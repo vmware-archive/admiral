@@ -13,9 +13,13 @@ package com.vmware.admiral.request.compute;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import java.net.URI;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -98,5 +102,67 @@ public class ResourceGroupUtilsTest extends RequestBaseTest {
         assertNotNull(resourceGroup.customProperties);
         assertEquals(resourceGroup.customProperties.get(ComputeProperties.RESOURCE_TYPE_KEY),
                 ResourceGroupUtils.COMPUTE_DEPLOYMENT_TYPE_VALUE);
+    }
+
+    @Test
+    public void testUpdateDeploymentResourceGroup() throws Throwable {
+        String contextId = UUID.randomUUID().toString();
+        List<String> tenantLinks = TestRequestStateFactory.getTenantLinks();
+
+        TestContext ctx1 = testCreate(1);
+        AtomicReference<ResourceGroupState> resGroupRef = new AtomicReference<>();
+        ResourceGroupUtils.createResourceGroup(host, referer, contextId,
+                tenantLinks)
+                .whenComplete((rg, e) -> {
+                    if (e != null) {
+                        ctx1.fail(e);
+                        return;
+                    }
+                    resGroupRef.set(rg);
+                    ctx1.complete();
+                });
+        ctx1.await();
+
+        ResourceGroupState resourceGroup = resGroupRef.get();
+        assertNotNull(resourceGroup);
+        assertEquals(resourceGroup.name, contextId);
+        assertEquals(resourceGroup.tenantLinks, tenantLinks);
+        assertNotNull(resourceGroup.customProperties);
+        assertEquals(resourceGroup.customProperties.get(ComputeProperties.RESOURCE_TYPE_KEY),
+                ResourceGroupUtils.COMPUTE_DEPLOYMENT_TYPE_VALUE);
+        assertNull(resourceGroup.customProperties.get(ComputeProperties.ENDPOINT_LINK_PROP_NAME));
+
+
+        TestContext ctx2 = testCreate(1);
+        ResourceGroupState resourceGroupState = new ResourceGroupState();
+        resourceGroupState.customProperties = new HashMap<>();
+        resourceGroupState.customProperties.put(
+                ComputeProperties.ENDPOINT_LINK_PROP_NAME,
+                "endpoint-link");
+
+        Set<String> groupLinks = new HashSet<>();
+        groupLinks.add(resourceGroup.documentSelfLink);
+        groupLinks.add("some-random-group-link");
+        ResourceGroupUtils.updateDeploymentResourceGroup(host, referer, resourceGroupState,
+                groupLinks, tenantLinks)
+                .whenComplete((rg, e) -> {
+                    if (e != null) {
+                        ctx2.fail(e);
+                        return;
+                    }
+                    resGroupRef.set(rg);
+                    ctx2.complete();
+                });
+        ctx2.await();
+
+        resourceGroup = resGroupRef.get();
+        assertNotNull(resourceGroup);
+        assertEquals(resourceGroup.name, contextId);
+        assertEquals(resourceGroup.tenantLinks, tenantLinks);
+        assertNotNull(resourceGroup.customProperties);
+        assertEquals(resourceGroup.customProperties.get(ComputeProperties.RESOURCE_TYPE_KEY),
+                ResourceGroupUtils.COMPUTE_DEPLOYMENT_TYPE_VALUE);
+        assertEquals(resourceGroup.customProperties.get(ComputeProperties
+                .ENDPOINT_LINK_PROP_NAME), "endpoint-link");
     }
 }

@@ -83,14 +83,10 @@ public class AzureWordpressProvisionNetworkIT extends BaseWordpressComputeProvis
                 { "WordPress_with_MySQL_compute_public_network.yaml", null },
                 { "WordPress_with_MySQL_compute_isolated_network.yaml",
                         (BiConsumer<Set<ServiceDocument>, String>) BaseWordpressComputeProvisionIT
-                                ::validateIsolatedNic }
-                /*
-                Disabled until Jira VCOM-1149 is fixed.                                ,
-
-                {"WordPress_with_MySQL_compute_isolated_sg_network.yaml",
+                                ::validateIsolatedNic },
+                { "WordPress_with_MySQL_compute_isolated_sg_network.yaml",
                         (BiConsumer<Set<ServiceDocument>, String>) BaseWordpressComputeProvisionIT
                                 ::validateIsolatedNic }
-                */
         });
     }
 

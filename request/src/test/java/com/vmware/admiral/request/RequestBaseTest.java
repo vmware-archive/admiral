@@ -14,6 +14,8 @@ package com.vmware.admiral.request;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import static com.vmware.admiral.request.compute.ResourceGroupUtils.COMPUTE_DEPLOYMENT_TYPE_VALUE;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -86,6 +88,7 @@ import com.vmware.admiral.service.test.MockComputeHostInstanceAdapter;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.admiral.service.test.MockDockerNetworkAdapterService;
 import com.vmware.admiral.service.test.MockDockerVolumeAdapterService;
+import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.adapters.awsadapter.AWSLoadBalancerService;
 import com.vmware.photon.controller.model.adapters.awsadapter.AWSNetworkService;
 import com.vmware.photon.controller.model.adapters.awsadapter.AWSSecurityGroupService;
@@ -932,6 +935,9 @@ public abstract class RequestBaseTest extends BaseTestCase {
         resGroup.documentSelfLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
                 contextId);
         resGroup.tenantLinks = tenantLinks;
+        resGroup.customProperties = new HashMap<>();
+        resGroup.customProperties.put(ComputeProperties.RESOURCE_TYPE_KEY,
+                COMPUTE_DEPLOYMENT_TYPE_VALUE);
         return getOrCreateDocument(resGroup, ResourceGroupService.FACTORY_LINK);
     }
 

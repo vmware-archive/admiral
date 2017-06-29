@@ -219,6 +219,8 @@ public class ComputeNetworkProvisionTaskServiceTest extends ComputeRequestBaseTe
         cn.tenantLinks = cnd.tenantLinks;
         cn.descriptionLink = cnd.documentSelfLink;
         cn.groupLinks = new HashSet<>();
+        cn.groupLinks.add(createResourceGroup("contextId", cnd.tenantLinks)
+                .documentSelfLink);
         cn = doPost(cn, ComputeNetworkService.FACTORY_LINK);
         assertNotNull(cn);
         return cn;

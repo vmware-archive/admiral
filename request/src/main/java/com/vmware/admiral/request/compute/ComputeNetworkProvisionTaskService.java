@@ -41,6 +41,7 @@ import com.vmware.admiral.compute.profile.ProfileService.ProfileStateExpanded;
 import com.vmware.admiral.request.compute.ComputeNetworkProvisionTaskService.ComputeNetworkProvisionTaskState.SubStage;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
+import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.UriPaths;
 import com.vmware.photon.controller.model.UriPaths.AdapterTypePath;
 import com.vmware.photon.controller.model.adapterapi.SecurityGroupInstanceRequest;
@@ -58,6 +59,7 @@ import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionS
 import com.vmware.photon.controller.model.resources.NetworkInterfaceService;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceService.NetworkInterfaceState;
 import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;
+import com.vmware.photon.controller.model.resources.ResourceGroupService.ResourceGroupState;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.photon.controller.model.resources.SecurityGroupService;
 import com.vmware.photon.controller.model.resources.SecurityGroupService.SecurityGroupState;
@@ -269,6 +271,9 @@ public class ComputeNetworkProvisionTaskService
     }
 
     private DeferredResult<Context> provisionResource(Context context) {
+        DeferredResult<Context> returnedResult = DeferredResult.completed(context)
+                .thenCompose(this::updateDeploymentResourceGroup);
+
         if (context.computeNetwork.networkType == NetworkType.ISOLATED &&
                 context.profile.networkProfile.isolationType == IsolationSupportType.SUBNET) {
             // Provision a new subnet
@@ -277,7 +282,7 @@ public class ComputeNetworkProvisionTaskService
                         String.format("Subnet is required to provision an ISOLATED network '%s'.",
                                 context.computeNetworkDescription.name));
             }
-            return DeferredResult.completed(context)
+            return returnedResult
                     .thenCompose(this::allocateSubnetCIDR)
                     .thenCompose(this::createSubnet)
                     .thenCompose(this::configureConnectedResources)
@@ -286,7 +291,7 @@ public class ComputeNetworkProvisionTaskService
                 context.profile.networkProfile.isolationType
                         == IsolationSupportType.SECURITY_GROUP) {
             // Provision a new security group
-            return DeferredResult.completed(context)
+            return returnedResult
                     .thenCompose(this::populateEndpointComputeState)
                     .thenCompose(this::createSecurityGroup)
                     .thenCompose(this::configureConnectedResources)
@@ -295,7 +300,7 @@ public class ComputeNetworkProvisionTaskService
         } else {
             // No new resources need to be provisioned.
             // Simply create the NIC states and finish the task.
-            return DeferredResult.completed(context)
+            return returnedResult
                     .thenCompose(this::configureConnectedResources)
                     .thenCompose(ctx -> {
                         context.serviceTaskCallback.sendResponse(this, (Throwable)null);
@@ -808,5 +813,28 @@ public class ComputeNetworkProvisionTaskService
         }
         return DeferredResult.allOf(
                 links.stream().map(link -> getDocumentDR(link, type)).collect(Collectors.toList()));
+    }
+
+    /**
+     * Add the __endpointLink to the list of custom properties of the deployment resource group.
+     * This is done in order to ensure that this resource group gets deleted when the associated
+     * endpoint is removed.
+     *
+     * @param context
+     * @return
+     */
+    private DeferredResult<Context> updateDeploymentResourceGroup(Context context) {
+        AssertUtil.assertNotNull(context.profile.endpoint,
+                "Context.profile.endpoint should not be null.");
+
+        ResourceGroupState resourceGroupState = new ResourceGroupState();
+        resourceGroupState.customProperties = new HashMap<>();
+        resourceGroupState.customProperties.put(
+                ComputeProperties.ENDPOINT_LINK_PROP_NAME,
+                context.profile.endpoint.documentSelfLink);
+        return ResourceGroupUtils.updateDeploymentResourceGroup(this.getHost(),
+                UriUtils.buildUri(getHost(), getSelfLink()), resourceGroupState,
+                context.computeNetwork.groupLinks, context.computeNetwork.tenantLinks)
+                .thenApply(ignore -> context);
     }
 }
