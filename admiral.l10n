@@ -5,5 +5,7 @@
 
 [ui/app/src/messages]
    admiral.%J.json
+[ui/ng-app/src/assets/i18n]
+  admiral.%J.json
 [common/src/main/resources/i18n]
    messages%j.properties
