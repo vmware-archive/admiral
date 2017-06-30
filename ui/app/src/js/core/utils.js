@@ -997,6 +997,10 @@ var utils = {
     return true;
   },
 
+  xor: function(a, b) {
+    return !a !== !b;
+  },
+
   arrayToObject: function(customProperties) {
     if (!customProperties) {
       return null;

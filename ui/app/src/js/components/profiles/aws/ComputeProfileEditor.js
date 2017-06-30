@@ -207,8 +207,18 @@ export default Vue.component('aws-compute-profile-editor', {
             return previous;
           }, {})
         },
-        valid: true
+        valid: this.validateMapping(this.instanceTypeMapping)
+          && this.validateMapping(this.imageMapping)
       });
+    },
+    validateMapping: function(mapping) {
+      for (var i = 0; i < mapping.length; i++) {
+        var mappingInstance = mapping[i];
+        if (utils.xor(mappingInstance.name, mappingInstance.value)) {
+          return false;
+        }
+      }
+      return true;
     }
   }
 });
