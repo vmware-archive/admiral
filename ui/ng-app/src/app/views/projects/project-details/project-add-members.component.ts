@@ -63,7 +63,7 @@ export class ProjectAddMembersComponent {
             this.membersSuggestions = this.members.map((principal) => {
                 let searchResult = {};
                 searchResult['id'] = principal.id;
-                searchResult['name'] = principal.email;
+                searchResult['name'] = principal.name + ' (' + principal.id + ')'
 
                 return searchResult;
             });
