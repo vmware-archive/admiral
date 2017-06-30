@@ -135,7 +135,8 @@ let EndpointsStore = Reflux.createStore({
       verifyEnumeration(createdEndpoint, ENUMERATION_RETRIES, () => {
         var immutableEndpoint = Immutable(createdEndpoint);
 
-        var endpoints = this.data.items.asMutable();
+        var endpoints = this.data.items ? this.data.items.asMutable() : [];
+
         endpoints.push(immutableEndpoint);
 
         this.setInData(['items'], endpoints);
