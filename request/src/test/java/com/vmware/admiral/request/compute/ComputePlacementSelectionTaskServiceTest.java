@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
@@ -67,6 +68,7 @@ public class ComputePlacementSelectionTaskServiceTest extends ComputeRequestBase
         taskRequestState.resourceCount = 1;
         taskRequestState.resourcePoolLinks = new ArrayList<>();
         taskRequestState.resourcePoolLinks.add(computeResourcePool.documentSelfLink);
+        taskRequestState.contextId = UUID.randomUUID().toString();
 
         ComputePlacementSelectionTaskState taskState = doPost(taskRequestState,
                 ComputePlacementSelectionTaskService.FACTORY_LINK);
@@ -168,6 +170,7 @@ public class ComputePlacementSelectionTaskServiceTest extends ComputeRequestBase
         taskRequestState.tenantLinks = computeDescription.tenantLinks;
         taskRequestState.resourcePoolLinks = new ArrayList<>();
         taskRequestState.resourcePoolLinks.add(computeResourcePool.documentSelfLink);
+        taskRequestState.contextId = UUID.randomUUID().toString();
 
         ComputePlacementSelectionTaskState taskState = doPost(taskRequestState,
                 ComputePlacementSelectionTaskService.FACTORY_LINK);
@@ -208,6 +211,7 @@ public class ComputePlacementSelectionTaskServiceTest extends ComputeRequestBase
         taskRequestState.resourceCount = 1;
         taskRequestState.resourcePoolLinks = new ArrayList<>();
         taskRequestState.resourcePoolLinks.add(computeResourcePool.documentSelfLink);
+        taskRequestState.contextId = UUID.randomUUID().toString();
 
         ComputePlacementSelectionTaskState taskState = doPost(taskRequestState,
                 ComputePlacementSelectionTaskService.FACTORY_LINK);

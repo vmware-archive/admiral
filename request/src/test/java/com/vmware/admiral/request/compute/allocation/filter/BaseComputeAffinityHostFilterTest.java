@@ -16,6 +16,7 @@ import static org.junit.Assert.assertNotNull;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -28,11 +29,13 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Before;
 
 import com.vmware.admiral.compute.ContainerHostService;
+import com.vmware.admiral.compute.content.TemplateComputeDescription;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSelection;
 import com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService.ComputePlacementSelectionTaskState;
 import com.vmware.admiral.request.compute.ComputeRequestBaseTest;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
+import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -57,14 +60,10 @@ public class BaseComputeAffinityHostFilterTest extends ComputeRequestBaseTest {
         state.resourceCount = 1;
 
         initialHostLinks = new ArrayList<>();
-        initialHostLinks.add(createDockerHost(
-                createDockerHostDescription(), createResourcePool(), true).documentSelfLink);
-        initialHostLinks.add(createDockerHost(
-                createDockerHostDescription(), createResourcePool(), true).documentSelfLink);
-        initialHostLinks.add(createDockerHost(
-                createDockerHostDescription(), createResourcePool(), true).documentSelfLink);
+        initialHostLinks.add(createVmHostCompute(true).documentSelfLink);
+        initialHostLinks.add(createVmHostCompute(true).documentSelfLink);
+        initialHostLinks.add(createVmHostCompute(true).documentSelfLink);
         vmGuestComputeDescription = TestRequestStateFactory.createComputeDescriptionForVmGuestChildren();
-        filter = new ComputeClusterAntiAffinityHostFilter(host, vmGuestComputeDescription);
         expectedLinks = new ArrayList<>(initialHostLinks);
     }
 
@@ -174,6 +173,35 @@ public class BaseComputeAffinityHostFilterTest extends ComputeRequestBaseTest {
         return hostSelectedMap;
     }
 
+
+    protected Map<String, HostSelection> filter(List<ComputeState> computeStates) throws Throwable {
+        final AtomicReference<Throwable> error = new AtomicReference<>();
+        final Map<String, HostSelection> hostSelectionMap = prepareHostSelectionMap(computeStates);
+        final Map<String, HostSelection> hostSelectedMap = new HashMap<>();
+
+        host.testStart(1);
+        filter
+                .filter(
+                        FilterContext.from(state),
+                        hostSelectionMap,
+                        (filteredHostSelectionMap, e) -> {
+                            if (e != null) {
+                                error.set(e);
+                            } else {
+                                hostSelectedMap.putAll(filteredHostSelectionMap);
+                            }
+                            host.completeIteration();
+                        });
+
+        host.testWait();
+
+        if (error.get() != null) {
+            throw error.get();
+        }
+
+        return hostSelectedMap;
+    }
+
     protected Map<String, HostSelection> prepareHostSelectionMap() throws Throwable {
         Map<String, HostSelection> hostSelectionMap = new HashMap<>();
         for (String hostLink : initialHostLinks) {
@@ -195,6 +223,43 @@ public class BaseComputeAffinityHostFilterTest extends ComputeRequestBaseTest {
             hostSelectionMap.put(hostLink, hostSelection);
         }
         return hostSelectionMap;
+    }
+
+    protected Map<String, HostSelection> prepareHostSelectionMap(Collection<ComputeState> hosts) throws Throwable {
+        Map<String, HostSelection> hostSelectionMap = new HashMap<>();
+        for (ComputeState host: hosts) {
+            HostSelection hostSelection = new HostSelection();
+            hostSelection.hostLink = host.documentSelfLink;
+
+            if (host.customProperties
+                    .containsKey(ContainerHostService.DOCKER_HOST_CLUSTER_STORE_PROP_NAME)) {
+                hostSelection.clusterStore = host.customProperties
+                        .get(ContainerHostService.DOCKER_HOST_CLUSTER_STORE_PROP_NAME);
+            }
+            if (host.customProperties
+                    .containsKey(ContainerHostService.DOCKER_HOST_PLUGINS_PROP_NAME)) {
+                hostSelection.plugins = host.customProperties
+                        .get(ContainerHostService.DOCKER_HOST_PLUGINS_PROP_NAME);
+            }
+
+            hostSelectionMap.put(host.documentSelfLink, hostSelection);
+        }
+        return hostSelectionMap;
+    }
+
+    protected ComputeDescription createDescriptions(String name, String[] affinity)
+            throws Throwable {
+        // loop a few times to make sure the right host is not chosen by chance
+        ComputeDescription desc = new ComputeDescription();
+        desc.documentSelfLink = UUID.randomUUID().toString();
+        desc.name = name;
+        TemplateComputeDescription.setAffinityNames(desc, affinity == null ?
+                Collections.emptyList() : Arrays.asList(affinity));
+        desc = doPost(desc, ComputeDescriptionService.FACTORY_LINK);
+        assertNotNull(desc);
+        addForDeletion(desc);
+
+        return desc;
     }
 
 }

@@ -292,6 +292,8 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         subnetState.networkLink = UriUtils.buildUriPath(NetworkService.FACTORY_LINK, name);
         subnetState.tenantLinks = tenantLinks;
         subnetState.tagLinks = new HashSet<>();
+        subnetState.zoneId = CommonTestStateFactory.ZONE_ID;
+        subnetState.regionId = CommonTestStateFactory.ENDPOINT_REGION_ID;
         return subnetState;
     }
 
@@ -470,7 +472,7 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         computeDescription.authCredentialsLink = UriUtils.buildUriPath(
                 AuthCredentialsService.FACTORY_LINK,
                 CommonTestStateFactory.AUTH_CREDENTIALS_ID);
-        computeDescription.zoneId = ENDPOINT_REGION_ID;
+        computeDescription.regionId = ENDPOINT_REGION_ID;
         computeDescription.tenantLinks = createTenantLinks(TENANT_NAME);
         computeDescription.customProperties = new HashMap<>();
 

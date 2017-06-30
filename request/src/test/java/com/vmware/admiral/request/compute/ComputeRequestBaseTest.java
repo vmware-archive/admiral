@@ -56,6 +56,7 @@ import com.vmware.xenon.common.UriUtils;
 public class ComputeRequestBaseTest extends RequestBaseTest {
 
     static final String TEST_VM_NAME = "testVM";
+    public static final String NETWORK_NAME = "test-nic";
 
     protected ComputeState vmHostCompute;
 
@@ -86,7 +87,7 @@ public class ComputeRequestBaseTest extends RequestBaseTest {
 
         SubnetState subnet = createSubnet("my-subnet");
         if (attachNic) {
-            NetworkInterfaceDescription nid = createNetworkInterface("test-nic",
+            NetworkInterfaceDescription nid = createNetworkInterface(NETWORK_NAME,
                     subnet.documentSelfLink);
             cd.networkInterfaceDescLinks = new ArrayList<>();
             cd.networkInterfaceDescLinks.add(nid.documentSelfLink);

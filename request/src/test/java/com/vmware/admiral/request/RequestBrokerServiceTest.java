@@ -737,6 +737,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
     public void testLoadBalancerRequestLifeCycle() throws Throwable {
         host.log("########  Start of testLoadBalancerRequestLifeCycle ######## ");
 
+        String endpointLink = createEndpoint().documentSelfLink;
+
         // create prerequisites
 
         String loadBalancerName = "mylb";
@@ -749,6 +751,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         SubnetState subnet;
         { // Sub-network to which the load balancer is attached
             subnet = TestRequestStateFactory.createSubnetState("subnet");
+            subnet.endpointLink = endpointLink;
             subnet = doPost(subnet, SubnetService.FACTORY_LINK);
 
             addForDeletion(subnet);
@@ -779,7 +782,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
             profile = TestRequestStateFactory
                     .createProfile("profile", networkProfile.documentSelfLink,
                             storageProfile.documentSelfLink, computeProfile.documentSelfLink);
-            profile.endpointLink = createEndpoint().documentSelfLink;
+            profile.endpointLink = endpointLink;
             profile.endpointType = null;
 
             profile = doPost(profile, ProfileService.FACTORY_LINK);

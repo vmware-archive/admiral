@@ -14,7 +14,9 @@ package com.vmware.admiral.request;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import static com.vmware.admiral.common.test.CommonTestStateFactory.ENDPOINT_REGION_ID;
 import static com.vmware.admiral.request.compute.ResourceGroupUtils.COMPUTE_DEPLOYMENT_TYPE_VALUE;
+import static com.vmware.admiral.request.compute.allocation.filter.ComputeToNetworkAffinityHostFilter.PREFIX_NETWORK;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -93,6 +95,7 @@ import com.vmware.photon.controller.model.adapters.awsadapter.AWSLoadBalancerSer
 import com.vmware.photon.controller.model.adapters.awsadapter.AWSNetworkService;
 import com.vmware.photon.controller.model.adapters.awsadapter.AWSSecurityGroupService;
 import com.vmware.photon.controller.model.adapters.awsadapter.AWSSubnetService;
+import com.vmware.photon.controller.model.adapters.vsphere.CustomProperties;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
@@ -514,6 +517,10 @@ public abstract class RequestBaseTest extends BaseTestCase {
     }
 
     protected ComputeState createVmHostCompute(boolean generateId) throws Throwable {
+        return createVmHostCompute(generateId, null, ENDPOINT_REGION_ID, TestRequestStateFactory.ZONE_ID);
+    }
+
+    protected ComputeState createVmHostCompute(boolean generateId, Set<String> networkLinks, String region, String zone) throws Throwable {
         ComputeState vmHostComputeState = TestRequestStateFactory.createVmHostComputeState();
         if (generateId) {
             vmHostComputeState.id = UUID.randomUUID().toString();
@@ -524,8 +531,30 @@ public abstract class RequestBaseTest extends BaseTestCase {
         vmHostComputeState.type = ComputeType.VM_HOST;
         vmHostComputeState.name = UUID.randomUUID().toString();
         vmHostComputeState.endpointLink = endpoint.documentSelfLink;
-        vmHostComputeState = getOrCreateDocument(vmHostComputeState, ComputeService.FACTORY_LINK);
+        vmHostComputeState.regionId = region;
+        vmHostComputeState.zoneId = zone;
+
+        Set<String> resourceGroupLinks = new HashSet<>();
+        if (networkLinks != null) {
+            for (String networkLink : networkLinks) {
+                ResourceGroupState resourceGroupStateRequest = new ResourceGroupState();
+                resourceGroupStateRequest.name = UriUtils.getLastPathSegment(networkLink);
+                resourceGroupStateRequest.customProperties = new HashMap<>();
+                resourceGroupStateRequest.documentSelfLink = PREFIX_NETWORK + UUID.randomUUID().toString();
+                resourceGroupStateRequest.customProperties
+                        .put(CustomProperties.TARGET_LINK, networkLink);
+
+                ResourceGroupState state = doPost(resourceGroupStateRequest,
+                        ResourceGroupService.FACTORY_LINK);
+                resourceGroupLinks.add(state.documentSelfLink);
+            }
+        }
+
+        vmHostComputeState.groupLinks = resourceGroupLinks;
         assertNotNull(vmHostComputeState);
+
+        vmHostComputeState = getOrCreateDocument(vmHostComputeState, ComputeService.FACTORY_LINK);
+
         if (generateId) {
             documentsForDeletion.add(vmHostComputeState);
         }
