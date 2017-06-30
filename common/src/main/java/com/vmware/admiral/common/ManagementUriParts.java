@@ -38,6 +38,7 @@ public interface ManagementUriParts {
             + "/composite-descriptions";
     String CONTAINERS_UPGRADE_TRANSFORM_PATH = UPGRADE_TRANSFORM_PREFIX + "containers";
     String RESOURCE_POOL_UPGRADE_TRANSFORM_PATH = UPGRADE_TRANSFORM_PREFIX + "/pools";
+    String REGISTRY_UPGRADE_TRANSFORM_PATH = UPGRADE_TRANSFORM_PREFIX + "/registries";
 
     String UTIL = "/util";
     String LONG_URI_GET = UTIL + "/long-uri-get";
