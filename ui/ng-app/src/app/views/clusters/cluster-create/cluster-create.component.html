@@ -51,7 +51,7 @@
         <div class="form-group" *ngIf="!isEdit">
           <label for="credentials">{{ "clusters.edit.credentials" | i18n }}</label>
           <div class="select">
-            <select [(ngModel)]="selectedCredentials" formControlName="credentials">
+            <select formControlName="credentials">
               <option *ngFor="let c of credentials" [ngValue]="c.documentSelfLink">{{ getCredentialsName(c) }}</option>
             </select>
           </div>

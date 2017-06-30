@@ -113,6 +113,7 @@
   },
   "clusters": {
     "title": "Clusters",
+    "cluster": "Cluster",
     "new": "New",
     "status": "Status",
     "state": {
@@ -138,12 +139,18 @@
       "memory": "Memory:"
     },
     "resources": {
+      "addHostButton": "Host",
       "title": "Resources",
       "address": "Address",
       "status": "Status",
       "containersCount": "Containers",
       "memory": "Memory",
-      "cpu": "CPU"
+      "cpu": "CPU",
+      "addHost": {
+        "title": "Add Host",
+        "address": "Address",
+        "addressRequired": "Address is required."
+      }
     },
     "edit": {
       "titleNew": "New Cluster",
@@ -162,10 +169,15 @@
     }
   },
   "hosts": {
+    "delete":{
+      "title": "Remove Host",
+      "confirmation": "Confirm removing of host {{hostName}}. The operation cannot be undone."
+    },
     "state": {
       "ON": "ON",
       "OFF": "OFF",
-      "UNKNOWN": "UNKNOWN"
+      "UNKNOWN": "UNKNOWN",
+      "SUSPEND": "DISABLED"
     }
   },
   "logs": {
@@ -220,6 +232,7 @@
   },
   "edit": "Edit",
   "save": "Save",
+  "add": "Add",
   "yes": "Yes",
   "remove": "Remove",
   "delete": "Delete",

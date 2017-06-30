@@ -234,7 +234,7 @@ navigation-container > :not(.with-back-button) > back-button {
     background-color: $clr-red;
 }
 
-.progress-meter.DISABLED::before, .progress-meter.UNKNOWN::before {
+.progress-meter.DISABLED::before, .progress-meter.SUSPEND::before, .progress-meter.UNKNOWN::before {
     background-color: $clr-yellow-dark-midtone;
 }
 

@@ -28,12 +28,52 @@ export class ClusterResourcesComponent implements OnChanges {
   @Input() cluster: any;
   @ViewChild('gridView') gridView: GridViewComponent;
 
-  serviceEndpoint;
+  serviceEndpoint: string;
+
+  showAddHost: boolean;
+
+  hostToDelete: any;
+  deleteConfirmationAlert: string;
 
   constructor(private service: DocumentService) { }
 
   ngOnChanges(changes: SimpleChanges) {
-    this.serviceEndpoint = changes.cluster.currentValue.documentSelfLink + '/hosts?miro=true';
+    this.serviceEndpoint = changes.cluster.currentValue.documentSelfLink + '/hosts';
+  }
+
+  get deleteConfirmationDescription(): string {
+    return this.hostToDelete && I18n.t('hosts.delete.confirmation',
+            { hostName: this.getHostName(this.hostToDelete) } as I18n.TranslationOptions);
+  }
+
+  deleteHost(event, host) {
+    event.stopPropagation();
+
+    this.hostToDelete = host;
+    return false; // prevents navigation
+  }
+
+  deleteConfirmed() {
+    this.service.delete(this.serviceEndpoint + '/' + Utils.getDocumentId(this.hostToDelete.documentSelfLink))
+        .then(result => {
+          this.hostToDelete = null;
+          this.gridView.refresh();
+        })
+        .catch(err => {
+          this.deleteConfirmationAlert = Utils.getErrorMessage(err)._generic;
+        });
+  }
+
+  deleteCanceled() {
+    this.hostToDelete = null;
+  }
+
+  onAddHost() {
+    this.showAddHost = true;
+  }
+
+  addCanceled() {
+    this.showAddHost = false;
   }
 
   getContainersCount(host) {
@@ -44,8 +84,8 @@ export class ClusterResourcesComponent implements OnChanges {
     return Utils.getDocumentId(host.documentSelfLink);
   }
 
-  clusterState(host) {
-    return I18n.t('clusters.state.' + host.powerState);
+  hostState(host) {
+    return I18n.t('hosts.state.' + host.powerState);
   }
 
   getHostName(host) {
@@ -53,10 +93,10 @@ export class ClusterResourcesComponent implements OnChanges {
   }
 
   getCpuPercentage(host, shouldRound) {
-    Utils.getCpuPercentage(host, shouldRound);
+    return Utils.getCpuPercentage(host, shouldRound);
   }
 
   getMemoryPercentage(host, shouldRound) {
-    Utils.getMemoryPercentage(host, shouldRound);
+    return Utils.getMemoryPercentage(host, shouldRound);
   }
 }

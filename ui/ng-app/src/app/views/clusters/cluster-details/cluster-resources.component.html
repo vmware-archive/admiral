@@ -10,6 +10,16 @@
   -->
 
 <grid-view [serviceEndpoint]="serviceEndpoint">
+  <div toolbar>
+    <button class="btn btn-link" (click)="onAddHost()"><i class="fa fa-plus"></i>{{ "clusters.resources.addHostButton" | i18n }}</button>
+  </div>
+  <delete-confirmation [title]="'hosts.delete.title' | i18n"
+                       [description]="deleteConfirmationDescription"
+                       [(alert)]="deleteConfirmationAlert"
+                       [visible]="hostToDelete"
+                       (onDelete)="deleteConfirmed()"
+                       (onCancel)="deleteCanceled()">
+  </delete-confirmation>
   <ng-template let-item="item">
     <card class="clusterCard">
       <div card-header>
@@ -20,7 +30,9 @@
               <clr-icon shape="ellipsis-vertical"></clr-icon>
           </button>
           <div class="dropdown-menu">
-            <a href="..." clrDropdownItem (click)="deleteCluster($event, item)">{{ "delete" | i18n }}</a>
+            <a href="..." clrDropdownItem (click)="deleteHost($event, item)">
+              <clr-icon shape="trash" size="20" class="card-drop-down-actions"></clr-icon>{{ "delete" | i18n }}
+            </a>
           </div>
         </clr-dropdown>
       </div>
@@ -31,7 +43,7 @@
         </div>
         <div class="form-group">
           <label>{{ "clusters.resources.status" | i18n }}</label>
-          <div class="status {{ clusterState(item) }}">{{ clusterState(item) }}</div>
+          <div class="status {{ hostState(item) }}">{{ hostState(item) }}</div>
         </div>
         <div class="form-group">
           <label>{{ "clusters.resources.containersCount" | i18n }}</label>
@@ -45,7 +57,7 @@
                 <div class="progress-meter" attr.data-value="{{ getMemoryPercentage(item, true) }}"></div>
               </div>
             </div>
-            <div class="col-sm-8 progress-details p7">{{ getMemoryPercentage(item) }}%</div>
+            <div class="col-sm-8 progress-details p7">{{ getMemoryPercentage(item, false) }}%</div>
           </div>
         </div>
         <div class="form-group">
@@ -66,6 +78,5 @@
     </card>
   </ng-template>
 </grid-view>
-<navigation-container>
-  <router-outlet></router-outlet>
-</navigation-container>
+
+<app-cluster-add-host [cluster]="cluster" [visible]="showAddHost" (onCancel)="addCanceled()"></app-cluster-add-host>

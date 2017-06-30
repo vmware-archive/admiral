@@ -30,7 +30,6 @@ import { BaseDetailsComponent } from '../../../components/base/base-details.comp
 export class ClusterCreateComponent extends BaseDetailsComponent implements AfterViewInit, OnInit {
   opened: boolean;
   isEdit: boolean;
-  selectedCredentials: any;
   credentials: any[];
 
   showCertificateWarning: boolean;

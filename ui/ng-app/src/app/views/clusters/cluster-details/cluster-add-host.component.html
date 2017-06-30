@@ -1,0 +1,45 @@
+<!--
+  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<clr-modal [clrModalOpen]="visible" (clrModalOpenChange)="addCanceled()">
+    <h3 class="modal-title">{{ "clusters.resources.addHost.title" | i18n }}</h3>
+    <div class="modal-body">
+        <clr-alert [clrAlertType]="'alert-danger'" [(clrAlertClosed)]="!alertMessage"  (clrAlertClosedChange)="resetAlert()">
+            <div class="alert-item">
+                <span class="alert-text">{{ alertMessage }}</span>
+            </div>
+        </clr-alert>
+        <form class="form" [formGroup]="addHostToClusterForm">
+            <section class="form-block">
+                <div class="form-group">
+                    <label for="address" class="required">{{ "clusters.resources.addHost.address" | i18n }}</label>
+                    <label for="address" aria-haspopup="true" role="tooltip" class="tooltip tooltip-validation tooltip-sm tooltip-right"
+                            [class.invalid]="addHostToClusterForm.get('address').invalid && (addHostToClusterForm.get('address').dirty || addHostToClusterForm.get('address').touched)">
+                        <input type="text" formControlName="address">
+                        <span class="tooltip-content">{{ "clusters.resources.addHost.addressRequired" | i18n }}</span>
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label for="credentials">{{ "clusters.edit.credentials" | i18n }}</label>
+                    <div class="select">
+                        <select formControlName="credentials">
+                            <option *ngFor="let c of credentials" [ngValue]="c.documentSelfLink">{{ getCredentialsName(c) }}</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+        </form>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-outline" [disabled]="isAddingHost" (click)="addCanceled()">{{"cancel" | i18n}}</button>
+        <button [clrLoading]="isAddingHost" type="button" class="btn btn-primary" [disabled]="addHostToClusterForm.invalid || isAddingHost" (click)="addHost()">{{ "add" | i18n }}</button>
+    </div>
+</clr-modal>
