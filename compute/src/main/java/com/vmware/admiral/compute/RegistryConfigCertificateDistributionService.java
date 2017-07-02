@@ -70,6 +70,8 @@ public class RegistryConfigCertificateDistributionService
     private void handleAddRegistryHostOperation(String registryAddress, String certificate,
             List<String> tenantLinks) {
 
+        logInfo("Retrieving hosts for tenantLinks %s", tenantLinks);
+
         QueryTask q = QueryUtil.buildQuery(ComputeState.class, true);
         QueryTask.Query hostTypeClause = new QueryTask.Query()
                 .setTermPropertyName(QuerySpecification.buildCompositeFieldName(
@@ -90,6 +92,7 @@ public class RegistryConfigCertificateDistributionService
             } else if (r.hasResult()) {
                 hostLinks.add(r.getDocumentSelfLink());
             } else {
+                logInfo("Retrieved hosts %s", hostLinks);
                 for (String hostLink : hostLinks) {
                     uploadCertificate(hostLink, registryAddress, certificate, tenantLinks);
                 }

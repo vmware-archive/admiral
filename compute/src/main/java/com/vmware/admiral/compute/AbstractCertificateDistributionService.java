@@ -64,6 +64,10 @@ public class AbstractCertificateDistributionService extends StatelessService {
 
     protected void processUploadCertificateQuery(ShellContainerExecutorState execState,
             String hostLink, int retries, String registryAddress, List<String> tenantLinks) {
+
+        logInfo("Uploading certificate on %s for registry %s. Retries %s", hostLink,
+                getCertificateDirName(registryAddress), retries);
+
         Operation post = Operation.createPost(this, ShellContainerExecutorService.SELF_LINK);
         post.setUri(UriUtils.appendQueryParam(post.getUri(),
                 ShellContainerExecutorService.HOST_LINK_URI_PARAM, hostLink));
@@ -86,7 +90,8 @@ public class AbstractCertificateDistributionService extends StatelessService {
                             tenantLinks);
                 }
             } else {
-                logInfo("Registry certificate successfully uploaded to host %s", hostLink);
+                logInfo("Registry certificate successfully uploaded to host %s for registry %s",
+                        hostLink, getCertificateDirName(registryAddress));
                 log(Level.FINEST, "Command result (possibly truncated):\n---\n%1.1024s\n---\n",
                         o.getBody(String.class));
             }

@@ -135,9 +135,12 @@ public class RegistryHostConfigService extends StatelessService {
                 .setCompletion(
                         (o, e) -> {
                             if (e != null) {
+                                logSevere("Failed to store registry %s", hostState.address);
                                 op.fail(e);
                                 return;
                             }
+
+                            logInfo("Stored registry %s", hostState.address);
 
                             RegistryState rs = o.getBody(RegistryState.class);
                             String documentSelfLink = rs.documentSelfLink;
@@ -227,13 +230,17 @@ public class RegistryHostConfigService extends StatelessService {
     private void distributeCertificate(RegistryState registry, Operation parentOp) {
         parentOp.complete();
 
+        logInfo("Distributing certificate for %s. Fetching registry certificate", registry.address);
+
         RegistryService.fetchRegistryCertificate(registry, (certificate) -> {
-            RegistryConfigCertificateDistributionState distributionState =
-                    new RegistryConfigCertificateDistributionState();
+            RegistryConfigCertificateDistributionState distributionState = new RegistryConfigCertificateDistributionState();
             distributionState.registryAddress = registry.address;
             distributionState.tenantLinks = registry.tenantLinks;
             distributionState.certState = new SslTrustCertificateState();
             distributionState.certState.certificate = certificate;
+
+            logInfo("Distributing certificate for %s. Fetched registry certificate.",
+                    registry.address);
 
             sendRequest(Operation.createPost(this,
                     RegistryConfigCertificateDistributionService.SELF_LINK)
