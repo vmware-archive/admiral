@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~ Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
   ~
   ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
   ~ You may not use this product except in compliance with the License.
@@ -9,7 +9,7 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<div class="image-item" :data-name="model.registry + '/' + model.name" v-on:click="hideGroups($event)">
+<div class="image-item" :data-name="model.registry + '/' + model.name">
   <div class="image-header">
     <img v-bind:src="model.icon"/>
     <div class="title-holder">
@@ -44,34 +44,19 @@
       <button v-if="model.provisioning" type="button" class="btn create-container-btn
         loading">{{i18n ("app.template.list.provision")}}<i class="fa fa-spinner fa-spin loader"></i></button>
       <template v-else><div>
-        <template v-if="showGroupForProvisioning">
-          <div class="provisionGroup">
-            <select v-model="preferredGroupId">
-              <option v-for="option in groupOptions" track-by="id"
-                      :value="option.id">
-                {{option.name}}
-              </option>
-              <option v-if="clearSelectionSupported()" value="">{{i18n('noSelection')}}</option>
-            </select>
-            <button type="button" class="btn btn-primary create-container-with-group-btn"
-                    v-on:click="provisionContainer($event)">{{i18n("app.template.list.provision")}}</button>
-          </div>
-        </template>
-        <template v-else>
-          <div class="dropdown">
-            <button type="button" class="btn create-container-btn"
-                    v-on:click="provisionContainer($event)">{{i18n("app.template.list.provision")}}</button>
-            <button type="button" class="btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              <span class="caret"></span>
-              <span class="sr-only">Toggle Dropdown</span>
-            </button>
-            <ul class="dropdown-menu">
-              <li><a href="#" class="create-container-additional-btn"
-                     v-on:click="provisionContainerAdditionalInfo($event)"
-                    >{{i18n("app.template.list.provisionAdditionalInfo")}}</a></li>
-            </ul>
-          </div>
-        </template>
+        <div class="dropdown">
+          <button type="button" class="btn create-container-btn"
+                  v-on:click="provisionContainer($event)">{{i18n("app.template.list.provision")}}</button>
+          <button type="button" class="btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <span class="caret"></span>
+            <span class="sr-only">Toggle Dropdown</span>
+          </button>
+          <ul class="dropdown-menu">
+            <li><a href="#" class="create-container-additional-btn"
+                   v-on:click="provisionContainerAdditionalInfo($event)"
+                  >{{i18n("app.template.list.provisionAdditionalInfo")}}</a></li>
+          </ul>
+        </div>
       </div></template>
     </template>
   </div>

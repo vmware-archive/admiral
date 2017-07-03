@@ -1403,6 +1403,14 @@ var utils = {
     });
   },
 
+  getSelectedProject() {
+    try {
+      return JSON.parse(localStorage.getItem('selectedProject'));
+    } catch (e) {
+      console.log('Failed to retrieve selectedProject entry from local storage.');
+    }
+  },
+
   convertToGigabytes(bytes) {
     return (bytes / 1073741824).toFixed(2);
   }

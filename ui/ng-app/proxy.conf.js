@@ -8,6 +8,8 @@ const ENDPOINTS = [
   '/resources/*',
   '/container-image-icons/*',
   '/projects/*',
+  '/requests/*',
+  '/request-status/*',
   '/config/*',
   '/templates/*',
   '/groups/*',

@@ -1962,56 +1962,6 @@ $alert-text-color: #ffffff;
   color: $brand-danger;
 }
 
-.provisionGroup {
-  margin-top: 0px;
-  margin-bottom: 0px;
-  display: flex;
-
-  label {
-    color: $main_color;
-    font-weight: normal;
-  }
-
-  $input-height-small: 30px;
-
-  select {
-    color: $main_color;
-    font-weight: normal;
-
-    height: $input-height-small;
-    line-height: $input-height-small;
-
-    flex: 0 1 50%;
-    margin: 3px 5px 0 0;
-
-    background-color: #fff;
-    border: 1px solid $main_color;
-    border-radius: 1px;
-
-    option {
-      color: $main_color;
-    }
-  }
-
-  button {
-    flex: 0 1 50%;
-    margin: 0;
-  }
-
-  .btn-circle {
-    margin-left: 5px;
-    width: 30px;
-    min-width: 30px;
-    height: 30px;
-    line-height: 26px;
-    border-width: 2px;
-    border-radius: 16px;
-    text-align: center;
-    padding: 0;
-    background-color: #fff;
-  }
-}
-
 .title-second-day-operations {
   display: inline;
   border-bottom: 1px solid #9a9a9a;

@@ -10,6 +10,9 @@
  */
 
 import { FT } from './../../utils/ft';
+import { Ajax } from './../../utils/ajax.service';
+import { Links } from './../../utils/links';
+import { DocumentListResult, DocumentService } from './../../utils/document.service';
 import { Component, OnInit, ViewEncapsulation, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { Router, NavigationEnd } from '@angular/router';
@@ -48,7 +51,7 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
     selectedProject;
     projects;
 
-    constructor(private router: Router, private ps: ProjectService) {
+    constructor(private router: Router, private ds: DocumentService, private ajax: Ajax, private ps: ProjectService) {
       this.routeObserve = this.router.events.subscribe((event) => {
         if (event instanceof NavigationEnd) {
           let formerViewPath;
@@ -67,7 +70,7 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-      this.ps.list().then((result) => {
+      this.listProjects().then((result) => {
         this.projects = result.documents;
 
         if (!this.projects || this.projects.length === 0) {
@@ -98,8 +101,19 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
       this.routeObserve.unsubscribe();
     }
 
+    listProjects() {
+      if (FT.isApplicationEmbedded()) {
+        return this.ajax.get(Links.GROUPS, null).then(result => {
+          let documents = result || [];
+          return new DocumentListResult(documents, result.nextPageLink, result.totalCount);
+        });
+      } else {
+        return this.ds.list(Links.PROJECTS, null);
+      }
+    }
+
     selectProject(project) {
-      this.selectedProject = project
+      this.selectedProject = project;
       this.ps.setSelectedProject(this.selectedProject);
     }
 }

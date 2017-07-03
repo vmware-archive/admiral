@@ -1,3 +1,4 @@
+import { FT } from './ft';
 /*
  * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
  *
@@ -9,14 +10,17 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
+import { Headers } from '@angular/http';
 import { Injectable } from '@angular/core';
 import { Ajax } from './ajax.service';
+import { ProjectService } from './project.service';
 import { Utils } from './utils';
 import { Links } from './links';
 import { URLSearchParams } from '@angular/http';
-import { searchConstants, serviceUtils} from 'admiral-ui-common';
+import { searchConstants, serviceUtils } from 'admiral-ui-common';
 
 const FILTER_VALUE_ALL_FIELDS = 'ALL_FIELDS';
+const HEADER_PROJECT = "x-project";
 
 let toArrayIfDefined = function(obj) {
   if (!obj) {
@@ -77,7 +81,7 @@ const PAGE_LIMIT : string = '50';
 @Injectable()
 export class DocumentService {
 
-  constructor(private ajax: Ajax) { }
+  constructor(private ajax: Ajax, private ps: ProjectService) { }
 
   public list(factoryLink: string, queryOptions: any): Promise<DocumentListResult> {
     let params = new URLSearchParams();
@@ -100,7 +104,7 @@ export class DocumentService {
 
       op = this.post(factoryLink, data);
     } else {
-      op = this.ajax.get(factoryLink, params);
+      op = this.ajax.get(factoryLink, params, undefined, this.buildHeaders());
     }
 
     return op.then(result => {
@@ -114,14 +118,15 @@ export class DocumentService {
   }
 
   public loadNextPage(nextPageLink): Promise<DocumentListResult> {
-    return this.ajax.get(nextPageLink).then(result => {
-      let documents = result.documentLinks.map(link => {
-        let document = result.documents[link];
-        document.documentId = Utils.getDocumentId(link);
-        return document;
-      });
-      return new DocumentListResult(documents, result.nextPageLink, result.totalCount);
-    }).then(result => slowPromise(result));
+    return this.ajax.get(nextPageLink, undefined, undefined, this.buildHeaders())
+      .then(result => {
+        let documents = result.documentLinks.map(link => {
+          let document = result.documents[link];
+          document.documentId = Utils.getDocumentId(link);
+          return document;
+        });
+        return new DocumentListResult(documents, result.nextPageLink, result.totalCount);
+      }).then(result => slowPromise(result));
   }
 
   public get(documentSelfLink, expand: boolean = false): Promise<any> {
@@ -129,10 +134,10 @@ export class DocumentService {
       let params = new URLSearchParams();
       params.set('expand', 'true');
 
-      return this.ajax.get(documentSelfLink, params);
+      return this.ajax.get(documentSelfLink, params, undefined, this.buildHeaders());
     }
 
-    return this.ajax.get(documentSelfLink);
+    return this.ajax.get(documentSelfLink, undefined, undefined, this.buildHeaders());
   }
 
    public getById(factoryLink: string, documentId: string): Promise<any> {
@@ -149,42 +154,43 @@ export class DocumentService {
         logRequestUriPath += '&since=' + sinceSeconds;
       }
 
-      this.ajax.get(logsServiceLink, new URLSearchParams(logRequestUriPath)).then((logServiceState) => {
-        if (logServiceState) {
-          if (logServiceState.logs) {
-            let decodedLogs = atob(logServiceState.logs);
-            resolve(decodedLogs);
-          } else {
-            for (let component in logServiceState) {
-              logServiceState[component] = atob(logServiceState[component].logs);
+      this.ajax.get(logsServiceLink, new URLSearchParams(logRequestUriPath), undefined, this.buildHeaders())
+        .then((logServiceState) => {
+          if (logServiceState) {
+            if (logServiceState.logs) {
+              let decodedLogs = atob(logServiceState.logs);
+              resolve(decodedLogs);
+            } else {
+              for (let component in logServiceState) {
+                logServiceState[component] = atob(logServiceState[component].logs);
+              }
+              resolve(logServiceState);
             }
-            resolve(logServiceState);
+          } else {
+            resolve('');
           }
-        } else {
-          resolve('');
-        }
-      }).catch(reject);
+        }).catch(reject);
     });
   }
 
   public patch(documentSelfLink, patchBody): Promise<any> {
-    return this.ajax.patch(documentSelfLink, null, patchBody);
+    return this.ajax.patch(documentSelfLink, undefined, patchBody, this.buildHeaders());
   }
 
   public post(factoryLink, postBody): Promise<any> {
-    return this.ajax.post(factoryLink, null, postBody);
+    return this.ajax.post(factoryLink, undefined, postBody, this.buildHeaders());
   }
 
   public put(documentSelfLink, putBody): Promise<any> {
-    return this.ajax.put(documentSelfLink, null, putBody);
+    return this.ajax.put(documentSelfLink, undefined, putBody, this.buildHeaders());
   }
 
   public delete(documentSelfLink): Promise<any> {
-    return this.ajax.delete(documentSelfLink);
+    return this.ajax.delete(documentSelfLink, undefined, undefined, this.buildHeaders());
   }
 
   public loadCurrentUserSecurityContext(): Promise<any> {
-    return this.ajax.get(Links.USER_SESSION);
+    return this.get(Links.USER_SESSION);
   }
 
   public getPrincipalById(principalId): Promise<any> {
@@ -199,10 +205,39 @@ export class DocumentService {
               searchParams.append('roles', 'all');
           }
 
-          this.ajax.get(Links.AUTH_PRINCIPALS, searchParams).then((principalsResult) => {
-              resolve(principalsResult);
-          }).catch(reject);
+          this.ajax.get(Links.AUTH_PRINCIPALS, searchParams, undefined, this.buildHeaders())
+            .then((principalsResult) => {
+                resolve(principalsResult);
+            }).catch(reject);
       });
+  }
+
+  private buildHeaders(): Headers {
+    if (!this.ps) {
+      return undefined;
+    }
+
+    let selectedProject = this.ps.getSelectedProject();
+
+    if (!selectedProject) {
+      return undefined;
+    }
+
+    let calculateHeaders = function(projectId) {
+      if (!projectId || /^\s*$/.test(projectId)) {
+        return undefined;
+      }
+
+      let headers = new Headers();
+      headers.append(HEADER_PROJECT, projectId);
+      return headers;
+    }
+
+    if (FT.isApplicationEmbedded()) {
+      return calculateHeaders(selectedProject.id);
+    } else {
+      return calculateHeaders(selectedProject.documentSelfLink);
+    }
   }
 }
 

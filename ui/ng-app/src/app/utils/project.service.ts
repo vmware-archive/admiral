@@ -10,30 +10,11 @@
  */
 
 import { Injectable } from '@angular/core';
-import { DocumentService, DocumentListResult } from './document.service';
-import { Ajax } from './ajax.service';
-import { FT } from './ft';
-import { Links } from './links';
-import { URLSearchParams, RequestOptions, ResponseContentType, Headers } from '@angular/http';
-import { searchConstants, serviceUtils} from 'admiral-ui-common';
 
 @Injectable()
 export class ProjectService {
 
   private selectedProject;
-
-  constructor(private ds: DocumentService, private ajax: Ajax) { }
-
-  public list() {
-    if (FT.isApplicationEmbedded()) {
-      return this.ajax.get(Links.GROUPS, null).then(result => {
-        let documents = result || [];
-        return new DocumentListResult(documents, result.nextPageLink, result.totalCount);
-      });
-    } else {
-      return this.ds.list(Links.PROJECTS, null);
-    }
-  };
 
   public getSelectedProject() {
     if (this.selectedProject) {

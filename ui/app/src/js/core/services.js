@@ -45,6 +45,8 @@ const MAX_URL_CHAR_COUNT = 2000;
 const PRAGMA_HEADER = 'pragma';
 const PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE = 'xn-force-index-update';
 
+const HEADER_PROJECT = 'x-project';
+
 const FILTER_VALUE_ALL_FIELDS = 'ALL_FIELDS';
 
 const CONTAINER_HOST_ID_CUSTOM_PROPERTY = '__containerHostId';
@@ -56,19 +58,13 @@ if (DEBUG_SLOW_MODE_TIMEOUT) {
 }
 
 var ajax = function(method, url, data, headers, disableReloadOnUnauthorized) {
-  if (!headers) {
-    headers = {};
-  }
-
-  headers[PRAGMA_HEADER] = PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE;
-
   return new Promise(function(resolve, reject) {
     var fn = function() {
       $.ajax({
         method: method,
         url: utils.serviceUrl(url),
         dataType: 'json',
-        headers: headers,
+        headers: buildHeaders(headers),
         data: data,
         contentType: 'application/json',
         statusCode: {
@@ -124,11 +120,31 @@ var deleteEntity = function(url) {
       method: 'DELETE',
       url: utils.serviceUrl(url),
       data: JSON.stringify({}), // DCP expects empty object in the body to make a delete
+      headers: buildHeaders(),
       contentType: 'application/json',
       dataType: 'text'
     }).done(resolve)
       .fail(reject);
   });
+};
+
+var buildHeaders = function(headers) {
+    if (!headers) {
+    headers = {};
+  }
+
+  headers[PRAGMA_HEADER] = PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE;
+
+  let selectedProject = utils.getSelectedProject();
+  if (selectedProject) {
+    if (utils.isApplicationEmbedded() && selectedProject.id) {
+      headers[HEADER_PROJECT] = selectedProject.id;
+    } else if (selectedProject.documentSelfLink) {
+      headers[HEADER_PROJECT] = selectedProject.documentSelfLink;
+    }
+  }
+
+  return headers;
 };
 
 var day2operation = function(url, entity) {
@@ -363,11 +379,11 @@ services.deleteDocument = function(documentSelfLink) {
 };
 
 services.patchDocument = function(documentSelfLink, diff) {
-  return ajax('PATCH', documentSelfLink, JSON.stringify(diff));
+  return patch(documentSelfLink, JSON.stringify(diff));
 };
 
 services.updateDocument = function(documentSelfLink, document) {
-  return ajax('PUT', documentSelfLink, JSON.stringify(document));
+  return put(documentSelfLink, JSON.stringify(document));
 };
 
 services.loadCredentials = function() {
@@ -609,6 +625,7 @@ services.importCertificate = function(hostUri, acceptCertificate) {
       method: 'PUT',
       url: utils.serviceUrl(links.SSL_TRUST_CERTS_IMPORT),
       data: JSON.stringify(trustImportRequest),
+      headers: buildHeaders(),
       contentType: 'application/json',
       dataType: 'json',
       accepts: {
@@ -1200,6 +1217,7 @@ services.createOrUpdateRegistry = function(registry) {
       url: utils.serviceUrl(links.REGISTRY_HOSTS),
       dataType: 'json',
       data: JSON.stringify(registry),
+      headers: buildHeaders(),
       contentType: 'application/json',
       accepts: {
         json: 'application/json'
@@ -2019,6 +2037,7 @@ services.importContainerTemplate = function(template) {
       url: utils.serviceUrl(links.COMPOSITE_DESCRIPTIONS_CONTENT),
       data: template,
       contentType: 'application/yaml',
+      headers: buildHeaders(),
       dataType: 'text',
       accepts: {
         yaml: 'application/yaml'
@@ -2237,6 +2256,7 @@ services.importKubernetesDescriptions = function(content) {
       data: content,
       contentType: 'application/yaml',
       dataType: 'text',
+      headers: buildHeaders(),
       accepts: {
         yaml: 'application/json'
       }
@@ -2254,6 +2274,7 @@ services.getContainerShellUri = function(containerId) {
       dataType: 'text',
       data: {id: containerId},
       contentType: 'text/plain',
+      headers: buildHeaders(),
       statusCode: {
         403: function() {
           window.location.reload(true);
