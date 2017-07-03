@@ -12,13 +12,12 @@
 #!/usr/bin/env bash
 # HAProxy LB initialization script
 
-echo -e "{}" | proxy-config
+proxy-config -config "{}"
 
 # Check whether HAProxy configuration is valid
 echo "Checking HAProxy configuration..."
 haproxy -c -f /etc/haproxy/haproxy.cfg || {
-    echo "ERROR: Invalid HAProxy configuration."
     cat /etc/haproxy/haproxy.cfg
+    echo "ERROR: Invalid HAProxy configuration."
     exit 1
 }
-

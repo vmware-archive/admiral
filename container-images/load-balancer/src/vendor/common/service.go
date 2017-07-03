@@ -12,7 +12,6 @@ package common
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 )
 
@@ -21,19 +20,23 @@ type Config struct {
 }
 
 type Frontend struct {
-	Port      int       `json:"port"`     // the frontend port
-	Backends  []Backend `json:"backends"` // array of service's backends
+	Port      int             `json:"port"`           // the frontend port
+	Backends  []Backend       `json:"backends"`       // array of service's backends
+	HealthConfig HealthConfig `json:"health_config"`  // backend service port
 }
 
 type Backend struct {
-	Host string `json:"host"`  // backend service hostname/IP
-	Port int    `json:"port"`  // backend service port
+	Host string    `json:"host"`   // backend service hostname/IP
+	Port int       `json:"port"`   // backend service port
 }
 
-func ReadFromInput(r io.Reader, inputMessage string) (*Config, error) {
-	if inputMessage != ""{
-		fmt.Println(inputMessage)
-    }
+type HealthConfig struct {
+	Path string     `json:"path"`      // backend service health check path
+	Protocol string `json:"protocol"`  // backend service health check protocol
+	Port int        `json:"port"`      // backend service health check port
+}
+
+func ReadFromInput(r io.Reader) (*Config, error) {
 	decoder := json.NewDecoder(r)
 	var config Config
 	if err := decoder.Decode(&config); err != nil {

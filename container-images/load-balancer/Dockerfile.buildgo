@@ -10,7 +10,7 @@
 #
 FROM vmware/photon:1.0
 
-RUN tdnf -y install go
+RUN tdnf -y install go-1.8.1
 
 RUN mkdir /go
 
@@ -21,9 +21,6 @@ ENV GOPATH /go
 COPY ./src /go/src
 COPY ./build-in-docker.sh /
 RUN chmod 0744 /build-in-docker.sh
-
-#Build and run golang tests
-RUN cd /go/src && go test ./... -cover
 
 ENTRYPOINT ["sh", "/build-in-docker.sh"]
 

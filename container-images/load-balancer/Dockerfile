@@ -22,8 +22,8 @@ COPY files/ /
 RUN chmod 755 /etc/container-boot/entrypoint \
     && chmod 755 /etc/container-boot/.base-entrypoint.sh \
     && chmod 755 /etc/container-boot/healthcheck.sh \
-    && chmod 644 /etc/container-boot/run.sh \
-    && chmod 644 /etc/haproxy/* \
+    && chmod 755 /etc/container-boot/run.sh \
+    && chmod 666 /etc/haproxy/* \
     && chmod 755 /usr/bin/proxy-config \
     && sync \
     && mkdir /var/lib/haproxy
