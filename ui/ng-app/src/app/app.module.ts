@@ -100,7 +100,9 @@ export class AppModule {
 
         router.events.subscribe((val) => {
             if (val instanceof NavigationEnd && window.parent !== window) {
-                window.parent.location.hash = window.location.hash;
+                if ((<any>window).notifyNavigation) {
+                    (<any>window).notifyNavigation(window.location.hash.substr(1));
+                }
             }
         });
     }

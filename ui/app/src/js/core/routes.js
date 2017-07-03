@@ -551,6 +551,9 @@ function parseHash(newHash) {
   crossroads.parse(newHash);
 
   if (newHash) {
+    if (window.notifyNavigation) {
+      window.notifyNavigation('/' + newHash);
+    }
     docs.update('/' + newHash);
   } else {
     docs.update('/');
