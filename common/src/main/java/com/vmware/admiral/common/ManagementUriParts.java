@@ -17,6 +17,7 @@ import com.vmware.xenon.services.common.AuthCredentialsService;
 public interface ManagementUriParts {
     // Registry/Config/Credentials:
     String CONFIG = "/config";
+    String UPGRADE_TRANSFORM_PREFIX = "/upgrade-transforms";
     String REGISTRIES = CONFIG + "/registries";
     String REGISTRY_HOSTS = CONFIG + "/registry-spec";
     String CONFIG_PROPS = CONFIG + "/props";
@@ -32,6 +33,9 @@ public interface ManagementUriParts {
     String IMAGE_PROFILES = CONFIG + "/image-profiles";
     String INSTANCE_TYPE_PROFILES = CONFIG + "/instance-types";
     String MIGRATION = CONFIG + "/migration";
+
+    String COMPOSITE_DESCRIPTION_UPGRADE_TRANSFORM_PATH = UPGRADE_TRANSFORM_PREFIX
+            + "/composite-descriptions";
 
     String UTIL = "/util";
     String LONG_URI_GET = UTIL + "/long-uri-get";
