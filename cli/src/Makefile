@@ -22,16 +22,16 @@ prepare:
 	GOPATH=$(GOPATH) go env
 
 linux: prepare
-	GOPATH=$(GOPATH) GOOS=linux GOARCH=amd64   go install $(LDFLAGS) $(BUILD_PACKAGE)
-	GOPATH=$(GOPATH) GOOS=linux GOARCH=386     go install $(LDFLAGS) $(BUILD_PACKAGE)
+	GOPATH=$(GOPATH) GOOS=linux GOARCH=amd64   go get $(BUILD_PACKAGE) && go install $(LDFLAGS) $(BUILD_PACKAGE)
+	GOPATH=$(GOPATH) GOOS=linux GOARCH=386     go get $(BUILD_PACKAGE) && go install $(LDFLAGS) $(BUILD_PACKAGE)
 
 darwin: prepare
-	GOPATH=$(GOPATH) GOOS=darwin GOARCH=amd64  go install $(LDFLAGS) $(BUILD_PACKAGE)
-	GOPATH=$(GOPATH) GOOS=darwin GOARCH=386    go install $(LDFLAGS) $(BUILD_PACKAGE)
+	GOPATH=$(GOPATH) GOOS=darwin GOARCH=amd64  go get $(BUILD_PACKAGE) && go install $(LDFLAGS) $(BUILD_PACKAGE)
+	GOPATH=$(GOPATH) GOOS=darwin GOARCH=386    go get $(BUILD_PACKAGE) && go install $(LDFLAGS) $(BUILD_PACKAGE)
 
 windows: prepare
-	GOPATH=$(GOPATH) GOOS=windows GOARCH=amd64 go install $(LDFLAGS) $(BUILD_PACKAGE)
-	GOPATH=$(GOPATH) GOOS=windows GOARCH=386   go install $(LDFLAGS) $(BUILD_PACKAGE)
+	GOPATH=$(GOPATH) GOOS=windows GOARCH=amd64 go get $(BUILD_PACKAGE) && go install $(LDFLAGS) $(BUILD_PACKAGE)
+	GOPATH=$(GOPATH) GOOS=windows GOARCH=386   go get $(BUILD_PACKAGE) && go install $(LDFLAGS) $(BUILD_PACKAGE)
 
 test: prepare
 	GOPATH=$(GOPATH) go test -v -p=1 -tags=integration admiral/...
