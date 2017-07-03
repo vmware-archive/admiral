@@ -43,6 +43,7 @@ import { ClusterDetailsComponent } from './views/clusters/cluster-details/cluste
 import { ClusterSummaryComponent } from './views/clusters/cluster-details/cluster-summary.component';
 import { ClusterResourcesComponent } from './views/clusters/cluster-details/cluster-resources.component';
 import { ClusterCreateComponent } from './views/clusters/cluster-create/cluster-create.component';
+import { VerifyCertificateComponent } from "./views/verify-certificate/verify-certificate.component";
 
 import { GridViewComponent } from './components/grid-view/grid-view.component';
 import { CardComponent } from './components/card/card.component';
@@ -76,6 +77,7 @@ export const ADMIRAL_DECLARATIONS = [
 
   DeleteConfirmationComponent,
   SimpleSearchComponent,
+  VerifyCertificateComponent,
 
   IdentityManagementComponent,
   UsersGroupsComponent,

@@ -59,46 +59,11 @@
       </section>
     </form>
     <!-- Untrusted certificate prompt -->
-    <clr-modal [(clrModalOpen)]="showCertificateWarning" [clrModalClosable]="false" [clrModalSize]="'lg'">
-      <h3 class="modal-title">{{ "certificate.validateTitle" | i18n }}</h3>
-      <div class="modal-body">
-        <p>{{ certificateWarningMessage() }}</p>
-        <form class="compact" *ngIf="certificateShown">
-          <section class="form-block">
-            <div class="form-group">
-              <label>{{ "certificate.details.commonName" | i18n }}</label>
-              <label>{{ certificate.commonName }}</label>
-            </div>
-            <div class="form-group">
-              <label>{{ "certificate.details.issuerName" | i18n }}</label>
-              <label>{{ certificate.issuerName }}</label>
-            </div>
-            <div class="form-group">
-              <label>{{ "certificate.details.serial" | i18n }}</label>
-              <label>{{ certificate.serial }}</label>
-            </div>
-            <div class="form-group">
-              <label>{{ "certificate.details.fingerprint" | i18n }}</label>
-              <label>{{ certificate.fingerprint}}</label>
-            </div>
-            <div class="form-group">
-              <label>{{ "certificate.details.validSince" | i18n }}</label>
-              <label>{{ certificate.validSince | date:'medium' }}</label>
-            </div>
-            <div class="form-group">
-              <label>{{ "certificate.details.validTo" | i18n }}</label>
-              <label>{{ certificate.validTo | date:'medium' }}</label>
-            </div>
-          </section>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline" *ngIf="!certificateShown" (click)="showCertificate()">{{ "certificate.show" | i18n }}</button>
-        <button type="button" class="btn btn-outline" *ngIf="certificateShown" (click)="hideCertificate()">{{ "certificate.hide" | i18n }}</button>
-        <button type="button" class="btn btn-outline" (click)="cancelCreateCluster()">{{ "cancel" | i18n }}</button>
-        <button type="button" class="btn btn-primary" (click)="acceptCertificate()">{{ "yes" | i18n }}</button>
-      </div>
-    </clr-modal>
+    <verify-certificate [visible]="showCertificateWarning"
+                        [hostAddress]="clusterForm.value.url"
+                        [certificate]="certificate"
+                        (onAccept)="acceptCertificate()"
+                        (onDecline)="cancelCreateCluster()"></verify-certificate>
   </div>
   <div class="modal-footer">
     <button type="button" class="btn btn-outline" (click)="toggleModal(false)">{{ "cancel" | i18n }}</button>

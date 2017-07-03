@@ -35,8 +35,6 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
 
   showCertificateWarning: boolean;
   certificate: any;
-  certificateShown: boolean;
-  certificateAccepted: boolean;
 
   isSaving: boolean;
   alertMessage: string;
@@ -100,7 +98,7 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
     if (this.isEdit) {
       this.updateCluster();
     } else {
-      this.createCluster();
+      this.createCluster(false);
     }
   }
 
@@ -117,7 +115,7 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
     }
   }
 
-  private createCluster() {
+  private createCluster(certificateAccepted: boolean) {
     if (this.clusterForm.valid) {
       this.isSaving = true;
 
@@ -142,12 +140,12 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
 
       let hostSpec = {
         'hostState': hostState,
-        'acceptCertificate': this.certificateAccepted
+        'acceptCertificate': certificateAccepted
       };
       this.service.post(Links.CLUSTERS, hostSpec).then((response) => {
         if (response.certificate) {
-          this.showCertificateWarning = true;
           this.certificate = response;
+          this.showCertificateWarning = true;
         } else {
           this.isSaving = false;
           this.toggleModal(false);
@@ -164,25 +162,9 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
     this.isSaving = false;
   }
 
-  certificateWarningMessage() {
-    if (this.certificate) {
-      return I18n.t("certificate.certificateWarning", { address: this.clusterForm.value.url } as I18n.TranslationOptions);
-    }
-    return '';
-  }
-
-  showCertificate() {
-    this.certificateShown = true;
-  }
-
-  hideCertificate() {
-    this.certificateShown = false;
-  }
-
   acceptCertificate() {
     this.showCertificateWarning = false;
-    this.certificateAccepted = true;
-    this.saveCluster();
+    this.createCluster(true);
   }
 
   resetAlert() {
