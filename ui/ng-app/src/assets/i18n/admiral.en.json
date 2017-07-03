@@ -12,7 +12,7 @@
     "repositories": "Repositories",
     "infrastructure": "Infrastructure",
     "registryReplication": "Registry Replication",
-    "configuration" : "Configuration",
+    "configuration": "Configuration",
     "edit": {
       "titleNew": "New Project",
       "titleEdit": "Edit Project",
@@ -25,7 +25,7 @@
       "confirmation": "Confirm removing of project {{projectName}}. Members and clusters will be unasociated from project. The operation cannot be undone."
     },
     "summary": {
-      "title" : "Summary",
+      "title": "Summary",
       "type": "Type:",
       "creationDate": "Created:",
       "team": {
@@ -47,7 +47,7 @@
       }
     },
     "members": {
-      "title":"Members",
+      "title": "Members",
       "columnName": "Name",
       "columnPrimaryId": "Primary ID",
       "columnSource": "Source",
@@ -60,10 +60,10 @@
         "fieldRequiredId": "ID is required.",
         "searchPlaceholder": "Search for users",
         "fieldTitleRole": "Role in project"
-       },
-      "editMember" : {
-          "title": "Edit member role in project",
-          "description": "Edit member {{memberId}} role in project {{projectName}}."
+      },
+      "editMember": {
+        "title": "Edit member role in project",
+        "description": "Edit member {{memberId}} role in project {{projectName}}."
       },
       "roles": {
         "administrator": "DevOps Administrator",
@@ -74,8 +74,8 @@
         "local": "Local"
       },
       "deleteMember": {
-          "title": "Remove Member from Project",
-          "confirmation": "Are you sure you want to remove the member from this project?"
+        "title": "Remove Member from Project",
+        "confirmation": "Are you sure you want to remove the member from this project?"
       }
     },
     "config": {
@@ -182,19 +182,19 @@
     "credentials": "Credentials",
     "certificates": "Certificates",
     "usersgroups": {
-        "title": "Users & Groups",
-        "description": "Import users and groups into the system. Then assign project roles to a user or group. You can also make a user a global cloud admin.",
-        "fieldTitleSearch": "Search Users/Groups",
-        "columnName": "User/Group Name",
-        "columnPrimaryId": "Primary ID",
-        "columnCloudAdmin": "Cloud Admin",
-        "columnProjects": "Projects",
-        "count": "users/groups",
-        "notFound": "No users found",
-        "projectRole": {
-            "admin": "Project Admin",
-            "member": "Developer"
-        }
+      "title": "Users & Groups",
+      "description": "Import users and groups into the system. Then assign project roles to a user or group. You can also make a user a global cloud admin.",
+      "fieldTitleSearch": "Search Users/Groups",
+      "columnName": "User/Group Name",
+      "columnPrimaryId": "Primary ID",
+      "columnCloudAdmin": "Cloud Admin",
+      "columnProjects": "Projects",
+      "count": "users/groups",
+      "notFound": "No users found",
+      "projectRole": {
+        "admin": "Project Admin",
+        "member": "Developer"
+      }
     }
   },
   "configuration": {
@@ -226,5 +226,29 @@
   "cancel": "Cancel",
   "unknown": "Unknown",
   "assignRoles": "Assign Roles",
-  "makeAdmin": " Make Admin"
+  "makeAdmin": " Make Admin",
+
+  "compute": {
+    "resources": "Resources",
+    "policies": "Policies",
+    "deployments": "Deployments",
+    "endpoints": {
+      "title": "Endpoints"
+    },
+    "compute": {
+      "title": "Compute"
+    },
+    "profiles": {
+      "title": "Profiles"
+    },
+    "placements": {
+      "title": "Placements"
+    },
+    "machines": {
+      "title": "Machines"
+    },
+    "networks": {
+      "title": "Networks"
+    }
+  }
 }

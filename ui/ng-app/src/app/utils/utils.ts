@@ -87,6 +87,11 @@ export class Utils {
     return this.configurationProperties.hasOwnProperty(property);
   }
 
+  public static isCompute() {
+    var locationHash = window.location.hash;
+    return locationHash.startsWith('#/compute');
+  }
+
   public static getErrorMessage(err) {
     let errorMessage;
 

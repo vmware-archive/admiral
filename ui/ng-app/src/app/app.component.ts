@@ -48,6 +48,10 @@ export class AppComponent {
         return location.pathname.indexOf(LOGIN_PATH) > -1;
     }
 
+    get compute(): boolean {
+        return FT.isCompute();
+    }
+
     get userName(): String {
         if (this.userSecurityContext) {
             return this.userSecurityContext.name || this.userSecurityContext.email;

@@ -21,7 +21,8 @@ const ENDPOINTS = [
   '/styles/*',
   '/messages/*',
   '/fonts/*',
-  '/util/*'
+  '/util/*',
+  '/adapter/*'
 ];
 
 var configure = function(env) {
@@ -45,6 +46,17 @@ var configure = function(env) {
     'target': `http://${env.services.ip}:4200/`,
     'secure': false
   }
+
+  // update the proxy configuration in case
+  // old UI is running on a debug server
+  if (env.services.port === '10082') {
+    configs['/ogui/*'] = {
+      'changeOrigin': true,
+      'pathRewrite': {'^/ogui': ''},
+      'target': `http://${env.services.ip}:${env.services.port}/`,
+      'secure': false
+    }
+}
 
   return configs;
 }

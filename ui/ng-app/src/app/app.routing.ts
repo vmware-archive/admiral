@@ -14,6 +14,7 @@ import { Routes, RouterModule } from '@angular/router';
 
 import { AdministrationComponent } from './views/administration/administration.component';
 import { MainResourcesComponent } from './views/main-resources/main-resources.component';
+import { MainResourcesComputeComponent } from './views/main-resources-compute/main-resources-compute.component';
 
 import { IdentityManagementComponent } from './views/identity-management/identity-management.component';
 import { ProjectsComponent } from './views/projects/projects.component';
@@ -142,6 +143,37 @@ export const ROUTES: Routes = [
             },
             {
                 path: 'logs', component: LogsComponent
+            }
+        ]
+    },
+
+    // Compute paths
+    {
+        path: 'compute', component: MainResourcesComputeComponent,
+        children: [
+            {
+                path: '', redirectTo: 'endpoints', pathMatch: 'full'
+            },
+            {
+                path: 'endpoints', component: FormerPlaceholderViewComponent
+            },
+            {
+                path: 'compute', component: FormerPlaceholderViewComponent
+            },
+            {
+                path: 'profiles', component: FormerPlaceholderViewComponent
+            },
+            {
+                path: 'placements', component: FormerPlaceholderViewComponent
+            },
+            {
+                path: 'machines', component: FormerPlaceholderViewComponent
+            },
+            {
+                path: 'networks', component: FormerPlaceholderViewComponent
+            },
+            {
+                 path: '**', component: FormerPlaceholderViewComponent
             }
         ]
     }

@@ -17,10 +17,19 @@ export class FormerViewComponent {
   @ViewChild('theFrame') theFrame;
 
   @Input()
+  forCompute: boolean;
+
+  @Input()
   set path(val: string) {
     val = val || 'containers';
 
-    this.url = window.location.pathname + 'ogui/index-no-navigation.html#' + val;
+    this.url = window.location.pathname + 'ogui/index-no-navigation.html';
+
+    if (this.forCompute) {
+      this.url += '?compute';
+    }
+
+    this.url += '#' + val;
 
     let iframeEl = this.theFrame.nativeElement;
     if (!iframeEl.src) {

@@ -79,4 +79,8 @@ export class FT {
   public static isVic() {
     return Utils.getConfigurationPropertyBoolean('vic');
   }
+
+  public static isCompute() {
+    return Utils.isCompute();
+  }
 };

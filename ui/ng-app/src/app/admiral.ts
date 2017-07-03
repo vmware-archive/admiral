@@ -18,6 +18,7 @@ import { BreakOutModalDirective } from "./directives/shared/break-out-modal.dire
 
 import { AdministrationComponent } from './views/administration/administration.component';
 import { MainResourcesComponent } from './views/main-resources/main-resources.component';
+import { MainResourcesComputeComponent } from './views/main-resources-compute/main-resources-compute.component';
 
 import { IdentityManagementComponent } from './views/identity-management/identity-management.component';
 import { UsersGroupsComponent } from "./views/identity-management/users-groups.component";
@@ -74,6 +75,7 @@ export const ADMIRAL_DECLARATIONS = [
 
   AdministrationComponent,
   MainResourcesComponent,
+  MainResourcesComputeComponent,
 
   DeleteConfirmationComponent,
   SimpleSearchComponent,
