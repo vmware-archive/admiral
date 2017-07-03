@@ -45,15 +45,18 @@ import com.vmware.admiral.auth.idm.content.AuthContentService.AuthContentBody;
 import com.vmware.admiral.auth.idm.local.LocalAuthConfigProvider.Config;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalState;
 import com.vmware.admiral.auth.project.ProjectFactoryService;
+import com.vmware.admiral.auth.project.ProjectInterceptor;
 import com.vmware.admiral.auth.project.ProjectService.ExpandedProjectState;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.test.BaseTestCase;
+import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.host.HostInitAuthServiceConfig;
 import com.vmware.admiral.host.HostInitCommonServiceConfig;
 import com.vmware.admiral.host.HostInitComputeServicesConfig;
 import com.vmware.admiral.host.HostInitPhotonModelServiceConfig;
+import com.vmware.admiral.host.interceptor.OperationInterceptorRegistry;
 import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.xenon.common.CommandLineArgumentParser;
 import com.vmware.xenon.common.DeferredResult;
@@ -125,6 +128,11 @@ public abstract class AuthBaseTest extends BaseTestCase {
                         + AuthBaseTest.class.getResource(FILE_LOCAL_USERS).toURI().getPath()
         };
         return createHost(customArgs);
+    }
+
+    @Override
+    protected void registerInterceptors(OperationInterceptorRegistry registry) {
+        ProjectInterceptor.register(registry);
     }
 
     protected void setPrivilegedServices() {
@@ -446,9 +454,36 @@ public abstract class AuthBaseTest extends BaseTestCase {
 
                         host.failIteration(e);
                     } else {
-                        host.failIteration(new Exception(String.format("%s should've not exist!", documentLink)));
+                        host.failIteration(new Exception(
+                                String.format("%s should've not exist!", documentLink)));
                     }
                 }).sendWith(host);
         host.testWait();
+    }
+
+    protected <T> T doPostWithProjectHeader(Object body, String factoryLink, String
+            projectLink, Class<T> stateType) {
+        TestContext ctx = testCreate(1);
+        final Object[] responseBody = new Object[1];
+        Operation create = Operation.createPost(host, factoryLink)
+                .setBody(body)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        ctx.failIteration(ex);
+                        return;
+                    }
+                    responseBody[0] = o.getBodyRaw();
+                    ctx.completeIteration();
+                });
+
+        setProjectHeader(projectLink, create);
+        host.send(create);
+        ctx.await();
+        return Utils.fromJson(responseBody[0], stateType);
+    }
+
+    public static Operation setProjectHeader(String projectLink, Operation op) {
+        op.addRequestHeader(OperationUtil.PROJECT_ADMIRAL_HEADER, projectLink);
+        return op;
     }
 }

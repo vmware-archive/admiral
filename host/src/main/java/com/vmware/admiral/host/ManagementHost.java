@@ -24,6 +24,7 @@ import io.swagger.models.Info;
 
 import com.vmware.admiral.auth.idm.AuthConfigProvider;
 import com.vmware.admiral.auth.idm.SessionService;
+import com.vmware.admiral.auth.project.ProjectInterceptor;
 import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
@@ -139,6 +140,7 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
         EndpointInterceptor.register(interceptors);
         ProfileInterceptor.register(interceptors);
         ComputePlacementZoneInterceptor.register(interceptors);
+        ProjectInterceptor.register(interceptors);
 
         if (this.startMockHostAdapterInstance) {
             PhotonModelMockRequestInterceptor.register(interceptors);

@@ -79,7 +79,7 @@ public class ProjectUtilTest {
         assertEquals(Occurance.MUST_OCCUR, groupClause.occurance);
         assertNotNull(groupClause.booleanClauses);
         // one for admins, one for members
-        assertEquals(2, groupClause.booleanClauses.size());
+        assertEquals(3, groupClause.booleanClauses.size());
         for (Query clause : groupClause.booleanClauses) {
             assertEquals(Occurance.SHOULD_OCCUR, clause.occurance);
             assertNotNull(clause.booleanClauses);
@@ -89,7 +89,9 @@ public class ProjectUtilTest {
                         .asList(QuerySpecification.buildCollectionItemName(
                                 ProjectState.FIELD_NAME_ADMINISTRATORS_USER_GROUP_LINKS),
                                 QuerySpecification.buildCollectionItemName(
-                                        ProjectState.FIELD_NAME_MEMBERS_USER_GROUP_LINKS))
+                                        ProjectState.FIELD_NAME_MEMBERS_USER_GROUP_LINKS),
+                                QuerySpecification.buildCollectionItemName(
+                                        ProjectState.FIELD_NAME_VIEWERS_USER_GROUP_LINKS))
                         .contains(subclause.term.propertyName));
                 assertTrue(groupLinks.contains(subclause.term.matchValue));
             }

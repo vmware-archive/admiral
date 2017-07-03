@@ -421,6 +421,13 @@ public class ProjectUtil {
         membersGroupQuery.setOccurance(Occurance.SHOULD_OCCUR);
         groupQuery.addBooleanClause(membersGroupQuery);
 
+        Query viewersGroupQuery = QueryUtil.addListValueClause(
+                QuerySpecification
+                        .buildCollectionItemName(ProjectState.FIELD_NAME_VIEWERS_USER_GROUP_LINKS),
+                groupLinks, MatchType.TERM);
+        viewersGroupQuery.setOccurance(Occurance.SHOULD_OCCUR);
+        groupQuery.addBooleanClause(viewersGroupQuery);
+
         return query;
     }
 

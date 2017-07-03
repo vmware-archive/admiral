@@ -26,6 +26,7 @@ import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.GuestUserService;
 
 public class OperationUtil {
+    public static final String PROJECT_ADMIRAL_HEADER = "x-project";
 
     public static Operation createForcedPost(URI uri) {
         return Operation.createPost(uri)
@@ -34,6 +35,10 @@ public class OperationUtil {
 
     public static Operation createForcedPost(Service sender, String targetPath) {
         return createForcedPost(UriUtils.buildUri(sender.getHost(), targetPath));
+    }
+
+    public static String extractProjectFromHeader(Operation op) {
+        return op.getRequestHeader(PROJECT_ADMIRAL_HEADER);
     }
 
     /**

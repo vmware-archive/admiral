@@ -97,6 +97,7 @@ public class ProjectService extends StatefulService {
         public static final String FIELD_NAME_DESCRIPTION = "description";
         public static final String FIELD_NAME_ADMINISTRATORS_USER_GROUP_LINKS = "administratorsUserGroupLinks";
         public static final String FIELD_NAME_MEMBERS_USER_GROUP_LINKS = "membersUserGroupLinks";
+        public static final String FIELD_NAME_VIEWERS_USER_GROUP_LINKS = "viewersUserGroupLinks";
 
         @Documentation(description = "Used for define a public project")
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,

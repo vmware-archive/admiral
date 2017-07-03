@@ -93,6 +93,7 @@ public class SecurityContextUtil {
                     projectEntry.documentSelfLink = project.documentSelfLink;
                     projectEntry.name = project.name;
                     projectEntry.roles = new HashSet<>();
+                    projectEntry.customProperties = project.customProperties;
 
                     if (CollectionUtils.containsAny(
                             project.administratorsUserGroupLinks, userGroupLinks)) {

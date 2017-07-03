@@ -12,6 +12,7 @@
 package com.vmware.admiral.auth.idm;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class SecurityContext {
@@ -23,6 +24,8 @@ public class SecurityContext {
         public String name;
 
         public Set<AuthRole> roles;
+
+        public Map<String, String> customProperties;
 
     }
 
