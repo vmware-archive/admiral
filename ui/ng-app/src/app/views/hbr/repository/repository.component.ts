@@ -4,7 +4,9 @@ import { Component } from '@angular/core';
   template: `
     <div class="main-view">
       <div class="title">Project Repositories</div>
-      <hbr-repository [projectId]="projectId" [sessionInfo]="sessionInfo" style="margin-top: -50px; display: block;"></hbr-repository>
+      <hbr-repository-stackview [projectId]="projectId" [hasSignedIn]="true"
+        [hasProjectAdminRole]="true"
+        style="display: block;"></hbr-repository-stackview>
     </div>
   `
 })

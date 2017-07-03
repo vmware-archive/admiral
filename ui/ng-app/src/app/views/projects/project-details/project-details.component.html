@@ -26,7 +26,7 @@
         <app-project-members [project]="entity"></app-project-members>
     </clr-tab-content>
     <clr-tab-content [clrTabContentId]="'repositoriesContent'">
-        <hbr-repository-stackview *ngIf="hbrProjectId" [projectId]="hbrProjectId" [sessionInfo]="hbrSessionInfo"></hbr-repository-stackview>
+        <hbr-repository-stackview *ngIf="hbrProjectId" [projectId]="hbrProjectId" [hasSignedIn]="true" [hasProjectAdminRole]="true" (tagClickEvent)="watchTagClickEvent($event)"></hbr-repository-stackview>
         <p *ngIf="!hbrProjectId">{{"unavailable" | i18n: { "ns": "base" } }}</p>
     </clr-tab-content>
     <clr-tab-content [clrTabContentId]="'infrastructureContent'">

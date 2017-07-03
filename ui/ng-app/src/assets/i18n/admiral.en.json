@@ -197,6 +197,10 @@
         }
     }
   },
+  "configuration": {
+    "title": "Configuration",
+    "registry": "Registry"
+  },
   "errors": {
     "itemNotFound": "Item was not found."
   },
