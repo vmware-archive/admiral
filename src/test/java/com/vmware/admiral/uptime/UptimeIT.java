@@ -48,6 +48,9 @@ public class UptimeIT extends BaseIntegrationSupportIT {
 
     private static final String APPLICATION = "app-2-alpine-1-network.yaml";
 
+    private static final int RANDOM_MAX_LIMIT =
+            Math.max(Integer.getInteger("RANDOM_MAX_LIMIT", 10), 10);
+
     /**
      * List with currently supported operations for the test. Each operation has relative weight.
      * On each run of the test a random operation is executed. Higher the weight higher the chance
@@ -105,7 +108,7 @@ public class UptimeIT extends BaseIntegrationSupportIT {
         String templateId = importTemplate(APPLICATION);
         logger.info("Imported composite description id = %s", templateId);
 
-        int n = (int) (Math.random() * 5 + 5);
+        int n = (int) (Math.random() * RANDOM_MAX_LIMIT + 5);
         logger.info("Start provisioning %d applications", n);
         for (int i = 0; i < n; i++) {
             RequestBrokerState request = requestTemplate(templateId, true);
@@ -123,7 +126,7 @@ public class UptimeIT extends BaseIntegrationSupportIT {
     }
 
     private void deleteApplications() throws Exception {
-        int n = (int) (Math.random() * 5 + 5);
+        int n = (int) (Math.random() * RANDOM_MAX_LIMIT + 2);
         logger.info("Start deleting %d applications", n);
         List<String> links = getApplications(n);
 
@@ -155,7 +158,7 @@ public class UptimeIT extends BaseIntegrationSupportIT {
     }
 
     private void stopApplications() throws Exception {
-        int n = (int) (Math.random() * 5 + 5);
+        int n = (int) (Math.random() * RANDOM_MAX_LIMIT + 2);
         logger.info("Start stopping %d applications", n);
         List<String> links = getApplications(n);
 
@@ -240,8 +243,8 @@ public class UptimeIT extends BaseIntegrationSupportIT {
         return URI.create(location).getPath();
     }
 
-    protected RequestBrokerState requestTemplate(String resourceDescLink,
-            boolean shouldWait) throws Exception {
+    protected RequestBrokerState requestTemplate(String resourceDescLink, boolean shouldWait)
+            throws Exception {
 
         RequestBrokerState request = new RequestBrokerState();
         request.resourceDescriptionLink = resourceDescLink;

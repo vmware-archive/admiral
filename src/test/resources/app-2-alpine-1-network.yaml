@@ -4,7 +4,7 @@ services:
   c1:
     image: "registry.hub.docker.com/library/alpine"
     command:
-    - "ping -i 15 c2"
+    - "ping -W 15 c2"
     links:
     - "c2"
     restart: "no"
