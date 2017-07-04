@@ -18,7 +18,7 @@ all: linux darwin windows
 deps:
 	git submodule init && git submodule update
 
-prepare:
+prepare: deps
 	GOPATH=$(GOPATH) go env
 
 linux: prepare
