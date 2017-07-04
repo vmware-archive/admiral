@@ -27,7 +27,7 @@ linux: prepare
 
 darwin: prepare
 	GOPATH=$(GOPATH) GOOS=darwin GOARCH=amd64  go install $(LDFLAGS) $(BUILD_PACKAGE)
-	GOPATH=$(GOPATH) GOOS=darwin GOARCH=386    go get $(BUILD_PACKAGE) && go install $(LDFLAGS) $(BUILD_PACKAGE)
+	GOPATH=$(GOPATH) GOOS=darwin GOARCH=386    go install $(LDFLAGS) $(BUILD_PACKAGE)
 
 windows: prepare
 	GOPATH=$(GOPATH) GOOS=windows GOARCH=amd64 go install $(LDFLAGS) $(BUILD_PACKAGE)
