@@ -29,6 +29,8 @@ import com.vmware.admiral.common.test.CommonTestStateFactory;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
+import com.vmware.admiral.compute.container.ContainerFactoryService;
+import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
 import com.vmware.admiral.request.RequestBrokerFactoryService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
@@ -131,8 +133,12 @@ public class UptimeIT extends BaseIntegrationSupportIT {
         logger.info("Start deleting %d applications", n);
         List<String> links = getApplications(n);
 
+        // filter applications, all containers should be running to avoid the error if we
+        // stop/delete container placed on a powered off host
+        links = filterByAvailableHosts(links);
+
         if (links.size() == 0) {
-            logger.info("No composite components. Exit.");
+            logger.info("No composite components to delete. Exit.");
             return;
         }
 
@@ -163,8 +169,12 @@ public class UptimeIT extends BaseIntegrationSupportIT {
         logger.info("Start stopping %d applications", n);
         List<String> links = getApplications(n);
 
+        // filter applications, all containers should be running to avoid the error if we
+        // stop/delete container placed on a powered off host
+        links = filterByAvailableHosts(links);
+
         if (links.size() == 0) {
-            logger.info("No composite components. Exit.");
+            logger.info("No composite components to stop. Exit.");
             return;
         }
 
@@ -225,6 +235,29 @@ public class UptimeIT extends BaseIntegrationSupportIT {
         assertNotNull(qr.documentLinks);
         logger.info("returning %d composite components", qr.documentLinks.size());
         return qr.documentLinks;
+    }
+
+    private List<String> filterByAvailableHosts(List<String> links) throws Exception {
+        List<String> result = new ArrayList<>();
+        for (String link : links) {
+            CompositeComponent cc = getDocument(link, CompositeComponent.class);
+            boolean delete = true;
+            for (String containerLink : cc.componentLinks) {
+                if (!containerLink.startsWith(ContainerFactoryService.SELF_LINK)) {
+                    continue;
+                }
+                ContainerState container = getDocument(containerLink, ContainerState.class);
+                if (container.powerState != ContainerState.PowerState.RUNNING) {
+                    logger.info("Skipping delete application %s as container %s is not RUNNING",
+                            link, containerLink);
+                    delete = false;
+                }
+            }
+            if (delete) {
+                result.add(link);
+            }
+        }
+        return result;
     }
 
     public String getRandomApplication() {
