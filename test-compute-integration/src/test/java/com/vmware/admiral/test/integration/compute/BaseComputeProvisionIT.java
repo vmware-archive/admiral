@@ -484,7 +484,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         DiskService.DiskState rootDisk = new DiskService.DiskState();
         rootDisk.id = UUID.randomUUID().toString();
         rootDisk.documentSelfLink = rootDisk.id;
-        rootDisk.name = "Default disk";
+        rootDisk.name = "boot-disk";
         rootDisk.type = DiskService.DiskType.HDD;
         rootDisk.bootOrder = 1;
         rootDisk.capacityMBytes = getRootDiskSize();

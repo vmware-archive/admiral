@@ -87,7 +87,7 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
             rootDisk.documentSelfLink = rootDisk.id;
             String diskName = computeDesc.customProperties.get(FIELD_NAME_CUSTOM_PROP_DISK_NAME);
             if (diskName == null) {
-                diskName = "Default disk";
+                diskName = "boot-disk";
             }
             rootDisk.name = diskName;
             rootDisk.type = DiskService.DiskType.HDD;
