@@ -857,7 +857,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         return np;
     }
 
-    protected String createTag(String key, String value) throws Throwable {
+    protected String createTag(String key, String value) throws Exception {
         TagState tag = new TagState();
         tag.key = key;
         tag.value = value;
