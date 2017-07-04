@@ -12,6 +12,7 @@
 export class Links {
 
   public static RESOURCES = '/resources';
+  public static UTIL = '/util';
   public static PODS = Links.RESOURCES + '/kubernetes-pods';
   public static DEPLOYMENTS = Links.RESOURCES + '/kubernetes-deployments';
   public static SERVICES = Links.RESOURCES + '/kubernetes-services';
@@ -37,5 +38,7 @@ export class Links {
   public static BASIC_AUTH = '/core/authn/basic';
 
   public static CREDENTIALS = '/core/auth/credentials';
+
+  public static LONG_URI_GET = Links.UTIL + '/long-uri-get';
 
 }

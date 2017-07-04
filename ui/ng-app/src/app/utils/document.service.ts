@@ -90,8 +90,20 @@ export class DocumentService {
     if (queryOptions) {
       params.set('$filter', getFilter(queryOptions));
     }
+    let op;
+    // 2000 is th max url length. Here we don't know the hostname, so 50 chars extra
+    if (params.toString().length + factoryLink.length > 1950) {
+      let data = {
+        uri: factoryLink + '?' + params.toString()
+      };
+      factoryLink = Links.LONG_URI_GET;
 
-    return this.ajax.get(factoryLink, params).then(result => {
+      op = this.post(factoryLink, data);
+    } else {
+      op = this.ajax.get(factoryLink, params);
+    }
+
+    return op.then(result => {
       let documents = result.documentLinks.map(link => {
         let document = result.documents[link]
         document.documentId = Utils.getDocumentId(link);

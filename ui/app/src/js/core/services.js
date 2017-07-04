@@ -40,6 +40,7 @@ const ODATA_FILTER_PROP_NAME = '$filter';
 const ODATA_LIMIT_PROP_NAME = '$limit';
 const ODATA_ORDERBY_PROP_NAME = '$orderby';
 const DEFAULT_XENON_LIMIT = 10000;
+const MAX_URL_CHAR_COUNT = 2000;
 
 const PRAGMA_HEADER = 'pragma';
 const PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE = 'xn-force-index-update';
@@ -294,7 +295,8 @@ var list = function(url, expandQuery, paramsData) {
   if (!paramsData[ODATA_LIMIT_PROP_NAME]) {
     paramsData[ODATA_LIMIT_PROP_NAME] = DEFAULT_XENON_LIMIT;
   }
-  return get(mergeUrl(url, paramsData)).then(function(result) {
+
+  var callback = function(result) {
     // The result.documents check is added to support vRA.
     if (expandQuery && result.documentLinks && result.documents) {
       return result.documentLinks.reduce((previous, current) => {
@@ -304,7 +306,18 @@ var list = function(url, expandQuery, paramsData) {
     } else {
       return result;
     }
-  });
+  };
+
+  var mergedUrl = mergeUrl(url, paramsData);
+  // If the URL gets too long, send to long url get
+  if (mergedUrl.length > MAX_URL_CHAR_COUNT) {
+    var data = {
+      uri: mergedUrl
+    };
+    return post(links.LONG_URI_GET, data).then(callback);
+  } else {
+    return get(mergedUrl).then(callback);
+  }
 };
 
 var getComputeParams = function(queryOptions) {
@@ -525,22 +538,7 @@ services.loadPlacementZones = function(documentSelfLinks) {
       [constants.SEARCH_OCCURRENCE.PARAM]: constants.SEARCH_OCCURRENCE.ANY
     });
   }
-
-  var paramsData = params || {};
-  paramsData[DOCUMENT_TYPE_PROP_NAME] = true;
-  paramsData[EXPAND_QUERY_PROP_NAME] = true;
-  paramsData[ODATA_LIMIT_PROP_NAME] = DEFAULT_XENON_LIMIT;
-
-  var data = {
-    uri: mergeUrl(links.EPZ_CONFIG, paramsData)
-  };
-  return post(links.LONG_URI_GET, data).then(function(result) {
-    // The result.documents check is added to support vRA.
-    return result.documentLinks.reduce((previous, current) => {
-      previous[current] = result.documents[current];
-      return previous;
-    }, {});
-  });
+  return list(links.EPZ_CONFIG, true, params);
 };
 
 services.loadPlacementZone = function(documentSelfLink) {
