@@ -46,7 +46,8 @@ public class UptimeIT extends BaseIntegrationSupportIT {
     private static final String USERNAME = "administrator@xenon.local";
     private static final String PASSWORD = "VMware1!";
 
-    private static final String APPLICATION = "app-2-alpine-1-network.yaml";
+    private static final String APPLICATION_SIMPLE = "app-2-alpine.yaml";
+    private static final String APPLICATION_NETWORK_VOLUME = "app-2-alpine-1-network-volume.yaml";
 
     private static final int RANDOM_MAX_LIMIT =
             Math.max(Integer.getInteger("RANDOM_MAX_LIMIT", 10), 10);
@@ -58,7 +59,7 @@ public class UptimeIT extends BaseIntegrationSupportIT {
      */
     enum Operations {
 
-        PROVISION_APPLICATION(40),
+        PROVISION_APPLICATION(12),
         DELETE_APPLICATION(10),
         STOP_APPLICATION(10);
 
@@ -82,8 +83,8 @@ public class UptimeIT extends BaseIntegrationSupportIT {
             Collections.shuffle(list);
             return list.get((int) Math.floor(Math.random() * list.size()));
         }
-    }
 
+    }
     @Test
     public void test() throws Exception {
         Operations op = Operations.randomOperation();
@@ -105,10 +106,10 @@ public class UptimeIT extends BaseIntegrationSupportIT {
     }
 
     private void provisionApplications() throws Exception {
-        String templateId = importTemplate(APPLICATION);
+        String templateId = importTemplate(getRandomApplication());
         logger.info("Imported composite description id = %s", templateId);
 
-        int n = (int) (Math.random() * RANDOM_MAX_LIMIT + 5);
+        int n = (int) (Math.random() * RANDOM_MAX_LIMIT + 3);
         logger.info("Start provisioning %d applications", n);
         for (int i = 0; i < n; i++) {
             RequestBrokerState request = requestTemplate(templateId, true);
@@ -126,7 +127,7 @@ public class UptimeIT extends BaseIntegrationSupportIT {
     }
 
     private void deleteApplications() throws Exception {
-        int n = (int) (Math.random() * RANDOM_MAX_LIMIT + 2);
+        int n = (int) (Math.random() * RANDOM_MAX_LIMIT + 3);
         logger.info("Start deleting %d applications", n);
         List<String> links = getApplications(n);
 
@@ -158,7 +159,7 @@ public class UptimeIT extends BaseIntegrationSupportIT {
     }
 
     private void stopApplications() throws Exception {
-        int n = (int) (Math.random() * RANDOM_MAX_LIMIT + 2);
+        int n = (int) (Math.random() * RANDOM_MAX_LIMIT + 3);
         logger.info("Start stopping %d applications", n);
         List<String> links = getApplications(n);
 
@@ -224,6 +225,11 @@ public class UptimeIT extends BaseIntegrationSupportIT {
         assertNotNull(qr.documentLinks);
         logger.info("returning %d composite components", qr.documentLinks.size());
         return qr.documentLinks;
+    }
+
+    public String getRandomApplication() {
+        int r = (int) (Math.random() * 100);
+        return r < 5 ? APPLICATION_NETWORK_VOLUME : APPLICATION_SIMPLE;
     }
 
     private String importTemplate(String filePath) throws Exception {
