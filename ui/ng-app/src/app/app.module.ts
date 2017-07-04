@@ -30,6 +30,7 @@ import { TemplateService } from './utils/template.service';
 import { ViewExpandRequestService } from './services/view-expand-request.service';
 import { HarborLibraryModule, SERVICE_CONFIG, IServiceConfig } from 'harbor-ui';
 import * as I18n from 'i18next';
+import { AuthGuard } from 'app/services/auth-guard.service';
 
 import { ADMIRAL_DECLARATIONS } from './admiral';
 
@@ -80,6 +81,7 @@ export function initConfig(ts: TranslateService) {
     ],
     providers: [
         Ajax,
+        AuthGuard,
         SessionTimedOutSubject,
         DocumentService,
         ProjectService,

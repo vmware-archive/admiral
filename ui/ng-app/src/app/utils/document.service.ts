@@ -145,6 +145,10 @@ export class DocumentService {
     return this.get(documentSelfLink, true);
   }
 
+  public getByCriteria(factoryLink: string, searchParams: URLSearchParams): Promise<any> {
+    return this.ajax.get(factoryLink, searchParams);
+  }
+
 
   public getLogs(logsServiceLink, id, sinceMs) {
     return new Promise((resolve, reject) => {
@@ -181,35 +185,17 @@ export class DocumentService {
     return this.ajax.post(factoryLink, undefined, postBody, this.buildHeaders());
   }
 
+  public postWithHeader(factoryLink, postBody, headers: Headers): Promise<any> {
+    return this.ajax.post(factoryLink, null, postBody, headers);
+  }
+
+
   public put(documentSelfLink, putBody): Promise<any> {
     return this.ajax.put(documentSelfLink, undefined, putBody, this.buildHeaders());
   }
 
   public delete(documentSelfLink): Promise<any> {
     return this.ajax.delete(documentSelfLink, undefined, undefined, this.buildHeaders());
-  }
-
-  public loadCurrentUserSecurityContext(): Promise<any> {
-    return this.get(Links.USER_SESSION);
-  }
-
-  public getPrincipalById(principalId): Promise<any> {
-    return this.getById(Links.AUTH_PRINCIPALS, principalId)
-  }
-
-  public findPrincipals(searchString, includeRoles): Promise<any> {
-      return new Promise((resolve, reject) => {
-          let searchParams = new URLSearchParams();
-          searchParams.append('criteria', searchString);
-          if (includeRoles) {
-              searchParams.append('roles', 'all');
-          }
-
-          this.ajax.get(Links.AUTH_PRINCIPALS, searchParams, undefined, this.buildHeaders())
-            .then((principalsResult) => {
-                resolve(principalsResult);
-            }).catch(reject);
-      });
   }
 
   private buildHeaders(): Headers {

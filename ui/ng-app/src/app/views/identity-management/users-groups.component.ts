@@ -11,7 +11,7 @@
 
 import { Component, OnInit } from '@angular/core';
 import { FormGroup, FormControl } from "@angular/forms";
-import { DocumentService } from "../../utils/document.service";
+import { AuthService } from './../../utils/auth.service';
 
 @Component({
     selector: 'app-identity-usersgroups',
@@ -30,7 +30,7 @@ export class UsersGroupsComponent implements OnInit {
     selected: any[] = [];
     selectedPrincipals: any[] = [];
 
-    constructor(protected service: DocumentService) {
+    constructor(protected authService: AuthService) {
     }
 
     ngOnInit() {
@@ -45,7 +45,7 @@ export class UsersGroupsComponent implements OnInit {
             return;
         }
 
-        this.service.findPrincipals(searchTerm, true).then((principalsResult) => {
+        this.authService.findPrincipals(searchTerm, true).then((principalsResult) => {
             this.selectedPrincipals = principalsResult;
         }).catch((error) => {
             console.log('Failed to find principals', error);

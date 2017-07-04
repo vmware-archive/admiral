@@ -16,6 +16,7 @@ import { DocumentService } from './../../../utils/document.service';
 import { ActivatedRoute } from '@angular/router';
 import { Links } from './../../../utils/links';
 import { TagClickEvent } from 'harbor-ui';
+import { RoutesRestriction } from './../../../utils/routes-restriction';
 
 @Component({
   selector: 'app-project-details',
@@ -44,4 +45,7 @@ export class ProjectDetailsComponent extends BaseDetailsComponent {
     this.router.navigate(['repositories', tag.repository_name, 'tags', tag.tag_name], {relativeTo: this.route});
   }
 
+  get projectsByIdRouteRestriction() {
+    return RoutesRestriction.PROJECTS_ID;
+  }
 }

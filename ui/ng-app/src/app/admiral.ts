@@ -66,7 +66,7 @@ import { DeploymentDetailsComponent } from './kubernetes/deployments/details/dep
 import { ServiceListComponent } from './kubernetes/services/list/service-list.component';
 import { ServiceDetailsComponent } from './kubernetes/services/details/service-details.component';
 import { TagDetailsComponent } from './views/tag-details/tag-details.component';
-
+import { AllowNavigationDirective } from './directives/shared/allow-navigation.directive';
 
 export const ADMIRAL_DECLARATIONS = [
   AppComponent,
@@ -75,6 +75,7 @@ export const ADMIRAL_DECLARATIONS = [
   ProjectNamePipe,
   ProjectMembersCountPipe,
   BreakOutModalDirective,
+  AllowNavigationDirective,
 
   AdministrationComponent,
   MainResourcesComponent,

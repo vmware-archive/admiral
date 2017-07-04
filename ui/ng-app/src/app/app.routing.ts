@@ -12,6 +12,7 @@ import { TagDetailsComponent } from './views/tag-details/tag-details.component';
 
 import { ModuleWithProviders } from '@angular/core/src/metadata/ng_module';
 import { Routes, RouterModule } from '@angular/router';
+import { RoutesRestriction } from './utils/routes-restriction';
 
 import { AdministrationComponent } from './views/administration/administration.component';
 import { MainResourcesComponent } from './views/main-resources/main-resources.component';
@@ -41,9 +42,9 @@ import { ServiceListComponent } from './kubernetes/services/list/service-list.co
 import { ServiceDetailsComponent } from './kubernetes/services/details/service-details.component';
 
 import { NavigationContainerType } from './components/navigation-container/navigation-container.component';
-
 import { LoginComponent } from './components/login/login.component';
 
+import { AuthGuard } from './services/auth-guard.service';
 
 export const ROUTES: Routes = [
     {
@@ -118,42 +119,70 @@ export const ROUTES: Routes = [
     },
     {
         path: 'administration', component: AdministrationComponent,
+        canActivate: [AuthGuard],
+        data: { roles: RoutesRestriction.ADMINISTRATION },
         children: [
             {
                 path: '', redirectTo: 'identity-management', pathMatch: 'full'
             },
             {
-                path: 'identity-management', component: IdentityManagementComponent
+                path: 'identity-management', component: IdentityManagementComponent,
+                canActivate: [AuthGuard],
+                data: { roles: RoutesRestriction.IDENTITY_MANAGEMENT }
             },
             {
                 path: 'projects', component: ProjectsComponent,
+                canActivate: [AuthGuard],
+                data: { roles: RoutesRestriction.PROJECTS },
                 children: [
-                    { path: 'new', component: ProjectCreateComponent, data: {
-                        navigationContainerType: NavigationContainerType.Default
-                    }},
-                    { path: ':id', component: ProjectDetailsComponent, data: {
-                        navigationContainerType: NavigationContainerType.Fullscreen
-                     }},
-                    { path: ':id/edit', component: ProjectCreateComponent, data: {
-                        navigationContainerType: NavigationContainerType.Fullscreen
-                     }},
+                    { path: 'new', component: ProjectCreateComponent,
+                        canActivate: [AuthGuard],
+                        data: {
+                            navigationContainerType: NavigationContainerType.Default,
+                            roles: RoutesRestriction.PROJECTS_NEW
+                        }
+                    },
+                    { path: ':id', component: ProjectDetailsComponent,
+                        canActivate: [AuthGuard],
+                        data: {
+                            navigationContainerType: NavigationContainerType.Fullscreen,
+                            roles: RoutesRestriction.PROJECTS_ID
+                        }
+                    },
+                    { path: ':id/edit', component: ProjectCreateComponent,
+                        canActivate: [AuthGuard],
+                        data: {
+                            navigationContainerType: NavigationContainerType.Fullscreen,
+                            roles: RoutesRestriction.PROJECTS_ID_EDIT
+                        }
+                    },
                     { path: ':id/repositories/:rid/tags/:tid', component: TagDetailsComponent, data: {
                         navigationContainerType: NavigationContainerType.Fullscreen,
                         hideBackButton: true
                      }},
-                    { path: ':id/add-member', component: ProjectAddMemberComponent, data: {
-                        navigationContainerType: NavigationContainerType.Fullscreen
-                      }}
+                    { path: ':id/add-member', component: ProjectAddMemberComponent,
+                        canActivate: [AuthGuard],
+                        data: {
+                            navigationContainerType: NavigationContainerType.Fullscreen,
+                            roles: RoutesRestriction.PROJECTS_ID_ADD_MEMBER
+                        }
+                    }
                 ]
             },
             {
-                path: 'registries', component: RegistriesComponent
+                path: 'registries', component: RegistriesComponent,
+                canActivate: [AuthGuard],
+                data: { roles: RoutesRestriction.REGISTRIES }
             },
             {
-                path: 'configuration', component: ConfigurationComponent
+                path: 'configuration', component: ConfigurationComponent,
+                canActivate: [AuthGuard],
+                data: { roles: RoutesRestriction.CONFIGURATION }
             },
             {
-                path: 'logs', component: LogsComponent
+                path: 'logs', component: LogsComponent,
+                canActivate: [AuthGuard],
+                data: { roles: RoutesRestriction.LOGS }
             }
         ]
     },

@@ -10,12 +10,12 @@
  */
 
 import { Component } from '@angular/core';
-import { Router } from '@angular/router';
 import { ViewExpandRequestService } from './services/view-expand-request.service';
 import { FT } from './utils/ft';
 import { Utils } from './utils/utils';
 import { DocumentService } from './utils/document.service';
 import { AuthService } from './utils/auth.service';
+import { RoutesRestriction } from './utils/routes-restriction';
 
 @Component({
     selector: 'my-app',
@@ -32,7 +32,7 @@ export class AppComponent {
             this.fullScreen = isFullScreen;
         });
 
-        this.documentService.loadCurrentUserSecurityContext().then((securityContext) => {
+        this.authService.loadCurrentUserSecurityContext().then((securityContext) => {
             this.userSecurityContext = securityContext;
         }).catch((ex) => {
             console.log(ex);
@@ -72,5 +72,9 @@ export class AppComponent {
         this.authService.logout().then(() => {
             window.location.reload();
         });
+    }
+
+    get administrationRouteRestriction() {
+        return RoutesRestriction.ADMINISTRATION;
     }
 }
