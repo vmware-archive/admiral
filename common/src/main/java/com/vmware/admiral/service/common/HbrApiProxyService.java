@@ -14,7 +14,6 @@ package com.vmware.admiral.service.common;
 import static com.vmware.admiral.common.util.UriUtilsExtended.getReverseProxyLocation;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Base64;
 import java.util.function.Function;
 
@@ -23,6 +22,7 @@ import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
+import com.vmware.admiral.service.common.SslTrustImportService.SslTrustImportRequest;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.StatelessService;
@@ -48,7 +48,7 @@ public class HbrApiProxyService extends StatelessService {
     private static final String HBR_API_BASE_ENDPOINT = "api";
     private static final String I18N_RESOURCE_SUBPATH = "i18n/lang";
 
-    private volatile String harborUrl;
+    private volatile URI harborUri;
     private volatile ServiceClient client;
 
     public HbrApiProxyService() {
@@ -75,12 +75,36 @@ public class HbrApiProxyService extends StatelessService {
                 .setCompletion((res, ex) -> {
                     if (ex == null && res.hasBody()) {
                         ConfigurationState body = res.getBody(ConfigurationState.class);
-                        harborUrl = body.value;
+                        String harborUrl = body.value;
 
                         if (harborUrl != null && !harborUrl.trim().isEmpty()) {
                             ServerX509TrustManager trustManager = ServerX509TrustManager
                                     .create(getHost());
                             client = ServiceClientFactory.createServiceClient(trustManager, null);
+
+                            harborUri = UriUtils.buildUri(harborUrl);
+
+                            if (harborUri != null
+                                    && UriUtils.HTTPS_SCHEME.equals(harborUri.getScheme())) {
+                                logFine("Importing ssl trust for harbor uri %s", harborUri);
+                                SslTrustImportRequest sslTrustRequest = new SslTrustImportRequest();
+                                sslTrustRequest.hostUri = harborUri;
+                                sslTrustRequest.acceptCertificate = true;
+
+                                sendRequest(
+                                        Operation
+                                                .createPut(getHost(),
+                                                        SslTrustImportService.SELF_LINK)
+                                                .setBody(sslTrustRequest)
+                                                .setCompletion((o, e) -> {
+                                                    if (e != null) {
+                                                        logSevere(
+                                                                "There was a problem importing SSL trust for harbor URI %s, Error: %s",
+                                                                harborUri, e);
+                                                    }
+                                                }));
+                            }
+
                         }
                     }
                 }));
@@ -117,7 +141,7 @@ public class HbrApiProxyService extends StatelessService {
     }
 
     private void forwardRequest(final Operation op, final Function<URI, Operation> createOp) {
-        if (harborUrl == null || harborUrl.isEmpty()) {
+        if (harborUri == null) {
             op.fail(new IllegalStateException(
                     "Configuration property " + HBR_URL_PROP + " not provided"));
             return;
@@ -181,15 +205,11 @@ public class HbrApiProxyService extends StatelessService {
             baseEndpoint = "";
         }
 
-        try {
-            String query = uri.getRawQuery();
-            if (query != null && !query.isEmpty()) {
-                query = "?" + query;
-            }
-            return UriUtils.buildUri(new URI(harborUrl), baseEndpoint, opPath, query);
-        } catch (URISyntaxException e) {
-            return null;
+        String query = uri.getRawQuery();
+        if (query != null && !query.isEmpty()) {
+            query = "?" + query;
         }
+        return UriUtils.buildUri(harborUri, baseEndpoint, opPath, query);
     }
 
     private void prepareAuthn(Operation op) {
