@@ -36,28 +36,50 @@ import com.vmware.admiral.service.common.SslTrustCertificateFactoryService;
 import com.vmware.admiral.service.common.SslTrustImportService;
 import com.vmware.admiral.service.common.mock.MockHbrApiProxyService;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
 
 public class HostInitCommonServiceConfig extends HostInitServiceHelper {
     public static final int COMMON_SERVICES_AVAILABILITY_TIMEOUT = Integer
-            .getInteger("common.services.initialization.timeout.seconds", 30);
+            .getInteger("common.services.initialization.timeout.seconds", 300);
+
+    @SuppressWarnings("unchecked")
+    private static final Class<? extends Service>[] servicesToStart = new Class[] {
+            NodeMigrationService.class,
+            NodeHealthCheckService.class,
+            SslTrustImportService.class,
+            ClusterMonitoringService.class,
+            ConfigurationFactoryService.class,
+            SslTrustCertificateFactoryService.class,
+            CommonInitialBootService.class,
+            ReverseProxyService.class,
+            ExtensibilitySubscriptionFactoryService.class,
+            LongURIGetService.class
+    };
+
+    @SuppressWarnings("unchecked")
+    private static final Class<? extends Service>[] serviceFactoriesToStart = new Class[] {
+            ResourceNamePrefixService.class,
+            RegistryService.class,
+            LogService.class,
+            EventLogService.class,
+            CounterSubTaskService.class,
+            ExtensibilitySubscriptionCallbackService.class,
+            EventTopicService.class
+    };
+
 
     public static void startServices(ServiceHost host) {
         startServices(host, false);
     }
 
     public static void startServices(ServiceHost host, boolean mockHbrApiProxyService) {
-        startServices(host, NodeMigrationService.class, NodeHealthCheckService.class,
-                SslTrustImportService.class,
-                ClusterMonitoringService.class,
-                ConfigurationFactoryService.class,
-                SslTrustCertificateFactoryService.class,
-                CommonInitialBootService.class,
-                ReverseProxyService.class,
-                ExtensibilitySubscriptionFactoryService.class,
-                LongURIGetService.class);
+        host.log(Level.INFO, "Start initializing common services");
+
+        startServices(host, servicesToStart);
 
         if (mockHbrApiProxyService) {
             startServices(host, MockHbrApiProxyService.class);
@@ -65,11 +87,7 @@ public class HostInitCommonServiceConfig extends HostInitServiceHelper {
             startServices(host, HbrApiProxyService.class);
         }
 
-        startServiceFactories(host, ResourceNamePrefixService.class, RegistryService.class,
-                LogService.class, EventLogService.class,
-                CounterSubTaskService.class,
-                ExtensibilitySubscriptionCallbackService.class,
-                EventTopicService.class);
+        startServiceFactories(host, serviceFactoriesToStart);
 
         // start initialization of system documents, posting with pragma to queue a request,
         // for a service to become available
@@ -83,11 +101,13 @@ public class HostInitCommonServiceConfig extends HostInitServiceHelper {
                 .setCompletion((o, e) -> {
                     try {
                         if (e != null) {
-                            host.log(Level.SEVERE, "Failute while waiting for service availability of common services: %s", e);
+                            host.log(Level.SEVERE, "Failure while waiting for service availability"
+                                    + " of common services: %s", Utils.toString(e));
                             t[0] = e;
                             return;
                         }
-                        host.log(Level.FINE, "Waiting for service availability of common services finished.");
+                        host.log(Level.INFO, "Waiting for service availability of common services"
+                                + " finished.");
                     } finally {
                         l.countDown();
                     }
@@ -95,14 +115,15 @@ public class HostInitCommonServiceConfig extends HostInitServiceHelper {
         ));
         try {
             if (!l.await(COMMON_SERVICES_AVAILABILITY_TIMEOUT, TimeUnit.SECONDS)) {
-                t[0] = new TimeoutException("Waiting for service availability of common services timed out.");
-                host.log(Level.SEVERE, "Waiting for service availability of common services timed out: %s",
-                        t[0]);
+                t[0] = new TimeoutException("Waiting for service availability of common services"
+                        + " timed out.");
+                host.log(Level.SEVERE, "Waiting for service availability of common services timed"
+                                + " out: %s", t[0]);
 
             }
         } catch (InterruptedException e1) {
-            host.log(Level.SEVERE, "Waiting for service availability of common services was interupted: %s",
-                    e1);
+            host.log(Level.SEVERE, "Waiting for service availability of common services was"
+                            + " interrupted: %s", Utils.toString(e1));
             t[0] = e1;
         }
         if (t[0] != null) {
