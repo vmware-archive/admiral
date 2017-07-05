@@ -16,6 +16,7 @@ import static org.junit.Assert.assertNotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -85,6 +86,7 @@ import com.vmware.admiral.service.test.MockComputeHostInstanceAdapter;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.admiral.service.test.MockDockerNetworkAdapterService;
 import com.vmware.admiral.service.test.MockDockerVolumeAdapterService;
+import com.vmware.photon.controller.model.adapters.awsadapter.AWSLoadBalancerService;
 import com.vmware.photon.controller.model.adapters.awsadapter.AWSNetworkService;
 import com.vmware.photon.controller.model.adapters.awsadapter.AWSSecurityGroupService;
 import com.vmware.photon.controller.model.adapters.awsadapter.AWSSubnetService;
@@ -95,6 +97,11 @@ import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService;
+import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService.LoadBalancerDescription.HealthCheckConfiguration;
+import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService.LoadBalancerDescription.Protocol;
+import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService.LoadBalancerDescription.RouteConfiguration;
+import com.vmware.photon.controller.model.resources.LoadBalancerService;
+import com.vmware.photon.controller.model.resources.LoadBalancerService.LoadBalancerState;
 import com.vmware.photon.controller.model.resources.NetworkService;
 import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;
 import com.vmware.photon.controller.model.resources.ResourceGroupService;
@@ -614,6 +621,48 @@ public abstract class RequestBaseTest extends BaseTestCase {
         subnet = doPost(subnet, SubnetService.FACTORY_LINK);
         assertNotNull(subnet);
         return subnet;
+    }
+
+    protected LoadBalancerState createLoadBalancerState() throws Throwable {
+        LoadBalancerState state = new LoadBalancerState();
+        state.name = UUID.randomUUID().toString();
+        state.endpointLink = createEndpoint().documentSelfLink;
+        state.regionId = ComputeBaseTest.REGION_ID;
+        state.computeLinks = Collections.singleton(createVmHostCompute(true).documentSelfLink);
+        state.subnetLinks = new HashSet<>();
+        state.subnetLinks.add(createSubnetState(null).documentSelfLink);
+        state.tenantLinks = TestRequestStateFactory.getTenantLinks();
+
+        RouteConfiguration route1 = new RouteConfiguration();
+        route1.protocol = Protocol.HTTP.name();
+        route1.port = "80";
+        route1.instanceProtocol = Protocol.HTTP.name();
+        route1.instancePort = "80";
+        route1.healthCheckConfiguration = new HealthCheckConfiguration();
+        route1.healthCheckConfiguration.protocol = Protocol.HTTP.name();
+        route1.healthCheckConfiguration.port = "80";
+        route1.healthCheckConfiguration.urlPath = "/test.html";
+        route1.healthCheckConfiguration.intervalSeconds = 60;
+        route1.healthCheckConfiguration.healthyThreshold = 2;
+        route1.healthCheckConfiguration.unhealthyThreshold = 5;
+        route1.healthCheckConfiguration.timeoutSeconds = 5;
+
+        RouteConfiguration route2 = new RouteConfiguration();
+        route2.protocol = Protocol.HTTPS.name();
+        route2.port = "443";
+        route2.instanceProtocol = Protocol.HTTPS.name();
+        route2.instancePort = "443";
+
+        state.routes = Arrays.asList(route1, route2);
+        state.internetFacing = Boolean.TRUE;
+        state.instanceAdapterReference = UriUtils
+                .buildUri(this.host, AWSLoadBalancerService.SELF_LINK);
+
+        state = doPost(state, LoadBalancerService.FACTORY_LINK);
+        assertNotNull(state);
+
+        addForDeletion(state);
+        return state;
     }
 
     protected void waitForContainerPowerState(final PowerState expectedPowerState,
