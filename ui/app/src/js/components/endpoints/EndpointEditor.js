@@ -13,7 +13,7 @@ import AwsEndpointEditor from 'components/endpoints/aws/EndpointEditor'; //eslin
 import AzureEndpointEditor from 'components/endpoints/azure/EndpointEditor'; //eslint-disable-line
 import VsphereEndpointEditor from 'components/endpoints/vsphere/EndpointEditor'; //eslint-disable-line
 import EndpointEditorVue from 'components/endpoints/EndpointEditorVue.html';
-import { EndpointsActions } from 'actions/Actions';
+import {EndpointsActions} from 'actions/Actions';
 import constants from 'core/constants';
 import services from 'core/services';
 import utils from 'core/utils';
@@ -49,10 +49,7 @@ export default Vue.component('endpoint-editor', {
       name: this.model.item.name,
       saveDisabled: !this.model.item.documentSelfLink,
       verifyDisabled: !this.model.item.documentSelfLink,
-      htmlEditor: {
-        htmlEndpointEditorSrc: null,
-        loaded: false
-      }
+      htmlEndpointEditorSrc: null
     };
   },
 
@@ -68,6 +65,9 @@ export default Vue.component('endpoint-editor', {
   },
 
   methods: {
+    isHtmlEditor() {
+      return this.endpointEditorType === 'html';
+    },
     cancel($event) {
       $event.stopImmediatePropagation();
       $event.preventDefault();
@@ -125,7 +125,7 @@ export default Vue.component('endpoint-editor', {
     onModelVerifiedChange() {
       this.onChange();
       var model = this.model.item.endpointProperties;
-      if (this.endpointEditorType === 'html') {
+      if (this.isHtmlEditor()) {
         var iframe = document.getElementById('htmlEndpointEditor');
         if (iframe && iframe.contentWindow && iframe.contentWindow.onVerify) {
           iframe.contentWindow.onVerify(model);
@@ -147,15 +147,7 @@ export default Vue.component('endpoint-editor', {
         return;
       }
 
-      for (var i = 0; i < this.adapters.length; i++) {
-        if (this.adapters[i].id === selectedEndpointType.id) {
-          this.selectedEndpointType = this.adapters[i];
-          return;
-        }
-
-      }
-
-      this.selectedEndpointType = null;
+      this.selectedEndpointType = utils.getAdapter(selectedEndpointType.id);
     },
     // update the UI model
     onSelectedEndpointChange() {
@@ -169,10 +161,10 @@ export default Vue.component('endpoint-editor', {
       this.endpointType = this.selectedEndpointType.id;
 
       this.endpointEditorType = this.selectedEndpointType.endpointEditorType;
-      if (this.endpointEditorType === 'html') {
+      if (this.isHtmlEditor()) {
         var res = services.encodeSchemeAndHost(this.selectedEndpointType.endpointEditor);
         if (res) {
-          this.htmlEditor.htmlEndpointEditorSrc = 'uerp/' + res;
+          this.htmlEndpointEditorSrc = 'uerp/' + res;
         }
       }
 
@@ -189,7 +181,7 @@ export default Vue.component('endpoint-editor', {
     isSaveDisabled() {
       var disabled = !this.name || !this.endpointType || !this.editor.valid ||
           !(this.model.verified && this.editor.valid);
-      if (!disabled && this.endpointEditorType === 'html') {
+      if (!disabled && this.isHtmlEditor()) {
         var iframe = document.getElementById('htmlEndpointEditor');
         if (iframe && iframe.contentWindow && iframe.contentWindow.canSave) {
           disabled = !iframe.contentWindow.canSave();
@@ -198,7 +190,7 @@ export default Vue.component('endpoint-editor', {
       return disabled;
     },
     isVerifyDisabled() {
-      if (this.endpointEditorType === 'html') {
+      if (this.isHtmlEditor()) {
         var iframe = document.getElementById('htmlEndpointEditor');
         if (iframe && iframe.contentWindow && iframe.contentWindow.canVerify) {
           this.editor.valid = iframe.contentWindow.canVerify();
@@ -208,7 +200,7 @@ export default Vue.component('endpoint-editor', {
     },
     getModel() {
       var props;
-      if (this.endpointEditorType === 'html') {
+      if (this.isHtmlEditor()) {
         var iframe = document.getElementById('htmlEndpointEditor');
         props = iframe.contentWindow.getModel();
       } else {
@@ -229,29 +221,18 @@ export default Vue.component('endpoint-editor', {
         };
       }
     },
-    htmlEditorInit(event) {
-      var frame = event.target;
-
-      var script = frame.contentWindow.document.createElement('script');
-      //inject the iframe-resizer client lib
-      script.setAttribute('src', '{host.uri}/lib/iframeResizer.contentWindow.min.js');
-      frame.contentWindow.document.head.appendChild(script);
-
+    htmlEndpointEditorInit(event) {
+      var iframe = event.target;
+      var context = {};
       var _this = this;
-
-      window.iFrameResize({
-        heightCalculationMethod: 'bodyScroll',
-        initCallback: function(iframe) {
-          services.mcpApi.htmlInit(iframe, _this, csp);
-        }
-      }, frame);
-      var csp = {
-        extension: {
-          extensionId: window.constants && window.constants.ENDPOINT_TYPE
-        }
-      };
-
-      this.htmlEditor.loaded = true;
+      services.initHtmlEditor(iframe, this, this.model.item, context,
+        function(url, body) {
+          return {
+            requestType: 'EndpointType',
+            entityId: _this.endpointType,
+            data: body
+          };
+        });
     }
   }
 });

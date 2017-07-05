@@ -2880,50 +2880,67 @@ var mcpClient = {
 };
 
 window.constants = window.constants || {};
-window.constants.ENDPOINT_TYPE = 'Compute.EndpointType';
 
-var adapterAPI = function(contentWindow, component) {
+var adapterAPI = function(contentWindow, component, prepareFetchDataRequest) {
   return {
     contentWindow: contentWindow,
     component: component,
     fetchData: function(url, body) {
-      var extensionId = this.contentWindow.csp.extension.extensionId;
-      if (extensionId.startsWith(window.constants.ENDPOINT_TYPE)) {
-
-        var fetchDataRequest = {
-          requestType: 'EndpointType',
-          entityId: component.endpointType,
-          data: body
-        };
-
-        if (!url.startsWith('/')) {
-          url += '/';
-        }
-        var urlToSend = '/adapter-extensibility/fetch-data' + url;
-
-        return patch(urlToSend, fetchDataRequest);
+      if (!url.startsWith('/')) {
+        url = '/' + url;
       }
-      console.error('Unhandled extensionId: ' + extensionId);
-      return null;
+
+      var fetchDataRequest = prepareFetchDataRequest(url, body);
+
+      var urlToSend = '/adapter-extensibility/fetch-data' + url;
+
+      return patch(urlToSend, fetchDataRequest);
     }, //fetchData
     notifyDirty: function() {
       this.component.onChange();
-    }//notifyDirty
+    }, //notifyDirty
+    //title - the title to display for the message, or null.
+    //msg - the message body.
+    showError: function(title, msg) {
+      alert('Error. title: ' + title
+        + '\n' + msg);
+    },
+    showWarning: function(title, msg) {
+      alert('Warning. title: ' + title
+        + '\n' + msg);
+    },
+    showSuccess: function(title, msg) {
+      alert('Success. title: ' + title
+        + '\n' + msg);
+    }
   };//return
 };//adapterAPI
 
-services.mcpApi = {
-  htmlInit: function(iframe, component, csp) {
-    if (iframe) {
+services.initHtmlEditor = function(frame, component, data, context, prepareFetchDataRequest) {
+  var script = frame.contentWindow.document.createElement('script');
+  //inject the iframe-resizer client lib
+  script.setAttribute('src', '{host.uri}/lib/iframeResizer.contentWindow.min.js');
+  frame.contentWindow.document.head.appendChild(script);
+
+  window.iFrameResize({
+    heightCalculationMethod: 'bodyScroll',
+    initCallback: function(iframe) {
       try {
-        iframe.contentWindow.csp = csp;
-        iframe.contentWindow.adapterAPI = adapterAPI(iframe.contentWindow, component);
-        iframe.contentWindow.init(component.model.item);
+        iframe.contentWindow.context = context;
+        iframe.contentWindow.adapterAPI = adapterAPI(
+          iframe.contentWindow,
+          component,
+          prepareFetchDataRequest);
+        iframe.contentWindow.init(data);
       } catch (err) {
         console.error('Cannot init editor. Cause: ' + err);
       }
     }
-  }
+  }, frame);
+};
+
+services.mcpApi = {
+  rest: mcpClient
 };
 
 window.mcp = window.mcp || {};

@@ -30,6 +30,8 @@ import AzureStorageAccountsList from 'components/profiles/azure/AzureStorageAcco
 import VsphereDatastoresList from 'components/profiles/vsphere/VsphereDatastoresList'; //eslint-disable-line
 import VsphereStoragePoliciesList from 'components/profiles/vsphere/VsphereStoragePoliciesList'; //eslint-disable-line
 
+import services from 'core/services';
+
 export default Vue.component('profile-edit-view', {
   template: ProfileEditViewVue,
   props: {
@@ -67,7 +69,9 @@ export default Vue.component('profile-edit-view', {
       tags: tags.map(({key, value}) => ({
         key,
         value
-      }))
+      })),
+      htmlComputeProfileEditorSrc: null,
+      computeProfileEditorType: null
     };
   },
   computed: {
@@ -111,6 +115,18 @@ export default Vue.component('profile-edit-view', {
     this.unwatchEndpoint();
   },
   methods: {
+    getHtmlEditorSrc() {
+      // utils.getAdapter(this.endpointType);
+      // this.endpointEditorType
+      if (this.endpointType) {
+        var endpoint = utils.getAdapter(this.endpointType);
+        this.computeProfileEditorType = endpoint && endpoint.computeProfileEditorType;
+        if (this.computeProfileEditorType === 'html') {
+          return endpoint.computeProfileEditor;
+        }
+      }
+      return false;
+    },
     goBack() {
       NavigationActions.openProfiles();
     },
@@ -133,6 +149,21 @@ export default Vue.component('profile-edit-view', {
     onEndpointChange(endpoint) {
       this.endpoint = endpoint;
       this.endpointType = endpoint && endpoint.endpointType;
+      if (this.endpointType) {
+        // var endpoint = utils.getAdapter(endpoint.endpointType);
+        var htmlSrc = this.getHtmlEditorSrc();
+        if (htmlSrc) {
+          this.computeProfileEditor.valid = false;
+          var res = services.encodeSchemeAndHost(htmlSrc);
+          if (res) {
+            let iframe = document.getElementById('htmlComputeProfileEditor');
+            if (iframe && iframe.close) {
+              iframe.close();
+            }
+            this.htmlComputeProfileEditorSrc = 'uerp/' + res;
+          }
+        }
+      }
     },
     onTagsChange(tags) {
       this.tags = tags;
@@ -140,6 +171,21 @@ export default Vue.component('profile-edit-view', {
     onComputeProfileEditorChange(value) {
       this.editorErrors = null;
       this.computeProfileEditor = value;
+    },
+    onChange() {
+      if (this.getHtmlEditorSrc()) {
+        var iframe = document.getElementById('htmlComputeProfileEditor');
+
+        if (iframe && iframe.contentWindow) {
+          var contentWindow = iframe.contentWindow;
+          if (contentWindow.canSave) {
+            this.computeProfileEditor.valid = contentWindow.canSave();
+          }
+          if (contentWindow.getModel) {
+            this.computeProfileEditor.properties = contentWindow.getModel();
+          }
+        }
+      }
     },
     onNetworkProfileEditorChange(value) {
       this.editorErrors = null;
@@ -192,6 +238,19 @@ export default Vue.component('profile-edit-view', {
           this.storageProfileEditor.properties);
       toSave.tagLinks = undefined;
       return toSave;
+    },
+    htmlComputeProfileEditorInit(event) {
+      var iframe = event.target;
+      var context = {};
+      var _this = this;
+      services.initHtmlEditor(iframe, this, this.model.item.computeProfile, context,
+        function(url, body) {
+          return {
+            requestType: 'Endpoint',
+            entityId: _this.endpoint,
+            data: body
+          };
+        });
     }
   }
 });

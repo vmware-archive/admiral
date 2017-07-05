@@ -143,6 +143,7 @@ initializer.init = function(initProperties, callback) {
         name: adapter.name,
         iconSrc: customProperties.icon.replace(/^\//, ''),
         endpointEditor: customProperties.endpointEditor,
+        computeProfileEditorType: customProperties.computeProfileEditorType,
         computeProfileEditor: customProperties.computeProfileEditor,
         networkProfileEditor: customProperties.networkProfileEditor,
         storageProfileEditor: customProperties.storageProfileEditor,

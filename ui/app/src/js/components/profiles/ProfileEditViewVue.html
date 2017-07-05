@@ -90,13 +90,23 @@
               <form>
                 <div
                   v-for="adapter in adapters"
-                  v-if="endpointType === adapter.id"
+                  v-if="endpointType === adapter.id && computeProfileEditorType !== 'html'"
                   :endpoint="endpoint"
                   :is="adapter.computeProfileEditor"
                   :model="model.item.computeProfile || {}"
                   @change="onComputeProfileEditorChange"
                   @error="onEditorError">
                 </div>
+
+                <iframe id="htmlComputeProfileEditor"
+                        v-if="computeProfileEditorType === 'html'"
+                        width="100%" frameborder="0"
+                        :src="htmlComputeProfileEditorSrc"
+                        scrolling="no"
+                        @load="htmlComputeProfileEditorInit"
+                >
+                </iframe>
+
               </form>
             </div>
             <div role="tabpanel" class="tab-pane" id="network">
