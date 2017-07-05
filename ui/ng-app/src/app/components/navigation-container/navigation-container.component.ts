@@ -7,7 +7,7 @@ import { Subscription } from 'rxjs';
 @Component({
   selector: 'navigation-container',
   template: `
-    <div [ngStyle]="contentStyle" [ngClass]="{'full-screen': type === 'fullScreenSlide' }">
+    <div [ngStyle]="contentStyle" [ngClass]="{'full-screen': type === 'fullScreenSlide', 'with-back-button': showBackButton }">
         <ng-content></ng-content>
     </div>
   `,
@@ -16,6 +16,7 @@ import { Subscription } from 'rxjs';
 export class NavigationContainerComponent implements OnInit, OnDestroy {
   private oldComponent: string;
   private routeObserve: Subscription;
+  private hideBackButton: boolean;
 
   contentStyle: any = {
     opacity: '0',
@@ -46,6 +47,10 @@ export class NavigationContainerComponent implements OnInit, OnDestroy {
     });
   }
 
+  get showBackButton() {
+    return this.type === 'fullScreenSlide' && !this.hideBackButton;
+  }
+
   hasFullscreenParent(route) {
     var routeData = route.data && route.data.value;
     if (routeData && routeData.navigationContainerType === NavigationContainerType.Fullscreen) {
@@ -62,6 +67,7 @@ export class NavigationContainerComponent implements OnInit, OnDestroy {
   handleNewComponent(newRoute) {
     var newComponent: any = newRoute.component;
     var navigationContainerType = newRoute.data && newRoute.data.value && newRoute.data.value.navigationContainerType;
+    this.hideBackButton = newRoute.data && newRoute.data.value && newRoute.data.value.hideBackButton;
 
     let selectedType;
     if (newComponent != this.oldComponent) {

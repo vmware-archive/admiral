@@ -77,7 +77,7 @@ navigation-container > .full-screen {
   overflow-y: auto;
 }
 
-navigation-container > :not(.full-screen) > back-button {
+navigation-container > :not(.with-back-button) > back-button {
   display: none;
 }
 

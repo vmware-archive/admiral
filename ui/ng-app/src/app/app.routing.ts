@@ -62,7 +62,8 @@ export const ROUTES: Routes = [
                 path: 'project-repositories', component: RepositoryComponent,
                 children: [
                     { path: 'repositories/:rid/tags/:tid', component: TagDetailsComponent, data: {
-                        navigationContainerType: NavigationContainerType.Fullscreen
+                        navigationContainerType: NavigationContainerType.Fullscreen,
+                        hideBackButton: true
                     }},
                 ]
             },
@@ -137,7 +138,8 @@ export const ROUTES: Routes = [
                         navigationContainerType: NavigationContainerType.Fullscreen
                      }},
                     { path: ':id/repositories/:rid/tags/:tid', component: TagDetailsComponent, data: {
-                        navigationContainerType: NavigationContainerType.Fullscreen
+                        navigationContainerType: NavigationContainerType.Fullscreen,
+                        hideBackButton: true
                      }},
                     { path: ':id/add-member', component: ProjectAddMemberComponent, data: {
                         navigationContainerType: NavigationContainerType.Fullscreen

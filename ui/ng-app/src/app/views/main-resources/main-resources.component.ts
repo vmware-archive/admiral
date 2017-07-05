@@ -48,9 +48,7 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
     selectedProject;
     projects;
 
-    constructor(private router: Router, private ps: ProjectService) { }
-
-    ngOnInit() {
+    constructor(private router: Router, private ps: ProjectService) {
       this.routeObserve = this.router.events.subscribe((event) => {
         if (event instanceof NavigationEnd) {
           let formerViewPath;
@@ -66,7 +64,9 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
           this.formerViewPath = formerViewPath;
         }
       });
+    }
 
+    ngOnInit() {
       this.ps.list().then((result) => {
         this.projects = result.documents;
 
