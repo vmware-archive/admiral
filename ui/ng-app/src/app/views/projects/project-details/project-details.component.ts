@@ -1,3 +1,4 @@
+import { Router } from '@angular/router';
 /*
  * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
  *
@@ -14,6 +15,7 @@ import { BaseDetailsComponent } from './../../../components/base/base-details.co
 import { DocumentService } from './../../../utils/document.service';
 import { ActivatedRoute } from '@angular/router';
 import { Links } from './../../../utils/links';
+import { TagClickEvent } from 'harbor-ui';
 
 @Component({
   selector: 'app-project-details',
@@ -24,9 +26,11 @@ export class ProjectDetailsComponent extends BaseDetailsComponent {
 
   hbrProjectId;
   hbrSessionInfo = {};
+  router: Router;
 
-  constructor(route: ActivatedRoute, service: DocumentService) {
+  constructor(route: ActivatedRoute, service: DocumentService, router: Router) {
     super(route, service, Links.PROJECTS);
+    this.router = router;
   }
 
   protected entityInitialized() {
@@ -34,6 +38,10 @@ export class ProjectDetailsComponent extends BaseDetailsComponent {
     if (cs.__projectIndex) {
       this.hbrProjectId = parseInt(cs.__projectIndex);
     }
+  }
+
+  watchTagClickEvent(tag: TagClickEvent) {
+    this.router.navigate(['repositories', tag.repository_name, 'tags', tag.tag_name], {relativeTo: this.route});
   }
 
 }

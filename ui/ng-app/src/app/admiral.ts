@@ -64,6 +64,8 @@ import { DeploymentListComponent } from './kubernetes/deployments/list/deploymen
 import { DeploymentDetailsComponent } from './kubernetes/deployments/details/deployment-details.component';
 import { ServiceListComponent } from './kubernetes/services/list/service-list.component';
 import { ServiceDetailsComponent } from './kubernetes/services/details/service-details.component';
+import { TagDetailsComponent } from './views/tag-details/tag-details.component';
+
 
 export const ADMIRAL_DECLARATIONS = [
   AppComponent,
@@ -122,5 +124,6 @@ export const ADMIRAL_DECLARATIONS = [
   DeploymentListComponent,
   DeploymentDetailsComponent,
   ServiceListComponent,
-  ServiceDetailsComponent
+  ServiceDetailsComponent,
+  TagDetailsComponent
 ];

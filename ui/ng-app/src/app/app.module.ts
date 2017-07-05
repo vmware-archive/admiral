@@ -34,15 +34,17 @@ import * as I18n from 'i18next';
 import { ADMIRAL_DECLARATIONS } from './admiral';
 
 export const ServiceConfig:IServiceConfig = {
-    systemInfoEndpoint: "/hbr-api/system",
+    systemInfoEndpoint: "/hbr-api/systeminfo",
     repositoryBaseEndpoint: "/hbr-api/repositories",
+    vulnerabilityScanningBaseEndpoint: "/hbr-api/repositories",
     logBaseEndpoint: "/hbr-api/logs",
     targetBaseEndpoint: "/hbr-api/targets",
     replicationRuleEndpoint: "/hbr-api/policies/replication",
     replicationJobEndpoint: "/hbr-api/jobs/replication",
     enablei18Support: true,
     langMessageLoader: "http",
-    langMessagePathForHttpLoader: "/hbr-api/i18n/lang/"
+    langMessagePathForHttpLoader: "/hbr-api/i18n/lang/",
+    configurationEndpoint: "/hbr-api/configurations"
 };
 
 

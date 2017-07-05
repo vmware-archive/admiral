@@ -77,6 +77,10 @@ navigation-container > .full-screen {
   overflow-y: auto;
 }
 
+navigation-container > :not(.full-screen) > back-button {
+  display: none;
+}
+
 .main-container .tokenfield {
   @include clr-form-fields-appearance($clr-baselineRem_2_5, $clr-form-field-border-color);
   @include input-border-bottom-animation();

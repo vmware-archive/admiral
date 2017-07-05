@@ -1,3 +1,4 @@
+import { TagDetailsComponent } from './views/tag-details/tag-details.component';
 /*
  * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
  *
@@ -58,7 +59,12 @@ export const ROUTES: Routes = [
                 path: 'dashboard', component: DashboardComponent
             },
             {
-                path: 'project-repositories', component: RepositoryComponent
+                path: 'project-repositories', component: RepositoryComponent,
+                children: [
+                    { path: 'repositories/:rid/tags/:tid', component: TagDetailsComponent, data: {
+                        navigationContainerType: NavigationContainerType.Fullscreen
+                    }},
+                ]
             },
             {
                 path: 'registries', component: RegistriesComponent
@@ -128,6 +134,9 @@ export const ROUTES: Routes = [
                         navigationContainerType: NavigationContainerType.Fullscreen
                      }},
                     { path: ':id/edit', component: ProjectCreateComponent, data: {
+                        navigationContainerType: NavigationContainerType.Fullscreen
+                     }},
+                    { path: ':id/repositories/:rid/tags/:tid', component: TagDetailsComponent, data: {
                         navigationContainerType: NavigationContainerType.Fullscreen
                      }},
                     { path: ':id/add-member', component: ProjectAddMemberComponent, data: {
