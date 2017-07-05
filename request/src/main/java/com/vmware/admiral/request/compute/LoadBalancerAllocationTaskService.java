@@ -448,6 +448,7 @@ public class LoadBalancerAllocationTaskService extends
         lbState.computeLinks = state.computeLinks;
         lbState.endpointLink = this.lbDescription.endpointLink;
         lbState.regionId = this.lbDescription.regionId;
+        lbState.securityGroupLinks = this.lbDescription.securityGroupLinks;
         lbState.tenantLinks = state.tenantLinks;
         lbState.customProperties = mergeCustomProperties(this.lbDescription.customProperties,
                 state.customProperties);

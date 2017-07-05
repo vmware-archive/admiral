@@ -707,7 +707,7 @@ public class ComputeNetworkProvisionTaskService
         }
 
         if (cr.resource instanceof LoadBalancerState) {
-            return patchLoadBalancerState(cr.resource.documentSelfLink,
+            return patchLoadBalancerState(context, cr.resource.documentSelfLink,
                     subnetState.documentSelfLink);
         }
 
@@ -742,10 +742,19 @@ public class ComputeNetworkProvisionTaskService
                         .setBody(computeState));
     }
 
-    private DeferredResult<Operation> patchLoadBalancerState(String loadBalancerLink,
-            String subnetLink) {
+    private DeferredResult<Operation> patchLoadBalancerState(Context context,
+            String loadBalancerLink, String subnetLink) {
+        List<String> securityGroupsToAdd = new ArrayList<>();
+        if (context.isolationSecurityGroup != null) {
+            securityGroupsToAdd.add(context.isolationSecurityGroup.documentSelfLink);
+        }
+        if (context.profile.networkProfile.securityGroupLinks != null) {
+            securityGroupsToAdd.addAll(context.profile.networkProfile.securityGroupLinks);
+        }
+
         LoadBalancerState patchBody = new LoadBalancerState();
         patchBody.subnetLinks = Collections.singleton(subnetLink);
+        patchBody.securityGroupLinks = securityGroupsToAdd.isEmpty() ? null : securityGroupsToAdd;
         return this.sendWithDeferredResult(
                 Operation.createPatch(this, loadBalancerLink).setBody(patchBody));
     }
