@@ -34,12 +34,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.PropertyUtils;
@@ -446,7 +448,7 @@ public class ComputeReservationTaskService extends
                     ComputeDescriptionDiskEnhancer diskEnhancer = new
                             ComputeDescriptionDiskEnhancer(getHost(), referer);
 
-                    List<DeferredResult<Pair<ComputeDescription, ProfileEntry>>> list = profileEntries
+                    List<DeferredResult<Triple<ComputeDescription, ProfileEntry, Throwable>>> list = profileEntries
                             .stream()
                             .flatMap(profileEntry -> profileEntry.profileLinks.stream()
                                     .map(profileLink -> {
@@ -467,7 +469,7 @@ public class ComputeReservationTaskService extends
                                         return Pair.of(context, cloned);
                                     })
                                     .map(p -> {
-                                        DeferredResult<Pair<ComputeDescription, ProfileEntry>> r =
+                                        DeferredResult<Triple<ComputeDescription, ProfileEntry, Throwable>> r =
                                                 new DeferredResult<>();
                                         pe.enhance(p.getLeft(), p.getRight())
                                                 .thenCompose(cd -> instanceTypeEnhancer
@@ -479,10 +481,10 @@ public class ComputeReservationTaskService extends
                                                 .whenComplete((cd, t) -> {
                                                     if (t != null) {
                                                         logInfo(() -> Utils.toString(t));
-                                                        r.complete(Pair.of(cd, null));
+                                                        r.complete(Triple.of(cd, null, t));
                                                         return;
                                                     }
-                                                    r.complete(Pair.of(cd, profileEntry));
+                                                    r.complete(Triple.of(cd, profileEntry, null));
                                                 });
                                         return r;
                                     }))
@@ -496,7 +498,7 @@ public class ComputeReservationTaskService extends
 
                         List<GroupResourcePlacementState> filteredPlacements = all
                                 .stream()
-                                .filter(p -> p.getRight() != null)
+                                .filter(p -> p.getMiddle() != null)
                                 .flatMap(p -> supportsCD(state, placementsByRpLink, p))
                                 .collect(Collectors.toList());
 
@@ -504,8 +506,19 @@ public class ComputeReservationTaskService extends
                                 filteredPlacements);
 
                         if (filteredPlacements.isEmpty()) {
-                            failTask(null, new IllegalStateException(
-                                    "No candidate placements left after endpoint filtering"));
+                            // Now collect the posisble reasons for failure.
+                            StringJoiner stringJoiner = new StringJoiner(",");
+                            all.stream().filter(p -> p.getRight() != null).forEach(triple -> {
+                                stringJoiner.add(triple.getRight().getMessage());
+                            });
+
+                            String errorMessage = "No candidate placements left after endpoint filtering";
+                            if (stringJoiner.length() > 0) {
+                                errorMessage = String.format("%s%s Error: %s", stringJoiner.toString(),
+                                        stringJoiner.toString().endsWith(".") ? "" : ".",
+                                        errorMessage);
+                            }
+                            failTask(stringJoiner.toString(), new IllegalStateException(errorMessage));
                             return;
                         }
 
@@ -615,13 +628,13 @@ public class ComputeReservationTaskService extends
 
     private Stream<GroupResourcePlacementState> supportsCD(ComputeReservationTaskState state,
             HashMap<String, List<GroupResourcePlacementState>> placementsByRpLink,
-            Pair<ComputeDescription, ProfileEntry> pair) {
-        return placementsByRpLink.get(pair.getRight().rpLink).stream()
+            Triple<ComputeDescription, ProfileEntry, Throwable> triple) {
+        return placementsByRpLink.get(triple.getMiddle().rpLink).stream()
                 .filter(p -> {
                     if (p.memoryLimit == 0) {
                         return true;
                     }
-                    if (p.availableMemory >= pair.getLeft().totalMemoryBytes
+                    if (p.availableMemory >= triple.getLeft().totalMemoryBytes
                             * state.resourceCount) {
                         return true;
                     }

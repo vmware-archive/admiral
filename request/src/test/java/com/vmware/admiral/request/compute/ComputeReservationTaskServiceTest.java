@@ -423,7 +423,9 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         task = doPost(task, ComputeReservationTaskService.FACTORY_LINK);
         assertNotNull(task);
 
-        waitForTaskError(task.documentSelfLink, ComputeReservationTaskState.class);
+        ComputeReservationTaskState taskState =  waitForTaskError(task.documentSelfLink,
+                ComputeReservationTaskState.class);
+        assertTrue(taskState.taskInfo.failure.message.contains("No matching storage defined in profile"));
     }
 
     @Test
