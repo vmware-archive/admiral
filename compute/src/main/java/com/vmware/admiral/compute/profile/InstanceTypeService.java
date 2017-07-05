@@ -40,6 +40,10 @@ public class InstanceTypeService extends StatefulService {
         @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL })
         public String endpointType;
 
+        @Documentation(description = "Link to the endpoint this profile is associated with")
+        @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL })
+        public String endpointLink;
+
         /**
          * Instance types provided by the particular endpoint. Keyed by global instance type
          * identifiers used to unify instance types among heterogeneous set of endpoint types.

@@ -178,6 +178,7 @@ public class ComputeProfileService extends StatefulService {
         InstanceTypeState its = new InstanceTypeState();
         its.name = "instance";
         its.endpointType = state.endpointType;
+        its.endpointLink = state.endpointLink;
         its.instanceTypeMapping = state.instanceTypeMapping;
         its.tenantLinks = state.tenantLinks;
         return its;

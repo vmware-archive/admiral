@@ -24,6 +24,7 @@ var links = Immutable({
   COMPUTE_PROFILES: CONFIG + '/compute-profiles',
   NETWORK_PROFILES: CONFIG + '/network-profiles',
   STORAGE_PROFILES: CONFIG + '/storage-profiles',
+  INSTANCE_TYPES: CONFIG + '/instance-types',
 
   COMPUTE_DESCRIPTIONS: RESOURCES + '/compute-descriptions',
   COMPUTE_RESOURCES: RESOURCES + '/compute',

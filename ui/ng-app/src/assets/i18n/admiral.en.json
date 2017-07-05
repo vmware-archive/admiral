@@ -262,6 +262,16 @@
     "profiles": {
       "title": "Profiles"
     },
+    "flavors": {
+      "title": "Flavor Profiles",
+      "edit": "Edit",
+      "delete": {
+        "action": "Delete",
+        "title": "Delete Flavor Profile"
+      },
+      "endpointType": "Endpoint Type",
+      "flavors": "Flavors"
+    },
     "placements": {
       "title": "Placements"
     },

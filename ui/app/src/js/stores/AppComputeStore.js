@@ -79,7 +79,9 @@ let initializeStoreListeners = function() {
   });
 
   ProfilesStore.listen((data) => {
-    if (this.data.centerView && this.data.centerView.name === constants.VIEWS.PROFILES.name) {
+    if (this.data.centerView &&
+        (this.data.centerView.name === constants.VIEWS.PROFILES.name
+         || this.data.centerView.name === constants.VIEWS.INSTANCETYPE.name)) {
       this.setInData(['centerView', 'data'], data);
       this.emitChange();
     }

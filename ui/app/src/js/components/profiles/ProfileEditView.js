@@ -36,9 +36,6 @@ export default Vue.component('profile-edit-view', {
   template: ProfileEditViewVue,
   props: {
     model: {
-      default: () => ({
-        contextView: {}
-      }),
       required: true,
       type: Object
     }

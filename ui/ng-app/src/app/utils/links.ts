@@ -32,6 +32,7 @@ export class Links {
 
   public static CONFIG = '/config';
   public static CONFIG_PROPS = Links.CONFIG + '/props';
+  public static INSTANCE_TYPES = Links.CONFIG + '/instance-types';
 
   public static AUTH = '/auth';
   public static USER_SESSION = Links.AUTH + '/session';

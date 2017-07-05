@@ -519,7 +519,7 @@
         "tagsPlaceholder": "Example: compliance:yes",
         "endpointLabel": "Endpoint",
         "valueLabel": "Value",
-        "instanceTypeMappingLabel": "Instance type",
+        "instanceTypeMappingLabel": "Flavor",
         "instanceTypeMappingDisplay": "{{cpuCount}} CPU, {{memoryInMB}} MB RAM, {{bootDiskSizeInMB}} MB disk",
         "instanceTypeMappingDisplayAWS": "{{cpuCount}} CPU, {{memoryInMB}} MB RAM, {{storageType}} Storage, {{networkType}} Network",
         "imageMappingLabel": "Image type",
@@ -642,6 +642,8 @@
         }
       },
       "instanceType": {
+        "addTitle": "Add Flavor Profile",
+        "editTitle": "Edit Flavor Profile",
         "aws": {
           "small": "Small (1 CPU, 1 GB Memory)",
           "medium": "Medium (1 CPU, 2 GB Memory)",

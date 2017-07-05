@@ -1366,6 +1366,10 @@ services.loadProfile = function(profileId) {
   return get(links.PROFILES + '/' + profileId + '?' + EXPAND_QUERY_PROP_NAME);
 };
 
+services.loadInstanceType = function(instanceTypeId) {
+  return get(links.INSTANCE_TYPES + '/' + instanceTypeId + '?' + EXPAND_QUERY_PROP_NAME);
+};
+
 services.createProfile = function(profile) {
   return post(links.PROFILES, profile);
 };
@@ -1380,6 +1384,14 @@ services.deleteProfile = function(profile) {
 
 services.createComputeProfile = function(profile) {
   return post(links.COMPUTE_PROFILES, profile);
+};
+
+services.createInstanceType = function(instanceType) {
+  return post(links.INSTANCE_TYPES, instanceType);
+};
+
+services.updateInstanceType = function(instanceType) {
+  return put(instanceType.documentSelfLink, instanceType);
 };
 
 services.updateComputeProfile = function(profile) {

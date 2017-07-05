@@ -732,6 +732,7 @@ $main-list-view-right: 10px;
 .compute-edit-view,
 .profile-edit-view,
 .machine-edit-view,
+.instance-type-edit-view,
 .registry-view {
   > .main-panel {
     @extend .position-expand;
@@ -749,6 +750,7 @@ $main-list-view-right: 10px;
 .endpoints-view.right-context-expanded,
 .compute-edit-view.right-context-expanded,
 .profile-edit-view.right-context-expanded,
+.instance-type-edit-view.right-context-expanded,
 .machine-edit-view.right-context-expanded,
 .registry-view.right-context-expanded {
   > .main-panel {
@@ -793,7 +795,8 @@ $main-list-view-right: 10px;
   }
 }
 
-.profile-edit-view {
+.profile-edit-view,
+.instance-type-edit-view {
   > .main-panel {
     @extend .position-expand;
     background-color: $context-view-background-color;

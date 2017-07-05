@@ -176,11 +176,11 @@ export var CertificatesActions = Reflux.createActions([
 ]);
 
 export var ProfileActions = Reflux.createActions([
-  'openProfiles', 'openProfilesNext', 'openAddProfile', 'editProfile',
+  'openProfiles', 'openProfilesNext', 'openAddProfile', 'editProfile', 'openAddInstanceType',
   'cancelEditProfile', 'createProfile', 'updateProfile', 'deleteProfile',
   'createEndpoint', 'manageEndpoints', 'createSubnetwork', 'manageSubnetworks',
   'closeToolbar', 'selectView', 'manageAzureStorageAccounts', 'manageVsphereDatastores',
-  'manageVsphereStoragePolicies'
+  'manageVsphereStoragePolicies', 'createInstanceType', 'updateInstanceType', 'editInstanceType'
 ]);
 
 export var EndpointsActions = Reflux.createActions([
@@ -236,8 +236,9 @@ export var NavigationActions = Reflux.createActions([
   'openTemplates', 'openEventLog', 'openRegistries', 'openContainerRequest', 'openContainers',
   'openNetworks', 'openContainerDetails', 'openClusterDetails', 'openCompositeContainerDetails',
   'openTemplateDetails', 'showContainersPerPlacement', 'showMachinesPerPlacement', 'openPlacements',
-  'openProfiles', 'openAddProfile', 'editProfile', 'openMachines', 'openAddMachine', 'editMachine',
-  'openCompute', 'editCompute', 'openMachineDetails', 'openClosures', 'openClosuresSilently',
-  'openAddClosure', 'openClosureDetails', 'openCompositeClosureDetails', 'openEndpoints',
-  'openEndpointsSilently', 'openAddEndpoint', 'openVolumes'
+  'openProfiles', 'openAddProfile', 'openAddInstanceType', 'editProfile', 'openMachines',
+  'openAddMachine', 'editMachine', 'openCompute', 'editCompute', 'openMachineDetails',
+  'openClosures', 'openClosuresSilently', 'openAddClosure', 'openClosureDetails',
+  'openCompositeClosureDetails', 'openEndpoints', 'openEndpointsSilently', 'openAddEndpoint',
+  'openVolumes', 'openInstanceTypes', 'editInstanceType'
 ]);

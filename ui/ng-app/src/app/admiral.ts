@@ -72,6 +72,9 @@ import { ServiceDetailsComponent } from './kubernetes/services/details/service-d
 import { TagDetailsComponent } from './views/tag-details/tag-details.component';
 import { AllowNavigationDirective } from './directives/shared/allow-navigation.directive';
 
+// compute views
+import { InstanceTypesComponent } from './views/profiles/instance-types/instance-types.component';
+
 export const ADMIRAL_DECLARATIONS = [
   AppComponent,
   TranslatePipe,
@@ -136,5 +139,8 @@ export const ADMIRAL_DECLARATIONS = [
   DeploymentDetailsComponent,
   ServiceListComponent,
   ServiceDetailsComponent,
-  TagDetailsComponent
+  TagDetailsComponent,
+
+  // compute exports
+  InstanceTypesComponent
 ];

@@ -46,6 +46,9 @@ import { LoginComponent } from './components/login/login.component';
 
 import { AuthGuard } from './services/auth-guard.service';
 
+// compute views
+import { InstanceTypesComponent } from './views/profiles/instance-types/instance-types.component';
+
 export const ROUTES: Routes = [
     {
         path: '', redirectTo: 'home', pathMatch: 'full'
@@ -202,6 +205,16 @@ export const ROUTES: Routes = [
             },
             {
                 path: 'profiles', component: FormerPlaceholderViewComponent
+            },
+            {
+                path: 'instance-types', component: InstanceTypesComponent,
+                children: [{
+                  path: 'new',
+                  component: FormerPlaceholderViewComponent
+                }, {
+                  path: ':id',
+                  component: FormerPlaceholderViewComponent
+                }]
             },
             {
                 path: 'placements', component: FormerPlaceholderViewComponent

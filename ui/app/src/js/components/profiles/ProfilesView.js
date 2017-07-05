@@ -12,6 +12,7 @@
 import ProfilesViewVue from 'components/profiles/ProfilesViewVue.html';
 import ProfileItem from 'components/profiles/ProfileItem'; //eslint-disable-line
 import ProfileEditView from 'components/profiles/ProfileEditView'; //eslint-disable-line
+import InstanceTypeEditView from 'components/profiles/instance-types/InstanceTypeEditView'; //eslint-disable-line
 import GridHolderMixin from 'components/common/GridHolderMixin';
 import constants from 'core/constants';
 import { ProfileActions, NavigationActions } from 'actions/Actions';

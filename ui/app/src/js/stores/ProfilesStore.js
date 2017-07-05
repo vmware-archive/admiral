@@ -204,6 +204,13 @@ let ProfilesStore = Reflux.createStore({
     this.emitChange();
   },
 
+  onOpenAddInstanceType() {
+    this.setInData(['editingItemData', 'item'], {});
+    this.setInData(['editingItemData', 'endpoints'], this.data.endpoints);
+    this.emitChange();
+  },
+
+
   onEditProfile(profileId) {
     services.loadProfile(profileId).then((document) => {
       var promises = [];
@@ -291,6 +298,39 @@ let ProfilesStore = Reflux.createStore({
     this.emitChange();
   },
 
+  onEditInstanceType(instanceTypeId) {
+    services.loadInstanceType(instanceTypeId).then((document) => {
+      var promises = [];
+
+      if (document.endpointLink) {
+        promises.push(
+            services.loadEndpoint(document.endpointLink).catch(() => Promise.resolve()));
+      } else {
+        promises.push(Promise.resolve());
+      }
+
+      if (document.tagLinks && document.tagLinks.length) {
+        promises.push(
+            services.loadTags(document.tagLinks).catch(() => Promise.resolve()));
+      } else {
+        promises.push(Promise.resolve());
+      }
+
+      Promise.all(promises).then(([endpoint, tags]) => {
+        if (document.endpointLink && endpoint) {
+          document.endpoint = endpoint;
+        }
+        document.tags = tags ? Object.values(tags) : [];
+
+        this.setInData(['editingItemData', 'item'], Immutable(document));
+        this.setInData(['editingItemData', 'endpoints'], this.data.endpoints);
+        this.emitChange();
+      });
+    }).catch(this.onGenericEditError);
+
+    this.emitChange();
+  },
+
   onCancelEditProfile() {
     this.setInData(['editingItemData'], null);
     this.emitChange();
@@ -349,6 +389,31 @@ let ProfilesStore = Reflux.createStore({
           this.emitChange();
         }).catch(this.onGenericEditError);
       }).catch(this.onGenericEditError);
+    this.setInData(['editingItemData', 'item'], model);
+    this.setInData(['editingItemData', 'validationErrors'], null);
+    this.setInData(['editingItemData', 'saving'], true);
+    this.emitChange();
+  },
+
+  onCreateInstanceType(model) {
+    this.onPersistInstanceType(model, services.createInstanceType);
+  },
+
+  onUpdateInstanceType(model) {
+    this.onPersistInstanceType(model, services.updateInstanceType);
+  },
+
+  onPersistInstanceType(model, persistFunction) {
+    persistFunction(model).then(() => {
+      NavigationActions.openInstanceTypes();
+      // update the model after a slight timeout so the view can change context
+      setTimeout(() => {
+        this.setInData(['editingItemData', 'item'], {});
+        this.setInData(['editingItemData', 'saving'], false);
+        this.emitChange();
+      }, 500);
+    }).catch(this.onGenericEditError);
+
     this.setInData(['editingItemData', 'item'], model);
     this.setInData(['editingItemData', 'validationErrors'], null);
     this.setInData(['editingItemData', 'saving'], true);

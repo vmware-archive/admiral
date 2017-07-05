@@ -71,5 +71,13 @@
 
     <profile-edit-view v-bind:model="model.editingItemData" class="content"></profile-edit-view>
   </div>
+  <!--
+  <div v-if="model.editingItemData" transition="slide-and-fade" class="closable-view">
+    <a class="close-button" v-on:click="goBack($event)"><i
+      class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
+
+    <instance-type-edit-view v-bind:model="model.editingItemData" class="content"></instance-type-edit-view>
+  </div>
+  -->
 
 </div>

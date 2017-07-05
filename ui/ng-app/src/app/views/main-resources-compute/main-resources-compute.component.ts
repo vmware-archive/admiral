@@ -32,7 +32,9 @@ export class MainResourcesComputeComponent implements OnInit, OnDestroy {
       'profiles': 'profiles',
       'placements': 'placements',
       'machines': 'machines',
-      'networks': 'networks'
+      'networks': 'networks',
+      'instance-types/new': 'instance-types/new',
+      'instance-types/edit': 'instance-types/edit'
     }
 
     formerViewPath;
@@ -46,10 +48,12 @@ export class MainResourcesComputeComponent implements OnInit, OnDestroy {
             let url = event.urlAfterRedirects.replace("/compute/", "");
             for (let key in this.formerViewPaths) {
               if (url.startsWith(key)) {
-                this.formerViewPath = this.formerViewPaths[key];
-                break;
+                this.formerViewPath = url.replace(key, this.formerViewPaths[key]);
+                return;
               }
             }
+
+            this.formerViewPath = null;
           }
         }
       });
