@@ -164,7 +164,7 @@ export default Vue.component('endpoint-editor', {
       if (this.isHtmlEditor()) {
         var res = services.encodeSchemeAndHost(this.selectedEndpointType.endpointEditor);
         if (res) {
-          this.htmlEndpointEditorSrc = 'uerp/' + res;
+          this.htmlEndpointEditorSrc = '../uerp/' + res;
         }
       }
 

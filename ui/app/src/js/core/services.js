@@ -2919,7 +2919,7 @@ var adapterAPI = function(contentWindow, component, prepareFetchDataRequest) {
 services.initHtmlEditor = function(frame, component, data, context, prepareFetchDataRequest) {
   var script = frame.contentWindow.document.createElement('script');
   //inject the iframe-resizer client lib
-  script.setAttribute('src', '{host.uri}/lib/iframeResizer.contentWindow.min.js');
+  script.setAttribute('src', '{host.uri}/ogui/lib/iframeResizer.contentWindow.min.js');
   frame.contentWindow.document.head.appendChild(script);
 
   window.iFrameResize({

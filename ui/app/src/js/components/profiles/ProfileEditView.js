@@ -160,7 +160,7 @@ export default Vue.component('profile-edit-view', {
             if (iframe && iframe.close) {
               iframe.close();
             }
-            this.htmlComputeProfileEditorSrc = 'uerp/' + res;
+            this.htmlComputeProfileEditorSrc = '../uerp/' + res;
           }
         }
       }
