@@ -585,7 +585,7 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
 
         ComputeReservationTaskService.ExtensibilityCallbackResponse payload =
                 (ComputeReservationTaskService.ExtensibilityCallbackResponse) service
-                        .notificationPayload();
+                        .notificationPayload(task);
 
         payload.placements = Arrays.asList("p-2");
 

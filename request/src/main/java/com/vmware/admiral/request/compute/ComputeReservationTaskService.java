@@ -786,7 +786,8 @@ public class ComputeReservationTaskService extends
     }
 
     @Override
-    protected BaseExtensibilityCallbackResponse notificationPayload() {
+    protected BaseExtensibilityCallbackResponse notificationPayload(ComputeReservationTaskState
+            state) {
         return new ExtensibilityCallbackResponse();
     }
 

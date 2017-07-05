@@ -48,6 +48,7 @@ import com.vmware.admiral.compute.container.HostPortProfileService;
 import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.compute.container.ServiceNetwork;
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
+import com.vmware.admiral.request.ContainerAllocationTaskService.AllocationExtensibilityCallbackResponse;
 import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState;
 import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState.SubStage;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
@@ -739,7 +740,6 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         Set<SubStage> subscriptionSubStages = allocationTask.taskSubStage.SUBSCRIPTION_SUB_STAGES;
 
         assertNotNull(subscriptionSubStages);
-        assertEquals(1, subscriptionSubStages.size());
         assertTrue(subscriptionSubStages.contains(allocationTask.taskSubStage.BUILD_RESOURCES_LINKS));
     }
 
@@ -772,6 +772,7 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         ContainerAllocationTaskState allocationTask = createContainerAllocationTask();
         allocationTask.customProperties = new HashMap<>();
         allocationTask.customProperties.put("customPropB", "valueB");
+
         allocationTask = allocate(allocationTask);
 
         final String selfLink = allocationTask.documentSelfLink;
@@ -783,9 +784,11 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         ContainerAllocationTaskService service = new ContainerAllocationTaskService();
         service.setHost(host);
 
-        ContainerAllocationTaskService.ExtensibilityCallbackResponse payload =
-                (ContainerAllocationTaskService.ExtensibilityCallbackResponse) service
-                        .notificationPayload();
+        allocationTask.taskSubStage = null;
+
+        AllocationExtensibilityCallbackResponse payload =
+                (AllocationExtensibilityCallbackResponse) service
+                        .notificationPayload(allocationTask);
 
         List<HostSelection> beforeExtensibility = new ArrayList<>(
                 allocationTask.hostSelections);

@@ -30,15 +30,25 @@ import com.vmware.xenon.common.TaskState.TaskStage;
  * Factory service implementing {@link FactoryService} used to create instances of
  * {@link ContainerAllocationTaskService}.
  */
-public class ContainerAllocationTaskFactoryService extends FactoryService implements EventTopicDeclarator {
+public class ContainerAllocationTaskFactoryService extends FactoryService
+        implements EventTopicDeclarator {
     public static final String SELF_LINK = ManagementUriParts.REQUEST_ALLOCATION_TASKS;
 
     //EventTopic constants
     private static final String CONTAINER_ALLOCATION_TOPIC_TASK_SELF_LINK = "container-allocation";
     private static final String CONTAINER_ALLOCATION_TOPIC_ID = "com.vmware.container.allocation.pre";
     private static final String CONTAINER_ALLOCATION_TOPIC_NAME = "Container allocation";
-    private static final String CONTAINER_ALLOCATION_TOPIC_TASK_DESCRIPTION = "Pre allocation for "
-            + "containers";
+    private static final String CONTAINER_ALLOCATION_TOPIC_TASK_DESCRIPTION = "Pre allocation for containers";
+
+    private static final String CONTAINER_PRE_PROVISION_TOPIC_TASK_SELF_LINK = "container-provision";
+    private static final String CONTAINER_PRE_PROVISION_TOPIC_ID = "com.vmware.container.provision.pre";
+    private static final String CONTAINER_PRE_PROVISION_TOPIC_NAME = "Container pre provision";
+    private static final String CONTAINER_PRE_PROVISION_TOPIC_TASK_DESCRIPTION = "Pre provision for containers";
+
+    private static final String CONTAINER_POST_PROVISION_TOPIC_TASK_SELF_LINK = "container-provision-post";
+    private static final String CONTAINER_POST_PROVISION_TOPIC_ID = "com.vmware.container.provision.post";
+    private static final String CONTAINER_POST_PROVISION_TOPIC_NAME = "Container post provisioning";
+    private static final String CONTAINER_POST_PROVISION_TOPIC_TASK_DESCRIPTION = "Post provision for containers";
 
     private static final String CONTAINER_ALLOCATION_TOPIC_FIELD_RESOURCE_NAMES = "resourceNames";
     private static final String CONTAINER_ALLOCATION_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION = "Generated resource names";
@@ -96,9 +106,36 @@ public class ContainerAllocationTaskFactoryService extends FactoryService implem
                 containerAllocationTopicSchema(), taskInfo, host);
     }
 
+    private void containerPreProvisionEventTopic(ServiceHost host) {
+        EventTopicService.TopicTaskInfo taskInfo = new EventTopicService.TopicTaskInfo();
+        taskInfo.task = ContainerAllocationTaskState.class.getSimpleName();
+        taskInfo.stage = TaskStage.STARTED.name();
+        taskInfo.substage = SubStage.START_PROVISIONING.name();
+
+        EventTopicUtils.registerEventTopic(CONTAINER_PRE_PROVISION_TOPIC_ID,
+                CONTAINER_PRE_PROVISION_TOPIC_NAME,
+                CONTAINER_PRE_PROVISION_TOPIC_TASK_DESCRIPTION,
+                CONTAINER_PRE_PROVISION_TOPIC_TASK_SELF_LINK, Boolean.TRUE,
+                new SchemaBuilder(), taskInfo, host);
+    }
+
+    private void containerPostProvisionEventTopic(ServiceHost host) {
+        EventTopicService.TopicTaskInfo taskInfo = new EventTopicService.TopicTaskInfo();
+        taskInfo.task = ContainerAllocationTaskState.class.getSimpleName();
+        taskInfo.stage = TaskStage.FINISHED.name();
+        taskInfo.substage = SubStage.COMPLETED.name();
+
+        EventTopicUtils.registerEventTopic(CONTAINER_POST_PROVISION_TOPIC_ID,
+                CONTAINER_POST_PROVISION_TOPIC_NAME,
+                CONTAINER_POST_PROVISION_TOPIC_TASK_DESCRIPTION,
+                CONTAINER_POST_PROVISION_TOPIC_TASK_SELF_LINK, Boolean.TRUE,
+                new SchemaBuilder(), taskInfo, host);
+    }
+
     @Override
     public void registerEventTopics(ServiceHost host) {
-
         containerAllocationEventTopic(host);
+        containerPreProvisionEventTopic(host);
+        containerPostProvisionEventTopic(host);
     }
 }

@@ -790,6 +790,7 @@ public class RequestBrokerService extends
                 .filter((l) -> l.startsWith(ContainerFactoryService.SELF_LINK))
                 .collect(Collectors.toSet());
         removalState.customProperties = state.customProperties;
+        removalState.tenantLinks = state.tenantLinks;
 
         removalState.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskStage.STARTED, errorState ? SubStage.ERROR : SubStage.ALLOCATED,

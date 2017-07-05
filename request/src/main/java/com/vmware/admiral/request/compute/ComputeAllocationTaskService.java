@@ -1048,7 +1048,8 @@ public class ComputeAllocationTaskService
     }
 
     @Override
-    protected BaseExtensibilityCallbackResponse notificationPayload() {
+    protected BaseExtensibilityCallbackResponse notificationPayload(ComputeAllocationTaskState
+            state) {
         return new ExtensibilityCallbackResponse();
     }
 

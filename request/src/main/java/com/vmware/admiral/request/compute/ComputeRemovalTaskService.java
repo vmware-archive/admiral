@@ -562,7 +562,7 @@ public class ComputeRemovalTaskService extends
     }
 
     @Override
-    protected BaseExtensibilityCallbackResponse notificationPayload() {
+    protected BaseExtensibilityCallbackResponse notificationPayload(ComputeRemovalTaskState state) {
         return new ExtensibilityCallbackResponse();
     }
 

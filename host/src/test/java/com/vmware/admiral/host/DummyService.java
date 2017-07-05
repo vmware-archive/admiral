@@ -97,12 +97,12 @@ public class DummyService
     }
 
     @Override
-    protected BaseExtensibilityCallbackResponse notificationPayload() {
+    protected BaseExtensibilityCallbackResponse notificationPayload(DummyServiceTaskState state) {
         return new CallbackCompleteResponse();
     }
 
     @Override
-    protected ServiceTaskCallbackResponse replyPayload() {
+    protected ServiceTaskCallbackResponse replyPayload(DummyServiceTaskState state) {
         return new CallbackCompleteResponse();
     }
 

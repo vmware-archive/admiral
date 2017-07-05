@@ -24,6 +24,7 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOp
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -50,6 +51,7 @@ import com.vmware.admiral.service.common.CounterSubTaskService.CounterSubTaskSta
 import com.vmware.admiral.service.common.LogService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.TaskServiceDocument;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.Service;
@@ -64,7 +66,8 @@ import com.vmware.xenon.services.common.QueryTask;
  */
 public class ContainerRemovalTaskService
         extends
-        AbstractTaskStatefulService<ContainerRemovalTaskService.ContainerRemovalTaskState, ContainerRemovalTaskService.ContainerRemovalTaskState.SubStage> {
+        AbstractTaskStatefulService<ContainerRemovalTaskService.ContainerRemovalTaskState,
+                ContainerRemovalTaskService.ContainerRemovalTaskState.SubStage> {
 
     public static final String DISPLAY_NAME = "Container Removal";
 
@@ -81,6 +84,9 @@ public class ContainerRemovalTaskService
 
             static final Set<SubStage> TRANSIENT_SUB_STAGES = new HashSet<>(
                     Arrays.asList(INSTANCES_REMOVING, REMOVING_RESOURCE_STATES));
+
+            static final Set<SubStage> SUBSCRIPTION_SUB_STAGES = new HashSet<>(
+                    Arrays.asList(REMOVING_RESOURCE_STATES));
         }
 
         /** (Required) The resources on which the given operation will be applied */
@@ -114,6 +120,7 @@ public class ContainerRemovalTaskService
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);
         super.transientSubStages = SubStage.TRANSIENT_SUB_STAGES;
+        this.subscriptionSubStages = EnumSet.copyOf(SubStage.SUBSCRIPTION_SUB_STAGES);
     }
 
     @Override
@@ -609,4 +616,22 @@ public class ContainerRemovalTaskService
         return operation;
     }
 
+    protected static class ExtensibilityCallbackResponse extends BaseExtensibilityCallbackResponse {
+    }
+
+    @Override
+    protected Collection<String> getRelatedResourcesLinks(ContainerRemovalTaskState state) {
+        return state.resourceLinks;
+    }
+
+    @Override
+    protected Class<? extends ResourceState> getRelatedResourceStateType() {
+        return ContainerState.class;
+    }
+
+    @Override
+    protected BaseExtensibilityCallbackResponse notificationPayload(ContainerRemovalTaskState
+            state) {
+        return new ExtensibilityCallbackResponse();
+    }
 }

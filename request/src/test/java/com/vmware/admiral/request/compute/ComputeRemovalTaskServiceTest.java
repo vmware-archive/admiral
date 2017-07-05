@@ -265,7 +265,7 @@ public class ComputeRemovalTaskServiceTest extends ComputeRequestBaseTest {
 
         ComputeRemovalTaskService.ExtensibilityCallbackResponse payload =
                 (ComputeRemovalTaskService.ExtensibilityCallbackResponse) service
-                        .notificationPayload();
+                        .notificationPayload(state);
 
         payload.customProperties = new HashMap<>();
         payload.customProperties.put(customPropName, "yes");

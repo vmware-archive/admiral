@@ -129,7 +129,7 @@ public class ContainerAllocationTaskService extends
                     Arrays.asList(PROVISIONING));
 
             static final Set<SubStage> SUBSCRIPTION_SUB_STAGES = new HashSet<>(
-                    Arrays.asList(BUILD_RESOURCES_LINKS));
+                    Arrays.asList(BUILD_RESOURCES_LINKS, START_PROVISIONING, COMPLETED));
 
         }
 
@@ -1073,14 +1073,20 @@ public class ContainerAllocationTaskService extends
     }
 
     @Override
-    protected BaseExtensibilityCallbackResponse notificationPayload() {
-        return new ExtensibilityCallbackResponse();
+    protected BaseExtensibilityCallbackResponse notificationPayload(ContainerAllocationTaskState
+            state) {
+        if (state.taskSubStage != SubStage.START_PROVISIONING && state.taskSubStage !=
+                SubStage.COMPLETED) {
+            return new AllocationExtensibilityCallbackResponse();
+        } else {
+            return new BaseExtensibilityCallbackResponse();
+        }
     }
 
     /**
      * Defines fields which are eligible for modification in case of subscription for task.
      */
-    protected static class ExtensibilityCallbackResponse extends BaseExtensibilityCallbackResponse {
+    protected static class AllocationExtensibilityCallbackResponse extends BaseExtensibilityCallbackResponse {
         public Set<String> resourceNames;
         public List<String> hosts;
     }
@@ -1101,8 +1107,8 @@ public class ContainerAllocationTaskService extends
             notificationPayload) {
         if (state.taskSubStage == SubStage.BUILD_RESOURCES_LINKS) {
             //Get host selections.
-            ContainerAllocationTaskService.ExtensibilityCallbackResponse ecr =
-                    (ContainerAllocationTaskService.ExtensibilityCallbackResponse)
+            AllocationExtensibilityCallbackResponse ecr =
+                    (AllocationExtensibilityCallbackResponse)
                             notificationPayload;
             ecr.hosts = new ArrayList<String>(state.hostSelections.stream
                     ().map(hs -> hs.name).collect(Collectors.toList()));
@@ -1115,14 +1121,17 @@ public class ContainerAllocationTaskService extends
     public DeferredResult<Void> enhanceExtensibilityResponse(ContainerAllocationTaskState state,
             ServiceTaskCallbackResponse replyPayload) {
         DeferredResult<Void> dr = new DeferredResult<>();
-        reorderHostSelections(state, replyPayload, () -> dr.complete(null));
+        if (state.taskSubStage != SubStage.START_PROVISIONING && state.taskSubStage !=
+                SubStage.COMPLETED) {
+            reorderHostSelections(state, replyPayload, () -> dr.complete(null));
+        }
         return dr;
     }
 
     protected void reorderHostSelections(ContainerAllocationTaskState state,
             ServiceTaskCallbackResponse replyPayload, Runnable callback) {
 
-        ExtensibilityCallbackResponse response = (ExtensibilityCallbackResponse) replyPayload;
+        AllocationExtensibilityCallbackResponse response = (AllocationExtensibilityCallbackResponse) replyPayload;
 
         //Host selections that have been provided as notification payload
         List<String> selectionsForNotificationPayload = state.hostSelections.stream

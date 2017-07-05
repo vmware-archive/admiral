@@ -297,7 +297,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
 
                 try {
                     ServiceTaskCallbackResponse replyPayload = op
-                            .getBody(this.replyPayload().getClass());
+                            .getBody(this.replyPayload(state).getClass());
 
                     this.patchCommonFields(state, replyPayload).thenCompose(s ->
                             this.enhanceExtensibilityResponse(state, replyPayload))
@@ -314,7 +314,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
                     logSevere(
                             "Failed resuming task from extensibility response. Payload = %s, reply"
                                     + " class = %s", op.getBodyRaw(),
-                            this.replyPayload().getClass());
+                            this.replyPayload(state).getClass());
                     this.failTask("Failed resuming task from extensibility response.", ex);
                 }
             }
@@ -329,7 +329,8 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
                 null || !state.customProperties.containsKey(constructExtensibilityResponseKey(state)))) {
             ExtensibilitySubscriptionManager manager = getExtensibilityManager();
             if (manager != null) {
-                BaseExtensibilityCallbackResponse notificationPayload = this.notificationPayload();
+                BaseExtensibilityCallbackResponse notificationPayload = this.notificationPayload
+                        (state);
 
                 //Once payload being enhanced, manager will sent notification to client.
                 Runnable notificationCallback = () -> {
@@ -337,7 +338,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
                     // Callback will trigger notification call to client.
                     Runnable callback = () -> {
                         manager.sendNotification(manager.getExtensibilitySubscription(state),
-                                notificationPayload, this.replyPayload(), state,
+                                notificationPayload, this.replyPayload(state), state,
                                 this::handleStagePatch);
                     };
 
@@ -345,7 +346,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
                             callback);
                 };
 
-                manager.handleStagePatch(notificationPayload, this.replyPayload(), state,
+                manager.handleStagePatch(notificationPayload, this.replyPayload(state), state,
                         this::handleStagePatch, notificationCallback);
             } else {
                 // ServiceHost is not instance of ManagementHost
@@ -913,15 +914,15 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
     /**
      * Declares service fields which will be sent to client for information about the task.
      */
-    protected BaseExtensibilityCallbackResponse notificationPayload() {
+    protected BaseExtensibilityCallbackResponse notificationPayload(T state) {
         return null;
     }
 
     /**
      * Declares service fields which will be merged once response from subscriber is received.
      */
-    protected ServiceTaskCallbackResponse replyPayload() {
-        return notificationPayload();
+    protected ServiceTaskCallbackResponse replyPayload(T state) {
+        return notificationPayload(state);
     }
 
     /**

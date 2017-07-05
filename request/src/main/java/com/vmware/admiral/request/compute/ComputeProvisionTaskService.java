@@ -530,7 +530,8 @@ public class ComputeProvisionTaskService extends
     }
 
     @Override
-    protected BaseExtensibilityCallbackResponse notificationPayload() {
+    protected BaseExtensibilityCallbackResponse notificationPayload(ComputeProvisionTaskState
+            state) {
         return new ExtensibilityCallbackResponse();
     }
 

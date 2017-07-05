@@ -232,7 +232,7 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
     public void testNotificationPayload() {
         ComputeProvisionTaskService service = new ComputeProvisionTaskService();
         ComputeProvisionTaskService.ExtensibilityCallbackResponse payload =
-                (ExtensibilityCallbackResponse) service.notificationPayload();
+                (ExtensibilityCallbackResponse) service.notificationPayload(null);
 
         List<Field> fields = Arrays.asList(payload.getClass().getFields());
 
@@ -373,7 +373,7 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
         state.resourceLinks = Collections.singleton(computeHost.documentSelfLink);
 
         ComputeProvisionTaskService.ExtensibilityCallbackResponse payload = (ExtensibilityCallbackResponse) service
-                .notificationPayload();
+                .notificationPayload(state);
 
         TestContext context = new TestContext(1, Duration.ofMinutes(1));
 
@@ -422,7 +422,7 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
 
         ComputeAllocationTaskService.ExtensibilityCallbackResponse payload =
                 (ComputeAllocationTaskService.ExtensibilityCallbackResponse) service
-                        .notificationPayload();
+                        .notificationPayload(state);
 
         List<HostSelection> beforeExtensibility = new ArrayList<>(
                 state.selectedComputePlacementHosts);
@@ -487,7 +487,7 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
         state.resourceLinks = Collections.singleton(computeHost.documentSelfLink);
 
         ComputeProvisionTaskService.ExtensibilityCallbackResponse payload = (ExtensibilityCallbackResponse) service
-                .notificationPayload();
+                .notificationPayload(state);
         payload.subnetName = "subnetName";
         payload.addresses = Collections.singleton("10.152.24.52");
 
@@ -515,7 +515,7 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
         state.resourceLinks = Collections.singleton(computeHost.documentSelfLink);
 
         ComputeProvisionTaskService.ExtensibilityCallbackResponse payload = (ExtensibilityCallbackResponse) service
-                .notificationPayload();
+                .notificationPayload(state);
         payload.customProperties = new HashMap<>();
         payload.customProperties.put(prop1, value1);
         payload.customProperties.put(prop2, value2);
@@ -554,7 +554,7 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
         state.resourceLinks = Collections.singleton(computeHost.documentSelfLink);
 
         ComputeProvisionTaskService.ExtensibilityCallbackResponse payload = (ExtensibilityCallbackResponse) service
-                .notificationPayload();
+                .notificationPayload(state);
         payload.tags = new HashMap<>();
         payload.tags.put(prop1, value1);
         payload.tags.put(prop2, value2);
@@ -635,7 +635,7 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
 
         ComputeAllocationTaskService.ExtensibilityCallbackResponse payload =
                 (ComputeAllocationTaskService.ExtensibilityCallbackResponse) service
-                        .notificationPayload();
+                        .notificationPayload(state);
         payload.hostSelections = Arrays.asList("hs1", "hs2");
 
         TestContext context = new TestContext(1, Duration.ofMinutes(1));
