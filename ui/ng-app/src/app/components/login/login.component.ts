@@ -30,8 +30,8 @@ export class LoginComponent {
   constructor(private authService: AuthService) { }
 
   login() {
-    this.username = this.username.trim();
-    this.password = this.password.trim();
+    this.username = this.username ? this.username.trim() : '';
+    this.password = this.password ? this.password.trim() : '';
     this.hasError = false;
     this.loading = true;
 

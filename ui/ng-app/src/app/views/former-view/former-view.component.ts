@@ -1,3 +1,4 @@
+import { Utils } from './../../utils/utils';
 import { Component, OnInit, OnDestroy, ViewChild, ViewEncapsulation, Input } from '@angular/core';
 import { Router, ActivatedRoute, Route, RoutesRecognized, NavigationEnd, NavigationCancel } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -30,6 +31,10 @@ export class FormerViewComponent {
     }
 
     this.url += '#' + val;
+
+    if (Utils.isLogin()) {
+      return;
+    }
 
     let iframeEl = this.theFrame.nativeElement;
     if (!iframeEl.src) {

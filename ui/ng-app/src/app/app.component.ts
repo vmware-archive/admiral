@@ -13,10 +13,9 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { ViewExpandRequestService } from './services/view-expand-request.service';
 import { FT } from './utils/ft';
+import { Utils } from './utils/utils';
 import { DocumentService } from './utils/document.service';
 import { AuthService } from './utils/auth.service';
-
-const LOGIN_PATH="/login/"
 
 @Component({
     selector: 'my-app',
@@ -45,7 +44,7 @@ export class AppComponent {
     }
 
     get isLogin(): boolean {
-        return location.pathname.indexOf(LOGIN_PATH) > -1;
+        return Utils.isLogin();
     }
 
     get compute(): boolean {

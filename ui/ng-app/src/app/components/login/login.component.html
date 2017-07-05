@@ -17,8 +17,8 @@
             <span *ngIf="isVic">{{"productNames.vic" | i18n: { "ns": "base" } }}</span>
         </label>
         <div class="login-group">
-            <input class="username" [(ngModel)]="username" name="username" type="text" placeholder="{{'loginPanel.username' | i18n: { 'ns': 'base' } }}">
-            <input class="password" [(ngModel)]="password" name="password" type="password" placeholder="{{'loginPanel.password' | i18n: { 'ns': 'base' } }}">
+            <input class="username" (keyup.enter)="login()" [(ngModel)]="username" name="username" type="text" placeholder="{{'loginPanel.username' | i18n: { 'ns': 'base' } }}">
+            <input class="password" (keyup.enter)="login()" [(ngModel)]="password" name="password" type="password" placeholder="{{'loginPanel.password' | i18n: { 'ns': 'base' } }}">
             <div *ngIf="hasError" class="error active">
                 {{"loginPanel.failure" | i18n: { "ns": "base" } }}
             </div>

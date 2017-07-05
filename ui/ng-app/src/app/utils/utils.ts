@@ -11,6 +11,8 @@
 
 import * as I18n from 'i18next';
 
+const LOGIN_PATH="/login/"
+
 export class Utils {
   public static ERROR_NOT_FOUND = 404;
 
@@ -235,6 +237,10 @@ export class Utils {
       return shouldRound ? Math.floor(memoryUsagePct) : Math.round(memoryUsagePct * 100) / 100;
     }
     return 0;
+  }
+
+  public static isLogin(): boolean {
+    return location.pathname.indexOf(LOGIN_PATH) > -1;
   }
 }
 
