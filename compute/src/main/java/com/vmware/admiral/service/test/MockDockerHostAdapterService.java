@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -66,11 +66,11 @@ public class MockDockerHostAdapterService extends BaseMockAdapterService {
         AdapterRequest request = op.getBody(AdapterRequest.class);
         request.validate();
 
-        if (ContainerHostOperationType.PING.id == request.operationTypeId
+        if (ContainerHostOperationType.PING.id.equals(request.operationTypeId)
                 && ComputeService.FACTORY_LINK.equals(request.resourceReference.getPath())) {
             op.complete();
 
-        } else if (ContainerHostOperationType.LIST_CONTAINERS.id == request.operationTypeId) {
+        } else if (ContainerHostOperationType.LIST_CONTAINERS.id.equals(request.operationTypeId)) {
             ContainerListCallback callbackResponse = new ContainerListCallback();
             callbackResponse.containerHostLink = request.resourceReference.getPath();
             String hostId = Service.getId(request.resourceReference.getPath());
@@ -85,7 +85,7 @@ public class MockDockerHostAdapterService extends BaseMockAdapterService {
             op.setBody(callbackResponse);
             op.complete();
 
-        } else if (ContainerHostOperationType.LIST_NETWORKS.id == request.operationTypeId) {
+        } else if (ContainerHostOperationType.LIST_NETWORKS.id.equals(request.operationTypeId)) {
             NetworkListCallback callbackResponse = new NetworkListCallback();
             callbackResponse.containerHostLink = request.resourceReference.getPath();
             String hostId = Service.getId(request.resourceReference.getPath());
@@ -97,7 +97,7 @@ public class MockDockerHostAdapterService extends BaseMockAdapterService {
             patchTaskStage(request, null, callbackResponse);
             op.setBody(callbackResponse);
             op.complete();
-        } else if (ContainerHostOperationType.LIST_VOLUMES.id == request.operationTypeId) {
+        } else if (ContainerHostOperationType.LIST_VOLUMES.id.equals(request.operationTypeId)) {
             VolumeListCallback callbackResponse = new VolumeListCallback();
             callbackResponse.containerHostLink = request.resourceReference.getPath();
             String hostId = Service.getId(request.resourceReference.getPath());
@@ -106,7 +106,7 @@ public class MockDockerHostAdapterService extends BaseMockAdapterService {
             patchTaskStage(request, null, callbackResponse);
             op.setBody(callbackResponse);
             op.complete();
-        } else if (ContainerHostOperationType.INFO.id == request.operationTypeId) {
+        } else if (ContainerHostOperationType.INFO.id.equals(request.operationTypeId)) {
             sendRequest(Operation
                     .createGet(request.resourceReference)
                     .setCompletion(
@@ -142,7 +142,7 @@ public class MockDockerHostAdapterService extends BaseMockAdapterService {
 
         if (properties != null && !properties.isEmpty()) {
             if (computeState.customProperties == null) {
-                computeState.customProperties = new HashMap<String, String>();
+                computeState.customProperties = new HashMap<>();
             }
 
             for (Map.Entry<String, Object> entry : properties.entrySet()) {
@@ -152,8 +152,7 @@ public class MockDockerHostAdapterService extends BaseMockAdapterService {
 
         sendRequest(Operation
                 .createPatch(request.resourceReference)
-                .setBody(computeState).setCompletion((o, ex) -> {
-                    patchTaskStage(request, ex);
-                }));
+                .setBody(computeState)
+                .setCompletion((o, ex) -> patchTaskStage(request, ex)));
     }
 }
