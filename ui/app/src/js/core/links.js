@@ -102,6 +102,7 @@ var links = Immutable({
 
   IMAGE_ENUMERATION: PROVISIONING + '/image-enumeration-tasks',
   RESOURCE_ENUMERATION: PROVISIONING + '/resource-enumeration-tasks',
+  AWS_VOLUME_TYPE_ENUMERATION: PROVISIONING + '/aws/volume-type-enumeration-adapter',
 
   LONG_URI_GET: UTIL + '/long-uri-get'
 });

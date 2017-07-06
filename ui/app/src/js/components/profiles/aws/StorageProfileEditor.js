@@ -144,6 +144,7 @@ Vue.component('aws-storage-item', {
         }));
       });
     }
+    this.filterVolumeTypes();
   },
   data() {
     let diskProperties = this.storageItem.diskProperties;
@@ -152,7 +153,7 @@ Vue.component('aws-storage-item', {
       this.storageItem.name = `${i18n.t('app.profile.edit.itemHeader')} ${this.index}`;
     }
     return {
-      volumeTypes: VOLUME_TYPES,
+      volumeTypes: [],
       volumeType: diskProperties.volumeType || '',
       deviceTypes: DEVICE_TYPES,
       deviceType: diskProperties.deviceType || '',
@@ -203,6 +204,7 @@ Vue.component('aws-storage-item', {
       this.onDiskPropertyChange('volumeType', $event.target.value);
     },
     onDeviceTypeChange($event) {
+      this.filterVolumeTypes();
       this.onDiskPropertyChange('deviceType', $event.target.value);
     },
     onIOPSChange($event) {
@@ -210,6 +212,16 @@ Vue.component('aws-storage-item', {
     },
     onEncryptionChange(value) {
       this.storageItem.supportsEncryption = value;
+    },
+    filterVolumeTypes() {
+      if (this.deviceType) {
+        services.loadAwsVolumeTypes(this.deviceType).then((obj) => {
+          let volumeTypes = obj && obj.volumeTypes || [];
+          this.volumeTypes = VOLUME_TYPES.filter((volumeType) => {
+            return volumeTypes.indexOf(volumeType.value) !== -1;
+          });
+        });
+      }
     },
     isValid() {
       if (!this.deviceType || !this.storageItem.name) {

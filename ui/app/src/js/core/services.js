@@ -2370,6 +2370,13 @@ services.loadVsphereDatastores = function(endpointLink, nameFilter, storagePolic
   }));
 };
 
+services.loadAwsVolumeTypes = function(deviceType) {
+  return get(mergeUrl(links.AWS_VOLUME_TYPE_ENUMERATION, {
+    deviceType: deviceType,
+    documentType: true
+  }));
+};
+
 services.updateVsphereDatastore = function(datastore) {
   return patch(datastore.documentSelfLink, {
     supportsEncryption: datastore.supportsEncryption
