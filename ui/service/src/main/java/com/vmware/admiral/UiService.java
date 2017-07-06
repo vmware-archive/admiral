@@ -13,6 +13,7 @@ package com.vmware.admiral;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.UriUtils;
 
 public class UiService extends BaseUiService {
     public static final String SELF_LINK = ManagementUriParts.UI_SERVICE;
@@ -23,15 +24,28 @@ public class UiService extends BaseUiService {
     public void handleStart(Operation startPost) {
         super.handleStart(startPost);
 
-        startForwardingService("/assets/i18n/base",
-                ManagementUriParts.UI_OG_SERVICE + "/messages/admiral");
-        startForwardingService(LOGIN_PATH + "assets/i18n/base",
-                ManagementUriParts.UI_OG_SERVICE + "/messages/admiral");
-        startForwardingService(LOGIN_PATH + "assets/i18n", "/assets/i18n");
-        startForwardingService(LOGIN_PATH, ManagementUriParts.UI_SERVICE);
+        startForwardingService(UriUtils.buildUriPath(SELF_LINK, "assets/i18n/base"),
+                UriUtils.buildUriPath(ManagementUriParts.UI_OG_SERVICE, "messages/admiral"));
+        startForwardingService(UriUtils.buildUriPath(SELF_LINK, LOGIN_PATH, "assets/i18n/base"),
+                UriUtils.buildUriPath(ManagementUriParts.UI_OG_SERVICE, "messages/admiral"));
+        startForwardingService(UriUtils.buildUriPath(SELF_LINK, LOGIN_PATH, "assets/i18n"),
+                UriUtils.buildUriPath(SELF_LINK, "assets/i18n"));
+
+        String loginServicePath = UriUtils.buildUriPath(SELF_LINK, LOGIN_PATH);
+        if (!loginServicePath.endsWith(UriUtils.URI_PATH_CHAR)) {
+            loginServicePath += UriUtils.URI_PATH_CHAR;
+        }
+
+        String uiServicePath = ManagementUriParts.UI_SERVICE;
+        if (!uiServicePath.endsWith(UriUtils.URI_PATH_CHAR)) {
+            uiServicePath += UriUtils.URI_PATH_CHAR;
+        }
+
+        startForwardingService(loginServicePath, uiServicePath);
 
         // TODO: remove after new UI is active in CS
-        startRedirectService("/index-embedded.html", "ogui/index-embedded.html");
+        startRedirectService(UriUtils.buildUriPath(SELF_LINK, "/index-embedded.html"),
+                UriUtils.buildUriPath(ManagementUriParts.UI_OG_SERVICE, "/index-embedded.html"));
     }
 
     @Override

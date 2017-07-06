@@ -243,13 +243,14 @@ public interface ManagementUriParts {
     String KV_STORE = "/kv-store";
     // UI Service:
     String UI_SERVICE = System.getProperty("dcp.management.ui.path", "/");
-    String UI_NG_SERVICE = UI_SERVICE + "ng";
-    String UI_OG_SERVICE = UI_SERVICE + "ogui";
-    String UI_COMPUTE_SERVICE = UI_SERVICE + "iaas";
+    String UI_NG_SERVICE = UriUtils.buildUriPath(UI_SERVICE, "ng");
+    String UI_OG_SERVICE = UriUtils.buildUriPath(UI_SERVICE, "ogui");
+    String UI_COMPUTE_SERVICE = UriUtils.buildUriPath(UI_SERVICE, "iaas");
 
-    String CONTAINER_ICONS_RESOURCE_PATH = UI_SERVICE + "/container-icons";
-    String CONTAINER_IDENTICONS_RESOURCE_PATH = UI_SERVICE + "/container-identicons";
-    String CONTAINER_IMAGE_ICONS = UI_SERVICE + "/container-image-icons";
+    String CONTAINER_ICONS_RESOURCE_PATH = UriUtils.buildUriPath(UI_SERVICE, "/container-icons");
+    String CONTAINER_IDENTICONS_RESOURCE_PATH = UriUtils.buildUriPath(UI_SERVICE,
+            "/container-identicons");
+    String CONTAINER_IMAGE_ICONS = UriUtils.buildUriPath(UI_SERVICE, "/container-image-icons");
 
     String REVERSE_PROXY = "/rp";
     String HBR_REVERSE_PROXY = "/hbr-api";
