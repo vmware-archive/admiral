@@ -12,6 +12,7 @@
 package com.vmware.admiral;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import static com.vmware.admiral.BaseProvisioningOnCoreOsIT.RegistryType.V1_SSL_SECURE;
@@ -256,8 +257,9 @@ public class BaseClosureIntegrationTest extends BaseProvisioningOnCoreOsIT {
         Closure fetchedClosure = getClosure(link, serviceClient);
         long startTime = System.currentTimeMillis();
         while (state != fetchedClosure.state
-                && !isFinished(fetchedClosure.state)
-                && isTimeoutNotElapsed(startTime, timeout)) {
+                && !isFinished(fetchedClosure.state)) {
+            verifyTimeout(timeout, fetchedClosure, startTime);
+
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
@@ -265,8 +267,16 @@ public class BaseClosureIntegrationTest extends BaseProvisioningOnCoreOsIT {
             }
             fetchedClosure = getClosure(link, serviceClient);
         }
+
         logger.info("Closure state: %s link: %s", fetchedClosure.state,
                 fetchedClosure.documentSelfLink);
+    }
+
+    private void verifyTimeout(int timeout, Closure fetchedClosure, long startTime) {
+        boolean isNotTimeouted = isTimeoutNotElapsed(startTime, timeout);
+        assertTrue("Timeout of " + timeout + " seconds elapsed! Test considered as FAILED! "
+                + "Closure state: " + fetchedClosure.state + " Closure link: " +
+                fetchedClosure.documentSelfLink, isNotTimeouted);
     }
 
     private boolean isFinished(TaskState.TaskStage state) {
