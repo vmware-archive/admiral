@@ -199,6 +199,20 @@ public class NetworkProfileServiceTest extends ComputeBaseTest {
         assertEquals((Object)20, networkProfile.isolatedSubnetCIDRPrefix);
     }
 
+    @Test
+    public void testCreateNetworkProfileWithExtension() throws Throwable {
+        // use another network profile as extension
+        NetworkProfile networkProfileExtension = new NetworkProfile();
+        networkProfileExtension.name = "networkProfileExtension";
+
+        NetworkProfile networkProfile = new NetworkProfile();
+        networkProfile.name = "networkProfile";
+        networkProfile.extensionData = networkProfileExtension;
+
+        networkProfile = doPost(networkProfile, NetworkProfileService.FACTORY_LINK);
+        assertNotNull(networkProfile.extensionData);
+    }
+
     private ComputeNetworkCIDRAllocationState createNetworkCIDRAllocationState() throws Throwable {
         NetworkState network = new NetworkState();
         network.subnetCIDR = NETWORK_CIDR;

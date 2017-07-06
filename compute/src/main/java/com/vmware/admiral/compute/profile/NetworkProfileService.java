@@ -17,6 +17,7 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOp
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -100,6 +101,11 @@ public class NetworkProfileService extends StatefulService {
                 + "length: 20.")
         public Integer isolatedSubnetCIDRPrefix;
 
+        @Documentation(description = "Network profile extension data in the adapter specific format"
+                + " to store selections specific to the networking adapter")
+        @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL, OPTIONAL })
+        public Object extensionData;
+
         /**
          * Defines the isolation network support this network profile provides.
          */
@@ -122,6 +128,7 @@ public class NetworkProfileService extends StatefulService {
                         this.isolationNetworkCIDRAllocationLink;
                 targetState.isolationNetworkCIDR = this.isolationNetworkCIDR;
                 targetState.isolatedSubnetCIDRPrefix = this.isolatedSubnetCIDRPrefix;
+                targetState.extensionData = this.extensionData;
             }
         }
     }
@@ -334,6 +341,7 @@ public class NetworkProfileService extends StatefulService {
         np.tagLinks = new HashSet<>();
         np.subnetLinks = new ArrayList<>();
         np.securityGroupLinks = new ArrayList<>();
+        np.extensionData = new HashMap<>();
         return np;
     }
 

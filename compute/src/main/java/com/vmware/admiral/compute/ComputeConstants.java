@@ -61,6 +61,8 @@ public class ComputeConstants {
     public static final String OVF_PROP_PREFIX = "ovf.prop:";
     public static final String OVF_COREOS_CLOUD_INIT_PROP = "guestinfo.coreos.config.data";
 
+    public static final String CUSTOM_PROP_NETWORK_PROFILE_EXTENSION_DATA = "__networkProfileExtensionData";
+
     /**
      * A key for the custom properties property which value stores serialized to json custom
      * payload.

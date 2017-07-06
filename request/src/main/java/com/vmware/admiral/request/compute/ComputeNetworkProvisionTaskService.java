@@ -31,6 +31,7 @@ import java.util.stream.Stream;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.ServiceUtils;
+import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService.ComputeNetworkCIDRAllocationRequest;
 import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService.ComputeNetworkCIDRAllocationState;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
@@ -510,7 +511,14 @@ public class ComputeNetworkProvisionTaskService
             subnet.lifecycleState = LifecycleState.PROVISIONING;
 
             subnet.customProperties = context.computeNetwork.customProperties;
-
+            if (context.profile.networkProfile.extensionData != null) {
+                subnet.customProperties = subnet.customProperties == null ?
+                        new HashMap<>() :
+                        subnet.customProperties;
+                subnet.customProperties.put(
+                        ComputeConstants.CUSTOM_PROP_NETWORK_PROFILE_EXTENSION_DATA,
+                        Utils.toJson(context.profile.networkProfile.extensionData));
+            }
             context.subnet = subnet;
 
             return DeferredResult.completed(context);
@@ -608,7 +616,8 @@ public class ComputeNetworkProvisionTaskService
         subnet.groupLinks = context.computeNetwork.groupLinks;
         String contextId = RequestUtils.getContextId(context.state);
         if (contextId != null) {
-            subnet.customProperties = new HashMap<>();
+            subnet.customProperties = subnet.customProperties == null ?
+                    new HashMap<>() : subnet.customProperties;
             subnet.customProperties.put(FIELD_NAME_CONTEXT_ID_KEY, contextId);
         }
 
