@@ -29,8 +29,10 @@ export class ClusterAddHostComponent implements AfterViewInit {
     @Input() visible: boolean;
 
     credentials: any[];
-    alertMessage: string;
     isAddingHost: boolean;
+    showCertificateWarning: boolean;
+    certificate: any;
+    alertMessage: string;
 
     @Output() onChange: EventEmitter<any> = new EventEmitter();
     @Output() onCancel: EventEmitter<any> = new EventEmitter();
@@ -48,8 +50,9 @@ export class ClusterAddHostComponent implements AfterViewInit {
         });
     }
 
-    clearForm() {
+    clearView() {
         this.resetAlert();
+        this.isAddingHost = false;
         this.addHostToClusterForm.reset();
         this.addHostToClusterForm.markAsPristine();
     }
@@ -58,19 +61,60 @@ export class ClusterAddHostComponent implements AfterViewInit {
         this.alertMessage = null;
     }
 
-    addCanceled() {
-        this.clearForm();
-        this.onCancel.emit(null);
-    }
-
     getCredentialsName(credentials) {
         let name = Utils.getCustomPropertyValue(credentials.customProperties, '__authCredentialsName');
         return name ? name : credentials.documentId;
     }
 
-    addHost() {
-        if (this.addHostToClusterForm.valid) {
+    declineCertificate() {
+        this.showCertificateWarning = false;
+        this.isAddingHost = false;
+    }
 
+    acceptCertificate() {
+        this.showCertificateWarning = false;
+        this.addHost(true);
+    }
+
+    addHostCanceled() {
+        this.clearView();
+        this.onCancel.emit(null);
+    }
+
+    addHost(certificateAccepted: boolean) {
+        if (this.addHostToClusterForm.valid) {
+            this.isAddingHost = true;
+
+            let formInput = this.addHostToClusterForm.value;
+            let hostState = {
+                'address': formInput.address,
+                'tenantLinks': [Links.PROJECTS + '/default-project'],
+                'customProperties': {
+                    '__containerHostType': 'DOCKER',
+                    '__adapterDockerType': 'API'
+                }
+            };
+
+            if (formInput.credentials) {
+                hostState.customProperties['__authCredentialsLink'] = formInput.credentials;
+            }
+
+            let hostSpec = {
+                'hostState': hostState,
+                'acceptCertificate': certificateAccepted
+            };
+            this.service.post(this.cluster.documentSelfLink + '/hosts', hostSpec).then((response) => {
+                if (response && response.certificate) {
+                    this.certificate = response;
+                    this.showCertificateWarning = true;
+                } else {
+                    this.clearView();
+                    this.onChange.emit(null);
+                }
+            }).catch(error => {
+                this.isAddingHost = false;
+                this.alertMessage = Utils.getErrorMessage(error)._generic;
+            });
         }
     }
 }

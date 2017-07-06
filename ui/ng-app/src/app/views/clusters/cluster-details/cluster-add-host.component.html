@@ -9,7 +9,7 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<clr-modal [clrModalOpen]="visible" (clrModalOpenChange)="addCanceled()">
+<clr-modal [clrModalOpen]="visible" (clrModalOpenChange)="addHostCanceled()">
     <h3 class="modal-title">{{ "clusters.resources.addHost.title" | i18n }}</h3>
     <div class="modal-body">
         <clr-alert [clrAlertType]="'alert-danger'" [(clrAlertClosed)]="!alertMessage"  (clrAlertClosedChange)="resetAlert()">
@@ -37,9 +37,15 @@
                 </div>
             </section>
         </form>
+        <!-- Untrusted certificate prompt -->
+        <verify-certificate [visible]="showCertificateWarning"
+                            [hostAddress]="addHostToClusterForm.value.address"
+                            [certificate]="certificate"
+                            (onAccept)="acceptCertificate()"
+                            (onDecline)="declineCertificate()"></verify-certificate>
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-outline" [disabled]="isAddingHost" (click)="addCanceled()">{{"cancel" | i18n}}</button>
-        <button [clrLoading]="isAddingHost" type="button" class="btn btn-primary" [disabled]="addHostToClusterForm.invalid || isAddingHost" (click)="addHost()">{{ "add" | i18n }}</button>
+        <button type="button" class="btn btn-outline" [disabled]="isAddingHost" (click)="addHostCanceled()">{{"cancel" | i18n}}</button>
+        <button [clrLoading]="isAddingHost" type="button" class="btn btn-primary" [disabled]="addHostToClusterForm.invalid || isAddingHost" (click)="addHost(false)">{{ "add" | i18n }}</button>
     </div>
 </clr-modal>

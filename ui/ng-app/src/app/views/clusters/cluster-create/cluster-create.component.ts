@@ -57,8 +57,8 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
   entityInitialized() {
     this.isEdit = true;
     this.clusterForm.get('name').setValue(this.entity.name);
-    if (this.entity.description) {
-      this.clusterForm.get('description').setValue(this.entity.description);
+    if (this.entity.details) {
+      this.clusterForm.get('description').setValue(this.entity.details);
     }
     this.clusterForm.get('type').setValue(this.entity.type);
     if (this.entity.address) {
@@ -104,8 +104,13 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
   private updateCluster() {
     let name = this.clusterForm.value.name;
     if (name) {
+      let description = this.clusterForm.value.description;
+      let clusterDtoPatch = {
+        'name': name,
+        'details':  description
+      };
       this.isSaving = true;
-      this.service.patch(this.entity.documentSelfLink, { 'name': name }).then(() => {
+      this.service.patch(this.entity.documentSelfLink, clusterDtoPatch).then(() => {
         this.toggleModal(false);
       }).catch(error => {
         this.isSaving = false;

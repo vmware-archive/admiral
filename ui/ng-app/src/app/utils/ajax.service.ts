@@ -86,7 +86,7 @@ export class Ajax {
    * @return {Object}           the payload trimmed to only its content
    */
   private trimMetadata(result) {
-    if (result.content) {
+    if (result && result.content) {
       return result.content;
     } else {
       return result;

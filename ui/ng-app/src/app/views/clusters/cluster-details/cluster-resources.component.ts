@@ -72,8 +72,13 @@ export class ClusterResourcesComponent implements OnChanges {
     this.showAddHost = true;
   }
 
-  addCanceled() {
+  onAddHostCanceled() {
     this.showAddHost = false;
+  }
+
+  onHostAdded() {
+    this.showAddHost = false;
+    this.gridView.refresh();
   }
 
   getContainersCount(host) {
