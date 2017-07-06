@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.compute.cluster;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
@@ -35,6 +36,7 @@ import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 
 public class ClusterUtils {
 
@@ -54,17 +56,23 @@ public class ClusterUtils {
     }
 
     public static DeferredResult<List<ComputeState>> getHostsWihtinPlacementZone(
-            String resourcePoolLink, ServiceHost host) {
+            String resourcePoolLink, String projectLink, ServiceHost host) {
         if (resourcePoolLink == null) {
             return null;
         }
 
-        Query query = Query.Builder.create()
+        Query.Builder queryBuilder = Query.Builder.create()
                 .addKindFieldClause(ComputeState.class)
                 .addFieldClause(ComputeState.FIELD_NAME_RESOURCE_POOL_LINK, resourcePoolLink)
                 .addCompositeFieldClause(ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
-                        ComputeConstants.COMPUTE_CONTAINER_HOST_PROP_NAME, "true")
-                .build();
+                        ComputeConstants.COMPUTE_CONTAINER_HOST_PROP_NAME, "true");
+
+        if (projectLink != null && !projectLink.isEmpty()) {
+            queryBuilder.addInCollectionItemClause(ComputeState.FIELD_NAME_TENANT_LINKS,
+                    Collections.singletonList(projectLink), Occurance.MUST_OCCUR);
+        }
+
+        Query query = queryBuilder.build();
 
         QueryUtils.QueryByPages<ComputeState> queryHelper = new QueryUtils.QueryByPages<>(
                 host, query, ComputeState.class, null);

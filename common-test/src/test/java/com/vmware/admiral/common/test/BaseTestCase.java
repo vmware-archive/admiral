@@ -196,6 +196,8 @@ public abstract class BaseTestCase {
         resultHost.setMaintenanceIntervalMicros(this.getMaintenanceIntervalMillis() * 1000);
         resultHost.setTimeoutSeconds(HOST_TIMEOUT_SECONDS);
 
+        setPrivilegedServices(resultHost);
+
         resultHost.start();
 
         return resultHost;
@@ -283,6 +285,9 @@ public abstract class BaseTestCase {
         TestContext ctx = testCreate(serviceLinks.length);
         h.registerForServiceAvailability(ctx.getCompletion(), serviceLinks);
         ctx.await();
+    }
+
+    protected void setPrivilegedServices(VerificationHost host) {
     }
 
     protected URI register(VerificationHost host, Class<? extends Service> type)

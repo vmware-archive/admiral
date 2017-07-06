@@ -12,8 +12,10 @@
 package com.vmware.admiral.compute.container;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.xenon.common.FactoryService;
+import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 
 /**
@@ -34,5 +36,11 @@ public class CompositeComponentFactoryService extends FactoryService {
     @Override
     public Service createServiceInstance() throws Throwable {
         return new CompositeComponentService();
+    }
+
+    @Override
+    public void handleGet(Operation get) {
+        OperationUtil.transformProjectHeaderToFilterQuery(get);
+        super.handleGet(get);
     }
 }

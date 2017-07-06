@@ -61,6 +61,7 @@ import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.xenon.common.CommandLineArgumentParser;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -103,7 +104,6 @@ public abstract class AuthBaseTest extends BaseTestCase {
     public void beforeForAuthBase() throws Throwable {
         host.setSystemAuthorizationContext();
 
-        setPrivilegedServices();
         startServices(host);
 
         waitForServiceAvailability(AuthInitialBootService.SELF_LINK);
@@ -135,7 +135,8 @@ public abstract class AuthBaseTest extends BaseTestCase {
         ProjectInterceptor.register(registry);
     }
 
-    protected void setPrivilegedServices() {
+    @Override
+    protected void setPrivilegedServices(VerificationHost host) {
         host.addPrivilegedService(SessionService.class);
     }
 
@@ -480,6 +481,26 @@ public abstract class AuthBaseTest extends BaseTestCase {
         host.send(create);
         ctx.await();
         return Utils.fromJson(responseBody[0], stateType);
+    }
+
+    protected ServiceDocumentQueryResult getDocumentsWithinProject(String factoryLink, String
+            projectLink) {
+        TestContext ctx = testCreate(1);
+        final ServiceDocumentQueryResult[] result = new ServiceDocumentQueryResult[1];
+        Operation get = Operation.createGet(host, factoryLink)
+                .setReferer(host.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        ctx.failIteration(ex);
+                        return;
+                    }
+                    result[0] = o.getBody(ServiceDocumentQueryResult.class);
+                    ctx.completeIteration();
+                });
+        setProjectHeader(projectLink, get);
+        host.send(get);
+        ctx.await();
+        return result[0];
     }
 
     public static Operation setProjectHeader(String projectLink, Operation op) {

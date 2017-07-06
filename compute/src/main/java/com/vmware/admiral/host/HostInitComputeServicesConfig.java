@@ -33,6 +33,7 @@ import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.CompositeComponentRegistry;
 import com.vmware.admiral.compute.container.CompositeDescriptionCloneService;
 import com.vmware.admiral.compute.container.CompositeDescriptionFactoryService;
+import com.vmware.admiral.compute.container.ContainerDescriptionFactoryService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerFactoryService;
@@ -53,12 +54,16 @@ import com.vmware.admiral.compute.container.loadbalancer.ContainerLoadBalancerDe
 import com.vmware.admiral.compute.container.loadbalancer.ContainerLoadBalancerDescriptionService.ContainerLoadBalancerDescription;
 import com.vmware.admiral.compute.container.loadbalancer.ContainerLoadBalancerService;
 import com.vmware.admiral.compute.container.loadbalancer.ContainerLoadBalancerService.ContainerLoadBalancerState;
+import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionFactoryService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
+import com.vmware.admiral.compute.container.network.ContainerNetworkFactoryService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionFactoryService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeFactoryService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
@@ -114,6 +119,11 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
 
         startServices(host,
                 ContainerFactoryService.class,
+                ContainerDescriptionFactoryService.class,
+                ContainerNetworkDescriptionFactoryService.class,
+                ContainerVolumeDescriptionFactoryService.class,
+                ContainerVolumeFactoryService.class,
+                ContainerNetworkFactoryService.class,
                 ContainerStatsService.class,
                 EndpointAdapterService.class,
                 RegistryHostConfigService.class,
@@ -137,7 +147,6 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 ResourcePoolTransformationService.class);
 
         startServiceFactories(host, CaSigningCertService.class,
-                ContainerDescriptionService.class,
                 GroupResourcePlacementService.class,
                 KubernetesEntityDataCollection.class,
                 HostContainerListDataCollection.class,
@@ -152,14 +161,9 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 InstanceTypeService.class,
                 DeploymentPolicyService.class,
                 HostPortProfileService.class,
-                ContainerNetworkService.class,
-                ContainerNetworkDescriptionService.class,
                 ComputeNetworkDescriptionService.class,
                 ComputeNetworkService.class,
                 ComputeNetworkCIDRAllocationService.class,
-                ContainerVolumeDescriptionService.class,
-                ContainerVolumeService.class,
-                ContainerVolumeDescriptionService.class,
                 ElasticPlacementZoneService.class,
                 EpzComputeEnumerationTaskService.class,
                 PlacementCapacityUpdateTaskService.class,

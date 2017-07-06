@@ -9,26 +9,26 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.closures.services.closuredescription;
+package com.vmware.admiral.compute.container.network;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.OperationUtil;
+import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 
-public class ClosureDescriptionFactoryService extends FactoryService {
+public class ContainerNetworkDescriptionFactoryService extends FactoryService {
 
-    public static final String FACTORY_LINK = ManagementUriParts.CLOSURES_DESC;
+    public static final String SELF_LINK = ManagementUriParts.CONTAINER_NETWORK_DESC;
 
-    public ClosureDescriptionFactoryService() {
-        super(ClosureDescription.class);
-        super.toggleOption(ServiceOption.IDEMPOTENT_POST, true);
+    public ContainerNetworkDescriptionFactoryService() {
+        super(ContainerNetworkDescription.class);
     }
 
     @Override
-    public Service createServiceInstance() {
-        return new ClosureDescriptionService();
+    public Service createServiceInstance() throws Throwable {
+        return new ContainerNetworkDescriptionService();
     }
 
     @Override

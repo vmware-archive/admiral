@@ -13,7 +13,9 @@ package com.vmware.admiral.closures.services.closure;
 
 import com.vmware.admiral.closures.drivers.DriverRegistry;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.xenon.common.FactoryService;
+import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 
 public class ClosureFactoryService extends FactoryService {
@@ -56,4 +58,9 @@ public class ClosureFactoryService extends FactoryService {
         return driverRegistry;
     }
 
+    @Override
+    public void handleGet(Operation get) {
+        OperationUtil.transformProjectHeaderToFilterQuery(get);
+        super.handleGet(get);
+    }
 }
