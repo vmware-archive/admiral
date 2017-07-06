@@ -63,7 +63,8 @@ public class OpenstackWordpressProvisionIT extends BaseWordpressComputeProvision
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][] {
                 { "existing", "WordPress_with_MySQL_compute_network_ubuntu14.yaml" },
-                { "isolated", "WordPress_with_MySQL_compute_isolated_ubuntu14.yaml" }
+                { "isolated", "WordPress_with_MySQL_compute_isolated_ubuntu14.yaml" },
+                { "isolated", "WordPress_with_MySQL_compute_isolated_sg_ubuntu14.yaml" }
         });
     }
 
@@ -91,6 +92,10 @@ public class OpenstackWordpressProvisionIT extends BaseWordpressComputeProvision
                 loadComputeProfile(getEndpointType()),
                 isolatedNetworkProfile,
                 new StorageProfile());
+
+        createProfile(loadComputeProfile(getEndpointType()), createIsolatedSecurityGroupNetworkProfile(
+                getTestRequiredProp("test.openstack.subnetwork.name"),
+                Sets.newHashSet(createTag("type", "sg"))), new StorageProfile());
     }
 
     @Override
