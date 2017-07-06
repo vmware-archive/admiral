@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.compute.ResourceType;
@@ -289,7 +288,6 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
     }
 
     @Test
-    @Ignore("https://jira-hzn.eng.vmware.com/browse/VCOM-1146")
     public void testPatchNicDescriptionOperation() throws Throwable {
 
         String ipAddress = "10.152.8.10";
@@ -463,6 +461,64 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
                 context.failIteration(throwable);
             }
             context.completeIteration();
+        });
+        context.await();
+    }
+
+    @Test
+    public void testEmptyHostSelections() throws Throwable {
+
+        createVmHostCompute(true);
+
+        ComputeDescription computeDescription = createVMComputeDescription(false);
+
+        ComputeAllocationTaskService service = new ComputeAllocationTaskService();
+        service.setHost(host);
+
+        ComputeAllocationTaskState state = createComputeAllocationTask(computeDescription
+                .documentSelfLink, 2, true);
+
+        state = doPost(state,
+                ComputeAllocationTaskService.FACTORY_LINK);
+
+        final String selfLink = state.documentSelfLink;
+        assertNotNull(selfLink);
+
+        state = allocate(state);
+
+        assertNotNull(state);
+        assertEquals(2, state.resourceLinks.size());
+
+        ComputeAllocationTaskService.ExtensibilityCallbackResponse payload =
+                (ComputeAllocationTaskService.ExtensibilityCallbackResponse) service
+                        .notificationPayload(state);
+
+        List<HostSelection> beforeExtensibility = new ArrayList<>(
+                state.selectedComputePlacementHosts);
+
+        payload.hostSelections = null;
+
+        TestContext context = new TestContext(1, Duration.ofMinutes(1));
+
+        service.enhanceExtensibilityResponse(state, payload).whenComplete((r, err) -> {
+            try {
+                ComputeAllocationTaskState document = getDocument(ComputeAllocationTaskState.class,
+                        selfLink);
+
+                assertNotNull(document);
+
+                List<HostSelection> patchedHosts = new ArrayList<HostSelection>(document
+                        .selectedComputePlacementHosts);
+
+                assertNotNull(patchedHosts);
+
+                assertEquals(beforeExtensibility.get(0).name, patchedHosts.get(0).name);
+                assertEquals(beforeExtensibility.get(1).name, patchedHosts.get(1).name);
+                context.completeIteration();
+            } catch (Throwable throwable) {
+                context.failIteration(throwable);
+            }
+
         });
         context.await();
     }

@@ -836,6 +836,71 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         context.await();
     }
 
+    @Test
+    public void testEmptyHostSelections() throws Throwable {
+
+        //Create second host for host selections.
+        createDockerHost(createDockerHostDescription(), resourcePool, true);
+
+        containerDesc.customProperties = new HashMap<>();
+        containerDesc.customProperties.put("customPropA", "valueA");
+
+        doOperation(containerDesc, UriUtils.buildUri(host, containerDesc.documentSelfLink),
+                false, Action.PUT);
+
+        ContainerAllocationTaskState allocationTask = createContainerAllocationTask();
+        allocationTask.customProperties = new HashMap<>();
+        allocationTask.customProperties.put("customPropB", "valueB");
+
+        allocationTask = allocate(allocationTask);
+
+        final String selfLink = allocationTask.documentSelfLink;
+        assertNotNull(selfLink);
+
+        assertNotNull(allocationTask);
+        assertEquals(1, allocationTask.resourceLinks.size());
+
+        ContainerAllocationTaskService service = new ContainerAllocationTaskService();
+        service.setHost(host);
+
+        allocationTask.taskSubStage = null;
+
+        AllocationExtensibilityCallbackResponse payload =
+                (AllocationExtensibilityCallbackResponse) service
+                        .notificationPayload(allocationTask);
+
+        List<HostSelection> beforeExtensibility = new ArrayList<>(
+                allocationTask.hostSelections);
+
+        payload.hosts = null;
+
+        TestContext context = new TestContext(1, Duration.ofMinutes(1));
+
+        service.enhanceExtensibilityResponse(allocationTask, payload).whenComplete((r, err) -> {
+            try {
+                ContainerAllocationTaskState document = getDocument(
+                        ContainerAllocationTaskState.class,
+                        selfLink);
+
+                assertNotNull(document);
+
+                List<HostSelection> patchedHosts = new ArrayList<HostSelection>(
+                        document.hostSelections);
+
+                assertNotNull(patchedHosts);
+
+                assertEquals(beforeExtensibility.get(0).name, patchedHosts.get(0).name);
+                assertEquals(beforeExtensibility.get(1).name, patchedHosts.get(1).name);
+                context.completeIteration();
+
+            } catch (Throwable throwable) {
+                context.failIteration(throwable);
+            }
+
+        });
+        context.await();
+    }
+
     private void validatePorts(ContainerDescription containerDescription,
             ContainerState containerState) throws Throwable {
         // get latest ports

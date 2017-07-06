@@ -1148,6 +1148,12 @@ public class ContainerAllocationTaskService extends
 
         AllocationExtensibilityCallbackResponse response = (AllocationExtensibilityCallbackResponse) replyPayload;
 
+        if (response.hosts == null || response.hosts.isEmpty()) {
+            logInfo("Host selections are empty.");
+            callback.run();
+            return;
+        }
+
         //Host selections that have been provided as notification payload
         List<String> selectionsForNotificationPayload = state.hostSelections.stream
                 ().map(hs -> hs.name).collect(Collectors.toList());

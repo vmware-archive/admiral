@@ -185,11 +185,15 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
     private void removeData(ContainerState admiralContainer) throws Exception {
         changeBaseURI(admiralMasterContainer);
         if (!applicationsToDelete.isEmpty()) {
+            // Wait until certificates are reloaded on Docker hosts in order to avoid [General SSL
+            // engine] error.
+            Thread.sleep(60000);
             requestContainerDelete(applicationsToDelete, false);
         }
         delete(COMPUTE_SELF_LINK);
         delete(CREDENTIALS_SELF_LINK);
         setBaseURI(null);
+
     }
 
     private void validateContent(ContainerState admiralContainer) throws Exception {

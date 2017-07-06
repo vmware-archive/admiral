@@ -36,7 +36,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -1094,6 +1093,12 @@ public class ComputeAllocationTaskService
                 ().map(hs -> hs.name).collect(Collectors.toList());
         List<String> responseHostSelections = response.hostSelections;
 
+        if (responseHostSelections == null || responseHostSelections.isEmpty()) {
+            logInfo("Host selections are empty.");
+            callback.run();
+            return;
+        }
+
         if (responseHostSelections.size() != selectionsForNotificationPayload.size()) {
             String missmatchInSelections = String.format("There is discrepancy between number of "
                             + "existing host selections: %s and provided by extensibility: %s",
@@ -1239,25 +1244,6 @@ public class ComputeAllocationTaskService
                 .withLabel(COMPUTE_ALLOCATION_TOPIC_FIELD_HOST_SELECTIONS_LABEL)
                 .withDescription(COMPUTE_ALLOCATION_TOPIC_FIELD_HOST_SELECTIONS_DESCRIPTION)
                 .done();
-    }
-
-    private Map<String, String> loadResourceToHostNameForNotificationPayload(
-            ComputeAllocationTaskState state) {
-
-        Map<String, String> resourceToHost = new TreeMap<>();
-        if (state.selectedComputePlacementHosts != null && !state.selectedComputePlacementHosts
-                .isEmpty()) {
-
-            Iterator<HostSelection> placementComputeLinkIterator = state.selectedComputePlacementHosts
-                    .iterator();
-            Iterator<String> namesIterator = state.resourceNames.iterator();
-            while (namesIterator.hasNext() && placementComputeLinkIterator.hasNext()) {
-                resourceToHost
-                        .put(namesIterator.next(), placementComputeLinkIterator.next().name);
-            }
-
-        }
-        return resourceToHost;
     }
 
     @Override
