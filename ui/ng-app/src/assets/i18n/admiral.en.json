@@ -103,6 +103,9 @@
       "makePrivate": "Make private",
       "addUsersAndGroups": "Add users and groups",
       "addClusters": "Add clusters"
+    },
+    "errors": {
+      "noSelectedProject": "Cannot load current project."
     }
   },
   "registries": {

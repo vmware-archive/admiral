@@ -12,8 +12,10 @@
 import { Component, AfterViewInit, Input, Output, EventEmitter } from '@angular/core';
 import { FormGroup, FormControl, Validators } from "@angular/forms";
 import { DocumentService } from './../../../utils/document.service';
+import { ProjectService } from './../../../utils/project.service';
 import { Links } from './../../../utils/links';
 import { Utils } from "../../../utils/utils";
+import * as I18n from 'i18next';
 
 @Component({
     selector: 'app-cluster-add-host',
@@ -42,10 +44,10 @@ export class ClusterAddHostComponent implements AfterViewInit {
         credentials: new FormControl('')
     });
 
-    constructor(protected service: DocumentService) {}
+    constructor(private ds: DocumentService, private ps: ProjectService) { }
 
     ngAfterViewInit() {
-        this.service.list(Links.CREDENTIALS, {}).then(credentials => {
+        this.ds.list(Links.CREDENTIALS, {}).then(credentials => {
             this.credentials = credentials.documents;
         });
     }
@@ -83,6 +85,12 @@ export class ClusterAddHostComponent implements AfterViewInit {
 
     addHost(certificateAccepted: boolean) {
         if (this.addHostToClusterForm.valid) {
+            let selectedProject = this.ps.getSelectedProject();
+            if (!selectedProject || !selectedProject.documentSelfLink) {
+                this.alertMessage = I18n.t('projects.errors.noSelectedProject');
+                return;
+            }
+
             this.isAddingHost = true;
 
             let formInput = this.addHostToClusterForm.value;
@@ -103,7 +111,7 @@ export class ClusterAddHostComponent implements AfterViewInit {
                 'hostState': hostState,
                 'acceptCertificate': certificateAccepted
             };
-            this.service.post(this.cluster.documentSelfLink + '/hosts', hostSpec).then((response) => {
+            this.ds.post(this.cluster.documentSelfLink + '/hosts', hostSpec).then((response) => {
                 if (response && response.certificate) {
                     this.certificate = response;
                     this.showCertificateWarning = true;

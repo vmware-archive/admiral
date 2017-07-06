@@ -15,6 +15,7 @@ import { FormGroup, FormControl, Validators } from "@angular/forms";
 import { Links } from '../../../utils/links';
 import { Utils } from "../../../utils/utils";
 import { DocumentService } from '../../../utils/document.service';
+import { ProjectService } from '../../../utils/project.service';
 import * as I18n from 'i18next';
 
 import { BaseDetailsComponent } from '../../../components/base/base-details.component';
@@ -46,7 +47,7 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
     credentials: new FormControl('')
   });
 
-  constructor(private router: Router, route: ActivatedRoute, service: DocumentService) {
+  constructor(private router: Router, route: ActivatedRoute, service: DocumentService, private ps: ProjectService) {
     super(route, service, Links.CLUSTERS);
   }
 
@@ -121,12 +122,18 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
 
   private createCluster(certificateAccepted: boolean) {
     if (this.clusterForm.valid) {
+      let selectedProject = this.ps.getSelectedProject();
+      if (!selectedProject || !selectedProject.documentSelfLink) {
+        this.alertMessage = I18n.t('projects.errors.noSelectedProject');
+        return;
+      }
+
       this.isSaving = true;
 
       let formInput = this.clusterForm.value;
       let hostState = {
         'address': formInput.url,
-        'tenantLinks': [Links.PROJECTS + '/default-project'],
+        'tenantLinks': [ selectedProject.documentSelfLink ],
         'customProperties': {
           '__containerHostType': formInput.type,
           '__adapterDockerType': 'API',

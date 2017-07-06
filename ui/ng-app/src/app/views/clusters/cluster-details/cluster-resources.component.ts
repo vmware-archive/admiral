@@ -82,7 +82,8 @@ export class ClusterResourcesComponent implements OnChanges {
   }
 
   getContainersCount(host) {
-    return Math.round(host.customProperties.__Containers);
+    let containersCount = Utils.getCustomPropertyValue(host.customProperties, '__Containers');
+    return containersCount ? Math.round(containersCount) : 0;
   }
 
   getDocumentId(host) {
