@@ -582,7 +582,11 @@
             "storagePolicyContextPanelTooltip": "Storage Policies",
             "datastoreEntityLabel": "Datastores",
             "storagePolicyEntityLabel": "Storage Policies",
-            "snapshotsLabel": "Independent of Snapshots",
+            "snapshotsLabel": "Snapshots",
+            "independentOfSnapshotsLabel": "Independent of Snapshots",
+            "persistentLabel": "Persistent",
+            "nonPersistentLabel": "Non-Persistent",
+            "provisioningSelectDefault": "Select type of provisioning",
             "datastore": {
               "typeLabel": "Type",
               "capacityLabel": "Capacity",

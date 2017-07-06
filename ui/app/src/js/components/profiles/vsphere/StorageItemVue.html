@@ -33,7 +33,7 @@
   </dropdown-search>
 </div>
 <div class="form-group">
-  <form-label :required="true">
+  <form-label>
     {{i18n('app.profile.edit.storage.vsphere.datastoreLabel')}}</form-label>
   <dropdown-search
     :filter="searchVsphereDatastores"
@@ -47,7 +47,8 @@
   <form-label>
     {{i18n('app.profile.edit.storage.vsphere.provisioningTypeLabel')}}</form-label>
   <div class="form-control select">
-    <select @change="onProvisioningTypeChange" v-model="provisioningType">
+    <select @change="onProvisioningTypeChange" v-model="provisioningType" :class="{'default-option': !provisioningType}">
+      <option value="">{{i18n('app.profile.edit.storage.vsphere.provisioningSelectDefault')}}</option>
       <option v-for="provisioningType of provisioningTypes"
               :value="provisioningType.value">{{provisioningType.name}}</option>
     </select>
@@ -80,11 +81,22 @@
 </div>
 <div class="form-group">
   <form-label>{{i18n('app.profile.edit.storage.vsphere.snapshotsLabel')}}</form-label>
-  <checkbox-control
-    :label=""
-    :value="independent"
-    @change="onIndependentChange">
-  </checkbox-control>
+  <div class="checkbox">
+    <input type="checkbox" id="independent-{{index}}" :checked="independent" @change="onIndependentChange">
+    <label for="independent-{{index}}">{{i18n('app.profile.edit.storage.vsphere.independentOfSnapshotsLabel')}}</label>
+  </div>
+  <div class="persistence-radio-group">
+    <div class="radio" :class="{'disabled': !independent}">
+      <input type="radio" name="persistenceRadios" id="persistent-{{index}}" @change="onPersistentChange"
+        value="true" :checked="persistent">
+      <label for="persistent-{{index}}">{{i18n('app.profile.edit.storage.vsphere.persistentLabel')}}</label>
+    </div>
+    <div class="radio" :class="{'disabled': !independent}">
+      <input type="radio" name="persistenceRadios" id="non-persistent-{{index}}" @change="onPersistentChange"
+        value="false" :checked="!persistent ">
+      <label for="non-persistent-{{index}}">{{i18n('app.profile.edit.storage.vsphere.nonPersistentLabel')}}</label>
+    </div>
+  </div>
 </div>
 <tags-group
   :label="i18n('app.profile.edit.tagsLabel')"
