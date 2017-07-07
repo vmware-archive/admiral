@@ -32,11 +32,13 @@ export class AppComponent {
             this.fullScreen = isFullScreen;
         });
 
-        this.authService.loadCurrentUserSecurityContext().then((securityContext) => {
-            this.userSecurityContext = securityContext;
-        }).catch((ex) => {
-            console.log(ex);
-        });
+        if(!this.embedded) {
+            this.authService.loadCurrentUserSecurityContext().then((securityContext) => {
+                this.userSecurityContext = securityContext;
+            }).catch((ex) => {
+                console.log(ex);
+            });
+        }
     }
 
     get embedded(): boolean {
