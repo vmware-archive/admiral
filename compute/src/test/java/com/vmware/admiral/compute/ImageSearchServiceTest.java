@@ -97,6 +97,11 @@ public class ImageSearchServiceTest extends ComputeBaseTest {
     public void testCalculateImagesFilter() throws Throwable {
 
         final ImageSearchService instance = new ImageSearchService();
+        List<EndpointState> endpoints = new ArrayList() {
+            {
+                add(endpoint);
+            }
+        };
 
         final String FILTER = "name eq '" + IMAGE_NAME + "'";
 
@@ -104,17 +109,32 @@ public class ImageSearchServiceTest extends ComputeBaseTest {
             String $filter = FILTER;
             String tenantLink = TENANT_LINK;
 
-            String imagesFilter = instance.calculateImagesFilter($filter, tenantLink, endpoint);
+            String imagesFilter = instance.calculateImagesFilter($filter, tenantLink, endpoints);
 
             assertEquals(
                     "(name eq 'image-name') and ((endpointType eq 'aws') or ((endpointLink eq '/resources/endpoints/image-endpointLink') and (tenantLinks/item eq 'image-tenantLink')))",
                     imagesFilter);
+
+        }
+        {
+            String $filter = FILTER;
+            String tenantLink = TENANT_LINK;
+            endpoints.add(endpoint);
+            String imagesFilter = instance.calculateImagesFilter($filter, tenantLink, endpoints);
+            assertEquals(
+                    "(name eq 'image-name') and (((endpointType eq 'aws') or ((endpointLink eq "
+                            + "'/resources/endpoints/image-endpointLink') and (tenantLinks/item "
+                            + "eq 'image-tenantLink'))) or ((endpointType eq 'aws') or ("
+                            + "(endpointLink eq '/resources/endpoints/image-endpointLink') and (tenantLinks/item eq 'image-tenantLink'))))",
+                    imagesFilter);
+            endpoints.remove(1);
+
         }
         {
             String $filter = FILTER;
             String tenantLink = null;
 
-            String imagesFilter = instance.calculateImagesFilter($filter, tenantLink, endpoint);
+            String imagesFilter = instance.calculateImagesFilter($filter, tenantLink, endpoints);
 
             assertEquals(
                     "(name eq 'image-name') and ((endpointType eq 'aws') or (endpointLink eq '/resources/endpoints/image-endpointLink'))",
@@ -124,7 +144,7 @@ public class ImageSearchServiceTest extends ComputeBaseTest {
             String $filter = null;
             String tenantLink = TENANT_LINK;
 
-            String imagesFilter = instance.calculateImagesFilter($filter, tenantLink, endpoint);
+            String imagesFilter = instance.calculateImagesFilter($filter, tenantLink, endpoints);
 
             assertEquals(
                     "((endpointType eq 'aws') or ((endpointLink eq '/resources/endpoints/image-endpointLink') and (tenantLinks/item eq 'image-tenantLink')))",
@@ -134,7 +154,7 @@ public class ImageSearchServiceTest extends ComputeBaseTest {
             String $filter = null;
             String tenantLink = null;
 
-            String imagesFilter = instance.calculateImagesFilter($filter, tenantLink, endpoint);
+            String imagesFilter = instance.calculateImagesFilter($filter, tenantLink, endpoints);
 
             assertEquals(
                     "((endpointType eq 'aws') or (endpointLink eq '/resources/endpoints/image-endpointLink'))",
@@ -241,16 +261,6 @@ public class ImageSearchServiceTest extends ComputeBaseTest {
                 runTestWithExc
                         .accept(new TestRunCtx(buildQuery($filter, tenantLink, endpointQuery)));
             }
-            {
-                String $filter = FILTER;
-                String tenantLink = TENANT_LINK;
-                // Endpoint filter matches 2 endpoints, but single one is expected
-                String endpointQuery = ENDPOINT_QUERY_MULTIPLE;
-
-                runTestWithExc
-                        .accept(new TestRunCtx(buildQuery($filter, tenantLink, endpointQuery)));
-            }
-
             // 'tenantLinks' query param validation
             {
                 String $filter = FILTER;
@@ -328,7 +338,7 @@ public class ImageSearchServiceTest extends ComputeBaseTest {
         try {
             images = getDocument(ODataFactoryQueryResult.class, uri);
         } catch (Throwable e) {
-            throw new IllegalStateException("Test execution failed with unexpected "
+            throw new IllegalArgumentException("Test execution failed with unexpected "
                     + e.getClass().getSimpleName() + ".", e);
         }
 
@@ -373,7 +383,7 @@ public class ImageSearchServiceTest extends ComputeBaseTest {
 
         } catch (Throwable e) {
             if (!ctx.expectedExc.isAssignableFrom(e.getClass())) {
-                throw new IllegalStateException(
+                throw new IllegalArgumentException(
                         "Test execution expected " + ctx.expectedExc.getSimpleName()
                                 + " but failed with " + e.getClass().getSimpleName() + ".",
                         e);
