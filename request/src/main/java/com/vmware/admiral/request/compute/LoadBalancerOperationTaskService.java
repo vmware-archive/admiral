@@ -93,6 +93,14 @@ public class LoadBalancerOperationTaskService extends
         }
     }
 
+    @Override
+    protected TaskStatusState fromTask(TaskServiceDocument<LoadBalancerOperationTaskState.SubStage> state) {
+        TaskStatusState statusTask = super.fromTask(state);
+        LoadBalancerOperationTaskState currentState = (LoadBalancerOperationTaskState) state;
+        statusTask.name = LoadBalancerOperationType.extractDisplayName(currentState.operation);
+        return statusTask;
+    }
+
     private void queryLoadBalancers(LoadBalancerOperationTaskState state,
             Consumer<List<LoadBalancerState>> callbackFunction) {
 

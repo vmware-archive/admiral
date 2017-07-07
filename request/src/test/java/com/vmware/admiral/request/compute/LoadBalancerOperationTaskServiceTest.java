@@ -11,15 +11,15 @@
 
 package com.vmware.admiral.request.compute;
 
-import static org.junit.Assert.assertNotNull;
-
 import java.util.Collections;
 
 import org.junit.After;
 import org.junit.Test;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
+import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.request.RequestBaseTest;
+import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.compute.LoadBalancerOperationTaskService.LoadBalancerOperationTaskState;
 import com.vmware.photon.controller.model.adapters.awsadapter.AWSLoadBalancerService;
 import com.vmware.photon.controller.model.resources.LoadBalancerService.LoadBalancerState;
@@ -47,10 +47,21 @@ public class LoadBalancerOperationTaskServiceTest extends RequestBaseTest {
 
         LoadBalancerState loadBalancerState = createLoadBalancerState();
 
-        LoadBalancerOperationTaskState loadBalancerOperationTaskState = createLoadBalancerOperationTask(
-                loadBalancerState, LoadBalancerOperationType.UPDATE.id);
+        RequestBrokerState updateLoadBalancerRequest = new RequestBrokerState();
+        updateLoadBalancerRequest.resourceType = ResourceType.LOAD_BALANCER_TYPE.getName();
+        updateLoadBalancerRequest.resourceLinks = Collections
+                .singleton(loadBalancerState.documentSelfLink);
+        updateLoadBalancerRequest.operation = LoadBalancerOperationType.UPDATE.id;
 
-        update(loadBalancerOperationTaskState);
+        updateLoadBalancerRequest = startRequest(updateLoadBalancerRequest);
+
+        String loadBalancerOperationTaskStateLink = UriUtils.buildUriPath(
+                LoadBalancerOperationTaskService.FACTORY_LINK,
+                extractId(updateLoadBalancerRequest.documentSelfLink));
+
+        waitForTaskSuccess(loadBalancerOperationTaskStateLink,
+                LoadBalancerOperationTaskState.class);
+        waitForRequestToComplete(updateLoadBalancerRequest);
 
     }
 
@@ -61,10 +72,20 @@ public class LoadBalancerOperationTaskServiceTest extends RequestBaseTest {
 
         LoadBalancerState loadBalancerState = createLoadBalancerState();
 
-        LoadBalancerOperationTaskState loadBalancerOperationTaskState = createLoadBalancerOperationTask(
-                loadBalancerState, "INVALID");
+        RequestBrokerState updateLoadBalancerRequest = new RequestBrokerState();
+        updateLoadBalancerRequest.resourceType = ResourceType.LOAD_BALANCER_TYPE.getName();
+        updateLoadBalancerRequest.resourceLinks = Collections
+                .singleton(loadBalancerState.documentSelfLink);
+        updateLoadBalancerRequest.operation = "INVALID";
 
-        updateWithError(loadBalancerOperationTaskState);
+        updateLoadBalancerRequest = startRequest(updateLoadBalancerRequest);
+
+        String loadBalancerOperationTaskStateLink = UriUtils.buildUriPath(
+                LoadBalancerOperationTaskService.FACTORY_LINK,
+                extractId(updateLoadBalancerRequest.documentSelfLink));
+
+        waitForTaskError(loadBalancerOperationTaskStateLink, LoadBalancerOperationTaskState.class);
+        waitForRequestToFail(updateLoadBalancerRequest);
 
     }
 
@@ -75,55 +96,22 @@ public class LoadBalancerOperationTaskServiceTest extends RequestBaseTest {
 
         LoadBalancerState loadBalancerState = createLoadBalancerState();
 
-        LoadBalancerOperationTaskState loadBalancerOperationTaskState = createLoadBalancerOperationTask(
-                loadBalancerState, LoadBalancerOperationType.UPDATE.id);
-
         stopService(AWSLoadBalancerService.SELF_LINK);
-        updateWithError(loadBalancerOperationTaskState);
 
-    }
+        RequestBrokerState updateLoadBalancerRequest = new RequestBrokerState();
+        updateLoadBalancerRequest.resourceType = ResourceType.LOAD_BALANCER_TYPE.getName();
+        updateLoadBalancerRequest.resourceLinks = Collections
+                .singleton(loadBalancerState.documentSelfLink);
+        updateLoadBalancerRequest.operation = LoadBalancerOperationType.UPDATE.id;
 
-    private LoadBalancerOperationTaskState update(LoadBalancerOperationTaskState operationTask)
-            throws Throwable {
-        operationTask = startUpdateTask(operationTask);
-        host.log("Start update task: " + operationTask.documentSelfLink);
+        updateLoadBalancerRequest = startRequest(updateLoadBalancerRequest);
 
-        operationTask = waitForTaskSuccess(operationTask.documentSelfLink,
-                LoadBalancerOperationTaskState.class);
+        String loadBalancerOperationTaskStateLink = UriUtils.buildUriPath(
+                LoadBalancerOperationTaskService.FACTORY_LINK,
+                extractId(updateLoadBalancerRequest.documentSelfLink));
 
-        return operationTask;
-    }
-
-    private LoadBalancerOperationTaskState updateWithError(LoadBalancerOperationTaskState
-            operationTask)
-            throws Throwable {
-        operationTask = startUpdateTask(operationTask);
-        host.log("Start update task: " + operationTask.documentSelfLink);
-
-        operationTask = waitForTaskError(operationTask.documentSelfLink,
-                LoadBalancerOperationTaskState.class);
-
-        return operationTask;
-    }
-
-    private LoadBalancerOperationTaskState createLoadBalancerOperationTask(LoadBalancerState
-            loadBalancerState, String operation) {
-        LoadBalancerOperationTaskState lbOperationState = new LoadBalancerOperationTaskState();
-        lbOperationState.resourceLinks = Collections.singleton(loadBalancerState.documentSelfLink);
-        lbOperationState.operation = operation;
-        lbOperationState.tenantLinks = loadBalancerState.tenantLinks;
-
-        return lbOperationState;
-    }
-
-    private LoadBalancerOperationTaskState startUpdateTask(
-            LoadBalancerOperationTaskState operationTask)
-            throws Throwable {
-        LoadBalancerOperationTaskState loadBalancerOperationTaskState = doPost(operationTask,
-                LoadBalancerOperationTaskService.FACTORY_LINK);
-
-        assertNotNull(loadBalancerOperationTaskState);
-        return loadBalancerOperationTaskState;
+        waitForTaskError(loadBalancerOperationTaskStateLink, LoadBalancerOperationTaskState.class);
+        waitForRequestToFail(updateLoadBalancerRequest);
     }
 
     private void stopService(String link) {

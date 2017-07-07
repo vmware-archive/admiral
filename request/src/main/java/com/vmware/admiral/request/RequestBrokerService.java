@@ -96,6 +96,8 @@ import com.vmware.admiral.request.compute.ComputeReservationTaskService;
 import com.vmware.admiral.request.compute.ComputeReservationTaskService.ComputeReservationTaskState;
 import com.vmware.admiral.request.compute.LoadBalancerAllocationTaskService;
 import com.vmware.admiral.request.compute.LoadBalancerAllocationTaskService.LoadBalancerAllocationTaskState;
+import com.vmware.admiral.request.compute.LoadBalancerOperationTaskService;
+import com.vmware.admiral.request.compute.LoadBalancerOperationTaskService.LoadBalancerOperationTaskState;
 import com.vmware.admiral.request.compute.LoadBalancerOperationType;
 import com.vmware.admiral.request.compute.LoadBalancerProvisionTaskService;
 import com.vmware.admiral.request.compute.LoadBalancerProvisionTaskService.LoadBalancerProvisionTaskState;
@@ -490,8 +492,7 @@ public class RequestBrokerService extends
             if (isRemoveOperation(state)) {
                 createLoadBalancerRemovalTask(state);
             } else {
-                failTask(null, new IllegalArgumentException("Not supported operation: "
-                        + state.operation));
+                createLoadBalancerOperationTask(state);
             }
         } else if (isContainerNetworkType(state)) {
             if (isRemoveOperation(state)) {
@@ -1203,6 +1204,33 @@ public class RequestBrokerService extends
                         failTask("Failure creating load balancer provision task", e);
                     }
                 }));
+    }
+
+    private void createLoadBalancerOperationTask(RequestBrokerState state) {
+        LoadBalancerOperationTaskState operationTaskState = new LoadBalancerOperationTaskState();
+        operationTaskState.resourceLinks = state.resourceLinks;
+        operationTaskState.operation = state.operation;
+        operationTaskState.documentSelfLink = getSelfId();
+        operationTaskState.serviceTaskCallback = ServiceTaskCallback.create(
+                getSelfLink(),
+                TaskStage.STARTED, SubStage.ALLOCATED,
+                TaskStage.FAILED, SubStage.ERROR);
+        operationTaskState.customProperties = state.customProperties;
+        operationTaskState.tenantLinks = state.tenantLinks;
+        operationTaskState.requestTrackerLink = state.requestTrackerLink;
+
+        sendRequest(Operation.createPost(this, LoadBalancerOperationTaskService.FACTORY_LINK)
+                .setBody(operationTaskState)
+                .setContextId(getSelfId())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        failRequest(state,
+                                "Failed to create load balancer operation task", ex);
+                        return;
+                    }
+                    proceedTo(SubStage.ALLOCATING);
+                }));
+
     }
 
     private void createLoadBalancerRemovalTask(RequestBrokerState state) {
@@ -1979,6 +2007,8 @@ public class RequestBrokerService extends
             } else {
                 if (isComputeType(state)) {
                     requestStatus.addTrackedTasks(ComputeOperationTaskService.DISPLAY_NAME);
+                } else if (isLoadBalancerType(state)) {
+                    requestStatus.addTrackedTasks(LoadBalancerOperationTaskService.DISPLAY_NAME);
                 } else {
                     requestStatus.addTrackedTasks(ContainerOperationTaskService.DISPLAY_NAME);
                 }
