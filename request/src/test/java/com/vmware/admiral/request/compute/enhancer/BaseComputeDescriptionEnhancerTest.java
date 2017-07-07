@@ -25,6 +25,7 @@ import com.vmware.admiral.request.compute.enhancer.Enhancer.EnhanceContext;
 import com.vmware.admiral.service.common.AbstractInitialBootService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.DiskService;
+import com.vmware.photon.controller.model.resources.DiskService.DiskState;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
@@ -70,13 +71,15 @@ public abstract class BaseComputeDescriptionEnhancerTest extends BaseTestCase {
                 return;
             }
 
-            ops.values().forEach(op -> {
+            for (Operation op: ops.values()) {
+                DiskState diskState = op.getBody(DiskService.DiskState.class);
                 try {
-                    assertion.accept(op.getBody(DiskService.DiskState.class));
+                    assertion.accept(diskState);
                 } catch (Throwable t) {
                     ctx.failIteration(t);
+                    return;
                 }
-            });
+            }
 
             ctx.completeIteration();
 

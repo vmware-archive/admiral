@@ -468,6 +468,8 @@ public class ComputeReservationTaskService extends
                                         EnhanceContext context = new EnhanceContext();
                                         context.profileLink = profileLink;
                                         context.skipNetwork = true;
+                                        // Instruct enhancers to NOT persist any state.
+                                        context.skipPersistence = true;
                                         String regionId = profileEntry.endpoint.regionId;
                                         if (regionId == null) {
                                             // TODO [adimitrov]: Remove this once all adapters set

@@ -106,16 +106,12 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
             }
 
             fillInBootConfigContent(context, computeDesc, rootDisk);
-            DeferredResult<ComputeDescription> result = this.host
-                    .sendWithDeferredResult(createDiskDescriptionState(rootDisk),
-                            DiskState.class)
+
+            return createDiskDescriptionState(context, rootDisk)
                     .thenApply(diskState -> {
-                        this.host.log(Level.INFO, "Resource created: %s",
-                                diskState.documentSelfLink);
                         computeDesc.diskDescLinks = Arrays.asList(diskState.documentSelfLink);
                         return computeDesc;
                     });
-            return result;
         } catch (Throwable t) {
             return DeferredResult.failed(t);
         }
@@ -150,14 +146,15 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
                     } else {
                         updateDiskStateWithStorageItemProperties(diskState, storageItem, cd);
                     }
-                    return this.host
-                            .sendWithDeferredResult(updateDiskDescriptionState(diskState),
-                                    DiskState.class);
+                    return updateDiskDescriptionState(context, diskState);
                 }))
-                .map(dr -> dr
-                        .thenApply(ds -> Pair.of(ds, (Throwable) null))
-                        .exceptionally(t -> Pair.of(null, t)))
+
+                .map(diskDr -> diskDr
+                        .thenApply(diskState -> Pair.of(diskState, (Throwable) null))
+                        .exceptionally(exc -> Pair.of(null, exc)))
+
                 .collect(Collectors.toList());
+
         DeferredResult<ComputeDescription> result = DeferredResult.allOf(diskStateResults)
                 .thenCompose(pairs -> {
                     // Collect error messages if any for all the disks.
@@ -394,19 +391,37 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
     /**
      * Construct create disk operation
      */
-    private Operation createDiskDescriptionState(DiskState diskState) {
-        return Operation.createPost(UriUtils.buildUri(this.host, DiskService.FACTORY_LINK))
-                .setReferer(this.referer)
+    private DeferredResult<DiskState> createDiskDescriptionState(EnhanceContext ctx, DiskState diskState) {
+        if (ctx.skipPersistence) {
+            return DeferredResult.completed(diskState);
+        }
+
+        Operation createDiskOp = Operation
+                .createPost(UriUtils.buildUri(host, DiskService.FACTORY_LINK))
+                .setReferer(referer)
                 .setBody(diskState);
+
+        return host.sendWithDeferredResult(createDiskOp, DiskState.class)
+                .thenApply(dS -> {
+                    host.log(Level.INFO, "DiskState created: %s", diskState.documentSelfLink);
+                    return dS;
+                });
     }
 
     /**
      * Construct update (put) disk operation
      */
-    private Operation updateDiskDescriptionState(DiskState diskState) {
-        return Operation.createPut(UriUtils.buildUri(this.host, diskState.documentSelfLink))
-                .setReferer(this.referer)
+    private DeferredResult<DiskState> updateDiskDescriptionState(EnhanceContext ctx, DiskState diskState) {
+        if (ctx.skipPersistence) {
+            return DeferredResult.completed(diskState);
+        }
+
+        Operation updateDiskOp = Operation
+                .createPut(UriUtils.buildUri(this.host, diskState.documentSelfLink))
+                .setReferer(referer)
                 .setBody(diskState);
+
+        return host.sendWithDeferredResult(updateDiskOp, DiskState.class);
     }
 
     /**

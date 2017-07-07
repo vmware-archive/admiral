@@ -18,6 +18,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -40,6 +41,7 @@ import com.vmware.photon.controller.model.adapters.vsphere.CustomProperties;
 import com.vmware.photon.controller.model.constants.PhotonModelConstants;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.DiskService;
+import com.vmware.photon.controller.model.resources.DiskService.DiskState;
 import com.vmware.photon.controller.model.resources.ResourceGroupService;
 import com.vmware.photon.controller.model.resources.StorageDescriptionService;
 import com.vmware.photon.controller.model.resources.TagFactoryService;
@@ -286,6 +288,39 @@ public class ComputeDescriptionDiskEnhancerTest extends BaseComputeDescriptionEn
 
         // Now get all the disk states to find the properties size.
         assertDiskStates(diskState -> assertNull(diskState.customProperties));
+    }
+
+    @Test
+    public void testEnhanceDiskCreateOsDisk() throws Throwable {
+
+        cd.diskDescLinks = Collections.emptyList();
+
+        createEnhanceContext();
+
+        enhance(new ComputeDescriptionDiskEnhancer(host, host.getReferer()));
+
+        assertEquals("OS DiskState is not created", 1, cd.diskDescLinks.size());
+
+        // Guarantees the OS Disk State is persisted
+        assertDiskStates(diskState -> {
+        });
+    }
+
+    @Test
+    public void testEnhanceDiskCreateOsDisk_skipPersistence() throws Throwable {
+
+        cd.diskDescLinks = Collections.emptyList();
+
+        createEnhanceContext();
+        context.skipPersistence = true;
+
+        enhance(new ComputeDescriptionDiskEnhancer(host, host.getReferer()));
+
+        assertEquals("OS DiskState is not created", 1, cd.diskDescLinks.size());
+
+        // Guarantees the OS Disk State is NOT persisted
+        List<String> diskStateLinks = getDocumentLinksOfType(DiskState.class);
+        assertTrue("OS DiskState should not have been persisted", diskStateLinks.isEmpty());
     }
 
     private void enhanceDiskFailure() {
