@@ -13,6 +13,12 @@
     display: inline-block;
     margin-left: 10px;
     height: 45px;
+    width: 220px;
+    .truncate {
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+    }
 }
 
 .progress-details {

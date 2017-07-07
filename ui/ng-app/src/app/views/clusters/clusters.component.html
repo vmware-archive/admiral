@@ -28,8 +28,8 @@
           <clr-icon shape="rack-server" size="48"></clr-icon>
         </div>
         <div class="titleHolder">
-          <div>{{ item.name }}</div>
-          <div *ngIf="item.address" class="clusterAddress">{{ item.address }}</div>
+          <div class="truncate">{{ item.name }}</div>
+          <div *ngIf="item.address" class="clusterAddress truncate">{{ item.address }}</div>
         </div>
 
         <clr-dropdown class="card-actions" [clrMenuPosition]="'left-top'" (click)="selectItem($event, item)">
