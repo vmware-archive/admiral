@@ -242,7 +242,7 @@ public class PrincipalService extends StatelessService {
 
         PrincipalRoles rolesResponse = new PrincipalRoles();
 
-        PrincipalUtil.getPrincipal(getHost(), principalId)
+        PrincipalUtil.getPrincipal(this, principalId)
                 .thenAccept(principal -> copyPrincipalData(principal, rolesResponse))
                 .thenCompose(ignore -> getDirectlyAssignedProjectRoles(getHost(), rolesResponse))
                 .thenAccept(projectEntries -> rolesResponse.projects = projectEntries)

@@ -46,6 +46,7 @@ import com.vmware.admiral.auth.idm.local.LocalAuthConfigProvider.Config;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalState;
 import com.vmware.admiral.auth.project.ProjectFactoryService;
 import com.vmware.admiral.auth.project.ProjectInterceptor;
+import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.auth.project.ProjectService.ExpandedProjectState;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.admiral.auth.util.AuthUtil;
@@ -63,6 +64,7 @@ import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
+import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.test.TestContext;
@@ -100,6 +102,14 @@ public abstract class AuthBaseTest extends BaseTestCase {
     protected List<String> loadedUsers;
     protected List<String> loadedGroups;
 
+    protected static final String REQUESTOR_SERVICE_SELF_LINK = "/test/service/";
+
+    protected class TestService extends StatelessService {
+
+    }
+
+    protected TestService testService;
+
     @Before
     public void beforeForAuthBase() throws Throwable {
         host.setSystemAuthorizationContext();
@@ -117,6 +127,9 @@ public abstract class AuthBaseTest extends BaseTestCase {
                 ctx::completeIteration, ctx::failIteration);
         ctx.await();
         host.resetAuthorizationContext();
+        testService = new TestService();
+        testService.setSelfLink(REQUESTOR_SERVICE_SELF_LINK);
+        testService.setHost(host);
     }
 
     @Override
@@ -138,6 +151,8 @@ public abstract class AuthBaseTest extends BaseTestCase {
     @Override
     protected void setPrivilegedServices(VerificationHost host) {
         host.addPrivilegedService(SessionService.class);
+        host.addPrivilegedService(ProjectService.class);
+        host.addPrivilegedService(ProjectFactoryService.class);
     }
 
     protected void startServices(VerificationHost host) throws Throwable {
@@ -310,7 +325,7 @@ public abstract class AuthBaseTest extends BaseTestCase {
         assertNotNull(state);
         assertNotNull(state.query);
 
-        DeferredResult<List<UserState>> result = retrieveUserStatesForGroup(host, state);
+        DeferredResult<List<UserState>> result = retrieveUserStatesForGroup(testService, state);
 
         List<UserState> resultList = new ArrayList<>();
 

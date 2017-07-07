@@ -24,7 +24,9 @@ import io.swagger.models.Info;
 
 import com.vmware.admiral.auth.idm.AuthConfigProvider;
 import com.vmware.admiral.auth.idm.SessionService;
+import com.vmware.admiral.auth.project.ProjectFactoryService;
 import com.vmware.admiral.auth.project.ProjectInterceptor;
+import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
@@ -392,6 +394,8 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
         // TODO this should be moved to HostInitAuthServiceConfig once HostInitServiceHelper gets
         // support for privileged services
         addPrivilegedService(SessionService.class);
+        addPrivilegedService(ProjectService.class);
+        addPrivilegedService(ProjectFactoryService.class);
 
         if (AuthUtil.useAuthConfig(this)) {
 

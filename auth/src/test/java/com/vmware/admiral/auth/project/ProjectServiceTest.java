@@ -120,6 +120,175 @@ public class ProjectServiceTest extends AuthBaseTest {
     }
 
     @Test
+    public void testProjectRolesLifeCycle() throws Throwable {
+        // Create project
+        ProjectState testProject = createProject("project-test");
+        String projectId = Service.getId(testProject.documentSelfLink);
+
+        String defaultResourceGroupLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
+                projectId);
+
+        String defaultAdminsRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
+                AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(projectId));
+        String defaultMembersRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
+                AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(projectId));
+        String defaultViewersRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
+                AuthRole.PROJECT_VIEWER.buildRoleWithSuffix(projectId));
+
+        String defaultAdminsLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(projectId));
+        String defaultMembersLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(projectId));
+        String defaultViewersLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_VIEWER.buildRoleWithSuffix(projectId));
+
+        String membersExtendedResourceGroupLink = UriUtils.buildUriPath(ResourceGroupService
+                .FACTORY_LINK, AuthRole.PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId));
+        String membersExtendedRoleLink = UriUtils.buildUriPath(RoleService
+                .FACTORY_LINK, AuthRole.PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId));
+
+        // Verify default documents are created.
+        assertDocumentExists(defaultAdminsLink);
+        assertDocumentExists(defaultMembersLink);
+        assertDocumentExists(defaultViewersLink);
+        assertDocumentExists(defaultResourceGroupLink);
+        assertDocumentExists(defaultAdminsRoleLink);
+        assertDocumentExists(defaultMembersRoleLink);
+        assertDocumentExists(defaultViewersRoleLink);
+        assertDocumentExists(membersExtendedRoleLink);
+        assertDocumentExists(membersExtendedResourceGroupLink);
+
+        // Assign principal of type user and validate.
+        ProjectRoles projectRoles = new ProjectRoles();
+        projectRoles.administrators = new PrincipalRoleAssignment();
+        projectRoles.members = new PrincipalRoleAssignment();
+        projectRoles.administrators.add = Collections.singletonList(USER_EMAIL_CONNIE);
+        projectRoles.members.add = Collections.singletonList(USER_EMAIL_GLORIA);
+        doPatch(projectRoles, testProject.documentSelfLink);
+
+        ExpandedProjectState expandedState = getExpandedProjectState(testProject.documentSelfLink);
+        assertTrue(expandedState.administrators.size() == 1);
+        assertTrue(expandedState.administrators.get(0).email.equals(USER_EMAIL_CONNIE));
+        assertTrue(expandedState.members.size() == 1);
+        assertTrue(expandedState.members.get(0).email.equals(USER_EMAIL_GLORIA));
+
+        UserState connieState = getDocumentNoWait(UserState.class, buildUserServicePath(
+                USER_EMAIL_CONNIE));
+        UserState gloriaState = getDocumentNoWait(UserState.class, buildUserServicePath(
+                USER_EMAIL_GLORIA));
+        assertTrue(connieState.userGroupLinks.contains(defaultAdminsLink));
+        assertTrue(gloriaState.userGroupLinks.contains(defaultMembersLink));
+
+        // Unassign principal of type user and validate
+        projectRoles = new ProjectRoles();
+        projectRoles.administrators = new PrincipalRoleAssignment();
+        projectRoles.members = new PrincipalRoleAssignment();
+        projectRoles.administrators.remove = Collections.singletonList(USER_EMAIL_CONNIE);
+        projectRoles.members.remove = Collections.singletonList(USER_EMAIL_GLORIA);
+        doPatch(projectRoles, testProject.documentSelfLink);
+
+        expandedState = getExpandedProjectState(testProject.documentSelfLink);
+        assertTrue(expandedState.administrators.size() == 0);
+        assertTrue(expandedState.members.size() == 0);
+
+        connieState = getDocumentNoWait(UserState.class, buildUserServicePath(
+                USER_EMAIL_CONNIE));
+        gloriaState = getDocumentNoWait(UserState.class, buildUserServicePath(
+                USER_EMAIL_GLORIA));
+        assertTrue(!connieState.userGroupLinks.contains(defaultAdminsLink));
+        assertTrue(!gloriaState.userGroupLinks.contains(defaultMembersLink));
+
+        // Assign principal of type group and validate
+        projectRoles = new ProjectRoles();
+        projectRoles.administrators = new PrincipalRoleAssignment();
+        projectRoles.members = new PrincipalRoleAssignment();
+        projectRoles.administrators.add = Collections.singletonList(USER_GROUP_SUPERUSERS);
+        projectRoles.members.add = Collections.singletonList(USER_GROUP_DEVELOPERS);
+        doPatch(projectRoles, testProject.documentSelfLink);
+
+        testProject = getDocumentNoWait(ProjectState.class, testProject.documentSelfLink);
+        assertTrue(testProject.administratorsUserGroupLinks.size() == 2);
+        assertTrue(testProject.membersUserGroupLinks.size() == 2);
+
+        String superusersRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
+                AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(projectId, USER_GROUP_SUPERUSERS));
+
+        String developersRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
+                AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(projectId, USER_GROUP_DEVELOPERS));
+
+        String developerExtendedRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
+                AuthRole.PROJECT_MEMBER_EXTENDED
+                        .buildRoleWithSuffix(projectId, USER_GROUP_DEVELOPERS));
+
+        String developersExtendedResourceGroupLink = UriUtils.buildUriPath(ResourceGroupService
+                        .FACTORY_LINK, AuthRole.PROJECT_MEMBER_EXTENDED
+                .buildRoleWithSuffix(projectId, USER_GROUP_DEVELOPERS));
+
+        assertDocumentExists(superusersRoleLink);
+        assertDocumentExists(developersRoleLink);
+        assertDocumentExists(developerExtendedRoleLink);
+        assertDocumentExists(developersExtendedResourceGroupLink);
+
+        expandedState = getExpandedProjectState(testProject.documentSelfLink);
+        assertTrue(expandedState.administrators.size() == 1);
+        assertTrue(expandedState.administrators.get(0).id.equals(USER_GROUP_SUPERUSERS));
+        assertTrue(expandedState.members.size() == 1);
+        assertTrue(expandedState.members.get(0).id.equals(USER_GROUP_DEVELOPERS));
+
+        // Unassign principal of type group and validate.
+        projectRoles = new ProjectRoles();
+        projectRoles.administrators = new PrincipalRoleAssignment();
+        projectRoles.members = new PrincipalRoleAssignment();
+        projectRoles.administrators.remove = Collections.singletonList(USER_GROUP_SUPERUSERS);
+        projectRoles.members.remove = Collections.singletonList(USER_GROUP_DEVELOPERS);
+        doPatch(projectRoles, testProject.documentSelfLink);
+
+        assertDocumentNotExists(superusersRoleLink);
+        assertDocumentNotExists(developersRoleLink);
+        assertDocumentNotExists(developerExtendedRoleLink);
+        assertDocumentNotExists(developersExtendedResourceGroupLink);
+
+        expandedState = getExpandedProjectState(testProject.documentSelfLink);
+        assertTrue(expandedState.administrators.size() == 0);
+        assertTrue(expandedState.members.size() == 0);
+
+        // Assign principal of type group and user and delete the project, validate that all
+        // resources are cleaned.
+        projectRoles.administrators = new PrincipalRoleAssignment();
+        projectRoles.members = new PrincipalRoleAssignment();
+        projectRoles.administrators.add = Arrays.asList(USER_GROUP_SUPERUSERS, USER_EMAIL_CONNIE);
+        projectRoles.members.add = Arrays.asList(USER_GROUP_DEVELOPERS, USER_EMAIL_GLORIA);
+        doPatch(projectRoles, testProject.documentSelfLink);
+
+        assertDocumentExists(superusersRoleLink);
+        assertDocumentExists(developersRoleLink);
+        assertDocumentExists(developerExtendedRoleLink);
+        assertDocumentExists(developersExtendedResourceGroupLink);
+
+        deleteProject(testProject);
+
+        assertDocumentNotExists(superusersRoleLink);
+        assertDocumentNotExists(developersRoleLink);
+        assertDocumentNotExists(developerExtendedRoleLink);
+        assertDocumentNotExists(developersExtendedResourceGroupLink);
+        assertDocumentNotExists(defaultAdminsLink);
+        assertDocumentNotExists(defaultMembersLink);
+        assertDocumentNotExists(defaultViewersLink);
+        assertDocumentNotExists(defaultResourceGroupLink);
+        assertDocumentNotExists(defaultAdminsRoleLink);
+        assertDocumentNotExists(defaultMembersRoleLink);
+        assertDocumentNotExists(defaultViewersRoleLink);
+        assertDocumentNotExists(membersExtendedRoleLink);
+        assertDocumentNotExists(membersExtendedResourceGroupLink);
+
+        connieState = getDocumentNoWait(UserState.class, connieState.documentSelfLink);
+        gloriaState = getDocumentNoWait(UserState.class, gloriaState.documentSelfLink);
+        assertTrue(!connieState.userGroupLinks.contains(defaultAdminsLink));
+        assertTrue(!gloriaState.userGroupLinks.contains(defaultMembersLink));
+
+    }
+
+    @Test
     public void testPatch() throws Throwable {
 
         final String patchedName = "patchedName";
@@ -653,39 +822,35 @@ public class ProjectServiceTest extends AuthBaseTest {
 
     @Test
     public void testResourceGroupsAutoCreatedOnProjectCreate() {
+        String projectId = Service.getId(project.documentSelfLink);
         String resourceGroupLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
-                Service.getId(project.documentSelfLink));
+                projectId);
+        String extendedMembersResourceGroupLink = UriUtils.buildUriPath(ResourceGroupService
+                        .FACTORY_LINK, AuthRole.PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId));
         assertDocumentExists(resourceGroupLink);
+        assertDocumentExists(extendedMembersResourceGroupLink);
     }
 
     @Test
     public void testRolesAutoCreatedOnProjectCreate() {
-        String adminsUserGroupId = Service
-                .getId(UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, AuthRole.PROJECT_ADMIN
-                        .buildRoleWithSuffix(Service.getId(project.documentSelfLink))));
-        String membersUserGroupId = Service
-                .getId(UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, AuthRole.PROJECT_MEMBER
-                        .buildRoleWithSuffix(Service.getId(project.documentSelfLink))));
-        String viewersUserGroupId = Service
-                .getId(UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, AuthRole.PROJECT_VIEWER
-                        .buildRoleWithSuffix(Service.getId(project.documentSelfLink))));
-
         String adminsRoleLinks = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
                 AuthRole.PROJECT_ADMIN
-                        .buildRoleWithSuffix(Service.getId(project.documentSelfLink),
-                                adminsUserGroupId));
+                        .buildRoleWithSuffix(Service.getId(project.documentSelfLink)));
         String membersRoleLinks = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
                 AuthRole.PROJECT_MEMBER
-                        .buildRoleWithSuffix(Service.getId(project.documentSelfLink),
-                                membersUserGroupId));
+                        .buildRoleWithSuffix(Service.getId(project.documentSelfLink)));
         String viewersRoleLinks = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
                 AuthRole.PROJECT_VIEWER
-                        .buildRoleWithSuffix(Service.getId(project.documentSelfLink),
-                                viewersUserGroupId));
+                        .buildRoleWithSuffix(Service.getId(project.documentSelfLink)));
+
+        String extendedMembersRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
+                AuthRole.PROJECT_MEMBER_EXTENDED
+                        .buildRoleWithSuffix(Service.getId(project.documentSelfLink)));
 
         assertDocumentExists(adminsRoleLinks);
         assertDocumentExists(membersRoleLinks);
         assertDocumentExists(viewersRoleLinks);
+        assertDocumentExists(extendedMembersRoleLink);
     }
 
     @Test

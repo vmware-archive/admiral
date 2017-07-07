@@ -103,13 +103,6 @@ public class LocalPrincipalService extends StatefulService {
 
     }
 
-    public static class LocalPrincipalUserGroupAssignment {
-
-        public List<String> groupLinksToAdd;
-
-        public List<String> groupLinksToRemove;
-    }
-
     public LocalPrincipalService() {
         super(LocalPrincipalState.class);
         super.toggleOption(ServiceOption.PERSISTENCE, true);

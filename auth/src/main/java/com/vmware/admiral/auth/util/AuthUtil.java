@@ -30,6 +30,9 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
+import com.vmware.admiral.compute.cluster.ClusterService;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.image.service.PopularImagesService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
 import com.vmware.photon.controller.model.resources.ResourceState;
@@ -203,7 +206,7 @@ public class AuthUtil {
         EnumSet<Action> verbs = EnumSet.allOf(Action.class);
 
         RoleState roleState = buildRoleState(selfLink, userGroupLink,
-                CLOUD_ADMINS_RESOURCE_GROUP_LINK, verbs);
+                CLOUD_ADMINS_RESOURCE_GROUP_LINK, verbs, Policy.ALLOW);
 
         return roleState;
     }
@@ -249,7 +252,7 @@ public class AuthUtil {
         EnumSet<Action> verbs = EnumSet.of(Action.GET);
 
         RoleState roleState = buildRoleState(selfLink, userGroupLink,
-                BASIC_USERS_RESOURCE_GROUP_LINK, verbs);
+                BASIC_USERS_RESOURCE_GROUP_LINK, verbs, Policy.ALLOW);
 
         return roleState;
     }
@@ -289,7 +292,7 @@ public class AuthUtil {
         EnumSet<Action> verbs = EnumSet.of(Action.GET, Action.POST);
 
         RoleState roleState = buildRoleState(selfLink, userGroupLink,
-                BASIC_USERS_EXTENDED_RESOURCE_GROUP_LINK, verbs);
+                BASIC_USERS_EXTENDED_RESOURCE_GROUP_LINK, verbs, Policy.ALLOW);
 
         return roleState;
     }
@@ -331,10 +334,49 @@ public class AuthUtil {
                         Occurance.SHOULD_OCCUR)
                 .addCollectionItemClause(ResourceState.FIELD_NAME_TENANT_LINKS, projectSelfLink,
                         Occurance.SHOULD_OCCUR)
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(ManagementUriParts.REQUEST),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(ClusterService.SELF_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(ElasticPlacementZoneConfigurationService.SELF_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(GroupResourcePlacementService.FACTORY_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
                 .build();
 
-        ResourceGroupState resourceGroupState = buildResourceGroupState(projectId,
+        ResourceGroupState resourceGroupState = buildResourceGroupState(null, projectId,
                 resourceGroupQuery);
+
+        return resourceGroupState;
+    }
+
+    public static ResourceGroupState buildProjectExtendedMemberResourceGroup(String projectId, String
+            groupId) {
+        ResourceGroupState state = buildProjectExtendedMemberResourceGroup(projectId);
+        String selfLink = AuthRole.PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId, groupId);
+        state.documentSelfLink = selfLink;
+        return state;
+    }
+
+    public static ResourceGroupState buildProjectExtendedMemberResourceGroup(String projectId) {
+        String projectSelfLink = UriUtils.buildUriPath(ProjectFactoryService.SELF_LINK, projectId);
+        Query resourceGroupQuery = Query.Builder
+                .create()
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK, projectSelfLink,
+                        Occurance.SHOULD_OCCUR)
+                .addCollectionItemClause(ResourceState.FIELD_NAME_TENANT_LINKS, projectSelfLink,
+                        Occurance.SHOULD_OCCUR)
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(ManagementUriParts.REQUEST),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+                .build();
+
+        ResourceGroupState resourceGroupState = buildResourceGroupState(
+                AuthRole.PROJECT_MEMBER_EXTENDED, projectId, resourceGroupQuery);
 
         return resourceGroupState;
     }
@@ -353,6 +395,14 @@ public class AuthUtil {
                 resourceGroupLink);
     }
 
+    public static RoleState buildProjectExtendedMembersRole(String projectId, String userGroupLink,
+            String resourceGroupLink) {
+        EnumSet<Action> verbs = EnumSet.allOf(Action.class);
+        verbs.remove(Action.GET);
+        return buildProjectRole(AuthRole.PROJECT_MEMBER_EXTENDED, verbs, projectId, userGroupLink,
+                resourceGroupLink);
+    }
+
     public static RoleState buildProjectViewersRole(String projectId, String userGroupLink,
             String resourceGroupLink) {
         // TODO currently this is the same as the members role. Probably needs to be tweaked or
@@ -364,11 +414,19 @@ public class AuthUtil {
 
     public static RoleState buildProjectRole(AuthRole role, EnumSet<Action> verbs, String projectId,
             String userGroupLink, String resourceGroupLink) {
-        String id = role.buildRoleWithSuffix(projectId, Service.getId(userGroupLink));
+        String id;
+
+        if (containsRoleSuffix(userGroupLink)) {
+            id = role.buildRoleWithSuffix(projectId);
+        } else {
+            String userGroupId = Service.getId(userGroupLink);
+            id = role.buildRoleWithSuffix(projectId, userGroupId);
+        }
 
         String selfLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, id);
 
-        RoleState roleState = buildRoleState(selfLink, userGroupLink, resourceGroupLink, verbs);
+        RoleState roleState = buildRoleState(selfLink, userGroupLink, resourceGroupLink, verbs,
+                Policy.ALLOW);
 
         return roleState;
     }
@@ -387,8 +445,17 @@ public class AuthUtil {
         return userGroupState;
     }
 
-    public static ResourceGroupState buildResourceGroupState(String identifier, Query query) {
-        String selfLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK, identifier);
+    public static ResourceGroupState buildResourceGroupState(AuthRole role, String identifier,
+            Query query) {
+        String selfLink;
+
+        if (role != null) {
+            selfLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
+                    role.buildRoleWithSuffix(identifier));
+        } else {
+            selfLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
+                    identifier);
+        }
 
         ResourceGroupState resourceGroupState = ResourceGroupState.Builder
                 .create()
@@ -411,10 +478,10 @@ public class AuthUtil {
     }
 
     public static RoleState buildRoleState(String selfLink, String userGroupLink,
-            String resourceGroupLink, EnumSet<Action> verbs) {
+            String resourceGroupLink, EnumSet<Action> verbs, Policy policy) {
         RoleState roleState = RoleState.Builder
                 .create()
-                .withPolicy(Policy.ALLOW)
+                .withPolicy(policy)
                 .withSelfLink(selfLink)
                 .withVerbs(verbs)
                 .withResourceGroupLink(resourceGroupLink)
@@ -438,9 +505,9 @@ public class AuthUtil {
 
     public static String buildUriWithWildcard(String link) {
         if (link.endsWith(UriUtils.URI_PATH_CHAR)) {
-            return link + UriUtils.URI_WILDCARD_CHAR;
+            return link.substring(0, link.length() - 1) + UriUtils.URI_WILDCARD_CHAR;
         }
-        return link + UriUtils.URI_PATH_CHAR + UriUtils.URI_WILDCARD_CHAR;
+        return link + UriUtils.URI_WILDCARD_CHAR;
     }
 
     public static String getAuthorizedUserId(AuthorizationContext authContext) {
@@ -547,6 +614,15 @@ public class AuthUtil {
         String roleSuffix = roleStateId.substring(lastSeparatorIndex + 1, roleStateId.length());
 
         return new String[] { projectId, groupId, roleSuffix };
+    }
+
+    private static boolean containsRoleSuffix(String userGroupLink) {
+        for (AuthRole role : AuthRole.values()) {
+            if (userGroupLink.contains(role.getSuffix())) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

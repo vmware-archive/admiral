@@ -11,12 +11,14 @@
 
 package com.vmware.admiral.compute.cluster;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletionException;
-import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.util.PropertyUtils;
+import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService.ElasticPlacementZoneConfigurationState;
@@ -25,7 +27,6 @@ import com.vmware.admiral.compute.cluster.ClusterService.ClusterDto;
 import com.vmware.admiral.compute.cluster.ClusterService.ClusterStatus;
 import com.vmware.admiral.compute.cluster.ClusterService.ClusterType;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
-import com.vmware.photon.controller.model.query.QueryUtils;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
@@ -35,6 +36,7 @@ import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 
@@ -74,9 +76,24 @@ public class ClusterUtils {
 
         Query query = queryBuilder.build();
 
-        QueryUtils.QueryByPages<ComputeState> queryHelper = new QueryUtils.QueryByPages<>(
-                host, query, ComputeState.class, null);
-        return queryHelper.collectDocuments(Collectors.toList());
+        QueryTask queryTask = QueryUtil.buildQuery(ComputeState.class, true, query);
+        QueryUtil.addExpandOption(queryTask);
+
+        List<ComputeState> computeStates = new ArrayList<>();
+
+        DeferredResult<List<ComputeState>> result = new DeferredResult<>();
+
+        new ServiceDocumentQuery<>(host, ComputeState.class).query(queryTask, r -> {
+            if (r.hasException()) {
+                result.fail(r.getException());
+            } else if (r.hasResult()) {
+                computeStates.add(r.getResult());
+            } else {
+                result.complete(computeStates);
+            }
+        });
+
+        return result;
     }
 
     public static void deletePZ(String pathPZId, Operation delete, ServiceHost host) {

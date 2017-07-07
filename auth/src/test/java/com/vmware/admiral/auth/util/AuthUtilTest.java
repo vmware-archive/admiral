@@ -68,6 +68,7 @@ import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 import com.vmware.xenon.services.common.ResourceGroupService;
 import com.vmware.xenon.services.common.ResourceGroupService.ResourceGroupState;
 import com.vmware.xenon.services.common.RoleService;
+import com.vmware.xenon.services.common.RoleService.Policy;
 import com.vmware.xenon.services.common.RoleService.RoleState;
 import com.vmware.xenon.services.common.UserGroupService;
 import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
@@ -232,10 +233,12 @@ public class AuthUtilTest {
         Query query = new Query();
         query.occurance = Occurance.MUST_NOT_OCCUR;
 
-        ResourceGroupState resourceGroupState = buildResourceGroupState(SAMPLE_PROJECT_ID, query);
+        ResourceGroupState resourceGroupState = buildResourceGroupState(AuthRole.PROJECT_ADMIN,
+                SAMPLE_PROJECT_ID, query);
 
         String expectedSelfLink = UriUtils
-                .buildUriPath(ResourceGroupService.FACTORY_LINK, SAMPLE_PROJECT_ID);
+                .buildUriPath(ResourceGroupService.FACTORY_LINK, AuthRole.PROJECT_ADMIN
+                        .buildRoleWithSuffix(SAMPLE_PROJECT_ID));
         assertEquals(expectedSelfLink, resourceGroupState.documentSelfLink);
         assertEquals(Occurance.MUST_NOT_OCCUR, resourceGroupState.query.occurance);
     }
@@ -255,7 +258,7 @@ public class AuthUtilTest {
     public void testBuildRoleState() {
         EnumSet<Action> verbs = EnumSet.of(Action.GET);
         RoleState roleState = buildRoleState(SAMPLE_SELF_LINK, SAMPLE_USER_GROUP_LINK,
-                SAMPLE_RESOURCE_GROUP_LINK, verbs);
+                SAMPLE_RESOURCE_GROUP_LINK, verbs, Policy.ALLOW);
 
         assertEquals(SAMPLE_SELF_LINK, roleState.documentSelfLink);
         assertEquals(SAMPLE_USER_GROUP_LINK, roleState.userGroupLink);

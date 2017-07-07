@@ -30,6 +30,7 @@ import org.junit.Test;
 
 import com.vmware.admiral.auth.AuthBaseTest;
 import com.vmware.admiral.auth.idm.PrincipalRolesHandler.PrincipalRoleAssignment;
+import com.vmware.admiral.auth.idm.SecurityContext.ProjectEntry;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalFactoryService;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalState;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalType;
@@ -432,29 +433,27 @@ public class PrincipalServiceTest extends AuthBaseTest {
         assertTrue(connieRoles.roles.contains(AuthRole.BASIC_USER));
         assertTrue(connieRoles.roles.contains(AuthRole.BASIC_USER_EXTENDED));
 
-        // Uncomment this once group assignment for project roles is implemented.
+        assertEquals(2, connieRoles.projects.size());
 
-        // assertEquals(2, connieRoles.projects.size());
+        ProjectEntry firstProjectEntry;
+        ProjectEntry secondProjectEntry;
 
-        // ProjectEntry firstProjectEntry;
-        // ProjectEntry secondProjectEntry;
-        //
-        // if (connieRoles.projects.get(0).name.equalsIgnoreCase(firstProject.name)) {
-        //     firstProjectEntry = connieRoles.projects.get(0);
-        //     secondProjectEntry = connieRoles.projects.get(1);
-        // } else {
-        //     firstProjectEntry = connieRoles.projects.get(1);
-        //     secondProjectEntry = connieRoles.projects.get(0);
-        // }
-        //
-        // assertEquals(firstProject.name, firstProjectEntry.name);
-        // assertEquals(firstProject.documentSelfLink, firstProjectEntry.documentSelfLink);
-        // assertEquals(1, firstProjectEntry.roles.size());
-        // assertTrue(firstProjectEntry.roles.contains(AuthRole.PROJECT_ADMIN));
-        //
-        // assertEquals(secondProject.name, secondProjectEntry.name);
-        // assertEquals(secondProject.documentSelfLink, secondProjectEntry.documentSelfLink);
-        // assertEquals(1, secondProjectEntry.roles.size());
-        // assertTrue(secondProjectEntry.roles.contains(AuthRole.PROJECT_MEMBER));
+        if (connieRoles.projects.get(0).name.equalsIgnoreCase(firstProject.name)) {
+            firstProjectEntry = connieRoles.projects.get(0);
+            secondProjectEntry = connieRoles.projects.get(1);
+        } else {
+            firstProjectEntry = connieRoles.projects.get(1);
+            secondProjectEntry = connieRoles.projects.get(0);
+        }
+
+        assertEquals(firstProject.name, firstProjectEntry.name);
+        assertEquals(firstProject.documentSelfLink, firstProjectEntry.documentSelfLink);
+        assertEquals(1, firstProjectEntry.roles.size());
+        assertTrue(firstProjectEntry.roles.contains(AuthRole.PROJECT_ADMIN));
+
+        assertEquals(secondProject.name, secondProjectEntry.name);
+        assertEquals(secondProject.documentSelfLink, secondProjectEntry.documentSelfLink);
+        assertEquals(2, secondProjectEntry.roles.size());
+        assertTrue(secondProjectEntry.roles.contains(AuthRole.PROJECT_MEMBER));
     }
 }

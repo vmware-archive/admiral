@@ -40,8 +40,13 @@ import com.vmware.admiral.adapter.common.ClosureOperationType;
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.adapter.common.NetworkOperationType;
 import com.vmware.admiral.adapter.common.VolumeOperationType;
+import com.vmware.admiral.auth.idm.AuthRole;
+import com.vmware.admiral.auth.idm.SecurityContext;
+import com.vmware.admiral.auth.idm.SecurityContext.ProjectEntry;
 import com.vmware.admiral.closures.services.closure.ClosureFactoryService;
+import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.serialization.ReleaseConstants;
+import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ComputeConstants;
@@ -112,6 +117,7 @@ import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
@@ -229,7 +235,20 @@ public class RequestBrokerService extends
     @Override
     protected boolean validateStateOnStart(RequestBrokerState state, Operation startOpr) {
         super.validateStateOnStart(state, startOpr);
-        return createRequestTrackerIfNoneProvided(state, startOpr);
+
+        validateUserAuthorization(state, startOpr)
+                .whenComplete((ignore, ex) -> {
+                    if (ex != null) {
+                        startOpr.fail(ex);
+                        return;
+                    }
+                    boolean completed = createRequestTrackerIfNoneProvided(state, startOpr);
+                    if (!completed) {
+                        startOpr.complete();
+                    }
+                });
+
+        return true;
     }
 
     @Override
@@ -2083,5 +2102,85 @@ public class RequestBrokerService extends
                     ComputeDescription desc = o.getBody(ComputeDescription.class);
                     callbackFunction.accept(desc);
                 }));
+    }
+
+    private DeferredResult<Void> validateUserAuthorization(RequestBrokerState state, Operation
+            startOp) {
+        String projectLink = OperationUtil.extractProjectFromHeader(startOp);
+
+        if (projectLink == null || projectLink.isEmpty()) {
+            return DeferredResult.completed(null);
+        }
+
+        Operation getSecurityContext = Operation.createGet(this, ManagementUriParts.AUTH_SESSION)
+                .setReferer(startOp.getUri());
+
+        return sendWithDeferredResult(getSecurityContext, SecurityContext.class)
+                .thenCompose(securityContext -> {
+                    if (securityContext.roles.contains(AuthRole.CLOUD_ADMIN)) {
+                        return DeferredResult.completed(null);
+                    }
+                    ProjectEntry foundEntry = null;
+                    for (ProjectEntry entry : securityContext.projects) {
+                        if (entry.documentSelfLink.equalsIgnoreCase(projectLink)) {
+                            foundEntry = entry;
+                            break;
+                        }
+                    }
+                    if (foundEntry == null) {
+                        return DeferredResult.failed(new IllegalStateException("Principal does "
+                                + "not belong to selected project."));
+                    }
+                    return isUserAuthorized(foundEntry, securityContext, state);
+                });
+    }
+
+    private DeferredResult<Void> isUserAuthorized(ProjectEntry entry, SecurityContext context,
+            RequestBrokerState state) {
+
+        if (entry.roles.contains(AuthRole.PROJECT_VIEWER)) {
+            return DeferredResult.failed(new IllegalStateException("Project Viewer cannot request "
+                    + "operations over resources."));
+        }
+
+        if (entry.roles.contains(AuthRole.PROJECT_ADMIN)) {
+            return DeferredResult.completed(null);
+        }
+
+        if (isProvisionOperation(state)) {
+            return DeferredResult.completed(null);
+        }
+
+        return validateProjectMemberOperation(context, state);
+
+    }
+
+    /**
+     * In case the RequestBroker operation is not provisioning, and the principal is project member
+     * validate that he is owner of all documents he attempt to modify.
+     */
+    private DeferredResult<Void> validateProjectMemberOperation(SecurityContext context,
+            RequestBrokerState state) {
+
+        List<DeferredResult<Void>> results = new ArrayList<>(state.resourceLinks.size());
+        for (String resLink : state.resourceLinks) {
+            Operation getResource = Operation.createGet(this, resLink)
+                    .setReferer(this.getUri());
+            DeferredResult<Void> tempResult = sendWithDeferredResult(
+                    getResource, ServiceDocument.class)
+                    .thenCompose(doc -> {
+                        if (!doc.documentAuthPrincipalLink.equalsIgnoreCase(context.id)) {
+                            String errMsg = String.format("Principal %s does not own resource: %s",
+                                    context.id, doc.documentSelfLink);
+                            return DeferredResult.failed(new IllegalAccessError(errMsg));
+                        }
+                        return DeferredResult.completed(null);
+                    });
+            results.add(tempResult);
+        }
+
+        return DeferredResult.allOf(results).thenAccept(ignore -> {
+        });
+
     }
 }

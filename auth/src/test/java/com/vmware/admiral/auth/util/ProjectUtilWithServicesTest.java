@@ -79,7 +79,7 @@ public class ProjectUtilWithServicesTest extends AuthBaseTest {
 
         // verify
         List<UserState> retrievedUsers = QueryTemplate.waitToComplete(ProjectUtil
-                .retrieveUserStatesForGroup(host, AuthUtil.buildUserGroupState(groupName)));
+                .retrieveUserStatesForGroup(testService, AuthUtil.buildUserGroupState(groupName)));
         assertNotNull(retrievedUsers);
         assertEquals(userStates.size(), retrievedUsers.size());
         assertTrue(retrievedUsers.stream()
@@ -98,7 +98,7 @@ public class ProjectUtilWithServicesTest extends AuthBaseTest {
         CompositeDescription template = createTemplate(project.documentSelfLink);
 
         ExpandedProjectState expandedState = QueryTemplate
-                .waitToComplete(ProjectUtil.expandProjectState(host, project, host.getUri()));
+                .waitToComplete(ProjectUtil.expandProjectState(testService, project, host.getUri()));
 
         // verify admins
         assertNotNull(expandedState.administrators);

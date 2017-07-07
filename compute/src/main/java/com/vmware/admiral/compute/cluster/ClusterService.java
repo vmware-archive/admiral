@@ -290,11 +290,16 @@ public class ClusterService extends StatelessService {
 
     private void getAllClusters(Operation get) {
         boolean expand = UriUtils.hasODataExpandParamValue(get.getUri());
-        URI elasticPlacementZoneConfigurationUri = UriUtils.buildUri(getHost(),
+        URI placementZoneUri = UriUtils.buildUri(getHost(),
                 ElasticPlacementZoneConfigurationService.SELF_LINK, get.getUri().getQuery());
+
+        placementZoneUri = UriUtils.extendUriWithQuery(placementZoneUri,
+                UriUtils.URI_PARAM_ODATA_EXPAND_NO_DOLLAR_SIGN, "");
+
         String projectLink = OperationUtil.extractProjectFromHeader(get);
+
         Operation getPlacementZone = Operation
-                .createGet(UriUtils.buildExpandLinksQueryUri(elasticPlacementZoneConfigurationUri))
+                .createGet(placementZoneUri)
                 .setReferer(getUri());
 
         if (projectLink != null && !projectLink.isEmpty()) {

@@ -62,7 +62,7 @@ public class ProjectFactoryService extends FactoryService {
                     .stream()
                     .map((jsonProject) -> {
                         ProjectState projectState = Utils.fromJson(jsonProject, ProjectState.class);
-                        return ProjectUtil.expandProjectState(getHost(), projectState, getUri());
+                        return ProjectUtil.expandProjectState(this, projectState, getUri());
                     }).collect(Collectors.toList());
             DeferredResult.allOf(deferredExpands).thenAccept((expandedStates) -> {
                 expandedStates.forEach((expandedState) -> {

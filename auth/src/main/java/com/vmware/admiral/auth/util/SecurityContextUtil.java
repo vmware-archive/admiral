@@ -102,6 +102,7 @@ public class SecurityContextUtil {
                     if (CollectionUtils.containsAny(
                             project.membersUserGroupLinks, userGroupLinks)) {
                         projectEntry.roles.add(AuthRole.PROJECT_MEMBER);
+                        projectEntry.roles.add(AuthRole.PROJECT_MEMBER_EXTENDED);
                     }
                     if (CollectionUtils.containsAny(
                             project.viewersUserGroupLinks, userGroupLinks)) {
