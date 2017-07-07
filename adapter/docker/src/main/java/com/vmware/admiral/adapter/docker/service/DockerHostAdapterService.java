@@ -16,6 +16,7 @@ import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExec
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NAMES_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORK_ID_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORK_NAME_PROP_NAME;
+import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_STATE_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_VOLUMES_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_VOLUME_DRIVER_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_VOLUME_NAME_PROP_NAME;
@@ -299,17 +300,17 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
         for (Map<String, Object> containerData : containerList) {
             String id = (String) containerData.get(DOCKER_CONTAINER_ID_PROP_NAME);
             String[] names;
-            Object namesProperty = containerData
-                    .get(DOCKER_CONTAINER_NAMES_PROP_NAME);
+            Object namesProperty = containerData.get(DOCKER_CONTAINER_NAMES_PROP_NAME);
             if (namesProperty instanceof List) {
-                names = ((List<String>) namesProperty)
-                        .toArray(new String[0]);
+                names = ((List<String>) namesProperty).toArray(new String[0]);
             } else {
                 names = (String[]) namesProperty;
             }
             callbackResponse.addIdAndNames(id, names);
             callbackResponse.containerIdsAndImage.put(id,
                     (String) containerData.get(DOCKER_CONTAINER_IMAGE_PROP_NAME));
+            callbackResponse.containerIdsAndState.put(id, ContainerStateMapper.mapPowerState(
+                    (String) containerData.get(DOCKER_CONTAINER_STATE_PROP_NAME)));
         }
         return callbackResponse;
     }

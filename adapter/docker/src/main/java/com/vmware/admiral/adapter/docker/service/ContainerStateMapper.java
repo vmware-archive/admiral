@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -85,6 +85,28 @@ public class ContainerStateMapper {
 
         mapNetworkSettingsProperties(containerState,
                 getMap(properties, DOCKER_CONTAINER_NETWORK_SETTINGS_PROP_NAME));
+    }
+
+    /**
+     * Map the result from listing all containers - State property to the PowerState enum.
+     * Returns {@link PowerState} if state is mapped.
+     */
+    public static PowerState mapPowerState(String state) {
+        // docker states when listing all containers:
+        // created|restarting|running|removing|paused|exited|dead
+        state = state.toLowerCase();
+
+        switch (state) {
+        case "running":
+            return PowerState.RUNNING;
+        case "paused":
+            return PowerState.PAUSED;
+        case "exited":
+        case "dead":
+            return PowerState.STOPPED;
+        default:
+            return null;
+        }
     }
 
     /**

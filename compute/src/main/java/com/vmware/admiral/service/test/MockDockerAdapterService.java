@@ -74,6 +74,9 @@ public class MockDockerAdapterService extends BaseMockAdapterService {
     // Map of container ids and image by hostId. hostId -> Map of containerId -> container image
     private static final Map<String, Map<String, String>> CONTAINER_IDS_AND_IMAGE =
             new ConcurrentHashMap<>();
+    // Map of container ids and their power state
+    private static final Map<String, PowerState> CONTAINER_IDS_AND_STATE =
+            new ConcurrentHashMap<>();
 
     private static class MockAdapterRequest extends AdapterRequest {
 
@@ -539,6 +542,14 @@ public class MockDockerAdapterService extends BaseMockAdapterService {
             CONTAINER_IDS_AND_IMAGE.put(hostId, new ConcurrentHashMap<>());
         }
         CONTAINER_IDS_AND_IMAGE.get(hostId).put(containerId, image);
+    }
+
+    public static synchronized PowerState getContainerPowerState(String containerId) {
+        return CONTAINER_IDS_AND_STATE.get(containerId);
+    }
+
+    public static synchronized void addContainerState(String containerId, PowerState state) {
+        CONTAINER_IDS_AND_STATE.put(containerId, state);
     }
 
 }

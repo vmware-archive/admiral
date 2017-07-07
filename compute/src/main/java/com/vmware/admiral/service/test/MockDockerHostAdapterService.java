@@ -80,6 +80,8 @@ public class MockDockerHostAdapterService extends BaseMockAdapterService {
                         MockDockerAdapterService.getContainerNames(containerId));
                 callbackResponse.containerIdsAndImage.put(containerId,
                         MockDockerAdapterService.getContainerImage(containerId));
+                callbackResponse.containerIdsAndState.put(containerId,
+                        MockDockerAdapterService.getContainerPowerState(containerId));
             }
             patchTaskStage(request, null, callbackResponse);
             op.setBody(callbackResponse);
@@ -155,4 +157,5 @@ public class MockDockerHostAdapterService extends BaseMockAdapterService {
                 .setBody(computeState)
                 .setCompletion((o, ex) -> patchTaskStage(request, ex)));
     }
+
 }

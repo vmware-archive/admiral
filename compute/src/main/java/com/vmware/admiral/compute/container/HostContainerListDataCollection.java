@@ -105,6 +105,7 @@ public class HostContainerListDataCollection extends StatefulService {
         public URI hostAdapterReference;
         public Map<String, String> containerIdsAndNames = new HashMap<>();
         public Map<String, String> containerIdsAndImage = new HashMap<>();
+        public Map<String, PowerState> containerIdsAndState = new HashMap<>();
         public boolean unlockDataCollectionForHost;
 
         public void addIdAndNames(String id, String[] names) {
@@ -442,6 +443,8 @@ public class HostContainerListDataCollection extends StatefulService {
             } else {
                 callback.containerIdsAndNames.remove(existingContainerState.id);
 
+                updateExistingContainer(existingContainerState, callback);
+
                 checkIfSystemContainer(containerHostLink, systemContainersToInstall,
                         existingContainerState);
             }
@@ -523,6 +526,30 @@ public class HostContainerListDataCollection extends StatefulService {
                 });
 
         sendRequest(operation);
+    }
+
+    private void updateExistingContainer(ContainerState c, ContainerListCallback callback) {
+        boolean changed = false;
+        ContainerState patch = new ContainerState();
+
+        // handle power state changes
+        PowerState newPowerState = callback.containerIdsAndState.get(c.id);
+        if (newPowerState != null
+                && c.powerState != newPowerState
+                && !ContainerState.CONTAINER_UNHEALTHY_STATUS.equals(c.status)) {
+            // do not modify the power state set during the health config check!
+
+            logInfo("Changing power state of container %s (%s) from %s to %s",
+                    c.names, c.documentSelfLink, c.powerState, newPowerState);
+            changed = true;
+            patch.powerState = newPowerState;
+        }
+
+        if (changed) {
+            sendRequest(Operation
+                    .createPatch(this, c.documentSelfLink)
+                    .setBodyNoCloning(patch));
+        }
     }
 
     private void checkIfSystemContainer(String containerHostLink,
