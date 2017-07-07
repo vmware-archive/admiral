@@ -76,15 +76,17 @@ public class FetchDataGatewayService extends StatelessService {
                             forwardUri = getHost().getUri();
                         }
                         URI backendURI = forwardUri.resolve(servicePath);
-                        String shallStartWith = UriUtils.buildUriPath(UriPaths.ADAPTER, cfg.id);
+                        String epPrefix = UriUtils.buildUriPath(UriPaths.ADAPTER, cfg.id);
+                        String commonPrefix = UriUtils.buildUriPath(UriPaths.ADAPTER, "common");
                         String pathToCheck = backendURI.getPath();
-                        if (pathToCheck.startsWith(shallStartWith)) {
+                        if (pathToCheck.startsWith(epPrefix)
+                                || pathToCheck.startsWith(commonPrefix)) {
                             sendRequest(UrlEncodedReverseProxyService
                                     .createForwardOperation(patch, backendURI,
                                             Operation::createPatch));
                         } else {
                             patch.fail(new IllegalArgumentException(
-                                    "Requested servicePath shall start with: " + shallStartWith
+                                    "Requested servicePath shall start with: " + epPrefix
                                             + ". Actual: " + pathToCheck));
                         }
                     }

@@ -17,7 +17,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 import java.util.logging.Logger;
 
 import org.junit.Assert;
@@ -56,7 +56,7 @@ public class UrlEncodedReverseProxyTest {
                 + "/s1/" + key +
                 "/step1/step2?p1=v1&p2=v2#fragment";
         URI uri = UrlEncodedReverseProxyService.extractBackendURI(URI.create(location),
-                k -> URI.create(scheme + "://" + k));
+                (k, p) -> URI.create(scheme + "://" + k).resolve(p));
         Assert.assertTrue(scheme.equals(uri.getScheme()));
         Assert.assertTrue(host.equals(uri.getHost()));
     }
@@ -82,7 +82,7 @@ public class UrlEncodedReverseProxyTest {
     }
 
     private URI prepareProxyPart(String backendLocation,
-            Function<String, URI> resolver) throws UnsupportedEncodingException {
+            BiFunction<String, String, URI> resolver) throws UnsupportedEncodingException {
         this.logger.info("backendLocation: " + backendLocation);
         String location = createReverseProxyLocation(backendLocation);
         this.logger.info("location: " + location);
