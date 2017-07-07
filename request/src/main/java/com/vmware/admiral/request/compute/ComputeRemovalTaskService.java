@@ -554,7 +554,7 @@ public class ComputeRemovalTaskService extends
     }
 
     @Override
-    protected Class<? extends ResourceState> getRelatedResourceStateType() {
+    protected Class<? extends ResourceState> getRelatedResourceStateType(ComputeRemovalTaskState state) {
         return ComputeState.class;
     }
 

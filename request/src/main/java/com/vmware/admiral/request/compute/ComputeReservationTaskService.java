@@ -797,7 +797,7 @@ public class ComputeReservationTaskService extends
     }
 
     @Override
-    protected Class<? extends ResourceState> getRelatedResourceStateType() {
+    protected Class<? extends ResourceState> getRelatedResourceStateType(ComputeReservationTaskState state) {
         return ComputeDescription.class;
     }
 

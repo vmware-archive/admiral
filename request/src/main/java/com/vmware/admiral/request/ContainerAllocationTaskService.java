@@ -73,7 +73,6 @@ import com.vmware.admiral.service.common.ResourceNamePrefixService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.admiral.service.common.TaskServiceDocument;
-import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
@@ -1092,13 +1091,27 @@ public class ContainerAllocationTaskService extends
     }
 
     @Override
-    protected Collection<String> getRelatedResourcesLinks(ContainerAllocationTaskState state) {
-        return Arrays.asList(state.resourceDescriptionLink);
+    protected boolean skipExtensibility(ContainerAllocationTaskState state) {
+        return isAllocationRequest(state) && state.taskSubStage != SubStage.BUILD_RESOURCES_LINKS;
     }
 
     @Override
-    protected Class<? extends ResourceState> getRelatedResourceStateType() {
-        return ComputeDescription.class;
+    protected Collection<String> getRelatedResourcesLinks(ContainerAllocationTaskState state) {
+        if (state.taskSubStage == SubStage.BUILD_RESOURCES_LINKS) {
+            return Arrays.asList(state.resourceDescriptionLink);
+        } else {
+            return state.resourceLinks;
+        }
+    }
+
+    @Override
+    protected Class<? extends ResourceState> getRelatedResourceStateType(
+            ContainerAllocationTaskState state) {
+        if (state.taskSubStage == SubStage.BUILD_RESOURCES_LINKS) {
+            return ContainerDescription.class;
+        } else {
+            return ContainerState.class;
+        }
     }
 
     @Override
@@ -1120,12 +1133,14 @@ public class ContainerAllocationTaskService extends
     @Override
     public DeferredResult<Void> enhanceExtensibilityResponse(ContainerAllocationTaskState state,
             ServiceTaskCallbackResponse replyPayload) {
-        DeferredResult<Void> dr = new DeferredResult<>();
         if (state.taskSubStage != SubStage.START_PROVISIONING && state.taskSubStage !=
                 SubStage.COMPLETED) {
+            DeferredResult<Void> dr = new DeferredResult<>();
             reorderHostSelections(state, replyPayload, () -> dr.complete(null));
+            return dr;
+        } else {
+            return DeferredResult.completed(null);
         }
-        return dr;
     }
 
     protected void reorderHostSelections(ContainerAllocationTaskState state,

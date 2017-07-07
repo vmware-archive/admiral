@@ -1059,7 +1059,7 @@ public class ComputeAllocationTaskService
     }
 
     @Override
-    protected Class<? extends ResourceState> getRelatedResourceStateType() {
+    protected Class<? extends ResourceState> getRelatedResourceStateType(ComputeAllocationTaskState state) {
         return ComputeDescription.class;
     }
 

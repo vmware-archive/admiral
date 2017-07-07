@@ -29,6 +29,8 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.host.IExtensibilityRegistryHost;
@@ -326,7 +328,8 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
     private void handleSubscriptions(T state) {
         // Check if Task allows subscription on this stage & prevent sending of event more than once
         if (subscriptionSubStages.contains(state.taskSubStage) && (state.customProperties ==
-                null || !state.customProperties.containsKey(constructExtensibilityResponseKey(state)))) {
+                null || !state.customProperties.containsKey(constructExtensibilityResponseKey
+                (state))) && !skipExtensibility(state)) {
             ExtensibilitySubscriptionManager manager = getExtensibilityManager();
             if (manager != null) {
                 BaseExtensibilityCallbackResponse notificationPayload = this.notificationPayload
@@ -950,18 +953,22 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         List<DeferredResult<ResourceState>> results = getRelatedResourcesLinks(state).stream()
                 .map(link -> Operation.createGet(this, link))
                 .map(o -> (DeferredResult<ResourceState>)sendWithDeferredResult(o,
-                        getRelatedResourceStateType()))
+                        getRelatedResourceStateType(state)))
                 .collect(Collectors.toList());
 
         return DeferredResult.allOf(results).thenApply(r -> new ArrayList<ResourceState>(r));
     }
 
-    protected Collection<String> getRelatedResourcesLinks(T state) {
-        return new ArrayList<>();
+    protected boolean skipExtensibility(T state) {
+        return false;
     }
 
-    protected Class<? extends ResourceState> getRelatedResourceStateType() {
-        return ResourceState.class;
+    protected Collection<String> getRelatedResourcesLinks(T state) {
+        throw new NotImplementedException();
+    }
+
+    protected Class<? extends ResourceState> getRelatedResourceStateType(T state) {
+        throw new NotImplementedException();
     }
 
     public<R extends ResourceState> DeferredResult<Map<String, String>> getResourceStatesTags(
@@ -1019,7 +1026,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
             List<DeferredResult<Operation>> results = getRelatedResourcesLinks(state).stream()
                     .map(link -> {
                         try {
-                            ResourceState doc = getRelatedResourceStateType().newInstance();
+                            ResourceState doc = getRelatedResourceStateType(state).newInstance();
                             doc.customProperties = new HashMap<>(replyPayload.customProperties);
                             return sendWithDeferredResult(
                                     Operation.createPatch(this, link).setBody(doc));
@@ -1043,14 +1050,19 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
 
         List<DeferredResult<Operation>> drs = resources.stream()
                 .map(link -> {
-                    TagAssignmentRequest req = new TagAssignmentRequest();
                     BaseExtensibilityCallbackResponse response = (BaseExtensibilityCallbackResponse) replyPayload;
-                    req.tagsToAssign = response.tags.entrySet().stream()
-                            .map(ent -> new KeyValue(ent.getKey(), ent.getValue()))
-                            .collect(Collectors.toList());
-                    req.resourceLink = link;
-                    return req;
+                    if (response.tags != null) {
+                        TagAssignmentRequest req = new TagAssignmentRequest();
+                        req.tagsToAssign = response.tags.entrySet().stream()
+                                .map(ent -> new KeyValue(ent.getKey(), ent.getValue()))
+                                .collect(Collectors.toList());
+                        req.resourceLink = link;
+                        return req;
+                    } else {
+                        return null;
+                    }
                 })
+                .filter(r -> r != null)
                 .map(req -> sendWithDeferredResult(
                         Operation.createPost(this, TagAssignmentService.SELF_LINK)
                                 .setBody(req))).collect(Collectors.toList());
