@@ -47,7 +47,7 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
     credentials: new FormControl('')
   });
 
-  constructor(private router: Router, route: ActivatedRoute, service: DocumentService, private ps: ProjectService) {
+  constructor(private router: Router, route: ActivatedRoute, service: DocumentService) {
     super(route, service, Links.CLUSTERS);
   }
 
@@ -122,18 +122,11 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
 
   private createCluster(certificateAccepted: boolean) {
     if (this.clusterForm.valid) {
-      let selectedProject = this.ps.getSelectedProject();
-      if (!selectedProject || !selectedProject.documentSelfLink) {
-        this.alertMessage = I18n.t('projects.errors.noSelectedProject');
-        return;
-      }
-
       this.isSaving = true;
 
       let formInput = this.clusterForm.value;
       let hostState = {
         'address': formInput.url,
-        'tenantLinks': [ selectedProject.documentSelfLink ],
         'customProperties': {
           '__containerHostType': formInput.type,
           '__adapterDockerType': 'API',

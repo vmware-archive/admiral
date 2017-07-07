@@ -44,7 +44,7 @@ export class ClusterAddHostComponent implements AfterViewInit {
         credentials: new FormControl('')
     });
 
-    constructor(private ds: DocumentService, private ps: ProjectService) { }
+    constructor(private ds: DocumentService) { }
 
     ngAfterViewInit() {
         this.ds.list(Links.CREDENTIALS, {}).then(credentials => {
@@ -85,18 +85,11 @@ export class ClusterAddHostComponent implements AfterViewInit {
 
     addHost(certificateAccepted: boolean) {
         if (this.addHostToClusterForm.valid) {
-            let selectedProject = this.ps.getSelectedProject();
-            if (!selectedProject || !selectedProject.documentSelfLink) {
-                this.alertMessage = I18n.t('projects.errors.noSelectedProject');
-                return;
-            }
-
             this.isAddingHost = true;
 
             let formInput = this.addHostToClusterForm.value;
             let hostState = {
                 'address': formInput.address,
-                'tenantLinks': [Links.PROJECTS + '/default-project'],
                 'customProperties': {
                     '__containerHostType': 'DOCKER',
                     '__adapterDockerType': 'API'
