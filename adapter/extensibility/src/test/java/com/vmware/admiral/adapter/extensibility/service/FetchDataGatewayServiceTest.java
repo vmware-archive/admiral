@@ -113,6 +113,19 @@ public class FetchDataGatewayServiceTest extends BaseTestCase {
                 });
     }
 
+    @Test
+    public void testGetByEndpoint() {
+        testGetByXXX(false, false,
+                (ept, d) -> {
+                    EndpointState endpointState = registerEndpoint(ept);
+                    FetchDataRequest request = new FetchDataRequest();
+                    request.entityId = endpointState.documentSelfLink;
+                    request.requestType = RequestType.Endpoint;
+                    request.data = d;
+                    return request;
+                });
+    }
+
     private void testGetByXXX(boolean withHost, boolean withWrongPath,
             BiFunction<String, Object, FetchDataRequest> config) {
 

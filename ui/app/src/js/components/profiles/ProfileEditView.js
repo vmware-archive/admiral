@@ -247,7 +247,7 @@ export default Vue.component('profile-edit-view', {
         function(url, body) {
           return {
             requestType: 'Endpoint',
-            entityId: _this.endpoint,
+            entityId: _this.endpoint.documentSelfLink,
             data: body
           };
         });
