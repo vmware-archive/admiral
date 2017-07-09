@@ -12,7 +12,11 @@
 <clr-main-container *ngIf="!isLogin">
   <clr-header class="header-5" *ngIf="!embedded">
     <div class="branding">
-        <a class="nav-link" routerLink="/" *ngIf="!compute">
+        <a class="nav-link" routerLink="/" *ngIf="admiral">
+            <clr-icon shape="vm-bug"></clr-icon>
+            <span class="title">Admiral</span>
+        </a>
+        <a class="nav-link" routerLink="/" *ngIf="vic">
             <clr-icon shape="vm-bug"></clr-icon>
             <span class="title">vSphere Integrated Containers</span>
         </a>

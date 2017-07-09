@@ -37,13 +37,14 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
     formerViewPaths = {
       'templates': 'templates?$category=templates',
       'public-repositories': 'templates?$category=images',
-      'closures': 'templates?$category=closures',
+      'closure-definitions': 'templates?$category=closures',
       'placements': 'placements',
       'hosts': 'hosts',
       'applications': 'applications',
       'containers': 'containers',
       'networks': 'networks',
-      'volumes': 'volumes'
+      'volumes': 'volumes',
+      'closures': 'closures'
     }
 
     formerViewPath;

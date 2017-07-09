@@ -10,6 +10,7 @@
  */
 
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
+import { FT } from './../../utils/ft';
 
 @Component({
   selector: 'app-identity-management',
@@ -22,6 +23,10 @@ export class IdentityManagementComponent implements OnInit {
   constructor() { }
 
   ngOnInit() {
+  }
+
+  get embedded(): boolean {
+    return FT.isApplicationEmbedded();
   }
 
 }

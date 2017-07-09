@@ -30,6 +30,7 @@
               <li><a class="nav-link" routerLink="containers" routerLinkActive="active">Containers</a></li>
               <li><a class="nav-link" routerLink="networks" routerLinkActive="active">Networks</a></li>
               <li><a class="nav-link" routerLink="volumes" routerLinkActive="active">Volumes</a></li>
+              <li *ngIf="areClosuresAllowed"><a class="nav-link" routerLink="closures" routerLinkActive="active">Closures</a></li>
               <li *ngIf="kubernetesEnabled">
                   <section class="nav-group collapsible">
                       <input id="deploymentsCollapse" type="checkbox">
@@ -54,7 +55,7 @@
               <li *ngIf="isHbrEnabled"><a class="nav-link" routerLink="project-repositories" routerLinkActive="active">Project repositories</a></li>
               <li><a class="nav-link" routerLink="public-repositories" routerLinkActive="active">Public repositories</a></li>
               <li *ngIf="embeddedMode"><a class="nav-link" routerLink="registries" routerLinkActive="active">Registries</a></li>
-              <li *ngIf="areClosuresAllowed"><a class="nav-link" routerLink="closures" routerLinkActive="active">Closures</a></li>
+              <li *ngIf="areClosuresAllowed"><a class="nav-link" routerLink="closure-definitions" routerLinkActive="active">Closures</a></li>
           </ul>
       </section>
        <section class="nav-group collapsible">

@@ -53,6 +53,14 @@ export class AppComponent {
         return FT.isCompute();
     }
 
+    get vic(): boolean {
+        return FT.isVic();
+    }
+
+    get admiral(): boolean {
+        return !this.compute && !this.vic;
+    }
+
     get userName(): String {
         if (this.userSecurityContext) {
             return this.userSecurityContext.name || this.userSecurityContext.email;
