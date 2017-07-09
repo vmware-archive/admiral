@@ -25,8 +25,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>${xenon.group}</groupId>
-            <artifactId>xenon-swagger-adapter</artifactId>
+            <groupId>com.vmware.photon.controller</groupId>
+            <artifactId>photon-model</artifactId>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
@@ -78,6 +78,15 @@
             <artifactId>admiral-closure-adapter</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>${xenon.group}</groupId>
+            <artifactId>xenon-loader</artifactId>
+            <version>${xenon.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${xenon.group}</groupId>
+            <artifactId>xenon-swagger-adapter</artifactId>
+        </dependency>
 
         <!-- TEST -->
         <dependency>
@@ -93,11 +102,6 @@
             <version>${xenon.version}</version>
             <classifier>tests</classifier>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.vmware.xenon</groupId>
-            <artifactId>xenon-loader</artifactId>
-            <version>${xenon.version}</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
