@@ -132,7 +132,7 @@ public class ProjectInterceptor {
 
     private static void handleContainerHostSpec(ContainerHostSpec state, String projectLink,
             Operation op) {
-        if (projectLink == null || projectLink.isEmpty()) {
+        if (projectLink == null || projectLink.isEmpty() || state.hostState == null) {
             return;
         }
         if (state.hostState.tenantLinks == null) {
