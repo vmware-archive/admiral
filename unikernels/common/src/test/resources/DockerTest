@@ -1,0 +1,4 @@
+FROM cloudrouter/osv-builder
+COPY OSv-service.jar .
+WORKDIR /
+CMD java -jar OSv-service.jar

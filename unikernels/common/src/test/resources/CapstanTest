@@ -1,0 +1,6 @@
+base: cloudius/osv-openjdk
+
+cmdline: /java.so -jar /app.jar
+
+files:
+  /app.jar: target/my-app-1.0-SNAPSHOT.jar
