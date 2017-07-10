@@ -82,6 +82,9 @@ public class RegistrySearchResponse {
     }
 
     public void limit(int size) {
+        if (results == null) {
+            return;
+        }
         size = Math.min(size, results.size());
         results = results.subList(0, size);
         numResults = results.size();

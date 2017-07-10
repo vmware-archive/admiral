@@ -22,6 +22,7 @@ import java.util.ServiceLoader;
 import java.util.function.Function;
 import java.util.logging.Level;
 
+import com.vmware.admiral.adapter.registry.service.RegistryAdapterService;
 import com.vmware.admiral.auth.idm.AuthConfigProvider;
 import com.vmware.admiral.auth.idm.AuthRole;
 import com.vmware.admiral.auth.idm.SessionService;
@@ -32,9 +33,15 @@ import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
 import com.vmware.admiral.compute.cluster.ClusterService;
+import com.vmware.admiral.compute.container.CompositeDescriptionCloneService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
+import com.vmware.admiral.compute.container.TemplateSearchService;
+import com.vmware.admiral.image.service.ContainerImageService;
+import com.vmware.admiral.image.service.ContainerImageTagsService;
 import com.vmware.admiral.image.service.PopularImagesService;
+import com.vmware.admiral.log.EventLogService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
+import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Claims;
 import com.vmware.xenon.common.Operation;
@@ -228,6 +235,9 @@ public class AuthUtil {
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
                         SessionService.SELF_LINK,
                         MatchType.TERM, Occurance.SHOULD_OCCUR)
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        ManagementUriParts.CONTAINER_IMAGE_ICONS,
+                        MatchType.TERM, Occurance.SHOULD_OCCUR)
                 // TODO: Currently this breaks the UI. Remove this query, once
                 // this call is skipped for basic user.
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
@@ -289,7 +299,7 @@ public class AuthUtil {
         String id = AuthRole.BASIC_USER_EXTENDED.buildRoleWithSuffix(identifier);
         String selfLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, id);
 
-        EnumSet<Action> verbs = EnumSet.of(Action.GET, Action.POST);
+        EnumSet<Action> verbs = EnumSet.of(Action.GET, Action.POST, Action.DELETE);
 
         RoleState roleState = buildRoleState(selfLink, userGroupLink,
                 BASIC_USERS_EXTENDED_RESOURCE_GROUP_LINK, verbs, Policy.ALLOW);
@@ -332,17 +342,50 @@ public class AuthUtil {
                 .create()
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK, projectSelfLink,
                         Occurance.SHOULD_OCCUR)
+
                 .addCollectionItemClause(ResourceState.FIELD_NAME_TENANT_LINKS, projectSelfLink,
                         Occurance.SHOULD_OCCUR)
+
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
                         buildUriWithWildcard(ManagementUriParts.REQUEST),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(TemplateSearchService.SELF_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(CompositeDescriptionCloneService.SELF_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(ContainerImageService.SELF_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(ContainerImageTagsService.SELF_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(RegistryService.FACTORY_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(RegistryAdapterService.SELF_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(EventLogService.FACTORY_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
                         buildUriWithWildcard(ClusterService.SELF_LINK),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
                         buildUriWithWildcard(ElasticPlacementZoneConfigurationService.SELF_LINK),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
                         buildUriWithWildcard(GroupResourcePlacementService.FACTORY_LINK),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
@@ -368,8 +411,22 @@ public class AuthUtil {
                 .create()
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK, projectSelfLink,
                         Occurance.SHOULD_OCCUR)
+
                 .addCollectionItemClause(ResourceState.FIELD_NAME_TENANT_LINKS, projectSelfLink,
                         Occurance.SHOULD_OCCUR)
+
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(CompositeDescriptionCloneService.SELF_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(RegistryAdapterService.SELF_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(EventLogService.FACTORY_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
                         buildUriWithWildcard(ManagementUriParts.REQUEST),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)

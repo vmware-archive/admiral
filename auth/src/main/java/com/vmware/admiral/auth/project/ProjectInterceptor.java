@@ -28,6 +28,7 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionSer
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService;
 import com.vmware.admiral.host.interceptor.OperationInterceptorRegistry;
 import com.vmware.admiral.service.common.MultiTenantDocument;
+import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
@@ -55,6 +56,8 @@ public class ProjectInterceptor {
 
         registerType(registry, CompositeDescriptionService.class);
         registerType(registry, CompositeComponentService.class);
+
+        registerType(registry, RegistryService.class);
     }
 
     private static void registerType(OperationInterceptorRegistry registry,
