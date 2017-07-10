@@ -30,7 +30,6 @@ import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
-import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.host.interceptor.AuthCredentialsInterceptor;
 import com.vmware.admiral.host.interceptor.ComputePlacementZoneInterceptor;
 import com.vmware.admiral.host.interceptor.EndpointInterceptor;
@@ -55,7 +54,6 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.AuthorizationContext;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceClient;
-import com.vmware.xenon.common.ServiceConfigUpdateRequest;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.http.netty.NettyHttpListener;
@@ -185,8 +183,6 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
         super.addPrivilegedService(NodeMigrationService.class);
         // Clean up authorization context to avoid privileged access.
         setAuthorizationContext(null);
-
-        postInitialization();
 
         return this;
     }
@@ -432,33 +428,6 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
         trustManager.start();
         setAuthorizationContext(null);
         return this;
-    }
-
-    /**
-     * Execute code after all services are started.
-     */
-    private void postInitialization() {
-        // hack to set new retention limits for 2 services from photon model
-        // - resource pool - placement zones
-        // - groups placement - placements
-        registerForServiceAvailability(
-                (o, e) -> {
-                    setNewLimits(GroupResourcePlacementService.DEFAULT_RESOURCE_POOL_LINK);
-                    setNewLimits(GroupResourcePlacementService.DEFAULT_RESOURCE_PLACEMENT_LINK);
-                },
-                GroupResourcePlacementService.DEFAULT_RESOURCE_POOL_LINK,
-                GroupResourcePlacementService.DEFAULT_RESOURCE_PLACEMENT_LINK);
-    }
-
-    private void setNewLimits(String service) {
-        log(Level.INFO, "Set new retention limit for %s", service);
-        ServiceConfigUpdateRequest configUpdate = ServiceConfigUpdateRequest.create();
-        configUpdate.versionRetentionLimit = 5L;
-        configUpdate.versionRetentionFloor = 5L;
-        Operation.createPatch(UriUtils.buildConfigUri(this, service))
-                .setBodyNoCloning(configUpdate)
-                .setReferer(this.getPublicUri())
-                .sendWith(this);
     }
 
     private ServiceClient createServiceClient(SSLContext sslContext,

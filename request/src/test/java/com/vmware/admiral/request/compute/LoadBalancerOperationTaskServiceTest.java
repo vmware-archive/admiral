@@ -31,8 +31,8 @@ public class LoadBalancerOperationTaskServiceTest extends RequestBaseTest {
 
     @Override
     public void setUp() throws Throwable {
-        super.setUp();
         DeploymentProfileConfig.getInstance().setTest(true);
+        super.setUp();
     }
 
     @After

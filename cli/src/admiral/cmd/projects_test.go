@@ -21,6 +21,8 @@ import (
 	. "admiral/common/utils"
 	"admiral/config"
 	"admiral/hosts"
+	"admiral/placement_zones"
+	"admiral/placements"
 )
 
 func TestAddUseRemoveProjects(t *testing.T) {
@@ -40,6 +42,9 @@ func TestAddUseRemoveProjects(t *testing.T) {
 		t.Error("Login failed.")
 		t.FailNow()
 	}
+
+	placement_zones.BuildDefaultPlacementZone()
+	placements.BuildDefaultPlacement()
 
 	TestPrintln("Adding host.")
 	hostAddCmd.ParseFlags([]string{"--address=" + tc.HostAddress, "--placement-zone=" + tc.PlacementZone,

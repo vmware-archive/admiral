@@ -13,6 +13,7 @@ package com.vmware.admiral.host;
 
 import java.util.ArrayList;
 
+import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
@@ -45,10 +46,12 @@ public class ComputeInitialBootService extends AbstractInitialBootService {
         states.add(HostContainerListDataCollection.buildDefaultStateInstance());
         states.add(HostNetworkListDataCollection.buildDefaultStateInstance());
         states.add(HostVolumeListDataCollection.buildDefaultStateInstance());
-        states.add(GroupResourcePlacementService.buildDefaultResourcePool());
 
-        if (!ConfigurationUtil.isEmbedded()) {
-            states.add(GroupResourcePlacementService.buildDefaultStateInstance());
+        if (DeploymentProfileConfig.getInstance().isTest()) {
+            states.add(GroupResourcePlacementService.buildDefaultResourcePool());
+            if (!ConfigurationUtil.isEmbedded()) {
+                states.add(GroupResourcePlacementService.buildDefaultStateInstance());
+            }
         }
 
         initInstances(post, states.toArray(new ServiceDocument[states.size()]));

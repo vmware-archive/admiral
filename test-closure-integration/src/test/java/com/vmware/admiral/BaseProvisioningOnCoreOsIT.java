@@ -56,6 +56,7 @@ import com.vmware.admiral.compute.container.CompositeComponentRegistry.Component
 import com.vmware.admiral.compute.container.CompositeDescriptionFactoryService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.image.service.ContainerImageService;
 import com.vmware.admiral.request.RequestBrokerFactoryService;
@@ -65,6 +66,7 @@ import com.vmware.admiral.service.common.SslTrustCertificateService;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceClient;
@@ -209,6 +211,10 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
 
         dockerHostAuthCredentials = postDocument(AuthCredentialsService.FACTORY_LINK,
                 dockerHostAuthCredentials, TestDocumentLifeCycle.FOR_DELETE_AFTER_CLASS);
+        postDocument(ResourcePoolService.FACTORY_LINK,
+                GroupResourcePlacementService.buildDefaultResourcePool(), TestDocumentLifeCycle.FOR_DELETE_AFTER_CLASS);
+        postDocument(GroupResourcePlacementService.FACTORY_LINK,
+                GroupResourcePlacementService.buildDefaultStateInstance(), TestDocumentLifeCycle.FOR_DELETE_AFTER_CLASS);
 
         assertNotNull("Failed to create host credentials", dockerHostAuthCredentials);
 

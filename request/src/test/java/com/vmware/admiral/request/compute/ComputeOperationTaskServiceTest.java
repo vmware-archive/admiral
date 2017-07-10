@@ -70,8 +70,8 @@ public class ComputeOperationTaskServiceTest extends ComputeRequestBaseTest {
 
     @Override
     public void setUp() throws Throwable {
-        super.setUp();
         DeploymentProfileConfig.getInstance().setTest(true);
+        super.setUp();
 
         // create a single powered-on compute available for placement
         createVmHostCompute(true);

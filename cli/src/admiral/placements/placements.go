@@ -438,3 +438,25 @@ func GetPlacementLinks(name string) []string {
 	}
 	return links
 }
+
+func BuildDefaultPlacement() {
+	url := uri_utils.BuildUrl(uri_utils.Placement, nil, true)
+
+	placement := PlacementToAdd{
+		Name:               "default-resource-placement",
+		MaxNumberInstances: 10000000,
+		Priority:           "100",
+	}
+	placement.SetResourcePool("default-placement-zone")
+	placement.DocumentSelfLink = "default-resource-placement"
+
+	jsonBody, err := json.Marshal(placement)
+	utils.CheckBlockingError(err)
+
+	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
+	_, respBody, respErr := client.ProcessRequest(req)
+	utils.CheckBlockingError(respErr)
+	newPolicy := &Placement{}
+	err = json.Unmarshal(respBody, newPolicy)
+	utils.CheckBlockingError(err)
+}

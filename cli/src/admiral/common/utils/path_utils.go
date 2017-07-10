@@ -15,7 +15,6 @@ import (
 	"fmt"
 	"os"
 	"runtime"
-
 	"github.com/mitchellh/go-homedir"
 )
 

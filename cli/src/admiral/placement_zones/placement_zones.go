@@ -52,6 +52,7 @@ type ResourcePoolState struct {
 	base_types.ServiceDocument
 
 	Name             string             `json:"name,omitempty"`
+	Id               string             `json:"id,omitempty"`
 	MaxCpuCount      int64              `json:"maxCpuCount,omitempty"`
 	MaxMemoryBytes   int64              `json:"maxMemoryBytes,omitempty"`
 	CustomProperties map[string]*string `json:"customProperties,omitempty"`
@@ -443,6 +444,32 @@ func GetPlacementZone(id string) (*PlacementZone, error) {
 
 	pz := pzList.Documents[pzList.DocumentLinks[0]]
 	return &pz, nil
+}
+
+func BuildDefaultPlacementZone() {
+	url := uri_utils.BuildUrl(uri_utils.ElasticPlacementZone, nil, true)
+
+	resPoolState := ResourcePoolState{
+		Name: "default-placement-zone",
+		Id:   "default-placement-zone",
+	}
+
+	resPoolState.DocumentSelfLink = "default-placement-zone"
+
+	epzState := EpzState{}
+
+	pz := &PlacementZone{
+		ResourcePoolState: resPoolState,
+		EpzState:          epzState,
+	}
+
+	jsonBody, _ := json.Marshal(pz)
+	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
+	_, respBody, respErr := client.ProcessRequest(req)
+	utils.CheckBlockingError(respErr)
+	pz = &PlacementZone{}
+	err := json.Unmarshal(respBody, pz)
+	utils.CheckBlockingError(err)
 }
 
 // Currently disabled!
