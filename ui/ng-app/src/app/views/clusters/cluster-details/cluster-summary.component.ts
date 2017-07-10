@@ -29,6 +29,14 @@ export class ClusterSummaryComponent implements OnInit {
     return this.cluster && Utils.getDocumentId(this.cluster.documentSelfLink);
   }
 
+  get adminPortal() {
+    if (this.cluster && this.cluster.address) {
+      let urlParts = Utils.getURLParts(this.cluster.address);
+      return 'https://' + urlParts.host + ':2378';
+    }
+    return '';
+  }
+
   ngOnInit() {
     // DOM init
   }

@@ -129,6 +129,7 @@
     "summary": {
       "title": "Summary",
       "address": "Address:",
+      "adminPortal": "Admin Portal:",
       "type": "Type:",
       "clusterOverview": "Cluster Overview",
       "clusterResources": "Cluster Resources",
