@@ -422,7 +422,7 @@ public class ComputeNetworkProvisionTaskService
 
         // collect the ones connected to this network
         return query.collectDocuments(Collectors.toList())
-                .thenCompose(computes -> DeferredResult.allOf(
+                .thenCompose(computes -> DeferredResult.<ConnectedResource>allOf(
                         computes.stream().map(compute -> populateComputeState(context, compute))
                                 .collect(Collectors.toList())))
                 .thenApply(resources -> resources.stream()
@@ -467,7 +467,7 @@ public class ComputeNetworkProvisionTaskService
                 builder.build(), LoadBalancerState.class, context.state.tenantLinks);
 
         return query.collectDocuments(Collectors.toList())
-                .thenCompose(lbs -> DeferredResult.allOf(
+                .thenCompose(lbs -> DeferredResult.<ConnectedResource>allOf(
                         lbs.stream().map(lb -> populateLoadBalancer(context, lb))
                                 .collect(Collectors.toList())))
                 .thenApply(resources -> {
