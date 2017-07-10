@@ -195,8 +195,7 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
     public void testGetComputeNetworkProfilesWithConstraints() throws Throwable {
         ComputeNetworkDescription networkDescription = createNetworkDescription("my net",
                 Arrays.asList(TestRequestStateFactory.createCondition("cap1", "pci1", true, false),
-                        TestRequestStateFactory.createCondition("cap2", "pci2", true, false),
-                        TestRequestStateFactory.createCondition("cap3", "pci3", true, false)));
+                        TestRequestStateFactory.createCondition("cap2", "pci2", true, false)));
         List<String> subnets1 = Arrays.asList(
                 createSubnet("sub-1", networkDescription.tenantLinks, null).documentSelfLink,
                 createSubnet("sub-2", networkDescription.tenantLinks,
@@ -288,7 +287,7 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
         TestContext ctx = testCreate(1);
         Set<String> subnets = new HashSet<>();
         NetworkProfileQueryUtils.getSubnetForComputeNic(computeNetwork, networkDescription,
-                profileState,
+                profileState.networkProfile,
                 (s, e) -> {
                     if (e != null) {
                         ctx.fail(e);
@@ -325,7 +324,7 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
         TestContext ctx = testCreate(1);
         Set<SubnetState> subnets = new HashSet<>();
         NetworkProfileQueryUtils.getSubnetForComputeNic(computeNetwork, networkDescription,
-                profileState,
+                profileState.networkProfile,
                 (s, e) -> {
                     if (e != null) {
                         ctx.fail(e);
@@ -366,7 +365,7 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
         List<String> subnets = new ArrayList<>();
         List<Throwable> exceptions = new ArrayList<>();
         NetworkProfileQueryUtils.getSubnetForComputeNic(computeNetwork, networkDescription,
-                profileState,
+                profileState.networkProfile,
                 (s, e) -> {
                     if (e != null) {
                         exceptions.add(e);
@@ -409,7 +408,7 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
         TestContext ctx = testCreate(1);
         Set<String> subnets = new HashSet<>();
         NetworkProfileQueryUtils.getSubnetForComputeNic(computeNetwork, networkDescription,
-                profileState,
+                profileState.networkProfile,
                 (s, e) -> {
                     if (e != null) {
                         ctx.fail(e);

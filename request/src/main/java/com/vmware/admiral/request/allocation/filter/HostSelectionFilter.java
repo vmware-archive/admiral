@@ -59,9 +59,11 @@ public interface HostSelectionFilter<T> extends AffinityFilter {
         public String plugins;
         public String name;
         public ContainerHostType hostType;
+        public Set<String> subnets;
 
         /** Configured location of the key-value store for the overlay networks. */
         public String clusterStore;
+        public Map<String, Set<String>> networkResourcesPerProfile;
 
         public void addDesc(DescName descName) {
             if (descName == null) {
@@ -71,6 +73,15 @@ public interface HostSelectionFilter<T> extends AffinityFilter {
                 descNames = new HashMap<>();
             }
             descNames.put(descName.descriptionName, descName);
+        }
+
+        public void addNetworkResource(String profileLink, String resourceLink) {
+            if (networkResourcesPerProfile == null) {
+                networkResourcesPerProfile = new HashMap<>();
+            }
+
+            networkResourcesPerProfile.putIfAbsent(profileLink, new HashSet<>());
+            networkResourcesPerProfile.get(profileLink).add(resourceLink);
         }
 
         public String[] mapNames(String[] names) {
