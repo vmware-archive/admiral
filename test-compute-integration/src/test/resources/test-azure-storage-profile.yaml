@@ -1,0 +1,20 @@
+---
+storageItems:
+  - name: standard
+    tagLinks: []
+    defaultItem: true
+    supportsEncryption: false
+    diskProperties:
+      azureStorageAccountType: "Standard_LRS"
+      azureStorageAccountName: "azbasicsa"
+      azureOsDiskCaching: "None"
+      azureDataDiskCaching: "ReadWrite"
+  - name: premium
+    tagLinks: []
+    defaultItem: false
+    supportsEncryption: false
+    diskProperties:
+      azureStorageAccountType: "Standard_LRS"
+      azureStorageAccountName: "azbasicsa"
+      azureOsDiskCaching: "ReadWrite"
+      azureDataDiskCaching: "ReadWrite"
