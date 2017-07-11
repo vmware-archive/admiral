@@ -200,8 +200,8 @@ public class LocalPrincipalService extends StatefulService {
 
     private void createUserState(LocalPrincipalState state, Operation op) {
         UserState user = new UserState();
-        user.email = state.email;
-        user.documentSelfLink = state.email;
+        user.email = state.email.toLowerCase();
+        user.documentSelfLink = user.email;
 
         URI userFactoryUri = UriUtils.buildUri(getHost(),
                 AuthUtil.buildUserServicePathFromPrincipalId(""));

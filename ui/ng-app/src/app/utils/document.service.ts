@@ -81,7 +81,7 @@ const PAGE_LIMIT : string = '50';
 @Injectable()
 export class DocumentService {
 
-  constructor(private ajax: Ajax, private ps: ProjectService) { }
+  constructor(public ajax: Ajax, private ps: ProjectService) { }
 
   public list(factoryLink: string, queryOptions: any): Promise<DocumentListResult> {
     let params = new URLSearchParams();

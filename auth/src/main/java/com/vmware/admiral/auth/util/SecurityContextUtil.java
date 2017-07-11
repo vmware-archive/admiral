@@ -16,6 +16,8 @@ import static com.vmware.admiral.auth.util.PrincipalRolesUtil.getAllRolesForPrin
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -26,63 +28,65 @@ import com.vmware.admiral.auth.idm.PrincipalRoles;
 import com.vmware.admiral.auth.idm.PrincipalService;
 import com.vmware.admiral.auth.idm.SecurityContext;
 import com.vmware.admiral.auth.idm.SecurityContext.ProjectEntry;
-import com.vmware.admiral.auth.idm.SessionService;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.Operation.AuthorizationContext;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.UriUtils;
-import com.vmware.xenon.services.common.UserService.UserState;
 
 public class SecurityContextUtil {
 
-    protected static class SecurityContextBuilderCache {
-        public Principal principal;
-        public UserState userState;
-        public SecurityContext context = new SecurityContext();
-    }
+    // TODO - Improve the caching with VBV-1406
+    private static final Map<String, SecurityContext> securityContextCache = new ConcurrentHashMap<>();
 
     /**
      * Gets the {@link SecurityContext} for the currently authenticated user
      */
     public static DeferredResult<SecurityContext> getSecurityContext(Service requestorService,
-            AuthorizationContext authContext) {
-        return getSecurityContext(requestorService, AuthUtil.getAuthorizedUserId(authContext));
+            Operation requestorOperation) {
+        return getSecurityContext(requestorService, requestorOperation,
+                AuthUtil.getAuthorizedUserId(requestorOperation.getAuthorizationContext()));
+    }
+
+    public static void clearSecurityContext(Operation requestorOperation) {
+        securityContextCache.remove(
+                AuthUtil.getAuthorizedUserId(requestorOperation.getAuthorizationContext()));
+    }
+
+    public static void clearAllSecurityContexts() {
+        securityContextCache.clear();
     }
 
     /**
      * Gets the {@link SecurityContext} for the denoted user
      */
     public static DeferredResult<SecurityContext> getSecurityContext(Service requestorService,
-            String userId) {
-        return DeferredResult.completed(new SecurityContextBuilderCache())
-                .thenCompose(cache -> getPrincipal(requestorService, userId, cache))
-                .thenCompose(principal -> getAllRolesForPrincipal(
-                        requestorService.getHost(), principal))
-                .thenApply(SecurityContextUtil::fromPrincipalRolesToSecurityContext);
-    }
+            Operation requestorOperation, String userId) {
 
-    private static DeferredResult<Principal> getPrincipal(Service requestorService, String userId,
-            SecurityContextBuilderCache cache) {
-        // return from cache if already cached
-        if (cache.principal != null) {
-            return DeferredResult.completed(cache.principal);
+        SecurityContext securityContext = securityContextCache.get(userId);
+        if (securityContext != null) {
+            return DeferredResult.completed(securityContext);
         }
 
-        // otherwise get the state and cache it
-        Operation getOp = Operation
-                .createGet(requestorService,
-                        UriUtils.buildUriPath(PrincipalService.SELF_LINK, userId))
-                .setReferer(requestorService.getUri());
-        authorizeOperationIfSessionService(requestorService, getOp);
-
-        return requestorService.getHost()
-                .sendWithDeferredResult(getOp, Principal.class)
-                .thenApply((principal) -> {
-                    cache.principal = principal;
-                    return principal;
+        return getPrincipal(requestorService, requestorOperation, userId)
+                .thenCompose(principal -> getAllRolesForPrincipal(
+                        requestorService, requestorOperation, principal))
+                .thenApply(SecurityContextUtil::fromPrincipalRolesToSecurityContext)
+                .thenApply(sc -> {
+                    securityContextCache.put(userId, sc);
+                    return sc;
                 });
+    }
+
+    private static DeferredResult<Principal> getPrincipal(Service requestorService,
+            Operation requestorOperation, String userId) {
+        Operation getOp = Operation.createGet(requestorService,
+                UriUtils.buildUriPath(PrincipalService.SELF_LINK, userId));
+
+        requestorService.setAuthorizationContext(getOp,
+                requestorOperation.getAuthorizationContext());
+
+        return requestorService.sendWithDeferredResult(getOp, Principal.class);
     }
 
     public static List<SecurityContext.ProjectEntry> buildProjectEntries(
@@ -123,19 +127,4 @@ public class SecurityContextUtil {
         return context;
     }
 
-    /**
-     * We want to authorize the operation with system context only when the requestorService is
-     * SessionService, because SessionService is privileged, so even the basic users should be able
-     * to get the SecurityContext for themselves.
-     * <p>
-     * In other cases where the caller is not authorized to required services to collect the
-     * SecurityContext (e.g. UserService, PrincipalService), we should not authorize the
-     * operation with system context.
-     */
-    private static void authorizeOperationIfSessionService(Service requestorService, Operation op) {
-        if (requestorService instanceof SessionService) {
-            requestorService.setAuthorizationContext(op,
-                    requestorService.getSystemAuthorizationContext());
-        }
-    }
 }

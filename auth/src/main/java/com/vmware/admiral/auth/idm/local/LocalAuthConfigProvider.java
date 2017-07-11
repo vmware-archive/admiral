@@ -296,7 +296,7 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
     }
 
     private static String buildUserUri(Claims claims) {
-        return UserService.FACTORY_LINK + "/" + claims.getSubject();
+        return UserService.FACTORY_LINK + "/" + claims.getSubject().toLowerCase();
     }
 
     @Override

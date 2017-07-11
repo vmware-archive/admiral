@@ -23,6 +23,7 @@ import javax.net.ssl.SSLContext;
 import io.swagger.models.Info;
 
 import com.vmware.admiral.auth.idm.AuthConfigProvider;
+import com.vmware.admiral.auth.idm.PrincipalService;
 import com.vmware.admiral.auth.idm.SessionService;
 import com.vmware.admiral.auth.project.ProjectFactoryService;
 import com.vmware.admiral.auth.project.ProjectInterceptor;
@@ -390,6 +391,7 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
         // TODO this should be moved to HostInitAuthServiceConfig once HostInitServiceHelper gets
         // support for privileged services
         addPrivilegedService(SessionService.class);
+        addPrivilegedService(PrincipalService.class);
         addPrivilegedService(ProjectService.class);
         addPrivilegedService(ProjectFactoryService.class);
 
@@ -407,13 +409,6 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
         super.start();
 
         startDefaultCoreServicesSynchronously();
-        startPeerListener();
-
-        log(Level.INFO, "Setting authorization context ...");
-        // Set system user's authorization context to allow the services start privileged access.
-        setAuthorizationContext(getSystemAuthorizationContext());
-
-        startCommonServices();
 
         if (AuthUtil.useAuthConfig(this)) {
             Collection<FactoryService> authServiceFactories = authProvider.createServiceFactories();
@@ -421,6 +416,14 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
                 startFactoryServicesSynchronously(authServiceFactories.toArray(new Service[] {}));
             }
         }
+
+        startPeerListener();
+
+        log(Level.INFO, "Setting authorization context ...");
+        // Set system user's authorization context to allow the services start privileged access.
+        setAuthorizationContext(getSystemAuthorizationContext());
+
+        startCommonServices();
 
         startExtensibilityRegistry();
 

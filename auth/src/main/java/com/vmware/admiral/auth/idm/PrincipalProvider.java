@@ -15,18 +15,22 @@ import java.util.List;
 import java.util.Set;
 
 import com.vmware.xenon.common.DeferredResult;
+import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Service;
 
 public interface PrincipalProvider {
 
-    DeferredResult<Principal> getPrincipal(String principalId);
+    void init(Service service);
 
-    DeferredResult<List<Principal>> getPrincipals(String criteria);
+    DeferredResult<Principal> getPrincipal(Operation op, String principalId);
 
-    DeferredResult<Principal> createPrincipal(Principal principal);
+    DeferredResult<List<Principal>> getPrincipals(Operation op, String criteria);
 
-    DeferredResult<Principal> updatePrincipal(Principal principal);
+    DeferredResult<Principal> createPrincipal(Operation op, Principal principal);
 
-    DeferredResult<Principal> deletePrincipal(String principalId);
+    DeferredResult<Principal> updatePrincipal(Operation op, Principal principal);
 
-    DeferredResult<Set<String>> getAllGroupsForPrincipal(String principalId);
+    DeferredResult<Principal> deletePrincipal(Operation op, String principalId);
+
+    DeferredResult<Set<String>> getAllGroupsForPrincipal(Operation op, String principalId);
 }

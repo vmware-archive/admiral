@@ -62,6 +62,8 @@ import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.xenon.common.CommandLineArgumentParser;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Operation.AuthorizationContext;
+import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.StatelessService;
@@ -102,13 +104,20 @@ public abstract class AuthBaseTest extends BaseTestCase {
     protected List<String> loadedUsers;
     protected List<String> loadedGroups;
 
-    protected static final String REQUESTOR_SERVICE_SELF_LINK = "/test/service/";
-
     protected class TestService extends StatelessService {
-
+        public static final String SELF_LINK = "/test/service/";
     }
 
-    protected TestService testService;
+    public static class PrivilegedTestService extends StatelessService {
+        public static final String SELF_LINK = "/test/privileged-service/";
+
+        public PrivilegedTestService() {
+            super();
+        }
+    }
+
+    protected Service testService;
+    protected Service privilegedTestService;
 
     @Before
     public void beforeForAuthBase() throws Throwable {
@@ -126,9 +135,14 @@ public abstract class AuthBaseTest extends BaseTestCase {
                 ((CustomizationVerificationHost) host).localUsers,
                 ctx::completeIteration, ctx::failIteration);
         ctx.await();
+
+        privilegedTestService = host.startServiceAndWait(PrivilegedTestService.class,
+                PrivilegedTestService.SELF_LINK);
+
         host.resetAuthorizationContext();
+
         testService = new TestService();
-        testService.setSelfLink(REQUESTOR_SERVICE_SELF_LINK);
+        testService.setSelfLink(TestService.SELF_LINK);
         testService.setHost(host);
     }
 
@@ -151,8 +165,16 @@ public abstract class AuthBaseTest extends BaseTestCase {
     @Override
     protected void setPrivilegedServices(VerificationHost host) {
         host.addPrivilegedService(SessionService.class);
+        host.addPrivilegedService(PrincipalService.class);
         host.addPrivilegedService(ProjectService.class);
         host.addPrivilegedService(ProjectFactoryService.class);
+        host.addPrivilegedService(PrivilegedTestService.class);
+    }
+
+    protected Operation createAuthorizedOperation(AuthorizationContext authorizationContext) {
+        Operation op = Operation.createGet(UriUtils.buildUri("http://localhost/foo/bar"));
+        privilegedTestService.setAuthorizationContext(op, authorizationContext);
+        return op;
     }
 
     protected void startServices(VerificationHost host) throws Throwable {
@@ -477,8 +499,8 @@ public abstract class AuthBaseTest extends BaseTestCase {
         host.testWait();
     }
 
-    protected <T> T doPostWithProjectHeader(Object body, String factoryLink, String
-            projectLink, Class<T> stateType) {
+    protected <T> T doPostWithProjectHeader(Object body, String factoryLink, String projectLink,
+            Class<T> stateType) {
         TestContext ctx = testCreate(1);
         final Object[] responseBody = new Object[1];
         Operation create = Operation.createPost(host, factoryLink)
@@ -498,8 +520,8 @@ public abstract class AuthBaseTest extends BaseTestCase {
         return Utils.fromJson(responseBody[0], stateType);
     }
 
-    protected ServiceDocumentQueryResult getDocumentsWithinProject(String factoryLink, String
-            projectLink) {
+    protected ServiceDocumentQueryResult getDocumentsWithinProject(String factoryLink,
+            String projectLink) {
         TestContext ctx = testCreate(1);
         final ServiceDocumentQueryResult[] result = new ServiceDocumentQueryResult[1];
         Operation get = Operation.createGet(host, factoryLink)

@@ -43,6 +43,7 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
@@ -56,11 +57,11 @@ import com.vmware.xenon.services.common.UserService.UserState;
 
 public class PrincipalRolesUtil {
 
-    public static DeferredResult<Set<AuthRole>> getDirectlyAssignedSystemRolesForUser(ServiceHost host,
-            Principal principal) {
-
-        return getUserState(host, principal.id).thenApply(userState -> {
-            if (userState.userGroupLinks == null || userState.userGroupLinks.isEmpty()) {
+    public static DeferredResult<Set<AuthRole>> getDirectlyAssignedSystemRolesForUser(
+            Service requestorService, Principal principal) {
+        return getUserState(requestorService, principal.id).thenApply(userState -> {
+            if ((userState == null) || (userState.userGroupLinks == null)
+                    || (userState.userGroupLinks.isEmpty())) {
                 return Collections.emptySet();
             }
 
@@ -76,27 +77,30 @@ public class PrincipalRolesUtil {
     }
 
     public static DeferredResult<List<ProjectEntry>> getDirectlyAssignedProjectRolesForUser(
-            ServiceHost host, Principal principal) {
+            Service requestorService, Principal principal) {
+        return getUserState(requestorService, principal.id).thenCompose(userState -> {
+            if ((userState == null) || (userState.userGroupLinks == null)
+                    || (userState.userGroupLinks.isEmpty())) {
+                return DeferredResult.completed(Collections.emptyList());
+            }
 
-        return getUserState(host, principal.id).thenCompose(userState -> {
-            Query query = ProjectUtil
-                    .buildQueryProjectsFromGroups(userState.userGroupLinks);
+            Query query = ProjectUtil.buildQueryProjectsFromGroups(userState.userGroupLinks);
 
-            return new QueryByPages<>(host, query, ProjectState.class,
-                    null)
-                            .collectDocuments(Collectors.toList())
-                            .thenApply((projects) -> buildProjectEntries(
-                                    projects, userState.userGroupLinks));
+            return new QueryByPages<>(requestorService.getHost(), query, ProjectState.class, null)
+                    .collectDocuments(Collectors.toList())
+                    .thenApply(
+                            (projects) -> buildProjectEntries(projects, userState.userGroupLinks));
         });
     }
 
     public static DeferredResult<Set<AuthRole>> getDirectlyAssignedSystemRolesForGroup(
-            ServiceHost host, Principal principal) {
+            Service requestorService, Principal principal) {
         String roleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, principal.id);
 
         Query query = Query.Builder.create()
                 .addCaseInsensitiveFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
-                        roleLink, MatchType.PREFIX, Occurance.SHOULD_OCCUR).build();
+                        roleLink, MatchType.PREFIX, Occurance.SHOULD_OCCUR)
+                .build();
 
         QueryTask queryTask = QueryUtil.buildQuery(RoleState.class, true, query);
         QueryUtil.addExpandOption(queryTask);
@@ -104,15 +108,16 @@ public class PrincipalRolesUtil {
         List<RoleState> roles = new ArrayList<>();
         DeferredResult<List<RoleState>> result = new DeferredResult<>();
 
-        new ServiceDocumentQuery<>(host, RoleState.class).query(queryTask, r -> {
-            if (r.hasException()) {
-                result.fail(r.getException());
-            } else if (r.hasResult()) {
-                roles.add(r.getResult());
-            } else {
-                result.complete(roles);
-            }
-        });
+        new ServiceDocumentQuery<>(requestorService.getHost(), RoleState.class)
+                .query(queryTask, r -> {
+                    if (r.hasException()) {
+                        result.fail(r.getException());
+                    } else if (r.hasResult()) {
+                        roles.add(r.getResult());
+                    } else {
+                        result.complete(roles);
+                    }
+                });
 
         return result.thenApply(roleStates -> {
             Set<AuthRole> rolesResult = new HashSet<>();
@@ -124,7 +129,7 @@ public class PrincipalRolesUtil {
     }
 
     public static DeferredResult<List<ProjectEntry>> getDirectlyAssignedProjectRolesForGroup(
-            ServiceHost host, Principal principal) {
+            Service requestorService, Principal principal) {
 
         String userGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, principal.id);
         List<String> userGroupLinkList = Collections.singletonList(userGroupLink);
@@ -135,7 +140,8 @@ public class PrincipalRolesUtil {
                 .addInCollectionItemClause(ProjectState.FIELD_NAME_MEMBERS_USER_GROUP_LINKS,
                         userGroupLinkList, Occurance.SHOULD_OCCUR)
                 .addInCollectionItemClause(ProjectState.FIELD_NAME_VIEWERS_USER_GROUP_LINKS,
-                        userGroupLinkList, Occurance.SHOULD_OCCUR).build();
+                        userGroupLinkList, Occurance.SHOULD_OCCUR)
+                .build();
 
         QueryTask queryTask = QueryUtil.buildQuery(ProjectState.class, true, query);
         QueryUtil.addExpandOption(queryTask);
@@ -143,15 +149,16 @@ public class PrincipalRolesUtil {
         List<ProjectState> projects = new ArrayList<>();
         DeferredResult<List<ProjectState>> result = new DeferredResult<>();
 
-        new ServiceDocumentQuery<>(host, ProjectState.class).query(queryTask, r -> {
-            if (r.hasException()) {
-                result.fail(r.getException());
-            } else if (r.hasResult()) {
-                projects.add(r.getResult());
-            } else {
-                result.complete(projects);
-            }
-        });
+        new ServiceDocumentQuery<>(requestorService.getHost(), ProjectState.class)
+                .query(queryTask, r -> {
+                    if (r.hasException()) {
+                        result.fail(r.getException());
+                    } else if (r.hasResult()) {
+                        projects.add(r.getResult());
+                    } else {
+                        result.complete(projects);
+                    }
+                });
 
         return result.thenApply(projectStates -> {
             List<ProjectEntry> entries = new ArrayList<>();
@@ -167,25 +174,26 @@ public class PrincipalRolesUtil {
         });
     }
 
-    public static DeferredResult<List<PrincipalRoles>> getAllRolesForPrincipals(ServiceHost host,
-            List<Principal> principals) {
+    public static DeferredResult<List<PrincipalRoles>> getAllRolesForPrincipals(
+            Service requestorService, Operation requestorOperation, List<Principal> principals) {
 
         List<DeferredResult<PrincipalRoles>> deferredResults = new ArrayList<>();
 
         for (Principal principal : principals) {
-            deferredResults.add(getAllRolesForPrincipal(host, principal));
+            deferredResults.add(
+                    getAllRolesForPrincipal(requestorService, requestorOperation, principal));
         }
 
         return DeferredResult.allOf(deferredResults);
     }
 
-    public static DeferredResult<PrincipalRoles> getAllRolesForPrincipal(ServiceHost host,
-            Principal principal) {
+    public static DeferredResult<PrincipalRoles> getAllRolesForPrincipal(Service requestorService,
+            Operation requestorOperation, Principal principal) {
 
         PrincipalRoles returnRoles = new PrincipalRoles();
 
-        return getGroupsWherePrincipalBelongs(host, principal.id)
-                .thenCompose(groups -> getRoleStatesForGroups(host, groups))
+        return getGroupsWherePrincipalBelongs(requestorService, requestorOperation, principal.id)
+                .thenCompose(groups -> getRoleStatesForGroups(requestorService.getHost(), groups))
                 .thenApply(groupsToRoles -> {
                     List<RoleState> roleStates = new ArrayList<>();
                     for (List<RoleState> rs : groupsToRoles.values()) {
@@ -194,7 +202,7 @@ public class PrincipalRolesUtil {
                     return roleStates;
                 })
                 .thenCompose(roleStates -> extractRolesIntoPrincipalRoles(
-                        host, principal, roleStates))
+                        requestorService.getHost(), principal, roleStates))
                 .thenAccept(principalRoles -> {
                     PrincipalUtil.copyPrincipalData(principalRoles, returnRoles);
                     returnRoles.roles = principalRoles.roles;
@@ -202,16 +210,16 @@ public class PrincipalRolesUtil {
                 })
                 .thenCompose(ignore -> {
                     if (principal.type == PrincipalType.GROUP) {
-                        return getDirectlyAssignedSystemRolesForGroup(host, principal);
+                        return getDirectlyAssignedSystemRolesForGroup(requestorService, principal);
                     }
-                    return getDirectlyAssignedSystemRolesForUser(host, principal);
+                    return getDirectlyAssignedSystemRolesForUser(requestorService, principal);
                 })
                 .thenAccept(systemRoles -> returnRoles.roles.addAll(systemRoles))
                 .thenCompose(ignore -> {
                     if (principal.type == PrincipalType.GROUP) {
-                        return getDirectlyAssignedProjectRolesForGroup(host, principal);
+                        return getDirectlyAssignedProjectRolesForGroup(requestorService, principal);
                     }
-                    return getDirectlyAssignedProjectRolesForUser(host, principal);
+                    return getDirectlyAssignedProjectRolesForUser(requestorService, principal);
                 })
                 .thenApply(projectEntries -> {
                     returnRoles.projects.addAll(projectEntries);
@@ -337,8 +345,8 @@ public class PrincipalRolesUtil {
                 roleState.documentSelfLink);
     }
 
-    private static Set<AuthRole> extractProjectRolesFromProjectState(ProjectState state, String
-            groupLink) {
+    private static Set<AuthRole> extractProjectRolesFromProjectState(ProjectState state,
+            String groupLink) {
         Set<AuthRole> result = new HashSet<>();
         if (state.administratorsUserGroupLinks.contains(groupLink)) {
             result.add(AuthRole.PROJECT_ADMIN);
@@ -390,22 +398,35 @@ public class PrincipalRolesUtil {
     }
 
     @SuppressWarnings("unchecked")
-    private static DeferredResult<List<String>> getGroupsWherePrincipalBelongs(ServiceHost host,
-            String principalId) {
+    private static DeferredResult<List<String>> getGroupsWherePrincipalBelongs(
+            Service requestorService, Operation requestorOperation, String principalId) {
         String uri = UriUtils.buildUriPath(PrincipalService.SELF_LINK, principalId,
                 PrincipalService.GROUPS_SUFFIX);
 
-        Operation getGroupsOp = Operation.createGet(host, uri)
-                .setReferer(host.getUri());
+        Operation getGroupsOp = Operation.createGet(requestorService, uri);
 
-        return host.sendWithDeferredResult(getGroupsOp, List.class)
+        requestorService.setAuthorizationContext(getGroupsOp,
+                requestorOperation.getAuthorizationContext());
+
+        return requestorService.sendWithDeferredResult(getGroupsOp, List.class)
                 .thenApply(groupsList -> (ArrayList<String>) groupsList);
     }
 
-    private static DeferredResult<UserState> getUserState(ServiceHost host, String principalId) {
-        Operation getUserStateOp = Operation.createGet(host,
-                AuthUtil.buildUserServicePathFromPrincipalId(principalId))
-                .setReferer(host.getUri());
-        return host.sendWithDeferredResult(getUserStateOp, UserState.class);
+    private static DeferredResult<UserState> getUserState(Service requestorService,
+            String principalId) {
+        Operation getUserStateOp = Operation.createGet(requestorService,
+                AuthUtil.buildUserServicePathFromPrincipalId(principalId));
+
+        requestorService.setAuthorizationContext(getUserStateOp,
+                requestorService.getSystemAuthorizationContext());
+
+        return requestorService.sendWithDeferredResult(getUserStateOp, UserState.class)
+                .exceptionally((ex) -> {
+                    if (ex.getCause() instanceof ServiceNotFoundException) {
+                        return new UserState();
+                    }
+                    return null;
+                });
     }
+
 }

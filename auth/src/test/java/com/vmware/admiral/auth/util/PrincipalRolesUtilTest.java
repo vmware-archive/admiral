@@ -38,6 +38,7 @@ import com.vmware.admiral.auth.project.ProjectFactoryService;
 import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.xenon.common.DeferredResult;
+import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.TestContext;
 
@@ -47,8 +48,10 @@ public class PrincipalRolesUtilTest extends AuthBaseTest {
     public void testGetDirectlyAssignedSystemRoles() throws GeneralSecurityException {
         // Verify for cloud admin.
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
+
         DeferredResult<Set<AuthRole>> result = PrincipalRolesUtil
-                .getDirectlyAssignedSystemRolesForUser(host, getPrincipal(USER_EMAIL_ADMIN));
+                .getDirectlyAssignedSystemRolesForUser(privilegedTestService,
+                        getPrincipal(USER_EMAIL_ADMIN));
 
         Set<AuthRole> roles = new HashSet<>();
         TestContext ctx = testCreate(1);
@@ -67,8 +70,8 @@ public class PrincipalRolesUtilTest extends AuthBaseTest {
         assertTrue(roles.contains(AuthRole.BASIC_USER_EXTENDED));
 
         // Verify for basic user.
-        result = PrincipalRolesUtil
-                .getDirectlyAssignedSystemRolesForUser(host, getPrincipal(USER_EMAIL_BASIC_USER));
+        result = PrincipalRolesUtil.getDirectlyAssignedSystemRolesForUser(privilegedTestService,
+                getPrincipal(USER_EMAIL_BASIC_USER));
         Set<AuthRole> roles1 = new HashSet<>();
         TestContext ctx1 = testCreate(1);
         result.whenComplete((rolesResult, ex) -> {
@@ -103,7 +106,8 @@ public class PrincipalRolesUtilTest extends AuthBaseTest {
         doPatch(projectRoles, project.documentSelfLink);
 
         DeferredResult<List<ProjectEntry>> result = PrincipalRolesUtil
-                .getDirectlyAssignedProjectRolesForUser(host, getPrincipal(USER_EMAIL_ADMIN));
+                .getDirectlyAssignedProjectRolesForUser(privilegedTestService,
+                        getPrincipal(USER_EMAIL_ADMIN));
 
         TestContext ctx = testCreate(1);
         List<ProjectEntry> entries = new ArrayList<>();
@@ -127,7 +131,9 @@ public class PrincipalRolesUtilTest extends AuthBaseTest {
 
     @Test
     public void testGetAllRolesForPrincipal() throws Throwable {
-        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN2));
+        Operation testOperationByAdmin = createAuthorizedOperation(
+                host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN2)));
+
         // Scenario: create 2 projects, assign fritz as project admin in 1st and as project
         // member in 2nd project.
 
@@ -150,8 +156,8 @@ public class PrincipalRolesUtilTest extends AuthBaseTest {
         doPatch(projectRoles, secondProject.documentSelfLink);
 
         Principal fritz = getPrincipal(USER_EMAIL_ADMIN);
-        DeferredResult<PrincipalRoles> result = PrincipalRolesUtil.getAllRolesForPrincipal(host,
-                fritz);
+        DeferredResult<PrincipalRoles> result = PrincipalRolesUtil.getAllRolesForPrincipal(
+                privilegedTestService, testOperationByAdmin, fritz);
 
         final PrincipalRoles[] resultRoles = new PrincipalRoles[1];
 
@@ -205,7 +211,9 @@ public class PrincipalRolesUtilTest extends AuthBaseTest {
 
     @Test
     public void testGetAllRolesForPrincipalWithIndirectRoles() throws Throwable {
-        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN2));
+        Operation testOperationByAdmin = createAuthorizedOperation(
+                host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN2)));
+
         // Scenario: create a group which will contain Connie which is basic user and the group
         // will be assigned to cloud admins. Create nested groups and add Connie in them, assign
         // the nested groups to project roles. Verify that PrincipalRoles for Connie contains all
@@ -264,8 +272,8 @@ public class PrincipalRolesUtilTest extends AuthBaseTest {
         doPatch(projectRoles, secondProject.documentSelfLink);
 
         Principal connie = getPrincipal(USER_EMAIL_CONNIE);
-        DeferredResult<PrincipalRoles> result = PrincipalRolesUtil.getAllRolesForPrincipal(host,
-                connie);
+        DeferredResult<PrincipalRoles> result = PrincipalRolesUtil.getAllRolesForPrincipal(
+                privilegedTestService, testOperationByAdmin, connie);
 
         final PrincipalRoles[] resultRoles = new PrincipalRoles[1];
 
@@ -319,10 +327,12 @@ public class PrincipalRolesUtilTest extends AuthBaseTest {
 
     @Test
     public void testGetPrincipalRolesForBasicUser() throws GeneralSecurityException {
-        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
+        Operation testOperationByAdmin = createAuthorizedOperation(
+                host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN2)));
+
         Principal basicUser = getPrincipal(USER_EMAIL_BASIC_USER);
-        DeferredResult<PrincipalRoles> result = PrincipalRolesUtil.getAllRolesForPrincipal(host,
-                basicUser);
+        DeferredResult<PrincipalRoles> result = PrincipalRolesUtil.getAllRolesForPrincipal(
+                privilegedTestService, testOperationByAdmin, basicUser);
 
         final PrincipalRoles[] resultRoles = new PrincipalRoles[1];
 

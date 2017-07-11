@@ -39,6 +39,7 @@ public class SessionService extends StatelessService {
     public void handleGet(Operation get) {
         if (isLogoutRequest(get)) {
             provider.doLogout(get);
+            SecurityContextUtil.clearSecurityContext(get);
         } else if (isSessionRequest(get)) {
             getCurrentUserSecurityContext(get)
                     .thenApply(get::setBody)
@@ -57,7 +58,7 @@ public class SessionService extends StatelessService {
     }
 
     private DeferredResult<SecurityContext> getCurrentUserSecurityContext(Operation op) {
-        return SecurityContextUtil.getSecurityContext(this, op.getAuthorizationContext());
+        return SecurityContextUtil.getSecurityContext(this, op);
     }
 
 }

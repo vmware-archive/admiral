@@ -25,6 +25,7 @@ import java.util.logging.Level;
 
 import com.vmware.admiral.auth.idm.AuthConfigProvider;
 import com.vmware.admiral.auth.idm.AuthRole;
+import com.vmware.admiral.auth.idm.PrincipalService;
 import com.vmware.admiral.auth.idm.SessionService;
 import com.vmware.admiral.auth.project.ProjectFactoryService;
 import com.vmware.admiral.common.ManagementUriParts;
@@ -251,6 +252,9 @@ public class AuthUtil {
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
                         ManagementUriParts.CONTAINER_IMAGE_ICONS,
                         MatchType.TERM, Occurance.SHOULD_OCCUR)
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        PrincipalService.SELF_LINK,
+                        MatchType.TERM, Occurance.SHOULD_OCCUR)
                 // TODO: Currently this breaks the UI. Remove this query, once
                 // this call is skipped for basic user.
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
@@ -413,8 +417,8 @@ public class AuthUtil {
         return resourceGroupState;
     }
 
-    public static ResourceGroupState buildProjectExtendedMemberResourceGroup(String projectId, String
-            groupId) {
+    public static ResourceGroupState buildProjectExtendedMemberResourceGroup(String projectId,
+            String groupId) {
         ResourceGroupState state = buildProjectExtendedMemberResourceGroup(projectId);
         String selfLink = AuthRole.PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId, groupId);
         state.documentSelfLink = selfLink;
@@ -655,7 +659,7 @@ public class AuthUtil {
                 || authContext.getClaims().getSubject() == null) {
             return null;
         }
-        return authContext.getClaims().getSubject();
+        return authContext.getClaims().getSubject().toLowerCase();
     }
 
     /**

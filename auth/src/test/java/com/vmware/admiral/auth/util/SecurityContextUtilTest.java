@@ -37,6 +37,7 @@ import com.vmware.admiral.auth.project.ProjectFactoryService;
 import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.xenon.common.DeferredResult;
+import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.TestContext;
 
@@ -55,16 +56,20 @@ public class SecurityContextUtilTest extends AuthBaseTest {
         // init cloud admin roles
         rolesAvailableToCloudAdmin.add(AuthRole.CLOUD_ADMIN);
 
-        // init requestor service
-        host.addPrivilegedService(TestService.class);
+        SecurityContextUtil.clearAllSecurityContexts();
     }
 
     @Test
     public void testSecurityContextForCloudAdminAndBasicUser() throws GeneralSecurityException {
-        // Verify for cloud admin.
+        Operation testOperationByAdmin = createAuthorizedOperation(
+                host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN)));
+        Operation testOperationByBasicUser = createAuthorizedOperation(
+                host.assumeIdentity(buildUserServicePath(USER_EMAIL_BASIC_USER)));
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
+
+        // Verify for cloud admin.
         DeferredResult<SecurityContext> result = SecurityContextUtil.getSecurityContext(
-                testService, USER_EMAIL_ADMIN);
+                privilegedTestService, testOperationByAdmin);
 
         final SecurityContext[] context = new SecurityContext[1];
         TestContext ctx = testCreate(1);
@@ -84,8 +89,8 @@ public class SecurityContextUtilTest extends AuthBaseTest {
         assertTrue(context[0].roles.contains(AuthRole.BASIC_USER_EXTENDED));
 
         // Verify for basic user.
-        result = SecurityContextUtil.getSecurityContext(
-                testService, USER_EMAIL_BASIC_USER);
+        result = SecurityContextUtil.getSecurityContext(privilegedTestService,
+                testOperationByBasicUser);
         TestContext ctx1 = testCreate(1);
         result.whenComplete((securityContext, ex) -> {
             if (ex != null) {
@@ -104,7 +109,9 @@ public class SecurityContextUtilTest extends AuthBaseTest {
 
     @Test
     public void testSecurityContextContainsDirectlyAssignedProjectRoles() throws Throwable {
-        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
+        Operation testOperationByAdmin = createAuthorizedOperation(
+                host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN)));
+
         ProjectState project = new ProjectState();
         project.name = "test";
         project.description = "test-description";
@@ -120,7 +127,7 @@ public class SecurityContextUtilTest extends AuthBaseTest {
         doPatch(projectRoles, project.documentSelfLink);
 
         DeferredResult<SecurityContext> result = SecurityContextUtil.getSecurityContext(
-                testService, USER_EMAIL_ADMIN);
+                privilegedTestService, testOperationByAdmin);
 
         final SecurityContext[] context = new SecurityContext[1];
         TestContext ctx = testCreate(1);
@@ -145,7 +152,10 @@ public class SecurityContextUtilTest extends AuthBaseTest {
 
     @Test
     public void testSecurityContextContainsAllRolesForMultipleProjects() throws Throwable {
+        Operation testOperationByAdmin = createAuthorizedOperation(
+                host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN)));
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN2));
+
         // Scenario: create 2 projects, assign fritz as project admin in 1st and as project
         // member in 2nd project.
 
@@ -168,7 +178,7 @@ public class SecurityContextUtilTest extends AuthBaseTest {
         doPatch(projectRoles, secondProject.documentSelfLink);
 
         DeferredResult<SecurityContext> result = SecurityContextUtil.getSecurityContext(
-                testService, USER_EMAIL_ADMIN);
+                privilegedTestService, testOperationByAdmin);
 
         final SecurityContext[] context = new SecurityContext[1];
         TestContext ctx = testCreate(1);
@@ -220,7 +230,10 @@ public class SecurityContextUtilTest extends AuthBaseTest {
 
     @Test
     public void testSecurityContextContainsIndirectAssignedRoles() throws Throwable {
+        Operation testOperationByBasicUser = createAuthorizedOperation(
+                host.assumeIdentity(buildUserServicePath(USER_EMAIL_CONNIE)));
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN2));
+
         // Scenario: create a group which will contain Connie which is basic user and the group
         // will be assigned to cloud admins. Create nested groups and add Connie in them, assign
         // the nested groups to project roles. Verify that PrincipalRoles for Connie contains all
@@ -279,7 +292,7 @@ public class SecurityContextUtilTest extends AuthBaseTest {
         doPatch(projectRoles, secondProject.documentSelfLink);
 
         DeferredResult<SecurityContext> result = SecurityContextUtil.getSecurityContext(
-                testService, USER_EMAIL_CONNIE);
+                privilegedTestService, testOperationByBasicUser);
 
         final SecurityContext[] context = new SecurityContext[1];
         TestContext ctx = testCreate(1);

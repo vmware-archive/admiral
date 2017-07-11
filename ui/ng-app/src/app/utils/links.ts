@@ -36,6 +36,7 @@ export class Links {
   public static USER_SESSION = Links.AUTH + '/session';
   public static AUTH_IDM = Links.AUTH + '/idm';
   public static AUTH_PRINCIPALS = Links.AUTH_IDM + '/principals';
+  public static AUTH_LOGOUT = Links.USER_SESSION + '/logout';
   public static BASIC_AUTH = '/core/authn/basic';
 
   public static CREDENTIALS = '/core/auth/credentials';

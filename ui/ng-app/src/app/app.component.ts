@@ -63,7 +63,7 @@ export class AppComponent {
 
     get userName(): String {
         if (this.userSecurityContext) {
-            return this.userSecurityContext.name || this.userSecurityContext.email;
+            return this.userSecurityContext.name || this.userSecurityContext.id;
         }
         return null;
     }
@@ -74,13 +74,19 @@ export class AppComponent {
                 // Already shown above
                 return null;
             }
-            return this.userSecurityContext.email;
+            return this.userSecurityContext.id;
         }
     }
 
     logout() {
-        this.authService.logout().then(() => {
-            window.location.reload();
+        this.authService.logout().then((location) => {
+            if (location !== null) {
+                window.location.href = location;
+            } else {
+                window.location.reload();
+            }
+        }, (e) => {
+            console.log(e);
         });
     }
 

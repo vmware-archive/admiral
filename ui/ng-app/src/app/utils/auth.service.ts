@@ -1,5 +1,5 @@
 import { DocumentService } from './document.service';
-import { Headers, URLSearchParams } from '@angular/http';
+import { Headers, URLSearchParams, RequestOptions, ResponseContentType } from '@angular/http';
 import { Links } from './links';
 import { Injectable } from '@angular/core';
 
@@ -7,7 +7,7 @@ import { Injectable } from '@angular/core';
 export class AuthService {
 
   constructor(private documentService: DocumentService) {}
-
+  
   public login(username, password) {
     var data = JSON.stringify({
       requestType: 'LOGIN'
@@ -19,12 +19,18 @@ export class AuthService {
     return this.documentService.postWithHeader(Links.BASIC_AUTH, data, headers);
   }
 
-  public logout() {
-    var data = {
-      requestType: 'LOGOUT'
-    };
+  public logout(): Promise<any> {
+    let requestOptions = new RequestOptions({
+      url: Links.AUTH_LOGOUT,
+      method: 'GET',
+      responseType: ResponseContentType.Text,
+      withCredentials: true
+    });
 
-    return this.documentService.post(Links.BASIC_AUTH, data);
+    return this.documentService.ajax.ajaxRaw(requestOptions)
+      .then(result => {
+        return result.headers.get('location');
+      });
   }
 
   public loadCurrentUserSecurityContext(): Promise<any> {

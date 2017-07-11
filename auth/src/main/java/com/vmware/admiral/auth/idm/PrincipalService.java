@@ -25,7 +25,6 @@ import java.util.regex.Pattern;
 
 import com.vmware.admiral.auth.idm.Principal.PrincipalType;
 import com.vmware.admiral.auth.idm.PrincipalRolesHandler.PrincipalRoleAssignment;
-import com.vmware.admiral.auth.idm.local.LocalPrincipalProvider;
 import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.auth.util.PrincipalUtil;
 import com.vmware.admiral.auth.util.SecurityContextUtil;
@@ -101,20 +100,14 @@ public class PrincipalService extends StatelessService {
     @Override
     public void handleStart(Operation startPost) {
         provider = AuthUtil.getPreferredProvider(PrincipalProvider.class);
-
-        // TODO - replace it with some host-based init method perhaps
-        if (provider instanceof LocalPrincipalProvider) {
-            ((LocalPrincipalProvider) provider).setServiceHost(getHost());
-        }
-
+        provider.init(this);
         startPost.complete();
     }
 
     @Override
     public void handleGet(Operation get) {
         if (isPrincipalByIdRequest(get)) {
-            handleSearchById(UriUtils.parseUriPathSegments(get.getUri(),
-                    TEMPLATE_PRINCIPAL_ID_PATH_SEGMENT).get(PRINCIPAL_ID_PATH_SEGMENT), get);
+            handleSearchById(get);
 
         } else if (isPrincipalByCriteriaRequest(get)) {
             Map<String, String> queryParams = UriUtils.parseUriQueryParams(get.getUri());
@@ -142,6 +135,11 @@ public class PrincipalService extends StatelessService {
         return UriUtilsExtended.uriPathMatches(op.getUri(), PATTERN_PRINCIPAL_GET_BY_ID);
     }
 
+    private String getIdFromPrincipalByIdRequest(Operation op) {
+        return UriUtils.parseUriPathSegments(op.getUri(), TEMPLATE_PRINCIPAL_ID_PATH_SEGMENT)
+                .get(PRINCIPAL_ID_PATH_SEGMENT);
+    }
+
     private boolean isPrincipalByCriteriaRequest(Operation op) {
         if (!UriUtilsExtended.uriPathMatches(op.getUri(), PATTERN_PRINCIPAL_SERVICE_BASE)) {
             return false;
@@ -154,19 +152,32 @@ public class PrincipalService extends StatelessService {
         return UriUtilsExtended.uriPathMatches(op.getUri(), PATTERN_PRINCIPAL_SECURITY_CONTEXT);
     }
 
+    private String getIdFromSecurityContextRequest(Operation op) {
+        return UriUtils.parseUriPathSegments(op.getUri(), TEMPLATE_PRINCIPAL_SECURITY_CONTEXT)
+                .get(PRINCIPAL_ID_PATH_SEGMENT);
+    }
+
     private boolean isRolesRequest(Operation op) {
         return UriUtilsExtended.uriPathMatches(op.getUri(), PATTERN_PRINCIPAL_ROLES);
+    }
+
+    private String getIdFromRolesRequest(Operation op) {
+        return UriUtils.parseUriPathSegments(op.getUri(), TEMPLATE_PRINCIPAL_SECURITY_CONTEXT)
+                .get(PRINCIPAL_ID_PATH_SEGMENT);
     }
 
     private boolean isGroupsRequest(Operation op) {
         return UriUtilsExtended.uriPathMatches(op.getUri(), PATTERN_PRINCIPAL_GROUPS);
     }
 
-    private void handleGetSecurityContext(Operation get) {
-        String principalId = UriUtils
-                .parseUriPathSegments(get.getUri(), TEMPLATE_PRINCIPAL_SECURITY_CONTEXT)
+    private String getIdFromGroupsRequest(Operation op) {
+        return UriUtils.parseUriPathSegments(op.getUri(), TEMPLATE_PRINCIPAL_SECURITY_CONTEXT)
                 .get(PRINCIPAL_ID_PATH_SEGMENT);
-        SecurityContextUtil.getSecurityContext(this, principalId)
+    }
+
+    private void handleGetSecurityContext(Operation get) {
+        String principalId = getIdFromSecurityContextRequest(get);
+        SecurityContextUtil.getSecurityContext(this, get, principalId)
                 .thenAccept((context) -> {
                     get.setBody(context);
                     get.complete();
@@ -180,17 +191,17 @@ public class PrincipalService extends StatelessService {
                         rsp.stackTrace = null;
                         get.fail(Operation.STATUS_CODE_NOT_FOUND, ex, rsp);
                     } else {
-                        logWarning("Failed to retrieve security context for user %s: %s", principalId,
-                                Utils.toString(ex));
+                        logWarning("Failed to retrieve security context for user %s: %s",
+                                principalId, Utils.toString(ex));
                         get.fail(ex);
                     }
                     return null;
                 });
     }
 
-    private void handleSearchById(String principalId, Operation get) {
-        DeferredResult<Principal> result = provider.getPrincipal(principalId);
-
+    private void handleSearchById(Operation get) {
+        String principalId = getIdFromPrincipalByIdRequest(get);
+        DeferredResult<Principal> result = provider.getPrincipal(get, principalId);
         result.whenComplete((principal, ex) -> {
             if (ex != null) {
                 if (ex.getCause() instanceof ServiceNotFoundException) {
@@ -205,10 +216,10 @@ public class PrincipalService extends StatelessService {
     }
 
     private void handleSearchByCriteria(String criteria, String roles, Operation get) {
-        DeferredResult<List<Principal>> result = provider.getPrincipals(criteria);
+        DeferredResult<List<Principal>> result = provider.getPrincipals(get, criteria);
 
         if (roles != null && roles.equalsIgnoreCase(ROLES_QUERY_VALUE)) {
-            result.thenCompose(principals -> getAllRolesForPrincipals(getHost(), principals))
+            result.thenCompose(principals -> getAllRolesForPrincipals(this, get, principals))
                     .thenAccept(principalRoles -> get.setBody(principalRoles))
                     .whenCompleteNotify(get);
             return;
@@ -219,13 +230,9 @@ public class PrincipalService extends StatelessService {
     }
 
     private void handleGetGroups(Operation get) {
-
-        String principalId = UriUtils
-                .parseUriPathSegments(get.getUri(), TEMPLATE_PRINCIPAL_SECURITY_CONTEXT)
-                .get(PRINCIPAL_ID_PATH_SEGMENT);
-
-        DeferredResult<Set<String>> groupsResult = provider.getAllGroupsForPrincipal(principalId);
-
+        String principalId = getIdFromGroupsRequest(get);
+        DeferredResult<Set<String>> groupsResult = provider.getAllGroupsForPrincipal(get,
+                principalId);
         groupsResult.whenComplete((groups, ex) -> {
             if (ex != null) {
                 logWarning("Unable to get groups for principal %s: %s",
@@ -239,31 +246,26 @@ public class PrincipalService extends StatelessService {
     }
 
     private void handleGetPrincipalRoles(Operation get) {
-        String principalId = UriUtils
-                .parseUriPathSegments(get.getUri(), TEMPLATE_PRINCIPAL_SECURITY_CONTEXT)
-                .get(PRINCIPAL_ID_PATH_SEGMENT);
-
+        String principalId = getIdFromRolesRequest(get);
         PrincipalRoles rolesResponse = new PrincipalRoles();
-
         PrincipalUtil.getPrincipal(this, principalId)
                 .thenAccept(principal -> copyPrincipalData(principal, rolesResponse))
                 .thenCompose(ignore -> {
                     if (rolesResponse.type == PrincipalType.GROUP) {
-                        return getDirectlyAssignedProjectRolesForGroup(getHost(), rolesResponse);
+                        return getDirectlyAssignedProjectRolesForGroup(this, rolesResponse);
                     }
-                    return getDirectlyAssignedProjectRolesForUser(getHost(), rolesResponse);
+                    return getDirectlyAssignedProjectRolesForUser(this, rolesResponse);
                 })
                 .thenAccept(projectEntries -> rolesResponse.projects = projectEntries)
                 .thenCompose(ignore -> {
                     if (rolesResponse.type == PrincipalType.GROUP) {
-                        return getDirectlyAssignedSystemRolesForGroup(getHost(), rolesResponse);
+                        return getDirectlyAssignedSystemRolesForGroup(this, rolesResponse);
                     }
-                    return getDirectlyAssignedSystemRolesForUser(getHost(), rolesResponse);
+                    return getDirectlyAssignedSystemRolesForUser(this, rolesResponse);
                 })
                 .thenAccept(systemRoles -> rolesResponse.roles = systemRoles)
                 .thenAccept(ignore -> get.setBody(rolesResponse))
                 .whenCompleteNotify(get);
-
     }
 
     @Override
@@ -313,4 +315,3 @@ public class PrincipalService extends StatelessService {
         });
     }
 }
-

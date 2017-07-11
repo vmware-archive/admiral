@@ -32,9 +32,8 @@ public class LocalLogoutProviderTest extends AuthBaseTest {
     @Before
     public void injectHost() throws Throwable {
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
-
-        provider.init(
-                host.startServiceAndWait(SessionService.class, SessionService.SELF_LINK + "-test"));
+        provider.init(host.startServiceAndWait(SessionService.class,
+                SessionService.SELF_LINK + "-test"));
     }
 
     @Test

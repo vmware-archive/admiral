@@ -11,7 +11,6 @@
 
 package com.vmware.admiral.auth.idm.local;
 
-import static com.vmware.admiral.auth.util.PrincipalUtil.buildLocalPrincipalStateSelfLink;
 import static com.vmware.admiral.auth.util.PrincipalUtil.fromLocalPrincipalToPrincipal;
 import static com.vmware.admiral.auth.util.PrincipalUtil.fromPrincipalToLocalPrincipal;
 import static com.vmware.admiral.auth.util.PrincipalUtil.fromQueryResultToPrincipalList;
@@ -31,8 +30,8 @@ import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
-import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
@@ -41,86 +40,90 @@ public class LocalPrincipalProvider implements PrincipalProvider {
     private static final String EXPAND_QUERY_KEY = "expand";
     private static final String FILTER_QUERY_KEY = "$filter";
 
-    private ServiceHost host;
+    private Service service;
 
-    public void setServiceHost(ServiceHost host) {
-        this.host = host;
+    @Override
+    public void init(Service service) {
+        this.service = service;
     }
 
     @Override
-    public DeferredResult<Principal> getPrincipal(String principalId) {
+    public DeferredResult<Principal> getPrincipal(Operation op, String principalId) {
         assertNotNullOrEmpty(principalId, "principalId");
-        URI uri = buildLocalPrincipalStateSelfLink(host, principalId);
 
-        Operation get = Operation.createGet(uri)
-                .setReferer(host.getUri());
+        Operation get = Operation.createGet(service,
+                UriUtils.buildUriPath(LocalPrincipalFactoryService.SELF_LINK, principalId));
 
-        return host.sendWithDeferredResult(get, LocalPrincipalState.class)
+        service.setAuthorizationContext(get, service.getSystemAuthorizationContext());
+
+        return service.sendWithDeferredResult(get, LocalPrincipalState.class)
                 .thenApply((s) -> fromLocalPrincipalToPrincipal(s));
     }
 
     @Override
-    public DeferredResult<List<Principal>> getPrincipals(String criteria) {
+    public DeferredResult<List<Principal>> getPrincipals(Operation op, String criteria) {
         String filterQuery = buildFilterBasedOnCriteria(criteria);
 
-        URI uri = UriUtils.buildUri(host, LocalPrincipalFactoryService.SELF_LINK);
+        URI uri = UriUtils.buildUri(service.getHost(), LocalPrincipalFactoryService.SELF_LINK);
         uri = UriUtils.extendUriWithQuery(uri, EXPAND_QUERY_KEY, Boolean.TRUE.toString());
         uri = UriUtils.extendUriWithQuery(uri, FILTER_QUERY_KEY, filterQuery);
 
-        Operation get = Operation.createGet(uri)
-                .setReferer(host.getUri());
+        Operation get = Operation.createGet(uri);
 
-        return host.sendWithDeferredResult(get, ServiceDocumentQueryResult.class)
+        service.setAuthorizationContext(get, service.getSystemAuthorizationContext());
+
+        return service.sendWithDeferredResult(get, ServiceDocumentQueryResult.class)
                 .thenApply((q) -> fromQueryResultToPrincipalList(q));
     }
 
     @Override
-    public DeferredResult<Principal> createPrincipal(Principal principal) {
+    public DeferredResult<Principal> createPrincipal(Operation op, Principal principal) {
         LocalPrincipalState stateToCreate = fromPrincipalToLocalPrincipal(principal);
 
-        URI uri = UriUtils.buildUri(host, LocalPrincipalFactoryService.SELF_LINK);
-
-        Operation post = Operation.createPost(uri)
+        Operation post = Operation.createPost(service, LocalPrincipalFactoryService.SELF_LINK)
                 .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
-                .setBody(stateToCreate)
-                .setReferer(host.getUri());
+                .setBody(stateToCreate);
 
-        return host.sendWithDeferredResult(post, LocalPrincipalState.class)
+        service.setAuthorizationContext(post, service.getSystemAuthorizationContext());
+
+        return service.sendWithDeferredResult(post, LocalPrincipalState.class)
                 .thenApply((s) -> fromLocalPrincipalToPrincipal(s));
     }
 
     @Override
-    public DeferredResult<Principal> updatePrincipal(Principal principal) {
+    public DeferredResult<Principal> updatePrincipal(Operation op, Principal principal) {
         LocalPrincipalState stateToPatch = fromPrincipalToLocalPrincipal(principal);
 
-        URI uri = buildLocalPrincipalStateSelfLink(host, stateToPatch.id);
-
-        Operation post = Operation.createPatch(uri)
+        Operation patch = Operation.createPatch(service,
+                UriUtils.buildUriPath(LocalPrincipalFactoryService.SELF_LINK, stateToPatch.id))
                 .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
-                .setBody(stateToPatch)
-                .setReferer(host.getUri());
+                .setBody(stateToPatch);
 
-        return host.sendWithDeferredResult(post, LocalPrincipalState.class)
+        service.setAuthorizationContext(patch, service.getSystemAuthorizationContext());
+
+        return service.sendWithDeferredResult(patch, LocalPrincipalState.class)
                 .thenApply((s) -> fromLocalPrincipalToPrincipal(s));
     }
 
     @Override
-    public DeferredResult<Principal> deletePrincipal(String principalId) {
-        URI uri = buildLocalPrincipalStateSelfLink(host, principalId);
+    public DeferredResult<Principal> deletePrincipal(Operation op, String principalId) {
+        assertNotNullOrEmpty(principalId, "principalId");
 
-        Operation delete = Operation.createDelete(uri)
-                .setReferer(host.getUri());
+        Operation delete = Operation.createDelete(service,
+                UriUtils.buildUriPath(LocalPrincipalFactoryService.SELF_LINK, principalId));
 
-        return host.sendWithDeferredResult(delete, LocalPrincipalState.class)
+        service.setAuthorizationContext(delete, service.getSystemAuthorizationContext());
+
+        return service.sendWithDeferredResult(delete, LocalPrincipalState.class)
                 .thenApply((s) -> fromLocalPrincipalToPrincipal(s));
     }
 
     @Override
-    public DeferredResult<Set<String>> getAllGroupsForPrincipal(String principalId) {
+    public DeferredResult<Set<String>> getAllGroupsForPrincipal(Operation op, String principalId) {
+        assertNotNullOrEmpty(principalId, "principalId");
 
         return getDirectlyAssignedGroupsForPrincipal(principalId)
                 .thenCompose(groups -> getIndirectlyAssignedGroupsForPrincipal(groups, null, null));
-
     }
 
     private DeferredResult<Set<String>> getDirectlyAssignedGroupsForPrincipal(String principalId) {
@@ -133,13 +136,14 @@ public class LocalPrincipalProvider implements PrincipalProvider {
 
         Query query = Query.Builder.create()
                 .addInCollectionItemClause(LocalPrincipalState.FIELD_NAME_GROUP_MEMBERS_LINKS,
-                        Collections.singleton(principalSelfLink)).build();
+                        Collections.singleton(principalSelfLink))
+                .build();
 
         QueryTask queryTask = QueryUtil.buildQuery(LocalPrincipalState.class, true, query);
 
         QueryUtil.addExpandOption(queryTask);
 
-        new ServiceDocumentQuery<>(host, LocalPrincipalState.class)
+        new ServiceDocumentQuery<>(service.getHost(), LocalPrincipalState.class)
                 .query(queryTask, (r) -> {
                     if (r.hasException()) {
                         result.fail(r.getException());
@@ -154,8 +158,7 @@ public class LocalPrincipalProvider implements PrincipalProvider {
     }
 
     private DeferredResult<Set<String>> getIndirectlyAssignedGroupsForPrincipal(
-            Set<String> groupsToCheck, Set<String> foundGroups,
-            Set<String> alreadyChecked) {
+            Set<String> groupsToCheck, Set<String> foundGroups, Set<String> alreadyChecked) {
 
         if (groupsToCheck == null || groupsToCheck.isEmpty()) {
             return DeferredResult.completed(new HashSet<>());
@@ -180,14 +183,15 @@ public class LocalPrincipalProvider implements PrincipalProvider {
 
         Query query = Query.Builder.create()
                 .addInCollectionItemClause(LocalPrincipalState.FIELD_NAME_GROUP_MEMBERS_LINKS,
-                        groupsToCheckLinks).build();
+                        groupsToCheckLinks)
+                .build();
 
         QueryTask queryTask = QueryUtil.buildQuery(LocalPrincipalState.class, true, query);
         QueryUtil.addExpandOption(queryTask);
 
         groupsToCheck.clear();
 
-        new ServiceDocumentQuery<>(host, LocalPrincipalState.class)
+        new ServiceDocumentQuery<>(service.getHost(), LocalPrincipalState.class)
                 .query(queryTask, (r) -> {
                     if (r.hasException()) {
                         result.fail(r.getException());

@@ -11,21 +11,19 @@
 
 package com.vmware.admiral.auth.util;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.vmware.admiral.auth.idm.Principal;
 import com.vmware.admiral.auth.idm.Principal.PrincipalType;
 import com.vmware.admiral.auth.idm.PrincipalService;
-import com.vmware.admiral.auth.idm.local.LocalPrincipalFactoryService;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalState;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalType;
+import com.vmware.photon.controller.model.adapters.util.Pair;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
-import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
@@ -39,7 +37,7 @@ public class PrincipalUtil {
 
         Principal principal = new Principal();
         principal.email = state.email;
-        principal.name = state.name;
+        principal.name = toPrincipalName(state);
         principal.id = state.id;
         principal.password = state.password;
         principal.type = PrincipalType.valueOf(state.type.name());
@@ -101,9 +99,50 @@ public class PrincipalUtil {
         return service.sendWithDeferredResult(getPrincipalOp, Principal.class);
     }
 
-    public static URI buildLocalPrincipalStateSelfLink(ServiceHost host, String id) {
-        return UriUtils.buildUri(host, LocalPrincipalFactoryService.SELF_LINK + "/" + id);
+    public static Pair<String, String> toNameAndDomain(String principalId) {
+
+        // UPN format: NAME@DOMAIN
+        String[] parts = principalId.split("@");
+        if (parts.length == 2) {
+            return new Pair<>(parts[0], parts[1]);
+        }
+
+        // NETBIOS format: DOMAIN\NAME
+        parts = principalId.split("\\\\");
+        if (parts.length == 2) {
+            return new Pair<>(parts[1], parts[0]);
+        }
+
+        throw new IllegalArgumentException("Invalid principalId format: '" + principalId + "'");
     }
 
+    public static String toPrincipalId(String name, String domain) {
+        if ((name == null) || (name.isEmpty())) {
+            throw new IllegalArgumentException("Invalid principal name: '" + name + "'");
+        }
+        StringBuilder sb = new StringBuilder(name);
+        if (domain != null) {
+            sb.append("@").append(domain);
+        }
+        return sb.toString().toLowerCase();
+    }
+
+    public static String toPrincipalName(String firstName, String lastName) {
+        StringBuilder sb = new StringBuilder();
+        if ((firstName != null) && (!firstName.trim().isEmpty())) {
+            sb.append(firstName.trim());
+        }
+        if ((lastName != null) && (!lastName.trim().isEmpty())) {
+            sb.append(" ").append(lastName.trim());
+        }
+        return sb.toString();
+    }
+
+    private static String toPrincipalName(LocalPrincipalState state) {
+        if ((state.name != null) && (!state.name.trim().isEmpty())) {
+            return state.name;
+        }
+        return state.id.split("@")[0];
+    }
 
 }
