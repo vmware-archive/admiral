@@ -587,6 +587,7 @@
             "persistentLabel": "Persistent",
             "nonPersistentLabel": "Non-Persistent",
             "provisioningSelectDefault": "Select type of provisioning",
+            "sharesLevelDefault": "Select shares level",
             "datastore": {
               "typeLabel": "Type",
               "capacityLabel": "Capacity",

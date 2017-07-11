@@ -22,6 +22,10 @@ export default Vue.component('vsphere-datastores-list', {
     model: {
       type: Object,
       required: true
+    },
+    endpoint: {
+      type: Object,
+      required: true
     }
   },
   data() {
@@ -53,7 +57,7 @@ export default Vue.component('vsphere-datastores-list', {
       VsphereDatastoreActions.editDatastore(item);
     },
     refresh() {
-      VsphereDatastoreActions.retrieveDatastores();
+      VsphereDatastoreActions.retrieveDatastores(this.endpoint.documentSelfLink);
     },
     sortBy(key) {
       this.sortKey = key;

@@ -188,8 +188,8 @@ Vue.component('vsphere-storage-item', {
       provisioningTypes: PROVISIONTNG_TYPES,
       sharesLevelTypes: SHARES_LEVEL,
       provisioningType: diskProperties.provisioningType || '',
-      sharesLevel: diskProperties.sharesLevel || SHARES_LEVEL_VALUES.normal,
-      shares: diskProperties.shares || SHARES_VALUES.normal,
+      sharesLevel: diskProperties.sharesLevel || '',
+      shares: diskProperties.shares || '',
       isSharesValid: true,
       sharesInvalidMsg: '',
       limitIops: diskProperties.limitIops || '',
@@ -217,9 +217,9 @@ Vue.component('vsphere-storage-item', {
   },
   attached() {
     this.onDiskPropertyChange('sharesLevel',
-      this.storageItem.diskProperties.sharesLevel || SHARES_LEVEL_VALUES.normal);
+      this.storageItem.diskProperties.sharesLevel || '');
     this.onDiskPropertyChange('shares',
-      this.storageItem.diskProperties.shares || SHARES_VALUES.normal);
+      this.storageItem.diskProperties.shares || '');
     this.onDiskPropertyChange('limitIops',
       this.storageItem.diskProperties.limitIops || '');
     this.onDiskPropertyChange('provisioningType',
@@ -274,6 +274,8 @@ Vue.component('vsphere-storage-item', {
           this.customShares = true;
           this.shares = '';
           break;
+        case '':
+          this.shares = '';
       }
       this.onDiskPropertyChange('sharesLevel', $event.target.value);
       this.onDiskPropertyChange('shares', this.shares);
@@ -286,12 +288,14 @@ Vue.component('vsphere-storage-item', {
       this.onDiskPropertyChange('shares', this.shares);
     },
     isValid() {
-      this.isSharesValid = parseInt(this.storageItem.diskProperties.shares, 10) <= SHARES_RANGE.max
-        && parseInt(this.storageItem.diskProperties.shares, 10) >= SHARES_RANGE.min;
+      let shares = this.storageItem.diskProperties.shares;
+      let limitIops = this.storageItem.diskProperties.limitIops;
+      this.isSharesValid = parseInt(shares, 10) <= SHARES_RANGE.max
+        && parseInt(shares, 10) >= SHARES_RANGE.min || shares === '';
       this.isLimitIopsValid =
-        parseInt(this.storageItem.diskProperties.limitIops, 10) <= LIMIT_RANGE.max
-        && parseInt(this.storageItem.diskProperties.limitIops, 10) >= LIMIT_RANGE.min
-        || this.storageItem.diskProperties.limitIops === '';
+        parseInt(limitIops, 10) <= LIMIT_RANGE.max
+        && parseInt(limitIops, 10) >= LIMIT_RANGE.min
+        || limitIops === '';
 
       this.sharesInvalidMsg = this.isSharesValid ? '' :
         i18n.t('app.profile.edit.validation.valueInRange', {

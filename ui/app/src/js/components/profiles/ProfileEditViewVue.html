@@ -197,9 +197,11 @@
         endpoint && endpoint.endpointType === 'azure'"
         :model="model.contextView.activeItem.data"></azure-storage-accounts-list>
       <vsphere-datastores-list v-if="activeContextItem === 'vsphere_datastores'"
-        :model="model.contextView.activeItem.data"></vsphere-datastores-list>
+        :model="model.contextView.activeItem.data"
+        :endpoint="endpoint"></vsphere-datastores-list>
       <vsphere-storage-policies-list v-if="activeContextItem === 'vsphere_storage_policies'"
-        :model="model.contextView.activeItem.data"></vsphere-storage-policies-list>
+        :model="model.contextView.activeItem.data"
+        :endpoint="endpoint"></vsphere-storage-policies-list>
     </div>
   </context-sidepanel>
 

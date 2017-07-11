@@ -50,6 +50,7 @@ export default Vue.component('vsphere-datastore-editor', {
       var tagRequest = utils.createTagAssignmentRequest(toSave.documentSelfLink,
         this.model.item.tags || [], this.tags);
       VsphereDatastoreActions.updateDatastore(toSave, tagRequest);
+      VsphereDatastoreActions.retrieveDatastores(this.model.item.endpointLink);
     },
     getModel() {
       return $.extend({}, this.model.item, {

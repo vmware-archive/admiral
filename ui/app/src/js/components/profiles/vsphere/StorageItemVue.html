@@ -57,7 +57,8 @@
 <div class="form-group">
   <form-label>{{i18n('app.profile.edit.storage.vsphere.sharesLevelLabel')}}</form-label>
   <div class="form-control select">
-    <select @change="onSharesLevelChange" v-model="sharesLevel">
+    <select @change="onSharesLevelChange" v-model="sharesLevel" :class="{'default-option': !sharesLevel}">
+      <option value="">{{i18n('app.profile.edit.storage.vsphere.sharesLevelDefault')}}</option>
       <option  v-for="shareLevel of sharesLevelTypes" :value="shareLevel.value">
         {{shareLevel.name}}</option>
     </select>

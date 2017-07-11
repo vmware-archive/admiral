@@ -21,6 +21,10 @@ export default Vue.component('vsphere-storage-policies-list', {
     model: {
       type: Object,
       required: true
+    },
+    endpoint: {
+      type: Object,
+      required: true
     }
   },
   data() {
@@ -51,7 +55,7 @@ export default Vue.component('vsphere-storage-policies-list', {
       VsphereStoragePolicyActions.editStoragePolicy(item);
     },
     refresh() {
-      VsphereStoragePolicyActions.retrieveStoragePolicies();
+      VsphereStoragePolicyActions.retrieveStoragePolicies(this.endpoint.documentSelfLink);
     },
     sortBy(key) {
       this.sortKey = key;
