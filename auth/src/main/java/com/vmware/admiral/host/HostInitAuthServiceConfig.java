@@ -18,6 +18,7 @@ import com.vmware.admiral.auth.idm.content.AuthContentService;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalFactoryService;
 import com.vmware.admiral.auth.project.ProjectFactoryService;
 import com.vmware.admiral.auth.project.transformation.CompositeDescriptionTransformationService;
+import com.vmware.admiral.auth.project.transformation.ComputePlacementPoolRelationTransformationService;
 import com.vmware.admiral.auth.project.transformation.ContainersTransformationService;
 import com.vmware.admiral.auth.project.transformation.RegistryTransformationService;
 import com.vmware.admiral.service.common.AuthBootstrapService;
@@ -39,7 +40,8 @@ public class HostInitAuthServiceConfig extends HostInitServiceHelper {
                 AuthContentService.class,
                 CompositeDescriptionTransformationService.class,
                 ContainersTransformationService.class,
-                RegistryTransformationService.class);
+                RegistryTransformationService.class,
+                ComputePlacementPoolRelationTransformationService.class);
 
         startServiceFactories(host,
                 AuthBootstrapService.class);
