@@ -37,12 +37,24 @@ export class AuthGuard implements CanActivate {
           });
         }
 
+        if (securityContext && securityContext.projects) {
+          securityContext.projects.forEach(project => {
+            if (project &&  project.roles) {
+              project.roles.forEach(role => {
+                if (roles.indexOf(role) != -1) {
+                  authorized = true;
+                  return;
+                }
+              });
+            }
+          });
+        }
+
         authorized ? resolve(true) : resolve(false);
       })
       .catch((err) => {
-        console.log(err);
-        this.router.navigateByUrl(Links.HOME);
-        return resolve(false);
+        // allow access in case of no authentication
+        return resolve(true);
       });
     });
   }

@@ -123,7 +123,7 @@ export const ROUTES: Routes = [
         data: { roles: RoutesRestriction.ADMINISTRATION },
         children: [
             {
-                path: '', redirectTo: 'identity-management', pathMatch: 'full'
+                path: '', redirectTo: 'projects', pathMatch: 'full'
             },
             {
                 path: 'identity-management', component: IdentityManagementComponent,

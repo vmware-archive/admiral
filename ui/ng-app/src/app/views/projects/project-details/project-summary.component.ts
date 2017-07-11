@@ -11,6 +11,7 @@
 
 import {Component, Input, OnInit} from '@angular/core';
 import { Utils } from '../../../utils/utils';
+import { RoutesRestriction } from './../../../utils/routes-restriction';
 
 @Component({
   selector: 'app-project-summary',
@@ -29,6 +30,10 @@ export class ProjectSummaryComponent implements OnInit {
     return this.project && Utils.getDocumentId(this.project.documentSelfLink);
   }
 
+  get documentSelfLink() {
+    return this.project && this.project.documentSelfLink;
+  }
+
   get projectType() {
       return this.project
                 ? (this.project.isPublic ? "projects.public" : "projects.private")
@@ -37,5 +42,9 @@ export class ProjectSummaryComponent implements OnInit {
 
   ngOnInit() {
     // DOM init
+  }
+
+  get projectSummaryEdit() {
+    return RoutesRestriction.PROJECT_SUMMARY_EDIT;
   }
 }

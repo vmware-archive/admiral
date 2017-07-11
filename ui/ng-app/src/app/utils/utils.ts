@@ -81,6 +81,10 @@ export class Utils {
     return this.configurationProperties && this.configurationProperties[property];
   }
 
+  public static getConfigurationProperties() {
+    return this.configurationProperties;
+  }
+
   public static getConfigurationPropertyBoolean(property) {
     return this.configurationProperties && this.configurationProperties[property] === 'true';
   }

@@ -11,6 +11,7 @@
 
 import { AuthService } from './../../utils/auth.service';
 import { Directive, Input, Inject, ElementRef, Renderer } from '@angular/core';
+import { Utils } from './../../utils/utils';
 
 @Directive({
   selector: '[allowNavigation]'
@@ -20,23 +21,49 @@ export class AllowNavigationDirective {
   @Input()
   roles: string[];
 
+  @Input()
+  projectSelfLink: string;
+
   constructor(private el: ElementRef, private renderer: Renderer, private authService: AuthService) {
   }
 
-  ngOnInit(){
+  ngOnInit() {
     this.authService.loadCurrentUserSecurityContext().then((securityContext) => {
       let show = false;
 
       if (securityContext && securityContext.roles) {
-        securityContext.roles.forEach(element => {
-          if (this.roles.indexOf(element) != -1) {
+        securityContext.roles.forEach(role => {
+          if (this.roles.indexOf(role) != -1) {
             show = true;
             return;
           }
         });
       }
 
+      if (securityContext && securityContext.projects) {
+        securityContext.projects.forEach(project => {
+          if (project && project.roles) {
+            project.roles.forEach(role => {
+              if (this.projectSelfLink) {
+                if (project.documentSelfLink === this.projectSelfLink && this.roles.indexOf(role) != -1) {
+                  show = true;
+                  return;
+                }
+              } else {
+                if (this.roles.indexOf(role) != -1) {
+                  show = true;
+                  return;
+                }
+              }
+            });
+          }
+        });
+      }
+
       this.renderer.setElementStyle(this.el.nativeElement, 'display', show ? 'block' : 'none');
+    }).catch((ex) => {
+      // show in case of no authentication
+      this.renderer.setElementStyle(this.el.nativeElement, 'display', 'block');
     });
   }
 }

@@ -32,17 +32,20 @@
       <div card-header>
         <img [src]="'/container-image-icons?container-image=' + item.documentSelfLink"/>
         {{item.name}}
-        <clr-dropdown class="card-actions" allowNavigation [roles]="projectsDetailsRouteRestriction"
+        <clr-dropdown class="card-actions" allowNavigation [projectSelfLink]="item.documentSelfLink"
+          [roles]="projectsCardViewActions"
           [clrMenuPosition]="'left-top'" (click)="selectItem($event, item)">
           <button class="btn btn-sm btn-link" clrDropdownToggle>
               <clr-icon shape="ellipsis-vertical" size="20"></clr-icon>
           </button>
 
           <div class="dropdown-menu">
-              <a href="..." clrDropdownItem
+              <a href="..." clrDropdownItem allowNavigation [projectSelfLink]="item.documentSelfLink"
+                 [roles]="projectsCardViewActionsDetails"
                  [routerLink]="['./' + item.documentId]"><clr-icon shape="eye" size="20"
                                                                    class="card-drop-down-actions"></clr-icon>{{"projects.actions.details" | i18n}}</a>
-              <a href="..." clrDropdownItem
+              <a href="..." clrDropdownItem allowNavigation [projectSelfLink]="item.documentSelfLink"
+                 [roles]="projectsCardViewActionsDelete"
                  (click)="deleteProject($event, item)"><clr-icon shape="trash" size="20"
                                                                  class="card-drop-down-actions"></clr-icon>{{"delete" | i18n}}</a>
           </div>
