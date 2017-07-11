@@ -111,6 +111,7 @@ import com.vmware.admiral.compute.container.volume.VolumeBinding;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.admiral.service.common.LogService;
+import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.FileUtils;
 import com.vmware.xenon.common.LocalizableValidationException;
@@ -209,8 +210,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                     containerRequest.getRequestTrackingLog());
         }
 
-        if (ContainerOperationType.EXEC == operationType
-                || ContainerOperationType.STATS == operationType) {
+        if (ContainerOperationType.EXEC == operationType) {
             // Exec is direct operation, stats will complete operation after completion
             context.operation = op;
         } else {
@@ -1168,6 +1168,26 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                 .setCompletion((o, ex) -> {
                     if (!context.requestFailed) {
                         patchTaskStage(request, TaskStage.FINISHED, ex);
+                    }
+                    if (newContainerState.powerState == PowerState.RUNNING) {
+                        // request fetch stats
+
+                        ContainerInstanceRequest containerRequest = new ContainerInstanceRequest();
+                        containerRequest.operationTypeId = ContainerOperationType.STATS.id;
+                        containerRequest.resourceReference = request.resourceReference;
+                        containerRequest.serviceTaskCallback = ServiceTaskCallback.createEmpty();
+
+                        RequestContext newContext = new RequestContext();
+                        newContext.containerState = newContainerState;
+                        newContext.computeState = context.computeState;
+                        newContext.containerDescription = context.containerDescription;
+                        newContext.request = containerRequest;
+                        newContext.commandInput = context.commandInput;
+                        newContext.executor = context.executor;
+                        newContext.operation = context.operation;
+
+                        processOperation(newContext);
+                        return;
                     }
                 }));
     }

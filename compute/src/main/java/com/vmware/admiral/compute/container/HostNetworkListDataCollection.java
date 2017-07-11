@@ -184,8 +184,10 @@ public class HostNetworkListDataCollection extends StatefulService {
 
         AssertUtil.assertNotNull(body.networkIdsAndNames, "networkIdsAndNames");
 
-        logFine("Host network list callback invoked for host [%s] with network IDs: %s",
-                body.containerHostLink, new ArrayList<>(body.networkIdsAndNames.keySet()));
+        logFine(() -> String.format(
+                "Host network list callback invoked for host [%s] with network IDs: %s",
+                body.containerHostLink, new ArrayList<>(body.networkIdsAndNames.keySet()))
+        );
 
         // the patch will succeed regardless of the synchronization process
         if (state.containerHostLinks.get(body.containerHostLink) != null &&

@@ -417,11 +417,7 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
                 TaskState.TaskStage.FINISHED);
 
         // try to fetch the stats again and expect failure
-        try {
-            sendFetchContainerStatsRequest();
-            fail("Fetch stats is expected to fail");
-        } catch (Exception ignored) {
-        }
+        sendFetchContainerStatsRequest();
 
         // wait for request task stage to change to finish
         waitForPropertyValue(provisioningTaskLink, MockTaskState.class, "taskInfo.stage",
