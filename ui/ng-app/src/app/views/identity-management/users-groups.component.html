@@ -44,8 +44,9 @@
         <clr-dg-cell> <clr-icon *ngIf="isCloudAdmin(principal)" shape="check" class="user-cloud-admin-check"></clr-icon>
             <clr-icon *ngIf="!isCloudAdmin(principal)" shape="minus"></clr-icon></clr-dg-cell>
         <clr-dg-cell><span *ngFor="let projectRole of getProjectsRoles(principal)" class="label label-project-role">{{ projectRole.projectName }}
-            <span class="badge" *ngIf="projectRole.projectRole == 'PROJECT_ADMINS'">{{ "identity.usersgroups.projectRole.admin" | i18n }}</span>
-            <span class="badge" *ngIf="projectRole.projectRole == 'PROJECT_MEMBERS'">{{ "identity.usersgroups.projectRole.member" | i18n }}</span>
+            <span class="badge" *ngIf="projectRole.projectRole == 'PROJECT_ADMIN'">{{ "projects.members.roles.administrator" | i18n }}</span>
+            <span class="badge" *ngIf="projectRole.projectRole == 'PROJECT_MEMBER'">{{ "projects.members.roles.member" | i18n }}</span>
+            <span class="badge" *ngIf="projectRole.projectRole == 'PROJECT_VIEWER'">{{ "projects.members.roles.viewer" | i18n }}</span>
         </span></clr-dg-cell>
     </clr-dg-row>
 

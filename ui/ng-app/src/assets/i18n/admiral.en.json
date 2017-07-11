@@ -203,11 +203,7 @@
       "columnCloudAdmin": "Cloud Admin",
       "columnProjects": "Projects",
       "count": "users/groups",
-      "notFound": "No users found",
-      "projectRole": {
-        "admin": "Project Admin",
-        "member": "Developer"
-      }
+      "notFound": "No users found"
     }
   },
   "configuration": {
