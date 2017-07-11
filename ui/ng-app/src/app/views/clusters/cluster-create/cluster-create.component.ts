@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, OnInit, AfterViewInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewEncapsulation } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormGroup, FormControl, Validators } from "@angular/forms";
 import { Links } from '../../../utils/links';
@@ -23,7 +23,8 @@ import { BaseDetailsComponent } from '../../../components/base/base-details.comp
 @Component({
   selector: 'app-cluster-create',
   templateUrl: './cluster-create.component.html',
-  styleUrls: ['./cluster-create.component.scss']
+  styleUrls: ['./cluster-create.component.scss'],
+  encapsulation: ViewEncapsulation.None,
 })
 /**
  * Modal for cluster creation.
@@ -46,6 +47,16 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
     url: new FormControl('', Validators.required),
     credentials: new FormControl('')
   });
+
+  credentialsTitle = I18n.t('dropdownSearchMenu.title', {
+    ns: 'base',
+    entity: I18n.t('app.credential.entity', {ns: 'base'})
+  } as I18n.TranslationOptions );
+
+  credentialsSearchPlaceholder = I18n.t('dropdownSearchMenu.searchPlaceholder', {
+    ns: 'base',
+    entity: I18n.t('app.credential.entity', {ns: 'base'})
+  } as I18n.TranslationOptions );
 
   constructor(private router: Router, route: ActivatedRoute, service: DocumentService) {
     super(route, service, Links.CLUSTERS);
@@ -73,7 +84,7 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
       this.showCertificateWarning = false;
     });
     this.service.list(Links.CREDENTIALS, {}).then(credentials => {
-      this.credentials = credentials.documents;
+      this.credentials = credentials.documents.map(this.toCredentialViewModel);
     });
   }
 
@@ -86,12 +97,14 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
     }
   }
 
-  getCredentialsName(credentials) {
-    let name = credentials.customProperties ? credentials.customProperties.__authCredentialsName : '';
-    if (!name) {
-      return credentials.documentId;
+  toCredentialViewModel(credential) {
+    let vm:any = {};
+    vm.documentSelfLink = credential.documentSelfLink;
+    vm.name = credential.customProperties ? credential.customProperties.__authCredentialsName : '';
+    if (!vm.name) {
+      vm.name = credential.documentId;
     }
-    return name;
+    return vm;
   }
 
   saveCluster() {
@@ -135,7 +148,7 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
       };
 
       if (formInput.credentials) {
-        hostState.customProperties['__authCredentialsLink'] = formInput.credentials;
+        hostState.customProperties['__authCredentialsLink'] = formInput.credentials.documentSelfLink;
       }
 
       if (formInput.description) {

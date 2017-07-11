@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import DropdownSearchMenu from 'components/common/DropdownSearchMenu';
+import { DropdownSearchMenu } from 'admiral-ui-common';
 import HostAddViewVue from 'components/hosts/HostAddViewVue.html';
 import PlacementZonesView from 'components/placementzones/PlacementZonesView'; //eslint-disable-line
 import CredentialsList from 'components/credentials/CredentialsList'; //eslint-disable-line

@@ -11,6 +11,7 @@
 
 import services from 'core/services';
 import utils from 'core/utils';
+import { formatUtils } from 'admiral-ui-common';
 
 export default Vue.component('azure-compute-profile-editor', {
   template: `
@@ -116,13 +117,13 @@ export default Vue.component('azure-compute-profile-editor', {
       let query = context._query || '';
       let index = query ? display.toLowerCase().indexOf(query.toLowerCase()) : -1;
       if (index >= 0) {
-          display = utils.escapeHtml(display.substring(0, index))
+          display = formatUtils.escapeHtml(display.substring(0, index))
               + '<strong>'
-              + utils.escapeHtml(display.substring(index, index + query.length))
+              + formatUtils.escapeHtml(display.substring(index, index + query.length))
               + '</strong>'
-              + utils.escapeHtml(display.substring(index + query.length));
+              + formatUtils.escapeHtml(display.substring(index + query.length));
       } else {
-          display = utils.escapeHtml(display);
+          display = formatUtils.escapeHtml(display);
       }
 
       return '<div>' +

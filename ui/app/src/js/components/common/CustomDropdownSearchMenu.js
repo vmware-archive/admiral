@@ -12,7 +12,7 @@
 import CustomDropdownSearchMenuTemplate from
  'components/common/CustomDropdownSearchMenuTemplate.html';
 import constants from 'core/constants';
-import utils from 'core/utils';
+import { formatUtils } from 'admiral-ui-common';
 
 function DEFAULT_RENDERER(itemSpec) {
   var result = '';
@@ -27,7 +27,7 @@ function DEFAULT_RENDERER(itemSpec) {
     result += `<span class="spinner spinner-inline"></span>`;
   }
 
-  result += `<span>${utils.escapeHtml(itemSpec.name)}</span>`;
+  result += `<span>${formatUtils.escapeHtml(itemSpec.name)}</span>`;
 
   return result;
 }

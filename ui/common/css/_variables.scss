@@ -161,3 +161,43 @@ $nav-side-panel-width: 216px;
     vertical-align: middle;
   }
 }
+
+.hide {
+    display: none !important;
+}
+
+.search-input {
+  position: relative;
+
+  input, .twitter-typeahead input {
+    padding-left: 30px;
+    width: 100%;
+  }
+
+  input:not(.tt-input) {
+  }
+
+  .search-input span, .image-tags-input span {
+    left: 0;
+  }
+
+  .loader-inline, .search-hint {
+    z-index: 1;
+    left: 5px;
+    bottom: 10px;
+    position: absolute;
+  }
+
+  .loader-inline {
+    display: none;
+  }
+}
+
+.search-input.loading {
+  .loader-inline {
+    display: block;
+  }
+  .search-hint {
+    display: none;
+  }
+}

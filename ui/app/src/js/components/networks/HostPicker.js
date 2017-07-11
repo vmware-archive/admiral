@@ -10,7 +10,7 @@
  */
 
 import HostPickerVue from 'components/networks/HostPickerVue.html';
-import DropdownSearchMenu from 'components/common/DropdownSearchMenu';
+import { DropdownSearchMenu } from 'admiral-ui-common';
 import utils from 'core/utils';
 import services from 'core/services';
 

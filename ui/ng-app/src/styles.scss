@@ -1,13 +1,8 @@
 /* You can add global styles to this file, and also import other style files */
-@import "node_modules/clarity-ui/src/color/utils/colors.clarity";
-@import "node_modules/clarity-ui/src/utils/variables.clarity";
+@import "node_modules/clarity-ui/src/main";
 @import 'node_modules/admiral-ui-common/css/variables';
 @import "node_modules/admiral-ui-common/css/tokenfield-override";
-@import "node_modules/clarity-ui/src/utils/mixins.clarity";
-@import "node_modules/clarity-ui/src/utils/helpers.clarity";
-@import "node_modules/clarity-ui/src/image/images.clarity";
-@import "node_modules/clarity-ui/src/typography/typography.clarity";
-@import "node_modules/clarity-ui/src/forms/forms.clarity";
+@import "node_modules/admiral-ui-common/css/dropdown";
 
 
 .main-container {

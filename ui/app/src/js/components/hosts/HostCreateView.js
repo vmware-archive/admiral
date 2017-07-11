@@ -12,12 +12,13 @@
 import HostCreateViewVue from 'components/hosts/HostCreateViewVue.html';
 import EndpointsList from 'components/endpoints/EndpointsList'; //eslint-disable-line
 import MulticolumnInputs from 'components/common/MulticolumnInputs';
-import DropdownSearchMenu from 'components/common/DropdownSearchMenu';
+import { DropdownSearchMenu } from 'admiral-ui-common';
 import Tags from 'components/common/Tags';
 import { HostActions, HostContextToolbarActions } from 'actions/Actions';
 import constants from 'core/constants';
 import services from 'core/services';
 import utils from 'core/utils';
+import { formatUtils } from 'admiral-ui-common';
 
 const endpointManageOptions = [{
   id: 'endpoint-create',
@@ -46,7 +47,7 @@ function hostRenderer(host) {
   return `
     <div>
       <div class="host-picker-item-primary" title="${host.name}">
-        ${utils.escapeHtml(host.name)}
+        ${formatUtils.escapeHtml(host.name)}
       </div>
       <div class="host-picker-item-secondary" title="${host.customProperties.__computeType}">
         (${host.customProperties.__computeType})

@@ -50,11 +50,11 @@
         </div>
         <div class="form-group" *ngIf="!isEdit">
           <label for="credentials">{{ "clusters.edit.credentials" | i18n }}</label>
-          <div class="select">
-            <select formControlName="credentials">
-              <option *ngFor="let c of credentials" [ngValue]="c.documentSelfLink">{{ getCredentialsName(c) }}</option>
-            </select>
-          </div>
+          <dropdown formControlName="credentials" [options]="credentials"
+            [title]="credentialsTitle"
+            [searchPlaceholder]="credentialsSearchPlaceholder"
+            ddClass="top-left">
+          </dropdown>
         </div>
       </section>
     </form>

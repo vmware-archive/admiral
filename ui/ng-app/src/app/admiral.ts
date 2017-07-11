@@ -55,6 +55,7 @@ import { MaximizableBehaviourComponent } from "./components/maximizable-behaviou
 import { BackButtonComponent } from "./components/back-button/back-button.component";
 import { SearchComponent } from "./components/search/search.component";
 import { SimpleSearchComponent } from './components/search/simple-search.component';
+import { DropdownComponent } from './components/dropdown/dropdown.component';
 import { NavigationContainerComponent } from "./components/navigation-container/navigation-container.component";
 import { LoginComponent } from './components/login/login.component';
 
@@ -118,6 +119,7 @@ export const ADMIRAL_DECLARATIONS = [
   MaximizableBehaviourComponent,
   BackButtonComponent,
   SearchComponent,
+  DropdownComponent,
   NavigationContainerComponent,
   LoginComponent,
 

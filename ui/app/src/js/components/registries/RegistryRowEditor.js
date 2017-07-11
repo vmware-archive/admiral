@@ -13,7 +13,7 @@ import RegistryRowEditTemplate from 'components/registries/RegistryRowEditTempla
 import { RegistryContextToolbarActions, RegistryActions } from 'actions/Actions';
 import HostCertificateConfirmTemplate from 'components/hosts/HostCertificateConfirmTemplate.html';
 import Alert from 'components/common/Alert';
-import DropdownSearchMenu from 'components/common/DropdownSearchMenu';
+import { DropdownSearchMenu } from 'admiral-ui-common';
 import constants from 'core/constants';
 import modal from 'core/modal';
 import utils from 'core/utils';

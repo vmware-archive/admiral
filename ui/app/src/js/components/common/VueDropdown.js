@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import DropdownSearchMenu from 'components/common/DropdownSearchMenu';
+import { DropdownSearchMenu } from 'admiral-ui-common';
 
 export default Vue.component('dropdown', {
   template: `

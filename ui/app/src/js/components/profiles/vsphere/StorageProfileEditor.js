@@ -11,6 +11,7 @@
 
 import services from 'core/services';
 import utils from 'core/utils';
+import { formatUtils } from 'admiral-ui-common';
 import StorageItemVue from 'components/profiles/vsphere/StorageItemVue.html';
 
 export default Vue.component('vsphere-storage-profile-editor', {
@@ -328,16 +329,16 @@ Vue.component('vsphere-storage-item', {
     renderDatastore(datastore) {
       let props = [
         i18n.t('app.profile.edit.storage.vsphere.datastore.typeLabel') + ': ' +
-        utils.escapeHtml(datastore.type),
+        formatUtils.escapeHtml(datastore.type),
         i18n.t('app.profile.edit.storage.vsphere.datastore.capacityLabel') + ': ' +
-        utils.escapeHtml(utils.convertToGigabytes(datastore.capacityBytes)) +
+        formatUtils.escapeHtml(utils.convertToGigabytes(datastore.capacityBytes)) +
         i18n.t('app.profile.edit.storage.vsphere.datastore.capacityUnit')
       ];
       let secondary = props.join(', ');
       return `
         <div>
           <div class="host-picker-item-primary">
-            ${utils.escapeHtml(datastore.name)}
+            ${formatUtils.escapeHtml(datastore.name)}
         </div>
         <div class="host-picker-item-secondary" title="${secondary}">
             ${secondary}
@@ -358,12 +359,12 @@ Vue.component('vsphere-storage-item', {
     renderStoragePolicy(storagePolicy) {
       let props = [
         i18n.t('app.profile.edit.storage.vsphere.storagePolicy.descriptionLabel')
-        + ': ' + utils.escapeHtml(storagePolicy.desc)
+        + ': ' + formatUtils.escapeHtml(storagePolicy.desc)
       ];
       return `
       <div>
         <div class="host-picker-item-primary">
-          ${utils.escapeHtml(storagePolicy.name)}
+          ${formatUtils.escapeHtml(storagePolicy.name)}
         </div>
         <div class="host-picker-item-secondary" title="${props}">
           ${props}
