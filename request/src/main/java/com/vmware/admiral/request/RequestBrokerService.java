@@ -2106,6 +2106,11 @@ public class RequestBrokerService extends
 
     private DeferredResult<Void> validateUserAuthorization(RequestBrokerState state, Operation
             startOp) {
+
+        if (!this.getHost().isAuthorizationEnabled()) {
+            return DeferredResult.completed(null);
+        }
+
         String projectLink = OperationUtil.extractProjectFromHeader(startOp);
 
         if (projectLink == null || projectLink.isEmpty()) {
