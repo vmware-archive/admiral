@@ -327,17 +327,17 @@ public class RoleRestrictionsTest extends AuthBaseTest {
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_GLORIA));
 
         // GET
-        doGetWithRestrictionVerification(createdState, AuthCredentialsService.FACTORY_LINK, AuthCredentialsServiceState.class.getName());
+        getDocumentNoWait(AuthCredentialsServiceState.class, createdState.documentSelfLink);
 
         // POST
-        doPostWithRestrictionVerification(cred, AuthCredentialsService.FACTORY_LINK);
+        doPost(cred, AuthCredentialsService.FACTORY_LINK);
 
         // PUT
         createdState.userEmail = "updated-name";
-        doPutWithRestrictionVerification(createdState, AuthCredentialsService.FACTORY_LINK);
+        doPut(createdState);
 
         // DELETE
-        doDeleteWithRestrictionVerification(createdState, AuthCredentialsService.FACTORY_LINK);
+        doDelete(UriUtils.buildUri(host, createdState.documentSelfLink), false);
     }
 
     @Test

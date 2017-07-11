@@ -13,6 +13,7 @@ package com.vmware.admiral.auth.util;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNullOrEmpty;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -22,7 +23,6 @@ import java.util.ServiceLoader;
 import java.util.function.Function;
 import java.util.logging.Level;
 
-import com.vmware.admiral.adapter.registry.service.RegistryAdapterService;
 import com.vmware.admiral.auth.idm.AuthConfigProvider;
 import com.vmware.admiral.auth.idm.AuthRole;
 import com.vmware.admiral.auth.idm.SessionService;
@@ -34,14 +34,25 @@ import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
 import com.vmware.admiral.compute.cluster.ClusterService;
 import com.vmware.admiral.compute.container.CompositeDescriptionCloneService;
+import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
+import com.vmware.admiral.compute.container.HostContainerListDataCollection;
+import com.vmware.admiral.compute.container.HostNetworkListDataCollection;
+import com.vmware.admiral.compute.container.HostPortProfileService;
+import com.vmware.admiral.compute.container.HostVolumeListDataCollection;
+import com.vmware.admiral.compute.container.ShellContainerExecutorService;
 import com.vmware.admiral.compute.container.TemplateSearchService;
+import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
 import com.vmware.admiral.image.service.ContainerImageService;
 import com.vmware.admiral.image.service.ContainerImageTagsService;
 import com.vmware.admiral.image.service.PopularImagesService;
 import com.vmware.admiral.log.EventLogService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
+import com.vmware.admiral.service.common.CounterSubTaskService;
+import com.vmware.admiral.service.common.HbrApiProxyService;
 import com.vmware.admiral.service.common.RegistryService;
+import com.vmware.admiral.service.common.ResourceNamePrefixService;
+import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Claims;
 import com.vmware.xenon.common.Operation;
@@ -52,6 +63,8 @@ import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.AuthCredentialsService;
+import com.vmware.xenon.services.common.BroadcastQueryPageService;
 import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 import com.vmware.xenon.services.common.QueryTask.QueryTerm;
@@ -278,6 +291,13 @@ public class AuthUtil {
                         buildUriWithWildcard(ServiceUriPaths.CORE_QUERY_TASKS),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(ServiceUriPaths.CORE_LOCAL_QUERY_TASKS),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(ServiceUriPaths.CORE + UriUtils.URI_PATH_CHAR
+                                + BroadcastQueryPageService.SELF_LINK_PREFIX),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
                         buildUriWithWildcard(ServiceUriPaths.CORE_QUERY_PAGE),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
                 .build();
@@ -299,7 +319,7 @@ public class AuthUtil {
         String id = AuthRole.BASIC_USER_EXTENDED.buildRoleWithSuffix(identifier);
         String selfLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, id);
 
-        EnumSet<Action> verbs = EnumSet.of(Action.GET, Action.POST, Action.DELETE);
+        EnumSet<Action> verbs = EnumSet.allOf(Action.class);
 
         RoleState roleState = buildRoleState(selfLink, userGroupLink,
                 BASIC_USERS_EXTENDED_RESOURCE_GROUP_LINK, verbs, Policy.ALLOW);
@@ -338,24 +358,10 @@ public class AuthUtil {
 
     public static ResourceGroupState buildProjectResourceGroup(String projectId) {
         String projectSelfLink = UriUtils.buildUriPath(ProjectFactoryService.SELF_LINK, projectId);
-        Query resourceGroupQuery = Query.Builder
+        Query.Builder queryBuilder = Query.Builder
                 .create()
-                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK, projectSelfLink,
-                        Occurance.SHOULD_OCCUR)
-
-                .addCollectionItemClause(ResourceState.FIELD_NAME_TENANT_LINKS, projectSelfLink,
-                        Occurance.SHOULD_OCCUR)
-
-                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
-                        buildUriWithWildcard(ManagementUriParts.REQUEST),
-                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
-
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
                         buildUriWithWildcard(TemplateSearchService.SELF_LINK),
-                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
-
-                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
-                        buildUriWithWildcard(CompositeDescriptionCloneService.SELF_LINK),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
 
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
@@ -371,11 +377,16 @@ public class AuthUtil {
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
 
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
-                        buildUriWithWildcard(RegistryAdapterService.SELF_LINK),
+                        buildUriWithWildcard(ComputeService.FACTORY_LINK),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
 
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
-                        buildUriWithWildcard(EventLogService.FACTORY_LINK),
+                        buildUriWithWildcard(HbrApiProxyService.SELF_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
+                // Give access to credentials, but restrict the system ones.
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(AuthCredentialsService.FACTORY_LINK),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
 
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
@@ -388,8 +399,13 @@ public class AuthUtil {
 
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
                         buildUriWithWildcard(GroupResourcePlacementService.FACTORY_LINK),
-                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
-                .build();
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR);
+
+        for (Query query : fullAccessResourcesForAdminsAndMembers(projectSelfLink)) {
+            queryBuilder.addClause(query);
+        }
+
+        Query resourceGroupQuery = queryBuilder.build();
 
         ResourceGroupState resourceGroupState = buildResourceGroupState(null, projectId,
                 resourceGroupQuery);
@@ -405,8 +421,7 @@ public class AuthUtil {
         return state;
     }
 
-    public static ResourceGroupState buildProjectExtendedMemberResourceGroup(String projectId) {
-        String projectSelfLink = UriUtils.buildUriPath(ProjectFactoryService.SELF_LINK, projectId);
+    public static List<Query> fullAccessResourcesForAdminsAndMembers(String projectSelfLink) {
         Query resourceGroupQuery = Query.Builder
                 .create()
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK, projectSelfLink,
@@ -420,7 +435,7 @@ public class AuthUtil {
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
 
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
-                        buildUriWithWildcard(RegistryAdapterService.SELF_LINK),
+                        buildUriWithWildcard(ManagementUriParts.ADAPTERS),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
 
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
@@ -428,9 +443,68 @@ public class AuthUtil {
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
 
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(ResourceNamePrefixService.FACTORY_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(CounterSubTaskService.FACTORY_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(CompositeDescriptionContentService.SELF_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
                         buildUriWithWildcard(ManagementUriParts.REQUEST),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(ContainerHostDataCollectionService.FACTORY_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(HostContainerListDataCollection.FACTORY_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(HostNetworkListDataCollection.FACTORY_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(HostVolumeListDataCollection.FACTORY_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(ContainerHostDataCollectionService.FACTORY_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(ShellContainerExecutorService.SELF_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(HostPortProfileService.FACTORY_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
                 .build();
+
+        List<Query> clauses = new ArrayList<>();
+
+        clauses.addAll(resourceGroupQuery.booleanClauses);
+
+        return clauses;
+    }
+
+    public static ResourceGroupState buildProjectExtendedMemberResourceGroup(String projectId) {
+        String projectSelfLink = UriUtils.buildUriPath(ProjectFactoryService.SELF_LINK, projectId);
+
+        Query.Builder queryBuilder = Query.Builder.create();
+
+        for (Query query : fullAccessResourcesForAdminsAndMembers(projectSelfLink)) {
+            queryBuilder.addClause(query);
+        }
+
+        Query resourceGroupQuery = queryBuilder.build();
 
         ResourceGroupState resourceGroupState = buildResourceGroupState(
                 AuthRole.PROJECT_MEMBER_EXTENDED, projectId, resourceGroupQuery);

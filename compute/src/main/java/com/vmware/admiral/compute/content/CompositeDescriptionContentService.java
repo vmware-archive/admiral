@@ -14,6 +14,7 @@ package com.vmware.admiral.compute.content;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNullOrEmpty;
+import static com.vmware.admiral.common.util.OperationUtil.extractProjectFromHeader;
 import static com.vmware.admiral.common.util.OperationUtil.isApplicationYamlContent;
 import static com.vmware.admiral.common.util.ServiceUtils.addServiceRequestRoute;
 import static com.vmware.admiral.common.util.UriUtilsExtended.MEDIA_TYPE_APPLICATION_YAML;
@@ -38,6 +39,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentRegistry;
 import com.vmware.admiral.compute.container.CompositeDescriptionFactoryService;
@@ -99,7 +101,7 @@ public class CompositeDescriptionContentService extends StatelessService {
         boolean returnInline = CONTENT_DISPOSITION_INLINE.equalsIgnoreCase(
                 queryParams.get(DISPOSITION_PARAM_NAME));
 
-        sendRequest(Operation.createGet(this, selfLink).setCompletion((o, ex) -> {
+        Operation getDocument = Operation.createGet(this, selfLink).setCompletion((o, ex) -> {
             if (ex != null) {
                 op.fail(ex);
                 return;
@@ -117,7 +119,14 @@ public class CompositeDescriptionContentService extends StatelessService {
                             return null;
                         });
             }
-        }));
+        });
+
+        String projectLink = OperationUtil.extractProjectFromHeader(op);
+        if (projectLink != null && !projectLink.isEmpty()) {
+            getDocument.addRequestHeader(OperationUtil.PROJECT_ADMIRAL_HEADER, projectLink);
+        }
+
+        sendRequest(getDocument);
     }
 
     private void serializeAndComplete(CompositeTemplate template, boolean returnDocker,
@@ -248,15 +257,18 @@ public class CompositeDescriptionContentService extends StatelessService {
     private void processCompositeTemplate(CompositeTemplate template, Operation op) {
         validateCompositeTemplate(template);
 
+        String projectLink = extractProjectFromHeader(op);
+
         Map<String, NestedState> componentNestedStates = createComponentNestedStates(template);
 
         DeferredResult<List<Operation>> publishComponentsDR = DeferredResult.allOf(
                 componentNestedStates.values().stream()
-                        .map(ns -> ns.sendRequest(this, Action.POST))
+                        .map(ns -> ns.sendRequest(this, Action.POST, projectLink))
                         .collect(Collectors.toList()));
         publishComponentsDR
                 .thenCompose(ignore -> updateComponentLinks(componentNestedStates))
-                .thenCompose(ignore -> persistCompositeDescription(template, componentNestedStates))
+                .thenCompose(ignore -> persistCompositeDescription(template,
+                        componentNestedStates, projectLink))
                 .whenComplete((description, e) -> {
                     if (e != null) {
                         logWarning("Failed to create CompositeDescription: %s", Utils.toString(e));
@@ -286,7 +298,8 @@ public class CompositeDescriptionContentService extends StatelessService {
     }
 
     private DeferredResult<CompositeDescription> persistCompositeDescription(
-            CompositeTemplate template, Map<String, NestedState> componentNestedStates) {
+            CompositeTemplate template, Map<String, NestedState> componentNestedStates, String
+            projectLink) {
         CompositeDescription description = fromCompositeTemplateToCompositeDescription(
                 template);
         description.descriptionLinks = componentNestedStates.values().stream()
@@ -295,6 +308,11 @@ public class CompositeDescriptionContentService extends StatelessService {
         Operation createDescriptionOp = Operation
                 .createPost(this, CompositeDescriptionFactoryService.SELF_LINK)
                 .setBody(description);
+
+        if (projectLink != null && !projectLink.isEmpty()) {
+            createDescriptionOp.addRequestHeader(OperationUtil.PROJECT_ADMIRAL_HEADER, projectLink);
+        }
+
         return sendWithDeferredResult(createDescriptionOp, CompositeDescription.class);
     }
 

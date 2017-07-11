@@ -120,6 +120,7 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService.Co
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceErrorResponse;
 import com.vmware.xenon.common.TaskState.TaskStage;
@@ -2174,7 +2175,8 @@ public class RequestBrokerService extends
             DeferredResult<Void> tempResult = sendWithDeferredResult(
                     getResource, ServiceDocument.class)
                     .thenCompose(doc -> {
-                        if (!doc.documentAuthPrincipalLink.equalsIgnoreCase(context.id)) {
+                        String documentPrincipalId = Service.getId(doc.documentAuthPrincipalLink);
+                        if (!documentPrincipalId.equalsIgnoreCase(context.id)) {
                             String errMsg = String.format("Principal %s does not own resource: %s",
                                     context.id, doc.documentSelfLink);
                             return DeferredResult.failed(new IllegalAccessError(errMsg));

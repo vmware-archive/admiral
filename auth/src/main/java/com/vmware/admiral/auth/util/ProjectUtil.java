@@ -305,7 +305,6 @@ public class ProjectUtil {
                                 Boolean.toString(true))))
                 .setReferer(ProjectFactoryService.SELF_LINK);
 
-        authorizeOperationIfProjectService(service, getRepositories);
         return service.sendWithDeferredResult(getRepositories)
                 .thenApply((op) -> {
                     Object body = op.getBodyRaw();

@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.photon.controller.model.adapters.util.Pair;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -113,11 +114,16 @@ public class NestedState {
 
     }
 
+    public DeferredResult<Operation> sendRequest(Service sender, Service.Action action) {
+        return sendRequest(sender, action, null);
+    }
+
     /**
      * Send a request recursively through all objects in the hierarchy
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public DeferredResult<Operation> sendRequest(Service sender, Service.Action action) {
+    public DeferredResult<Operation> sendRequest(Service sender, Service.Action action, String
+            projectLink) {
 
         Map<String, Class<? extends ServiceDocument>> fields = getLinkFields(object.getClass());
 
@@ -208,6 +214,9 @@ public class NestedState {
                     Operation op = Operation.createPost(sender, link);
                     op.setAction(action);
                     op.setBody(object);
+                    if (projectLink != null && !projectLink.isEmpty()) {
+                        op.addRequestHeader(OperationUtil.PROJECT_ADMIRAL_HEADER, projectLink);
+                    }
                     return sender.sendWithDeferredResult(op).thenApply(o -> {
                         ServiceDocument createdDocument = o.getBody(ServiceDocument.class);
                         object.documentSelfLink = createdDocument.documentSelfLink;
