@@ -299,8 +299,8 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
 
         // Serve swagger on default uri
         this.startService(swagger);
-        this.log(Level.INFO, "Swagger service started. Checkout Swagger UI at: "
-                + this.getUri() + ServiceUriPaths.SWAGGER + "/ui");
+        this.log(Level.INFO, "Swagger service started. Checkout Swagger UI at: %s%s/ui",
+                this.getUri(), ServiceUriPaths.SWAGGER);
     }
 
     private void startExtensibilityRegistry() {
