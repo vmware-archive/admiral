@@ -305,8 +305,12 @@ public class ComputeToNetworkAffinityHostFilter implements HostSelectionFilter<F
     private DeferredResult<Set<String>> getSubnetsForHost(ComputeState vMhost) {
         DeferredResult<Set<String>> subnetLinksDr = new DeferredResult<>();
 
-        Query.Builder builder = Query.Builder.create().addKindFieldClause(SubnetState.class)
-                .addFieldClause(SubnetState.FIELD_NAME_REGION_ID, vMhost.regionId);
+        Query.Builder builder = Query.Builder.create().addKindFieldClause(SubnetState.class);
+        // TODO https://jira-hzn.eng.vmware.com/browse/VCOM-1299
+        // remove the if when the vMhost.regionId becomes mandatory
+        if (vMhost.regionId != null) {
+            builder.addFieldClause(SubnetState.FIELD_NAME_REGION_ID, vMhost.regionId);
+        }
 
         if (vMhost.zoneId != null) {
             builder.addFieldClause(SubnetState.FIELD_NAME_ZONE_ID, vMhost.zoneId);
