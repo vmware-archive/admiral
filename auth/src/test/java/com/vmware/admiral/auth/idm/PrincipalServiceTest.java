@@ -456,4 +456,41 @@ public class PrincipalServiceTest extends AuthBaseTest {
         assertEquals(2, secondProjectEntry.roles.size());
         assertTrue(secondProjectEntry.roles.contains(AuthRole.PROJECT_MEMBER));
     }
+
+    @Test
+    public void testGetRolesForPrincipalOfTypeGroup() throws Throwable {
+        PrincipalRoleAssignment roleAssignment = new PrincipalRoleAssignment();
+        roleAssignment.add = Collections.singletonList(AuthRole.CLOUD_ADMIN.name());
+        doPatch(roleAssignment, UriUtils.buildUriPath(PrincipalService.SELF_LINK,
+                USER_GROUP_SUPERUSERS, PrincipalService.ROLES_SUFFIX));
+
+        ProjectState projectState = new ProjectState();
+        projectState.name = "test";
+        projectState = doPost(projectState, ProjectFactoryService.SELF_LINK);
+
+        ProjectRoles roles = new ProjectRoles();
+        roles.administrators = new PrincipalRoleAssignment();
+        roles.administrators.add = Collections.singletonList(USER_GROUP_SUPERUSERS);
+        doPatch(roles, projectState.documentSelfLink);
+
+        SecurityContext contextById = getDocumentNoWait(SecurityContext.class,
+                UriUtils.buildUriPath(PrincipalService.SELF_LINK, USER_GROUP_SUPERUSERS,
+                        PrincipalService.ROLES_SUFFIX));
+
+        assertTrue(contextById.name.equals(USER_GROUP_SUPERUSERS));
+        assertTrue(contextById.roles.contains(AuthRole.CLOUD_ADMIN));
+        assertTrue(contextById.projects.size() == 1);
+        assertTrue(contextById.projects.get(0).roles.contains(AuthRole.PROJECT_ADMIN));
+
+        String uriString = UriUtils.buildUriPath(PrincipalService.SELF_LINK);
+        URI uri = UriUtils.buildUri(uriString);
+        uri = UriUtils.extendUriWithQuery(uri, PrincipalService.CRITERIA_QUERY,
+                USER_GROUP_SUPERUSERS, PrincipalService.ROLES_QUERY,
+                PrincipalService.ROLES_QUERY_VALUE);
+
+        PrincipalRoles[] principalRoles = getDocumentNoWait(PrincipalRoles[].class,
+                uri.toString());
+
+        assertTrue(principalRoles.length == 1);
+    }
 }

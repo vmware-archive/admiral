@@ -48,7 +48,7 @@ public class PrincipalRolesUtilTest extends AuthBaseTest {
         // Verify for cloud admin.
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
         DeferredResult<Set<AuthRole>> result = PrincipalRolesUtil
-                .getDirectlyAssignedSystemRoles(host, getPrincipal(USER_EMAIL_ADMIN));
+                .getDirectlyAssignedSystemRolesForUser(host, getPrincipal(USER_EMAIL_ADMIN));
 
         Set<AuthRole> roles = new HashSet<>();
         TestContext ctx = testCreate(1);
@@ -68,7 +68,7 @@ public class PrincipalRolesUtilTest extends AuthBaseTest {
 
         // Verify for basic user.
         result = PrincipalRolesUtil
-                .getDirectlyAssignedSystemRoles(host, getPrincipal(USER_EMAIL_BASIC_USER));
+                .getDirectlyAssignedSystemRolesForUser(host, getPrincipal(USER_EMAIL_BASIC_USER));
         Set<AuthRole> roles1 = new HashSet<>();
         TestContext ctx1 = testCreate(1);
         result.whenComplete((rolesResult, ex) -> {
@@ -103,7 +103,7 @@ public class PrincipalRolesUtilTest extends AuthBaseTest {
         doPatch(projectRoles, project.documentSelfLink);
 
         DeferredResult<List<ProjectEntry>> result = PrincipalRolesUtil
-                .getDirectlyAssignedProjectRoles(host, getPrincipal(USER_EMAIL_ADMIN));
+                .getDirectlyAssignedProjectRolesForUser(host, getPrincipal(USER_EMAIL_ADMIN));
 
         TestContext ctx = testCreate(1);
         List<ProjectEntry> entries = new ArrayList<>();

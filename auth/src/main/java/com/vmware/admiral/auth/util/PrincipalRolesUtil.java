@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 
 import com.vmware.admiral.auth.idm.AuthRole;
 import com.vmware.admiral.auth.idm.Principal;
+import com.vmware.admiral.auth.idm.Principal.PrincipalType;
 import com.vmware.admiral.auth.idm.PrincipalRoles;
 import com.vmware.admiral.auth.idm.PrincipalService;
 import com.vmware.admiral.auth.idm.SecurityContext.ProjectEntry;
@@ -40,19 +41,22 @@ import com.vmware.photon.controller.model.query.QueryUtils.QueryByPages;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
+import com.vmware.xenon.services.common.RoleService;
 import com.vmware.xenon.services.common.RoleService.RoleState;
 import com.vmware.xenon.services.common.UserGroupService;
 import com.vmware.xenon.services.common.UserService.UserState;
 
 public class PrincipalRolesUtil {
 
-    public static DeferredResult<Set<AuthRole>> getDirectlyAssignedSystemRoles(ServiceHost host,
+    public static DeferredResult<Set<AuthRole>> getDirectlyAssignedSystemRolesForUser(ServiceHost host,
             Principal principal) {
 
         return getUserState(host, principal.id).thenApply(userState -> {
@@ -71,7 +75,7 @@ public class PrincipalRolesUtil {
         });
     }
 
-    public static DeferredResult<List<ProjectEntry>> getDirectlyAssignedProjectRoles(
+    public static DeferredResult<List<ProjectEntry>> getDirectlyAssignedProjectRolesForUser(
             ServiceHost host, Principal principal) {
 
         return getUserState(host, principal.id).thenCompose(userState -> {
@@ -83,6 +87,83 @@ public class PrincipalRolesUtil {
                             .collectDocuments(Collectors.toList())
                             .thenApply((projects) -> buildProjectEntries(
                                     projects, userState.userGroupLinks));
+        });
+    }
+
+    public static DeferredResult<Set<AuthRole>> getDirectlyAssignedSystemRolesForGroup(
+            ServiceHost host, Principal principal) {
+        String roleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, principal.id);
+
+        Query query = Query.Builder.create()
+                .addCaseInsensitiveFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        roleLink, MatchType.PREFIX, Occurance.SHOULD_OCCUR).build();
+
+        QueryTask queryTask = QueryUtil.buildQuery(RoleState.class, true, query);
+        QueryUtil.addExpandOption(queryTask);
+
+        List<RoleState> roles = new ArrayList<>();
+        DeferredResult<List<RoleState>> result = new DeferredResult<>();
+
+        new ServiceDocumentQuery<>(host, RoleState.class).query(queryTask, r -> {
+            if (r.hasException()) {
+                result.fail(r.getException());
+            } else if (r.hasResult()) {
+                roles.add(r.getResult());
+            } else {
+                result.complete(roles);
+            }
+        });
+
+        return result.thenApply(roleStates -> {
+            Set<AuthRole> rolesResult = new HashSet<>();
+            for (RoleState roleState : roleStates) {
+                rolesResult.add(extractSystemRoleFromRoleState(roleState));
+            }
+            return rolesResult;
+        });
+    }
+
+    public static DeferredResult<List<ProjectEntry>> getDirectlyAssignedProjectRolesForGroup(
+            ServiceHost host, Principal principal) {
+
+        String userGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, principal.id);
+        List<String> userGroupLinkList = Collections.singletonList(userGroupLink);
+
+        Query query = Query.Builder.create()
+                .addInCollectionItemClause(ProjectState.FIELD_NAME_ADMINISTRATORS_USER_GROUP_LINKS,
+                        userGroupLinkList, Occurance.SHOULD_OCCUR)
+                .addInCollectionItemClause(ProjectState.FIELD_NAME_MEMBERS_USER_GROUP_LINKS,
+                        userGroupLinkList, Occurance.SHOULD_OCCUR)
+                .addInCollectionItemClause(ProjectState.FIELD_NAME_VIEWERS_USER_GROUP_LINKS,
+                        userGroupLinkList, Occurance.SHOULD_OCCUR).build();
+
+        QueryTask queryTask = QueryUtil.buildQuery(ProjectState.class, true, query);
+        QueryUtil.addExpandOption(queryTask);
+
+        List<ProjectState> projects = new ArrayList<>();
+        DeferredResult<List<ProjectState>> result = new DeferredResult<>();
+
+        new ServiceDocumentQuery<>(host, ProjectState.class).query(queryTask, r -> {
+            if (r.hasException()) {
+                result.fail(r.getException());
+            } else if (r.hasResult()) {
+                projects.add(r.getResult());
+            } else {
+                result.complete(projects);
+            }
+        });
+
+        return result.thenApply(projectStates -> {
+            List<ProjectEntry> entries = new ArrayList<>();
+            for (ProjectState state : projectStates) {
+                ProjectEntry entry = new ProjectEntry();
+                entry.documentSelfLink = state.documentSelfLink;
+                entry.name = state.name;
+                entry.customProperties = state.customProperties;
+                entry.roles = extractProjectRolesFromProjectState(state, userGroupLink);
+                entries.add(entry);
+            }
+            return entries;
         });
     }
 
@@ -119,9 +200,19 @@ public class PrincipalRolesUtil {
                     returnRoles.roles = principalRoles.roles;
                     returnRoles.projects = principalRoles.projects;
                 })
-                .thenCompose(ignore -> getDirectlyAssignedSystemRoles(host, principal))
+                .thenCompose(ignore -> {
+                    if (principal.type == PrincipalType.GROUP) {
+                        return getDirectlyAssignedSystemRolesForGroup(host, principal);
+                    }
+                    return getDirectlyAssignedSystemRolesForUser(host, principal);
+                })
                 .thenAccept(systemRoles -> returnRoles.roles.addAll(systemRoles))
-                .thenCompose(ignore -> getDirectlyAssignedProjectRoles(host, principal))
+                .thenCompose(ignore -> {
+                    if (principal.type == PrincipalType.GROUP) {
+                        return getDirectlyAssignedProjectRolesForGroup(host, principal);
+                    }
+                    return getDirectlyAssignedProjectRolesForUser(host, principal);
+                })
                 .thenApply(projectEntries -> {
                     returnRoles.projects.addAll(projectEntries);
                     returnRoles.projects = mergeProjectEntries(returnRoles.projects);
@@ -244,6 +335,22 @@ public class PrincipalRolesUtil {
 
         throw new RuntimeException("Cannot extract system role from role state with id: " +
                 roleState.documentSelfLink);
+    }
+
+    private static Set<AuthRole> extractProjectRolesFromProjectState(ProjectState state, String
+            groupLink) {
+        Set<AuthRole> result = new HashSet<>();
+        if (state.administratorsUserGroupLinks.contains(groupLink)) {
+            result.add(AuthRole.PROJECT_ADMIN);
+        }
+        if (state.membersUserGroupLinks.contains(groupLink)) {
+            result.add(AuthRole.PROJECT_MEMBER);
+            result.add(AuthRole.PROJECT_MEMBER_EXTENDED);
+        }
+        if (state.viewersUserGroupLinks.contains(groupLink)) {
+            result.add(AuthRole.PROJECT_VIEWER);
+        }
+        return result;
     }
 
     private static boolean isProjectRole(RoleState roleState) {

@@ -12,8 +12,10 @@
 package com.vmware.admiral.auth.idm;
 
 import static com.vmware.admiral.auth.util.PrincipalRolesUtil.getAllRolesForPrincipals;
-import static com.vmware.admiral.auth.util.PrincipalRolesUtil.getDirectlyAssignedProjectRoles;
-import static com.vmware.admiral.auth.util.PrincipalRolesUtil.getDirectlyAssignedSystemRoles;
+import static com.vmware.admiral.auth.util.PrincipalRolesUtil.getDirectlyAssignedProjectRolesForGroup;
+import static com.vmware.admiral.auth.util.PrincipalRolesUtil.getDirectlyAssignedProjectRolesForUser;
+import static com.vmware.admiral.auth.util.PrincipalRolesUtil.getDirectlyAssignedSystemRolesForGroup;
+import static com.vmware.admiral.auth.util.PrincipalRolesUtil.getDirectlyAssignedSystemRolesForUser;
 import static com.vmware.admiral.auth.util.PrincipalUtil.copyPrincipalData;
 
 import java.util.List;
@@ -21,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import com.vmware.admiral.auth.idm.Principal.PrincipalType;
 import com.vmware.admiral.auth.idm.PrincipalRolesHandler.PrincipalRoleAssignment;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalProvider;
 import com.vmware.admiral.auth.util.AuthUtil;
@@ -244,9 +247,19 @@ public class PrincipalService extends StatelessService {
 
         PrincipalUtil.getPrincipal(this, principalId)
                 .thenAccept(principal -> copyPrincipalData(principal, rolesResponse))
-                .thenCompose(ignore -> getDirectlyAssignedProjectRoles(getHost(), rolesResponse))
+                .thenCompose(ignore -> {
+                    if (rolesResponse.type == PrincipalType.GROUP) {
+                        return getDirectlyAssignedProjectRolesForGroup(getHost(), rolesResponse);
+                    }
+                    return getDirectlyAssignedProjectRolesForUser(getHost(), rolesResponse);
+                })
                 .thenAccept(projectEntries -> rolesResponse.projects = projectEntries)
-                .thenCompose(ignore -> getDirectlyAssignedSystemRoles(getHost(), rolesResponse))
+                .thenCompose(ignore -> {
+                    if (rolesResponse.type == PrincipalType.GROUP) {
+                        return getDirectlyAssignedSystemRolesForGroup(getHost(), rolesResponse);
+                    }
+                    return getDirectlyAssignedSystemRolesForUser(getHost(), rolesResponse);
+                })
                 .thenAccept(systemRoles -> rolesResponse.roles = systemRoles)
                 .thenAccept(ignore -> get.setBody(rolesResponse))
                 .whenCompleteNotify(get);
