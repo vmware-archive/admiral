@@ -21,7 +21,7 @@
             <app-cluster-summary [cluster]="entity"></app-cluster-summary>
         </clr-tab-content>
         <clr-tab-content [clrTabContentId]="'resourcesContent'">
-            <app-cluster-resources *ngIf="showResources" [cluster]="entity"></app-cluster-resources>
+            <app-cluster-resources *ngIf="showResources" [cluster]="entity" [projectLink]="projectLink"></app-cluster-resources>
         </clr-tab-content>
     </clr-tabs>
 </div>

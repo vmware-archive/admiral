@@ -97,7 +97,7 @@
       "placeholder": "Search for projects"
     },
     "actions": {
-      "title": "Actions",
+      "title": "Projects",
       "details": "Details",
       "makePublic": "Make public",
       "makePrivate": "Make private",

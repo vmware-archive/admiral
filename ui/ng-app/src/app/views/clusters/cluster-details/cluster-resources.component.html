@@ -9,7 +9,7 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<grid-view #gridView [serviceEndpoint]="serviceEndpoint">
+<grid-view #gridView [serviceEndpoint]="serviceEndpoint" [projectLink]="projectLink">
   <div toolbar>
     <button class="btn btn-link" (click)="onAddHost()"><i class="fa fa-plus"></i>{{ "clusters.resources.addHostButton" | i18n }}</button>
   </div>
@@ -79,4 +79,4 @@
   </ng-template>
 </grid-view>
 
-<app-cluster-add-host [cluster]="cluster" [visible]="showAddHost" (onCancel)="onAddHostCanceled()" (onChange)="onHostAdded()"></app-cluster-add-host>
+<app-cluster-add-host [cluster]="cluster" [visible]="showAddHost" (onCancel)="onAddHostCanceled()" (onChange)="onHostAdded()" [projectLink]="projectLink"></app-cluster-add-host>

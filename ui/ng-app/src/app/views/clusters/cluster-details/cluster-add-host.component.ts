@@ -29,6 +29,7 @@ export class ClusterAddHostComponent implements AfterViewInit {
 
     @Input() cluster: any;
     @Input() visible: boolean;
+    @Input() projectLink: string;
 
     credentials: any[];
     isAddingHost: boolean;
@@ -104,7 +105,7 @@ export class ClusterAddHostComponent implements AfterViewInit {
                 'hostState': hostState,
                 'acceptCertificate': certificateAccepted
             };
-            this.ds.post(this.cluster.documentSelfLink + '/hosts', hostSpec).then((response) => {
+            this.ds.post(this.cluster.documentSelfLink + '/hosts', hostSpec, this.projectLink).then((response) => {
                 if (response && response.certificate) {
                     this.certificate = response;
                     this.showCertificateWarning = true;

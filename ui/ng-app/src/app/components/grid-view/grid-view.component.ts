@@ -30,6 +30,7 @@ export class GridViewComponent implements OnInit, OnChanges {
   @Input() searchPlaceholder: string;
   @Input() searchSuggestionProperties: Array<string>;
   @Input() searchQueryOptions: any;
+  @Input() projectLink: string;
 
   @ViewChildren('cardItem') cards;
   @ViewChild('itemsHolder') itemsHolder;
@@ -93,7 +94,7 @@ export class GridViewComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes.serviceEndpoint && this.serviceEndpoint) {
+    if (changes.serviceEndpoint && this.serviceEndpoint || changes.projectLink) {
       this.list();
     }
   }
@@ -280,7 +281,7 @@ export class GridViewComponent implements OnInit, OnChanges {
 
     this.loading = true;
     this.loadedPages = 0;
-    this.loadingPromise = new CancelablePromise(this.service.list(this.serviceEndpoint, this.searchQueryOptions));
+    this.loadingPromise = new CancelablePromise(this.service.list(this.serviceEndpoint, this.searchQueryOptions, this.projectLink));
     return this.loadingPromise.getPromise()
     .then(result => {
       this.loading = false;
@@ -305,7 +306,7 @@ export class GridViewComponent implements OnInit, OnChanges {
     }
 
     this.loading = true;
-    this.loadingPromise = new CancelablePromise(this.service.loadNextPage(this.nextPageLink));
+    this.loadingPromise = new CancelablePromise(this.service.loadNextPage(this.nextPageLink, this.projectLink));
     return this.loadingPromise.getPromise()
     .then(result => {
       this.loading = false;

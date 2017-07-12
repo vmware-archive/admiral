@@ -1,4 +1,4 @@
-import { Component, ViewChild, OnInit } from '@angular/core';
+import { Component, ViewChild, OnInit, Input } from '@angular/core';
 import { Links } from '../../utils/links';
 import { DocumentService } from '../../utils/document.service';
 import * as I18n from 'i18next';
@@ -13,6 +13,9 @@ import { GridViewComponent } from '../../components/grid-view/grid-view.componen
 export class ClustersComponent implements OnInit {
 
   constructor(private service: DocumentService) { }
+
+  @Input() hideTitle: boolean = false;
+  @Input() projectLink: string;
 
   serviceEndpoint = Links.CLUSTERS;
   clusterToDelete: any;
@@ -41,7 +44,7 @@ export class ClustersComponent implements OnInit {
   }
 
   deleteConfirmed() {
-    this.service.delete(this.clusterToDelete.documentSelfLink)
+    this.service.delete(this.clusterToDelete.documentSelfLink, this.projectLink)
         .then(result => {
           this.clusterToDelete = null;
           this.gridView.refresh();

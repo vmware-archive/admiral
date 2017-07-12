@@ -83,7 +83,7 @@ export class DocumentService {
 
   constructor(public ajax: Ajax, private ps: ProjectService) { }
 
-  public list(factoryLink: string, queryOptions: any): Promise<DocumentListResult> {
+  public list(factoryLink: string, queryOptions: any, projectLink?: string): Promise<DocumentListResult> {
     let params = new URLSearchParams();
     // params.set('$limit', serviceUtils.calculateLimit().toString());
     params.set('$limit', PAGE_LIMIT);
@@ -104,7 +104,7 @@ export class DocumentService {
 
       op = this.post(factoryLink, data);
     } else {
-      op = this.ajax.get(factoryLink, params, undefined, this.buildHeaders());
+      op = this.ajax.get(factoryLink, params, undefined, this.buildHeaders(projectLink));
     }
 
     return op.then(result => {
@@ -117,8 +117,8 @@ export class DocumentService {
     }).then(result => slowPromise(result));
   }
 
-  public loadNextPage(nextPageLink): Promise<DocumentListResult> {
-    return this.ajax.get(nextPageLink, undefined, undefined, this.buildHeaders())
+  public loadNextPage(nextPageLink, projectLink?: string): Promise<DocumentListResult> {
+    return this.ajax.get(nextPageLink, undefined, undefined, this.buildHeaders(projectLink))
       .then(result => {
         let documents = result.documentLinks.map(link => {
           let document = result.documents[link];
@@ -129,20 +129,20 @@ export class DocumentService {
       }).then(result => slowPromise(result));
   }
 
-  public get(documentSelfLink, expand: boolean = false): Promise<any> {
+  public get(documentSelfLink, expand: boolean = false, projectLink?: string): Promise<any> {
     if (expand) {
       let params = new URLSearchParams();
       params.set('expand', 'true');
 
-      return this.ajax.get(documentSelfLink, params, undefined, this.buildHeaders());
+      return this.ajax.get(documentSelfLink, params, undefined, this.buildHeaders(projectLink));
     }
 
-    return this.ajax.get(documentSelfLink, undefined, undefined, this.buildHeaders());
+    return this.ajax.get(documentSelfLink, undefined, undefined, this.buildHeaders(projectLink));
   }
 
-   public getById(factoryLink: string, documentId: string): Promise<any> {
+   public getById(factoryLink: string, documentId: string, projectLink?: string): Promise<any> {
     let documentSelfLink = factoryLink + '/' + documentId
-    return this.get(documentSelfLink, true);
+    return this.get(documentSelfLink, true, projectLink);
   }
 
   public getByCriteria(factoryLink: string, searchParams: URLSearchParams): Promise<any> {
@@ -177,12 +177,12 @@ export class DocumentService {
     });
   }
 
-  public patch(documentSelfLink, patchBody): Promise<any> {
-    return this.ajax.patch(documentSelfLink, undefined, patchBody, this.buildHeaders());
+  public patch(documentSelfLink, patchBody, projectLink?: string): Promise<any> {
+    return this.ajax.patch(documentSelfLink, undefined, patchBody, this.buildHeaders(projectLink));
   }
 
-  public post(factoryLink, postBody): Promise<any> {
-    return this.ajax.post(factoryLink, undefined, postBody, this.buildHeaders());
+  public post(factoryLink, postBody, projectLink?: string): Promise<any> {
+    return this.ajax.post(factoryLink, undefined, postBody, this.buildHeaders(projectLink));
   }
 
   public postWithHeader(factoryLink, postBody, headers: Headers): Promise<any> {
@@ -194,20 +194,16 @@ export class DocumentService {
     return this.ajax.put(documentSelfLink, undefined, putBody, this.buildHeaders());
   }
 
-  public delete(documentSelfLink): Promise<any> {
-    return this.ajax.delete(documentSelfLink, undefined, undefined, this.buildHeaders());
+  public delete(documentSelfLink, projectLink?: string): Promise<any> {
+    return this.ajax.delete(documentSelfLink, undefined, undefined, this.buildHeaders(projectLink));
   }
 
-  private buildHeaders(): Headers {
-    if (!this.ps) {
+  private buildHeaders(projectLink?: string): Headers {
+    if (!this.ps && !projectLink) {
       return undefined;
     }
 
     let selectedProject = this.ps.getSelectedProject();
-
-    if (!selectedProject) {
-      return undefined;
-    }
 
     let calculateHeaders = function(projectId) {
       if (!projectId || /^\s*$/.test(projectId)) {
@@ -220,9 +216,20 @@ export class DocumentService {
     }
 
     if (FT.isApplicationEmbedded()) {
+      if (!selectedProject) {
+        return undefined
+      }
       return calculateHeaders(selectedProject.id);
     } else {
-      return calculateHeaders(selectedProject.documentSelfLink);
+      if (!projectLink) {
+        if (selectedProject) {
+          projectLink = selectedProject.documentSelfLink;
+        } else {
+          return undefined;
+        }
+      }
+
+      return calculateHeaders(projectLink);
     }
   }
 }

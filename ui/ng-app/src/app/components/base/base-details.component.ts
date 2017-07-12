@@ -16,6 +16,7 @@ import { DocumentService } from '../../utils/document.service';
 export class BaseDetailsComponent implements OnInit {
   id;
   entity;
+  protected projectLink: string;
 
   constructor(protected route: ActivatedRoute, protected service: DocumentService, protected link: string) {}
 
@@ -28,7 +29,7 @@ export class BaseDetailsComponent implements OnInit {
          return;
        }
 
-       this.service.getById(this.link, this.id).then(service => {
+       this.service.getById(this.link, this.id, this.projectLink).then(service => {
          this.entity = service;
          this.entityInitialized();
        });
@@ -43,7 +44,7 @@ export class BaseDetailsComponent implements OnInit {
               return;
           }
 
-          this.service.getById(this.link, this.id).then(service => {
+          this.service.getById(this.link, this.id, this.projectLink).then(service => {
               this.entity = service;
               this.entityInitialized();
           });

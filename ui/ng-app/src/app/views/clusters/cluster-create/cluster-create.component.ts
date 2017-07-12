@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, OnInit, AfterViewInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ViewEncapsulation } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormGroup, FormControl, Validators } from "@angular/forms";
 import { Links } from '../../../utils/links';
@@ -29,7 +29,7 @@ import { BaseDetailsComponent } from '../../../components/base/base-details.comp
 /**
  * Modal for cluster creation.
  */
-export class ClusterCreateComponent extends BaseDetailsComponent implements AfterViewInit, OnInit {
+export class ClusterCreateComponent extends BaseDetailsComponent implements AfterViewInit, OnInit, OnDestroy {
   opened: boolean;
   isEdit: boolean;
   credentials: any[];
@@ -39,6 +39,8 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
 
   isSaving: boolean;
   alertMessage: string;
+
+  private sub: any;
 
   clusterForm = new FormGroup({
     name: new FormControl('', Validators.required),
@@ -78,6 +80,20 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
     }
   }
 
+  ngOnInit() {
+    this.sub = this.route.params.subscribe(params => {
+      let projectId = params['projectId'];
+      if (projectId) {
+        this.projectLink = Links.PROJECTS + '/' + projectId;
+      }
+      super.ngOnInit();
+    });
+  }
+
+  ngOnDestroy() {
+    this.sub.unsubscribe();
+  }
+
   ngAfterViewInit() {
     setTimeout(() => {
       this.opened = true;
@@ -92,7 +108,7 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
     this.opened = open;
     if (!open) {
       let path: any[] = this.isEdit
-                        ? ['../../' + Utils.getDocumentId(this.entity.documentSelfLink)] : ['../'];
+                        ? ['../../' + Utils.getDocumentId(this.entity.documentSelfLink)] : ['../../'];
       this.router.navigate(path, { relativeTo: this.route });
     }
   }
@@ -124,7 +140,7 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
         'details':  description
       };
       this.isSaving = true;
-      this.service.patch(this.entity.documentSelfLink, clusterDtoPatch).then(() => {
+      this.service.patch(this.entity.documentSelfLink, clusterDtoPatch, this.projectLink).then(() => {
         this.toggleModal(false);
       }).catch(error => {
         this.isSaving = false;
@@ -159,7 +175,7 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
         'hostState': hostState,
         'acceptCertificate': certificateAccepted
       };
-      this.service.post(Links.CLUSTERS, hostSpec).then((response) => {
+      this.service.post(Links.CLUSTERS, hostSpec, this.projectLink).then((response) => {
         if (response.certificate) {
           this.certificate = response;
           this.showCertificateWarning = true;

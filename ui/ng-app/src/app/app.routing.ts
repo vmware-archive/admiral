@@ -80,13 +80,13 @@ export const ROUTES: Routes = [
             {
                 path: 'clusters', component: ClustersComponent,
                 children: [
-                    { path: 'new', component: ClusterCreateComponent, data: {
+                    { path: 'cluster/new', component: ClusterCreateComponent, data: {
                         navigationContainerType: NavigationContainerType.Default
                     }},
-                    { path: ':id', component: ClusterDetailsComponent, data: {
+                    { path: 'cluster/:id', component: ClusterDetailsComponent, data: {
                         navigationContainerType: NavigationContainerType.Fullscreen
                     }},
-                    { path: ':id/edit', component: ClusterCreateComponent, data: {
+                    { path: 'cluster/:id/edit', component: ClusterCreateComponent, data: {
                         navigationContainerType: NavigationContainerType.Fullscreen
                     }}
                 ]
@@ -153,6 +153,27 @@ export const ROUTES: Routes = [
                         }
                     },
                     { path: ':id/edit', component: ProjectCreateComponent,
+                        canActivate: [AuthGuard],
+                        data: {
+                            navigationContainerType: NavigationContainerType.Fullscreen,
+                            roles: RoutesRestriction.PROJECTS_ID_EDIT
+                        }
+                    },
+                    { path: ':projectId/cluster/new', component: ClusterCreateComponent,
+                        canActivate: [AuthGuard],
+                        data: {
+                            navigationContainerType: NavigationContainerType.Fullscreen,
+                            roles: RoutesRestriction.PROJECTS_ID_EDIT
+                        }
+                    },
+                    { path: ':projectId/cluster/:id', component: ClusterDetailsComponent,
+                        canActivate: [AuthGuard],
+                        data: {
+                            navigationContainerType: NavigationContainerType.Fullscreen,
+                            roles: RoutesRestriction.PROJECTS_ID_EDIT
+                        }
+                    },
+                    { path: ':projectId/cluster/:id/edit', component: ClusterCreateComponent,
                         canActivate: [AuthGuard],
                         data: {
                             navigationContainerType: NavigationContainerType.Fullscreen,

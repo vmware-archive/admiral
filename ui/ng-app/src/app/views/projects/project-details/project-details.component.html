@@ -30,7 +30,7 @@
         <p *ngIf="!hbrProjectId">{{"unavailable" | i18n: { "ns": "base" } }}</p>
     </clr-tab-content>
     <clr-tab-content [clrTabContentId]="'infrastructureContent'">
-        <p>Content for infrastructure tab.</p>
+        <app-clusters [hideTitle]="true" [projectLink]="entity?.documentSelfLink"></app-clusters>
     </clr-tab-content>
     <clr-tab-content [clrTabContentId]="'registryReplicationContent'">
         <hbr-replication *ngIf="hbrProjectId" [projectId]="hbrProjectId" [withReplicationJob]="true"></hbr-replication>
