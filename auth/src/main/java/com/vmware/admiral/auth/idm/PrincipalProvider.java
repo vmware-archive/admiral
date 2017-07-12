@@ -33,4 +33,8 @@ public interface PrincipalProvider {
     DeferredResult<Principal> deletePrincipal(Operation op, String principalId);
 
     DeferredResult<Set<String>> getAllGroupsForPrincipal(Operation op, String principalId);
+
+    DeferredResult<Principal> getPrincipalByCredentials(Operation op, String principalId,
+            String password);
+
 }

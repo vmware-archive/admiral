@@ -39,6 +39,7 @@ import com.vmware.admiral.auth.idm.AuthConfigProvider;
 import com.vmware.admiral.auth.idm.Principal;
 import com.vmware.admiral.auth.idm.PrincipalService;
 import com.vmware.admiral.auth.idm.SecurityContext;
+import com.vmware.admiral.auth.idm.SecurityContext.SecurityContextPostDto;
 import com.vmware.admiral.auth.idm.SessionService;
 import com.vmware.admiral.auth.idm.content.AuthContentService;
 import com.vmware.admiral.auth.idm.content.AuthContentService.AuthContentBody;
@@ -433,6 +434,29 @@ public abstract class AuthBaseTest extends BaseTestCase {
         return context[0];
     }
 
+    protected SecurityContext getSecurityContextByCredentials(String principalId, String password) {
+        SecurityContextPostDto dto = new SecurityContextPostDto();
+        dto.password = password;
+
+        final SecurityContext[] result = new SecurityContext[1];
+        TestContext ctx = testCreate(1);
+        Operation post = Operation
+                .createPost(host, UriUtils.buildUriPath(PrincipalService.SELF_LINK, principalId,
+                        PrincipalService.SECURITY_CONTEXT_SUFFIX))
+                .setBody(dto)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        ctx.failIteration(ex);
+                        return;
+                    }
+                    result[0] = o.getBody(SecurityContext.class);
+                    ctx.completeIteration();
+                });
+        host.send(post);
+        ctx.await();
+        return result[0];
+    }
+
     protected ExpandedProjectState getExpandedProjectState(String projectLink) {
         URI uriWithExpand = UriUtils.extendUriWithQuery(UriUtils.buildUri(host, projectLink),
                 UriUtils.URI_PARAM_ODATA_EXPAND, Boolean.toString(true));
@@ -578,8 +602,8 @@ public abstract class AuthBaseTest extends BaseTestCase {
     public void deleteUserGroup(String userGroup) {
         TestContext ctx = testCreate(1);
 
-        Operation delete = Operation.createDelete(host, UriUtils.buildUriPath(UserGroupService
-                .FACTORY_LINK, userGroup))
+        Operation delete = Operation
+                .createDelete(host, UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, userGroup))
                 .setReferer(host.getUri())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {

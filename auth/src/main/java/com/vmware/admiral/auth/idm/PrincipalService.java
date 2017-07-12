@@ -17,6 +17,7 @@ import static com.vmware.admiral.auth.util.PrincipalRolesUtil.getDirectlyAssigne
 import static com.vmware.admiral.auth.util.PrincipalRolesUtil.getDirectlyAssignedSystemRolesForGroup;
 import static com.vmware.admiral.auth.util.PrincipalRolesUtil.getDirectlyAssignedSystemRolesForUser;
 import static com.vmware.admiral.auth.util.PrincipalUtil.copyPrincipalData;
+import static com.vmware.admiral.common.util.AssertUtil.assertNotNullOrEmpty;
 
 import java.util.List;
 import java.util.Map;
@@ -25,6 +26,7 @@ import java.util.regex.Pattern;
 
 import com.vmware.admiral.auth.idm.Principal.PrincipalType;
 import com.vmware.admiral.auth.idm.PrincipalRolesHandler.PrincipalRoleAssignment;
+import com.vmware.admiral.auth.idm.SecurityContext.SecurityContextPostDto;
 import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.auth.util.PrincipalUtil;
 import com.vmware.admiral.auth.util.SecurityContextUtil;
@@ -266,6 +268,36 @@ public class PrincipalService extends StatelessService {
                 .thenAccept(systemRoles -> rolesResponse.roles = systemRoles)
                 .thenAccept(ignore -> get.setBody(rolesResponse))
                 .whenCompleteNotify(get);
+    }
+
+    @Override
+    public void handlePost(Operation post) {
+        if (isSecurityContextRequest(post)) {
+            handlePostSecurityContext(post);
+            return;
+        }
+
+        super.handlePost(post);
+    }
+
+    private void handlePostSecurityContext(Operation post) {
+        if (!post.hasBody()) {
+            post.fail(new LocalizableValidationException("body is required",
+                    "auth.body.required"));
+            return;
+        }
+
+        SecurityContextPostDto dto = post.getBody(SecurityContextPostDto.class);
+        assertNotNullOrEmpty(dto.password, "password");
+        String principalId = UriUtils
+                .parseUriPathSegments(post.getUri(), TEMPLATE_PRINCIPAL_SECURITY_CONTEXT)
+                .get(PRINCIPAL_ID_PATH_SEGMENT);
+
+        provider.getPrincipalByCredentials(post, principalId, dto.password)
+                .thenCompose(principal -> SecurityContextUtil
+                        .getSecurityContext(this, post, principal.id))
+                .thenAccept(securityContext -> post.setBody(securityContext))
+                .whenCompleteNotify(post);
     }
 
     @Override

@@ -17,6 +17,10 @@ import java.util.Set;
 
 public class SecurityContext {
 
+    public static class SecurityContextPostDto {
+        public String password;
+    }
+
     public static class ProjectEntry {
 
         public String documentSelfLink;

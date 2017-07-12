@@ -31,6 +31,7 @@ import org.junit.Test;
 import com.vmware.admiral.auth.AuthBaseTest;
 import com.vmware.admiral.auth.idm.PrincipalRolesHandler.PrincipalRoleAssignment;
 import com.vmware.admiral.auth.idm.SecurityContext.ProjectEntry;
+import com.vmware.admiral.auth.idm.SecurityContext.SecurityContextPostDto;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalFactoryService;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalState;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalType;
@@ -172,8 +173,8 @@ public class PrincipalServiceTest extends AuthBaseTest {
                         if (expectFailure) {
                             host.failIteration(throwOnPass != null ? throwOnPass
                                     : new IllegalArgumentException(String.format(
-                                    "Request to %s was expected to fail but passed",
-                                    requestPath)));
+                                            "Request to %s was expected to fail but passed",
+                                            requestPath)));
                         } else {
                             try {
                                 result.add(o.getBody(resultClass));
@@ -210,8 +211,8 @@ public class PrincipalServiceTest extends AuthBaseTest {
         doPatch(roleAssignment, uri);
 
         // Verify superusers got assigned and required roles are created.
-        String superusersRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, AuthRole
-                .CLOUD_ADMIN.buildRoleWithSuffix(superusers));
+        String superusersRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
+                AuthRole.CLOUD_ADMIN.buildRoleWithSuffix(superusers));
 
         RoleState roleState = getDocument(RoleState.class, superusersRoleLink);
         assertNotNull(roleState);
@@ -322,8 +323,8 @@ public class PrincipalServiceTest extends AuthBaseTest {
         projectRoles.viewers = roleAssignment;
         doPatch(projectRoles, project.documentSelfLink);
 
-        PrincipalRoles roles = getDocumentNoWait(PrincipalRoles.class, UriUtils.buildUriPath
-                (PrincipalService.SELF_LINK, USER_EMAIL_ADMIN, PrincipalService.ROLES_SUFFIX));
+        PrincipalRoles roles = getDocumentNoWait(PrincipalRoles.class, UriUtils.buildUriPath(
+                PrincipalService.SELF_LINK, USER_EMAIL_ADMIN, PrincipalService.ROLES_SUFFIX));
 
         assertTrue(roles.roles.contains(AuthRole.CLOUD_ADMIN));
         assertTrue(roles.roles.contains(AuthRole.BASIC_USER));
@@ -400,8 +401,6 @@ public class PrincipalServiceTest extends AuthBaseTest {
         URI uri = UriUtils.buildUri(host, PrincipalService.SELF_LINK);
         uri = UriUtils.extendUriWithQuery(uri, PrincipalService.CRITERIA_QUERY, "connie",
                 PrincipalService.ROLES_QUERY, PrincipalService.ROLES_QUERY_VALUE);
-
-
 
         List<PrincipalRoles> resultRoles = new ArrayList<>();
 
@@ -499,6 +498,38 @@ public class PrincipalServiceTest extends AuthBaseTest {
     }
 
     @Test
+    public void testGetSecurityContextWithIdAndPassword() {
+        SecurityContext securityContext = getSecurityContextByCredentials(USER_EMAIL_GLORIA,
+                "Password1!");
+
+        assertEquals(USER_NAME_GLORIA, securityContext.name);
+        assertEquals(USER_EMAIL_GLORIA, securityContext.id);
+        assertTrue(securityContext.roles.contains(AuthRole.BASIC_USER));
+        assertTrue(securityContext.roles.contains(AuthRole.BASIC_USER_EXTENDED));
+    }
+
+    @Test
+    public void testGetSecurityContextWithIdAndInvalidPassword() {
+        SecurityContextPostDto dto = new SecurityContextPostDto();
+        dto.password = "invalid";
+
+        TestContext ctx = testCreate(1);
+        Operation post = Operation
+                .createPost(host, UriUtils.buildUriPath(PrincipalService.SELF_LINK,
+                        USER_EMAIL_GLORIA, PrincipalService.SECURITY_CONTEXT_SUFFIX))
+                .setBody(dto)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        ctx.completeIteration();
+                        return;
+                    }
+                    ctx.failIteration(new IllegalStateException("Getting security context with "
+                            + "invalid password should've failed."));
+                });
+        host.send(post);
+        ctx.await();
+    }
+
     public void testAssignSystemRoleOnPrincipalWithoutUserState() {
         deleteUser(USER_EMAIL_CONNIE);
         assertDocumentNotExists(AuthUtil.buildUserServicePathFromPrincipalId(USER_EMAIL_CONNIE));

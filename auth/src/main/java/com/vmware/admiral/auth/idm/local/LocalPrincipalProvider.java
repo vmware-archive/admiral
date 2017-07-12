@@ -28,6 +28,7 @@ import com.vmware.admiral.auth.idm.PrincipalProvider;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalState;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.photon.controller.model.adapters.util.Pair;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
@@ -35,6 +36,10 @@ import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.authn.AuthenticationRequest;
+import com.vmware.xenon.services.common.authn.AuthenticationRequest.AuthenticationRequestType;
+import com.vmware.xenon.services.common.authn.BasicAuthenticationService;
+import com.vmware.xenon.services.common.authn.BasicAuthenticationUtils;
 
 public class LocalPrincipalProvider implements PrincipalProvider {
     private static final String EXPAND_QUERY_KEY = "expand";
@@ -124,6 +129,43 @@ public class LocalPrincipalProvider implements PrincipalProvider {
 
         return getDirectlyAssignedGroupsForPrincipal(principalId)
                 .thenCompose(groups -> getIndirectlyAssignedGroupsForPrincipal(groups, null, null));
+    }
+
+    @Override
+    public DeferredResult<Principal> getPrincipalByCredentials(Operation get, String principalId,
+            String password) {
+
+        return tryLogin(principalId, password)
+                .thenCompose(isAuthenticated -> {
+                    if (!isAuthenticated) {
+                        return DeferredResult.failed(new IllegalAccessError("Unable to "
+                                + "authenticate for " + principalId));
+                    }
+                    return getPrincipal(get, principalId);
+                });
+    }
+
+    private DeferredResult<Boolean> tryLogin(String principalId, String password) {
+        String auth = BasicAuthenticationUtils.constructBasicAuth(principalId, password);
+
+        AuthenticationRequest body = new AuthenticationRequest();
+        body.requestType = AuthenticationRequestType.LOGIN;
+
+        Operation login = Operation.createPost(service.getHost(),
+                BasicAuthenticationService.SELF_LINK)
+                .setReferer(service.getHost().getUri())
+                .setBody(body)
+                .addRequestHeader(Operation.AUTHORIZATION_HEADER, auth);
+
+        return service.sendWithDeferredResult(login)
+                .thenApply(op -> new Pair<>(op, null))
+                .exceptionally(ex -> new Pair<>(null, ex))
+                .thenApply(pair -> {
+                    if (pair.right != null) {
+                        return false;
+                    }
+                    return true;
+                });
     }
 
     private DeferredResult<Set<String>> getDirectlyAssignedGroupsForPrincipal(String principalId) {
