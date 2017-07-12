@@ -50,6 +50,11 @@ public class ComputeDescriptionImageEnhancer extends ComputeDescriptionEnhancer 
         }
 
         if (cd.customProperties.containsKey(TEMPLATE_LINK)) {
+            apply(context,
+                    cd,
+                    null,
+                    cd.customProperties.get(TEMPLATE_LINK));
+
             return DeferredResult.completed(cd);
         }
 
