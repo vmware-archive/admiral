@@ -706,9 +706,6 @@ public class ProjectService extends StatefulService {
     }
 
     private DeferredResult<ProjectState> createProjectUserGroups(ProjectState projectState) {
-        if (projectState.documentSelfLink.equals(DEFAULT_PROJECT_LINK)) {
-            return DeferredResult.completed(projectState);
-        }
 
         String projectId = Service.getId(projectState.documentSelfLink);
         UserGroupState membersGroupState = AuthUtil.buildProjectMembersUserGroup(projectId);

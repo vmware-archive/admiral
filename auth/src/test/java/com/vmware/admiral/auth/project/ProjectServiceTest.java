@@ -921,6 +921,34 @@ public class ProjectServiceTest extends AuthBaseTest {
     }
 
     @Test
+    public void testDefaultProjectUserGroupsAreCreated() throws Throwable {
+        ProjectState defaultProject = getDocumentNoWait(ProjectState.class, ProjectService
+                .DEFAULT_PROJECT_LINK);
+
+        assertNotNull(defaultProject);
+        assertNotNull(defaultProject.documentSelfLink);
+        assertNotNull(defaultProject.administratorsUserGroupLinks);
+        assertNotNull(defaultProject.membersUserGroupLinks);
+        assertNotNull(defaultProject.viewersUserGroupLinks);
+
+        assertEquals(1, defaultProject.administratorsUserGroupLinks.size());
+        assertEquals(1, defaultProject.membersUserGroupLinks.size());
+        assertEquals(1, defaultProject.viewersUserGroupLinks.size());
+
+        String adminsGroupLink = defaultProject.administratorsUserGroupLinks.iterator().next();
+        String membersGroupLink = defaultProject.membersUserGroupLinks.iterator().next();
+        String viewersGroupLink = defaultProject.viewersUserGroupLinks.iterator().next();
+
+        UserGroupState adminGroup = getDocumentNoWait(UserGroupState.class, adminsGroupLink);
+        UserGroupState membersGroup = getDocumentNoWait(UserGroupState.class, membersGroupLink);
+        UserGroupState viewersGroup = getDocumentNoWait(UserGroupState.class, viewersGroupLink);
+
+        assertNotNull(adminGroup.documentSelfLink);
+        assertNotNull(membersGroup.documentSelfLink);
+        assertNotNull(viewersGroup.documentSelfLink);
+    }
+
+    @Test
     public void testCreateProjectWithDuplicateNameShouldFail() throws Throwable {
         createProject("test-name");
 
