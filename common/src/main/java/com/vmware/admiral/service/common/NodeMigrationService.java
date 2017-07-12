@@ -79,6 +79,7 @@ public class NodeMigrationService extends StatelessService {
         services.add("/resources/pools");
         services.add("/resources/groups");
         services.add("/resources/tags");
+        services.add("/resources/compute-descriptions");
 
         // Do not migrate these services
         services.remove(ManagementUriParts.HOST_CONTAINER_LIST_DATA_COLLECTION);
