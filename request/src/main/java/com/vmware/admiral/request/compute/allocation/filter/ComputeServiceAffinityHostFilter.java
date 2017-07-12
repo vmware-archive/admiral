@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -114,8 +115,8 @@ public class ComputeServiceAffinityHostFilter extends ComputeBaseAffinityHostFil
 
         Map<String, AffinityConstraint> affinityConstraints = extractAffinityConstraints(
                 affinityNames, affinity);
-        final Map<String, HostSelection> hardAffinityHosts = new HashMap<>();
-        final Map<String, HostSelection> softAffinityHosts = new HashMap<>();
+        final Map<String, HostSelection> hardAffinityHosts = new LinkedHashMap<>();
+        final Map<String, HostSelection> softAffinityHosts = new LinkedHashMap<>();
         for (HostSelection hostSelection : filteredHostSelectionMap.values()) {
             if (hostSelection.descNames == null) {
                 continue;

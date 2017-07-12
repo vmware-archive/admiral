@@ -15,7 +15,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -159,7 +159,7 @@ public class ComputeSpreadAffinityHostFilter implements HostSelectionFilter<Filt
         // Host with smallest number of computes is the first element.
         HostSelection mostLoadedHost = hostSelections.get(0);
 
-        Map<String, HostSelection> result = new HashMap<>();
+        Map<String, HostSelection> result = new LinkedHashMap<>();
         result.put(mostLoadedHost.hostLink, mostLoadedHost);
 
         callback.complete(result, null);

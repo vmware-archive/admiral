@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -47,6 +48,7 @@ import com.vmware.photon.controller.model.Constraint.Condition;
 import com.vmware.photon.controller.model.adapters.util.Pair;
 import com.vmware.photon.controller.model.adapters.vsphere.CustomProperties;
 import com.vmware.photon.controller.model.query.QueryUtils;
+import com.vmware.photon.controller.model.query.QueryUtils.QueryByPages;
 import com.vmware.photon.controller.model.query.QueryUtils.QueryTop;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -68,7 +70,6 @@ import com.vmware.xenon.services.common.QueryTask.Query;
  */
 public class ComputeToNetworkAffinityHostFilter implements HostSelectionFilter<FilterContext> {
     private final ServiceHost host;
-    @SuppressWarnings("unused")
     private List<String> tenantLinks;
     private ComputeDescription desc;
 
@@ -397,7 +398,7 @@ public class ComputeToNetworkAffinityHostFilter implements HostSelectionFilter<F
 
         Query query = builder.build();
 
-        QueryUtils.QueryByPages<SubnetState> queryByPages = new QueryUtils.QueryByPages(host, query,
+        QueryUtils.QueryByPages<NetworkState> queryByPages = new QueryUtils.QueryByPages<>(host, query,
                 NetworkState.class, computeState.tenantLinks, computeState.endpointLink);
 
         Set<String> networkLinks = new TreeSet<>();
@@ -492,7 +493,7 @@ public class ComputeToNetworkAffinityHostFilter implements HostSelectionFilter<F
                 .map(cs -> cs.hostLink)
                 .collect(Collectors.toSet());
 
-        Map<String, HostSelection> result = new TreeMap<>(context.hostSelectionMap);
+        Map<String, HostSelection> result = new LinkedHashMap<>(context.hostSelectionMap);
         result.keySet().retainAll(filteredHostLinks);
 
         return result;
@@ -571,7 +572,7 @@ public class ComputeToNetworkAffinityHostFilter implements HostSelectionFilter<F
 
         Query query = builder.build();
 
-        QueryUtils.QueryByPages<SubnetState> queryByPages = new QueryUtils.QueryByPages(host, query,
+        QueryByPages<SubnetState> queryByPages = new QueryByPages<>(host, query,
                 SubnetState.class, vMhost.tenantLinks, vMhost.endpointLink);
 
         Set<String> subnetLinks = new TreeSet<>();
@@ -640,7 +641,7 @@ public class ComputeToNetworkAffinityHostFilter implements HostSelectionFilter<F
                 .addInClause(SubnetState.FIELD_NAME_NETWORK_LINK, networkLinks);
         Query query = builder.build();
 
-        QueryUtils.QueryByPages<SubnetState> queryByPages = new QueryUtils.QueryByPages(host, query,
+        QueryUtils.QueryByPages<SubnetState> queryByPages = new QueryUtils.QueryByPages<>(host, query,
                 SubnetState.class, tenantLinks);
 
         Set<String> subnetLinks = new TreeSet<>();
