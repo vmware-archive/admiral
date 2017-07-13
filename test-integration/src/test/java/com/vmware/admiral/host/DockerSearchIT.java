@@ -15,6 +15,7 @@ import static java.net.HttpURLConnection.HTTP_OK;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import static com.vmware.admiral.common.util.ServerX509TrustManager.JAVAX_NET_SSL_TRUST_STORE;
 import static com.vmware.admiral.common.util.ServerX509TrustManager.JAVAX_NET_SSL_TRUST_STORE_PASSWORD;
@@ -31,7 +32,6 @@ import org.junit.Test;
 
 import com.vmware.admiral.adapter.registry.service.RegistryAdapterService;
 import com.vmware.admiral.adapter.registry.service.RegistrySearchResponse;
-import com.vmware.admiral.adapter.registry.service.RegistrySearchResponse.Result;
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.common.util.SslCertificateResolver;
@@ -49,7 +49,9 @@ import com.vmware.xenon.common.Utils;
 public class DockerSearchIT extends BaseTestCase {
 
     private static final String DOCKER_REGISTRY = "https://registry.hub.docker.com";
-    private static final String TEST_IMAGE = "kitematic/hello-world-nginx";
+    private static final String TEST_IMAGE = "admiral";
+    private static final String DEFAULT_REGISTRY_HOSTNAME = UriUtilsExtended
+            .extractHostAndPort(DOCKER_REGISTRY);
 
     @BeforeClass
     public static void setUpClass() throws Throwable {
@@ -117,13 +119,16 @@ public class DockerSearchIT extends BaseTestCase {
                 RegistrySearchResponse.class);
 
         assertNotNull(response);
-        assertEquals(1, response.numResults);
+        assertTrue(response.numResults > 0);
+        assertNotNull(response.results);
 
-        Result result = response.results.get(0);
-        assertNotNull(result);
-        assertEquals(UriUtilsExtended.extractHostAndPort(DOCKER_REGISTRY) + "/" + TEST_IMAGE,
-                result.name); // the image we searched
-        assertEquals(DOCKER_REGISTRY, result.registry); // from the Docker registry
+        response.results.forEach((result) -> {
+            assertNotNull(result);
+            assertNotNull(result.name);
+            assertEquals(DOCKER_REGISTRY, result.registry); // from the Docker registry
+            assertTrue(result.name.startsWith(DEFAULT_REGISTRY_HOSTNAME));
+            assertTrue(result.name.contains(TEST_IMAGE));
+        });
     }
 
 }

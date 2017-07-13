@@ -155,7 +155,6 @@ public class DockerProvisioningOnCoreOsIT extends BaseProvisioningOnCoreOsIT {
                 RegistryType.V2_BASIC_AUTH);
     }
 
-    @Ignore("https://jira-hzn.eng.vmware.com/browse/VBV-654")
     @Test
     public void testProvisionDockerContainerOnCoreOSUsingLocalImageWithPriority()
             throws Exception {
@@ -196,7 +195,7 @@ public class DockerProvisioningOnCoreOsIT extends BaseProvisioningOnCoreOsIT {
             containerDesc.image = getImageName(registryType);
         }
 
-        containerDesc.customProperties = new HashMap<String, String>();
+        containerDesc.customProperties = new HashMap<>();
         containerDesc.customProperties.put("DOCKER_CONTAINER_CREATE_USE_LOCAL_IMAGE_WITH_PRIORITY",
                 useLocalImageWithPriority.toString());
 
