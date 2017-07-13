@@ -30,7 +30,6 @@ import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 import com.vmware.xenon.services.common.QueryTask.QuerySpecification.QueryOption;
 import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
-import com.vmware.xenon.services.common.QueryTaskFactoryService;
 import com.vmware.xenon.services.common.ServiceUriPaths;
 
 /**
@@ -121,20 +120,6 @@ public class ServiceDocumentQuery<T extends ServiceDocument> {
                             }
                             try {
                                 QueryTask qtr = o.getBody(QueryTask.class);
-                                // check the returned object, which is supposed to be QueryTask
-                                // some weird cases were observed, adding this as insurance
-                                if (qtr == null
-                                        || qtr.documentSelfLink == null
-                                        || !qtr.documentSelfLink.startsWith(
-                                                QueryTaskFactoryService.SELF_LINK)
-                                        || !QueryTask.KIND.equals(qtr.documentKind)) {
-                                    host.log(Level.SEVERE,
-                                            "***** Error: QueryTask is not a QueryTask : %s",
-                                            Utils.toJson(qtr));
-
-                                    throw new IllegalStateException(
-                                            "Invalid QueryTask response");
-                                }
                                 if (qtr.results.documents == null
                                         || qtr.results.documents.isEmpty()) {
                                     completionHandler.accept(noResult());
@@ -143,8 +128,6 @@ public class ServiceDocumentQuery<T extends ServiceDocument> {
                                     completionHandler.accept(result(values.iterator().next(),
                                             values.size()));
                                 }
-                                // delete query task
-                                deleteQueryTask(qtr);
                             } catch (Throwable ex) {
                                 completionHandler.accept(error(ex));
                             }
@@ -209,24 +192,7 @@ public class ServiceDocumentQuery<T extends ServiceDocument> {
                         return;
                     }
                     QueryTask qrt = o.getBody(QueryTask.class);
-                    // check the returned object, which is supposed to be QueryTask
-                    // some weird cases were observed, adding this as insurance
-                    if (qrt == null
-                            || qrt.documentSelfLink == null
-                            || !qrt.documentSelfLink.startsWith(QueryTaskFactoryService.SELF_LINK)
-                            || !QueryTask.KIND.equals(qrt.documentKind)) {
-                        host.log(Level.SEVERE, "***** Error: QueryTask is not a QueryTask : %s",
-                                Utils.toJson(qrt));
-                        completionHandler.accept(error(
-                                new IllegalStateException("Invalid QueryTask response")));
-                        return;
-                    }
-                    processQuery(qrt, (h) -> {
-                        completionHandler.accept(h);
-                        if (h != null && !h.hasResult()) {
-                            deleteQueryTask(qrt);
-                        }
-                    });
+                    processQuery(qrt, completionHandler);
                 }));
     }
 
@@ -424,21 +390,6 @@ public class ServiceDocumentQuery<T extends ServiceDocument> {
 
     public static <S extends ServiceDocument> ServiceDocumentQueryElementResult<S> noResult() {
         return new ServiceDocumentQueryElementResult<>();
-    }
-
-    private void deleteQueryTask(QueryTask qrt) {
-        // check the document self link, which is supposed to be QueryTask
-        // some weird cases were observed, adding this as insurance
-        if (!qrt.documentSelfLink.startsWith(QueryTaskFactoryService.SELF_LINK)) {
-            host.log(Level.SEVERE, "***** Invalid QueryTask self link, skip deleting it: %s",
-                    Utils.toJson(qrt));
-            return;
-        }
-        host.log(Level.FINEST, "Deleting query task %s", qrt.documentSelfLink);
-
-        Operation.createDelete(host, qrt.documentSelfLink)
-                .setReferer(host.getUri())
-                .sendWith(host);
     }
 
     public static class ServiceDocumentQueryElementResult<T extends ServiceDocument> {
