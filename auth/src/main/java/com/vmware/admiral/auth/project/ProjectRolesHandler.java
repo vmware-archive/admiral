@@ -12,6 +12,7 @@
 package com.vmware.admiral.auth.project;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -22,6 +23,7 @@ import com.vmware.admiral.auth.idm.PrincipalRolesHandler.PrincipalRoleAssignment
 import com.vmware.admiral.auth.idm.PrincipalService;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.admiral.auth.util.AuthUtil;
+import com.vmware.admiral.auth.util.PrincipalUtil;
 import com.vmware.admiral.auth.util.UserGroupsUpdater;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.photon.controller.model.adapters.util.Pair;
@@ -222,13 +224,30 @@ public class ProjectRolesHandler {
             return DeferredResult.failed(new IllegalArgumentException(NOT_PROJECT_ROLE_MESSAGE));
         }
 
-        return UserGroupsUpdater.create()
-                .setGroupLink(groupLink)
-                .setHost(getHost())
-                .setReferrer(getHost().getUri().toString())
-                .setUsersToAdd(addPrincipals)
-                .setUsersToRemove(removePrincipals)
-                .update();
+        List<DeferredResult<Void>> results = new ArrayList<>();
+
+        for (String principal : addPrincipals) {
+            results.add(PrincipalUtil.getOrCreateUser(serviceHost, principal)
+                    .thenCompose(user -> UserGroupsUpdater.create()
+                            .setGroupLink(groupLink)
+                            .setHost(serviceHost)
+                            .setReferrer(serviceHost.getUri().toString())
+                            .setUsersToAdd(Collections.singletonList(principal))
+                            .update()));
+        }
+
+        for (String principal : removePrincipals) {
+            results.add(PrincipalUtil.getOrCreateUser(serviceHost, principal)
+                    .thenCompose(user -> UserGroupsUpdater.create()
+                            .setGroupLink(groupLink)
+                            .setHost(serviceHost)
+                            .setReferrer(serviceHost.getUri().toString())
+                            .setUsersToRemove(Collections.singletonList(principal))
+                            .update()));
+        }
+
+        return DeferredResult.allOf(results).thenAccept(ignore -> {
+        });
     }
 
     private DeferredResult<Void> handleGroupsAssignment(ProjectState projectState,

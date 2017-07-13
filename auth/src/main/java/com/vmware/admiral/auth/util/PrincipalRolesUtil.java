@@ -335,7 +335,8 @@ public class PrincipalRolesUtil {
 
         if (roleState.documentSelfLink.contains(AuthRole.CLOUD_ADMIN.getSuffix())) {
             return AuthRole.CLOUD_ADMIN;
-        } else if (roleState.documentSelfLink.contains(AuthRole.BASIC_USER.getSuffix())) {
+        } else if (roleState.documentSelfLink.contains(AuthRole.BASIC_USER.getSuffix())
+                && !roleState.documentSelfLink.contains(AuthRole.BASIC_USER_EXTENDED.getSuffix())) {
             return AuthRole.BASIC_USER;
         } else if (roleState.documentSelfLink.contains(AuthRole.BASIC_USER_EXTENDED.getSuffix())) {
             return AuthRole.BASIC_USER_EXTENDED;

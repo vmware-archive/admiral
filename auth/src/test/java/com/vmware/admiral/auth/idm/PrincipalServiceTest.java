@@ -37,6 +37,8 @@ import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalTyp
 import com.vmware.admiral.auth.project.ProjectFactoryService;
 import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
+import com.vmware.admiral.auth.util.AuthUtil;
+import com.vmware.admiral.auth.util.SecurityContextUtil;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
@@ -44,12 +46,14 @@ import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.TestContext;
 import com.vmware.xenon.services.common.RoleService;
 import com.vmware.xenon.services.common.RoleService.RoleState;
+import com.vmware.xenon.services.common.UserGroupService;
 
 public class PrincipalServiceTest extends AuthBaseTest {
 
     @Before
     public void setIdentity() throws GeneralSecurityException {
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
+        SecurityContextUtil.clearAllSecurityContexts();
     }
 
     @Test
@@ -493,4 +497,45 @@ public class PrincipalServiceTest extends AuthBaseTest {
 
         assertTrue(principalRoles.length == 1);
     }
+
+    @Test
+    public void testAssignSystemRoleOnPrincipalWithoutUserState() {
+        deleteUser(USER_EMAIL_CONNIE);
+        assertDocumentNotExists(AuthUtil.buildUserServicePathFromPrincipalId(USER_EMAIL_CONNIE));
+        PrincipalRoleAssignment roleAssignment = new PrincipalRoleAssignment();
+        roleAssignment.add = Collections.singletonList(AuthRole.CLOUD_ADMIN.name());
+        doPatch(roleAssignment, UriUtils.buildUriPath(PrincipalService.SELF_LINK,
+                USER_EMAIL_CONNIE, PrincipalService.ROLES_SUFFIX));
+
+        assertDocumentExists(AuthUtil.buildUserServicePathFromPrincipalId(USER_EMAIL_CONNIE));
+
+        SecurityContext connieContext = getSecurityContext(USER_EMAIL_CONNIE);
+
+        assertTrue(connieContext.roles.contains(AuthRole.CLOUD_ADMIN));
+        assertTrue(connieContext.roles.contains(AuthRole.BASIC_USER));
+        assertTrue(connieContext.roles.contains(AuthRole.BASIC_USER_EXTENDED));
+    }
+
+    @Test
+    public void testAssignSystemRoleOnPrincipalWithoutUserGroupState() {
+        deleteUserGroup(USER_GROUP_DEVELOPERS);
+        assertDocumentNotExists(UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                USER_GROUP_DEVELOPERS));
+
+        PrincipalRoleAssignment roleAssignment = new PrincipalRoleAssignment();
+        roleAssignment.add = Collections.singletonList(AuthRole.CLOUD_ADMIN.name());
+
+        doPatch(roleAssignment, UriUtils.buildUriPath(PrincipalService.SELF_LINK,
+                USER_GROUP_DEVELOPERS, PrincipalService.ROLES_SUFFIX));
+
+        assertDocumentExists(UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                USER_GROUP_DEVELOPERS));
+
+        SecurityContext developersContext = getSecurityContext(USER_GROUP_DEVELOPERS);
+
+        assertTrue(developersContext.roles.contains(AuthRole.CLOUD_ADMIN));
+        assertTrue(developersContext.roles.contains(AuthRole.BASIC_USER));
+        assertTrue(developersContext.roles.contains(AuthRole.BASIC_USER_EXTENDED));
+    }
+
 }

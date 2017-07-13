@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import com.vmware.admiral.auth.util.AuthUtil;
+import com.vmware.admiral.auth.util.PrincipalUtil;
 import com.vmware.admiral.auth.util.UserGroupsUpdater;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
@@ -28,11 +28,8 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.UriUtils;
-import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.RoleService;
 import com.vmware.xenon.services.common.RoleService.RoleState;
-import com.vmware.xenon.services.common.UserGroupService;
-import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
 
 public class PrincipalRolesHandler {
 
@@ -154,18 +151,18 @@ public class PrincipalRolesHandler {
 
     private DeferredResult<Void> handleUserRoleAssignment(AuthRole role) {
 
-        if (role == AuthRole.CLOUD_ADMIN) {
-            return UserGroupsUpdater.create()
-                    .setGroupLink(CLOUD_ADMINS_USER_GROUP_LINK)
-                    .setHost(host)
-                    .setReferrer(host.getUri().toString())
-                    .setUsersToAdd(Collections.singletonList(principalId))
-                    .update();
-
+        if (role != AuthRole.CLOUD_ADMIN) {
+            return DeferredResult.failed(new LocalizableValidationException(
+                    ROLE_NOT_SUPPORTED_MESSAGE, ROLE_NOT_SUPPORTED_MESSAGE_CODE, role.name()));
         }
-        return DeferredResult.failed(new LocalizableValidationException(
-                ROLE_NOT_SUPPORTED_MESSAGE, ROLE_NOT_SUPPORTED_MESSAGE_CODE, role.name()));
 
+        return PrincipalUtil.getOrCreateUser(host, principalId)
+                .thenCompose(user -> UserGroupsUpdater.create()
+                        .setGroupLink(CLOUD_ADMINS_USER_GROUP_LINK)
+                        .setHost(host)
+                        .setReferrer(host.getUri().toString())
+                        .setUsersToAdd(Collections.singletonList(principalId))
+                        .update());
     }
 
     private DeferredResult<Void> handleUserRoleUnassignment(AuthRole role) {
@@ -236,48 +233,17 @@ public class PrincipalRolesHandler {
     }
 
     private DeferredResult<Void> handleCloudAdminGroupAssignment(String principalId) {
-        String groupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, principalId);
-        Operation getGroup = Operation.createGet(host, groupLink)
-                .setReferer(host.getUri());
-
-        DeferredResult<Void> result = new DeferredResult<>();
-
-        host.sendWithDeferredResult(getGroup, UserGroupState.class)
-                .handle((ug, ex) -> {
-                    if (ex != null) {
-                        if (ex.getCause() instanceof ServiceNotFoundException) {
-                            Query groupQuery = AuthUtil.buildQueryForUsers(groupLink);
-                            UserGroupState state = UserGroupState.Builder.create()
-                                    .withQuery(groupQuery)
-                                    .withSelfLink(groupLink).build();
-                            Operation createGroupOp = Operation.createPost(host,
-                                    UserGroupService.FACTORY_LINK)
-                                    .setReferer(host.getUri())
-                                    .setBody(state);
-                            addReplicationFactor(createGroupOp);
-                            return host.sendWithDeferredResult(createGroupOp, UserGroupState.class);
-                        }
-                        return DeferredResult.failed(ex);
-                    }
-                    return DeferredResult.completed(ug);
-                })
-                .thenAccept(deferredResult -> deferredResult
-                        .thenCompose(ignore -> {
-                            RoleState roleState = buildCloudAdminsRole(principalId, groupLink);
-                            Operation createRoleOp = Operation
-                                    .createPost(host, RoleService.FACTORY_LINK)
-                                    .setReferer(host.getUri())
-                                    .setBody(roleState);
-                            addReplicationFactor(createRoleOp);
-                            return host.sendWithDeferredResult(createRoleOp, RoleState.class);
-                        })
-                        .thenAccept(ignore -> result.complete(null))
-                        .exceptionally(ex -> {
-                            result.fail(ex);
-                            return null;
-                        }));
-
-        return result;
+        return PrincipalUtil.getOrCreateUserGroup(host, principalId)
+                .thenCompose(userGroup -> {
+                    RoleState roleState = buildCloudAdminsRole(principalId,
+                            userGroup.documentSelfLink);
+                    Operation createRoleOp = Operation
+                            .createPost(host, RoleService.FACTORY_LINK)
+                            .setReferer(host.getUri())
+                            .setBody(roleState);
+                    addReplicationFactor(createRoleOp);
+                    return host.sendWithDeferredResult(createRoleOp, RoleState.class);
+                }).thenAccept(ignore -> {
+                });
     }
-
 }

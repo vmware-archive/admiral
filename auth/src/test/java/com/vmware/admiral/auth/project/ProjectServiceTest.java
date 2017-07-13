@@ -31,10 +31,14 @@ import org.junit.Test;
 
 import com.vmware.admiral.auth.AuthBaseTest;
 import com.vmware.admiral.auth.idm.AuthRole;
+import com.vmware.admiral.auth.idm.Principal;
 import com.vmware.admiral.auth.idm.PrincipalRolesHandler.PrincipalRoleAssignment;
+import com.vmware.admiral.auth.idm.SecurityContext;
+import com.vmware.admiral.auth.idm.SecurityContext.ProjectEntry;
 import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles;
 import com.vmware.admiral.auth.project.ProjectService.ExpandedProjectState;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
+import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.auth.util.ProjectUtil;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.QueryUtil;
@@ -1092,6 +1096,42 @@ public class ProjectServiceTest extends AuthBaseTest {
                 .collect(Collectors.toList());
 
         assertEquals(1, testProjects.size());
+    }
+
+    @Test
+    public void testAssignProjectRoleToPrincipalWithoutUserState() throws Throwable {
+        deleteUser(USER_EMAIL_CONNIE);
+        assertDocumentNotExists(AuthUtil.buildUserServicePathFromPrincipalId(USER_EMAIL_CONNIE));
+
+        ProjectState projectState = createProject("test-test");
+
+        ProjectRoles roleAssignment = new ProjectRoles();
+        roleAssignment.administrators = new PrincipalRoleAssignment();
+        roleAssignment.administrators.add = Collections.singletonList(USER_EMAIL_CONNIE);
+
+        doPatch(roleAssignment, projectState.documentSelfLink);
+
+        ExpandedProjectState expandedProjectState = getExpandedProjectState(projectState
+                .documentSelfLink);
+
+        assertTrue(expandedProjectState.administrators.size() == 1);
+
+        Principal principal = expandedProjectState.administrators.get(0);
+        assertEquals(USER_EMAIL_CONNIE, principal.id);
+
+        assertDocumentExists(AuthUtil.buildUserServicePathFromPrincipalId(USER_EMAIL_CONNIE));
+
+        SecurityContext connieContext = getSecurityContext(USER_EMAIL_CONNIE);
+
+        assertTrue(connieContext.roles.contains(AuthRole.BASIC_USER));
+        assertTrue(connieContext.roles.contains(AuthRole.BASIC_USER_EXTENDED));
+
+        assertTrue(connieContext.projects.size() == 1);
+
+        ProjectEntry entry = connieContext.projects.get(0);
+        assertEquals(projectState.documentSelfLink, entry.documentSelfLink);
+        assertEquals(projectState.name, entry.name);
+        assertTrue(entry.roles.contains(AuthRole.PROJECT_ADMIN));
     }
 
     private void createProjectNoWait(ProjectState state) {

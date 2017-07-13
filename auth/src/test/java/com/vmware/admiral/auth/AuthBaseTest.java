@@ -71,6 +71,7 @@ import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.test.TestContext;
 import com.vmware.xenon.common.test.VerificationHost;
+import com.vmware.xenon.services.common.UserGroupService;
 import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
 import com.vmware.xenon.services.common.UserService.UserState;
 
@@ -415,6 +416,23 @@ public abstract class AuthBaseTest extends BaseTestCase {
         return context[0];
     }
 
+    protected SecurityContext getSecurityContext(String principalId) {
+        final SecurityContext[] context = new SecurityContext[1];
+        TestContext ctx = testCreate(1);
+        host.send(Operation.createGet(host, UriUtils.buildUriPath(PrincipalService.SELF_LINK,
+                principalId, PrincipalService.SECURITY_CONTEXT_SUFFIX))
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        ctx.failIteration(ex);
+                        return;
+                    }
+                    context[0] = o.getBody(SecurityContext.class);
+                    ctx.completeIteration();
+                }));
+        ctx.await();
+        return context[0];
+    }
+
     protected ExpandedProjectState getExpandedProjectState(String projectLink) {
         URI uriWithExpand = UriUtils.extendUriWithQuery(UriUtils.buildUri(host, projectLink),
                 UriUtils.URI_PARAM_ODATA_EXPAND, Boolean.toString(true));
@@ -538,6 +556,40 @@ public abstract class AuthBaseTest extends BaseTestCase {
         host.send(get);
         ctx.await();
         return result[0];
+    }
+
+    public void deleteUser(String user) {
+        TestContext ctx = testCreate(1);
+
+        Operation delete = Operation.createDelete(host, AuthUtil
+                .buildUserServicePathFromPrincipalId(user))
+                .setReferer(host.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        ctx.failIteration(ex);
+                        return;
+                    }
+                    ctx.completeIteration();
+                });
+        host.send(delete);
+        ctx.await();
+    }
+
+    public void deleteUserGroup(String userGroup) {
+        TestContext ctx = testCreate(1);
+
+        Operation delete = Operation.createDelete(host, UriUtils.buildUriPath(UserGroupService
+                .FACTORY_LINK, userGroup))
+                .setReferer(host.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        ctx.failIteration(ex);
+                        return;
+                    }
+                    ctx.completeIteration();
+                });
+        host.send(delete);
+        ctx.await();
     }
 
     public static Operation setProjectHeader(String projectLink, Operation op) {
