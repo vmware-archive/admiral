@@ -31,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.registry.service.RegistryAdapterService;
@@ -114,6 +115,7 @@ public class DockerSearchIT extends BaseTestCase {
         latch.await(HOST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
 
+    @Ignore("VBV-1465")
     @Test
     public void testSearchImageFromDocker() throws Exception {
 
