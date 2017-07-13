@@ -14,6 +14,7 @@ import { CanActivate, ActivatedRouteSnapshot, Router, RouterStateSnapshot } from
 import { Links } from './../utils/links';
 import { AuthService } from './../utils/auth.service';
 import { Utils } from './../utils/utils';
+import { FT } from './../utils/ft';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -28,6 +29,11 @@ export class AuthGuard implements CanActivate {
       }
 
       let roles = route.data["roles"] as Array<string>;
+
+      if (FT.isApplicationEmbedded()) {
+        return resolve(true);
+      }
+
       this.authService.loadCurrentUserSecurityContext().then((securityContext) => {
         if (securityContext && securityContext.roles) {
           for (var index = 0; index < securityContext.roles.length; index++) {

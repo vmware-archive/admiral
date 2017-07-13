@@ -13,6 +13,7 @@ import { AuthService } from './../../utils/auth.service';
 import { Directive, Input, Inject, ElementRef, Renderer } from '@angular/core';
 import { Utils } from './../../utils/utils';
 import { OnChanges } from '@angular/core';
+import { FT } from './../../utils/ft';
 
 @Directive({
   selector: '[allowNavigation]'
@@ -33,6 +34,11 @@ export class AllowNavigationDirective implements OnChanges {
   }
 
   private allowAccess() {
+    if (FT.isApplicationEmbedded()) {
+      this.renderer.setElementStyle(this.el.nativeElement, 'display', 'block');
+      return;
+    }
+
     this.authService.loadCurrentUserSecurityContext().then((securityContext) => {
       let show = false;
       if (securityContext && securityContext.roles) {

@@ -30,24 +30,10 @@ import { TemplateService } from './utils/template.service';
 import { ViewExpandRequestService } from './services/view-expand-request.service';
 import { HarborLibraryModule, SERVICE_CONFIG, IServiceConfig } from 'harbor-ui';
 import * as I18n from 'i18next';
+import { FT } from './utils/ft';
 import { AuthGuard } from 'app/services/auth-guard.service';
 
 import { ADMIRAL_DECLARATIONS } from './admiral';
-
-export const ServiceConfig:IServiceConfig = {
-    systemInfoEndpoint: "/hbr-api/systeminfo",
-    repositoryBaseEndpoint: "/hbr-api/repositories",
-    vulnerabilityScanningBaseEndpoint: "/hbr-api/repositories",
-    logBaseEndpoint: "/hbr-api/logs",
-    targetBaseEndpoint: "/hbr-api/targets",
-    replicationRuleEndpoint: "/hbr-api/policies/replication",
-    replicationJobEndpoint: "/hbr-api/jobs/replication",
-    enablei18Support: true,
-    langMessageLoader: "http",
-    langMessagePathForHttpLoader: "/hbr-api/i18n/lang/",
-    configurationEndpoint: "/hbr-api/configurations"
-};
-
 
 let HBR_SUPPORTED_LANGS = ['en-us', 'zh-cn', 'es-es'];
 
@@ -57,6 +43,24 @@ export function initConfig(ts: TranslateService) {
         ts.addLangs(HBR_SUPPORTED_LANGS);
         ts.use(lng.toLocaleLowerCase());
     };
+}
+
+export function initHarborConfig() {
+    var sc:IServiceConfig = {
+        systemInfoEndpoint: "/hbr-api/systeminfo",
+        repositoryBaseEndpoint: "/hbr-api/repositories",
+        vulnerabilityScanningBaseEndpoint: "/hbr-api/repositories",
+        logBaseEndpoint: "/hbr-api/logs",
+        targetBaseEndpoint: "/hbr-api/targets",
+        replicationRuleEndpoint: "/hbr-api/policies/replication",
+        replicationJobEndpoint: "/hbr-api/jobs/replication",
+        enablei18Support: true,
+        langMessageLoader: FT.isHbrEnabled()? "http" : null,
+        langMessagePathForHttpLoader: "/hbr-api/i18n/lang/",
+        configurationEndpoint: "/hbr-api/configurations"
+    };
+
+    return sc;
 }
 
 
@@ -74,7 +78,7 @@ export function initConfig(ts: TranslateService) {
         HarborLibraryModule.forChild({
             config: {
                 provide: SERVICE_CONFIG,
-                useValue: ServiceConfig
+                useFactory: initHarborConfig
             }
         }),
         InfiniteScrollModule,
