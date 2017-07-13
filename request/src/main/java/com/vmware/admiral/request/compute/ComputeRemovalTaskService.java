@@ -61,6 +61,7 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
@@ -262,9 +263,15 @@ public class ComputeRemovalTaskService extends
                                 return;
                             }
 
-                            failTask("Unexpected exception while suspending container host",
-                                    new Throwable(Utils.toString(exs)));
-                            return;
+                            for (Throwable ex : exs.values()) {
+                                // don't fail if the computes have already been removed
+                                // the failure has already been logged above
+                                if (!(ex instanceof ServiceNotFoundException)) {
+                                    failTask("Unexpected exception while suspending container host",
+                                            new Throwable(Utils.toString(exs)));
+                                    return;
+                                }
+                            }
                         }
                         proceedTo(SubStage.SUSPENDED_COMPUTES);
                     }).sendWith(this);
@@ -297,6 +304,11 @@ public class ComputeRemovalTaskService extends
                             if (e != null) {
                                 logWarning("Failed retrieving Compute State: %s. Error: %s",
                                         resourceLink, Utils.toString(e));
+                                if ( e instanceof ServiceNotFoundException) {
+                                    // don't fail task if resource is not found
+                                    completeSubTasksCounter(taskCallback, null);
+                                    return;
+                                }
                                 completeSubTasksCounter(taskCallback, e);
                                 return;
                             }

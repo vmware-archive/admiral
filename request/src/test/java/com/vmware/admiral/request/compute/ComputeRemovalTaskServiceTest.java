@@ -89,7 +89,8 @@ public class ComputeRemovalTaskServiceTest extends ComputeRequestBaseTest {
     }
 
     @Test
-    public void testComputeRemovalResourceOperationCycleAfterAllocationShouldFail() throws Throwable {
+    public void testComputeRemovalResourceOperationCycleAfterAllocationShouldSucceed() throws
+            Throwable {
         // compute states after compute allocation request
         createComputeAllocationRequest();
 
@@ -105,7 +106,7 @@ public class ComputeRemovalTaskServiceTest extends ComputeRequestBaseTest {
         String taskSelfLink = state.documentSelfLink;
         assertNotNull("task self link is missing", taskSelfLink);
 
-        waitForTaskError(taskSelfLink, ComputeRemovalTaskState.class);
+        waitForTaskSuccess(taskSelfLink, ComputeRemovalTaskState.class);
     }
 
     @Test
