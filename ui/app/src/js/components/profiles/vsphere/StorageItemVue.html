@@ -88,12 +88,14 @@
   </div>
   <div class="persistence-radio-group">
     <div class="radio" :class="{'disabled': !independent}">
-      <input type="radio" name="persistenceRadios" id="persistent-{{index}}" @change="onPersistentChange"
+      <input type="radio" name="persistenceRadios-{{index}}" id="persistent-{{index}}"
+             @change="onPersistentChange"
         value="true" :checked="persistent">
       <label for="persistent-{{index}}">{{i18n('app.profile.edit.storage.vsphere.persistentLabel')}}</label>
     </div>
     <div class="radio" :class="{'disabled': !independent}">
-      <input type="radio" name="persistenceRadios" id="non-persistent-{{index}}" @change="onPersistentChange"
+      <input type="radio" name="persistenceRadios-{{index}}" id="non-persistent-{{index}}"
+             @change="onPersistentChange"
         value="false" :checked="!persistent ">
       <label for="non-persistent-{{index}}">{{i18n('app.profile.edit.storage.vsphere.nonPersistentLabel')}}</label>
     </div>

@@ -132,7 +132,7 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
                 })
                 .map(dr -> dr.thenCompose(diskState -> {
                     if (diskState.type != null && diskState.type == DiskService.DiskType.HDD
-                            && diskState.bootOrder == 1) {
+                            && diskState.bootOrder != null && diskState.bootOrder == 1) {
                         fillInBootConfigContent(context, cd, diskState);
                     }
                     // Match the constraints from Disk to the profile to extract the
@@ -148,11 +148,9 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
                     }
                     return updateDiskDescriptionState(context, diskState);
                 }))
-
                 .map(diskDr -> diskDr
                         .thenApply(diskState -> Pair.of(diskState, (Throwable) null))
-                        .exceptionally(exc -> Pair.of(null, exc)))
-
+                        .exceptionally(exc -> Pair.of(null, exc.getCause())))
                 .collect(Collectors.toList());
 
         DeferredResult<ComputeDescription> result = DeferredResult.allOf(diskStateResults)

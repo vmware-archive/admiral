@@ -494,8 +494,8 @@ public class ComputeReservationTaskService extends
                                                         .enhance(p.getLeft(), cd))
                                                 .whenComplete((cd, t) -> {
                                                     if (t != null) {
-                                                        logInfo(() -> Utils.toString(t));
-                                                        r.complete(Triple.of(cd, null, t));
+                                                        r.complete(Triple.of(cd, null,
+                                                                t.getCause() != null ? t.getCause() : t));
                                                         return;
                                                     }
                                                     r.complete(Triple.of(cd, profileEntry, null));
@@ -523,6 +523,7 @@ public class ComputeReservationTaskService extends
                             // Now collect the posisble reasons for failure.
                             StringJoiner stringJoiner = new StringJoiner(",");
                             all.stream().filter(p -> p.getRight() != null).forEach(triple -> {
+                                logInfo(() -> Utils.toString(triple.getRight()));
                                 stringJoiner.add(triple.getRight().getMessage());
                             });
 
