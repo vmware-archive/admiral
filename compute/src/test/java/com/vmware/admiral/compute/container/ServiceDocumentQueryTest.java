@@ -27,6 +27,7 @@ import org.junit.Test;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.ServiceDocumentQuery.ServiceDocumentQueryElementResult;
+import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
@@ -292,6 +293,8 @@ public class ServiceDocumentQueryTest extends ComputeBaseTest {
         qs.query = Query.Builder.create().addKindFieldClause(ContainerDescription.class).build();
         QueryTask qt = QueryTask.create(qs);
         qt.documentSelfLink = queryTaskLink;
+        int fiveSec = 5000000;
+        qt.documentExpirationTimeMicros = ServiceUtils.getExpirationTimeFromNowInMicros(fiveSec);
 
         final AtomicReference<QueryTask> q = new AtomicReference<>();
         host.testStart(1);
