@@ -1,0 +1,74 @@
+<!--
+  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<clr-modal [clrModalStaticBackdrop]="true" [clrModalOpen]="visible"
+           (clrModalOpenChange)="assignmentsCanceled()" [clrModalSize]="'lg'">
+    <h3 class="modal-title">{{ 'projects.members.addMembers.title' | i18n }}</h3>
+    <div class="modal-body">
+        <clr-alert [clrAlertType]="'alert-danger'" [(clrAlertClosed)]="!alertMessage" (clrAlertClosedChange)="resetAlert()">
+            <div class="alert-item">
+                <span class="alert-text">{{ alertMessage }}</span>
+            </div>
+        </clr-alert>
+        <p>{{ description }}</p>
+        <form class="form" [formGroup]="formAssignToProjects">
+            <div formArrayName="assignments"
+                 *ngFor="let assignment of assignments.controls; let i = index; let lastRow = last;">
+                <div [formGroupName]="i">
+                  <div class="row">
+                    <div class="left">
+                        <div class="select">
+                            <select formControlName="project">
+                                <option *ngIf="assignment.controls.existing.value; else other_content"
+                                        [ngValue]="assignment.controls.project.value"
+                                        selected="selected">{{assignment.controls.project.value}}</option>
+                                <ng-template #other_content>
+                                    <option *ngFor="let project of projects"
+                                            value="{{project.name}}">{{project.name}}</option>
+                                </ng-template>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="right">
+                        <div class="select">
+                            <select formControlName="role" value="{{assignment.controls.role.value}}">
+                                <option value="PROJECT_ADMIN"
+                                        [selected]="assignment.controls.role.value === 'PROJECT_ADMIN'"
+                                    >{{"projects.members.roles.administrator" | i18n}}</option>
+                                <option value="PROJECT_MEMBER"
+                                        [selected]="assignment.controls.role.value === 'PROJECT_MEMBER'"
+                                    >{{"projects.members.roles.member" | i18n}}</option>
+                                <option value="PROJECT_VIEWER"
+                                        [selected]="assignment.controls.role.value === 'PROJECT_VIEWER'"
+                                    >{{"projects.members.roles.viewer" | i18n}}</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <a href="..." (click)="removeAssignment($event, i)"
+                            ><clr-icon shape="minus-circle" class="is-error is-solid" size="18"></clr-icon></a>
+                        <a href="..." (click)="addEmptyAssignment($event)"
+                            ><clr-icon *ngIf="lastRow" shape="plus-circle" class="is-solid is-success" size="18"></clr-icon></a>
+                    </div>
+                    <div class="clear"></div>
+                  </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-outline"
+                (click)="assignmentsCanceled()">{{ "cancel" | i18n }}</button>
+        <button type="button" class="btn btn-primary"
+                [disabled]="formAssignToProjects.invalid"
+                (click)="assignmentsConfirmed()">{{ "ok" | i18n }}</button>
+    </div>
+</clr-modal>

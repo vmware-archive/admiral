@@ -14,12 +14,12 @@
 <div class="search-holder">
     <form class="form" [formGroup]="searchPrincipalsForm">
         <div class="search-users"><clr-icon shape="search" size="20"></clr-icon></div>
-        <input id="searchField" type="text" formControlName="searchField" (keyup.enter)="searchIt($event)">
+        <input id="searchField" type="text" placeholder="username@domain" formControlName="searchField" (keyup.enter)="searchIt($event)">
     </form>
 </div>
 
 <div class="users-table-holder">
-<clr-datagrid [(clrDgSelected)]="selected">
+<clr-datagrid [(clrDgSelected)]="selected" [clrDgLoading]="loading">
     <clr-dg-action-bar>
         <div class="btn-group">
             <button type="button" class="btn btn-sm btn-secondary" (click)="onAssignRoles()"
@@ -54,3 +54,7 @@
 
 </clr-datagrid>
 </div>
+
+<app-users-assign-roles [visible]="showAssignRolesDialog" [principal]="selected[0]"
+                         (onChange)="onAssignRolesDone()"
+                         (onCancel)="onAssignRolesCanceled()"></app-users-assign-roles>

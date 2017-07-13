@@ -9,9 +9,10 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { FormGroup, FormControl } from "@angular/forms";
-import { AuthService } from './../../utils/auth.service';
+import { AuthService } from '../../utils/auth.service';
+import { Roles } from '../../utils/roles';
 
 @Component({
     selector: 'app-identity-usersgroups',
@@ -21,34 +22,37 @@ import { AuthService } from './../../utils/auth.service';
 /**
  * Tab displaying the users and groups in the system.
  */
-export class UsersGroupsComponent implements OnInit {
+export class UsersGroupsComponent {
 
     searchPrincipalsForm = new FormGroup({
         searchField: new FormControl('')
     });
 
+    searchTerm: string = '';
+    loading: boolean = false;
     selected: any[] = [];
     selectedPrincipals: any[] = [];
+
+    showAssignRolesDialog: boolean = false;
 
     constructor(protected authService: AuthService) {
     }
 
-    ngOnInit() {
-    }
-
     searchIt($event) {
-        let searchTerm = this.searchPrincipalsForm.get("searchField").value;
-        console.log('searchTerm', searchTerm, $event);
+        this.searchTerm = this.searchPrincipalsForm.get("searchField").value;
 
-        if (searchTerm === '') {
+        if (this.searchTerm === '') {
             this.selectedPrincipals = [];
             return;
         }
 
-        this.authService.findPrincipals(searchTerm, true).then((principalsResult) => {
+        this.loading = true;
+        this.authService.findPrincipals(this.searchTerm, true).then((principalsResult) => {
             this.selectedPrincipals = principalsResult;
+            this.loading = false;
         }).catch((error) => {
             console.log('Failed to find principals', error);
+            this.loading = false;
         });
     }
 
@@ -58,8 +62,8 @@ export class UsersGroupsComponent implements OnInit {
             return false;
         }
 
-        let cloudAdminRole:any = roles.find((role) => {
-            return role === 'CLOUD_ADMIN';
+        let cloudAdminRole: any = roles.find((role) => {
+            return role === Roles.CLOUD_ADMIN;
         });
 
         return !!cloudAdminRole;
@@ -72,9 +76,14 @@ export class UsersGroupsComponent implements OnInit {
         if (projects) {
             projects.forEach((project) => {
                 if (project.roles && project.roles.length > 0) {
+                    // we are not showing PROJECT_MEMBER_EXTENDED
+                    let idxRole = project.roles.indexOf(Roles.PROJECT_MEMBER);
+                    if (idxRole === -1) {
+                        idxRole = 0;
+                    }
                     projectsRoles.push({
                         projectName: project.name,
-                        projectRole: project.roles[0]
+                        projectRole: project.roles[idxRole]
                     });
                 }
             });
@@ -84,7 +93,22 @@ export class UsersGroupsComponent implements OnInit {
     }
 
     onAssignRoles() {
-        // TODO
+        this.showAssignRolesDialog = true;
+    }
+
+    onAssignRolesDone() {
+        this.showAssignRolesDialog = false;
+
+        // refresh
+        this.authService.findPrincipals(this.searchTerm, true).then((principalsResult) => {
+            this.selectedPrincipals = principalsResult;
+        }).catch((error) => {
+            console.log('Failed to find principals', error);
+        });
+    }
+
+    onAssignRolesCanceled() {
+        this.showAssignRolesDialog = false;
     }
 
     onMakeAdmin(selectedPrincipals) {
@@ -92,7 +116,7 @@ export class UsersGroupsComponent implements OnInit {
         roles.concat(selectedPrincipals[0].roles);
 
         let isAdmin = roles.find((role) => {
-            return role === 'CLOUD_ADMIN';
+            return role === Roles.CLOUD_ADMIN;
         });
         if (isAdmin) {
             console.log('Already a cloud admin!');
@@ -101,10 +125,11 @@ export class UsersGroupsComponent implements OnInit {
 
         this.authService.makeCloudAdmin(selectedPrincipals[0].id).then(() => {
             // update screen
-            roles.push('CLOUD_ADMIN');
+            roles.push(Roles.CLOUD_ADMIN);
             selectedPrincipals[0].roles = roles;
         }).catch((error) => {
-           console.log("Failed to make cloud admin", error);
+            console.log("Failed to make cloud admin", error);
         });
     }
+
 }

@@ -24,6 +24,8 @@ import { MainResourcesComputeComponent } from './views/main-resources-compute/ma
 
 import { IdentityManagementComponent } from './views/identity-management/identity-management.component';
 import { UsersGroupsComponent } from "./views/identity-management/users-groups.component";
+import { UsersGroupsAssignRolesComponent } from "./views/identity-management/users-groups-assign-roles.component";
+
 import { ProjectsComponent } from './views/projects/projects.component';
 import { ProjectDetailsComponent } from './views/projects/project-details/project-details.component';
 import { ProjectSummaryComponent } from "./views/projects/project-details/project-summary.component";
@@ -96,6 +98,7 @@ export const ADMIRAL_DECLARATIONS = [
 
   IdentityManagementComponent,
   UsersGroupsComponent,
+  UsersGroupsAssignRolesComponent,
   ProjectsComponent,
   ProjectDetailsComponent,
   ProjectSummaryComponent,

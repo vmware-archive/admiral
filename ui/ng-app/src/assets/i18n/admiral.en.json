@@ -214,7 +214,10 @@
       "columnCloudAdmin": "Cloud Admin",
       "columnProjects": "Projects",
       "count": "users/groups",
-      "notFound": "No users found"
+      "notFound": "No users found",
+      "assignRoleInProject": {
+      "description": "Set the project and role for the user/group {{principal}}."
+      }
     }
   },
   "configuration": {
