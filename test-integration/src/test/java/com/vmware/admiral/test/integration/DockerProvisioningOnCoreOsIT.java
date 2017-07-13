@@ -55,7 +55,6 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
@@ -109,7 +108,6 @@ public class DockerProvisioningOnCoreOsIT extends BaseProvisioningOnCoreOsIT {
         doProvisionDockerContainerOnCoreOS(true, DockerAdapterType.API);
     }
 
-    @Ignore("VBV-1465")
     @Test
     public void testProvisionDockerContainerOnCoreOSWithRegistryImageAPI()
             throws Exception {
@@ -117,7 +115,6 @@ public class DockerProvisioningOnCoreOsIT extends BaseProvisioningOnCoreOsIT {
         doProvisionDockerContainerOnCoreOS(false, DockerAdapterType.API);
     }
 
-    @Ignore("VBV-1465")
     @Test
     public void testProvisionDockerContainerOnCoreOSWithV2RegistryImageAPI()
             throws Exception {
@@ -126,7 +123,6 @@ public class DockerProvisioningOnCoreOsIT extends BaseProvisioningOnCoreOsIT {
                 RegistryType.V2_SSL_SECURE);
     }
 
-    @Ignore("VBV-1465")
     @Test
     public void testProvisionDockerContainerOnCoreOSWithInsecureRegistryImageAPI()
             throws Exception {
@@ -135,7 +131,6 @@ public class DockerProvisioningOnCoreOsIT extends BaseProvisioningOnCoreOsIT {
                 RegistryType.V1_HTTP_INSECURE);
     }
 
-    @Ignore("VBV-1465")
     @Test
     public void testProvisionDockerContainerOnCoreOSWithSecureRegistryImageAPI()
             throws Exception {
@@ -144,7 +139,6 @@ public class DockerProvisioningOnCoreOsIT extends BaseProvisioningOnCoreOsIT {
                 RegistryType.V2_BASIC_AUTH);
     }
 
-    @Ignore("VBV-1465")
     @Test
     public void testProvisionDockerContainerOnCoreOSUsingLocalImageWithPriority()
             throws Exception {

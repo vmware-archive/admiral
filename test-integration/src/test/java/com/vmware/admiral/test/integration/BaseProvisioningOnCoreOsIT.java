@@ -36,6 +36,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 import org.junit.After;
 
@@ -101,6 +102,7 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
     private static final long DEFAULT_OPERATION_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(30);
     private static final int DOCKER_MAX_BRIDGE_NETWORKS_COUNT = 29;
     private static final String BRIDGE_NETWORK_TYPE_QUERY = "?$filter=driver eq 'bridge'";
+    private static final String DEFAULT_REGISTRY_ADDRESS = "https://registry.hub.docker.com";
 
     protected ComputeState dockerHostCompute;
     protected List<ComputeState> dockerHostsInCluster;
@@ -432,30 +434,31 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
      * @throws Exception
      */
     private String searchForImage(String query) throws Exception {
-        // search in different group - no results expected
+        // search in different group - no results expected;
         RegistrySearchResponse globalSearchResponse = searchForImages(query, OTHER_TENANT_LINKS);
-        int otherTenantResultCount = globalSearchResponse.numResults;
-        assertEquals("expected at least one global registry result", 0, otherTenantResultCount);
+        // if there are any search results, they should come only from the default registry
+        if (globalSearchResponse.numResults > 0) {
+            globalSearchResponse.results
+                    .forEach((r) -> assertEquals("expected results only from the default registry",
+                            DEFAULT_REGISTRY_ADDRESS, r.registry));
+        }
 
-        // search in group - expect one result
+        // search in group - expect one result + the results from the default (global) registry
         RegistrySearchResponse registrySearchResponse = searchForImages(query, TENANT_LINKS);
-        int registryResultCount = registrySearchResponse.numResults;
-        assertTrue("expected more than the global registry result",
-                registryResultCount >= 1);
 
         // we may have got similar results, so filter them out
         String expectedResult = UriUtilsExtended.extractHostAndPort(registryAddress) + "/"
                 + CONTAINER_ADMIRAL_IMAGE;
-        String imageName = registrySearchResponse.results.stream()
+        List<String> imageNames = registrySearchResponse.results.stream()
                 .filter((r) -> registryAddress.equals(r.registry))
                 .map((r) -> r.name)
                 .filter(expectedResult::equals)
-                .findAny()
-                .orElse(null);
+                .collect(Collectors.toList());
 
-        assertNotNull("Couldn't find image in search results: " + expectedResult, imageName);
+        assertEquals("Expected only 1 result from tenanted registy for " + expectedResult, 1,
+                imageNames.size());
 
-        return imageName;
+        return imageNames.get(0);
     }
 
     private RegistrySearchResponse searchForImages(String query, List<String> tenantLinks)
