@@ -525,7 +525,7 @@
         "imageMappingLabel": "Image type",
         "diskPropertyMappingLabel": "Disk Properties",
         "cpuCountLabel": "CPUs",
-        "memoryMbLabel": "Memory (MB)",
+        "memoryGbLabel": "Memory (GB)",
         "generalLabel": "General",
         "existingLabel": "Existing",
         "subnetworksLabel": "Subnetworks",
