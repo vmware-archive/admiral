@@ -503,6 +503,8 @@ public class ComputeNetworkProvisionTaskService
             // Create a new subnet template to attach to the VM NICs
             SubnetState subnet = new SubnetState();
             subnet.id = UUID.randomUUID().toString();
+            // must set the documentSelfLink here in order for the CIDR allocation logic to use it
+            subnet.documentSelfLink = UriUtils.buildUriPath(SubnetService.FACTORY_LINK, subnet.id);
             subnet.name = context.computeNetwork.name;
             subnet.networkLink = context.computeNetwork.documentSelfLink;
             subnet.tenantLinks = context.computeNetwork.tenantLinks;
@@ -590,7 +592,7 @@ public class ComputeNetworkProvisionTaskService
 
         String optionalNetworkCIDR = context.profile.networkProfile.isolationNetworkCIDR;
         ComputeNetworkCIDRAllocationRequest request =
-                allocationRequest(context.subnet.id,
+                allocationRequest(context.subnet.documentSelfLink,
                         context.profile.networkProfile.isolatedSubnetCIDRPrefix,
                         optionalNetworkCIDR);
         return this.sendWithDeferredResult(
@@ -600,7 +602,8 @@ public class ComputeNetworkProvisionTaskService
                 ComputeNetworkCIDRAllocationState.class)
                 .thenApply(cidrAllocation -> {
                     // Store the allocated CIDR in the context.
-                    context.subnetCIDR = cidrAllocation.allocatedCIDRs.get(request.subnetId);
+                    context.subnetCIDR = cidrAllocation.allocatedCIDRs.get(
+                            request.subnetLink);
                     return context;
                 });
     }

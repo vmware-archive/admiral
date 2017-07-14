@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -124,6 +124,7 @@ public class ComputeNetworkCIDRAllocationServiceTest extends Suite {
         SubnetState createSubnet(int index) throws Throwable {
             SubnetState subnet = new SubnetState();
             subnet.id = UUID.randomUUID().toString();
+            subnet.documentSelfLink = UriUtils.buildUriPath(SubnetService.FACTORY_LINK, subnet.id);
             subnet.name = "isolatedSubnet" + index;
             subnet.networkLink = NETWORK_LINK;
             subnet.subnetCIDR = "0.0.0.0/16";
@@ -196,28 +197,28 @@ public class ComputeNetworkCIDRAllocationServiceTest extends Suite {
         @Test
         public void testCompleteFlow() throws Throwable {
             String cidrAllocationLink = this.createNetworkCIDRAllocationState();
-            String[] subnetIds = new String[config.numberOfAllocationRequests];
+            String[] subnetLinks = new String[config.numberOfAllocationRequests];
 
             // Allocate
             for (int i = 0; i < config.numberOfAllocationRequests; i++) {
                 SubnetState subnet = createSubnet(i);
-                subnetIds[i] = subnet.id;
+                subnetLinks[i] = subnet.documentSelfLink;
 
                 ComputeNetworkCIDRAllocationRequest request =
-                        allocationRequest(subnet.id, SUBNET_CIDR_PREFIX_LENGTH);
+                        allocationRequest(subnet.documentSelfLink, SUBNET_CIDR_PREFIX_LENGTH);
 
                 ComputeNetworkCIDRAllocationState allocation =
                         doPatch(request, ComputeNetworkCIDRAllocationState.class,
                                 cidrAllocationLink);
 
-                String lastAllocatedCIDR = allocation.allocatedCIDRs.get(request.subnetId);
+                String lastAllocatedCIDR = allocation.allocatedCIDRs.get(request.subnetLink);
                 assertNotNull(lastAllocatedCIDR);
                 assertTrue(NETWORK_INFO.isInRange(lastAllocatedCIDR.split("/")[0]));
                 assertEquals(SUBNET_CIDRS[i], lastAllocatedCIDR);
 
                 assertNotNull(allocation.allocatedCIDRs);
                 assertEquals(i + 1, allocation.allocatedCIDRs.size());
-                assertTrue(allocation.allocatedCIDRs.containsKey(request.subnetId));
+                assertTrue(allocation.allocatedCIDRs.containsKey(request.subnetLink));
             }
 
             // Deallocate
@@ -225,13 +226,13 @@ public class ComputeNetworkCIDRAllocationServiceTest extends Suite {
                 for (int i = 0; i < config.numberOfDeallocationRequests; i++) {
                     // Now deallocate.
                     ComputeNetworkCIDRAllocationRequest deallocationRequest =
-                            deallocationRequest(subnetIds[i]);
+                            deallocationRequest(subnetLinks[i]);
 
                     ComputeNetworkCIDRAllocationState deallocation = doPatch(deallocationRequest,
                             ComputeNetworkCIDRAllocationState.class, cidrAllocationLink);
 
                     assertFalse(deallocation.allocatedCIDRs
-                            .containsKey(deallocationRequest.subnetId));
+                            .containsKey(deallocationRequest.subnetLink));
                     assertFalse(deallocation.allocatedCIDRs.containsValue(SUBNET_CIDRS[i]));
                 }
             }
@@ -246,7 +247,7 @@ public class ComputeNetworkCIDRAllocationServiceTest extends Suite {
                             doPatch(request, ComputeNetworkCIDRAllocationState.class,
                                     cidrAllocationLink);
                     assertEquals(SUBNET_CIDRS[i],
-                            allocation.allocatedCIDRs.get(request.subnetId));
+                            allocation.allocatedCIDRs.get(request.subnetLink));
                 }
             }
         }
@@ -298,6 +299,7 @@ public class ComputeNetworkCIDRAllocationServiceTest extends Suite {
 
             SubnetState subnet = new SubnetState();
             subnet.id = UUID.randomUUID().toString();
+            subnet.documentSelfLink = UriUtils.buildUriPath(SubnetService.FACTORY_LINK, subnet.id);
             subnet.name = subnet.id;
             subnet.networkLink = this.networkState.documentSelfLink;
             subnet.subnetCIDR = "192.168.0.0/24";
@@ -306,14 +308,14 @@ public class ComputeNetworkCIDRAllocationServiceTest extends Suite {
             subnet = doPost(subnet, SubnetService.FACTORY_LINK);
 
             ComputeNetworkCIDRAllocationRequest request =
-                    allocationRequest(subnet.id, 24);
+                    allocationRequest(subnet.documentSelfLink, 24);
 
             ComputeNetworkCIDRAllocationState allocation =
                     doPatch(request, ComputeNetworkCIDRAllocationState.class,
                             cidrAllocationLink);
 
             // Expect 192.168.1.0/24 instead of already used 192.168.0.0/24.
-            assertEquals("192.168.1.0/24", allocation.allocatedCIDRs.get(subnet.id));
+            assertEquals("192.168.1.0/24", allocation.allocatedCIDRs.get(subnet.documentSelfLink));
         }
 
         @Test
@@ -321,6 +323,7 @@ public class ComputeNetworkCIDRAllocationServiceTest extends Suite {
             // Allocate Subnet 1 - 24 prefix length
             SubnetState subnet = new SubnetState();
             subnet.id = UUID.randomUUID().toString();
+            subnet.documentSelfLink = UriUtils.buildUriPath(SubnetService.FACTORY_LINK, subnet.id);
             subnet.name = subnet.id;
             subnet.networkLink = this.networkState.documentSelfLink;
             subnet.subnetCIDR = "0.0.0.0/24";
@@ -329,17 +332,18 @@ public class ComputeNetworkCIDRAllocationServiceTest extends Suite {
             subnet = doPost(subnet, SubnetService.FACTORY_LINK);
 
             ComputeNetworkCIDRAllocationRequest request =
-                    allocationRequest(subnet.id, 24);
+                    allocationRequest(subnet.documentSelfLink, 24);
 
             ComputeNetworkCIDRAllocationState allocation =
                     doPatch(request, ComputeNetworkCIDRAllocationState.class,
                             cidrAllocationLink);
 
-            assertEquals("192.168.0.0/24", allocation.allocatedCIDRs.get(subnet.id));
+            assertEquals("192.168.0.0/24", allocation.allocatedCIDRs.get(subnet.documentSelfLink));
 
             // Allocate Subnet 2 - 28 prefix length
             subnet = new SubnetState();
             subnet.id = UUID.randomUUID().toString();
+            subnet.documentSelfLink = UriUtils.buildUriPath(SubnetService.FACTORY_LINK, subnet.id);
             subnet.name = subnet.id;
             subnet.networkLink = this.networkState.documentSelfLink;
             subnet.subnetCIDR = "0.0.0.0/28";
@@ -347,12 +351,12 @@ public class ComputeNetworkCIDRAllocationServiceTest extends Suite {
 
             subnet = doPost(subnet, SubnetService.FACTORY_LINK);
 
-            request = allocationRequest(subnet.id, 28);
+            request = allocationRequest(subnet.documentSelfLink, 28);
 
             allocation = doPatch(request, ComputeNetworkCIDRAllocationState.class,
                     cidrAllocationLink);
 
-            assertEquals("192.168.1.0/28", allocation.allocatedCIDRs.get(subnet.id));
+            assertEquals("192.168.1.0/28", allocation.allocatedCIDRs.get(subnet.documentSelfLink));
 
             // Allocate Subnet 3 - 24 prefix length
             subnet = new SubnetState();
@@ -364,18 +368,19 @@ public class ComputeNetworkCIDRAllocationServiceTest extends Suite {
 
             subnet = doPost(subnet, SubnetService.FACTORY_LINK);
 
-            request = allocationRequest(subnet.id, 24);
+            request = allocationRequest(subnet.documentSelfLink, 24);
 
             allocation = doPatch(request, ComputeNetworkCIDRAllocationState.class,
                     cidrAllocationLink);
 
-            assertEquals("192.168.2.0/24", allocation.allocatedCIDRs.get(subnet.id));
+            assertEquals("192.168.2.0/24", allocation.allocatedCIDRs.get(subnet.documentSelfLink));
         }
 
         @Test
         public void testSubnetsInProvisioningStateAreIgnored() throws Throwable {
             SubnetState subnet = new SubnetState();
             subnet.id = UUID.randomUUID().toString();
+            subnet.documentSelfLink = UriUtils.buildUriPath(SubnetService.FACTORY_LINK, subnet.id);
             subnet.name = subnet.id;
             subnet.networkLink = this.networkState.documentSelfLink;
             subnet.subnetCIDR = "192.168.0.0/24";
@@ -384,20 +389,21 @@ public class ComputeNetworkCIDRAllocationServiceTest extends Suite {
             subnet = doPost(subnet, SubnetService.FACTORY_LINK);
 
             ComputeNetworkCIDRAllocationRequest request =
-                    allocationRequest(subnet.id, 24);
+                    allocationRequest(subnet.documentSelfLink, 24);
 
             ComputeNetworkCIDRAllocationState allocation =
                     doPatch(request, ComputeNetworkCIDRAllocationState.class,
                             cidrAllocationLink);
 
             // Expect 192.168.1.0/24 instead of already used 192.168.0.0/24.
-            assertEquals("192.168.0.0/24", allocation.allocatedCIDRs.get(subnet.id));
+            assertEquals("192.168.0.0/24", allocation.allocatedCIDRs.get(subnet.documentSelfLink));
         }
 
         @Test
         public void testExceptionIfNoSpaceForAllocation() throws Throwable {
             SubnetState subnet = new SubnetState();
             subnet.id = UUID.randomUUID().toString();
+            subnet.documentSelfLink = UriUtils.buildUriPath(SubnetService.FACTORY_LINK, subnet.id);
             subnet.name = subnet.id;
             subnet.networkLink = this.networkState.documentSelfLink;
             // Existing subnet takes all space in the parent network
@@ -407,7 +413,7 @@ public class ComputeNetworkCIDRAllocationServiceTest extends Suite {
             subnet = doPost(subnet, SubnetService.FACTORY_LINK);
 
             ComputeNetworkCIDRAllocationRequest request =
-                    allocationRequest(subnet.id, 24);
+                    allocationRequest(subnet.documentSelfLink, 24);
 
             try {
                 ComputeNetworkCIDRAllocationState allocation =
