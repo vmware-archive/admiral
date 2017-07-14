@@ -24,8 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.junit.Ignore;
-
 import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.profile.StorageProfileService;
 import com.vmware.admiral.compute.profile.StorageProfileService.StorageProfile;
@@ -38,11 +36,9 @@ import com.vmware.photon.controller.model.resources.DiskService.DiskState;
 import com.vmware.photon.controller.model.resources.StorageDescriptionService;
 import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 
-@Ignore("https://jira-hzn.eng.vmware.com/browse/VCOM-1246")
 public class VSphereComputeProvisionWithDisksIT extends VsphereComputeProvisionIT {
 
     private static final String DEFAULT_SUBNET_NAME = "VM Network";
-    private static final String SECONDARY_SUBNET_NAME = "good-portgroup";
     private static final long BOOT_DISK_SIZE = 62 * 1024L;
     private static final long NEW_DISK_SIZE = 3 * 1024L;
     private static final String GENERAL_DISK = "general";
@@ -56,9 +52,6 @@ public class VSphereComputeProvisionWithDisksIT extends VsphereComputeProvisionI
 
     @Override
     public void doSetUp() throws Exception {
-        createProfile(loadComputeProfile(getEndpointType()), createNetworkProfile(
-                SECONDARY_SUBNET_NAME, null, null), createStorageProfile(GENERAL_DISK));
-
         createProfile(loadComputeProfile(getEndpointType()), createNetworkProfile(
                 DEFAULT_SUBNET_NAME, null, null), createStorageProfile(""));
     }
