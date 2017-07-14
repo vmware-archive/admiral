@@ -111,7 +111,31 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
+    <profiles>
+        <profile>
+            <id>vic</id>
+            <repositories>
+                <repository>
+                  <id>symphony-maven-local</id>
+                  <url>https://build-artifactory.eng.vmware.com/artifactory/symphony-maven-local</url>
+                  <releases>
+                    <enabled>true</enabled>
+                  </releases>
+                  <snapshots>
+                    <enabled>true</enabled>
+                  </snapshots>
+                </repository>
+            </repositories>
+            <dependencies>
+                <dependency>
+                    <groupId>${project.groupId}</groupId>
+                    <artifactId>admiral-auth-psc</artifactId>
+                     <version>${project.version}</version>
+                    <classifier>psc-uber-jar</classifier>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
     <build>
         <resources>
             <resource>
