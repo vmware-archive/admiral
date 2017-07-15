@@ -81,15 +81,16 @@ public class ProjectUtil {
     }
 
     public static final long PROJECT_INDEX_ORIGIN = 2L;
-    public static final long PROJECT_INDEX_BOUND = (long)Integer.MAX_VALUE * 2; // simulate uint
+    public static final long PROJECT_INDEX_BOUND = (long) Integer.MAX_VALUE * 2; // simulate uint
 
-
-    public static QueryTask createQueryTaskForProjectAssociatedWithPlacement(ResourceState project, Query query) {
+    public static QueryTask createQueryTaskForProjectAssociatedWithPlacement(ResourceState project,
+            Query query) {
         QueryTask queryTask = null;
         if (query != null) {
             queryTask = QueryTask.Builder.createDirectTask().setQuery(query).build();
         } else if (project != null && project.documentSelfLink != null) {
-            queryTask = QueryUtil.buildQuery(GroupResourcePlacementState.class, true, QueryUtil.addTenantAndGroupClause(Arrays.asList(project.documentSelfLink)));
+            queryTask = QueryUtil.buildQuery(GroupResourcePlacementState.class, true,
+                    QueryUtil.addTenantAndGroupClause(Arrays.asList(project.documentSelfLink)));
         }
 
         if (queryTask != null) {
@@ -103,12 +104,15 @@ public class ProjectUtil {
      * Creates a {@link ExpandedProjectState} based on the provided simple state additionally
      * building the lists of administrators and members.
      *
-     * @param service a {@link Service} that can be used to retrieve service documents
-     * @param simpleState the {@link ProjectState} that needs to be expanded
-     * @param referer the {@link URI} of the service that issues the expand
+     * @param service
+     *            a {@link Service} that can be used to retrieve service documents
+     * @param simpleState
+     *            the {@link ProjectState} that needs to be expanded
+     * @param referer
+     *            the {@link URI} of the service that issues the expand
      */
     public static DeferredResult<ExpandedProjectState> expandProjectState(Service service,
-            ProjectState simpleState, URI referer) {
+            Operation requestorOperation, ProjectState simpleState, URI referer) {
         ExpandedProjectState expandedState = new ExpandedProjectState();
         simpleState.copyTo(expandedState);
         expandedState.administrators = new ArrayList<>();
@@ -136,27 +140,27 @@ public class ProjectUtil {
 
         DeferredResult<Void> retrieveAdmins = retrieveUserGroupMembers(service,
                 adminsGroupLink, referer)
-                .thenAccept((adminsList) -> {
-                    adminsList.forEach(a -> userStates.put(a.documentSelfLink, a));
-                    roleToUsersLinks.put(AuthRole.PROJECT_ADMIN, adminsList.stream().map(a ->
-                            a.documentSelfLink).collect(Collectors.toList()));
-                });
+                        .thenAccept((adminsList) -> {
+                            adminsList.forEach(a -> userStates.put(a.documentSelfLink, a));
+                            roleToUsersLinks.put(AuthRole.PROJECT_ADMIN, adminsList.stream()
+                                    .map(a -> a.documentSelfLink).collect(Collectors.toList()));
+                        });
 
         DeferredResult<Void> retrieveMembers = retrieveUserGroupMembers(service,
                 membersGroupLink, referer)
-                .thenAccept((membersList) -> {
-                    membersList.forEach(m -> userStates.put(m.documentSelfLink, m));
-                    roleToUsersLinks.put(AuthRole.PROJECT_MEMBER, membersList.stream().map(m ->
-                            m.documentSelfLink).collect(Collectors.toList()));
-                });
+                        .thenAccept((membersList) -> {
+                            membersList.forEach(m -> userStates.put(m.documentSelfLink, m));
+                            roleToUsersLinks.put(AuthRole.PROJECT_MEMBER, membersList.stream()
+                                    .map(m -> m.documentSelfLink).collect(Collectors.toList()));
+                        });
 
         DeferredResult<Void> retrieveViewers = retrieveUserGroupMembers(service,
                 viewersGroupLink, referer)
-                .thenAccept((viewersList) -> {
-                    viewersList.forEach(v -> userStates.put(v.documentSelfLink, v));
-                    roleToUsersLinks.put(AuthRole.PROJECT_VIEWER, viewersList.stream().map(m ->
-                            m.documentSelfLink).collect(Collectors.toList()));
-                });
+                        .thenAccept((viewersList) -> {
+                            viewersList.forEach(v -> userStates.put(v.documentSelfLink, v));
+                            roleToUsersLinks.put(AuthRole.PROJECT_VIEWER, viewersList.stream()
+                                    .map(m -> m.documentSelfLink).collect(Collectors.toList()));
+                        });
 
         DeferredResult<Void> retrieveUserStatePrincipals = DeferredResult.allOf(retrieveAdmins,
                 retrieveMembers, retrieveViewers)
@@ -165,6 +169,7 @@ public class ProjectUtil {
 
                     for (Entry<String, UserState> entry : userStates.entrySet()) {
                         DeferredResult<Void> tempResult = PrincipalUtil.getPrincipal(service,
+                                requestorOperation,
                                 Service.getId(entry.getValue().documentSelfLink))
                                 .thenAccept(p -> userLinkToPrincipal.put(entry.getKey(), p));
                         results.add(tempResult);
@@ -186,16 +191,19 @@ public class ProjectUtil {
                 });
 
         DeferredResult<Void> retrieveAdminsGroupPrincipals = getGroupPrincipals(service,
-                simpleState.administratorsUserGroupLinks, projectId, AuthRole.PROJECT_ADMIN)
-                .thenAccept(principals -> expandedState.administrators.addAll(principals));
+                requestorOperation, simpleState.administratorsUserGroupLinks, projectId,
+                AuthRole.PROJECT_ADMIN)
+                        .thenAccept(principals -> expandedState.administrators.addAll(principals));
 
         DeferredResult<Void> retrieveMembersGroupPrincipals = getGroupPrincipals(service,
-                simpleState.membersUserGroupLinks, projectId, AuthRole.PROJECT_MEMBER)
-                .thenAccept(principals -> expandedState.members.addAll(principals));
+                requestorOperation, simpleState.membersUserGroupLinks, projectId,
+                AuthRole.PROJECT_MEMBER)
+                        .thenAccept(principals -> expandedState.members.addAll(principals));
 
         DeferredResult<Void> retrieveViewersGroupPrincipals = getGroupPrincipals(service,
-                simpleState.viewersUserGroupLinks, projectId, AuthRole.PROJECT_VIEWER)
-                .thenAccept(principals -> expandedState.viewers.addAll(principals));
+                requestorOperation, simpleState.viewersUserGroupLinks, projectId,
+                AuthRole.PROJECT_VIEWER)
+                        .thenAccept(principals -> expandedState.viewers.addAll(principals));
 
         DeferredResult<Void> retrieveClusterLinks = retrieveClusterLinks(service,
                 simpleState.documentSelfLink)
@@ -205,11 +213,13 @@ public class ProjectUtil {
                 simpleState.documentSelfLink)
                         .thenAccept((templateLinks) -> expandedState.templateLinks = templateLinks);
 
-        DeferredResult<Void> retrieveRepositoriesAndImagesCount = retrieveRepositoriesAndTagsCount(service,
+        DeferredResult<Void> retrieveRepositoriesAndImagesCount = retrieveRepositoriesAndTagsCount(
+                service,
                 simpleState.documentSelfLink, getProjectIndex(simpleState))
                         .thenAccept(
                                 (repositories) -> {
-                                    expandedState.repositories = new ArrayList<>(repositories.size());
+                                    expandedState.repositories = new ArrayList<>(
+                                            repositories.size());
                                     expandedState.numberOfImages = 0L;
 
                                     repositories.forEach((entry) -> {
@@ -232,7 +242,8 @@ public class ProjectUtil {
     }
 
     private static DeferredResult<List<Principal>> getGroupPrincipals(Service service,
-            List<String> groupLinks, String projectId, AuthRole role) {
+            Operation requestorOperation, List<String> groupLinks, String projectId,
+            AuthRole role) {
 
         if (projectId == null || projectId.isEmpty()) {
             return DeferredResult.failed(new LocalizableValidationException(
@@ -258,7 +269,8 @@ public class ProjectUtil {
         List<DeferredResult<Principal>> results = new ArrayList<>();
 
         for (String groupLink : groupLinks) {
-            results.add(PrincipalUtil.getPrincipal(service, Service.getId(groupLink)));
+            results.add(PrincipalUtil.getPrincipal(service, requestorOperation,
+                    Service.getId(groupLink)));
         }
 
         return DeferredResult.allOf(results);
@@ -322,7 +334,8 @@ public class ProjectUtil {
                     String json = String.format("{\"%s\": %s}",
                             HbrRepositoriesResponse.FIELD_NAME_RESPONSE_ENTRIES, stringBody);
 
-                    HbrRepositoriesResponse response = Utils.fromJson(json, HbrRepositoriesResponse.class);
+                    HbrRepositoriesResponse response = Utils.fromJson(json,
+                            HbrRepositoriesResponse.class);
                     return response.responseEntries;
                 })
                 .exceptionally((ex) -> {
@@ -354,14 +367,16 @@ public class ProjectUtil {
     /**
      * Retrieves the list of members for the specified user group.
      */
-    public static DeferredResult<List<UserState>> retrieveUserStatesForGroup(Service service,
-            UserGroupState groupState) {
-        DeferredResult<List<UserState>> deferredResult = new DeferredResult<>();
-        ArrayList<UserState> resultList = new ArrayList<>();
+    @SuppressWarnings("unchecked")
+    public static <T extends UserState> DeferredResult<List<T>> retrieveUserStatesForGroup(
+            Service service, UserGroupState groupState) {
+        DeferredResult<List<T>> deferredResult = new DeferredResult<>();
+        ArrayList<T> resultList = new ArrayList<>();
 
-        QueryTask queryTask = QueryUtil.buildQuery(UserState.class, true, groupState.query);
+        QueryTask queryTask = QueryUtil.buildQuery(AuthUtil.USER_STATE_CLASS, true,
+                groupState.query);
         QueryUtil.addExpandOption(queryTask);
-        new ServiceDocumentQuery<UserState>(service.getHost(), UserState.class)
+        new ServiceDocumentQuery<>(service.getHost(), AuthUtil.USER_STATE_CLASS)
                 .query(queryTask, (r) -> {
                     if (r.hasException()) {
                         service.getHost().log(Level.WARNING,
@@ -369,7 +384,7 @@ public class ProjectUtil {
                                 groupState.documentSelfLink, Utils.toString(r.getException()));
                         deferredResult.fail(r.getException());
                     } else if (r.hasResult()) {
-                        resultList.add(r.getResult());
+                        resultList.add((T) r.getResult());
                     } else {
                         deferredResult.complete(resultList);
                     }
@@ -430,8 +445,9 @@ public class ProjectUtil {
         Query nameClause = QueryUtil.addCaseInsensitiveListValueClause(ProjectState.FIELD_NAME_NAME,
                 Collections.singletonList(name), MatchType.TERM);
 
-        Query selfLinkClause = QueryUtil.addCaseInsensitiveListValueClause(ProjectState
-                .FIELD_NAME_SELF_LINK, Collections.singletonList(documentSelfLink), MatchType.TERM);
+        Query selfLinkClause = QueryUtil.addCaseInsensitiveListValueClause(
+                ProjectState.FIELD_NAME_SELF_LINK, Collections.singletonList(documentSelfLink),
+                MatchType.TERM);
         selfLinkClause.setOccurance(Occurance.MUST_NOT_OCCUR);
 
         query.addBooleanClause(nameClause);

@@ -319,22 +319,20 @@ public class LocalPrincipalService extends StatefulService {
         List<DeferredResult<Void>> result = new ArrayList<>();
         if (state.isAdmin == null || state.isAdmin) {
             result.add(UserGroupsUpdater.create()
+                    .setService(this)
                     .setUsersToRemove(null)
                     .setUsersToAdd(Collections.singletonList(state.email))
-                    .setReferrer(op.getUri().toString())
                     .setGroupLink(CLOUD_ADMINS_USER_GROUP_LINK)
-                    .setHost(getHost())
                     .setSkipPrincipalVerification(true)
                     .update());
         }
         // We want always to add the user to basic users, even if he is cloud admin,
         // in case he is removed from cloud admins he will remain basic user.
         result.add(UserGroupsUpdater.create()
+                .setService(this)
                 .setUsersToRemove(null)
                 .setUsersToAdd(Collections.singletonList(state.email))
-                .setReferrer(op.getUri().toString())
                 .setGroupLink(BASIC_USERS_USER_GROUP_LINK)
-                .setHost(getHost())
                 .setSkipPrincipalVerification(true)
                 .update());
 
@@ -419,9 +417,8 @@ public class LocalPrincipalService extends StatefulService {
                     }
                     LocalPrincipalState localPrincipalState = o.getBody(LocalPrincipalState.class);
                     DeferredResult<Void> result = UserGroupsUpdater.create()
+                            .setService(this)
                             .setGroupLink(groupLink)
-                            .setHost(getHost())
-                            .setReferrer(getHost().getUri().toString())
                             .setUsersToAdd(Collections.singletonList(localPrincipalState.email))
                             .update();
                     result.whenComplete((ignore, err) -> {
@@ -492,8 +489,7 @@ public class LocalPrincipalService extends StatefulService {
                 .collect(Collectors.toList());
 
         DeferredResult<Void> result = UserGroupsUpdater.create()
-                .setReferrer(delete.getUri().toString())
-                .setHost(getHost())
+                .setService(this)
                 .setGroupLink(groupLink)
                 .setUsersToRemove(usersToRemoveFromGroup)
                 .update();

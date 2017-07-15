@@ -25,6 +25,7 @@ import com.vmware.admiral.auth.idm.PrincipalRolesHandler.PrincipalRoleAssignment
 import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.admiral.auth.util.AuthUtil;
+import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.UriUtils;
@@ -41,44 +42,50 @@ public class ProjectRolesHandlerTest extends AuthBaseTest {
 
     private ProjectRolesHandler rolesHandler;
     private ProjectState project;
+    private Operation testOperationByAdmin;
 
     @Before
     public void setUp() throws Throwable {
         waitForServiceAvailability(ProjectFactoryService.SELF_LINK);
         waitForServiceAvailability(UserGroupService.FACTORY_LINK);
 
-        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
+        testOperationByAdmin = createAuthorizedOperation(
+                host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN)));
+
         project = createProject(PROJECT_NAME, PROJECT_DESCRIPTION, PROJECT_IS_PUBLIC);
 
-        rolesHandler = new ProjectRolesHandler(host, project.documentSelfLink);
+        rolesHandler = new ProjectRolesHandler(privilegedTestService, project.documentSelfLink);
     }
 
     @Test
-    public void testAssignExistingUserGroupToProjectShouldCreateNewRoleAndAssignTheUserGroupToTheProject() throws Throwable {
+    public void testAssignExistingUserGroupToProjectShouldCreateNewRoleAndAssignTheUserGroupToTheProject()
+            throws Throwable {
         ProjectRoles projectRoles = new ProjectRoles();
         projectRoles.members = new PrincipalRoleAssignment();
         projectRoles.administrators = new PrincipalRoleAssignment();
         projectRoles.administrators.add = Collections.singletonList(USER_GROUP_SUPERUSERS);
 
-        String userGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, USER_GROUP_SUPERUSERS);
-        String resourceGroupLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK, Service.getId(project.documentSelfLink));
+        String userGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                USER_GROUP_SUPERUSERS);
+        String resourceGroupLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
+                Service.getId(project.documentSelfLink));
         String roleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
-                AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(Service.getId(project.documentSelfLink), USER_GROUP_SUPERUSERS));
+                AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(Service.getId(project.documentSelfLink),
+                        USER_GROUP_SUPERUSERS));
 
         assertDocumentExists(userGroupLink);
         assertDocumentExists(resourceGroupLink);
         assertDocumentNotExists(roleLink);
 
         host.testStart(1);
-        rolesHandler.handleRolesUpdate(project, projectRoles).whenComplete((ignore, ex) -> {
-            if (ex != null) {
-                host.failIteration(ex);
-                return;
-            }
-
-            host.completeIteration();
-
-        });
+        rolesHandler.handleRolesUpdate(project, projectRoles, testOperationByAdmin)
+                .whenComplete((ignore, ex) -> {
+                    if (ex != null) {
+                        host.failIteration(ex);
+                        return;
+                    }
+                    host.completeIteration();
+                });
         host.testWait();
 
         // verify that the role is deleted
@@ -90,16 +97,20 @@ public class ProjectRolesHandlerTest extends AuthBaseTest {
     }
 
     @Test
-    public void testUnassignExistingGroupFromProjectShouldDeleteRoleAndUnassignTheGroupFromTheProject() throws Throwable {
+    public void testUnassignExistingGroupFromProjectShouldDeleteRoleAndUnassignTheGroupFromTheProject()
+            throws Throwable {
         ProjectRoles projectRoles = new ProjectRoles();
         projectRoles.members = new PrincipalRoleAssignment();
         projectRoles.administrators = new PrincipalRoleAssignment();
         projectRoles.administrators.remove = Collections.singletonList(USER_GROUP_SUPERUSERS);
 
-        String userGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, USER_GROUP_SUPERUSERS);
-        String resourceGroupLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK, Service.getId(project.documentSelfLink));
+        String userGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                USER_GROUP_SUPERUSERS);
+        String resourceGroupLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
+                Service.getId(project.documentSelfLink));
         String roleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
-                AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(Service.getId(project.documentSelfLink), USER_GROUP_SUPERUSERS));
+                AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(Service.getId(project.documentSelfLink),
+                        USER_GROUP_SUPERUSERS));
 
         assertDocumentNotExists(roleLink);
 
@@ -111,14 +122,14 @@ public class ProjectRolesHandlerTest extends AuthBaseTest {
         assertDocumentExists(roleLink);
 
         host.testStart(1);
-        rolesHandler.handleRolesUpdate(project, projectRoles).whenComplete((ignore, ex) -> {
-            if (ex != null) {
-                host.failIteration(ex);
-                return;
-            }
-
-            host.completeIteration();
-        });
+        rolesHandler.handleRolesUpdate(project, projectRoles, testOperationByAdmin)
+                .whenComplete((ignore, ex) -> {
+                    if (ex != null) {
+                        host.failIteration(ex);
+                        return;
+                    }
+                    host.completeIteration();
+                });
         host.testWait();
 
         // verify that the role is deleted
@@ -138,26 +149,25 @@ public class ProjectRolesHandlerTest extends AuthBaseTest {
 
         host.testStart(1);
 
-        rolesHandler.handleRolesUpdate(project, projectRoles).whenComplete((ignore, ex) -> {
-            if (ex != null) {
-                if (ex.getCause() instanceof ServiceNotFoundException) {
-                    host.completeIteration();
-                    return;
-                }
-
-                host.failIteration(ex);
-                return;
-            }
-
-            host.failIteration(new Exception(
-                    String.format("Should've thrown %s", new ServiceNotFoundException())));
-        });
-
+        rolesHandler.handleRolesUpdate(project, projectRoles, testOperationByAdmin)
+                .whenComplete((ignore, ex) -> {
+                    if (ex != null) {
+                        if (ex.getCause() instanceof ServiceNotFoundException) {
+                            host.completeIteration();
+                            return;
+                        }
+                        host.failIteration(ex);
+                        return;
+                    }
+                    host.failIteration(new Exception(
+                            String.format("Should've thrown %s", new ServiceNotFoundException())));
+                });
         host.testWait();
     }
 
     @Test
-    public void testAssignExistingPrincipalGroupWithNotExistingUserGroupStateShouldCreateANewUserGroupState() throws Throwable {
+    public void testAssignExistingPrincipalGroupWithNotExistingUserGroupStateShouldCreateANewUserGroupState()
+            throws Throwable {
         ProjectRoles projectRoles = new ProjectRoles();
         projectRoles.members = new PrincipalRoleAssignment();
         projectRoles.administrators = new PrincipalRoleAssignment();
@@ -171,14 +181,14 @@ public class ProjectRolesHandlerTest extends AuthBaseTest {
         assertDocumentNotExists(userGroupLink);
 
         host.testStart(1);
-        rolesHandler.handleRolesUpdate(project, projectRoles).whenComplete((ignore, ex) -> {
-            if (ex != null) {
-                host.failIteration(ex);
-                return;
-            }
-
-            host.completeIteration();
-        });
+        rolesHandler.handleRolesUpdate(project, projectRoles, testOperationByAdmin)
+                .whenComplete((ignore, ex) -> {
+                    if (ex != null) {
+                        host.failIteration(ex);
+                        return;
+                    }
+                    host.completeIteration();
+                });
         host.testWait();
 
         // verify that the user group is created
@@ -200,8 +210,8 @@ public class ProjectRolesHandlerTest extends AuthBaseTest {
         String resourceGroupLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
                 AuthRole.PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId, groupId));
 
-        String roleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, AuthRole
-                .PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId, groupId));
+        String roleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
+                AuthRole.PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId, groupId));
 
         assertDocumentExists(resourceGroupLink);
         assertDocumentExists(roleLink);

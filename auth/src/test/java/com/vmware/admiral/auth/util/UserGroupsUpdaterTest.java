@@ -53,9 +53,8 @@ public class UserGroupsUpdaterTest extends AuthBaseTest {
 
         // Add users.
         DeferredResult<Void> result = UserGroupsUpdater.create()
-                .setHost(host)
+                .setService(privilegedTestService)
                 .setGroupLink(userGroupSelfLink)
-                .setReferrer(host.getUri().toString())
                 .setUsersToAdd(Arrays.asList(USER_EMAIL_ADMIN, USER_EMAIL_CONNIE))
                 .update();
 
@@ -77,9 +76,8 @@ public class UserGroupsUpdaterTest extends AuthBaseTest {
 
         // Remove user.
         result = UserGroupsUpdater.create()
-                .setHost(host)
+                .setService(privilegedTestService)
                 .setGroupLink(userGroupSelfLink)
-                .setReferrer(host.getUri().toString())
                 .setUsersToRemove(Arrays.asList(USER_EMAIL_CONNIE))
                 .update();
 

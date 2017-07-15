@@ -40,6 +40,7 @@ import com.vmware.admiral.service.common.mock.MockHbrApiProxyService;
 import com.vmware.photon.controller.model.query.QueryUtils.QueryTemplate;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
+import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.UserGroupService;
 import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
@@ -91,14 +92,17 @@ public class ProjectUtilWithServicesTest extends AuthBaseTest {
     public void testExpandProjectState() throws Throwable {
         waitForServiceAvailability(ProjectFactoryService.SELF_LINK);
         waitForServiceAvailability(GroupResourcePlacementService.FACTORY_LINK);
-        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
+
+        Operation testOperationByAdmin = createAuthorizedOperation(
+                host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN)));
 
         ProjectState project = createTestProject();
         ResourcePoolState cluster = createCluster(project.documentSelfLink);
         CompositeDescription template = createTemplate(project.documentSelfLink);
 
         ExpandedProjectState expandedState = QueryTemplate
-                .waitToComplete(ProjectUtil.expandProjectState(testService, project, host.getUri()));
+                .waitToComplete(ProjectUtil.expandProjectState(privilegedTestService,
+                        testOperationByAdmin, project, host.getUri()));
 
         // verify admins
         assertNotNull(expandedState.administrators);

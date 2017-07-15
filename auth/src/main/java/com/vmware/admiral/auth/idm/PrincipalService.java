@@ -248,7 +248,7 @@ public class PrincipalService extends StatelessService {
     private void handleGetPrincipalRoles(Operation get) {
         String principalId = getIdFromRolesRequest(get);
         PrincipalRoles rolesResponse = new PrincipalRoles();
-        PrincipalUtil.getPrincipal(this, principalId)
+        PrincipalUtil.getPrincipal(this, get, principalId)
                 .thenAccept(principal -> copyPrincipalData(principal, rolesResponse))
                 .thenCompose(ignore -> {
                     if (rolesResponse.type == PrincipalType.GROUP) {
@@ -301,7 +301,7 @@ public class PrincipalService extends StatelessService {
         PrincipalRoleAssignment body = patch.getBody(PrincipalRoleAssignment.class);
 
         DeferredResult<Void> result = PrincipalRolesHandler.create()
-                .setHost(getHost())
+                .setService(this)
                 .setPrincipalId(principalId)
                 .setRoleAssignment(body)
                 .update();

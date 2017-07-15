@@ -47,6 +47,7 @@ import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.UserService;
+import com.vmware.xenon.services.common.UserService.UserState;
 import com.vmware.xenon.services.common.authn.BasicAuthenticationService;
 
 public class LocalAuthConfigProvider implements AuthConfigProvider {
@@ -302,6 +303,11 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
     @Override
     public Collection<FactoryService> createServiceFactories() {
         return Collections.emptyList();
+    }
+
+    @Override
+    public Class<? extends UserState> getUserStateClass() {
+        return UserState.class;
     }
 
 }

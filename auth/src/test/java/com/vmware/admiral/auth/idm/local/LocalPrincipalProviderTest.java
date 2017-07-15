@@ -28,8 +28,6 @@ import com.vmware.admiral.auth.AuthBaseTest;
 import com.vmware.admiral.auth.idm.Principal;
 import com.vmware.admiral.auth.idm.Principal.PrincipalType;
 import com.vmware.admiral.auth.idm.PrincipalProvider;
-import com.vmware.admiral.auth.idm.PrincipalService;
-import com.vmware.admiral.auth.idm.SessionService;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalState;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalType;
 import com.vmware.xenon.common.DeferredResult;
@@ -45,8 +43,7 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
     @Before
     public void injectHost() throws Throwable {
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
-        provider.init(host.startServiceAndWait(SessionService.class,
-                PrincipalService.SELF_LINK + "-test"));
+        provider.init(privilegedTestService);
     }
 
     @Test

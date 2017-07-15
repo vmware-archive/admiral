@@ -31,7 +31,6 @@ import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
-import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.ResourceGroupService;
 import com.vmware.xenon.services.common.ResourceGroupService.ResourceGroupState;
@@ -78,13 +77,13 @@ public class ProjectRolesHandler {
 
     }
 
-    private ServiceHost serviceHost;
+    private Service service;
     private String projectLink;
 
-    public ProjectRolesHandler(ServiceHost serviceHost, String projectLink) {
-        AssertUtil.assertNotNull(serviceHost, "serviceHost");
+    public ProjectRolesHandler(Service service, String projectLink) {
+        AssertUtil.assertNotNull(service, "service");
         AssertUtil.assertNotEmpty(projectLink, "projectLink");
-        this.serviceHost = serviceHost;
+        this.service = service;
         this.projectLink = projectLink;
     }
 
@@ -104,17 +103,18 @@ public class ProjectRolesHandler {
                 || (rolesAssignment.remove != null && !rolesAssignment.remove.isEmpty());
     }
 
-    public DeferredResult<ProjectState> handleRolesUpdate(ProjectState project, ProjectRoles patchBody) {
+    public DeferredResult<ProjectState> handleRolesUpdate(ProjectState project,
+            ProjectRoles patchBody, Operation requestorOperation) {
         if (patchBody == null) {
             return DeferredResult.failed(new LocalizableValidationException(
                     BODY_IS_REQUIRED_MESSAGE, BODY_IS_REQUIRED_MESSAGE_CODE));
         }
 
-        return handleRolesAssignment(project, patchBody);
+        return handleRolesAssignment(project, patchBody, requestorOperation);
     }
 
     private DeferredResult<ProjectState> handleRolesAssignment(ProjectState projectState,
-            ProjectRoles patchBody) {
+            ProjectRoles patchBody, Operation requestorOperation) {
         List<String> adminUsersToAdd = new ArrayList<>();
         List<String> adminUsersToRemove = new ArrayList<>();
         List<String> membersUsersToAdd = new ArrayList<>();
@@ -133,11 +133,13 @@ public class ProjectRolesHandler {
         List<DeferredResult<Void>> results = new ArrayList<>();
 
         buildAddRemoveLists(patchBody.administrators, adminUsersToAdd, adminUserGroupsToAdd,
-                adminUsersToRemove, adminUserGroupsToRemove, principalResults);
+                adminUsersToRemove, adminUserGroupsToRemove, principalResults, requestorOperation);
         buildAddRemoveLists(patchBody.members, membersUsersToAdd, membersUserGroupsToAdd,
-                membersUsersToRemove, membersUserGroupsToRemove, principalResults);
+                membersUsersToRemove, membersUserGroupsToRemove, principalResults,
+                requestorOperation);
         buildAddRemoveLists(patchBody.viewers, viewersUsersToAdd, viewersUserGroupsToAdd,
-                viewersUsersToRemove, viewersUserGroupsToRemove, principalResults);
+                viewersUsersToRemove, viewersUserGroupsToRemove, principalResults,
+                requestorOperation);
 
         return DeferredResult.allOf(principalResults)
                 .thenCompose(ignore -> {
@@ -159,50 +161,49 @@ public class ProjectRolesHandler {
                 .thenCompose(ignore -> DeferredResult.completed(projectState));
     }
 
-    private DeferredResult<Principal> getPrincipal(String principal) {
-        Operation getPrincipalOp = Operation.createGet(getHost(), UriUtils.buildUriPath(PrincipalService.SELF_LINK, principal))
-                .setReferer(getHost().getUri());
-
-        return getHost().sendWithDeferredResult(getPrincipalOp, Principal.class);
-    }
-
     /**
      * Iterates through the specified {@link PrincipalRoleAssignment} and fills the provided lists
      * with users and groups to add/remove from a given project.
+     *
+     * @param requestorService
+     * @param requestorOperation
      */
     private void buildAddRemoveLists(PrincipalRoleAssignment assignment,
             List<String> usersToAdd, List<String> userGroupsToAdd,
             List<String> usersToRemove, List<String> userGroupsToRemove,
-            List<DeferredResult<Void>> principalResults) {
+            List<DeferredResult<Void>> principalResults, Operation requestorOperation) {
         if (assignment == null) {
             return;
         }
 
         if (assignment.add != null && !assignment.add.isEmpty()) {
-            assignment.add.stream().forEach(principal -> {
-                principalResults.add(getPrincipal(principal).thenAccept(p -> {
-                    if (PrincipalType.USER.equals(p.type)) {
-                        usersToAdd.add(principal);
-                    } else {
-                        userGroupsToAdd.add(principal);
-                    }
-                }));
+            assignment.add.stream().forEach(principalId -> {
+                principalResults.add(PrincipalUtil
+                        .getPrincipal(service, requestorOperation, principalId)
+                        .thenAccept(p -> {
+                            if (PrincipalType.USER.equals(p.type)) {
+                                usersToAdd.add(principalId);
+                            } else {
+                                userGroupsToAdd.add(principalId);
+                            }
+                        }));
             });
         }
 
         if (assignment.remove != null && !assignment.remove.isEmpty()) {
-            assignment.remove.stream().forEach(principal -> {
-                principalResults.add(getPrincipal(principal).thenAccept(p -> {
-                    if (PrincipalType.USER.equals(p.type)) {
-                        usersToRemove.add(principal);
-                    } else {
-                        userGroupsToRemove.add(principal);
-                    }
-                }));
+            assignment.remove.stream().forEach(principalId -> {
+                principalResults.add(PrincipalUtil
+                        .getPrincipal(service, requestorOperation, principalId)
+                        .thenAccept(p -> {
+                            if (PrincipalType.USER.equals(p.type)) {
+                                usersToRemove.add(principalId);
+                            } else {
+                                userGroupsToRemove.add(principalId);
+                            }
+                        }));
             });
         }
     }
-
 
     private DeferredResult<Void> handleUserAssignment(List<String> addPrincipals,
             List<String> removePrincipals, AuthRole role) {
@@ -227,21 +228,19 @@ public class ProjectRolesHandler {
         List<DeferredResult<Void>> results = new ArrayList<>();
 
         for (String principal : addPrincipals) {
-            results.add(PrincipalUtil.getOrCreateUser(serviceHost, principal)
+            results.add(PrincipalUtil.getOrCreateUser(service, principal)
                     .thenCompose(user -> UserGroupsUpdater.create()
                             .setGroupLink(groupLink)
-                            .setHost(serviceHost)
-                            .setReferrer(serviceHost.getUri().toString())
+                            .setService(service)
                             .setUsersToAdd(Collections.singletonList(principal))
                             .update()));
         }
 
         for (String principal : removePrincipals) {
-            results.add(PrincipalUtil.getOrCreateUser(serviceHost, principal)
+            results.add(PrincipalUtil.getOrCreateUser(service, principal)
                     .thenCompose(user -> UserGroupsUpdater.create()
                             .setGroupLink(groupLink)
-                            .setHost(serviceHost)
-                            .setReferrer(serviceHost.getUri().toString())
+                            .setService(service)
                             .setUsersToRemove(Collections.singletonList(principal))
                             .update()));
         }
@@ -253,7 +252,7 @@ public class ProjectRolesHandler {
     private DeferredResult<Void> handleGroupsAssignment(ProjectState projectState,
             List<String> adminUserGroupsToAdd, List<String> adminUserGroupsToRemove,
             List<String> memberUserGroupsToAdd, List<String> memberUserGroupsToRemove,
-            List<String> viewerUserGroupsToAdd, List<String> viewerUserGroupsToRemove)  {
+            List<String> viewerUserGroupsToAdd, List<String> viewerUserGroupsToRemove) {
 
         List<DeferredResult<Void>> results = new ArrayList<>();
 
@@ -285,14 +284,16 @@ public class ProjectRolesHandler {
         });
     }
 
-    private DeferredResult<Void> handleProjectViewerGroupAssignment(ProjectState projectState, String groupId) {
+    private DeferredResult<Void> handleProjectViewerGroupAssignment(ProjectState projectState,
+            String groupId) {
         String projectId = Service.getId(projectState.documentSelfLink);
         RoleState role = AuthUtil.buildProjectViewersRole(projectId, groupId, null);
         return createRole(projectId, groupId, role)
-               .thenAccept(ignore -> projectState.viewersUserGroupLinks.add(role.userGroupLink));
+                .thenAccept(ignore -> projectState.viewersUserGroupLinks.add(role.userGroupLink));
     }
 
-    private DeferredResult<Void> handleProjectViewerGroupUnssignment(ProjectState projectState, String groupId) {
+    private DeferredResult<Void> handleProjectViewerGroupUnssignment(ProjectState projectState,
+            String groupId) {
         String projectId = Service.getId(projectState.documentSelfLink);
 
         String roleLink = AuthRole.PROJECT_VIEWER.buildRoleWithSuffix(projectId, groupId);
@@ -301,7 +302,8 @@ public class ProjectRolesHandler {
                 .thenAccept(ignore -> projectState.viewersUserGroupLinks.remove(userGroupLink));
     }
 
-    private DeferredResult<Void> handleProjectMemberGroupAssignment(ProjectState projectState, String groupId) {
+    private DeferredResult<Void> handleProjectMemberGroupAssignment(ProjectState projectState,
+            String groupId) {
         String projectId = Service.getId(projectState.documentSelfLink);
         RoleState role = AuthUtil.buildProjectMembersRole(projectId, groupId, null);
         return createRole(projectId, groupId, role)
@@ -309,7 +311,8 @@ public class ProjectRolesHandler {
                 .thenAccept(ignore -> projectState.membersUserGroupLinks.add(role.userGroupLink));
     }
 
-    private DeferredResult<Void> handleProjectMemberGroupUnssignment(ProjectState projectState, String groupId) {
+    private DeferredResult<Void> handleProjectMemberGroupUnssignment(ProjectState projectState,
+            String groupId) {
         String projectId = Service.getId(projectState.documentSelfLink);
 
         String roleLink = AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(projectId, groupId);
@@ -320,66 +323,73 @@ public class ProjectRolesHandler {
                 .thenAccept(ignore -> projectState.membersUserGroupLinks.remove(userGroupLink));
     }
 
-    private DeferredResult<Void> handleProjectAdminGroupAssignment(ProjectState projectState, String groupId) {
+    private DeferredResult<Void> handleProjectAdminGroupAssignment(ProjectState projectState,
+            String groupId) {
         String projectId = Service.getId(projectState.documentSelfLink);
         RoleState role = AuthUtil.buildProjectAdminsRole(projectId, groupId, null);
         return createRole(projectId, groupId, role)
-               .thenAccept(ignore -> projectState.administratorsUserGroupLinks.add(role.userGroupLink));
+                .thenAccept(ignore -> projectState.administratorsUserGroupLinks
+                        .add(role.userGroupLink));
     }
 
-    private DeferredResult<Void> handleProjectAdminGroupUnassignment(ProjectState projectState, String groupId) {
+    private DeferredResult<Void> handleProjectAdminGroupUnassignment(ProjectState projectState,
+            String groupId) {
         String projectId = Service.getId(projectState.documentSelfLink);
         String roleLink = AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(projectId, groupId);
         String userGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, groupId);
 
         return deleteRole(roleLink)
-                .thenAccept(ignore -> projectState.administratorsUserGroupLinks.remove(userGroupLink));
+                .thenAccept(
+                        ignore -> projectState.administratorsUserGroupLinks.remove(userGroupLink));
     }
 
     private DeferredResult<RoleState> createRole(String projectId, String groupId, RoleState role) {
-        Operation principalGroupOp = Operation.createGet(getHost(), UriUtils.buildUriPath(PrincipalService.SELF_LINK, groupId))
-                .setReferer(getHost().getUri());
+        Operation principalGroupOp = Operation
+                .createGet(service, UriUtils.buildUriPath(PrincipalService.SELF_LINK, groupId));
 
-        Operation userGroupGetOp = Operation.createGet(getHost(), UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, groupId))
-                .setReferer(getHost().getUri());
+        Operation userGroupGetOp = Operation
+                .createGet(service, UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, groupId));
 
-        Operation userGroupPostOp = Operation.createPost(getHost(), UriUtils.buildUriPath(UserGroupService.FACTORY_LINK))
-                .setReferer(getHost().getUri())
+        Operation userGroupPostOp = Operation
+                .createPost(service, UriUtils.buildUriPath(UserGroupService.FACTORY_LINK))
                 .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE);
 
-        Operation resourceGroupOp = Operation.createGet(getHost(), UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK, projectId))
-                .setReferer(getHost().getUri());
+        Operation resourceGroupOp = Operation.createGet(service,
+                UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK, projectId));
 
-        Operation rolePostOp = Operation.createPost(getHost(), UriUtils.buildUriPath(RoleService.FACTORY_LINK))
-                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
-                .setReferer(getHost().getUri());
+        Operation rolePostOp = Operation
+                .createPost(service, UriUtils.buildUriPath(RoleService.FACTORY_LINK))
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE);
 
-        return getHost().sendWithDeferredResult(principalGroupOp, Principal.class)
-            .thenCompose(principal -> {
-                // retrieve the UserGroupState for the given group
-                return getHost().sendWithDeferredResult(userGroupGetOp, UserGroupState.class);
-            })
-            .thenApply(ug -> Pair.of(ug, (Throwable) null))
-            .exceptionally(ex -> Pair.of(null, ex))
-            .thenCompose(pair -> {
-                // create UserGroupState if doesn't exist
-                if (pair.right != null) {
-                    userGroupPostOp.setBody(AuthUtil.buildProjectMembersUserGroupByGroupId(groupId));
-                    return getHost().sendWithDeferredResult(userGroupPostOp, UserGroupState.class);
-                }
+        return service.sendWithDeferredResult(principalGroupOp, Principal.class)
+                .thenCompose(principal -> {
+                    // retrieve the UserGroupState for the given group
+                    return service.sendWithDeferredResult(userGroupGetOp, UserGroupState.class);
+                })
+                .thenApply(ug -> Pair.of(ug, (Throwable) null))
+                .exceptionally(ex -> Pair.of(null, ex))
+                .thenCompose(pair -> {
+                    // create UserGroupState if doesn't exist
+                    if (pair.right != null) {
+                        userGroupPostOp
+                                .setBody(AuthUtil.buildProjectMembersUserGroupByGroupId(groupId));
+                        return service.sendWithDeferredResult(userGroupPostOp,
+                                UserGroupState.class);
+                    }
 
-                // returns the fetched UserGroupState
-                return DeferredResult.completed(pair.left);
-            })
-            .thenCompose(userGroup -> {
-                role.userGroupLink = userGroup.documentSelfLink;
-                return getHost().sendWithDeferredResult(resourceGroupOp, ResourceGroupState.class);
-            })
-            .thenCompose(rg -> {
-                role.resourceGroupLink = rg.documentSelfLink;
-                rolePostOp.setBody(role);
-                return getHost().sendWithDeferredResult(rolePostOp, RoleState.class);
-            });
+                    // returns the fetched UserGroupState
+                    return DeferredResult.completed(pair.left);
+                })
+                .thenCompose(userGroup -> {
+                    role.userGroupLink = userGroup.documentSelfLink;
+                    return service.sendWithDeferredResult(resourceGroupOp,
+                            ResourceGroupState.class);
+                })
+                .thenCompose(rg -> {
+                    role.resourceGroupLink = rg.documentSelfLink;
+                    rolePostOp.setBody(role);
+                    return service.sendWithDeferredResult(rolePostOp, RoleState.class);
+                });
     }
 
     private DeferredResult<Void> createExtendedMemberRole(String projectId, String groupId) {
@@ -393,55 +403,45 @@ public class ProjectRolesHandler {
                 resourceGroupState.documentSelfLink);
 
         Operation resourceGroupPostOp = Operation
-                .createPost(getHost(), ResourceGroupService.FACTORY_LINK)
+                .createPost(service, ResourceGroupService.FACTORY_LINK)
                 .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
-                .setBody(resourceGroupState)
-                .setReferer(getHost().getUri());
+                .setBody(resourceGroupState);
 
         Operation rolePostOp = Operation
-                .createPost(getHost(), RoleService.FACTORY_LINK)
+                .createPost(service, RoleService.FACTORY_LINK)
                 .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
-                .setBody(roleState)
-                .setReferer(getHost().getUri());
+                .setBody(roleState);
 
-        return getHost().sendWithDeferredResult(resourceGroupPostOp, ResourceGroupState.class)
-                .thenCompose(ignore -> getHost().sendWithDeferredResult(rolePostOp, RoleState.class))
+        return service.sendWithDeferredResult(resourceGroupPostOp, ResourceGroupState.class)
+                .thenCompose(
+                        ignore -> service.sendWithDeferredResult(rolePostOp, RoleState.class))
                 .thenAccept(ignore -> {
                 });
     }
 
     private DeferredResult<Void> deleteRole(String roleLink) {
-        Operation roleDeleteOp = Operation.createDelete(getHost(), UriUtils.buildUriPath(RoleService.FACTORY_LINK, roleLink))
-                .setReferer(getHost().getUri());
+        Operation roleDeleteOp = Operation
+                .createDelete(service, UriUtils.buildUriPath(RoleService.FACTORY_LINK, roleLink));
 
-        return getHost().sendWithDeferredResult(roleDeleteOp).thenAccept(ignore -> {
+        return service.sendWithDeferredResult(roleDeleteOp).thenAccept(ignore -> {
         });
     }
 
     private DeferredResult<Void> deleteExtendedMemberRole(String projectId, String groupId) {
-        String roleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, AuthRole
-                .PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId, groupId));
+        String roleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
+                AuthRole.PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId, groupId));
 
         String resourceGroupLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
                 AuthRole.PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId, groupId));
 
-        Operation deleteRgOp = Operation.createDelete(getHost(), resourceGroupLink)
-                .setReferer(getHost().getUri());
+        Operation deleteRgOp = Operation.createDelete(service, resourceGroupLink);
 
-        Operation deleteRoleOp = Operation.createDelete(getHost(), roleLink)
-                .setReferer(getHost().getUri());
+        Operation deleteRoleOp = Operation.createDelete(service, roleLink);
 
-        return getHost().sendWithDeferredResult(deleteRgOp)
-                .thenCompose(ignore -> getHost().sendWithDeferredResult(deleteRoleOp))
+        return service.sendWithDeferredResult(deleteRgOp)
+                .thenCompose(ignore -> service.sendWithDeferredResult(deleteRoleOp))
                 .thenAccept(ignore -> {
                 });
     }
 
-    private ServiceHost getHost() {
-        return serviceHost;
-    }
-
-    private String getProjectLink() {
-        return projectLink;
-    }
 }

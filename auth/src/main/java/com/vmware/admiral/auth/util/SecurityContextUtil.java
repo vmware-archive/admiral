@@ -11,8 +11,6 @@
 
 package com.vmware.admiral.auth.util;
 
-import static com.vmware.admiral.auth.util.PrincipalRolesUtil.getAllRolesForPrincipal;
-
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -23,16 +21,13 @@ import java.util.stream.Collectors;
 import org.apache.commons.collections.CollectionUtils;
 
 import com.vmware.admiral.auth.idm.AuthRole;
-import com.vmware.admiral.auth.idm.Principal;
 import com.vmware.admiral.auth.idm.PrincipalRoles;
-import com.vmware.admiral.auth.idm.PrincipalService;
 import com.vmware.admiral.auth.idm.SecurityContext;
 import com.vmware.admiral.auth.idm.SecurityContext.ProjectEntry;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
-import com.vmware.xenon.common.UriUtils;
 
 public class SecurityContextUtil {
 
@@ -68,25 +63,14 @@ public class SecurityContextUtil {
             return DeferredResult.completed(securityContext);
         }
 
-        return getPrincipal(requestorService, requestorOperation, userId)
-                .thenCompose(principal -> getAllRolesForPrincipal(
+        return PrincipalUtil.getPrincipal(requestorService, requestorOperation, userId)
+                .thenCompose(principal -> PrincipalRolesUtil.getAllRolesForPrincipal(
                         requestorService, requestorOperation, principal))
                 .thenApply(SecurityContextUtil::fromPrincipalRolesToSecurityContext)
                 .thenApply(sc -> {
                     securityContextCache.put(userId, sc);
                     return sc;
                 });
-    }
-
-    private static DeferredResult<Principal> getPrincipal(Service requestorService,
-            Operation requestorOperation, String userId) {
-        Operation getOp = Operation.createGet(requestorService,
-                UriUtils.buildUriPath(PrincipalService.SELF_LINK, userId));
-
-        requestorService.setAuthorizationContext(getOp,
-                requestorOperation.getAuthorizationContext());
-
-        return requestorService.sendWithDeferredResult(getOp, Principal.class);
     }
 
     public static List<SecurityContext.ProjectEntry> buildProjectEntries(

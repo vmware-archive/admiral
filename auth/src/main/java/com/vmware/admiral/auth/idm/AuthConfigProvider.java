@@ -20,6 +20,7 @@ import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.services.common.UserService.UserState;
 
 public interface AuthConfigProvider {
 
@@ -41,5 +42,7 @@ public interface AuthConfigProvider {
     Function<Claims, String> getAuthenticationServiceUserLinkBuilder();
 
     Collection<FactoryService> createServiceFactories();
+
+    Class<? extends UserState> getUserStateClass();
 
 }

@@ -129,6 +129,9 @@ public class AuthUtil {
 
     public static final String AUTH_CONFIG_FILE = "authConfig";
 
+    public static final Class<? extends UserState> USER_STATE_CLASS = AuthUtil
+            .getPreferredProvider(AuthConfigProvider.class).getUserStateClass();
+
     private static final String PREFERRED_PROVIDER_PACKAGE = "com.vmware.admiral.auth.idm.psc";
 
     static {
@@ -673,7 +676,7 @@ public class AuthUtil {
     public static Query buildQueryForUsers(String userGroupLink) {
         Query resultQuery = new Query();
 
-        Query kindClause = QueryUtil.createKindClause(UserState.class)
+        Query kindClause = QueryUtil.createKindClause(AuthUtil.USER_STATE_CLASS)
                 .setOccurance(Occurance.MUST_OCCUR);
 
         Query matchUsers = Query.Builder.create()
@@ -689,7 +692,7 @@ public class AuthUtil {
     public static Query buildUsersQuery(List<String> userLinks) {
         Query resultQuery = new Query();
 
-        Query kindClause = QueryUtil.createKindClause(UserState.class)
+        Query kindClause = QueryUtil.createKindClause(AuthUtil.USER_STATE_CLASS)
                 .setOccurance(Occurance.MUST_OCCUR);
 
         Query documentLinkClause = new Query().setOccurance(Occurance.MUST_OCCUR);

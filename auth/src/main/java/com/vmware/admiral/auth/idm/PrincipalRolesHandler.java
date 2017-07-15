@@ -20,11 +20,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.auth.util.PrincipalUtil;
 import com.vmware.admiral.auth.util.UserGroupsUpdater;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.UriUtils;
@@ -41,33 +43,24 @@ public class PrincipalRolesHandler {
 
     public static class PrincipalRoleAssignment {
         public List<String> add;
-
         public List<String> remove;
     }
 
-    private ServiceHost host;
-
+    private Service service;
     private PrincipalRoleAssignment roleAssignment;
-
     private String principalId;
 
     private PrincipalRolesHandler() {
     }
 
-    private PrincipalRolesHandler(ServiceHost host,
-            PrincipalRoleAssignment roleAssignment, String principalId) {
-        this.setHost(host);
+    private PrincipalRolesHandler(ServiceHost host, PrincipalRoleAssignment roleAssignment,
+            String principalId) {
+        this.setService(service);
         this.setPrincipalId(principalId);
-        this.setRoleAssignment(roleAssignment);
     }
 
     public static PrincipalRolesHandler create() {
         return new PrincipalRolesHandler();
-    }
-
-    public static PrincipalRolesHandler create(ServiceHost host,
-            PrincipalRoleAssignment roleAssignment, String principalId) {
-        return new PrincipalRolesHandler(host, roleAssignment, principalId);
     }
 
     public static boolean isPrincipalRolesUpdate(Operation op) {
@@ -79,9 +72,9 @@ public class PrincipalRolesHandler {
                 || (body.remove != null && !body.remove.isEmpty());
     }
 
-    public PrincipalRolesHandler setHost(ServiceHost host) {
-        assertNotNull(host, "host");
-        this.host = host;
+    public PrincipalRolesHandler setService(Service service) {
+        assertNotNull(service, "service");
+        this.service = service;
         return this;
     }
 
@@ -156,11 +149,10 @@ public class PrincipalRolesHandler {
                     ROLE_NOT_SUPPORTED_MESSAGE, ROLE_NOT_SUPPORTED_MESSAGE_CODE, role.name()));
         }
 
-        return PrincipalUtil.getOrCreateUser(host, principalId)
+        return PrincipalUtil.getOrCreateUser(service, principalId)
                 .thenCompose(user -> UserGroupsUpdater.create()
-                        .setGroupLink(CLOUD_ADMINS_USER_GROUP_LINK)
-                        .setHost(host)
-                        .setReferrer(host.getUri().toString())
+                        .setService(service)
+                        .setGroupLink(AuthUtil.CLOUD_ADMINS_USER_GROUP_LINK)
                         .setUsersToAdd(Collections.singletonList(principalId))
                         .update());
     }
@@ -169,9 +161,8 @@ public class PrincipalRolesHandler {
 
         if (role == AuthRole.CLOUD_ADMIN) {
             return UserGroupsUpdater.create()
+                    .setService(service)
                     .setGroupLink(CLOUD_ADMINS_USER_GROUP_LINK)
-                    .setHost(host)
-                    .setReferrer(host.getUri().toString())
                     .setUsersToRemove(Collections.singletonList(principalId))
                     .update();
 
@@ -204,12 +195,11 @@ public class PrincipalRolesHandler {
     private DeferredResult<Void> handleCloudAdminGroupUnassignment() {
         String roleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, AuthRole.CLOUD_ADMIN
                 .buildRoleWithSuffix(principalId));
-        Operation getRole = Operation.createGet(host, roleLink)
-                .setReferer(host.getUri());
+        Operation getRole = Operation.createGet(service, roleLink);
 
         DeferredResult<Void> result = new DeferredResult<>();
 
-        host.sendWithDeferredResult(getRole, RoleState.class)
+        service.sendWithDeferredResult(getRole, RoleState.class)
                 .handle((ug, ex) -> {
                     if (ex != null) {
                         if (ex.getCause() instanceof ServiceNotFoundException) {
@@ -218,10 +208,9 @@ public class PrincipalRolesHandler {
                         }
                         return DeferredResult.failed(ex);
                     }
-                    Operation deleteRoleOp = Operation.createDelete(host, roleLink)
-                            .setReferer(host.getUri());
+                    Operation deleteRoleOp = Operation.createDelete(service, roleLink);
                     addReplicationFactor(deleteRoleOp);
-                    return host.sendWithDeferredResult(deleteRoleOp, RoleState.class);
+                    return service.sendWithDeferredResult(deleteRoleOp, RoleState.class);
                 })
                 .thenAccept(ignore -> result.complete(null))
                 .exceptionally(ex -> {
@@ -233,16 +222,15 @@ public class PrincipalRolesHandler {
     }
 
     private DeferredResult<Void> handleCloudAdminGroupAssignment(String principalId) {
-        return PrincipalUtil.getOrCreateUserGroup(host, principalId)
+        return PrincipalUtil.getOrCreateUserGroup(service, principalId)
                 .thenCompose(userGroup -> {
                     RoleState roleState = buildCloudAdminsRole(principalId,
                             userGroup.documentSelfLink);
                     Operation createRoleOp = Operation
-                            .createPost(host, RoleService.FACTORY_LINK)
-                            .setReferer(host.getUri())
+                            .createPost(service, RoleService.FACTORY_LINK)
                             .setBody(roleState);
                     addReplicationFactor(createRoleOp);
-                    return host.sendWithDeferredResult(createRoleOp, RoleState.class);
+                    return service.sendWithDeferredResult(createRoleOp, RoleState.class);
                 }).thenAccept(ignore -> {
                 });
     }
