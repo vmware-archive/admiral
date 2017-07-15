@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.junit.Ignore;
+
 import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.profile.StorageProfileService;
 import com.vmware.photon.controller.model.Constraint;
@@ -30,6 +32,7 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.DiskService;
 import com.vmware.xenon.services.common.QueryTask;
 
+@Ignore("https://jira-hzn.eng.vmware.com/browse/VCOM-1377")
 public class AzureComputeProvisionWithBootAndAdditionalDiskIT extends AzureComputeProvisionIT {
 
     private static final long OS_DISK_SIZE = 32 * 1024;
