@@ -15,6 +15,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
@@ -28,6 +29,7 @@ public class ResourcePoolTransformationServiceTest extends ComputeBaseTest {
         waitForServiceAvailability(GroupResourcePlacementService.FACTORY_LINK);
         waitForServiceAvailability(ResourcePoolService.FACTORY_LINK);
         waitForServiceAvailability(ResourcePoolTransformationService.SELF_LINK);
+        waitForServiceAvailability(ElasticPlacementZoneConfigurationService.SELF_LINK);
 
     }
 
