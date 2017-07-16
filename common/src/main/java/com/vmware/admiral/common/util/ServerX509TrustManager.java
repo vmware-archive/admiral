@@ -207,7 +207,7 @@ public class ServerX509TrustManager implements X509TrustManager, Closeable {
 
         Runnable task = () -> {
             try {
-                host.log(Level.INFO, "Host %s reloading all certificates", host.getPublicUri());
+                host.log(Level.FINE, "Host %s reloading all certificates", host.getPublicUri());
                 documentUpdateTimeMicros = 0;
                 loadSslTrustCertServices();
 
