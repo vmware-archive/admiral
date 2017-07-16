@@ -12,9 +12,7 @@
 <clr-datagrid class="projectMembersGrid">
     <clr-dg-action-bar>
         <div class="btn-group" role="group" aria-label="Available Actions">
-            <button type="button" class="btn btn-sm btn-secondary" allowNavigation
-                    [projectSelfLink]="projectSelfLink"
-                    [roles]="projectMembersAdd"
+            <button type="button" class="btn btn-sm btn-secondary"
                     (click)="onAddMembers()"><clr-icon shape="add"></clr-icon><span
                                         class="btn-spaced-text">{{"add" | i18n}}</span></button>
         </div>
@@ -25,9 +23,7 @@
     <clr-dg-column>{{"projects.members.columnRole" | i18n}}</clr-dg-column>
 
     <clr-dg-row *clrDgItems="let member of members" [clrDgItem]="member">
-        <clr-dg-action-overflow allowNavigation
-                    [projectSelfLink]="projectSelfLink"
-                    [roles]="projectMemberActions">
+        <clr-dg-action-overflow>
             <button class="action-item" (click)="onEdit(member)">{{"edit" | i18n}}</button>
             <button class="action-item" (click)="onRemove(member)">{{"remove" | i18n}}</button>
         </clr-dg-action-overflow>

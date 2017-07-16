@@ -12,11 +12,12 @@
 import { AuthService } from './../../utils/auth.service';
 import { Directive, Input, Inject, ElementRef, Renderer } from '@angular/core';
 import { Utils } from './../../utils/utils';
+import { OnChanges } from '@angular/core';
 
 @Directive({
   selector: '[allowNavigation]'
 })
-export class AllowNavigationDirective {
+export class AllowNavigationDirective implements OnChanges {
 
   @Input()
   roles: string[];
@@ -27,10 +28,13 @@ export class AllowNavigationDirective {
   constructor(private el: ElementRef, private renderer: Renderer, private authService: AuthService) {
   }
 
-  ngOnInit() {
+  ngOnChanges(changes) {
+    this.allowAccess();
+  }
+
+  private allowAccess() {
     this.authService.loadCurrentUserSecurityContext().then((securityContext) => {
       let show = false;
-
       if (securityContext && securityContext.roles) {
         securityContext.roles.forEach(role => {
           if (this.roles.indexOf(role) != -1) {

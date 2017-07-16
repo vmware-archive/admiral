@@ -13,7 +13,6 @@ import { Component, Input, OnChanges } from '@angular/core';
 import { DocumentService } from "../../../utils/document.service";
 import * as I18n from 'i18next';
 import { Utils } from "../../../utils/utils";
-import { RoutesRestriction } from './../../../utils/routes-restriction';
 
 @Component({
     selector: 'app-project-members',
@@ -192,17 +191,5 @@ export class ProjectMembersComponent implements OnChanges {
             console.log("Failed to reload project data", error);
             this.deleteConfirmationAlert = Utils.getErrorMessage(error)._generic;
         });
-    }
-
-    get projectMembersAdd() {
-        return RoutesRestriction.PROJECT_MEMBERS_ADD;
-    }
-
-    get projectSelfLink() {
-        return this.project && this.project.documentSelfLink;
-    }
-
-    get projectMemberActions() {
-        return RoutesRestriction.PROJECT_MEMBER_ACTIONS;
     }
 }

@@ -40,12 +40,10 @@
           </button>
 
           <div class="dropdown-menu">
-              <a href="..." clrDropdownItem allowNavigation [projectSelfLink]="item.documentSelfLink"
-                 [roles]="projectsCardViewActionsDetails"
+              <a href="..." clrDropdownItem
                  [routerLink]="['./' + item.documentId]"><clr-icon shape="eye" size="20"
                                                                    class="card-drop-down-actions"></clr-icon>{{"projects.actions.details" | i18n}}</a>
-              <a href="..." clrDropdownItem allowNavigation [projectSelfLink]="item.documentSelfLink"
-                 [roles]="projectsCardViewActionsDelete"
+              <a href="..." clrDropdownItem
                  (click)="deleteProject($event, item)"><clr-icon shape="trash" size="20"
                                                                  class="card-drop-down-actions"></clr-icon>{{"delete" | i18n}}</a>
           </div>

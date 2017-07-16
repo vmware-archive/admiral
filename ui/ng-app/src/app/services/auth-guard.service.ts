@@ -9,17 +9,19 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Injectable } from '@angular/core';
-import { CanActivate, ActivatedRouteSnapshot, Router } from '@angular/router';
+import { Injectable, Input } from '@angular/core';
+import { CanActivate, ActivatedRouteSnapshot, Router, RouterStateSnapshot } from '@angular/router';
 import { Links } from './../utils/links';
 import { AuthService } from './../utils/auth.service';
+import { Utils } from './../utils/utils';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
+
   constructor(private router: Router, private authService: AuthService) {
   }
 
-  canActivate(route: ActivatedRouteSnapshot): Promise<boolean> {
+  canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Promise<boolean> {
     return new Promise((resolve, reject) => {
       if (!route.data["roles"]) {
         return reject(new Error("Roles not provided!"));
@@ -27,30 +29,46 @@ export class AuthGuard implements CanActivate {
 
       let roles = route.data["roles"] as Array<string>;
       this.authService.loadCurrentUserSecurityContext().then((securityContext) => {
-        let authorized = false;
         if (securityContext && securityContext.roles) {
-          securityContext.roles.forEach(element => {
-            if (roles.indexOf(element) != -1) {
-              authorized = true;
-              return;
+          for (var index = 0; index < securityContext.roles.length; index++) {
+            var role = securityContext.roles[index];
+            if (roles.indexOf(role) != -1) {
+              return resolve(true);
             }
-          });
+          }
         }
 
         if (securityContext && securityContext.projects) {
-          securityContext.projects.forEach(project => {
-            if (project &&  project.roles) {
-              project.roles.forEach(role => {
-                if (roles.indexOf(role) != -1) {
-                  authorized = true;
-                  return;
+          for (var index = 0; index < securityContext.projects.length; index++) {
+            var project = securityContext.projects[index];
+            if (project && project.roles) {
+              if (state.url.indexOf(Utils.getDocumentId(project.documentSelfLink)) != -1) {
+                let authorized = false;
+                for (var index = 0; index < project.roles.length; index++) {
+                  var role = project.roles[index];
+                  if (roles.indexOf(role) != -1) {
+                    authorized = true;
+                  }
                 }
-              });
+
+                return resolve(authorized);
+              }
             }
-          });
+          }
+
+          for (var index = 0; index < securityContext.projects.length; index++) {
+            var project = securityContext.projects[index];
+            if (project && project.roles) {
+                project.roles.forEach(role => {
+                  if (roles.indexOf(role) != -1) {
+                    return resolve(true);
+                  }
+                });
+              }
+            }
         }
 
-        authorized ? resolve(true) : resolve(false);
+        return resolve(false);
       })
       .catch((err) => {
         // allow access in case of no authentication

@@ -98,12 +98,4 @@ export class ProjectsComponent {
   get projectsCardViewActions() {
     return RoutesRestriction.PROJECT_CARD_VIEW_ACTIONS;
   }
-
-  get projectsCardViewActionsDetails() {
-    return RoutesRestriction.PROJECT_CARD_VIEW_ACTIONS_DETAILS;
-  }
-
-  get projectsCardViewActionsDelete() {
-    return RoutesRestriction.PROJECT_CARD_VIEW_ACTIONS_DELETE;
-  }
 }
