@@ -1,5 +1,5 @@
 import { Utils } from './../../utils/utils';
-import { Component, OnInit, OnDestroy, ViewChild, ViewEncapsulation, Input } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ViewEncapsulation, Input, Output, EventEmitter } from '@angular/core';
 import { Router, ActivatedRoute, Route, RoutesRecognized, NavigationEnd, NavigationCancel } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ViewExpandRequestService } from '../../services/view-expand-request.service';
@@ -20,9 +20,12 @@ export class FormerViewComponent {
   @Input()
   forCompute: boolean;
 
+  @Output()
+  onRouteChange: EventEmitter<string> = new EventEmitter();
+
   @Input()
   set path(val: string) {
-    val = val || 'containers';
+    val = val || '/containers';
 
     this.url = window.location.pathname + 'ogui/index-no-navigation.html';
 
@@ -42,6 +45,10 @@ export class FormerViewComponent {
       iframeEl.onload = () => {
         this.frameLoading = false;
         iframeEl.src = this.url;
+
+        iframeEl.contentWindow.notifyNavigation = (hash) => {
+          this.onRouteChange.emit(hash);
+        }
       }
 
       iframeEl.src = this.url;

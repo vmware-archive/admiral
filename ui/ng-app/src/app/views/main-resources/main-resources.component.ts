@@ -17,6 +17,7 @@ import { Component, OnInit, ViewEncapsulation, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { Router, NavigationEnd } from '@angular/router';
 import { ProjectService } from './../../utils/project.service';
+import { FormerViewPathBridge, RouteUtils } from './../../utils/route-utils';
 
 @Component({
   selector: 'app-main-resources',
@@ -34,18 +35,21 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
 
     routeObserve: Subscription;
 
-    formerViewPaths = {
-      'templates': 'templates?$category=templates',
-      'public-repositories': 'templates?$category=images',
-      'closure-definitions': 'templates?$category=closures',
-      'placements': 'placements',
-      'hosts': 'hosts',
-      'applications': 'applications',
-      'containers': 'containers',
-      'networks': 'networks',
-      'volumes': 'volumes',
-      'closures': 'closures'
-    }
+    formerViewPaths = [
+      new FormerViewPathBridge('/home/templates/image', '/templates/image'),
+      new FormerViewPathBridge('/home/templates/template', '/templates/template'),
+      new FormerViewPathBridge('/home/templates','/templates','$category=templates'),
+      new FormerViewPathBridge('/home/public-repositories','/templates','$category=images'),
+      new FormerViewPathBridge('/home/closure-definitions','/templates','$category=closures'),
+      new FormerViewPathBridge('/home/closure-definitions','/templates','$category=closures'),
+      new FormerViewPathBridge('/home/placements','/placements'),
+      new FormerViewPathBridge('/home/hosts','/hosts'),
+      new FormerViewPathBridge('/home/applications','/applications'),
+      new FormerViewPathBridge('/home/containers','/containers'),
+      new FormerViewPathBridge('/home/networks','/networks'),
+      new FormerViewPathBridge('/home/volumes','/volumes'),
+      new FormerViewPathBridge('/home/closures','/closures')
+    ]
 
     formerViewPath;
 
@@ -55,17 +59,7 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
     constructor(private router: Router, private ds: DocumentService, private ajax: Ajax, private ps: ProjectService) {
       this.routeObserve = this.router.events.subscribe((event) => {
         if (event instanceof NavigationEnd) {
-          let formerViewPath;
-          if (event.urlAfterRedirects.startsWith("/home/")) {
-            let url = event.urlAfterRedirects.replace("/home/", "");
-            for (let key in this.formerViewPaths) {
-              if (url.startsWith(key)) {
-                formerViewPath = this.formerViewPaths[key]
-              }
-            }
-          }
-
-          this.formerViewPath = formerViewPath;
+          this.formerViewPath = RouteUtils.toFormerViewPath(event.urlAfterRedirects, this.formerViewPaths);
         }
       });
     }
@@ -116,5 +110,17 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
     selectProject(project) {
       this.selectedProject = project;
       this.ps.setSelectedProject(this.selectedProject);
+    }
+
+    onFormerViewRouteChange(newFormerPath: string) {
+      if (!this.formerViewPath) {
+        // not yet initialized
+        return;
+      }
+
+      let viewPath = RouteUtils.fromFormerViewPath(newFormerPath, this.formerViewPaths);
+      if (viewPath) {
+        this.router.navigateByUrl(viewPath);
+      }
     }
 }

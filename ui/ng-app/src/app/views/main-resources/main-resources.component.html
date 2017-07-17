@@ -74,5 +74,5 @@
     <router-outlet></router-outlet>
 </div>
 <div class="content-area expanded" [hidden]="!formerViewPath">
-    <former-view [path]="formerViewPath"></former-view>
+    <former-view [path]="formerViewPath" (onRouteChange)="onFormerViewRouteChange($event)"></former-view>
 </div>
