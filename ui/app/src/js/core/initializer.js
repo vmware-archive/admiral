@@ -151,7 +151,9 @@ initializer.init = function(initProperties, callback) {
         endpointEditor: customProperties.endpointEditor,
         computeProfileEditorType: customProperties.computeProfileEditorType,
         computeProfileEditor: customProperties.computeProfileEditor,
+        networkProfileEditorType: customProperties.networkProfileEditorType,
         networkProfileEditor: customProperties.networkProfileEditor,
+        storageProfileEditorType: customProperties.storageProfileEditorType,
         storageProfileEditor: customProperties.storageProfileEditor,
         endpointEditorType: customProperties.endpointEditorType
       };
