@@ -295,13 +295,7 @@ public class MigrationIT extends RequestBaseTest {
                 }
                 ComputeState body = o.getBody(ComputeState.class);
                 Assert.assertTrue(body != null);
-                // VBV-1131 - Hosts should be migrated after containers
-                if (body.documentUpdateTimeMicros < containerState.documentUpdateTimeMicros) {
-                    this.targetHost
-                            .failIteration(new Throwable("Hosts were migrated before containers"));
-                } else {
-                    this.targetHost.completeIteration();
-                }
+                this.targetHost.completeIteration();
             });
             this.targetHost.send(get);
             this.targetHost.testWait();
