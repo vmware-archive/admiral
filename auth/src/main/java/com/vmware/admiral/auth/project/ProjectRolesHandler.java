@@ -288,7 +288,7 @@ public class ProjectRolesHandler {
             String groupId) {
         String projectId = Service.getId(projectState.documentSelfLink);
         RoleState role = AuthUtil.buildProjectViewersRole(projectId, groupId, null);
-        return createRole(projectId, groupId, role)
+        return createRole(projectId, AuthRole.PROJECT_VIEWER, groupId, role)
                 .thenAccept(ignore -> projectState.viewersUserGroupLinks.add(role.userGroupLink));
     }
 
@@ -306,7 +306,7 @@ public class ProjectRolesHandler {
             String groupId) {
         String projectId = Service.getId(projectState.documentSelfLink);
         RoleState role = AuthUtil.buildProjectMembersRole(projectId, groupId, null);
-        return createRole(projectId, groupId, role)
+        return createRole(projectId, AuthRole.PROJECT_MEMBER, groupId, role)
                 .thenCompose(ignore -> createExtendedMemberRole(projectId, groupId))
                 .thenAccept(ignore -> projectState.membersUserGroupLinks.add(role.userGroupLink));
     }
@@ -327,7 +327,7 @@ public class ProjectRolesHandler {
             String groupId) {
         String projectId = Service.getId(projectState.documentSelfLink);
         RoleState role = AuthUtil.buildProjectAdminsRole(projectId, groupId, null);
-        return createRole(projectId, groupId, role)
+        return createRole(projectId, AuthRole.PROJECT_ADMIN, groupId, role)
                 .thenAccept(ignore -> projectState.administratorsUserGroupLinks
                         .add(role.userGroupLink));
     }
@@ -343,7 +343,8 @@ public class ProjectRolesHandler {
                         ignore -> projectState.administratorsUserGroupLinks.remove(userGroupLink));
     }
 
-    private DeferredResult<RoleState> createRole(String projectId, String groupId, RoleState role) {
+    private DeferredResult<RoleState> createRole(String projectId, AuthRole role, String groupId,
+            RoleState roleState) {
         Operation principalGroupOp = Operation
                 .createGet(service, UriUtils.buildUriPath(PrincipalService.SELF_LINK, groupId));
 
@@ -355,7 +356,8 @@ public class ProjectRolesHandler {
                 .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE);
 
         Operation resourceGroupOp = Operation.createGet(service,
-                UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK, projectId));
+                UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
+                        role.buildRoleWithSuffix(projectId)));
 
         Operation rolePostOp = Operation
                 .createPost(service, UriUtils.buildUriPath(RoleService.FACTORY_LINK))
@@ -381,13 +383,13 @@ public class ProjectRolesHandler {
                     return DeferredResult.completed(pair.left);
                 })
                 .thenCompose(userGroup -> {
-                    role.userGroupLink = userGroup.documentSelfLink;
+                    roleState.userGroupLink = userGroup.documentSelfLink;
                     return service.sendWithDeferredResult(resourceGroupOp,
                             ResourceGroupState.class);
                 })
                 .thenCompose(rg -> {
-                    role.resourceGroupLink = rg.documentSelfLink;
-                    rolePostOp.setBody(role);
+                    roleState.resourceGroupLink = rg.documentSelfLink;
+                    rolePostOp.setBody(roleState);
                     return service.sendWithDeferredResult(rolePostOp, RoleState.class);
                 });
     }

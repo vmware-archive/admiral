@@ -39,7 +39,6 @@ import static com.vmware.admiral.auth.util.AuthUtil.buildProjectAdminsRole;
 import static com.vmware.admiral.auth.util.AuthUtil.buildProjectAdminsUserGroup;
 import static com.vmware.admiral.auth.util.AuthUtil.buildProjectMembersRole;
 import static com.vmware.admiral.auth.util.AuthUtil.buildProjectMembersUserGroup;
-import static com.vmware.admiral.auth.util.AuthUtil.buildProjectResourceGroup;
 import static com.vmware.admiral.auth.util.AuthUtil.buildProjectViewersRole;
 import static com.vmware.admiral.auth.util.AuthUtil.buildProjectViewersUserGroup;
 import static com.vmware.admiral.auth.util.AuthUtil.buildResourceGroupState;
@@ -169,16 +168,6 @@ public class AuthUtilTest {
         String expectedSelfLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, id);
         assertEquals(expectedSelfLink, userGroupState.documentSelfLink);
         assertNotNull(userGroupState.query);
-    }
-
-    @Test
-    public void testBuildProjectResourceGroup() {
-        ResourceGroupState resourceGroupState = buildProjectResourceGroup(SAMPLE_PROJECT_ID);
-        String expectedSelfLink = UriUtils
-                .buildUriPath(ResourceGroupService.FACTORY_LINK, SAMPLE_PROJECT_ID);
-
-        assertEquals(expectedSelfLink, resourceGroupState.documentSelfLink);
-        assertNotNull(resourceGroupState.query);
     }
 
     @Test

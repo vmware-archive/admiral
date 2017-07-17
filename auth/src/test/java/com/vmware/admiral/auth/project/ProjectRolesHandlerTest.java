@@ -68,7 +68,8 @@ public class ProjectRolesHandlerTest extends AuthBaseTest {
         String userGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
                 USER_GROUP_SUPERUSERS);
         String resourceGroupLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
-                Service.getId(project.documentSelfLink));
+                AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(Service.getId(project
+                        .documentSelfLink)));
         String roleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
                 AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(Service.getId(project.documentSelfLink),
                         USER_GROUP_SUPERUSERS));

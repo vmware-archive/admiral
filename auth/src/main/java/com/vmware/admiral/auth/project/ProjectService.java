@@ -524,8 +524,14 @@ public class ProjectService extends StatefulService {
         String viewersUserGroupUri = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
                 AuthRole.PROJECT_VIEWER.buildRoleWithSuffix(projectId));
 
-        String resourceGroupUri = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
-                projectId);
+        String adminsResourceGroupUri = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(projectId));
+
+        String membersResourceGroupUri = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(projectId));
+
+        String viewersResourceGroupUri = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_VIEWER.buildRoleWithSuffix(projectId));
 
         String extendedResourceGroupUri = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
                 AuthRole.PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId));
@@ -559,7 +565,11 @@ public class ProjectService extends StatefulService {
                 }).thenCompose((ignore) -> {
                     // Then delete the resource group
                     return DeferredResult.allOf(
-                            doDeleteDocument(resourceGroupUri, ResourceGroupState.class,
+                            doDeleteDocument(adminsResourceGroupUri, ResourceGroupState.class,
+                                    delete.getUri()),
+                            doDeleteDocument(membersResourceGroupUri, ResourceGroupState.class,
+                                    delete.getUri()),
+                            doDeleteDocument(viewersResourceGroupUri, ResourceGroupState.class,
                                     delete.getUri()),
                             doDeleteDocument(extendedResourceGroupUri, ResourceGroupState.class,
                                     delete.getUri()));
@@ -744,22 +754,24 @@ public class ProjectService extends StatefulService {
         return DeferredResult.allOf(
                 createProjectUserGroup(projectState.administratorsUserGroupLinks, adminsGroupState),
                 createProjectUserGroup(projectState.membersUserGroupLinks, membersGroupState),
-                createProjectUserGroup(projectState.viewersUserGroupLinks, viewersGroupState))
-                .thenCompose((ignore) ->
-        // Project Admins/Members/Viewers use the same resource group.
-        // We need to create additional one for Members extended role only.
-        createProjectResourceGroup(projectState, AuthRole.PROJECT_ADMIN))
-                .thenCompose((resourceGroup) -> DeferredResult.allOf(
-                        createProjectAdminRole(projectState, resourceGroup.documentSelfLink,
-                                adminsGroupState.documentSelfLink),
-                        createProjectMemberRole(projectState, resourceGroup.documentSelfLink,
-                                membersGroupState.documentSelfLink),
-                        createProjectViewerRole(projectState, resourceGroup.documentSelfLink,
-                                viewersGroupState.documentSelfLink)))
-                .thenCompose((ignore) -> createProjectResourceGroup(projectState,
-                        AuthRole.PROJECT_MEMBER_EXTENDED))
-                .thenCompose(resourceGroup -> createProjectExtendedMemberRole(projectState,
-                        resourceGroup.documentSelfLink, membersGroupState.documentSelfLink))
+                createProjectUserGroup(projectState.viewersUserGroupLinks, viewersGroupState),
+
+                createProjectResourceGroup(projectState, AuthRole.PROJECT_ADMIN)
+                    .thenCompose(resourceGroup -> createProjectAdminRole(projectState,
+                            resourceGroup.documentSelfLink, adminsGroupState.documentSelfLink)),
+
+                createProjectResourceGroup(projectState, AuthRole.PROJECT_MEMBER)
+                    .thenCompose(resourceGroup -> createProjectMemberRole(projectState,
+                            resourceGroup.documentSelfLink, membersGroupState.documentSelfLink)),
+
+                createProjectResourceGroup(projectState, AuthRole.PROJECT_MEMBER_EXTENDED)
+                    .thenCompose(resourceGroup -> createProjectExtendedMemberRole(projectState,
+                            resourceGroup.documentSelfLink, membersGroupState.documentSelfLink)),
+
+                createProjectResourceGroup(projectState, AuthRole.PROJECT_VIEWER)
+                    .thenCompose(resourceGroup -> createProjectViewerRole(projectState,
+                            resourceGroup.documentSelfLink, viewersGroupState.documentSelfLink)))
+
                 .thenApply(ignore -> projectState);
     }
 
@@ -781,12 +793,24 @@ public class ProjectService extends StatefulService {
     private DeferredResult<ResourceGroupState> createProjectResourceGroup(ProjectState projectState,
             AuthRole role) {
         String projectId = Service.getId(projectState.documentSelfLink);
-        ResourceGroupState resourceGroupState;
+        ResourceGroupState resourceGroupState = null;
 
-        if (role.equals(AuthRole.PROJECT_MEMBER_EXTENDED)) {
+        switch (role) {
+        case PROJECT_ADMIN:
+            resourceGroupState = AuthUtil.buildProjectAdminResourceGroup(projectId);
+            break;
+        case PROJECT_VIEWER:
+            resourceGroupState = AuthUtil.buildProjectViewerResourceGroup(projectId);
+            break;
+        case PROJECT_MEMBER:
+            resourceGroupState = AuthUtil.buildProjectMemberResourceGroup(projectId);
+            break;
+        case PROJECT_MEMBER_EXTENDED:
             resourceGroupState = AuthUtil.buildProjectExtendedMemberResourceGroup(projectId);
-        } else {
-            resourceGroupState = AuthUtil.buildProjectResourceGroup(projectId);
+            break;
+        default:
+            String message = String.format("%s is not project role.", role.name());
+            throw new IllegalStateException(message);
         }
 
         return getHost().sendWithDeferredResult(

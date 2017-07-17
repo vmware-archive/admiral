@@ -366,69 +366,29 @@ public class AuthUtil {
         return userGroupState;
     }
 
-    public static ResourceGroupState buildProjectResourceGroup(String projectId) {
-        String projectSelfLink = UriUtils.buildUriPath(ProjectFactoryService.SELF_LINK, projectId);
-        Query.Builder queryBuilder = Query.Builder
-                .create()
+    public static List<Query> fullAccessResourcesForAdmins() {
+        Query resourceGroupQuery = Query.Builder.create()
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
-                        buildUriWithWildcard(TemplateSearchService.SELF_LINK),
+                        buildUriWithWildcard(PrincipalService.SELF_LINK),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
-
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
-                        buildUriWithWildcard(ContainerImageService.SELF_LINK),
+                        buildUriWithWildcard(buildUserServicePathFromPrincipalId("")),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
-
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
-                        buildUriWithWildcard(ContainerImageTagsService.SELF_LINK),
+                        buildUriWithWildcard(UserGroupService.FACTORY_LINK),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
-
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
-                        buildUriWithWildcard(RegistryService.FACTORY_LINK),
+                        buildUriWithWildcard(RoleService.FACTORY_LINK),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
-
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
-                        buildUriWithWildcard(ComputeService.FACTORY_LINK),
-                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+                        buildUriWithWildcard(ResourceGroupService.FACTORY_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR).build();
 
-                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
-                        buildUriWithWildcard(HbrApiProxyService.SELF_LINK),
-                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+        List<Query> clauses = new ArrayList<>();
 
-                // Give access to credentials, but restrict the system ones.
-                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
-                        buildUriWithWildcard(AuthCredentialsService.FACTORY_LINK),
-                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+        clauses.addAll(resourceGroupQuery.booleanClauses);
 
-                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
-                        buildUriWithWildcard(ClusterService.SELF_LINK),
-                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
-
-                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
-                        buildUriWithWildcard(ElasticPlacementZoneConfigurationService.SELF_LINK),
-                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
-
-                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
-                        buildUriWithWildcard(GroupResourcePlacementService.FACTORY_LINK),
-                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR);
-
-        for (Query query : fullAccessResourcesForAdminsAndMembers(projectSelfLink)) {
-            queryBuilder.addClause(query);
-        }
-
-        Query resourceGroupQuery = queryBuilder.build();
-
-        ResourceGroupState resourceGroupState = buildResourceGroupState(null, projectId,
-                resourceGroupQuery);
-
-        return resourceGroupState;
-    }
-
-    public static ResourceGroupState buildProjectExtendedMemberResourceGroup(String projectId,
-            String groupId) {
-        ResourceGroupState state = buildProjectExtendedMemberResourceGroup(projectId);
-        String selfLink = AuthRole.PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId, groupId);
-        state.documentSelfLink = selfLink;
-        return state;
+        return clauses;
     }
 
     public static List<Query> fullAccessResourcesForAdminsAndMembers(String projectSelfLink) {
@@ -505,6 +465,72 @@ public class AuthUtil {
         return clauses;
     }
 
+    public static ResourceGroupState buildCommonProjectResourceGroup(String projectId, AuthRole
+            role) {
+        String projectSelfLink = UriUtils.buildUriPath(ProjectFactoryService.SELF_LINK, projectId);
+        Query.Builder queryBuilder = Query.Builder
+                .create()
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(TemplateSearchService.SELF_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(ContainerImageService.SELF_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(ContainerImageTagsService.SELF_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(RegistryService.FACTORY_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(ComputeService.FACTORY_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(HbrApiProxyService.SELF_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
+                // Give access to credentials, but restrict the system ones.
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(AuthCredentialsService.FACTORY_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(ClusterService.SELF_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(ElasticPlacementZoneConfigurationService.SELF_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(GroupResourcePlacementService.FACTORY_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR);
+
+        for (Query query : fullAccessResourcesForAdminsAndMembers(projectSelfLink)) {
+            queryBuilder.addClause(query);
+        }
+
+        Query resourceGroupQuery = queryBuilder.build();
+
+        ResourceGroupState resourceGroupState = buildResourceGroupState(role, projectId,
+                resourceGroupQuery);
+
+        return resourceGroupState;
+    }
+
+    public static ResourceGroupState buildProjectExtendedMemberResourceGroup(String projectId,
+            String groupId) {
+        ResourceGroupState state = buildProjectExtendedMemberResourceGroup(projectId);
+        String selfLink = AuthRole.PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId, groupId);
+        state.documentSelfLink = selfLink;
+        return state;
+    }
+
     public static ResourceGroupState buildProjectExtendedMemberResourceGroup(String projectId) {
         String projectSelfLink = UriUtils.buildUriPath(ProjectFactoryService.SELF_LINK, projectId);
 
@@ -521,6 +547,25 @@ public class AuthUtil {
 
         return resourceGroupState;
     }
+
+    public static ResourceGroupState buildProjectMemberResourceGroup(String projectId) {
+        return buildCommonProjectResourceGroup(projectId, AuthRole.PROJECT_MEMBER);
+    }
+
+    public static ResourceGroupState buildProjectViewerResourceGroup(String projectId) {
+        return buildCommonProjectResourceGroup(projectId, AuthRole.PROJECT_VIEWER);
+    }
+
+    public static ResourceGroupState buildProjectAdminResourceGroup(String projectId) {
+        ResourceGroupState resourceGroupState = buildCommonProjectResourceGroup(projectId,
+                AuthRole.PROJECT_ADMIN);
+        for (Query query : fullAccessResourcesForAdmins()) {
+            resourceGroupState.query.addBooleanClause(query);
+        }
+        return resourceGroupState;
+    }
+
+
 
     public static RoleState buildProjectAdminsRole(String projectId, String userGroupLink,
             String resourceGroupLink) {

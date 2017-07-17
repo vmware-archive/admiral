@@ -129,9 +129,6 @@ public class ProjectServiceTest extends AuthBaseTest {
         ProjectState testProject = createProject("project-test");
         String projectId = Service.getId(testProject.documentSelfLink);
 
-        String defaultResourceGroupLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
-                projectId);
-
         String defaultAdminsRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
                 AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(projectId));
         String defaultMembersRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
@@ -146,6 +143,13 @@ public class ProjectServiceTest extends AuthBaseTest {
         String defaultViewersLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
                 AuthRole.PROJECT_VIEWER.buildRoleWithSuffix(projectId));
 
+        String defaultAdminsResGroupLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(projectId));
+        String defaultMembersResGroupLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(projectId));
+        String defaultViewersResGroupLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_VIEWER.buildRoleWithSuffix(projectId));
+
         String membersExtendedResourceGroupLink = UriUtils.buildUriPath(
                 ResourceGroupService.FACTORY_LINK,
                 AuthRole.PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId));
@@ -156,10 +160,12 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertDocumentExists(defaultAdminsLink);
         assertDocumentExists(defaultMembersLink);
         assertDocumentExists(defaultViewersLink);
-        assertDocumentExists(defaultResourceGroupLink);
         assertDocumentExists(defaultAdminsRoleLink);
         assertDocumentExists(defaultMembersRoleLink);
         assertDocumentExists(defaultViewersRoleLink);
+        assertDocumentExists(defaultAdminsResGroupLink);
+        assertDocumentExists(defaultMembersResGroupLink);
+        assertDocumentExists(defaultViewersResGroupLink);
         assertDocumentExists(membersExtendedRoleLink);
         assertDocumentExists(membersExtendedResourceGroupLink);
 
@@ -279,7 +285,9 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertDocumentNotExists(defaultAdminsLink);
         assertDocumentNotExists(defaultMembersLink);
         assertDocumentNotExists(defaultViewersLink);
-        assertDocumentNotExists(defaultResourceGroupLink);
+        assertDocumentNotExists(defaultAdminsResGroupLink);
+        assertDocumentNotExists(defaultMembersResGroupLink);
+        assertDocumentNotExists(defaultViewersResGroupLink);
         assertDocumentNotExists(defaultAdminsRoleLink);
         assertDocumentNotExists(defaultMembersRoleLink);
         assertDocumentNotExists(defaultViewersRoleLink);
@@ -844,12 +852,18 @@ public class ProjectServiceTest extends AuthBaseTest {
     @Test
     public void testResourceGroupsAutoCreatedOnProjectCreate() {
         String projectId = Service.getId(project.documentSelfLink);
-        String resourceGroupLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
-                projectId);
+        String adminsResourceGroupLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(projectId));
+        String membersResourceGroupLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(projectId));
+        String viewersResourceGroupLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_VIEWER.buildRoleWithSuffix(projectId));
         String extendedMembersResourceGroupLink = UriUtils.buildUriPath(
                 ResourceGroupService.FACTORY_LINK,
                 AuthRole.PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId));
-        assertDocumentExists(resourceGroupLink);
+        assertDocumentExists(adminsResourceGroupLink);
+        assertDocumentExists(membersResourceGroupLink);
+        assertDocumentExists(viewersResourceGroupLink);
         assertDocumentExists(extendedMembersResourceGroupLink);
     }
 
@@ -1150,6 +1164,29 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertEquals(projectState.documentSelfLink, entry.documentSelfLink);
         assertEquals(projectState.name, entry.name);
         assertTrue(entry.roles.contains(AuthRole.PROJECT_ADMIN));
+    }
+
+    @Test
+    public void testDevOpsAdminCanAssignUsersToProject() throws Throwable {
+        ProjectState project = createProject("project");
+        ProjectRoles roles = new ProjectRoles();
+        roles.administrators = new PrincipalRoleAssignment();
+        roles.administrators.add = Collections.singletonList(USER_EMAIL_BASIC_USER);
+        doPatch(roles, project.documentSelfLink);
+
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_BASIC_USER));
+        ProjectRoles roles1 = new ProjectRoles();
+        roles1.members = new PrincipalRoleAssignment();
+        roles1.members.add = Collections.singletonList(USER_EMAIL_CONNIE);
+        doPatch(roles1, project.documentSelfLink);
+
+        ExpandedProjectState expandedProjectState = getExpandedProjectState(project
+                .documentSelfLink);
+
+        assertTrue(expandedProjectState.administrators.size() == 1);
+        assertTrue(expandedProjectState.administrators.get(0).id.equals(USER_EMAIL_BASIC_USER));
+        assertTrue(expandedProjectState.members.size() == 1);
+        assertTrue(expandedProjectState.members.get(0).id.equals(USER_EMAIL_CONNIE));
     }
 
     private void createProjectNoWait(ProjectState state) {
