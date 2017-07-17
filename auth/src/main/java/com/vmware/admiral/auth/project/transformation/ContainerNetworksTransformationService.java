@@ -18,20 +18,23 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
-import com.vmware.admiral.compute.container.ContainerService.ContainerState;
+import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
+import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 
 /**
  * The service is executed during the upgrade from VIC 1.1 to 1.2 and vRA 7.3 to 7.4. The service
- * adds the project from the host to the containers
+ * adds the project from the host to the networks
  */
-public class ContainersTransformationService extends StatelessService {
+public class ContainerNetworksTransformationService extends StatelessService {
 
-    public static final String SELF_LINK = ManagementUriParts.CONTAINERS_UPGRADE_TRANSFORM_PATH;
+    public static final String SELF_LINK = ManagementUriParts.CONTAINER_NETWORKS_UPGRADE_TRANSFORM_PATH;
 
     AtomicInteger hostsCount;
 
@@ -60,61 +63,70 @@ public class ContainersTransformationService extends StatelessService {
     private void processHosts(List<ComputeState> hosts, Operation post) {
         hostsCount = new AtomicInteger(hosts.size());
         for (ComputeState state : hosts) {
-            QueryTask queryTask = QueryUtil.buildPropertyQuery(ContainerState.class,
-                    ContainerState.FIELD_NAME_PARENT_LINK,
-                    state.documentSelfLink);
+            QueryTask queryTask = QueryUtil.buildQuery(ContainerNetworkState.class, true);
+
+            String parentLinksItemField = QueryTask.QuerySpecification
+                    .buildCollectionItemName(ContainerNetworkState.FIELD_NAME_PARENT_LINKS);
+            Query parentsClause = new Query()
+                    .setTermPropertyName(parentLinksItemField)
+                    .setTermMatchValue(state.documentSelfLink)
+                    .setTermMatchType(MatchType.TERM)
+                    .setOccurance(Occurance.MUST_OCCUR);
+
+            queryTask.querySpec.query.addBooleanClause(parentsClause);
             QueryUtil.addExpandOption(queryTask);
-            List<ContainerState> containers = new ArrayList<ContainerState>();
-            new ServiceDocumentQuery<ContainerState>(getHost(),
-                    ContainerState.class)
+
+            List<ContainerNetworkState> networks = new ArrayList<ContainerNetworkState>();
+            new ServiceDocumentQuery<ContainerNetworkState>(getHost(),
+                    ContainerNetworkState.class)
                             .query(queryTask, (r) -> {
                                 if (r.hasException()) {
                                     post.fail(r.getException());
-                                    logSevere("Failed to get container states with parentLink %s",
+                                    logSevere("Failed to get networks containing parentLink %s",
                                             state.documentSelfLink);
                                 } else if (r.hasResult()) {
-                                    containers.add(r.getResult());
+                                    networks.add(r.getResult());
                                 } else {
-                                    processContainers(state, containers, post);
-                                    logInfo("Number of containers found with parentLink %s %d",
-                                            state.documentSelfLink, containers.size());
+                                    processNetworks(state, networks, post);
+                                    logInfo("Number of networks found with containing parent link %s %d",
+                                            state.documentSelfLink, networks.size());
                                 }
                             });
         }
     }
 
-    private void processContainers(ComputeState state, List<ContainerState> containers,
+    private void processNetworks(ComputeState state, List<ContainerNetworkState> networks,
             Operation post) {
-        if (containers.size() == 0) {
-            logInfo("No containers found for host %s",
+        if (networks.size() == 0) {
+            logInfo("No networks found for host %s",
                     state.documentSelfLink);
             if (hostsCount.decrementAndGet() == 0) {
-                logInfo("Containers tranformation completed successfully");
+                logInfo("Networks tranformation completed successfully");
                 post.complete();
                 return;
             }
         }
-        AtomicInteger containersCount = new AtomicInteger(containers.size());
-        for (ContainerState container : containers) {
-            if (container.tenantLinks == null) {
-                container.tenantLinks = state.tenantLinks;
+        AtomicInteger networksCount = new AtomicInteger(networks.size());
+        for (ContainerNetworkState network : networks) {
+            if (network.tenantLinks == null) {
+                network.tenantLinks = state.tenantLinks;
             } else {
-                container.tenantLinks.addAll(state.tenantLinks);
+                network.tenantLinks.addAll(state.tenantLinks);
             }
-            Operation.createPatch(this, container.documentSelfLink)
-                    .setBody(container)
+            Operation.createPatch(this, network.documentSelfLink)
+                    .setBody(network)
                     .setReferer(UriUtils.buildUri(getHost(), SELF_LINK))
                     .setCompletion((o, ex) -> {
                         if (ex != null) {
-                            logSevere("Failed to update tenantLinks for container %s",
-                                    container.documentSelfLink);
+                            logSevere("Failed to update tenantLinks for network %s",
+                                    network.documentSelfLink);
                             post.fail(ex);
                         } else {
-                            logInfo("Container state %s updated with tenantLinks",
-                                    container.documentSelfLink);
-                            if (containersCount.decrementAndGet() == 0) {
+                            logInfo("Network state %s updated with tenantLinks",
+                                    network.documentSelfLink);
+                            if (networksCount.decrementAndGet() == 0) {
                                 if (hostsCount.decrementAndGet() == 0) {
-                                    logInfo("Containers tranformation completed successfully");
+                                    logInfo("Networks tranformation completed successfully");
                                     post.complete();
                                 }
                             }

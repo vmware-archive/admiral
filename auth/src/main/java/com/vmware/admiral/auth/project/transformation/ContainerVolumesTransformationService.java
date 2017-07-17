@@ -18,20 +18,23 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
-import com.vmware.admiral.compute.container.ContainerService.ContainerState;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
+import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 
 /**
  * The service is executed during the upgrade from VIC 1.1 to 1.2 and vRA 7.3 to 7.4. The service
- * adds the project from the host to the containers
+ * adds the project from the host to the volumes
  */
-public class ContainersTransformationService extends StatelessService {
+public class ContainerVolumesTransformationService extends StatelessService {
 
-    public static final String SELF_LINK = ManagementUriParts.CONTAINERS_UPGRADE_TRANSFORM_PATH;
+    public static final String SELF_LINK = ManagementUriParts.CONTAINER_VOLUMES_UPGRADE_TRANSFORM_PATH;
 
     AtomicInteger hostsCount;
 
@@ -60,61 +63,70 @@ public class ContainersTransformationService extends StatelessService {
     private void processHosts(List<ComputeState> hosts, Operation post) {
         hostsCount = new AtomicInteger(hosts.size());
         for (ComputeState state : hosts) {
-            QueryTask queryTask = QueryUtil.buildPropertyQuery(ContainerState.class,
-                    ContainerState.FIELD_NAME_PARENT_LINK,
-                    state.documentSelfLink);
+            QueryTask queryTask = QueryUtil.buildQuery(ContainerVolumeState.class, true);
+
+            String parentLinksItemField = QueryTask.QuerySpecification
+                    .buildCollectionItemName(ContainerVolumeState.FIELD_NAME_PARENT_LINKS);
+            Query parentsClause = new Query()
+                    .setTermPropertyName(parentLinksItemField)
+                    .setTermMatchValue(state.documentSelfLink)
+                    .setTermMatchType(MatchType.TERM)
+                    .setOccurance(Occurance.MUST_OCCUR);
+
+            queryTask.querySpec.query.addBooleanClause(parentsClause);
             QueryUtil.addExpandOption(queryTask);
-            List<ContainerState> containers = new ArrayList<ContainerState>();
-            new ServiceDocumentQuery<ContainerState>(getHost(),
-                    ContainerState.class)
+
+            List<ContainerVolumeState> volumes = new ArrayList<ContainerVolumeState>();
+            new ServiceDocumentQuery<ContainerVolumeState>(getHost(),
+                    ContainerVolumeState.class)
                             .query(queryTask, (r) -> {
                                 if (r.hasException()) {
                                     post.fail(r.getException());
-                                    logSevere("Failed to get container states with parentLink %s",
+                                    logSevere("Failed to get volumes containing parentLink %s",
                                             state.documentSelfLink);
                                 } else if (r.hasResult()) {
-                                    containers.add(r.getResult());
+                                    volumes.add(r.getResult());
                                 } else {
-                                    processContainers(state, containers, post);
-                                    logInfo("Number of containers found with parentLink %s %d",
-                                            state.documentSelfLink, containers.size());
+                                    processVolumes(state, volumes, post);
+                                    logInfo("Number of volumes found with containing parent link %s %d",
+                                            state.documentSelfLink, volumes.size());
                                 }
                             });
         }
     }
 
-    private void processContainers(ComputeState state, List<ContainerState> containers,
+    private void processVolumes(ComputeState state, List<ContainerVolumeState> volumes,
             Operation post) {
-        if (containers.size() == 0) {
-            logInfo("No containers found for host %s",
+        if (volumes.size() == 0) {
+            logInfo("No volumes found for host %s",
                     state.documentSelfLink);
             if (hostsCount.decrementAndGet() == 0) {
-                logInfo("Containers tranformation completed successfully");
+                logInfo("Volumes tranformation completed successfully");
                 post.complete();
                 return;
             }
         }
-        AtomicInteger containersCount = new AtomicInteger(containers.size());
-        for (ContainerState container : containers) {
-            if (container.tenantLinks == null) {
-                container.tenantLinks = state.tenantLinks;
+        AtomicInteger volumesCount = new AtomicInteger(volumes.size());
+        for (ContainerVolumeState volume : volumes) {
+            if (volume.tenantLinks == null) {
+                volume.tenantLinks = state.tenantLinks;
             } else {
-                container.tenantLinks.addAll(state.tenantLinks);
+                volume.tenantLinks.addAll(state.tenantLinks);
             }
-            Operation.createPatch(this, container.documentSelfLink)
-                    .setBody(container)
+            Operation.createPatch(this, volume.documentSelfLink)
+                    .setBody(volume)
                     .setReferer(UriUtils.buildUri(getHost(), SELF_LINK))
                     .setCompletion((o, ex) -> {
                         if (ex != null) {
-                            logSevere("Failed to update tenantLinks for container %s",
-                                    container.documentSelfLink);
+                            logSevere("Failed to update tenantLinks for volume %s",
+                                    volume.documentSelfLink);
                             post.fail(ex);
                         } else {
-                            logInfo("Container state %s updated with tenantLinks",
-                                    container.documentSelfLink);
-                            if (containersCount.decrementAndGet() == 0) {
+                            logInfo("Volume state %s updated with tenantLinks",
+                                    volume.documentSelfLink);
+                            if (volumesCount.decrementAndGet() == 0) {
                                 if (hostsCount.decrementAndGet() == 0) {
-                                    logInfo("Containers tranformation completed successfully");
+                                    logInfo("Volumes tranformation completed successfully");
                                     post.complete();
                                 }
                             }
