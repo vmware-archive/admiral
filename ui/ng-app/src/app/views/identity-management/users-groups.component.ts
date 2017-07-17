@@ -59,7 +59,7 @@ export class UsersGroupsComponent implements OnInit {
         }
 
         let cloudAdminRole:any = roles.find((role) => {
-            return role === 'CLOUD_ADMINS';
+            return role === 'CLOUD_ADMIN';
         });
 
         return !!cloudAdminRole;
@@ -87,7 +87,24 @@ export class UsersGroupsComponent implements OnInit {
         // TODO
     }
 
-    onMakeAdmin() {
-        // TODO
+    onMakeAdmin(selectedPrincipals) {
+        let roles = [];
+        roles.concat(selectedPrincipals[0].roles);
+
+        let isAdmin = roles.find((role) => {
+            return role === 'CLOUD_ADMIN';
+        });
+        if (isAdmin) {
+            console.log('Already a cloud admin!');
+            return;
+        }
+
+        this.authService.makeCloudAdmin(selectedPrincipals[0].id).then(() => {
+            // update screen
+            roles.push('CLOUD_ADMIN');
+            selectedPrincipals[0].roles = roles;
+        }).catch((error) => {
+           console.log("Failed to make cloud admin", error);
+        });
     }
 }

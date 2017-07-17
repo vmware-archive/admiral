@@ -7,7 +7,7 @@ import { Injectable } from '@angular/core';
 export class AuthService {
 
   constructor(private documentService: DocumentService) {}
-  
+
   public login(username, password) {
     var data = JSON.stringify({
       requestType: 'LOGIN'
@@ -53,5 +53,14 @@ export class AuthService {
               resolve(principalsResult);
           }).catch(reject);
       });
+  }
+
+  public makeCloudAdmin(principalId) {
+      let link = Links.AUTH_PRINCIPALS + '/' + principalId + '/roles';
+      let patchValue = {
+          'add': ['CLOUD_ADMIN']
+      };
+
+      return this.documentService.patch(link, patchValue);
   }
 }

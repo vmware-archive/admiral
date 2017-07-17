@@ -25,7 +25,7 @@
             <button type="button" class="btn btn-sm btn-secondary" (click)="onAssignRoles()"
                     *ngIf="selected.length == 1"><clr-icon shape="pencil"></clr-icon><span
                 class="btn-spaced-text">{{"assignRoles" | i18n}}</span></button>
-            <button type="button" class="btn btn-sm btn-secondary" (click)="onMakeAdmin()"
+            <button type="button" class="btn btn-sm btn-secondary" (click)="onMakeAdmin(selected)"
                     *ngIf="selected.length == 1"><clr-icon shape="pencil"></clr-icon><span
                 class="btn-spaced-text">{{"makeAdmin" | i18n}}</span></button>
         </div>
