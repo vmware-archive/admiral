@@ -421,7 +421,7 @@ public class ComputeNetworkAllocationTaskService extends
                 UriUtils.buildUri(getHost(), getSelfLink()), networkDescription,
                 (profileLinks, e) -> {
                     if (e != null) {
-                        failTask("Error selecting profiles for the for the network: ", e);
+                        failTask("Error selecting profiles for network: ", e);
                         return;
                     }
 

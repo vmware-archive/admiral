@@ -223,17 +223,10 @@ public class NetworkProfileQueryUtils {
                                     .distinct()
                                     .collect(Collectors.toList());
                         }
-                        if (placementConstraints != null && !placementConstraints.isEmpty()
-                                && selectedProfiles.isEmpty()) {
-                            List<String> constraints = placementConstraints.keySet().stream()
-                                    .map(c -> ConstraintConverter.encodeCondition(c).tag)
-                                    .collect(Collectors.toList());
-                            consumer.accept(null, new LocalizableValidationException(
-                                    String.format(
-                                            "Could not find any profiles to satisfy all of network '%s' constraints %s.",
-                                            networkDescription.name, constraints),
-                                    "compute.network.no.profiles.satisfy.constraints",
-                                    networkDescription.name, constraints));
+                        // if no profiles are found, return an error
+                        if (selectedProfiles.isEmpty()) {
+                            consumer.accept(null, getNetworkProfileSearchException(
+                                    placementConstraints, networkDescription));
                         } else {
                             consumer.accept(selectedProfiles, null);
                         }
@@ -595,5 +588,33 @@ public class NetworkProfileQueryUtils {
         }
 
         return securityGroups;
+    }
+
+    private static Exception getNetworkProfileSearchException(
+            Map<Condition, String> placementConstraints,
+            ComputeNetworkDescription networkDescription) {
+        if (placementConstraints != null && !placementConstraints.isEmpty()) {
+            List<String> constraints = placementConstraints.keySet().stream()
+                    .map(c -> ConstraintConverter.encodeCondition(c).tag)
+                    .collect(Collectors.toList());
+            return new LocalizableValidationException(
+                    String.format(
+                            "Could not find any profiles to satisfy all of network '%s' "
+                                    + "constraints %s.",
+                            networkDescription.name, constraints),
+                    "compute.network.no.profiles.satisfy.constraints",
+                    networkDescription.name, constraints);
+        } else {
+            return new LocalizableValidationException(
+                    String.format(
+                            "Could not find any profiles to match network '%s' of type %s.",
+                            networkDescription.name,
+                            networkDescription.networkType == null ? NetworkType.EXTERNAL :
+                                    networkDescription.networkType.name()),
+                    "compute.network.no.profiles.match",
+                    networkDescription.name,
+                    networkDescription.networkType == null ? NetworkType.EXTERNAL :
+                            networkDescription.networkType.name());
+        }
     }
 }

@@ -28,7 +28,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
-import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService;
 import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService.ComputeNetworkCIDRAllocationState;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
@@ -43,18 +42,12 @@ import com.vmware.admiral.request.compute.ComputeNetworkProvisionTaskService.Com
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
-import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.NetworkService;
-import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;
 import com.vmware.photon.controller.model.resources.SecurityGroupService;
 import com.vmware.photon.controller.model.resources.SecurityGroupService.SecurityGroupState;
-import com.vmware.xenon.common.UriUtils;
 
 public class ComputeNetworkProvisionTaskServiceTest extends ComputeRequestBaseTest {
 
-    private static final String NETWORK_ADDRESS = "192.168.0.0";
-    private static final int NETWORK_CIDR_PREFIX = 29;
-    private static final String NETWORK_CIDR = NETWORK_ADDRESS + "/" + NETWORK_CIDR_PREFIX;
     private static final String NETWORK_LINK = NetworkService.FACTORY_LINK + "/myNetwork";
 
     @Override
@@ -250,18 +243,6 @@ public class ComputeNetworkProvisionTaskServiceTest extends ComputeRequestBaseTe
         return securityGroupState;
     }
 
-    private ProfileState createProfile()
-            throws Throwable {
-        NetworkProfile networkProfile = new NetworkProfile();
-        networkProfile.isolationType = IsolationSupportType.NONE;
-        networkProfile.subnetLinks = Arrays.asList(createSubnetState(null).documentSelfLink);
-        networkProfile = doPost(networkProfile, NetworkProfileService.FACTORY_LINK);
-        ProfileState profile = super.createProfile(null, null, networkProfile, null, null);
-        assertNotNull(profile);
-
-        return profile;
-    }
-
     private ProfileState createIsolatedNetworkProfile(SecurityGroupState securityGroupState) throws Throwable {
 
         ComputeNetworkCIDRAllocationState cidrAllocation = createNetworkCIDRAllocationState();
@@ -272,24 +253,6 @@ public class ComputeNetworkProvisionTaskServiceTest extends ComputeRequestBaseTe
         networkProfile.isolationNetworkCIDR = "192.168.0.0/16";
         networkProfile.securityGroupLinks = Arrays.asList(securityGroupState.documentSelfLink);
 
-        networkProfile = doPost(networkProfile, NetworkProfileService.FACTORY_LINK);
-
-        ProfileState profile = super.createProfile(null, null, networkProfile, null, null);
-        assertNotNull(profile);
-
-        return profile;
-    }
-
-    private ProfileState createIsolatedSubnetNetworkProfile() throws Throwable {
-
-        ComputeNetworkCIDRAllocationState cidrAllocation = createNetworkCIDRAllocationState();
-
-        NetworkProfile networkProfile = new NetworkProfile();
-        networkProfile.name = "networkProfileName";
-        networkProfile.isolationType = IsolationSupportType.SUBNET;
-        networkProfile.isolationNetworkLink = cidrAllocation.networkLink;
-        networkProfile.isolationNetworkCIDR = "192.168.0.0/16";
-        networkProfile.isolatedSubnetCIDRPrefix = 16;
         networkProfile = doPost(networkProfile, NetworkProfileService.FACTORY_LINK);
 
         ProfileState profile = super.createProfile(null, null, networkProfile, null, null);
@@ -310,25 +273,5 @@ public class ComputeNetworkProvisionTaskServiceTest extends ComputeRequestBaseTe
         assertNotNull(profile);
 
         return profile;
-    }
-
-    private ComputeNetworkCIDRAllocationState createNetworkCIDRAllocationState() throws Throwable {
-        EndpointState epState = TestRequestStateFactory.createEndpoint();
-        NetworkState network = new NetworkState();
-        network.subnetCIDR = NETWORK_CIDR;
-        network.name = "IsolatedNetwork";
-        network.endpointLink = epState.documentSelfLink;
-        network.instanceAdapterReference = UriUtils.buildUri("/instance-adapter-reference");
-        network.resourcePoolLink = "/dummy-resource-pool-link";
-        network.regionId = "dummy-region-id";
-        network = doPost(network, NetworkService.FACTORY_LINK);
-        return createNetworkCIDRAllocationState(network.documentSelfLink);
-    }
-
-    private ComputeNetworkCIDRAllocationState createNetworkCIDRAllocationState(String networkLink)
-            throws Throwable {
-        ComputeNetworkCIDRAllocationState state = new ComputeNetworkCIDRAllocationState();
-        state.networkLink = networkLink;
-        return doPost(state, ComputeNetworkCIDRAllocationService.FACTORY_LINK);
     }
 }
