@@ -33,8 +33,9 @@ public class Writer {
 
     public void write(List<String> messages) throws IOException, UntranslatableFileException {
         for (String s : messages) {
-            if (s == null)
+            if (s == null) {
                 throw new UntranslatableFileException();
+            }
 
             bw.write(s);
             bw.newLine();

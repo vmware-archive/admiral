@@ -27,10 +27,11 @@ public abstract class DescriptiveFileReference {
     protected String getOnlyBase(String baseLine) {
         String[] separatedLine = baseLine.split("\\s+");
 
-        if (separatedLine.length > 1)
+        if (separatedLine.length > 1) {
             return separatedLine[1];
-        else
+        } else {
             return "";
+        }
     }
 
     public String getBase() {
@@ -62,10 +63,11 @@ public abstract class DescriptiveFileReference {
     }
 
     public void identifyLanguage() {
-        if (CMD.contains("jar"))
+        if (CMD.contains("jar")) {
             language = "java";
-        else if (CMD.contains("node") || CMD.contains(".js"))
+        } else if (CMD.contains("node") || CMD.contains(".js")) {
             language = "node";
+        }
     }
 
     public abstract List<String> getDocument();

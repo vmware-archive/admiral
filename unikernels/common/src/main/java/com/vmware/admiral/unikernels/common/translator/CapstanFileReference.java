@@ -16,7 +16,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.vmware.admiral.unikernels.common.exceptions.CapstanFileFormatException;
-import com.vmware.admiral.unikernels.common.exceptions.DockerFileFormatException;
 
 public class CapstanFileReference extends DescriptiveFileReference {
 
@@ -44,10 +43,11 @@ public class CapstanFileReference extends DescriptiveFileReference {
         this.workDir = workDir;
         this.executableName = executableName;
 
-        if (givenName != null && !givenName.equals("."))
+        if (givenName != null && !givenName.equals(".")) {
             this.givenName = givenName;
-        else if (language.equals("java"))
+        } else if (language.equals("java")) {
             this.givenName = "/app.jar";
+        }
 
         configCMD();
     }
@@ -63,11 +63,12 @@ public class CapstanFileReference extends DescriptiveFileReference {
             // name is always parsed "<name>:" and is required "/<name>"
             givenName = "/" + parsedFiles[0].substring(0, parsedFiles[0].length() - 1);
             executableName = parsedFiles[parsedFiles.length - 1];
-            String path = "";
+            StringBuffer sb = new StringBuffer();
             for (int i = 1; i < parsedFiles.length - 1; i++) {
-                path = path + "/" + parsedFiles[i];
+                sb.append("/");
+                sb.append(parsedFiles[i]);
             }
-            workDir = path;
+            workDir = sb.toString();
             nonEmptyCreation();
         } catch (Exception e) {
             throw new CapstanFileFormatException();
@@ -81,8 +82,9 @@ public class CapstanFileReference extends DescriptiveFileReference {
     }
 
     private void nonEmptyCreation() throws CapstanFileFormatException {
-        if (base.equals("") || CMD.equals(""))
+        if (base.equals("") || CMD.equals("")) {
             throw new CapstanFileFormatException();
+        }
     }
 
     @Override
@@ -92,10 +94,11 @@ public class CapstanFileReference extends DescriptiveFileReference {
         fileLines.add(CMD);
         fileLines.add("files:");
 
-        if (workDir.equals("/")) // non-repetitive symbols for root
+        if (workDir.equals("/")) { // non-repetitive symbols for root
             fileLines.add("  " + givenName + ": " + workDir + executableName);
-        else
+        } else {
             fileLines.add("  " + givenName + ": " + workDir + "/" + executableName);
+        }
         return fileLines;
     }
 

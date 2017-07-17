@@ -42,10 +42,11 @@ public class DockerFileReference extends DescriptiveFileReference {
         this.workDir = workDir;
         this.executableName = executableName;
 
-        if (givenName != null)
+        if (givenName != null) {
             this.givenName = givenName;
-        else
+        } else {
             givenName = "/my-app";
+        }
 
         configCMD();
     }
@@ -62,10 +63,11 @@ public class DockerFileReference extends DescriptiveFileReference {
             String[] parsedWorkDir = workDir.split("\\s+");
 
             // WORKIDIR <DIRECTORY> -> second element strip off the given folder name in the
-            if (workDir != "")
+            if (!workDir.equals("")) {
                 this.workDir = parsedWorkDir[1].replace(givenName, "");
-            else
+            } else {
                 this.workDir = "/";
+            }
 
             String[] parsedCMD = CMD.split("\\s+");
             executableName = parsedCMD[parsedCMD.length - 1];
@@ -83,8 +85,9 @@ public class DockerFileReference extends DescriptiveFileReference {
     }
 
     private void nonEmptyCreation() throws DockerFileFormatException {
-        if (base.equals("") || CMD.equals(""))
+        if (base.equals("") || CMD.equals("")) {
             throw new DockerFileFormatException();
+        }
     }
 
     @Override

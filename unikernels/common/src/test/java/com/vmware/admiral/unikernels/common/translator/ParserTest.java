@@ -11,7 +11,8 @@
 
 package com.vmware.admiral.unikernels.common.translator;
 
-import static org.junit.Assert.*;
+
+import static org.junit.Assert.assertEquals;
 
 import java.io.FileNotFoundException;
 
@@ -43,8 +44,9 @@ public class ParserTest {
 
         // skip empty lines
         for (String s : reading) {
-            if (!s.equals(""))
+            if (!s.equals("")) {
                 numMessages++;
+            }
         }
         assertEquals(numMessages == 4, true);
     }

@@ -48,26 +48,29 @@ public class Parser {
 
     private void readStream() {
         String readLine = "";
-        String readFile = "";
-
+        StringBuffer sb = new StringBuffer();
         while (scanner.hasNextLine()) {
             readLine = scanner.nextLine();
-            if (readLine.trim() != "")
-                readFile = readFile + "\n" + readLine;
+            if (!readLine.trim().equals("")) {
+                sb.append("\n");
+                sb.append(readLine);
+            }
         }
 
-        reading = readFile.split("\\r?\\n");
+        reading = sb.toString().split("\\r?\\n");
 
     }
 
     public String[] getReading() {
-        return reading;
+        String[] readingCopy = reading;
+        return readingCopy;
     }
 
     public String getTagArgs(String tag) {
         for (String tagLine : reading) {
-            if (tagLine.contains(tag))
+            if (tagLine.contains(tag)) {
                 return tagLine;
+            }
         }
 
         return "";

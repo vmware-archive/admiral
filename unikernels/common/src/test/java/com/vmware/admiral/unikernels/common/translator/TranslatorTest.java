@@ -11,11 +11,8 @@
 
 package com.vmware.admiral.unikernels.common.translator;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
-import java.io.FileInputStream;
-
-import org.junit.Before;
 import org.junit.Test;
 
 public class TranslatorTest {

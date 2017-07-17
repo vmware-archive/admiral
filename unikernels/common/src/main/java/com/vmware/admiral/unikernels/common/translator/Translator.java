@@ -62,8 +62,9 @@ public class Translator {
         // Compiler platform bases from the file which we are creating
         List<String> cpbTo = getCompilerPlatformBases(platform);
 
-        if (equivalenceIndex == -1)
+        if (equivalenceIndex == -1) {
             return usedBase;
+        }
 
         return cpbTo.get(equivalenceIndex);
     }

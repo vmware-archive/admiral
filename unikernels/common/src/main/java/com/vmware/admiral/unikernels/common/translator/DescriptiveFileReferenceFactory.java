@@ -20,9 +20,9 @@ public class DescriptiveFileReferenceFactory {
             return new CapstanFileReference();
         case Docker:
             return new DockerFileReference();
+        default:
+            return null;
         }
-
-        return null;
     }
 
     public DescriptiveFileReference getFileReferenceWithArgs(Platform platform, String base,
@@ -32,8 +32,8 @@ public class DescriptiveFileReferenceFactory {
             return new CapstanFileReference(base, language, workDir, executableName, givenName);
         case Docker:
             return new DockerFileReference(base, language, workDir, executableName, givenName);
+        default:
+            return null;
         }
-
-        return null;
     }
 }
