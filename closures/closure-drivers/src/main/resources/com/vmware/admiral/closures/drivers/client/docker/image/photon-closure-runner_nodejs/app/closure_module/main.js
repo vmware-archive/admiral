@@ -340,7 +340,7 @@ function proceedWithTask(closureUri, internalCtx, context) {
       }, (err, res, data) => {
         if (err || res.statusCode !== 200) {
             var msg = "Unable to get closure source from URI: " + closureUri;
-            if (res) {
+            if (err) {
                 msg += " Reason: " + err;
             }
             console.error(msg);

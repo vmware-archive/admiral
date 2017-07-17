@@ -70,11 +70,6 @@ public class ClosureProps {
     public static final String CLOSURE_SERVICE_CALLBACK_URI = "closure.service.callback.uri";
 
     /**
-     * Trust certificates to use when talking to callback uri
-     */
-    public static final String CALLBACK_TRUST_CERT_FILE_PATH = "closure.service.callback.trust.certificate";
-
-    /**
      * Sets runtime image registry. If set the runtime base image will be pulled from the
      * registry.
      */

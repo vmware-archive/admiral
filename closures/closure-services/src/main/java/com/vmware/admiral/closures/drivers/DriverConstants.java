@@ -23,8 +23,6 @@ public final class DriverConstants {
     public static final String RUNTIME_POWERSHELL_6 = "powershell";
     // java
     public static final String RUNTIME_JAVA_8 = "java";
-    // bash
-    public static final String RUNTIME_BASH = "bash";
     public static final String RUNTIME_NASHORN = "nashorn";
 
     public static final String NODEJS_4_IMAGE = VMWARE_RUNTIME + RUNTIME_NODEJS_4;
