@@ -23,6 +23,7 @@ export class Links {
   public static CLUSTERS = Links.RESOURCES + '/clusters';
   public static GROUPS = '/groups';
   public static PROJECTS = '/projects';
+  public static EVENT_LOGS = Links.RESOURCES + '/event-logs';
 
   public static COMPOSITE_DESCRIPTIONS = Links.RESOURCES + '/composite-descriptions';
   public static COMPOSITE_DESCRIPTIONS_CLONE = Links.RESOURCES + '/composite-descriptions-clone';

@@ -13,7 +13,9 @@ import { AppComponent } from './app.component';
 import { TranslatePipe } from './utils/i18n.pipe';
 import { ArrayElementsCountPipe } from './utils/count.pipe';
 import { ProjectNamePipe } from './utils/project-name.pipe';
-import { ProjectMembersCountPipe } from "./utils/members-count.pipe";
+import { ProjectMembersCountPipe } from './utils/members-count.pipe';
+import { MicroTimePipe } from './utils/microtime-pipe';
+import { SeverityTextPipe } from './utils/severity-text.pipe';
 import { BreakOutModalDirective } from "./directives/shared/break-out-modal.directive";
 
 import { AdministrationComponent } from './views/administration/administration.component';
@@ -35,6 +37,7 @@ import { DeleteConfirmationComponent } from './views/delete-confirmation/delete-
 import { RegistriesComponent } from './views/registries/registries.component';
 import { ConfigurationComponent } from './views/configuration/configuration.component';
 import { LogsComponent } from './views/logs/logs.component';
+import { SystemLogsComponent } from './views/logs/system-logs.component';
 
 import { DashboardComponent } from './views/dashboard/dashboard.component';
 import { FormerViewComponent, FormerPlaceholderViewComponent } from './views/former-view/former-view.component';
@@ -75,6 +78,8 @@ export const ADMIRAL_DECLARATIONS = [
   ArrayElementsCountPipe,
   ProjectNamePipe,
   ProjectMembersCountPipe,
+  MicroTimePipe,
+  SeverityTextPipe,
   BreakOutModalDirective,
   AllowNavigationDirective,
 
@@ -100,6 +105,7 @@ export const ADMIRAL_DECLARATIONS = [
   RegistriesComponent,
   ConfigurationComponent,
   LogsComponent,
+  SystemLogsComponent,
 
   DashboardComponent,
   FormerViewComponent,

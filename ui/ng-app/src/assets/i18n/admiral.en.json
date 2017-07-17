@@ -184,10 +184,21 @@
   "logs": {
     "title": "Logs",
     "system": {
-      "title": "System"
+      "title": "System",
+      "columnLogEntry": "Log Entry",
+      "columnSeverity": "Severity",
+      "columnTimeStamp": "Timestamp",
+      "entriesCount": "log entries"
     },
     "registry": {
       "title": "Registry"
+    },
+    "event": {
+      "type": {
+          "info": "Information",
+          "warning": "Warning",
+          "error": "Error"
+      }
     }
   },
   "identity": {
