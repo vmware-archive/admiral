@@ -30,7 +30,6 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -1088,6 +1087,7 @@ public class ContainerAllocationTaskService extends
     protected static class AllocationExtensibilityCallbackResponse extends BaseExtensibilityCallbackResponse {
         public Set<String> resourceNames;
         public List<String> hosts;
+        public String host;
     }
 
     @Override
@@ -1148,8 +1148,8 @@ public class ContainerAllocationTaskService extends
 
         AllocationExtensibilityCallbackResponse response = (AllocationExtensibilityCallbackResponse) replyPayload;
 
-        if (response.hosts == null || response.hosts.isEmpty()) {
-            logInfo("Host selections are empty.");
+        if (response.host == null || response.host.isEmpty()) {
+            logInfo("Host is not specified. Won't be changed.");
             callback.run();
             return;
         }
@@ -1157,72 +1157,35 @@ public class ContainerAllocationTaskService extends
         //Host selections that have been provided as notification payload
         List<String> selectionsForNotificationPayload = state.hostSelections.stream
                 ().map(hs -> hs.name).collect(Collectors.toList());
-        List<String> responseHostSelections = response.hosts;
 
-        if (responseHostSelections.size() != selectionsForNotificationPayload.size()) {
-            String missmatchInSelections = String.format("There is discrepancy between number of "
-                            + "existing host selections: %s and provided by extensibility: %s",
-                    selectionsForNotificationPayload.size(), responseHostSelections.size());
-            failTask(missmatchInSelections, new Throwable(missmatchInSelections));
+        if (!selectionsForNotificationPayload.contains(response.host)) {
+            String invalidHost = String.format("Invalid host: %s", response.host);
+            failTask(invalidHost, new Throwable(invalidHost));
             return;
         }
 
-        if (!selectionsForNotificationPayload.equals(responseHostSelections)) {
-            //Check if client provides host that doesn't exist
-            for (String hostName : response.hosts) {
-                if (!state.hostSelections.stream().filter(hs -> hs.name != null &&
-                        hs.name.equals(hostName)).findFirst().isPresent()) {
-                    String unknownHostMsg = String.format("Unknown host: %s", hostName);
-                    failTask(unknownHostMsg, new Throwable(unknownHostMsg));
-                    return;
-                }
-            }
+        HostSelection host = state.hostSelections.stream()
+                .filter(h -> h.name.equals(response.host))
+                .findFirst().get();
 
-            List<HostSelection> hostSelections = new LinkedList<>(
-                    state.hostSelections);
-            List<HostSelection> copySelections = new LinkedList<>(
-                    state.hostSelections);
+        List<HostSelection> patchedHosts = new ArrayList<>(state.hostSelections);
+        patchedHosts.set(0, host);
 
-            /**
-             * Reorder host selections in order to match client's wish, i.e.
-             *
-             * As part of notification payload, client will receive the following Collection which
-             * represents host placements (name of hosts / Compute[VM_HOST].name):
-             *
-             * hostSelections = [A,B,C]
-             * resourceNames = [c1, c2, c3]
-             *
-             * After client's response if hostSelections has been changed, for example:
-             * hostSelections = [ B, A, C ].
-             * Task selectedComputePlacementHosts should be reordered to [B,A,C] => after resuming, task will
-             * take care to place resources on hosts based on indexes of both collections - Hosts &
-             * Resoures.
-             */
-            response.hosts.stream().forEachOrdered(hostName -> {
-                HostSelection hostSelection = hostSelections.stream()
-                        .filter(h -> h.name.equals(hostName)).findFirst().get();
-                copySelections.set(response.hosts.indexOf(hostName), hostSelection);
-            });
+        ContainerAllocationTaskState patch = new ContainerAllocationTaskState();
+        patch.hostSelections = patchedHosts;
+        patch.taskInfo = state.taskInfo;
+        patch.taskSubStage = state.taskSubStage;
 
-            ContainerAllocationTaskState patch = new ContainerAllocationTaskState();
-            patch.hostSelections = copySelections;
-            patch.taskInfo = state.taskInfo;
-            patch.taskSubStage = state.taskSubStage;
+        Operation.createPatch(this, state.documentSelfLink)
+                .setBody(patch)
+                .setReferer(getHost().getUri())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask(e.getMessage(), e);
+                        return;
+                    }
+                    callback.run();
+                }).sendWith(getHost());
 
-            Operation.createPatch(this, state.documentSelfLink)
-                    .setBody(patch)
-                    .setReferer(getHost().getUri())
-                    .setCompletion((o, e) -> {
-                        if (e != null) {
-                            failTask(e.getMessage(), e);
-                            return;
-                        }
-                        callback.run();
-                    }).sendWith(getHost());
-
-        } else {
-            //Host selections are not changed, resume the task
-            callback.run();
-        }
     }
 }

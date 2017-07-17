@@ -32,7 +32,6 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -69,6 +68,7 @@ import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.data.SchemaBuilder;
+import com.vmware.photon.controller.model.data.SchemaField.Constraint;
 import com.vmware.photon.controller.model.data.SchemaField.Type;
 import com.vmware.photon.controller.model.query.QueryUtils.QueryByPages;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
@@ -122,6 +122,11 @@ public class ComputeAllocationTaskService
     private static final String COMPUTE_ALLOCATION_TOPIC_FIELD_HOST_SELECTIONS_LABEL = "Selected hosts";
     private static final String COMPUTE_ALLOCATION_TOPIC_FIELD_HOST_SELECTIONS_DESCRIPTION =
             "Host selections for resource";
+
+    private static final String COMPUTE_ALLOCATION_TOPIC_FIELD_HOST = "host";
+    private static final String COMPUTE_ALLOCATION_TOPIC_FIELD_HOST_LABEL = "Selected host";
+    private static final String COMPUTE_ALLOCATION_TOPIC_FIELD_HOST_DESCRIPTION =
+            "Host on which resource will be deployed";
 
     private static final String ID_DELIMITER_CHAR = "-";
     // cached compute description
@@ -1044,6 +1049,7 @@ public class ComputeAllocationTaskService
     protected static class ExtensibilityCallbackResponse extends BaseExtensibilityCallbackResponse {
         public Set<String> resourceNames;
         public List<String> hostSelections;
+        public String host;
     }
 
     @Override
@@ -1087,83 +1093,48 @@ public class ComputeAllocationTaskService
 
     protected void reorderHostSelections(ComputeAllocationTaskState state,
             ServiceTaskCallbackResponse replyPayload, Runnable callback) {
+
         ExtensibilityCallbackResponse response = (ExtensibilityCallbackResponse) replyPayload;
-        //Host selections that have been provided as notification payload
+
+        if (response.host == null || response.host.isEmpty()) {
+            logInfo("Host is not specified. Won't be changed.");
+            callback.run();
+            return;
+        }
+
+        //Host selections (names) that have been provided as notification payload
         List<String> selectionsForNotificationPayload = state.selectedComputePlacementHosts.stream
                 ().map(hs -> hs.name).collect(Collectors.toList());
-        List<String> responseHostSelections = response.hostSelections;
 
-        if (responseHostSelections == null || responseHostSelections.isEmpty()) {
-            logInfo("Host selections are empty.");
-            callback.run();
+        if (!selectionsForNotificationPayload.contains(response.host)) {
+            String invalidHost = String.format("Invalid host: %s", response.host);
+            failTask(invalidHost, new Throwable(invalidHost));
             return;
         }
 
-        if (responseHostSelections.size() != selectionsForNotificationPayload.size()) {
-            String missmatchInSelections = String.format("There is discrepancy between number of "
-                            + "existing host selections: %s and provided by extensibility: %s",
-                    selectionsForNotificationPayload.size(), responseHostSelections.size());
-            failTask(missmatchInSelections, new Throwable(missmatchInSelections));
-            return;
-        }
+        HostSelection host = state.selectedComputePlacementHosts.stream()
+                .filter(h -> h.name.equals(response.host))
+                .findFirst().get();
 
-        if (!selectionsForNotificationPayload.equals(responseHostSelections)) {
-            //Check if client provides host that doesn't exist
-            for (String hostName : response.hostSelections) {
-                if (!state.selectedComputePlacementHosts.stream().filter(hs -> hs.name != null &&
-                        hs.name.equals(hostName)).findFirst().isPresent()) {
-                    String unknownHostMsg = String.format("Unknown host: %s", hostName);
-                    failTask(unknownHostMsg, new Throwable(unknownHostMsg));
-                    return;
-                }
-            }
+        List<HostSelection> patchedHosts = new ArrayList<>(state.selectedComputePlacementHosts);
+        patchedHosts.set(0, host);
 
-            List<HostSelection> hostSelections = new LinkedList<>(
-                    state.selectedComputePlacementHosts);
-            List<HostSelection> copySelections = new LinkedList<>(
-                    state.selectedComputePlacementHosts);
+        ComputeAllocationTaskState patch = new ComputeAllocationTaskState();
+        patch.selectedComputePlacementHosts = patchedHosts;
+        patch.taskInfo = state.taskInfo;
+        patch.taskSubStage = state.taskSubStage;
 
-            /**
-             * Reorder host selections in order to match client's wish, i.e.
-             *
-             * As part of notification payload, client will receive the following Collection which
-             * represents host placements (name of hosts / Compute[VM_HOST].name):
-             *
-             * hostSelections = [A,B,C]
-             * resourceNames = [c1, c2, c3]
-             *
-             * After client's response if hostSelections has been changed, for example:
-             * hostSelections = [ B, A, C ].
-             * Task selectedComputePlacementHosts should be reordered to [B,A,C] => after resuming, task will
-             * take care to place resources on hosts based on indexes of both collections - Hosts &
-             * Resoures.
-             */
-            response.hostSelections.stream().forEachOrdered(hostName -> {
-                HostSelection hostSelection = hostSelections.stream()
-                        .filter(h -> h.name.equals(hostName)).findFirst().get();
-                copySelections.set(response.hostSelections.indexOf(hostName), hostSelection);
-            });
+        Operation.createPatch(this, state.documentSelfLink)
+                .setBody(patch)
+                .setReferer(getHost().getUri())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask(e.getMessage(), e);
+                        return;
+                    }
+                    callback.run();
+                }).sendWith(getHost());
 
-            ComputeAllocationTaskState patch = new ComputeAllocationTaskState();
-            patch.selectedComputePlacementHosts = copySelections;
-            patch.taskInfo = state.taskInfo;
-            patch.taskSubStage = state.taskSubStage;
-
-            Operation.createPatch(this, state.documentSelfLink)
-                    .setBody(patch)
-                    .setReferer(getHost().getUri())
-                    .setCompletion((o, e) -> {
-                        if (e != null) {
-                            failTask(e.getMessage(), e);
-                            return;
-                        }
-                        callback.run();
-                    }).sendWith(getHost());
-
-        } else {
-            //Host selections are not changed, resume the task
-            callback.run();
-        }
     }
 
     @Override
@@ -1241,8 +1212,16 @@ public class ComputeAllocationTaskService
                 .addField(COMPUTE_ALLOCATION_TOPIC_FIELD_HOST_SELECTIONS)
                 .withType(Type.LIST)
                 .withDataType(DATATYPE_STRING)
+                .withConstraint(Constraint.readOnly, true)
                 .withLabel(COMPUTE_ALLOCATION_TOPIC_FIELD_HOST_SELECTIONS_LABEL)
                 .withDescription(COMPUTE_ALLOCATION_TOPIC_FIELD_HOST_SELECTIONS_DESCRIPTION)
+                .done()
+                // Add host filed to schema. It is empty for notification payload.
+                .addField(COMPUTE_ALLOCATION_TOPIC_FIELD_HOST)
+                .withType(Type.VALUE)
+                .withDataType(DATATYPE_STRING)
+                .withLabel(COMPUTE_ALLOCATION_TOPIC_FIELD_HOST_LABEL)
+                .withDescription(COMPUTE_ALLOCATION_TOPIC_FIELD_HOST_DESCRIPTION)
                 .done();
     }
 

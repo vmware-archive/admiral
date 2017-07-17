@@ -23,7 +23,6 @@ import java.net.ServerSocket;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -743,7 +742,6 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         assertTrue(subscriptionSubStages.contains(allocationTask.taskSubStage.BUILD_RESOURCES_LINKS));
     }
 
-
     @Test
     public void testEnhanceExtensibilityResponse() throws Throwable {
 
@@ -793,13 +791,7 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         List<HostSelection> beforeExtensibility = new ArrayList<>(
                 allocationTask.hostSelections);
 
-        payload.hosts = beforeExtensibility.stream()
-                .map(hs -> hs.name)
-                .collect(Collectors.toList());
-
-        Collections.reverse(payload.hosts);
-
-        assertNotEquals(beforeExtensibility, payload.hosts);
+        payload.host = beforeExtensibility.get(1).name;
 
         TestContext context = new TestContext(1, Duration.ofMinutes(1));
 
@@ -821,10 +813,9 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
                 //Task is in complete state and won't remove initial host selections, just add newfo
                 //ones to the existing which have been assigned when document has been initialized.
                 if (patchedHosts.size() == 4) {
-                    //Assert that new newly added host selections are in proper order (reversed
-                    // of original)
+                    //Assert that new newly added host selections are in proper order (first one
+                    // is newly provided host)
                     assertEquals(beforeExtensibility.get(1).name, patchedHosts.get(2).name);
-                    assertEquals(beforeExtensibility.get(0).name, patchedHosts.get(3).name);
                 } else {
                     context.failIteration(new Throwable("Expected 4 host selections."));
                 }
@@ -872,7 +863,7 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         List<HostSelection> beforeExtensibility = new ArrayList<>(
                 allocationTask.hostSelections);
 
-        payload.hosts = null;
+        payload.host = null;
 
         TestContext context = new TestContext(1, Duration.ofMinutes(1));
 

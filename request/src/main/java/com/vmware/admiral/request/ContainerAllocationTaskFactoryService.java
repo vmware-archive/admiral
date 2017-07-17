@@ -20,6 +20,7 @@ import com.vmware.admiral.request.utils.EventTopicUtils;
 import com.vmware.admiral.service.common.EventTopicDeclarator;
 import com.vmware.admiral.service.common.EventTopicService;
 import com.vmware.photon.controller.model.data.SchemaBuilder;
+import com.vmware.photon.controller.model.data.SchemaField.Constraint;
 import com.vmware.photon.controller.model.data.SchemaField.Type;
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.Service;
@@ -60,6 +61,11 @@ public class ContainerAllocationTaskFactoryService extends FactoryService
     private static final String CONTAINER_ALLOCATION_TOPIC_FIELD_HOST_SELECTIONS_DESCRIPTION =
             "Host selections for given resource";
 
+    private static final String CONTAINER_ALLOCATION_TOPIC_FIELD_HOST = "host";
+    private static final String CONTAINER_ALLOCATION_TOPIC_FIELD_HOST_LABEL = "Selected host";
+    private static final String CONTAINER_ALLOCATION_TOPIC_FIELD_HOST_DESCRIPTION =
+            "Host on which resource will be deployed";
+
     public ContainerAllocationTaskFactoryService() {
         super(ContainerAllocationTaskState.class);
         super.toggleOption(ServiceOption.PERSISTENCE, true);
@@ -82,15 +88,21 @@ public class ContainerAllocationTaskFactoryService extends FactoryService
                 .withLabel(CONTAINER_ALLOCATION_TOPIC_FIELD_RESOURCE_NAMES_LABEL)
                 .withDescription(CONTAINER_ALLOCATION_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION)
                 .done()
-
                 // Add hosts info
                 .addField(CONTAINER_ALLOCATION_TOPIC_FIELD_HOST_SELECTIONS)
                 .withType(Type.LIST)
                 .withDataType(DATATYPE_STRING)
+                .withConstraint(Constraint.readOnly, true)
                 .withLabel(CONTAINER_ALLOCATION_TOPIC_FIELD_HOST_SELECTIONS_LABEL)
                 .withDescription(CONTAINER_ALLOCATION_TOPIC_FIELD_HOST_SELECTIONS_DESCRIPTION)
+                .done()
+                // Add host field (will be empty for notification payload)
+                .addField(CONTAINER_ALLOCATION_TOPIC_FIELD_HOST)
+                .withType(Type.VALUE)
+                .withDataType(DATATYPE_STRING)
+                .withLabel(CONTAINER_ALLOCATION_TOPIC_FIELD_HOST_LABEL)
+                .withDescription(CONTAINER_ALLOCATION_TOPIC_FIELD_HOST_DESCRIPTION)
                 .done();
-
     }
 
     private void containerAllocationEventTopic(ServiceHost host) {
