@@ -14,6 +14,7 @@ package com.vmware.admiral.service.common;
 import java.util.logging.Level;
 
 import com.vmware.admiral.auth.idm.AuthConfigProvider;
+import com.vmware.admiral.auth.idm.local.LocalAuthConfigProvider;
 import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.xenon.common.FactoryService;
@@ -76,6 +77,16 @@ public class AuthBootstrapService extends StatefulService {
         getHost().log(Level.INFO, "handleStart");
 
         AuthConfigProvider provider = AuthUtil.getPreferredProvider(AuthConfigProvider.class);
+
+        // TODO - Refactor: the LocalAuthConfigProvider should be initialized only once whereas the
+        // PSC should be initialized every time...
+        if (!ServiceHost.isServiceCreate(post) && (provider instanceof LocalAuthConfigProvider)) {
+            // do not perform bootstrap logic when the post is NOT from direct client, eg: node
+            // restart
+            post.complete();
+            return;
+        }
+
         provider.initConfig(getHost(), post);
     }
 

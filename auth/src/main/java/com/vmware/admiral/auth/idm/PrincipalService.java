@@ -294,8 +294,8 @@ public class PrincipalService extends StatelessService {
                 .get(PRINCIPAL_ID_PATH_SEGMENT);
 
         provider.getPrincipalByCredentials(post, principalId, dto.password)
-                .thenCompose(principal -> SecurityContextUtil
-                        .getSecurityContext(this, post, principal.id))
+                .thenCompose(
+                        principal -> SecurityContextUtil.getSecurityContext(this, post, principal))
                 .thenAccept(securityContext -> post.setBody(securityContext))
                 .whenCompleteNotify(post);
     }

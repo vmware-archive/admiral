@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.auth.idm;
 
+import java.util.Set;
+
 public class Principal {
 
     public enum PrincipalType {
@@ -28,6 +30,8 @@ public class Principal {
     public String name;
 
     public String email;
+
+    public Set<String> groups;
 
     public PrincipalType type;
 

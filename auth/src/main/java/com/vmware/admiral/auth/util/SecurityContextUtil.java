@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.collections.CollectionUtils;
 
 import com.vmware.admiral.auth.idm.AuthRole;
+import com.vmware.admiral.auth.idm.Principal;
 import com.vmware.admiral.auth.idm.PrincipalRoles;
 import com.vmware.admiral.auth.idm.SecurityContext;
 import com.vmware.admiral.auth.idm.SecurityContext.ProjectEntry;
@@ -69,6 +70,23 @@ public class SecurityContextUtil {
                 .thenApply(SecurityContextUtil::fromPrincipalRolesToSecurityContext)
                 .thenApply(sc -> {
                     securityContextCache.put(userId, sc);
+                    return sc;
+                });
+    }
+
+    public static DeferredResult<SecurityContext> getSecurityContext(Service requestorService,
+            Operation requestorOperation, Principal principal) {
+
+        SecurityContext securityContext = securityContextCache.get(principal.id);
+        if (securityContext != null) {
+            return DeferredResult.completed(securityContext);
+        }
+
+        return PrincipalRolesUtil
+                .getAllRolesForPrincipal(requestorService, requestorOperation, principal)
+                .thenApply(SecurityContextUtil::fromPrincipalRolesToSecurityContext)
+                .thenApply(sc -> {
+                    securityContextCache.put(principal.id, sc);
                     return sc;
                 });
     }

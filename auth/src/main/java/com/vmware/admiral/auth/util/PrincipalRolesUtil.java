@@ -192,7 +192,7 @@ public class PrincipalRolesUtil {
 
         PrincipalRoles returnRoles = new PrincipalRoles();
 
-        return getGroupsWherePrincipalBelongs(requestorService, requestorOperation, principal.id)
+        return getGroupsWherePrincipalBelongs(requestorService, requestorOperation, principal)
                 .thenCompose(groups -> getRoleStatesForGroups(requestorService.getHost(), groups))
                 .thenApply(groupsToRoles -> {
                     List<RoleState> roleStates = new ArrayList<>();
@@ -398,10 +398,18 @@ public class PrincipalRolesUtil {
                 .collect(Collectors.toList());
     }
 
+    // TODO - this method won't be needed when all the principals include the groups that they
+    // belong to...
     @SuppressWarnings("unchecked")
+    @Deprecated
     private static DeferredResult<List<String>> getGroupsWherePrincipalBelongs(
-            Service requestorService, Operation requestorOperation, String principalId) {
-        String uri = UriUtils.buildUriPath(PrincipalService.SELF_LINK, principalId,
+            Service requestorService, Operation requestorOperation, Principal principal) {
+
+        if ((principal.groups != null) && (!principal.groups.isEmpty())) {
+            return DeferredResult.completed(new ArrayList<>(principal.groups));
+        }
+
+        String uri = UriUtils.buildUriPath(PrincipalService.SELF_LINK, principal.id,
                 PrincipalService.GROUPS_SUFFIX);
 
         Operation getGroupsOp = Operation.createGet(requestorService, uri);
