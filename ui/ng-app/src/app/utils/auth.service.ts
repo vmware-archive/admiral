@@ -6,6 +6,9 @@ import { Injectable } from '@angular/core';
 @Injectable()
 export class AuthService {
 
+  private _cachedSessionContext: any;
+  private _initialSessionPromise: Promise<any>;
+
   constructor(private documentService: DocumentService) {}
 
   public login(username, password) {
@@ -35,6 +38,25 @@ export class AuthService {
 
   public loadCurrentUserSecurityContext(): Promise<any> {
     return this.documentService.get(Links.USER_SESSION);
+  }
+
+  public getCachedSecurityContext(): Promise<any> {
+    if (!this._initialSessionPromise) {
+      this._initialSessionPromise = new Promise((resolve) => {
+        this.loadCurrentUserSecurityContext().then((securityContext) => {
+          this._cachedSessionContext = securityContext;
+          resolve(this._cachedSessionContext);
+        });
+      });
+    }
+
+    if (!this._cachedSessionContext) {
+      return this._initialSessionPromise;
+    } else {
+      return new Promise((resolve, reject) => {
+        resolve(this._cachedSessionContext);
+      });
+    }
   }
 
   public getPrincipalById(principalId): Promise<any> {

@@ -33,7 +33,7 @@ export class AppComponent {
         });
 
         if(!this.embedded) {
-            this.authService.loadCurrentUserSecurityContext().then((securityContext) => {
+            this.authService.getCachedSecurityContext().then((securityContext) => {
                 this.userSecurityContext = securityContext;
             }).catch((ex) => {
                 console.log(ex);

@@ -39,7 +39,7 @@ export class AllowNavigationDirective implements OnChanges {
       return;
     }
 
-    this.authService.loadCurrentUserSecurityContext().then((securityContext) => {
+    this.authService.getCachedSecurityContext().then((securityContext) => {
       let show = false;
       if (securityContext && securityContext.roles) {
         securityContext.roles.forEach(role => {

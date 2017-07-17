@@ -34,7 +34,7 @@ export class AuthGuard implements CanActivate {
         return resolve(true);
       }
 
-      this.authService.loadCurrentUserSecurityContext().then((securityContext) => {
+      this.authService.getCachedSecurityContext().then((securityContext) => {
         if (securityContext && securityContext.roles) {
           for (var index = 0; index < securityContext.roles.length; index++) {
             var role = securityContext.roles[index];
