@@ -126,10 +126,15 @@ var addEventListeners = function() {
 
         toggleButtonsState(_this.$el);
       } else {
+         var certificateWarning = i18n.t('app.host.details.trustedCertificate',
+                                  {address: currentUri});
+        _this.alert.toggle(_this.$el, constants.ALERTS.TYPE.WARNING, certificateWarning);
         _this.$el.find('.certificate-input').val('');
       }
 
-      _this.alert.toggle(_this.$el, constants.ALERTS.TYPE.FAIL, importedCertificateInfo.error);
+      if (importedCertificateInfo.error) {
+        _this.alert.toggle(_this.$el, constants.ALERTS.TYPE.FAIL, importedCertificateInfo.error);
+      }
 
       _this.$el.find('.certificate-import-button').removeClass('loading');
     }

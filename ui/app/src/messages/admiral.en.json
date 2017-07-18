@@ -85,6 +85,7 @@
         "update": "Update",
         "create": "Create",
         "certificateWarning": "The certificate for {{address}} is invalid. You may be connecting to a website that is pretending to be {{address}}, which could put your confidential information at risk. Would you like to connect to the website anyway?",
+        "trustedCertificate": "The certificate for {{address}} is trusted.",
         "showCertificate": "Show certificate",
         "hideCertificate": "Hide certificate",
         "manageCertificates": "Manage Certificates",
