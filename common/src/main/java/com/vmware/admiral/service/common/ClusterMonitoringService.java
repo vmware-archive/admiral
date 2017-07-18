@@ -16,6 +16,7 @@ import static com.vmware.xenon.services.common.NodeState.NodeStatus.UNAVAILABLE;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.logging.Level;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
@@ -158,9 +159,12 @@ public class ClusterMonitoringService extends StatelessService {
                 updateQuorumOperation = createUpdateQuorumOperation(nowAvailable);
             } else {
                 if (Boolean.getBoolean("automatic.quorum.update")) {
-                    createUpdateQuorumOperationForAllNodes(ngs);
+                    getHost().log(Level.INFO, "Available nodes: " + nowAvailable);
+                    updateQuorumOperation = createUpdateQuorumOperation(nowAvailable);
                 }
             }
+
+
 
         } else {
             logInfo("Quorum update: %d", quorumUpdate.membershipQuorum);
@@ -244,34 +248,4 @@ public class ClusterMonitoringService extends StatelessService {
                         });
     }
 
-    private void createUpdateQuorumOperationForAllNodes(NodeGroupState ngs) {
-
-        int availableNodes = countNodesWithStatus(ngs, AVAILABLE, true);
-
-        UpdateQuorumRequest request = new UpdateQuorumRequest();
-        request.isGroupUpdate = true;
-        request.kind = UpdateQuorumRequest.KIND;
-        request.membershipQuorum = (availableNodes / 2) + 1;
-
-        for (NodeState node : ngs.nodes.values()) {
-            if (node.status == NodeStatus.AVAILABLE) {
-                logInfo("Updating membershipQuorum to %d for node: %s ", request.membershipQuorum,
-                        node.groupReference);
-
-                Operation.createPatch(node.groupReference)
-                        .setBody(request)
-                        .setReferer(getHost().getUri())
-                        .setCompletion(
-
-                                (o, e) -> {
-                                    if (e != null) {
-                                        logSevere(e);
-                                    } else {
-                                        logInfo("Update quorum request sent!");
-                                    }
-                                }).sendWith(getHost());
-            }
-        }
-
-    }
 }
