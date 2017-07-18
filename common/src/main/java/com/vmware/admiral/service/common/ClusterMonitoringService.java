@@ -153,16 +153,14 @@ public class ClusterMonitoringService extends StatelessService {
 
                 updateQuorumOperation = createUpdateQuorumOperation(nowAvailable);
 
-            // xenon removes unavailable nodes before excution of this task
+                // xenon removes unavailable nodes before excution of this task
             } else if (beforeUnavailable > nowUnavailable) {
                 updateQuorumOperation = createUpdateQuorumOperation(nowAvailable);
-            }else{
-               updateQuorumOperation = createUpdateQuorumOperation(4);
+            } else {
+                if (Boolean.getBoolean("automatic.quorum.update")) {
+                    createUpdateQuorumOperationForAllNodes(ngs);
+                }
             }
-
-
-
-
 
         } else {
             logInfo("Quorum update: %d", quorumUpdate.membershipQuorum);
@@ -225,6 +223,7 @@ public class ClusterMonitoringService extends StatelessService {
         return false;
     }
 
+
     private Operation createUpdateQuorumOperation(int availableNodes) {
 
         UpdateQuorumRequest request = new UpdateQuorumRequest();
@@ -246,4 +245,35 @@ public class ClusterMonitoringService extends StatelessService {
                         });
     }
 
+
+    private void createUpdateQuorumOperationForAllNodes(NodeGroupState ngs) {
+
+        int availableNodes = countNodesWithStatus(ngs, AVAILABLE, true);
+
+        UpdateQuorumRequest request = new UpdateQuorumRequest();
+        request.isGroupUpdate = true;
+        request.kind = UpdateQuorumRequest.KIND;
+        request.membershipQuorum = (availableNodes / 2) + 1;
+
+        for (NodeState node : ngs.nodes.values()) {
+            if (node.status == NodeStatus.AVAILABLE) {
+                logInfo("Updating membershipQuorum to %d for node: %s ", request.membershipQuorum,
+                        node.groupReference);
+
+                Operation.createPatch(node.groupReference)
+                        .setBody(request)
+                        .setCompletion(
+
+                                (o, e) -> {
+                                    if (e != null) {
+                                        logSevere(e);
+                                    } else {
+                                        logInfo("Update quorum request sent!");
+                                    }
+                                }).sendWith(getHost());
+            }
+        }
+
+
+    }
 }
