@@ -32,7 +32,6 @@ import com.vmware.photon.controller.model.Constraint.Condition;
 import com.vmware.photon.controller.model.Constraint.Condition.Enforcement;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.DiskService;
-import com.vmware.photon.controller.model.resources.DiskService.DiskState;
 import com.vmware.photon.controller.model.resources.StorageDescriptionService;
 import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 
@@ -60,8 +59,8 @@ public class VSphereComputeProvisionWithDisksIT extends VsphereComputeProvisionI
     protected void validateDisks(List<String> diskLinks) throws Exception {
         for (String diskLink : diskLinks) {
             DiskService.DiskState diskState = getDocument(diskLink, DiskService.DiskState.class);
-            switch (diskState.bootOrder) {
-            case 1:
+            switch (diskState.name) {
+            case "disk-1":
                 assertEquals("disk-1", diskState.name);
                 assertEquals(BOOT_DISK_SIZE, diskState.capacityMBytes);
                 assertNotNull(diskState.customProperties);
@@ -70,7 +69,7 @@ public class VSphereComputeProvisionWithDisksIT extends VsphereComputeProvisionI
                 assertTrue(diskState.customProperties.containsKey(SHARES_LEVEL));
                 assertEquals("normal", diskState.customProperties.get(SHARES_LEVEL));
                 break;
-            case 2:
+            case "disk-2":
                 assertEquals("disk-2", diskState.name);
                 assertEquals(NEW_DISK_SIZE, diskState.capacityMBytes);
                 assertNotNull(diskState.customProperties);
@@ -79,7 +78,7 @@ public class VSphereComputeProvisionWithDisksIT extends VsphereComputeProvisionI
                 assertTrue(diskState.customProperties.containsKey(INDEPENDENT));
                 assertEquals("true", diskState.customProperties.get(INDEPENDENT));
                 break;
-            case 3:
+            case "disk-3":
                 assertEquals("disk-3", diskState.name);
                 assertEquals(NEW_DISK_SIZE, diskState.capacityMBytes);
                 assertNotNull(diskState.customProperties);
@@ -187,18 +186,20 @@ public class VSphereComputeProvisionWithDisksIT extends VsphereComputeProvisionI
             disk.documentSelfLink = disk.id;
             disk.name = "disk-" + i;
             disk.type = DiskService.DiskType.HDD;
-            disk.bootOrder = i;
-            disk.capacityMBytes = getDiskSize(disk.bootOrder);
+            if (i == 1) {
+                disk.bootOrder = 1;
+            }
+            disk.capacityMBytes = getDiskSize(i);
             disk.persistent = true;
-            addConstraint(disk);
+            disk.constraint = addConstraint(i);
             disk = postDocument(DiskService.FACTORY_LINK, disk, documentLifeCycle);
             diskStateLinks.add(disk.documentSelfLink);
         }
         return diskStateLinks;
     }
 
-    private long getDiskSize(int bootOrder) {
-        switch (bootOrder) {
+    private long getDiskSize(int index) {
+        switch (index) {
         case 1:
             return BOOT_DISK_SIZE;
         default:
@@ -206,24 +207,20 @@ public class VSphereComputeProvisionWithDisksIT extends VsphereComputeProvisionI
         }
     }
 
-    private void addConstraint(DiskState diskState) {
-        switch (diskState.bootOrder) {
-        case 1:
-            //No constraint to boot disk. Should use the default item.
-            break;
+    private Constraint addConstraint(int index) {
+        switch (index) {
         case 2:
             //add hard constraint for first additional disk
-            diskState.constraint = getConstraint(GENERAL_DISK, Enforcement.HARD,
+            return getConstraint(GENERAL_DISK, Enforcement.HARD,
                     Occurance.MUST_OCCUR);
-            break;
         case 3:
             //add soft constraint for second additional disk
-            diskState.constraint = getConstraint(FAST_DISK, Enforcement.SOFT,
+            return getConstraint(FAST_DISK, Enforcement.SOFT,
                     Occurance.SHOULD_OCCUR);
-            break;
         default:
             break;
         }
+        return null;
     }
 
     private Constraint getConstraint(String tagName, Enforcement enforcement, Occurance
