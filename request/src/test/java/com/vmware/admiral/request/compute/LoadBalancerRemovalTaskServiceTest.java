@@ -72,7 +72,6 @@ public class LoadBalancerRemovalTaskServiceTest extends RequestBaseTest {
         LoadBalancerState document = getDocumentNoWait(LoadBalancerState.class,
                 loadBalancerState.documentSelfLink);
         assertNull(document);
-
     }
 
     @Test
@@ -86,6 +85,21 @@ public class LoadBalancerRemovalTaskServiceTest extends RequestBaseTest {
         LoadBalancerState document = getDocument(LoadBalancerState.class,
                 loadBalancerState.documentSelfLink);
         assertNotNull(document);
+    }
+
+    @Test
+    public void testRemovalWithAlreadyRemovedInstances() throws Throwable {
+        for (String computeLink : loadBalancerState.computeLinks) {
+            delete(computeLink);
+        }
+        LoadBalancerRemovalTaskState removalTask = createLoadBalancerRemovalTask(
+                loadBalancerState.documentSelfLink);
+
+        remove(removalTask, false);
+
+        LoadBalancerState document = getDocumentNoWait(LoadBalancerState.class,
+                loadBalancerState.documentSelfLink);
+        assertNull(document);
     }
 
     private void stopService(String link) {
