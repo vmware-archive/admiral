@@ -80,8 +80,8 @@ public class ProjectUtil {
         public long tagsCount;
     }
 
-    public static final long PROJECT_INDEX_ORIGIN = 2L;
-    public static final long PROJECT_INDEX_BOUND = (long) Integer.MAX_VALUE * 2; // simulate uint
+    public static final int PROJECT_INDEX_ORIGIN = 2;
+    public static final int PROJECT_INDEX_BOUND = Integer.MAX_VALUE; // simulate uint
 
     public static QueryTask createQueryTaskForProjectAssociatedWithPlacement(ResourceState project,
             Query query) {
@@ -456,8 +456,8 @@ public class ProjectUtil {
         return query;
     }
 
-    public static long generateRandomUnsignedInt() {
-        return ThreadLocalRandom.current().nextLong(PROJECT_INDEX_ORIGIN, PROJECT_INDEX_BOUND);
+    public static int generateRandomInt() {
+        return ThreadLocalRandom.current().nextInt(PROJECT_INDEX_ORIGIN, PROJECT_INDEX_BOUND);
     }
 
     public static void authorizeOperationIfProjectService(Service requestorService, Operation op) {

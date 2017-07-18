@@ -422,12 +422,12 @@ public class ProjectService extends StatefulService {
             ProjectState patchState) {
         ServiceDocumentDescription docDesc = getDocumentTemplate().documentDescription;
         String currentSignature = Utils.computeSignature(currentState, docDesc);
-        DeferredResult<Long> projectIndex;
+        DeferredResult<Integer> projectIndex;
 
         if (currentState.customProperties == null) {
             projectIndex = generateProjectIndex();
         } else {
-            projectIndex = DeferredResult.completed(Long.parseLong(
+            projectIndex = DeferredResult.completed(Integer.parseInt(
                     currentState.customProperties.get(CUSTOM_PROPERTY_PROJECT_INDEX)));
         }
 
@@ -445,11 +445,11 @@ public class ProjectService extends StatefulService {
 
     private void handleProjectPut(ProjectState putState, Operation put) {
         ProjectState currentState = getState(put);
-        DeferredResult<Long> projectIndex;
+        DeferredResult<Integer> projectIndex;
         if (currentState.customProperties == null) {
             projectIndex = generateProjectIndex();
         } else {
-            projectIndex = DeferredResult.completed(Long.parseLong(
+            projectIndex = DeferredResult.completed(Integer.parseInt(
                     currentState.customProperties.get(CUSTOM_PROPERTY_PROJECT_INDEX)));
         }
 
@@ -793,7 +793,7 @@ public class ProjectService extends StatefulService {
     private DeferredResult<ResourceGroupState> createProjectResourceGroup(ProjectState projectState,
             AuthRole role) {
         String projectId = Service.getId(projectState.documentSelfLink);
-        ResourceGroupState resourceGroupState = null;
+        ResourceGroupState resourceGroupState;
 
         switch (role) {
         case PROJECT_ADMIN:
@@ -883,8 +883,8 @@ public class ProjectService extends StatefulService {
                 .setBody(state);
     }
 
-    private DeferredResult<Long> generateProjectIndex() {
-        long random = ProjectUtil.generateRandomUnsignedInt();
+    private DeferredResult<Integer> generateProjectIndex() {
+        int random = ProjectUtil.generateRandomInt();
 
         return isProjectIndexUsed(random)
                 .thenCompose(isUsed -> {
