@@ -249,7 +249,7 @@ public class ClusterMonitoringService extends StatelessService {
     private void createUpdateQuorumOperationForAllNodes(NodeGroupState ngs) {
 
         int availableNodes = countNodesWithStatus(ngs, AVAILABLE, true);
-
+        availableNodes = 6;
         UpdateQuorumRequest request = new UpdateQuorumRequest();
         request.isGroupUpdate = true;
         request.kind = UpdateQuorumRequest.KIND;
@@ -262,6 +262,7 @@ public class ClusterMonitoringService extends StatelessService {
 
                 Operation.createPatch(node.groupReference)
                         .setBody(request)
+                        .setReferer(getHost().getUri())
                         .setCompletion(
 
                                 (o, e) -> {
