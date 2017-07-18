@@ -33,7 +33,7 @@ import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 public class QueryUtil {
 
     public static final long QUERY_RETRY_INTERVAL_MILLIS = Long.getLong(
-            "com.vmware.admiral.common.util.query.retry.interval.millis", 500);
+            "com.vmware.admiral.common.util.query.retry.interval.millis", 300);
 
     /**
      * prefix for tenants. e.g. /tenants/t1

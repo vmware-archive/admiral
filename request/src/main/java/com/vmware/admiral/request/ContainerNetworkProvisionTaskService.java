@@ -400,7 +400,6 @@ public class ContainerNetworkProvisionTaskService
         QueryTask q = QueryUtil.buildPropertyQuery(ContainerState.class,
                 ContainerState.FIELD_NAME_COMPOSITE_COMPONENT_LINK, UriUtils.buildUriPath(
                         CompositeComponentFactoryService.SELF_LINK, contextId));
-        q.taskInfo.isDirect = false;
         QueryUtil.addExpandOption(q);
 
         Map<String, List<ContainerState>> containersByDescriptionLink = new HashMap<>();
