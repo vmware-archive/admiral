@@ -18,6 +18,7 @@ COPY app/com/vmware/admiral/closure/ /app/com/vmware/admiral/closure/
 RUN javac -cp \* \
 /app/com/vmware/admiral/closure/runtime/Context.java \
 /app/com/vmware/admiral/closure/runner/AppRunner.java \
+/app/com/vmware/admiral/closure/runner/SSLRunnerConnectionFactory.java \
 /app/com/vmware/admiral/closure/runner/ContextImpl.java
 
 COPY app/com/vmware/admiral/closure /app/com/vmware/admiral/closure
