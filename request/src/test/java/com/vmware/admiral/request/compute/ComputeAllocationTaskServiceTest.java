@@ -52,6 +52,7 @@ import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionS
 import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService.NetworkInterfaceDescription;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceService;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceService.NetworkInterfaceState;
+import com.vmware.photon.controller.model.resources.StorageDescriptionService.StorageDescription;
 import com.vmware.photon.controller.model.resources.SubnetService;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.photon.controller.model.resources.TagService.TagState;
@@ -398,7 +399,9 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
          *
          */
 
-        createVmHostCompute(true);
+        StorageDescription datastore = createDatastore(5000);
+        createVmHostCompute(true, null,
+                Collections.singleton(datastore.documentSelfLink));
 
         ComputeDescription computeDescription = createVMComputeDescription(false);
 

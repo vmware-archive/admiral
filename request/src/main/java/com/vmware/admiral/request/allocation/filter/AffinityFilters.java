@@ -35,6 +35,7 @@ import com.vmware.admiral.request.compute.allocation.filter.ComputeServiceAffini
 import com.vmware.admiral.request.compute.allocation.filter.ComputeServiceAntiAffinityHostFilter;
 import com.vmware.admiral.request.compute.allocation.filter.ComputeSpreadAffinityHostFilter;
 import com.vmware.admiral.request.compute.allocation.filter.ComputeToNetworkAffinityHostFilter;
+import com.vmware.admiral.request.compute.allocation.filter.ComputeToStorageAffinityFilter;
 import com.vmware.admiral.request.compute.allocation.filter.LoadBalancerToComputeAffinityHostFilter;
 import com.vmware.admiral.request.compute.allocation.filter.LoadBalancerToNetworkAffinityHostFilter;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
@@ -93,6 +94,8 @@ public final class AffinityFilters {
         filters.add(new ComputeClusterAntiAffinityHostFilter(host, desc));
 
         filters.add(new ComputeToNetworkAffinityHostFilter(host, desc));
+        filters.add(new ComputeToStorageAffinityFilter(host, desc));
+
         filters.add(new ComputeBinpackAffinityHostFilter(host, desc));
         filters.add(new ComputeSpreadAffinityHostFilter(host, desc));
     }

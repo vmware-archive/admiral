@@ -268,17 +268,21 @@ public class ComputePlacementSelectionTaskService extends
         if (filter == null) {
             selection(state, hostSelectionMap);
         } else {
-            filter.filter(filterContext, hostSelectionMap, (filteredHostSelectionMap, e) -> {
-                if (e != null) {
-                    if (e instanceof HostSelectionFilter.HostSelectionFilterException) {
-                        failTask("Allocation filter error: " + e.getMessage(), null);
-                    } else {
-                        failTask("Allocation filter exception", e);
+            if (filter.isActive()) {
+                filter.filter(filterContext, hostSelectionMap, (filteredHostSelectionMap, e) -> {
+                    if (e != null) {
+                        if (e instanceof HostSelectionFilter.HostSelectionFilterException) {
+                            failTask("Allocation filter error: " + e.getMessage(), null);
+                        } else {
+                            failTask("Allocation filter exception", e);
+                        }
+                        return;
                     }
-                    return;
-                }
-                filter(state, filterContext, filteredHostSelectionMap, filters);
-            });
+                    filter(state, filterContext, filteredHostSelectionMap, filters);
+                });
+            } else {
+                filter(state, filterContext, hostSelectionMap, filters);
+            }
         }
     }
 

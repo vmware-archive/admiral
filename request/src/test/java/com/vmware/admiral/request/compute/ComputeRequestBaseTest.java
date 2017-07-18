@@ -18,6 +18,7 @@ import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_I
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -49,12 +50,15 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.resources.DiskService;
+import com.vmware.photon.controller.model.resources.DiskService.DiskState;
 import com.vmware.photon.controller.model.resources.EndpointService;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService.NetworkInterfaceDescription;
 import com.vmware.photon.controller.model.resources.NetworkService;
 import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;
+import com.vmware.photon.controller.model.resources.StorageDescriptionService.StorageDescription;
 import com.vmware.photon.controller.model.resources.SubnetService;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.photon.controller.model.resources.TagService;
@@ -77,7 +81,9 @@ public class ComputeRequestBaseTest extends RequestBaseTest {
         createComputeResourcePool();
         computeGroupPlacementState = createComputeGroupResourcePlacement(computeResourcePool, 10);
         // create a single powered-on compute available for placement
-        vmHostCompute = createVmHostCompute(true);
+        StorageDescription datastore = createDatastore(5000);
+        vmHostCompute = createVmHostCompute(true, null,
+                Collections.singleton(datastore.documentSelfLink));
     }
 
     protected ComputeDescription createVMComputeDescription(boolean attachNic) throws Throwable {
@@ -105,6 +111,19 @@ public class ComputeRequestBaseTest extends RequestBaseTest {
             cd.customProperties.put("subnetworkLink", subnet.documentSelfLink);
         }
         return cd;
+    }
+
+    protected ComputeDescription createComputeDescriptionWithDisks(List<Long> disksCapacity) throws
+            Throwable {
+
+        ComputeDescription desc = createComputeDescription(false);
+        desc.diskDescLinks = new ArrayList<>();
+        for (Long capacity : disksCapacity) {
+            DiskState disk = createDiskState(capacity);
+            desc.diskDescLinks.add(disk.documentSelfLink);
+        }
+
+        return desc;
     }
 
     protected ComputeDescription createComputeDescriptionWithNetwork(String networkName) throws
@@ -190,6 +209,16 @@ public class ComputeRequestBaseTest extends RequestBaseTest {
 
         NetworkInterfaceDescription returnState = doPost(nid,
                 NetworkInterfaceDescriptionService.FACTORY_LINK);
+        return returnState;
+    }
+
+    private DiskState createDiskState(long capacityMB) throws Throwable {
+        DiskState disk = new DiskState();
+        disk.id = UUID.randomUUID().toString();
+        disk.name = disk.id;
+        disk.capacityMBytes = capacityMB;
+
+        DiskState returnState = doPost(disk, DiskService.FACTORY_LINK);
         return returnState;
     }
 

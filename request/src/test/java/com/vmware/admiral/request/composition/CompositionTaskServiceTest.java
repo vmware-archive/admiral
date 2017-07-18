@@ -45,6 +45,7 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService.LoadBalancerDescription;
+import com.vmware.photon.controller.model.resources.StorageDescriptionService.StorageDescription;
 import com.vmware.photon.controller.model.resources.SubnetService;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.xenon.common.UriUtils;
@@ -61,7 +62,9 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
         super.setUp();
 
         // create a single powered-on compute available for placement
-        createVmHostCompute(true);
+        StorageDescription datastore = createDatastore(5000);
+        createVmHostCompute(true, null,
+                Collections.singleton(datastore.documentSelfLink));
     }
 
     @Test
