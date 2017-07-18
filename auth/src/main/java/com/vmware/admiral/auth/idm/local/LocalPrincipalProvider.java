@@ -17,6 +17,7 @@ import static com.vmware.admiral.auth.util.PrincipalUtil.fromQueryResultToPrinci
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNullOrEmpty;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -62,7 +63,14 @@ public class LocalPrincipalProvider implements PrincipalProvider {
         service.setAuthorizationContext(get, service.getSystemAuthorizationContext());
 
         return service.sendWithDeferredResult(get, LocalPrincipalState.class)
-                .thenApply((s) -> fromLocalPrincipalToPrincipal(s));
+                .thenApply(s -> fromLocalPrincipalToPrincipal(s))
+                .thenApply(p -> new Pair<Principal, Set<String>>(p, null))
+                .thenCompose(pair -> getAllGroupsForPrincipal(op, principalId)
+                        .thenApply(groups -> new Pair<>(pair.left, groups)))
+                .thenApply(pair -> {
+                    pair.left.groups = pair.right;
+                    return pair.left;
+                });
     }
 
     @Override
@@ -78,7 +86,19 @@ public class LocalPrincipalProvider implements PrincipalProvider {
         service.setAuthorizationContext(get, service.getSystemAuthorizationContext());
 
         return service.sendWithDeferredResult(get, ServiceDocumentQueryResult.class)
-                .thenApply((q) -> fromQueryResultToPrincipalList(q));
+                .thenApply(q -> fromQueryResultToPrincipalList(q))
+                .thenCompose(principals -> {
+                    List<DeferredResult<Principal>> results = new ArrayList<>();
+                    for (Principal p : principals) {
+                        results.add(getAllGroupsForPrincipal(op, p.id)
+                                .thenApply(groups -> {
+                                    p.groups = groups;
+                                    return p;
+                                }));
+                    }
+                    return DeferredResult.allOf(results);
+                });
+
     }
 
     @Override

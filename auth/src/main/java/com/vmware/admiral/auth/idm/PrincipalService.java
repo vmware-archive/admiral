@@ -21,7 +21,6 @@ import static com.vmware.admiral.common.util.AssertUtil.assertNotNullOrEmpty;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Pattern;
 
 import com.vmware.admiral.auth.idm.Principal.PrincipalType;
@@ -48,7 +47,6 @@ public class PrincipalService extends StatelessService {
     public static final String ROLES_QUERY_VALUE = "all";
     public static final String SECURITY_CONTEXT_SUFFIX = "/security-context";
     public static final String ROLES_SUFFIX = "/roles";
-    public static final String GROUPS_SUFFIX = "/groups";
 
     private static final String PRINCIPAL_ID_PATH_SEGMENT = "principalId";
 
@@ -85,13 +83,6 @@ public class PrincipalService extends StatelessService {
             .compile(String.format("^%s\\/[^\\/]+%s\\/?$", SELF_LINK.replaceAll("/", "\\\\/"),
                     ROLES_SUFFIX));
 
-    /**
-     * Matches /auth/idm/principals/{principal-id}/groups
-     */
-    private static final Pattern PATTERN_PRINCIPAL_GROUPS = Pattern
-            .compile(String.format("^%s\\/[^\\/]+%s\\/?$", SELF_LINK.replaceAll("/", "\\\\/"),
-                    GROUPS_SUFFIX));
-
     private PrincipalProvider provider;
 
     public PrincipalService() {
@@ -120,9 +111,6 @@ public class PrincipalService extends StatelessService {
 
         } else if (isSecurityContextRequest(get)) {
             handleGetSecurityContext(get);
-
-        } else if (isGroupsRequest(get)) {
-            handleGetGroups(get);
 
         } else if (isRolesRequest(get)) {
             handleGetPrincipalRoles(get);
@@ -164,15 +152,6 @@ public class PrincipalService extends StatelessService {
     }
 
     private String getIdFromRolesRequest(Operation op) {
-        return UriUtils.parseUriPathSegments(op.getUri(), TEMPLATE_PRINCIPAL_SECURITY_CONTEXT)
-                .get(PRINCIPAL_ID_PATH_SEGMENT);
-    }
-
-    private boolean isGroupsRequest(Operation op) {
-        return UriUtilsExtended.uriPathMatches(op.getUri(), PATTERN_PRINCIPAL_GROUPS);
-    }
-
-    private String getIdFromGroupsRequest(Operation op) {
         return UriUtils.parseUriPathSegments(op.getUri(), TEMPLATE_PRINCIPAL_SECURITY_CONTEXT)
                 .get(PRINCIPAL_ID_PATH_SEGMENT);
     }
@@ -229,22 +208,6 @@ public class PrincipalService extends StatelessService {
 
         result.thenAccept(principals -> get.setBody(principals))
                 .whenCompleteNotify(get);
-    }
-
-    private void handleGetGroups(Operation get) {
-        String principalId = getIdFromGroupsRequest(get);
-        DeferredResult<Set<String>> groupsResult = provider.getAllGroupsForPrincipal(get,
-                principalId);
-        groupsResult.whenComplete((groups, ex) -> {
-            if (ex != null) {
-                logWarning("Unable to get groups for principal %s: %s",
-                        principalId, Utils.toString(ex));
-                get.fail(ex);
-                return;
-            }
-            get.setBody(groups);
-            get.complete();
-        });
     }
 
     private void handleGetPrincipalRoles(Operation get) {

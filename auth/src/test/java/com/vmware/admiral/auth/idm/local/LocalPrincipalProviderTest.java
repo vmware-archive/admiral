@@ -67,6 +67,7 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
         assertEquals(principalId, principal.id);
         assertEquals("Connie", principal.name);
         assertEquals(PrincipalType.USER, principal.type);
+        assertTrue(principal.groups.contains(USER_GROUP_DEVELOPERS));
     }
 
     @Test
@@ -167,6 +168,9 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
         assertEquals(EXPECTED_PRINCIPALS_COUNT, principals.size());
 
         for (Principal p : principals) {
+            if (p.id.equals(expectedPrincipal1)) {
+                assertTrue(p.groups.contains(USER_GROUP_DEVELOPERS));
+            }
             assertTrue(p.email.equals(expectedPrincipal1)
                     || p.email.equals(expectedPrincipal2)
                     || p.email.equals(expectedPrincipal3)

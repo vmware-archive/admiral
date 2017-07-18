@@ -31,7 +31,6 @@ import com.vmware.admiral.auth.idm.AuthRole;
 import com.vmware.admiral.auth.idm.Principal;
 import com.vmware.admiral.auth.idm.Principal.PrincipalType;
 import com.vmware.admiral.auth.idm.PrincipalRoles;
-import com.vmware.admiral.auth.idm.PrincipalService;
 import com.vmware.admiral.auth.idm.SecurityContext.ProjectEntry;
 import com.vmware.admiral.auth.project.ProjectFactoryService;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
@@ -192,8 +191,7 @@ public class PrincipalRolesUtil {
 
         PrincipalRoles returnRoles = new PrincipalRoles();
 
-        return getGroupsWherePrincipalBelongs(requestorService, requestorOperation, principal)
-                .thenCompose(groups -> getRoleStatesForGroups(requestorService.getHost(), groups))
+        return getRoleStatesForGroups(requestorService.getHost(), principal.groups)
                 .thenApply(groupsToRoles -> {
                     List<RoleState> roleStates = new ArrayList<>();
                     for (List<RoleState> rs : groupsToRoles.values()) {
@@ -229,7 +227,7 @@ public class PrincipalRolesUtil {
     }
 
     public static DeferredResult<Map<String, List<RoleState>>> getRoleStatesForGroups(
-            ServiceHost host, List<String> groups) {
+            ServiceHost host, Set<String> groups) {
 
         if (groups == null || groups.isEmpty()) {
             return DeferredResult.completed(new HashMap<>());
@@ -396,29 +394,6 @@ public class PrincipalRolesUtil {
 
         return mergedEntries.entrySet().stream().map(Entry::getValue)
                 .collect(Collectors.toList());
-    }
-
-    // TODO - this method won't be needed when all the principals include the groups that they
-    // belong to...
-    @SuppressWarnings("unchecked")
-    @Deprecated
-    private static DeferredResult<List<String>> getGroupsWherePrincipalBelongs(
-            Service requestorService, Operation requestorOperation, Principal principal) {
-
-        if ((principal.groups != null) && (!principal.groups.isEmpty())) {
-            return DeferredResult.completed(new ArrayList<>(principal.groups));
-        }
-
-        String uri = UriUtils.buildUriPath(PrincipalService.SELF_LINK, principal.id,
-                PrincipalService.GROUPS_SUFFIX);
-
-        Operation getGroupsOp = Operation.createGet(requestorService, uri);
-
-        requestorService.setAuthorizationContext(getGroupsOp,
-                requestorOperation.getAuthorizationContext());
-
-        return requestorService.sendWithDeferredResult(getGroupsOp, List.class)
-                .thenApply(groupsList -> (ArrayList<String>) groupsList);
     }
 
     private static DeferredResult<UserState> getUserState(Service requestorService,

@@ -70,6 +70,7 @@ public class PrincipalServiceTest extends AuthBaseTest {
                 Principal.class);
         assertNotNull(connie);
         assertEquals(USER_EMAIL_CONNIE, connie.id);
+        assertTrue(connie.groups.contains(USER_GROUP_DEVELOPERS));
     }
 
     @Test
@@ -98,6 +99,7 @@ public class PrincipalServiceTest extends AuthBaseTest {
                 false, null, ArrayList.class);
         assertEquals(1, principals.size());
         assertEquals(USER_EMAIL_ADMIN, principals.iterator().next().id);
+        assertTrue(principals.iterator().next().groups.contains(USER_GROUP_SUPERUSERS));
 
         // match multiple users
         principals = testRequest(Operation::createGet, String.format("%s/?%s=%s",
@@ -244,7 +246,6 @@ public class PrincipalServiceTest extends AuthBaseTest {
         ctx.await();
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testNestedGetGroupsForPrincipal() throws Throwable {
         LocalPrincipalState itGroup = new LocalPrincipalState();
@@ -268,14 +269,14 @@ public class PrincipalServiceTest extends AuthBaseTest {
         TestContext ctx = testCreate(1);
         Set<String> groups = new HashSet<>();
         host.send(Operation.createGet(host, UriUtils.buildUriPath(PrincipalService.SELF_LINK,
-                USER_EMAIL_ADMIN, PrincipalService.GROUPS_SUFFIX))
+                USER_EMAIL_ADMIN))
                 .setReferer(host.getUri())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         ctx.failIteration(ex);
                         return;
                     }
-                    groups.addAll(o.getBody(HashSet.class));
+                    groups.addAll(o.getBody(Principal.class).groups);
                     ctx.completeIteration();
                 }));
         ctx.await();
@@ -285,20 +286,19 @@ public class PrincipalServiceTest extends AuthBaseTest {
         assertTrue(groups.contains("organization"));
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testSimpleGetGroupsForPrincipal() throws Throwable {
         TestContext ctx = testCreate(1);
         Set<String> groups = new HashSet<>();
         host.send(Operation.createGet(host, UriUtils.buildUriPath(PrincipalService.SELF_LINK,
-                USER_EMAIL_ADMIN, PrincipalService.GROUPS_SUFFIX))
+                USER_EMAIL_ADMIN))
                 .setReferer(host.getUri())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         ctx.failIteration(ex);
                         return;
                     }
-                    groups.addAll(o.getBody(HashSet.class));
+                    groups.addAll(o.getBody(Principal.class).groups);
                     ctx.completeIteration();
                 }));
         ctx.await();
