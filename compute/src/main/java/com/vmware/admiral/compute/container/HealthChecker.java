@@ -32,6 +32,7 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 
+import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.serialization.ReleaseConstants;
 import com.vmware.admiral.common.util.QueryUtil;
@@ -359,7 +360,11 @@ public class HealthChecker {
     private void determineContainerHostPort(ServiceHost host, ContainerState containerState,
             HealthConfig healthConfig, BiConsumer<String, Integer> callback) {
 
-        if (containerState.ports != null && healthConfig.port != null) {
+        if (healthConfig.port == null) {
+            healthConfig.port = getDefaultPort();
+        }
+
+        if (containerState.ports != null) {
             for (PortBinding portBinding : containerState.ports) {
                 if (portBinding.hostPort != null && portBinding.containerPort != null
                         && !portBinding.hostPort.isEmpty()
@@ -375,6 +380,14 @@ public class HealthChecker {
         host.log(Level.WARNING,
                 "Container does not expose ports - using container address as public");
         callback.accept(containerState.address, healthConfig.port);
+    }
+
+    private Integer getDefaultPort() {
+        if (DeploymentProfileConfig.getInstance().isTest()) {
+            return null;
+        } else {
+            return DEFAULT_PORT;
+        }
     }
 
     private void getHostPortBinding(ServiceHost host, ContainerState containerState, int port,
