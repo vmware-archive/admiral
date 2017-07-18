@@ -4,7 +4,7 @@ services:
   cnv1:
     image: "registry.hub.docker.com/library/alpine"
     command:
-    - "ping cnv2"
+    - "ping -w 240 cnv2"
     volumes:
     - "vol1:/container/project/path"
     links:
