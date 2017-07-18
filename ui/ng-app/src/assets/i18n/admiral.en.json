@@ -241,6 +241,9 @@
       "validTo": "Valid to"
     }
   },
+  "tagDetails": {
+    "affectedContainers": "Containers affected"
+  },
   "edit": "Edit",
   "save": "Save",
   "add": "Add",
@@ -251,7 +254,7 @@
   "unknown": "Unknown",
   "assignRoles": "Assign Roles",
   "makeAdmin": " Make Admin",
-
+  "noItems": "No items",
   "compute": {
     "resources": "Resources",
     "policies": "Policies",

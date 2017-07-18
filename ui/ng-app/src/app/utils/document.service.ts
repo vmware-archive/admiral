@@ -37,12 +37,15 @@ let getFilter = function(queryOptions: any): string {
   let newQueryOptions = {};
   newQueryOptions[searchConstants.SEARCH_OCCURRENCE.PARAM] = queryOptions[searchConstants.SEARCH_OCCURRENCE.PARAM];
 
+  var wildCard = queryOptions._strictFilter ? '' : '*';
+  delete queryOptions._strictFilter;
+
   var anyArray = toArrayIfDefined(queryOptions.any);
   if (anyArray) {
     newQueryOptions[FILTER_VALUE_ALL_FIELDS] = [];
     for (let i = 0; i < anyArray.length; i++) {
       newQueryOptions[FILTER_VALUE_ALL_FIELDS].push({
-        val: '*' + anyArray[i].toLowerCase() + '*',
+        val: wildCard + anyArray[i].toLowerCase() + wildCard,
         op: 'eq'
       });
     }
@@ -56,7 +59,7 @@ let getFilter = function(queryOptions: any): string {
         newQueryOptions[key] = [];
         for (let i = 0; i < valArray.length; i++) {
           newQueryOptions[key].push({
-            val: '*' + valArray[i].toLowerCase() + '*',
+            val: wildCard + valArray[i].toLowerCase() + wildCard,
             op: 'eq'
           });
         }

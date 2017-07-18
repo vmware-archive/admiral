@@ -13,6 +13,8 @@ import * as I18n from 'i18next';
 
 const LOGIN_PATH="/login/"
 
+const REGISTRY_SCHEME_REG_EXP = /^(https?):\/\//;
+
 export class Utils {
   public static ERROR_NOT_FOUND = 404;
 
@@ -253,6 +255,13 @@ export class Utils {
 
   public static isLogin(): boolean {
     return location.pathname.indexOf(LOGIN_PATH) > -1;
+  }
+
+  public static getHbrContainerImage(registryAddress, repositoryId, tagId): string {
+    registryAddress = registryAddress.replace(REGISTRY_SCHEME_REG_EXP, '');
+    let harborImageRef = registryAddress + ':*/' + repositoryId + ':' + tagId;
+
+    return harborImageRef;
   }
 }
 

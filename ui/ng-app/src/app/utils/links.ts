@@ -21,6 +21,7 @@ export class Links {
   public static CONTAINER_LOGS = Links.RESOURCES + '/container-logs';
   public static POD_LOGS = Links.RESOURCES + '/kubernetes-pod-logs';
   public static CLUSTERS = Links.RESOURCES + '/clusters';
+  public static CONTAINERS = Links.RESOURCES + '/containers';
   public static GROUPS = '/groups';
   public static PROJECTS = '/projects';
   public static EVENT_LOGS = Links.RESOURCES + '/event-logs';
@@ -33,6 +34,7 @@ export class Links {
   public static CONFIG = '/config';
   public static CONFIG_PROPS = Links.CONFIG + '/props';
   public static INSTANCE_TYPES = Links.CONFIG + '/instance-types';
+  public static REGISTRIES = Links.CONFIG + '/registries';
 
   public static AUTH = '/auth';
   public static USER_SESSION = Links.AUTH + '/session';

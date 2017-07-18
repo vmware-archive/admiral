@@ -935,7 +935,6 @@
     },
     "container": {
       "list": {
-        "title": "Items",
         "titleSearchContainers": "Found Containers",
         "titleSearchApplications": "Found Applications",
         "searchPlaceholder": "Search for containers",
@@ -963,7 +962,10 @@
           "all": "All",
           "containers": "Containers",
           "applications": "Applications"
-        }
+        },
+        "columnName": "Container",
+        "columnStatus": "Status",
+        "columnRunningSince": "Running since"
       },
       "details": {
         "usages": "Usages",

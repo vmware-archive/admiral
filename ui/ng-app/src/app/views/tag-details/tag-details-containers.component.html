@@ -1,0 +1,16 @@
+<div class="p2">{{ "tagDetails.affectedContainers" | i18n }}</div>
+<clr-datagrid>
+    <clr-dg-column>{{"app.container.list.columnName" | i18n: { "ns": "base" } }}</clr-dg-column>
+    <clr-dg-column>{{"app.container.list.columnStatus" | i18n: { "ns": "base" } }}</clr-dg-column>
+    <clr-dg-column>{{"app.container.list.columnRunningSince" | i18n: { "ns": "base" } }}</clr-dg-column>
+
+    <clr-dg-placeholder>{{ "noItems" | i18n }}</clr-dg-placeholder>
+
+    <clr-dg-row *clrDgItems="let container of containers" [clrDgItem]="container">
+        <clr-dg-cell><a routerLink="/home/containers/{{getContainerId(container)}}">{{ container.names }}</a></clr-dg-cell>
+        <clr-dg-cell>{{ container.powerState }}</clr-dg-cell>
+        <clr-dg-cell>{{ container.created | date:'yyyy-mm-dd HH:mm:ss' }}</clr-dg-cell>
+    </clr-dg-row>
+
+</clr-datagrid>
+

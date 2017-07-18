@@ -51,6 +51,7 @@ import { ClusterResourcesComponent } from './views/clusters/cluster-details/clus
 import { ClusterAddHostComponent } from './views/clusters/cluster-details/cluster-add-host.component';
 import { ClusterCreateComponent } from './views/clusters/cluster-create/cluster-create.component';
 import { VerifyCertificateComponent } from "./views/verify-certificate/verify-certificate.component";
+import { TagDetailsContainersComponent } from "./views/tag-details/tag-details-containers.component";
 
 import { GridViewComponent } from './components/grid-view/grid-view.component';
 import { CardComponent } from './components/card/card.component';
@@ -112,6 +113,7 @@ export const ADMIRAL_DECLARATIONS = [
   ConfigurationComponent,
   LogsComponent,
   SystemLogsComponent,
+  TagDetailsContainersComponent,
 
   DashboardComponent,
   FormerViewComponent,

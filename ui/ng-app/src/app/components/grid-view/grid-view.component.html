@@ -40,7 +40,7 @@
       </ng-template>
     </span>
     <span *ngIf="items.length === 0 && !loading" class="content-empty">
-      No items
+      {{ "noItems" | i18n }}
     </span>
   </div>
   <div *ngIf="loading" class="central-block-loading">
