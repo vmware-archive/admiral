@@ -156,7 +156,14 @@ public class ClusterMonitoringService extends StatelessService {
             // xenon removes unavailable nodes before excution of this task
             } else if (beforeUnavailable > nowUnavailable) {
                 updateQuorumOperation = createUpdateQuorumOperation(nowAvailable);
+            }else{
+               updateQuorumOperation = createUpdateQuorumOperation(4);
             }
+
+
+
+
+
         } else {
             logInfo("Quorum update: %d", quorumUpdate.membershipQuorum);
         }
