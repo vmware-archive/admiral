@@ -343,11 +343,14 @@ public class ProjectService extends StatefulService {
             ProjectState projectPut = put.getBody(ProjectState.class);
             validateState(projectPut);
             isProjectNameUsed(projectPut.name, currentState.documentSelfLink)
-                    .whenComplete((isNameUsed, e) -> {
-                        if (e != null) {
+                    .thenApply(isNameUsed -> new Pair<>(isNameUsed, (Throwable) null))
+                    .exceptionally(ex -> new Pair<>(null, ex))
+                    .thenAccept(pair -> {
+                        boolean isNameUsed = pair.left;
+                        if (pair.right != null) {
                             logWarning("Error during project name check: %s",
-                                    Utils.toString(e));
-                            put.fail(e);
+                                    Utils.toString(pair.right));
+                            put.fail(pair.right);
                             return;
                         }
                         if (isNameUsed) {
@@ -373,45 +376,42 @@ public class ProjectService extends StatefulService {
         ProjectState projectPatch = patch.getBody(ProjectState.class);
         ProjectState currentState = getState(patch);
         isProjectNameUsed(projectPatch.name, currentState.documentSelfLink)
-                .whenComplete((isNameUsed, e) -> {
-                    if (e != null) {
-                        logWarning("Error during project name check: %s", Utils.toString(e));
-                        patch.fail(e);
-                        return;
+                .thenApply(isNameUsed -> new Pair<>(isNameUsed, (Throwable) null))
+                .exceptionally(ex -> new Pair<>(null, ex))
+                .thenCompose(pair -> {
+                    boolean isNameUsed = pair.left;
+                    if (pair.right != null) {
+                        logWarning("Error during project name check: %s",
+                                Utils.toString(pair.right));
+                        return DeferredResult.failed(pair.right);
                     }
                     if (isNameUsed) {
                         String message = String.format(PROJECT_NAME_ALREADY_USED_MESSAGE,
                                 projectPatch.name);
-                        patch.fail(new LocalizableValidationException(message,
-                                PROJECT_NAME_ALREADY_USED_CODE, projectPatch.name));
-                        return;
+                        return DeferredResult.failed(new LocalizableValidationException(message,
+                                        PROJECT_NAME_ALREADY_USED_CODE, projectPatch.name));
                     }
 
-                    DeferredResult<ProjectState> projectDefRes = new DeferredResult<>();
-
                     if (ProjectRolesHandler.isProjectRolesUpdate(patch)) {
-                        projectDefRes = new ProjectRolesHandler(this, getSelfLink())
+                        return new ProjectRolesHandler(this, getSelfLink())
                                 .handleRolesUpdate(currentState, patch.getBody(ProjectRoles.class),
                                         patch);
                     } else {
-                        projectDefRes.complete(currentState);
+                        return DeferredResult.completed(currentState);
                     }
-
-                    projectDefRes.thenCompose(project -> {
-                        return handleProjectPatch(project, projectPatch);
-                    }).whenComplete((ignore, ex) -> {
-                        if (ex != null) {
-                            if (ex.getCause() instanceof ServiceNotFoundException) {
-                                patch.fail(Operation.STATUS_CODE_BAD_REQUEST,
-                                        ex.getCause(), ex.getCause());
-                                return;
-                            }
-                            patch.fail(ex);
+                })
+                .thenCompose(projectState -> handleProjectPatch(projectState, projectPatch))
+                .whenComplete((ignore, ex) -> {
+                    if (ex != null) {
+                        if (ex.getCause() instanceof ServiceNotFoundException) {
+                            patch.fail(Operation.STATUS_CODE_BAD_REQUEST,
+                                    ex.getCause(), ex.getCause());
                             return;
                         }
-
-                        patch.complete();
-                    });
+                        patch.fail(ex);
+                        return;
+                    }
+                    patch.complete();
                 });
     }
 

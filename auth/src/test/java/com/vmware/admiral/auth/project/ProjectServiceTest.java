@@ -62,6 +62,7 @@ import com.vmware.xenon.services.common.RoleService;
 import com.vmware.xenon.services.common.RoleService.RoleState;
 import com.vmware.xenon.services.common.UserGroupService;
 import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
+import com.vmware.xenon.services.common.UserService;
 import com.vmware.xenon.services.common.UserService.UserState;
 
 public class ProjectServiceTest extends AuthBaseTest {
@@ -333,7 +334,7 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertEquals(patchedIsPublic, updatedProject.isPublic);
     }
 
-    @Ignore
+    //TODO: Remove waitFor() once patch is stable.
     @Test
     public void testProjectRolesPatch() throws Throwable {
         // verify initial state
@@ -354,6 +355,36 @@ public class ProjectServiceTest extends AuthBaseTest {
         projectRoles.members.remove = Arrays.asList(USER_EMAIL_ADMIN);
         projectRoles.members.add = Arrays.asList(USER_EMAIL_GLORIA, USER_EMAIL_CONNIE);
         doPatch(projectRoles, expandedState.documentSelfLink);
+
+        waitFor(() -> {
+            UserState gloria = getDocumentNoWait(UserState.class,
+                    UriUtils.buildUriPath(UserService.FACTORY_LINK, USER_EMAIL_GLORIA));
+
+            String groupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                    AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(
+                            Service.getId(project.documentSelfLink)));
+            return gloria.userGroupLinks.contains(groupLink);
+        });
+
+        waitFor(() -> {
+            UserState connie = getDocumentNoWait(UserState.class,
+                    UriUtils.buildUriPath(UserService.FACTORY_LINK, USER_EMAIL_CONNIE));
+
+            String groupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                    AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(
+                            Service.getId(project.documentSelfLink)));
+            return connie.userGroupLinks.contains(groupLink);
+        });
+
+        waitFor(() -> {
+            UserState admin = getDocumentNoWait(UserState.class,
+                    UriUtils.buildUriPath(UserService.FACTORY_LINK, USER_EMAIL_ADMIN));
+
+            String groupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                    AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(
+                            Service.getId(project.documentSelfLink)));
+            return !admin.userGroupLinks.contains(groupLink);
+        });
 
         // verify result
         expandedState = getExpandedProjectState(project.documentSelfLink);
@@ -390,6 +421,37 @@ public class ProjectServiceTest extends AuthBaseTest {
                 USER_EMAIL_CONNIE);
         doPatch(projectRoles, expandedState.documentSelfLink);
 
+        waitFor(() -> {
+            UserState gloria = getDocumentNoWait(UserState.class,
+                    UriUtils.buildUriPath(UserService.FACTORY_LINK, USER_EMAIL_GLORIA));
+
+            String groupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                    AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(
+                            Service.getId(project.documentSelfLink)));
+            return !gloria.userGroupLinks.contains(groupLink);
+        });
+
+        waitFor(() -> {
+            UserState connie = getDocumentNoWait(UserState.class,
+                    UriUtils.buildUriPath(UserService.FACTORY_LINK, USER_EMAIL_CONNIE));
+
+            String groupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                    AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(
+                            Service.getId(project.documentSelfLink)));
+            return !connie.userGroupLinks.contains(groupLink);
+        });
+
+        waitFor(() -> {
+            UserState admin = getDocumentNoWait(UserState.class,
+                    UriUtils.buildUriPath(UserService.FACTORY_LINK, USER_EMAIL_ADMIN));
+
+            String groupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                    AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(
+                            Service.getId(project.documentSelfLink)));
+            return !admin.userGroupLinks.contains(groupLink);
+        });
+
+
         // verify result
         expandedState = getExpandedProjectState(project.documentSelfLink);
         assertNotNull(expandedState.members);
@@ -399,7 +461,7 @@ public class ProjectServiceTest extends AuthBaseTest {
     /**
      * Test with a PATCH request that updates both the project state and the user roles.
      */
-    @Ignore
+    //TODO: remove waitFor() once Patch is stable.
     @Test
     public void testMixedPatch() throws Throwable {
         // verify initial state
@@ -424,6 +486,26 @@ public class ProjectServiceTest extends AuthBaseTest {
         patchBody.members = new PrincipalRoleAssignment();
         patchBody.members.add = Arrays.asList(USER_EMAIL_GLORIA, USER_EMAIL_CONNIE);
         doPatch(patchBody, expandedState.documentSelfLink);
+
+        waitFor(() -> {
+            UserState gloria = getDocumentNoWait(UserState.class,
+                    UriUtils.buildUriPath(UserService.FACTORY_LINK, USER_EMAIL_GLORIA));
+
+            String groupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                    AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(
+                            Service.getId(project.documentSelfLink)));
+            return gloria.userGroupLinks.contains(groupLink);
+        });
+
+        waitFor(() -> {
+            UserState connie = getDocumentNoWait(UserState.class,
+                    UriUtils.buildUriPath(UserService.FACTORY_LINK, USER_EMAIL_CONNIE));
+
+            String groupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                    AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(
+                            Service.getId(project.documentSelfLink)));
+            return connie.userGroupLinks.contains(groupLink);
+        });
 
         // Verify result
         expandedState = getExpandedProjectState(project.documentSelfLink);
@@ -1043,7 +1125,7 @@ public class ProjectServiceTest extends AuthBaseTest {
             patchProject(state, state.documentSelfLink);
             fail("Project update with same name should've failed");
         } catch (Exception ex) {
-            assertTrue(ex instanceof LocalizableValidationException);
+            assertTrue(ex.getCause() instanceof LocalizableValidationException);
             assertTrue(ex.getMessage().contains("test-name"));
         }
 
@@ -1052,7 +1134,7 @@ public class ProjectServiceTest extends AuthBaseTest {
             patchProject(state, state.documentSelfLink);
             fail("Project update with same name (case insensitive) should've failed");
         } catch (Exception ex) {
-            assertTrue(ex instanceof LocalizableValidationException);
+            assertTrue(ex.getCause() instanceof LocalizableValidationException);
             assertTrue(ex.getMessage().contains("test-Name"));
         }
     }
