@@ -21,6 +21,7 @@ import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.logging.Level;
 
+import com.vmware.admiral.common.util.CertificateUtilExtended;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
@@ -79,8 +80,10 @@ public class GuestCredentialsComputeDescriptionEnhancer extends ComputeDescripti
         AuthCredentialsServiceState credentialsState = new AuthCredentialsServiceState();
         credentialsState.type = AuthCredentialsType.PublicKey.name();
         credentialsState.userEmail = UUID.randomUUID().toString();
-        credentialsState.publicKey = KeyUtil.toPEMFormat(keyPair.getPublic());
-        credentialsState.privateKey = KeyUtil.toPEMFormat(keyPair.getPrivate());
+        credentialsState.publicKey = CertificateUtilExtended.toPEMFormat(keyPair.getPublic(),
+                host);
+        credentialsState.privateKey = CertificateUtilExtended.toPEMFormat(keyPair.getPrivate(),
+                host);
 
         String sshAuthorizedKey = KeyUtil
                 .toPublicOpenSSHFormat((RSAPublicKey) keyPair.getPublic());

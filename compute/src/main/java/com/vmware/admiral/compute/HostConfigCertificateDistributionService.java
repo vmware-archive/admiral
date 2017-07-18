@@ -74,7 +74,7 @@ public class HostConfigCertificateDistributionService extends
                                     return;
                                 }
                                 uploadCertificate(hostLink, registry.address, cert, tenantLinks);
-                            });
+                            }, getHost());
                         });
                     }
                 }));

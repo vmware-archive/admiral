@@ -25,6 +25,7 @@ import org.apache.commons.io.IOUtils;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.CertificateUtilExtended;
 import com.vmware.admiral.common.util.SshServiceUtil;
 import com.vmware.admiral.compute.ConfigureHostOverSshTaskService.ConfigureHostOverSshTaskServiceState.SubStage;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
@@ -35,7 +36,6 @@ import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.security.util.CertificateUtil;
 import com.vmware.photon.controller.model.security.util.CertificateUtil.CertChainKeyPair;
-import com.vmware.photon.controller.model.security.util.KeyUtil;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.CompletionHandler;
@@ -287,7 +287,7 @@ public class ConfigureHostOverSshTaskService extends
 
     public void uploadServerPem(ConfigureHostOverSshTaskServiceState state,
             AuthCredentialsServiceState credentials, CertChainKeyPair pair) {
-        String pem = CertificateUtil.toPEMformat(pair.getCertificate());
+        String pem = CertificateUtilExtended.toPEMformat(pair.getCertificate(), getHost());
         getSshServiceUtil().upload(state.address, credentials, pem.getBytes(),
                 "installer/certs/server.pem", (op, failure) -> {
                     if (failure != null) {
@@ -301,7 +301,7 @@ public class ConfigureHostOverSshTaskService extends
 
     public void uploadServerKeyPem(ConfigureHostOverSshTaskServiceState state,
             AuthCredentialsServiceState credentials, CertChainKeyPair pair) {
-        String pem = KeyUtil.toPEMFormat(pair.getPrivateKey());
+        String pem = CertificateUtilExtended.toPEMFormat(pair.getPrivateKey(), getHost());
         getSshServiceUtil().upload(state.address, credentials, pem.getBytes(),
                 "installer/certs/server-key.pem", (op, failure) -> {
                     if (failure != null) {

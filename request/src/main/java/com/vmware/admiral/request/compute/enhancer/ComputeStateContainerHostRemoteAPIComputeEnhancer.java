@@ -25,13 +25,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.CertificateUtilExtended;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
 import com.vmware.admiral.request.compute.enhancer.EnhancerUtils.WriteFiles;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.security.util.CertificateUtil;
 import com.vmware.photon.controller.model.security.util.CertificateUtil.CertChainKeyPair;
-import com.vmware.photon.controller.model.security.util.KeyUtil;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
@@ -159,9 +159,9 @@ public class ComputeStateContainerHostRemoteAPIComputeEnhancer extends ComputeEn
 
             list.add(new WriteFiles("/etc/docker/ca.pem", "0644", cred.publicKey));
             list.add(new WriteFiles("/etc/docker/server.pem", "0644",
-                    CertificateUtil.toPEMformat(signedForServer.getCertificate())));
+                    CertificateUtilExtended.toPEMformat(signedForServer.getCertificate(), host)));
             list.add(new WriteFiles("/etc/docker/server-key.pem", "0600",
-                    KeyUtil.toPEMFormat(signedForServer.getPrivateKey())));
+                    CertificateUtilExtended.toPEMFormat(signedForServer.getPrivateKey(), host)));
             content.put(WRITE_FILES_ELEMENT, list);
 
         } catch (Exception e) {

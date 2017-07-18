@@ -24,11 +24,11 @@ import java.util.Scanner;
 import java.util.logging.Level;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.CertificateUtilExtended;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
 import com.vmware.photon.controller.model.security.util.CertificateUtil;
 import com.vmware.photon.controller.model.security.util.CertificateUtil.CertChainKeyPair;
-import com.vmware.photon.controller.model.security.util.KeyUtil;
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.CompletionHandler;
@@ -41,6 +41,7 @@ import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
+@SuppressWarnings("deprecation")
 public class CaSigningCertService extends StatefulService {
 
     public static final String FACTORY_LINK = ManagementUriParts.CONFIG_CA_CREDENTIALS;
@@ -201,8 +202,10 @@ public class CaSigningCertService extends StatefulService {
 
         CertChainKeyPair signedForClient = CertificateUtil.generateSignedForClient("computeClient",
                 caCertificate, caKeyPair.getPrivate());
-        authCredentials.publicKey = CertificateUtil.toPEMformat(signedForClient.getCertificate());
-        authCredentials.privateKey = KeyUtil.toPEMFormat(signedForClient.getPrivateKey());
+        authCredentials.publicKey = CertificateUtilExtended.toPEMformat(
+                signedForClient.getCertificate(), getHost());
+        authCredentials.privateKey = CertificateUtilExtended.toPEMFormat(
+                signedForClient.getPrivateKey(), getHost());
         return Operation.createPost(this, AuthCredentialsService.FACTORY_LINK)
                 .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
                 .setBody(authCredentials);

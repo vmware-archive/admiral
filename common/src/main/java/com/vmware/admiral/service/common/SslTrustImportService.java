@@ -20,6 +20,7 @@ import java.security.cert.X509Certificate;
 import java.util.List;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.CertificateUtilExtended;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.SslCertificateResolver;
@@ -181,9 +182,9 @@ public class SslTrustImportService extends StatelessService {
                 }));
     }
 
-    private static SslTrustCertificateState createSslTrustCertificateState(
+    private SslTrustCertificateState createSslTrustCertificateState(
             SslTrustImportRequest request, X509Certificate[] certChain) {
-        String sslTrust = CertificateUtil.toPEMformat(certChain);
+        String sslTrust = CertificateUtilExtended.toPEMformat(certChain, getHost());
 
         SslTrustCertificateState sslTrustState = new SslTrustCertificateState();
         sslTrustState.certificate = sslTrust;
