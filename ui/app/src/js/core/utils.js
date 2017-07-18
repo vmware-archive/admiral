@@ -1409,6 +1409,18 @@ var utils = {
 
   convertToGigabytes(bytes) {
     return (bytes / 1073741824).toFixed(2);
+  },
+
+  getUnifiedState(cs) {
+    if (!cs) {
+      return null;
+    }
+
+    var state = cs.lifecycleState;
+    if (state === 'RETIRED' || state === 'PROVISIONING') {
+      return state;
+    }
+    return cs.powerState;
   }
 };
 

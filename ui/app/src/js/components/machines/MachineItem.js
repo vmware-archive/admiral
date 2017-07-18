@@ -12,6 +12,7 @@
 import { NavigationActions } from 'actions/Actions';
 import MachineItemVue from 'components/machines/MachineItemVue.html';
 import constants from 'core/constants';
+import utils from 'core/utils';
 
 export default Vue.component('machine-grid-item', {
   template: MachineItemVue,
@@ -32,8 +33,8 @@ export default Vue.component('machine-grid-item', {
   attached: function() {
   },
   methods: {
-    stateMessage(state) {
-      return i18n.t('state.' + state);
+    stateMessage() {
+      return utils.getUnifiedState(this.model);
     },
     percentageLevel(percentage) {
       if (percentage < 50) {

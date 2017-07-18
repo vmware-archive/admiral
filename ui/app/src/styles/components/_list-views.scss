@@ -122,6 +122,9 @@
   .status.RETIRED {
     color: $secondary_inactive_button_color;
   }
+  .status.PROVISIONING {
+    color: $secondary_inactive_button_color;
+  }
   .status.ON {
     color: $status_running_color;
   }
