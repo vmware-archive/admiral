@@ -70,6 +70,10 @@ public abstract class DescriptiveFileReference {
         }
     }
 
+    public String getDocumentString() {
+        return String.join("\n", getDocument());
+    }
+
     public abstract List<String> getDocument();
 
 }

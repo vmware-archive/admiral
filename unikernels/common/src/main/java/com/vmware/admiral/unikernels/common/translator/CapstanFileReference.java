@@ -101,5 +101,4 @@ public class CapstanFileReference extends DescriptiveFileReference {
         }
         return fileLines;
     }
-
 }

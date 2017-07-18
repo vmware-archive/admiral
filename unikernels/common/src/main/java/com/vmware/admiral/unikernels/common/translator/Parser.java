@@ -46,6 +46,10 @@ public class Parser {
         readStream();
     }
 
+    public Parser() {
+
+    }
+
     private void readStream() {
         String readLine = "";
         StringBuffer sb = new StringBuffer();
@@ -57,8 +61,11 @@ public class Parser {
             }
         }
 
-        reading = sb.toString().split("\\r?\\n");
+        readString(sb.toString());
+    }
 
+    public void readString(String fileContent) {
+        reading = fileContent.split("\\r?\\n");
     }
 
     public String[] getReading() {

@@ -30,6 +30,16 @@
 		    <artifactId>xenon-common</artifactId>
 		    <version>${xenon.version}</version>
 		</dependency>
+
+
+	  <!-- TEST -->
+        <dependency>
+            <groupId>${xenon.group}</groupId>
+            <artifactId>xenon-common</artifactId>
+            <version>${xenon.version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
 </project>

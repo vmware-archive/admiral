@@ -11,7 +11,6 @@
 
 package com.vmware.admiral.unikernels.common.translator;
 
-
 import static org.junit.Assert.assertEquals;
 
 import java.io.FileNotFoundException;
@@ -48,19 +47,17 @@ public class ParserTest {
                 numMessages++;
             }
         }
-        assertEquals(numMessages == 4, true);
+        assertEquals(numMessages, 4);
     }
 
     @Test
     public void parsedTaggedMessagesQualityCapstanTest() {
-        assertEquals(parserFromCapstan.getTagArgs("base").equals("base: cloudius/osv-openjdk"),
-                true);
+        assertEquals(parserFromCapstan.getTagArgs("base"), "base: cloudius/osv-openjdk");
     }
 
     @Test
     public void parsedTaggedMessagesQualityDockerTest() {
-        assertEquals(parserFromDocker.getTagArgs("FROM").equals("FROM cloudrouter/osv-builder"),
-                true);
+        assertEquals(parserFromDocker.getTagArgs("FROM"), "FROM cloudrouter/osv-builder");
     }
 
     @Test

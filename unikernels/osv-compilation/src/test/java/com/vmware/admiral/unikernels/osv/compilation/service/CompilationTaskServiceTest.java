@@ -59,8 +59,9 @@ public class CompilationTaskServiceTest {
         host.stop();
     }
 
-    private void clearData() {
-    }
+    /*
+     * private void clearData() { }
+     */
 
     public class SuccessMockService extends StatelessService {
         public static final String SELF_LINK = UnikernelManagementURIParts.SAMPLE_SUCCESSCB;
@@ -96,8 +97,7 @@ public class CompilationTaskServiceTest {
     public void testTaskCompletion() {
         invokeService();
         waitCompilationTaskServiceCompletion(timeForTaskServiceCompletionSeconds);
-        assertEquals(successLink.equals("/success"), true);
-        assertEquals(successLink.equals("/failure"), false);
+        assertEquals(successLink, "/success");
     }
 
     private void waitCompilationTaskServiceCompletion(int timeInSeconds) {
@@ -122,7 +122,7 @@ public class CompilationTaskServiceTest {
         stateBody.data.capstanfile = "base: cloudius/osv-openjdk "
                 + "\ncmdline: /java.so -jar /app.jar "
                 + "\nfiles: "
-                + "\n  /app.jar: target/my-app-1.0-SNAPSHOT.jar";
+                + "\n  /app.jar: OSv-service.jar";
 
         stateBody.data.compilationPlatform = "vbox";
         stateBody.data.sources = "https://github.com/antonOO/JarSourceUnikernel.git";

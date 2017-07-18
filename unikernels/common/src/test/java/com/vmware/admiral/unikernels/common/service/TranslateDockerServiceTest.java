@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.unikernels.osv.compilation.service;
+package com.vmware.admiral.unikernels.common.service;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -20,13 +20,16 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.vmware.admiral.unikernels.osv.compilation.service.CompilationTaskService.CompilationTaskServiceState;
+import com.vmware.admiral.unikernels.common.exceptions.DockerFileFormatException;
+import com.vmware.admiral.unikernels.common.translator.Parser;
+import com.vmware.admiral.unikernels.common.translator.Platform;
+import com.vmware.admiral.unikernels.common.translator.Translator;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.test.TestContext;
 
-public class CompilationBrockerServiceTest {
+public class TranslateDockerServiceTest {
 
     private ServiceHost host;
     private CompilationData response;
@@ -36,10 +39,10 @@ public class CompilationBrockerServiceTest {
         host = ServiceHost.create();
         host.start();
         host.startDefaultCoreServicesSynchronously();
-        host.startService(new CompilationBrockerService());
+        host.startService(new TranslateDockerService());
         host.startService(new TaskServiceMock());
         waitForServiceAvailability(host,
-                CompilationBrockerService.SELF_LINK,
+                TranslateDockerService.SELF_LINK,
                 TaskServiceMock.SELF_LINK);
     }
 
@@ -60,28 +63,32 @@ public class CompilationBrockerServiceTest {
 
     public class TaskServiceMock extends StatelessService {
 
-        public static final String SELF_LINK = UnikernelManagementURIParts.COMPILE_TASK;
+        public static final String SELF_LINK = UnikernelManagementURIParts.UNIKERNEL_CREATION;
 
         @Override
         public void handlePost(Operation post) {
-            response = post.getBody(CompilationTaskServiceState.class).data;
+            response = post.getBody(CompilationData.class);
             post.complete();
         }
 
     }
 
     @Test
-    public void dataFlowCheck() {
-        CompilationData postBody = new CompilationData();
-        postBody.capstanfile = "capstan";
-        postBody.compilationPlatform = "vbox";
-        postBody.sources = "github";
-        postBody.successCB = "success";
-        postBody.failureCB = "failure";
+    public void translationCheck() {
+        TranslationData translationData = new TranslationData();
+        translationData.dockerfile = "FROM cloudrouter/osv-builder"
+                + "\nCOPY OSv-service.jar ."
+                + "\nWORKDIR /"
+                + "\nCMD java -jar OSv-service.jar";
+        translationData.sources = "github";
+        translationData.platform = Platform.OSv;
+        translationData.successCB = "success";
+        translationData.failureCB = "failure";
+        translationData.compilationPlatform = "vbox";
 
         TestContext ctx = TestContext.create(1, Duration.ofSeconds(60).toMillis() * 1000);
-        Operation.createPost(host, UnikernelManagementURIParts.ROUTER)
-                .setBody(postBody).setReferer(host.getUri())
+        Operation.createPost(host, UnikernelManagementURIParts.TRANSLATION)
+                .setBody(translationData).setReferer(host.getUri())
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         fail(e.getMessage());
@@ -91,10 +98,23 @@ public class CompilationBrockerServiceTest {
                 }).sendWith(host);
         ctx.await();
 
-        assertEquals(response.capstanfile, "capstan");
-        assertEquals(response.compilationPlatform, "vbox");
-        assertEquals(response.sources, "github");
-        assertEquals(response.successCB, "success");
+        assertEquals(response.capstanfile, translateDockerUtil(translationData.dockerfile));
         assertEquals(response.failureCB, "failure");
+        assertEquals(response.successCB, "success");
+        assertEquals(response.sources, "github");
+        assertEquals(response.compilationPlatform, "vbox");
+    }
+
+    private String translateDockerUtil(String docker) {
+        Parser parser = new Parser();
+        parser.readString(docker);
+        try {
+            Translator translator = new Translator(parser.parseDocker());
+            return translator.translate(Platform.OSv).getDocumentString();
+        } catch (DockerFileFormatException e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 }
