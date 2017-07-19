@@ -208,7 +208,6 @@ export default Vue.component('profile-edit-view', {
       this.computeProfileEditor = value;
     },
     onChange() {
-      console.log('onChange', this);
       this.handleOnChangeForEditor('computeProfile');
       this.handleOnChangeForEditor('networkProfile');
       this.handleOnChangeForEditor('storageProfile');
