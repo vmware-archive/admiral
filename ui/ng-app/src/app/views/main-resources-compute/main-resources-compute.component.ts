@@ -23,6 +23,7 @@ import { Router, NavigationEnd } from '@angular/router';
 export class MainResourcesComputeComponent implements OnInit, OnDestroy {
 
     embeddedMode = FT.isApplicationEmbedded();
+    isProfilesSplitEnabled = FT.isProfilesSplitEnabled();
 
     routeObserve: Subscription;
 

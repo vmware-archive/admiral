@@ -83,4 +83,8 @@ export class FT {
   public static isCompute() {
     return Utils.isCompute();
   }
+
+  public static isProfilesSplitEnabled() {
+    return Utils.getConfigurationPropertyBoolean('allow.ft.profiles.split');
+  }
 };
