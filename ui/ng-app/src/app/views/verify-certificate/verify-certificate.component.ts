@@ -33,7 +33,11 @@ export class VerifyCertificateComponent {
 
   warningMessage() {
     if (this.certificate) {
-      return I18n.t("certificate.certificateWarning", { address: this.hostAddress } as I18n.TranslationOptions); }
+      return I18n.t("certificate.certificateWarning", {
+        address: this.hostAddress,
+        interpolation: { escapeValue: false }
+      } as I18n.TranslationOptions);
+    }
     return '';
   }
 

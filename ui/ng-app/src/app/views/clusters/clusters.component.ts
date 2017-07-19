@@ -30,8 +30,8 @@ export class ClustersComponent implements OnInit {
 
   get deleteConfirmationDescription(): string {
     return this.clusterToDelete && this.clusterToDelete.name
-            && I18n.t('clusters.delete.confirmation',
-            { clusterName:  this.clusterToDelete.name } as I18n.TranslationOptions);
+            && I18n.t('clusters.delete.confirmation', { clusterName:  this.clusterToDelete.name,
+               interpolation: { escapeValue: false } } as I18n.TranslationOptions);
   }
 
   deleteCluster(event, cluster) {

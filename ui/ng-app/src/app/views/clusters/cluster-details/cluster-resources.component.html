@@ -27,7 +27,7 @@
         {{ getHostName(item) }}
         <clr-dropdown class="card-actions" [clrMenuPosition]="'left-top'" (click)="$event.stopPropagation()">
           <button class="btn btn-sm btn-link" clrDropdownToggle>
-              <clr-icon shape="ellipsis-vertical"></clr-icon>
+              <clr-icon shape="ellipsis-vertical" size="20"></clr-icon>
           </button>
           <div class="dropdown-menu">
             <a href="..." clrDropdownItem (click)="deleteHost($event, item)">

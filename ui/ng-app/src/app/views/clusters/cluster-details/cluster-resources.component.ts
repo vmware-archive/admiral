@@ -44,7 +44,8 @@ export class ClusterResourcesComponent implements OnChanges {
 
   get deleteConfirmationDescription(): string {
     return this.hostToDelete && I18n.t('hosts.delete.confirmation',
-            { hostName: this.getHostName(this.hostToDelete) } as I18n.TranslationOptions);
+            { hostName: this.getHostName(this.hostToDelete),
+              interpolation: { escapeValue: false } } as I18n.TranslationOptions);
   }
 
   deleteHost(event, host) {
