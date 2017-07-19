@@ -15,6 +15,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
@@ -22,17 +23,24 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Executors;
 
-import org.junit.Ignore;
+import com.microsoft.azure.CloudException;
+import com.microsoft.azure.management.network.AddressSpace;
+import com.microsoft.azure.management.network.implementation.NetworkManagementClientImpl;
+import com.microsoft.azure.management.network.implementation.SubnetInner;
+import com.microsoft.azure.management.network.implementation.VirtualNetworkInner;
+import com.microsoft.azure.management.resources.implementation.ResourceGroupInner;
 
 import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.profile.StorageProfileService;
 import com.vmware.photon.controller.model.Constraint;
+import com.vmware.photon.controller.model.adapters.azure.utils.AzureSdkClients;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.DiskService;
+import com.vmware.xenon.services.common.AuthCredentialsService;
 import com.vmware.xenon.services.common.QueryTask;
 
-@Ignore("https://jira-hzn.eng.vmware.com/browse/VCOM-1377")
 public class AzureComputeProvisionWithBootAndAdditionalDiskIT extends AzureComputeProvisionIT {
 
     private static final long OS_DISK_SIZE = 32 * 1024;
@@ -41,6 +49,12 @@ public class AzureComputeProvisionWithBootAndAdditionalDiskIT extends AzureCompu
     private static final Map<String, String> tagMap = new HashMap<>();
     public static final String OSDISK_NAME = "OSDisk";
     public static final String DATA_DISK_NAME = "DataDisk";
+    public static final String RESOURCE_GROUP_FOR_SUBNET = "ittestdefaultrgforsubnet";
+    public static final String VIRTUAL_NETWORK = "defaultvNetForIT";
+    public static final String SUBNET = "itdefaultsubnet";
+
+    private static AzureSdkClients azureSdkClients;
+    public AuthCredentialsService.AuthCredentialsServiceState auth;
 
     @Override protected String getResourceDescriptionLink() throws Exception {
         return getResourceDescriptionLink(true, null);
@@ -52,11 +66,46 @@ public class AzureComputeProvisionWithBootAndAdditionalDiskIT extends AzureCompu
     }
 
     @Override
+    public void setUp() throws Throwable {
+
+        setupAuthCredentials();
+
+        azureSdkClients = new AzureSdkClients(Executors.newSingleThreadExecutor(), this.auth);
+
+        createResourceGroup(RESOURCE_GROUP_FOR_SUBNET);
+
+        createVirtualNetworkAndSubnet(RESOURCE_GROUP_FOR_SUBNET, VIRTUAL_NETWORK, SUBNET);
+
+        super.setUp();
+    }
+
+    private void setupAuthCredentials() throws Exception {
+
+        this.auth = new AuthCredentialsService.AuthCredentialsServiceState();
+        this.auth.userEmail = getTestRequiredProp(VM_ADMIN_USERNAME);
+        this.auth.privateKey = getTestRequiredProp(VM_ADMIN_PASSWORD);
+        this.auth.documentSelfLink = UUID.randomUUID().toString();
+        this.auth.privateKeyId = getTestRequiredProp(ACCESS_KEY_PROP);
+        this.auth.privateKey = getTestRequiredProp(ACCESS_SECRET_PROP);
+        this.auth.userLink = getTestRequiredProp(SUBSCRIPTION_PROP);
+        this.auth.customProperties = new HashMap<>();
+        this.auth.customProperties.put("azureTenantId", getTestRequiredProp(TENANT_ID_PROP));
+
+        this.auth = postDocument(AuthCredentialsService.FACTORY_LINK, this.auth, documentLifeCycle);
+    }
+
+    @Override
+    protected void extendComputeDescription(ComputeDescriptionService.ComputeDescription
+            computeDescription) throws Exception {
+        computeDescription.authCredentialsLink = auth.documentSelfLink;
+        computeDescription.name = "mcp";
+    }
+
+    @Override
     protected void doSetUp() throws Throwable {
 
-        //assuming existing of subnet named "test-subnet0" in test-sharedNetworkRG
         createProfile(loadComputeProfile(getEndpointType()), createNetworkProfile(
-                "test-subnet0", null, null), createStorageProfile());
+                SUBNET, null, null), createStorageProfile());
     }
 
     @Override
@@ -194,6 +243,40 @@ public class AzureComputeProvisionWithBootAndAdditionalDiskIT extends AzureCompu
             }
             storageItem.tagLinks.add(tagMap.get(storageItem.name));
         }
+    }
+
+    private void createVirtualNetworkAndSubnet(String resourceGroupName, String virtualNetworkName,
+            String subnetName) {
+
+        NetworkManagementClientImpl client =  azureSdkClients
+                .getNetworkManagementClientImpl();
+
+        VirtualNetworkInner virtualNetworkRequest = new VirtualNetworkInner();
+        virtualNetworkRequest.withLocation(getTestProp(REGION_ID_PROP, "westus"));
+
+        AddressSpace addressSpace = new AddressSpace();
+        ArrayList<String> prefixes = new ArrayList<>();
+        prefixes.add("10.10.0.0/16");
+        addressSpace.withAddressPrefixes(prefixes);
+        virtualNetworkRequest.withAddressSpace(addressSpace);
+
+        client.virtualNetworks().createOrUpdate(resourceGroupName, virtualNetworkName,
+                virtualNetworkRequest);
+
+        SubnetInner subnetRequest = new SubnetInner()
+                .withAddressPrefix("10.10.10.0/28")
+                .withName(subnetName);
+
+        client.subnets().createOrUpdate(resourceGroupName, virtualNetworkName, subnetName ,subnetRequest);
+    }
+
+    private void createResourceGroup(String resourceGroupName)
+            throws CloudException, IOException {
+        ResourceGroupInner resourceGroupToCreate = new ResourceGroupInner()
+                .withName(resourceGroupName)
+                .withLocation(getTestProp(REGION_ID_PROP, "westus"));
+
+        azureSdkClients.getResourceManagementClientImpl().resourceGroups().createOrUpdate(resourceGroupName, resourceGroupToCreate);
     }
 
 
