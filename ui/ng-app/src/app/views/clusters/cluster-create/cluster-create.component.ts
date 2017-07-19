@@ -100,7 +100,9 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
       this.showCertificateWarning = false;
     });
     this.service.list(Links.CREDENTIALS, {}).then(credentials => {
-      this.credentials = credentials.documents.map(this.toCredentialViewModel);
+      this.credentials = credentials.documents
+          .filter(c => !Utils.areSystemScopedCredentials(c))
+          .map(this.toCredentialViewModel);
     });
   }
 

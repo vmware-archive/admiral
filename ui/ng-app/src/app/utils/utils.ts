@@ -195,6 +195,14 @@ export class Utils {
     };
   }
 
+  public static areSystemScopedCredentials(credentials) {
+    if (credentials) {
+      let scope = this.getCustomPropertyValue(credentials.customProperties, 'scope');
+      return 'SYSTEM' == scope;
+    }
+    return false;
+  }
+
   public static getHostName(host) {
     if (!host) {
       return null;

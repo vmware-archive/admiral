@@ -45,11 +45,33 @@ export class ClusterAddHostComponent implements AfterViewInit {
         credentials: new FormControl('')
     });
 
+    credentialsTitle = I18n.t('dropdownSearchMenu.title', {
+        ns: 'base',
+        entity: I18n.t('app.credential.entity', {ns: 'base'})
+    } as I18n.TranslationOptions );
+
+    credentialsSearchPlaceholder = I18n.t('dropdownSearchMenu.searchPlaceholder', {
+        ns: 'base',
+        entity: I18n.t('app.credential.entity', {ns: 'base'})
+    } as I18n.TranslationOptions );
+
     constructor(private ds: DocumentService) { }
+
+    toCredentialViewModel(credential) {
+        let vm:any = {};
+        vm.documentSelfLink = credential.documentSelfLink;
+        vm.name = credential.customProperties ? credential.customProperties.__authCredentialsName : '';
+        if (!vm.name) {
+            vm.name = credential.documentId;
+        }
+        return vm;
+    }
 
     ngAfterViewInit() {
         this.ds.list(Links.CREDENTIALS, {}).then(credentials => {
-            this.credentials = credentials.documents;
+            this.credentials = credentials.documents
+                .filter(c => !Utils.areSystemScopedCredentials(c))
+                .map(c => this.toCredentialViewModel(c));
         });
     }
 
