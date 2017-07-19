@@ -38,6 +38,7 @@ import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAl
 import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAllocationTaskState.SubStage;
 import com.vmware.admiral.request.compute.ComputeProvisionTaskService.ComputeProvisionTaskState;
 import com.vmware.admiral.request.compute.ComputeProvisionTaskService.ExtensibilityCallbackResponse;
+import com.vmware.admiral.request.utils.ComputeStateUtils;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.EventTopicDeclarator;
 import com.vmware.admiral.service.common.EventTopicService;
@@ -304,8 +305,8 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
         ComputeProvisionTaskService service = new ComputeProvisionTaskService();
         service.setHost(host);
 
-        Operation operation = service
-                .patchNicDescriptionOperation(ipAddress, description.documentSelfLink);
+        Operation operation = ComputeStateUtils
+                .patchNicDescriptionOperation(host, ipAddress, description.documentSelfLink);
 
         //Overload completion handler
         operation.setCompletion((o, e) -> {
@@ -343,8 +344,8 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
         SubnetState subnet = new SubnetState();
         subnet.documentSelfLink = "subnet-link";
 
-        Operation operation = service
-                .patchNicStateOperation(subnet, ipAddress, state.documentSelfLink);
+        Operation operation = ComputeStateUtils
+                .patchNicStateOperation(host, subnet, ipAddress, state.documentSelfLink);
 
         //Overload completion handler
         operation.setCompletion((o, e) -> {
@@ -524,6 +525,51 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
     }
 
     @Test
+    public void testIPAssignment() throws Throwable {
+
+        ComputeState cs = createVmHostCompute(true);
+
+        ComputeProvisionTaskService service = new ComputeProvisionTaskService();
+        service.setHost(host);
+
+        ComputeProvisionTaskState state = new ComputeProvisionTaskState();
+        state.resourceLinks = Collections.singleton(cs.documentSelfLink);
+        state.taskSubStage = ComputeProvisionTaskState.SubStage.CUSTOMIZING_COMPUTE;
+
+        state = doPost(state,
+                ComputeProvisionTaskService.FACTORY_LINK);
+
+        final String selfLink = cs.documentSelfLink;
+        assertNotNull(selfLink);
+
+        assertNotNull(state);
+        assertEquals(1, state.resourceLinks.size());
+
+        ComputeProvisionTaskService.ExtensibilityCallbackResponse payload =
+                (ComputeProvisionTaskService.ExtensibilityCallbackResponse) service
+                        .notificationPayload(state);
+
+        payload.addresses = Collections.singleton("127.0.0.1");
+        payload.subnetName = "subnet";
+
+        TestContext context = new TestContext(1, Duration.ofMinutes(1));
+
+        service.enhanceExtensibilityResponse(state, payload).whenComplete((r, err) -> {
+            try {
+                ComputeState document = getDocument(ComputeState.class, selfLink);
+
+                assertNotNull(document);
+
+                context.completeIteration();
+            } catch (Throwable throwable) {
+                context.failIteration(throwable);
+            }
+
+        });
+        context.await();
+    }
+
+    @Test
     public void testRetrieveSubnetwork() throws Throwable {
 
         ComputeProvisionTaskService service = new ComputeProvisionTaskService();
@@ -542,16 +588,14 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
         ComputeProvisionTaskState state = new ComputeProvisionTaskState();
         state.resourceLinks = Collections.singleton(computeHost.documentSelfLink);
 
-        ComputeProvisionTaskService.ExtensibilityCallbackResponse payload = (ExtensibilityCallbackResponse) service
-                .notificationPayload(state);
-        payload.subnetName = "subnetName";
-        payload.addresses = Collections.singleton("10.152.24.52");
-
         TestContext context = new TestContext(1, Duration.ofMinutes(1));
 
-        service.retrieveSubnetwork(state, payload, () -> {
-            context.completeIteration();
-        });
+        ComputeStateUtils.patchSubnetsNicsAndDescriptions(host, state.resourceLinks, Collections
+                        .singleton("10.152.24.52"),
+                "subnetName")
+                .whenComplete((o, e) -> {
+                    context.completeIteration();
+                });
 
         context.await();
     }

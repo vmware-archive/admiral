@@ -11,9 +11,6 @@
 
 package com.vmware.admiral.compute;
 
-import com.vmware.photon.controller.model.UriPaths;
-import com.vmware.xenon.common.UriUtils;
-
 public class ComputeConstants {
 
     public static final String HOST_AUTH_CREDENTIALS_PROP_NAME = "__authCredentialsLink";
@@ -53,6 +50,12 @@ public class ComputeConstants {
 
     public static final String CUSTOM_PROP_ENABLE_SSH_ACCESS_NAME = "enableSSH";
 
+    public static final String CUSTOM_PROP_HOST_NAME = "hostName";
+
+    public static final String CUSTOM_PROP_IP_ADDRESS = "ipAddress";
+
+    public static final String CUSTOM_PROP_SUBNET = "subnet";
+
     public static final String HOST_URI_PROP_NAME = "__hostURI";
 
     public static final String COMPUTE_PLACEMENT_CONSTRAINT_KEY = "placement";
@@ -68,30 +71,6 @@ public class ComputeConstants {
      * payload.
      */
     public static final String OPERATION_PAYLOAD_PROP_NAME = "__operationPayload";
-
-    public enum AdapterType {
-        INSTANCE_ADAPTER("instance-adapter"),
-        NETWORK_ADAPTER("network-adapter"),
-        FIREWALL_ADAPTER("firewall-adapter"),
-        STATS_ADAPTER("stats-adapter"),
-        BOOT_ADAPTER("boot-adapter"),
-        POWER_ADAPTER("power-adapter"),
-        ENUMERATION_ADAPTER("enumeration-adapter"),
-        ENUMERATION_CREATION_ADAPTER("enumeration-creation-adapter"),
-        ENUMERATION_DELETION_ADAPTER("enumeration-deletion-adapter"),
-        COMPUTE_DESCRIPTION_CREATION_ADAPTER("compute-description-creation-adapter"),
-        COMPUTE_STATE_CREATION_ADAPTER("compute-state-creation-adapter");
-
-        private final String path;
-
-        private AdapterType(String path) {
-            this.path = path;
-        }
-
-        public String adapterLink(String endpointType) {
-            return UriUtils.buildUriPath(UriPaths.PROVISIONING, endpointType, this.path);
-        }
-    }
 
     public enum EndpointType {
         VSPHERE_TYPE("vsphere");

@@ -634,6 +634,12 @@ public class ComputeAllocationTaskService
         resource.endpointLink = state.endpointLink;
         resource.diskLinks = diskLinks;
 
+        resource.address = state.getCustomProperty(
+                ComputeConstants.CUSTOM_PROP_IP_ADDRESS);
+
+        resource.hostName = state.getCustomProperty(
+                ComputeConstants.CUSTOM_PROP_HOST_NAME);
+
         // networkLinks may be null (in which case they may be set during network provisioning if
         // there are networks defined in the blueprint)
         resource.networkInterfaceLinks = networkLinks != null && networkLinks.isEmpty() ? null

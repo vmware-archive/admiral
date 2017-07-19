@@ -36,6 +36,7 @@ public class ComputeStateEnhancers extends ComputeEnhancer {
         this.enhancers.add(new ComputeStateSoftwareAgentEnhancer());
         this.enhancers.add(new CloudConfigSerializeEnhancer(host));
         this.enhancers.add(new ComputeStateDiskEnhancer(host, referer));
+        this.enhancers.add(new ComputeStateIPAndHostnameEnhancer(host, referer));
     }
 
     public static ComputeStateEnhancers build(ServiceHost host, URI referer) {
