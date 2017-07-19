@@ -575,16 +575,15 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
             if (ex != null) {
                 completionHandler.handle(null, ex);
             } else {
+                String output = null;
                 if (op.hasBody()) {
-                    String body;
-
                     Object rawBody = op.getBodyRaw();
                     /* when the shell command does not return anything */
                     if (startBody.equals(rawBody)) {
-                        body = "";
+                        output = "";
                     } else if (rawBody instanceof byte[]) {
                         try {
-                            body = DockerStreamUtil.decodeFullRawResponce((byte[]) rawBody);
+                            output = DockerStreamUtil.decodeFullRawResponse((byte[]) rawBody);
                         } catch (Exception decodeEx) {
                             logger.severe(decodeEx.getMessage());
                             completionHandler.handle(null, decodeEx);
@@ -596,11 +595,29 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
                         completionHandler.handle(null, new RuntimeException(err));
                         return;
                     }
-                    op.setBodyNoCloning(body);
                 }
-                completionHandler.handle(op, null);
+                inspectExec(input, execId, output, completionHandler);
             }
         });
+    }
+
+    private void inspectExec(CommandInput input, String execId, String output, CompletionHandler c) {
+        URI inspectUri = UriUtils.extendUri(input.getDockerUri(),
+                String.format("/exec/%s/json", execId));
+
+        sendGet(inspectUri, null, (op, ex) -> {
+            if (ex != null) {
+                logger.severe("Cannot inspect execution " + execId + " : " + ex.getMessage());
+                c.handle(null, ex);
+            } else {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> result = op.getBody(Map.class);
+                result.put(DOCKER_EXEC_OUTPUT, output);
+                op.setBodyNoCloning(result);
+                c.handle(op, null);
+            }
+        });
+
     }
 
     /**

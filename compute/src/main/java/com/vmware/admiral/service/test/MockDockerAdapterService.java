@@ -131,7 +131,7 @@ public class MockDockerAdapterService extends BaseMockAdapterService {
         }
 
         if (op.getReferer().getPath().equals(ShellContainerExecutorService.SELF_LINK)) {
-            op.setBodyNoCloning("");
+            op.setBodyNoCloning(emptyExecResult());
         }
 
         op.setStatusCode(Operation.STATUS_CODE_ACCEPTED).complete();
@@ -429,6 +429,13 @@ public class MockDockerAdapterService extends BaseMockAdapterService {
                     }
                     callbackFunc.run();
                 }));
+    }
+
+    private Map<String, Object> emptyExecResult() {
+        Map<String, Object> result = new HashMap<>();
+        result.put("__output", "");
+        result.put("ExitCode", 0);
+        return result;
     }
 
     public static synchronized void resetContainers() {

@@ -42,6 +42,7 @@ import com.vmware.admiral.compute.container.HostContainerListDataCollection.Cont
 import com.vmware.admiral.compute.container.HostNetworkListDataCollection.NetworkListCallback;
 import com.vmware.admiral.compute.container.HostVolumeListDataCollection.VolumeListCallback;
 import com.vmware.admiral.compute.container.ShellContainerExecutorService;
+import com.vmware.admiral.compute.container.ShellContainerExecutorService.ShellContainerExecutorResult;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -201,10 +202,12 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
                 return;
             }
 
-            String commandOutput = o2.getBody(String.class);
-            Map<String, Object> properties = parseStatsOutput(commandOutput, hostLink);
+            ShellContainerExecutorResult result = o2.getBody(ShellContainerExecutorResult.class);
+            Map<String, Object> properties = parseStatsOutput(result.output, hostLink);
 
-            Operation op = Operation.createPatch(null).setBodyNoCloning(properties);
+            Operation op = Operation
+                    .createPatch(null)
+                    .setBodyNoCloning(properties);
             getHostPatchCompletionHandler(request).handle(op, null);
         }));
     }

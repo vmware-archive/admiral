@@ -42,6 +42,7 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService.Containe
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig.HttpVersion;
+import com.vmware.admiral.compute.container.ShellContainerExecutorService.ShellContainerExecutorResult;
 import com.vmware.admiral.compute.container.ShellContainerExecutorService.ShellContainerExecutorState;
 import com.vmware.admiral.compute.container.maintenance.ContainerStats;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -232,7 +233,8 @@ public class HealthChecker {
             Consumer<ContainerStats> callback) {
 
         ShellContainerExecutorState executorState = new ShellContainerExecutorState();
-        executorState.command = healthConfig.command.split(" ");
+        executorState.command = ShellContainerExecutorService
+                .buildComplexCommand(healthConfig.command);
         executorState.attachStdOut = false;
 
         URI executeUri = UriUtils.buildUri(host, ShellContainerExecutorService.SELF_LINK);
@@ -244,14 +246,27 @@ public class HealthChecker {
         host.sendRequest(Operation
                 .createPost(executeUri)
                 .setReferer(UriUtils.buildUri(host, SERVICE_REFERRER_PATH))
-                .setBody(executorState)
+                .setBodyNoCloning(executorState)
                 .setCompletion((o, e) -> {
-                    String body = o.getBody(String.class);
-                    if (e == null && body != null && !body.isEmpty()) {
-                        // We have requested stderr only
-                        e = new RuntimeException(
-                                String.format("Health check failed: %s",
-                                        o.getBody(String.class)));
+                    if (e != null) {
+                        host.log(Level.SEVERE, "Error executing health check for %s : %s",
+                                UriUtils.getLastPathSegment(containerState.documentSelfLink),
+                                e.getMessage());
+                        handleHealthResponse(host, containerState, e, callback);
+                        return;
+                    }
+
+                    ShellContainerExecutorResult result =
+                            o.getBody(ShellContainerExecutorResult.class);
+                    // Exit code is not 0, health check has failed
+                    if (result.exitCode == null || result.exitCode != 0) {
+                        String s = String.format("Health check for %s failed. Exit code: %s,"
+                                        + " Output: %s",
+                                UriUtils.getLastPathSegment(containerState.documentSelfLink),
+                                result.exitCode, result.output);
+
+                        host.log(Level.WARNING, s);
+                        e = new RuntimeException(s);
                     }
                     handleHealthResponse(host, containerState, e, callback);
                 }));
@@ -395,7 +410,7 @@ public class HealthChecker {
             Consumer<ContainerStats> callback) {
         if (ex != null) {
             host.log(Level.WARNING, "Health check status is failed for container %s : %s",
-                    containerState, Utils.toJson(ex));
+                    containerState.documentSelfLink, Utils.toJson(ex));
         }
 
         /* if ex != null, the health check is failed */
@@ -404,7 +419,7 @@ public class HealthChecker {
         containerStats.containerStopped = containerState.powerState == PowerState.STOPPED;
         URI uri = UriUtils.buildUri(host, containerState.documentSelfLink);
         host.sendRequest(Operation.createPatch(uri)
-                .setBody(containerStats)
+                .setBodyNoCloning(containerStats)
                 .setReferer(UriUtils.buildUri(host, SERVICE_REFERRER_PATH))
                 .setCompletion((ob, exception) -> {
                     if (exception != null) {

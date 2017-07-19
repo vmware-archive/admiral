@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.test.integration;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.net.URI;
@@ -23,6 +24,7 @@ import org.junit.Test;
 
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.ShellContainerExecutorService;
+import com.vmware.admiral.compute.container.ShellContainerExecutorService.ShellContainerExecutorResult;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
@@ -51,8 +53,10 @@ public class ShellContainerExecutorServiceIT extends BaseProvisioningOnCoreOsIT 
         SimpleHttpsClient.HttpResponse response = SimpleHttpsClient
                 .execute(SimpleHttpsClient.HttpMethod.POST, url,
                         Utils.toJson(command));
-
-        assertTrue(response.responseBody.startsWith("Linux"));
+        ShellContainerExecutorResult result = Utils.fromJson(response.responseBody,
+                ShellContainerExecutorResult.class);
+        assertEquals("Expecting exit code 0", Integer.valueOf(0), result.exitCode);
+        assertTrue("Expecting starting with 'Linux'", result.output.startsWith("Linux"));
     }
 
     @Override

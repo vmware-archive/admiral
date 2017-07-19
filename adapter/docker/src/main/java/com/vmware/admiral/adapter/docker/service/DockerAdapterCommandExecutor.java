@@ -84,6 +84,7 @@ public interface DockerAdapterCommandExecutor {
     String DOCKER_EXEC_COMMAND_PROP_NAME = "Cmd";
     String DOCKER_EXEC_DETACH_PROP_NAME = "Detach";
     String DOCKER_EXEC_ID_PROP_NAME = "Id";
+    String DOCKER_EXEC_OUTPUT = "__output";
 
     // CHECKSTYLE:OFF
     interface DOCKER_CONTAINER_HOST_CONFIG {

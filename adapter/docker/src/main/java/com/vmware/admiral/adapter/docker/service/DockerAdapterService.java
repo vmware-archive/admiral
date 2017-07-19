@@ -1113,7 +1113,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                 context.operation.fail(ex);
             } else {
                 if (op.hasBody()) {
-                    context.operation.setBodyNoCloning(op.getBody(String.class));
+                    context.operation.setBodyNoCloning(op.getBodyRaw());
                 }
                 context.operation.complete();
             }

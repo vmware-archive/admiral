@@ -33,10 +33,13 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
 
 public class ShellContainerExecutorService extends StatelessService {
     public static final String SELF_LINK = ManagementUriParts.EXEC;
 
+    private static final String DOCKER_EXEC_OUTPUT = "__output";
+    private static final String DOCKER_EXEC_EXIT_CODE_PROP_NAME = "ExitCode";
     private static final int RETRY_COUNT = Integer.parseInt(System.getProperty(
             "dcp.management.container.shell.availability.retry", "20"));
     public static final String COMMAND_KEY = "command";
@@ -49,6 +52,11 @@ public class ShellContainerExecutorService extends StatelessService {
         public String[] command;
         public Boolean attachStdErr;
         public Boolean attachStdOut;
+    }
+
+    public static class ShellContainerExecutorResult {
+        public String output;
+        public Integer exitCode;
     }
 
     @Override
@@ -155,7 +163,6 @@ public class ShellContainerExecutorService extends StatelessService {
 
     private void executeCommand(ContainerState container, ShellContainerExecutorState execState,
             Operation op) {
-
         AdapterRequest adapterRequest = new AdapterRequest();
         // task callback not needed in case of exec, as it is direct, but needed for validation.
         adapterRequest.serviceTaskCallback = ServiceTaskCallback.create(UriUtils.buildUri(
@@ -183,15 +190,27 @@ public class ShellContainerExecutorService extends StatelessService {
             targetPath = container.adapterManagementReference.getPath();
         }
 
-        sendRequest(Operation.createPatch(getHost(), targetPath)
-                .setBody(adapterRequest)
+        sendRequest(Operation
+                .createPatch(getHost(), targetPath)
+                .setBodyNoCloning(adapterRequest)
                 .setCompletion((o, e) -> {
                     if (e != null) {
+                        logSevere("Exec command failed: %s", e.getMessage());
                         op.fail(e);
                         return;
                     }
-                    op.setBody(o.getBody(String.class));
-                    op.setContentType(Operation.MEDIA_TYPE_TEXT_PLAIN);
+
+                    Object rawBody = o.getBodyRaw();
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> map = o.getBody(Map.class);
+                    if (map == null) {
+                        logSevere("Exec command return wrong response: %s",
+                                Utils.toJson(rawBody));
+                        op.fail(new RuntimeException("Exec command failed"));
+                        return;
+                    }
+                    ShellContainerExecutorResult result = parseExecResponse(map);
+                    op.setBodyNoCloning(result);
                     op.complete();
                 }));
     }
@@ -203,6 +222,23 @@ public class ShellContainerExecutorService extends StatelessService {
         commandString[2] = String.join(" && ", commands);
 
         return commandString;
+    }
+
+    private ShellContainerExecutorResult parseExecResponse(Map map) {
+        ShellContainerExecutorResult result = new ShellContainerExecutorResult();
+        result.output = (String) map.get(DOCKER_EXEC_OUTPUT);
+        Object exitCodeObject = map.get(DOCKER_EXEC_EXIT_CODE_PROP_NAME);
+        if (exitCodeObject instanceof Double) {
+            result.exitCode = (int) ((Double) exitCodeObject).doubleValue();
+        } else if (exitCodeObject instanceof String) {
+            try {
+                result.exitCode = (int) Double.parseDouble((String) exitCodeObject);
+            } catch (NumberFormatException ignore) {
+            }
+        } else {
+            logWarning("Exit code is not recognized: %s", Utils.toJson(exitCodeObject));
+        }
+        return result;
     }
 
 }
