@@ -1099,14 +1099,6 @@ public class ComputeAllocationTaskService
             return;
         }
 
-        if (responseHostSelections.size() != selectionsForNotificationPayload.size()) {
-            String missmatchInSelections = String.format("There is discrepancy between number of "
-                            + "existing host selections: %s and provided by extensibility: %s",
-                    selectionsForNotificationPayload.size(), responseHostSelections.size());
-            failTask(missmatchInSelections, new Throwable(missmatchInSelections));
-            return;
-        }
-
         if (!selectionsForNotificationPayload.equals(responseHostSelections)) {
             //Check if client provides host that doesn't exist
             for (String hostName : response.hostSelections) {
