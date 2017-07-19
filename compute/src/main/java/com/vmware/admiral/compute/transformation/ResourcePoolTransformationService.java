@@ -102,10 +102,11 @@ public class ResourcePoolTransformationService extends StatelessService {
 
     private void processPlacement(ElasticPlacementZoneConfigurationState state,
             List<GroupResourcePlacementState> placements, Operation post) {
-
         if (placements.size() > 1) {
-            // skip the first placement. Only the duplicates should be updated and for the a new
-            // pool should be created
+            // Update only tenant links for the pool of the first placement
+            updatePoolTenantLinks(state, post, placements.get(0), false);
+            // skip the first placement. Only the duplicates should be updated and a new pool should
+            // be created
             AtomicInteger processedCount = new AtomicInteger();
             for (int i = 1; i < placements.size(); i++) {
                 GroupResourcePlacementState placement = placements.get(i);
@@ -113,6 +114,10 @@ public class ResourcePoolTransformationService extends StatelessService {
                 state.resourcePoolState.documentSelfLink = null;
                 if (state.epzState != null) {
                     state.epzState.documentSelfLink = null;
+                }
+                state.resourcePoolState.tenantLinks = new ArrayList<>();
+                if (placement.tenantLinks != null) {
+                    state.resourcePoolState.tenantLinks.addAll(placement.tenantLinks);
                 }
                 state.documentSelfLink = null;
                 Operation.createPost(this, ElasticPlacementZoneConfigurationService.SELF_LINK)
@@ -155,9 +160,38 @@ public class ResourcePoolTransformationService extends StatelessService {
                             }
                         }).sendWith(getHost());
             }
-        } else if (poolsCount.decrementAndGet() == 0) {
-            logInfo("Resource pool tranformation completed successfully");
-            post.complete();
+        } else {
+            GroupResourcePlacementState placement = placements.get(0);
+            updatePoolTenantLinks(state, post, placement, true);
         }
+
+    }
+
+    private void updatePoolTenantLinks(ElasticPlacementZoneConfigurationState state, Operation post,
+            GroupResourcePlacementState placement, boolean decrementCount) {
+        state.resourcePoolState.tenantLinks = new ArrayList<>();
+
+        if (placement.tenantLinks != null) {
+            state.resourcePoolState.tenantLinks.addAll(placement.tenantLinks);
+        }
+        Operation.createPatch(this, ElasticPlacementZoneConfigurationService.SELF_LINK)
+                .setBody(state)
+                .setReferer(UriUtils.buildUri(getHost(), SELF_LINK))
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        logSevere("Failed to update resource pool with tenant links");
+                        post.fail(ex);
+                    } else {
+                        logInfo("Resource pool %s updated with tenant links",
+                                state.documentSelfLink);
+                        if (decrementCount) {
+                            if (poolsCount.decrementAndGet() == 0) {
+                                // add tenant links to the pool
+                                logInfo("Resource pool tranformation completed successfully");
+                                post.complete();
+                            }
+                        }
+                    }
+                }).sendWith(getHost());
     }
 }

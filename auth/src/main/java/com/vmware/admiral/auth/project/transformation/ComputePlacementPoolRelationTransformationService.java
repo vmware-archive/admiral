@@ -174,19 +174,17 @@ public class ComputePlacementPoolRelationTransformationService extends Stateless
                     } else {
                         logInfo("Tag created or already existing for placement %s", placement.name);
                         String tagSelfLink = TagFactoryService.generateSelfLink(tag);
-                        if (poolTags.get(pool.resourcePoolState.documentSelfLink) == null) {
-                            poolTags.put(pool.resourcePoolState.documentSelfLink, new HashSet<>());
-                        }
+                        poolTags.putIfAbsent(pool.resourcePoolState.documentSelfLink,
+                                ConcurrentHashMap.newKeySet());
                         poolTags.get(pool.resourcePoolState.documentSelfLink).add(tagSelfLink);
                         pools.put(pool.resourcePoolState.documentSelfLink, pool);
-                        patchStates(hosts, placement, pool, tagSelfLink, post);
+                        patchStates(hosts, placement, tagSelfLink, post);
                     }
                 }).sendWith(getHost());
     }
 
     private void patchStates(List<ComputeState> hosts,
-            GroupResourcePlacementState placement, ElasticPlacementZoneConfigurationState pool,
-            String tagSelfLink, Operation post) {
+            GroupResourcePlacementState placement, String tagSelfLink, Operation post) {
         if (hosts.isEmpty()) {
             updatePlacementAndPool(placement, tagSelfLink, post);
             return;
@@ -253,7 +251,6 @@ public class ComputePlacementPoolRelationTransformationService extends Stateless
                     } else {
                         logInfo("placement %s updated", placement.documentSelfLink);
                         if (this.placementsToProcess.decrementAndGet() == 0) {
-                            logInfo("Transformation completed successfully");
                             updateEPZTags(post);
                         }
                     }
@@ -286,6 +283,7 @@ public class ComputePlacementPoolRelationTransformationService extends Stateless
                             logInfo("resource pool %s updated with tags",
                                     pool.resourcePoolState.documentSelfLink);
                             if (poolsToProcess.decrementAndGet() == 0) {
+                                logInfo("Transformation completed successfully");
                                 post.complete();
                             }
                         }
