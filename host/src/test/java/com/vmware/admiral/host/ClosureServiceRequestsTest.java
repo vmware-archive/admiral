@@ -43,9 +43,8 @@ import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptio
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptionFactoryService;
 import com.vmware.admiral.closures.services.closuredescription.ResourceConstraints;
 import com.vmware.admiral.closures.util.ClosureProps;
-import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.test.BaseTestCase;
-import com.vmware.admiral.common.test.HostInitTestDcpServicesConfig;
+import com.vmware.admiral.common.test.CommonTestStateFactory;
 import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
@@ -53,6 +52,7 @@ import com.vmware.admiral.host.interceptor.OperationInterceptorRegistry;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.service.common.ConfigurationService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
+import com.vmware.admiral.service.common.SslTrustCertificateService;
 import com.vmware.admiral.service.test.MockComputeHostInstanceAdapter;
 import com.vmware.admiral.service.test.MockDockerHostAdapterImageService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
@@ -75,21 +75,35 @@ public class ClosureServiceRequestsTest extends BaseTestCase {
     @Before
     public void setUp() throws Exception {
         try {
-            this.host.log(Level.INFO, "Starting test services ...");
+            long startSetupTime = System.currentTimeMillis();
+            this.host.log(Level.INFO, "Starting core services ...");
             startCoreServices(this.host);
-            this.host.log(Level.INFO, "Test services started.");
 
+            waitForServiceAvailability(SslTrustCertificateService.FACTORY_LINK);
+            createTestTrustCertificate();
+
+            long durationTime = System.currentTimeMillis() - startSetupTime;
+            this.host.log(Level.INFO, "Core services started for: " + durationTime);
+
+            long checkpoint = System.currentTimeMillis();
             // turn on powershell runtime
             configurePullFromRegistry(DriverConstants.RUNTIME_POWERSHELL_6,
                     "powershell.test.registry");
 
             startClosureServices(this.host);
+
+            durationTime = System.currentTimeMillis() - checkpoint;
+            this.host.log(Level.INFO, "Closure services started for:  " + durationTime);
+
             waitForServiceAvailability(AdmiralAdapterFactoryService.FACTORY_LINK);
             this.host
                     .log(Level.INFO, "Service ready: " + AdmiralAdapterFactoryService.FACTORY_LINK);
             waitForInitialBootServiceToBeSelfStopped(ComputeInitialBootService.SELF_LINK);
             this.host.log(Level.INFO, "Initial Boot Service stopped: " + ComputeInitialBootService
                     .SELF_LINK);
+
+            durationTime = System.currentTimeMillis() - startSetupTime;
+            this.host.log(Level.INFO, "All test services ready for: " + durationTime);
 
             // first docker host
             ComputeDescriptionService.ComputeDescription dockerHostDesc = createDockerHostDescription();
@@ -100,13 +114,23 @@ public class ClosureServiceRequestsTest extends BaseTestCase {
                     createDockerHostDescription();
             createDockerHost(dockerHostDescSecond);
 
-            this.host.log(Level.INFO, "Test compute created.");
+            durationTime = System.currentTimeMillis() - startSetupTime;
+            this.host.log(Level.INFO, "Test setup done. Time used: " + durationTime + "ms.");
 
         } catch (Throwable e) {
             this.host.log(Level.SEVERE, "Failed to run test setup. Reason: %s", Utils.toString
                     (e));
             throw new RuntimeException(e);
         }
+    }
+
+    private void createTestTrustCertificate() throws Throwable {
+        SslTrustCertificateService.SslTrustCertificateState sslTrustCert1 = new SslTrustCertificateService.SslTrustCertificateState();
+        String sslTrust1 = CommonTestStateFactory.getFileContent("certs/test_ssl_trust.PEM")
+                .trim();
+        sslTrustCert1.certificate = sslTrust1;
+        sslTrustCert1.subscriptionLink = null;
+        doPost(sslTrustCert1, SslTrustCertificateService.FACTORY_LINK);
     }
 
     @Override
@@ -1056,9 +1080,7 @@ public class ClosureServiceRequestsTest extends BaseTestCase {
     }
 
     private static void startCoreServices(ServiceHost serviceHost) throws Throwable {
-        DeploymentProfileConfig.getInstance().setTest(true);
         HostInitPhotonModelServiceConfig.startServices(serviceHost);
-        HostInitTestDcpServicesConfig.startServices(serviceHost);
         HostInitCommonServiceConfig.startServices(serviceHost);
         HostInitComputeServicesConfig.startServices(serviceHost, true);
         HostInitRequestServicesConfig.startServices(serviceHost);
