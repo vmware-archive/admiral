@@ -2,6 +2,11 @@ import { DocumentService } from './document.service';
 import { Headers, URLSearchParams, RequestOptions, ResponseContentType } from '@angular/http';
 import { Links } from './links';
 import { Injectable } from '@angular/core';
+import * as CryptoJS from 'crypto-js';
+
+function btoaEncode(s) {
+  return btoa(encodeURIComponent(s));
+}
 
 @Injectable()
 export class AuthService {
@@ -17,7 +22,9 @@ export class AuthService {
     });
 
     let headers = new Headers();
-    headers.append('Authorization', 'Basic ' + btoa(username + ':' + password));
+    let byteArr = CryptoJS.enc.Utf8.parse(username + ':' + password);
+    let encoded = CryptoJS.enc.Base64.stringify(byteArr)
+    headers.append('Authorization', 'Basic ' + encoded);
 
     return this.documentService.postWithHeader(Links.BASIC_AUTH, data, headers);
   }
