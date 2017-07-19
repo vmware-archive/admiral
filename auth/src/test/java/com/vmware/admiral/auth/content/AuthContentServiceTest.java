@@ -193,9 +193,9 @@ public class AuthContentServiceTest extends AuthBaseTest {
                 .filter(p -> p.name.equals("testProject3"))
                 .collect(Collectors.toList()).get(0);
 
-        String adminsGroup = projectState.administratorsUserGroupLinks.get(0);
-        String membersGroup = projectState.membersUserGroupLinks.get(0);
-        String viewersGroup = projectState.viewersUserGroupLinks.get(0);
+        String adminsGroup = projectState.administratorsUserGroupLinks.iterator().next();
+        String membersGroup = projectState.membersUserGroupLinks.iterator().next();
+        String viewersGroup = projectState.viewersUserGroupLinks.iterator().next();
 
         List<UserState> adminUsers = getUsersFromUserGroup(adminsGroup);
 

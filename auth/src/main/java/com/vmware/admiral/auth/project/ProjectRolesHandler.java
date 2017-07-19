@@ -286,6 +286,10 @@ public class ProjectRolesHandler {
 
     private DeferredResult<Void> handleProjectViewerGroupAssignment(ProjectState projectState,
             String groupId) {
+        String userGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, groupId);
+        if (projectState.viewersUserGroupLinks.contains(userGroupLink)) {
+            return DeferredResult.completed(null);
+        }
         String projectId = Service.getId(projectState.documentSelfLink);
         RoleState role = AuthUtil.buildProjectViewersRole(projectId, groupId, null);
         return createRole(projectId, AuthRole.PROJECT_VIEWER, groupId, role)
@@ -304,6 +308,10 @@ public class ProjectRolesHandler {
 
     private DeferredResult<Void> handleProjectMemberGroupAssignment(ProjectState projectState,
             String groupId) {
+        String userGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, groupId);
+        if (projectState.administratorsUserGroupLinks.contains(userGroupLink)) {
+            return DeferredResult.completed(null);
+        }
         String projectId = Service.getId(projectState.documentSelfLink);
         RoleState role = AuthUtil.buildProjectMembersRole(projectId, groupId, null);
         return createRole(projectId, AuthRole.PROJECT_MEMBER, groupId, role)
@@ -325,6 +333,10 @@ public class ProjectRolesHandler {
 
     private DeferredResult<Void> handleProjectAdminGroupAssignment(ProjectState projectState,
             String groupId) {
+        String userGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, groupId);
+        if (projectState.administratorsUserGroupLinks.contains(userGroupLink)) {
+            return DeferredResult.completed(null);
+        }
         String projectId = Service.getId(projectState.documentSelfLink);
         RoleState role = AuthUtil.buildProjectAdminsRole(projectId, groupId, null);
         return createRole(projectId, AuthRole.PROJECT_ADMIN, groupId, role)

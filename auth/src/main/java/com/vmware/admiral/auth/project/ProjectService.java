@@ -16,8 +16,10 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.management.ServiceNotFoundException;
@@ -116,7 +118,7 @@ public class ProjectService extends StatefulService {
         @Documentation(description = "Links to the groups of administrators for this project.")
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
-        public List<String> administratorsUserGroupLinks;
+        public Set<String> administratorsUserGroupLinks;
 
         /**
          * Links to the groups of members for this project.
@@ -125,7 +127,7 @@ public class ProjectService extends StatefulService {
         @Documentation(description = "Links to the groups of members for this project.")
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
-        public List<String> membersUserGroupLinks;
+        public Set<String> membersUserGroupLinks;
 
         /**
          * Links to the groups of viewers for this project.
@@ -133,7 +135,7 @@ public class ProjectService extends StatefulService {
         @Documentation(description = "Links to the groups of viewers for this project.")
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
-        public List<String> viewersUserGroupLinks;
+        public Set<String> viewersUserGroupLinks;
 
         @Deprecated
         @Documentation(description = "Link to the group of administrators for this project.")
@@ -154,21 +156,21 @@ public class ProjectService extends StatefulService {
 
             if (this.administratorsUserGroupLinks != null
                     && !this.administratorsUserGroupLinks.isEmpty()) {
-                destination.administratorsUserGroupLinks = new ArrayList<>(
+                destination.administratorsUserGroupLinks = new HashSet<>(
                         this.administratorsUserGroupLinks.size());
                 destination.administratorsUserGroupLinks.addAll(this.administratorsUserGroupLinks);
             }
 
             if (this.membersUserGroupLinks != null
                     && !this.membersUserGroupLinks.isEmpty()) {
-                destination.membersUserGroupLinks = new ArrayList<>(
+                destination.membersUserGroupLinks = new HashSet<>(
                         this.membersUserGroupLinks.size());
                 destination.membersUserGroupLinks.addAll(this.membersUserGroupLinks);
             }
 
             if (this.viewersUserGroupLinks != null
                     && !this.viewersUserGroupLinks.isEmpty()) {
-                destination.viewersUserGroupLinks = new ArrayList<>(
+                destination.viewersUserGroupLinks = new HashSet<>(
                         this.viewersUserGroupLinks.size());
                 destination.viewersUserGroupLinks.addAll(this.viewersUserGroupLinks);
             }
@@ -703,9 +705,9 @@ public class ProjectService extends StatefulService {
         template.id = "project-id";
         template.description = "project1";
         template.isPublic = true;
-        template.viewersUserGroupLinks = Collections.singletonList("viewers-group");
-        template.membersUserGroupLinks = Collections.singletonList("members-group");
-        template.administratorsUserGroupLinks = Collections.singletonList("admins-group");
+        template.viewersUserGroupLinks = Collections.singleton("viewers-group");
+        template.membersUserGroupLinks = Collections.singleton("members-group");
+        template.administratorsUserGroupLinks = Collections.singleton("admins-group");
 
         return template;
     }
@@ -742,13 +744,13 @@ public class ProjectService extends StatefulService {
         }
 
         if (projectState.administratorsUserGroupLinks == null) {
-            projectState.administratorsUserGroupLinks = new ArrayList<>();
+            projectState.administratorsUserGroupLinks = new HashSet<>();
         }
         if (projectState.membersUserGroupLinks == null) {
-            projectState.membersUserGroupLinks = new ArrayList<>();
+            projectState.membersUserGroupLinks = new HashSet<>();
         }
         if (projectState.viewersUserGroupLinks == null) {
-            projectState.viewersUserGroupLinks = new ArrayList<>();
+            projectState.viewersUserGroupLinks = new HashSet<>();
         }
 
         return DeferredResult.allOf(
@@ -775,7 +777,7 @@ public class ProjectService extends StatefulService {
                 .thenApply(ignore -> projectState);
     }
 
-    private DeferredResult<Void> createProjectUserGroup(List<String> addTo,
+    private DeferredResult<Void> createProjectUserGroup(Set<String> addTo,
             UserGroupState groupState) {
         AssertUtil.assertNotNull(addTo, "addTo");
         AssertUtil.assertNotNull(groupState, "groupState");

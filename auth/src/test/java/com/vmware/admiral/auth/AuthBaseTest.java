@@ -27,6 +27,7 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -227,9 +228,9 @@ public abstract class AuthBaseTest extends BaseTestCase {
         projectState.name = name;
         projectState.description = description;
         projectState.isPublic = isPublic;
-        projectState.administratorsUserGroupLinks = new ArrayList<>();
-        projectState.membersUserGroupLinks = new ArrayList<>();
-        projectState.viewersUserGroupLinks = new ArrayList<>();
+        projectState.administratorsUserGroupLinks = new HashSet<>();
+        projectState.membersUserGroupLinks = new HashSet<>();
+        projectState.viewersUserGroupLinks = new HashSet<>();
         projectState.customProperties = customProperties;
 
         if (adminsGroupLink != null) {

@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.auth.project;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -23,6 +24,7 @@ import com.vmware.admiral.auth.AuthBaseTest;
 import com.vmware.admiral.auth.idm.AuthRole;
 import com.vmware.admiral.auth.idm.PrincipalRolesHandler.PrincipalRoleAssignment;
 import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles;
+import com.vmware.admiral.auth.project.ProjectService.ExpandedProjectState;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.xenon.common.Operation;
@@ -225,5 +227,35 @@ public class ProjectRolesHandlerTest extends AuthBaseTest {
 
         assertDocumentNotExists(resourceGroupLink);
         assertDocumentNotExists(roleLink);
+    }
+
+    @Test
+    public void testAssignPrincipalOfTypeGroupTwice() {
+        String groupId = "superusers";
+
+        ProjectRoles projectRoles = new ProjectRoles();
+        projectRoles.members = new PrincipalRoleAssignment();
+        projectRoles.members.add = Collections.singletonList(groupId);
+
+        String projectId = Service.getId(project.documentSelfLink);
+
+        // patch twice and verify principal is present only once in the project.
+        doPatch(projectRoles, project.documentSelfLink);
+
+        doPatch(projectRoles, project.documentSelfLink);
+
+        String resourceGroupLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId, groupId));
+
+        String roleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
+                AuthRole.PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId, groupId));
+
+        assertDocumentExists(resourceGroupLink);
+        assertDocumentExists(roleLink);
+
+        ExpandedProjectState projectState = getExpandedProjectState(project.documentSelfLink);
+        assertEquals(1, projectState.members.size());
+        // default one and the assigned one.
+        assertEquals(2, projectState.membersUserGroupLinks.size());
     }
 }

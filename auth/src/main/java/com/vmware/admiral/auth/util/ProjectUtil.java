@@ -23,6 +23,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Level;
@@ -242,7 +243,7 @@ public class ProjectUtil {
     }
 
     private static DeferredResult<List<Principal>> getGroupPrincipals(Service service,
-            Operation requestorOperation, List<String> groupLinks, String projectId,
+            Operation requestorOperation, Set<String> groupLinks, String projectId,
             AuthRole role) {
 
         if (projectId == null || projectId.isEmpty()) {
