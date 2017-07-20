@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import com.google.common.collect.Sets;
 import org.junit.Test;
 
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService;
@@ -272,73 +273,6 @@ public class ComputeToNetworkAffinityHostFilterTest extends BaseComputeAffinityH
     }
 
     @Test
-    public void testCheckConnectivityMultipleProfiles() throws Throwable {
-
-        String region1 = "region1";
-
-        String zone1Region1 = "zone1region1";
-        String zone2Region1 = "zone2region1";
-
-        String region2 = "region2";
-
-        String zone1Region2 = "zone1region2";
-
-        SubnetState subnet1 = createSubnet("does-not-matter", region1, zone1Region1);
-        SubnetState subnet2 = createSubnet("does-not-matter", region1, zone2Region1);
-        SubnetState subnet3 = createSubnet("does-not-matter", region2, zone1Region2);
-
-        NetworkProfile networkProfile = createNetworkProfile(
-                Arrays.asList(subnet2.documentSelfLink), null, null);
-
-        NetworkProfile networkProfile2 = createNetworkProfile(
-                Arrays.asList(subnet1.documentSelfLink), null, null);
-
-        ProfileStateExpanded profile = createProfile(null, null, networkProfile,
-                endpoint.tenantLinks, null);
-
-        ProfileStateExpanded profile2 = createProfile(null, null, networkProfile2,
-                endpoint.tenantLinks, null);
-
-        createComputeNetwork(createComputeNetworkDescription(NetworkType.EXTERNAL).documentSelfLink,
-                Arrays.asList(profile.documentSelfLink, profile2.documentSelfLink));
-
-        // Create 3 groups of hosts that have connectivity between them (3, 3, 2) hosts
-        ComputeState host11 = createVmHostCompute(true, null, region1, zone1Region1);
-        ComputeState host12 = createVmHostCompute(true, null, region1, zone1Region1);
-        ComputeState host13 = createVmHostCompute(true, null, region1, zone1Region1);
-
-        ComputeState host21 = createVmHostCompute(true, null, region2, zone1Region2);
-        ComputeState host22 = createVmHostCompute(true, null, region2, zone1Region2);
-        ComputeState host23 = createVmHostCompute(true, null, region2, zone1Region2);
-
-        ComputeState host31 = createVmHostCompute(true, null, region1, zone2Region1);
-        ComputeState host32 = createVmHostCompute(true, null, region1, zone2Region1);
-
-        ComputeDescription desc = createComputeDescription(true);
-
-        filter = new ComputeToNetworkAffinityHostFilter(host, desc);
-
-        List<ComputeState> computeStates = Arrays
-                .asList(host11, host12, host13, host21, host22, host23, host31, host32);
-
-        // filter the same compute desc 10 times
-        Set<String> filteredHosts = null;
-        try {
-            Map<String, HostSelection> result = filter(computeStates);
-            filteredHosts = result.keySet();
-        } catch (Throwable throwable) {
-            fail(throwable.getMessage());
-        }
-
-        // the two profiles will match "host groups" 1 and 3 but the filter will pick 1 as there are
-        // more hosts there
-        assertEquals(3, filteredHosts.size());
-        assertTrue(filteredHosts.containsAll(
-                Arrays.asList(host11.documentSelfLink, host12.documentSelfLink,
-                        host13.documentSelfLink)));
-    }
-
-    @Test
     public void testCheckConnectivityIsolatedProfileBySecurityGroup() throws Throwable {
 
         String region1 = "region1";
@@ -454,7 +388,10 @@ public class ComputeToNetworkAffinityHostFilterTest extends BaseComputeAffinityH
     }
 
     @Test
-    public void testCheckConnectivityIsolatedMixedProfiles() throws Throwable {
+    public void testCheckConnectivityPickHostsWithSmallestNumberOfSubnets() throws Throwable {
+        NetworkState network1 = createNetwork();
+        NetworkState network2 = createNetwork();
+        NetworkState network3 = createNetwork();
 
         String region1 = "region1";
 
@@ -465,57 +402,40 @@ public class ComputeToNetworkAffinityHostFilterTest extends BaseComputeAffinityH
 
         String zone1Region2 = "zone1region2";
 
-        NetworkState network1 = createNetwork(region1);
-        NetworkState network2 = createNetwork(region2);
-        NetworkState network3 = createNetwork(region1);
-
         SubnetState subnet1 = createSubnet(network1.documentSelfLink, region1, zone1Region1);
-        SubnetState subnet2 = createSubnet(network3.documentSelfLink, region1, zone2Region1);
-        SubnetState subnet3 = createSubnet(network2.documentSelfLink, region2, zone1Region2);
+        SubnetState subnet2 = createSubnet(network2.documentSelfLink, region1, zone2Region1);
+        SubnetState subnet3 = createSubnet(network3.documentSelfLink, region2, zone1Region2);
 
-        //this profile should match the third group of hosts
-        NetworkProfile networkProfileSubnet = createNetworkProfile(null, network3.documentSelfLink,
-                IsolationSupportType.SUBNET);
-
-        //this profile should match the second group of hosts
-        NetworkProfile networkProfileSecurityGroup = createNetworkProfile(
-                Arrays.asList(subnet3.documentSelfLink), null, IsolationSupportType.SECURITY_GROUP);
-
-        ProfileStateExpanded profile1 = createProfile(null, null, networkProfileSubnet,
-                endpoint.tenantLinks, null);
-
-        ProfileStateExpanded profile2 = createProfile(null, null, networkProfileSecurityGroup,
-                endpoint.tenantLinks, null);
-
-        createComputeNetwork(createComputeNetworkDescription(NetworkType.ISOLATED).documentSelfLink,
-                Arrays.asList(profile1.documentSelfLink, profile2.documentSelfLink));
-
-        // Create 3 groups of hosts that have connectivity between them (3, 3, 2) hosts
+        // Create 3 groups of hosts that have connectivity between them (3, 3) hosts
         ComputeState host11 = createVmHostCompute(true,
-                Collections.singleton(network1.documentSelfLink), region1, zone1Region1);
+                Collections.singleton(network1.documentSelfLink), null, null);
         ComputeState host12 = createVmHostCompute(true,
-                Collections.singleton(network1.documentSelfLink), region1, zone1Region1);
+                Collections.singleton(network1.documentSelfLink), null, null);
         ComputeState host13 = createVmHostCompute(true,
-                Collections.singleton(network1.documentSelfLink), region1, zone1Region1);
+                Collections.singleton(network1.documentSelfLink), null, null);
 
         ComputeState host21 = createVmHostCompute(true,
-                Collections.singleton(network2.documentSelfLink), region2, zone1Region2);
+                Sets.newHashSet(network2.documentSelfLink,network3.documentSelfLink), null, null);
         ComputeState host22 = createVmHostCompute(true,
-                Collections.singleton(network2.documentSelfLink), region2, zone1Region2);
+                Sets.newHashSet(network2.documentSelfLink,network3.documentSelfLink), null, null);
         ComputeState host23 = createVmHostCompute(true,
-                Collections.singleton(network2.documentSelfLink), region2, zone1Region2);
+                Sets.newHashSet(network2.documentSelfLink,network3.documentSelfLink), null, null);
 
-        ComputeState host31 = createVmHostCompute(true,
-                Collections.singleton(network3.documentSelfLink), region1, zone2Region1);
-        ComputeState host32 = createVmHostCompute(true,
-                Collections.singleton(network3.documentSelfLink), region1, zone2Region1);
+        NetworkProfile networkProfile = createNetworkProfile(
+                Arrays.asList(subnet1.documentSelfLink, subnet2.documentSelfLink,
+                        subnet3.documentSelfLink), null, null);
 
+        ProfileStateExpanded profile = createProfile(null, null, networkProfile,
+                endpoint.tenantLinks, null);
+        createComputeNetwork(createComputeNetworkDescription(NetworkType.EXTERNAL).documentSelfLink,
+                Arrays.asList(profile.documentSelfLink));
         ComputeDescription desc = createComputeDescription(true);
 
         filter = new ComputeToNetworkAffinityHostFilter(host, desc);
 
         List<ComputeState> computeStates = Arrays
-                .asList(host11, host12, host13, host21, host22, host23, host31, host32);
+                .asList(host11, host12, host13, host21, host22, host23);
+
 
         Set<String> filteredHosts = null;
         try {
@@ -526,9 +446,14 @@ public class ComputeToNetworkAffinityHostFilterTest extends BaseComputeAffinityH
         }
 
         assertEquals(3, filteredHosts.size());
+
+        /**
+         * Expect to pick the first group of hosts because each of these hosts is connected to a
+         * single subnet
+         */
         assertTrue(filteredHosts.containsAll(
-                Arrays.asList(host21.documentSelfLink, host22.documentSelfLink,
-                        host23.documentSelfLink)));
+                Arrays.asList(host11.documentSelfLink, host12.documentSelfLink,
+                        host13.documentSelfLink)));
     }
 
     private NetworkState createNetwork() throws Throwable {

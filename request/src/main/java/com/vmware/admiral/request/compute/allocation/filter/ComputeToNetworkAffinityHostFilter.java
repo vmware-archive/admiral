@@ -20,10 +20,12 @@ import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_I
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +41,6 @@ import java.util.stream.Collectors;
 
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
-import com.vmware.admiral.compute.profile.NetworkProfileService.NetworkProfile.IsolationSupportType;
 import com.vmware.admiral.compute.profile.NetworkProfileService.NetworkProfileExpanded;
 import com.vmware.admiral.compute.profile.ProfileService.ProfileStateExpanded;
 import com.vmware.admiral.request.allocation.filter.AffinityConstraint;
@@ -81,7 +82,7 @@ public class ComputeToNetworkAffinityHostFilter implements HostSelectionFilter<F
      * Used to store results/computations between steps. Make sure to not use HashMaps and HashSets
      * so that things are as deterministic as possible
      */
-    private static class InternalContext {
+    static class InternalContext {
         FilterContext filterContext;
         Map<String, HostSelection> hostSelectionMap;
         Map<ComputeNetwork, ComputeNetworkDescription> contextNetworks;
@@ -91,8 +92,8 @@ public class ComputeToNetworkAffinityHostFilter implements HostSelectionFilter<F
         Map<String, Set<HostSelection>> hostGroupsBySubnet; // all hosts in a subnet
         Map<String, Set<String>> hostSubnets; // all subnets connected to a host
 
-        Map<String, Set<HostSelection>> hostGroupsByNetwork; // all hosts in a subnet
-        Map<String, Set<String>> hostNetworks; // all subnets connected to a host
+        Map<String, Set<HostSelection>> hostGroupsByNetwork; // all hosts in a network
+        Map<String, Set<String>> hostNetworks; // all networks connected to a host
 
         Map<ComputeNetwork, Set<NetworkProfileExpanded>> profiles;
     }
@@ -285,14 +286,14 @@ public class ComputeToNetworkAffinityHostFilter implements HostSelectionFilter<F
      */
     private DeferredResult<InternalContext> groupHostsByConnectivityBySubnet(InternalContext internalContext) {
 
-        List<DeferredResult<Pair<ComputeState, Set<String>>>> getNetworksRequests = internalContext.hosts
+        List<DeferredResult<Pair<ComputeState, Set<String>>>> getSubnetsRequests = internalContext.hosts
                 .stream()
                 .map(computeState -> {
                     return getSubnetLinks(computeState)
-                            .thenApply(networkLinks -> Pair.of(computeState, networkLinks));
+                            .thenApply(subnetLinks -> Pair.of(computeState, subnetLinks));
                 }).collect(Collectors.toList());
 
-        return DeferredResult.allOf(getNetworksRequests).thenApply(pairs -> {
+        return DeferredResult.allOf(getSubnetsRequests).thenApply(pairs -> {
 
             internalContext.hostSubnets = new TreeMap<>();
 
@@ -417,6 +418,10 @@ public class ComputeToNetworkAffinityHostFilter implements HostSelectionFilter<F
 
     private Map<String, HostSelection> pickHosts(InternalContext context) {
 
+        //assume a single profile for now that satisfies the requirements of all networks
+        NetworkProfileExpanded profile = context.profiles.values().iterator().next().iterator()
+                .next();
+
         Map<String, Set<HostSelection>> allHostGroups = new TreeMap<>();
         for (Map.Entry<ComputeNetwork, ComputeNetworkDescription> entry : context.contextNetworks
                 .entrySet()) {
@@ -424,43 +429,26 @@ public class ComputeToNetworkAffinityHostFilter implements HostSelectionFilter<F
             ComputeNetworkDescription desc = entry.getValue();
             ComputeNetwork network = entry.getKey();
 
-            Set<NetworkProfileExpanded> profiles = context.profiles.get(network);
-
             Map<String, Set<HostSelection>> allHostsForNetwork;
 
-            /**
-             * If the network type is isolated, we split the profiles in two groups. Isolation by
-             * subnet and isolation by security group. Then for both groups we filter the hosts and
-             * finally return a union of the two groups of hosts.
-             */
             if (desc.networkType == ISOLATED) {
                 allHostsForNetwork = new TreeMap<>();
-
-                Map<IsolationSupportType, List<NetworkProfileExpanded>> profilesByType = profiles
-                        .stream().collect(Collectors.groupingBy(p -> p.isolationType));
-
-                // isolation by security group
-                List<NetworkProfileExpanded> securityGroupProfiles = profilesByType
-                        .get(SECURITY_GROUP);
-
-                if (securityGroupProfiles != null) {
+                if (profile.isolationType == SECURITY_GROUP) {
+                    // isolation by security group
                     TreeMap<String, Set<HostSelection>> securityGroupHosts = filterHostsBySubnet(
-                            context,
-                            desc, network, securityGroupProfiles);
+                            context, desc, network, Arrays.asList(profile));
 
                     allHostsForNetwork.putAll(securityGroupHosts);
                 }
 
-                // isolation by subnet
-                List<NetworkProfileExpanded> subnetProfiles = profilesByType.get(SUBNET);
-                if (subnetProfiles != null) {
-                    TreeMap<String, Set<HostSelection>> subnetHosts = filterHostsByNetwork(context,
-                            subnetProfiles);
+                if (profile.isolationType == SUBNET) {
+                    // isolation by subnet
+                    TreeMap<String, Set<HostSelection>> subnetHosts = filterHostsByNetwork(
+                            context, Arrays.asList(profile));
                     allHostsForNetwork.putAll(subnetHosts);
                 }
-
             } else {
-                allHostsForNetwork = filterHostsBySubnet(context, desc, network, profiles);
+                allHostsForNetwork = filterHostsBySubnet(context, desc, network, Arrays.asList(profile));
             }
 
             if (allHostGroups.isEmpty()) {
@@ -472,7 +460,34 @@ public class ComputeToNetworkAffinityHostFilter implements HostSelectionFilter<F
 
         List<Set<HostSelection>> groups = new ArrayList<>(allHostGroups.values());
 
-        //sort descending
+        if (groups.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        Set<HostSelection> hostsFlattened = allHostGroups.values().stream().flatMap(g -> g.stream())
+                .collect(Collectors.toSet());
+        if (profile.isolationType != SUBNET) {
+            context.hostSubnets.values().forEach(subnets -> subnets.retainAll(profile.subnetLinks));
+
+            int minSubnets = hostsFlattened.stream()
+                    .mapToInt(h -> context.hostSubnets.get(h.hostLink).size()).min().getAsInt();
+
+            // remove the hosts that have more subnets than the minimum
+            for (Set<HostSelection> group : groups) {
+                Iterator<HostSelection> iterator = group.iterator();
+
+                while (iterator.hasNext()) {
+                    HostSelection host = iterator.next();
+                    int networkResourcesSize = context.hostSubnets.get(host.hostLink).size();
+
+                    if (networkResourcesSize > minSubnets) {
+                        iterator.remove();
+                    }
+                }
+            }
+        }
+
+        // Then pick the largest group of hosts
         groups.sort((g1, g2) -> Integer.compare(g2.size(), g1.size()));
 
         int max = groups.get(0).size();
@@ -517,8 +532,7 @@ public class ComputeToNetworkAffinityHostFilter implements HostSelectionFilter<F
                 networkLink = subnetProfile.isolationNetworkLink;
             }
 
-            Set<HostSelection> hostSelections = context.hostGroupsByNetwork
-                    .get(networkLink);
+            Set<HostSelection> hostSelections = context.hostGroupsByNetwork.get(networkLink);
 
             if (hostSelections != null) {
                 hostSelections.forEach(
