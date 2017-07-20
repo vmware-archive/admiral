@@ -116,8 +116,7 @@ const DEVICE_TYPES = [{
   value: 'ebs'
 }, {
   name: i18n.t('app.profile.awsDeviceTypes.instanceStore'),
-  value: 'instanceStore',
-  disabled: true
+  value: 'instanceStore'
 }];
 
 const IOPS_LIMIT = 20000;
@@ -202,10 +201,15 @@ Vue.component('aws-storage-item', {
     },
     onVolumeTypeChange($event) {
       this.onDiskPropertyChange('volumeType', $event.target.value);
+      this.iops = '';
+      this.onDiskPropertyChange('iops', '');
     },
     onDeviceTypeChange($event) {
       this.filterVolumeTypes();
       this.onDiskPropertyChange('deviceType', $event.target.value);
+      this.volumeType = '';
+      this.onDiskPropertyChange('volumeType', '');
+      this.onDiskPropertyChange('iops', '');
     },
     onIOPSChange($event) {
       this.onDiskPropertyChange('iops', $event.target.value);
@@ -214,7 +218,7 @@ Vue.component('aws-storage-item', {
       this.storageItem.supportsEncryption = value;
     },
     filterVolumeTypes() {
-      if (this.deviceType) {
+      if (this.deviceType === 'ebs') {
         services.loadAwsVolumeTypes(this.deviceType).then((obj) => {
           let volumeTypes = obj && obj.volumeTypes || [];
           this.volumeTypes = VOLUME_TYPES.filter((volumeType) => {

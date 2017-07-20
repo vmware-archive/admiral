@@ -27,7 +27,7 @@
     {{i18n('app.profile.edit.storage.aws.deviceTypeLabel')}}</form-label>
   <div class="form-control select">
     <select @change="onDeviceTypeChange" v-model="deviceType">
-      <option v-for="deviceType of deviceTypes" value="{{deviceType.value}}" :disabled="deviceType.disabled">
+      <option v-for="deviceType of deviceTypes" value="{{deviceType.value}}">
         {{deviceType.name}}</option>
     </select>
   </div>
@@ -60,7 +60,8 @@
   <checkbox-control
     :label="i18n('app.profile.edit.storage.azure.list.edit.encryptionLabel')"
     :value="storageItem.supportsEncryption"
-    @change="onEncryptionChange">
+    @change="onEncryptionChange"
+    :disabled="true">
   </checkbox-control>
 </div>
 <tags-group
