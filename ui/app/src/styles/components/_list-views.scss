@@ -987,6 +987,9 @@ $elements-side-margin: $elements-margin / 2;
 .images-view .template-details.closure-form {
   overflow: auto;
   z-index: 102;
+  left: 0px;
+  top: 0px;
+  margin-top: 0px;
 }
 
 .template-details .edit-network.closable-view .control-btns,
