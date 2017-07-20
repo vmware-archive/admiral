@@ -104,7 +104,7 @@ public class ProjectService extends StatefulService {
         @Documentation(description = "Used for define a public project")
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
-        public boolean isPublic;
+        public Boolean isPublic;
 
         @Documentation(description = "Used for descripe the purpose of the project")
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
@@ -267,6 +267,9 @@ public class ProjectService extends StatefulService {
         ProjectState createBody = post.getBody(ProjectState.class);
         validateState(createBody);
         createBody.creationTimeMicros = Instant.now().toEpochMilli();
+        if (createBody.isPublic == null) {
+            createBody.isPublic = false;
+        }
 
         isProjectNameUsed(createBody.name, createBody.documentSelfLink)
                 .whenComplete((isNameUsed, ex) -> {

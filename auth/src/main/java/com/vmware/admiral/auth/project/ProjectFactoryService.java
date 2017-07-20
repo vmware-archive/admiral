@@ -125,7 +125,7 @@ public class ProjectFactoryService extends FactoryService {
                     .map(doc -> Utils.fromJson(doc, ProjectState.class))
                     // TODO - filtering wouldn't be not needed if the odata query had explicitly
                     // public = true
-                    .filter(doc -> doc.isPublic)
+                    .filter(doc -> doc.isPublic != null && doc.isPublic)
                     .map(doc -> {
                         PublicProjectDto publicProjectDto = new PublicProjectDto();
                         publicProjectDto.name = doc.name;

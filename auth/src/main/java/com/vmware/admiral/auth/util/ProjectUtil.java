@@ -320,8 +320,13 @@ public class ProjectUtil {
 
         return service.sendWithDeferredResult(getRepositories)
                 .thenApply((op) -> {
+
                     Object body = op.getBodyRaw();
                     String stringBody = body instanceof String ? (String) body : Utils.toJson(body);
+
+                    if (op.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
+                        throw new IllegalStateException(stringBody.trim());
+                    }
 
                     // Harbor is returning a list of JSON objects and since in java generic types
                     // are runtime only, the only types that we can get the response body are String
@@ -333,7 +338,7 @@ public class ProjectUtil {
                     // The following is a workaround: manually wrap the raw output in a
                     // valid JSON object with a single property (list of entries) and parse that.
                     String json = String.format("{\"%s\": %s}",
-                            HbrRepositoriesResponse.FIELD_NAME_RESPONSE_ENTRIES, stringBody);
+                            HbrRepositoriesResponse.FIELD_NAME_RESPONSE_ENTRIES, stringBody.trim());
 
                     HbrRepositoriesResponse response = Utils.fromJson(json,
                             HbrRepositoriesResponse.class);
