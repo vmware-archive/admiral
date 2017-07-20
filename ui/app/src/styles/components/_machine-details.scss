@@ -32,11 +32,9 @@ $elements-side-margin: $elements-margin / 2;
   .content > .machine-details-properties {
     top: 0;
     bottom: 0;
-    left: 40%;
     margin-right: $elements-side-margin;
     overflow: auto;
     z-index: 1;
-    right: 0;
     position: absolute;
   }
 
