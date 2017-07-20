@@ -66,7 +66,8 @@ public class ProfileService extends StatefulService {
         @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL })
         public String endpointLink;
 
-        @Documentation(description = "The endpoint type if this profile is not for a specific endpoint ")
+        @Documentation(
+                description = "The endpoint type if this profile is not for a specific endpoint ")
         @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL })
         public String endpointType;
 
@@ -341,7 +342,19 @@ public class ProfileService extends StatefulService {
             ComputeProfile cp = new ComputeProfile();
             cp.name = state.name;
             cp.endpointLink = state.endpointLink;
-            cp.endpointType = state.endpointType;
+
+            //always set endpointType
+            //if not presented extract from the associated endpoint
+            if (state.endpointType != null) {
+                cp.endpointType = state.endpointType;
+            } else {
+                dr = dr.thenCompose(ignore -> sendWithDeferredResult(
+                        Operation.createGet(this, cp.endpointLink), EndpointState.class))
+                        .thenApply(ep -> {
+                            cp.endpointType = ep.endpointType;
+                            return null;
+                        });
+            }
 
             dr = dr.thenCompose(ignore -> sendWithDeferredResult(
                     Operation.createPatch(this, state.computeProfileLink).setBody(cp)));
