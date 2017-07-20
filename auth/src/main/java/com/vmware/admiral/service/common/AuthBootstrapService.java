@@ -14,7 +14,6 @@ package com.vmware.admiral.service.common;
 import java.util.logging.Level;
 
 import com.vmware.admiral.auth.idm.AuthConfigProvider;
-import com.vmware.admiral.auth.idm.local.LocalAuthConfigProvider;
 import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.xenon.common.FactoryService;
@@ -74,26 +73,23 @@ public class AuthBootstrapService extends StatefulService {
 
     @Override
     public void handleStart(Operation post) {
-        getHost().log(Level.INFO, "handleStart");
-
         AuthConfigProvider provider = AuthUtil.getPreferredProvider(AuthConfigProvider.class);
 
-        // TODO - Refactor: the LocalAuthConfigProvider should be initialized only once whereas the
-        // PSC should be initialized every time...
-        if (!ServiceHost.isServiceCreate(post) && (provider instanceof LocalAuthConfigProvider)) {
+        if (!ServiceHost.isServiceCreate(post)) {
             // do not perform bootstrap logic when the post is NOT from direct client, eg: node
             // restart
+            provider.initConfig(getHost(), post);
             post.complete();
             return;
         }
 
+        provider.initBootConfig(getHost(), post);
         provider.initConfig(getHost(), post);
+        post.complete();
     }
 
     @Override
     public void handlePut(Operation put) {
-        getHost().log(Level.INFO, "handlePut");
-
         if (put.hasPragmaDirective(Operation.PRAGMA_DIRECTIVE_POST_TO_PUT)) {
             // converted PUT due to IDEMPOTENT_POST option
             logInfo("Task has already started. Ignoring converted PUT.");

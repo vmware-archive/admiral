@@ -416,6 +416,10 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
             if ((authServiceFactories != null && !authServiceFactories.isEmpty())) {
                 startFactoryServicesSynchronously(authServiceFactories.toArray(new Service[] {}));
             }
+            Collection<Service> authServices = authProvider.createServices();
+            if ((authServices != null && !authServices.isEmpty())) {
+                startCoreServicesSynchronously(authServices.toArray(new Service[] {}));
+            }
         }
 
         startPeerListener();

@@ -199,7 +199,7 @@ public abstract class ManagementHostClusterBaseTestCase extends ManagementHostBa
 
         TestContext ctx = new TestContext(1,
                 Duration.ofSeconds(DEFAULT_WAIT_SECONDS_FOR_AUTH_SERVICES));
-        AuthUtil.getPreferredProvider(AuthConfigProvider.class).waitForInitConfig(host,
+        AuthUtil.getPreferredProvider(AuthConfigProvider.class).waitForInitBootConfig(host,
                 host.localUsers, ctx::completeIteration, ctx::failIteration);
         ctx.await();
 

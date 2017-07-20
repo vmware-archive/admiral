@@ -71,7 +71,7 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
     }
 
     @Override
-    public void initConfig(ServiceHost host, Operation post) {
+    public void initBootConfig(ServiceHost host, Operation post) {
 
         String localUsers = AuthUtil.getLocalUsersFile(host);
 
@@ -113,6 +113,11 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
             }
         }, true, servicePaths);
 
+    }
+
+    @Override
+    public void initConfig(ServiceHost host, Operation post) {
+        // Nothing to do here...
     }
 
     private static Config getConfig(ServiceHost host, String localUsers) {
@@ -222,7 +227,7 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
     }
 
     @Override
-    public void waitForInitConfig(ServiceHost host, String localUsers,
+    public void waitForInitBootConfig(ServiceHost host, String localUsers,
             Runnable successfulCallback, Consumer<Throwable> failureCallback) {
 
         if (!AuthUtil.useLocalUsers(host)) {
@@ -302,6 +307,11 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
 
     @Override
     public Collection<FactoryService> createServiceFactories() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public Collection<Service> createServices() {
         return Collections.emptyList();
     }
 

@@ -58,9 +58,7 @@ public class ProjectFactoryService extends FactoryService {
 
     @Override
     public void authorizeRequest(Operation op) {
-        Map<String, String> queryParams = UriUtils.parseUriQueryParams(op.getUri());
-        if (op.getAction() == Action.GET && queryParams.containsKey(QUERY_PARAM_PUBLIC)
-                && !queryParams.get(QUERY_PARAM_PUBLIC).equals(Boolean.FALSE.toString())) {
+        if (isPublicProjectsAccess(op)) {
             op.complete();
             return;
         }
@@ -69,9 +67,7 @@ public class ProjectFactoryService extends FactoryService {
 
     @Override
     public void handleRequest(Operation op) {
-        Map<String, String> queryParams = UriUtils.parseUriQueryParams(op.getUri());
-        if (op.getAction() == Action.GET && queryParams.containsKey(QUERY_PARAM_PUBLIC)
-                && !queryParams.get(QUERY_PARAM_PUBLIC).equals(Boolean.FALSE.toString())) {
+        if (isPublicProjectsAccess(op)) {
             // Set system authorization and add expand query if not present.
             if (!UriUtils.hasODataExpandParamValue(op.getUri())) {
                 op.setUri(UriUtils.extendUriWithQuery(op.getUri(),
@@ -84,6 +80,16 @@ public class ProjectFactoryService extends FactoryService {
         }
 
         super.handleRequest(op);
+    }
+
+    /*
+     * Accepts ?public, ?public= or ?public=true, but nothing else.
+     */
+    public static boolean isPublicProjectsAccess(Operation op) {
+        Map<String, String> queryParams = UriUtils.parseUriQueryParams(op.getUri());
+        return (op.getAction() == Action.GET) && queryParams.containsKey(QUERY_PARAM_PUBLIC) &&
+                (queryParams.get(QUERY_PARAM_PUBLIC).isEmpty()
+                        || Boolean.parseBoolean(queryParams.get(QUERY_PARAM_PUBLIC)));
     }
 
     private void expandGetResults(Operation op, Throwable ex) {
@@ -117,6 +123,8 @@ public class ProjectFactoryService extends FactoryService {
         if (body.documents != null) {
             List<PublicProjectDto> publicProjects = body.documents.values().stream()
                     .map(doc -> Utils.fromJson(doc, ProjectState.class))
+                    // TODO - filtering wouldn't be not needed if the odata query had explicitly
+                    // public = true
                     .filter(doc -> doc.isPublic)
                     .map(doc -> {
                         PublicProjectDto publicProjectDto = new PublicProjectDto();
