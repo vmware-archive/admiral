@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.auth.project.transformation;
+package com.vmware.admiral.upgrade.transformation;
 
 import java.util.ArrayList;
 import java.util.HashSet;

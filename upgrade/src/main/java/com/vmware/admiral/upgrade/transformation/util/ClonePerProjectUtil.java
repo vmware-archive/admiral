@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.auth.project.transformation.util;
+package com.vmware.admiral.upgrade.transformation.util;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -56,9 +56,10 @@ public class ClonePerProjectUtil {
             List<MultiTenantDocument> documents,
             Operation post, Service sender, String factoryLink, URI referer,
             ServiceHost host, boolean generateSelfLink) {
-        if (documents == null || documents.size() == 0) {
+        if (documents == null || documents.size() == 0 || projects == null
+                || projects.size() == 0) {
             host.log(Level.INFO,
-                    "No documents found. Transformation completed successfully.");
+                    "No documents/projects found. Transformation completed successfully.");
             post.complete();
             return;
         }

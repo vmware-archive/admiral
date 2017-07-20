@@ -239,6 +239,7 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
 
         HostInitCommonServiceConfig.startServices(this);
         HostInitAuthServiceConfig.startServices(this);
+        HostInitUpgradeServiceConfig.startServices(this);
 
         registerForServiceAvailability(AuthBootstrapService.startTask(this), true,
                 AuthBootstrapService.FACTORY_LINK);

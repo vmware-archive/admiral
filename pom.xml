@@ -43,6 +43,7 @@
         <module>ui</module>
         <module>host</module>
         <module>adapter</module>
+        <module>upgrade</module>
     </modules>
 
     <properties>

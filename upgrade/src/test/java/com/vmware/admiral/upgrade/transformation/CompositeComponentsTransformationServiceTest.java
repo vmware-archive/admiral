@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.auth.project.transformation;
+package com.vmware.admiral.upgrade.transformation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +19,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.vmware.admiral.auth.AuthBaseTest;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.ContainerFactoryService;
@@ -29,12 +28,13 @@ import com.vmware.admiral.compute.container.network.ContainerNetworkService.Cont
 import com.vmware.admiral.compute.container.volume.ContainerVolumeFactoryService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
+import com.vmware.admiral.upgrade.UpgradeBaseTest;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.UriUtils;
 
-public class CompositeComponentsTransformationServiceTest extends AuthBaseTest {
+public class CompositeComponentsTransformationServiceTest extends UpgradeBaseTest {
 
     @Before
     public void setUp() throws Throwable {
@@ -43,8 +43,6 @@ public class CompositeComponentsTransformationServiceTest extends AuthBaseTest {
         waitForServiceAvailability(ContainerVolumeService.FACTORY_LINK);
         waitForServiceAvailability(ContainerVolumeFactoryService.SELF_LINK);
         waitForServiceAvailability(CompositeComponentsTransformationService.SELF_LINK);
-
-        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
     }
 
     @Test

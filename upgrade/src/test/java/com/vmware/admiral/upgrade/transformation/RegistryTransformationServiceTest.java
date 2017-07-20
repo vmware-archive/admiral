@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.auth.project.transformation;
+package com.vmware.admiral.upgrade.transformation;
 
 import java.util.List;
 
@@ -17,25 +17,25 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.vmware.admiral.auth.AuthBaseTest;
 import com.vmware.admiral.auth.project.ProjectFactoryService;
 import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
+import com.vmware.admiral.upgrade.UpgradeBaseTest;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.UriUtils;
 
-public class RegistryTransformationServiceTest extends AuthBaseTest {
+public class RegistryTransformationServiceTest extends UpgradeBaseTest {
 
     @Before
     public void setUp() throws Throwable {
         waitForServiceAvailability(ProjectFactoryService.SELF_LINK);
         waitForServiceAvailability(RegistryService.FACTORY_LINK);
+        waitForServiceAvailability(RegistryService.DEFAULT_INSTANCE_LINK);
+        waitForServiceAvailability(ProjectService.DEFAULT_PROJECT_LINK);
         waitForServiceAvailability(RegistryTransformationService.SELF_LINK);
-
-        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
     }
 
     @Test

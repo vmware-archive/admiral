@@ -9,12 +9,12 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.auth.project.transformation;
+package com.vmware.admiral.upgrade.transformation;
 
-import com.vmware.admiral.auth.project.transformation.util.ClonePerProjectUtil;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
+import com.vmware.admiral.upgrade.transformation.util.ClonePerProjectUtil;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;

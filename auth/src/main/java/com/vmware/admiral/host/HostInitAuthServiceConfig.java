@@ -17,13 +17,6 @@ import com.vmware.admiral.auth.idm.SessionService;
 import com.vmware.admiral.auth.idm.content.AuthContentService;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalFactoryService;
 import com.vmware.admiral.auth.project.ProjectFactoryService;
-import com.vmware.admiral.auth.project.transformation.CompositeComponentsTransformationService;
-import com.vmware.admiral.auth.project.transformation.CompositeDescriptionTransformationService;
-import com.vmware.admiral.auth.project.transformation.ComputePlacementPoolRelationTransformationService;
-import com.vmware.admiral.auth.project.transformation.ContainerNetworksTransformationService;
-import com.vmware.admiral.auth.project.transformation.ContainerVolumesTransformationService;
-import com.vmware.admiral.auth.project.transformation.ContainersTransformationService;
-import com.vmware.admiral.auth.project.transformation.RegistryTransformationService;
 import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
@@ -40,14 +33,7 @@ public class HostInitAuthServiceConfig extends HostInitServiceHelper {
                 ProjectFactoryService.class,
                 PrincipalService.class,
                 LocalPrincipalFactoryService.class,
-                AuthContentService.class,
-                CompositeDescriptionTransformationService.class,
-                ContainersTransformationService.class,
-                RegistryTransformationService.class,
-                ComputePlacementPoolRelationTransformationService.class,
-                ContainerVolumesTransformationService.class,
-                ContainerNetworksTransformationService.class,
-                CompositeComponentsTransformationService.class);
+                AuthContentService.class);
 
         startServiceFactories(host,
                 AuthBootstrapService.class);

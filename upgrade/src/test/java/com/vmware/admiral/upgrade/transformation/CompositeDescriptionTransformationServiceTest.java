@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.auth.project.transformation;
+package com.vmware.admiral.upgrade.transformation;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,7 +19,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.vmware.admiral.auth.AuthBaseTest;
 import com.vmware.admiral.auth.project.ProjectFactoryService;
 import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
@@ -27,19 +26,19 @@ import com.vmware.admiral.compute.container.CompositeDescriptionService;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
+import com.vmware.admiral.upgrade.UpgradeBaseTest;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.UriUtils;
 
-public class CompositeDescriptionTransformationServiceTest extends AuthBaseTest {
+public class CompositeDescriptionTransformationServiceTest extends UpgradeBaseTest {
 
     @Before
     public void setUp() throws Throwable {
         waitForServiceAvailability(ProjectFactoryService.SELF_LINK);
         waitForServiceAvailability(CompositeDescriptionService.SELF_LINK);
+        waitForServiceAvailability(ProjectService.DEFAULT_PROJECT_LINK);
         waitForServiceAvailability(CompositeDescriptionTransformationService.SELF_LINK);
-
-        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
     }
 
     @Test
