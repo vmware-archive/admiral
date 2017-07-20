@@ -20,30 +20,26 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.vmware.admiral.unikernels.common.exceptions.DockerFileFormatException;
 import com.vmware.admiral.unikernels.common.service.UnikernelCreationTaskService.UnikernelCreationTaskServiceState;
-import com.vmware.admiral.unikernels.common.translator.Parser;
-import com.vmware.admiral.unikernels.common.translator.Platform;
-import com.vmware.admiral.unikernels.common.translator.Translator;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.test.TestContext;
 
-public class TranslateDockerServiceTest {
+public class CompilationSuccessHandlerServiceTest {
 
     private ServiceHost host;
-    private CompilationData response;
+    private String patchedDownloadLink;
 
     @Before
     public void createAndStartServiceHost() throws Throwable {
         host = ServiceHost.create();
         host.start();
         host.startDefaultCoreServicesSynchronously();
-        host.startService(new TranslateDockerService());
+        host.startService(new CompilationSuccessHandlerService());
         host.startService(new TaskServiceMock());
         waitForServiceAvailability(host,
-                TranslateDockerService.SELF_LINK,
+                CompilationSuccessHandlerService.SELF_LINK,
                 TaskServiceMock.SELF_LINK);
     }
 
@@ -67,29 +63,22 @@ public class TranslateDockerServiceTest {
         public static final String SELF_LINK = UnikernelManagementURIParts.CREATION;
 
         @Override
-        public void handlePost(Operation post) {
-            response = post.getBody(UnikernelCreationTaskServiceState.class).data;
-            post.complete();
+        public void handlePatch(Operation patch) {
+            UnikernelCreationTaskServiceState state = patch
+                    .getBody(UnikernelCreationTaskServiceState.class);
+            patchedDownloadLink = state.data.downloadLink;
+            patch.complete();
         }
-
     }
 
     @Test
-    public void translationCheck() {
-        TranslationData translationData = new TranslationData();
-        translationData.dockerfile = "FROM cloudrouter/osv-builder"
-                + "\nCOPY OSv-service.jar ."
-                + "\nWORKDIR /"
-                + "\nCMD java -jar OSv-service.jar";
-        translationData.sources = "github";
-        translationData.platform = Platform.OSv;
-        translationData.successCB = "success";
-        translationData.failureCB = "failure";
-        translationData.compilationPlatform = "vbox";
+    public void testSuccessPatch() {
+        String[] testData = { "SUCCESS", host.getUri() + UnikernelManagementURIParts.CREATION,
+                "DOWNLOAD" };
 
         TestContext ctx = TestContext.create(1, Duration.ofSeconds(60).toMillis() * 1000);
-        Operation.createPost(host, UnikernelManagementURIParts.TRANSLATION)
-                .setBody(translationData)
+        Operation.createPost(host, UnikernelManagementURIParts.SUCCESS_CB)
+                .setBody(testData)
                 .setReferer(host.getUri())
                 .setCompletion((o, e) -> {
                     if (e != null) {
@@ -100,23 +89,6 @@ public class TranslateDockerServiceTest {
                 }).sendWith(host);
         ctx.await();
 
-        assertEquals(response.capstanfile, translateDockerUtil(translationData.dockerfile));
-        assertEquals(response.failureCB, "failure");
-        assertEquals(response.successCB, "success");
-        assertEquals(response.sources, "github");
-        assertEquals(response.compilationPlatform, "vbox");
-    }
-
-    private String translateDockerUtil(String docker) {
-        Parser parser = new Parser();
-        parser.readString(docker);
-        try {
-            Translator translator = new Translator(parser.parseDocker());
-            return translator.translate(Platform.OSv).getDocumentString();
-        } catch (DockerFileFormatException e) {
-            e.printStackTrace();
-        }
-
-        return null;
+        assertEquals(patchedDownloadLink, "DOWNLOAD");
     }
 }

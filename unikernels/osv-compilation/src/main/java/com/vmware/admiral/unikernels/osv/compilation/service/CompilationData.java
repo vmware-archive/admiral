@@ -20,6 +20,7 @@ public class CompilationData extends ServiceDocument {
     public String compilationPlatform;
     public String successCB;
     public String failureCB;
+    public String creationTaskServiceURI;
 
     public Boolean isSet() {
         return !(capstanfile == null || sources == null || compilationPlatform == null);

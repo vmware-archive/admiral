@@ -21,9 +21,19 @@ public class CompilationData extends ServiceDocument {
     public String compilationPlatform;
     public String successCB;
     public String failureCB;
+    public String downloadLink;
 
     public Boolean isSet() {
         return !(capstanfile == null || sources == null || compilationPlatform == null);
+    }
+
+    public void setEmptyFields() {
+        capstanfile = "";
+        compilationPlatform = "";
+        sources = "";
+        successCB = "";
+        failureCB = "";
+        downloadLink = "";
     }
 
 }

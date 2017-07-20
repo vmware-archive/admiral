@@ -12,6 +12,7 @@
 package com.vmware.admiral.unikernels.common.service;
 
 import com.vmware.admiral.unikernels.common.exceptions.DockerFileFormatException;
+import com.vmware.admiral.unikernels.common.service.UnikernelCreationTaskService.UnikernelCreationTaskServiceState;
 import com.vmware.admiral.unikernels.common.translator.DescriptiveFileReference;
 import com.vmware.admiral.unikernels.common.translator.Parser;
 import com.vmware.admiral.unikernels.common.translator.Translator;
@@ -35,21 +36,22 @@ public class TranslateDockerService extends StatelessService {
             logWarning(e1.getMessage());
         }
 
+        UnikernelCreationTaskServiceState wrappedData = new UnikernelCreationTaskServiceState();
+        wrappedData.data = forwardedData;
+
         Operation request = Operation
-                .createPost(this, UnikernelManagementURIParts.UNIKERNEL_CREATION)
+                .createPost(this, UnikernelManagementURIParts.CREATION)
                 .setReferer(getSelfLink())
-                .setBody(forwardedData)
+                .setBody(wrappedData)
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         post.fail(e);
                     } else {
                         post.complete();
                     }
-
                 });
 
         sendRequest(request);
-
     }
 
     private String getTranslatedDfrString(TranslationData data) throws DockerFileFormatException {

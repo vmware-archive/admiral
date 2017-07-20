@@ -11,11 +11,6 @@
 
 package com.vmware.admiral.unikernels.common.service;
 
-public interface UnikernelManagementURIParts {
-
-    String TRANSLATION = "/unikernel/translate";
-    String CREATION = "/unikernel/create";
-    String SUCCESS_CB = "/unikernel/receive/success";
-    String FAILURE_CB = "/unikernel/receive/failure";
+public class UnikernelCreationTaskServiceTest {
 
 }

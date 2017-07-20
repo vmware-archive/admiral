@@ -20,6 +20,7 @@ public class Driver {
     public static void main(String[] args) throws Throwable {
 
         ServiceHost host = ServiceHost.create();
+        host.initialize(args);
         host.start();
         host.startDefaultCoreServicesSynchronously();
         host.startService(new CompilationBrockerService());

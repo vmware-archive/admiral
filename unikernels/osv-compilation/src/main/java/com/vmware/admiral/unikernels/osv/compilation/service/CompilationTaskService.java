@@ -12,6 +12,7 @@
 package com.vmware.admiral.unikernels.osv.compilation.service;
 
 import java.io.IOException;
+import java.net.URI;
 
 import com.vmware.admiral.unikernels.osv.compilation.CommandExecutor;
 import com.vmware.xenon.common.Operation;
@@ -20,18 +21,19 @@ import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.TaskService;
 
 public class CompilationTaskService
         extends TaskService<CompilationTaskService.CompilationTaskServiceState> {
+
+    public static final String FACTORY_LINK = UnikernelManagementURIParts.COMPILE_TASK;
 
     public static final CommandExecutor executor = new CommandExecutor();
 
     public enum SubStage {
         PULLING_SOURCES, CREATING_CAPSTAN, COMPILING, TARGETING_IMAGE
     }
-
-    public static final String FACTORY_LINK = UnikernelManagementURIParts.COMPILE_TASK;
 
     public static class CompilationTaskServiceState extends TaskService.TaskServiceState {
 
@@ -48,7 +50,6 @@ public class CompilationTaskService
         toggleOption(ServiceOption.REPLICATION, true);
         toggleOption(ServiceOption.INSTRUMENTATION, true);
         toggleOption(ServiceOption.OWNER_SELECTION, true);
-
     }
 
     @Override
@@ -92,7 +93,6 @@ public class CompilationTaskService
         if (!validateTransition(patch, currentTask, patchBody)) {
             return;
         }
-
         updateState(currentTask, patchBody);
         patch.complete();
 
@@ -107,9 +107,9 @@ public class CompilationTaskService
             break;
         case FINISHED:
             System.out.println("Task finished successfully");
-            sendCB(patch, patchBody.data.successCB); // test
+                            //cb                      task host
+            sendCB(patch, patchBody.data.successCB, patchBody.data.creationTaskServiceURI);
             logInfo("Task finished successfully");
-
             break;
         case FAILED:
             sendCB(patch, patchBody.data.failureCB); // test
@@ -122,17 +122,13 @@ public class CompilationTaskService
         }
     }
 
-    private void sendCB(Operation patch, String cbLink) {
-        Operation request = Operation.createPatch(this, cbLink)
-                .setReferer(getSelfLink())
-                .setBody(cbLink) // replace with download link
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        patch.fail(e);
-                    } else {
-                        patch.complete();
-                    }
-                });
+    private void sendCB(Operation patch, String... callbackData) {
+        // cbLink                           //cbLink
+        URI requestUri = UriUtils.buildUri(callbackData[0]);
+        Operation request = Operation
+                .createPost(requestUri)
+                .setBody(callbackData); // cbLink, task host, download
+
         sendRequest(request);
     }
 
@@ -209,7 +205,7 @@ public class CompilationTaskService
     }
 
     private void handleTargetingImage(CompilationTaskServiceState task) {
-        //String folderName = getFolderNameFromPath(task.data.sources);
+        // String folderName = getFolderNameFromPath(task.data.sources);
         String targetQuery = "cd ~/.capstan/repository ; ls";
 
         try {
@@ -223,11 +219,10 @@ public class CompilationTaskService
         sendSelfPatch(task, TaskStage.FINISHED, SubStage.TARGETING_IMAGE);
     }
     /*
-    private String getFolderNameFromPath(String path) {
-        String[] parsedLink = path.split("/");
-        String folderName = parsedLink[parsedLink.length - 1];
-        return folderName.substring(0, folderName.length() - 4); // remove .git extension
-    } */
+     * private String getFolderNameFromPath(String path) { String[] parsedLink = path.split("/");
+     * String folderName = parsedLink[parsedLink.length - 1]; return folderName.substring(0,
+     * folderName.length() - 4); // remove .git extension }
+     */
 
     private void sendSelfPatch(CompilationTaskServiceState task, TaskStage stage,
             SubStage subStage) {

@@ -67,8 +67,8 @@ public class CompilationTaskServiceTest {
         public static final String SELF_LINK = UnikernelManagementURIParts.SAMPLE_SUCCESSCB;
 
         @Override
-        public void handlePatch(Operation patch) {
-            successLink = patch.getBody(String.class);
+        public void handlePost(Operation post) {
+            successLink = post.getBody(String[].class)[0];
         }
 
     }
@@ -77,8 +77,8 @@ public class CompilationTaskServiceTest {
         public static final String SELF_LINK = UnikernelManagementURIParts.SAMPLE_FAILURECB;
 
         @Override
-        public void handlePatch(Operation patch) {
-            failureLink = patch.getBody(String.class);
+        public void handlePost(Operation post) {
+            failureLink = post.getBody(String[].class)[0];
         }
 
     }
@@ -97,7 +97,7 @@ public class CompilationTaskServiceTest {
     public void testTaskCompletion() {
         invokeService();
         waitCompilationTaskServiceCompletion(timeForTaskServiceCompletionSeconds);
-        assertEquals(successLink, "/success");
+        assertEquals(successLink, "http://localhost:8000/success");
     }
 
     private void waitCompilationTaskServiceCompletion(int timeInSeconds) {
@@ -126,8 +126,8 @@ public class CompilationTaskServiceTest {
 
         stateBody.data.compilationPlatform = "vbox";
         stateBody.data.sources = "https://github.com/antonOO/JarSourceUnikernel.git";
-        stateBody.data.successCB = "/success";
-        stateBody.data.failureCB = "/failure";
+        stateBody.data.successCB = "http://localhost:8000/success";
+        stateBody.data.failureCB = "http://localhost:8000/failure";
 
         Operation post = Operation.createPost(host, UnikernelManagementURIParts.COMPILE_TASK)
                 .setBody(stateBody);
