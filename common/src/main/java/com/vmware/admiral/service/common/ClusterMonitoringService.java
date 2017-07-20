@@ -14,6 +14,7 @@ package com.vmware.admiral.service.common;
 import static com.vmware.xenon.services.common.NodeState.NodeStatus.AVAILABLE;
 import static com.vmware.xenon.services.common.NodeState.NodeStatus.UNAVAILABLE;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
@@ -40,6 +41,9 @@ public class ClusterMonitoringService extends StatelessService {
 
     public static final String SELF_LINK = ManagementUriParts.CONFIG + "/cluster-monitoring";
 
+    public static final String AUTOMATIC_QUORM_UPDATE_PROPERTY = "automatic.quorum.update";
+    private static final Integer RETRIES_FOR_INITIAL_QUORUM_UPDATE = 5;
+
     // Cached node group state. Refreshed during maintenance
     private NodeGroupState cachedGroupState;
 
@@ -56,8 +60,6 @@ public class ClusterMonitoringService extends StatelessService {
             return;
         }
 
-        logInfo("handleStart");
-
         NodeSelectorState state = null;
         if (!start.hasBody()) {
             state = new NodeSelectorState();
@@ -70,6 +72,33 @@ public class ClusterMonitoringService extends StatelessService {
         state.documentOwner = getHost().getId();
         this.cachedState = state;
         startHelperServices(start);
+
+        if (Boolean.getBoolean(AUTOMATIC_QUORM_UPDATE_PROPERTY)) {
+            updateQuorum(RETRIES_FOR_INITIAL_QUORUM_UPDATE);
+        }
+    }
+
+    private void updateQuorum(int retries) {
+
+        sendRequest(Operation.createGet(this, ServiceUriPaths.DEFAULT_NODE_GROUP)
+                .setCompletion((o, e) -> {
+                    if (e == null) {
+                        if (retries > 0) {
+                            NodeGroupState ngs = o.getBody(NodeGroupState.class);
+                            int nowAvailable = countNodesWithStatus(ngs, AVAILABLE, true);
+                            logInfo("Retrying [ %s ] times to set a quorum to: [ %s ] ",
+                                    retries, (nowAvailable / 2) + 1);
+                            sendRequest(createUpdateQuorumOperation(nowAvailable));
+
+                            getHost().schedule(() -> updateQuorum(retries - 1), 5, TimeUnit
+                                    .SECONDS);
+                        }
+
+                    } else {
+                        logSevere(e);
+                    }
+
+                }));
     }
 
     private void startHelperServices(Operation op) {

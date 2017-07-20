@@ -142,7 +142,6 @@ public class CommonContinuousQueries {
         case EXTENSIBILITY_SUBSCRIPTIONS:
             Query extensibilitySubscriptionQuery = Query.Builder.create()
                     .addKindFieldClause(ExtensibilitySubscription.class)
-                    .addFieldClause(ServiceDocument.FIELD_NAME_OWNER, host.getId())
                     .build();
             task = QueryTask.Builder.create()
                     .addOptions(EnumSet.of(QueryOption.CONTINUOUS, QueryOption.EXPAND_CONTENT))
