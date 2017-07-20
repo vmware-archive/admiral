@@ -144,6 +144,14 @@ public abstract class BaseTestCase {
         host = null;
     }
 
+    protected static void restoreSystemProperty(String key, String value) {
+        if (value == null) {
+            System.clearProperty(key);
+        } else {
+            System.setProperty(key, value);
+        }
+    }
+
     protected ServiceHost.Arguments getHostArguments() {
         ServiceHost.Arguments args = new ServiceHost.Arguments();
         args.sandbox = null; // ask runtime to pick a random storage location

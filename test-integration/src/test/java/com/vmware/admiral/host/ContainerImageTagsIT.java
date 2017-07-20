@@ -14,7 +14,6 @@ package com.vmware.admiral.host;
 import static java.net.HttpURLConnection.HTTP_OK;
 
 import static org.hamcrest.CoreMatchers.hasItems;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;

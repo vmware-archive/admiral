@@ -96,6 +96,14 @@ public class ServerX509TrustManager implements X509TrustManager, Closeable {
         return INSTANCE;
     }
 
+    /**
+     * Invalidate the instance, if created/initialized and the copy in SslCertificateResolver
+     */
+    public static synchronized void invalidate() {
+        INSTANCE = null;
+        SslCertificateResolver.invalidateTrustManager();
+    }
+
     protected ServerX509TrustManager(ServiceHost host) {
         AssertUtil.assertNotNull(host, "serviceHost");
         this.host = host;
