@@ -95,7 +95,10 @@ export class DocumentService {
     params.set('$count', 'true');
 
     if (queryOptions) {
-      params.set('$filter', getFilter(queryOptions));
+      let filter = getFilter(queryOptions);
+      if(filter){
+        params.set('$filter', filter);
+      }
     }
     let op;
     // 2000 is th max url length. Here we don't know the hostname, so 50 chars extra
