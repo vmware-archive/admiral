@@ -31,6 +31,7 @@ import java.util.UUID;
 
 import org.junit.Before;
 
+import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.common.test.HostInitTestDcpServicesConfig;
@@ -251,6 +252,10 @@ public abstract class RequestBaseTest extends BaseTestCase {
     }
 
     protected void startServices(VerificationHost h) throws Throwable {
+        // some of the services do different init based on this so make sure it is set before
+        // starting them
+        DeploymentProfileConfig.getInstance().setTest(true);
+
         h.registerForServiceAvailability(CaSigningCertService.startTask(h), true,
                 CaSigningCertService.FACTORY_LINK);
         HostInitTestDcpServicesConfig.startServices(h);
