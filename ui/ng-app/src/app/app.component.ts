@@ -9,13 +9,14 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { ViewExpandRequestService } from './services/view-expand-request.service';
 import { FT } from './utils/ft';
 import { Utils } from './utils/utils';
 import { DocumentService } from './utils/document.service';
 import { AuthService } from './utils/auth.service';
 import { RoutesRestriction } from './utils/routes-restriction';
+import { SessionTimedOutSubject } from './utils/ajax.service';
 
 @Component({
     selector: 'my-app',
@@ -25,9 +26,13 @@ import { RoutesRestriction } from './utils/routes-restriction';
 export class AppComponent {
     fullScreen: boolean;
     userSecurityContext: any;
+    showSessionTimeout: boolean;
 
-    constructor(private viewExpandRequestor: ViewExpandRequestService, private documentService: DocumentService,
-    private authService: AuthService) {
+    constructor(private viewExpandRequestor: ViewExpandRequestService,
+        private documentService: DocumentService,
+        private authService: AuthService,
+        private sessionTimedOutSubject: SessionTimedOutSubject,
+        private cd: ChangeDetectorRef) {
         this.viewExpandRequestor.getFullScreenRequestEmitter().subscribe(isFullScreen => {
             this.fullScreen = isFullScreen;
         });
@@ -39,6 +44,14 @@ export class AppComponent {
                 console.log(ex);
             });
         }
+
+        this.sessionTimedOutSubject.subscribe(e => {
+            this.showSessionTimeout = !FT.isApplicationEmbedded();
+            // Since anyone can call sessionTimedOutSubject,
+            // an update can happen outside of the Angular Zone and would not
+            // detect a change, therefore call it manually
+            this.cd.detectChanges();
+        });
     }
 
     get embedded(): boolean {
@@ -88,6 +101,10 @@ export class AppComponent {
         }, (e) => {
             console.log(e);
         });
+    }
+
+    reload() {
+        window.location.reload();
     }
 
     get administrationRouteRestriction() {

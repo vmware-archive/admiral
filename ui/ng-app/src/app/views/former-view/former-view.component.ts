@@ -1,3 +1,4 @@
+import { SessionTimedOutSubject } from './../../utils/ajax.service';
 import { Utils } from './../../utils/utils';
 import { Component, OnInit, OnDestroy, ViewChild, ViewEncapsulation, Input, Output, EventEmitter } from '@angular/core';
 import { Router, ActivatedRoute, Route, RoutesRecognized, NavigationEnd, NavigationCancel } from '@angular/router';
@@ -22,6 +23,8 @@ export class FormerViewComponent {
 
   @Output()
   onRouteChange: EventEmitter<string> = new EventEmitter();
+
+  constructor(private sessionTimedOutSubject: SessionTimedOutSubject) {}
 
   @Input()
   set path(val: string) {
@@ -48,6 +51,10 @@ export class FormerViewComponent {
 
         iframeEl.contentWindow.notifyNavigation = (hash) => {
           this.onRouteChange.emit(hash);
+        }
+
+        iframeEl.contentWindow.notifySessionTimeout = () => {
+          this.sessionTimedOutSubject.setError({});
         }
       }
 

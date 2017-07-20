@@ -10,6 +10,21 @@
   -->
 
 <clr-main-container *ngIf="!isLogin">
+  <clr-alert [clrAlertType]="'alert-danger'"
+    [clrAlertAppLevel]="true"
+    [clrAlertClosable]="false"
+    *ngIf="showSessionTimeout"
+    class="above-modal-backdrop">
+    <div class="alert-item">
+        <span class="alert-text">
+            {{ 'sessionExpired' | i18n }}
+        </span>
+        <div class="alert-actions">
+            <button class="btn alert-action"
+                (click)="reload()">{{ 'reload' | i18n }}</button>
+        </div>
+    </div>
+  </clr-alert>
   <clr-header class="header-5" *ngIf="!embedded">
     <div class="branding">
         <a class="nav-link" routerLink="/" *ngIf="admiral">

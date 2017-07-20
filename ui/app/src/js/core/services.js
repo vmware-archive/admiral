@@ -69,13 +69,13 @@ var ajax = function(method, url, data, headers, disableReloadOnUnauthorized) {
         contentType: 'application/json',
         statusCode: {
           403: function() {
-            if (!disableReloadOnUnauthorized) {
-              window.location.reload(true);
+            if (!disableReloadOnUnauthorized && window.notifySessionTimeout) {
+              window.notifySessionTimeout();
             }
           },
           401: function() {
-            if (!disableReloadOnUnauthorized) {
-              window.location.reload(true);
+            if (!disableReloadOnUnauthorized && window.notifySessionTimeout) {
+              window.notifySessionTimeout();
             }
           }
         },

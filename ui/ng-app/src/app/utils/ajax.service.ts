@@ -73,7 +73,7 @@ export class Ajax {
 
     return this.http.request(new Request(requestOptions))
       .toPromise()
-      .then(result => this.trimMetadata(result.json()))
+      .then(result => this.trimMetadata(result.headers))
       .catch(error => this.handleAjaxError(error));
   }
 
@@ -101,7 +101,8 @@ export class Ajax {
    */
   private handleAjaxError(error) {
     // handle session timeout
-    if (error && error.status && error.status === 401) {
+    let status = error && error.status;
+    if (status === 401 || status === 403) {
       this.sessionTimedOutSubject.setError(error);
       throw error; // propagate the initial error
     }

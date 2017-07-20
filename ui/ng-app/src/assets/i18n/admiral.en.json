@@ -255,6 +255,8 @@
   "assignRoles": "Assign Roles",
   "makeAdmin": " Make Admin",
   "noItems": "No items",
+  "reload": "Reload",
+  "sessionExpired": "Your session is no longer valid, please log in again!",
   "compute": {
     "resources": "Resources",
     "policies": "Policies",
