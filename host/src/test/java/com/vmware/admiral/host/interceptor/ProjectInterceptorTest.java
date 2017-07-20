@@ -9,23 +9,46 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.auth.project;
+package com.vmware.admiral.host.interceptor;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
+import static com.vmware.admiral.host.ManagementHostAuthUsersTest.DEFAULT_WAIT_SECONDS_FOR_AUTH_SERVICES;
+import static com.vmware.admiral.request.util.TestRequestStateFactory.COMPUTE_ADDRESS;
+
+import java.io.File;
+import java.nio.file.Files;
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.junit.Before;
 import org.junit.Test;
 
-import com.vmware.admiral.auth.AuthBaseTest;
+import com.vmware.admiral.auth.AuthInitialBootService;
+import com.vmware.admiral.auth.idm.AuthConfigProvider;
+import com.vmware.admiral.auth.idm.PrincipalRolesHandler.PrincipalRoleAssignment;
+import com.vmware.admiral.auth.idm.PrincipalService;
+import com.vmware.admiral.auth.idm.SessionService;
+import com.vmware.admiral.auth.idm.local.LocalAuthConfigProvider.Config;
+import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalState;
+import com.vmware.admiral.auth.project.ProjectFactoryService;
+import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles;
+import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
+import com.vmware.admiral.auth.util.AuthUtil;
+import com.vmware.admiral.common.DeploymentProfileConfig;
+import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
+import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
 import com.vmware.admiral.compute.cluster.ClusterService;
 import com.vmware.admiral.compute.cluster.ClusterService.ClusterDto;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
@@ -46,40 +69,114 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionSer
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
+import com.vmware.admiral.host.HostInitAuthServiceConfig;
+import com.vmware.admiral.host.HostInitCommonServiceConfig;
+import com.vmware.admiral.host.HostInitComputeServicesConfig;
+import com.vmware.admiral.host.HostInitPhotonModelServiceConfig;
+import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.admiral.service.test.MockDockerHostAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.xenon.common.CommandLineArgumentParser;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.common.test.TestContext;
+import com.vmware.xenon.common.test.VerificationHost;
 
-public class ProjectInterceptorTest extends AuthBaseTest {
+public class ProjectInterceptorTest extends BaseTestCase {
+    private static final String USER_EMAIL_ADMIN = "fritz@admiral.com";
+    private static final String USER_EMAIL_ADMIN2 = "administrator@admiral.com";
+    private static final String USER_EMAIL_BASIC_USER = "tony@admiral.com";
+    private static final String USER_EMAIL_GLORIA = "gloria@admiral.com";
+    private static final String USER_EMAIL_CONNIE = "connie@admiral.com";
+
+    private static final String FILE_LOCAL_USERS = "/local-users.json";
 
     private ProjectState project;
     private ProjectState testProject1;
     private ProjectState testProject2;
 
+    protected List<String> loadedUsers;
+    protected List<String> loadedGroups;
+
     @Before
     public void setup() throws Throwable {
-        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
-        project = createProject("test-project");
-        testProject1 = createProject("test-project1");
-        testProject2 = createProject("test-project2");
+        host.setSystemAuthorizationContext();
 
+        startServices(host);
+
+        waitForServiceAvailability(AuthInitialBootService.SELF_LINK);
+        waitForInitialBootServiceToBeSelfStopped(AuthInitialBootService.SELF_LINK);
+        waitForDefaultRoles();
+        waitForDefaultUsersAndGroups();
+        TestContext ctx = new TestContext(1,
+                Duration.ofSeconds(DEFAULT_WAIT_SECONDS_FOR_AUTH_SERVICES));
+        AuthUtil.getPreferredProvider(AuthConfigProvider.class).waitForInitConfig(host,
+                ((CustomizationVerificationHost) host).localUsers,
+                ctx::completeIteration, ctx::failIteration);
+        ctx.await();
+        waitForServiceAvailability(SessionService.SELF_LINK);
+        waitForServiceAvailability(ProjectFactoryService.SELF_LINK);
         waitForServiceAvailability(ClusterService.SELF_LINK);
         waitForServiceAvailability(ContainerHostService.SELF_LINK);
         waitForServiceAvailability(ComputeService.FACTORY_LINK);
         waitForServiceAvailability(ResourcePoolService.FACTORY_LINK);
         waitForServiceAvailability(GroupResourcePlacementService.FACTORY_LINK);
-
         MockDockerHostAdapterService dockerAdapterService = new MockDockerHostAdapterService();
         host.startService(Operation.createPost(UriUtils.buildUri(host,
                 MockDockerHostAdapterService.class)), dockerAdapterService);
 
         waitForServiceAvailability(MockDockerHostAdapterService.SELF_LINK);
+
+        host.resetAuthorizationContext();
+
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
+
+        project = createProject("test-project");
+        testProject1 = createProject("test-project1");
+        testProject2 = createProject("test-project2");
+
+    }
+
+    @Override
+    protected VerificationHost createHost() throws Throwable {
+        String[] customArgs = {
+                CommandLineArgumentParser.ARGUMENT_PREFIX
+                        + AuthUtil.LOCAL_USERS_FILE
+                        + CommandLineArgumentParser.ARGUMENT_ASSIGNMENT
+                        + ProjectInterceptorTest.class.getResource(FILE_LOCAL_USERS).toURI().getPath()
+        };
+        return createHost(customArgs);
+    }
+
+    @Override
+    protected void setPrivilegedServices(VerificationHost host) {
+        host.addPrivilegedService(SessionService.class);
+        host.addPrivilegedService(PrincipalService.class);
+        host.addPrivilegedService(ProjectService.class);
+        host.addPrivilegedService(ProjectFactoryService.class);
+    }
+
+    @Override
+    protected void registerInterceptors(OperationInterceptorRegistry registry) {
+        ProjectInterceptor.register(registry);
+    }
+
+    protected void startServices(VerificationHost host) throws Throwable {
+        DeploymentProfileConfig.getInstance().setTest(true);
+
+        HostInitCommonServiceConfig.startServices(host, true);
+        HostInitPhotonModelServiceConfig.startServices(host);
+        HostInitComputeServicesConfig.startServices(host, true);
+        HostInitAuthServiceConfig.startServices(host);
+
+        host.registerForServiceAvailability(AuthBootstrapService.startTask(host), true,
+                AuthBootstrapService.FACTORY_LINK);
     }
 
     @Test
@@ -490,6 +587,67 @@ public class ProjectInterceptorTest extends AuthBaseTest {
         assertTrue(project2Docs.documentLinks.contains(dto2.documentSelfLink));
     }
 
+    @Test
+    public void testClusterServiceRestrictions() throws Throwable {
+        // Assign Gloria as project admin and Tony as project viewer.
+        ProjectRoles roles = new ProjectRoles();
+        roles.members = new PrincipalRoleAssignment();
+        roles.viewers = new PrincipalRoleAssignment();
+        roles.members.add = Collections.singletonList(USER_EMAIL_GLORIA);
+        roles.viewers.add = Collections.singletonList(USER_EMAIL_BASIC_USER);
+
+        doPatch(roles, testProject1.documentSelfLink);
+
+        // Try to add cluster as project member.
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_GLORIA));
+        ContainerHostSpec hostSpec = createContainerHostSpec(Collections
+                        .singletonList(testProject1.documentSelfLink), ContainerHostType.DOCKER);
+
+        try {
+            doPostWithProjectHeader(hostSpec, ClusterService.SELF_LINK, testProject1
+                    .documentSelfLink, ClusterDto.class);
+            fail("Create cluster as project member should've failed.");
+        } catch (Throwable ex) {
+            assertTrue(ex.getMessage().contains("forbidden"));
+        }
+
+        // Try to add cluster as project viewer.
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_BASIC_USER));
+
+        try {
+            doPostWithProjectHeader(hostSpec, ClusterService.SELF_LINK, testProject1
+                    .documentSelfLink, ClusterDto.class);
+            fail("Create cluster as project member should've failed.");
+        } catch (Throwable ex) {
+            assertTrue(ex.getMessage().contains("forbidden"));
+        }
+
+        // Try to add cluster as project admin.
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
+        roles = new ProjectRoles();
+        roles.members = new PrincipalRoleAssignment();
+        roles.administrators = new PrincipalRoleAssignment();
+        roles.members.remove = Collections.singletonList(USER_EMAIL_GLORIA);
+        roles.administrators.add = Collections.singletonList(USER_EMAIL_GLORIA);
+        doPatch(roles, testProject1.documentSelfLink);
+
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_GLORIA));
+
+        try {
+            doPostWithProjectHeader(hostSpec, ClusterService.SELF_LINK, testProject1
+                    .documentSelfLink, ClusterDto.class);
+            fail("Create cluster as project member should've failed.");
+        } catch (Throwable ex) {
+            assertTrue(ex.getMessage().contains("forbidden"));
+        }
+
+        //Try to add cluster as cloud admin.
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
+        ClusterDto dto = doPostWithProjectHeader(hostSpec, ClusterService.SELF_LINK, testProject1
+                .documentSelfLink, ClusterDto.class);
+        assertNotNull(dto.documentSelfLink);
+    }
+
 
     private static void assertTenantLinks(ResourceState state, String... projectLinks) {
         for (String projectLink : projectLinks) {
@@ -505,5 +663,111 @@ public class ProjectInterceptorTest extends AuthBaseTest {
                 throw new RuntimeException("Created state should have tenantLink " + projectLink);
             }
         }
+    }
+
+    private String buildUserServicePath(String email) {
+        return AuthUtil.buildUserServicePathFromPrincipalId(email);
+    }
+
+    private ProjectState createProject(String name) throws Throwable {
+        ProjectState state = new ProjectState();
+        state.name = name;
+        return doPost(state, ProjectFactoryService.SELF_LINK);
+    }
+
+    private ContainerHostSpec createContainerHostSpec(List<String> tenantLinks,
+            ContainerHostType hostType) throws Throwable {
+        return createContainerHostSpec(tenantLinks,
+                hostType, null, null);
+    }
+
+    private ContainerHostSpec createContainerHostSpec(List<String> tenantLinks,
+            ContainerHostType hostType, String clusterName, String clusterDetails)
+            throws Throwable {
+        ContainerHostSpec ch = new ContainerHostSpec();
+        ch.hostState = createComputeState(hostType, ComputeService.PowerState.ON, tenantLinks,
+                clusterName, clusterDetails);
+        return ch;
+    }
+
+    private ComputeState createComputeState(ContainerHostType hostType,
+            ComputeService.PowerState hostState, List<String> tenantLinks, String clusterName,
+            String clusterDetails
+
+    ) throws Throwable {
+        ComputeState cs = new ComputeState();
+        cs.id = UUID.randomUUID().toString();
+        cs.address = COMPUTE_ADDRESS;
+        cs.powerState = hostState;
+        cs.customProperties = new HashMap<>();
+        cs.customProperties.put(ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME,
+                "API");
+        cs.customProperties.put(ContainerHostService.CONTAINER_HOST_TYPE_PROP_NAME,
+                hostType.toString());
+        cs.customProperties.put(MockDockerHostAdapterService.CONTAINER_HOST_TYPE_PROP_NAME,
+                hostType.toString());
+        cs.tenantLinks = new ArrayList<>(tenantLinks);
+
+        if (clusterDetails != null && !clusterDetails.isEmpty()) {
+            cs.customProperties.put(
+                    ClusterService.CLUSTER_DETAILS_CUSTOM_PROP,
+                    clusterDetails);
+        }
+        if (clusterName != null) {
+            cs.customProperties.put(
+                    ClusterService.CLUSTER_NAME_CUSTOM_PROP,
+                    clusterName);
+        }
+        return cs;
+    }
+
+    private void waitForDefaultRoles() throws Throwable {
+        waitForServiceAvailability(AuthUtil.CLOUD_ADMINS_RESOURCE_GROUP_LINK,
+                AuthUtil.CLOUD_ADMINS_USER_GROUP_LINK,
+                AuthUtil.DEFAULT_CLOUD_ADMINS_ROLE_LINK,
+                AuthUtil.DEFAULT_BASIC_USERS_ROLE_LINK,
+                AuthUtil.BASIC_USERS_USER_GROUP_LINK,
+                AuthUtil.BASIC_USERS_RESOURCE_GROUP_LINK);
+    }
+
+    private void waitForDefaultUsersAndGroups() throws Throwable {
+        loadLocalUsers();
+        waitFor(() -> {
+            List<String> stateLinks = getDocumentLinksOfType(LocalPrincipalState.class);
+            int expectedSize = loadedUsers.size() + loadedGroups.size();
+            if (stateLinks == null || stateLinks.isEmpty()
+                    || stateLinks.size() != expectedSize) {
+                return false;
+            }
+            return true;
+        });
+    }
+
+    private void loadLocalUsers() {
+        String localUsers = AuthUtil.getLocalUsersFile(host);
+        assertNotNull(localUsers);
+        Config config;
+        try {
+            String content = new String(Files.readAllBytes((new File(localUsers)).toPath()));
+            config = Utils.fromJson(content, Config.class);
+        } catch (Exception e) {
+            fail(String.format("Failed to load users configuration file '%s'!. Error: %s",
+                    localUsers, Utils.toString(e)));
+            return;
+
+        }
+
+        if (config.users == null || config.users.isEmpty()) {
+            fail("No users found in the configuration file!");
+            return;
+        }
+
+        loadedUsers = config.users.stream()
+                .map((u) -> u.email)
+                .collect(Collectors.toList());
+
+        loadedGroups = config.groups.stream()
+                .map(u -> u.name)
+                .collect(Collectors.toList());
     }
 }

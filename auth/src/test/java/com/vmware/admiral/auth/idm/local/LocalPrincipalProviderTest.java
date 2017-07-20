@@ -149,7 +149,7 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
         String expectedPrincipal2 = "fritz@admiral.com";
         String expectedPrincipal3 = "gloria@admiral.com";
         String expectedPrincipal4 = "tony@admiral.com";
-        String expectedPrincipal5 = "admin@admiral.com";
+        String expectedPrincipal5 = "administrator@admiral.com";
 
         DeferredResult<List<Principal>> result = provider.getPrincipals(null, criteria);
 

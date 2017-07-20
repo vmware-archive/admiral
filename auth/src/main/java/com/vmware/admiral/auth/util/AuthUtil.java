@@ -33,7 +33,6 @@ import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
-import com.vmware.admiral.compute.cluster.ClusterService;
 import com.vmware.admiral.compute.container.CompositeDescriptionCloneService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
@@ -382,7 +381,11 @@ public class AuthUtil {
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
                         buildUriWithWildcard(ResourceGroupService.FACTORY_LINK),
-                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR).build();
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(ManagementUriParts.CLUSTERS),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+                .build();
 
         List<Query> clauses = new ArrayList<>();
 
@@ -497,10 +500,6 @@ public class AuthUtil {
                 // Give access to credentials, but restrict the system ones.
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
                         buildUriWithWildcard(AuthCredentialsService.FACTORY_LINK),
-                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
-
-                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
-                        buildUriWithWildcard(ClusterService.SELF_LINK),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
 
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,

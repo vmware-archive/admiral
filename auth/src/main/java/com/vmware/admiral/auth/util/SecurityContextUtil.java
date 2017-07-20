@@ -25,6 +25,7 @@ import com.vmware.admiral.auth.idm.Principal;
 import com.vmware.admiral.auth.idm.PrincipalRoles;
 import com.vmware.admiral.auth.idm.SecurityContext;
 import com.vmware.admiral.auth.idm.SecurityContext.ProjectEntry;
+import com.vmware.admiral.auth.idm.SessionService;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
@@ -127,6 +128,11 @@ public class SecurityContextUtil {
         context.projects = roles.projects;
         context.roles = roles.roles;
         return context;
+    }
+
+    public static DeferredResult<SecurityContext> getSecurityContextForCurrentUser(Service service) {
+        Operation getSecurityContext = Operation.createGet(service, SessionService.SELF_LINK);
+        return service.sendWithDeferredResult(getSecurityContext, SecurityContext.class);
     }
 
 }

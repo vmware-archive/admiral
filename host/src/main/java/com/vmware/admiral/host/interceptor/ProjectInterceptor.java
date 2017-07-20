@@ -9,10 +9,11 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.auth.project;
+package com.vmware.admiral.host.interceptor;
 
 import java.util.ArrayList;
 
+import com.vmware.admiral.auth.util.SecurityContextUtil;
 import com.vmware.admiral.closures.services.closure.ClosureService;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptionService;
 import com.vmware.admiral.common.util.OperationUtil;
@@ -26,7 +27,6 @@ import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionS
 import com.vmware.admiral.compute.container.network.ContainerNetworkService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService;
-import com.vmware.admiral.host.interceptor.OperationInterceptorRegistry;
 import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.photon.controller.model.resources.ResourceState;
@@ -65,45 +65,45 @@ public class ProjectInterceptor {
         registry.addServiceInterceptor(serviceType, null,
                 ProjectInterceptor::handleServiceOp);
         registry.addFactoryServiceInterceptor(serviceType, null,
-                ProjectInterceptor::handleFactoryPost);
+                ProjectInterceptor::handleFactoryOp);
     }
 
-    public static DeferredResult<Void> handleFactoryPost(Service service, Operation op) {
+    public static DeferredResult<Void> handleFactoryOp(Service service, Operation op) {
         if (op.getAction() != Action.POST) {
             return DeferredResult.completed(null);
         }
-        setProjectLinkAsTenantLink(service, op);
-        return DeferredResult.completed(null);
+        return handleClusterServiceOp(service, op)
+                .thenCompose(ignore -> setProjectLinkAsTenantLink(service, op));
     }
 
     public static DeferredResult<Void> handleServiceOp(Service service, Operation op) {
-        if (op.getAction() != Action.PUT && op.getAction() != Action.PATCH
-                && op.getAction() != Action.POST) {
+        if (op.getAction() == Action.GET) {
             return DeferredResult.completed(null);
         }
-        setProjectLinkAsTenantLink(service, op);
-        return DeferredResult.completed(null);
+
+        return handleClusterServiceOp(service, op)
+                .thenCompose(ignore -> setProjectLinkAsTenantLink(service, op));
     }
 
-    private static void setProjectLinkAsTenantLink(Service service, Operation op) {
+    private static DeferredResult<Void> setProjectLinkAsTenantLink(Service service, Operation op) {
         String projectLink = OperationUtil.extractProjectFromHeader(op);
         ResourceState state = extractResourceState(service, op);
         if (state != null) {
             handleResourceState(state, projectLink, op);
-            return;
+            return DeferredResult.completed(null);
         }
 
         MultiTenantDocument multiTenantDocument = extractMultiTenantState(service, op);
         if (multiTenantDocument != null) {
             handleMultiTenantState(multiTenantDocument, projectLink, op);
-            return;
+            return DeferredResult.completed(null);
         }
 
         ContainerHostSpec hostSpec = extractContainerHostSpec(op);
         if (hostSpec != null) {
             handleContainerHostSpec(hostSpec, projectLink, op);
-            return;
         }
+        return DeferredResult.completed(null);
     }
 
     private static void handleResourceState(ResourceState state, String projectLink, Operation op) {
@@ -181,4 +181,29 @@ public class ProjectInterceptor {
         return o.getBody(ContainerHostSpec.class);
     }
 
+    private static DeferredResult<Void> handleClusterServiceOp(Service service, Operation op) {
+        if (!(service instanceof ClusterService)) {
+            return DeferredResult.completed(null);
+        }
+
+        String projectLink = OperationUtil.extractProjectFromHeader(op);
+
+        if (projectLink == null || projectLink.isEmpty()) {
+            return DeferredResult.completed(null);
+        }
+
+        return SecurityContextUtil.getSecurityContextForCurrentUser(service)
+                .thenCompose(sc -> {
+                    if (sc.isCloudAdmin()) {
+                        return DeferredResult.completed(null);
+                    } else {
+                        if (op.getAction() == Action.GET && sc.isProjectAdmin(projectLink)) {
+                            return DeferredResult.completed(null);
+                        }
+                    }
+                    return DeferredResult.failed(new IllegalAccessError("forbidden"));
+                })
+                .thenAccept(ignore -> {
+                });
+    }
 }

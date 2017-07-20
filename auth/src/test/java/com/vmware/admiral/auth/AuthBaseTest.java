@@ -14,14 +14,6 @@ package com.vmware.admiral.auth;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
-import static com.vmware.admiral.auth.util.AuthUtil.BASIC_USERS_RESOURCE_GROUP_LINK;
-import static com.vmware.admiral.auth.util.AuthUtil.BASIC_USERS_USER_GROUP_LINK;
-import static com.vmware.admiral.auth.util.AuthUtil.CLOUD_ADMINS_RESOURCE_GROUP_LINK;
-import static com.vmware.admiral.auth.util.AuthUtil.CLOUD_ADMINS_USER_GROUP_LINK;
-import static com.vmware.admiral.auth.util.AuthUtil.DEFAULT_BASIC_USERS_ROLE_LINK;
-import static com.vmware.admiral.auth.util.AuthUtil.DEFAULT_CLOUD_ADMINS_ROLE_LINK;
-import static com.vmware.admiral.auth.util.ProjectUtil.retrieveUserStatesForGroup;
-
 import java.io.File;
 import java.net.URI;
 import java.nio.file.Files;
@@ -47,26 +39,23 @@ import com.vmware.admiral.auth.idm.content.AuthContentService.AuthContentBody;
 import com.vmware.admiral.auth.idm.local.LocalAuthConfigProvider.Config;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalState;
 import com.vmware.admiral.auth.project.ProjectFactoryService;
-import com.vmware.admiral.auth.project.ProjectInterceptor;
 import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.auth.project.ProjectService.ExpandedProjectState;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.admiral.auth.util.AuthUtil;
+import com.vmware.admiral.auth.util.ProjectUtil;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.test.BaseTestCase;
-import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.host.HostInitAuthServiceConfig;
 import com.vmware.admiral.host.HostInitCommonServiceConfig;
 import com.vmware.admiral.host.HostInitComputeServicesConfig;
 import com.vmware.admiral.host.HostInitPhotonModelServiceConfig;
-import com.vmware.admiral.host.interceptor.OperationInterceptorRegistry;
 import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.xenon.common.CommandLineArgumentParser;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.AuthorizationContext;
 import com.vmware.xenon.common.Service;
-import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
@@ -78,22 +67,22 @@ import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
 import com.vmware.xenon.services.common.UserService.UserState;
 
 public abstract class AuthBaseTest extends BaseTestCase {
-    public static final int DEFAULT_WAIT_SECONDS_FOR_AUTH_SERVICES = 180;
-
     protected static final String USER_EMAIL_ADMIN = "fritz@admiral.com";
-    protected static final String USER_EMAIL_ADMIN2 = "admin@admiral.com";
+    protected static final String USER_EMAIL_ADMIN2 = "administrator@admiral.com";
     protected static final String USER_EMAIL_BASIC_USER = "tony@admiral.com";
     protected static final String USER_EMAIL_GLORIA = "gloria@admiral.com";
     protected static final String USER_EMAIL_CONNIE = "connie@admiral.com";
 
     protected static final String USER_NAME_ADMIN = "Fritz";
-    protected static final String USER_NAME_ADMIN2 = "Admin";
+    protected static final String USER_NAME_ADMIN2 = "Administrator";
     protected static final String USER_NAME_BASIC_USER = "Tony";
     protected static final String USER_NAME_GLORIA = "Gloria";
     protected static final String USER_NAME_CONNIE = "Connie";
 
     protected static final String USER_GROUP_SUPERUSERS = "superusers";
     protected static final String USER_GROUP_DEVELOPERS = "developers";
+
+    public static final int DEFAULT_WAIT_SECONDS_FOR_AUTH_SERVICES = 180;
 
     protected static final String PROJECT_NAME_TEST_PROJECT_1 = "testProject1";
     protected static final String PROJECT_NAME_TEST_PROJECT_2 = "testProject2";
@@ -158,11 +147,6 @@ public abstract class AuthBaseTest extends BaseTestCase {
                         + AuthBaseTest.class.getResource(FILE_LOCAL_USERS).toURI().getPath()
         };
         return createHost(customArgs);
-    }
-
-    @Override
-    protected void registerInterceptors(OperationInterceptorRegistry registry) {
-        ProjectInterceptor.register(registry);
     }
 
     @Override
@@ -275,10 +259,6 @@ public abstract class AuthBaseTest extends BaseTestCase {
         }
     }
 
-    protected String buildUserServicePath(String email) {
-        return AuthUtil.buildUserServicePathFromPrincipalId(email);
-    }
-
     protected void doPatch(Object state, String documentSelfLink) {
         TestContext ctx = testCreate(1);
         Operation patch = Operation.createPatch(host, documentSelfLink)
@@ -324,12 +304,12 @@ public abstract class AuthBaseTest extends BaseTestCase {
     }
 
     private void waitForDefaultRoles() throws Throwable {
-        waitForServiceAvailability(CLOUD_ADMINS_RESOURCE_GROUP_LINK,
-                CLOUD_ADMINS_USER_GROUP_LINK,
-                DEFAULT_CLOUD_ADMINS_ROLE_LINK,
-                DEFAULT_BASIC_USERS_ROLE_LINK,
-                BASIC_USERS_USER_GROUP_LINK,
-                BASIC_USERS_RESOURCE_GROUP_LINK);
+        waitForServiceAvailability(AuthUtil.CLOUD_ADMINS_RESOURCE_GROUP_LINK,
+                AuthUtil.CLOUD_ADMINS_USER_GROUP_LINK,
+                AuthUtil.DEFAULT_CLOUD_ADMINS_ROLE_LINK,
+                AuthUtil.DEFAULT_BASIC_USERS_ROLE_LINK,
+                AuthUtil.BASIC_USERS_USER_GROUP_LINK,
+                AuthUtil.BASIC_USERS_RESOURCE_GROUP_LINK);
     }
 
     private void waitForDefaultUsersAndGroups() throws Throwable {
@@ -350,7 +330,8 @@ public abstract class AuthBaseTest extends BaseTestCase {
         assertNotNull(state);
         assertNotNull(state.query);
 
-        DeferredResult<List<UserState>> result = retrieveUserStatesForGroup(testService, state);
+        DeferredResult<List<UserState>> result = ProjectUtil
+                .retrieveUserStatesForGroup(testService, state);
 
         List<UserState> resultList = new ArrayList<>();
 
@@ -542,47 +523,6 @@ public abstract class AuthBaseTest extends BaseTestCase {
         host.testWait();
     }
 
-    protected <T> T doPostWithProjectHeader(Object body, String factoryLink, String projectLink,
-            Class<T> stateType) {
-        TestContext ctx = testCreate(1);
-        final Object[] responseBody = new Object[1];
-        Operation create = Operation.createPost(host, factoryLink)
-                .setBody(body)
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        ctx.failIteration(ex);
-                        return;
-                    }
-                    responseBody[0] = o.getBodyRaw();
-                    ctx.completeIteration();
-                });
-
-        setProjectHeader(projectLink, create);
-        host.send(create);
-        ctx.await();
-        return Utils.fromJson(responseBody[0], stateType);
-    }
-
-    protected ServiceDocumentQueryResult getDocumentsWithinProject(String factoryLink,
-            String projectLink) {
-        TestContext ctx = testCreate(1);
-        final ServiceDocumentQueryResult[] result = new ServiceDocumentQueryResult[1];
-        Operation get = Operation.createGet(host, factoryLink)
-                .setReferer(host.getUri())
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        ctx.failIteration(ex);
-                        return;
-                    }
-                    result[0] = o.getBody(ServiceDocumentQueryResult.class);
-                    ctx.completeIteration();
-                });
-        setProjectHeader(projectLink, get);
-        host.send(get);
-        ctx.await();
-        return result[0];
-    }
-
     public void deleteUser(String user) {
         TestContext ctx = testCreate(1);
 
@@ -617,8 +557,7 @@ public abstract class AuthBaseTest extends BaseTestCase {
         ctx.await();
     }
 
-    public static Operation setProjectHeader(String projectLink, Operation op) {
-        op.addRequestHeader(OperationUtil.PROJECT_ADMIRAL_HEADER, projectLink);
-        return op;
+    protected String buildUserServicePath(String email) {
+        return AuthUtil.buildUserServicePathFromPrincipalId(email);
     }
 }
