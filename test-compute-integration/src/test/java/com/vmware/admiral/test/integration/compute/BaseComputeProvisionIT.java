@@ -390,15 +390,14 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
 
     protected void createProfile(ComputeProfile computeProfile, NetworkProfile networkProfile,
             StorageProfile storageProfile) {
-        List<ServiceDocument> docs = new ArrayList<>();
         String id = UUID.randomUUID().toString();
         ProfileState profile = new ProfileState();
         profile.name = getProfileName();
         profile.documentSelfLink = UriUtils.buildUriPath(ProfileService.FACTORY_LINK, id);
         profile.endpointLink = endpoint.documentSelfLink;
         profile.tenantLinks = getTenantLinks();
-        docs.add(profile);
 
+        List<ServiceDocument> docs = new ArrayList<>();
         if (computeProfile != null) {
             profile.computeProfileLink = UriUtils.buildUriPath(ComputeProfileService.FACTORY_LINK, id);
             computeProfile.documentSelfLink = profile.computeProfileLink;
@@ -418,6 +417,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
             docs.add(storageProfile);
         }
 
+        // Post compute, network and storage profiles.
         docs.forEach(d -> {
             try {
                 postDocument(UriUtils.getParentPath(d.documentSelfLink), d);
@@ -425,6 +425,13 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
                 throw new RuntimeException(e);
             }
         });
+        // Now post profile as this invokes update of its child profiles, so that the subsequent
+        // patch on the child profiles succeed.
+        try {
+            postDocument(UriUtils.getParentPath(profile.documentSelfLink), profile);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     protected String getProfileName() {

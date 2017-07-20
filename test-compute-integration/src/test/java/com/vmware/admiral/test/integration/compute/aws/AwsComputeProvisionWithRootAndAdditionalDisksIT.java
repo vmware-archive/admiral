@@ -188,6 +188,9 @@ public class AwsComputeProvisionWithRootAndAdditionalDisksIT extends AwsComputeP
 
     private Constraint addConstraint(int index) {
         switch (index) {
+        case 1:
+            //No constraint to boot disk. Should use the default item.
+            break;
         case 2:
             //add hard constraint for first additional disk
             return getConstraint(GENERAL_DISK, Enforcement.HARD,

@@ -53,6 +53,7 @@ public class VSphereComputeProvisionWithDisksIT extends VsphereComputeProvisionI
     public void doSetUp() throws Exception {
         createProfile(loadComputeProfile(getEndpointType()), createNetworkProfile(
                 DEFAULT_SUBNET_NAME, null, null), createStorageProfile(""));
+        logger.info("[VSphereComputeProvisionWithDisksIT] Set up of profiles completed successfully.");
     }
 
     @Override
@@ -209,6 +210,9 @@ public class VSphereComputeProvisionWithDisksIT extends VsphereComputeProvisionI
 
     private Constraint addConstraint(int index) {
         switch (index) {
+        case 1:
+            //No constraint to boot disk. Should use the default item.
+            break;
         case 2:
             //add hard constraint for first additional disk
             return getConstraint(GENERAL_DISK, Enforcement.HARD,
