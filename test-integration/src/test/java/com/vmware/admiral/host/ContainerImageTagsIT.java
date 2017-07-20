@@ -14,7 +14,6 @@ package com.vmware.admiral.host;
 import static java.net.HttpURLConnection.HTTP_OK;
 
 import static org.hamcrest.CoreMatchers.hasItems;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
@@ -32,7 +31,6 @@ import java.util.UUID;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.registry.service.RegistryAdapterService;
@@ -95,7 +93,6 @@ public class ContainerImageTagsIT extends BaseTestCase {
     }
 
     @Test
-    @Ignore("https://jira-hzn.eng.vmware.com/browse/VBV-1242")
     public void testListTagsFromV1Registry() throws Exception {
         String imageName = toFullImageName(v1RegistryAddress, TEST_IMAGE);
         configureRegistry(v1RegistryAddress, TENANT);
@@ -103,7 +100,6 @@ public class ContainerImageTagsIT extends BaseTestCase {
     }
 
     @Test
-    @Ignore("https://jira-hzn.eng.vmware.com/browse/VBV-1242")
     public void testListTagsFromV2Registry() throws Exception {
         String imageName = toFullImageName(v2RegistryAddress, TEST_IMAGE);
         configureRegistry(v2RegistryAddress, TENANT);
@@ -127,7 +123,6 @@ public class ContainerImageTagsIT extends BaseTestCase {
     }
 
     @Test
-    @Ignore("https://jira-hzn.eng.vmware.com/browse/VBV-1242")
     public void testFailWhenRegistryWithDifferentTenant() throws Exception {
         configureRegistry(v1RegistryAddress, "different-tenant");
         String imageName = toFullImageName(v1RegistryAddress, TEST_IMAGE);
@@ -135,7 +130,6 @@ public class ContainerImageTagsIT extends BaseTestCase {
     }
 
     @Test
-    @Ignore("https://jira-hzn.eng.vmware.com/browse/VBV-1242")
     public void testListTagsNoTenant() throws Exception {
         String v1ImageName = toFullImageName(v1RegistryAddress, TEST_IMAGE);
         String v2ImageName = toFullImageName(v2RegistryAddress, TEST_IMAGE);
@@ -146,7 +140,6 @@ public class ContainerImageTagsIT extends BaseTestCase {
     }
 
     @Test
-    @Ignore("https://jira-hzn.eng.vmware.com/browse/VBV-1242")
     public void testFailForNonexistentImage() throws Exception {
         String nonexistentImage = "nonexisting-image-admiral-test";
 

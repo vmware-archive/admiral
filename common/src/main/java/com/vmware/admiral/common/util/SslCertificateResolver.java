@@ -109,6 +109,10 @@ public class SslCertificateResolver {
         });
     }
 
+    public static void invalidateTrustManager() {
+        trustManager = null;
+    }
+
     private SslCertificateResolver(URI uri) {
         this(uri, DEFAULT_CONNECTION_TIMEOUT_MILLIS);
     }

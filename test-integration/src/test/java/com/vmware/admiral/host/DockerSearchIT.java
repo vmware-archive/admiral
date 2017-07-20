@@ -30,6 +30,7 @@ import java.security.cert.X509Certificate;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -46,7 +47,6 @@ import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.admiral.test.integration.SimpleHttpsClient;
 import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpMethod;
 import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpResponse;
-import com.vmware.xenon.common.ReflectionUtils;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
@@ -57,13 +57,24 @@ public class DockerSearchIT extends BaseTestCase {
     private static final String DEFAULT_REGISTRY_HOSTNAME = UriUtilsExtended
             .extractHostAndPort(DOCKER_REGISTRY);
 
+    private static String oldTrustStore;
+    private static String oldTrustStorePassword;
+
     @BeforeClass
     public static void setUpClass() throws Throwable {
         // Force a custom trust store... that shouldn't override the Java default cacerts.
         URI customStore = DockerSearchIT.class.getResource("/certs/trusted_certificates.jks")
                 .toURI();
-        System.setProperty(JAVAX_NET_SSL_TRUST_STORE, customStore.getPath());
-        System.setProperty(JAVAX_NET_SSL_TRUST_STORE_PASSWORD, "changeit");
+        oldTrustStore = System.setProperty(JAVAX_NET_SSL_TRUST_STORE, customStore.getPath());
+        oldTrustStorePassword = System.setProperty(JAVAX_NET_SSL_TRUST_STORE_PASSWORD, "changeit");
+    }
+
+    @AfterClass
+    public static void tearDownClass() throws Exception {
+        // Restore system properties and reset trust manager to avoid side effects on other tests
+        restoreSystemProperty(JAVAX_NET_SSL_TRUST_STORE, oldTrustStore);
+        restoreSystemProperty(JAVAX_NET_SSL_TRUST_STORE_PASSWORD, oldTrustStorePassword);
+        ServerX509TrustManager.invalidate();
     }
 
     @Before
@@ -80,8 +91,8 @@ public class DockerSearchIT extends BaseTestCase {
     @Test
     public void testCheckTrustedCertificates() throws Exception {
 
-        // Force null INSTANCE when in CI.
-        ReflectionUtils.getField(ServerX509TrustManager.class, "INSTANCE").set(null, null);
+        // Force null INSTANCE when in because current test needs different trust store data.
+        ServerX509TrustManager.invalidate();
 
         ServerX509TrustManager trustManager = ServerX509TrustManager.create(host);
 
