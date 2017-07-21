@@ -182,6 +182,11 @@ public class ProjectInterceptor {
     }
 
     private static DeferredResult<Void> handleClusterServiceOp(Service service, Operation op) {
+        // In case of authn is not enabled do not check for authorization.
+        if (!service.getHost().isAuthorizationEnabled()) {
+            return DeferredResult.completed(null);
+        }
+
         if (!(service instanceof ClusterService)) {
             return DeferredResult.completed(null);
         }
