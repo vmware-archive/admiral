@@ -379,11 +379,11 @@ services.deleteDocument = function(documentSelfLink) {
 };
 
 services.patchDocument = function(documentSelfLink, diff) {
-  return patch(documentSelfLink, JSON.stringify(diff));
+  return patch(documentSelfLink, diff);
 };
 
 services.updateDocument = function(documentSelfLink, document) {
-  return put(documentSelfLink, JSON.stringify(document));
+  return put(documentSelfLink, document);
 };
 
 services.loadCredentials = function() {
