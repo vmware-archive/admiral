@@ -108,10 +108,12 @@ public class ResourcePoolTransformationService extends StatelessService {
             // skip the first placement. Only the duplicates should be updated and a new pool should
             // be created
             AtomicInteger processedCount = new AtomicInteger();
+            String poolName = state.resourcePoolState.name;
             for (int i = 1; i < placements.size(); i++) {
                 GroupResourcePlacementState placement = placements.get(i);
                 state.resourcePoolState.id = null;
                 state.resourcePoolState.documentSelfLink = null;
+                state.resourcePoolState.name = poolName + "-" + placement.name;
                 if (state.epzState != null) {
                     state.epzState.documentSelfLink = null;
                 }
