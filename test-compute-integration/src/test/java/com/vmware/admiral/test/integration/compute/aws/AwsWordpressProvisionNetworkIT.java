@@ -64,6 +64,9 @@ public class AwsWordpressProvisionNetworkIT extends BaseWordpressComputeProvisio
                 {"WordPress_with_MySQL_compute_isolated_sg_network.yaml",
                         (BiConsumer<Set<ServiceDocument>, String>) BaseWordpressComputeProvisionIT
                                 ::validateIsolatedNic },
+                {"WordPress_with_MySQL_compute_isolated_outbound_network.yaml",
+                        (BiConsumer<Set<ServiceDocument>, String>) BaseWordpressComputeProvisionIT
+                                ::validateOutboundAccess },
                 //{"WordPress_with_MySQL_compute_with_load_balancer.yaml", null }
         });
     }

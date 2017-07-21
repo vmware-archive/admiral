@@ -64,7 +64,8 @@ public class OpenstackWordpressProvisionIT extends BaseWordpressComputeProvision
         return Arrays.asList(new Object[][] {
                 { "existing", "WordPress_with_MySQL_compute_network_ubuntu14.yaml" },
                 { "isolated", "WordPress_with_MySQL_compute_isolated_ubuntu14.yaml" },
-                { "isolated", "WordPress_with_MySQL_compute_isolated_sg_ubuntu14.yaml" }
+                { "isolated", "WordPress_with_MySQL_compute_isolated_sg_ubuntu14.yaml" },
+                { "outbound", "WordPress_with_MySQL_compute_isolated_outbound_ubuntu14.yaml" }
         });
     }
 
@@ -146,6 +147,8 @@ public class OpenstackWordpressProvisionIT extends BaseWordpressComputeProvision
         if ("isolated".equals(shortName)) {
             validateIsolatedNic(resources, getTestRequiredProp("test.openstack.network.name"),
                     getTestRequiredProp("test.openstack.network.cidr"));
+        } else if ("outbound".equals(shortName)) {
+            validateOutboundAccess(resources);
         } else {
             super.doWithResources(resourceLinks);
             resources.stream()

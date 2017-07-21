@@ -569,9 +569,13 @@ public class ComputeNetworkProvisionTaskService
             securityGroup.customProperties.put(FIELD_NAME_CONTEXT_ID_KEY, contextId);
         }
 
-        // build "deny-all" rules for now
-        securityGroup.ingress = buildIsolationRules("inbound");
-        securityGroup.egress = buildIsolationRules("outbound");
+        securityGroup.ingress = buildSecurityGroupRule("inbound-deny-all", Access.Deny);
+        if (context.computeNetworkDescription.outboundAccess == null ||
+                context.computeNetworkDescription.outboundAccess.equals(Boolean.FALSE)) {
+            securityGroup.egress = buildSecurityGroupRule("outbound-deny-all", Access.Deny);
+        } else {
+            securityGroup.egress = buildSecurityGroupRule("outbound-allow-all", Access.Allow);
+        }
 
         return this.sendWithDeferredResult(
                 Operation.createPost(this, SecurityGroupService.FACTORY_LINK)
@@ -776,12 +780,12 @@ public class ComputeNetworkProvisionTaskService
                 Operation.createPatch(this, loadBalancerLink).setBody(patchBody));
     }
 
-    private List<Rule> buildIsolationRules(String direction) {
+    private List<Rule> buildSecurityGroupRule(String name, Access access) {
         Rule isolationRule = new Rule();
-        isolationRule.name = direction + "-deny-all";
+        isolationRule.name = name;
         isolationRule.protocol = SecurityGroupService.ANY;
         isolationRule.ipRangeCidr = "0.0.0.0/0";
-        isolationRule.access = Access.Deny;
+        isolationRule.access = access;
         isolationRule.ports = "1-65535";
 
         return Arrays.asList(isolationRule);
