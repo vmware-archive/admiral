@@ -73,7 +73,7 @@ export class Ajax {
 
     return this.http.request(new Request(requestOptions))
       .toPromise()
-      .then(result => this.trimMetadata(result.headers))
+      .then(result => this.trimMetadata(result.json()))
       .catch(error => this.handleAjaxError(error));
   }
 
