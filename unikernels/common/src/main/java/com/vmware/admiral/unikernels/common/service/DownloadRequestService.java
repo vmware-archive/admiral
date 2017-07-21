@@ -11,39 +11,32 @@
 
 package com.vmware.admiral.unikernels.common.service;
 
+import java.util.ArrayList;
+
 import com.vmware.admiral.unikernels.common.service.UnikernelCreationTaskService.UnikernelCreationTaskServiceState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
 
-public class CompilationFailureHandlerService extends StatelessService {
+public class DownloadRequestService extends StatelessService {
 
-    public static final String SELF_LINK = UnikernelManagementURIParts.FAILURE_CB;
+    public static final String SELF_LINK = UnikernelManagementURIParts.DOWNLOAD;
+    private static ArrayList<String> downloadListURI = new ArrayList<>();
 
     @Override
     public void handlePost(Operation post) {
-        CompilationData data = new CompilationData();
-        data.setEmptyFields();
+        String downloadURI = post.getBody(String.class);
+        downloadListURI.add(downloadURI);
 
-        UnikernelCreationTaskServiceState wrappedData = new UnikernelCreationTaskServiceState();
-        wrappedData.taskInfo = new TaskState();
-        wrappedData.taskInfo.stage = TaskStage.FAILED;
-        wrappedData.data = data;
+        UnikernelCreationTaskServiceState state = new UnikernelCreationTaskServiceState();
+        state.taskInfo = new TaskState();
+        state.taskInfo.stage = TaskStage.FINISHED;
 
-        Operation request = Operation
-                .createPatch(this, UnikernelManagementURIParts.CREATION)
+        Operation request = Operation.createPatch(this, UnikernelManagementURIParts.CREATION)
                 .setReferer(getSelfLink())
-                .setBody(wrappedData)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        post.fail(e);
-                    } else {
-                        post.complete();
-                    }
-                });
+                .setBody(state);
 
         sendRequest(request);
     }
-
 }

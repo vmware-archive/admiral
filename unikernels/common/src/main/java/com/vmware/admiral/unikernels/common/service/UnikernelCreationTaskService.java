@@ -27,6 +27,7 @@ public class UnikernelCreationTaskService
         extends TaskService<UnikernelCreationTaskService.UnikernelCreationTaskServiceState> {
 
     public static final String FACTORY_LINK = UnikernelManagementURIParts.CREATION;
+    private String compilationURI;
 
     public enum SubStage {
         PROVISION_CONTAINER, CREATE_UNIKERNEL, HANDLE_CALLBACK
@@ -128,7 +129,6 @@ public class UnikernelCreationTaskService
             createUnikernel(task);
             break;
         case HANDLE_CALLBACK:
-            System.out.println("Received patch");
             handleCallback(task);
             break;
         default:
@@ -138,6 +138,8 @@ public class UnikernelCreationTaskService
     }
 
     private void provisionContainer(UnikernelCreationTaskServiceState task) {
+        // During the provisioning patch an IP would be allocated for callback for now it is hardcoded
+        compilationURI = getHost().getUri() + UnikernelManagementURIParts.COMPILATION_TEST;
         sendSelfPatch(task, TaskStage.STARTED, SubStage.CREATE_UNIKERNEL);
     }
 
@@ -149,7 +151,7 @@ public class UnikernelCreationTaskService
         forwardedData.failureCB = getHost().getUri().toString()
                 + UnikernelManagementURIParts.FAILURE_CB;
 
-        URI requestUri = UriUtils.buildUri("http://localhost:8000/route");
+        URI requestUri = UriUtils.buildUri(compilationURI);
         Operation request = Operation
                 .createPost(requestUri)
                 .setReferer(getUri())
@@ -159,7 +161,12 @@ public class UnikernelCreationTaskService
     }
 
     private void handleCallback(UnikernelCreationTaskServiceState task) {
-        sendSelfPatch(task, TaskStage.FINISHED, SubStage.HANDLE_CALLBACK);
+        // No need for self patch here cause the downloadService responds with a final Patch
+        Operation request = Operation.createPost(this, UnikernelManagementURIParts.DOWNLOAD)
+                .setReferer(getSelfLink())
+                .setBody(task.data.downloadLink);
+
+        sendRequest(request);
     }
 
     private void sendSelfPatch(UnikernelCreationTaskServiceState task, TaskStage stage,

@@ -26,7 +26,6 @@ public class CompilationBrockerService extends StatelessService {
         CompilationTaskServiceState wrappedData = new CompilationTaskServiceState();
 
         wrappedData.data = data;
-        System.out.println(post.getReferer().toString());
 
         Operation request = Operation.createPost(this, UnikernelManagementURIParts.COMPILE_TASK)
                 .setReferer(getSelfLink())

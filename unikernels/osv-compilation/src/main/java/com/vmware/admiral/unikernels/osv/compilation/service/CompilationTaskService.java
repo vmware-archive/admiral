@@ -205,7 +205,12 @@ public class CompilationTaskService
     }
 
     private void handleTargetingImage(CompilationTaskServiceState task) {
-        // String folderName = getFolderNameFromPath(task.data.sources);
+        /*
+         *  String folderName = getFolderNameFromPath(task.data.sources);
+         * private String getFolderNameFromPath(String path) { String[] parsedLink = path.split("/");
+         * String folderName = parsedLink[parsedLink.length - 1]; return folderName.substring(0,
+         * folderName.length() - 4); // remove .git extension }
+         */
         String targetQuery = "cd ~/.capstan/repository ; ls";
 
         try {
@@ -218,11 +223,6 @@ public class CompilationTaskService
         System.out.println("TARGETING");
         sendSelfPatch(task, TaskStage.FINISHED, SubStage.TARGETING_IMAGE);
     }
-    /*
-     * private String getFolderNameFromPath(String path) { String[] parsedLink = path.split("/");
-     * String folderName = parsedLink[parsedLink.length - 1]; return folderName.substring(0,
-     * folderName.length() - 4); // remove .git extension }
-     */
 
     private void sendSelfPatch(CompilationTaskServiceState task, TaskStage stage,
             SubStage subStage) {

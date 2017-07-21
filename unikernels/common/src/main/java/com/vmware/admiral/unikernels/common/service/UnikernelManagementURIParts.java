@@ -17,5 +17,9 @@ public interface UnikernelManagementURIParts {
     String CREATION = "/unikernel/create";
     String SUCCESS_CB = "/unikernel/receive/success";
     String FAILURE_CB = "/unikernel/receive/failure";
+    String DOWNLOAD = "/unikernel/download";
+
+    String COMPILATION_EXTERNAL = "http://localhost:8000/route";
+    String COMPILATION_TEST = "/unikernel/compilation/test";
 
 }

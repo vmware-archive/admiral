@@ -59,10 +59,6 @@ public class CompilationTaskServiceTest {
         host.stop();
     }
 
-    /*
-     * private void clearData() { }
-     */
-
     public class SuccessMockService extends StatelessService {
         public static final String SELF_LINK = UnikernelManagementURIParts.SAMPLE_SUCCESSCB;
 
