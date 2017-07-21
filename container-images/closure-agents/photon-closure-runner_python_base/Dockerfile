@@ -13,7 +13,7 @@ FROM vmware/photon:1.0
 
 MAINTAINER Admiral Team, https://vmware.github.io/admiral/
 
-RUN tyum install python3-devel openssl-devel libffi dbus-glib python3-3.5.3-3.ph1.x86_64 \
+RUN tyum install python3-devel openssl-devel libffi dbus-glib python3-3.5.3-4.ph1.x86_64 \
     gcc make binutils glibc-devel linux-api-headers -y &&\
     mkdir -p /app &&\
     pip3 install --upgrade pip &&\
