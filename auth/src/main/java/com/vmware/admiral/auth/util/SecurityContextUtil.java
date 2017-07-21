@@ -14,8 +14,6 @@ package com.vmware.admiral.auth.util;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -33,9 +31,6 @@ import com.vmware.xenon.common.Service;
 
 public class SecurityContextUtil {
 
-    // TODO - Improve the caching with VBV-1406
-    private static final Map<String, SecurityContext> securityContextCache = new ConcurrentHashMap<>();
-
     /**
      * Gets the {@link SecurityContext} for the currently authenticated user
      */
@@ -45,51 +40,25 @@ public class SecurityContextUtil {
                 AuthUtil.getAuthorizedUserId(requestorOperation.getAuthorizationContext()));
     }
 
-    public static void clearSecurityContext(Operation requestorOperation) {
-        securityContextCache.remove(
-                AuthUtil.getAuthorizedUserId(requestorOperation.getAuthorizationContext()));
-    }
-
-    public static void clearAllSecurityContexts() {
-        securityContextCache.clear();
-    }
-
     /**
      * Gets the {@link SecurityContext} for the denoted user
      */
     public static DeferredResult<SecurityContext> getSecurityContext(Service requestorService,
             Operation requestorOperation, String userId) {
 
-        SecurityContext securityContext = securityContextCache.get(userId);
-        if (securityContext != null) {
-            return DeferredResult.completed(securityContext);
-        }
 
         return PrincipalUtil.getPrincipal(requestorService, requestorOperation, userId)
                 .thenCompose(principal -> PrincipalRolesUtil.getAllRolesForPrincipal(
                         requestorService, requestorOperation, principal))
-                .thenApply(SecurityContextUtil::fromPrincipalRolesToSecurityContext)
-                .thenApply(sc -> {
-                    securityContextCache.put(userId, sc);
-                    return sc;
-                });
+                .thenApply(SecurityContextUtil::fromPrincipalRolesToSecurityContext);
     }
 
     public static DeferredResult<SecurityContext> getSecurityContext(Service requestorService,
             Operation requestorOperation, Principal principal) {
 
-        SecurityContext securityContext = securityContextCache.get(principal.id);
-        if (securityContext != null) {
-            return DeferredResult.completed(securityContext);
-        }
-
         return PrincipalRolesUtil
                 .getAllRolesForPrincipal(requestorService, requestorOperation, principal)
-                .thenApply(SecurityContextUtil::fromPrincipalRolesToSecurityContext)
-                .thenApply(sc -> {
-                    securityContextCache.put(principal.id, sc);
-                    return sc;
-                });
+                .thenApply(SecurityContextUtil::fromPrincipalRolesToSecurityContext);
     }
 
     public static List<SecurityContext.ProjectEntry> buildProjectEntries(

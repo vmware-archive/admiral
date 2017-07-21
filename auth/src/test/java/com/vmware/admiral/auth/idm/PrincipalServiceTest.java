@@ -39,7 +39,6 @@ import com.vmware.admiral.auth.project.ProjectFactoryService;
 import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.admiral.auth.util.AuthUtil;
-import com.vmware.admiral.auth.util.SecurityContextUtil;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
@@ -54,7 +53,6 @@ public class PrincipalServiceTest extends AuthBaseTest {
     @Before
     public void setIdentity() throws GeneralSecurityException {
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
-        SecurityContextUtil.clearAllSecurityContexts();
     }
 
     @Test

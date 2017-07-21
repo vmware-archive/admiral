@@ -39,7 +39,6 @@ public class SessionService extends StatelessService {
     public void handleGet(Operation get) {
         if (isLogoutRequest(get)) {
             provider.doLogout(get);
-            SecurityContextUtil.clearSecurityContext(get);
         } else if (isSessionRequest(get)) {
             getCurrentUserSecurityContext(get)
                     .thenApply(get::setBody)

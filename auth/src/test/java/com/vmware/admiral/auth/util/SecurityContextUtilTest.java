@@ -55,8 +55,6 @@ public class SecurityContextUtilTest extends AuthBaseTest {
 
         // init cloud admin roles
         rolesAvailableToCloudAdmin.add(AuthRole.CLOUD_ADMIN);
-
-        SecurityContextUtil.clearAllSecurityContexts();
     }
 
     @Test
