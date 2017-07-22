@@ -93,7 +93,7 @@ import com.vmware.admiral.compute.network.ComputeNetworkService;
 import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
 import com.vmware.admiral.compute.profile.ComputeProfileService;
 import com.vmware.admiral.compute.profile.ImageProfileService;
-import com.vmware.admiral.compute.profile.InstanceTypeService;
+import com.vmware.admiral.compute.profile.InstanceTypeService.InstanceTypeFactoryService;
 import com.vmware.admiral.compute.profile.NetworkProfileService;
 import com.vmware.admiral.compute.profile.ProfileMappingService;
 import com.vmware.admiral.compute.profile.ProfileService;
@@ -144,7 +144,8 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 UrlEncodedReverseProxyService.class,
                 FetchDataGatewayService.class,
                 ClusterService.class,
-                ResourcePoolTransformationService.class);
+                ResourcePoolTransformationService.class,
+                InstanceTypeFactoryService.class);
 
         startServiceFactories(host, CaSigningCertService.class,
                 GroupResourcePlacementService.class,
@@ -158,7 +159,6 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 StorageProfileService.class,
                 NetworkProfileService.class,
                 ImageProfileService.class,
-                InstanceTypeService.class,
                 DeploymentPolicyService.class,
                 HostPortProfileService.class,
                 ComputeNetworkDescriptionService.class,

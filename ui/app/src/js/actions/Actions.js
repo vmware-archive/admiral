@@ -180,7 +180,8 @@ export var ProfileActions = Reflux.createActions([
   'cancelEditProfile', 'createProfile', 'updateProfile', 'deleteProfile',
   'createEndpoint', 'manageEndpoints', 'createSubnetwork', 'manageSubnetworks',
   'closeToolbar', 'selectView', 'manageAzureStorageAccounts', 'manageVsphereDatastores',
-  'manageVsphereStoragePolicies', 'createInstanceType', 'updateInstanceType', 'editInstanceType'
+  'manageVsphereStoragePolicies', 'createInstanceType', 'updateInstanceType', 'editInstanceType',
+  'clearProfile'
 ]);
 
 export var EndpointsActions = Reflux.createActions([

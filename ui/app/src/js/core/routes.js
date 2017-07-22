@@ -520,6 +520,7 @@ actions.NavigationActions.openInstanceTypes.listen(function() {
   // TODO: find a better way
   // Navigate to home so the view is hidden from the stage
   actions.AppActions.openView(null);
+  actions.ProfileActions.clearProfile();
   window.top.location.href = window.origin + '/#compute/instance-types';
 });
 

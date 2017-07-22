@@ -27,6 +27,7 @@
       <div card-header>
         <clr-icon shape="scroll" size="48"></clr-icon>
         {{ item.name }}
+
         <clr-dropdown class="card-actions" [clrMenuPosition]="'left-top'" (click)="selectItem($event, item)">
           <button class="btn btn-sm btn-link" clrDropdownToggle>
               <clr-icon shape="ellipsis-vertical" size="20"></clr-icon>
@@ -41,11 +42,15 @@
                                                                 class="card-drop-down-actions"></clr-icon>{{"compute.flavors.delete.action" | i18n}}</a>
           </div>
         </clr-dropdown>
+        <div>
+          <span *ngFor="let tag of item.tags" class="badge badge-info">{{tag.key}}:{{tag.value}}</span>
+        </div>
       </div>
       <div card-content>
         <div class="form-group">
-          <label>{{"compute.flavors.endpointType" | i18n}}</label>
-          <img [src]="getAdapterIcon(item)" width="24" height="24"/>
+          <label>{{"compute.flavors.endpoint" | i18n}}</label>
+          <img [src]="getAdapterIcon(item)" class="endpointIcon" width="24" height="24"/>
+          <span *ngIf="item.endpoint">{{item.endpoint.name}}</span>
         </div>
         <div class="form-group">
           <label>{{"compute.flavors.flavors" | i18n}}</label>

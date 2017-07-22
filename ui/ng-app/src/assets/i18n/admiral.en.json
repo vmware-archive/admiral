@@ -277,7 +277,7 @@
         "action": "Delete",
         "title": "Delete Flavor Profile"
       },
-      "endpointType": "Endpoint Type",
+      "endpoint": "Endpoint",
       "flavors": "Flavors"
     },
     "placements": {

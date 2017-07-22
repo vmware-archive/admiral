@@ -11,7 +11,7 @@
 
 import InstanceTypeSearch from 'components/profiles/instance-types/InstanceTypeSearch';
 
-import utils from 'core/utils';
+import { formatUtils } from 'admiral-ui-common';
 
 export default Vue.component('aws-instance-type-search', {
   mixins: [InstanceTypeSearch],
@@ -22,13 +22,13 @@ export default Vue.component('aws-instance-type-search', {
       let query = context._query || '';
       let index = query ? display.toLowerCase().indexOf(query.toLowerCase()) : -1;
       if (index >= 0) {
-        display = utils.escapeHtml(display.substring(0, index))
+        display = formatUtils.escapeHtml(display.substring(0, index))
             + '<strong>'
-            + utils.escapeHtml(display.substring(index, index + query.length))
+            + formatUtils.escapeHtml(display.substring(index, index + query.length))
             + '</strong>'
-            + utils.escapeHtml(display.substring(index + query.length));
+            + formatUtils.escapeHtml(display.substring(index + query.length));
       } else {
-        display = utils.escapeHtml(display);
+        display = formatUtils.escapeHtml(display);
       }
 
       let descriptionText = i18n.t('app.profile.edit.instanceTypeMappingDisplayAWS', context);
