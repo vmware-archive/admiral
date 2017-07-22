@@ -503,7 +503,19 @@ public class ComputeToNetworkAffinityHostFilter implements HostSelectionFilter<F
             List<NetworkProfileExpanded> subnetProfiles) {
         Set<String> networks = new HashSet<>();
         for (NetworkProfileExpanded subnetProfile : subnetProfiles) {
-            String networkLink = subnetProfile.isolationNetworkLink;
+            String networkLink;
+
+            // This is only possible if this is NSX-V/T network profile
+            // We need to skip filtering hosts by isolation network, as there is no relationship
+            // between vSphere hosts and NSX-V/T networks
+            // TODO: remove this code when the relationship between NSX-V/T networks
+            // and vSphere hosts is data collected
+            if (!subnetProfile.isolatedNetworkState.endpointLink
+                    .equals(subnetProfile.endpointLink)) {
+                networkLink = context.hostGroupsByNetwork.keySet().iterator().next();
+            } else {
+                networkLink = subnetProfile.isolationNetworkLink;
+            }
 
             Set<HostSelection> hostSelections = context.hostGroupsByNetwork
                     .get(networkLink);
