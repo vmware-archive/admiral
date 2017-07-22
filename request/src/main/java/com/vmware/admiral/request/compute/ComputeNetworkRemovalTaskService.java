@@ -178,8 +178,10 @@ public class ComputeNetworkRemovalTaskService extends
         logInfo("Removing networks with names: ", networkNames);
 
         // Check if subnets should be deleted
+        // TODO: add Isolation type to network
         List<ComputeNetwork> isolatedComputeNetworks = computeNetworks.stream()
-                .filter(n -> n.networkType == NetworkType.ISOLATED && n.subnetLink != null)
+                .filter(n -> n.networkType == NetworkType.ISOLATED && n.subnetLink != null
+                && (n.securityGroupLinks == null || n.securityGroupLinks.isEmpty()))
                 .collect(Collectors.toList());
         if (isolatedComputeNetworks.size() == 0) {
             proceedTo(SubStage.SUBNET_INSTANCES_REMOVED);

@@ -66,6 +66,10 @@ public class ComputeConstants {
 
     public static final String CUSTOM_PROP_NETWORK_PROFILE_EXTENSION_DATA = "__networkProfileExtensionData";
 
+    public static final String CUSTOM_PROP_ISOLATION_EXTERNAL_SUBNET_LINK = "__isolationExternalSubnetLink";
+
+    public static final String CUSTOM_PROP_ISOLATION_EXTERNAL_IP_ADDRESS_LINK = "__isolationExternalIPAddressLink";
+
     /**
      * A key for the custom properties property which value stores serialized to json custom
      * payload.

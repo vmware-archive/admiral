@@ -54,6 +54,8 @@ import com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService;
 import com.vmware.admiral.request.compute.ComputeProvisionTaskService;
 import com.vmware.admiral.request.compute.ComputeRemovalTaskService;
 import com.vmware.admiral.request.compute.ComputeReservationTaskService;
+import com.vmware.admiral.request.compute.IsolatedSecurityGroupProvisionTaskService;
+import com.vmware.admiral.request.compute.IsolatedSubnetProvisionTaskService;
 import com.vmware.admiral.request.compute.LoadBalancerAllocationTaskService;
 import com.vmware.admiral.request.compute.LoadBalancerOperationTaskService;
 import com.vmware.admiral.request.compute.LoadBalancerProvisionTaskService;
@@ -97,6 +99,8 @@ public class HostInitRequestServicesConfig extends HostInitServiceHelper {
                 ContainerNetworkProvisionTaskService.class,
                 ComputeNetworkAllocationTaskService.class,
                 ComputeNetworkProvisionTaskService.class,
+                IsolatedSubnetProvisionTaskService.class,
+                IsolatedSecurityGroupProvisionTaskService.class,
                 ComputeNetworkRemovalTaskService.class,
                 LoadBalancerAllocationTaskService.class,
                 LoadBalancerProvisionTaskService.class,

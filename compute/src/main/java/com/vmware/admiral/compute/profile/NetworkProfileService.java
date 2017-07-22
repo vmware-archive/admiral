@@ -96,6 +96,11 @@ public class NetworkProfileService extends StatefulService {
         @PropertyOptions(usage = { OPTIONAL })
         public String isolationNetworkCIDRAllocationLink;
 
+        @Documentation(description = "Link to the subnet used for outbound access. "
+                + "This field should be populated only when isolation Type is SUBNET.")
+        @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL, OPTIONAL })
+        public String isolationExternalSubnetLink;
+
         @Documentation(description = "The CIDR prefix length to be used for the isolated subnets "
                 + "to be created (example: Subnet with CIDR 192.168.0.0/20 has CIDR prefix "
                 + "length: 20.")
@@ -128,6 +133,7 @@ public class NetworkProfileService extends StatefulService {
                         this.isolationNetworkCIDRAllocationLink;
                 targetState.isolationNetworkCIDR = this.isolationNetworkCIDR;
                 targetState.isolatedSubnetCIDRPrefix = this.isolatedSubnetCIDRPrefix;
+                targetState.isolationExternalSubnetLink = this.isolationExternalSubnetLink;
                 targetState.extensionData = this.extensionData;
             }
         }

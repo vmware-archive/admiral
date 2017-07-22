@@ -28,6 +28,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
+import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService.ComputeNetworkCIDRAllocationState;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
@@ -45,6 +46,7 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService.Co
 import com.vmware.photon.controller.model.resources.NetworkService;
 import com.vmware.photon.controller.model.resources.SecurityGroupService;
 import com.vmware.photon.controller.model.resources.SecurityGroupService.SecurityGroupState;
+import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 
 public class ComputeNetworkProvisionTaskServiceTest extends ComputeRequestBaseTest {
 
@@ -122,6 +124,40 @@ public class ComputeNetworkProvisionTaskServiceTest extends ComputeRequestBaseTe
         assertEquals(computeNetworkDesc.documentSelfLink, networkState.descriptionLink);
         assertTrue(networkState.name.contains(computeNetworkDesc.name));
         assertEquals(provisioningTask.resourceLinks.iterator().next(), networkState.documentSelfLink);
+    }
+
+    @Test
+    public void testProvisionIsolatedSubnetNetworkWithExternalIPAllocation() throws Throwable {
+        ComputeNetworkDescription computeNetworkDesc = createComputeNetworkDescription(UUID
+                .randomUUID().toString(), NetworkType.ISOLATED);
+
+        ComputeNetwork computeNetwork = createComputeNetwork(computeNetworkDesc,
+                createIsolatedSubnetNetworkProfileWithExternalSubnetLink().documentSelfLink);
+
+        String contextId = UUID.randomUUID().toString();
+        ComputeDescription cd = createComputeDescriptionWithNetwork(computeNetwork.name);
+        createComputeState(cd.documentSelfLink, contextId);
+
+        ComputeNetworkProvisionTaskState provisioningTask = createComputeNetworkProvisionTask(
+                computeNetworkDesc.documentSelfLink, computeNetwork.documentSelfLink, contextId, 1);
+        provisioningTask = provision(provisioningTask);
+
+        ComputeNetwork networkState = getDocument(ComputeNetwork.class,
+                provisioningTask.resourceLinks.iterator().next());
+
+        assertNotNull(networkState);
+        assertEquals(computeNetworkDesc.documentSelfLink, networkState.descriptionLink);
+        assertTrue(networkState.name.contains(computeNetworkDesc.name));
+        assertEquals(provisioningTask.resourceLinks.iterator().next(), networkState.documentSelfLink);
+        assertNotNull(networkState.subnetLink);
+
+        SubnetState subnetState = getDocument(SubnetState.class, networkState.subnetLink);
+        assertNotNull(subnetState);
+        assertNotNull(subnetState.customProperties);
+        assertNotNull(subnetState.customProperties.get(
+                ComputeConstants.CUSTOM_PROP_ISOLATION_EXTERNAL_IP_ADDRESS_LINK));
+        assertNotNull(subnetState.customProperties.get(
+                ComputeConstants.CUSTOM_PROP_ISOLATION_EXTERNAL_SUBNET_LINK));
     }
 
     @Test

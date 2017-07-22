@@ -59,9 +59,12 @@ import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionS
 import com.vmware.photon.controller.model.resources.NetworkService;
 import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;
 import com.vmware.photon.controller.model.resources.StorageDescriptionService.StorageDescription;
+import com.vmware.photon.controller.model.resources.SubnetRangeService;
+import com.vmware.photon.controller.model.resources.SubnetRangeService.SubnetRangeState;
 import com.vmware.photon.controller.model.resources.SubnetService;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.photon.controller.model.resources.TagService;
+import com.vmware.photon.controller.model.support.IPVersion;
 import com.vmware.xenon.common.UriUtils;
 
 public class ComputeRequestBaseTest extends RequestBaseTest {
@@ -378,8 +381,37 @@ public class ComputeRequestBaseTest extends RequestBaseTest {
         return profile;
     }
 
-    protected ProfileState createIsolatedSubnetNetworkProfile() throws Throwable {
+    protected ProfileState createIsolatedSubnetNetworkProfileWithExternalSubnetLink()
+            throws Throwable {
+        NetworkProfile networkProfile = createNetworkProfile();
+        SubnetState subnetState = createSubnet("external-subnet");
+        createSubnetRange(subnetState, "192.168.0.10", "192.168.0.20");
+        networkProfile.isolationExternalSubnetLink = subnetState.documentSelfLink;
+        doPatch(networkProfile, networkProfile.documentSelfLink);
+        ProfileState profile = createProfile(null, null, networkProfile, null, null);
+        assertNotNull(profile);
 
+        return profile;
+    }
+
+    protected SubnetRangeState createSubnetRange(SubnetState subnetState, String startIp, String endIp)
+            throws Throwable {
+        SubnetRangeState subnetRangeState = new SubnetRangeState();
+        subnetRangeState.startIPAddress = startIp;
+        subnetRangeState.endIPAddress = endIp;
+        subnetRangeState.ipVersion = IPVersion.IPv4;
+        subnetRangeState.subnetLink = subnetState.documentSelfLink;
+        return doPost(subnetRangeState, SubnetRangeService.FACTORY_LINK);
+    }
+
+    protected ProfileState createIsolatedSubnetNetworkProfile() throws Throwable {
+        ProfileState profile = createProfile(null, null, createNetworkProfile(), null, null);
+        assertNotNull(profile);
+
+        return profile;
+    }
+
+    private NetworkProfile createNetworkProfile() throws Throwable {
         ComputeNetworkCIDRAllocationState cidrAllocation = createNetworkCIDRAllocationState();
 
         NetworkProfile networkProfile = new NetworkProfile();
@@ -388,12 +420,8 @@ public class ComputeRequestBaseTest extends RequestBaseTest {
         networkProfile.isolationNetworkLink = cidrAllocation.networkLink;
         networkProfile.isolationNetworkCIDR = "192.168.0.0/16";
         networkProfile.isolatedSubnetCIDRPrefix = 16;
-        networkProfile = doPost(networkProfile, NetworkProfileService.FACTORY_LINK);
+        return doPost(networkProfile, NetworkProfileService.FACTORY_LINK);
 
-        ProfileState profile = createProfile(null, null, networkProfile, null, null);
-        assertNotNull(profile);
-
-        return profile;
     }
 
     protected ComputeNetworkCIDRAllocationState createNetworkCIDRAllocationState() throws

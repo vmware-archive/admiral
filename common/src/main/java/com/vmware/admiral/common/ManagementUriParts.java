@@ -163,6 +163,8 @@ public interface ManagementUriParts {
 
     String REQUEST_COMPUTE_NETWORK_ALLOCATION_TASKS = REQUEST + "/compute-network-allocation-tasks";
     String REQUEST_PROVISION_COMPUTE_NETWORK_TASKS = REQUEST + "/provision-compute-network-tasks";
+    String REQUEST_PROVISION_ISOLATED_SUBNET_TASKS = REQUEST + "/provision-isolated-subnet-tasks";
+    String REQUEST_PROVISION_ISOLATED_SECURITY_GROUP_TASKS = REQUEST + "/provision-isolated-security-group-tasks";
     String REQUEST_COMPUTE_NETWORK_REMOVAL_TASKS = REQUEST + "/compute-network-removal-tasks";
 
     String REQUEST_LOAD_BALANCER_ALLOCATION_TASKS = REQUEST + "/load-balancer-allocation-tasks";
