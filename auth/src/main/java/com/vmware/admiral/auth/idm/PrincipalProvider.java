@@ -22,8 +22,26 @@ public interface PrincipalProvider {
 
     void init(Service service);
 
+    /**
+     * Gets a principal by its id.
+     *
+     * @param op
+     *            Operation
+     * @param principalId
+     *            Principal id
+     * @return Principal
+     */
     DeferredResult<Principal> getPrincipal(Operation op, String principalId);
 
+    /**
+     * Gets all the principals matching the given criteria.
+     *
+     * @param op
+     *            Operation
+     * @param criteria
+     *            Criteria
+     * @return List of principals
+     */
     DeferredResult<List<Principal>> getPrincipals(Operation op, String criteria);
 
     DeferredResult<Principal> createPrincipal(Operation op, Principal principal);
@@ -32,8 +50,28 @@ public interface PrincipalProvider {
 
     DeferredResult<Principal> deletePrincipal(Operation op, String principalId);
 
+    /**
+     * Gets all the groups that a given principal belongs to.
+     *
+     * @param op
+     *            Operation
+     * @param principalId
+     *            Principal id
+     * @return Set of group ids.
+     */
     DeferredResult<Set<String>> getAllGroupsForPrincipal(Operation op, String principalId);
 
+    /**
+     * Gets a principal after validating that his credentials are correct.
+     *
+     * @param op
+     *            Operation
+     * @param principalId
+     *            Principal id
+     * @param password
+     *            Principal password
+     * @return Principal
+     */
     DeferredResult<Principal> getPrincipalByCredentials(Operation op, String principalId,
             String password);
 

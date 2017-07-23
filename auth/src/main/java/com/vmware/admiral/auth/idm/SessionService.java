@@ -14,7 +14,6 @@ package com.vmware.admiral.auth.idm;
 import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.auth.util.SecurityContextUtil;
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatelessService;
 
@@ -40,7 +39,7 @@ public class SessionService extends StatelessService {
         if (isLogoutRequest(get)) {
             provider.doLogout(get);
         } else if (isSessionRequest(get)) {
-            getCurrentUserSecurityContext(get)
+            SecurityContextUtil.getSecurityContext(this, get)
                     .thenApply(get::setBody)
                     .whenCompleteNotify(get);
         } else {
@@ -54,10 +53,6 @@ public class SessionService extends StatelessService {
 
     private boolean isSessionRequest(Operation op) {
         return SELF_LINK.equalsIgnoreCase(op.getUri().getPath());
-    }
-
-    private DeferredResult<SecurityContext> getCurrentUserSecurityContext(Operation op) {
-        return SecurityContextUtil.getSecurityContext(this, op);
     }
 
 }

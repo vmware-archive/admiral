@@ -12,14 +12,16 @@
       "description": "Test project 2 description.",
       "isPublic": true,
       "administrators": ["fritz@admiral.com"],
-      "members": ["gloria@admiral.com"]
+      "members": ["gloria@admiral.com"],
+      "viewers": ["tony@admiral.com"]
     },
     {
       "name": "testProject3",
       "description": "Test project 3 description.",
       "isPublic": true,
       "administrators": ["tony@admiral.com"],
-      "members": ["gloria@admiral.com"]
+      "members": ["gloria@admiral.com"],
+      "viewers": ["fritz@admiral.com"]
     }
   ]
 }

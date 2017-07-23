@@ -122,8 +122,8 @@ public class AuthContentServiceTest extends AuthBaseTest {
         doPatch(roleAssignment, UriUtils.buildUriPath(PrincipalService.SELF_LINK, developers,
                 PrincipalService.ROLES_SUFFIX));
 
-        RoleState roleState = getDocument(RoleState.class, UriUtils.buildUriPath(RoleService
-                .FACTORY_LINK, AuthRole.CLOUD_ADMIN.buildRoleWithSuffix(developers)));
+        RoleState roleState = getDocument(RoleState.class, UriUtils.buildUriPath(
+                RoleService.FACTORY_LINK, AuthRole.CLOUD_ADMIN.buildRoleWithSuffix(developers)));
         assertNotNull(roleState);
 
         // Import content
@@ -145,14 +145,14 @@ public class AuthContentServiceTest extends AuthBaseTest {
 
         // Verify superusers are cloud admins.
         String superusers = "superusers";
-        roleState = getDocument(RoleState.class, UriUtils.buildUriPath(RoleService
-                .FACTORY_LINK, AuthRole.CLOUD_ADMIN.buildRoleWithSuffix(superusers)));
+        roleState = getDocument(RoleState.class, UriUtils.buildUriPath(RoleService.FACTORY_LINK,
+                AuthRole.CLOUD_ADMIN.buildRoleWithSuffix(superusers)));
         assertNotNull(roleState);
 
         // Verify developers are unassigned from cloud admins.
         TestContext ctx1 = testCreate(1);
-        host.send(Operation.createGet(host, UriUtils.buildUriPath(RoleService
-                .FACTORY_LINK, AuthRole.CLOUD_ADMIN.buildRoleWithSuffix(developers)))
+        host.send(Operation.createGet(host, UriUtils.buildUriPath(RoleService.FACTORY_LINK,
+                AuthRole.CLOUD_ADMIN.buildRoleWithSuffix(developers)))
                 .setReferer(host.getUri())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
@@ -198,22 +198,19 @@ public class AuthContentServiceTest extends AuthBaseTest {
         String viewersGroup = projectState.viewersUserGroupLinks.iterator().next();
 
         List<UserState> adminUsers = getUsersFromUserGroup(adminsGroup);
+        assertNotNull(adminUsers);
+        assertEquals(1, adminUsers.size());
+        assertTrue(adminUsers.get(0).email.equals(USER_EMAIL_BASIC_USER));
 
         List<UserState> memberUsers = getUsersFromUserGroup(membersGroup);
+        assertNotNull(memberUsers);
+        assertEquals(1, memberUsers.size());
+        assertTrue(memberUsers.get(0).email.equals(USER_EMAIL_GLORIA));
 
         List<UserState> viewerUsers = getUsersFromUserGroup(viewersGroup);
-
-        for (UserState admin : adminUsers) {
-            assertTrue(!admin.email.equals(USER_EMAIL_ADMIN));
-        }
-
-        for (UserState member : memberUsers) {
-            assertTrue(!member.email.equals(USER_EMAIL_ADMIN));
-        }
-
-        for (UserState viewer : viewerUsers) {
-            assertTrue(!viewer.email.equals(USER_EMAIL_ADMIN));
-        }
+        assertNotNull(viewerUsers);
+        assertEquals(1, viewerUsers.size());
+        assertTrue(viewerUsers.get(0).email.equals(USER_EMAIL_ADMIN));
     }
 
     @Test

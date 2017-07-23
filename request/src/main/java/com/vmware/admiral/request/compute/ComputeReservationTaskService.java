@@ -641,11 +641,10 @@ public class ComputeReservationTaskService extends
                             placements.stream(),
                             placementTagLinksSupplier,
                             (placement1, placement2) -> placement1.priority - placement2.priority)
-
                     .collect(Collectors.toMap(gp -> gp.documentSelfLink,
                             gp -> Pair.of(gp.name, gp.resourcePoolLink),
                             (k1, k2) -> k1,
-                            LinkedHashMap::new));
+                            () -> new LinkedHashMap<String, Pair<String, String>>()));
 
             if (!placements.isEmpty() && placementsAfterTagFilter.isEmpty()) {
                 logInfo("No candidate placements after tag filtering");
