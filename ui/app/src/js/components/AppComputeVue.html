@@ -39,6 +39,10 @@
                    v-bind:model="model.centerView.data"
                    v-ref:center-view>
       </placements-view>
+      <placement-zones-view v-if="model.centerView.name === computeConstants.VIEWS.PLACEMENT_ZONES.name"
+                   v-bind:model="model.centerView.data"
+                   v-ref:center-view>
+      </placement-zones-view>
       <machines-view v-if="model.centerView.name === computeConstants.VIEWS.RESOURCES.VIEWS.MACHINES.name"
                    v-bind:model="model.centerView.data"
                    v-ref:center-view>

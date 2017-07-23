@@ -68,6 +68,11 @@ crossroads.addRoute('/placements', function() {
   actions.PlacementActions.openPlacements();
 });
 
+crossroads.addRoute('/placementZones', function() {
+  actions.AppActions.openView(computeConstants.VIEWS.PLACEMENT_ZONES.name);
+  actions.PlacementZonesActions.retrievePlacementZones();
+});
+
 crossroads.addRoute('/projects:?query:', function(query) {
   actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.PROJECTS.name);
 

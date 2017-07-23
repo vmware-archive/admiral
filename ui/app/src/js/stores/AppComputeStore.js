@@ -10,6 +10,7 @@
  */
 
 import PlacementsStore from 'stores/PlacementsStore';
+import PlacementZonesStore from 'stores/PlacementZonesStore';
 import ProfilesStore from 'stores/ProfilesStore';
 import EndpointsStore from 'stores/EndpointsStore';
 import MachinesStore from 'stores/MachinesStore';
@@ -89,6 +90,13 @@ let initializeStoreListeners = function() {
   PlacementsStore.listen((data) => {
     if (this.data.centerView && this.data.centerView.name === constants.VIEWS.PLACEMENTS.name) {
       this.setInData(['centerView', 'data'], data);
+      this.emitChange();
+    }
+  });
+  PlacementZonesStore.listen((quotesData) => {
+    if (this.data.centerView &&
+      this.data.centerView.name === constants.VIEWS.PLACEMENT_ZONES.name) {
+      this.setInData(['centerView', 'data'], quotesData);
       this.emitChange();
     }
   });

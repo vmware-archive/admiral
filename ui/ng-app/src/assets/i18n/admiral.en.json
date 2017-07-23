@@ -283,6 +283,9 @@
     "placements": {
       "title": "Placements"
     },
+    "placementZones": {
+      "title": "Placement Zones"
+    },
     "machines": {
       "title": "Machines"
     },

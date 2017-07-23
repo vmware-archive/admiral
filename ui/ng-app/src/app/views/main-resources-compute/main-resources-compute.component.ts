@@ -32,6 +32,7 @@ export class MainResourcesComputeComponent implements OnInit, OnDestroy {
       'compute': 'compute',
       'profiles': 'profiles',
       'placements': 'placements',
+      'placementZones': 'placementZones',
       'machines': 'machines',
       'networks': 'networks',
       'instance-types/new': 'instance-types/new',

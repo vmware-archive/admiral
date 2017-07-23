@@ -151,7 +151,7 @@ export var ContainersContextToolbarActions = Reflux.createActions([
 
 export var PlacementZonesActions = Reflux.createActions([
   'retrievePlacementZones', 'editPlacementZone', 'cancelEditPlacementZone', 'createPlacementZone',
-  'updatePlacementZone', 'deletePlacementZone'
+  'updatePlacementZone', 'deletePlacementZone', 'openPlacementZones'
 ]);
 
 export var CredentialsActions = Reflux.createActions([

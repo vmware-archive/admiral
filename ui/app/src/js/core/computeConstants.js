@@ -32,6 +32,9 @@ var computeConstants = Immutable({
     PLACEMENTS: {
       name: 'placements'
     },
+    PLACEMENT_ZONES: {
+      name: 'placementZones'
+    },
     COMPUTE: {
       name: 'compute'
     },

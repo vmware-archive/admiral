@@ -1068,7 +1068,11 @@ $elements-side-margin: $elements-margin / 2;
   margin-top: 20px;
 }
 
-.placements-view, .profiles-view, .center-view > .endpoints-view, .registry-view {
+.center-view > .placement-zones-view > .main-panel {
+  margin: 24px;
+}
+
+.placements-view, .placement-zones-view, .profiles-view, .center-view > .endpoints-view, .registry-view {
   > .main-panel {
     @extend .position-expand;
     z-index: 1;
