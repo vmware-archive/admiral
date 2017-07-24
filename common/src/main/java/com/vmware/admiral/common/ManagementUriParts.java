@@ -264,6 +264,7 @@ public interface ManagementUriParts {
     String UI_NG_SERVICE = UriUtils.buildUriPath(UI_SERVICE, "ng");
     String UI_OG_SERVICE = UriUtils.buildUriPath(UI_SERVICE, "ogui");
     String UI_COMPUTE_SERVICE = UriUtils.buildUriPath(UI_SERVICE, "iaas");
+    String LOGIN = "/login/";
 
     String CONTAINER_ICONS_RESOURCE_PATH = UriUtils.buildUriPath(UI_SERVICE, "/container-icons");
     String CONTAINER_IDENTICONS_RESOURCE_PATH = UriUtils.buildUriPath(UI_SERVICE,

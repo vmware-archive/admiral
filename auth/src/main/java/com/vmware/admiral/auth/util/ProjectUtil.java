@@ -50,6 +50,7 @@ import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
+import com.vmware.xenon.common.ServiceErrorResponse;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
@@ -322,6 +323,12 @@ public class ProjectUtil {
                 .thenApply((op) -> {
 
                     Object body = op.getBodyRaw();
+
+                    if (op.getBodyRaw() instanceof ServiceErrorResponse) {
+                        ServiceErrorResponse errorResponse = op.getBody(ServiceErrorResponse.class);
+                        throw new IllegalStateException(errorResponse.message);
+                    }
+
                     String stringBody = body instanceof String ? (String) body : Utils.toJson(body);
 
                     if (op.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
