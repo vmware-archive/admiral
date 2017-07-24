@@ -68,7 +68,7 @@
                 <div class="progress-meter" attr.data-value="{{ cpuPercentageLevel(item) }}"></div>
               </div>
             </div>
-            <div class="col-sm-8 progress-details p7">{{ getResourceLabel(item.cpuUsage, item.totalCpu) }}GHz</div>
+            <div class="col-sm-8 progress-details p7">{{ getResourceLabel(item.cpuUsage, item.totalCpu, 'GHz') }}</div>
           </div>
         </div>
         <div class="form-group">
@@ -79,7 +79,7 @@
                 <div class="progress-meter" attr.data-value="{{ memoryPercentageLevel(item) }}"></div>
               </div>
             </div>
-            <div class="col-sm-8 progress-details p7">{{ getResourceLabel(item.memoryUsage, item.totalMemory) }}B</div>
+            <div class="col-sm-8 progress-details p7">{{ getResourceLabel(item.memoryUsage, item.totalMemory, 'B') }}</div>
           </div>
         </div>
         <div class="progress-static top">

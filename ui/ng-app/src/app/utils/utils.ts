@@ -145,7 +145,7 @@ export class Utils {
     if (bytes == 0) {
       return 0;
     }
-    var decimals = 2;
+    var decimals = 1;
     return parseFloat((bytes / Math.pow(1024, magnitude)).toFixed(decimals));
   }
 

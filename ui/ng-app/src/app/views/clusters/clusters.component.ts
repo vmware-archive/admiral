@@ -84,12 +84,12 @@ export class ClustersComponent implements OnInit {
     return Math.floor(cluster.memoryUsage / cluster.totalMemory * 100);
   }
 
-  getResourceLabel(b1, b2) {
-    if (b1 == 0 || b2 ==0) {
-      return b1 + ' of ' + b2;
+  getResourceLabel(b1, b2, unit) {
+    if (b2 == 0) {
+      return 'N/A';
     }
     let m = Utils.getMagnitude(b2);
-    return Utils.formatBytes(b1, m) + ' of ' + Utils.formatBytes(b2, m) + Utils.magnitudes[m];
+    return Utils.formatBytes(b1, m) + ' of ' + Utils.formatBytes(b2, m) + Utils.magnitudes[m] + unit;
   }
 
   clusterState(cluster) {
