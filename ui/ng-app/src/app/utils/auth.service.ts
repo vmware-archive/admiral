@@ -49,10 +49,12 @@ export class AuthService {
 
   public getCachedSecurityContext(): Promise<any> {
     if (!this._initialSessionPromise) {
-      this._initialSessionPromise = new Promise((resolve) => {
+      this._initialSessionPromise = new Promise((resolve, reject) => {
         this.loadCurrentUserSecurityContext().then((securityContext) => {
           this._cachedSessionContext = securityContext;
           resolve(this._cachedSessionContext);
+        }).catch((ex) => {
+          reject(ex);
         });
       });
     }
