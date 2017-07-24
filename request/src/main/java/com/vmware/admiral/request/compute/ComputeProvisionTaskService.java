@@ -41,6 +41,7 @@ import com.vmware.admiral.request.compute.enhancer.ComputeStateEnhancers;
 import com.vmware.admiral.request.compute.enhancer.Enhancer.EnhanceContext;
 import com.vmware.admiral.request.utils.ComputeStateUtils;
 import com.vmware.admiral.request.utils.EventTopicUtils;
+import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.EventTopicDeclarator;
 import com.vmware.admiral.service.common.EventTopicService;
@@ -188,11 +189,16 @@ public class ComputeProvisionTaskService extends
 
     private void customizeCompute(ComputeProvisionTaskState state) {
         URI referer = UriUtils.buildUri(getHost().getPublicUri(), getSelfLink());
+        final String clusterIndex = (state.customProperties != null && !state.customProperties.isEmpty())
+                ? state.customProperties.get(RequestUtils.FIELD_NAME_CLUSTER_INDEX) : null;
         List<DeferredResult<Operation>> results = state.resourceLinks.stream()
                 .map(link -> Operation.createGet(this, link))
                 .map(o -> sendWithDeferredResult(o, ComputeState.class))
                 .map(dr -> {
                     return dr.thenCompose(cs -> {
+                        if (clusterIndex != null) {
+                            cs.customProperties.put(RequestUtils.FIELD_NAME_CLUSTER_INDEX, clusterIndex);
+                        }
                         EnhanceContext context = new EnhanceContext();
                         context.endpointType = cs.customProperties
                                 .get(ComputeConstants.CUSTOM_PROP_ENDPOINT_TYPE_NAME);

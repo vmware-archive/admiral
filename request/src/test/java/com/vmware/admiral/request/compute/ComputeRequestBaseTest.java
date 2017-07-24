@@ -412,7 +412,36 @@ public class ComputeRequestBaseTest extends RequestBaseTest {
         return profile;
     }
 
-    private NetworkProfile createNetworkProfile() throws Throwable {
+    protected ProfileService.ProfileStateExpanded createExpandedIsolatedSubnetNetworkProfile()
+            throws Throwable {
+        ProfileService.ProfileStateExpanded p1 = createProfileWithInstanceTypeAndNetworkProfile(
+                "small", "t2.micro", "coreos", "ami-234355", null, createNetworkProfile(),
+                computeGroupPlacementState);
+        assertNotNull(p1);
+        return p1;
+    }
+
+    protected ProfileStateExpanded createProfileWithInstanceTypeAndNetworkProfile(
+            String instanceTypeKey,
+            String instanceTypeValue, String imageKey, String imageValue,
+            StorageProfile storageProfile,
+            NetworkProfile np, GroupResourcePlacementState computeGroupPlacementState)
+            throws Throwable {
+        ComputeProfile cp1 = new ComputeProfile();
+        cp1.instanceTypeMapping = new HashMap<>();
+        InstanceTypeDescription itd = new InstanceTypeDescription();
+        itd.instanceType = instanceTypeValue;
+        cp1.instanceTypeMapping.put(instanceTypeKey, itd);
+
+        ComputeImageDescription cid = new ComputeImageDescription();
+        cid.image = imageValue;
+        cp1.imageMapping = new HashMap<>();
+        cp1.imageMapping.put(imageKey, cid);
+
+        return createProfile(cp1, storageProfile, np, computeGroupPlacementState.tenantLinks, null);
+    }
+
+    protected NetworkProfile createNetworkProfile() throws Throwable {
         ComputeNetworkCIDRAllocationState cidrAllocation = createNetworkCIDRAllocationState();
 
         NetworkProfile networkProfile = new NetworkProfile();

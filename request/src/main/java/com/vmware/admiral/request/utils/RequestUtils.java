@@ -44,6 +44,11 @@ public abstract class RequestUtils {
      */
     public static final String CONTAINER_REDEPLOYMENT_CUSTOM_PROP = "__container_redeployment";
 
+    /**
+     * Cluster index for a resource used during scale in and scale out operation.
+     */
+    public static final String FIELD_NAME_CLUSTER_INDEX = "__cluster_index";
+
     private RequestUtils() {
     }
 

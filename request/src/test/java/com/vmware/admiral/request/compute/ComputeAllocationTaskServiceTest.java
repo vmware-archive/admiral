@@ -18,6 +18,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import static com.vmware.admiral.compute.ComputeConstants.CUSTOM_PROP_PROFILE_LINK_NAME;
+import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
 
 import java.lang.reflect.Field;
 import java.time.Duration;
@@ -25,19 +26,24 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.junit.Test;
 
 import com.vmware.admiral.compute.ResourceType;
+import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService;
+import com.vmware.admiral.compute.network.ComputeNetworkService;
 import com.vmware.admiral.compute.profile.ProfileService.ProfileStateExpanded;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSelection;
 import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAllocationTaskState;
 import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAllocationTaskState.SubStage;
 import com.vmware.admiral.request.compute.ComputeProvisionTaskService.ComputeProvisionTaskState;
 import com.vmware.admiral.request.compute.ComputeProvisionTaskService.ExtensibilityCallbackResponse;
+import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.request.utils.ComputeStateUtils;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.EventTopicDeclarator;
@@ -45,6 +51,7 @@ import com.vmware.admiral.service.common.EventTopicService;
 import com.vmware.admiral.service.common.EventTopicService.EventTopicState;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
+import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService;
@@ -798,6 +805,16 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
         allocationTask.customProperties.put("compute.docker.host", "true");
         allocationTask.customProperties.put(RequestUtils.FIELD_NAME_ALLOCATION_REQUEST,
                 String.valueOf(allocation));
+
+        HostSelection hs2 = new HostSelection();
+        hs2.name = "hs2";
+
+        List<HostSelection> hostSelections = Arrays.asList(new HostSelection[] { hs2 });
+        allocationTask.selectedComputePlacementHosts = hostSelections;
+
+        allocationTask.customProperties.put(ComputeProperties.PLACEMENT_LINK,
+                hostSelections.iterator().next().hostLink);
+
         return allocationTask;
     }
 
@@ -824,6 +841,227 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
                 provisionTask, ComputeProvisionTaskService.FACTORY_LINK);
         assertNotNull(outprovisionTask);
         return outprovisionTask;
+    }
+
+    private ComputeAllocationTaskState createComputeScaleOutAllocationTask(
+            String computeDescriptionLink,
+            long resourceCount, boolean allocation) {
+        ComputeAllocationTaskState allocationTask = new ComputeAllocationTaskState();
+        allocationTask.resourceDescriptionLink = computeDescriptionLink;
+        allocationTask.groupResourcePlacementLink = computeGroupPlacementState.documentSelfLink;
+        allocationTask.tenantLinks = computeGroupPlacementState.tenantLinks;
+        allocationTask.resourceType = "Compute";
+        allocationTask.resourceCount = resourceCount;
+        allocationTask.serviceTaskCallback = ServiceTaskCallback.createEmpty();
+        allocationTask.customProperties = new HashMap<>();
+        // allocationTask.customProperties.put("compute.docker.host", "true");
+        allocationTask.customProperties.put("clusterSize", "1");
+        allocationTask.customProperties.put(RequestUtils.FIELD_NAME_ALLOCATION_REQUEST,
+                String.valueOf(allocation));
+        return allocationTask;
+    }
+
+    private ComputeAllocationTaskState allocateWithScaleOut(
+            ComputeAllocationTaskState allocationTask, int resourceCount)
+            throws Throwable {
+        allocationTask = startAllocationTask(allocationTask);
+        host.log("Start allocation test: " + allocationTask.documentSelfLink);
+
+        allocationTask = waitForTaskSuccess(allocationTask.documentSelfLink,
+                ComputeAllocationTaskState.class);
+        assertNotNull("ResourceLinks null for allocation: " + allocationTask.documentSelfLink,
+                allocationTask.resourceLinks);
+        assertEquals("Resource count not equal for: " + allocationTask.documentSelfLink,
+                resourceCount, allocationTask.resourceLinks.size());
+
+        host.log("Finished allocation test: " + allocationTask.documentSelfLink);
+        return allocationTask;
+    }
+
+    @Test
+    public void testComputeAllocationWithFollowingProvisioningRequestAndScaleOutAllocation()
+            throws Throwable {
+        host.log(
+                ">>>>>>Start: testComputeAllocationWithFollowingProvisioningRequestAndScaleOutAllocation <<<<< ");
+        ComputeDescription computeDescription = createVMComputeDescription(false);
+
+        String compCtxUd = UUID.randomUUID().toString();
+        ComputeAllocationTaskState allocationTask = createComputeScaleOutAllocationTask(
+                computeDescription.documentSelfLink, 1, true);
+        allocationTask.customProperties.put("__composition_context_id", compCtxUd);
+        allocationTask = allocate(allocationTask);
+
+        ComputeState computeState = getDocument(ComputeState.class,
+                allocationTask.resourceLinks.iterator().next());
+        assertTrue(computeState.name.startsWith(TEST_VM_NAME));
+        assertNotNull(computeState.id);
+        assertEquals(computeDescription.documentSelfLink, computeState.descriptionLink);
+        assertEquals(allocationTask.tenantLinks, computeState.tenantLinks);
+
+        // make sure the host is not update with the new container.
+        assertFalse("should not be provisioned container: " + computeState.documentSelfLink,
+                MockDockerAdapterService.isContainerProvisioned(computeState.documentSelfLink));
+
+        ComputeProvisionTaskState provisionTask = createComputeProvisionForScaleOutTask(
+                allocationTask.resourceLinks, "0");
+        provisionTask.customProperties.put("__composition_context_id", compCtxUd);
+        // Request provisioning after allocation:
+        provisionTask = provision(provisionTask);
+
+        // verify container state is provisioned and patched:
+        computeState = getDocument(ComputeState.class,
+                provisionTask.resourceLinks.iterator().next());
+        assertNotNull(computeState);
+
+        assertNotNull(computeState.id);
+        assertEquals(computeDescription.documentSelfLink, computeState.descriptionLink);
+        // assertEquals(vmHostCompute.documentSelfLink, computeState.parentLink);
+
+        ComputeAllocationTaskState scaleOutAllocationTask = createComputeScaleOutAllocationTask(
+                computeDescription.documentSelfLink, 2, true);
+        scaleOutAllocationTask.customProperties.put("__composition_context_id", compCtxUd);
+        scaleOutAllocationTask.customProperties.put("__clustering_operation", "true");
+
+        scaleOutAllocationTask = allocateWithScaleOut(scaleOutAllocationTask, 3);
+
+        assertEquals(computeState.documentSelfLink,
+                scaleOutAllocationTask.resourceLinks.iterator().next());
+    }
+
+    private ComputeProvisionTaskState createComputeProvisionForScaleOutTask(
+            Set<String> resourceLinks, String clusterIndex) {
+        ComputeProvisionTaskState provisionTask = new ComputeProvisionTaskState();
+        provisionTask.resourceLinks = resourceLinks;
+        provisionTask.serviceTaskCallback = ServiceTaskCallback.createEmpty();
+        provisionTask.customProperties = new HashMap<>();
+        provisionTask.customProperties.put("compute.docker.host", "true");
+        provisionTask.customProperties.put("__cluster_index", clusterIndex);
+        return provisionTask;
+    }
+
+    @Test
+    public void testComputeAllocationWithNetworkProfileFollowedByProvisioning() throws Throwable {
+        ComputeNetworkDescriptionService.ComputeNetworkDescription computeNetworkDesc = createComputeNetworkDescription(
+                UUID.randomUUID().toString(),
+                ComputeNetworkDescriptionService.NetworkType.EXTERNAL);
+
+        ComputeNetworkService.ComputeNetwork computeNetwork = createComputeNetwork(
+                computeNetworkDesc,
+                createProfile().documentSelfLink);
+
+        ComputeNetworkProvisionTaskService.ComputeNetworkProvisionTaskState provisioningTask = createComputeNetworkProvisionTask(
+                computeNetworkDesc.documentSelfLink, computeNetwork, null, 1);
+        provisionNetwork(provisioningTask);
+
+        ComputeDescription computeDescription = createVMComputeDescription(false);
+        createProfileWithInstanceTypeAndNetworkProfile(
+                "small", "t2.micro", "coreos", "ami-234355", null, createNetworkProfile(),
+                computeGroupPlacementState);
+
+        ComputeAllocationTaskService.ComputeAllocationTaskState allocationTask = createComputeAllocationTask(
+                computeDescription.documentSelfLink, 1, true);
+        allocationTask = allocate(allocationTask);
+
+        ComputeState computeState = getDocument(ComputeState.class,
+                allocationTask.resourceLinks.iterator().next());
+        assertNotNull(computeState.id);
+        assertEquals(computeDescription.documentSelfLink, computeState.descriptionLink);
+
+        ComputeProvisionTaskState provisionTask = createComputeProvisionTask(
+                allocationTask.resourceLinks);
+
+        // Request provisioning
+        provisionTask = provision(provisionTask);
+
+        // verify container state is provisioned
+        computeState = getDocument(ComputeState.class,
+                provisionTask.resourceLinks.iterator().next());
+        assertNotNull(computeState);
+        assertEquals(computeDescription.documentSelfLink, computeState.descriptionLink);
+    }
+
+    private ComputeNetworkService.ComputeNetwork createComputeNetwork(
+            ComputeNetworkDescriptionService.ComputeNetworkDescription cnd,
+            String profileLink) throws Throwable {
+        ComputeNetworkService.ComputeNetwork cn = new ComputeNetworkService.ComputeNetwork();
+        cn.id = UUID.randomUUID().toString();
+        cn.networkType = cnd.networkType;
+        cn.customProperties = cnd.customProperties;
+        cn.name = cnd.name;
+        cn.provisionProfileLink = profileLink;
+        cn.tenantLinks = cnd.tenantLinks;
+        cn.descriptionLink = cnd.documentSelfLink;
+        cn.groupLinks = new HashSet<>();
+        cn.groupLinks.add(createResourceGroup("contextId", cnd.tenantLinks).documentSelfLink);
+        cn = doPost(cn, ComputeNetworkService.FACTORY_LINK);
+        assertNotNull(cn);
+        return cn;
+    }
+
+    private ComputeNetworkProvisionTaskService.ComputeNetworkProvisionTaskState createComputeNetworkProvisionTask(
+            String networkDescriptionSelfLink, ComputeNetworkService.ComputeNetwork networkState,
+            String contextId,
+            long resourceCount) {
+
+        ComputeNetworkProvisionTaskService.ComputeNetworkProvisionTaskState provisionTask = new ComputeNetworkProvisionTaskService.ComputeNetworkProvisionTaskState();
+        provisionTask.resourceLinks = new HashSet<>();
+        provisionTask.resourceLinks.add(networkState.documentSelfLink);
+        provisionTask.resourceDescriptionLink = networkDescriptionSelfLink;
+        provisionTask.resourceCount = resourceCount;
+        provisionTask.serviceTaskCallback = ServiceTaskCallback.createEmpty();
+        provisionTask.customProperties = new HashMap<>();
+        if (contextId != null) {
+            provisionTask.customProperties.put(FIELD_NAME_CONTEXT_ID_KEY, contextId);
+        }
+        provisionTask.tenantLinks = networkState.tenantLinks;
+        return provisionTask;
+    }
+
+    private ComputeNetworkProvisionTaskService.ComputeNetworkProvisionTaskState provisionNetwork(
+            ComputeNetworkProvisionTaskService.ComputeNetworkProvisionTaskState provisionTask)
+            throws Throwable {
+        provisionTask = startProvisionTaskNetwork(provisionTask);
+        host.log("Start provisioning test: " + provisionTask.documentSelfLink);
+
+        provisionTask = waitForTaskSuccess(provisionTask.documentSelfLink,
+                ComputeNetworkProvisionTaskService.ComputeNetworkProvisionTaskState.class);
+
+        assertNotNull("ResourceLinks null for provisioning: " + provisionTask.documentSelfLink,
+                provisionTask.resourceLinks);
+        assertEquals("Resource count not equal for: " + provisionTask.documentSelfLink,
+                provisionTask.resourceCount, Long.valueOf(provisionTask.resourceLinks.size()));
+
+        host.log("Finished provisioning test: " + provisionTask.documentSelfLink);
+        return provisionTask;
+    }
+
+    private ComputeNetworkProvisionTaskService.ComputeNetworkProvisionTaskState startProvisionTaskNetwork(
+            ComputeNetworkProvisionTaskService.ComputeNetworkProvisionTaskState provisionTask)
+            throws Throwable {
+        ComputeNetworkProvisionTaskService.ComputeNetworkProvisionTaskState outProvisionTask = doPost(
+                provisionTask, ComputeNetworkProvisionTaskService.FACTORY_LINK);
+        assertNotNull(outProvisionTask);
+        return outProvisionTask;
+    }
+
+    private ComputeNetworkDescriptionService.ComputeNetworkDescription createComputeNetworkDescription(
+            String name, ComputeNetworkDescriptionService.NetworkType networkType)
+            throws Throwable {
+        ComputeNetworkDescriptionService.ComputeNetworkDescription desc = createNetworkDescription(
+                name, networkType);
+        desc = doPost(desc,
+                ComputeNetworkDescriptionService.FACTORY_LINK);
+        assertNotNull(desc);
+        return desc;
+    }
+
+    private ComputeNetworkDescriptionService.ComputeNetworkDescription createNetworkDescription(
+            String name, ComputeNetworkDescriptionService.NetworkType networkType) {
+        ComputeNetworkDescriptionService.ComputeNetworkDescription desc = TestRequestStateFactory
+                .createComputeNetworkDescription(name);
+        desc.documentSelfLink = UUID.randomUUID().toString();
+        desc.networkType = networkType;
+        return desc;
     }
 
 }
