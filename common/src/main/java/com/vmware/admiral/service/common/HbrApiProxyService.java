@@ -20,8 +20,11 @@ import java.util.function.Function;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.ConfigurationUtil;
+import com.vmware.admiral.common.util.ServerX509TrustManager;
+import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
 
@@ -46,6 +49,7 @@ public class HbrApiProxyService extends StatelessService {
     private static final String I18N_RESOURCE_SUBPATH = "i18n/lang";
 
     private volatile String harborUrl;
+    private volatile ServiceClient client;
 
     public HbrApiProxyService() {
         super.toggleOption(ServiceOption.URI_NAMESPACE_OWNER, true);
@@ -72,6 +76,12 @@ public class HbrApiProxyService extends StatelessService {
                     if (ex == null && res.hasBody()) {
                         ConfigurationState body = res.getBody(ConfigurationState.class);
                         harborUrl = body.value;
+
+                        if (harborUrl != null && !harborUrl.trim().isEmpty()) {
+                            ServerX509TrustManager trustManager = ServerX509TrustManager
+                                    .create(getHost());
+                            client = ServiceClientFactory.createServiceClient(trustManager, null);
+                        }
                     }
                 }));
     }
@@ -142,7 +152,9 @@ public class HbrApiProxyService extends StatelessService {
                 });
 
         prepareAuthn(forwardOp);
-        sendRequest(forwardOp);
+
+        forwardOp.setReferer(UriUtils.buildUri(getHost().getPublicUri(), getSelfLink()));
+        client.send(forwardOp);
     }
 
     private URI getTargetUri(Operation op) {

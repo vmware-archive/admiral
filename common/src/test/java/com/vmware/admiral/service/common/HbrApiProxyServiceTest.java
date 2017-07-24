@@ -20,13 +20,17 @@ import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import javax.net.ssl.SSLContext;
+
 import org.junit.Test;
 
 import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ReflectionUtils;
 import com.vmware.xenon.common.Service.Action;
+import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.test.VerificationHost;
 
 public class HbrApiProxyServiceTest {
 
@@ -135,7 +139,9 @@ public class HbrApiProxyServiceTest {
 
         String resourcePath = I18N_RESOURCE_SUBPATH + "/messages-en.json";
 
-        HbrApiProxyService service = new HbrApiProxyService() {
+        HbrApiProxyService service = new HbrApiProxyService();
+        service.setHost(VerificationHost.create());
+        ServiceClient client = new MockServiceClient() {
             @Override
             public void sendRequest(Operation op) {
                 URI targetUri = UriUtils.buildUri(SAMPLE_HARBOR_URL + resourcePath);
@@ -148,7 +154,12 @@ public class HbrApiProxyServiceTest {
         try {
             field.set(service, SAMPLE_HARBOR_URL);
         } catch (Throwable e) {
-            e.printStackTrace();
+        }
+
+        field = ReflectionUtils.getField(HbrApiProxyService.class, "client");
+        try {
+            field.set(service, client);
+        } catch (Throwable e) {
         }
 
         AtomicBoolean completed = new AtomicBoolean();
@@ -171,7 +182,9 @@ public class HbrApiProxyServiceTest {
         String movedLocation = "moved";
         URI targetUri = UriUtils.buildUri(SAMPLE_HARBOR_URL + SAMPLE_API_PATH);
 
-        HbrApiProxyService service = new HbrApiProxyService() {
+        HbrApiProxyService service = new HbrApiProxyService();
+        service.setHost(VerificationHost.create());
+        ServiceClient client = new MockServiceClient() {
             @Override
             public void sendRequest(Operation op) {
                 op.setStatusCode(Operation.STATUS_CODE_MOVED_PERM);
@@ -185,7 +198,12 @@ public class HbrApiProxyServiceTest {
         try {
             field.set(service, SAMPLE_HARBOR_URL);
         } catch (Throwable e) {
-            e.printStackTrace();
+        }
+
+        field = ReflectionUtils.getField(HbrApiProxyService.class, "client");
+        try {
+            field.set(service, client);
+        } catch (Throwable e) {
         }
 
         AtomicBoolean completed = new AtomicBoolean();
@@ -209,7 +227,10 @@ public class HbrApiProxyServiceTest {
     }
 
     private void testResponse(Action action, boolean testFailure) {
-        HbrApiProxyService service = new HbrApiProxyService() {
+        HbrApiProxyService service = new HbrApiProxyService();
+        service.setHost(VerificationHost.create());
+
+        ServiceClient client = new MockServiceClient() {
             @Override
             public void sendRequest(Operation op) {
 
@@ -235,7 +256,12 @@ public class HbrApiProxyServiceTest {
         try {
             field.set(service, SAMPLE_HARBOR_URL);
         } catch (Throwable e) {
-            e.printStackTrace();
+        }
+
+        field = ReflectionUtils.getField(HbrApiProxyService.class, "client");
+        try {
+            field.set(service, client);
+        } catch (Throwable e) {
         }
 
         AtomicBoolean completed = new AtomicBoolean();
@@ -260,5 +286,73 @@ public class HbrApiProxyServiceTest {
         service.handleRequest(actualOp);
 
         assertTrue(completed.get());
+    }
+
+    private static class MockServiceClient implements ServiceClient {
+        @Override
+        public void sendRequest(Operation op) {
+        }
+
+        @Override
+        public ServiceClient setSSLContext(SSLContext context) {
+            return null;
+        }
+
+        @Override
+        public SSLContext getSSLContext() {
+            return null;
+        }
+
+        @Override
+        public void start() {
+        }
+
+        @Override
+        public void handleMaintenance(Operation op) {
+        }
+
+        @Override
+        public void stop() {
+        }
+
+        @Override
+        public void send(Operation op) {
+            this.sendRequest(op);
+        }
+
+        @Override
+        public ServiceClient setConnectionLimitPerTag(String connectionTag, int limit) {
+            return null;
+        }
+
+        @Override
+        public int getConnectionLimitPerTag(String connectionTag) {
+            return 0;
+        }
+
+        @Override
+        public ServiceClient setPendingRequestQueueLimit(int limit) {
+            return null;
+        }
+
+        @Override
+        public int getPendingRequestQueueLimit() {
+            return 0;
+        }
+
+        @Override
+        public ServiceClient setRequestPayloadSizeLimit(int limit) {
+            return null;
+        }
+
+        @Override
+        public int getRequestPayloadSizeLimit() {
+            return 0;
+        }
+
+        @Override
+        public ConnectionPoolMetrics getConnectionPoolMetrics(String connectionTag) {
+            return null;
+        }
     }
 }
