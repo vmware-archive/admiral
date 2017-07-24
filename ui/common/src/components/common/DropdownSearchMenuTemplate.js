@@ -22,7 +22,7 @@ module.exports = function(componentOptions) {
   }
 
   return `
-    <div class="dropdown dropdown-select">
+    <div class="dropdown dropdown-select dropdown-search-menu">
       <button class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
         <div class="dropdown-title placeholder">${componentOptions.title}</div>
         <div class="loading hide">

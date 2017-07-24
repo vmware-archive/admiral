@@ -370,7 +370,7 @@ module.exports = class DropdownSearchMenu {
         return;
       }
       // Bootstrap-like hooks
-      $(document).on('click', '.dropdown', (e) => {
+      $(document).on('click', '.dropdown-search-menu', (e) => {
         e.preventDefault();
         e.stopImmediatePropagation();
 
@@ -379,7 +379,7 @@ module.exports = class DropdownSearchMenu {
       });
 
       $(document).on('click', () => {
-        $('.dropdown').removeClass('open');
+        $('.dropdown-search-menu').removeClass('open');
       });
 
       _hooksConfigured = true;
