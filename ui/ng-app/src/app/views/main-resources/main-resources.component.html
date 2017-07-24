@@ -13,8 +13,8 @@
   <section class="sidenav-content">
       <clr-dropdown clrMenuPosition="bottom-left" class="project-selector">
         <button class="btn btn-link" clrDropdownToggle>
-          <div *ngIf="embeddedMode" class="project-caret">Group <clr-icon shape="caret down"></clr-icon></div>
-          <div *ngIf="!embeddedMode" class="project-caret">Project <clr-icon shape="caret down"></clr-icon></div>
+          <div *ngIf="embeddedMode" class="project-caret">{{ "projects.globalSelectLabelEmbedded" | i18n }} <clr-icon shape="caret down"></clr-icon></div>
+          <div *ngIf="!embeddedMode" class="project-caret">{{ "projects.globalSelectLabel" | i18n }} <clr-icon shape="caret down"></clr-icon></div>
           <div class="project-label">{{selectedProject | projectName}}</div>
         </button>
         <clr-dropdown-menu>
@@ -24,13 +24,13 @@
       <!--a class="nav-link" routerLink="dashboard" routerLinkActive="active">Dashboard</a-->
       <section class="nav-group collapsible">
           <input id="deploymentsCollapse" type="checkbox">
-          <label for="deploymentsCollapse">Deployments</label>
+          <label for="deploymentsCollapse">{{ "navigation.home" | i18n }}</label>
           <ul class="nav-list">
-              <li><a class="nav-link" routerLink="applications" routerLinkActive="active">Applications</a></li>
-              <li><a class="nav-link" routerLink="containers" routerLinkActive="active">Containers</a></li>
-              <li><a class="nav-link" routerLink="networks" routerLinkActive="active">Networks</a></li>
-              <li><a class="nav-link" routerLink="volumes" routerLinkActive="active">Volumes</a></li>
-              <li *ngIf="areClosuresAllowed"><a class="nav-link" routerLink="closures" routerLinkActive="active">Closures</a></li>
+              <li><a class="nav-link" routerLink="applications" routerLinkActive="active">{{ "navigation.home" | i18n }}</a></li>
+              <li><a class="nav-link" routerLink="containers" routerLinkActive="active">{{ "navigation.containers" | i18n }}</a></li>
+              <li><a class="nav-link" routerLink="networks" routerLinkActive="active">{{ "navigation.networks" | i18n }}</a></li>
+              <li><a class="nav-link" routerLink="volumes" routerLinkActive="active">{{ "navigation.volumes" | i18n }}</a></li>
+              <li *ngIf="areClosuresAllowed"><a class="nav-link" routerLink="closures" routerLinkActive="active">{{ "navigation.closures" | i18n }}</a></li>
               <li *ngIf="kubernetesEnabled">
                   <section class="nav-group collapsible">
                       <input id="deploymentsCollapse" type="checkbox">
@@ -49,25 +49,25 @@
       </section>
       <section class="nav-group collapsible">
           <input id="libraryCollapse" type="checkbox">
-          <label for="libraryCollapse">Library</label>
+          <label for="libraryCollapse">{{ "navigation.library" | i18n }}</label>
           <ul class="nav-list">
-              <li><a class="nav-link" routerLink="templates" routerLinkActive="active">Templates</a></li>
-              <li *ngIf="isHbrEnabled"><a class="nav-link" routerLink="project-repositories" routerLinkActive="active">Project repositories</a></li>
-              <li><a class="nav-link" routerLink="public-repositories" routerLinkActive="active">Public repositories</a></li>
-              <li *ngIf="embeddedMode"><a class="nav-link" routerLink="registries" routerLinkActive="active">Registries</a></li>
-              <li *ngIf="areClosuresAllowed"><a class="nav-link" routerLink="closure-definitions" routerLinkActive="active">Closures</a></li>
+              <li><a class="nav-link" routerLink="templates" routerLinkActive="active">{{ "navigation.templates" | i18n }}</a></li>
+              <li *ngIf="isHbrEnabled"><a class="nav-link" routerLink="project-repositories" routerLinkActive="active">{{ "navigation.projectRepositories" | i18n }}</a></li>
+              <li><a class="nav-link" routerLink="public-repositories" routerLinkActive="active">{{ "navigation.publicRepositories" | i18n }}</a></li>
+              <li *ngIf="embeddedMode"><a class="nav-link" routerLink="registries" routerLinkActive="active">{{ "navigation.registries" | i18n }}</a></li>
+              <li *ngIf="areClosuresAllowed"><a class="nav-link" routerLink="closure-definitions" routerLinkActive="active">{{ "navigation.closures" | i18n }}</a></li>
           </ul>
       </section>
        <section class="nav-group collapsible">
           <input id="infrastructureCollapse" type="checkbox">
-          <label for="infrastructureCollapse">Infrastructure</label>
+          <label for="infrastructureCollapse">{{ "navigation.infrastructure" | i18n }}</label>
           <ul class="nav-list">
-              <li *ngIf="!embeddedMode"><a class="nav-link" routerLink="clusters" routerLinkActive="active">Clusters</a></li>
-              <li *ngIf="embeddedMode"><a class="nav-link" routerLink="hosts" routerLinkActive="active">Hosts</a></li>
+              <li *ngIf="!embeddedMode"><a class="nav-link" routerLink="clusters" routerLinkActive="active">{{ "navigation.clusters" | i18n }}</a></li>
+              <li *ngIf="embeddedMode"><a class="nav-link" routerLink="hosts" routerLinkActive="active">{{ "navigation.hosts" | i18n }}</a></li>
           </ul>
       </section>
-      <a *ngIf="embeddedMode" class="nav-link" routerLink="placements" routerLinkActive="active">Placements</a>
-      <a *ngIf="embeddedMode" class="nav-link" routerLink="identity-management" routerLinkActive="active">Identity Management</a>
+      <a *ngIf="embeddedMode" class="nav-link" routerLink="placements" routerLinkActive="active">{{ "navigation.placements" | i18n }}</a>
+      <a *ngIf="embeddedMode" class="nav-link" routerLink="identity-management" routerLinkActive="active">{{ "navigation.identityManagement" | i18n }}</a>
   </section>
 </nav>
 <!-- Content Area -->

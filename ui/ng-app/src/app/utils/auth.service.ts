@@ -12,6 +12,7 @@ function btoaEncode(s) {
 export class AuthService {
 
   private _cachedSessionContext: any;
+  private _cachedSessionContextErr: any;
   private _initialSessionPromise: Promise<any>;
 
   constructor(private documentService: DocumentService) {}
@@ -53,8 +54,9 @@ export class AuthService {
         this.loadCurrentUserSecurityContext().then((securityContext) => {
           this._cachedSessionContext = securityContext;
           resolve(this._cachedSessionContext);
-        }).catch((ex) => {
-          reject(ex);
+        }).catch(e => {
+          this._cachedSessionContextErr = e;
+          reject(e);
         });
       });
     }
@@ -63,7 +65,11 @@ export class AuthService {
       return this._initialSessionPromise;
     } else {
       return new Promise((resolve, reject) => {
-        resolve(this._cachedSessionContext);
+        if (this._cachedSessionContextErr) {
+          reject(this._cachedSessionContextErr);
+        } else {
+          resolve(this._cachedSessionContext);
+        }
       });
     }
   }

@@ -10,18 +10,21 @@
   -->
 
 <clr-main-container *ngIf="!isLogin">
-
-  <clr-alert *ngIf="showSessionTimeout" class="above-modal-backdrop"
-             [clrAlertType]="'alert-danger'" [clrAlertAppLevel]="true"
-             [clrAlertClosable]="false">
+  <clr-alert [clrAlertType]="'alert-danger'"
+    [clrAlertAppLevel]="true"
+    [clrAlertClosable]="false"
+    *ngIf="showSessionTimeout"
+    class="above-modal-backdrop">
     <div class="alert-item">
-        <span class="alert-text">{{"sessionExpired" | i18n }}</span>
+        <span class="alert-text">
+            {{ 'sessionExpired' | i18n }}
+        </span>
         <div class="alert-actions">
-            <button class="btn alert-action" (click)="reload()">{{"reload" | i18n}}</button>
+            <button class="btn alert-action"
+                (click)="reload()">{{ 'reload' | i18n }}</button>
         </div>
     </div>
   </clr-alert>
-
   <clr-header class="header-5" *ngIf="!embedded">
     <div class="branding">
         <a class="nav-link" routerLink="/" *ngIf="admiral">
@@ -38,11 +41,8 @@
         </a>
     </div>
     <div class="header-nav" *ngIf="!compute">
-        <a class="nav-link nav-text"
-           routerLink="/home" routerLinkActive="active">{{"header.navigation.home" | i18n}}</a>
-        <a class="nav-link nav-text"
-           allowNavigation [roles]="administrationRouteRestriction"
-           routerLink="/administration" routerLinkActive="active">{{"header.navigation.administration" | i18n}}</a>
+        <a class="nav-link nav-text" routerLink="/home" routerLinkActive="active">{{ "navigation.home" | i18n }}</a>
+        <a class="nav-link nav-text" allowNavigation [roles]="administrationRouteRestriction" routerLink="/administration" routerLinkActive="active">{{ "navigation.administration" | i18n }}</a>
     </div>
     <div class="header-actions">
         <clr-dropdown clrMenuPosition="bottom-right" class="dropdown" *ngIf="userName">
@@ -52,8 +52,7 @@
             </button>
             <div class="dropdown-menu">
                 <div class="dropdown-header" *ngIf="userNameDetail">{{userNameDetail}}</div>
-                <a href="..." clrDropdownItem>{{"header.actions.preferences" | i18n}}</a>
-                <a (click)="logout()" clrDropdownItem>{{"header.actions.logout" | i18n}}</a>
+                <a (click)="logout()" clrDropdownItem>{{"loginPanel.logout" | i18n: { "ns": "base" } }}</a>
             </div>
         </clr-dropdown>
     </div>
@@ -62,9 +61,7 @@
     <router-outlet></router-outlet>
   </div>
 </clr-main-container>
-
 <div *ngIf="isLogin">
-  <span style="display: none;"><router-outlet></router-outlet></span>
-
-  <login></login>
+    <span style="display: none"><router-outlet></router-outlet></span>
+    <login></login>
 </div>
