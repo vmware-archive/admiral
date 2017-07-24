@@ -29,6 +29,7 @@ import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService.Elast
 import com.vmware.admiral.compute.ElasticPlacementZoneService.ElasticPlacementZoneState;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.photon.controller.model.query.QueryUtils.QueryByPages;
+import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.TagFactoryService;
 import com.vmware.photon.controller.model.resources.TagService;
@@ -202,6 +203,7 @@ public class ComputePlacementPoolRelationTransformationService extends Stateless
                 // project
                 host.tenantLinks.add(ProjectService.DEFAULT_PROJECT_LINK);
             }
+            host.type = ComputeType.VM_GUEST;
 
             if (host.tagLinks == null) {
                 host.tagLinks = new HashSet<>();

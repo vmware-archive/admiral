@@ -176,7 +176,7 @@ public class ResourcePoolTransformationService extends StatelessService {
         if (placement.tenantLinks != null) {
             state.resourcePoolState.tenantLinks.addAll(placement.tenantLinks);
         }
-        Operation.createPatch(this, ElasticPlacementZoneConfigurationService.SELF_LINK)
+        Operation.createPost(this, ElasticPlacementZoneConfigurationService.SELF_LINK)
                 .setBody(state)
                 .setReferer(UriUtils.buildUri(getHost(), SELF_LINK))
                 .setCompletion((o, ex) -> {
