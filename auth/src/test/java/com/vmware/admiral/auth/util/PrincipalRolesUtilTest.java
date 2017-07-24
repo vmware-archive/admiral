@@ -30,6 +30,7 @@ import com.vmware.admiral.auth.idm.Principal;
 import com.vmware.admiral.auth.idm.PrincipalRoles;
 import com.vmware.admiral.auth.idm.PrincipalRolesHandler.PrincipalRoleAssignment;
 import com.vmware.admiral.auth.idm.PrincipalService;
+import com.vmware.admiral.auth.idm.SecurityContext;
 import com.vmware.admiral.auth.idm.SecurityContext.ProjectEntry;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalFactoryService;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalState;
@@ -360,5 +361,41 @@ public class PrincipalRolesUtilTest extends AuthBaseTest {
         assertEquals(2, connieRoles.roles.size());
         assertTrue(connieRoles.roles.contains(AuthRole.BASIC_USER));
         assertTrue(connieRoles.roles.contains(AuthRole.BASIC_USER_EXTENDED));
+    }
+
+    @Test
+    public void testGetSecurityContextForPrincipalAssignedAsViewer() throws Throwable {
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
+        ProjectRoles roles = new ProjectRoles();
+        roles.viewers = new PrincipalRoleAssignment();
+        roles.viewers.add = Collections.singletonList(USER_GROUP_DEVELOPERS);
+        ProjectState testProject = createProject("test-project");
+        assertNotNull(testProject.documentSelfLink);
+        doPatch(roles, testProject.documentSelfLink);
+
+        Operation getSecurityContext = Operation.createGet(host, UriUtils.buildUriPath(
+                PrincipalService.SELF_LINK, USER_GROUP_DEVELOPERS, PrincipalService
+                        .SECURITY_CONTEXT_SUFFIX));
+
+        DeferredResult<SecurityContext> securityContextDr = host.sendWithDeferredResult(
+                getSecurityContext, SecurityContext.class);
+
+        final SecurityContext[] securityContext = new SecurityContext[1];
+        TestContext ctx = testCreate(1);
+        securityContextDr.whenComplete((sc, ex) -> {
+            if (ex != null) {
+                ctx.fail(ex);
+                return;
+            }
+            securityContext[0] = sc;
+            ctx.completeIteration();
+        });
+        ctx.await();
+
+        assertEquals(1, securityContext[0].projects.size());
+        ProjectEntry entry = securityContext[0].projects.get(0);
+        assertEquals(testProject.name, entry.name);
+        assertEquals(testProject.documentSelfLink, entry.documentSelfLink);
+        assertTrue(securityContext[0].isProjectViewer(testProject.documentSelfLink));
     }
 }

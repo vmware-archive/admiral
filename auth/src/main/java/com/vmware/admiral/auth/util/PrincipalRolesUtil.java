@@ -362,7 +362,8 @@ public class PrincipalRolesUtil {
 
     private static boolean isProjectRole(RoleState roleState) {
         return roleState.documentSelfLink.contains(AuthRole.PROJECT_ADMIN.getSuffix())
-                || roleState.documentSelfLink.contains(AuthRole.PROJECT_MEMBER.getSuffix());
+                || roleState.documentSelfLink.contains(AuthRole.PROJECT_MEMBER.getSuffix())
+                || roleState.documentSelfLink.contains(AuthRole.PROJECT_VIEWER.getSuffix());
     }
 
     private static DeferredResult<ProjectState> getProjectState(ServiceHost host,
