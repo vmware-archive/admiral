@@ -17,6 +17,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import static com.vmware.admiral.compute.ComputeConstants.COMPUTE_PLACEMENT_CONSTRAINT_KEY;
+import static com.vmware.admiral.compute.ComputeConstants.COMPUTE_STORAGE_CONSTRAINT_KEY;
+
 import static com.vmware.admiral.request.util.TestRequestStateFactory.createGroupResourcePlacementState;
 import static com.vmware.admiral.request.util.TestRequestStateFactory.createTenantLinks;
 
@@ -36,7 +39,6 @@ import com.google.common.collect.Sets;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ElasticPlacementZoneService;
 import com.vmware.admiral.compute.ElasticPlacementZoneService.ElasticPlacementZoneState;
 import com.vmware.admiral.compute.PlacementZoneConstants;
@@ -478,7 +480,7 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         // - rpTag SOFT condition might be satisfied at ResPool level
         // - hostTag HARD condition should be satisfied at Host level
         // - hostTag SOFT condition might be satisfied at Host level
-        setConstraintToComputeDesc(hostDesc,
+        setConstraintToComputeDesc(hostDesc, COMPUTE_PLACEMENT_CONSTRAINT_KEY,
                 new ConditionSpec(rpTag_hard.key, rpTag_hard.value, /* hard */ true, false),
                 new ConditionSpec(rpTag_soft.key, rpTag_soft.value, /* soft */ false, false),
                 new ConditionSpec(hostTag_hard.key, hostTag_hard.value, /* hard */ true, false),
@@ -616,6 +618,47 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         ComputeDescription descPatch = new ComputeDescription();
         setConstraintToComputeDesc(descPatch, "cap", "pci", true, false);
         descPatch.diskDescLinks = buildDiskStateWithHardConstraint();
+        doPatch(descPatch, hostDesc.documentSelfLink);
+
+        ComputeReservationTaskState task = new ComputeReservationTaskState();
+        task.tenantLinks = groupPlacementState.tenantLinks;
+        task.resourceDescriptionLink = hostDesc.documentSelfLink;
+        task.resourceCount = 1;
+        task.serviceTaskCallback = ServiceTaskCallback.createEmpty();
+
+        task = doPost(task, ComputeReservationTaskService.FACTORY_LINK);
+        assertNotNull(task);
+
+        ComputeReservationTaskState taskState = waitForTaskError(task.documentSelfLink,
+                ComputeReservationTaskState.class);
+        assertTrue(taskState.taskInfo.failure.message
+                .contains("No matching storage defined in profile"));
+    }
+
+    @Test
+    public void testImageDiskUnSatisfiedHardRequirement() throws Throwable {
+        GroupResourcePlacementState groupPlacementState = TestRequestStateFactory
+                .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE);
+        groupPlacementState.resourcePoolLink = computeResourcePool.documentSelfLink;
+        groupPlacementState = doPost(groupPlacementState,
+                GroupResourcePlacementService.FACTORY_LINK);
+        addForDeletion(groupPlacementState);
+
+        TagState tag = new TagState();
+        tag.key = "cap";
+        tag.value = "pci";
+        tag.tenantLinks = TestRequestStateFactory
+                .createTenantLinks(TestRequestStateFactory.TENANT_NAME);
+        tag = doPost(tag, TagService.FACTORY_LINK);
+
+        ResourcePoolState rpPatch = new ResourcePoolState();
+        rpPatch.tagLinks = Collections.singleton(tag.documentSelfLink);
+        doPatch(rpPatch, computeResourcePool.documentSelfLink);
+
+        ComputeDescription descPatch = new ComputeDescription();
+        setConstraintToComputeDesc(descPatch, "cap", "pci", true, false);
+        setConstraintToComputeDesc(descPatch, COMPUTE_STORAGE_CONSTRAINT_KEY,
+                new ConditionSpec("HA", "", true, false));
         doPatch(descPatch, hostDesc.documentSelfLink);
 
         ComputeReservationTaskState task = new ComputeReservationTaskState();
@@ -775,7 +818,7 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
     }
 
     private static void setConstraintToComputeDesc(
-            ComputeDescription computeDesc, ConditionSpec... constraintSpecs) {
+            ComputeDescription computeDesc, String constraintKey, ConditionSpec... constraintSpecs) {
 
         final Constraint constraint = new Constraint();
         constraint.conditions = Arrays.stream(constraintSpecs)
@@ -786,15 +829,15 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
                         constraintSpec.isAnti))
                 .collect(Collectors.toList());
 
-        computeDesc.constraints = Collections.singletonMap(
-                ComputeConstants.COMPUTE_PLACEMENT_CONSTRAINT_KEY, constraint);
+        computeDesc.constraints = Collections.singletonMap(constraintKey, constraint);
     }
 
     private static void setConstraintToComputeDesc(ComputeDescription computeDesc,
             String tagKey, String tagValue, boolean isHard, boolean isAnti) {
 
-        setConstraintToComputeDesc(computeDesc, new ConditionSpec(
-                tagKey, tagValue, isHard, isAnti));
+        setConstraintToComputeDesc(computeDesc, COMPUTE_PLACEMENT_CONSTRAINT_KEY,
+                new ConditionSpec(
+                        tagKey, tagValue, isHard, isAnti));
     }
 
     private ArrayList<String> buildDiskStateWithHardConstraint() throws Throwable {

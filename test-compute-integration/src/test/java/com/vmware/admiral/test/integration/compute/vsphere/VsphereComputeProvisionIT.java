@@ -43,7 +43,6 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
     static final String VSPHERE_COMPUTE_PROFILE = "/config/compute-profiles/vsphere";
     static final String VSPHERE_DISK_URI = System.getProperty("test.vc.disk.uri",
             "vc://datastore/sof-20659-local/coreos-991.1.0/coreos-991.1.0.vmdk");
-    private static final long HDD_DISK_SIZE = 61 * 1024;
     final String DISK_URI_IMAGE_ID = "coreos-disk";
 
     @Override
@@ -58,11 +57,6 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
 
         executeDay2(resourceLinks, ComputeOperationType.POWER_OFF);
         waitForComputePowerState(PowerState.OFF, resourceLinks);
-    }
-
-    @Override
-    protected long getRootDiskSize() {
-        return HDD_DISK_SIZE;
     }
 
     private void executeDay2(Set<String> resourceLinks, ComputeOperationType computeOperation)

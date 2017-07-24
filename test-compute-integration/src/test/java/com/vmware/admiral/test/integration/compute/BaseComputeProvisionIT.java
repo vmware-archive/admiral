@@ -92,7 +92,6 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
-import com.vmware.photon.controller.model.resources.DiskService;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService;
 import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;
@@ -294,6 +293,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
             assertNotNull(computeState);
             computesToDelete.put(link, computeState);
         }
+        logger.info("Allocation of compute request completed successfully");
 
         RequestBrokerState provisionRequest = requestCompute(resourceDescriptionLink, false,
                 allocateRequest.resourceLinks);
@@ -304,6 +304,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         for (String link : allocateRequest.resourceLinks) {
             computesToDelete.remove(link);
         }
+        logger.info("Provisioning of compute request completed successfully");
         return provisionRequest;
     }
 
@@ -421,7 +422,9 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         docs.forEach(d -> {
             try {
                 postDocument(UriUtils.getParentPath(d.documentSelfLink), d);
+                logger.info("%s created successfully", d.documentSelfLink);
             } catch (Exception e) {
+                logger.info("%s failed to create", d.documentSelfLink);
                 throw new RuntimeException(e);
             }
         });
@@ -482,27 +485,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
     }
 
     protected List<String> createDiskStates() throws Exception {
-        List<String> diskLinks = new ArrayList<>();
-        diskLinks.add(prepareRootDisk().documentSelfLink);
-        return diskLinks;
-    }
-
-    protected DiskService.DiskState prepareRootDisk() throws Exception {
-        DiskService.DiskState rootDisk = new DiskService.DiskState();
-        rootDisk.id = UUID.randomUUID().toString();
-        rootDisk.documentSelfLink = rootDisk.id;
-        rootDisk.name = "boot-disk";
-        rootDisk.type = DiskService.DiskType.HDD;
-        rootDisk.bootOrder = 1;
-        rootDisk.capacityMBytes = getRootDiskSize();
-
-        rootDisk = postDocument(DiskService.FACTORY_LINK, rootDisk, documentLifeCycle);
-
-        return rootDisk;
-    }
-
-    protected long getRootDiskSize() {
-        return DEFAULT_DISK_SIZE;
+        return Collections.emptyList();
     }
 
     protected ComputeDescription prepareComputeDescription(String imageId) throws Exception {
@@ -885,5 +868,4 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
 
         waitForTaskToComplete(d2oRequest.documentSelfLink);
     }
-
 }

@@ -43,11 +43,10 @@ import com.vmware.xenon.services.common.QueryTask;
 
 public class AzureComputeProvisionWithBootAndAdditionalDiskIT extends AzureComputeProvisionIT {
 
-    private static final long OS_DISK_SIZE = 32 * 1024;
     private static final long ADDITIONAL_DISK_SIZE = 12 * 1024;
 
     private static final Map<String, String> tagMap = new HashMap<>();
-    public static final String OSDISK_NAME = "OSDisk";
+    public static final String OSDISK_NAME = "boot-disk";
     public static final String DATA_DISK_NAME = "DataDisk";
     public static final String RESOURCE_GROUP_FOR_SUBNET = "ittestdefaultrgforsubnet";
     public static final String VIRTUAL_NETWORK = "defaultvNetForIT";
@@ -56,13 +55,9 @@ public class AzureComputeProvisionWithBootAndAdditionalDiskIT extends AzureCompu
     private static AzureSdkClients azureSdkClients;
     public AuthCredentialsService.AuthCredentialsServiceState auth;
 
-    @Override protected String getResourceDescriptionLink() throws Exception {
-        return getResourceDescriptionLink(true, null);
-    }
-
     @Override
-    protected long getRootDiskSize() {
-        return OS_DISK_SIZE;
+    protected String getResourceDescriptionLink() throws Exception {
+        return getResourceDescriptionLink(true, null);
     }
 
     @Override
@@ -106,16 +101,16 @@ public class AzureComputeProvisionWithBootAndAdditionalDiskIT extends AzureCompu
 
         createProfile(loadComputeProfile(getEndpointType()), createNetworkProfile(
                 SUBNET, null, null), createStorageProfile());
+        logger.info("[AzureComputeProvisionWithBootAndAdditionalDiskIT] Set up of profiles completed successfully.");
     }
 
     @Override
     protected void validateDisks(List<String> diskLinks) throws Exception {
         for (String diskLink : diskLinks) {
             DiskService.DiskState diskState = getDocument(diskLink, DiskService.DiskState.class);
-            switch (diskState.bootOrder) {
-            case 1:
+            switch (diskState.name) {
+            case "boot-disk":
                 assertEquals(OSDISK_NAME, diskState.name);
-                assertEquals(OS_DISK_SIZE, diskState.capacityMBytes);
                 assertNotNull(diskState.customProperties);
 
                 assertTrue(diskState.customProperties.containsKey("azureStorageAccountType"));
@@ -130,7 +125,7 @@ public class AzureComputeProvisionWithBootAndAdditionalDiskIT extends AzureCompu
                 assertTrue(diskState.customProperties.containsKey("azureDataDiskCaching"));
                 assertEquals("ReadWrite", diskState.customProperties.get("azureDataDiskCaching"));
                 break;
-            case 2:
+            case "DataDisk":
                 assertEquals(DATA_DISK_NAME, diskState.name);
                 assertEquals(ADDITIONAL_DISK_SIZE, diskState.capacityMBytes);
                 assertNotNull(diskState.customProperties);
@@ -179,23 +174,11 @@ public class AzureComputeProvisionWithBootAndAdditionalDiskIT extends AzureCompu
     private List<String> constructDisks() throws Exception {
         List<String> diskStateLinks = new ArrayList<>();
 
-        DiskService.DiskState bootDisk = new DiskService.DiskState();
-        bootDisk.id = UUID.randomUUID().toString();
-        bootDisk.documentSelfLink = bootDisk.id;
-        bootDisk.name = OSDISK_NAME;
-        bootDisk.type = DiskService.DiskType.HDD;
-        bootDisk.bootOrder = 1;
-        bootDisk.capacityMBytes = OS_DISK_SIZE;
-
-        bootDisk = postDocument(DiskService.FACTORY_LINK, bootDisk, documentLifeCycle);
-        diskStateLinks.add(bootDisk.documentSelfLink);
-
         DiskService.DiskState additionalDisk = new DiskService.DiskState();
         additionalDisk.id = UUID.randomUUID().toString();
         additionalDisk.documentSelfLink = additionalDisk.id;
         additionalDisk.name = DATA_DISK_NAME;
         additionalDisk.type = DiskService.DiskType.HDD;
-        additionalDisk.bootOrder = 2;
         additionalDisk.capacityMBytes = ADDITIONAL_DISK_SIZE;
         additionalDisk.constraint = getConstraint("premium", Constraint.Condition.Enforcement.HARD,
                 QueryTask.Query.Occurance.MUST_OCCUR );
@@ -278,6 +261,4 @@ public class AzureComputeProvisionWithBootAndAdditionalDiskIT extends AzureCompu
 
         azureSdkClients.getResourceManagementClientImpl().resourceGroups().createOrUpdate(resourceGroupName, resourceGroupToCreate);
     }
-
-
 }

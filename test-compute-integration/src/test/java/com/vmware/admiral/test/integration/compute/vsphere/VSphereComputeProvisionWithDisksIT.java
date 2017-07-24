@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import com.vmware.admiral.common.util.YamlMapper;
@@ -38,7 +39,6 @@ import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 public class VSphereComputeProvisionWithDisksIT extends VsphereComputeProvisionIT {
 
     private static final String DEFAULT_SUBNET_NAME = "VM Network";
-    private static final long BOOT_DISK_SIZE = 62 * 1024L;
     private static final long NEW_DISK_SIZE = 3 * 1024L;
     private static final String GENERAL_DISK = "general";
     private static final String FAST_DISK = "fast";
@@ -57,21 +57,26 @@ public class VSphereComputeProvisionWithDisksIT extends VsphereComputeProvisionI
     }
 
     @Override
+    protected void doWithResources(Set<String> resourceLinks) throws Throwable {
+        validateHostState(resourceLinks,
+                com.vmware.photon.controller.model.resources.ComputeService.PowerState.ON);
+    }
+
+    @Override
     protected void validateDisks(List<String> diskLinks) throws Exception {
         for (String diskLink : diskLinks) {
             DiskService.DiskState diskState = getDocument(diskLink, DiskService.DiskState.class);
             switch (diskState.name) {
-            case "disk-1":
-                assertEquals("disk-1", diskState.name);
-                assertEquals(BOOT_DISK_SIZE, diskState.capacityMBytes);
+            case "boot-disk":
+                assertEquals("boot-disk", diskState.name);
                 assertNotNull(diskState.customProperties);
                 assertTrue(diskState.customProperties.containsKey(PROVISIONING_TYPE));
                 assertEquals("thin", diskState.customProperties.get(PROVISIONING_TYPE));
                 assertTrue(diskState.customProperties.containsKey(SHARES_LEVEL));
                 assertEquals("normal", diskState.customProperties.get(SHARES_LEVEL));
                 break;
-            case "disk-2":
-                assertEquals("disk-2", diskState.name);
+            case "disk-1":
+                assertEquals("disk-1", diskState.name);
                 assertEquals(NEW_DISK_SIZE, diskState.capacityMBytes);
                 assertNotNull(diskState.customProperties);
                 assertTrue(diskState.customProperties.containsKey(SHARES_LEVEL));
@@ -79,8 +84,8 @@ public class VSphereComputeProvisionWithDisksIT extends VsphereComputeProvisionI
                 assertTrue(diskState.customProperties.containsKey(INDEPENDENT));
                 assertEquals("true", diskState.customProperties.get(INDEPENDENT));
                 break;
-            case "disk-3":
-                assertEquals("disk-3", diskState.name);
+            case "disk-2":
+                assertEquals("disk-2", diskState.name);
                 assertEquals(NEW_DISK_SIZE, diskState.capacityMBytes);
                 assertNotNull(diskState.customProperties);
                 assertTrue(diskState.customProperties.containsKey(LIMIT_IOPS));
@@ -181,17 +186,13 @@ public class VSphereComputeProvisionWithDisksIT extends VsphereComputeProvisionI
 
     private List<String> constructDisks() throws Exception {
         List<String> diskStateLinks = new ArrayList<>();
-        for (int i = 1; i <= 3; i++) {
+        for (int i = 1; i <= 2; i++) {
             DiskService.DiskState disk = new DiskService.DiskState();
             disk.id = UUID.randomUUID().toString();
             disk.documentSelfLink = disk.id;
             disk.name = "disk-" + i;
             disk.type = DiskService.DiskType.HDD;
-            if (i == 1) {
-                disk.bootOrder = 1;
-            }
-            disk.capacityMBytes = getDiskSize(i);
-            disk.persistent = true;
+            disk.capacityMBytes = NEW_DISK_SIZE;
             disk.constraint = addConstraint(i);
             disk = postDocument(DiskService.FACTORY_LINK, disk, documentLifeCycle);
             diskStateLinks.add(disk.documentSelfLink);
@@ -199,25 +200,13 @@ public class VSphereComputeProvisionWithDisksIT extends VsphereComputeProvisionI
         return diskStateLinks;
     }
 
-    private long getDiskSize(int index) {
-        switch (index) {
-        case 1:
-            return BOOT_DISK_SIZE;
-        default:
-            return NEW_DISK_SIZE;
-        }
-    }
-
     private Constraint addConstraint(int index) {
         switch (index) {
         case 1:
-            //No constraint to boot disk. Should use the default item.
-            break;
-        case 2:
             //add hard constraint for first additional disk
             return getConstraint(GENERAL_DISK, Enforcement.HARD,
                     Occurance.MUST_OCCUR);
-        case 3:
+        case 2:
             //add soft constraint for second additional disk
             return getConstraint(FAST_DISK, Enforcement.SOFT,
                     Occurance.SHOULD_OCCUR);

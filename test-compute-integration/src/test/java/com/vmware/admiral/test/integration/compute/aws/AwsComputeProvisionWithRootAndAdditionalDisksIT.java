@@ -38,7 +38,6 @@ public class AwsComputeProvisionWithRootAndAdditionalDisksIT extends AwsComputeP
 
     private static final String AWS_DEFAULT_SUBNET_NAME = "subnet1";
     private static final String AWS_SECONDARY_SUBNET_NAME = "subnet2";
-    private static final long BOOT_DISK_SIZE = 32 * 1024L;
     private static final long NEW_DISK_SIZE = 16 * 1024L;
     private static final String GENERAL_DISK = "general";
     private static final String FAST_DISK = "fast";
@@ -54,6 +53,7 @@ public class AwsComputeProvisionWithRootAndAdditionalDisksIT extends AwsComputeP
 
         createProfile(loadComputeProfile(getEndpointType()), createNetworkProfile(
                 AWS_DEFAULT_SUBNET_NAME, null, null), createStorageProfile(""));
+        logger.info("[AwsComputeProvisionWithRootAndAdditionalDisksIT] Set up of profiles completed successfully.");
     }
 
     @Override
@@ -61,22 +61,21 @@ public class AwsComputeProvisionWithRootAndAdditionalDisksIT extends AwsComputeP
         for (String diskLink : diskLinks) {
             DiskService.DiskState diskState = getDocument(diskLink, DiskService.DiskState.class);
             switch (diskState.name) {
-            case "disk-1":
-                assertEquals("disk-1", diskState.name);
-                assertEquals(BOOT_DISK_SIZE, diskState.capacityMBytes);
+            case "boot-disk":
+                assertEquals("boot-disk", diskState.name);
                 assertNotNull(diskState.customProperties);
                 assertTrue(diskState.customProperties.containsKey(VOLUME_TYPE));
                 assertEquals("standard", diskState.customProperties.get(VOLUME_TYPE));
                 break;
-            case "disk-2":
-                assertEquals("disk-2", diskState.name);
+            case "disk-1":
+                assertEquals("disk-1", diskState.name);
                 assertEquals(NEW_DISK_SIZE, diskState.capacityMBytes);
                 assertNotNull(diskState.customProperties);
                 assertTrue(diskState.customProperties.containsKey(VOLUME_TYPE));
                 assertEquals("gp2", diskState.customProperties.get(VOLUME_TYPE));
                 break;
-            case "disk-3":
-                assertEquals("disk-3", diskState.name);
+            case "disk-2":
+                assertEquals("disk-2", diskState.name);
                 assertEquals(NEW_DISK_SIZE, diskState.capacityMBytes);
                 assertNotNull(diskState.customProperties);
                 assertTrue(diskState.customProperties.containsKey(VOLUME_TYPE));
@@ -169,16 +168,13 @@ public class AwsComputeProvisionWithRootAndAdditionalDisksIT extends AwsComputeP
      */
     private List<String> constructDisks() throws Exception {
         List<String> diskStateLinks = new ArrayList<>();
-        for (int i = 1; i <= 3; i++) {
+        for (int i = 1; i <= 2; i++) {
             DiskService.DiskState disk = new DiskService.DiskState();
             disk.id = UUID.randomUUID().toString();
             disk.documentSelfLink = disk.id;
             disk.name = "disk-" + i;
             disk.type = DiskService.DiskType.HDD;
-            if (i == 1) {
-                disk.bootOrder = 1;
-            }
-            disk.capacityMBytes = getDiskSize(i);
+            disk.capacityMBytes = NEW_DISK_SIZE;
             disk.constraint = addConstraint(i);
             disk = postDocument(DiskService.FACTORY_LINK, disk, documentLifeCycle);
             diskStateLinks.add(disk.documentSelfLink);
@@ -189,13 +185,10 @@ public class AwsComputeProvisionWithRootAndAdditionalDisksIT extends AwsComputeP
     private Constraint addConstraint(int index) {
         switch (index) {
         case 1:
-            //No constraint to boot disk. Should use the default item.
-            break;
-        case 2:
             //add hard constraint for first additional disk
             return getConstraint(GENERAL_DISK, Enforcement.HARD,
                     Occurance.MUST_OCCUR);
-        case 3:
+        case 2:
             //add soft constraint for second additional disk
             return getConstraint(FAST_DISK, Enforcement.SOFT,
                     Occurance.SHOULD_OCCUR);
@@ -212,14 +205,5 @@ public class AwsComputeProvisionWithRootAndAdditionalDisksIT extends AwsComputeP
         Constraint constraint = new Constraint();
         constraint.conditions = conditions;
         return constraint;
-    }
-
-    private long getDiskSize(int bootOrder) {
-        switch (bootOrder) {
-        case 1:
-            return BOOT_DISK_SIZE;
-        default:
-            return NEW_DISK_SIZE;
-        }
     }
 }

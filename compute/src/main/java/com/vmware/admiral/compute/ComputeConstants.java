@@ -59,6 +59,7 @@ public class ComputeConstants {
     public static final String HOST_URI_PROP_NAME = "__hostURI";
 
     public static final String COMPUTE_PLACEMENT_CONSTRAINT_KEY = "placement";
+    public static final String COMPUTE_STORAGE_CONSTRAINT_KEY = "storage";
 
     public static final String OVA_URI = "ova.uri";
     public static final String OVF_PROP_PREFIX = "ovf.prop:";
