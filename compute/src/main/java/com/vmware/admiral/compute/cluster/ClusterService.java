@@ -534,9 +534,7 @@ public class ClusterService extends StatelessService {
         hs.hostState.customProperties.put(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME,
                 PropertyUtils.getPropertyString(hostSpec.hostState.customProperties,
                         ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME)
-                        .orElseThrow(() -> new LocalizableValidationException(
-                                "Certificate must not be null.",
-                                "common.certificate.null")));
+                        .orElse(null));
 
         sendWithDeferredResult(Operation
                 .createPut(UriUtils.buildUri(getHost(),
