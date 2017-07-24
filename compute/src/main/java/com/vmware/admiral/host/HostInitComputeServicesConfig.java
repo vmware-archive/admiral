@@ -102,6 +102,7 @@ import com.vmware.admiral.compute.transformation.ResourcePoolTransformationServi
 import com.vmware.admiral.service.common.UrlEncodedReverseProxyService;
 import com.vmware.admiral.service.test.MockConfigureHostOverSshTaskServiceWithoutValidate;
 import com.vmware.admiral.service.test.MockContainerHostService;
+import com.vmware.iaas.consumer.api.service.MachineService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -145,7 +146,8 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 FetchDataGatewayService.class,
                 ClusterService.class,
                 ResourcePoolTransformationService.class,
-                InstanceTypeFactoryService.class);
+                InstanceTypeFactoryService.class,
+                MachineService.class);
 
         startServiceFactories(host, CaSigningCertService.class,
                 GroupResourcePlacementService.class,

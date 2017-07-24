@@ -21,53 +21,34 @@
         <version>1.2.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>admiral-compute</artifactId>
+    <groupId>com.vmware.admiral</groupId>
+    <artifactId>consumer-iaas-api</artifactId>
+    <version>1.2.0-SNAPSHOT</version>
     <packaging>jar</packaging>
+
+
+    <properties>
+        <maven.plugin.exec.version>1.5.0</maven.plugin.exec.version>
+    </properties>
 
     <dependencies>
         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>admiral-common</artifactId>
-            <version>${project.version}</version>
+            <groupId>${xenon.group}</groupId>
+            <artifactId>xenon-common</artifactId>
         </dependency>
         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>admiral-adapter-common</artifactId>
-            <version>${project.version}</version>
+            <groupId>${xenon.group}</groupId>
+            <artifactId>xenon-swagger-adapter</artifactId>
         </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>admiral-adapter-registry</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>admiral-adapter-extensibility</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
+        <dependency><!-- TODO: Do we really need to expose Photon Model types? -->
             <groupId>com.vmware.photon.controller</groupId>
             <artifactId>photon-model</artifactId>
         </dependency>
-
         <dependency>
-            <groupId>com.vmware.admiral.closures</groupId>
-            <artifactId>admiral-closure-services</artifactId>
-            <version>${project.version}</version>
+            <groupId>com.vmware.admiral</groupId>
+            <artifactId>admiral-common</artifactId>
+            <version>1.2.0-SNAPSHOT</version>
         </dependency>
-
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>consumer-iaas-api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-        </dependency>
-
         <!-- TEST -->
         <dependency>
             <groupId>${project.groupId}</groupId>
@@ -77,4 +58,26 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>${maven.plugin.exec.version}</version>
+                <configuration>
+                    <executable>java</executable>
+                    <arguments>
+                        <argument>-classpath</argument>
+                        <classpath/>
+                        <argument>com.vmware.iaas.consumer.api.Host</argument>
+                    </arguments>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+    
+
+
+
 </project>

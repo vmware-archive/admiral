@@ -44,6 +44,7 @@
         <module>host</module>
         <module>adapter</module>
         <module>upgrade</module>
+        <module>consumer-iaas-api</module>
     </modules>
 
     <properties>
