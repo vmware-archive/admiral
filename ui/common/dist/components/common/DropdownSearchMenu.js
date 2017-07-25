@@ -306,14 +306,14 @@ module.exports = (function () {
             return;
         }
         // Bootstrap-like hooks
-        $(document).on('click', '.dropdown', function (e) {
+        $(document).on('click', '.dropdown-search-menu', function (e) {
             e.preventDefault();
             e.stopImmediatePropagation();
             var $dropdown = $(e.currentTarget);
             $dropdown.toggleClass('open');
         });
         $(document).on('click', function () {
-            $('.dropdown').removeClass('open');
+            $('.dropdown-search-menu').removeClass('open');
         });
         _hooksConfigured = true;
     };
