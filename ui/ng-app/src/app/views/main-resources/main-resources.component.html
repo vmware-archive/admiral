@@ -63,7 +63,7 @@
           <label for="infrastructureCollapse">Infrastructure</label>
           <ul class="nav-list">
               <li *ngIf="!embeddedMode"><a class="nav-link" routerLink="clusters" routerLinkActive="active">Clusters</a></li>
-              <li><a class="nav-link" routerLink="hosts" routerLinkActive="active">Hosts</a></li>
+              <li *ngIf="embeddedMode"><a class="nav-link" routerLink="hosts" routerLinkActive="active">Hosts</a></li>
           </ul>
       </section>
       <a *ngIf="embeddedMode" class="nav-link" routerLink="placements" routerLinkActive="active">Placements</a>
