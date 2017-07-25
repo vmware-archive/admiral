@@ -17,8 +17,6 @@ import java.util.List;
 import java.util.concurrent.CompletionException;
 
 import com.vmware.admiral.common.util.PropertyUtils;
-import com.vmware.admiral.common.util.QueryUtil;
-import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService.ElasticPlacementZoneConfigurationState;
@@ -30,14 +28,13 @@ import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
+import com.vmware.photon.controller.model.tasks.helpers.ResourcePoolQueryHelper;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.UriUtils;
-import com.vmware.xenon.services.common.QueryTask;
-import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 
 public class ClusterUtils {
@@ -62,34 +59,28 @@ public class ClusterUtils {
         if (resourcePoolLink == null) {
             return null;
         }
-
-        Query.Builder queryBuilder = Query.Builder.create()
-                .addKindFieldClause(ComputeState.class)
-                .addFieldClause(ComputeState.FIELD_NAME_RESOURCE_POOL_LINK, resourcePoolLink)
-                .addCompositeFieldClause(ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
-                        ComputeConstants.COMPUTE_CONTAINER_HOST_PROP_NAME, "true");
-
-        if (projectLink != null && !projectLink.isEmpty()) {
-            queryBuilder.addInCollectionItemClause(ComputeState.FIELD_NAME_TENANT_LINKS,
-                    Collections.singletonList(projectLink), Occurance.MUST_OCCUR);
-        }
-
-        Query query = queryBuilder.build();
-
-        QueryTask queryTask = QueryUtil.buildQuery(ComputeState.class, true, query);
-        QueryUtil.addExpandOption(queryTask);
-
-        List<ComputeState> computeStates = new ArrayList<>();
-
         DeferredResult<List<ComputeState>> result = new DeferredResult<>();
 
-        new ServiceDocumentQuery<>(host, ComputeState.class).query(queryTask, r -> {
-            if (r.hasException()) {
-                result.fail(r.getException());
-            } else if (r.hasResult()) {
-                computeStates.add(r.getResult());
+        ResourcePoolQueryHelper helper = ResourcePoolQueryHelper.createForResourcePool(host,
+                resourcePoolLink);
+        helper.setExpandComputes(true);
+        helper.setAdditionalQueryClausesProvider(qb -> {
+            qb.addCompositeFieldClause(ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
+                    ComputeConstants.COMPUTE_CONTAINER_HOST_PROP_NAME, "true");
+        });
+
+        if (projectLink != null && !projectLink.isEmpty()) {
+            helper.setAdditionalQueryClausesProvider(qb -> {
+                qb.addInCollectionItemClause(ComputeState.FIELD_NAME_TENANT_LINKS,
+                        Collections.singletonList(projectLink), Occurance.MUST_OCCUR);
+            });
+        }
+
+        helper.query((qr) -> {
+            if (qr.error != null) {
+                result.fail(qr.error);
             } else {
-                result.complete(computeStates);
+                result.complete(new ArrayList<>(qr.computesByLink.values()));
             }
         });
 
