@@ -366,7 +366,7 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
         patchTaskStage(request, TaskStage.FAILED, e);
     }
 
-    protected void fail(AdapterRequest request, Operation o, Throwable e) {
+    protected Throwable fail(AdapterRequest request, Operation o, Throwable e) {
         if (o != null && o.getBodyRaw() != null) {
             String reason = normalizeDockerError(o.getBody(String.class));
             String errMsg = String.format("%s; Reason: %s", e.getMessage(), Utils.toJson(reason));
@@ -374,6 +374,7 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
             e = new Exception(errMsg, e);
         }
         fail(request, e);
+        return e;
     }
 
     protected void handleExceptions(AdapterRequest request, Operation op, Runnable function) {

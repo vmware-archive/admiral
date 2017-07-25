@@ -509,7 +509,7 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
                         commandInput,
                         (currentOpr, currentEx) -> {
                             if (currentEx != null) {
-                                op.fail(currentEx);
+                                op.fail(fail(request, currentOpr, currentEx));
                             } else {
                                 op.complete();
                             }
