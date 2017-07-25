@@ -11,7 +11,6 @@
 
 package com.vmware.admiral.unikernels.osv.compilation.service;
 
-import java.io.IOException;
 import java.net.URI;
 
 import com.vmware.admiral.unikernels.osv.compilation.CommandExecutor;
@@ -30,6 +29,7 @@ public class CompilationTaskService
     public static final String FACTORY_LINK = UnikernelManagementURIParts.COMPILE_TASK;
 
     public static final CommandExecutor executor = new CommandExecutor();
+    private String downloadLink = "";
 
     public enum SubStage {
         PULLING_SOURCES, CREATING_CAPSTAN, COMPILING, TARGETING_IMAGE
@@ -107,12 +107,13 @@ public class CompilationTaskService
             break;
         case FINISHED:
             System.out.println("Task finished successfully");
-                            //cb                      task host
-            sendCB(patch, patchBody.data.successCB, patchBody.data.creationTaskServiceURI);
+            // cb task host
+            sendCB(patch, patchBody.data.successCB, patchBody.data.creationTaskServiceURI,
+                    downloadLink);
             logInfo("Task finished successfully");
             break;
         case FAILED:
-            sendCB(patch, patchBody.data.failureCB); // test
+            sendCB(patch, patchBody.data.failureCB, patchBody.data.creationTaskServiceURI);
             logWarning("Task failed: %s", (patchBody.failureMessage == null ? "No reason given"
                     : patchBody.failureMessage));
             break;
@@ -123,7 +124,7 @@ public class CompilationTaskService
     }
 
     private void sendCB(Operation patch, String... callbackData) {
-        // cbLink                           //cbLink
+        // cbLink //cbLink
         URI requestUri = UriUtils.buildUri(callbackData[0]);
         Operation request = Operation
                 .createPost(requestUri)
@@ -153,41 +154,52 @@ public class CompilationTaskService
     }
 
     private void handlePullSources(CompilationTaskServiceState task) {
-        String checkoutCommand = "cd ; git clone " + task.data.sources; // pull in main folder
+        String checkoutCommand = "cd ; git clone " + task.data.sources; // pull in home folder
+
+        logInfo("PULLING SOURCES");
+
         try {
             executor.execute(new String[] { "bash", "-c", checkoutCommand });
-        } catch (IOException e) {
+        } catch (Exception e) {
             task.taskInfo.stage = TaskStage.FAILED;
             e.printStackTrace();
+            logWarning(e.getMessage());
         }
 
-        System.out.println("PULLING SOURCES");
-        sendSelfPatch(task, TaskStage.STARTED, SubStage.CREATING_CAPSTAN);
+        sendSelfPatch(task, task.taskInfo.stage, SubStage.CREATING_CAPSTAN);
     }
 
     private void handleCreateCapstan(CompilationTaskServiceState task) {
-        String[] parsedLink = task.data.sources.split("/");
-        String folderName = parsedLink[parsedLink.length - 1];
-        folderName = folderName.substring(0, folderName.length() - 4); // remove .git extension
-
+        String folderName = getFolderNameFromPath(task.data.sources);
         String creationCommand = "cd ~/" + folderName + " ; touch Capstanfile ; printf '"
                 + task.data.capstanfile + "' >> Capstanfile";
+
+        logInfo("CREATING CAPSTAN");
+
         try {
             executor.execute(new String[] { "bash", "-c", creationCommand });
         } catch (Exception e) {
             task.taskInfo.stage = TaskStage.FAILED;
             e.printStackTrace();
+            logWarning(e.getMessage());
         }
 
-        System.out.println("CREATING CAPSTAN");
-        sendSelfPatch(task, TaskStage.STARTED, SubStage.COMPILING);
+        System.out.println("CREATED CAPSTAN");
+        sendSelfPatch(task, task.taskInfo.stage, SubStage.COMPILING);
+    }
+
+    private String getFolderNameFromPath(String path) {
+        String[] parsedLink = path.split("/");
+        String folderName = parsedLink[parsedLink.length - 1];
+        return folderName.substring(0,
+                folderName.length() - 4); // remove .git extension
     }
 
     private void handleCompilingCapstan(CompilationTaskServiceState task) {
-        String[] parsedLink = task.data.sources.split("/");
-        String folderName = parsedLink[parsedLink.length - 1];
-        folderName = folderName.substring(0, folderName.length() - 4); // remove .git extension
+        String folderName = getFolderNameFromPath(task.data.sources);
         String compilationCommand = "cd ~/" + folderName + " ; capstan build ";
+
+        logInfo("COMPILING CAPSTAN");
 
         if (!task.data.compilationPlatform.equals("")) {
             compilationCommand = compilationCommand + "-p " + task.data.compilationPlatform;
@@ -198,30 +210,21 @@ public class CompilationTaskService
         } catch (Exception e) {
             task.taskInfo.stage = TaskStage.FAILED;
             e.printStackTrace();
+            logWarning(e.getMessage());
         }
 
-        System.out.println("COMPILING");
-        sendSelfPatch(task, TaskStage.STARTED, SubStage.TARGETING_IMAGE);
+        System.out.println("COMPILED");
+        sendSelfPatch(task, task.taskInfo.stage, SubStage.TARGETING_IMAGE);
     }
 
     private void handleTargetingImage(CompilationTaskServiceState task) {
-        /*
-         *  String folderName = getFolderNameFromPath(task.data.sources);
-         * private String getFolderNameFromPath(String path) { String[] parsedLink = path.split("/");
-         * String folderName = parsedLink[parsedLink.length - 1]; return folderName.substring(0,
-         * folderName.length() - 4); // remove .git extension }
-         */
-        String targetQuery = "cd ~/.capstan/repository ; ls";
-
-        try {
-            executor.execute(new String[] { "bash", "-c", targetQuery });
-        } catch (Exception e) {
-            task.taskInfo.stage = TaskStage.FAILED;
-            e.printStackTrace();
-        }
+        String folderName = getFolderNameFromPath(task.data.sources);
+        downloadLink = "/capstan-repository/" + folderName + "/" + folderName + "."
+                + task.data.compilationPlatform;
 
         System.out.println("TARGETING");
         sendSelfPatch(task, TaskStage.FINISHED, SubStage.TARGETING_IMAGE);
+
     }
 
     private void sendSelfPatch(CompilationTaskServiceState task, TaskStage stage,

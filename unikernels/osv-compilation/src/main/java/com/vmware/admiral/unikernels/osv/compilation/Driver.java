@@ -13,6 +13,7 @@ package com.vmware.admiral.unikernels.osv.compilation;
 
 import com.vmware.admiral.unikernels.osv.compilation.service.CompilationBrockerService;
 import com.vmware.admiral.unikernels.osv.compilation.service.CompilationTaskService;
+import com.vmware.admiral.unikernels.osv.compilation.service.DownloadService;
 import com.vmware.xenon.common.ServiceHost;
 
 public class Driver {
@@ -24,7 +25,7 @@ public class Driver {
         host.start();
         host.startDefaultCoreServicesSynchronously();
         host.startService(new CompilationBrockerService());
+        host.startService(new DownloadService());
         host.startFactory(new CompilationTaskService());
     }
-
 }

@@ -19,14 +19,19 @@ public class CommandExecutor {
 
     private Process startedProcess;
 
-    public synchronized void execute(String[] command) throws IOException {
+    public synchronized void execute(String[] command) throws Exception {
 
         ProcessBuilder pb = new ProcessBuilder(command);
         startedProcess = pb.start();
-        try {
-            startedProcess.waitFor();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+
+        int statusCode = startedProcess.waitFor();
+        String output = output();
+        System.out.println("OUTPUT - " + output);
+
+        if (statusCode != 0) {
+            System.out.println("OUTPUT - " + output);
+           // System.out.println("OUTPUT - " + startedProcess.getOutputStream()..toString());
+            throw (new Exception());
         }
     }
 

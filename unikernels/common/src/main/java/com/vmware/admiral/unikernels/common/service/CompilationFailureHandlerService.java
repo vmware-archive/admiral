@@ -11,11 +11,15 @@
 
 package com.vmware.admiral.unikernels.common.service;
 
+import java.net.URI;
+
 import com.vmware.admiral.unikernels.common.service.UnikernelCreationTaskService.UnikernelCreationTaskServiceState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
+import com.vmware.xenon.common.UriUtils;
+
 
 public class CompilationFailureHandlerService extends StatelessService {
 
@@ -23,6 +27,7 @@ public class CompilationFailureHandlerService extends StatelessService {
 
     @Override
     public void handlePost(Operation post) {
+        String[] receivedData = post.getBody(String[].class);
         CompilationData data = new CompilationData();
         data.setEmptyFields();
 
@@ -31,8 +36,9 @@ public class CompilationFailureHandlerService extends StatelessService {
         wrappedData.taskInfo.stage = TaskStage.FAILED;
         wrappedData.data = data;
 
+        URI creationTaskServiceURI = UriUtils.buildUri(receivedData[1]);
         Operation request = Operation
-                .createPatch(this, UnikernelManagementURIParts.CREATION)
+                .createPatch(creationTaskServiceURI)
                 .setReferer(getSelfLink())
                 .setBody(wrappedData)
                 .setCompletion((o, e) -> {

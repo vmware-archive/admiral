@@ -65,8 +65,6 @@ public class DockerFileReference extends DescriptiveFileReference {
             // WORKIDIR <DIRECTORY> -> second element strip off the given folder name in the
             if (!workDir.equals("")) {
                 this.workDir = parsedWorkDir[1].replace(givenName, "");
-            } else {
-                this.workDir = "/";
             }
 
             String[] parsedCMD = CMD.split("\\s+");

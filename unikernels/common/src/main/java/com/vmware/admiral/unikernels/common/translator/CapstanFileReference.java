@@ -94,8 +94,8 @@ public class CapstanFileReference extends DescriptiveFileReference {
         fileLines.add(CMD);
         fileLines.add("files:");
 
-        if (workDir.equals("/")) { // non-repetitive symbols for root
-            fileLines.add("  " + givenName + ": " + workDir + executableName);
+        if (workDir.equals("/") || workDir.equals(".") || workDir.equals("")) {
+            fileLines.add("  " + givenName + ": " + executableName);
         } else {
             fileLines.add("  " + givenName + ": " + workDir + "/" + executableName);
         }

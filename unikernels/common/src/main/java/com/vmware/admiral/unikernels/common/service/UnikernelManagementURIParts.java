@@ -21,5 +21,6 @@ public interface UnikernelManagementURIParts {
 
     String COMPILATION_EXTERNAL = "http://localhost:8000/route";
     String COMPILATION_TEST = "/unikernel/compilation/test";
+    String DOWNLOAD_EXTERNAL = "http://localhost:8000/download";
 
 }

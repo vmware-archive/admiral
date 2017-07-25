@@ -24,6 +24,7 @@ public class TestDriver {
         host.startDefaultCoreServicesSynchronously();
         host.startService(new TranslateDockerService());
         host.startService(new CompilationSuccessHandlerService());
+        host.startService(new DownloadRequestService());
         host.startService(new CompilationFailureHandlerService());
         host.startFactory(new UnikernelCreationTaskService());
     }

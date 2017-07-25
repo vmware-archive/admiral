@@ -18,4 +18,5 @@ public interface UnikernelManagementURIParts {
     String SAMPLE_SUCCESSCB = "/success";
     String SAMPLE_FAILURECB = "/failure";
 
+    String DOWNLOAD = "/download";
 }

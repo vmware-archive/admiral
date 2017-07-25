@@ -53,7 +53,7 @@ public class TranslatorTest {
             assertEquals(info.equals("base: cloudrouter/osv-builder") ||
                     info.equals("cmdline: /java.so -jar /app.jar") ||
                     info.equals("files:") ||
-                    info.equals("  /app.jar: /OSv-service.jar"), true);
+                    info.equals("  /app.jar: OSv-service.jar"), true);
         }
 
     }

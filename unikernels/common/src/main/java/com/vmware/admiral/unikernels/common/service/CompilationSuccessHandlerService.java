@@ -40,7 +40,6 @@ public class CompilationSuccessHandlerService extends StatelessService {
         wrappedData.taskInfo.stage = TaskStage.STARTED;
         wrappedData.subStage = SubStage.HANDLE_CALLBACK;
         wrappedData.data = data;
-        System.out.println(receivedData[1]);
 
         URI creationTaskServiceURI = UriUtils.buildUri(receivedData[1]);
         Operation request = Operation

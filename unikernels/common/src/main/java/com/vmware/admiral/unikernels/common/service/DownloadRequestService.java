@@ -27,16 +27,29 @@ public class DownloadRequestService extends StatelessService {
     @Override
     public void handlePost(Operation post) {
         String downloadURI = post.getBody(String.class);
-        downloadListURI.add(downloadURI);
+        downloadListURI.add(UnikernelManagementURIParts.DOWNLOAD_EXTERNAL + downloadURI);
 
         UnikernelCreationTaskServiceState state = new UnikernelCreationTaskServiceState();
         state.taskInfo = new TaskState();
         state.taskInfo.stage = TaskStage.FINISHED;
 
-        Operation request = Operation.createPatch(this, UnikernelManagementURIParts.CREATION)
+        Operation request = Operation.createPatch(post.getReferer())
                 .setReferer(getSelfLink())
-                .setBody(state);
+                .setBody(state)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        post.fail(e);
+                    } else {
+                        post.complete();
+                    }
+                });
 
         sendRequest(request);
+    }
+
+    @Override
+    public void handleGet(Operation get) {
+        get.setBody(downloadListURI);
+        get.complete();
     }
 }
