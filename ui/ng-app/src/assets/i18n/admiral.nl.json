@@ -1,0 +1,275 @@
+{
+  "projects": {
+    "title": "Projecten",
+    "project": "Project",
+    "users": "Gebruikers",
+    "administrators": "Beheerders",
+    "projectRegistry": "Projectregister",
+    "public": "Openbaar",
+    "publicDescription": "Openbare toegang tot projectregister",
+    "private": "Privé",
+    "clusters": "Clusters",
+    "repositories": "Opslagplaatsen",
+    "infrastructure": "Infrastructuur",
+    "registryReplication": "Registerreplicatie",
+    "configuration": "Configuratie",
+    "edit": {
+      "titleNew": "Nieuw project",
+      "titleEdit": "Project bewerken",
+      "name": "Naam",
+      "nameRequired": "Naam is vereist.",
+      "description": "Beschrijving"
+    },
+    "delete": {
+      "title": "Project verwijderen",
+      "confirmation": "Bevestig het verwijderen van het project {{projectName}}. Leden en clusters worden losgekoppeld van het project. De bewerking kan niet ongedaan worden gemaakt."
+    },
+    "summary": {
+      "title": "Samenvatting",
+      "type": "Type:",
+      "creationDate": "Gemaakt:",
+      "team": {
+        "title": "Projectteam",
+        "administrators": "Projectbeheerders:",
+        "members": "Ontwikkelaars:",
+        "viewers": "Kijkers",
+        "users": "gebruikers"
+      },
+      "repositories": {
+        "title": "Projectopslagplaatsen",
+        "repositories": "Opslagplaatsen:"
+      },
+      "resources": {
+        "title": "Projectbronnen",
+        "clusters": "Clusters:",
+        "templates": "Appsjablonen:",
+        "images": "Images:"
+      }
+    },
+    "members": {
+      "title": "Leden",
+      "columnName": "Naam",
+      "columnPrimaryId": "Primaire id",
+      "columnSource": "Bron",
+      "columnRole": "Rol",
+      "count": "leden",
+      "addMembers": {
+        "title": "Gebruikers en groepen toevoegen",
+        "description": "Voeg gebruikers en groepen toe aan {{projectName}} op basis van hun id of e-mailadres.",
+        "fieldTitleId": "Id of e-mailadres",
+        "fieldRequiredId": "Id is vereist.",
+        "searchPlaceholder": "Zoeken naar gebruikers",
+        "fieldTitleRole": "Rol in project"
+      },
+      "editMember": {
+        "title": "Ledenrol in project bewerken",
+        "description": "Bewerk de rol van het lid {{memberId}} in het project {{projectName}}."
+      },
+      "roles": {
+        "administrator": "DevOps-beheerder",
+        "member": "Ontwikkelaar",
+        "viewer": "Kijker"
+      },
+      "source": {
+        "local": "Lokaal"
+      },
+      "deleteMember": {
+        "title": "Lid uit project verwijderen",
+        "confirmation": "Weet u zeker dat u het lid uit dit project wilt verwijderen?"
+      }
+    },
+    "config": {
+      "title": "Configuratie",
+      "projectRegistry": "Projectregister",
+      "public": "Openbaar",
+      "publicDescription": "Als u een projectregister openbaar maakt, worden alle opslagplaatsen toegankelijk voor iedereen.",
+      "deploymentSecurity": "Beveiliging van implementatie",
+      "enableContentTrust": "Vertrouwen voor inhoud inschakelen",
+      "enableContentTrustDescription": "Alleen toestaan dat geverifieerde images worden geïmplementeerd.",
+      "preventVulnerableImagesFromRunning": "Verhinderen dat kwetsbare images worden uitgevoerd",
+      "preventVulnerableImagesFromRunningDescription_part1": "Verhinderen dat images met een kwetsbaarheidsgraad van",
+      "preventVulnerableImagesFromRunningDescription_part2": "en hoger worden geïmplementeerd.",
+      "vulnerabilityScanning": "Scannen op kwetsbaarheden",
+      "automaticallyScanImagesOnPush": "Images automatisch scannen bij push",
+      "automaticallyScanImagesOnPushDescription": "Images automatisch scannen wanneer ze naar het projectregister worden gepusht."
+    },
+    "search": {
+      "placeholder": "Zoeken naar projecten"
+    },
+    "actions": {
+      "title": "Acties",
+      "details": "Details",
+      "makePublic": "Openbaar maken",
+      "makePrivate": "Privé maken",
+      "addUsersAndGroups": "Gebruikers en groepen toevoegen",
+      "addClusters": "Clusters toevoegen"
+    }
+  },
+  "registries": {
+    "title": "Registers",
+    "sourceRegistries": "Bronregisters",
+    "replicationEndpoints": "Replicatie-endpoints",
+    "replicationRules": "Replicatieregels"
+  },
+  "clusters": {
+    "title": "Clusters",
+    "cluster": "Cluster",
+    "new": "Nieuw",
+    "status": "Status",
+    "state": {
+      "ON": "AAN",
+      "OFF": "UIT",
+      "DISABLED": "UITGESCHAKELD",
+      "WARNING": "WAARSCHUWING"
+    },
+    "type": "Type",
+    "containers": "Containers",
+    "cpu": "CPU",
+    "memory": "Geheugen",
+    "summary": {
+      "title": "Samenvatting",
+      "address": "Adres:",
+      "adminPortal": "Beheerdersportal:",
+      "type": "Type:",
+      "clusterOverview": "Overzicht van cluster",
+      "clusterResources": "Clusterbronnen",
+      "status": "Status:",
+      "creationDate": "Gemaakt:",
+      "containersCount": "Containers:",
+      "cpu": "vCPU:",
+      "memory": "Geheugen:"
+    },
+    "resources": {
+      "addHostButton": "Host",
+      "title": "Bronnen",
+      "address": "Adres",
+      "status": "Status",
+      "containersCount": "Containers",
+      "memory": "Geheugen",
+      "cpu": "CPU",
+      "addHost": {
+        "title": "Host toevoegen",
+        "address": "Adres",
+        "addressRequired": "Adres is vereist."
+      }
+    },
+    "edit": {
+      "titleNew": "Nieuw cluster",
+      "titleEdit": "Cluster bewerken",
+      "name": "Naam",
+      "nameRequired": "Naam is vereist.",
+      "description": "Beschrijving",
+      "type": "Type",
+      "url": "URL",
+      "urlRequired": "Cluster-URL is vereist.",
+      "credentials": "Verificatiegegevens"
+    },
+    "delete": {
+      "title": "Cluster verwijderen",
+      "confirmation": "Bevestig het verwijderen van het cluster {{clusterName}}. De bewerking kan niet ongedaan worden gemaakt."
+    }
+  },
+  "hosts": {
+    "delete":{
+      "title": "Host verwijderen",
+      "confirmation": "Bevestig het verwijderen van de host {{hostName}}. De bewerking kan niet ongedaan worden gemaakt."
+    },
+    "state": {
+      "ON": "AAN",
+      "OFF": "UIT",
+      "UNKNOWN": "ONBEKEND",
+      "SUSPEND": "UITGESCHAKELD"
+    }
+  },
+  "logs": {
+    "title": "Logboeken",
+    "system": {
+      "title": "Systeem",
+      "columnLogEntry": "Logboekvermelding",
+      "columnSeverity": "Ernst",
+      "columnTimeStamp": "Tijdstempel",
+      "entriesCount": "logboekvermeldingen"
+    },
+    "registry": {
+      "title": "Register"
+    },
+    "event": {
+      "type": {
+          "info": "Informatie",
+          "warning": "Waarschuwing",
+          "error": "Fout"
+      }
+    }
+  },
+  "identity": {
+    "title": "Identiteitsbeheer",
+    "credentials": "Verificatiegegevens",
+    "certificates": "Certificaten",
+    "usersgroups": {
+      "title": "Gebruikers en groepen",
+      "description": "Importeer gebruikers en groepen in het systeem. Wijs vervolgens projectrollen toe aan een gebruiker of groep. U kunt een gebruiker ook algemeen cloudbeheerder maken.",
+      "fieldTitleSearch": "Gebruikers/groepen zoeken",
+      "columnName": "Naam van gebruiker/groep",
+      "columnPrimaryId": "Primaire id",
+      "columnCloudAdmin": "Cloudbeheerder",
+      "columnProjects": "Projecten",
+      "count": "gebruikers/groepen",
+      "notFound": "Geen gebruikers gevonden"
+    }
+  },
+  "configuration": {
+    "title": "Configuratie",
+    "registry": "Register"
+  },
+  "errors": {
+    "itemNotFound": "Item is niet gevonden."
+  },
+  "certificate": {
+    "certificateWarning": "Het certificaat voor {{address}} is ongeldig. U maakt mogelijk verbinding met een website die zich voordoet als {{address}} waardoor uw vertrouwelijke gegevens risico kunnen lopen. Wilt u toch verbinding maken met deze website?",
+    "show": "Certificaat weergeven",
+    "hide": "Certificaat verbergen",
+    "validateTitle": "Certificaat verifiëren",
+    "details": {
+      "commonName": "Algemene naam",
+      "issuerName": "Naam verstrekker",
+      "serial": "Serienummer",
+      "fingerprint": "SHA-vingerafdruk",
+      "validSince": "Geldig vanaf",
+      "validTo": "Geldig tot"
+    }
+  },
+  "edit": "Bewerken",
+  "save": "Opslaan",
+  "add": "Toevoegen",
+  "yes": "Ja",
+  "remove": "Verwijderen",
+  "delete": "Verwijderen",
+  "cancel": "Annuleren",
+  "unknown": "Onbekend",
+  "assignRoles": "Rollen toewijzen",
+  "makeAdmin": " Beheerder maken",
+
+  "compute": {
+    "resources": "Bronnen",
+    "policies": "Beleid",
+    "deployments": "Implementaties",
+    "endpoints": {
+      "title": "Endpoints"
+    },
+    "compute": {
+      "title": "Computingbron"
+    },
+    "profiles": {
+      "title": "Profielen"
+    },
+    "placements": {
+      "title": "Plaatsingen"
+    },
+    "machines": {
+      "title": "Machines"
+    },
+    "networks": {
+      "title": "Netwerken"
+    }
+  }
+}

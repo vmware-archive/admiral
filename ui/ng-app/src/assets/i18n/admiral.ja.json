@@ -1,0 +1,275 @@
+{
+  "projects": {
+    "title": "プロジェクト",
+    "project": "プロジェクト",
+    "users": "ユーザー",
+    "administrators": "管理者",
+    "projectRegistry": "プロジェクト レジストリ",
+    "public": "パブリック",
+    "publicDescription": "プロジェクト レジストリへのパブリック アクセス",
+    "private": "プライベート",
+    "clusters": "クラスタ",
+    "repositories": "リポジトリ",
+    "infrastructure": "インフラストラクチャ",
+    "registryReplication": "レジストリのレプリケーション",
+    "configuration": "構成",
+    "edit": {
+      "titleNew": "新規プロジェクト",
+      "titleEdit": "プロジェクトの編集",
+      "name": "名前",
+      "nameRequired": "名前は必須です。",
+      "description": "説明"
+    },
+    "delete": {
+      "title": "プロジェクトの削除",
+      "confirmation": "プロジェクト {{projectName}} の削除を確認してください。メンバーおよびクラスタはプロジェクトとの関連付けを解除されます。この操作は元に戻せません。"
+    },
+    "summary": {
+      "title": "サマリ",
+      "type": "タイプ：",
+      "creationDate": "作成日:",
+      "team": {
+        "title": "プロジェクト チーム",
+        "administrators": "プロジェクト管理者:",
+        "members": "開発者:",
+        "viewers": "閲覧者",
+        "users": "ユーザー"
+      },
+      "repositories": {
+        "title": "プロジェクト リポジトリ",
+        "repositories": "リポジトリ:"
+      },
+      "resources": {
+        "title": "プロジェクト リソース",
+        "clusters": "クラスタ:",
+        "templates": "アプリのテンプレート:",
+        "images": "イメージ:"
+      }
+    },
+    "members": {
+      "title": "メンバー",
+      "columnName": "名前",
+      "columnPrimaryId": "プライマリ ID",
+      "columnSource": "ソース",
+      "columnRole": "ロール",
+      "count": "メンバー",
+      "addMembers": {
+        "title": "ユーザーおよびグループの追加",
+        "description": "ユーザーおよびグループを ID または E メール アドレス別に {{projectName}} に追加します。",
+        "fieldTitleId": "ID または E メール アドレス",
+        "fieldRequiredId": "ID は必須です。",
+        "searchPlaceholder": "ユーザーの検索",
+        "fieldTitleRole": "プロジェクトのロール"
+      },
+      "editMember": {
+        "title": "プロジェクトのメンバー ロールの編集",
+        "description": "プロジェクト {{projectName}} のメンバー {{memberId}} のロールを編集します。"
+      },
+      "roles": {
+        "administrator": "DevOps 管理者",
+        "member": "開発者",
+        "viewer": "閲覧者"
+      },
+      "source": {
+        "local": "ローカル"
+      },
+      "deleteMember": {
+        "title": "プロジェクトからのメンバーの削除",
+        "confirmation": "このプロジェクトからメンバーを削除しますか?"
+      }
+    },
+    "config": {
+      "title": "構成",
+      "projectRegistry": "プロジェクト レジストリ",
+      "public": "パブリック",
+      "publicDescription": "プロジェクト レジストリをパブリックに設定すると、すべてのユーザーがすべてのリポジトリにアクセスできるようになります。",
+      "deploymentSecurity": "展開のセキュリティ",
+      "enableContentTrust": "コンテンツの信頼の有効化",
+      "enableContentTrustDescription": "検証されたイメージのみを展開できます。",
+      "preventVulnerableImagesFromRunning": "脆弱なイメージの実行を防止",
+      "preventVulnerableImagesFromRunningDescription_part1": "脆弱性の重要度が",
+      "preventVulnerableImagesFromRunningDescription_part2": "以上のイメージの展開を防止します。",
+      "vulnerabilityScanning": "脆弱性のスキャン",
+      "automaticallyScanImagesOnPush": "プッシュ時にイメージを自動スキャン",
+      "automaticallyScanImagesOnPushDescription": "プロジェクト レジストリにイメージをプッシュするときに、自動的にスキャンします。"
+    },
+    "search": {
+      "placeholder": "プロジェクトの検索"
+    },
+    "actions": {
+      "title": "アクション",
+      "details": "詳細",
+      "makePublic": "パブリックに設定",
+      "makePrivate": "プライベートに設定",
+      "addUsersAndGroups": "ユーザーおよびグループの追加",
+      "addClusters": "クラスタの追加"
+    }
+  },
+  "registries": {
+    "title": "レジストリ",
+    "sourceRegistries": "ソース レジストリ",
+    "replicationEndpoints": "レプリケーション エンドポイント",
+    "replicationRules": "レプリケーション ルール"
+  },
+  "clusters": {
+    "title": "クラスタ",
+    "cluster": "クラスタ",
+    "new": "新規",
+    "status": "ステータス",
+    "state": {
+      "ON": "有効",
+      "OFF": "無効",
+      "DISABLED": "無効",
+      "WARNING": "警告"
+    },
+    "type": "タイプ",
+    "containers": "コンテナ",
+    "cpu": "CPU",
+    "memory": "メモリ",
+    "summary": {
+      "title": "サマリ",
+      "address": "アドレス:",
+      "adminPortal": "管理者ポータル:",
+      "type": "タイプ：",
+      "clusterOverview": "クラスタの概要",
+      "clusterResources": "クラスタ リソース",
+      "status": "ステータス:",
+      "creationDate": "作成日:",
+      "containersCount": "コンテナ:",
+      "cpu": "vCPU:",
+      "memory": "メモリ:"
+    },
+    "resources": {
+      "addHostButton": "ホスト",
+      "title": "リソース",
+      "address": "アドレス",
+      "status": "ステータス",
+      "containersCount": "コンテナ",
+      "memory": "メモリ",
+      "cpu": "CPU",
+      "addHost": {
+        "title": "ホストの追加",
+        "address": "アドレス",
+        "addressRequired": "アドレスは必須です。"
+      }
+    },
+    "edit": {
+      "titleNew": "新規クラスタ",
+      "titleEdit": "クラスタの編集",
+      "name": "名前",
+      "nameRequired": "名前は必須です。",
+      "description": "説明",
+      "type": "タイプ",
+      "url": "URL",
+      "urlRequired": "クラスタの URL は必須です。",
+      "credentials": "認証情報"
+    },
+    "delete": {
+      "title": "クラスタの削除",
+      "confirmation": "クラスタ {{clusterName}} の削除を確認しください。この操作は元に戻せません。"
+    }
+  },
+  "hosts": {
+    "delete":{
+      "title": "ホストの削除",
+      "confirmation": "ホスト {{hostName}} の削除を確認しください。この操作は元に戻せません。"
+    },
+    "state": {
+      "ON": "有効",
+      "OFF": "無効",
+      "UNKNOWN": "不明",
+      "SUSPEND": "無効"
+    }
+  },
+  "logs": {
+    "title": "ログ",
+    "system": {
+      "title": "システム",
+      "columnLogEntry": "ログ エントリ",
+      "columnSeverity": "重要度",
+      "columnTimeStamp": "タイムスタンプ",
+      "entriesCount": "ログ エントリ"
+    },
+    "registry": {
+      "title": "レジストリ"
+    },
+    "event": {
+      "type": {
+          "info": "情報",
+          "warning": "警告",
+          "error": "エラー"
+      }
+    }
+  },
+  "identity": {
+    "title": "ID 管理",
+    "credentials": "認証情報",
+    "certificates": "証明書",
+    "usersgroups": {
+      "title": "ユーザーおよびグループ",
+      "description": "ユーザーおよびグループをシステムにインポートします。その後、プロジェクトのロールをユーザーまたはグループに割り当てます。ユーザーをグローバル クラウドの管理者に設定することもできます。",
+      "fieldTitleSearch": "ユーザー/グループの検索",
+      "columnName": "ユーザー/グループの名前",
+      "columnPrimaryId": "プライマリ ID",
+      "columnCloudAdmin": "クラウドの管理者",
+      "columnProjects": "プロジェクト",
+      "count": "ユーザー/グループ",
+      "notFound": "ユーザーが見つかりません"
+    }
+  },
+  "configuration": {
+    "title": "構成",
+    "registry": "レジストリ"
+  },
+  "errors": {
+    "itemNotFound": "アイテムが見つかりませんでした。"
+  },
+  "certificate": {
+    "certificateWarning": "{{address}} の証明書が無効です。接続先の Web サイトが {{address}} になりすましている可能性があり、このために機密情報が危険にさらされる可能性があります。このまま Web サイトに接続しますか?",
+    "show": "証明書の表示",
+    "hide": "証明書を隠す",
+    "validateTitle": "証明書の検証",
+    "details": {
+      "commonName": "共通名",
+      "issuerName": "発行者名",
+      "serial": "シリアル",
+      "fingerprint": "SHA フィンガープリント",
+      "validSince": "有効期間開始日",
+      "validTo": "有効期間終了日"
+    }
+  },
+  "edit": "編集",
+  "save": "保存",
+  "add": "追加",
+  "yes": "はい",
+  "remove": "削除",
+  "delete": "削除",
+  "cancel": "キャンセル",
+  "unknown": "不明",
+  "assignRoles": "ロールの割り当て",
+  "makeAdmin": "管理者に設定",
+
+  "compute": {
+    "resources": "リソース",
+    "policies": "ポリシー",
+    "deployments": "展開",
+    "endpoints": {
+      "title": "エンドポイント"
+    },
+    "compute": {
+      "title": "コンピューティング"
+    },
+    "profiles": {
+      "title": "プロファイル"
+    },
+    "placements": {
+      "title": "配置"
+    },
+    "machines": {
+      "title": "マシン"
+    },
+    "networks": {
+      "title": "ネットワーク"
+    }
+  }
+}

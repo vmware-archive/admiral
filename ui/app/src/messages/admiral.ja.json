@@ -72,7 +72,7 @@
         "tagsPlaceholder": "例: location:west",
         "tagsHint": "key:value タグを入力します",
         "autoConfigure": "自動構成",
-        "autoConfigureInput":"ホストの自動構成の有効化",
+        "autoConfigureInput": "ホストの自動構成の有効化",
         "autoConfigureHint": "このオプションを指定すると、生成された自己署名証明書を使用して、指定されたアドレスおよびポートに Docker Remote API が構成されます。この処理は SSH を介して 1 回実行されます。サポート対象のオペレーティング システムは、CoreOS、PhotonOS、Ubuntu Server 16.04 以降です。",
         "reservationPolicy": "予約ポリシー",
         "endpoint": "エンドポイント",
@@ -109,7 +109,8 @@
         "searchPlaceholder": "ホストの検索",
         "dataCollect": "データ収集",
         "dataCollectStart": "データ収集をトリガーしています。完了まで数分かかる場合があります。",
-        "dataCollectEnd": "データ収集が終了しました。"
+        "dataCollectEnd": "データ収集が終了しました。",
+        "create": "ホスト"
       },
       "actions": {
         "start": "開始",
@@ -126,7 +127,7 @@
       "entity": "配置ゾーン",
       "list": {
         "title": "配置ゾーン",
-        "addButton": "追加",
+        "addButton": "配置ゾーン",
         "nameColumn": "名前",
         "cpuColumn": "CPU",
         "memoryColumn": "メモリ",
@@ -160,7 +161,7 @@
       "contextPanelTooltip": "プロジェクト",
       "list": {
         "title": "プロジェクト",
-        "addButton": "追加",
+        "addButton": "プロジェクト",
         "nameColumn": "名前",
         "details": {
           "title": "プロジェクトの詳細"
@@ -179,7 +180,7 @@
       "contextPanelTooltip": "認証情報",
       "list": {
         "title": "認証情報",
-        "addButton": "追加",
+        "addButton": "認証情報",
         "nameColumn": "名前",
         "typeColumn": "タイプ",
         "credentialsColumn": "認証情報"
@@ -209,7 +210,7 @@
       "contextPanelTooltip": "展開ポリシー",
       "list": {
         "title": "展開ポリシー",
-        "addButton": "追加",
+        "addButton": "ポリシー",
         "nameColumn": "名前",
         "descriptionColumn": "説明",
         "details": {
@@ -230,7 +231,7 @@
       "contextPanelTooltip": "証明書",
       "list": {
         "title": "証明書",
-        "addButton": "追加",
+        "addButton": "証明書",
         "nameColumn": "名前",
         "serialColumn": "シリアル",
         "shaColumn": "SHA",
@@ -259,8 +260,10 @@
       "list": {
         "title": "よく使われるテンプレート",
         "titleSearch": "見つかったテンプレート",
+        "popularRepositories": "よく使われるリポジトリ",
         "searchImagesTemplatesPlaceholder": "イメージ、テンプレートの検索",
         "searchImagesPlaceholder": "イメージの検索",
+        "searchRepositoriesPlaceholder": "リポジトリの検索",
         "searchTemplatesPlaceholder": "テンプレートの検索",
         "searchClosuresPlaceholder": "クロージャの検索",
         "manageRegistry": "レジストリの管理",
@@ -283,7 +286,8 @@
           "all": "すべて",
           "images": "イメージ",
           "templates": "テンプレート",
-          "closures": "クロージャ"
+          "closures": "クロージャ",
+          "repositories": "リポジトリ"
         }
       },
       "details": {
@@ -333,12 +337,12 @@
           "ipamConfigGatewayHint": "例: 172.16.238.1",
           "customProperties": "カスタム プロパティ"
         },
-        "editClosures" :{
+        "editClosures": {
           "newTitle": "クロージャの追加",
           "editTitle": "クロージャの編集",
           "name": "名前"
         },
-        "editVolume" :{
+        "editVolume": {
           "newLabel": "ボリュームの追加",
           "newTitle": "ボリュームの追加",
           "newDropdownTitle": "ボリュームの追加...",
@@ -349,9 +353,9 @@
           "driverOptions": {
             "label": "ドライバのオプション",
             "keyTitle": "オプション",
-            "keyHint": "例: size",
+            "keyHint": "例: o",
             "valueTitle": "値",
-            "valueHint": "例: 20GB"
+            "valueHint": "例: size=100m"
           },
           "existingVolume": "既存",
           "showingCount": "{{count}}/{{totalCount}} を表示中",
@@ -416,7 +420,7 @@
     "placement": {
       "list": {
         "title": "配置",
-        "addButton": "追加",
+        "addButton": "配置",
         "nameColumn": "名前",
         "groupColumn": "プロジェクト",
         "businessGroupColumn": "ビジネス グループ",
@@ -465,7 +469,7 @@
     "registry": {
       "list": {
         "title": "既存のレジストリ",
-        "addButton": "追加",
+        "addButton": "レジストリ",
         "addressColumn": "アドレス",
         "nameColumn": "名前",
         "statusColumn": "ステータス"
@@ -487,7 +491,7 @@
         "title": "プロファイル",
         "titleSearch": "プロファイルが見つかりました",
         "searchPlaceholder": "プロファイルの検索",
-        "addButton": "プロファイルの作成",
+        "addButton": "プロファイル",
         "addPropertyButton": "プロパティの追加",
         "nameColumn": "名前",
         "endpointTypeColumn": "エンドポイント タイプ",
@@ -516,21 +520,126 @@
         "endpointLabel": "エンドポイント",
         "valueLabel": "値",
         "instanceTypeMappingLabel": "インスタンス タイプ",
+        "instanceTypeMappingDisplay": "{{cpuCount}} 個の CPU、 {{memoryInMB}} MB の RAM、{{bootDiskSizeInMB}} MB のディスク",
+        "instanceTypeMappingDisplayAWS": "{{cpuCount}} 個の CPU、{{memoryInMB}} MB の RAM、{{storageType}} のストレージ、{{networkType}} のネットワーク",
         "imageMappingLabel": "イメージ タイプ",
-        "bootDiskPropertyMappingLabel": "ブート ディスクのプロパティ",
+        "diskPropertyMappingLabel": "ディスクのプロパティ",
         "cpuCountLabel": "CPU",
-        "diskSizeMbLabel": "ディスク サイズ (MB)",
-        "memoryMbLabel": "メモリ (MB)",
+        "memoryGbLabel": "メモリ (GB)",
+        "generalLabel": "全般",
+        "existingLabel": "既存",
         "subnetworksLabel": "サブネットワーク",
-        "isolationTypeLabel": "隔離タイプ",
-        "isolationNetworkLabel": "隔離ネットワーク",
+        "isolationLabel": "分離",
+        "isolationTypeLabel": "タイプ",
+        "isolationNetworkLabel": "ネットワーク",
         "noneIsolationTypeLabel": "なし",
         "subnetIsolationTypeLabel": "サブネットワーク",
-        "securityGroupIsolationTypeLabel": "なし",
+        "securityGroupIsolationTypeLabel": "セキュリティ グループ",
+        "securityGroups": "セキュリティ グループ",
+        "vpc": "VPC",
         "cidrLabel": "CIDR",
         "cidrLabelHint": "0.0.0.0/0",
+        "cidrPrefixLabel": "サブネットのプリフィックス長",
+        "networkLabel": "ネットワーク",
+        "resourceGroupsLabel": "リソース グループ",
         "supportPublicIpAddressLabel": "パブリック IP アドレスのサポート",
-        "defaultForZoneLabel": "ゾーンのデフォルト"
+        "defaultForZoneLabel": "ゾーンのデフォルト",
+        "addStorageItem": "ストレージ アイテムの追加",
+        "defaultLabel": "デフォルト",
+        "makeDescriptorDefault": "このストレージ アイテムをデフォルトに設定",
+        "itemHeader": "ストレージ アイテム",
+        "storage": {
+          "azure": {
+            "selectAccountLabel": "アカウントの選択",
+            "storageAccountTypeLabel": "ストレージ アカウントのタイプ",
+            "osDiskCachingLabel": "OS ディスクのキャッシング",
+            "dataDiskCachingLabel": "データ ディスクのキャッシング",
+            "contextPanelTooltip": "ストレージ アカウント",
+            "typeLabel": "タイプ",
+            "encryptionLabel": "ストレージ サービスの暗号化",
+            "entityLabel": "ストレージ アカウント",
+            "list": {
+              "title": "ストレージ アカウント",
+              "nameColumn": "名前",
+              "typeColumn": "タイプ",
+              "encryptionColumn": "ストレージ サービスの暗号化",
+              "edit": {
+                "title": "ストレージ アカウントの編集",
+                "nameLabel": "アカウント名",
+                "typeLabel": "アカウント タイプ",
+                "encryptionLabel": "ストレージ サービスの暗号化"
+              }
+            }
+          },
+          "vsphere": {
+            "storagePolicyLabel": "ストレージ ポリシー",
+            "provisioningTypeLabel": "プロビジョニング タイプ",
+            "datastoreLabel": "データストア",
+            "sharesLevelLabel": "シェア レベル",
+            "sharesLabel": "シェア",
+            "limitLabel": "IOPS の制限",
+            "datastoreContextPanelTooltip": "データストア",
+            "storagePolicyContextPanelTooltip": "ストレージ ポリシー",
+            "datastoreEntityLabel": "データストア",
+            "storagePolicyEntityLabel": "ストレージ ポリシー",
+            "snapshotsLabel": "スナップショット",
+            "independentOfSnapshotsLabel": "スナップショットから独立",
+            "persistentLabel": "パーシステント",
+            "nonPersistentLabel": "非パーシステント",
+            "provisioningSelectDefault": "プロビジョニング タイプの選択",
+            "sharesLevelDefault": "シェア レベルの選択",
+            "datastore": {
+              "typeLabel": "タイプ",
+              "capacityLabel": "容量",
+              "capacityUnit": "GB",
+              "list": {
+                "title": "データストア",
+                "nameColumn": "名前",
+                "typeColumn": "タイプ",
+                "capacityColumn": "容量 (GB)",
+                "encryptionColumn": "暗号化のサポート",
+                "edit": {
+                  "title": "データストアの編集",
+                  "nameLabel": "データストア",
+                  "typeLabel": "タイプ",
+                  "encryptionLabel": "暗号化のサポート",
+                  "capacityLabel": "容量 (GB)"
+                }
+              }
+            },
+            "storagePolicy": {
+              "descriptionLabel": "説明",
+              "list": {
+                "title": "ストレージ ポリシー",
+                "nameColumn": "名前",
+                "descColumn": "説明",
+                "encryptionColumn": "暗号化のサポート",
+                "edit": {
+                  "title": "ストレージ ポリシーの編集",
+                  "nameLabel": "名前",
+                  "descLabel": "説明",
+                  "customPropertiesLabel": "カスタム プロパティ",
+                  "customPropertiesTable": {
+                    "keyColumn": "キー",
+                    "valueColumn": "値"
+                  }
+                }
+              }
+            }
+          },
+          "aws": {
+            "volumeTypeLabel": "ボリューム タイプ",
+            "deviceTypeLabel": "デバイス タイプ",
+            "iopsLabel": "最大 IOPS",
+            "iopsHint": "実際のプロビジョニング済み IOPS は、ディスク容量に応じて小さくなることがあります",
+            "fileSystemLabel": "ファイル システム",
+            "encryptedLabel": "暗号化のサポート"
+          }
+        },
+        "validation": {
+          "valueNotMoreThan": "値を {{max}} より大きくすることはできません",
+          "valueInRange": "値は {{min}} ～ {{max}} の範囲にする必要があります"
+        }
       },
       "instanceType": {
         "aws": {
@@ -559,12 +668,46 @@
         "coreos": "CoreOS",
         "photon": "Photon OS",
         "ubuntu-1604": "Ubuntu"
+      },
+      "azureStorageAccountType": {
+        "standardLRS": "標準 LRS",
+        "standardZRS": "標準 ZRS",
+        "standardGRS": "標準 GRS",
+        "standardRAGRS": "標準 RAGRS",
+        "premiumLRS": "プレミアム LRS"
+      },
+      "azureDiskCachingType": {
+        "none": "なし",
+        "readOnly": "読み取り専用",
+        "readWrite": "読み書き"
+      },
+      "vsphereProvisioningTypes": {
+        "thin": "シン",
+        "thick": "シック",
+        "eagerZeroedThick": "Eager Zeroed シック"
+      },
+      "vsphereSharesLevel": {
+        "low": "低",
+        "normal": "標準",
+        "high": "高",
+        "custom": "カスタム"
+      },
+      "awsVolumeTypes": {
+        "gp2": "汎用 SSD (GP2)",
+        "io1": "プロビジョニング済み IOPS SSD (IO1)",
+        "sc1": "コールド HDD (SC1)",
+        "st1": "スループットが最適化された HDD (ST1)",
+        "standard": "磁気"
+      },
+      "awsDeviceTypes": {
+        "ebs": "EBS",
+        "instanceStore": "インスタンス ストア"
       }
     },
     "endpoint": {
       "list": {
         "title": "エンドポイント",
-        "addButton": "追加",
+        "addButton": "エンドポイント",
         "nameColumn": "名前",
         "typeColumn": "タイプ"
       },
@@ -576,6 +719,11 @@
         "privateKeyIdLabel": "アクセス キーの ID",
         "privateKeyLabel": "プライベート アクセス キー",
         "regionIdLabel": "地域 ID",
+        "collectLabel": "データ収集",
+        "collectInventoryLabel": "インベントリの収集",
+        "collectInventoryMessage": "インベントリ収集をトリガしています。完了まで数分かかる場合があります。",
+        "collectImagesLabel": "イメージ タイプの収集",
+        "collectImagesMessage": "イメージ収集をトリガしています。完了まで数分かかる場合があります。",
         "azure": {
           "userLinkLabel": "サブスクリプション ID",
           "tenantIdLabel": "テナント ID"
@@ -585,7 +733,7 @@
           "privateKeyIdLabel": "ユーザー名",
           "privateKeyLabel": "パスワード",
           "regionIdLabel": "データセンター",
-          "linkedEndpointLabel": "NSX-T エンドポイント"
+          "linkedEndpointLabel": "NSX エンドポイント"
         }
       },
       "entity": "エンドポイント",
@@ -600,7 +748,7 @@
         "title": "マシン",
         "titleSearch": "見つかったマシン",
         "searchPlaceholder": "マシンの検索",
-        "addButton": "マシンの作成"
+        "addButton": "マシン"
       },
       "edit": {
         "addTitle": "マシンの作成",
@@ -611,6 +759,25 @@
         "loadButton": "ファイルからロード",
         "importTemplateHint": "説明を合成します。これには、1 台または複数のマシンの説明が含まれます。",
         "importPlaceholder": ""
+      },
+      "details": {
+        "propertyName": "名前",
+        "propertyValue": "値",
+        "general": {
+          "id": "ID",
+          "placementHost": "配置ホスト",
+          "address": "アドレス",
+          "endpoint": "エンドポイント",
+          "properties": "プロパティ",
+          "usages": "使用量",
+          "powerState": "電源状態",
+          "environment": "環境",
+          "region": "地域",
+          "profile": "プロファイル"
+        },
+        "customProperties": {
+          "title": "カスタム プロパティ"
+        }
       }
     },
     "compute": {
@@ -621,22 +788,37 @@
         "searchPlaceholder": "コンピューティングの検索"
       },
       "details": {
-        "type": "タイプ"
+        "type": "タイプ",
+        "zone": "アベイラビリティ ゾーン",
+        "vm_host": "地域",
+        "clustercomputeresource": "クラスタ",
+        "computeresource": "ホスト",
+        "endpoint": "エンドポイント",
+        "hostsystem": "ホスト",
+        "resourcepool": "リソース プール"
       },
       "edit": {
         "title": "コンピューティングの編集",
         "nameLabel": "名前"
+      },
+      "actions": {
+        "details": "詳細"
       }
     },
     "network": {
       "entity": "ネットワーク"
     },
+    "securityGroup": {
+      "entity": "セキュリティ グループ"
+    },
     "subnetwork": {
       "list": {
         "title": "サブネットワーク",
-        "addButton": "追加",
+        "addButton": "サブネットワーク",
         "nameColumn": "名前",
-        "cidrColumn": "CIDR"
+        "cidrColumn": "CIDR",
+        "supportPublicIpAddressColumn": "パブリック IP アドレスのサポート",
+        "networkColumn": "ネットワーク"
       },
       "edit": {
         "addNew": "サブネットワークの追加",
@@ -668,7 +850,7 @@
           "connectedContainers": "コンテナ",
           "parentHosts": "ホスト",
           "external": "外部",
-          "create": "ネットワークの作成",
+          "create": "ネットワーク",
           "state": {
             "UNKNOWN": "不明",
             "PROVISIONING": "プロビジョニング",
@@ -682,26 +864,26 @@
           "description": "説明",
           "public": "パブリック",
           "private": "プライベート",
-          "create": "プロジェクトの作成",
+          "create": "プロジェクト",
           "actions": {
             "edit": "編集",
             "remove": "削除"
           }
         },
         "container": {
-          "create": "コンテナの作成"
+          "create": "コンテナ"
         },
         "application": {
-          "create": "アプリケーションの作成"
+          "create": "アプリケーション"
         },
         "closure": {
-          "create": "クロージャの作成"
+          "create": "クロージャ"
         },
         "kubernetes": {
-          "create": "作成"
+          "create": "定義"
         },
         "volume": {
-          "create": "ボリュームの作成",
+          "create": "ボリューム",
           "connectedDateLabel": "接続済み",
           "driverLabel": "ドライバ",
           "driverOptionsLabel": "ドライバのオプション",
@@ -977,12 +1159,12 @@
           },
           "logConfigOptions": "オプション",
           "logConfigOptionsDescription": "各ログ ドライバでサポートされるオプション",
-          "logConfigOptionsInputs" : {
+          "logConfigOptionsInputs": {
             "name": "名前",
             "nameHint": "例: max-size",
             "value": "値",
             "valueHint": "例: 10m"
-           }
+          }
         }
       },
       "state": {
@@ -1038,7 +1220,7 @@
       "details": {
         "name": "名前",
         "description": "説明",
-        "runtime" : "ランタイム",
+        "runtime": "ランタイム",
         "state": "状態",
         "id": "ID",
         "inputs": "入力",
@@ -1059,7 +1241,7 @@
         "FAILED": "失敗",
         "CANCELLED": "キャンセル済み"
       },
-      "list" : {
+      "list": {
         "name": "クロージャ",
         "closuresCountLabel": "クロージャ",
         "closureRunsLabel": "クロージャの実行",
@@ -1082,22 +1264,22 @@
             "powershell": "Powershell 6",
             "java": "Java 8"
           },
-          "logConfigOptionsInputs" : {
+          "logConfigOptionsInputs": {
             "name": "名前",
             "nameHint": "例: max-size",
             "value": "値",
             "valueHint": "例: 10m"
-           },
-           "closureInputs" : {
+          },
+          "closureInputs": {
             "name": "名前",
             "nameHint": "例: a",
             "value": "値",
             "valueHint": "例: 1"
-           },
-           "closureOutputs" : {
+          },
+          "closureOutputs": {
             "name": "名前",
             "nameHint": "例: result"
-           },
+          },
           "memoryLimit": "メモリ制限 (MB)",
           "timeout": "タイムアウト (秒)",
           "entrypoint": "エントリポイント ハンドラ",
@@ -1138,101 +1320,115 @@
         "outputs": "出力"
       }
     },
+    "image": {
+      "entity": "イメージ"
+    },
     "help": {
-        "link": "ヘルプ",
-        "description": "Ensemble を使用すると、現在実行中のタスクのコンテキストに関連する情報にアクセスできます。情報は作業の進行に合わせて自動的に更新されます。その際は相互参照が表示され、別画面を開いたり、画面を分割して、リアルタイムに情報を参照できます。モバイル デバイス、テレビなどの画面は、コンピュータに接続しているかどうかに関係なく使用できます。Ensemble は信頼されたネットワークの外で使用することが可能で、そのような環境でも更新情報をすばやく受信できます。",
-        "descriptionOpen": "Ensemble を開くには、<strong>[新しいタブで開く]</strong> をクリックするか、モバイル デバイスから QR コードをスキャンします。"
-      },
-      "resources": {
-        "selectMultiple": "アイテムの選択",
-        "message": {
-          "selectShift": "複数のアイテムを選択するには、Shift キーを使用します"
-        }
+      "link": "ヘルプ",
+      "description": "Ensemble を使用すると、現在実行中のタスクのコンテキストに関連する情報にアクセスできます。情報は作業の進行に合わせて自動的に更新されます。その際は相互参照が表示され、別画面を開いたり、画面を分割して、リアルタイムに情報を参照できます。モバイル デバイス、テレビなどの画面は、コンピュータに接続しているかどうかに関係なく使用できます。Ensemble は信頼されたネットワークの外で使用することが可能で、そのような環境でも更新情報をすばやく受信できます。",
+      "descriptionOpen": "Ensemble を開くには、<strong>[新しいタブで開く]</strong> をクリックするか、モバイル デバイスから QR コードをスキャンします。"
+    },
+    "resources": {
+      "selectMultiple": "アイテムの選択",
+      "message": {
+        "selectShift": "複数のアイテムを選択するには、Shift キーを使用します"
       }
     },
-    "loginPanel": {
-      "login": "ログイン",
-      "logout": "ログアウト",
-      "username": "ユーザー名",
-      "password": "パスワード",
-      "success": "認証に成功しました",
-      "failure": "認証エラー"
-    },
-    "dropdownSearchMenu": {
-      "title": "{{entity}} リストから選択します",
-      "searchPlaceholder": "{{entity}} の検索",
-      "clear": "選択をクリア",
-      "showingCount": "{{count}}/{{totalCount}} を表示中",
-      "noResults": "アイテムが見つかりませんでした"
-    },
-    "customProperties": {
-      "name": "名前",
-      "nameHint": "例: speedchecker",
-      "value": "値",
-      "valueHint": "例: slow"
-    },
-    "yes": "はい",
-    "ok": "OK",
-    "cancel": "キャンセル",
-    "error": "エラー",
-    "delete": "削除",
-    "enable": "有効化",
-    "enabled": "有効",
-    "disable": "無効化",
-    "disabled": "無効",
-    "close": "閉じる",
-    "edit": "編集",
-    "remove": "削除",
-    "add": "追加",
-    "save": "保存",
-    "back": "戻る",
-    "refresh": "更新",
-    "clear": "クリア",
-    "deleteAll": "すべて削除",
-    "pendingOperationCancel": "操作:",
-    "openInNewTab": "新しいタブで開く",
-    "unavailable": "N/A",
-    "advanced": "詳細",
-    "noSelection": "選択なし",
-    "buildNumber": "ビルド番号",
-    "errors": {
-      "hostIp": "値はホスト名または IP アドレスである必要があります。",
-      "urlPath": "URL パスが無効です。",
-      "propertyNameRequired": "プロパティ名が必要です。",
-      "propertyContainerNameInvalid": "コンテナ名が無効です。許可される文字は、[a-zA-Z0-9][a-zA-Z0-9_.-] のみです。",
-      "propertyNamesNotUnique": "プロパティ名は一意である必要があります。",
-      "nonNegativeNumber": "値は、2147483648 より小さい正の整数にする必要があります。",
-      "positiveNumber": "値は、2147483648 より小さい正の整数にする必要があります。",
-      "nonNegativeNumberAndMinusOne": "値は -1 ～ 2147483647 の整数にする必要があります。",
-      "portNumber": "ポート番号が無効です。有効なポート番号は、0 ～ 65535 の範囲です。",
-      "containerMemory": "メモリは、0 (リミットなし) または 4194304 バイト (4 MB) 以上にする必要があります。",
-      "required": "値を入力してください。",
-      "requiredAll": "すべてのフィールドは必須です。",
-      "serviceNameRequired": "サービス名が必要です。",
-      "networkRequired": "ネットワークが必要です。",
-      "itemNotFound": "アイテムが見つかりませんでした。",
-      "networkExists": "テンプレート内にネットワークがあります。",
-      "volumeDestinationRequired": "ボリュームのターゲットが必要です。",
-      "invalidInputValue": "入力値が無効です",
-      "invalidPath": "値は絶対パスにする必要があります。",
-      "invalidPathOrName": "値は、絶対パスまたは有効なボリューム名にする必要があります。",
-      "containersConnected": "接続済みのコネクタがあります",
-      "managedByCatalog": "カタログで管理されています",
-      "projectsUnexpectedError": "予期しないエラーが発生しました"
-    },
-    "infoMessages": {
-      "created": "正常に作成されました。",
-      "updated": "正常に更新されました。"
-    },
-    "occurrence": {
-      "all": "すべてに一致",
-      "any": "いずれかに一致"
-    },
-    "state": {
-      "ON": "有効",
-      "OFF": "無効",
-      "SUSPEND": "無効",
-      "UNKNOWN": "不明",
-      "stateSinceMessage": "{{date}} 以降"
-    }
+    "noneLabel": "なし"
+  },
+  "loginPanel": {
+    "login": "ログイン",
+    "logout": "ログアウト",
+    "username": "ユーザー名",
+    "password": "パスワード",
+    "welcomeTo": "ようこそ",
+    "success": "認証に成功しました",
+    "failure": "認証エラー"
+  },
+  "dropdownSearchMenu": {
+    "title": "{{entity}} リストから選択します",
+    "searchPlaceholder": "{{entity}} の検索",
+    "clear": "選択をクリア",
+    "showingCount": "{{count}}/{{totalCount}} を表示中",
+    "noResults": "アイテムが見つかりませんでした"
+  },
+  "customProperties": {
+    "name": "名前",
+    "nameHint": "例: speedchecker",
+    "value": "値",
+    "valueHint": "例: slow"
+  },
+  "yes": "はい",
+  "no": "いいえ",
+  "ok": "OK",
+  "cancel": "キャンセル",
+  "error": "エラー",
+  "delete": "削除",
+  "enable": "有効化",
+  "enabled": "有効",
+  "disable": "無効化",
+  "disabled": "無効",
+  "close": "閉じる",
+  "edit": "編集",
+  "remove": "削除",
+  "add": "追加",
+  "save": "保存",
+  "verify": "検証",
+  "verified": "検証が正常に完了しました。",
+  "back": "戻る",
+  "refresh": "更新",
+  "clear": "クリア",
+  "deleteAll": "すべて削除",
+  "pendingOperationCancel": "操作:",
+  "openInNewTab": "新しいタブで開く",
+  "unavailable": "N/A",
+  "advanced": "詳細",
+  "noSelection": "選択なし",
+  "buildNumber": "ビルド番号",
+  "errors": {
+    "hostIp": "値はホスト名または IP アドレスである必要があります。",
+    "urlPath": "URL パスが無効です。",
+    "propertyNameRequired": "プロパティ名が必要です。",
+    "propertyContainerNameInvalid": "コンテナ名が無効です。許可される文字は、[a-zA-Z0-9][a-zA-Z0-9_.-] のみです。",
+    "propertyNamesNotUnique": "プロパティ名は一意である必要があります。",
+    "nonNegativeNumber": "値は、2147483648 より小さい正の整数にする必要があります。",
+    "positiveNumber": "値は、2147483648 より小さい正の整数にする必要があります。",
+    "nonNegativeNumberAndMinusOne": "値は -1 ～ 2147483647 の整数にする必要があります。",
+    "portNumber": "ポート番号が無効です。有効なポート番号は、0 ～ 65535 の範囲です。",
+    "containerMemory": "メモリは、0 (リミットなし) または 4194304 バイト (4 MB) 以上にする必要があります。",
+    "required": "値を入力してください。",
+    "requiredAll": "すべてのフィールドは必須です。",
+    "serviceNameRequired": "サービス名が必要です。",
+    "networkRequired": "ネットワークが必要です。",
+    "itemNotFound": "アイテムが見つかりませんでした。",
+    "networkExists": "テンプレート内にネットワークがあります。",
+    "volumeDestinationRequired": "ボリュームのターゲットが必要です。",
+    "invalidInputValue": "入力値が無効です",
+    "invalidPath": "値は絶対パスにする必要があります。",
+    "invalidPathOrName": "値は、絶対パスまたは有効なボリューム名にする必要があります。",
+    "containersConnected": "接続済みのコネクタがあります",
+    "managedByCatalog": "カタログで管理されています",
+    "projectsUnexpectedError": "予期しないエラーが発生しました"
+  },
+  "infoMessages": {
+    "created": "正常に作成されました。",
+    "updated": "正常に更新されました。",
+    "notFound": "見つかりません",
+    "showingCount": "{{count}}/{{totalCount}} を表示中"
+  },
+  "occurrence": {
+    "all": "すべてに一致",
+    "any": "いずれかに一致"
+  },
+  "state": {
+    "ON": "有効",
+    "OFF": "無効",
+    "SUSPEND": "無効",
+    "UNKNOWN": "不明",
+    "stateSinceMessage": "{{date}} 以降"
+  },
+  "productNames": {
+    "admiral": "Admiral",
+    "vic": "vSphere Integrated Containers"
+  }
 }

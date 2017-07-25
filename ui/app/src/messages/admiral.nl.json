@@ -72,7 +72,7 @@
         "tagsPlaceholder": "Voorbeeld: location:west",
         "tagsHint": "Invoersleutel: waardetags",
         "autoConfigure": "Automatische configuratie",
-        "autoConfigureInput":"Automatische configuratie host inschakelen",
+        "autoConfigureInput": "Automatische configuratie host inschakelen",
         "autoConfigureHint": "Met deze optie configureert u de Docker Remote API op het opgegeven adres en de opgegeven poort met gegenereerde, zelf ondertekende certificaten. Dit gebeurt eenmaal en verloopt via SSH. Ondersteunde besturingssystemen zijn: CoreOS, PhotonOS, Ubuntu Server 16.04 of hoger.",
         "reservationPolicy": "Reserveringsbeleid",
         "endpoint": "Endpoint",
@@ -109,7 +109,8 @@
         "searchPlaceholder": "Zoeken naar hosts",
         "dataCollect": "Gegevens verzamelen",
         "dataCollectStart": "Gegevensverzameling wordt getriggerd. Dit kan een paar minuten duren.",
-        "dataCollectEnd": "Gegevensverzameling is voltooid."
+        "dataCollectEnd": "Gegevensverzameling is voltooid.",
+        "create": "Host"
       },
       "actions": {
         "start": "Beginnen",
@@ -126,7 +127,7 @@
       "entity": "Plaatsingszones",
       "list": {
         "title": "Plaatsingszones",
-        "addButton": "Toevoegen",
+        "addButton": "Plaatsingszone",
         "nameColumn": "Naam",
         "cpuColumn": "CPU",
         "memoryColumn": "Geheugen",
@@ -160,7 +161,7 @@
       "contextPanelTooltip": "Projecten",
       "list": {
         "title": "Project",
-        "addButton": "Toevoegen",
+        "addButton": "Project",
         "nameColumn": "Naam",
         "details": {
           "title": "Projectdetails"
@@ -179,7 +180,7 @@
       "contextPanelTooltip": "Verificatiegegevens",
       "list": {
         "title": "Verificatiegegevens",
-        "addButton": "Toevoegen",
+        "addButton": "Verificatiegegevens",
         "nameColumn": "Naam",
         "typeColumn": "Type",
         "credentialsColumn": "Verificatiegegevens"
@@ -204,12 +205,12 @@
     },
     "deploymentPolicy": {
       "createNew": "Nieuw implementatiebeleid",
-      "entity": "Implementatiebeheer",
+      "entity": "implementatiebeleid",
       "manage": "Implementatiebeleid beheren",
       "contextPanelTooltip": "Impl.beleid",
       "list": {
         "title": "Implementatiebeleid",
-        "addButton": "Toevoegen",
+        "addButton": "Beleid",
         "nameColumn": "Naam",
         "descriptionColumn": "Beschrijving",
         "details": {
@@ -230,7 +231,7 @@
       "contextPanelTooltip": "Certificaten",
       "list": {
         "title": "Certificaten",
-        "addButton": "Toevoegen",
+        "addButton": "Certificaat",
         "nameColumn": "Naam",
         "serialColumn": "Serienummer",
         "shaColumn": "SHA",
@@ -259,8 +260,10 @@
       "list": {
         "title": "Populaire sjablonen",
         "titleSearch": "Sjablonen gevonden",
+        "popularRepositories": "Populaire opslagplaatsen",
         "searchImagesTemplatesPlaceholder": "Zoeken naar images, sjablonen",
         "searchImagesPlaceholder": "Zoeken naar images",
+        "searchRepositoriesPlaceholder": "Zoeken naar opslagplaatsen",
         "searchTemplatesPlaceholder": "Zoeken naar sjablonen",
         "searchClosuresPlaceholder": "Zoeken naar sluitingen",
         "manageRegistry": "Registers beheren",
@@ -283,7 +286,8 @@
           "all": "Alles",
           "images": "Images",
           "templates": "Sjablonen",
-          "closures": "Sluitingen"
+          "closures": "Sluitingen",
+          "repositories": "Opslagplaatsen"
         }
       },
       "details": {
@@ -333,12 +337,12 @@
           "ipamConfigGatewayHint": "Voorbeeld: 172.16.238.1",
           "customProperties": "Aangepaste eigenschappen"
         },
-        "editClosures" :{
+        "editClosures": {
           "newTitle": "Sluiting toevoegen",
           "editTitle": "Sluiting bewerken",
           "name": "Naam"
         },
-        "editVolume" :{
+        "editVolume": {
           "newLabel": "Volume toevoegen",
           "newTitle": "Volume toevoegen",
           "newDropdownTitle": "Volume toevoegen...",
@@ -349,9 +353,9 @@
           "driverOptions": {
             "label": "Opties van stuurprogramma",
             "keyTitle": "Optie",
-            "keyHint": "Voorbeeld: size",
+            "keyHint": "Voorbeeld: o",
             "valueTitle": "Waarde",
-            "valueHint": "Voorbeeld: 20GB"
+            "valueHint": "Voorbeeld: grootte=100m"
           },
           "existingVolume": "Bestaand",
           "showingCount": "{{count}} van {{totalCount}} weergegeven",
@@ -416,7 +420,7 @@
     "placement": {
       "list": {
         "title": "Plaatsingen",
-        "addButton": "Toevoegen",
+        "addButton": "Plaatsing",
         "nameColumn": "Naam",
         "groupColumn": "Project",
         "businessGroupColumn": "Bedrijfsgroep",
@@ -465,7 +469,7 @@
     "registry": {
       "list": {
         "title": "Bestaande registers",
-        "addButton": "Toevoegen",
+        "addButton": "Register",
         "addressColumn": "Adres",
         "nameColumn": "Naam",
         "statusColumn": "Status"
@@ -487,7 +491,7 @@
         "title": "Profielen",
         "titleSearch": "Gevonden profielen",
         "searchPlaceholder": "Zoeken naar profielen",
-        "addButton": "Profiel maken",
+        "addButton": "Profiel",
         "addPropertyButton": "Eigenschap toevoegen",
         "nameColumn": "Naam",
         "endpointTypeColumn": "Endpointtype",
@@ -516,21 +520,126 @@
         "endpointLabel": "Endpoint",
         "valueLabel": "Waarde",
         "instanceTypeMappingLabel": "Instantietype",
+        "instanceTypeMappingDisplay": "{{cpuCount}} CPU, {{memoryInMB}} MB RAM, {{bootDiskSizeInMB}} MB schijf",
+        "instanceTypeMappingDisplayAWS": "{{cpuCount}} CPU, {{memoryInMB}} MB RAM, {{storageType}}-opslag, {{networkType}}-netwerk",
         "imageMappingLabel": "Imagetype",
-        "bootDiskPropertyMappingLabel": "Opstartschijfeigenschap",
+        "diskPropertyMappingLabel": "Schijfeigenschappen",
         "cpuCountLabel": "CPU's",
-        "diskSizeMbLabel": "Schijfgrootte (MB)",
-        "memoryMbLabel": "Geheugen (MB)",
+        "memoryGbLabel": "Geheugen (GB)",
+        "generalLabel": "Algemeen",
+        "existingLabel": "Bestaand",
         "subnetworksLabel": "Subnetwerken",
-        "isolationTypeLabel": "Isolatietype",
-        "isolationNetworkLabel": "Isolatienetwerk",
+        "isolationLabel": "Isolatie",
+        "isolationTypeLabel": "Type",
+        "isolationNetworkLabel": "Netwerk",
         "noneIsolationTypeLabel": "Geen",
         "subnetIsolationTypeLabel": "Subnetwerk",
-        "securityGroupIsolationTypeLabel": "Geen",
+        "securityGroupIsolationTypeLabel": "Beveiligingsgroep",
+        "securityGroups": "Beveiligingsgroepen",
+        "vpc": "VPC",
         "cidrLabel": "CIDR",
         "cidrLabelHint": "0.0.0.0/0",
+        "cidrPrefixLabel": "Voorvoegsellengte van subnetten",
+        "networkLabel": "Netwerk",
+        "resourceGroupsLabel": "Brongroepen",
         "supportPublicIpAddressLabel": "Ondersteuning voor openbaar IP",
-        "defaultForZoneLabel": "Standaard voor zone"
+        "defaultForZoneLabel": "Standaard voor zone",
+        "addStorageItem": "Opslagitem toevoegen",
+        "defaultLabel": "Standaard",
+        "makeDescriptorDefault": "Dit opslagitem standaard maken",
+        "itemHeader": "Opslagitem",
+        "storage": {
+          "azure": {
+            "selectAccountLabel": "Account selecteren",
+            "storageAccountTypeLabel": "Type opslagaccount",
+            "osDiskCachingLabel": "Opslaan in cache van besturingssysteemschijf",
+            "dataDiskCachingLabel": "Opslaan in cache van gegevensschijf",
+            "contextPanelTooltip": "Opslagaccounts",
+            "typeLabel": "Type",
+            "encryptionLabel": "Versleuteling van opslagservice",
+            "entityLabel": "Opslagaccounts",
+            "list": {
+              "title": "Opslagaccounts",
+              "nameColumn": "Naam",
+              "typeColumn": "Type",
+              "encryptionColumn": "Versleuteling van opslagservice",
+              "edit": {
+                "title": "Opslagaccount bewerken",
+                "nameLabel": "Accountnaam",
+                "typeLabel": "Accounttype",
+                "encryptionLabel": "Versleuteling van opslagservice"
+              }
+            }
+          },
+          "vsphere": {
+            "storagePolicyLabel": "Opslagbeleid",
+            "provisioningTypeLabel": "Inrichtingstype",
+            "datastoreLabel": "Datastore",
+            "sharesLevelLabel": "Niveau van gedeelten",
+            "sharesLabel": "Gedeelten",
+            "limitLabel": "IOPS beperken",
+            "datastoreContextPanelTooltip": "Datastores",
+            "storagePolicyContextPanelTooltip": "Opslagbeleid",
+            "datastoreEntityLabel": "Datastores",
+            "storagePolicyEntityLabel": "Opslagbeleid",
+            "snapshotsLabel": "Momentopnamen",
+            "independentOfSnapshotsLabel": "Onafhankelijk van momentopnamen",
+            "persistentLabel": "Persistent",
+            "nonPersistentLabel": "Niet-persistent",
+            "provisioningSelectDefault": "Inrichtingstype selecteren",
+            "sharesLevelDefault": "Niveau van gedeelten selecteren",
+            "datastore": {
+              "typeLabel": "Type",
+              "capacityLabel": "Capaciteit",
+              "capacityUnit": "GB",
+              "list": {
+                "title": "Datastores",
+                "nameColumn": "Naam",
+                "typeColumn": "Type",
+                "capacityColumn": "Capaciteit (GB)",
+                "encryptionColumn": "Ondersteunt versleuteling",
+                "edit": {
+                  "title": "Datastore bewerken",
+                  "nameLabel": "Datastore",
+                  "typeLabel": "Type",
+                  "encryptionLabel": "Ondersteunt versleuteling",
+                  "capacityLabel": "Capaciteit (GB)"
+                }
+              }
+            },
+            "storagePolicy": {
+              "descriptionLabel": "Beschrijving",
+              "list": {
+                "title": "Opslagbeleid",
+                "nameColumn": "Naam",
+                "descColumn": "Beschrijving",
+                "encryptionColumn": "Ondersteunt versleuteling",
+                "edit": {
+                  "title": "Opslagbeleid bewerken",
+                  "nameLabel": "Naam",
+                  "descLabel": "Beschrijving",
+                  "customPropertiesLabel": "Aangepaste eigenschappen",
+                  "customPropertiesTable": {
+                    "keyColumn": "Sleutel",
+                    "valueColumn": "Waarde"
+                  }
+                }
+              }
+            }
+          },
+          "aws": {
+            "volumeTypeLabel": "Volumetype",
+            "deviceTypeLabel": "Apparaattype",
+            "iopsLabel": "Max. aantal IOPS",
+            "iopsHint": "Werkelijk ingerichte IOPS kunnen lager liggen, afhankelijk van de schijfcapaciteit",
+            "fileSystemLabel": "Bestandssysteem",
+            "encryptedLabel": "Ondersteunt versleuteling"
+          }
+        },
+        "validation": {
+          "valueNotMoreThan": "Waarde kan niet hoger zijn dan {{max}}",
+          "valueInRange": "Waarde moet tussen {{min}} en {{max}} liggen"
+        }
       },
       "instanceType": {
         "aws": {
@@ -559,12 +668,46 @@
         "coreos": "CoreOS",
         "photon": "Photon OS",
         "ubuntu-1604": "Ubuntu"
+      },
+      "azureStorageAccountType": {
+        "standardLRS": "Standaard-LRS",
+        "standardZRS": "Standaard-ZRS",
+        "standardGRS": "Standaard-GRS",
+        "standardRAGRS": "Standaard-RAGRS",
+        "premiumLRS": "Premium-LRS"
+      },
+      "azureDiskCachingType": {
+        "none": "Geen",
+        "readOnly": "Alleen-lezen",
+        "readWrite": "Alleen-schrijven"
+      },
+      "vsphereProvisioningTypes": {
+        "thin": "Dun",
+        "thick": "Dik",
+        "eagerZeroedThick": "Eager Zeroed Thick"
+      },
+      "vsphereSharesLevel": {
+        "low": "Laag",
+        "normal": "Normaal",
+        "high": "Hoog",
+        "custom": "Aangepast"
+      },
+      "awsVolumeTypes": {
+        "gp2": "SSD voor algemeen gebruik (GP2)",
+        "io1": "SSD met ingerichte IOPS (IO1)",
+        "sc1": "Koude HDD (SC1)",
+        "st1": "HDD voor geoptimaliseerde doorvoer (ST1)",
+        "standard": "Magnetisch"
+      },
+      "awsDeviceTypes": {
+        "ebs": "EBS",
+        "instanceStore": "Instantiestore"
       }
     },
     "endpoint": {
       "list": {
         "title": "Endpoints",
-        "addButton": "Toevoegen",
+        "addButton": "Endpoint",
         "nameColumn": "Naam",
         "typeColumn": "Type"
       },
@@ -576,6 +719,11 @@
         "privateKeyIdLabel": "Toegangssleutel-id",
         "privateKeyLabel": "Geheime toegangssleutel",
         "regionIdLabel": "Regio-id",
+        "collectLabel": "Gegevensverzameling",
+        "collectInventoryLabel": "Inventaris samenstellen",
+        "collectInventoryMessage": "Samenstellen van inventaris wordt getriggerd. Dit kan een paar minuten duren.",
+        "collectImagesLabel": "Imagetypen verzamelen",
+        "collectImagesMessage": "Verzamelen van images wordt getriggerd. Dit kan een paar minuten duren.",
         "azure": {
           "userLinkLabel": "Abonnements-id",
           "tenantIdLabel": "Tenant-id"
@@ -585,7 +733,7 @@
           "privateKeyIdLabel": "Gebruikersnaam",
           "privateKeyLabel": "Wachtwoord",
           "regionIdLabel": "Datacenter",
-          "linkedEndpointLabel": "NSX-T-endpoint"
+          "linkedEndpointLabel": "NSX-endpoint"
         }
       },
       "entity": "endpoint",
@@ -600,7 +748,7 @@
         "title": "Machines",
         "titleSearch": "Machines gevonden",
         "searchPlaceholder": "Zoeken naar machines",
-        "addButton": "Machine maken"
+        "addButton": "Machine"
       },
       "edit": {
         "addTitle": "Machine maken",
@@ -611,6 +759,25 @@
         "loadButton": "Laden vanuit bestand",
         "importTemplateHint": "Samengestelde beschrijving met een of meerdere machinebeschrijvingen",
         "importPlaceholder": ""
+      },
+      "details": {
+        "propertyName": "Naam",
+        "propertyValue": "Waarde",
+        "general": {
+          "id": "Id",
+          "placementHost": "Plaatsingshost",
+          "address": "Adres",
+          "endpoint": "Endpoint",
+          "properties": "Eigenschappen",
+          "usages": "Aantal keer gebruikt",
+          "powerState": "Energieniveau",
+          "environment": "Omgeving",
+          "region": "Regio",
+          "profile": "Profiel"
+        },
+        "customProperties": {
+          "title": "Aangepaste eigenschappen"
+        }
       }
     },
     "compute": {
@@ -621,22 +788,37 @@
         "searchPlaceholder": "Zoeken naar computingbron"
       },
       "details": {
-        "type": "Type"
+        "type": "Type",
+        "zone": "Beschikbaarheidszone",
+        "vm_host": "Regio",
+        "clustercomputeresource": "Cluster",
+        "computeresource": "Host",
+        "endpoint": "Endpoint",
+        "hostsystem": "Host",
+        "resourcepool": "Bronpool"
       },
       "edit": {
         "title": "Computingbron bewerken",
         "nameLabel": "Naam"
+      },
+      "actions": {
+        "details": "Details"
       }
     },
     "network": {
       "entity": "Netwerk"
     },
+    "securityGroup": {
+      "entity": "Beveiligingsgroep"
+    },
     "subnetwork": {
       "list": {
         "title": "Subnetwerken",
-        "addButton": "Toevoegen",
+        "addButton": "Subnetwerk",
         "nameColumn": "Naam",
-        "cidrColumn": "CIDR"
+        "cidrColumn": "CIDR",
+        "supportPublicIpAddressColumn": "Ondersteuning voor openbaar IP",
+        "networkColumn": "Netwerk"
       },
       "edit": {
         "addNew": "Subnetwerk toevoegen",
@@ -668,7 +850,7 @@
           "connectedContainers": "Containers",
           "parentHosts": "Hosts",
           "external": "Extern",
-          "create": "Netwerk maken",
+          "create": "Netwerk",
           "state": {
             "UNKNOWN": "ONBEKEND",
             "PROVISIONING": "INRICHTING",
@@ -682,26 +864,26 @@
           "description": "Beschrijving",
           "public": "Openbaar",
           "private": "Privé",
-          "create": "Project maken",
+          "create": "Project",
           "actions": {
             "edit": "Bewerken",
             "remove": "Verwijderen"
           }
         },
         "container": {
-          "create": "Container maken"
+          "create": "Container"
         },
         "application": {
-          "create": "Toepassing maken"
+          "create": "Toepassing"
         },
         "closure": {
-          "create": "Sluiting maken"
+          "create": "Sluiting"
         },
         "kubernetes": {
-          "create": "Maken"
+          "create": "Definitie"
         },
         "volume": {
-          "create": "Volume maken",
+          "create": "Volume",
           "connectedDateLabel": "Verbonden",
           "driverLabel": "Stuurprogramma",
           "driverOptionsLabel": "Opties van stuurprogramma",
@@ -907,7 +1089,7 @@
           "volumeNamePlaceholder": "Voorbeeld: volumeNaam",
           "volumeNameDescription": "De naam van het volume bij gebruik van een niet-lokaal stuurprogramma",
           "workingDirectory": "Werkdirectory",
-          "workingDirectoryDescription": "De werkdirectory om opdrachten in uit te voeren",
+          "workingDirectoryDescription": "De werkdirectory waarin opdrachten moeten worden uitgevoerd",
           "clusterSize": "Clustergrootte",
           "clusterSizeDescription": "Het aantal knooppunten dat moet worden ingericht",
           "restartPolicy": "Beleid opnieuw starten",
@@ -977,12 +1159,12 @@
           },
           "logConfigOptions": "Opties",
           "logConfigOptionsDescription": "Ondersteunde opties per stuurprogramma logboekregistratie",
-          "logConfigOptionsInputs" : {
+          "logConfigOptionsInputs": {
             "name": "Naam",
             "nameHint": "Voorbeeld: max-size",
             "value": "Waarde",
             "valueHint": "Voorbeeld: 10m"
-           }
+          }
         }
       },
       "state": {
@@ -1038,7 +1220,7 @@
       "details": {
         "name": "Naam",
         "description": "Beschrijving",
-        "runtime" : "Runtime",
+        "runtime": "Runtime",
         "state": "Status",
         "id": "Id",
         "inputs": "Invoer",
@@ -1059,7 +1241,7 @@
         "FAILED": "MISLUKT",
         "CANCELLED": "GEANNULEERD"
       },
-      "list" : {
+      "list": {
         "name": "Sluiting",
         "closuresCountLabel": "Sluitingen",
         "closureRunsLabel": "Uitvoeringen sluiting",
@@ -1082,22 +1264,22 @@
             "powershell": "Powershell 6",
             "java": "Java 8"
           },
-          "logConfigOptionsInputs" : {
+          "logConfigOptionsInputs": {
             "name": "Naam",
             "nameHint": "Voorbeeld: max-size",
             "value": "Waarde",
             "valueHint": "Voorbeeld: 10m"
-           },
-           "closureInputs" : {
+          },
+          "closureInputs": {
             "name": "Naam",
             "nameHint": "Voorbeeld: a",
             "value": "Waarde",
             "valueHint": "Voorbeeld: 1"
-           },
-           "closureOutputs" : {
+          },
+          "closureOutputs": {
             "name": "Naam",
             "nameHint": "Voorbeeld: resultaat"
-           },
+          },
           "memoryLimit": "Geheugenlimiet (megabyte)",
           "timeout": "Time-out (seconden)",
           "entrypoint": "Verwerker entrypoint",
@@ -1138,101 +1320,115 @@
         "outputs": "Uitvoer"
       }
     },
+    "image": {
+      "entity": "image"
+    },
     "help": {
-        "link": "Help",
-        "description": "Ensemble stelt u in staat relevante informatie te lezen voor de context van de taak die u op dit moment uitvoert. Het wordt automatisch vernieuwd met instructies terwijl u werkt. Gebruik een tweede scherm of een gedeeld scherm om de informatie in realtime te openen. U kunt een mobiel apparaat, een tv of een ander scherm gebruiken, ongeacht of deze/dit is verbonden met uw computer of niet. U kunt Ensemble buiten het vertrouwde netwerk gebruiken en toch directe updates ontvangen.",
-        "descriptionOpen": "Klik op <strong>Openen in nieuw tabblad</strong> of scan de QR-code met uw mobiele apparaat om Ensemble te openen."
-      },
-      "resources": {
-        "selectMultiple": "Items selecteren",
-        "message": {
-          "selectShift": "Gebruik Shift om verschillende items te selecteren"
-        }
+      "link": "Help",
+      "description": "Ensemble stelt u in staat relevante informatie te lezen voor de context van de taak die u op dit moment uitvoert. Het wordt automatisch vernieuwd met instructies terwijl u werkt. Gebruik een tweede scherm of een gedeeld scherm om de informatie in realtime te openen. U kunt een mobiel apparaat, een tv of een ander scherm gebruiken, ongeacht of deze/dit is verbonden met uw computer of niet. U kunt Ensemble buiten het vertrouwde netwerk gebruiken en toch directe updates ontvangen.",
+      "descriptionOpen": "Klik op <strong>Openen in nieuw tabblad</strong> of scan de QR-code met uw mobiele apparaat om Ensemble te openen."
+    },
+    "resources": {
+      "selectMultiple": "Items selecteren",
+      "message": {
+        "selectShift": "Gebruik Shift om verschillende items te selecteren"
       }
     },
-    "loginPanel": {
-      "login": "Aanmelden",
-      "logout": "Afmelden",
-      "username": "Gebruikersnaam",
-      "password": "Wachtwoord",
-      "success": "Verificatie gelukt",
-      "failure": "Verificatie mislukt"
-    },
-    "dropdownSearchMenu": {
-      "title": "Selecteren in de lijst {{entity}}",
-      "searchPlaceholder": "Zoeken naar {{entity}}",
-      "clear": "Selectie wissen",
-      "showingCount": "{{count}} van {{totalCount}} weergegeven",
-      "noResults": "Geen items gevonden"
-    },
-    "customProperties": {
-      "name": "Naam",
-      "nameHint": "Voorbeeld: speedchecker",
-      "value": "Waarde",
-      "valueHint": "Voorbeeld: slow"
-    },
-    "yes": "Ja",
-    "ok": "Ok",
-    "cancel": "Annuleren",
-    "error": "Fout",
-    "delete": "Verwijderen",
-    "enable": "Inschakelen",
-    "enabled": "Ingeschakeld",
-    "disable": "Uitschakelen",
-    "disabled": "Uitgeschakeld",
-    "close": "Sluiten",
-    "edit": "Bewerken",
-    "remove": "Verwijderen",
-    "add": "Toevoegen",
-    "save": "Opslaan",
-    "back": "Terug",
-    "refresh": "Vernieuwen",
-    "clear": "Wissen",
-    "deleteAll": "Alles verwijderen",
-    "pendingOperationCancel": "bewerking in",
-    "openInNewTab": "Openen in nieuw tabblad",
-    "unavailable": "N.v.t.",
-    "advanced": "Geavanceerd",
-    "noSelection": "Geen selectie",
-    "buildNumber": "Versienummer",
-    "errors": {
-      "hostIp": "Waarde moet hostnaam of IP-adres zijn.",
-      "urlPath": "URL-pad is ongeldig.",
-      "propertyNameRequired": "Eigenschapnaam is verplicht.",
-      "propertyContainerNameInvalid": "Ongeldige containernaam, alleen [a-zA-Z0-9][a-zA-Z0-9_.-] zijn toegestaan.",
-      "propertyNamesNotUnique": "Eigenschapnamen moeten uniek zijn.",
-      "nonNegativeNumber": "Waarde moet een niet-negatief geheel getal zijn dat lager is dan 2147483648.",
-      "positiveNumber": "Waarde moet een positief geheel getal zijn dat lager is dan 2147483648.",
-      "nonNegativeNumberAndMinusOne": "Waarde moet een geheel getal zijn tussen -1 en 2147483647.",
-      "portNumber": "Ongeldig poortnummer. Een geldig poortnummer ligt tussen 0 en 65535.",
-      "containerMemory": "Geheugen moet 0 (geen limiet) of ten minste 4194304 byte (4 MB) zijn.",
-      "required": "Waarde is verplicht.",
-      "requiredAll": "Alle velden zijn verplicht.",
-      "serviceNameRequired": "Servicenaam is verplicht.",
-      "networkRequired": "Netwerk is verplicht.",
-      "itemNotFound": "Item is niet gevonden.",
-      "networkExists": "Netwerk bestaat al in sjabloon.",
-      "volumeDestinationRequired": "Volumebestemming is verplicht.",
-      "invalidInputValue": "Ongeldige invoerwaarde",
-      "invalidPath": "Waarde moet een absoluut pad zijn.",
-      "invalidPathOrName": "Waarde moet een absoluut pad of een geldige volumenaam zijn.",
-      "containersConnected": "Er zijn verbonden containers.",
-      "managedByCatalog": "Beheerd per catalogus",
-      "projectsUnexpectedError": "Er is een onverwachte fout opgetreden"
-    },
-    "infoMessages": {
-      "created": "Gemaakt!",
-      "updated": "Bijgewerkt!"
-    },
-    "occurrence": {
-      "all": "Alle overeenkomende",
-      "any": "Willekeurig overeenkomende"
-    },
-    "state": {
-      "ON": "AAN",
-      "OFF": "UIT",
-      "SUSPEND": "UITGESCHAKELD",
-      "UNKNOWN": "ONBEKEND",
-      "stateSinceMessage": "sinds {{date}}"
-    }
+    "noneLabel": "Geen"
+  },
+  "loginPanel": {
+    "login": "Aanmelden",
+    "logout": "Afmelden",
+    "username": "Gebruikersnaam",
+    "password": "Wachtwoord",
+    "welcomeTo": "Welkom bij",
+    "success": "Verificatie gelukt",
+    "failure": "Verificatie mislukt"
+  },
+  "dropdownSearchMenu": {
+    "title": "Selecteren in de lijst {{entity}}",
+    "searchPlaceholder": "Zoeken naar {{entity}}",
+    "clear": "Selectie wissen",
+    "showingCount": "{{count}} van {{totalCount}} weergegeven",
+    "noResults": "Geen items gevonden"
+  },
+  "customProperties": {
+    "name": "Naam",
+    "nameHint": "Voorbeeld: speedchecker",
+    "value": "Waarde",
+    "valueHint": "Voorbeeld: slow"
+  },
+  "yes": "Ja",
+  "no": "Nee",
+  "ok": "Ok",
+  "cancel": "Annuleren",
+  "error": "Fout",
+  "delete": "Verwijderen",
+  "enable": "Inschakelen",
+  "enabled": "Ingeschakeld",
+  "disable": "Uitschakelen",
+  "disabled": "Uitgeschakeld",
+  "close": "Sluiten",
+  "edit": "Bewerken",
+  "remove": "Verwijderen",
+  "add": "Toevoegen",
+  "save": "Opslaan",
+  "verify": "Verifiëren",
+  "verified": "Geverifieerd!",
+  "back": "Terug",
+  "refresh": "Vernieuwen",
+  "clear": "Wissen",
+  "deleteAll": "Alles verwijderen",
+  "pendingOperationCancel": "bewerking in",
+  "openInNewTab": "Openen in nieuw tabblad",
+  "unavailable": "N.v.t.",
+  "advanced": "Geavanceerd",
+  "noSelection": "Geen selectie",
+  "buildNumber": "Versienummer",
+  "errors": {
+    "hostIp": "Waarde moet hostnaam of IP-adres zijn.",
+    "urlPath": "URL-pad is ongeldig.",
+    "propertyNameRequired": "Eigenschapnaam is verplicht.",
+    "propertyContainerNameInvalid": "Ongeldige containernaam, alleen [a-zA-Z0-9][a-zA-Z0-9_.-] zijn toegestaan.",
+    "propertyNamesNotUnique": "Eigenschapnamen moeten uniek zijn.",
+    "nonNegativeNumber": "Waarde moet een niet-negatief geheel getal zijn dat lager is dan 2147483648.",
+    "positiveNumber": "Waarde moet een positief geheel getal zijn dat lager is dan 2147483648.",
+    "nonNegativeNumberAndMinusOne": "Waarde moet een geheel getal zijn tussen -1 en 2147483647.",
+    "portNumber": "Ongeldig poortnummer. Een geldig poortnummer ligt tussen 0 en 65535.",
+    "containerMemory": "Geheugen moet 0 (geen limiet) of ten minste 4194304 byte (4 MB) zijn.",
+    "required": "Waarde is verplicht.",
+    "requiredAll": "Alle velden zijn verplicht.",
+    "serviceNameRequired": "Servicenaam is verplicht.",
+    "networkRequired": "Netwerk is verplicht.",
+    "itemNotFound": "Item is niet gevonden.",
+    "networkExists": "Netwerk bestaat al in sjabloon.",
+    "volumeDestinationRequired": "Volumebestemming is verplicht.",
+    "invalidInputValue": "Ongeldige invoerwaarde",
+    "invalidPath": "Waarde moet een absoluut pad zijn.",
+    "invalidPathOrName": "Waarde moet een absoluut pad of een geldige volumenaam zijn.",
+    "containersConnected": "Er zijn verbonden containers.",
+    "managedByCatalog": "Beheerd per catalogus",
+    "projectsUnexpectedError": "Er is een onverwachte fout opgetreden"
+  },
+  "infoMessages": {
+    "created": "Gemaakt!",
+    "updated": "Bijgewerkt!",
+    "notFound": "Niet gevonden",
+    "showingCount": "{{count}} van {{totalCount}} weergegeven"
+  },
+  "occurrence": {
+    "all": "Alle overeenkomende",
+    "any": "Willekeurig overeenkomende"
+  },
+  "state": {
+    "ON": "AAN",
+    "OFF": "UIT",
+    "SUSPEND": "UITGESCHAKELD",
+    "UNKNOWN": "ONBEKEND",
+    "stateSinceMessage": "sinds {{date}}"
+  },
+  "productNames": {
+    "admiral": "Admiral",
+    "vic": "vSphere Integrated Containers"
+  }
 }

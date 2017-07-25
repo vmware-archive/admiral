@@ -1,0 +1,275 @@
+{
+  "projects": {
+    "title": "Проекты",
+    "project": "Проект",
+    "users": "Пользователи",
+    "administrators": "Администраторы",
+    "projectRegistry": "Реестр проекта",
+    "public": "Общедоступный",
+    "publicDescription": "Открытый доступ к реестру проекта",
+    "private": "Частный",
+    "clusters": "Кластеры",
+    "repositories": "Репозитории",
+    "infrastructure": "Инфраструктура",
+    "registryReplication": "Репликация реестра",
+    "configuration": "Конфигурация",
+    "edit": {
+      "titleNew": "Новый проект",
+      "titleEdit": "Изменить проект",
+      "name": "Имя",
+      "nameRequired": "Необходимо указать имя.",
+      "description": "Описание"
+    },
+    "delete": {
+      "title": "Удалить проект",
+      "confirmation": "Подтвердите удаление проекта {{projectName}}. Все связи участников и кластеров с проектом будут удалены. Это действие невозможно отменить."
+    },
+    "summary": {
+      "title": "Сводка",
+      "type": "Тип:",
+      "creationDate": "Создано:",
+      "team": {
+        "title": "Команда проекта",
+        "administrators": "Администраторы проекта:",
+        "members": "Разработчики:",
+        "viewers": "Наблюдатели:",
+        "users": "пользователи"
+      },
+      "repositories": {
+        "title": "Репозитории проекта",
+        "repositories": "Репозитории:"
+      },
+      "resources": {
+        "title": "Ресурсы проекта",
+        "clusters": "Кластеры:",
+        "templates": "Шаблоны приложений:",
+        "images": "Образы:"
+      }
+    },
+    "members": {
+      "title": "Участники",
+      "columnName": "Имя",
+      "columnPrimaryId": "Основной идентификатор",
+      "columnSource": "Источник",
+      "columnRole": "Роль",
+      "count": "участники",
+      "addMembers": {
+        "title": "Добавить пользователей и группы",
+        "description": "Добавить пользователей и группы к проекту {{projectName}} по идентификаторам или адресам эл. почты.",
+        "fieldTitleId": "Идентификатор или адрес эл. почты",
+        "fieldRequiredId": "Требуется указать идентификатор.",
+        "searchPlaceholder": "Поиск пользователей",
+        "fieldTitleRole": "Роль в проекте"
+      },
+      "editMember": {
+        "title": "Изменить роль участника в проекте",
+        "description": "Изменить роль участника {{memberId}} в проекте {{projectName}}."
+      },
+      "roles": {
+        "administrator": "Администратор DevOps",
+        "member": "Разработчик",
+        "viewer": "Наблюдатель"
+      },
+      "source": {
+        "local": "Локальный"
+      },
+      "deleteMember": {
+        "title": "Удалить участника из проекта",
+        "confirmation": "Действительно удалить участника из этого проекта?"
+      }
+    },
+    "config": {
+      "title": "Конфигурация",
+      "projectRegistry": "Реестр проекта",
+      "public": "Общедоступный",
+      "publicDescription": "Если сделать реестр проекта общедоступным, все репозитории станут доступными для любых пользователей.",
+      "deploymentSecurity": "Защита развертывания",
+      "enableContentTrust": "Включить механизм доверия содержимому",
+      "enableContentTrustDescription": "Разрешить развертывание только проверенных образов.",
+      "preventVulnerableImagesFromRunning": "Исключить запуск уязвимых образов",
+      "preventVulnerableImagesFromRunningDescription_part1": "Исключить развертывание образов со степенью уязвимости",
+      "preventVulnerableImagesFromRunningDescription_part2": "и выше.",
+      "vulnerabilityScanning": "Проверка уязвимостей",
+      "automaticallyScanImagesOnPush": "Автоматически проверять образы при отправке",
+      "automaticallyScanImagesOnPushDescription": "Автоматически проверять образы при отправке в реестр проекта."
+    },
+    "search": {
+      "placeholder": "Поиск проектов"
+    },
+    "actions": {
+      "title": "Действия",
+      "details": "Сведения",
+      "makePublic": "Сделать общедоступным",
+      "makePrivate": "Сделать частным",
+      "addUsersAndGroups": "Добавить пользователей и группы",
+      "addClusters": "Добавить кластеры"
+    }
+  },
+  "registries": {
+    "title": "Реестры",
+    "sourceRegistries": "Реестры источников",
+    "replicationEndpoints": "Конечные точки репликации",
+    "replicationRules": "Правила репликации"
+  },
+  "clusters": {
+    "title": "Кластеры",
+    "cluster": "Кластер",
+    "new": "Создать",
+    "status": "Состояние",
+    "state": {
+      "ON": "Включено",
+      "OFF": "Выключено",
+      "DISABLED": "ОТКЛЮЧЕНО",
+      "WARNING": "ПРЕДУПРЕЖДЕНИЕ"
+    },
+    "type": "Тип",
+    "containers": "Контейнеры",
+    "cpu": "ЦП",
+    "memory": "Память",
+    "summary": {
+      "title": "Сводка",
+      "address": "Адрес:",
+      "adminPortal": "Административный портал:",
+      "type": "Тип:",
+      "clusterOverview": "Обзор кластера",
+      "clusterResources": "Ресурсы кластера",
+      "status": "Состояние:",
+      "creationDate": "Создано:",
+      "containersCount": "Контейнеры:",
+      "cpu": "Виртуальные ЦП:",
+      "memory": "Память:"
+    },
+    "resources": {
+      "addHostButton": "Узел",
+      "title": "Ресурсы",
+      "address": "Адрес",
+      "status": "Состояние",
+      "containersCount": "Контейнеры",
+      "memory": "Память",
+      "cpu": "ЦП",
+      "addHost": {
+        "title": "Добавить узел",
+        "address": "Адрес",
+        "addressRequired": "Требуется указать адрес."
+      }
+    },
+    "edit": {
+      "titleNew": "Создать кластер",
+      "titleEdit": "Изменить кластер",
+      "name": "Имя",
+      "nameRequired": "Необходимо указать имя.",
+      "description": "Описание",
+      "type": "Тип",
+      "url": "URL-адрес",
+      "urlRequired": "Необходимо указать URL-адрес кластера.",
+      "credentials": "Учетные данные"
+    },
+    "delete": {
+      "title": "Удалить кластер",
+      "confirmation": "Подтвердите удаление кластера {{clusterName}}. Это действие невозможно отменить."
+    }
+  },
+  "hosts": {
+    "delete":{
+      "title": "Удалить узел",
+      "confirmation": "Подтвердите удаление узла {{hostName}}. Это действие невозможно отменить."
+    },
+    "state": {
+      "ON": "Включено",
+      "OFF": "Выключено",
+      "UNKNOWN": "НЕТ ДАННЫХ",
+      "SUSPEND": "ОТКЛЮЧЕНО"
+    }
+  },
+  "logs": {
+    "title": "Журналы",
+    "system": {
+      "title": "Система",
+      "columnLogEntry": "Запись журнала",
+      "columnSeverity": "Серьезность",
+      "columnTimeStamp": "Метка времени",
+      "entriesCount": "Записи журнала"
+    },
+    "registry": {
+      "title": "Реестр"
+    },
+    "event": {
+      "type": {
+          "info": "Сведения",
+          "warning": "Предупреждение",
+          "error": "Ошибка"
+      }
+    }
+  },
+  "identity": {
+    "title": "Управление идентификацией",
+    "credentials": "Учетные данные",
+    "certificates": "Сертификаты",
+    "usersgroups": {
+      "title": "Пользователи и группы",
+      "description": "Импортируйте пользователей и группы в систему. Затем присвойте им роли в проекте. также можно сделать пользователя глобальным администратором облаков.",
+      "fieldTitleSearch": "Поиск пользователей/групп",
+      "columnName": "Имя пользователя/группы",
+      "columnPrimaryId": "Основной идентификатор",
+      "columnCloudAdmin": "Администратор облаков",
+      "columnProjects": "Проекты",
+      "count": "пользователи/группы",
+      "notFound": "Пользователи не найдены"
+    }
+  },
+  "configuration": {
+    "title": "Конфигурация",
+    "registry": "Реестр"
+  },
+  "errors": {
+    "itemNotFound": "Элемент не найден."
+  },
+  "certificate": {
+    "certificateWarning": "Сертификат для {{address}} является недействительным. Возможно, вы пытаетесь подключиться к веб-сайту, который выдается за {{address}}, что может поставить под угрозу вашу конфиденциальную информацию. Подключиться к веб-сайту в любом случае?",
+    "show": "Показать сертификат",
+    "hide": "Скрыть сертификат",
+    "validateTitle": "Проверить сертификат",
+    "details": {
+      "commonName": "Обычное имя",
+      "issuerName": "Имя издателя",
+      "serial": "Серийный номер",
+      "fingerprint": "Отпечаток пальца SHA",
+      "validSince": "Действителен с",
+      "validTo": "Действителен до"
+    }
+  },
+  "edit": "Изменить",
+  "save": "Сохранить",
+  "add": "Добавить",
+  "yes": "Да",
+  "remove": "Удалить",
+  "delete": "Удалить",
+  "cancel": "Отмена",
+  "unknown": "Нет данных",
+  "assignRoles": "Присвоить роли",
+  "makeAdmin": " Сделать администратором",
+
+  "compute": {
+    "resources": "Ресурсы",
+    "policies": "Политики",
+    "deployments": "Развертывания",
+    "endpoints": {
+      "title": "Конечные точки"
+    },
+    "compute": {
+      "title": "Вычислительный ресурс"
+    },
+    "profiles": {
+      "title": "Профили"
+    },
+    "placements": {
+      "title": "Размещения"
+    },
+    "machines": {
+      "title": "Компьютеры"
+    },
+    "networks": {
+      "title": "Сети"
+    }
+  }
+}

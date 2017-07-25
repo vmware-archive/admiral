@@ -72,7 +72,7 @@
         "tagsPlaceholder": "Пример: расположение:запад",
         "tagsHint": "Введите теги ключ:значение",
         "autoConfigure": "Автоматическая конфигурация",
-        "autoConfigureInput":"Включить автоматическую конфигурацию узла",
+        "autoConfigureInput": "Включить автоматическую конфигурацию узла",
         "autoConfigureHint": "Эта функция поможет настроить удаленный интерфейс API Docker для указанного адреса и порта, используя сгенерированные самоподписанные сертификаты. Это будет сделано один раз через SSH. Поддерживаемые операционные системы: CoreOS, PhotonOS, Ubuntu Server версии 16.04 или выше.",
         "reservationPolicy": "Политика резервирования",
         "endpoint": "Конечная точка",
@@ -109,7 +109,8 @@
         "searchPlaceholder": "Поиск узлов",
         "dataCollect": "Сбор данных",
         "dataCollectStart": "Инициирование сбора данных. Для завершения операции может потребоваться несколько минут.",
-        "dataCollectEnd": "Сбор данных завершен."
+        "dataCollectEnd": "Сбор данных завершен.",
+        "create": "Узел"
       },
       "actions": {
         "start": "Пуск",
@@ -126,7 +127,7 @@
       "entity": "зона размещения",
       "list": {
         "title": "Зоны размещения",
-        "addButton": "Добавить",
+        "addButton": "Зона размещения",
         "nameColumn": "Имя",
         "cpuColumn": "ЦП",
         "memoryColumn": "Память",
@@ -160,7 +161,7 @@
       "contextPanelTooltip": "Проекты",
       "list": {
         "title": "Проект",
-        "addButton": "Добавить",
+        "addButton": "Проект",
         "nameColumn": "Имя",
         "details": {
           "title": "Сведения о проекте"
@@ -179,7 +180,7 @@
       "contextPanelTooltip": "Учетные данные",
       "list": {
         "title": "Учетные данные",
-        "addButton": "Добавить",
+        "addButton": "Учетные данные",
         "nameColumn": "Имя",
         "typeColumn": "Тип",
         "credentialsColumn": "Учетные данные"
@@ -209,7 +210,7 @@
       "contextPanelTooltip": "Политики развертывания",
       "list": {
         "title": "Политики развертывания",
-        "addButton": "Добавить",
+        "addButton": "Политика",
         "nameColumn": "Имя",
         "descriptionColumn": "Описание",
         "details": {
@@ -230,7 +231,7 @@
       "contextPanelTooltip": "Сертификаты",
       "list": {
         "title": "Сертификаты",
-        "addButton": "Добавить",
+        "addButton": "Сертификат",
         "nameColumn": "Имя",
         "serialColumn": "Серийный номер",
         "shaColumn": "SHA",
@@ -259,8 +260,10 @@
       "list": {
         "title": "Популярные шаблоны",
         "titleSearch": "Найденные шаблоны",
+        "popularRepositories": "Часто используемые репозитории",
         "searchImagesTemplatesPlaceholder": "Поиск образов, шаблонов",
         "searchImagesPlaceholder": "Поиск образов",
+        "searchRepositoriesPlaceholder": "Поиск репозиториев",
         "searchTemplatesPlaceholder": "Поиск шаблонов",
         "searchClosuresPlaceholder": "Поиск закрытий",
         "manageRegistry": "Управление реестрами",
@@ -283,7 +286,8 @@
           "all": "Все",
           "images": "Образы",
           "templates": "Шаблоны",
-          "closures": "Закрытия"
+          "closures": "Закрытия",
+          "repositories": "Репозитории"
         }
       },
       "details": {
@@ -333,12 +337,12 @@
           "ipamConfigGatewayHint": "Пример: 172.16.238.1",
           "customProperties": "Настраиваемые свойства"
         },
-        "editClosures" :{
+        "editClosures": {
           "newTitle": "Добавить закрытие",
           "editTitle": "Изменить закрытие",
           "name": "Имя"
         },
-        "editVolume" :{
+        "editVolume": {
           "newLabel": "Добавить том",
           "newTitle": "Добавить том",
           "newDropdownTitle": "Добавить том...",
@@ -349,9 +353,9 @@
           "driverOptions": {
             "label": "Параметры драйвера",
             "keyTitle": "Параметр",
-            "keyHint": "Пример: размер",
+            "keyHint": "Пример: o",
             "valueTitle": "Значение",
-            "valueHint": "Пример: 20 ГБ"
+            "valueHint": "Пример: размер=100м"
           },
           "existingVolume": "Имеющиеся",
           "showingCount": "Показано: {{count}} из {{totalCount}}",
@@ -416,7 +420,7 @@
     "placement": {
       "list": {
         "title": "Размещения",
-        "addButton": "Добавить",
+        "addButton": "Размещение",
         "nameColumn": "Имя",
         "groupColumn": "Проект",
         "businessGroupColumn": "Бизнес-группа",
@@ -465,7 +469,7 @@
     "registry": {
       "list": {
         "title": "Существующие реестры",
-        "addButton": "Добавить",
+        "addButton": "Реестр",
         "addressColumn": "Адрес",
         "nameColumn": "Имя",
         "statusColumn": "Состояние"
@@ -487,7 +491,7 @@
         "title": "Профили",
         "titleSearch": "Найденные профили",
         "searchPlaceholder": "Поиск профилей",
-        "addButton": "Создать профиль",
+        "addButton": "Профиль",
         "addPropertyButton": "Добавить свойство",
         "nameColumn": "Имя",
         "endpointTypeColumn": "Тип конечной точки",
@@ -516,21 +520,126 @@
         "endpointLabel": "Конечная точка",
         "valueLabel": "Значение",
         "instanceTypeMappingLabel": "Тип экземпляра",
+        "instanceTypeMappingDisplay": "{{cpuCount}} ЦП, {{memoryInMB}} МБ ОЗУ, диск {{bootDiskSizeInMB}} МБ",
+        "instanceTypeMappingDisplayAWS": "{{cpuCount}} ЦП, {{memoryInMB}} МБ ОЗУ, хранилище {{storageType}}, сеть {{networkType}}",
         "imageMappingLabel": "Тип образа",
-        "bootDiskPropertyMappingLabel": "Свойство загрузочного диска",
+        "diskPropertyMappingLabel": "Свойства диска",
         "cpuCountLabel": "Процессоры",
-        "diskSizeMbLabel": "Размер диска (МБ)",
-        "memoryMbLabel": "Память (МБ)",
+        "memoryGbLabel": "Память (ГБ)",
+        "generalLabel": "Общие",
+        "existingLabel": "Имеющиеся",
         "subnetworksLabel": "Подсети",
-        "isolationTypeLabel": "Тип изоляции",
-        "isolationNetworkLabel": "Сеть изоляции",
+        "isolationLabel": "Изоляция",
+        "isolationTypeLabel": "Тип",
+        "isolationNetworkLabel": "Сеть",
         "noneIsolationTypeLabel": "Нет",
         "subnetIsolationTypeLabel": "Подсеть",
-        "securityGroupIsolationTypeLabel": "Нет",
+        "securityGroupIsolationTypeLabel": "Группа безопасности",
+        "securityGroups": "Группы безопасности",
+        "vpc": "VPC",
         "cidrLabel": "CIDR",
         "cidrLabelHint": "0.0.0.0/0",
+        "cidrPrefixLabel": "Длина префиксов подсетей",
+        "networkLabel": "Сеть",
+        "resourceGroupsLabel": "Группы ресурсов",
         "supportPublicIpAddressLabel": "Поддерживать общедоступный IP-адрес",
-        "defaultForZoneLabel": "По умолчанию для зоны"
+        "defaultForZoneLabel": "По умолчанию для зоны",
+        "addStorageItem": "Добавить элемент хранилища",
+        "defaultLabel": "По умолчанию",
+        "makeDescriptorDefault": "Сделать этот элемент элементом хранилища по умолчанию",
+        "itemHeader": "Элемент хранилища",
+        "storage": {
+          "azure": {
+            "selectAccountLabel": "Выберите учетную запись",
+            "storageAccountTypeLabel": "Тип учетной записи хранилища",
+            "osDiskCachingLabel": "Кэширование диска с ОС",
+            "dataDiskCachingLabel": "Кэширование диска с данными",
+            "contextPanelTooltip": "Учетные записи хранилища",
+            "typeLabel": "Тип",
+            "encryptionLabel": "Шифрование служб хранилища",
+            "entityLabel": "Учетные записи хранилища",
+            "list": {
+              "title": "Учетные записи хранилища",
+              "nameColumn": "Имя",
+              "typeColumn": "Тип",
+              "encryptionColumn": "Шифрование служб хранилища",
+              "edit": {
+                "title": "Изменить учетную запись хранилища",
+                "nameLabel": "Имя учетной записи",
+                "typeLabel": "Тип учетной записи",
+                "encryptionLabel": "Шифрование служб хранилища"
+              }
+            }
+          },
+          "vsphere": {
+            "storagePolicyLabel": "Политика хранилища",
+            "provisioningTypeLabel": "Тип подготовки",
+            "datastoreLabel": "Хранилище данных",
+            "sharesLevelLabel": "Уровень долей",
+            "sharesLabel": "Доли",
+            "limitLabel": "Ограничить операции ввода-вывода в сек.",
+            "datastoreContextPanelTooltip": "Хранилища данных",
+            "storagePolicyContextPanelTooltip": "Политики хранилища",
+            "datastoreEntityLabel": "Хранилища данных",
+            "storagePolicyEntityLabel": "Политики хранилища",
+            "snapshotsLabel": "Моментальные снимки",
+            "independentOfSnapshotsLabel": "Независимые моментальные снимки",
+            "persistentLabel": "С сохранением состояния",
+            "nonPersistentLabel": "Без сохранения состояния",
+            "provisioningSelectDefault": "Выберите тип подготовки",
+            "sharesLevelDefault": "Выберите уровень долей",
+            "datastore": {
+              "typeLabel": "Тип",
+              "capacityLabel": "Емкость",
+              "capacityUnit": "ГБ",
+              "list": {
+                "title": "Хранилища данных",
+                "nameColumn": "Имя",
+                "typeColumn": "Тип",
+                "capacityColumn": "Емкость (ГБ)",
+                "encryptionColumn": "Поддержка шифрования",
+                "edit": {
+                  "title": "Изменить хранилище данных",
+                  "nameLabel": "Хранилище данных",
+                  "typeLabel": "Тип",
+                  "encryptionLabel": "Поддержка шифрования",
+                  "capacityLabel": "Емкость (ГБ)"
+                }
+              }
+            },
+            "storagePolicy": {
+              "descriptionLabel": "Описание",
+              "list": {
+                "title": "Политики хранилища",
+                "nameColumn": "Имя",
+                "descColumn": "Описание",
+                "encryptionColumn": "Поддержка шифрования",
+                "edit": {
+                  "title": "Изменить политику хранилища",
+                  "nameLabel": "Имя",
+                  "descLabel": "Описание",
+                  "customPropertiesLabel": "Настраиваемые свойства",
+                  "customPropertiesTable": {
+                    "keyColumn": "Ключ",
+                    "valueColumn": "Значение"
+                  }
+                }
+              }
+            }
+          },
+          "aws": {
+            "volumeTypeLabel": "Тип тома",
+            "deviceTypeLabel": "Тип устройства",
+            "iopsLabel": "Макс. число операций ввода-вывода в сек.",
+            "iopsHint": "Число операций ввода-вывода в секунду, заданное при подготовке, может быть меньше в зависимости от емкости диска",
+            "fileSystemLabel": "Файловая система",
+            "encryptedLabel": "Поддержка шифрования"
+          }
+        },
+        "validation": {
+          "valueNotMoreThan": "Значение не должно превышать {{max}}",
+          "valueInRange": "Значение должно быть в диапазоне от {{min}} до {{max}}"
+        }
       },
       "instanceType": {
         "aws": {
@@ -559,12 +668,46 @@
         "coreos": "CoreOS",
         "photon": "Photon OS",
         "ubuntu-1604": "Ubuntu"
+      },
+      "azureStorageAccountType": {
+        "standardLRS": "Standard LRS",
+        "standardZRS": "Standard ZRS",
+        "standardGRS": "Standard GRS",
+        "standardRAGRS": "Standard RAGRS",
+        "premiumLRS": "Premium LRS"
+      },
+      "azureDiskCachingType": {
+        "none": "Нет",
+        "readOnly": "Только для чтения",
+        "readWrite": "Для чтения и записи"
+      },
+      "vsphereProvisioningTypes": {
+        "thin": "Тонкий",
+        "thick": "Толстый",
+        "eagerZeroedThick": "Thick Eager Zero"
+      },
+      "vsphereSharesLevel": {
+        "low": "Низкий",
+        "normal": "Нормальный",
+        "high": "Высокий",
+        "custom": "Пользовательский"
+      },
+      "awsVolumeTypes": {
+        "gp2": "Твердотельный диск общего назначения (GP2)",
+        "io1": "Твердотельный диск с настраиваемым числом операций ввода-вывода при подготовке (IO1)",
+        "sc1": "Жесткий диск для нечасто используемых данных (SC1)",
+        "st1": "Жесткий диск с оптимизированной скоростью передачи данных (ST1)",
+        "standard": "Магнитный"
+      },
+      "awsDeviceTypes": {
+        "ebs": "EBS",
+        "instanceStore": "Хранилище экземпляров"
       }
     },
     "endpoint": {
       "list": {
         "title": "Конечные точки",
-        "addButton": "Добавить",
+        "addButton": "Конечная точка",
         "nameColumn": "Имя",
         "typeColumn": "Тип"
       },
@@ -576,6 +719,11 @@
         "privateKeyIdLabel": "Идентификатор ключа доступа",
         "privateKeyLabel": "Секретный ключ доступа",
         "regionIdLabel": "Идентификатор области",
+        "collectLabel": "Сбор данных",
+        "collectInventoryLabel": "Сбор данных иерархии",
+        "collectInventoryMessage": "Инициирование сбора данных иерархии. Для завершения операции может потребоваться несколько минут.",
+        "collectImagesLabel": "Сбор типов образов",
+        "collectImagesMessage": "Инициирование сбора типов образов. Для завершения операции может потребоваться несколько минут.",
         "azure": {
           "userLinkLabel": "Идентификатор подписки",
           "tenantIdLabel": "Идентификатор арендатора"
@@ -585,7 +733,7 @@
           "privateKeyIdLabel": "Имя пользователя",
           "privateKeyLabel": "Пароль",
           "regionIdLabel": "ЦОД",
-          "linkedEndpointLabel": "Конечная точка NSX-T"
+          "linkedEndpointLabel": "Конечная точка NSX"
         }
       },
       "entity": "конечная точка",
@@ -600,7 +748,7 @@
         "title": "Компьютеры",
         "titleSearch": "Найденные компьютеры",
         "searchPlaceholder": "Поиск компьютеров",
-        "addButton": "Создать компьютер"
+        "addButton": "Компьютер"
       },
       "edit": {
         "addTitle": "Создать компьютер",
@@ -611,6 +759,25 @@
         "loadButton": "Загрузить из файла",
         "importTemplateHint": "Составное описание с одним или несколькими описаниями компьютеров",
         "importPlaceholder": ""
+      },
+      "details": {
+        "propertyName": "Имя",
+        "propertyValue": "Значение",
+        "general": {
+          "id": "Идентификатор",
+          "placementHost": "Узел размещения",
+          "address": "Адрес",
+          "endpoint": "Конечная точка",
+          "properties": "Свойства",
+          "usages": "Использование",
+          "powerState": "Состояние питания",
+          "environment": "Среда",
+          "region": "Область",
+          "profile": "Профиль"
+        },
+        "customProperties": {
+          "title": "Настраиваемые свойства"
+        }
       }
     },
     "compute": {
@@ -621,22 +788,37 @@
         "searchPlaceholder": "Поиск вычислительных ресурсов"
       },
       "details": {
-        "type": "Тип"
+        "type": "Тип",
+        "zone": "Зона доступности",
+        "vm_host": "Область",
+        "clustercomputeresource": "Кластер",
+        "computeresource": "Узел",
+        "endpoint": "Конечная точка",
+        "hostsystem": "Узел",
+        "resourcepool": "Пул ресурсов"
       },
       "edit": {
         "title": "Изменить вычислительный ресурс",
         "nameLabel": "Имя"
+      },
+      "actions": {
+        "details": "Сведения"
       }
     },
     "network": {
       "entity": "Сеть"
     },
+    "securityGroup": {
+      "entity": "Группа безопасности"
+    },
     "subnetwork": {
       "list": {
         "title": "Подсети",
-        "addButton": "Добавить",
+        "addButton": "Подсеть",
         "nameColumn": "Имя",
-        "cidrColumn": "CIDR"
+        "cidrColumn": "CIDR",
+        "supportPublicIpAddressColumn": "Поддерживать общедоступный IP-адрес",
+        "networkColumn": "Сеть"
       },
       "edit": {
         "addNew": "Добавить подсеть",
@@ -668,7 +850,7 @@
           "connectedContainers": "Контейнеры",
           "parentHosts": "Узлы",
           "external": "Внешние",
-          "create": "Создать сеть",
+          "create": "Сеть",
           "state": {
             "UNKNOWN": "НЕТ ДАННЫХ",
             "PROVISIONING": "ПОДГОТОВКА",
@@ -682,26 +864,26 @@
           "description": "Описание",
           "public": "Общедоступный",
           "private": "Частный",
-          "create": "Создать проект",
+          "create": "Проект",
           "actions": {
             "edit": "Изменить",
             "remove": "Удалить"
           }
         },
         "container": {
-          "create": "Создать контейнер"
+          "create": "Контейнер"
         },
         "application": {
-          "create": "Создать приложение"
+          "create": "Приложение"
         },
         "closure": {
-          "create": "Создать закрытие"
+          "create": "Закрытие"
         },
         "kubernetes": {
-          "create": "Создать"
+          "create": "Определение"
         },
         "volume": {
-          "create": "Создать том",
+          "create": "Том",
           "connectedDateLabel": "Подключено",
           "driverLabel": "Драйвер",
           "driverOptionsLabel": "Параметры драйвера",
@@ -977,12 +1159,12 @@
           },
           "logConfigOptions": "Параметры",
           "logConfigOptionsDescription": "Поддерживаемые параметры для каждого драйвера ведения журнала",
-          "logConfigOptionsInputs" : {
+          "logConfigOptionsInputs": {
             "name": "Имя",
             "nameHint": "Пример: max-size",
             "value": "Значение",
             "valueHint": "Пример: 10m"
-           }
+          }
         }
       },
       "state": {
@@ -1038,7 +1220,7 @@
       "details": {
         "name": "Имя",
         "description": "Описание",
-        "runtime" : "Среда выполнения",
+        "runtime": "Среда выполнения",
         "state": "Состояние",
         "id": "Идентификатор",
         "inputs": "Ввод",
@@ -1059,7 +1241,7 @@
         "FAILED": "СБОЙ",
         "CANCELLED": "ОТМЕНЕНО"
       },
-      "list" : {
+      "list": {
         "name": "Закрытие",
         "closuresCountLabel": "Закрытия",
         "closureRunsLabel": "Запуск закрытий",
@@ -1082,22 +1264,22 @@
             "powershell": "Powershell 6",
             "java": "Java 8"
           },
-          "logConfigOptionsInputs" : {
+          "logConfigOptionsInputs": {
             "name": "Имя",
             "nameHint": "Пример: max-size",
             "value": "Значение",
             "valueHint": "Пример: 10m"
-           },
-           "closureInputs" : {
+          },
+          "closureInputs": {
             "name": "Имя",
             "nameHint": "Пример: a",
             "value": "Значение",
             "valueHint": "Пример: 1"
-           },
-           "closureOutputs" : {
+          },
+          "closureOutputs": {
             "name": "Имя",
             "nameHint": "Пример: result"
-           },
+          },
           "memoryLimit": "Ограничение памяти (в мегабайтах)",
           "timeout": "Время ожидания (в секундах)",
           "entrypoint": "Обработчик точки входа",
@@ -1138,101 +1320,115 @@
         "outputs": "Вывод"
       }
     },
+    "image": {
+      "entity": "образ"
+    },
     "help": {
-        "link": "Справка",
-        "description": "Функция Ensemble позволяет получить доступ к необходимой информации о контексте задачи, которая выполняется в данный момент. По мере продолжения работы обновление выполняется автоматически с соблюдением инструкций. Используйте второй экран или разделенный экран для доступа к информации в режиме реального времени. Можно использовать мобильное устройство, телевизор или любой другой экран, независимо от того, подключен он к компьютеру или нет. Функцию Ensemble можно использовать вне доверенной сети, продолжая получать при этом мгновенные обновления.",
-        "descriptionOpen": "Чтобы открыть функцию Ensemble, щелкните элемент <strong>Открыть в новой вкладке</strong> или отсканируйте QR-код с помощью мобильного устройства."
-      },
-      "resources": {
-        "selectMultiple": "Выбрать элементы",
-        "message": {
-          "selectShift": "Используйте клавишу Shift, чтобы выбрать несколько элементов"
-        }
+      "link": "Справка",
+      "description": "Функция Ensemble позволяет получить доступ к необходимой информации о контексте задачи, которая выполняется в данный момент. По мере продолжения работы обновление выполняется автоматически с соблюдением инструкций. Используйте второй экран или разделенный экран для доступа к информации в режиме реального времени. Можно использовать мобильное устройство, телевизор или любой другой экран, независимо от того, подключен он к компьютеру или нет. Функцию Ensemble можно использовать вне доверенной сети, продолжая получать при этом мгновенные обновления.",
+      "descriptionOpen": "Чтобы открыть функцию Ensemble, щелкните элемент <strong>Открыть в новой вкладке</strong> или отсканируйте QR-код с помощью мобильного устройства."
+    },
+    "resources": {
+      "selectMultiple": "Выбрать элементы",
+      "message": {
+        "selectShift": "Используйте клавишу Shift, чтобы выбрать несколько элементов"
       }
     },
-    "loginPanel": {
-      "login": "Вход",
-      "logout": "Выход",
-      "username": "Имя пользователя",
-      "password": "Пароль",
-      "success": "Проверка подлинности выполнена успешно",
-      "failure": "Ошибка проверки подлинности"
-    },
-    "dropdownSearchMenu": {
-      "title": "Выбор из списка {{entity}}",
-      "searchPlaceholder": "Поиск: {{entity}}",
-      "clear": "Очистить выбор",
-      "showingCount": "Показано: {{count}} из {{totalCount}}",
-      "noResults": "Элементы не найдены"
-    },
-    "customProperties": {
-      "name": "Имя",
-      "nameHint": "Пример: speedchecker",
-      "value": "Значение",
-      "valueHint": "Пример: slow"
-    },
-    "yes": "Да",
-    "ok": "ОК",
-    "cancel": "Отмена",
-    "error": "Ошибка",
-    "delete": "Удалить",
-    "enable": "Включить",
-    "enabled": "Включено",
-    "disable": "Отключить",
-    "disabled": "Отключено",
-    "close": "Закрыть",
-    "edit": "Изменить",
-    "remove": "Удалить",
-    "add": "Добавить",
-    "save": "Сохранить",
-    "back": "Назад",
-    "refresh": "Обновить",
-    "clear": "Очистить",
-    "deleteAll": "Удалить все",
-    "pendingOperationCancel": "операция в",
-    "openInNewTab": "Открыть в новой вкладке",
-    "unavailable": "Н/д",
-    "advanced": "Дополнительно",
-    "noSelection": "Нет выбранных элементов",
-    "buildNumber": "Номер сборки",
-    "errors": {
-      "hostIp": "В качестве значения должно быть указано имя узла или IP-адрес.",
-      "urlPath": "Недопустимый URL-путь.",
-      "propertyNameRequired": "Необходимо указать имя свойства.",
-      "propertyContainerNameInvalid": "Недопустимое имя контейнера, разрешены только символы: [a-zA-Z0-9][a-zA-Z0-9_.-].",
-      "propertyNamesNotUnique": "Имена свойств должны быть уникальными.",
-      "nonNegativeNumber": "Значение должно быть неотрицательным целым числом меньше 2147483648.",
-      "positiveNumber": "Значение должно быть положительным целым числом меньше 2147483648.",
-      "nonNegativeNumberAndMinusOne": "Значение должно быть целым числом между -1 и 2147483647.",
-      "portNumber": "Недействительный номер порта. Допустимый диапазон номеров портов — от 0 до 65535.",
-      "containerMemory": "Для памяти должно быть установлено значение '0' (без ограничений) или по крайней мере 4194304 байта (4 МБ).",
-      "required": "Необходимо указать значение.",
-      "requiredAll": "Все поля обязательны для заполнения.",
-      "serviceNameRequired": "Необходимо указать имя службы.",
-      "networkRequired": "Необходимо указать сеть.",
-      "itemNotFound": "Элемент не найден.",
-      "networkExists": "Сеть уже существует в шаблоне.",
-      "volumeDestinationRequired": "Необходимо указать пункт назначения тома.",
-      "invalidInputValue": "Недопустимое входное значение",
-      "invalidPath": "В качестве значения должен быть указан абсолютный путь.",
-      "invalidPathOrName": "В качестве значения должен быть указан абсолютный путь или действительное имя тома.",
-      "containersConnected": "Есть подключенные контейнеры",
-      "managedByCatalog": "Под управлением каталога",
-      "projectsUnexpectedError": "Возникла непредвиденная ошибка"
-    },
-    "infoMessages": {
-      "created": "Успешно создано!",
-      "updated": "Успешно обновлено!"
-    },
-    "occurrence": {
-      "all": "Сопоставить все",
-      "any": "Сопоставить любые"
-    },
-    "state": {
-      "ON": "Включено",
-      "OFF": "ВЫКЛ.",
-      "SUSPEND": "ОТКЛЮЧЕНО",
-      "UNKNOWN": "НЕТ ДАННЫХ",
-      "stateSinceMessage": "с {{date}}"
-    }
+    "noneLabel": "Нет"
+  },
+  "loginPanel": {
+    "login": "Вход",
+    "logout": "Выход",
+    "username": "Имя пользователя",
+    "password": "Пароль",
+    "welcomeTo": "Вас приветствует",
+    "success": "Проверка подлинности выполнена успешно",
+    "failure": "Ошибка проверки подлинности"
+  },
+  "dropdownSearchMenu": {
+    "title": "Выбор из списка {{entity}}",
+    "searchPlaceholder": "Поиск: {{entity}}",
+    "clear": "Очистить выбор",
+    "showingCount": "Показано: {{count}} из {{totalCount}}",
+    "noResults": "Элементы не найдены"
+  },
+  "customProperties": {
+    "name": "Имя",
+    "nameHint": "Пример: speedchecker",
+    "value": "Значение",
+    "valueHint": "Пример: slow"
+  },
+  "yes": "Да",
+  "no": "Нет",
+  "ok": "ОК",
+  "cancel": "Отмена",
+  "error": "Ошибка",
+  "delete": "Удалить",
+  "enable": "Включить",
+  "enabled": "Включено",
+  "disable": "Отключить",
+  "disabled": "Отключено",
+  "close": "Закрыть",
+  "edit": "Изменить",
+  "remove": "Удалить",
+  "add": "Добавить",
+  "save": "Сохранить",
+  "verify": "Проверить",
+  "verified": "Проверка успешно выполнена!",
+  "back": "Назад",
+  "refresh": "Обновить",
+  "clear": "Очистить",
+  "deleteAll": "Удалить все",
+  "pendingOperationCancel": "операция в",
+  "openInNewTab": "Открыть в новой вкладке",
+  "unavailable": "Н/д",
+  "advanced": "Дополнительно",
+  "noSelection": "Нет выбранных элементов",
+  "buildNumber": "Номер сборки",
+  "errors": {
+    "hostIp": "В качестве значения должно быть указано имя узла или IP-адрес.",
+    "urlPath": "Недопустимый URL-путь.",
+    "propertyNameRequired": "Необходимо указать имя свойства.",
+    "propertyContainerNameInvalid": "Недопустимое имя контейнера, разрешены только символы: [a-zA-Z0-9][a-zA-Z0-9_.-].",
+    "propertyNamesNotUnique": "Имена свойств должны быть уникальными.",
+    "nonNegativeNumber": "Значение должно быть неотрицательным целым числом меньше 2147483648.",
+    "positiveNumber": "Значение должно быть положительным целым числом меньше 2147483648.",
+    "nonNegativeNumberAndMinusOne": "Значение должно быть целым числом между -1 и 2147483647.",
+    "portNumber": "Недействительный номер порта. Допустимый диапазон номеров портов — от 0 до 65535.",
+    "containerMemory": "Для памяти должно быть установлено значение '0' (без ограничений) или по крайней мере 4194304 байта (4 МБ).",
+    "required": "Необходимо указать значение.",
+    "requiredAll": "Все поля обязательны для заполнения.",
+    "serviceNameRequired": "Необходимо указать имя службы.",
+    "networkRequired": "Необходимо указать сеть.",
+    "itemNotFound": "Элемент не найден.",
+    "networkExists": "Сеть уже существует в шаблоне.",
+    "volumeDestinationRequired": "Необходимо указать пункт назначения тома.",
+    "invalidInputValue": "Недопустимое входное значение",
+    "invalidPath": "В качестве значения должен быть указан абсолютный путь.",
+    "invalidPathOrName": "В качестве значения должен быть указан абсолютный путь или действительное имя тома.",
+    "containersConnected": "Есть подключенные контейнеры",
+    "managedByCatalog": "Под управлением каталога",
+    "projectsUnexpectedError": "Возникла непредвиденная ошибка"
+  },
+  "infoMessages": {
+    "created": "Успешно создано!",
+    "updated": "Успешно обновлено!",
+    "notFound": "Не найдено",
+    "showingCount": "Показано: {{count}} из {{totalCount}}"
+  },
+  "occurrence": {
+    "all": "Сопоставить все",
+    "any": "Сопоставить любые"
+  },
+  "state": {
+    "ON": "Включено",
+    "OFF": "ВЫКЛ.",
+    "SUSPEND": "ОТКЛЮЧЕНО",
+    "UNKNOWN": "НЕТ ДАННЫХ",
+    "stateSinceMessage": "с {{date}}"
+  },
+  "productNames": {
+    "admiral": "Admiral",
+    "vic": "vSphere Integrated Containers"
+  }
 }
