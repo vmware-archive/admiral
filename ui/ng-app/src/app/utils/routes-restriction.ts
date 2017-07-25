@@ -13,9 +13,9 @@ import { Roles } from './roles';
 
 export class RoutesRestriction {
 
-  public static ADMINISTRATION = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN, Roles.PROJECT_MEMBER];
+  public static ADMINISTRATION = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN];
   public static IDENTITY_MANAGEMENT = [Roles.CLOUD_ADMIN];
-  public static PROJECTS = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN, Roles.PROJECT_MEMBER, Roles.PROJECT_VIEWER];
+  public static PROJECTS = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN];
   public static PROJECTS_NEW = [Roles.CLOUD_ADMIN];
 
   public static PROJECTS_ID = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN];
