@@ -15,7 +15,7 @@
     <button class="btn btn-link" allowNavigation [roles]="clustersNewRouteRestrictions"
         [routerLink]="['./cluster/new']"><i class="fa fa-plus"></i>{{ "clusters.new" | i18n | uppercase }}</button>
   </div>
-  <delete-confirmation [title]="'clusters.delete.title' | i18n"
+  <delete-confirmation *ngIf="clusterToDelete" [title]="'clusters.delete.title' | i18n"
                        [description]="deleteConfirmationDescription"
                        [(alert)]="deleteConfirmationAlert"
                        [visible]="clusterToDelete"

@@ -24,6 +24,7 @@ import { AppComponent } from './app.component';
 import { ROUTING } from "./app.routing";
 import { Ajax, SessionTimedOutSubject } from './utils/ajax.service';
 import { DocumentService } from './utils/document.service';
+import { ErrorService } from './utils/error.service';
 import { ProjectService } from './utils/project.service';
 import { AuthService } from './utils/auth.service';
 import { TemplateService } from './utils/template.service';
@@ -93,6 +94,7 @@ export function initHarborConfig() {
         TemplateService,
         ViewExpandRequestService,
         TranslateService,
+        ErrorService,
         {
             provide: APP_INITIALIZER,
             useFactory: initConfig,

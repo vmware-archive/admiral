@@ -1,4 +1,3 @@
-import { FT } from './ft';
 /*
  * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
  *
@@ -14,6 +13,7 @@ import { Headers } from '@angular/http';
 import { Injectable } from '@angular/core';
 import { Ajax } from './ajax.service';
 import { ProjectService } from './project.service';
+import { FT } from './ft';
 import { Utils } from './utils';
 import { Links } from './links';
 import { URLSearchParams } from '@angular/http';

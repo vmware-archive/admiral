@@ -17,6 +17,7 @@ import { Component, OnInit, ViewEncapsulation, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { Router, NavigationEnd } from '@angular/router';
 import { ProjectService } from './../../utils/project.service';
+import { ErrorService } from '../../utils/error.service';
 import { FormerViewPathBridge, RouteUtils } from './../../utils/route-utils';
 
 @Component({
@@ -34,6 +35,7 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
     isHbrEnabled = FT.isHbrEnabled();
 
     routeObserve: Subscription;
+    errorObserve: Subscription;
 
     formerViewPaths = [
       new FormerViewPathBridge('/home/templates/image', '/templates/image'),
@@ -49,18 +51,28 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
       new FormerViewPathBridge('/home/networks','/networks'),
       new FormerViewPathBridge('/home/volumes','/volumes'),
       new FormerViewPathBridge('/home/closures','/closures')
-    ]
+    ];
 
     formerViewPath;
 
     selectedProject;
     projects;
 
-    constructor(private router: Router, private ds: DocumentService, private ajax: Ajax, private ps: ProjectService) {
+    alertMessage: string;
+
+    constructor(private router: Router, private ds: DocumentService, private ajax: Ajax,
+                private ps: ProjectService, private errorService: ErrorService) {
+
       this.routeObserve = this.router.events.subscribe((event) => {
         if (event instanceof NavigationEnd) {
-          this.formerViewPath = RouteUtils.toFormerViewPath(event.urlAfterRedirects, this.formerViewPaths);
+
+          this.formerViewPath =
+              RouteUtils.toFormerViewPath(event.urlAfterRedirects, this.formerViewPaths);
         }
+      });
+
+      this.errorObserve = this.errorService.errorMessages.subscribe((event) => {
+          this.alertMessage = event;
       });
     }
 
@@ -94,6 +106,7 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
       this.routeObserve.unsubscribe();
+      this.errorObserve.unsubscribe();
     }
 
     listProjects() {
@@ -122,5 +135,9 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
       if (viewPath) {
         this.router.navigateByUrl(viewPath);
       }
+    }
+
+    resetAlert() {
+        this.alertMessage = null;
     }
 }

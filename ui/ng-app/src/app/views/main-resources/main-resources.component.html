@@ -70,9 +70,24 @@
       <a *ngIf="embeddedMode" class="nav-link" routerLink="identity-management" routerLinkActive="active">Identity Management</a>
   </section>
 </nav>
+<!-- Content Area -->
 <div class="content-area" [hidden]="formerViewPath">
+    <clr-alert *ngIf="alertMessage"
+               [clrAlertType]="'alert-danger'" [(clrAlertClosed)]="!alertMessage"
+               (clrAlertClosedChange)="resetAlert()">
+        <div class="alert-item">
+            <span class="alert-text">{{ alertMessage }}</span>
+        </div>
+    </clr-alert>
     <router-outlet></router-outlet>
 </div>
 <div class="content-area expanded" [hidden]="!formerViewPath">
+    <clr-alert *ngIf="alertMessage"
+               [clrAlertType]="'alert-danger'" [(clrAlertClosed)]="!alertMessage"
+               (clrAlertClosedChange)="resetAlert()">
+        <div class="alert-item">
+            <span class="alert-text">{{ alertMessage }}</span>
+        </div>
+    </clr-alert>
     <former-view [path]="formerViewPath" (onRouteChange)="onFormerViewRouteChange($event)"></former-view>
 </div>

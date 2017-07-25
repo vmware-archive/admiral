@@ -1,4 +1,19 @@
 {
+  "header": {
+    "title": {
+      "admiral": "Admiral",
+      "vic": "vSphere Integrated Containers",
+      "compute": "Infrastructure"
+    },
+    "navigation": {
+      "home": "Home",
+      "administration": "Administration"
+    },
+    "actions": {
+      "perferences": "Preferences",
+      "logout": "Log out"
+    }
+  },
   "projects": {
     "title": "Projects",
     "project": "Project",

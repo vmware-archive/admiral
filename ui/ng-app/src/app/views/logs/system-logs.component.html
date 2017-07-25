@@ -8,8 +8,6 @@
   ~ and license terms. Your use of these subcomponents is subject to the terms and
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
-<clr-alert [clrAlertType]="'alert-danger'" [(clrAlertClosed)]="!alertMessage" (clrAlertClosedChange)="resetAlert()">
-    <div class="alert-item"><span class="alert-text">{{ alertMessage }}</span></div></clr-alert>
 
 <clr-datagrid class="systemLogsGrid">
     <clr-dg-column>{{"logs.system.columnLogEntry" | i18n}}</clr-dg-column>

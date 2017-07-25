@@ -13,6 +13,7 @@ import { Component, OnInit } from '@angular/core';
 
 import { CancelablePromise } from '../../utils/utils';
 import { DocumentService, DocumentListResult } from '../../utils/document.service';
+import { ErrorService } from "../../utils/error.service";
 import { Links } from '../../utils/links';
 import { Utils } from '../../utils/utils';
 
@@ -31,9 +32,7 @@ export class SystemLogsComponent implements OnInit {
 
     logEntries: any[];
 
-    alertMessage: string;
-
-    constructor(protected service: DocumentService) { }
+    constructor(protected service: DocumentService, private errorService: ErrorService) { }
 
     ngOnInit() {
         this.listLogEntries();
@@ -57,13 +56,9 @@ export class SystemLogsComponent implements OnInit {
                         // ok to be canceled
                     } else {
                         console.error('Failed loading log entries ', error);
-                        this.alertMessage = Utils.getErrorMessage(error)._generic;
+                        this.errorService.error(Utils.getErrorMessage(error)._generic);
                     }
                 }
             })
-    }
-
-    resetAlert() {
-        this.alertMessage = null;
     }
 }
