@@ -391,7 +391,8 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
                     notificationPayload.tags = tags;
                     notificationPayload.customProperties = states.stream()
                             .flatMap(s -> s.customProperties.entrySet().stream())
-                            .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+                            .collect(Collectors
+                                    .toMap(e -> e.getKey(), e -> e.getValue(), (a, b) -> a));
                     return states;
                 }).thenCompose(resources -> enhanceNotificationPayload(state, resources,
                         notificationPayload))
