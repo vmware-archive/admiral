@@ -30,4 +30,9 @@ export class RoutesRestriction {
   public static PROJECT_SUMMARY_EDIT = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN];
   public static PROJECT_MEMBERS_ADD = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN];
   public static PROJECT_MEMBER_ACTIONS = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN];
+
+  public static CLUSTERS = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN];
+  public static CLUSTERS_NEW = [Roles.CLOUD_ADMIN];
+  public static CLUSTERS_ID = [Roles.CLOUD_ADMIN];
+  public static CLUSTERS_EDIT = [Roles.CLOUD_ADMIN];
 }

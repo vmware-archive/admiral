@@ -1,3 +1,4 @@
+import { RoutesRestriction } from './../../utils/routes-restriction';
 import { Component, ViewChild, OnInit, Input } from '@angular/core';
 import { Links } from '../../utils/links';
 import { DocumentService } from '../../utils/document.service';
@@ -98,4 +99,12 @@ export class ClustersComponent implements OnInit {
   isItemSelected(item: any) {
     return item === this.selectedItem;
   }
-}
+
+  get clustersNewRouteRestrictions() {
+    return RoutesRestriction.CLUSTERS_NEW;
+  }
+
+  get clustersCardViewActions() {
+    return RoutesRestriction.CLUSTERS_ID;
+  }
+ }
