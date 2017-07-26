@@ -27,10 +27,10 @@ public class UnikernelCreationTaskService
         extends TaskService<UnikernelCreationTaskService.UnikernelCreationTaskServiceState> {
 
     public static final String FACTORY_LINK = UnikernelManagementURIParts.CREATION;
-    private String compilationURI;
+    private static String compilationURI = "";
 
     public enum SubStage {
-        PROVISION_CONTAINER, CREATE_UNIKERNEL, HANDLE_CALLBACK
+        SEARCH_EXISTING_CONTAINER, PROVISION_CONTAINER, PUT_CONTAINER_URL, CREATE_UNIKERNEL, HANDLE_CALLBACK
     }
 
     public static class UnikernelCreationTaskServiceState extends TaskService.TaskServiceState {
@@ -89,7 +89,6 @@ public class UnikernelCreationTaskService
     public void handlePatch(Operation patch) {
         UnikernelCreationTaskServiceState currentTask = getState(patch);
         UnikernelCreationTaskServiceState patchBody = getBody(patch);
-        System.out.println(getUri());
         if (!validateTransition(patch, currentTask, patchBody)) {
             return;
         }
@@ -122,8 +121,14 @@ public class UnikernelCreationTaskService
 
     private void handleSubstage(UnikernelCreationTaskServiceState task) {
         switch (task.subStage) {
+        case SEARCH_EXISTING_CONTAINER:
+            searchForExistingContainer(task);
+            break;
         case PROVISION_CONTAINER:
             provisionContainer(task);
+            break;
+        case PUT_CONTAINER_URL:
+            putContainerURL(task);
             break;
         case CREATE_UNIKERNEL:
             createUnikernel(task);
@@ -137,11 +142,28 @@ public class UnikernelCreationTaskService
         }
     }
 
+    private void searchForExistingContainer(UnikernelCreationTaskServiceState task) {
+    }
+
     private void provisionContainer(UnikernelCreationTaskServiceState task) {
-        // During the provisioning patch an IP would be allocated for callback for now it is hardcoded
-       // compilationURI =  UnikernelManagementURIParts.COMPILATION_EXTERNAL;
-        compilationURI = getHost().getUri() + UnikernelManagementURIParts.COMPILATION_TEST;
+        // During the provisioning patch an IP would be allocated for callback for now it is
+        // hardcoded
+
+        compilationURI = UnikernelManagementURIParts.EXTERNAL;
+         //compilationURI = getHost().getUri().toString();
+
         logInfo("PROVISIONING CONTAINER");
+
+        sendSelfPatch(task, TaskStage.STARTED, SubStage.PUT_CONTAINER_URL);
+    }
+
+    private void putContainerURL(UnikernelCreationTaskServiceState task) {
+        Operation put = Operation
+                .createPut(getHost(), UnikernelManagementURIParts.DOWNLOAD)
+                .setReferer(getUri())
+                .setBody(compilationURI + UnikernelManagementURIParts.DOWNLOAD_EXTERNAL);
+
+        sendRequest(put);
 
         sendSelfPatch(task, TaskStage.STARTED, SubStage.CREATE_UNIKERNEL);
     }
@@ -154,7 +176,8 @@ public class UnikernelCreationTaskService
         forwardedData.failureCB = getHost().getUri().toString()
                 + UnikernelManagementURIParts.FAILURE_CB;
 
-        URI requestUri = UriUtils.buildUri(compilationURI);
+        URI requestUri = UriUtils
+                .buildUri(compilationURI + UnikernelManagementURIParts.COMPILATION_EXTERNAL);
         Operation request = Operation
                 .createPost(requestUri)
                 .setReferer(getUri())

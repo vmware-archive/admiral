@@ -24,10 +24,13 @@ public class DownloadRequestService extends StatelessService {
     public static final String SELF_LINK = UnikernelManagementURIParts.DOWNLOAD;
     private static ArrayList<String> downloadListURI = new ArrayList<>();
 
+    private String OSvCompilationHostURL = "";
+
     @Override
     public void handlePost(Operation post) {
         String downloadURI = post.getBody(String.class);
-        downloadListURI.add(UnikernelManagementURIParts.DOWNLOAD_EXTERNAL + downloadURI);
+
+        downloadListURI.add(OSvCompilationHostURL + downloadURI);
 
         UnikernelCreationTaskServiceState state = new UnikernelCreationTaskServiceState();
         state.taskInfo = new TaskState();
@@ -45,6 +48,16 @@ public class DownloadRequestService extends StatelessService {
                 });
 
         sendRequest(request);
+    }
+
+    /*
+     * The method is responsible for updating the host URL, which is sent from the
+     * UnikernelCreationTaskService after provisioning
+     */
+    @Override
+    public void handlePut(Operation put) {
+        OSvCompilationHostURL = put.getBody(String.class);
+        put.complete();
     }
 
     @Override

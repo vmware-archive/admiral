@@ -19,8 +19,7 @@ public interface UnikernelManagementURIParts {
     String FAILURE_CB = "/unikernel/receive/failure";
     String DOWNLOAD = "/unikernel/download";
 
-    String COMPILATION_EXTERNAL = "http://localhost:8000/route";
-    String COMPILATION_TEST = "/unikernel/compilation/test";
-    String DOWNLOAD_EXTERNAL = "http://localhost:8000/download";
-
+    String EXTERNAL =  "http://localhost:8000";
+    String COMPILATION_EXTERNAL = "/route";
+    String DOWNLOAD_EXTERNAL = "/download";
 }

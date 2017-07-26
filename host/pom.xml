@@ -78,6 +78,11 @@
             <artifactId>admiral-closure-adapter</artifactId>
             <version>${project.version}</version>
         </dependency>
+		<dependency>
+			<groupId>com.vmware.admiral</groupId>
+			<artifactId>admiral-unikernels-common</artifactId>
+			<version>${project.version}</version>
+		</dependency>
 
         <!-- TEST -->
         <dependency>

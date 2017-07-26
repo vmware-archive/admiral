@@ -25,6 +25,11 @@
     <packaging>jar</packaging>
 
     <dependencies>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>admiral-common</artifactId>
+			<version>${project.version}</version>
+		</dependency>
 	    <dependency>
 		    <groupId>${xenon.group}</groupId>
 		    <artifactId>xenon-common</artifactId>

@@ -69,7 +69,7 @@ public class UnikernelCreationTaskServiceTest {
     }
 
     public class CompilationMockService extends StatelessService {
-        public static final String SELF_LINK = UnikernelManagementURIParts.COMPILATION_TEST;
+        public static final String SELF_LINK = UnikernelManagementURIParts.COMPILATION_EXTERNAL;
 
         @Override
         public void handlePost(Operation post) {

@@ -19,23 +19,20 @@ public class CommandExecutor {
 
     private Process startedProcess;
 
-    public synchronized void execute(String[] command) throws Exception {
+    public void execute(String[] command) throws Exception {
 
         ProcessBuilder pb = new ProcessBuilder(command);
+        pb.redirectErrorStream(true);
         startedProcess = pb.start();
 
         int statusCode = startedProcess.waitFor();
         String output = output();
-        System.out.println("OUTPUT - " + output);
-
         if (statusCode != 0) {
-            System.out.println("OUTPUT - " + output);
-           // System.out.println("OUTPUT - " + startedProcess.getOutputStream()..toString());
-            throw (new Exception());
+            throw (new Exception(output));
         }
     }
 
-    public synchronized String output() throws IOException, InterruptedException {
+    public String output() throws IOException, InterruptedException {
 
         if (startedProcess == null) {
             return "";
