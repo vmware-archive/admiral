@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -22,6 +22,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import org.junit.After;
@@ -43,6 +44,7 @@ import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.Service.Action;
+import com.vmware.xenon.common.ServiceConfigUpdateRequest;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.TypeName;
 import com.vmware.xenon.common.TaskState;
@@ -194,6 +196,9 @@ public class RequestStatusServiceTest extends RequestBaseTest {
                 ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
         request.tenantLinks = groupPlacementState.tenantLinks;
         request = startRequest(request);
+        setNewLimits(request.documentSelfLink);
+        setNewLimits(request.requestTrackerLink);
+
         waitForRequestToFail(request);
         requestId = extractId(request.documentSelfLink);
 
@@ -247,6 +252,8 @@ public class RequestStatusServiceTest extends RequestBaseTest {
                 ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
         request.tenantLinks = groupPlacementState.tenantLinks;
         request = startRequest(request);
+        setNewLimits(request.documentSelfLink);
+        setNewLimits(request.requestTrackerLink);
         waitForRequestToFail(request);
         requestId = extractId(request.documentSelfLink);
 
@@ -283,6 +290,9 @@ public class RequestStatusServiceTest extends RequestBaseTest {
         request.tenantLinks = groupPlacementState.tenantLinks;
         host.log("########  Start of request ######## ");
         request = startRequest(request);
+        setNewLimits(request.documentSelfLink);
+        setNewLimits(request.requestTrackerLink);
+
         waitForRequestToComplete(request);
         requestId = extractId(request.documentSelfLink);
         host.log("########  request completed ######## ");
@@ -405,6 +415,17 @@ public class RequestStatusServiceTest extends RequestBaseTest {
         host.testWait();
 
         return resultHolder[0];
+    }
+
+    private void setNewLimits(String service) {
+        host.log(Level.INFO, "Set new retention limit for %s", service);
+        ServiceConfigUpdateRequest configUpdate = ServiceConfigUpdateRequest.create();
+        configUpdate.versionRetentionLimit = 100L;
+        configUpdate.versionRetentionFloor = 100L;
+        Operation.createPatch(UriUtils.buildConfigUri(host, service))
+                .setBodyNoCloning(configUpdate)
+                .setReferer(host.getPublicUri())
+                .sendWith(host);
     }
 
 }
