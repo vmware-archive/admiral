@@ -2271,13 +2271,14 @@ public class RequestBrokerService extends
     private DeferredResult<Void> isUserAuthorized(ProjectEntry entry, SecurityContext context,
             RequestBrokerState state) {
 
-        if (entry.roles.contains(AuthRole.PROJECT_VIEWER)) {
-            return DeferredResult.failed(new IllegalStateException("Project Viewer cannot request "
-                    + "operations over resources."));
+        if (context.isProjectAdmin(entry.documentSelfLink)) {
+            return DeferredResult.completed(null);
         }
 
-        if (entry.roles.contains(AuthRole.PROJECT_ADMIN)) {
-            return DeferredResult.completed(null);
+        if (context.isProjectViewer(entry.documentSelfLink)
+                && !context.isProjectMember(entry.documentSelfLink)) {
+            return DeferredResult.failed(new IllegalStateException("Project Viewer cannot request "
+                    + "operations over resources."));
         }
 
         if (isProvisionOperation(state)) {

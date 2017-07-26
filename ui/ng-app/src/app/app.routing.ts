@@ -1,4 +1,3 @@
-import { TagDetailsComponent } from './views/tag-details/tag-details.component';
 /*
  * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
  *
@@ -34,6 +33,8 @@ import { ClustersComponent } from './views/clusters/clusters.component';
 import { ClusterDetailsComponent } from './views/clusters/cluster-details/cluster-details.component';
 import { ClusterCreateComponent } from './views/clusters/cluster-create/cluster-create.component';
 
+import { DummyComponent } from './components/dummy/dummy.component';
+
 import { PodListComponent } from './kubernetes/pods/list/pod-list.component';
 import { PodDetailsComponent } from './kubernetes/pods/details/pod-details.component';
 import { DeploymentListComponent } from './kubernetes/deployments/list/deployment-list.component';
@@ -44,7 +45,10 @@ import { ServiceDetailsComponent } from './kubernetes/services/details/service-d
 import { NavigationContainerType } from './components/navigation-container/navigation-container.component';
 import { LoginComponent } from './components/login/login.component';
 
-import { AuthGuard } from './services/auth-guard.service';
+import { AdminAuthGuard } from 'app/services/admin-auth-guard.service';
+import { HomeAuthGuard } from 'app/services/home-auth-guard.service';
+import { TagDetailsComponent } from './views/tag-details/tag-details.component';
+
 
 // compute views
 import { InstanceTypesComponent } from './views/profiles/instance-types/instance-types.component';
@@ -57,10 +61,22 @@ export const ROUTES: Routes = [
         path: 'home', component: MainResourcesComponent,
         children: [
             {
-                path: '', redirectTo: 'applications', pathMatch: 'full'
+                path: '', canActivate: [HomeAuthGuard], data: { roles: RoutesRestriction.HOME }, pathMatch: 'full', redirectTo: 'applications' 
             },
             {
-                path: 'dashboard', component: DashboardComponent
+                path: 'dashboard', component: DashboardComponent,
+            },
+            {
+                path: 'applications', component: DummyComponent, canActivate: [HomeAuthGuard], data: { roles: RoutesRestriction.DEPLOYMENTS }
+            },
+            {
+                path: 'containers', component: DummyComponent, canActivate: [HomeAuthGuard], data: { roles: RoutesRestriction.DEPLOYMENTS }
+            },
+            {
+                path: 'networks', component: DummyComponent, canActivate: [HomeAuthGuard], data: { roles: RoutesRestriction.DEPLOYMENTS }
+            },
+            {
+                path: 'volumes', component: DummyComponent, canActivate: [HomeAuthGuard], data: { roles: RoutesRestriction.DEPLOYMENTS }
             },
             {
                 path: 'project-repositories', component: RepositoryComponent,
@@ -79,21 +95,21 @@ export const ROUTES: Routes = [
             },
             {
                 path: 'clusters', component: ClustersComponent,
-                canActivate: [AuthGuard],
                 data: { roles: RoutesRestriction.CLUSTERS },
+                canActivate: [HomeAuthGuard],
                 children: [
                     { path: 'cluster/new',
-                        canActivate: [AuthGuard], component: ClusterCreateComponent, data: {
+                        canActivate: [HomeAuthGuard], component: ClusterCreateComponent, data: {
                         navigationContainerType: NavigationContainerType.Default,
                         roles: RoutesRestriction.CLUSTERS_NEW
                     }},
                     { path: 'cluster/:id',
-                        canActivate: [AuthGuard], component: ClusterDetailsComponent, data: {
+                        canActivate: [HomeAuthGuard], component: ClusterDetailsComponent, data: {
                         navigationContainerType: NavigationContainerType.Fullscreen,
                         roles: RoutesRestriction.CLUSTERS_ID
                     }},
                     { path: 'cluster/:id/edit',
-                        canActivate: [AuthGuard], component: ClusterCreateComponent, data: {
+                        canActivate: [HomeAuthGuard], component: ClusterCreateComponent, data: {
                         navigationContainerType: NavigationContainerType.Fullscreen,
                         roles: RoutesRestriction.CLUSTERS_EDIT
                     }}
@@ -130,7 +146,7 @@ export const ROUTES: Routes = [
     },
     {
         path: 'administration', component: AdministrationComponent,
-        canActivate: [AuthGuard],
+        canActivate: [AdminAuthGuard],
         data: { roles: RoutesRestriction.ADMINISTRATION },
         children: [
             {
@@ -138,51 +154,51 @@ export const ROUTES: Routes = [
             },
             {
                 path: 'identity-management', component: IdentityManagementComponent,
-                canActivate: [AuthGuard],
+                canActivate: [AdminAuthGuard],
                 data: { roles: RoutesRestriction.IDENTITY_MANAGEMENT }
             },
             {
                 path: 'projects', component: ProjectsComponent,
-                canActivate: [AuthGuard],
+                canActivate: [AdminAuthGuard],
                 data: { roles: RoutesRestriction.PROJECTS },
                 children: [
                     { path: 'new', component: ProjectCreateComponent,
-                        canActivate: [AuthGuard],
+                        canActivate: [AdminAuthGuard],
                         data: {
                             navigationContainerType: NavigationContainerType.Default,
                             roles: RoutesRestriction.PROJECTS_NEW
                         }
                     },
                     { path: ':id', component: ProjectDetailsComponent,
-                        canActivate: [AuthGuard],
+                        canActivate: [AdminAuthGuard],
                         data: {
                             navigationContainerType: NavigationContainerType.Fullscreen,
                             roles: RoutesRestriction.PROJECTS_ID
                         }
                     },
                     { path: ':id/edit', component: ProjectCreateComponent,
-                        canActivate: [AuthGuard],
+                        canActivate: [AdminAuthGuard],
                         data: {
                             navigationContainerType: NavigationContainerType.Fullscreen,
                             roles: RoutesRestriction.PROJECTS_ID_EDIT
                         }
                     },
                     { path: ':projectId/cluster/new', component: ClusterCreateComponent,
-                        canActivate: [AuthGuard],
+                        canActivate: [AdminAuthGuard],
                         data: {
                             navigationContainerType: NavigationContainerType.Fullscreen,
                             roles: RoutesRestriction.CLUSTERS_NEW
                         }
                     },
                     { path: ':projectId/cluster/:id', component: ClusterDetailsComponent,
-                        canActivate: [AuthGuard],
+                        canActivate: [AdminAuthGuard],
                         data: {
                             navigationContainerType: NavigationContainerType.Fullscreen,
                             roles: RoutesRestriction.CLUSTERS_ID
                         }
                     },
                     { path: ':projectId/cluster/:id/edit', component: ClusterCreateComponent,
-                        canActivate: [AuthGuard],
+                        canActivate: [AdminAuthGuard],
                         data: {
                             navigationContainerType: NavigationContainerType.Fullscreen,
                             roles: RoutesRestriction.CLUSTERS_EDIT
@@ -193,7 +209,7 @@ export const ROUTES: Routes = [
                         hideBackButton: true
                      }},
                     { path: ':id/add-member', component: ProjectAddMemberComponent,
-                        canActivate: [AuthGuard],
+                        canActivate: [AdminAuthGuard],
                         data: {
                             navigationContainerType: NavigationContainerType.Fullscreen,
                             roles: RoutesRestriction.PROJECTS_ID_ADD_MEMBER
@@ -203,17 +219,17 @@ export const ROUTES: Routes = [
             },
             {
                 path: 'registries', component: RegistriesComponent,
-                canActivate: [AuthGuard],
+                canActivate: [AdminAuthGuard],
                 data: { roles: RoutesRestriction.REGISTRIES }
             },
             {
                 path: 'configuration', component: ConfigurationComponent,
-                canActivate: [AuthGuard],
+                canActivate: [AdminAuthGuard],
                 data: { roles: RoutesRestriction.CONFIGURATION }
             },
             {
                 path: 'logs', component: LogsComponent,
-                canActivate: [AuthGuard],
+                canActivate: [AdminAuthGuard],
                 data: { roles: RoutesRestriction.LOGS }
             }
         ]

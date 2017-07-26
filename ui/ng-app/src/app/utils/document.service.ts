@@ -204,6 +204,17 @@ export class DocumentService {
     return this.ajax.delete(documentSelfLink, undefined, undefined, this.buildHeaders(projectLink));
   }
 
+  public listProjects() {
+      if (FT.isApplicationEmbedded()) {
+        return this.ajax.get(Links.GROUPS, null).then(result => {
+          let documents = result || [];
+          return new DocumentListResult(documents, result.nextPageLink, result.totalCount);
+        });
+      } else {
+        return this.list(Links.PROJECTS, null);
+      }
+    }
+
   private buildHeaders(projectLink?: string): Headers {
     if (!this.ps && !projectLink) {
       return undefined;

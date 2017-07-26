@@ -38,7 +38,6 @@ export class AllowNavigationDirective implements OnChanges {
       this.renderer.setElementStyle(this.el.nativeElement, 'display', 'block');
       return;
     }
-
     this.authService.getCachedSecurityContext().then((securityContext) => {
       let show = false;
       if (securityContext && securityContext.roles) {

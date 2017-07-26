@@ -32,7 +32,8 @@ import { ViewExpandRequestService } from './services/view-expand-request.service
 import { HarborLibraryModule, SERVICE_CONFIG, IServiceConfig } from 'harbor-ui';
 import * as I18n from 'i18next';
 import { FT } from './utils/ft';
-import { AuthGuard } from 'app/services/auth-guard.service';
+import { HomeAuthGuard } from 'app/services/home-auth-guard.service';
+import { AdminAuthGuard } from 'app/services/admin-auth-guard.service';
 
 import { ADMIRAL_DECLARATIONS } from './admiral';
 
@@ -86,7 +87,8 @@ export function initHarborConfig() {
     ],
     providers: [
         Ajax,
-        AuthGuard,
+        HomeAuthGuard,
+        AdminAuthGuard,
         SessionTimedOutSubject,
         DocumentService,
         ProjectService,
