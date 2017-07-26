@@ -546,9 +546,11 @@ public class HostContainerListDataCollection extends StatefulService {
         }
 
         if (changed) {
+            // power state is change - save the new state and inspect the container
             sendRequest(Operation
                     .createPatch(this, c.documentSelfLink)
                     .setBodyNoCloning(patch));
+            inspectContainer(c, ServiceTaskCallback.createEmpty());
         }
     }
 

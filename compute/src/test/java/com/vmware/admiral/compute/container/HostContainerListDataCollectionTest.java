@@ -13,6 +13,9 @@ package com.vmware.admiral.compute.container;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import static com.vmware.admiral.compute.container.HostContainerListDataCollection.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -26,10 +29,12 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
+import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.ContainerListCallback;
+import com.vmware.admiral.compute.container.HostContainerListDataCollection.ContainerVersion;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.HostContainerListDataCollectionState;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.admiral.service.test.MockDockerHostAdapterService;
@@ -38,9 +43,11 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService.Co
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.common.test.TestRequestSender;
 
 public class HostContainerListDataCollectionTest extends ComputeBaseTest {
     private static final String TEST_PREEXISTING_CONTAINER_ID = "preexisting-container";
@@ -67,8 +74,7 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
 
         waitForServiceAvailability(MockDockerAdapterService.SELF_LINK);
         waitForServiceAvailability(MockDockerHostAdapterService.SELF_LINK);
-        waitForServiceAvailability(
-                HostContainerListDataCollection.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK);
+        waitForServiceAvailability(DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK);
 
         containerListBody = new ContainerListCallback();
         containerListBody.containerHostLink = COMPUTE_HOST_LINK;
@@ -101,6 +107,71 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
         DeploymentProfileConfig.getInstance().setTest(true);
 
         MockDockerAdapterService.resetContainers();
+    }
+
+    @Test
+    public void testPost() throws Throwable {
+        TestRequestSender sender = host.getTestRequestSender();
+        TestRequestSender.FailureResponse failureResponse = sender.sendAndWaitFailure(Operation
+                .createPost(host, DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK));
+        assertTrue(IllegalArgumentException.class.equals(failureResponse.failure.getClass()));
+
+        failureResponse = sender.sendAndWaitFailure(Operation
+                .createPost(host, DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK)
+                .setBodyNoCloning(new HostContainerListDataCollectionState()));
+        assertTrue(LocalizableValidationException.class.equals(failureResponse.failure.getClass()));
+        assertTrue(failureResponse.failure.getMessage().startsWith("Only one instance"));
+
+        HostContainerListDataCollectionState dc = new HostContainerListDataCollectionState();
+        dc.documentSelfLink = DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK;
+        Operation response = sender.sendAndWait(Operation
+                .createPost(host, DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK)
+                .setBodyNoCloning(dc));
+        assertTrue(Operation.STATUS_CODE_OK == response.getStatusCode());
+    }
+
+    @Test
+    public void testPut() throws Throwable {
+        TestRequestSender sender = host.getTestRequestSender();
+        Operation response = sender.sendAndWait(Operation
+                .createPut(host, DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK)
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_POST_TO_PUT)
+                .setBodyNoCloning(new HostContainerListDataCollectionState()));
+        assertTrue(Operation.STATUS_CODE_OK == response.getStatusCode());
+
+        TestRequestSender.FailureResponse failureResponse = sender.sendAndWaitFailure(Operation
+                .createPut(host, DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK));
+        assertTrue(IllegalArgumentException.class.equals(failureResponse.failure.getClass()));
+
+        response = sender.sendAndWait(Operation
+                .createPut(host, DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK)
+                .setBodyNoCloning(new HostContainerListDataCollectionState()));
+        assertTrue(Operation.STATUS_CODE_OK == response.getStatusCode());
+    }
+
+    @Test
+    public void testPatch() throws Throwable {
+        TestRequestSender sender = host.getTestRequestSender();
+        Operation response = sender.sendAndWait(Operation
+                .createPatch(host, DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK)
+                .setBodyNoCloning(new ContainerListCallback()));
+        assertTrue(Operation.STATUS_CODE_NOT_MODIFIED == response.getStatusCode());
+
+        ContainerListCallback body = new ContainerListCallback();
+        body.containerHostLink = "h1";
+
+        response = sender.sendAndWait(Operation
+                .createPatch(host, DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK)
+                .setBodyNoCloning(body));
+        assertTrue(Operation.STATUS_CODE_OK == response.getStatusCode());
+
+        body = new ContainerListCallback();
+        body.containerHostLink = "h1";
+
+        response = sender.sendAndWait(Operation
+                .createPatch(host, DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK)
+                .setBodyNoCloning(body));
+        assertTrue(Operation.STATUS_CODE_NOT_MODIFIED == response.getStatusCode());
     }
 
     @Test
@@ -254,6 +325,7 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
         cs.parentLink = COMPUTE_HOST_LINK;
         cs.powerState = ContainerState.PowerState.RUNNING;
         cs.image = image;
+        cs.adapterManagementReference = UriUtils.buildUri(ManagementUriParts.ADAPTER_DOCKER);
 
         cs = doPost(cs, ContainerFactoryService.SELF_LINK);
 
@@ -270,6 +342,17 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
 
         cs = getDocument(ContainerState.class, cs.documentSelfLink);
         assertEquals(PowerState.STOPPED, cs.powerState);
+    }
+
+    @Test
+    public void testContainerVersion() throws Throwable {
+        ContainerVersion cv22 = ContainerVersion.fromImageName("abc:2.2");
+        ContainerVersion cv23 = ContainerVersion.fromImageName("abc:2.3");
+        ContainerVersion cvLatest = ContainerVersion.fromImageName("abc:latest");
+
+        assertTrue(cv22.hashCode() != cv23.hashCode());
+        assertTrue(cv22.compareTo(cv23) < 0);
+        assertTrue(!cv23.equals(cvLatest));
     }
 
     private void testStateStuckInProvisioning(boolean isSystemContainerMissingOnHost)
@@ -306,8 +389,8 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
     private void startAndWaitHostContainerListDataCollection() throws Throwable {
         host.testStart(1);
         host.sendRequest(Operation
-                .createPatch(UriUtils.buildUri(host, HostContainerListDataCollection
-                        .DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK))
+                .createPatch(UriUtils.buildUri(host,
+                        DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK))
                 .setBody(containerListBody)
                 .setReferer(host.getUri())
                 .setCompletion(host.getCompletion()));
@@ -349,8 +432,7 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
     private void waitForDataCollectionFinished() throws Throwable {
         AtomicBoolean cotinue = new AtomicBoolean();
 
-        String dataCollectionLink = HostContainerListDataCollection
-                .DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK;
+        String dataCollectionLink = DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK;
         waitFor(() -> {
             ServiceDocumentQuery<HostContainerListDataCollectionState> query =
                     new ServiceDocumentQuery<>(host, HostContainerListDataCollectionState.class);
