@@ -27,8 +27,6 @@ import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
-import org.apache.commons.collections.CollectionUtils;
-
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.compute.profile.StorageProfileService.StorageProfile;
 import com.vmware.admiral.request.allocation.filter.AffinityConstraint;
@@ -170,7 +168,7 @@ public class ComputeToStorageAffinityFilter implements HostSelectionFilter<Filte
     private DeferredResult<Context> getDiskDescriptions(Context ctx) {
         AssertUtil.assertNotNull(desc, "desc");
 
-        if (CollectionUtils.isEmpty(desc.diskDescLinks)) {
+        if (desc.diskDescLinks == null || desc.diskDescLinks.isEmpty()) {
             return DeferredResult.completed(ctx);
         }
 
