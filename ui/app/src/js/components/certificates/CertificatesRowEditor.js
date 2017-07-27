@@ -15,6 +15,7 @@ import Alert from 'components/common/Alert';
 import ImportedCertificatesStore from 'stores/ImportedCertificatesStore';
 import { CertificatesActions } from 'actions/Actions';
 import constants from 'core/constants';
+import { formatUtils } from 'admiral-ui-common';
 
 function CertificatesRowEditor() {
   this.$el = $(CertificatesRowEditTemplate());
@@ -144,7 +145,7 @@ var addEventListeners = function() {
 var applyValidationErrors = function($el, errors) {
   errors = errors || {};
 
-  this.alert.toggle($el, constants.ALERTS.TYPE.FAIL, errors._generic);
+  this.alert.toggle($el, constants.ALERTS.TYPE.FAIL, formatUtils.escapeHtml(errors._generic));
 };
 
 var toggleButtonsState = function($el) {
