@@ -13,6 +13,7 @@ package com.vmware.admiral.compute.cluster;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.net.URI;
@@ -338,6 +339,46 @@ public class ClusterServiceTest extends ComputeBaseTest {
         hostsStates = getHostsInOneClusterExpand(
                 GroupResourcePlacementService.DEFAULT_RESOURCE_POOL_ID);
         assertTrue(hostsStates.isEmpty());
+
+        ContainerHostSpec hostSpecDocker1 = createContainerHostSpec(projectLinkDocker);
+        String testHostAddress1 = "test-address-1";
+        hostSpecDocker1.hostState.address = testHostAddress1;
+        addHostInCluster(Service.getId(clusterDocker.documentSelfLink), hostSpecDocker1);
+
+        ServiceDocumentQueryResult serviceDocumentQueryResult = getHostsInOneClusterQuery(
+                Service.getId(clusterDocker.documentSelfLink), null);
+        assertEquals(2, serviceDocumentQueryResult.documentLinks.size());
+        assertNull(serviceDocumentQueryResult.nextPageLink);
+
+        ServiceDocumentQueryResult serviceDocumentQueryResult1 = getHostsInOneClusterQuery(
+                Service.getId(clusterDocker.documentSelfLink), new String[] { "$limit", "1" });
+        assertEquals(1, serviceDocumentQueryResult1.documentLinks.size());
+        assertNotNull(serviceDocumentQueryResult1.nextPageLink);
+        ServiceDocumentQueryResult serviceDocumentQueryResult2 = getHostsInOneClusterQueryNextPage(
+                serviceDocumentQueryResult1.nextPageLink);
+        assertEquals(1, serviceDocumentQueryResult2.documentLinks.size());
+        assertNull(serviceDocumentQueryResult2.nextPageLink);
+
+        assertTrue(!serviceDocumentQueryResult1.documentLinks.get(0)
+                .equals(serviceDocumentQueryResult2.documentLinks.get(0)));
+        assertTrue(serviceDocumentQueryResult.documentLinks
+                .contains(serviceDocumentQueryResult1.documentLinks.get(0)));
+        assertTrue(serviceDocumentQueryResult.documentLinks
+                .contains(serviceDocumentQueryResult2.documentLinks.get(0)));
+
+        ServiceDocumentQueryResult serviceDocumentQueryResult3 = getHostsInOneClusterQuery(
+                Service.getId(clusterDocker.documentSelfLink),
+                new String[] { "$filter", "ALL_FIELDS eq '*1111*'" });
+        assertEquals(0, serviceDocumentQueryResult3.documentLinks.size());
+        serviceDocumentQueryResult3 = getHostsInOneClusterQuery(
+                Service.getId(clusterDocker.documentSelfLink), new String[] { "$filter",
+                        String.format("ALL_FIELDS eq '*%s*'", testHostAddress1) });
+        assertEquals(1, serviceDocumentQueryResult3.documentLinks.size());
+        ComputeState cs = Utils.fromJson(
+                serviceDocumentQueryResult3.documents.values().iterator().next(),
+                ComputeState.class);
+        assertEquals(testHostAddress1, cs.address);
+
     }
 
     @Test
@@ -794,7 +835,8 @@ public class ClusterServiceTest extends ComputeBaseTest {
                                 o.getBody(ServiceDocumentQueryResult.class).documents
                                         .entrySet().stream()
                                         .forEach(a -> {
-                                            result.put(a.getKey(), (ComputeState) a.getValue());
+                                            result.put(a.getKey(), Utils.fromJson(a.getValue(),
+                                                    ComputeState.class));
                                         });
                             }
                             host.completeIteration();
@@ -812,6 +854,59 @@ public class ClusterServiceTest extends ComputeBaseTest {
         host.testWait();
 
         return result;
+    }
+
+    private ServiceDocumentQueryResult getHostsInOneClusterQuery(String clusterId,
+            String[] filter) {
+        List<ServiceDocumentQueryResult> result = new LinkedList<>();
+        String pathHostsInCluster = UriUtils.buildUriPath(ClusterService.SELF_LINK, clusterId,
+                "hosts");
+        URI uri = UriUtils.buildUri(host, pathHostsInCluster);
+        uri = UriUtils.extendUriWithQuery(uri, "?expand", "true");
+        if (filter != null) {
+            uri = UriUtils.extendUriWithQuery(uri, filter);
+        }
+        Operation get = Operation.createGet(host, uri.getPath() + uri.getQuery())
+                .setReferer(host.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        host.log(Level.SEVERE, "Failed to get hosts in cluster: %s",
+                                Utils.toString(ex));
+                        host.failIteration(ex);
+                    } else {
+                        result.add(o.getBody(ServiceDocumentQueryResult.class));
+                        host.completeIteration();
+                    }
+                });
+
+        host.testStart(1);
+        host.send(get);
+        host.testWait();
+
+        return result.get(0);
+    }
+
+    private ServiceDocumentQueryResult getHostsInOneClusterQueryNextPage(String nextPagePath) {
+        List<ServiceDocumentQueryResult> result = new LinkedList<>();
+
+        Operation get = Operation.createGet(host, nextPagePath)
+                .setReferer(host.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        host.log(Level.SEVERE, "Failed to get hosts in cluster: %s",
+                                Utils.toString(ex));
+                        host.failIteration(ex);
+                    } else {
+                        result.add(o.getBody(QueryTask.class).results);
+                        host.completeIteration();
+                    }
+                });
+
+        host.testStart(1);
+        host.send(get);
+        host.testWait();
+
+        return result.get(0);
     }
 
     private ComputeState getSingleHostInOneCluster(String clusterId, String hostId,

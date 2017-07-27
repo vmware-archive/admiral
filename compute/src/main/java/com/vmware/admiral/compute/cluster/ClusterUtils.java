@@ -14,9 +14,13 @@ package com.vmware.admiral.compute.cluster;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletionException;
 
+import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.PropertyUtils;
+import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService.ElasticPlacementZoneConfigurationState;
@@ -30,12 +34,19 @@ import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.photon.controller.model.tasks.helpers.ResourcePoolQueryHelper;
 import com.vmware.xenon.common.DeferredResult;
+import com.vmware.xenon.common.ODataQueryVisitor;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
+import com.vmware.xenon.common.ServiceDocumentDescription;
+import com.vmware.xenon.common.ServiceDocumentDescription.Builder;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
+import com.vmware.xenon.services.common.QueryTaskUtils;
+import com.vmware.xenon.services.common.ServiceUriPaths;
 
 public class ClusterUtils {
 
@@ -87,20 +98,91 @@ public class ClusterUtils {
         return result;
     }
 
+    public static void getHostsWihtinPlacementZone(
+            Operation get, ServiceHost host) {
+
+        String clusterId = UriUtils.parseUriPathSegments(get.getUri(),
+                ClusterService.CLUSTER_PATH_SEGMENT_TEMPLATE)
+                .get(ClusterService.CLUSTER_ID_PATH_SEGMENT);
+        String resourcePoolLink = UriUtils.buildUriPath(
+                ResourcePoolService.FACTORY_LINK, clusterId);
+        String projectLink = OperationUtil.extractProjectFromHeader(get);
+
+        if (resourcePoolLink == null) {
+            return;
+        }
+
+        Query.Builder queryBuilder = Query.Builder.create()
+                .addKindFieldClause(ComputeState.class)
+                .addFieldClause(ComputeState.FIELD_NAME_RESOURCE_POOL_LINK, resourcePoolLink)
+                .addCompositeFieldClause(ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
+                        ComputeConstants.COMPUTE_CONTAINER_HOST_PROP_NAME, "true");
+
+        if (projectLink != null && !projectLink.isEmpty()) {
+            queryBuilder.addInCollectionItemClause(ComputeState.FIELD_NAME_TENANT_LINKS,
+                    Collections.singletonList(projectLink), Occurance.MUST_OCCUR);
+        }
+
+        String filter = UriUtils.getODataFilterParamValue(get.getUri());
+        if (filter != null) {
+            ServiceDocumentDescription desc = Builder.create().buildDescription(
+                    ComputeState.class);
+
+            Set<String> expandedQueryPropertyNames = QueryTaskUtils
+                    .getExpandedQueryPropertyNames(desc);
+            Query q = new ODataQueryVisitor(expandedQueryPropertyNames).toQuery(filter);
+            if (q != null) {
+                queryBuilder.addClause(q);
+            }
+        }
+        Query query = queryBuilder.build();
+        QueryTask queryTask = QueryUtil.buildQuery(ComputeState.class, true, query);
+        QueryUtil.addExpandOption(queryTask);
+
+        Integer limit = UriUtils.getODataLimitParamValue(get.getUri());
+        if (limit != null && limit > 0) {
+            queryTask.querySpec.resultLimit = limit;
+        } else {
+            queryTask.querySpec.resultLimit = ServiceDocumentQuery.DEFAULT_QUERY_RESULT_LIMIT;
+        }
+        queryTask.documentExpirationTimeMicros = ServiceDocumentQuery.getDefaultQueryExpiration();
+
+        host.sendWithDeferredResult(Operation
+                .createPost(UriUtils.buildUri(host, ServiceUriPaths.CORE_QUERY_TASKS))
+                .setBody(queryTask)
+                .setReferer(host.getUri()), QueryTask.class)
+                .thenCompose(qrt -> {
+                    if (qrt.results.nextPageLink != null) {
+                        return host.sendWithDeferredResult(Operation
+                                .createGet(UriUtils.buildUri(host, qrt.results.nextPageLink))
+                                .setReferer(host.getUri()), QueryTask.class);
+                    }
+                    return DeferredResult.completed(qrt);
+                }).thenAccept(queryPage -> {
+                    get.setBody(queryPage.results);
+                    get.complete();
+                }).exceptionally(ex -> {
+                    get.fail(ex);
+                    return null;
+                });
+        ;
+
+    }
+
     public static void deletePZ(String pathPZId, Operation delete, ServiceHost host) {
         host.sendWithDeferredResult(
                 Operation.createDelete(UriUtils.buildUri(host, pathPZId))
                         .setBody(new ElasticPlacementZoneConfigurationState())
                         .setReferer(host.getUri()),
                 ElasticPlacementZoneConfigurationState.class)
-                        .exceptionally(f -> {
-                            if (f instanceof ServiceNotFoundException) {
-                                return null;
-                            } else {
-                                throw new CompletionException(f);
-                            }
-                        })
-                        .whenCompleteNotify(delete);
+                .exceptionally(f -> {
+                    if (f instanceof ServiceNotFoundException) {
+                        return null;
+                    } else {
+                        throw new CompletionException(f);
+                    }
+                })
+                .whenCompleteNotify(delete);
     }
 
     public static ClusterDto placementZoneAndItsHostsToClusterDto(

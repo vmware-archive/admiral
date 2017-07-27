@@ -355,32 +355,7 @@ public class ClusterService extends StatelessService {
     }
 
     private void getAllHostsInSingleCluster(Operation get) {
-        String clusterId = UriUtils.parseUriPathSegments(get.getUri(),
-                CLUSTER_PATH_SEGMENT_TEMPLATE).get(CLUSTER_ID_PATH_SEGMENT);
-        String resourcePoolLink = UriUtils.buildUriPath(
-                ResourcePoolService.FACTORY_LINK, clusterId);
-        String projectLink = OperationUtil.extractProjectFromHeader(get);
-        boolean expand = UriUtils.hasODataExpandParamValue(get.getUri());
-
-        ClusterUtils.getHostsWihtinPlacementZone(resourcePoolLink, projectLink, getHost())
-                .thenAccept(computeStates -> {
-                    ServiceDocumentQueryResult queryResult = new ServiceDocumentQueryResult();
-
-                    if (computeStates.isEmpty()) {
-                        get.setBody(queryResult);
-                    } else {
-                        queryResult.documentLinks = computeStates.stream().map(computeState -> {
-                            return computeState.documentSelfLink;
-                        }).collect(Collectors.toList());
-                        queryResult.documentCount = Long.valueOf(computeStates.size());
-                        if (expand) {
-                            queryResult.documents = computeStates.stream().collect(Collectors.toMap(
-                                    computeState -> computeState.documentSelfLink,
-                                    Function.identity()));
-                        }
-                    }
-                    get.setBody(queryResult);
-                }).whenCompleteNotify(get);
+        ClusterUtils.getHostsWihtinPlacementZone(get, getHost());
     }
 
 
