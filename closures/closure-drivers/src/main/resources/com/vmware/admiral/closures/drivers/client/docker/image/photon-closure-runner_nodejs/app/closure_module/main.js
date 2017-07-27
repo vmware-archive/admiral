@@ -19,6 +19,8 @@ var END_CERT_PATTERN = '-----END CERTIFICATE-----';
 var trust_store = [];
 
 
+var use_custom_ca = true;
+
 var closureSemaphore = null;
 
 function getModuleName() {
@@ -48,6 +50,13 @@ function createAppPackageJson(scriptDeps) {
     " + scriptDeps + "\n\}";
 
     fs.writeFileSync("./package.json", packageJson);
+}
+
+function setTrustStore(options) {
+    if (use_custom_ca) {
+        options.ca = trust_store;
+    }
+    return options;
 }
 
 function prepareArguments(context) {
@@ -169,9 +178,9 @@ function proceedWithSourceUrl(data, context) {
     let options = {
         hostname: sourceURLObj.hostname,
         port: sourceURLObj.port,
-        path: sourceURLObj.path,
-        ca: trust_store
+        path: sourceURLObj.path
     };
+    setTrustStore(options);
     let httpFunction = sourceURL.startsWith('https') ? https : http;
     request = httpFunction.get(options, function(response) {
         if (response.statusCode !== 200) {
@@ -211,15 +220,16 @@ function proceedWithSourceUrl(data, context) {
 
 function getProceedWithTaskDef(closureDescUri, internalCtx, context) {
     // console.log("Getting closure description to TASKDEF_URI = " + closureDescUri);
-    var headers = {
+    let headers = {
         'x-xenon-auth-token': process.env.TOKEN
     }
-    request.get({
+    let options = {
         url: closureDescUri,
         json: true,
-        headers: headers,
-        ca: trust_store
-      }, (err, res, data) => {
+        headers: headers
+    };
+    setTrustStore(options);
+    request.get(options, (err, res, data) => {
         if (err || res.statusCode !== 200) {
             var msg = "Unable to get closure description from URI: " + closureDescUri;
             if (res) {
@@ -299,13 +309,14 @@ function proceedWithExecution(closureUri, internalCtx, context, closure) {
             'x-xenon-auth-token': process.env.TOKEN
         }
 
-        request.patch({
+        let options = {
             url: closureUri,
             json: true,
             headers: headers,
-            ca: trust_store,
             body: runningState
-          }, (err, res, data) => {
+        };
+        setTrustStore(options);
+        request.patch(options, (err, res, data) => {
             if (err || res.statusCode !== 200) {
                 console.error("Unable to start closure with URI: " + closureUri);
 
@@ -332,12 +343,13 @@ function proceedWithTask(closureUri, internalCtx, context) {
         'x-xenon-auth-token': process.env.TOKEN
     }
 
-    request.get({
+    let options = {
         url: closureUri,
         json: true,
-        headers: headers,
-        ca: trust_store
-      }, (err, res, data) => {
+        headers: headers
+    };
+    setTrustStore(options);
+    request.get(options, (err, res, data) => {
         if (err || res.statusCode !== 200) {
             var msg = "Unable to get closure source from URI: " + closureUri;
             if (err) {
@@ -423,12 +435,13 @@ function executeFunc(token, link, operation, body, handler) {
     let targetUri = buildUri(process.env.TASK_URI, link);
     let method = op;
     if (_.isEqual(op, 'GET')) {
-        request.get({
+        let options = {
             url: targetUri,
             json: true,
-            headers: headers,
-            ca: trust_store
-          }, (err, res, data) => {
+            headers: headers
+        };
+        setTrustStore(options);
+        request.get(options, (err, res, data) => {
             if (arguments.length > 4) {
                 handler(res, data);
             } else {
@@ -441,15 +454,35 @@ function executeFunc(token, link, operation, body, handler) {
         throw 'Unsupported operation on ctx.execute() function: ' + operation;
     }
 
-    request.get({
+    let args = {
         url: targetUri,
         json: true,
         method: method,
         headers: headers,
-        body: body,
-        ca: trust_store
-      }, (err, res, data) => {
+        body: body
+    };
+    if (use_custom_ca) {
+        args.ca = trust_store;
+    }
+    request.get(args, (err, res, data) => {
         handler(res, data);
+    });
+}
+
+function setTrustStrategyAndProceed() {
+    let headers = {
+        'x-xenon-auth-token': process.env.TOKEN
+    }
+    request.head({
+        url: process.env.TASK_URI,
+        json: true,
+        headers: headers,
+        ca: trust_store
+    }, (err, res, data) => {
+        if (err || res.statusCode !== 200) {
+            use_custom_ca = false;
+        }
+        startExecution();
     });
 }
 
@@ -469,16 +502,15 @@ function initTrustStore() {
     trust_store = ca;
 }
 
-function main() {
-    initTrustStore();
+function startExecution() {
     console.log("Script run started at: " + moment().toDate());
     let token = process.env.TOKEN;
     var context = {
         outputs: {},
         execute: function() {
-           var args = Array.prototype.slice.call(arguments);
-           args.splice(0, 0, token);
-           return executeFunc.apply(null, args);
+            var args = Array.prototype.slice.call(arguments);
+            args.splice(0, 0, token);
+            return executeFunc.apply(null, args);
         }
     };
     var internalCtx = {
@@ -491,6 +523,12 @@ function main() {
         throw 'TASK_URI env variable not set. Script execution aborted.';
     }
     proceedWithTask(closureUri, internalCtx, context);
+}
+
+function main() {
+    initTrustStore();
+    
+    setTrustStrategyAndProceed();
 }
 
 module.exports.run = main;

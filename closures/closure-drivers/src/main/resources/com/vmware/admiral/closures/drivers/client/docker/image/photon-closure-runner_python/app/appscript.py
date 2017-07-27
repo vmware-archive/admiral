@@ -18,6 +18,9 @@ SRC_DIR = './user_scripts'
 SRC_REQ_FILE = 'requirements.txt'
 TRUSTED_CERTS = '/app/trust.pem'
 
+use_custom_ca=True
+trust_strategy_set=False
+
 def save_source_in_file(closure_description, module_name):
     src_file = None
     try:
@@ -77,7 +80,7 @@ def patch_results(outputs, closure_semaphore, token):
         "closureSemaphore": closure_semaphore,
         "outputs": outputs
     }
-    patch_resp = requests.patch(closure_uri, data=json.dumps(data), headers=headers, verify = TRUSTED_CERTS)
+    patch_resp = dynamic_wrapper('patch', closure_uri, headers, json.dumps(data))
     if patch_resp.ok:
         print ('Script run state: ' + state)
     else:
@@ -100,15 +103,15 @@ class Context:
             op = operation.upper()
             target_uri = build_closure_description_uri(self.closure_uri, link)
             if op == 'GET':
-                resp = requests.get(target_uri, stream=True, verify = TRUSTED_CERTS)
+                resp = dynamic_wrapper('get', target_uri, headers)
             elif op == 'POST':
-                resp = requests.post(target_uri, data=json.dumps(body), headers=headers, verify = TRUSTED_CERTS)
+                resp = dynamic_wrapper('post', target_uri, headers, json.dumps(body))
             elif op == 'PATCH':
-                resp = requests.patch(target_uri, data=json.dumps(body), headers=headers, verify = TRUSTED_CERTS)
+                resp = dynamic_wrapper('patch', target_uri, headers, json.dumps(body))
             elif op == 'PUT':
-                resp = requests.put(target_uri, data=json.dumps(body), headers=headers, verify = TRUSTED_CERTS)
+                resp = dynamic_wrapper('put', target_uri, headers, json.dumps(body))
             elif op == 'DELETE':
-                resp = requests.delete(target_uri, headers=headers, verify = TRUSTED_CERTS)
+                resp = dynamic_wrapper('delete', target_uri, headers)
             else:
                 print ('Unsupported operation on ctx.execute()!', operation)
                 patch_failure(self.closure_semaphore, Exception('Unsupported operation: ', operation), token)
@@ -190,7 +193,7 @@ def proceed_with_closure_description(closure_uri, closure_desc_uri, inputs, clos
                'Accept': 'application/json',
                'x-xenon-auth-token': os.environ['TOKEN']
                }
-    closure_desc_response = requests.get(closure_desc_uri, headers=headers, verify = TRUSTED_CERTS)
+    closure_desc_response = dynamic_wrapper('get', closure_desc_uri, headers)
     if closure_desc_response.ok:
         closure_description = json.loads(closure_desc_response.content.decode('utf-8'))
         (module_name, handler_name) = create_entry_point(closure_description)
@@ -232,7 +235,7 @@ def patch_closure_started(closure_uri, closure_semaphore):
         "state": state,
         "closureSemaphore": closure_semaphore
     }
-    patch_resp = requests.patch(closure_uri, data=json.dumps(data), headers=headers, verify = TRUSTED_CERTS)
+    patch_resp = dynamic_wrapper('patch', closure_uri, headers, json.dumps(data))
     if not patch_resp.ok:
         patch_resp.raise_for_status()
 
@@ -240,6 +243,32 @@ def patch_closure_started(closure_uri, closure_semaphore):
 def is_blank(my_string):
     return not (my_string and my_string.strip())
 
+
+def detect_trust_strategy(uri, **headers):
+    response = requests.head(uri, **headers)
+    global trust_strategy_set
+    trust_strategy_set = True
+    if not response.ok:
+        print ('Switching to public CA trusts')
+        return False
+    return True
+
+def dynamic_wrapper(method, uri, headers, data=None):
+    args = {
+        "headers": headers
+    }
+
+    global use_custom_ca
+    if os.path.exists(TRUSTED_CERTS) and use_custom_ca:
+        args['verify']=TRUSTED_CERTS
+
+    if not trust_strategy_set:
+        use_custom_ca = detect_trust_strategy(uri, **args)
+
+    if data:
+        args['data']=data
+
+    return getattr(requests, method)(uri, **args)
 
 def proceed_with_closure_execution(skip_execution=False):
     closure_uri = os.environ['TASK_URI']
@@ -253,7 +282,7 @@ def proceed_with_closure_execution(skip_execution=False):
                'Accept': 'application/json',
                'x-xenon-auth-token': os.environ['TOKEN']
                }
-    closure_response = requests.get(closure_uri, headers=headers, verify = TRUSTED_CERTS)
+    closure_response = dynamic_wrapper('get', closure_uri, headers)
     if closure_response.ok:
         closure_data = json.loads(closure_response.content.decode('utf-8'))
         closure_semaphore = closure_data['closureSemaphore']
@@ -293,7 +322,7 @@ def patch_failure(closure_semaphore, error, token=None):
             "errorMsg": repr(error)
         }
 
-    patch_resp = requests.patch(closure_uri, data=json.dumps(data), headers=headers, verify = TRUSTED_CERTS)
+    patch_resp = dynamic_wrapper('patch', closure_uri, headers, json.dumps(data))
     if patch_resp.ok:
         print ('Script run state: ' + state)
     else:

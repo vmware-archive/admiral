@@ -1,6 +1,7 @@
 #!/bin/bash
 
-echo "${TRUST_CERTS}" > trust.pem
+[[ ! -z "${TRUST_CERTS}" ]] && echo "${TRUST_CERTS}" | base64 --decode > trusted.gz
+[[ ! -z "${TRUST_CERTS}" ]] && gzip -dc < trusted.gz > trust.pem
 
 node ./appmain.js
 

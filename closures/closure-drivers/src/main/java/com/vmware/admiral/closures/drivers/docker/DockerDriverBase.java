@@ -63,7 +63,7 @@ public abstract class DockerDriverBase implements ExecutionDriver {
     private ClosureSslTrustQueryCompletionHandler queryHandler;
     private volatile long documentUpdateTimeMicros;
 
-    private AtomicReference<String> trustCertificate;
+    private AtomicReference<String> trustCertificates;
 
     public abstract String getDockerImage();
 
@@ -73,7 +73,7 @@ public abstract class DockerDriverBase implements ExecutionDriver {
         this.driverRegistry = driverRegistry;
         this.dockerClientFactory = dockerClientFactory;
 
-        this.trustCertificate = new AtomicReference<>();
+        this.trustCertificates = new AtomicReference<>();
 
         this.subscriptionManager = new SubscriptionManager<>(serviceHost,
                 serviceHost.getId() + getDockerImage(), SSL_TRUST_CONFIG_SUBSCRIBE_FOR_LINK,
@@ -105,6 +105,8 @@ public abstract class DockerDriverBase implements ExecutionDriver {
     private class ClosureSslTrustQueryCompletionHandler implements
             Consumer<ServiceDocumentQuery.ServiceDocumentQueryElementResult<SslTrustCertificateState>> {
 
+        List<SslTrustCertificateState> trustedCerts = new ArrayList<>();
+
         @Override
         public void accept(
                 ServiceDocumentQuery.ServiceDocumentQueryElementResult<SslTrustCertificateState> result) {
@@ -115,8 +117,14 @@ public abstract class DockerDriverBase implements ExecutionDriver {
                                 : Utils.toString(result.getException()));
             } else if (result.hasResult()) {
                 SslTrustCertificateState sslTrustCert = result.getResult();
+                trustedCerts.add(sslTrustCert);
+            } else {
+                StringBuilder sb = new StringBuilder();
+                for (SslTrustCertificateState cert : trustedCerts) {
+                    sb.append("\n").append(cert.certificate);
+                }
 
-                trustCertificate.set(sslTrustCert.certificate);
+                trustCertificates.set(ClosureUtils.compress((sb.toString())));
             }
         }
 
@@ -253,10 +261,10 @@ public abstract class DockerDriverBase implements ExecutionDriver {
         if (!ClosureUtils.isEmpty(token)) {
             vars.add(ClosureProps.ENV_PROP_TOKEN + "=" + token);
         }
-        String cert = trustCertificate.get();
+        String certs = trustCertificates.get();
 
-        cert = cert == null ? "" : cert;
-        vars.add(ClosureProps.ENV_TRUST_CERTS + "=" + cert);
+        certs = certs == null ? "" : certs;
+        vars.add(ClosureProps.ENV_TRUST_CERTS + "=" + certs);
 
         return vars;
     }
