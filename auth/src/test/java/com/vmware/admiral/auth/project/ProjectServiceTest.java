@@ -26,7 +26,6 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.auth.AuthBaseTest;
@@ -85,6 +84,7 @@ public class ProjectServiceTest extends AuthBaseTest {
 
     @Before
     public void setUp() throws Throwable {
+        waitForServiceAvailability(ProjectService.UNIQUE_PROJECT_NAMES_SERVICE_LINK);
         waitForServiceAvailability(ProjectFactoryService.SELF_LINK);
         waitForServiceAvailability(GroupResourcePlacementService.FACTORY_LINK);
 
@@ -1071,18 +1071,18 @@ public class ProjectServiceTest extends AuthBaseTest {
         createProject("test-name");
 
         try {
-            createProject("test-name");
+            createProjectExpectFailure("test-name");
             fail("Project create with same name should've failed");
         } catch (Exception ex) {
-            assertTrue(ex instanceof LocalizableValidationException);
+            assertTrue(ex instanceof IllegalStateException);
             assertTrue(ex.getMessage().contains("test-name"));
         }
 
         try {
-            createProject("test-Name");
+            createProjectExpectFailure("test-Name");
             fail("Project create with same name (case insensitive) should've failed");
         } catch (Exception ex) {
-            assertTrue(ex instanceof LocalizableValidationException);
+            assertTrue(ex instanceof IllegalStateException);
             assertTrue(ex.getMessage().contains("test-Name"));
         }
     }
@@ -1099,7 +1099,7 @@ public class ProjectServiceTest extends AuthBaseTest {
             updateProject(state);
             fail("Project update with same name should've failed");
         } catch (Exception ex) {
-            assertTrue(ex instanceof LocalizableValidationException);
+            assertTrue(ex instanceof IllegalStateException);
             assertTrue(ex.getMessage().contains("test-name"));
         }
 
@@ -1108,7 +1108,7 @@ public class ProjectServiceTest extends AuthBaseTest {
             updateProject(state);
             fail("Project update with same name (case insensitive) should've failed");
         } catch (Exception ex) {
-            assertTrue(ex instanceof LocalizableValidationException);
+            assertTrue(ex instanceof IllegalStateException);
             assertTrue(ex.getMessage().contains("test-Name"));
         }
     }
@@ -1125,7 +1125,7 @@ public class ProjectServiceTest extends AuthBaseTest {
             patchProject(state, state.documentSelfLink);
             fail("Project update with same name should've failed");
         } catch (Exception ex) {
-            assertTrue(ex.getCause() instanceof LocalizableValidationException);
+            assertTrue(ex.getCause() instanceof IllegalStateException);
             assertTrue(ex.getMessage().contains("test-name"));
         }
 
@@ -1134,7 +1134,7 @@ public class ProjectServiceTest extends AuthBaseTest {
             patchProject(state, state.documentSelfLink);
             fail("Project update with same name (case insensitive) should've failed");
         } catch (Exception ex) {
-            assertTrue(ex.getCause() instanceof LocalizableValidationException);
+            assertTrue(ex.getCause() instanceof IllegalStateException);
             assertTrue(ex.getMessage().contains("test-Name"));
         }
     }
@@ -1175,7 +1175,7 @@ public class ProjectServiceTest extends AuthBaseTest {
     }
 
     @Test
-    @Ignore("Once proper synchronization is implemented, remove the ignore.")
+    // @Ignore("Once proper synchronization is implemented, remove the ignore.")
     public void testCreateMultipleProjectsAtOnceWithSameName() throws Throwable {
         ProjectState state = new ProjectState();
         for (int i = 0; i < 10; i++) {
@@ -1270,6 +1270,35 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertTrue(expandedProjectState.members.size() == 1);
         assertTrue(expandedProjectState.members.get(0).id.equals(USER_EMAIL_CONNIE));
     }
+
+
+    @Test
+    public void testProjectNameIsUnclaimedAfterUpdateOrDelete() throws Throwable {
+        ProjectState project = createProject("test-name");
+        assertNotNull(project.documentSelfLink);
+
+        ProjectState project1 = new ProjectState();
+        project1.name = "new-name";
+        project = patchProject(project1, project.documentSelfLink);
+        assertEquals(project1.name, project.name);
+
+        project1 = createProject("test-name");
+        assertNotNull(project1.documentSelfLink);
+
+        deleteProject(project1);
+
+        project1 = createProject("test-name");
+        assertNotNull(project1.documentSelfLink);
+
+        ProjectState projectPut = new ProjectState();
+        projectPut.name = "updated-name";
+        projectPut.documentSelfLink = project1.documentSelfLink;
+        updateProject(projectPut);
+
+        project1 = createProject("test-name");
+        assertNotNull(project1.documentSelfLink);
+    }
+
 
     private void createProjectNoWait(ProjectState state) {
         Operation op = Operation.createPost(host, ProjectFactoryService.SELF_LINK)

@@ -52,6 +52,7 @@ import com.vmware.admiral.service.common.CounterSubTaskService;
 import com.vmware.admiral.service.common.HbrApiProxyService;
 import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.admiral.service.common.ResourceNamePrefixService;
+import com.vmware.admiral.service.common.UniquePropertiesService;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Claims;
@@ -457,6 +458,10 @@ public class AuthUtil {
 
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
                         buildUriWithWildcard(HostPortProfileService.FACTORY_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(UniquePropertiesService.FACTORY_LINK),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
 
                 .build();

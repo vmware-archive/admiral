@@ -34,6 +34,7 @@ import com.vmware.admiral.service.common.ResourceNamePrefixService;
 import com.vmware.admiral.service.common.ReverseProxyService;
 import com.vmware.admiral.service.common.SslTrustCertificateFactoryService;
 import com.vmware.admiral.service.common.SslTrustImportService;
+import com.vmware.admiral.service.common.UniquePropertiesService;
 import com.vmware.admiral.service.common.mock.MockHbrApiProxyService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
@@ -68,7 +69,8 @@ public class HostInitCommonServiceConfig extends HostInitServiceHelper {
             LogService.class,
             CounterSubTaskService.class,
             ExtensibilitySubscriptionCallbackService.class,
-            EventTopicService.class
+            EventTopicService.class,
+            UniquePropertiesService.class
     };
 
 

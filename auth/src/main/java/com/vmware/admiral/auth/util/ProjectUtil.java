@@ -452,23 +452,6 @@ public class ProjectUtil {
                 Collections.singletonList(Long.toString(projectIndex)), MatchType.TERM);
     }
 
-    public static Query buildQueryForProjectsFromName(String name, String documentSelfLink) {
-        Query query = new Query();
-
-        Query nameClause = QueryUtil.addCaseInsensitiveListValueClause(ProjectState.FIELD_NAME_NAME,
-                Collections.singletonList(name), MatchType.TERM);
-
-        Query selfLinkClause = QueryUtil.addCaseInsensitiveListValueClause(
-                ProjectState.FIELD_NAME_SELF_LINK, Collections.singletonList(documentSelfLink),
-                MatchType.TERM);
-        selfLinkClause.setOccurance(Occurance.MUST_NOT_OCCUR);
-
-        query.addBooleanClause(nameClause);
-        query.addBooleanClause(selfLinkClause);
-
-        return query;
-    }
-
     public static int generateRandomInt() {
         return ThreadLocalRandom.current().nextInt(PROJECT_INDEX_ORIGIN, PROJECT_INDEX_BOUND);
     }

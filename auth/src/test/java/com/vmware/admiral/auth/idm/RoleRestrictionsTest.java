@@ -419,6 +419,7 @@ public class RoleRestrictionsTest extends AuthBaseTest {
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_GLORIA));
 
         // POST
+        project.name = "test--name";
         doPostWithRestrictionVerification(project, ProjectFactoryService.SELF_LINK);
 
         // PUT

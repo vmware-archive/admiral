@@ -16,8 +16,10 @@ import java.util.List;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
+import com.vmware.admiral.service.common.UniquePropertiesService.UniquePropertiesState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
+import com.vmware.xenon.common.UriUtils;
 
 /**
  * Initial boot service for creating system default documents for the common module.
@@ -32,6 +34,7 @@ public class CommonInitialBootService extends AbstractInitialBootService {
 
         List<ServiceDocument> resources = new ArrayList<>();
         resources.add(ResourceNamePrefixService.buildDefaultStateInstance());
+        resources.add(buildUniqueProjectNamesInstrance());
 
         ServiceDocument defaultRegistryState = RegistryService.buildDefaultStateInstance(getHost());
         if (defaultRegistryState != null) {
@@ -39,5 +42,13 @@ public class CommonInitialBootService extends AbstractInitialBootService {
         }
 
         initInstances(post, resources.toArray(new ServiceDocument[resources.size()]));
+    }
+
+    public static UniquePropertiesState buildUniqueProjectNamesInstrance() {
+        UniquePropertiesState state = new UniquePropertiesState();
+        state.uniqueProperties = new ArrayList<>();
+        state.documentSelfLink = UriUtils.buildUriPath(UniquePropertiesService.FACTORY_LINK,
+                UniquePropertiesService.PROJECT_NAMES_ID);
+        return state;
     }
 }

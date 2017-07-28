@@ -56,6 +56,7 @@ import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.AuthorizationContext;
 import com.vmware.xenon.common.Service;
+import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
@@ -230,6 +231,14 @@ public abstract class AuthBaseTest extends BaseTestCase {
         projectState = doPost(projectState, ProjectFactoryService.SELF_LINK);
 
         return projectState;
+    }
+
+    protected ProjectState createProjectExpectFailure(String name) throws Throwable {
+        ProjectState state = new ProjectState();
+        state.name = name;
+        state = doOperation(state, UriUtils.buildUri(host, ProjectFactoryService.SELF_LINK),
+                ProjectState.class, true, Action.POST);
+        return state;
     }
 
     protected ProjectState patchProject(ProjectState patchState, String projectSelfLink)

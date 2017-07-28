@@ -20,6 +20,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
 
 import javax.management.ServiceNotFoundException;
@@ -37,6 +38,8 @@ import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.admiral.service.common.UniquePropertiesService;
+import com.vmware.admiral.service.common.UniquePropertiesService.UniquePropertiesRequest;
 import com.vmware.photon.controller.model.ServiceUtils;
 import com.vmware.photon.controller.model.adapters.util.Pair;
 import com.vmware.photon.controller.model.resources.ResourceState;
@@ -77,6 +80,10 @@ public class ProjectService extends StatefulService {
     public static final String DEFAULT_PROJECT_INDEX = "1";
     public static final String DEFAULT_PROJECT_LINK = UriUtils
             .buildUriPath(ProjectFactoryService.SELF_LINK, DEFAULT_PROJECT_ID);
+
+    public static final String UNIQUE_PROJECT_NAMES_SERVICE_LINK = UriUtils
+            .buildUriPath(UniquePropertiesService.FACTORY_LINK,
+                    UniquePropertiesService.PROJECT_NAMES_ID);
 
     public static ProjectState buildDefaultProjectInstance() {
         ProjectState project = new ProjectState();
@@ -271,40 +278,51 @@ public class ProjectService extends StatefulService {
             createBody.isPublic = false;
         }
 
-        isProjectNameUsed(createBody.name, createBody.documentSelfLink)
-                .whenComplete((isNameUsed, ex) -> {
-                    if (ex != null) {
-                        logWarning("Error during project name check: %s", Utils.toString(ex));
-                        post.fail(ex);
-                        return;
-                    }
+        String message = String.format(PROJECT_NAME_ALREADY_USED_MESSAGE,
+                createBody.name);
+        claimProjectName(createBody.name)
+                .thenCompose((isNameUsed) -> {
                     if (isNameUsed) {
-                        String message = String.format(PROJECT_NAME_ALREADY_USED_MESSAGE,
-                                createBody.name);
-                        post.fail(new LocalizableValidationException(message,
-                                PROJECT_NAME_ALREADY_USED_CODE, createBody.name));
+
+                        // Do not fail with localizable exception now, because xenon overrides the
+                        // status code to 400 but we need 409.
+                        return DeferredResult.failed(new IllegalStateException(message));
+                    }
+                    return generateProjectIndex();
+                })
+                .thenApply(index -> handleProjectIndex(index, createBody))
+                .thenCompose(this::createProjectUserGroups)
+                .thenApply(projectState -> {
+                    projectState.membersUserGroupLink = null;
+                    projectState.administratorsUserGroupLink = null;
+
+                    if (projectState.tenantLinks == null) {
+                        projectState.tenantLinks = new ArrayList<>();
+                    }
+
+                    if (!projectState.tenantLinks.contains(
+                            projectState.documentSelfLink)) {
+
+                        projectState.tenantLinks.add(projectState.documentSelfLink);
+                    }
+
+                    return projectState;
+                })
+                .whenComplete((ps, ex) -> {
+                    if (ex != null) {
+                        // Have error as final.
+                        Throwable error = (ex instanceof CompletionException) ? ex.getCause() : ex;
+                        //TODO: fail with 409 when there is name conflict, same for patch and put.
+                        if (error.getMessage().equalsIgnoreCase(message)) {
+                            post.fail(error);
+                            return;
+                        }
+                        //Clear already claimed name.
+                        freeProjectName(createBody.name)
+                                .whenComplete((ignore, err) -> post.fail(error));
                         return;
                     }
-                    generateProjectIndex()
-                            .thenApply(index -> handleProjectIndex(index, createBody))
-                            .thenCompose(this::createProjectUserGroups)
-                            .thenAccept(projectState -> {
-                                projectState.membersUserGroupLink = null;
-                                projectState.administratorsUserGroupLink = null;
-
-                                if (projectState.tenantLinks == null) {
-                                    projectState.tenantLinks = new ArrayList<>();
-                                }
-
-                                if (!projectState.tenantLinks.contains(
-                                        projectState.documentSelfLink)) {
-
-                                    projectState.tenantLinks.add(projectState.documentSelfLink);
-                                }
-
-                                post.setBody(projectState);
-                            })
-                            .whenCompleteNotify(post);
+                    post.setBody(ps).complete();
                 });
 
     }
@@ -347,26 +365,25 @@ public class ProjectService extends StatefulService {
             // this is an update of the state
             ProjectState projectPut = put.getBody(ProjectState.class);
             validateState(projectPut);
-            isProjectNameUsed(projectPut.name, currentState.documentSelfLink)
-                    .thenApply(isNameUsed -> new Pair<>(isNameUsed, (Throwable) null))
-                    .exceptionally(ex -> new Pair<>(null, ex))
-                    .thenAccept(pair -> {
-                        boolean isNameUsed = pair.left;
-                        if (pair.right != null) {
-                            logWarning("Error during project name check: %s",
-                                    Utils.toString(pair.right));
-                            put.fail(pair.right);
-                            return;
-                        }
-                        if (isNameUsed) {
-                            String message = String.format(PROJECT_NAME_ALREADY_USED_MESSAGE,
-                                    projectPut.name);
-                            put.fail(new LocalizableValidationException(message,
-                                    PROJECT_NAME_ALREADY_USED_CODE, projectPut.name));
-                            return;
-                        }
-                        handleProjectPut(projectPut, put);
-                    });
+
+            DeferredResult<Boolean> deferredResult;
+
+            if (projectPut.name.equalsIgnoreCase(currentState.name)) {
+                deferredResult = DeferredResult.completed(false);
+            } else {
+                deferredResult = updateClaimedProjectName(projectPut.name, currentState.name);
+            }
+
+            deferredResult.thenAccept(isNameUsed -> {
+                if (isNameUsed) {
+                    String message = String.format(PROJECT_NAME_ALREADY_USED_MESSAGE,
+                            projectPut.name);
+                    put.fail(new IllegalStateException(message));
+                    return;
+                }
+                handleProjectPut(projectPut, put);
+            });
+
         }
     }
 
@@ -380,21 +397,21 @@ public class ProjectService extends StatefulService {
 
         ProjectState projectPatch = patch.getBody(ProjectState.class);
         ProjectState currentState = getState(patch);
-        isProjectNameUsed(projectPatch.name, currentState.documentSelfLink)
-                .thenApply(isNameUsed -> new Pair<>(isNameUsed, (Throwable) null))
-                .exceptionally(ex -> new Pair<>(null, ex))
-                .thenCompose(pair -> {
-                    boolean isNameUsed = pair.left;
-                    if (pair.right != null) {
-                        logWarning("Error during project name check: %s",
-                                Utils.toString(pair.right));
-                        return DeferredResult.failed(pair.right);
-                    }
+
+        DeferredResult<Boolean> deferredResult;
+
+        if (projectPatch.name != null && !projectPatch.name.equalsIgnoreCase(currentState.name)) {
+            deferredResult = updateClaimedProjectName(projectPatch.name, currentState.name);
+        } else {
+            deferredResult = DeferredResult.completed(false);
+        }
+
+        deferredResult
+                .thenCompose(isNameUsed -> {
                     if (isNameUsed) {
                         String message = String.format(PROJECT_NAME_ALREADY_USED_MESSAGE,
                                 projectPatch.name);
-                        return DeferredResult.failed(new LocalizableValidationException(message,
-                                        PROJECT_NAME_ALREADY_USED_CODE, projectPatch.name));
+                        return DeferredResult.failed(new IllegalStateException(message));
                     }
 
                     if (ProjectRolesHandler.isProjectRolesUpdate(patch)) {
@@ -502,11 +519,11 @@ public class ProjectService extends StatefulService {
                                     documentCount, documentCount > 1 ? "s" : ""));
                         }
                         String projectId = Service.getId(getState(delete).documentSelfLink);
-                        return deleteDefaultProjectGroups(projectId, delete)
-                                .thenCompose(ignore -> deleteDuplicatedRolesAndResourceGroups(
-                                        state));
+                        return deleteDefaultProjectGroups(projectId, delete);
                     }
                 })
+                .thenCompose(ignore -> deleteDuplicatedRolesAndResourceGroups(state))
+                .thenCompose(ignore -> freeProjectName(state.name))
                 .whenComplete((ignore, ex) -> {
                     if (ex != null) {
                         delete.fail(ex);
@@ -899,33 +916,69 @@ public class ProjectService extends StatefulService {
                 });
     }
 
-    private DeferredResult<Boolean> isProjectNameUsed(String name, String currentStateSelfLink) {
-        if (name == null || name.isEmpty()) {
-            return DeferredResult.completed(false);
-        }
+    private DeferredResult<Boolean> claimProjectName(String name) {
+        UniquePropertiesRequest request = new UniquePropertiesRequest();
+        request.toAdd = Collections.singletonList(name);
+
         DeferredResult<Boolean> result = new DeferredResult<>();
 
-        List<ProjectState> foundProjects = new ArrayList<>();
-
-        Query query = ProjectUtil.buildQueryForProjectsFromName(name, currentStateSelfLink);
-
-        QueryTask queryTask = QueryUtil.buildQuery(ProjectState.class, true, query);
-        QueryUtil.addExpandOption(queryTask);
-
-        new ServiceDocumentQuery<>(getHost(), ProjectState.class).query(queryTask, (r) -> {
-            if (r.hasException()) {
-                result.fail(r.getException());
-            } else if (r.hasResult()) {
-                foundProjects.add(r.getResult());
-            } else {
-                if (foundProjects.isEmpty()) {
+        Operation patch = Operation.createPatch(this, UNIQUE_PROJECT_NAMES_SERVICE_LINK)
+                .setBody(request)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        if (o.getStatusCode() == Operation.STATUS_CODE_CONFLICT) {
+                            result.complete(true);
+                            return;
+                        }
+                        result.fail(ex);
+                        return;
+                    }
                     result.complete(false);
-                } else {
-                    result.complete(true);
-                }
-            }
-        });
+                });
 
+        sendRequest(patch);
+        return result;
+    }
+
+    private DeferredResult<Void> freeProjectName(String name) {
+        UniquePropertiesRequest request = new UniquePropertiesRequest();
+        request.toRemove = Collections.singletonList(name);
+
+        Operation patch = Operation.createPatch(this, UNIQUE_PROJECT_NAMES_SERVICE_LINK)
+                .setBody(request);
+
+        return sendWithDeferredResult(patch)
+                .exceptionally(ex -> {
+                    logWarning("Unable to free name %s: %s", name, Utils.toString(ex));
+                    return null;
+                })
+                .thenAccept(ignore -> {
+                });
+
+    }
+
+    private DeferredResult<Boolean> updateClaimedProjectName(String newName, String oldName) {
+        UniquePropertiesRequest request = new UniquePropertiesRequest();
+        request.toRemove = Collections.singletonList(oldName);
+        request.toAdd = Collections.singletonList(newName);
+
+        DeferredResult<Boolean> result = new DeferredResult<>();
+
+        Operation patch = Operation.createPatch(this, UNIQUE_PROJECT_NAMES_SERVICE_LINK)
+                .setBody(request)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        if (o.getStatusCode() == Operation.STATUS_CODE_CONFLICT) {
+                            result.complete(true);
+                            return;
+                        }
+                        result.fail(ex);
+                        return;
+                    }
+                    result.complete(false);
+                });
+
+        sendRequest(patch);
         return result;
     }
 
