@@ -25,6 +25,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import org.junit.Ignore;
+
 import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.profile.StorageProfileService;
 import com.vmware.admiral.compute.profile.StorageProfileService.StorageProfile;
@@ -36,6 +38,7 @@ import com.vmware.photon.controller.model.resources.DiskService;
 import com.vmware.photon.controller.model.resources.StorageDescriptionService;
 import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 
+@Ignore("https://jira-hzn.eng.vmware.com/browse/VCOM-1441")
 public class VSphereComputeProvisionWithDisksIT extends VsphereComputeProvisionIT {
 
     private static final String DEFAULT_SUBNET_NAME = "VM Network";
