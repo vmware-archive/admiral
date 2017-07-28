@@ -72,14 +72,14 @@
         <m2e.lifecycle-mapping>1.0.0</m2e.lifecycle-mapping>
 
         <!-- xenon -->
-        <xenon.version>1.5.2</xenon.version>
+        <xenon.version>1.5.3</xenon.version>
         <xenon.common.version>${xenon.version}</xenon.common.version>
         <xenon.ui.version>${xenon.version}</xenon.ui.version>
         <xenon.swagger.version>0.0.2</xenon.swagger.version>
         <xenon.group>com.vmware.xenon</xenon.group>
 
         <!-- Photon Model -->
-        <photon.model.version>0.6.28-SNAPSHOT</photon.model.version>
+        <photon.model.version>0.6.29-SNAPSHOT</photon.model.version>
 
         <!-- other -->
         <bouncycastle.version>1.56</bouncycastle.version>
