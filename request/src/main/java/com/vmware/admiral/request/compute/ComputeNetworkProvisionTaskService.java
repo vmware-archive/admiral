@@ -249,6 +249,7 @@ public class ComputeNetworkProvisionTaskService
             taskState.resourceLink = context.computeNetworkLink;
             taskState.serviceTaskCallback = context.serviceTaskCallback;
             taskState.customProperties = context.state.customProperties;
+            taskState.tenantLinks = context.state.tenantLinks;
 
             proceedTo(PROVISIONING);
             return this.sendWithDeferredResult(Operation
@@ -263,6 +264,7 @@ public class ComputeNetworkProvisionTaskService
             taskState.resourceDescriptionLink = context.state.resourceDescriptionLink;
             taskState.serviceTaskCallback = context.serviceTaskCallback;
             taskState.customProperties = context.state.customProperties;
+            taskState.tenantLinks = context.state.tenantLinks;
 
             proceedTo(PROVISIONING);
             return this.sendWithDeferredResult(Operation

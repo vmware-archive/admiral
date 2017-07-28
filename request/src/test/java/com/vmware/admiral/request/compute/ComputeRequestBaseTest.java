@@ -198,6 +198,7 @@ public class ComputeRequestBaseTest extends RequestBaseTest {
         compute.descriptionLink = descLink;
         compute.customProperties = new HashMap<>();
         compute.customProperties.put(FIELD_NAME_CONTEXT_ID_KEY, contextId);
+        compute.tenantLinks = TestRequestStateFactory.getTenantLinks();
         return doPost(compute, ComputeService.FACTORY_LINK);
     }
 

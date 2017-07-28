@@ -68,7 +68,7 @@ public class ComputeNetworkProvisionTaskServiceTest extends ComputeRequestBaseTe
                 createIsolatedNetworkProfile(createSecurityGroupState()).documentSelfLink);
 
         ComputeNetworkProvisionTaskState provisioningTask = createComputeNetworkProvisionTask(
-                computeNetworkDesc.documentSelfLink, computeNetwork.documentSelfLink, null, 1);
+                computeNetworkDesc.documentSelfLink, computeNetwork, null, 1);
         provisioningTask = provision(provisioningTask);
 
         ComputeNetwork networkState = getDocument(ComputeNetwork.class,
@@ -89,7 +89,7 @@ public class ComputeNetworkProvisionTaskServiceTest extends ComputeRequestBaseTe
                 createProfile().documentSelfLink);
 
         ComputeNetworkProvisionTaskState provisioningTask = createComputeNetworkProvisionTask(
-                computeNetworkDesc.documentSelfLink, computeNetwork.documentSelfLink, null, 1);
+                computeNetworkDesc.documentSelfLink, computeNetwork, null, 1);
         provisioningTask = provision(provisioningTask);
 
         ComputeNetwork networkState = getDocument(ComputeNetwork.class,
@@ -114,7 +114,7 @@ public class ComputeNetworkProvisionTaskServiceTest extends ComputeRequestBaseTe
         createComputeState(cd.documentSelfLink, contextId);
 
         ComputeNetworkProvisionTaskState provisioningTask = createComputeNetworkProvisionTask(
-                computeNetworkDesc.documentSelfLink, computeNetwork.documentSelfLink, contextId, 1);
+                computeNetworkDesc.documentSelfLink, computeNetwork, contextId, 1);
         provisioningTask = provision(provisioningTask);
 
         ComputeNetwork networkState = getDocument(ComputeNetwork.class,
@@ -124,6 +124,17 @@ public class ComputeNetworkProvisionTaskServiceTest extends ComputeRequestBaseTe
         assertEquals(computeNetworkDesc.documentSelfLink, networkState.descriptionLink);
         assertTrue(networkState.name.contains(computeNetworkDesc.name));
         assertEquals(provisioningTask.resourceLinks.iterator().next(), networkState.documentSelfLink);
+        assertEquals(computeNetworkDesc.documentSelfLink, networkState.descriptionLink);
+        assertTrue(networkState.name.contains(computeNetworkDesc.name));
+        assertEquals(provisioningTask.resourceLinks.iterator().next(),
+                networkState.documentSelfLink);
+        assertNotNull(networkState.subnetLink);
+        SubnetState subnetState = getDocument(SubnetState.class, networkState.subnetLink);
+        assertEquals(networkState.tenantLinks, subnetState.tenantLinks);
+        assertNotNull(subnetState.customProperties);
+        String sgContextId = subnetState.customProperties.get(FIELD_NAME_CONTEXT_ID_KEY);
+        assertNotNull(sgContextId);
+        assertEquals(contextId, sgContextId);
     }
 
     @Test
@@ -139,7 +150,7 @@ public class ComputeNetworkProvisionTaskServiceTest extends ComputeRequestBaseTe
         createComputeState(cd.documentSelfLink, contextId);
 
         ComputeNetworkProvisionTaskState provisioningTask = createComputeNetworkProvisionTask(
-                computeNetworkDesc.documentSelfLink, computeNetwork.documentSelfLink, contextId, 1);
+                computeNetworkDesc.documentSelfLink, computeNetwork, contextId, 1);
         provisioningTask = provision(provisioningTask);
 
         ComputeNetwork networkState = getDocument(ComputeNetwork.class,
@@ -173,7 +184,7 @@ public class ComputeNetworkProvisionTaskServiceTest extends ComputeRequestBaseTe
         createComputeState(cd.documentSelfLink, contextId);
 
         ComputeNetworkProvisionTaskState provisioningTask = createComputeNetworkProvisionTask(
-                computeNetworkDesc.documentSelfLink, computeNetwork.documentSelfLink, contextId, 1);
+                computeNetworkDesc.documentSelfLink, computeNetwork, contextId,1);
         provisioningTask = provision(provisioningTask);
 
         ComputeNetwork networkState = getDocument(ComputeNetwork.class,
@@ -183,15 +194,24 @@ public class ComputeNetworkProvisionTaskServiceTest extends ComputeRequestBaseTe
         assertEquals(computeNetworkDesc.documentSelfLink, networkState.descriptionLink);
         assertTrue(networkState.name.contains(computeNetworkDesc.name));
         assertEquals(provisioningTask.resourceLinks.iterator().next(), networkState.documentSelfLink);
+        assertNotNull(networkState.securityGroupLinks);
+        assertEquals(1, networkState.securityGroupLinks.size());
+        SecurityGroupState securityGroupState = getDocument(SecurityGroupState.class,
+                networkState.securityGroupLinks.iterator().next());
+        assertEquals(networkState.tenantLinks, securityGroupState.tenantLinks);
+        assertNotNull(securityGroupState.customProperties);
+        String sgContextId = securityGroupState.customProperties.get(FIELD_NAME_CONTEXT_ID_KEY);
+        assertNotNull(sgContextId);
+        assertEquals(contextId, sgContextId);
     }
 
     private ComputeNetworkProvisionTaskState createComputeNetworkProvisionTask(
-            String networkDescriptionSelfLink, String networkStateSelfLink, String contextId,
+            String networkDescriptionSelfLink, ComputeNetwork networkState, String contextId,
             long resourceCount) {
 
         ComputeNetworkProvisionTaskState provisionTask = new ComputeNetworkProvisionTaskState();
         provisionTask.resourceLinks = new HashSet<>();
-        provisionTask.resourceLinks.add(networkStateSelfLink);
+        provisionTask.resourceLinks.add(networkState.documentSelfLink);
         provisionTask.resourceDescriptionLink = networkDescriptionSelfLink;
         provisionTask.resourceCount = resourceCount;
         provisionTask.serviceTaskCallback = ServiceTaskCallback.createEmpty();
@@ -199,6 +219,7 @@ public class ComputeNetworkProvisionTaskServiceTest extends ComputeRequestBaseTe
         if (contextId != null) {
             provisionTask.customProperties.put(FIELD_NAME_CONTEXT_ID_KEY, contextId);
         }
+        provisionTask.tenantLinks = networkState.tenantLinks;
         return provisionTask;
     }
 
