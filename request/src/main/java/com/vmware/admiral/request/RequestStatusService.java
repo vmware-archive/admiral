@@ -45,13 +45,11 @@ public class RequestStatusService extends StatefulService {
     private static final long EXPIRATION_MICROS = TimeUnit.MINUTES.toMicros(Long.getLong(
             "com.vmware.admiral.request.status.expiration.mins",
             TimeUnit.DAYS.toMinutes(7)));
-    private static final int MAX_STATE_SIZE = 1024 * 224;
 
     public static class RequestStatus extends
             com.vmware.admiral.service.common.AbstractTaskStatefulService.TaskStatusState {
 
-        public static final String FIELD_NAME_REQUEST_PROGRESS_BY_COMPONENT =
-                "requestProgressByComponent";
+        public static final String FIELD_NAME_REQUEST_PROGRESS_BY_COMPONENT = "requestProgressByComponent";
         public static final String FIELD_NAME_COMPONENTS = "components";
 
         /** Request progress (0-100%) */
@@ -238,16 +236,13 @@ public class RequestStatusService extends StatefulService {
     @Override
     public ServiceDocument getDocumentTemplate() {
         RequestStatus template = (RequestStatus) super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
         template.phase = "Container Allocation";
         template.taskInfo = new TaskState();
         template.taskInfo.stage = TaskStage.CREATED;
         template.subStage = "CREATED";
         template.component = "mysql";
         template.progress = 0;
-        // overwrite max size limit and retention limit explicitly
-        template.documentDescription.serializedStateSizeLimit = MAX_STATE_SIZE;
-        template.documentDescription.versionRetentionLimit = 2;
-        template.documentDescription.versionRetentionFloor = 2;
 
         return template;
     }
