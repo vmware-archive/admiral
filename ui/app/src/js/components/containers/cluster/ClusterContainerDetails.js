@@ -63,7 +63,7 @@ var ClusterContainerDetails = Vue.extend({
     },
 
     refresh: function() {
-      ContainerActions.openClusterDetails(this.model.documentId);
+      NavigationActions.openClusterDetails(this.model.documentId, this.parentCompositeComponentId);
     },
 
     operationSupported: function(op) {
