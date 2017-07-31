@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -9,33 +9,25 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.request;
+package com.vmware.admiral.log;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.OperationUtil;
-import com.vmware.admiral.request.RequestStatusService.RequestStatus;
+import com.vmware.admiral.log.EventLogService.EventLogState;
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 
-/**
- * Factory service implementing {@link FactoryService} used to create instances of
- * {@link RequestStatusService}.
- */
-public class RequestStatusFactoryService extends FactoryService {
-    public static final String SELF_LINK = ManagementUriParts.REQUEST_STATUS;
+public class EventLogFactoryService extends FactoryService {
+    public static final String SELF_LINK = ManagementUriParts.EVENT_LOG;
 
-    public RequestStatusFactoryService() {
-        super(RequestStatus.class);
-        super.toggleOption(ServiceOption.PERSISTENCE, true);
-        super.toggleOption(ServiceOption.REPLICATION, true);
-        super.toggleOption(ServiceOption.INSTRUMENTATION, true);
-        super.toggleOption(ServiceOption.IDEMPOTENT_POST, true);
+    public EventLogFactoryService() {
+        super(EventLogState.class);
     }
 
     @Override
     public Service createServiceInstance() throws Throwable {
-        return new RequestStatusService();
+        return new EventLogService();
     }
 
     @Override

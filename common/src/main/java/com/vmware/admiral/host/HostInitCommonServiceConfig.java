@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 
-import com.vmware.admiral.log.EventLogService;
+import com.vmware.admiral.log.EventLogFactoryService;
 import com.vmware.admiral.service.common.ClusterMonitoringService;
 import com.vmware.admiral.service.common.CommonInitialBootService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
@@ -57,7 +57,8 @@ public class HostInitCommonServiceConfig extends HostInitServiceHelper {
             CommonInitialBootService.class,
             ReverseProxyService.class,
             ExtensibilitySubscriptionFactoryService.class,
-            LongURIGetService.class
+            LongURIGetService.class,
+            EventLogFactoryService.class
     };
 
     @SuppressWarnings("unchecked")
@@ -65,7 +66,6 @@ public class HostInitCommonServiceConfig extends HostInitServiceHelper {
             ResourceNamePrefixService.class,
             RegistryService.class,
             LogService.class,
-            EventLogService.class,
             CounterSubTaskService.class,
             ExtensibilitySubscriptionCallbackService.class,
             EventTopicService.class
