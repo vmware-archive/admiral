@@ -355,7 +355,7 @@ public class ClusterService extends StatelessService {
     }
 
     private void getAllHostsInSingleCluster(Operation get) {
-        ClusterUtils.getHostsWihtinPlacementZone(get, getHost());
+        ClusterUtils.getHostsWithinPlacementZone(get, getHost());
     }
 
 
@@ -392,7 +392,7 @@ public class ClusterService extends StatelessService {
                 .extractQueryResult(
                         queryResult, ElasticPlacementZoneConfigurationState.class);
         List<DeferredResult<ClusterDto>> clusterDtoList = ePZstates.keySet().stream()
-                .map(key -> ClusterUtils.getHostsWihtinPlacementZone(ePZstates.get(key)
+                .map(key -> ClusterUtils.getHostsWithinPlacementZone(ePZstates.get(key)
                                 .resourcePoolState.documentSelfLink, projectLink, getHost())
                         .thenApply(computeStates -> {
                             return ClusterUtils.placementZoneAndItsHostsToClusterDto(
@@ -407,7 +407,7 @@ public class ClusterService extends StatelessService {
         Map<String, ElasticPlacementZoneConfigurationState> ePZstates = new HashMap<>();
         ePZstates.put(queryResult.documentSelfLink, queryResult);
         List<DeferredResult<ClusterDto>> clusterDtoList = ePZstates.keySet().stream()
-                .map(key -> ClusterUtils.getHostsWihtinPlacementZone(ePZstates.get(key)
+                .map(key -> ClusterUtils.getHostsWithinPlacementZone(ePZstates.get(key)
                         .resourcePoolState.documentSelfLink, projectLink, getHost())
                         .thenApply(computeStates -> {
                             return ClusterUtils.placementZoneAndItsHostsToClusterDto(
@@ -420,7 +420,7 @@ public class ClusterService extends StatelessService {
     private DeferredResult<Operation> deleteHostsWihtinOnePlacementZone(ServiceHost host,
             String resourcePoolLink, String projectLink) {
 
-        DeferredResult<Operation> deleteNodesDR = ClusterUtils.getHostsWihtinPlacementZone(
+        DeferredResult<Operation> deleteNodesDR = ClusterUtils.getHostsWithinPlacementZone(
                 resourcePoolLink, projectLink, getHost())
                 .thenCompose(computeStates -> {
 

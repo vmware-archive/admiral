@@ -65,7 +65,7 @@ public class ClusterUtils {
         }
     }
 
-    public static DeferredResult<List<ComputeState>> getHostsWihtinPlacementZone(
+    public static DeferredResult<List<ComputeState>> getHostsWithinPlacementZone(
             String resourcePoolLink, String projectLink, ServiceHost host) {
         if (resourcePoolLink == null) {
             return null;
@@ -98,7 +98,7 @@ public class ClusterUtils {
         return result;
     }
 
-    public static void getHostsWihtinPlacementZone(
+    public static void getHostsWithinPlacementZone(
             Operation get, ServiceHost host) {
 
         String clusterId = UriUtils.parseUriPathSegments(get.getUri(),
@@ -112,46 +112,49 @@ public class ClusterUtils {
             return;
         }
 
-        Query.Builder queryBuilder = Query.Builder.create()
-                .addKindFieldClause(ComputeState.class)
-                .addFieldClause(ComputeState.FIELD_NAME_RESOURCE_POOL_LINK, resourcePoolLink)
-                .addCompositeFieldClause(ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
-                        ComputeConstants.COMPUTE_CONTAINER_HOST_PROP_NAME, "true");
+        Operation getRpOp = Operation.createGet(host, resourcePoolLink).setReferer(host.getUri());
+        host.sendWithDeferredResult(getRpOp, ResourcePoolState.class)
+                .thenCompose(currentRpState -> {
+                    Query.Builder queryBuilder = Query.Builder.create()
+                            .addClause(currentRpState.query)
+                            .addCompositeFieldClause(ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
+                                    ComputeConstants.COMPUTE_CONTAINER_HOST_PROP_NAME, "true");
+                    if (projectLink != null && !projectLink.isEmpty()) {
+                        queryBuilder.addInCollectionItemClause(ComputeState.FIELD_NAME_TENANT_LINKS,
+                                Collections.singletonList(projectLink), Occurance.MUST_OCCUR);
+                    }
 
-        if (projectLink != null && !projectLink.isEmpty()) {
-            queryBuilder.addInCollectionItemClause(ComputeState.FIELD_NAME_TENANT_LINKS,
-                    Collections.singletonList(projectLink), Occurance.MUST_OCCUR);
-        }
+                    String filter = UriUtils.getODataFilterParamValue(get.getUri());
+                    if (filter != null) {
+                        ServiceDocumentDescription desc = Builder.create().buildDescription(
+                                ComputeState.class);
 
-        String filter = UriUtils.getODataFilterParamValue(get.getUri());
-        if (filter != null) {
-            ServiceDocumentDescription desc = Builder.create().buildDescription(
-                    ComputeState.class);
+                        Set<String> expandedQueryPropertyNames = QueryTaskUtils
+                                .getExpandedQueryPropertyNames(desc);
+                        Query q = new ODataQueryVisitor(expandedQueryPropertyNames).toQuery(filter);
+                        if (q != null) {
+                            queryBuilder.addClause(q);
+                        }
+                    }
+                    Query query = queryBuilder.build();
+                    QueryTask queryTask = QueryUtil.buildQuery(ComputeState.class, true, query);
+                    QueryUtil.addExpandOption(queryTask);
 
-            Set<String> expandedQueryPropertyNames = QueryTaskUtils
-                    .getExpandedQueryPropertyNames(desc);
-            Query q = new ODataQueryVisitor(expandedQueryPropertyNames).toQuery(filter);
-            if (q != null) {
-                queryBuilder.addClause(q);
-            }
-        }
-        Query query = queryBuilder.build();
-        QueryTask queryTask = QueryUtil.buildQuery(ComputeState.class, true, query);
-        QueryUtil.addExpandOption(queryTask);
+                    Integer limit = UriUtils.getODataLimitParamValue(get.getUri());
+                    if (limit != null && limit > 0) {
+                        queryTask.querySpec.resultLimit = limit;
+                    } else {
+                        queryTask.querySpec.resultLimit = ServiceDocumentQuery.DEFAULT_QUERY_RESULT_LIMIT;
+                    }
+                    queryTask.documentExpirationTimeMicros = ServiceDocumentQuery
+                            .getDefaultQueryExpiration();
 
-        Integer limit = UriUtils.getODataLimitParamValue(get.getUri());
-        if (limit != null && limit > 0) {
-            queryTask.querySpec.resultLimit = limit;
-        } else {
-            queryTask.querySpec.resultLimit = ServiceDocumentQuery.DEFAULT_QUERY_RESULT_LIMIT;
-        }
-        queryTask.documentExpirationTimeMicros = ServiceDocumentQuery.getDefaultQueryExpiration();
+                    return host.sendWithDeferredResult(Operation
+                            .createPost(UriUtils.buildUri(host, ServiceUriPaths.CORE_QUERY_TASKS))
+                            .setBody(queryTask)
+                            .setReferer(host.getUri()), QueryTask.class);
 
-        host.sendWithDeferredResult(Operation
-                .createPost(UriUtils.buildUri(host, ServiceUriPaths.CORE_QUERY_TASKS))
-                .setBody(queryTask)
-                .setReferer(host.getUri()), QueryTask.class)
-                .thenCompose(qrt -> {
+                }).thenCompose(qrt -> {
                     if (qrt.results.nextPageLink != null) {
                         return host.sendWithDeferredResult(Operation
                                 .createGet(UriUtils.buildUri(host, qrt.results.nextPageLink))
@@ -165,8 +168,6 @@ public class ClusterUtils {
                     get.fail(ex);
                     return null;
                 });
-        ;
-
     }
 
     public static void deletePZ(String pathPZId, Operation delete, ServiceHost host) {
