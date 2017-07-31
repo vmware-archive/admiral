@@ -866,11 +866,11 @@ public class ProjectServiceTest extends AuthBaseTest {
 
         try {
             deleteProject(project);
-        } catch (LocalizableValidationException e) {
-            verifyExceptionMessage(e.getMessage(),
-                    ProjectUtil.PROJECT_IN_USE_MESSAGE);
+        } catch (Exception e) {
+            if (!e.getMessage().contains(ProjectUtil.PROJECT_IN_USE_MESSAGE)) {
+                throw e;
+            }
         }
-
     }
 
     @Test

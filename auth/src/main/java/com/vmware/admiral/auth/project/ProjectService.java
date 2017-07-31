@@ -47,7 +47,6 @@ import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
-import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -97,7 +96,8 @@ public class ProjectService extends StatefulService {
     public static class ProjectState extends ResourceState {
         public static final String FIELD_NAME_PUBLIC = "isPublic";
         public static final String FIELD_NAME_DESCRIPTION = "description";
-        public static final String FIELD_NAME_ADMINISTRATORS_USER_GROUP_LINKS = "administratorsUserGroupLinks";
+        public static final String FIELD_NAME_ADMINISTRATORS_USER_GROUP_LINKS =
+                "administratorsUserGroupLinks";
         public static final String FIELD_NAME_MEMBERS_USER_GROUP_LINKS = "membersUserGroupLinks";
         public static final String FIELD_NAME_VIEWERS_USER_GROUP_LINKS = "viewersUserGroupLinks";
 
@@ -485,7 +485,7 @@ public class ProjectService extends StatefulService {
                 .createPost(getHost(), ServiceUriPaths.CORE_QUERY_TASKS)
                 .setBody(queryTask);
 
-        sendWithDeferredResult(getPlacementsWithProject, ServiceDocumentQueryResult.class)
+        sendWithDeferredResult(getPlacementsWithProject, QueryTask.class)
                 .thenApply(result -> new Pair<>(result, (Throwable) null))
                 .exceptionally(ex -> new Pair<>(null, ex))
                 .thenCompose(pair -> {
@@ -494,7 +494,7 @@ public class ProjectService extends StatefulService {
                                 state.documentSelfLink);
                         return DeferredResult.failed(pair.right);
                     } else {
-                        Long documentCount = pair.left.documentCount;
+                        Long documentCount = pair.left.results.documentCount;
                         if (documentCount != null && documentCount != 0) {
                             return DeferredResult.failed(new LocalizableValidationException(
                                     ProjectUtil.PROJECT_IN_USE_MESSAGE,
@@ -514,7 +514,6 @@ public class ProjectService extends StatefulService {
                     }
                     super.handleDelete(delete);
                 });
-
     }
 
     private DeferredResult<Void> deleteDefaultProjectGroups(String projectId,
