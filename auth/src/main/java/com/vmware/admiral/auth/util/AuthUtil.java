@@ -548,7 +548,19 @@ public class AuthUtil {
     }
 
     public static ResourceGroupState buildProjectMemberResourceGroup(String projectId) {
-        return buildCommonProjectResourceGroup(projectId, AuthRole.PROJECT_MEMBER);
+        Query commonQuery = buildCommonProjectResourceGroup(projectId,
+                AuthRole.PROJECT_MEMBER).query;
+
+        Query.Builder builder = Query.Builder.create();
+        builder.addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                buildUriWithWildcard(ManagementUriParts.CLUSTERS),
+                MatchType.WILDCARD, Occurance.SHOULD_OCCUR);
+
+        for (Query query : commonQuery.booleanClauses) {
+            builder.addClause(query);
+        }
+
+        return buildResourceGroupState(AuthRole.PROJECT_MEMBER, projectId, builder.build());
     }
 
     public static ResourceGroupState buildProjectViewerResourceGroup(String projectId) {
