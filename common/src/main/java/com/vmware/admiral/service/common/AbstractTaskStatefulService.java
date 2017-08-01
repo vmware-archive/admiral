@@ -348,9 +348,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
                     this.validateAndEnhanceNotificationPayload(state, notificationPayload,
                             callback);
                 };
-
-                manager.handleStagePatch(notificationPayload, this.replyPayload(state), state,
-                        this::handleStagePatch, notificationCallback);
+                manager.handleStagePatch(state, this::handleStagePatch, notificationCallback);
             } else {
                 // ServiceHost is not instance of ManagementHost
                 handleStagePatch(state);
