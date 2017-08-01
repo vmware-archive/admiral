@@ -92,8 +92,13 @@ public class AwsWordpressProvisionNetworkIT extends BaseWordpressComputeProvisio
         createProfile(loadComputeProfile(getEndpointType()), createIsolatedSubnetNetworkProfile(
                 AWS_ISOLATED_VPC_NAME, CIDR_PREFIX), new StorageProfile());
 
-        createProfile(loadComputeProfile(getEndpointType()), createIsolatedSecurityGroupNetworkProfile(
-                AWS_DEFAULT_SUBNET_NAME, Sets.newHashSet(createTag("type", "sg"))),
+        createProfile(loadComputeProfile(getEndpointType()),
+                createIsolatedSecurityGroupNetworkProfile(AWS_DEFAULT_SUBNET_NAME,
+                        Sets.newHashSet(createTag("type", "sg"))), new StorageProfile());
+
+        createProfile(loadComputeProfile(getEndpointType()),
+                createIsolatedSubnetWithOutboundAccessNetworkProfile(
+                        AWS_DEFAULT_VPC_NAME, CIDR_PREFIX, AWS_EXTERNAL_SUBNET_NAME),
                 new StorageProfile());
     }
 

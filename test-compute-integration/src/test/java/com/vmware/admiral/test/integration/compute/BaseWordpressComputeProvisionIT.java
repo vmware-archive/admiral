@@ -48,8 +48,10 @@ public abstract class BaseWordpressComputeProvisionIT extends BaseComputeProvisi
 
     protected static final String AWS_DEFAULT_SUBNET_NAME = "subnet1";
     protected static final String AWS_SECONDARY_SUBNET_NAME = "subnet2";
+    protected static final String AWS_EXTERNAL_SUBNET_NAME = "subnet-external";
 
     protected static final String AWS_ISOLATED_VPC_NAME = "isolated-vpc";
+    protected static final String AWS_DEFAULT_VPC_NAME = "default-vpc";
 
     private static final String WP_PATH = "mywordpresssite/wp-admin/install.php?step=1";
     private static final int STATUS_CODE_WAIT_POLLING_RETRY_COUNT = 300; //5 min
@@ -226,22 +228,11 @@ public abstract class BaseWordpressComputeProvisionIT extends BaseComputeProvisi
 
                 IsolationSupportType isolationType = getNetworkProfileIsolationType
                         (networkInterfaceState, computes);
-                assertTrue(isolationType.equals(IsolationSupportType.SECURITY_GROUP));
-                assertNotNull(networkInterfaceState.securityGroupLinks);
-                assertTrue(networkInterfaceState.securityGroupLinks.size() > 0);
-
-                boolean isOutboundAccessSecurityGroup = false;
-                for (String sgLink : networkInterfaceState.securityGroupLinks) {
-                    SecurityGroupState securityGroupState = getDocument(sgLink,
-                            SecurityGroupState.class);
-                    assertNotNull(securityGroupState);
-                    assertNotNull(computeState.customProperties);
-
-                    isOutboundAccessSecurityGroup = isOutboundAccessSecurityGroup(securityGroupState,
-                            computeState.customProperties.get(FIELD_NAME_CONTEXT_ID_KEY));
+                if (isolationType.equals(IsolationSupportType.SUBNET)) {
+                    validateSubnetIsolationWithOutboundAccess(networkInterfaceState);
+                } else if (isolationType.equals(IsolationSupportType.SECURITY_GROUP)) {
+                    validateSecurityGroupIsolationWithOutboundAccess(networkInterfaceState, computeState);
                 }
-
-                assertTrue(isOutboundAccessSecurityGroup);
             } catch (Exception e) {
                 fail();
             }
@@ -315,6 +306,42 @@ public abstract class BaseWordpressComputeProvisionIT extends BaseComputeProvisi
         }
 
         return true;
+    }
+
+    private static void validateSubnetIsolationWithOutboundAccess(
+            NetworkInterfaceState networkInterfaceState) throws Exception {
+        SubnetState subnetState = getDocument(
+                networkInterfaceState.subnetLink,
+                SubnetState.class);
+
+        assertTrue(subnetState.name.contains("wpnet"));
+        assertNotNull(subnetState.externalSubnetLink);
+
+        SubnetState externalSubnetState = getDocument(
+                subnetState.externalSubnetLink,
+                SubnetState.class);
+        assertNotNull(externalSubnetState);
+        assertEquals(externalSubnetState.name, AWS_EXTERNAL_SUBNET_NAME);
+    }
+
+    private static void validateSecurityGroupIsolationWithOutboundAccess(
+            NetworkInterfaceState networkInterfaceState, ComputeState computeState)
+            throws Exception {
+        assertNotNull(networkInterfaceState.securityGroupLinks);
+        assertTrue(networkInterfaceState.securityGroupLinks.size() > 0);
+
+        boolean isOutboundAccessSecurityGroup = false;
+        for (String sgLink : networkInterfaceState.securityGroupLinks) {
+            SecurityGroupState securityGroupState = getDocument(sgLink,
+                    SecurityGroupState.class);
+            assertNotNull(securityGroupState);
+            assertNotNull(computeState.customProperties);
+
+            isOutboundAccessSecurityGroup = isOutboundAccessSecurityGroup(securityGroupState,
+                    computeState.customProperties.get(FIELD_NAME_CONTEXT_ID_KEY));
+        }
+
+        assertTrue(isOutboundAccessSecurityGroup);
     }
 
     private static boolean isOutboundAccessSecurityGroup(

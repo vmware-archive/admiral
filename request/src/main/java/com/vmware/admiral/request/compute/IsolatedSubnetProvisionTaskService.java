@@ -30,6 +30,7 @@ import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService.ComputeNetworkCIDRAllocationRequest;
 import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService.ComputeNetworkCIDRAllocationState;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService;
+import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.admiral.compute.network.ComputeNetworkService;
 import com.vmware.admiral.compute.profile.NetworkProfileService;
 import com.vmware.admiral.compute.profile.ProfileService;
@@ -113,15 +114,14 @@ public class IsolatedSubnetProvisionTaskService
     }
 
     private static class Context {
-        public Context(String computeNetworkLink, IsolatedSubnetProvisionTaskState state,
+        public Context(IsolatedSubnetProvisionTaskState state,
                 ServiceTaskCallback<SubStage> serviceTaskCallback) {
-            this.computeNetworkLink = computeNetworkLink;
             this.state = state;
             this.serviceTaskCallback = serviceTaskCallback;
         }
 
-        public String computeNetworkLink;
         public ComputeNetworkService.ComputeNetwork computeNetwork;
+        public ComputeNetworkDescription computeNetworkDescription;
         public ProfileService.ProfileStateExpanded profile;
         public SubnetState subnet;
         public EndpointService.EndpointState isolatedNetworkEndpoint;
@@ -167,15 +167,20 @@ public class IsolatedSubnetProvisionTaskService
     }
 
     private void allocateExternalIPAddress(IsolatedSubnetProvisionTaskState state) {
-        ServiceTaskCallback<SubStage> callback = createCallback(SubStage.ALLOCATED_EXTERNAL_IP_ADDRESS);
+        ServiceTaskCallback<SubStage> callback = createCallback(
+                SubStage.ALLOCATED_EXTERNAL_IP_ADDRESS,
+                // ignore IP address allocation errors for now;
+                // this needs to go to SubStage.ERROR once the IP allocation task service is able
+                // to handle the various providers properly (e.g., elastic IP allocation on AWS)
+                SubStage.START_PROVISIONING);
 
-        DeferredResult.completed(new Context(state.resourceLink, state, callback))
+        DeferredResult.completed(new Context(state, callback))
                 .thenCompose(this::populateContext)
                 .thenCompose(this::populateEndpoint)
                 .thenCompose(this::populateInstanceAdapterReference)
                 .thenCompose(this::createSubnet)
                 .thenCompose(context -> {
-                    if (context.profile.networkProfile.isolationExternalSubnetLink == null) {
+                    if (context.subnet.externalSubnetLink == null) {
                         proceedTo(SubStage.START_PROVISIONING);
                         return DeferredResult.completed(context);
                     }
@@ -198,7 +203,7 @@ public class IsolatedSubnetProvisionTaskService
         ipAddressAllocationTask.allocationCount = 1;
         ipAddressAllocationTask.connectedResourceLink = context.subnet.documentSelfLink;
         ipAddressAllocationTask.requestType = IPAddressAllocationTaskState.RequestType.ALLOCATE;
-        ipAddressAllocationTask.subnetLink = context.profile.networkProfile.isolationExternalSubnetLink;
+        ipAddressAllocationTask.subnetLink = context.subnet.externalSubnetLink;
         ipAddressAllocationTask.serviceTaskCallback = context.serviceTaskCallback;
 
         return this.sendWithDeferredResult(
@@ -209,7 +214,7 @@ public class IsolatedSubnetProvisionTaskService
     }
 
     private void saveExternalIPAddress(IsolatedSubnetProvisionTaskState state) {
-        DeferredResult.completed(new Context(state.resourceLink, state, null))
+        DeferredResult.completed(new Context(state, null))
                 .thenCompose(this::populateContext)
                 .thenCompose(context -> {
                     AssertUtil.assertNotNull(context.subnet,
@@ -234,9 +239,9 @@ public class IsolatedSubnetProvisionTaskService
     }
 
     private void provisionResources(IsolatedSubnetProvisionTaskState state) {
-        ServiceTaskCallback<SubStage> callback = createCallback(SubStage.COMPLETED);
+        ServiceTaskCallback<SubStage> callback = createCallback(SubStage.COMPLETED, SubStage.ERROR);
         DeferredResult
-                .completed(new Context(state.resourceLink, state, callback))
+                .completed(new Context(state, callback))
                 .thenCompose(this::populateContext)
                 .thenCompose(this::provisionResource)
                 .exceptionally(t -> {
@@ -250,6 +255,7 @@ public class IsolatedSubnetProvisionTaskService
     private DeferredResult<Context> populateContext(Context context) {
         return DeferredResult.completed(context)
                 .thenCompose(this::populateComputeNetwork)
+                .thenCompose(this::populateComputeNetworkDescription)
                 .thenCompose(this::populateSubnet)
                 .thenCompose(this::populateProfile)
                 .thenCompose(ctx -> {
@@ -275,10 +281,22 @@ public class IsolatedSubnetProvisionTaskService
 
     private DeferredResult<Context> populateComputeNetwork(Context context) {
         return this.sendWithDeferredResult(
-                Operation.createGet(this, context.computeNetworkLink),
+                Operation.createGet(this, context.state.resourceLink),
                 ComputeNetworkService.ComputeNetwork.class)
                 .thenApply(computeNetwork -> {
                     context.computeNetwork = computeNetwork;
+                    return context;
+                });
+    }
+
+    private DeferredResult<Context> populateComputeNetworkDescription(Context context) {
+        AssertUtil.assertNotNull(context.computeNetwork, "context.computeNetwork should not be "
+                + "null");
+        return this.sendWithDeferredResult(
+                Operation.createGet(this, context.computeNetwork.descriptionLink),
+                ComputeNetworkDescription.class)
+                .thenApply(computeNetworkDescription -> {
+                    context.computeNetworkDescription = computeNetworkDescription;
                     return context;
                 });
     }
@@ -390,6 +408,9 @@ public class IsolatedSubnetProvisionTaskService
         subnet.endpointLink = context.isolatedNetworkEndpoint.documentSelfLink;
         subnet.instanceAdapterReference = URI.create(context.subnetInstanceAdapterReference);
         subnet.groupLinks = context.computeNetwork.groupLinks;
+        subnet.externalSubnetLink = (context.computeNetworkDescription.outboundAccess != null &&
+                context.computeNetworkDescription.outboundAccess == true) ?
+                context.profile.networkProfile.isolationExternalSubnetLink : null;
 
         subnet.lifecycleState = LifecycleState.PROVISIONING;
 
@@ -402,12 +423,6 @@ public class IsolatedSubnetProvisionTaskService
             subnet.customProperties.put(
                     ComputeConstants.CUSTOM_PROP_NETWORK_PROFILE_EXTENSION_DATA,
                     Utils.toJson(context.profile.networkProfile.extensionData));
-        }
-
-        if (context.profile.networkProfile.isolationExternalSubnetLink != null) {
-            subnet.customProperties.put(
-                    ComputeConstants.CUSTOM_PROP_ISOLATION_EXTERNAL_SUBNET_LINK,
-                    context.profile.networkProfile.isolationExternalSubnetLink);
         }
 
         String contextId = RequestUtils.getContextId(context.state);
@@ -457,10 +472,11 @@ public class IsolatedSubnetProvisionTaskService
                 .thenCompose(ignore -> DeferredResult.completed(context));
     }
 
-    private ServiceTaskCallback<SubStage> createCallback(SubStage completeStage) {
+    private ServiceTaskCallback<SubStage> createCallback(SubStage completeStage,
+            SubStage errorStage) {
         ServiceTaskCallback<SubStage> callback = ServiceTaskCallback.create(getUri());
         callback.onSuccessTo(completeStage);
-        callback.onErrorTo(SubStage.ERROR);
+        callback.onErrorTo(errorStage);
         return callback;
     }
 }

@@ -788,6 +788,12 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
     }
 
     protected NetworkProfile createIsolatedSubnetNetworkProfile(String isolatedNetworkName, int cidrPrefix) throws Exception {
+        return createIsolatedSubnetWithOutboundAccessNetworkProfile(isolatedNetworkName, cidrPrefix, null);
+    }
+
+    protected NetworkProfile createIsolatedSubnetWithOutboundAccessNetworkProfile(
+            String isolatedNetworkName, int cidrPrefix,
+            String isolationExternalSubnetName) throws Exception {
         String networkLink = loadResource(NetworkState.class, isolatedNetworkName);
 
         NetworkProfile np = new NetworkProfile();
@@ -795,6 +801,10 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         np.isolationType = IsolationSupportType.SUBNET;
         np.isolationNetworkLink = networkLink;
         np.isolatedSubnetCIDRPrefix = cidrPrefix;
+        if (isolationExternalSubnetName != null) {
+            String subnetLink = loadResource(SubnetState.class, isolationExternalSubnetName);
+            np.isolationExternalSubnetLink = subnetLink;
+        }
         return np;
     }
 

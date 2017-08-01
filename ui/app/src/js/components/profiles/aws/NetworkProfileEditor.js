@@ -73,6 +73,15 @@ export default Vue.component('aws-network-profile-editor', {
           :value="isolationNetwork"
           @change="onIsolationNetworkChange">
         </dropdown-search-group>
+        <dropdown-search-group
+          v-if="isolationType && isolationType.value === 'SUBNET' && isolationNetwork"
+          :entity="i18n('app.subnetwork.entity')"
+          :filter="searchIsolationExternalSubnets"
+          :label="i18n('app.profile.edit.isolationExternalSubnetLabel')"
+          :required="false"
+          :value="isolationExternalSubnet"
+          @change="onIsolationExternalSubnetChange">
+        </dropdown-search-group>
         <number-group
           v-if="isolationType && isolationType.value === 'SUBNET'"
           :label="i18n('app.profile.edit.cidrPrefixLabel')"
@@ -101,6 +110,7 @@ export default Vue.component('aws-network-profile-editor', {
     return {
       isolatedSubnetCIDRPrefix: this.model.isolatedSubnetCIDRPrefix,
       isolationNetwork: this.model.isolationNetwork,
+      isolationExternalSubnet: this.model.isolationExternalSubnet,
       isolationType: ISOLATION_TYPES.find((type) => type.value === this.model.isolationType) ||
           ISOLATION_TYPES[0],
       isolationTypes: ISOLATION_TYPES,
@@ -134,6 +144,12 @@ export default Vue.component('aws-network-profile-editor', {
     },
     onIsolationNetworkChange(value) {
       this.isolationNetwork = value;
+      // reset the isolation external subnet if isolation network selection has changed
+      this.isolationExternalSubnet = null;
+      this.emitChange();
+    },
+    onIsolationExternalSubnetChange(value) {
+      this.isolationExternalSubnet = value;
       this.emitChange();
     },
     onIsolatedSubnetCIDRPrefixChange(value) {
@@ -199,6 +215,14 @@ export default Vue.component('aws-network-profile-editor', {
         }).catch(reject);
       });
     },
+    searchIsolationExternalSubnets(...args) {
+      return new Promise((resolve, reject) => {
+        services.searchSubnetsByNetwork.apply(null,
+            [this.isolationNetwork.documentSelfLink, ...args]).then((result) => {
+          resolve(result);
+        }).catch(reject);
+      });
+    },
     manageSubnetworks() {
       this.$emit('manage.subnetworks');
     },
@@ -208,6 +232,8 @@ export default Vue.component('aws-network-profile-editor', {
           isolationType: this.isolationType && this.isolationType.value,
           isolationNetworkLink: this.isolationNetwork &&
               this.isolationNetwork.documentSelfLink,
+          isolationExternalSubnetLink: this.isolationExternalSubnet &&
+              this.isolationExternalSubnet.documentSelfLink,
           isolatedSubnetCIDRPrefix: this.isolatedSubnetCIDRPrefix,
           subnetLinks: this.subnetworks.reduce((previous, current) => {
             if (current.name && current.name.documentSelfLink) {

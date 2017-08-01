@@ -57,5 +57,3 @@ components:
       name: wpnet
       networkType: isolated
       outboundAccess: true
-      constraints:
-        - tag: "type:sg:hard"

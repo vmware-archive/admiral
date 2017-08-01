@@ -259,7 +259,43 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
         assertFalse(exceptions.isEmpty());
         assertEquals(1, exceptions.size());
         assertTrue(exceptions.iterator().next().getMessage()
-                .contains("Could not find any profiles"));
+                .contains("Could not find any profile"));
+    }
+
+    @Test
+    public void testGetComputeNetworkProfilesWithOutboundAccessNotFound() throws Throwable {
+        ComputeNetworkDescription networkDescription = createNetworkDescription("my net",
+                null, NetworkType.ISOLATED, true);
+        List<String> subnets1 = Arrays.asList(
+                createSubnet("sub-1", networkDescription.tenantLinks, null).documentSelfLink,
+                createSubnet("sub-2", networkDescription.tenantLinks,
+                        Sets.newHashSet(createTag("cap", "notPci",
+                                networkDescription.tenantLinks))).documentSelfLink);
+        NetworkProfile networkProfile1 = createNetworkProfile(subnets1,
+                networkDescription.tenantLinks, null);
+        createProfile(networkProfile1.documentSelfLink, networkProfile1.tenantLinks, null);
+
+        TestContext ctx = testCreate(1);
+        Set<String> profileLinks = new HashSet<>();
+        Set<Throwable> exceptions = new HashSet<>();
+        NetworkProfileQueryUtils.getProfilesForNetworkDescription(host, referer,
+                networkDescription,
+                (all, e) -> {
+                    if (e != null) {
+                        exceptions.add(e);
+                        ctx.complete();
+                        return;
+                    }
+                    profileLinks.addAll(all);
+                    ctx.complete();
+                });
+        ctx.await();
+
+        assertFalse(exceptions.isEmpty());
+        assertEquals(1, exceptions.size());
+        String errorMessage = exceptions.iterator().next().getMessage();
+        assertTrue(errorMessage.contains("Could not find any profile"));
+        assertTrue(errorMessage.contains("with outbound access"));
     }
 
     @Test
@@ -744,11 +780,18 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
 
     private ComputeNetworkDescription createNetworkDescription(String name,
             List<Condition> conditions) throws Throwable {
-        return createNetworkDescription(name, conditions, null);
+        return createNetworkDescription(name, conditions, null, null);
     }
 
     private ComputeNetworkDescription createNetworkDescription(String name,
-            List<Condition> conditions, NetworkType networkType) throws Throwable {
+            List<Condition> conditions, NetworkType networkType)
+            throws Throwable {
+        return createNetworkDescription(name, conditions, networkType, null);
+    }
+
+    private ComputeNetworkDescription createNetworkDescription(String name,
+            List<Condition> conditions, NetworkType networkType, Boolean outboundAccess)
+            throws Throwable {
         ComputeNetworkDescription desc = TestRequestStateFactory.createComputeNetworkDescription(
                 name);
         desc.networkType = networkType;
@@ -759,6 +802,7 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
             desc.constraints = new HashMap<>();
             desc.constraints.put(ComputeConstants.COMPUTE_PLACEMENT_CONSTRAINT_KEY, constraint);
         }
+        desc.outboundAccess = outboundAccess;
         desc = doPost(desc, ComputeNetworkDescriptionService.FACTORY_LINK);
         addForDeletion(desc);
         return desc;

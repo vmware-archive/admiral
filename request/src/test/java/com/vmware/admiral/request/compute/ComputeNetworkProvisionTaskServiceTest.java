@@ -62,7 +62,7 @@ public class ComputeNetworkProvisionTaskServiceTest extends ComputeRequestBaseTe
     @Test
     public void testProvisionIsolatedNetworkNoCompute() throws Throwable {
         ComputeNetworkDescription computeNetworkDesc = createComputeNetworkDescription(UUID
-                .randomUUID().toString(), NetworkType.ISOLATED);
+                .randomUUID().toString(), NetworkType.ISOLATED, false);
 
         ComputeNetwork computeNetwork = createComputeNetwork(computeNetworkDesc,
                 createIsolatedNetworkProfile(createSecurityGroupState()).documentSelfLink);
@@ -83,7 +83,7 @@ public class ComputeNetworkProvisionTaskServiceTest extends ComputeRequestBaseTe
     @Test
     public void testProvisionExternalNetworkNoCompute() throws Throwable {
         ComputeNetworkDescription computeNetworkDesc = createComputeNetworkDescription(UUID
-                .randomUUID().toString(), NetworkType.EXTERNAL);
+                .randomUUID().toString(), NetworkType.EXTERNAL, false);
 
         ComputeNetwork computeNetwork = createComputeNetwork(computeNetworkDesc,
                 createProfile().documentSelfLink);
@@ -104,7 +104,7 @@ public class ComputeNetworkProvisionTaskServiceTest extends ComputeRequestBaseTe
     @Test
     public void testProvisionIsolatedSubnetNetwork() throws Throwable {
         ComputeNetworkDescription computeNetworkDesc = createComputeNetworkDescription(UUID
-                .randomUUID().toString(), NetworkType.ISOLATED);
+                .randomUUID().toString(), NetworkType.ISOLATED, false);
 
         ComputeNetwork computeNetwork = createComputeNetwork(computeNetworkDesc,
                 createIsolatedSubnetNetworkProfile().documentSelfLink);
@@ -140,7 +140,7 @@ public class ComputeNetworkProvisionTaskServiceTest extends ComputeRequestBaseTe
     @Test
     public void testProvisionIsolatedSubnetNetworkWithExternalIPAllocation() throws Throwable {
         ComputeNetworkDescription computeNetworkDesc = createComputeNetworkDescription(UUID
-                .randomUUID().toString(), NetworkType.ISOLATED);
+                .randomUUID().toString(), NetworkType.ISOLATED, true);
 
         ComputeNetwork computeNetwork = createComputeNetwork(computeNetworkDesc,
                 createIsolatedSubnetNetworkProfileWithExternalSubnetLink().documentSelfLink);
@@ -167,14 +167,13 @@ public class ComputeNetworkProvisionTaskServiceTest extends ComputeRequestBaseTe
         assertNotNull(subnetState.customProperties);
         assertNotNull(subnetState.customProperties.get(
                 ComputeConstants.CUSTOM_PROP_ISOLATION_EXTERNAL_IP_ADDRESS_LINK));
-        assertNotNull(subnetState.customProperties.get(
-                ComputeConstants.CUSTOM_PROP_ISOLATION_EXTERNAL_SUBNET_LINK));
+        assertNotNull(subnetState.externalSubnetLink);
     }
 
     @Test
     public void testProvisionIsolatedSecurityGroupNetwork() throws Throwable {
         ComputeNetworkDescription computeNetworkDesc = createComputeNetworkDescription(UUID
-                .randomUUID().toString(), NetworkType.ISOLATED);
+                .randomUUID().toString(), NetworkType.ISOLATED, false);
 
         ComputeNetwork computeNetwork = createComputeNetwork(computeNetworkDesc,
                 createIsolatedSecurityGroupNetworkProfile().documentSelfLink);
@@ -249,9 +248,10 @@ public class ComputeNetworkProvisionTaskServiceTest extends ComputeRequestBaseTe
         return outProvisionTask;
     }
 
-    private ComputeNetworkDescription createComputeNetworkDescription(String name, NetworkType networkType)
-            throws Throwable {
+    private ComputeNetworkDescription createComputeNetworkDescription(String name,
+            NetworkType networkType, boolean outboundAccess) throws Throwable {
         ComputeNetworkDescription desc = createNetworkDescription(name, networkType);
+        desc.outboundAccess = outboundAccess;
         desc = doPost(desc,
                 ComputeNetworkDescriptionService.FACTORY_LINK);
         assertNotNull(desc);

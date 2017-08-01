@@ -199,6 +199,11 @@ public class NetworkProfileQueryUtils {
                                             env -> combineTags(env),
                                             null)
                                     .filter(env -> env.networkProfile.isolationType != IsolationSupportType.NONE)
+                                    .filter(env -> networkDescription.outboundAccess == null ||
+                                            networkDescription.outboundAccess == false ||
+                                            (env.networkProfile.isolationExternalSubnetLink !=
+                                                    null || env.networkProfile.isolationType ==
+                                                    IsolationSupportType.SECURITY_GROUP))
                                     .map(env -> env.documentSelfLink)
                                     .distinct()
                                     .collect(Collectors.toList());
@@ -593,28 +598,33 @@ public class NetworkProfileQueryUtils {
     private static Exception getNetworkProfileSearchException(
             Map<Condition, String> placementConstraints,
             ComputeNetworkDescription networkDescription) {
+        List<String> constraints = new ArrayList<>();
         if (placementConstraints != null && !placementConstraints.isEmpty()) {
-            List<String> constraints = placementConstraints.keySet().stream()
+            constraints = placementConstraints.keySet().stream()
                     .map(c -> ConstraintConverter.encodeCondition(c).tag)
                     .collect(Collectors.toList());
+        }
+
+        String networkType = networkDescription.networkType == null ? NetworkType.EXTERNAL.name() :
+                networkDescription.networkType.name();
+
+        if (networkDescription.outboundAccess != null && networkDescription.outboundAccess.equals(
+                Boolean.TRUE)) {
             return new LocalizableValidationException(
                     String.format(
-                            "Could not find any profiles to satisfy all of network '%s' "
-                                    + "constraints %s.",
-                            networkDescription.name, constraints),
-                    "compute.network.no.profiles.satisfy.constraints",
-                    networkDescription.name, constraints);
+                            "Could not find any profile to match network '%s' of type %s with "
+                                    + "outbound access and constraints %s.",
+                            networkDescription.name, networkType, constraints),
+                    "compute.network.no.profiles.match.outbound.access",
+                    networkDescription.name, networkType, constraints);
         } else {
             return new LocalizableValidationException(
                     String.format(
-                            "Could not find any profiles to match network '%s' of type %s.",
-                            networkDescription.name,
-                            networkDescription.networkType == null ? NetworkType.EXTERNAL :
-                                    networkDescription.networkType.name()),
+                            "Could not find any profile to match network '%s' of type %s with "
+                                    + "constraints %s.",
+                            networkDescription.name, networkType, constraints),
                     "compute.network.no.profiles.match",
-                    networkDescription.name,
-                    networkDescription.networkType == null ? NetworkType.EXTERNAL :
-                            networkDescription.networkType.name());
+                    networkDescription.name, networkType, constraints);
         }
     }
 }

@@ -926,6 +926,10 @@ services.searchSecurityGroups = function(endpointLink, query, limit) {
   });
 };
 
+services.loadSubnet = function(documentSelfLink) {
+  return get(documentSelfLink);
+};
+
 services.loadSubnetworks = function(endpointLink, documentSelfLinks) {
   var params = {};
   if (documentSelfLinks && documentSelfLinks.length) {
@@ -954,6 +958,30 @@ services.searchSubnetworks = function(endpointLink, query, limit) {
   var qOps = {
     any: query.toLowerCase(),
     endpoint: endpointLink
+  };
+
+  let filter = buildSearchQuery(qOps);
+  let url = buildPaginationUrl(links.SUBNETWORKS, filter, true,
+                               'documentUpdateTimeMicros desc', limit);
+  return get(url).then(function(data) {
+    var documentLinks = data.documentLinks || [];
+
+    var result = {
+      totalCount: data.totalCount
+    };
+
+    result.items = documentLinks.map((link) => {
+      return data.documents[link];
+    });
+
+    return result;
+  });
+};
+
+services.searchSubnetsByNetwork = function(networkLink, query, limit) {
+  var qOps = {
+    any: query.toLowerCase(),
+    network: networkLink
   };
 
   let filter = buildSearchQuery(qOps);
@@ -2894,6 +2922,16 @@ var buildSearchQuery = function(queryOptions) {
     userQueryOps.endpointLink = endpointArray.map((endpoint) => {
       return {
         val: endpoint,
+        op: 'eq'
+      };
+    });
+  }
+
+  var networkArray = toArrayIfDefined(queryOptions.network);
+  if (networkArray) {
+    userQueryOps.networkLink = networkArray.map((network) => {
+      return {
+        val: network,
         op: 'eq'
       };
     });
