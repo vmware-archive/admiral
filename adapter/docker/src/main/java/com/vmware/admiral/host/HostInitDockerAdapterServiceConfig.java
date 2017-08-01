@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -27,6 +27,7 @@ import com.vmware.admiral.service.test.MockDockerHostAdapterImageService;
 import com.vmware.admiral.service.test.MockDockerHostAdapterService;
 import com.vmware.admiral.service.test.MockDockerNetworkAdapterService;
 import com.vmware.admiral.service.test.MockDockerVolumeAdapterService;
+import com.vmware.admiral.service.test.MockDockerVolumeToHostService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
@@ -52,6 +53,7 @@ public class HostInitDockerAdapterServiceConfig {
 
             host.startService(Operation.createPost(UriUtils.buildUri(host,
                     MockDockerVolumeAdapterService.class)), new MockDockerVolumeAdapterService());
+            host.startFactory(new MockDockerVolumeToHostService());
             host.startService(
                     Operation.createPost(
                             UriUtils.buildUri(host, MockDockerHostAdapterImageService.class)),

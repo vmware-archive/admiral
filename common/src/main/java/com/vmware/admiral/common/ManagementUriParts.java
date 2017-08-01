@@ -137,6 +137,7 @@ public interface ManagementUriParts {
 
     String CONTAINER_VOLUMES = RESOURCES + "/container-volumes";
     String CONTAINER_VOLUMES_DESC = RESOURCES + "/container-volume" + DESCRIPTION_SUFFIX;
+    String MOCK_CONTAINER_VOLUMES = CONTAINER_VOLUMES + "-mock";
 
     String COMPUTE_NETWORKS = RESOURCES + "/compute-networks";
     String COMPUTE_NETWORK_DESC = RESOURCES + "/compute-network" + DESCRIPTION_SUFFIX;

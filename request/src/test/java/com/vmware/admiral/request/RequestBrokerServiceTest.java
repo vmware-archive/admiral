@@ -92,7 +92,8 @@ import com.vmware.admiral.request.compute.ComputeOperationType;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.admiral.service.test.MockDockerNetworkAdapterService;
-import com.vmware.admiral.service.test.MockDockerVolumeAdapterService;
+import com.vmware.admiral.service.test.MockDockerVolumeToHostService;
+import com.vmware.admiral.service.test.MockDockerVolumeToHostService.MockDockerVolumeToHostState;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService;
@@ -106,6 +107,7 @@ import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.photon.controller.model.resources.SubnetService;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
+import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
@@ -1456,8 +1458,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         volumeState.options = new HashMap<>();
         volumeState = doPost(volumeState, ContainerVolumeService.FACTORY_LINK);
         addForDeletion(volumeState);
-        MockDockerVolumeAdapterService.addVolume(extractId(computeHost.documentSelfLink),
-                volumeState.id, volumeName);
+        addVolumeToHost(computeHost.documentSelfLink, volumeName, "local", "local");
 
         ContainerVolumeDescription volumeDesc = VolumeUtil
                 .createContainerVolumeDescription(volumeState);
@@ -2431,7 +2432,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         CompositeDescription compositeDesc = new CompositeDescription();
         compositeDesc.name = containerState.names.iterator().next();
-        compositeDesc.descriptionLinks = new ArrayList<String>();
+        compositeDesc.descriptionLinks = new ArrayList<>();
         compositeDesc.descriptionLinks.add(containerDesc.documentSelfLink);
 
         compositeDesc = doPost(compositeDesc, CompositeDescriptionService.SELF_LINK);
@@ -2477,7 +2478,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         QueryTask containerStateQuery = QueryTask.Builder.create().setQuery(queryBuilder.build())
                 .build();
         QueryUtil.addExpandOption(containerStateQuery);
-        new ServiceDocumentQuery<ContainerState>(host, ContainerState.class).query(
+        new ServiceDocumentQuery<>(host, ContainerState.class).query(
                 containerStateQuery,
                 (r) -> {
                     if (r.hasException()) {
@@ -2553,4 +2554,26 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         return getDocument(CompositeComponent.class, request.resourceLinks.iterator().next());
     }
 
+    private void addVolumeToHost(String hostLink, String volumeName, String driver, String scope) throws Throwable {
+        MockDockerVolumeToHostState mockVolumeToHostState = new MockDockerVolumeToHostState();
+        mockVolumeToHostState.documentSelfLink = UriUtils.buildUriPath(
+                MockDockerVolumeToHostService.FACTORY_LINK, UUID.randomUUID().toString());
+        mockVolumeToHostState.name = volumeName;
+        mockVolumeToHostState.hostLink = hostLink;
+        mockVolumeToHostState.driver = driver;
+        mockVolumeToHostState.scope = scope;
+        host.sendRequest(Operation.createPost(host, MockDockerVolumeToHostService.FACTORY_LINK)
+                .setBody(mockVolumeToHostState)
+                .setReferer(host.getUri())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        host.log("Cannot create mock volume to host state. Error: %s", e.getMessage());
+                    }
+                }));
+        // wait until volume to host is created in the mock adapter
+        waitFor(() -> {
+            getDocument(MockDockerVolumeToHostState.class, mockVolumeToHostState.documentSelfLink);
+            return true;
+        });
+    }
 }
