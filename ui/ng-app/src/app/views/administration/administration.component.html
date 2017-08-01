@@ -14,7 +14,7 @@
       <a class="nav-link" allowNavigation [roles]="identityManagementRouteRestriction" routerLink="identity-management" routerLinkActive="active">{{ "navigation.identityManagement" | i18n }}</a>
       <a class="nav-link" allowNavigation [roles]="projectsRouteRestriction" routerLink="projects" routerLinkActive="active">{{ "navigation.projects" | i18n }}</a>
       <a class="nav-link" allowNavigation [roles]="registriesRouteRestriction" routerLink="registries" routerLinkActive="active">{{ "navigation.registries" | i18n }}</a>
-      <a class="nav-link" allowNavigation [roles]="configurationRouteRestriction" routerLink="configuration" routerLinkActive="active">{{ "navigation.configuration" | i18n }}</a>
+      <a *ngIf="isHbrEnabled" class="nav-link" allowNavigation [roles]="configurationRouteRestriction" routerLink="configuration" routerLinkActive="active">{{ "navigation.configuration" | i18n }}</a>
       <a class="nav-link" allowNavigation [roles]="logsRouteRestriction" routerLink="logs" routerLinkActive="active">{{ "navigation.logs" | i18n }}</a>
   </section>
 </nav>

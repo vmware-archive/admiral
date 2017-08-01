@@ -1,4 +1,3 @@
-import { Router } from '@angular/router';
 /*
  * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
  *
@@ -17,6 +16,8 @@ import { ActivatedRoute } from '@angular/router';
 import { Links } from './../../../utils/links';
 import { TagClickEvent } from 'harbor-ui';
 import { RoutesRestriction } from './../../../utils/routes-restriction';
+import { FT } from './../../../utils/ft';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-project-details',
@@ -28,6 +29,7 @@ export class ProjectDetailsComponent extends BaseDetailsComponent {
   hbrProjectId;
   hbrSessionInfo = {};
   router: Router;
+  isHbrEnabled = FT.isHbrEnabled();
 
   constructor(route: ActivatedRoute, service: DocumentService, router: Router) {
     super(route, service, Links.PROJECTS);

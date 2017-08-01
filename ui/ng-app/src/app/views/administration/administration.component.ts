@@ -13,6 +13,7 @@ import { Component, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ErrorService } from '../../utils/error.service';
 import { RoutesRestriction } from '../../utils/routes-restriction';
+import { FT } from './../../utils/ft';
 
 @Component({
   selector: 'app-administration',
@@ -27,6 +28,7 @@ export class AdministrationComponent implements OnInit {
   errorObserve: Subscription;
 
   alertMessage: string;
+  isHbrEnabled = FT.isHbrEnabled();
 
   constructor(private errorService: ErrorService) {
 
