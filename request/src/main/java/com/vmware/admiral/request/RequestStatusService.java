@@ -45,11 +45,13 @@ public class RequestStatusService extends StatefulService {
     private static final long EXPIRATION_MICROS = TimeUnit.MINUTES.toMicros(Long.getLong(
             "com.vmware.admiral.request.status.expiration.mins",
             TimeUnit.DAYS.toMinutes(7)));
+    private static final int MAX_STATE_SIZE = 1024 * 224;
 
     public static class RequestStatus extends
             com.vmware.admiral.service.common.AbstractTaskStatefulService.TaskStatusState {
 
-        public static final String FIELD_NAME_REQUEST_PROGRESS_BY_COMPONENT = "requestProgressByComponent";
+        public static final String FIELD_NAME_REQUEST_PROGRESS_BY_COMPONENT =
+                "requestProgressByComponent";
         public static final String FIELD_NAME_COMPONENTS = "components";
 
         /** Request progress (0-100%) */
@@ -144,7 +146,7 @@ public class RequestStatusService extends StatefulService {
             state.subStage = body.subStage;
             return;
             // if the request is finished the progress should be updated to 100
-        } else if (TaskStage.FINISHED.equals(state.taskInfo.stage)) {
+        } else if (TaskStage.FINISHED == state.taskInfo.stage) {
             state.progress = 100;
         }
 
@@ -243,6 +245,8 @@ public class RequestStatusService extends StatefulService {
         template.subStage = "CREATED";
         template.component = "mysql";
         template.progress = 0;
+        // overwrite max size limit
+        template.documentDescription.serializedStateSizeLimit = MAX_STATE_SIZE;
 
         return template;
     }
