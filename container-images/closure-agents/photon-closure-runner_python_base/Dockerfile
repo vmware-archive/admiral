@@ -19,6 +19,8 @@ RUN tyum install gzip python3-devel openssl-devel libffi dbus-glib python3-3.5.3
     pip3 install --upgrade pip &&\
     pip3 install requests &&\
     tyum remove vim findutils -y  &&\
-    tyum clean all
+    tyum clean all && \
+    rm -fr /var/cache/tdnf/*
+
 
 WORKDIR /app

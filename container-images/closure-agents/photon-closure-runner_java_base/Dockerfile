@@ -23,4 +23,5 @@ RUN tyum install wget curl tar gzip -y &&\
     wget http://central.maven.org/maven2/commons-logging/commons-logging/1.2/commons-logging-1.2.jar &&\
     rm -fr jdk-8u121-linux-x64.tar.gz &&\
     tyum remove wget tar vim -y  &&\
-    tyum clean all
+    tyum clean all && \
+    rm -fr /var/cache/tdnf/*
