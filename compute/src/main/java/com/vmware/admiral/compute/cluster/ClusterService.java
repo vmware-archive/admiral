@@ -44,6 +44,7 @@ import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService.Elast
 import com.vmware.admiral.compute.PlacementZoneConstants.PlacementZoneType;
 import com.vmware.admiral.compute.PlacementZoneUtil;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
+import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
 import com.vmware.photon.controller.model.adapters.util.Pair;
 import com.vmware.photon.controller.model.resources.ComputeService;
@@ -81,6 +82,9 @@ public class ClusterService extends StatelessService {
 
     private static final Pattern PATTERN_PROJECT_TENANT_LINK = Pattern
             .compile(String.format("^%s\\/[^\\/]+", ManagementUriParts.PROJECTS));
+    private static final Pattern PATTERN_TENANT_LINK = Pattern
+            .compile(String.format("^\\%s\\/[^\\/]+\\%s\\/[^\\/]+",
+                    MultiTenantDocument.TENANTS_PREFIX, MultiTenantDocument.GROUP_IDENTIFIER));
 
     public static final String HOST_NOT_IN_THIS_CLUSTER_EXCEPTION_TEMPLATE = "No host with id %s found in cluster with id %s";
 
@@ -544,7 +548,8 @@ public class ClusterService extends StatelessService {
         List<String> hostTenantLinks = hostSpec.getHostTenantLinks();
 
         if (hostTenantLinks == null || hostTenantLinks.isEmpty()
-                || hostTenantLinks.stream().noneMatch(PATTERN_PROJECT_TENANT_LINK.asPredicate())) {
+                || (hostTenantLinks.stream().noneMatch(PATTERN_PROJECT_TENANT_LINK.asPredicate())
+                && hostTenantLinks.stream().noneMatch(PATTERN_TENANT_LINK.asPredicate()))) {
             throw new LocalizableValidationException(
                     "Project context is required", "auth.project.context.required");
         }
