@@ -22,7 +22,6 @@ import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -35,6 +34,8 @@ import com.vmware.admiral.compute.container.network.ContainerNetworkService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.service.test.MockDockerHostAdapterService;
 import com.vmware.admiral.service.test.MockDockerNetworkAdapterService;
+import com.vmware.admiral.service.test.MockDockerNetworkToHostService;
+import com.vmware.admiral.service.test.MockDockerNetworkToHostService.MockDockerNetworkToHostState;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService;
@@ -58,6 +59,7 @@ public class HostNetworkListDataCollectionTest extends ComputeBaseTest {
     public void setUp() throws Throwable {
         host.startService(Operation.createPost(UriUtils.buildUri(host,
                 MockDockerNetworkAdapterService.class)), new MockDockerNetworkAdapterService());
+        host.startFactory(new MockDockerNetworkToHostService());
         host.startService(Operation.createPost(UriUtils.buildUri(host,
                 MockDockerHostAdapterService.class)), new MockDockerHostAdapterService());
 
@@ -72,6 +74,7 @@ public class HostNetworkListDataCollectionTest extends ComputeBaseTest {
         waitForServiceAvailability(ContainerNetworkService.FACTORY_LINK);
 
         waitForServiceAvailability(MockDockerNetworkAdapterService.SELF_LINK);
+        waitForServiceAvailability(MockDockerNetworkToHostService.FACTORY_LINK);
         waitForServiceAvailability(MockDockerHostAdapterService.SELF_LINK);
         waitForServiceAvailability(
                 HostNetworkListDataCollection.DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK);
@@ -92,15 +95,10 @@ public class HostNetworkListDataCollectionTest extends ComputeBaseTest {
 
     }
 
-    @After
-    public void tearDown() throws Throwable {
-        MockDockerNetworkAdapterService.resetNetworks();
-    }
-
     @Test
     public void testDiscoverExistingNetworkOnHost() throws Throwable {
         // add preexisting network to the adapter service
-        addNetworkToMockAdapter(TEST_HOST_ID, TEST_PREEXISTING_NETWORK_ID,
+        addNetworkToMockAdapter(COMPUTE_HOST_LINK, TEST_PREEXISTING_NETWORK_ID,
                 TEST_PREEXISTING_NETWORK_NAME);
 
         // run data collection on preexisting network
@@ -125,12 +123,12 @@ public class HostNetworkListDataCollectionTest extends ComputeBaseTest {
     public void testProvisionedContainerIsNotDiscovered() throws Throwable {
         // provision network
         ContainerNetworkState containerNetworkCreated = createNetwork(null);
-        addNetworkToMockAdapter(TEST_HOST_ID, containerNetworkCreated.id,
+        addNetworkToMockAdapter(COMPUTE_HOST_LINK, containerNetworkCreated.id,
                 containerNetworkCreated.name);
         // run data collection on preexisting network
         startAndWaitHostNetworkListDataCollection();
         List<ContainerNetworkState> networkStates = getNetworkStates();
-        assertEquals(networkStates.size(), 1);
+        assertEquals(1, networkStates.size());
         ContainerNetworkState containerNetworkGet = networkStates.get(0);
         assertNotNull("Preexisting network not created or can't be retrieved.",
                 containerNetworkGet);
@@ -144,12 +142,12 @@ public class HostNetworkListDataCollectionTest extends ComputeBaseTest {
     public void testDiscoveredAndCreatedNetworksWithSameNames() throws Throwable {
         getNetworkStates();
         // add preexisting network to the adapter service
-        addNetworkToMockAdapter(TEST_HOST_ID, TEST_PREEXISTING_NETWORK_ID,
+        addNetworkToMockAdapter(COMPUTE_HOST_LINK, TEST_PREEXISTING_NETWORK_ID,
                 TEST_PREEXISTING_NETWORK_NAME);
         // provision network
         ContainerNetworkState containerNetworkCreated =
                 createNetwork(TEST_PREEXISTING_NETWORK_NAME);
-        addNetworkToMockAdapter(TEST_HOST_ID, containerNetworkCreated.id,
+        addNetworkToMockAdapter(COMPUTE_HOST_LINK, containerNetworkCreated.id,
                 containerNetworkCreated.name);
         // run data collection on preexisting network
         startAndWaitHostNetworkListDataCollection();
@@ -238,8 +236,25 @@ public class HostNetworkListDataCollectionTest extends ComputeBaseTest {
         return networkState;
     }
 
-    private void addNetworkToMockAdapter(String hostId, String networkId, String networkNames) {
-        MockDockerNetworkAdapterService.addNetworkId(hostId, networkId, networkNames);
-        MockDockerNetworkAdapterService.addNetworkName(hostId, networkId, networkNames);
+    private void addNetworkToMockAdapter(String hostLink, String networkId, String networkNames) throws Throwable {
+        MockDockerNetworkToHostState mockNetworkToHostState = new MockDockerNetworkToHostState();
+        mockNetworkToHostState.documentSelfLink = UriUtils.buildUriPath(
+                MockDockerNetworkToHostService.FACTORY_LINK, UUID.randomUUID().toString());
+        mockNetworkToHostState.hostLink = hostLink;
+        mockNetworkToHostState.id = networkId;
+        mockNetworkToHostState.name = networkNames;
+        host.sendRequest(Operation.createPost(host, MockDockerNetworkToHostService.FACTORY_LINK)
+                .setBody(mockNetworkToHostState)
+                .setReferer(host.getUri())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        host.log("Cannot create mock network to host state. Error: %s", e.getMessage());
+                    }
+                }));
+        // wait until network to host is created in the mock adapter
+        waitFor(() -> {
+            getDocument(MockDockerNetworkToHostState.class, mockNetworkToHostState.documentSelfLink);
+            return true;
+        });
     }
 }

@@ -94,7 +94,6 @@ import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.admiral.service.common.ResourceNamePrefixService;
 import com.vmware.admiral.service.test.MockComputeHostInstanceAdapter;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
-import com.vmware.admiral.service.test.MockDockerNetworkAdapterService;
 import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.adapters.awsadapter.AWSLoadBalancerService;
 import com.vmware.photon.controller.model.adapters.awsadapter.AWSNetworkService;
@@ -185,7 +184,6 @@ public abstract class RequestBaseTest extends BaseTestCase {
     public void setUp() throws Throwable {
         startServices(host);
         MockDockerAdapterService.resetContainers();
-        MockDockerNetworkAdapterService.resetNetworks();
         setUpDockerHostAuthentication();
 
         createEndpoint();

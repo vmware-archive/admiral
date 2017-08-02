@@ -26,6 +26,7 @@ import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.admiral.service.test.MockDockerHostAdapterImageService;
 import com.vmware.admiral.service.test.MockDockerHostAdapterService;
 import com.vmware.admiral.service.test.MockDockerNetworkAdapterService;
+import com.vmware.admiral.service.test.MockDockerNetworkToHostService;
 import com.vmware.admiral.service.test.MockDockerVolumeAdapterService;
 import com.vmware.admiral.service.test.MockDockerVolumeToHostService;
 import com.vmware.xenon.common.Operation;
@@ -50,6 +51,7 @@ public class HostInitDockerAdapterServiceConfig {
 
             host.startService(Operation.createPost(UriUtils.buildUri(host,
                     MockDockerNetworkAdapterService.class)), new MockDockerNetworkAdapterService());
+            host.startFactory(new MockDockerNetworkToHostService());
 
             host.startService(Operation.createPost(UriUtils.buildUri(host,
                     MockDockerVolumeAdapterService.class)), new MockDockerVolumeAdapterService());

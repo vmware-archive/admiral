@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,28 +11,27 @@
 
 package com.vmware.admiral.service.test;
 
-import java.net.URI;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.NetworkOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState.PowerState;
+import com.vmware.admiral.service.test.MockDockerNetworkToHostService.MockDockerNetworkToHostState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.QueryTask;
 
 /**
  * Mock Docker Adapter service to be used in unit and integration tests.
@@ -46,31 +45,6 @@ public class MockDockerNetworkAdapterService extends BaseMockAdapterService {
 
     public boolean isFailureExpected;
     public String computeHostIpAddress = MOCK_HOST_ASSIGNED_ADDRESS;
-
-    // Map of network ids by hostId. hostId -> Map of networkId -> networkReference
-    private static final Map<String, Map<String, String>> NETWORK_IDS = new ConcurrentHashMap<>();
-    // Map of network ids and names by hostId. hostId -> Map of networkId -> network name
-    private static final Map<String, Map<String, String>> NETWORK_NAMES = new ConcurrentHashMap<>();
-
-    static {
-        // TODO (VBV-806) - These special initializations are required because some Container
-        // Service tests rely on such external network but they create them directly by creating a
-        // network state (rather than requesting it through the request broker), and in such way the
-        // MockDockerNetworkAdapterService is not properly initialized.
-
-        addNetworkId("test-docker-host-compute", "test-external-network",
-                "test-external-network");
-        addNetworkName("test-docker-host-compute", "test-external-network",
-                "test-external-network");
-        addNetworkId("test-docker-host-compute2", "test-external-network",
-                "test-external-network");
-        addNetworkName("test-docker-host-compute2", "test-external-network",
-                "test-external-network");
-        addNetworkId("test-docker-host-compute3", "test-external-network",
-                "test-external-network");
-        addNetworkName("test-docker-host-compute3", "test-external-network",
-                "test-external-network");
-    }
 
     private static class MockAdapterRequest extends AdapterRequest {
 
@@ -104,7 +78,7 @@ public class MockDockerNetworkAdapterService extends BaseMockAdapterService {
             }
             if (op.hasBody()) {
                 MockAdapterRequest state = op.getBody(MockAdapterRequest.class);
-                removeNetworkByReference(state.resourceReference);
+                removeNetworkByReference(state);
                 op.complete();
                 return;
             } else {
@@ -158,13 +132,6 @@ public class MockDockerNetworkAdapterService extends BaseMockAdapterService {
 
     private void processRequest(MockAdapterRequest state, TaskState taskInfo,
             ContainerNetworkState network, ContainerNetworkDescription networkDesc) {
-        if (TaskStage.FAILED == taskInfo.stage) {
-            logInfo("Failed request based on network resource:  %s",
-                    state.resourceReference);
-            patchTaskStage(state, taskInfo.failure);
-            return;
-        }
-
         if (network == null) {
             getDocument(ContainerNetworkState.class, state.resourceReference, taskInfo,
                     (networkState) -> processRequest(state, taskInfo, networkState, networkDesc));
@@ -186,22 +153,36 @@ public class MockDockerNetworkAdapterService extends BaseMockAdapterService {
         }
 
         if (state.isProvisioning()) {
-            patchContainerNetworkState(state, network);
+            createNetworkToHost(state, network);
         } else if (state.isDeprovisioning()) {
-            removeNetworkByReference(state.resourceReference);
-            patchTaskStage(state, (Throwable) null);
+            removeNetworkByReference(state);
         } else if (NetworkOperationType.INSPECT.id.equals(state.operationTypeId)) {
             patchTaskStage(state, (Throwable) null);
         }
     }
 
+    private void createNetworkToHost(MockAdapterRequest state,
+            ContainerNetworkState networkState) {
+        MockDockerNetworkToHostState networkToHostState = new MockDockerNetworkToHostState();
+        networkToHostState.hostLink = networkState.originatingHostLink;
+        networkToHostState.id = networkState.id;
+        networkToHostState.name = networkState.name;
+
+        sendRequest(Operation
+                .createPost(this, MockDockerNetworkToHostService.FACTORY_LINK)
+                .setBody(networkToHostState)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        patchTaskStage(state, e);
+                    } else {
+                        logInfo("Mock Network in docker host created successfully");
+                        patchContainerNetworkState(state, networkState);
+                    }
+                }));
+    }
+
     private void patchContainerNetworkState(MockAdapterRequest state,
             ContainerNetworkState networkState) {
-        addNetworkId(Service.getId(networkState.originatingHostLink), networkState.id,
-                state.resourceReference.toString());
-        addNetworkName(Service.getId(networkState.originatingHostLink), networkState.id,
-                networkState.name);
-
         networkState.powerState = PowerState.CONNECTED;
         sendRequest(Operation.createPatch(state.resourceReference)
                 .setBody(networkState)
@@ -215,72 +196,38 @@ public class MockDockerNetworkAdapterService extends BaseMockAdapterService {
                 }));
     }
 
-    public static synchronized void resetNetworks() {
-        NETWORK_IDS.clear();
-        NETWORK_NAMES.clear();
-    }
-
-    private synchronized void removeNetworkByReference(URI networkReference) {
-        Iterator<Map.Entry<String, Map<String, String>>> itHost = NETWORK_IDS.entrySet().iterator();
-        while (itHost.hasNext()) {
-            Map.Entry<String, Map<String, String>> networkIdsByHost = itHost.next();
-            Iterator<Entry<String, String>> itNetworks = networkIdsByHost.getValue().entrySet()
-                    .iterator();
-            while (itNetworks.hasNext()) {
-                Entry<String, String> entry = itNetworks.next();
-                if (entry.getValue().endsWith(networkReference.getPath())) {
-                    Utils.log(MockDockerNetworkAdapterService.class,
-                            MockDockerNetworkAdapterService.class.getSimpleName(), Level.INFO,
-                            "Network with id: %s and container ref: %s removed.", entry.getKey(),
-                            networkReference);
-                    String hostId = networkIdsByHost.getKey();
-                    if (NETWORK_NAMES.containsKey(hostId)) {
-                        NETWORK_NAMES.get(hostId).remove(entry.getKey());
+    private void removeNetworkByReference(MockAdapterRequest state) {
+        String networkName = Service.getId(state.resourceReference.getPath());
+        QueryTask q = QueryUtil.buildPropertyQuery(MockDockerNetworkToHostState.class,
+                MockDockerNetworkToHostState.FIELD_NAME_NAME, networkName);
+        List<String> mockNetworkToHostLinks = new ArrayList<>();
+        new ServiceDocumentQuery<>(getHost(), MockDockerNetworkToHostState.class).query(q,
+                (r) -> {
+                    if (r.hasException()) {
+                        patchTaskStage(state, r.getException());
+                    } else if (r.hasResult()) {
+                        mockNetworkToHostLinks.add(r.getDocumentSelfLink());
+                    } else {
+                        removeMockNetworkFromHost(state, mockNetworkToHostLinks);
                     }
-                    itNetworks.remove();
-                    return;
-                }
-            }
-        }
-        Utils.logWarning("**************** No networkId found for reference: %s",
-                networkReference.getPath());
+                });
     }
 
-    public static synchronized void addNetworkId(String hostId, String networkId,
-            String networkReference) {
-        Utils.log(MockDockerNetworkAdapterService.class,
-                MockDockerNetworkAdapterService.class.getSimpleName(),
-                Level.INFO, "Network with id: %s and network ref: %s created in host: %s.",
-                networkId, networkReference, hostId);
-        if (!NETWORK_IDS.containsKey(hostId)) {
-            NETWORK_IDS.put(hostId, new ConcurrentHashMap<>());
+    private void removeMockNetworkFromHost(MockAdapterRequest state,
+            List<String> mockNetworkToHostLinks) {
+        for (String mockNetworkToHostLink : mockNetworkToHostLinks) {
+            sendRequest(Operation.createDelete(this, mockNetworkToHostLink)
+                    .setBody(new ServiceDocument())
+                    .setCompletion((o, e) -> {
+                        if (e != null) {
+                            logWarning("No mock network %s found in host in mock adapter. Error %s",
+                                    mockNetworkToHostLink, e.getMessage());
+                        } else {
+                            logInfo("Mock network %s removed from mock adapter",
+                                    mockNetworkToHostLink);
+                        }
+                    }));
         }
-        NETWORK_IDS.get(hostId).put(networkId, networkReference);
-    }
-
-    public static synchronized void addNetworkName(String hostId, String networkId, String name) {
-        if (!NETWORK_NAMES.containsKey(hostId)) {
-            NETWORK_NAMES.put(hostId, new ConcurrentHashMap<>());
-        }
-        NETWORK_NAMES.get(hostId).put(networkId, name);
-    }
-
-    public static synchronized Set<String> getNetworkIdsByHost(String hostId) {
-        if (NETWORK_IDS.containsKey(hostId)) {
-            return NETWORK_IDS.get(hostId).keySet();
-        } else {
-            return Collections.emptySet();
-        }
-    }
-
-    public static synchronized String getNetworkNameById(String networkId) {
-        Iterator<Map<String, String>> iteratorHost = NETWORK_NAMES.values().iterator();
-        while (iteratorHost.hasNext()) {
-            Map<String, String> networkIdsAndNamesByHost = iteratorHost.next();
-            if (networkIdsAndNamesByHost.containsKey(networkId)) {
-                return networkIdsAndNamesByHost.get(networkId);
-            }
-        }
-        return null;
+        patchTaskStage(state, (Throwable) null);
     }
 }

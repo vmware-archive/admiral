@@ -28,7 +28,9 @@ import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.ContainerListCallback;
 import com.vmware.admiral.compute.container.HostNetworkListDataCollection.NetworkListCallback;
 import com.vmware.admiral.compute.container.HostVolumeListDataCollection.VolumeListCallback;
+import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
+import com.vmware.admiral.service.test.MockDockerNetworkToHostService.MockDockerNetworkToHostState;
 import com.vmware.admiral.service.test.MockDockerVolumeToHostService.MockDockerVolumeToHostState;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -98,15 +100,16 @@ public class MockDockerHostAdapterService extends BaseMockAdapterService {
         } else if (ContainerHostOperationType.LIST_NETWORKS.id.equals(request.operationTypeId)) {
             NetworkListCallback callbackResponse = new NetworkListCallback();
             callbackResponse.containerHostLink = request.resourceReference.getPath();
-            String hostId = Service.getId(request.resourceReference.getPath());
-            callbackResponse.networkIdsAndNames = new HashMap<>();
-            for (String networkId : MockDockerNetworkAdapterService.getNetworkIdsByHost(hostId)) {
-                callbackResponse.networkIdsAndNames.put(networkId,
-                        MockDockerNetworkAdapterService.getNetworkNameById(networkId));
-            }
-            patchTaskStage(request, null, callbackResponse);
-            op.setBody(callbackResponse);
-            op.complete();
+
+            queryNetworksByHost(request, (networkStates) -> {
+                for (ContainerNetworkState networkState : networkStates) {
+                    callbackResponse.addIdAndNames(networkState.id, networkState.name);
+                }
+                patchTaskStage(request, null, callbackResponse);
+                op.setBody(callbackResponse);
+                op.complete();
+            });
+
         } else if (ContainerHostOperationType.LIST_VOLUMES.id.equals(request.operationTypeId)) {
             VolumeListCallback callbackResponse = new VolumeListCallback();
             callbackResponse.containerHostLink = request.resourceReference.getPath();
@@ -167,6 +170,35 @@ public class MockDockerHostAdapterService extends BaseMockAdapterService {
                 .createPatch(request.resourceReference)
                 .setBody(computeState)
                 .setCompletion((o, ex) -> patchTaskStage(request, ex)));
+    }
+
+    private void queryNetworksByHost(AdapterRequest state,
+            Consumer<List<ContainerNetworkState>> callback) {
+        String hostLink = state.resourceReference.getPath();
+        QueryTask q = QueryUtil.buildPropertyQuery(MockDockerNetworkToHostState.class,
+                MockDockerNetworkToHostState.FIELD_NAME_HOST_LINK, hostLink);
+        QueryUtil.addExpandOption(q);
+
+        List<ContainerNetworkState> networkStates = new ArrayList< >();
+        new ServiceDocumentQuery<>(getHost(), MockDockerNetworkToHostState.class).query(q,
+                (r) -> {
+                    if (r.hasException()) {
+                        patchTaskStage(state, r.getException());
+                    } else if (r.hasResult()) {
+                        networkStates.add(buildContainerNetwork(r.getResult()));
+                    } else {
+                        callback.accept(networkStates);
+                    }
+                });
+    }
+
+    private ContainerNetworkState buildContainerNetwork(
+            MockDockerNetworkToHostState networkToHostState) {
+        ContainerNetworkState networkState = new ContainerNetworkState();
+        networkState.originatingHostLink = networkToHostState.hostLink;
+        networkState.id = networkToHostState.id;
+        networkState.name = networkToHostState.name;
+        return networkState;
     }
 
     private void queryVolumesByHost(AdapterRequest state, Consumer<List<ContainerVolumeState>> callback) {

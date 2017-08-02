@@ -92,6 +92,8 @@ import com.vmware.admiral.request.compute.ComputeOperationType;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.admiral.service.test.MockDockerNetworkAdapterService;
+import com.vmware.admiral.service.test.MockDockerNetworkToHostService;
+import com.vmware.admiral.service.test.MockDockerNetworkToHostService.MockDockerNetworkToHostState;
 import com.vmware.admiral.service.test.MockDockerVolumeToHostService;
 import com.vmware.admiral.service.test.MockDockerVolumeToHostService.MockDockerVolumeToHostState;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
@@ -481,10 +483,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         networkState.options = new HashMap<>();
         networkState = doPost(networkState, ContainerNetworkService.FACTORY_LINK);
         addForDeletion(networkState);
-        MockDockerNetworkAdapterService.addNetworkId(extractId(computeHost.documentSelfLink),
-                networkState.id, networkState.id);
-        MockDockerNetworkAdapterService.addNetworkName(extractId(computeHost.documentSelfLink),
-                networkState.id, networkState.name);
+        addNetworkToMockAdapter(computeHost.documentSelfLink, networkState.id, networkState.name);
 
         ContainerNetworkDescription networkDesc = NetworkUtils
                 .createContainerNetworkDescription(networkState);
@@ -2552,6 +2551,28 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         request = waitForRequestToComplete(request);
 
         return getDocument(CompositeComponent.class, request.resourceLinks.iterator().next());
+    }
+
+    private void addNetworkToMockAdapter(String hostLink, String networkId, String networkNames) throws Throwable {
+        MockDockerNetworkToHostState mockNetworkToHostState = new MockDockerNetworkToHostState();
+        mockNetworkToHostState.documentSelfLink = UriUtils.buildUriPath(
+                MockDockerNetworkToHostService.FACTORY_LINK, UUID.randomUUID().toString());
+        mockNetworkToHostState.hostLink = hostLink;
+        mockNetworkToHostState.id = networkId;
+        mockNetworkToHostState.name = networkNames;
+        host.sendRequest(Operation.createPost(host, MockDockerNetworkToHostService.FACTORY_LINK)
+                .setBody(mockNetworkToHostState)
+                .setReferer(host.getUri())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        host.log("Cannot create mock network to host state. Error: %s", e.getMessage());
+                    }
+                }));
+        // wait until network to host is created in the mock adapter
+        waitFor(() -> {
+            getDocument(MockDockerNetworkToHostState.class, mockNetworkToHostState.documentSelfLink);
+            return true;
+        });
     }
 
     private void addVolumeToHost(String hostLink, String volumeName, String driver, String scope) throws Throwable {
