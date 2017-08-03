@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -28,7 +28,6 @@ import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupR
 import com.vmware.admiral.request.ReservationAllocationTaskService.ReservationAllocationTaskState;
 import com.vmware.admiral.request.ReservationTaskService.ReservationTaskState;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
-import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.xenon.common.FactoryService;
@@ -38,7 +37,6 @@ public class ReservationAllocationTaskServiceTest extends RequestBaseTest {
     @Override
     public void setUp() throws Throwable {
         startServices(host);
-        MockDockerAdapterService.resetContainers();
 
         setUpDockerHostAuthentication();
 
@@ -53,7 +51,7 @@ public class ReservationAllocationTaskServiceTest extends RequestBaseTest {
         createContainerDescription();
         Map<String, String> customProperties = containerDesc.customProperties;
         if (customProperties == null) {
-            customProperties = new ConcurrentHashMap<String, String>();
+            customProperties = new ConcurrentHashMap<>();
         }
 
         customProperties.put(ReservationAllocationTaskService.CONTAINER_HOST_ID_CUSTOM_PROPERTY,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -13,11 +13,11 @@ package com.vmware.admiral.request;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.net.ServerSocket;
 import java.time.Duration;
@@ -811,7 +811,7 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
 
                 assertNotNull(document);
 
-                List<HostSelection> patchedHosts = new ArrayList<HostSelection>(
+                List<HostSelection> patchedHosts = new ArrayList<>(
                         document.hostSelections);
 
                 assertNotNull(patchedHosts);
@@ -884,7 +884,7 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
 
                 assertNotNull(document);
 
-                List<HostSelection> patchedHosts = new ArrayList<HostSelection>(
+                List<HostSelection> patchedHosts = new ArrayList<>(
                         document.hostSelections);
 
                 assertNotNull(patchedHosts);
@@ -1025,7 +1025,12 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         waitForContainerPowerState(PowerState.PROVISIONING, containerState.documentSelfLink);
 
         // make sure the host is not update with the new container.
-        assertFalse("should not be provisioned container: " + containerState.documentSelfLink,
-                MockDockerAdapterService.isContainerProvisioned(containerState.documentSelfLink));
+        Set<ContainerState> containerStates = getExistingContainersInAdapter();
+        for (ContainerState containerInAdapterState : containerStates) {
+            if (containerInAdapterState.documentSelfLink
+                    .endsWith(containerState.documentSelfLink)) {
+                fail("Container State not removed with link: " + containerState.documentSelfLink);
+            }
+        }
     }
 }

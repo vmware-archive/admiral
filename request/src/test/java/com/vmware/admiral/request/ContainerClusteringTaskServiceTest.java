@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -41,7 +41,6 @@ import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.allocation.filter.AffinityConstraint;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.request.utils.RequestUtils;
-import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
@@ -74,7 +73,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
                 createDockerHostDescription(), createResourcePool(), (long) Integer.MAX_VALUE,
                 true).documentSelfLink);
 
-        long containersNumberBeforeProvisioning = MockDockerAdapterService.getNumberOfContainers();
+        long containersNumberBeforeProvisioning = getExistingContainersInAdapter().size();
         assertEquals(0, containersNumberBeforeProvisioning);
 
         // Set up a ContainerDescription with _cluster > 0
@@ -91,7 +90,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         request = startRequest(request);
         RequestBrokerState initialState = waitForRequestToComplete(request);
 
-        long containersNumberBeforeClustering = MockDockerAdapterService.getNumberOfContainers();
+        long containersNumberBeforeClustering = getExistingContainersInAdapter().size();
 
         // Number of containers before provisioning.
         assertEquals(2, containersNumberBeforeClustering);
@@ -131,7 +130,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
             assertNull(containerState.compositeComponentLink);
         }
 
-        long containersNumberAfterClustering = MockDockerAdapterService.getNumberOfContainers();
+        long containersNumberAfterClustering = getExistingContainersInAdapter().size();
         assertEquals(desiredResourceCount /* 3 */, containersNumberAfterClustering);
 
         // delete created stuff
@@ -157,7 +156,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
                 createDockerHostDescription(), createResourcePool(), (long) Integer.MAX_VALUE,
                 true).documentSelfLink);
 
-        long containersNumberBeforeProvisioning = MockDockerAdapterService.getNumberOfContainers();
+        long containersNumberBeforeProvisioning = getExistingContainersInAdapter().size();
         assertEquals(0, containersNumberBeforeProvisioning);
 
         // Set up a ContainerDescription with _cluster > 0
@@ -174,7 +173,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         request = startRequest(request);
         RequestBrokerState initialState = waitForRequestToComplete(request);
 
-        long containersNumberBeforeClustering = MockDockerAdapterService.getNumberOfContainers();
+        long containersNumberBeforeClustering = getExistingContainersInAdapter().size();
 
         // Number of containers before provisioning.
         assertEquals(2, containersNumberBeforeClustering);
@@ -204,7 +203,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
 
         waitForRequestToComplete(day2OperationClustering);
 
-        long containersNumberAfterClustering = MockDockerAdapterService.getNumberOfContainers();
+        long containersNumberAfterClustering = getExistingContainersInAdapter().size();
         assertEquals(desiredResourceCount /* 2 */, containersNumberAfterClustering);
 
         // delete created stuff
@@ -224,7 +223,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         String hostSelfLink = UriUtils.buildUriPath(ComputeService.FACTORY_LINK,
                 CommonTestStateFactory.DOCKER_COMPUTE_ID);
 
-        long containersNumberBeforeProvisioning = MockDockerAdapterService.getNumberOfContainers();
+        long containersNumberBeforeProvisioning = getExistingContainersInAdapter().size();
         assertEquals(0, containersNumberBeforeProvisioning);
 
         // Set up a ContainerDescription with _cluster > 0
@@ -241,7 +240,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         request = startRequest(request);
         RequestBrokerState initialState = waitForRequestToComplete(request);
 
-        long containersNumberBeforeClustering = MockDockerAdapterService.getNumberOfContainers();
+        long containersNumberBeforeClustering = getExistingContainersInAdapter().size();
 
         // Number of containers before provisioning.
         assertEquals(2, containersNumberBeforeClustering);
@@ -287,7 +286,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         waitForTaskError(containerClusteringTaskLink, ClusteringTaskState.class);
 
         // container should not be deleted if the operation fails
-        long containersNumberAfterClustering = MockDockerAdapterService.getNumberOfContainers();
+        long containersNumberAfterClustering = getExistingContainersInAdapter().size();
         assertEquals(desiredResourceCount - 1, containersNumberAfterClustering);
 
         // delete created stuff
@@ -299,7 +298,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
     public void testContainerClusteringTaskServiceIncrementByTwo()
             throws Throwable {
 
-        long containersNumberBeforeProvisioning = MockDockerAdapterService.getNumberOfContainers();
+        long containersNumberBeforeProvisioning = getExistingContainersInAdapter().size();
         assertEquals(0, containersNumberBeforeProvisioning);
 
         // Set up a ContainerDescription with _cluster > 0
@@ -316,7 +315,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         request = startRequest(request);
         RequestBrokerState initialState = waitForRequestToComplete(request);
 
-        long containersNumberBeforeClustering = MockDockerAdapterService.getNumberOfContainers();
+        long containersNumberBeforeClustering = getExistingContainersInAdapter().size();
 
         // Number of containers before provisioning.
         assertEquals(2, containersNumberBeforeClustering);
@@ -346,7 +345,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
 
         waitForRequestToComplete(day2OperationClustering);
 
-        long containersNumberAfterClustering = MockDockerAdapterService.getNumberOfContainers();
+        long containersNumberAfterClustering = getExistingContainersInAdapter().size();
         assertEquals(desiredResourceCount /* 3 */, containersNumberAfterClustering);
 
         // delete created stuff
@@ -374,15 +373,16 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
                 createDockerHostDescription(), createResourcePool(), (long) Integer.MAX_VALUE,
                 true).documentSelfLink);
 
-        long containersNumberBeforeProvisioning = MockDockerAdapterService.getNumberOfContainers();
+        long containersNumberBeforeProvisioning = getExistingContainersInAdapter().size();
         assertEquals(0, containersNumberBeforeProvisioning);
 
         request = startRequest(request);
         RequestBrokerState initialState = waitForRequestToComplete(request);
 
-        long containersNumberBeforeClustering = MockDockerAdapterService.getNumberOfContainers();
-
-        Set<String> containersIdsBeforeClustering = MockDockerAdapterService.getContainerIds();
+        Set<ContainerState> containersBeforeClustering = getExistingContainersInAdapter();
+        Set<String> containersIdsBeforeClustering = containersBeforeClustering.stream()
+                .map(cs -> cs.id).collect(Collectors.toSet());
+        long containersNumberBeforeClustering = containersBeforeClustering.size();
 
         // Number of containers before provisioning.
         assertEquals(3, containersNumberBeforeClustering);
@@ -412,11 +412,13 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
 
         waitForRequestToComplete(day2OperationClustering);
 
-        long containersNumberAfterClustering = MockDockerAdapterService.getNumberOfContainers();
+        Set<ContainerState> containersAfterClustering = getExistingContainersInAdapter();
+        long containersNumberAfterClustering = containersAfterClustering.size();
         // Number of containers after clustering, should be increased with 7.
         assertEquals(5, containersNumberAfterClustering);
 
-        Set<String> containersIdsAfterClustering = MockDockerAdapterService.getContainerIds();
+        Set<String> containersIdsAfterClustering = containersAfterClustering.stream()
+                .map(cs -> cs.id).collect(Collectors.toSet());
 
         assertTrue(containersIdsAfterClustering.containsAll(containersIdsBeforeClustering));
 
@@ -432,15 +434,16 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
     public void testContainerClusteringTaskAddContainersServiceInsufficientPlacement()
             throws Throwable {
 
-        long containersNumberBeforeProvisioning = MockDockerAdapterService.getNumberOfContainers();
+        long containersNumberBeforeProvisioning = getExistingContainersInAdapter().size();
         assertEquals(0, containersNumberBeforeProvisioning);
 
         request = startRequest(request);
         RequestBrokerState initialState = waitForRequestToComplete(request);
 
-        long containersNumberBeforeClustering = MockDockerAdapterService.getNumberOfContainers();
-
-        Set<String> containersIdsBeforeClustering = MockDockerAdapterService.getContainerIds();
+        Set<ContainerState> containersBeforeClustering = getExistingContainersInAdapter();
+        Set<String> containersIdsBeforeClustering = containersBeforeClustering.stream()
+                .map(cs -> cs.id).collect(Collectors.toSet());
+        long containersNumberBeforeClustering = containersBeforeClustering.size();
 
         // Number of containers before provisioning.
         assertEquals(3, containersNumberBeforeClustering);
@@ -468,7 +471,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
                 extractId(day2OperationClustering.documentSelfLink));
         waitForTaskError(containerClusteringTaskLink, ClusteringTaskState.class);
 
-        long containersNumberAfterClustering = MockDockerAdapterService.getNumberOfContainers();
+        long containersNumberAfterClustering = getExistingContainersInAdapter().size();
         // Number of containers after clustering, should be the same.
         assertEquals(3, containersNumberAfterClustering);
 
@@ -479,7 +482,9 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         assertEquals(7, placementState.availableInstancesCount);
         assertEquals(3, placementState.allocatedInstancesCount);
 
-        Set<String> containersIdsAfterClustering = MockDockerAdapterService.getContainerIds();
+        Set<ContainerState> containersAfterClustering = getExistingContainersInAdapter();
+        Set<String> containersIdsAfterClustering = containersAfterClustering.stream()
+                .map(cs -> cs.id).collect(Collectors.toSet());
 
         assertTrue(containersIdsAfterClustering.containsAll(containersIdsBeforeClustering));
     }
@@ -488,13 +493,13 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
     public void testContainerClusteringTaskAddContainersServiceRemove()
             throws Throwable {
 
-        long containersNumberBeforeProvisioning = MockDockerAdapterService.getNumberOfContainers();
+        long containersNumberBeforeProvisioning = getExistingContainersInAdapter().size();
         assertEquals(0, containersNumberBeforeProvisioning);
 
         request = startRequest(request);
         RequestBrokerState initialState = waitForRequestToComplete(request);
 
-        long containersNumberBeforeClustering = MockDockerAdapterService.getNumberOfContainers();
+        long containersNumberBeforeClustering = getExistingContainersInAdapter().size();
 
         // Number of containers before provisioning.
         assertEquals(3, containersNumberBeforeClustering);
@@ -522,7 +527,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
                 extractId(day2OperationClustering.documentSelfLink));
         waitForTaskSuccess(containerClusteringTaskLink, ClusteringTaskState.class);
 
-        long containersNumberAfterClustering = MockDockerAdapterService.getNumberOfContainers();
+        long containersNumberAfterClustering = getExistingContainersInAdapter().size();
         // Number of containers after clustering, should be the same.
         assertEquals(2, containersNumberAfterClustering);
 
@@ -536,7 +541,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
 
     @Test
     public void testContainerClusteringTaskWithSystemContainer() throws Throwable {
-        long containersNumberBeforeClustering = MockDockerAdapterService.getNumberOfContainers();
+        long containersNumberBeforeClustering = getExistingContainersInAdapter().size();
         ContainerState container = TestRequestStateFactory.createContainer();
         container.descriptionLink = containerDesc.documentSelfLink;
         container.adapterManagementReference = containerDesc.instanceAdapterReference;
@@ -544,7 +549,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         container.system = Boolean.TRUE;
         container = doPost(container, ContainerFactoryService.SELF_LINK);
 
-        List<String> resourceLinks = new ArrayList<String>();
+        List<String> resourceLinks = new ArrayList<>();
         resourceLinks.add(container.documentSelfLink);
         RequestBrokerState day2OperationClustering = TestRequestStateFactory.createRequestState();
         day2OperationClustering.resourceDescriptionLink = request.resourceDescriptionLink;
@@ -559,7 +564,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
                 "Day2 operations are not supported for system container",
                 clusteringRequest.taskInfo.failure.message);
 
-        long containersNumberAfterClustering = MockDockerAdapterService.getNumberOfContainers();
+        long containersNumberAfterClustering = getExistingContainersInAdapter().size();
 
         assertEquals("New containers should not be deployed!", containersNumberBeforeClustering,
                 containersNumberAfterClustering);
@@ -578,7 +583,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
                 createDockerHostDescription(), createResourcePool(), (long) Integer.MAX_VALUE,
                 true).documentSelfLink);
 
-        long containersNumberBeforeProvisioning = MockDockerAdapterService.getNumberOfContainers();
+        long containersNumberBeforeProvisioning = getExistingContainersInAdapter().size();
         assertEquals(0, containersNumberBeforeProvisioning);
 
         // Create a composite description with two containers. name2 has affinity to name1
@@ -599,8 +604,6 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
 
         request = startRequest(request);
         RequestBrokerState initialRequest = waitForRequestToComplete(request);
-
-        MockDockerAdapterService.getContainerIds();
 
         String compositeComponentLink = initialRequest.resourceLinks.iterator().next();
 
@@ -673,7 +676,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
                 createDockerHostDescription(), createResourcePool(), (long) Integer.MAX_VALUE,
                 true).documentSelfLink);
 
-        long containersNumberBeforeProvisioning = MockDockerAdapterService.getNumberOfContainers();
+        long containersNumberBeforeProvisioning = getExistingContainersInAdapter().size();
         assertEquals(0, containersNumberBeforeProvisioning);
 
         // Create a composite description with two containers. name2 has anti affinity to name1
@@ -695,8 +698,6 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
 
         request = startRequest(request);
         RequestBrokerState initialRequest = waitForRequestToComplete(request);
-
-        MockDockerAdapterService.getContainerIds();
 
         String compositeComponentLink = initialRequest.resourceLinks.iterator().next();
 
@@ -768,7 +769,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
                 createDockerHostDescription(), createResourcePool(), (long) Integer.MAX_VALUE,
                 true).documentSelfLink);
 
-        long containersNumberBeforeProvisioning = MockDockerAdapterService.getNumberOfContainers();
+        long containersNumberBeforeProvisioning = getExistingContainersInAdapter().size();
         assertEquals(0, containersNumberBeforeProvisioning);
 
         // Create a composite description with two containers. name2 has affinity to name1
@@ -789,8 +790,6 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
 
         request = startRequest(request);
         RequestBrokerState initialRequest = waitForRequestToComplete(request);
-
-        MockDockerAdapterService.getContainerIds();
 
         String compositeComponentLink = initialRequest.resourceLinks.iterator().next();
 
@@ -857,7 +856,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
             }
         });
 
-        long containersNumberBeforeProvisioning = MockDockerAdapterService.getNumberOfContainers();
+        long containersNumberBeforeProvisioning = getExistingContainersInAdapter().size();
         assertEquals(0, containersNumberBeforeProvisioning);
 
         ContainerDescriptionService.ContainerDescription desc1 = TestRequestStateFactory
@@ -870,7 +869,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         request = startRequest(request);
         RequestBrokerState initialRequest = waitForRequestToComplete(request);
 
-        long containersNumberBeforeClustering = MockDockerAdapterService.getNumberOfContainers();
+        long containersNumberBeforeClustering = getExistingContainersInAdapter().size();
 
         // Number of containers before provisioning.
         assertEquals(3, containersNumberBeforeClustering);
@@ -904,7 +903,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         assertNotNull(clusteringRequest.resourceLinks);
         assertEquals(clusteringRequest.resourceLinks, clusteringTask.resourceLinks);
 
-        long containersNumberAfterClustering = MockDockerAdapterService.getNumberOfContainers();
+        long containersNumberAfterClustering = getExistingContainersInAdapter().size();
         // Number of containers after clustering, should be increased with 7.
         assertEquals(10, containersNumberAfterClustering);
 

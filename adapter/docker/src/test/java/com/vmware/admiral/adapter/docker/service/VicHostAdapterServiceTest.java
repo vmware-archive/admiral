@@ -31,7 +31,6 @@ import com.vmware.admiral.adapter.docker.mock.MockVicHostService;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
-import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.admiral.service.test.MockDockerHostAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
@@ -53,7 +52,6 @@ public class VicHostAdapterServiceTest extends BaseMockDockerTestCase {
                 Operation.createPost(UriUtils.buildUri(
                         mockDockerHost, MockVicHostService.SELF_LINK)),
                 new MockVicHostService());
-        MockDockerAdapterService.resetContainers();
     }
 
     @Before
@@ -91,7 +89,7 @@ public class VicHostAdapterServiceTest extends BaseMockDockerTestCase {
         waitForServiceAvailability(ComputeService.FACTORY_LINK);
 
         ComputeDescription computeDescription = new ComputeDescription();
-        computeDescription.customProperties = new HashMap<String, String>();
+        computeDescription.customProperties = new HashMap<>();
         computeDescription.id = UUID.randomUUID().toString();
         String computeDescriptionLink = doPost(computeDescription,
                 ComputeDescriptionService.FACTORY_LINK).documentSelfLink;
@@ -99,7 +97,7 @@ public class VicHostAdapterServiceTest extends BaseMockDockerTestCase {
         ComputeState computeState = new ComputeState();
         computeState.id = "testVCHComputeState";
         computeState.descriptionLink = computeDescriptionLink;
-        computeState.customProperties = new HashMap<String, String>();
+        computeState.customProperties = new HashMap<>();
         computeState.customProperties.put(
                 ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME, testDockerCredentialsLink);
         computeState.customProperties.put(

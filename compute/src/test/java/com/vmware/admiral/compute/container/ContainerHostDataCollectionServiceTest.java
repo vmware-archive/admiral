@@ -42,6 +42,8 @@ import com.vmware.admiral.compute.container.ContainerHostDataCollectionService.C
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
+import com.vmware.admiral.service.test.MockDockerContainerToHostService;
+import com.vmware.admiral.service.test.MockDockerContainerToHostService.MockDockerContainerToHostState;
 import com.vmware.admiral.service.test.MockDockerHostAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
@@ -80,10 +82,9 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         containerNames = new ArrayList<>();
         containerNames.add(createdContainerName);
 
-        MockDockerHostAdapterService service = new MockDockerHostAdapterService();
+        host.startFactory(new MockDockerContainerToHostService());
         host.startService(Operation.createPost(UriUtils.buildUri(host,
-                MockDockerHostAdapterService.class)), service);
-
+                MockDockerHostAdapterService.class)), new MockDockerHostAdapterService());
         mockAdapterService = new MockDockerAdapterService();
         host.startService(Operation.createPost(UriUtils.buildUri(host,
                 MockDockerAdapterService.class)), mockAdapterService);
@@ -93,15 +94,16 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         waitForServiceAvailability(ComputeDescriptionService.FACTORY_LINK);
         waitForServiceAvailability(ResourcePoolService.FACTORY_LINK);
 
+        waitForServiceAvailability(MockDockerContainerToHostService.FACTORY_LINK);
         waitForServiceAvailability(MockDockerHostAdapterService.SELF_LINK);
-        MockDockerAdapterService.resetContainers();
     }
 
     @Test
     public void testContainersCountOnHostWithContainersNoSystem() throws Throwable {
         String hostId = UUID.randomUUID().toString();
+        String hostLink = UriUtils.buildUriPath(ComputeService.FACTORY_LINK, hostId);
         // add preexisting container
-        addContainerToMockAdapter(hostId, preexistingContainerId, preexistingContainerNames);
+        addContainerToMockAdapter(hostLink, preexistingContainerId, preexistingContainerNames);
 
         ComputeDescription hostDescription = createComputeDescription();
         hostDescription = doPost(hostDescription, ComputeDescriptionService.FACTORY_LINK);
@@ -118,7 +120,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
                 hostId);
         containerState.powerState = PowerState.STOPPED;
         containerState = doPost(containerState, ContainerFactoryService.SELF_LINK);
-        addContainerToMockAdapter(hostId, containerState.id, containerState.names);
+        addContainerToMockAdapter(hostLink, containerState.id, containerState.names);
 
         doOperation(new ContainerHostDataCollectionState(), UriUtils.buildUri(host,
                 ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK),
@@ -174,6 +176,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         hostDescription = doPost(hostDescription, ComputeDescriptionService.FACTORY_LINK);
 
         String hostId = UUID.randomUUID().toString();
+        String hostLink = UriUtils.buildUriPath(ComputeService.FACTORY_LINK, hostId);
         ComputeState cs = createComputeState(hostId, hostDescription);
 
         cs = doPost(cs, ComputeService.FACTORY_LINK);
@@ -187,7 +190,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         containerState.powerState = PowerState.STOPPED;
         containerState.system = Boolean.TRUE;
         containerState = doPost(containerState, ContainerFactoryService.SELF_LINK);
-        addContainerToMockAdapter(hostId, containerState.id, containerState.names);
+        addContainerToMockAdapter(hostLink, containerState.id, containerState.names);
 
         doOperation(new ContainerHostDataCollectionState(), UriUtils.buildUri(host,
                 ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK),
@@ -211,8 +214,9 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
     @Test
     public void testContainersCountSystemAndNotSystem() throws Throwable {
         String hostId = UUID.randomUUID().toString();
+        String hostLink = UriUtils.buildUriPath(ComputeService.FACTORY_LINK, hostId);
         // add preexisting container
-        addContainerToMockAdapter(hostId, preexistingContainerId, preexistingContainerNames);
+        addContainerToMockAdapter(hostLink, preexistingContainerId, preexistingContainerNames);
 
         ComputeDescription hostDescription = createComputeDescription();
         hostDescription = doPost(hostDescription, ComputeDescriptionService.FACTORY_LINK);
@@ -229,7 +233,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         containerState.powerState = PowerState.STOPPED;
         containerState.system = Boolean.TRUE;
         containerState = doPost(containerState, ContainerFactoryService.SELF_LINK);
-        addContainerToMockAdapter(hostId, containerState.id, containerState.names);
+        addContainerToMockAdapter(hostLink, containerState.id, containerState.names);
 
         doOperation(new ContainerHostDataCollectionState(), UriUtils.buildUri(host,
                 ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK),
@@ -261,8 +265,9 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         String containerBeingProvisioned = "containerBeingProvisioned";
         try {
             String hostId = UUID.randomUUID().toString();
+            String hostLink = UriUtils.buildUriPath(ComputeService.FACTORY_LINK, hostId);
             // add preexisting container
-            addContainerToMockAdapter(hostId, preexistingContainerId, preexistingContainerNames);
+            addContainerToMockAdapter(hostLink, preexistingContainerId, preexistingContainerNames);
 
             URI adapterServiceUri = UriUtils.buildUri(host, ManagementUriParts.ADAPTER_DOCKER);
             host.startService(Operation.createPost(adapterServiceUri), mockInspectAdapterService);
@@ -284,7 +289,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
                     hostId);
             containerState.powerState = PowerState.PROVISIONING;
             containerState = doPost(containerState, ContainerFactoryService.SELF_LINK);
-            addContainerToMockAdapter(hostId, containerBeingProvisioned, containerState.names);
+            addContainerToMockAdapter(hostLink, containerBeingProvisioned, containerState.names);
 
             doOperation(new ContainerHostDataCollectionState(), UriUtils.buildUri(host,
                     ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK),
@@ -362,8 +367,9 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
     @Test
     public void testDataCollection() throws Throwable {
         String hostId = UUID.randomUUID().toString();
+        String hostLink = UriUtils.buildUriPath(ComputeService.FACTORY_LINK, hostId);
         // add preexisting container
-        addContainerToMockAdapter(hostId, preexistingContainerId, preexistingContainerNames);
+        addContainerToMockAdapter(hostLink, preexistingContainerId, preexistingContainerNames);
 
         host.log(">>>> DataCollection test start <<<<<<<");
 
@@ -410,7 +416,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
             AtomicBoolean found = new AtomicBoolean(false);
 
             host.testStart(1);
-            new ServiceDocumentQuery<ContainerState>(host, ContainerState.class).query(
+            new ServiceDocumentQuery<>(host, ContainerState.class).query(
                     queryTask, (
                             r) -> {
                         if (r.hasException()) {
@@ -710,8 +716,9 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
 
         try {
             String hostId = UUID.randomUUID().toString();
+            String hostLink = UriUtils.buildUriPath(ComputeService.FACTORY_LINK, hostId);
             // add preexisting container
-            addContainerToMockAdapter(hostId, preexistingContainerId, preexistingContainerNames);
+            addContainerToMockAdapter(hostLink, preexistingContainerId, preexistingContainerNames);
 
             URI adapterServiceUri = UriUtils.buildUri(host, ManagementUriParts.ADAPTER_DOCKER);
             host.startService(Operation.createPost(adapterServiceUri), mockInspectAdapterService);
@@ -758,7 +765,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
                 queryTask.setDirect(true);
 
                 host.testStart(1);
-                new ServiceDocumentQuery<ContainerState>(host, ContainerState.class).query(
+                new ServiceDocumentQuery<>(host, ContainerState.class).query(
                         queryTask, (r) -> {
                             if (r.hasException()) {
                                 if (containerStateSelfLink.get() != null) {
@@ -818,9 +825,9 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         containerState.powerState = PowerState.STOPPED;
         containerState.system = Boolean.TRUE;
         // Add the container to both hosts
-        addContainerToMockAdapter(cs1.id, containerState.id, SystemContainerDescriptions
+        addContainerToMockAdapter(cs1.parentLink, containerState.id, SystemContainerDescriptions
                 .getSystemContainerNames());
-        addContainerToMockAdapter(cs2.id, containerState.id, SystemContainerDescriptions
+        addContainerToMockAdapter(cs2.parentLink, containerState.id, SystemContainerDescriptions
                 .getSystemContainerNames());
 
         doOperation(new ContainerHostDataCollectionState(), UriUtils.buildUri(host,
@@ -924,15 +931,30 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         return cs;
     }
 
-    private void addContainerToMockAdapter(String hostId, String containerId,
-            List<String> containerNames) {
+    private void addContainerToMockAdapter(String hostLink, String containerId, List<String> containerNames) throws Throwable {
+        MockDockerContainerToHostState mockContainerToHostState = new MockDockerContainerToHostState();
         String containerName = createdContainerName;
         if (containerNames != null && !containerNames.isEmpty()) {
             containerName = containerNames.get(0);
         }
-        MockDockerAdapterService.addContainerId(hostId, containerId,
-                preexistingContainerId);
-        MockDockerAdapterService.addContainerNames(hostId, containerId, containerName);
+        mockContainerToHostState.documentSelfLink = UriUtils.buildUriPath(
+                MockDockerContainerToHostService.FACTORY_LINK, UUID.randomUUID().toString());
+        mockContainerToHostState.parentLink = hostLink;
+        mockContainerToHostState.id = containerId;
+        mockContainerToHostState.name = containerName;
+        host.sendRequest(Operation.createPost(host, MockDockerContainerToHostService.FACTORY_LINK)
+                .setBody(mockContainerToHostState)
+                .setReferer(host.getUri())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        host.log("Cannot create mock container to host state. Error: %s", e.getMessage());
+                    }
+                }));
+        // wait until container to host is created in the mock adapter
+        waitFor(() -> {
+            getDocument(MockDockerContainerToHostState.class, mockContainerToHostState.documentSelfLink);
+            return true;
+        });
     }
 
     private ComputeState createComputeState(String hostId, ComputeDescription hostDescription) {

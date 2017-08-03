@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+
 import javax.net.ssl.TrustManager;
 
 import org.junit.Before;
@@ -40,7 +41,6 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
-import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService;
@@ -70,7 +70,6 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
                 Operation.createPost(UriUtils.buildUri(
                         mockDockerHost, MockDockerHostService.SELF_LINK)),
                 new MockDockerHostService());
-        MockDockerAdapterService.resetContainers();
     }
 
     @Before

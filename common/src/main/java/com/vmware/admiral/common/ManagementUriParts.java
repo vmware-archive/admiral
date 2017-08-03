@@ -104,6 +104,8 @@ public interface ManagementUriParts {
     String CONTAINER_LOGS = RESOURCES + "/container-logs";
     String CONTAINER_SHELL = RESOURCES + "/container-shell";
     String CONTAINER_DESC = RESOURCES + "/container" + DESCRIPTION_SUFFIX;
+    String MOCK_CONTAINERS = CONTAINERS + "-mock";
+
     String COMPOSITE_DESC = RESOURCES + "/composite" + DESCRIPTION_SUFFIX;
     String COMPOSITE_DESC_CLONE = RESOURCES + "/composite" + DESCRIPTION_SUFFIX + CLONE_SUFFIX;
     String COMPOSITE_DESC_CONTENT = RESOURCES + "/composite-templates";

@@ -22,7 +22,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -51,7 +51,6 @@ import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler.Servic
 import com.vmware.admiral.request.ContainerHostRemovalTaskService.ContainerHostRemovalTaskState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
-import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 
@@ -227,11 +226,10 @@ public class ContainerHostRemovalTaskServiceTest extends RequestBaseTest {
         assertTrue("ComputeState was not deleted: " + computeSelfLinks, computeSelfLinks.isEmpty());
 
         // verify that the containers where removed from the docker mock
-        Map<String, String> containerRefsByIds = MockDockerAdapterService
-                .getContainerIdsWithContainerReferences();
-        for (String containerRef : containerRefsByIds.values()) {
+        Set<ContainerState> containerStates = getExistingContainersInAdapter();
+        for (ContainerState containerState : containerStates) {
             for (String containerLink : containerStateLinks) {
-                if (containerRef.endsWith(containerLink)) {
+                if (containerState.documentSelfLink.endsWith(containerLink)) {
                     fail("Container State not removed with link: " + containerLink);
                 }
             }
@@ -312,11 +310,10 @@ public class ContainerHostRemovalTaskServiceTest extends RequestBaseTest {
         assertTrue("ComputeState was not deleted: " + computeSelfLinks, computeSelfLinks.isEmpty());
 
         // verify that the containers where removed from the docker mock
-        Map<String, String> containerRefsByIds = MockDockerAdapterService
-                .getContainerIdsWithContainerReferences();
-        for (String containerRef : containerRefsByIds.values()) {
+        Set<ContainerState> containerStates = getExistingContainersInAdapter();
+        for (ContainerState containerState : containerStates) {
             for (String containerLink : containerStateLinks) {
-                if (containerRef.endsWith(containerLink)) {
+                if (containerState.documentSelfLink.endsWith(containerLink)) {
                     fail("Container State not removed with link: " + containerLink);
                 }
             }

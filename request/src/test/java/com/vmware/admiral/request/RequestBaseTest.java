@@ -59,8 +59,7 @@ import com.vmware.admiral.compute.container.HostContainerListDataCollection;
 import com.vmware.admiral.compute.container.HostPortProfileService;
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
 import com.vmware.admiral.compute.container.loadbalancer.ContainerLoadBalancerDescriptionService;
-import com.vmware.admiral.compute.container.loadbalancer.ContainerLoadBalancerDescriptionService
-        .ContainerLoadBalancerDescription;
+import com.vmware.admiral.compute.container.loadbalancer.ContainerLoadBalancerDescriptionService.ContainerLoadBalancerDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService;
@@ -93,7 +92,7 @@ import com.vmware.admiral.service.common.CounterSubTaskService;
 import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.admiral.service.common.ResourceNamePrefixService;
 import com.vmware.admiral.service.test.MockComputeHostInstanceAdapter;
-import com.vmware.admiral.service.test.MockDockerAdapterService;
+import com.vmware.admiral.service.test.MockDockerContainerToHostService.MockDockerContainerToHostState;
 import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.adapters.awsadapter.AWSLoadBalancerService;
 import com.vmware.photon.controller.model.adapters.awsadapter.AWSNetworkService;
@@ -183,7 +182,6 @@ public abstract class RequestBaseTest extends BaseTestCase {
     @Before
     public void setUp() throws Throwable {
         startServices(host);
-        MockDockerAdapterService.resetContainers();
         setUpDockerHostAuthentication();
 
         createEndpoint();
@@ -1045,4 +1043,33 @@ public abstract class RequestBaseTest extends BaseTestCase {
         return doPost(datastore, StorageDescriptionService.FACTORY_LINK);
     }
 
+    protected Set<ContainerState> getExistingContainersInAdapter() {
+        host.testStart(1);
+        QueryTask q = QueryUtil.buildPropertyQuery(MockDockerContainerToHostState.class);
+        QueryUtil.addExpandOption(q);
+
+        Set<ContainerState> containerStates = new HashSet<>();
+        new ServiceDocumentQuery<>(host, MockDockerContainerToHostState.class).query(q,
+                (r) -> {
+                    if (r.hasException()) {
+                        host.failIteration(r.getException());
+                    } else if (r.hasResult()) {
+                        containerStates.add(buildContainer(r.getResult()));
+                    } else {
+                        host.completeIteration();
+                    }
+                });
+        host.testWait();
+        return containerStates;
+    }
+
+    private ContainerState buildContainer(MockDockerContainerToHostState containerToHostState) {
+        ContainerState containerState = new ContainerState();
+        containerState.parentLink = containerToHostState.parentLink;
+        containerState.id = containerToHostState.id;
+        containerState.name = containerToHostState.name;
+        containerState.image = containerToHostState.image;
+        containerState.powerState = containerToHostState.powerState;
+        return containerState;
+    }
 }

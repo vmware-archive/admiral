@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -33,7 +33,6 @@ import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.service.common.NodeMigrationService;
 import com.vmware.admiral.service.common.NodeMigrationService.MigrationRequest;
-import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -51,7 +50,7 @@ public class MigrationIT extends RequestBaseTest {
     private static final int DOCKER_HOST_COUNT = 5;
 
     private VerificationHost targetHost;
-    private List<String> computeStates = new ArrayList<String>();
+    private List<String> computeStates = new ArrayList<>();
     private String resourcePoolStateLink;
     private String epzStateLink;
     private String containerSelfLink;
@@ -59,7 +58,6 @@ public class MigrationIT extends RequestBaseTest {
     @Override
     @Before
     public void setUp() throws Throwable {
-        MockDockerAdapterService.resetContainers();
         startServices(host);
         host.waitForServiceAvailable(ComputeService.FACTORY_LINK, ResourcePoolService.FACTORY_LINK,
                 ElasticPlacementZoneConfigurationService.SELF_LINK,

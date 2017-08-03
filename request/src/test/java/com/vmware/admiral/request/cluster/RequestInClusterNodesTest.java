@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -58,7 +58,6 @@ import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService.TaskStatusState;
 import com.vmware.admiral.service.common.SslTrustCertificateService;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
-import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.security.util.CertificateUtil;
@@ -78,7 +77,6 @@ public class RequestInClusterNodesTest extends RequestBaseTest {
     @Override
     @Before
     public void setUp() throws Throwable {
-        MockDockerAdapterService.resetContainers();
         startServices(host);
         waitForReplicatedFactoryServiceAvailable(host);
         addPeerNodes(NODE_COUNT);

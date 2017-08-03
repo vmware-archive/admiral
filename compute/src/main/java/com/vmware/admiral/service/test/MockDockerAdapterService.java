@@ -15,19 +15,12 @@ import java.io.File;
 import java.net.URI;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Random;
-import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -36,6 +29,8 @@ import com.google.gson.JsonPrimitive;
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
@@ -44,13 +39,16 @@ import com.vmware.admiral.compute.container.ShellContainerExecutorService;
 import com.vmware.admiral.compute.container.maintenance.ContainerStats;
 import com.vmware.admiral.compute.container.maintenance.ContainerStatsEvaluator;
 import com.vmware.admiral.service.common.LogService;
+import com.vmware.admiral.service.test.MockDockerContainerToHostService.MockDockerContainerToHostState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.ServiceHostLogService;
 
 /**
@@ -65,18 +63,6 @@ public class MockDockerAdapterService extends BaseMockAdapterService {
 
     public boolean isFailureExpected;
     public String computeHostIpAddress = MOCK_HOST_ASSIGNED_ADDRESS;
-
-    // Map of container ids by hostId. hostId -> Map of containerId -> containerReference
-    private static final Map<String, Map<String, String>> CONTAINER_IDS = new ConcurrentHashMap<>();
-    // Map of container ids and names by hostId. hostId -> Map of containerId -> container name
-    private static final Map<String, Map<String, String>> CONTAINER_IDS_AND_NAMES =
-            new ConcurrentHashMap<>();
-    // Map of container ids and image by hostId. hostId -> Map of containerId -> container image
-    private static final Map<String, Map<String, String>> CONTAINER_IDS_AND_IMAGE =
-            new ConcurrentHashMap<>();
-    // Map of container ids and their power state
-    private static final Map<String, PowerState> CONTAINER_IDS_AND_STATE =
-            new ConcurrentHashMap<>();
 
     private static class MockAdapterRequest extends AdapterRequest {
 
@@ -110,7 +96,7 @@ public class MockDockerAdapterService extends BaseMockAdapterService {
             }
             if (op.hasBody()) {
                 MockAdapterRequest state = op.getBody(MockAdapterRequest.class);
-                removeContainerIdByReference(state.resourceReference);
+                removeContainerByReference(state);
                 op.complete();
                 return;
             } else {
@@ -168,13 +154,6 @@ public class MockDockerAdapterService extends BaseMockAdapterService {
 
     private void processContainerRequest(MockAdapterRequest state, TaskState taskInfo,
             ContainerState containerState, ContainerDescription contDesc) {
-        if (TaskStage.FAILED == taskInfo.stage) {
-            logInfo("Failed request based on containerState resource:  %s",
-                    state.resourceReference);
-            patchTaskStage(state, taskInfo.failure);
-            return;
-        }
-
         if (containerState == null) {
             getDocument(ContainerState.class, state.resourceReference, taskInfo,
                     (container) -> processContainerRequest(state, taskInfo, container, contDesc));
@@ -197,10 +176,9 @@ public class MockDockerAdapterService extends BaseMockAdapterService {
         }
 
         if (state.isProvisioning()) {
-            patchContainerStateWithIPAddress(state, containerState, contDesc);
+            createContainerToHost(state, containerState, contDesc);
         } else if (state.isDeprovisioning()) {
-            removeContainerIdByReference(state.resourceReference);
-            patchTaskStage(state, (Throwable) null);
+            removeContainerByReference(state);
         } else if (ContainerOperationType.INSPECT.id.equals(state.operationTypeId)) {
             patchContainerInspect(state, containerState);
         } else if (ContainerOperationType.STATS.id.equals(state.operationTypeId)) {
@@ -212,12 +190,35 @@ public class MockDockerAdapterService extends BaseMockAdapterService {
         }
     }
 
+    private void createContainerToHost(MockAdapterRequest state,
+            ContainerState containerState, ContainerDescription containerDesc) {
+        String containerId = UUID.randomUUID().toString();
+        containerState.id = containerId;
+        MockDockerContainerToHostState containerToHostState = new MockDockerContainerToHostState();
+        containerToHostState.parentLink = containerState.parentLink;
+        containerToHostState.id = containerId;
+        if (containerState.names != null && !containerState.names.isEmpty()) {
+            containerToHostState.name = containerState.names.get(0);
+        }
+        containerToHostState.image = containerState.image;
+        containerToHostState.powerState = PowerState.RUNNING;
+
+        sendRequest(Operation.createPost(this, MockDockerContainerToHostService.FACTORY_LINK)
+                .setBody(containerToHostState)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        patchTaskStage(state, e);
+                    } else {
+                        logInfo("Mock Container in docker host created successfully");
+                        patchContainerStateWithIPAddress(state, containerState, containerDesc);
+                    }
+                }));
+    }
+
     private void patchContainerStateWithIPAddress(MockAdapterRequest state,
             ContainerState containerState, ContainerDescription containerDesc) {
         containerState.address = this.computeHostIpAddress;
         containerState.powerState = PowerState.RUNNING;
-        String containerId = UUID.randomUUID().toString();
-        containerState.id = containerId;
         containerState.created = new Date().getTime();
         containerState.command = containerDesc.command;
         containerState.image = containerDesc.image;
@@ -245,15 +246,6 @@ public class MockDockerAdapterService extends BaseMockAdapterService {
             containerState.ports.add(portBinding);
         }
 
-        // Add the container by hostId
-        String hostId = Service.getId(containerState.parentLink);
-        String containerName = null;
-        if (containerState.names != null && !containerState.names.isEmpty()) {
-            containerName = containerState.names.get(0);
-        }
-        addContainerId(hostId, containerState.id, state.resourceReference.toString());
-        addContainerNames(hostId, containerId, containerName);
-
         sendRequest(Operation.createPatch(state.resourceReference)
                 .setBody(containerState)
                 .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
@@ -277,21 +269,46 @@ public class MockDockerAdapterService extends BaseMockAdapterService {
             if (containerState.customProperties == null) {
                 containerState.customProperties = new HashMap<>();
             }
-            containerState.customProperties
-                    .put(MOCK_CURRENT_EXECUTED_OPERATION_KEY, state.operationTypeId);
+            containerState.customProperties.put(MOCK_CURRENT_EXECUTED_OPERATION_KEY,
+                    state.operationTypeId);
         }
 
         sendRequest(Operation.createPatch(state.resourceReference)
                 .setBody(containerState)
                 .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
                 .setCompletion((o, e) -> {
-                    Throwable patchException = null;
                     if (e != null) {
-                        logSevere(e);
-                        patchException = e;
+                        patchTaskStage(state, e);
+                    } else {
+                        patchContainerToHostPowerState(state, containerState);
                     }
-                    patchTaskStage(state, patchException);
                 }));
+    }
+
+    private void patchContainerToHostPowerState(MockAdapterRequest state, ContainerState containerState) {
+        String containerName = Service.getId(state.resourceReference.getPath());
+        QueryTask q = QueryUtil.buildPropertyQuery(MockDockerContainerToHostState.class,
+                MockDockerContainerToHostState.FIELD_NAME_NAME, containerName);
+        MockDockerContainerToHostState cthState = new MockDockerContainerToHostState();
+        cthState.powerState = containerState.powerState;
+        new ServiceDocumentQuery<>(getHost(), MockDockerContainerToHostState.class).query(q,
+                (r) -> {
+                    if (r.hasException()) {
+                        patchTaskStage(state, r.getException());
+                    } else if (r.hasResult()) {
+                        sendRequest(Operation.createPatch(this, r.getDocumentSelfLink())
+                                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
+                                .setBody(cthState)
+                                .setCompletion((o, e) -> {
+                                    Throwable patchException = null;
+                                    if (e != null) {
+                                        logSevere(e);
+                                        patchException = e;
+                                    }
+                                    patchTaskStage(state, patchException);
+                                }));
+                    }
+                });
     }
 
     private void patchContainerInspect(MockAdapterRequest state, ContainerState container) {
@@ -438,125 +455,37 @@ public class MockDockerAdapterService extends BaseMockAdapterService {
         return result;
     }
 
-    public static synchronized void resetContainers() {
-        CONTAINER_IDS.clear();
-        CONTAINER_IDS_AND_NAMES.clear();
-        CONTAINER_IDS_AND_IMAGE.clear();
-    }
-
-    public static synchronized int getNumberOfContainers() {
-        return getContainerIds().size();
-    }
-
-    private synchronized void removeContainerIdByReference(URI containerReference) {
-        for (Entry<String, Map<String, String>> containerIdsByHost : CONTAINER_IDS.entrySet()) {
-            Iterator<Entry<String, String>> iterator = containerIdsByHost.getValue().entrySet()
-                    .iterator();
-            while (iterator.hasNext()) {
-                Entry<String, String> entry = iterator.next();
-                if (entry.getValue().endsWith(containerReference.getPath())) {
-                    logFine("Container with id: %s and container ref: %s removed.",
-                            entry.getKey(), containerReference);
-                    String hostId = containerIdsByHost.getKey();
-                    if (CONTAINER_IDS_AND_NAMES.containsKey(hostId)) {
-                        CONTAINER_IDS_AND_NAMES.get(hostId).remove(entry.getKey());
+    private void removeContainerByReference(MockAdapterRequest state) {
+        String containerName = Service.getId(state.resourceReference.getPath());
+        QueryTask q = QueryUtil.buildPropertyQuery(MockDockerContainerToHostState.class,
+                MockDockerContainerToHostState.FIELD_NAME_NAME, containerName);
+        List<String> mockContainerToHostLinks = new ArrayList<>();
+        new ServiceDocumentQuery<>(getHost(), MockDockerContainerToHostState.class).query(q,
+                (r) -> {
+                    if (r.hasException()) {
+                        patchTaskStage(state, r.getException());
+                    } else if (r.hasResult()) {
+                        mockContainerToHostLinks.add(r.getDocumentSelfLink());
+                    } else {
+                        removeMockContainerFromHost(state, mockContainerToHostLinks);
                     }
-                    if (CONTAINER_IDS_AND_IMAGE.containsKey(hostId)) {
-                        CONTAINER_IDS_AND_IMAGE.get(hostId).remove(entry.getKey());
-                    }
-                    iterator.remove();
-                    return;
-                }
-            }
+                });
+    }
+
+    private void removeMockContainerFromHost(MockAdapterRequest state, List<String> mockContainerToHostLinks) {
+        for (String mockContainerToHostLink : mockContainerToHostLinks) {
+            sendRequest(Operation.createDelete(this, mockContainerToHostLink)
+                    .setBody(new ServiceDocument())
+                    .setCompletion((o, e) -> {
+                        if (e != null) {
+                            logWarning("No mock container %s found in host in mock adapter. Error %s",
+                                    mockContainerToHostLink, e.getMessage());
+                        } else {
+                            logInfo("Mock container %s removed from mock adapter", mockContainerToHostLink);
+                        }
+                    }));
         }
-        Utils.logWarning("**************** No containerId found for reference: %s",
-                containerReference.getPath());
-    }
-
-    public static synchronized void addContainerId(String hostId, String containerId,
-            String containerReference) {
-        Utils.log(MockDockerAdapterService.class, MockDockerAdapterService.class.getSimpleName(),
-                Level.INFO, "Container with id: %s and container ref: %s created in host: %s.",
-                containerId, containerReference, hostId);
-        if (!CONTAINER_IDS.containsKey(hostId)) {
-            CONTAINER_IDS.put(hostId, new ConcurrentHashMap<>());
-        }
-        CONTAINER_IDS.get(hostId).put(containerId, containerReference);
-    }
-
-    public static synchronized Set<String> getContainerIds() {
-        Set<String> containerIds = new HashSet<>();
-        for (Map<String, String> containerIdsByHost : CONTAINER_IDS.values()) {
-            containerIds.addAll(containerIdsByHost.keySet());
-        }
-        return containerIds;
-    }
-
-    public static synchronized Set<String> getContainerIds(String hostId) {
-        if (CONTAINER_IDS.containsKey(hostId)) {
-            return CONTAINER_IDS.get(hostId).keySet();
-        } else {
-            return Collections.emptySet();
-        }
-    }
-
-    public static synchronized boolean isContainerProvisioned(String containerLink) {
-        for (String containerRef : getContainerIdsWithContainerReferences().values()) {
-            if (containerRef.endsWith(containerLink)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public static synchronized Map<String, String> getContainerIdsWithContainerReferences() {
-        Map<String, String> containerIdWithRefs = new HashMap<>();
-        for (Map<String, String> containerIdsByHost : CONTAINER_IDS.values()) {
-            containerIdWithRefs.putAll(containerIdsByHost);
-        }
-        return containerIdWithRefs;
-    }
-
-    public static synchronized String getContainerNames(String containerId) {
-        for (Map<String, String> containerIdsAndNamesByHost : CONTAINER_IDS_AND_NAMES.values()) {
-            if (containerIdsAndNamesByHost.containsKey(containerId)) {
-                return containerIdsAndNamesByHost.get(containerId);
-            }
-        }
-        return null;
-    }
-
-    public static synchronized void addContainerNames(String hostId, String containerId,
-            String names) {
-        if (!CONTAINER_IDS_AND_NAMES.containsKey(hostId)) {
-            CONTAINER_IDS_AND_NAMES.put(hostId, new ConcurrentHashMap<>());
-        }
-        CONTAINER_IDS_AND_NAMES.get(hostId).put(containerId, names);
-    }
-
-    public static synchronized String getContainerImage(String containerId) {
-        for (Map<String, String> containerIdsAndImageByHost : CONTAINER_IDS_AND_IMAGE.values()) {
-            if (containerIdsAndImageByHost.containsKey(containerId)) {
-                return containerIdsAndImageByHost.get(containerId);
-            }
-        }
-        return null;
-    }
-
-    public static synchronized void addContainerImage(String hostId, String containerId,
-            String image) {
-        if (!CONTAINER_IDS_AND_IMAGE.containsKey(hostId)) {
-            CONTAINER_IDS_AND_IMAGE.put(hostId, new ConcurrentHashMap<>());
-        }
-        CONTAINER_IDS_AND_IMAGE.get(hostId).put(containerId, image);
-    }
-
-    public static synchronized PowerState getContainerPowerState(String containerId) {
-        return CONTAINER_IDS_AND_STATE.get(containerId);
-    }
-
-    public static synchronized void addContainerState(String containerId, PowerState state) {
-        CONTAINER_IDS_AND_STATE.put(containerId, state);
+        patchTaskStage(state, (Throwable) null);
     }
 
 }

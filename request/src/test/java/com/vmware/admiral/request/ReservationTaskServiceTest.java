@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -35,7 +35,6 @@ import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupR
 import com.vmware.admiral.request.ReservationTaskService.ReservationTaskState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
-import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
@@ -53,7 +52,6 @@ public class ReservationTaskServiceTest extends RequestBaseTest {
     @Override
     public void setUp() throws Throwable {
         startServices(host);
-        MockDockerAdapterService.resetContainers();
 
         setUpDockerHostAuthentication();
         // setup Docker Host:
@@ -487,7 +485,7 @@ public class ReservationTaskServiceTest extends RequestBaseTest {
         assertNotNull(task.hostSelections);
         assertEquals(2, task.hostSelections.size());
 
-        List<String> expectedHostsList = new ArrayList<ComputeState>(
+        List<String> expectedHostsList = new ArrayList<>(
                 Arrays.asList(host3, host4)).stream()
                         .map((e) -> e.documentSelfLink).collect(Collectors.toList());
         assertTrue(expectedHostsList.containsAll(

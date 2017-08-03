@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -12,10 +12,10 @@
 package com.vmware.admiral.request.compute;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import static com.vmware.admiral.compute.ComputeConstants.CUSTOM_PROP_PROFILE_LINK_NAME;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 import org.junit.Test;
 
 import com.vmware.admiral.compute.ResourceType;
+import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService;
 import com.vmware.admiral.compute.network.ComputeNetworkService;
 import com.vmware.admiral.compute.profile.ProfileService.ProfileStateExpanded;
@@ -50,7 +51,6 @@ import com.vmware.admiral.service.common.EventTopicDeclarator;
 import com.vmware.admiral.service.common.EventTopicService;
 import com.vmware.admiral.service.common.EventTopicService.EventTopicState;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
-import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -160,8 +160,13 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
         assertEquals(allocationTask.tenantLinks, computeState.tenantLinks);
 
         // make sure the host is not update with the new container.
-        assertFalse("should not be provisioned container: " + computeState.documentSelfLink,
-                MockDockerAdapterService.isContainerProvisioned(computeState.documentSelfLink));
+        Set<ContainerState> containerStates = getExistingContainersInAdapter();
+        for (ContainerState containerInAdapterState : containerStates) {
+            if (containerInAdapterState.documentSelfLink
+                    .endsWith(containerState.documentSelfLink)) {
+                fail("Container State not removed with link: " + containerState.documentSelfLink);
+            }
+        }
 
         ComputeProvisionTaskState provisionTask = createComputeProvisionTask(
                 allocationTask.resourceLinks);
@@ -197,8 +202,13 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
         assertEquals(allocationTask.tenantLinks, computeState.tenantLinks);
 
         // make sure the host is not update with the new container.
-        assertFalse("should not be provisioned container: " + computeState.documentSelfLink,
-                MockDockerAdapterService.isContainerProvisioned(computeState.documentSelfLink));
+        Set<ContainerState> containerStates = getExistingContainersInAdapter();
+        for (ContainerState containerInAdapterState : containerStates) {
+            if (containerInAdapterState.documentSelfLink
+                    .endsWith(containerState.documentSelfLink)) {
+                fail("Container State not removed with link: " + containerState.documentSelfLink);
+            }
+        }
 
         ComputeProvisionTaskState provisionTask = createComputeProvisionTask(
                 allocationTask.resourceLinks);
@@ -451,7 +461,7 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
 
                 assertNotNull(document);
 
-                List<HostSelection> patchedHosts = new ArrayList<HostSelection>(document
+                List<HostSelection> patchedHosts = new ArrayList<>(document
                         .selectedComputePlacementHosts);
 
                 assertNotNull(patchedHosts);
@@ -518,7 +528,7 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
 
                 assertNotNull(document);
 
-                List<HostSelection> patchedHosts = new ArrayList<HostSelection>(document
+                List<HostSelection> patchedHosts = new ArrayList<>(document
                         .selectedComputePlacementHosts);
 
                 assertNotNull(patchedHosts);
@@ -899,8 +909,13 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
         assertEquals(allocationTask.tenantLinks, computeState.tenantLinks);
 
         // make sure the host is not update with the new container.
-        assertFalse("should not be provisioned container: " + computeState.documentSelfLink,
-                MockDockerAdapterService.isContainerProvisioned(computeState.documentSelfLink));
+        Set<ContainerState> containerStates = getExistingContainersInAdapter();
+        for (ContainerState containerInAdapterState : containerStates) {
+            if (containerInAdapterState.documentSelfLink
+                    .endsWith(containerState.documentSelfLink)) {
+                fail("Container State not removed with link: " + containerState.documentSelfLink);
+            }
+        }
 
         ComputeProvisionTaskState provisionTask = createComputeProvisionForScaleOutTask(
                 allocationTask.resourceLinks, "0");

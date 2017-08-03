@@ -31,12 +31,15 @@ import org.junit.Test;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.ContainerListCallback;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.ContainerVersion;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.HostContainerListDataCollectionState;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
+import com.vmware.admiral.service.test.MockDockerContainerToHostService;
+import com.vmware.admiral.service.test.MockDockerContainerToHostService.MockDockerContainerToHostState;
 import com.vmware.admiral.service.test.MockDockerHostAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
@@ -62,6 +65,7 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
     public void setUp() throws Throwable {
         host.startService(Operation.createPost(UriUtils.buildUri(host,
                 MockDockerAdapterService.class)), new MockDockerAdapterService());
+        host.startFactory(new MockDockerContainerToHostService());
         host.startService(Operation.createPost(UriUtils.buildUri(host,
                 MockDockerHostAdapterService.class)), new MockDockerHostAdapterService());
 
@@ -73,6 +77,7 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
         waitForServiceAvailability(ContainerFactoryService.SELF_LINK);
 
         waitForServiceAvailability(MockDockerAdapterService.SELF_LINK);
+        waitForServiceAvailability(MockDockerContainerToHostService.FACTORY_LINK);
         waitForServiceAvailability(MockDockerHostAdapterService.SELF_LINK);
         waitForServiceAvailability(DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK);
 
@@ -105,8 +110,6 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
         //System container creation is disabled during test.
         //Disabled it back after this test.
         DeploymentProfileConfig.getInstance().setTest(true);
-
-        MockDockerAdapterService.resetContainers();
     }
 
     @Test
@@ -177,10 +180,8 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
     @Test
     public void testProvisionSystemContainerWhenDoesNotExistsOnHost() throws Throwable {
         // add preexisting container to the adapter service
-        MockDockerAdapterService.addContainerId(TEST_HOST_ID, TEST_PREEXISTING_CONTAINER_ID,
-                TEST_PREEXISTING_CONTAINER_ID);
-        MockDockerAdapterService.addContainerNames(TEST_HOST_ID, TEST_PREEXISTING_CONTAINER_ID,
-                "TestName");
+        addContainerToMockAdapter(COMPUTE_HOST_LINK, TEST_PREEXISTING_CONTAINER_ID,
+                TEST_PREEXISTING_CONTAINER_ID, "TestName");
 
         // run data collection on preexisting container
         startAndWaitHostContainerListDataCollection();
@@ -199,14 +200,10 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
     @Test
     public void testProvisionSystemContainerWhenExistsOnHost() throws Throwable {
         String systemContainerId = extractId(systemContainerLink);
-        String systemContainerRef = UriUtils.buildUri(host, systemContainerLink).toString();
 
         // add system container to the adapter service because it already exists on host
-        MockDockerAdapterService.addContainerId(TEST_HOST_ID, systemContainerId,
-                systemContainerRef);
-        MockDockerAdapterService.addContainerNames(TEST_HOST_ID, systemContainerId,
-                SystemContainerDescriptions.AGENT_CONTAINER_NAME);
-        MockDockerAdapterService.addContainerImage(TEST_HOST_ID, systemContainerId, image);
+        addContainerToMockAdapter(COMPUTE_HOST_LINK, systemContainerId,
+                SystemContainerDescriptions.AGENT_CONTAINER_NAME, image);
 
         // run data collection on preexisting system container
         startAndWaitHostContainerListDataCollection();
@@ -236,17 +233,13 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
     @Test
     public void testProvisionSystemContainerWhenOlderVersionExistsOnHost() throws Throwable {
         String systemContainerId = extractId(systemContainerLink);
-        String systemContainerRef = UriUtils.buildUri(host, systemContainerLink).toString();
         // deploy an old version of the system container
         String oldImage = String.format("%s:%s", SystemContainerDescriptions.AGENT_IMAGE_NAME,
                 "0.0.0");
 
         // add system container to the adapter service because it already exists on host
-        MockDockerAdapterService.addContainerId(TEST_HOST_ID, systemContainerId,
-                systemContainerRef);
-        MockDockerAdapterService.addContainerNames(TEST_HOST_ID, systemContainerId,
-                SystemContainerDescriptions.AGENT_CONTAINER_NAME);
-        MockDockerAdapterService.addContainerImage(TEST_HOST_ID, systemContainerId, oldImage);
+        addContainerToMockAdapter(COMPUTE_HOST_LINK, systemContainerId,
+                SystemContainerDescriptions.AGENT_CONTAINER_NAME, oldImage);
 
         // run data collection on preexisting system container with old version
         startAndWaitHostContainerListDataCollection();
@@ -270,16 +263,12 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
     @Test
     public void testProvisionSystemContainerWhenVersionIsWrong() throws Throwable {
         String systemContainerId = extractId(systemContainerLink);
-        String systemContainerRef = UriUtils.buildUri(host, systemContainerLink).toString();
         // deploy an old version of the system container
         String oldImage = String.format("%s:%s", "test", "abcdefg");
 
         // add system container to the adapter service because it already exists on host
-        MockDockerAdapterService.addContainerId(TEST_HOST_ID, systemContainerId,
-                systemContainerRef);
-        MockDockerAdapterService.addContainerNames(TEST_HOST_ID, systemContainerId,
-                SystemContainerDescriptions.AGENT_CONTAINER_NAME);
-        MockDockerAdapterService.addContainerImage(TEST_HOST_ID, systemContainerId, oldImage);
+        addContainerToMockAdapter(COMPUTE_HOST_LINK, systemContainerId,
+                SystemContainerDescriptions.AGENT_CONTAINER_NAME, oldImage);
 
         // run data collection on preexisting system container with old version
         startAndWaitHostContainerListDataCollection();
@@ -319,6 +308,11 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
     @Test
     public void testStoppedContainer() throws Throwable {
         String image = "image:ver";
+
+        ContainerDescription containerDesc = new ContainerDescription();
+        containerDesc.image = image;
+        containerDesc = doPost(containerDesc, ContainerDescriptionService.FACTORY_LINK);
+
         ContainerState cs = new ContainerState();
         cs.id = UUID.randomUUID().toString();
         cs.names = new ArrayList<>(Collections.singletonList("name_" + cs.id));
@@ -326,16 +320,12 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
         cs.powerState = ContainerState.PowerState.RUNNING;
         cs.image = image;
         cs.adapterManagementReference = UriUtils.buildUri(ManagementUriParts.ADAPTER_DOCKER);
+        cs.descriptionLink = containerDesc.documentSelfLink;
 
         cs = doPost(cs, ContainerFactoryService.SELF_LINK);
 
-        String ref = UriUtils.buildUri(host, cs.documentSelfLink).toString();
-
         // add system container to the adapter service because it already exists on host
-        MockDockerAdapterService.addContainerId(TEST_HOST_ID, cs.id, ref);
-        MockDockerAdapterService.addContainerNames(TEST_HOST_ID, cs.id, cs.names.get(0));
-        MockDockerAdapterService.addContainerImage(TEST_HOST_ID, cs.id, image);
-        MockDockerAdapterService.addContainerState(cs.id, PowerState.STOPPED);
+        addContainerToMockAdapter(COMPUTE_HOST_LINK, cs.id, cs.names.get(0), image, PowerState.STOPPED);
 
         // run data collection on preexisting system container with old version
         startAndWaitHostContainerListDataCollection();
@@ -358,13 +348,9 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
     private void testStateStuckInProvisioning(boolean isSystemContainerMissingOnHost)
             throws Throwable {
         String systemContainerId = extractId(systemContainerLink);
-        String systemContainerRef = UriUtils.buildUri(host, systemContainerLink).toString();
 
-        MockDockerAdapterService.addContainerId(TEST_HOST_ID, systemContainerId,
-                systemContainerRef);
-        MockDockerAdapterService.addContainerNames(TEST_HOST_ID, systemContainerId,
-                SystemContainerDescriptions.AGENT_CONTAINER_NAME);
-        MockDockerAdapterService.addContainerImage(TEST_HOST_ID, systemContainerId, image);
+        addContainerToMockAdapter(COMPUTE_HOST_LINK, systemContainerId,
+                SystemContainerDescriptions.AGENT_CONTAINER_NAME, image);
 
         startAndWaitHostContainerListDataCollection();
         waitForContainer(systemContainerLink, image, PowerState.RUNNING,
@@ -375,10 +361,6 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
         doPatch(cs, systemContainerLink);
         waitForContainer(systemContainerLink, image, PowerState.PROVISIONING,
                 "System container state should be provisioning after patching it to provisioning.");
-
-        if (isSystemContainerMissingOnHost) {
-            MockDockerAdapterService.resetContainers();
-        }
 
         startAndWaitHostContainerListDataCollection();
         waitForContainer(systemContainerLink, image, PowerState.RUNNING,
@@ -456,4 +438,36 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
         });
     }
 
+    private void addContainerToMockAdapter(String hostLink, String containerId,
+            String containerName, String containerImage) throws Throwable {
+        addContainerToMockAdapter(hostLink, containerId, containerName, containerImage,
+                PowerState.UNKNOWN);
+    }
+
+    private void addContainerToMockAdapter(String hostLink, String containerId,
+            String containerName, String containerImage, PowerState powerState) throws Throwable {
+        MockDockerContainerToHostState mockContainerToHostState = new MockDockerContainerToHostState();
+        mockContainerToHostState.documentSelfLink = UriUtils.buildUriPath(
+                MockDockerContainerToHostService.FACTORY_LINK, UUID.randomUUID().toString());
+        mockContainerToHostState.parentLink = hostLink;
+        mockContainerToHostState.id = containerId;
+        mockContainerToHostState.name = containerName;
+        mockContainerToHostState.image = containerImage;
+        mockContainerToHostState.powerState = powerState;
+        host.sendRequest(Operation.createPost(host, MockDockerContainerToHostService.FACTORY_LINK)
+                .setBody(mockContainerToHostState)
+                .setReferer(host.getUri())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        host.log("Cannot create mock container to host state. Error: %s",
+                                e.getMessage());
+                    }
+                }));
+        // wait until container to host is created in the mock adapter
+        waitFor(() -> {
+            getDocument(MockDockerContainerToHostState.class,
+                    mockContainerToHostState.documentSelfLink);
+            return true;
+        });
+    }
 }

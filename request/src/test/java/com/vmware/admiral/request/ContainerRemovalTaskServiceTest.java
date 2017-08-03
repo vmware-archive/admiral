@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -26,7 +26,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -53,7 +52,6 @@ import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
-import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.TaskState;
@@ -132,11 +130,10 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         assertEquals(groupResourcePlacement.allocatedInstancesCount, 0);
 
         // verify that the containers where removed from the docker mock
-        Map<String, String> containerRefsByIds = MockDockerAdapterService
-                .getContainerIdsWithContainerReferences();
-        for (String containerRef : containerRefsByIds.values()) {
+        Set<ContainerState> containerStates = getExistingContainersInAdapter();
+        for (ContainerState containerState : containerStates) {
             for (String containerLink : containerStateLinks) {
-                if (containerRef.endsWith(containerLink)) {
+                if (containerState.documentSelfLink.endsWith(containerLink)) {
                     fail("Container State not removed with link: " + containerLink);
                 }
             }
@@ -211,11 +208,10 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         assertEquals(groupResourcePlacement.allocatedInstancesCount, 0);
 
         // verify that the containers where removed from the docker mock
-        Map<String, String> containerRefsByIds = MockDockerAdapterService
-                .getContainerIdsWithContainerReferences();
-        for (String containerRef : containerRefsByIds.values()) {
+        Set<ContainerState> containerStates = getExistingContainersInAdapter();
+        for (ContainerState containerState : containerStates) {
             for (String containerLink : containerStateLinks) {
-                if (containerRef.endsWith(containerLink)) {
+                if (containerState.documentSelfLink.endsWith(containerLink)) {
                     fail("Container State not removed with link: " + containerLink);
                 }
             }
@@ -590,7 +586,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         // Remove Containers
         request = TestRequestStateFactory.createRequestState();
         request.tenantLinks = groupPlacementState.tenantLinks;
-        request.resourceLinks = new HashSet<String>();
+        request.resourceLinks = new HashSet<>();
         request.resourceLinks.add(container1.documentSelfLink);
         request.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
         request = startRequest(request);
@@ -603,7 +599,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         // Remove Containers
         request = TestRequestStateFactory.createRequestState();
         request.tenantLinks = groupPlacementState.tenantLinks;
-        request.resourceLinks = new HashSet<String>();
+        request.resourceLinks = new HashSet<>();
         request.resourceLinks.add(container2.documentSelfLink);
         request.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
         request = startRequest(request);
@@ -640,7 +636,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         // Remove Containers
         request = TestRequestStateFactory.createRequestState();
         request.tenantLinks = groupPlacementState.tenantLinks;
-        request.resourceLinks = new HashSet<String>();
+        request.resourceLinks = new HashSet<>();
         request.resourceLinks.add(documentLink1);
         request.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
         request = startRequest(request);
@@ -654,7 +650,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         // Remove Containers
         request = TestRequestStateFactory.createRequestState();
         request.tenantLinks = groupPlacementState.tenantLinks;
-        request.resourceLinks = new HashSet<String>();
+        request.resourceLinks = new HashSet<>();
         request.resourceLinks.add(documentLink2);
         request.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
         request = startRequest(request);
@@ -762,7 +758,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         // remove Container
         request = TestRequestStateFactory.createRequestState();
         request.tenantLinks = groupPlacementState.tenantLinks;
-        request.resourceLinks = new HashSet<String>();
+        request.resourceLinks = new HashSet<>();
         request.resourceLinks.add(documentLink);
         request.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
         request = startRequest(request);

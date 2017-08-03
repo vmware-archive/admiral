@@ -177,7 +177,16 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
                 request.resourceLinks.iterator().next());
         assertNotNull(containerState);
 
-        // 4. Remove the container
+        // 4. Get container statistics
+        request = TestRequestStateFactory.createRequestState();
+        request.operation = ContainerOperationType.STATS.id;
+        request.resourceLinks = new HashSet<>();
+        request.resourceLinks.add(containerState.documentSelfLink);
+        request = startRequest(request);
+
+        request = waitForRequestToComplete(request);
+
+        // 5. Remove the container
         request = TestRequestStateFactory.createRequestState();
         request.operation = ContainerOperationType.DELETE.id;
         request.resourceLinks = new HashSet<>();
