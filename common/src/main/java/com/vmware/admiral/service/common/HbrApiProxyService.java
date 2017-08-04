@@ -11,10 +11,12 @@
 
 package com.vmware.admiral.service.common;
 
+import static com.vmware.admiral.common.ManagementUriParts.CONFIG_PROPS;
 import static com.vmware.admiral.common.util.UriUtilsExtended.getReverseProxyLocation;
 
 import java.net.URI;
 import java.util.Base64;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.vmware.admiral.common.ManagementUriParts;
@@ -45,11 +47,15 @@ public class HbrApiProxyService extends StatelessService {
     public static final String HARBOR_RESP_PROP_TAGS_COUNT = "tags_count";
 
     private static final String HBR_URL_PROP = "harbor.tab.url";
+    private static final String HBR_USER_PROP = "harbor.user";
+    private static final String HBR_PASS_PROP = "harbor.password";
     private static final String HBR_API_BASE_ENDPOINT = "api";
     private static final String I18N_RESOURCE_SUBPATH = "i18n/lang";
 
     private volatile URI harborUri;
     private volatile ServiceClient client;
+    private String harborUser;
+    private String harborPassword;
 
     public HbrApiProxyService() {
         super.toggleOption(ServiceOption.URI_NAMESPACE_OWNER, true);
@@ -68,46 +74,41 @@ public class HbrApiProxyService extends StatelessService {
     public void handleStart(Operation startOp) {
         startOp.complete();
 
-        sendRequest(Operation
-                .createGet(getHost(), UriUtils.buildUriPath(ManagementUriParts.CONFIG_PROPS,
-                        HBR_URL_PROP))
-                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
-                .setCompletion((res, ex) -> {
-                    if (ex == null && res.hasBody()) {
-                        ConfigurationState body = res.getBody(ConfigurationState.class);
-                        String harborUrl = body.value;
+        getConfigProperty(HBR_USER_PROP, (configState) -> {
+            harborUser = configState.value;
+        });
 
-                        if (harborUrl != null && !harborUrl.trim().isEmpty()) {
-                            ServerX509TrustManager trustManager = ServerX509TrustManager
-                                    .create(getHost());
-                            client = ServiceClientFactory.createServiceClient(trustManager, null);
+        getConfigProperty(HBR_PASS_PROP, (configState) -> {
+            harborPassword = configState.value;
+        });
 
-                            harborUri = UriUtils.buildUri(harborUrl);
+        getConfigProperty(HBR_URL_PROP, (configState) -> {
+            String harborUrl = configState.value;
 
-                            if (harborUri != null
-                                    && UriUtils.HTTPS_SCHEME.equals(harborUri.getScheme())) {
-                                logFine("Importing ssl trust for harbor uri %s", harborUri);
-                                SslTrustImportRequest sslTrustRequest = new SslTrustImportRequest();
-                                sslTrustRequest.hostUri = harborUri;
-                                sslTrustRequest.acceptCertificate = true;
+            if (harborUrl != null && !harborUrl.trim().isEmpty()) {
+                ServerX509TrustManager trustManager = ServerX509TrustManager.create(getHost());
+                client = ServiceClientFactory.createServiceClient(trustManager, null);
 
-                                sendRequest(
-                                        Operation
-                                                .createPut(getHost(),
-                                                        SslTrustImportService.SELF_LINK)
-                                                .setBody(sslTrustRequest)
-                                                .setCompletion((o, e) -> {
-                                                    if (e != null) {
-                                                        logSevere(
-                                                                "There was a problem importing SSL trust for harbor URI %s, Error: %s",
-                                                                harborUri, e);
-                                                    }
-                                                }));
-                            }
+                harborUri = UriUtils.buildUri(harborUrl);
 
-                        }
-                    }
-                }));
+                if (harborUri != null && UriUtils.HTTPS_SCHEME.equals(harborUri.getScheme())) {
+                    logFine("Importing ssl trust for harbor uri %s", harborUri);
+                    SslTrustImportRequest sslTrustRequest = new SslTrustImportRequest();
+                    sslTrustRequest.hostUri = harborUri;
+                    sslTrustRequest.acceptCertificate = true;
+
+                    sendRequest(Operation
+                            .createPut(getHost(), SslTrustImportService.SELF_LINK)
+                            .setBody(sslTrustRequest)
+                            .setCompletion((o, e) -> {
+                                if (e != null) {
+                                    logSevere("There was a problem importing SSL trust for harbor"
+                                                    + " URI %s, Error: %s", harborUri, e);
+                                }
+                            }));
+                }
+            }
+        });
     }
 
     @Override
@@ -212,9 +213,23 @@ public class HbrApiProxyService extends StatelessService {
         return UriUtils.buildUri(harborUri, baseEndpoint, opPath, query);
     }
 
-    private void prepareAuthn(Operation op) {
-        // TODO: replace with actual token
-        String encoding = new String(Base64.getEncoder().encode("admin:Harbor12345".getBytes()));
-        op.addRequestHeader("Authorization", "Basic " + encoding);
+    private void getConfigProperty(String propName, Consumer<ConfigurationState> callback) {
+        sendRequest(Operation
+                .createGet(getHost(), UriUtils.buildUriPath(CONFIG_PROPS, propName))
+                .setCompletion((res, ex) -> {
+                    if (ex == null && res.hasBody()) {
+                        ConfigurationState body = res.getBody(ConfigurationState.class);
+                        callback.accept(body);
+                    }
+                }));
     }
+
+    private void prepareAuthn(Operation op) {
+        if (harborUser != null && harborPassword != null) {
+            String s = String.format("%s:%s", harborUser, harborPassword);
+            String encoding = new String(Base64.getEncoder().encode(s.getBytes()));
+            op.addRequestHeader("Authorization", "Basic " + encoding);
+        }
+    }
+
 }

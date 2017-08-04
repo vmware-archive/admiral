@@ -39,6 +39,9 @@ import com.vmware.xenon.common.test.VerificationHost;
 public class HbrApiProxyServiceTest {
 
     private static final String HARBOR_URI_FIELD_NAME = "harborUri";
+    private static final String HARBOR_CLIENT_FIELD_NAME = "client";
+    private static final String HARBOR_USER_FIELD_NAME = "harborUser";
+    private static final String HARBOR_PASS_FIELD_NAME = "harborPassword";
 
     private static final String SAMPLE_API_PATH = "/sample";
 
@@ -95,12 +98,8 @@ public class HbrApiProxyServiceTest {
         AtomicBoolean completed = new AtomicBoolean();
 
         HbrApiProxyService service = new HbrApiProxyService();
-        Field field = ReflectionUtils.getField(HbrApiProxyService.class, HARBOR_URI_FIELD_NAME);
-        try {
-            field.set(service, SAMPLE_HARBOR_URI);
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
+
+        setPrivateField(service, HARBOR_URI_FIELD_NAME, SAMPLE_HARBOR_URI);
 
         Operation actualOp = Operation.createGet(UriUtils
                 .buildUri("http://localhost/some-path"))
@@ -121,19 +120,15 @@ public class HbrApiProxyServiceTest {
         AtomicBoolean completed = new AtomicBoolean();
 
         HbrApiProxyService service = new HbrApiProxyService();
-        Field field = ReflectionUtils.getField(HbrApiProxyService.class, HARBOR_URI_FIELD_NAME);
-        try {
-            field.set(service, SAMPLE_HARBOR_URI);
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
+
+        setPrivateField(service, HARBOR_URI_FIELD_NAME, SAMPLE_HARBOR_URI);
+
 
         Operation actualOp = Operation.createGet(UriUtils
                 .buildUri("http://localhost" + HbrApiProxyService.SELF_LINK))
                 .setCompletion((o, e) -> {
                     assertNotNull(e);
-                    assertTrue(e.getMessage()
-                            .contains("Invalid target URI"));
+                    assertTrue(e.getMessage().contains("Invalid target URI"));
 
                     completed.set(true);
                 });
@@ -158,17 +153,8 @@ public class HbrApiProxyServiceTest {
             }
         };
 
-        Field field = ReflectionUtils.getField(HbrApiProxyService.class, HARBOR_URI_FIELD_NAME);
-        try {
-            field.set(service, SAMPLE_HARBOR_URI);
-        } catch (Throwable e) {
-        }
-
-        field = ReflectionUtils.getField(HbrApiProxyService.class, "client");
-        try {
-            field.set(service, client);
-        } catch (Throwable e) {
-        }
+        setPrivateField(service, HARBOR_URI_FIELD_NAME, SAMPLE_HARBOR_URI);
+        setPrivateField(service, HARBOR_CLIENT_FIELD_NAME, client);
 
         AtomicBoolean completed = new AtomicBoolean();
 
@@ -195,6 +181,8 @@ public class HbrApiProxyServiceTest {
         ServiceClient client = new MockServiceClient() {
             @Override
             public void sendRequest(Operation op) {
+                String authHeader = op.getRequestHeader(Operation.AUTHORIZATION_HEADER);
+                assertNull("Authorization header should be empty", authHeader);
                 op.setStatusCode(Operation.STATUS_CODE_MOVED_PERM);
                 op.addResponseHeader(Operation.LOCATION_HEADER, movedLocation);
                 op.setUri(targetUri);
@@ -202,17 +190,8 @@ public class HbrApiProxyServiceTest {
             }
         };
 
-        Field field = ReflectionUtils.getField(HbrApiProxyService.class, HARBOR_URI_FIELD_NAME);
-        try {
-            field.set(service, SAMPLE_HARBOR_URI);
-        } catch (Throwable e) {
-        }
-
-        field = ReflectionUtils.getField(HbrApiProxyService.class, "client");
-        try {
-            field.set(service, client);
-        } catch (Throwable e) {
-        }
+        setPrivateField(service, HARBOR_URI_FIELD_NAME, SAMPLE_HARBOR_URI);
+        setPrivateField(service, HARBOR_CLIENT_FIELD_NAME, client);
 
         AtomicBoolean completed = new AtomicBoolean();
 
@@ -232,6 +211,38 @@ public class HbrApiProxyServiceTest {
         service.handleRequest(actualOp);
 
         assertTrue(completed.get());
+    }
+
+    @Test
+    public void testBasicAuth() {
+        HbrApiProxyService service = new HbrApiProxyService();
+        service.setHost(VerificationHost.create());
+        ServiceClient client = new MockServiceClient() {
+            @Override
+            public void sendRequest(Operation op) {
+                String authHeader = op.getRequestHeader(Operation.AUTHORIZATION_HEADER);
+                assertNotNull("Authorization header must not be empty", authHeader);
+                assertEquals("Basic YWRtaW46cGFzcw==", authHeader);
+                op.complete();
+            }
+        };
+
+        setPrivateField(service, HARBOR_URI_FIELD_NAME, SAMPLE_HARBOR_URI);
+        setPrivateField(service, HARBOR_CLIENT_FIELD_NAME, client);
+        setPrivateField(service, HARBOR_USER_FIELD_NAME, "admin");
+        setPrivateField(service, HARBOR_PASS_FIELD_NAME, "pass");
+
+        Operation actualOp = Operation.createGet(SAMPLE_PROXY_URI);
+        service.handleRequest(actualOp);
+    }
+
+    private void setPrivateField(HbrApiProxyService service, String fieldName, Object value) {
+        Field field = ReflectionUtils.getField(HbrApiProxyService.class, fieldName);
+        try {
+            field.set(service, value);
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
     }
 
     private void testResponse(Action action, boolean testFailure) {
@@ -260,17 +271,8 @@ public class HbrApiProxyServiceTest {
             }
         };
 
-        Field field = ReflectionUtils.getField(HbrApiProxyService.class, HARBOR_URI_FIELD_NAME);
-        try {
-            field.set(service, SAMPLE_HARBOR_URI);
-        } catch (Throwable e) {
-        }
-
-        field = ReflectionUtils.getField(HbrApiProxyService.class, "client");
-        try {
-            field.set(service, client);
-        } catch (Throwable e) {
-        }
+        setPrivateField(service, HARBOR_URI_FIELD_NAME, SAMPLE_HARBOR_URI);
+        setPrivateField(service, HARBOR_CLIENT_FIELD_NAME, client);
 
         AtomicBoolean completed = new AtomicBoolean();
 
@@ -416,4 +418,5 @@ public class HbrApiProxyServiceTest {
             return null;
         }
     }
+
 }
