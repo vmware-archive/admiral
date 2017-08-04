@@ -245,13 +245,17 @@ def is_blank(my_string):
 
 
 def detect_trust_strategy(uri, **headers):
-    response = requests.head(uri, **headers)
+    headers['verify']=TRUSTED_CERTS
     global trust_strategy_set
     trust_strategy_set = True
-    if not response.ok:
-        print ('Switching to public CA trusts')
-        return False
-    return True
+    try:
+        response = requests.head(uri, **headers)
+        if response.ok:
+            return True
+    except Exception as err:
+        pass
+    return False
+
 
 def dynamic_wrapper(method, uri, headers, data=None):
     args = {
@@ -259,16 +263,17 @@ def dynamic_wrapper(method, uri, headers, data=None):
     }
 
     global use_custom_ca
-    if os.path.exists(TRUSTED_CERTS) and use_custom_ca:
-        args['verify']=TRUSTED_CERTS
-
     if not trust_strategy_set:
         use_custom_ca = detect_trust_strategy(uri, **args)
+
+    if os.path.exists(TRUSTED_CERTS) and use_custom_ca:
+        args['verify']=TRUSTED_CERTS
 
     if data:
         args['data']=data
 
     return getattr(requests, method)(uri, **args)
+
 
 def proceed_with_closure_execution(skip_execution=False):
     closure_uri = os.environ['TASK_URI']
