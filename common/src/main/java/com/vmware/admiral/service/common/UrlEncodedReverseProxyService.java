@@ -46,7 +46,7 @@ public class UrlEncodedReverseProxyService extends StatelessService {
             UriUtils.FILE_SCHEME);
     //Do not perform authorization for static files with these extensions (web page related)
     private static final Set<String> NO_AUTHZ_EXTENSIONS = new HashSet<>(
-            Arrays.asList("html", "htm", "css", "js", "png"));
+            Arrays.asList("html", "htm", "css", "js", "png", "woff", "woff2"));
 
     public static final String SELF_LINK = "/uerp";
     /**
