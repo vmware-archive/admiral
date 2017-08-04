@@ -282,6 +282,7 @@
     "containers": "Containers",
     "networks": "Networks",
     "volumes": "Volumes",
+    "closures": "Closures",
     "library": "Library",
     "templates": "Templates",
     "projectRepositories": "Project repositories",
