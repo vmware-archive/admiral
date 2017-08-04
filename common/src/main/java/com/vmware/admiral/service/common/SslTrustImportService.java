@@ -101,15 +101,18 @@ public class SslTrustImportService extends StatelessService {
             }
 
             X509Certificate[] certificateChain = resolver.getCertificateChain();
+
+            SslTrustCertificateState sslTrustState;
             try {
                 CertificateUtil.validateCertificateChain(certificateChain);
+                // moved in the try/catch block to prevent UI hangs in case of unexpected errors,
+                // e.g. SecurityException thrown by bouncy castle
+                sslTrustState = createSslTrustCertificateState(request, certificateChain);
             } catch (Exception e) {
                 op.fail(e);
                 return;
             }
 
-            SslTrustCertificateState sslTrustState = createSslTrustCertificateState(
-                    request, certificateChain);
 
             if (resolver.isCertsTrusted()) {
                 // No need to store the certificate since it is signed by a known CA.
