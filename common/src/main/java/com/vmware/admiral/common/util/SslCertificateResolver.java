@@ -23,6 +23,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -128,7 +129,8 @@ public class SslCertificateResolver {
     private SslCertificateResolver connect() {
         logger.entering(logger.getName(), "connect");
         connectionCertificates = new ArrayList<>();
-        logger.info("@@@ " + certListToString(connectionCertificates));
+        Throwable[] validationError = new Throwable[1];
+
         // create a SocketFactory without TrustManager (well with one that accepts anything)
         TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
             @Override
@@ -145,15 +147,18 @@ public class SslCertificateResolver {
             @Override
             public void checkServerTrusted(java.security.cert.X509Certificate[] certs,
                     String authType) throws CertificateException {
-                logger.info("@@@ checkServerTrusted: checking " + Arrays.toString(certs));
-                certs[0].checkValidity();
+                logger.finest("checkServerTrusted: checking " + Arrays.toString(certs));
+
+                try {
+                    certs[0].checkValidity();
+                } catch (CertificateException e) {
+                    validationError[0] = e;
+                    logger.severe(e.getMessage());
+                    throw e;
+                }
                 certsTrusted = validateIfTrusted(certs, authType);
 
-                logger.info("@@@ certsTrusted = " + certsTrusted + " ; adding certs");
-                for (X509Certificate certificate : certs) {
-                    connectionCertificates.add(certificate);
-                    logger.info("@@@ " + certListToString(connectionCertificates));
-                }
+                Collections.addAll(connectionCertificates, certs);
             }
         } };
 
@@ -174,7 +179,6 @@ public class SslCertificateResolver {
             SSLSession session = sslSocket.getSession();
             session.invalidate();
         } catch (IOException e) {
-            logger.severe("@@@ IOException : " + e.getMessage());
             if (certsTrusted || !connectionCertificates.isEmpty()) {
                 Utils.logWarning(
                         "Exception while resolving certificate for host: [%s]. Error: %s ",
@@ -193,35 +197,17 @@ public class SslCertificateResolver {
             }
         }
 
-        logger.info("@@@ " + certListToString(connectionCertificates));
         if (connectionCertificates.size() == 0) {
+            String errorMsg = validationError[0] != null ? validationError[0].getMessage() : "-";
             LocalizableValidationException e = new LocalizableValidationException(
-                    "Importing ssl certificate failed for server: " + uri,
-                    "common.certificate.import.failed", uri);
+                    "Importing ssl certificate failed for server: " + uri + ", error: " + errorMsg,
+                    "common.certificate.import.failed", uri, errorMsg);
 
             logger.throwing(logger.getName(), "connect", e);
             throw e;
         }
         logger.exiting(logger.getName(), "connect");
         return this;
-    }
-
-    private String certListToString(List<X509Certificate> l) {
-        if (l == null) {
-            return "connectionCertificates = null";
-        }
-        if (l.isEmpty()) {
-            return "connectionCertificates is empty";
-        }
-        StringBuilder sb = new StringBuilder();
-        sb.append("connectionCertificates = [");
-        for (X509Certificate x : l) {
-            String name = x.getSubjectDN().getName();
-            sb.append(name).append(", ");
-        }
-        sb.setLength(sb.length() - 2);
-        sb.append("] size=").append(l.size());
-        return sb.toString();
     }
 
     private boolean validateIfTrusted(X509Certificate[] certificates, String authType) {
