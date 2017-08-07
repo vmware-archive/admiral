@@ -83,16 +83,24 @@ public class HostInitCommonServiceConfig extends HostInitServiceHelper {
 
         startServices(host, servicesToStart);
 
+        startServiceFactories(host, serviceFactoriesToStart);
+
+        // trigger common initial boot service and wait to finish, it is responsible for populating
+        // configuration properties states
+        waitCommonInitialBootInitialization(host);
+
         if (mockHbrApiProxyService) {
             startServices(host, MockHbrApiProxyService.class);
         } else {
             startServices(host, HbrApiProxyService.class);
         }
+    }
 
-        startServiceFactories(host, serviceFactoriesToStart);
-
-        // start initialization of system documents, posting with pragma to queue a request,
-        // for a service to become available
+    /**
+     * Start initialization of system documents, posting with pragma to queue a request, for a
+     * service to become available
+     */
+    private static void waitCommonInitialBootInitialization(ServiceHost host) {
         Throwable[] t = new Throwable[1];
         CountDownLatch l = new CountDownLatch(1);
         host.sendRequest(Operation
@@ -121,7 +129,6 @@ public class HostInitCommonServiceConfig extends HostInitServiceHelper {
                         + " timed out.");
                 host.log(Level.SEVERE, "Waiting for service availability of common services timed"
                                 + " out: %s", t[0]);
-
             }
         } catch (InterruptedException e1) {
             host.log(Level.SEVERE, "Waiting for service availability of common services was"
