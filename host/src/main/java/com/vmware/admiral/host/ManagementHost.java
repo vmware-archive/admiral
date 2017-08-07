@@ -200,6 +200,16 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
         h.setProcessOwner(true);
         validatePeerArgs();
 
+        // if only secure connection is used, make the auth cookie secure
+        if (h.getPort() == ServiceHost.PORT_VALUE_LISTENER_DISABLED
+                && h.getSecurePort() != ServiceHost.PORT_VALUE_LISTENER_DISABLED) {
+            // Default netty listener is created during startup
+            // getSecureListener will return null here
+            NettyHttpListener listener = new NettyHttpListener(h);
+            listener.setSecureAuthCookie(true);
+            h.setSecureListener(listener);
+        }
+
         ConfigurationState[] configs = ConfigurationService.getConfigurationProperties();
         ConfigurationUtil.initialize(configs);
 
