@@ -15,7 +15,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.common.ManagementUriParts;
@@ -49,7 +48,6 @@ public class LogServiceTest extends ComputeBaseTest {
     }
 
     @Test
-    @Ignore("VBV-1411")
     public void testHandleMaintainance() throws Throwable {
         LogServiceStub logService = new LogServiceStub();
         logService.setHost(host);
