@@ -184,8 +184,8 @@ public class ProjectUtil {
                     List<String> members = roleToUsersLinks.get(AuthRole.PROJECT_MEMBER);
                     List<String> viewers = roleToUsersLinks.get(AuthRole.PROJECT_VIEWER);
 
-                    admins.forEach(a -> expandedState.administrators.add(
-                            userLinkToPrincipal.get(a)));
+                    admins.forEach(a ->
+                            expandedState.administrators.add(userLinkToPrincipal.get(a)));
 
                     members.forEach(m -> expandedState.members.add(userLinkToPrincipal.get(m)));
 
@@ -266,13 +266,13 @@ public class ProjectUtil {
         String defaultProjectGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
                 role.buildRoleWithSuffix(projectId));
 
-        groupLinks.remove(defaultProjectGroupLink);
-
         List<DeferredResult<Principal>> results = new ArrayList<>();
 
         for (String groupLink : groupLinks) {
-            results.add(PrincipalUtil.getPrincipal(service, requestorOperation,
-                    Service.getId(groupLink)));
+            if (!defaultProjectGroupLink.equals(groupLink)) {
+                results.add(PrincipalUtil.getPrincipal(service, requestorOperation,
+                        Service.getId(groupLink)));
+            }
         }
 
         return DeferredResult.allOf(results);
@@ -463,4 +463,5 @@ public class ProjectUtil {
                     requestorService.getSystemAuthorizationContext());
         }
     }
+
 }

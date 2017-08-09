@@ -23,8 +23,6 @@ import java.util.Set;
 import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
 
-import javax.management.ServiceNotFoundException;
-
 import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
 
 import com.vmware.admiral.auth.idm.AuthRole;
@@ -50,6 +48,7 @@ import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
+import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -161,25 +160,17 @@ public class ProjectService extends StatefulService {
             destination.isPublic = this.isPublic;
             destination.description = this.description;
 
-            if (this.administratorsUserGroupLinks != null
-                    && !this.administratorsUserGroupLinks.isEmpty()) {
-                destination.administratorsUserGroupLinks = new HashSet<>(
-                        this.administratorsUserGroupLinks.size());
-                destination.administratorsUserGroupLinks.addAll(this.administratorsUserGroupLinks);
+            if (this.administratorsUserGroupLinks != null) {
+                destination.administratorsUserGroupLinks =
+                        new HashSet<>(this.administratorsUserGroupLinks);
             }
 
-            if (this.membersUserGroupLinks != null
-                    && !this.membersUserGroupLinks.isEmpty()) {
-                destination.membersUserGroupLinks = new HashSet<>(
-                        this.membersUserGroupLinks.size());
-                destination.membersUserGroupLinks.addAll(this.membersUserGroupLinks);
+            if (this.membersUserGroupLinks != null) {
+                destination.membersUserGroupLinks = new HashSet<>(this.membersUserGroupLinks);
             }
 
-            if (this.viewersUserGroupLinks != null
-                    && !this.viewersUserGroupLinks.isEmpty()) {
-                destination.viewersUserGroupLinks = new HashSet<>(
-                        this.viewersUserGroupLinks.size());
-                destination.viewersUserGroupLinks.addAll(this.viewersUserGroupLinks);
+            if (this.viewersUserGroupLinks != null) {
+                destination.viewersUserGroupLinks = new HashSet<>(this.viewersUserGroupLinks);
             }
         }
 
@@ -733,7 +724,7 @@ public class ProjectService extends StatefulService {
 
     private void retrieveExpandedState(ProjectState simpleState, Operation get) {
         ProjectUtil.expandProjectState(this, get, simpleState, getUri())
-                .thenAccept((expandedState) -> get.setBody(expandedState))
+                .thenAccept(get::setBody)
                 .whenCompleteNotify(get);
     }
 
@@ -1025,4 +1016,5 @@ public class ProjectService extends StatefulService {
                 Long.toString(projectIndex));
         return state;
     }
+
 }
