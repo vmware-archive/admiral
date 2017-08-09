@@ -16,7 +16,7 @@ send_transformation_request() {
   fi
 }
 
-URL="http://$1/config/healthcheck"
+URL="https://$1/config/healthcheck"
 status_code=$( curl --max-time 10 -k -H "x-xenon-auth-token: $auth_token" -w %{http_code} -s --output /dev/null $URL)
 if [[ $status_code != 200 ]]; then
   counter=6
@@ -52,7 +52,7 @@ else
   else
     echo "New admiral node is ready for migration: $2"
     echo "Starting migration of the data"
-    migrationBody="{\"sourceNodeGroup\": \"http://$1/core/node-groups/default\"}"
+    migrationBody="{\"sourceNodeGroup\": \"https://$1/core/node-groups/default\"}"
     status_code=$(curl -k --max-time 1200 -X POST -d "$migrationBody" "https://$2/config/migration" -H "Content-type: application/json" -H "x-xenon-auth-token: $3" -w %{http_code} -s --output /dev/null)
     echo "Status code from migration: $status_code"
     if [[ $status_code != 200 ]]; then

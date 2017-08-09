@@ -88,6 +88,7 @@ public class NodeMigrationService extends StatelessService {
         services.remove(ManagementUriParts.HOST_NETWORK_LIST_DATA_COLLECTION);
         services.remove(ManagementUriParts.HOST_VOLUME_LIST_DATA_COLLECTION);
         services.remove(ManagementUriParts.EVENT_TOPIC);
+        services.remove(ManagementUriParts.EXTENSIBILITY_SUBSCRIPTION);
 
         patch.complete();
     }
