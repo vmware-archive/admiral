@@ -12,8 +12,8 @@ components:
       - var: "WORDPRESS_DB_PASSWORD"
         value: "wordpress"
       networks:
-        front: {}
-        back: {}
+      - name: "front"
+      - name: "back"
       ports:
       - host_port: "8000"
         container_port: "80"
@@ -53,9 +53,9 @@ components:
       - var: "MYSQL_PASSWORD"
         value: "wordpress"
       volumes:
-      - "./.data/db:/var/lib/mysql"
+      - "database:/var/lib/mysql"
       networks:
-        back: {}
+      - name: "back"
       log_config:
         type: "json-file"
         config:

@@ -21,8 +21,8 @@ components:
       volumes:
       - "phpconf:/etc/php/conf.d"
       networks:
-        front: {}
-        back: {}
+      - name: "front"
+      - name: "back"
       ports:
       - host_port: "8000"
         container_port: "80"
@@ -71,7 +71,7 @@ components:
       volumes:
       - "database:/var/lib/mysql/data"
       networks:
-        back: {}
+      - name: "back"
       log_config:
         type: "json-file"
         config:

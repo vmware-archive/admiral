@@ -16,7 +16,7 @@ components:
       - var: "MYSQL_PASSWORD"
         value: "wordpress"
       volumes:
-      - "./.data/db:/var/lib/mysql"
+      - "database:/var/lib/mysql"
       restart_policy: "always"
       log_config:
         type: "json-file"

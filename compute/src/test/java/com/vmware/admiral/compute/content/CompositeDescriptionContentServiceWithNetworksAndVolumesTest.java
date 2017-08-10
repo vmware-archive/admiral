@@ -41,7 +41,7 @@ import com.vmware.xenon.common.UriUtils;
  * Test the CompositeDescriptionContentService
  */
 @RunWith(Parameterized.class)
-public class CompositeDescriptionContentServiceWithNetworksAndVolumes extends ComputeBaseTest {
+public class CompositeDescriptionContentServiceWithNetworksAndVolumesTest extends ComputeBaseTest {
 
     private String yaml;
     private boolean hasNetwork;
@@ -63,7 +63,7 @@ public class CompositeDescriptionContentServiceWithNetworksAndVolumes extends Co
         return Arrays.asList(data);
     }
 
-    public CompositeDescriptionContentServiceWithNetworksAndVolumes(String filename,
+    public CompositeDescriptionContentServiceWithNetworksAndVolumesTest(String filename,
             boolean hasNetwork, boolean hasVolume) {
         this.yaml = getContent(filename);
         this.hasNetwork = hasNetwork;
@@ -192,7 +192,7 @@ public class CompositeDescriptionContentServiceWithNetworksAndVolumes extends Co
         assertFalse(yaml.contains("\nvolumes:"));
         assertTrue(yaml.contains("type: \"App.Container\""));
         assertEquals(hasNetwork, yaml.contains("type: \"App.Network\""));
-        assertEquals(hasVolume, yaml.contains("type: \"Volume.Docker\""));
+        assertEquals(hasVolume, yaml.contains("type: \"App.Volume\""));
         validateContent(yaml, hasNetwork, hasVolume);
     }
 
