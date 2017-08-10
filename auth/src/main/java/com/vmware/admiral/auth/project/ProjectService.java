@@ -34,10 +34,8 @@ import com.vmware.admiral.auth.util.UserGroupsUpdater;
 import com.vmware.admiral.common.serialization.ReleaseConstants;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.PropertyUtils;
-import com.vmware.admiral.common.util.QueryUtil;
-import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.admiral.common.util.UniquePropertiesUtil;
 import com.vmware.admiral.service.common.UniquePropertiesService;
-import com.vmware.admiral.service.common.UniquePropertiesService.UniquePropertiesRequest;
 import com.vmware.photon.controller.model.ServiceUtils;
 import com.vmware.photon.controller.model.adapters.util.Pair;
 import com.vmware.photon.controller.model.resources.ResourceState;
@@ -53,7 +51,6 @@ import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
-import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.ResourceGroupService;
 import com.vmware.xenon.services.common.ResourceGroupService.ResourceGroupState;
 import com.vmware.xenon.services.common.RoleService;
@@ -83,6 +80,10 @@ public class ProjectService extends StatefulService {
     public static final String UNIQUE_PROJECT_NAMES_SERVICE_LINK = UriUtils
             .buildUriPath(UniquePropertiesService.FACTORY_LINK,
                     UniquePropertiesService.PROJECT_NAMES_ID);
+
+    public static final String UNIQUE_PROJECT_INDEXES_SERVICE_LINK = UriUtils
+            .buildUriPath(UniquePropertiesService.FACTORY_LINK,
+                    UniquePropertiesService.PROJECT_INDEXES_ID);
 
     public static ProjectState buildDefaultProjectInstance() {
         ProjectState project = new ProjectState();
@@ -291,9 +292,7 @@ public class ProjectService extends StatefulService {
                         projectState.tenantLinks = new ArrayList<>();
                     }
 
-                    if (!projectState.tenantLinks.contains(
-                            projectState.documentSelfLink)) {
-
+                    if (!projectState.tenantLinks.contains(projectState.documentSelfLink)) {
                         projectState.tenantLinks.add(projectState.documentSelfLink);
                     }
 
@@ -308,8 +307,11 @@ public class ProjectService extends StatefulService {
                             post.fail(error);
                             return;
                         }
-                        //Clear already claimed name.
+                        String projectIndexStr = ProjectUtil.getProjectIndex(createBody);
+                        int projectIndex = projectIndexStr == null ? -1 : Integer.parseInt(projectIndexStr);
+                        //Clear already claimed name and project index.
                         freeProjectName(createBody.name)
+                                .thenCompose(ignore -> freeProjectIndex(projectIndex))
                                 .whenComplete((ignore, err) -> post.fail(error));
                         return;
                     }
@@ -494,6 +496,9 @@ public class ProjectService extends StatefulService {
                 .createPost(getHost(), ServiceUriPaths.CORE_QUERY_TASKS)
                 .setBody(queryTask);
 
+        String projectIndexStr = ProjectUtil.getProjectIndex(state);
+        int projectIndex = projectIndexStr == null ? -1 : Integer.parseInt(projectIndexStr);
+
         sendWithDeferredResult(getPlacementsWithProject, QueryTask.class)
                 .thenApply(result -> new Pair<>(result, (Throwable) null))
                 .exceptionally(ex -> new Pair<>(null, ex))
@@ -516,6 +521,7 @@ public class ProjectService extends StatefulService {
                 })
                 .thenCompose(ignore -> deleteDuplicatedRolesAndResourceGroups(state))
                 .thenCompose(ignore -> freeProjectName(state.name))
+                .thenCompose(ignore -> freeProjectIndex(projectIndex))
                 .whenComplete((ignore, ex) -> {
                     if (ex != null) {
                         delete.fail(ex);
@@ -899,7 +905,7 @@ public class ProjectService extends StatefulService {
     private DeferredResult<Integer> generateProjectIndex() {
         int random = ProjectUtil.generateRandomInt();
 
-        return isProjectIndexUsed(random)
+        return claimProjectIndex(random)
                 .thenCompose(isUsed -> {
                     if (!isUsed) {
                         return DeferredResult.completed(random);
@@ -909,97 +915,52 @@ public class ProjectService extends StatefulService {
     }
 
     private DeferredResult<Boolean> claimProjectName(String name) {
-        UniquePropertiesRequest request = new UniquePropertiesRequest();
-        request.toAdd = Collections.singletonList(name);
 
-        DeferredResult<Boolean> result = new DeferredResult<>();
-
-        Operation patch = Operation.createPatch(this, UNIQUE_PROJECT_NAMES_SERVICE_LINK)
-                .setBody(request)
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        if (o.getStatusCode() == Operation.STATUS_CODE_CONFLICT) {
-                            result.complete(true);
-                            return;
-                        }
-                        result.fail(ex);
-                        return;
-                    }
-                    result.complete(false);
-                });
-
-        sendRequest(patch);
-        return result;
+        return UniquePropertiesUtil.claimProperty(this,
+                UniquePropertiesService.PROJECT_NAMES_ID, name);
     }
 
     private DeferredResult<Void> freeProjectName(String name) {
-        UniquePropertiesRequest request = new UniquePropertiesRequest();
-        request.toRemove = Collections.singletonList(name);
 
-        Operation patch = Operation.createPatch(this, UNIQUE_PROJECT_NAMES_SERVICE_LINK)
-                .setBody(request);
-
-        return sendWithDeferredResult(patch)
+        return UniquePropertiesUtil.freeProperty(this,
+                UniquePropertiesService.PROJECT_NAMES_ID, name)
                 .exceptionally(ex -> {
                     logWarning("Unable to free name %s: %s", name, Utils.toString(ex));
                     return null;
-                })
-                .thenAccept(ignore -> {
                 });
 
     }
 
     private DeferredResult<Boolean> updateClaimedProjectName(String newName, String oldName) {
-        UniquePropertiesRequest request = new UniquePropertiesRequest();
-        request.toRemove = Collections.singletonList(oldName);
-        request.toAdd = Collections.singletonList(newName);
-
-        DeferredResult<Boolean> result = new DeferredResult<>();
-
-        Operation patch = Operation.createPatch(this, UNIQUE_PROJECT_NAMES_SERVICE_LINK)
-                .setBody(request)
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        if (o.getStatusCode() == Operation.STATUS_CODE_CONFLICT) {
-                            result.complete(true);
-                            return;
-                        }
-                        result.fail(ex);
-                        return;
-                    }
-                    result.complete(false);
-                });
-
-        sendRequest(patch);
-        return result;
+        return UniquePropertiesUtil.updateClaimedProperty(this,
+                UniquePropertiesService.PROJECT_NAMES_ID, newName, oldName);
     }
 
-    private DeferredResult<Boolean> isProjectIndexUsed(long random) {
+    private DeferredResult<Boolean> claimProjectIndex(int index) {
 
-        DeferredResult<Boolean> result = new DeferredResult<>();
+        return UniquePropertiesUtil.claimProperty(this,
+                UniquePropertiesService.PROJECT_INDEXES_ID, Integer.toString(index));
+    }
 
-        List<ProjectState> foundProjects = new ArrayList<>();
+    private DeferredResult<Void> freeProjectIndex(int index) {
+        if (index < 0) {
+            return DeferredResult.completed(null);
+        }
 
-        Query query = ProjectUtil.buildQueryForProjectsFromProjectIndex(random);
+        return UniquePropertiesUtil.freeProperty(this,
+                UniquePropertiesService.PROJECT_INDEXES_ID, Integer.toString(index))
+                .exceptionally(ex -> {
+                    logWarning("Unable to free project index %d: %s",
+                            index, Utils.toString(ex));
+                    return null;
+                });
 
-        QueryTask queryTask = QueryUtil.buildQuery(ProjectState.class, true, query);
-        QueryUtil.addExpandOption(queryTask);
+    }
 
-        new ServiceDocumentQuery<>(getHost(), ProjectState.class).query(queryTask, (r) -> {
-            if (r.hasException()) {
-                result.fail(r.getException());
-            } else if (r.hasResult()) {
-                foundProjects.add(r.getResult());
-            } else {
-                if (foundProjects.isEmpty()) {
-                    result.complete(false);
-                } else {
-                    result.complete(true);
-                }
-            }
-        });
-
-        return result;
+    private DeferredResult<Boolean> updateClaimedProjectIndex(int newIndex, int oldIndex) {
+        return UniquePropertiesUtil.updateClaimedProperty(this,
+                UniquePropertiesService.PROJECT_INDEXES_ID, Integer.toString(newIndex),
+                Integer.toString(oldIndex));
     }
 
     private ProjectState handleProjectIndex(long projectIndex, ProjectState state) {

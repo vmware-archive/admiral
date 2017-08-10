@@ -33,6 +33,7 @@ public class CommonInitialBootService extends AbstractInitialBootService {
         Collections.addAll(resources, ConfigurationService.getConfigurationProperties());
         resources.add(ResourceNamePrefixService.buildDefaultStateInstance());
         resources.add(buildUniqueProjectNamesInstance());
+        resources.add(buildUniqueProjectIndexesInstance());
 
         ServiceDocument defaultRegistryState = RegistryService.buildDefaultStateInstance(getHost());
         if (defaultRegistryState != null) {
@@ -47,6 +48,14 @@ public class CommonInitialBootService extends AbstractInitialBootService {
         state.uniqueProperties = new ArrayList<>();
         state.documentSelfLink = UriUtils.buildUriPath(UniquePropertiesService.FACTORY_LINK,
                 UniquePropertiesService.PROJECT_NAMES_ID);
+        return state;
+    }
+
+    public static UniquePropertiesState buildUniqueProjectIndexesInstance() {
+        UniquePropertiesState state = new UniquePropertiesState();
+        state.uniqueProperties = new ArrayList<>();
+        state.documentSelfLink = UriUtils.buildUriPath(UniquePropertiesService.FACTORY_LINK,
+                UniquePropertiesService.PROJECT_INDEXES_ID);
         return state;
     }
 

@@ -22,6 +22,7 @@ import com.vmware.xenon.common.StatefulService;
 public class UniquePropertiesService extends StatefulService {
     public static final String FACTORY_LINK = ManagementUriParts.UNIQUE_PROPERTIES;
     public static final String PROJECT_NAMES_ID = "projectNames";
+    public static final String PROJECT_INDEXES_ID = "projectIndexes";
 
     public static class UniquePropertiesState extends ServiceDocument {
         public List<String> uniqueProperties;
@@ -49,7 +50,7 @@ public class UniquePropertiesService extends StatefulService {
     }
 
     @Override
-    public void handlePost(Operation post) {
+    public void handleCreate(Operation post) {
         if (!checkForBody(post)) {
             return;
         }

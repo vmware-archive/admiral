@@ -57,7 +57,6 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.AuthorizationContext;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.Service.Action;
-import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -487,49 +486,6 @@ public abstract class AuthBaseTest extends BaseTestCase {
         host.send(getPrincipal);
         ctx.await();
         return principal[0];
-    }
-
-    protected void assertDocumentExists(String documentLink) {
-        assertNotNull(documentLink);
-
-        host.testStart(1);
-        Operation.createGet(host, documentLink)
-                .setReferer(host.getUri())
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        host.failIteration(e);
-                    } else {
-                        try {
-                            assertNotNull(o.getBodyRaw());
-                            host.completeIteration();
-                        } catch (AssertionError er) {
-                            host.failIteration(er);
-                        }
-                    }
-                }).sendWith(host);
-        host.testWait();
-    }
-
-    protected void assertDocumentNotExists(String documentLink) {
-        assertNotNull(documentLink);
-
-        host.testStart(1);
-        Operation.createGet(host, documentLink)
-                .setReferer(host.getUri())
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        if (e instanceof ServiceNotFoundException) {
-                            host.completeIteration();
-                            return;
-                        }
-
-                        host.failIteration(e);
-                    } else {
-                        host.failIteration(new Exception(
-                                String.format("%s should've not exist!", documentLink)));
-                    }
-                }).sendWith(host);
-        host.testWait();
     }
 
     public void deleteUser(String user) {

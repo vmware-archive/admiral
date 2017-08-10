@@ -44,6 +44,7 @@ import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
+import com.vmware.admiral.service.common.UniquePropertiesService.UniquePropertiesState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.LocalizableValidationException;
@@ -1297,6 +1298,26 @@ public class ProjectServiceTest extends AuthBaseTest {
 
         project1 = createProject("test-name");
         assertNotNull(project1.documentSelfLink);
+    }
+
+    @Test
+    public void testProjectIndexClaim() throws Throwable {
+        ProjectState project = createProject("test-name");
+        String projectIndex = project.customProperties.get(ProjectService
+                .CUSTOM_PROPERTY_PROJECT_INDEX);
+
+        String projectIndexesUri = ProjectService.UNIQUE_PROJECT_INDEXES_SERVICE_LINK;
+        List<String> claimedIndexes = getDocumentNoWait(UniquePropertiesState.class,
+                projectIndexesUri).uniqueProperties;
+
+        assertTrue(claimedIndexes.contains(projectIndex));
+
+        deleteProject(project);
+
+        claimedIndexes = getDocumentNoWait(UniquePropertiesState.class,
+                projectIndexesUri).uniqueProperties;
+
+        assertTrue(!claimedIndexes.contains(projectIndex));
     }
 
 

@@ -236,13 +236,6 @@ public class ProjectUtil {
                 .thenApply((ignore) -> expandedState);
     }
 
-    public static String getProjectIndex(ProjectState state) {
-        if (state == null || state.customProperties == null) {
-            return null;
-        }
-        return state.customProperties.get(ProjectService.CUSTOM_PROPERTY_PROJECT_INDEX);
-    }
-
     private static DeferredResult<List<Principal>> getGroupPrincipals(Service service,
             Operation requestorOperation, Set<String> groupLinks, String projectId,
             AuthRole role) {
@@ -462,6 +455,16 @@ public class ProjectUtil {
             requestorService.setAuthorizationContext(op,
                     requestorService.getSystemAuthorizationContext());
         }
+    }
+
+    public static String getProjectIndex(ProjectState state) {
+        if (state.customProperties == null
+                || state.customProperties.isEmpty()
+                || !state.customProperties.containsKey(
+                        ProjectService.CUSTOM_PROPERTY_PROJECT_INDEX)) {
+            return null;
+        }
+        return state.customProperties.get(ProjectService.CUSTOM_PROPERTY_PROJECT_INDEX);
     }
 
 }
