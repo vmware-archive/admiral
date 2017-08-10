@@ -168,7 +168,6 @@ public class SslCertificateResolver {
                 sslContext.init(null, trustAllCerts, new SecureRandom());
             }
         } catch (KeyManagementException | NoSuchAlgorithmException e) {
-            logger.throwing(logger.getName(), "connect", e);
             throw new LocalizableValidationException(e, "Failed to initialize SSL context.",
                     "common.ssh.context.init");
         }
@@ -184,7 +183,6 @@ public class SslCertificateResolver {
                         "Exception while resolving certificate for host: [%s]. Error: %s ",
                         uri, e.getMessage());
             } else {
-                logger.throwing(logger.getName(), "connect", e);
                 if (e instanceof SocketTimeoutException) {
                     throw new LocalizableValidationException(e, "Connection timeout",
                             "common.connection.timeout");

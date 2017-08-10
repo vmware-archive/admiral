@@ -12,6 +12,7 @@
 package com.vmware.admiral.compute;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.security.KeyPair;
 import java.security.cert.X509Certificate;
@@ -315,9 +316,9 @@ public class ConfigureHostOverSshTaskService extends
     public void uploadInstaller(ConfigureHostOverSshTaskServiceState state,
             AuthCredentialsServiceState credentials) {
         byte[] data = null;
-        try {
-            data = IOUtils.toByteArray(Thread.currentThread().getContextClassLoader()
-                    .getResourceAsStream(INSTALLER_RESOURCE));
+        try (InputStream stream = Thread.currentThread().getContextClassLoader()
+                .getResourceAsStream(INSTALLER_RESOURCE)) {
+            data = IOUtils.toByteArray(stream);
             getSshServiceUtil().upload(state.address, credentials, data,
                     "installer/" + INSTALLER_RESOURCE,
                     (op, failure) -> {

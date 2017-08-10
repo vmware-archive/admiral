@@ -28,7 +28,6 @@ import javax.net.ssl.X509KeyManager;
 
 import com.vmware.photon.controller.model.security.util.CertificateUtil;
 import com.vmware.xenon.common.LocalizableValidationException;
-import com.vmware.xenon.common.Utils;
 
 /**
  * KeyManager that delegates to one of multiple KeyManagers based on alias. Each delegate KeyManager
@@ -131,8 +130,8 @@ public class DelegatingX509KeyManager extends X509ExtendedKeyManager {
         try {
             peerCertificates = handshakeSession.getPeerCertificates();
         } catch (SSLPeerUnverifiedException e) {
-            logger.info("Cannot choose client alias: error getting peer certificate " +
-                    Utils.toString(e));
+            logger.info(
+                    "Cannot choose client alias: error getting peer certificate " + e.getMessage());
             return null;
         }
 
@@ -145,7 +144,7 @@ public class DelegatingX509KeyManager extends X509ExtendedKeyManager {
         try {
             cert = (X509Certificate) peerCertificates[0];
         } catch (ClassCastException e) {
-            logger.info("Cannot choose client alias: not a X509 certificate: " + Utils.toString(e));
+            logger.info("Cannot choose client alias: not a X509 certificate: " + e.getMessage());
             return null;
         }
 
