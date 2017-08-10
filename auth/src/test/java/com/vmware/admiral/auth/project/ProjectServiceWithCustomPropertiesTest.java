@@ -32,7 +32,7 @@ import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
 
 public class ProjectServiceWithCustomPropertiesTest extends AuthBaseTest {
 
-    private static final String PROJECT_NAME = "testName";
+    private static final String PROJECT_NAME = "test-name";
     private static final String PROJECT_DESCRIPTION = "testDescription";
     private static final boolean PROJECT_IS_PUBLIC = false;
 
@@ -71,7 +71,7 @@ public class ProjectServiceWithCustomPropertiesTest extends AuthBaseTest {
 
     @Test
     public void testSetCustomPropertyOnExistingProject() throws Throwable {
-        project = createProject("test-name");
+        project = createProject("test-name1");
 
         ProjectState patchState = new ProjectState();
         patchState.customProperties = createCustomPropertiesMap(CUSTOM_PROP_KEY_A,
@@ -103,7 +103,7 @@ public class ProjectServiceWithCustomPropertiesTest extends AuthBaseTest {
         final String anotherProperty = "anotherProperty";
         final String searchValue = "searchValue";
         final String anotherValue = "anotherValue";
-        final String targetProjectName = "targetProject";
+        final String targetProjectName = "target-project";
 
         // create some projects. Later we want to select only one of them (targetProject) based on
         // the searchValue of the searchProperty

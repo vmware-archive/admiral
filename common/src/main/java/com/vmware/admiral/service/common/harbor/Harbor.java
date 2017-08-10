@@ -11,12 +11,15 @@
 
 package com.vmware.admiral.service.common.harbor;
 
+import java.util.regex.Pattern;
+
 import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.xenon.common.UriUtils;
 
 public interface Harbor {
 
     String ENDPOINT_REPOSITORIES = "/repositories";
+    String ENDPOINT_PROJECTS = "/projects";
 
     String QUERY_PARAM_PROJECT_ID = "project_id";
     String QUERY_PARAM_DETAIL = "detail";
@@ -34,5 +37,7 @@ public interface Harbor {
     String DEFAULT_REGISTRY_LINK = UriUtils.buildUriPath(RegistryService.FACTORY_LINK,
             DEFAULT_REGISTRY_NAME);
     String DEFAULT_REGISTRY_USER_PREFIX = "harbor-vic-";
+
+    Pattern PROJECT_NAME_PATTERN = Pattern.compile("[a-z0-9]+(?:[._-][a-z0-9]+)*");
 
 }

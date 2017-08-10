@@ -35,7 +35,7 @@ import com.vmware.xenon.common.Utils;
 
 public class ProjectFactoryServiceTest extends AuthBaseTest {
 
-    private static final String PROJECT_NAME = "testName";
+    private static final String PROJECT_NAME = "test-name";
     private static final String PROJECT_DESCRIPTION = "testDescription";
     private static final boolean PROJECT_IS_PUBLIC = false;
 
@@ -109,10 +109,10 @@ public class ProjectFactoryServiceTest extends AuthBaseTest {
 
     @Test
     public void testGetPublicProjectOnly() throws Throwable {
-        ProjectState testProject1 = createProject("testProject1", "test", true);
-        ProjectState testProject2 = createProject("testProject2", "test", true);
-        ProjectState testProject3 = createProject("testProject3", "test", false);
-        ProjectState testProject4 = createProject("testProject4", "test", false);
+        ProjectState testProject1 = createProject("test-project1", "test", true);
+        ProjectState testProject2 = createProject("test-project2", "test", true);
+        ProjectState testProject3 = createProject("test-project3", "test", false);
+        ProjectState testProject4 = createProject("test-project4", "test", false);
         assertDocumentExists(testProject1.documentSelfLink);
         assertDocumentExists(testProject2.documentSelfLink);
         assertDocumentExists(testProject3.documentSelfLink);

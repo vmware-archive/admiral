@@ -38,7 +38,7 @@ import com.vmware.xenon.services.common.UserGroupService;
 
 public class ProjectRolesHandlerTest extends AuthBaseTest {
 
-    private static final String PROJECT_NAME = "testName";
+    private static final String PROJECT_NAME = "test-name";
     private static final String PROJECT_DESCRIPTION = "testDescription";
     private static final boolean PROJECT_IS_PUBLIC = false;
 

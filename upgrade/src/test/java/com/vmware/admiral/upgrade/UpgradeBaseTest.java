@@ -29,7 +29,7 @@ import com.vmware.admiral.host.HostInitUpgradeServiceConfig;
 import com.vmware.xenon.common.test.VerificationHost;
 
 public abstract class UpgradeBaseTest extends BaseTestCase {
-    protected static final String PROJECT_NAME_TEST_PROJECT_1 = "testProject1";
+    protected static final String PROJECT_NAME_TEST_PROJECT_1 = "test-project1";
 
     @Before
     public void beforeForUpgradeBase() throws Throwable {

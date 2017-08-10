@@ -190,7 +190,7 @@ public class AuthContentServiceTest extends AuthBaseTest {
                     }
                     return null;
                 })
-                .filter(p -> p.name.equals("testProject3"))
+                .filter(p -> p.name.equals("test.project3"))
                 .collect(Collectors.toList()).get(0);
 
         String adminsGroup = projectState.administratorsUserGroupLinks.iterator().next();

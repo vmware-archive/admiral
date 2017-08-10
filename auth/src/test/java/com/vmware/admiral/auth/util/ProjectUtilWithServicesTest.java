@@ -48,7 +48,7 @@ import com.vmware.xenon.services.common.UserService.UserState;
 
 public class ProjectUtilWithServicesTest extends AuthBaseTest {
 
-    private static final String TEST_PROJECT_NAME = "testProject";
+    private static final String TEST_PROJECT_NAME = "test-project";
     private static final String TEST_CLUSTER_NAME = "testCluster";
     private static final String TEST_TEMPLATE_NAME = "testTemplate";
 

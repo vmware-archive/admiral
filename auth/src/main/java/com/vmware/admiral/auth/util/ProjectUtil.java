@@ -122,19 +122,18 @@ public class ProjectUtil {
         expandedState.members = new ArrayList<>();
         expandedState.viewers = new ArrayList<>();
 
-        if (isNullOrEmpty(simpleState.membersUserGroupLinks)
-                && isNullOrEmpty(simpleState.administratorsUserGroupLinks)
-                && isNullOrEmpty(simpleState.viewersUserGroupLinks)) {
-            return DeferredResult.completed(expandedState);
-        }
-
         String projectId = Service.getId(simpleState.documentSelfLink);
 
-        String adminsGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+        String adminsGroupLink = isNullOrEmpty(simpleState.administratorsUserGroupLinks) ? null :
+                UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
                 AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(projectId));
-        String membersGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+
+        String membersGroupLink = isNullOrEmpty(simpleState.membersUserGroupLinks) ? null :
+                UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
                 AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(projectId));
-        String viewersGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+
+        String viewersGroupLink = isNullOrEmpty(simpleState.viewersUserGroupLinks) ? null :
+                UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
                 AuthRole.PROJECT_VIEWER.buildRoleWithSuffix(projectId));
 
         Map<String, UserState> userStates = new ConcurrentHashMap<>();
@@ -360,9 +359,7 @@ public class ProjectUtil {
             String groupLink, URI referer) {
 
         if (groupLink == null || groupLink.isEmpty()) {
-            return DeferredResult.failed(new LocalizableValidationException(
-                    String.format(PROPERTY_CANNOT_BE_EMPTY_MESSAGE_FORMAT, "groupLink"),
-                    "common.assertion.property.not.empty", "groupLink"));
+            return DeferredResult.completed(new ArrayList<>());
         }
 
         Operation groupGet = Operation.createGet(service, groupLink).setReferer(referer);

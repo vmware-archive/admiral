@@ -44,7 +44,11 @@ import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
+import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
+import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.admiral.service.common.UniquePropertiesService.UniquePropertiesState;
+import com.vmware.admiral.service.common.harbor.Harbor;
+import com.vmware.admiral.service.common.harbor.mock.MockHarborApiProxyService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.LocalizableValidationException;
@@ -67,7 +71,7 @@ import com.vmware.xenon.services.common.UserService.UserState;
 
 public class ProjectServiceTest extends AuthBaseTest {
 
-    private static final String PROJECT_NAME = "testName";
+    private static final String PROJECT_NAME = "test.name";
     private static final String PROJECT_DESCRIPTION = "testDescription";
     private static final boolean PROJECT_IS_PUBLIC = false;
 
@@ -306,7 +310,7 @@ public class ProjectServiceTest extends AuthBaseTest {
     @Test
     public void testPatch() throws Throwable {
 
-        final String patchedName = "patchedName";
+        final String patchedName = "patched-name";
         final String patchedDescription = "patchedDescription";
         final boolean patchedIsPublic = true;
 
@@ -452,7 +456,6 @@ public class ProjectServiceTest extends AuthBaseTest {
             return !admin.userGroupLinks.contains(groupLink);
         });
 
-
         // verify result
         expandedState = getExpandedProjectState(project.documentSelfLink);
         assertNotNull(expandedState.members);
@@ -479,7 +482,7 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertEquals(USER_EMAIL_BASIC_USER, expandedState.viewers.iterator().next().email);
 
         // Patch name, public flag and roles at the same time
-        final String patchedName = "patchedName";
+        final String patchedName = "patched-name";
         final boolean patchedPublicFlag = !PROJECT_IS_PUBLIC;
         ProjectMixedPatchDto patchBody = new ProjectMixedPatchDto();
         patchBody.name = patchedName;
@@ -530,7 +533,7 @@ public class ProjectServiceTest extends AuthBaseTest {
 
     @Test
     public void testPut() throws Throwable {
-        final String updatedName = "updatedName";
+        final String updatedName = "updated-name";
         final String updatedDescription = "updatedDescription";
         final boolean updatedIsPublic = !PROJECT_IS_PUBLIC;
 
@@ -1078,14 +1081,6 @@ public class ProjectServiceTest extends AuthBaseTest {
             assertTrue(ex instanceof IllegalStateException);
             assertTrue(ex.getMessage().contains("test-name"));
         }
-
-        try {
-            createProjectExpectFailure("test-Name");
-            fail("Project create with same name (case insensitive) should've failed");
-        } catch (Exception ex) {
-            assertTrue(ex instanceof IllegalStateException);
-            assertTrue(ex.getMessage().contains("test-Name"));
-        }
     }
 
     @Test
@@ -1104,14 +1099,6 @@ public class ProjectServiceTest extends AuthBaseTest {
             assertTrue(ex.getMessage().contains("test-name"));
         }
 
-        state.name = "test-Name";
-        try {
-            updateProject(state);
-            fail("Project update with same name (case insensitive) should've failed");
-        } catch (Exception ex) {
-            assertTrue(ex instanceof IllegalStateException);
-            assertTrue(ex.getMessage().contains("test-Name"));
-        }
     }
 
     @Test
@@ -1130,14 +1117,6 @@ public class ProjectServiceTest extends AuthBaseTest {
             assertTrue(ex.getMessage().contains("test-name"));
         }
 
-        state.name = "test-Name";
-        try {
-            patchProject(state, state.documentSelfLink);
-            fail("Project update with same name (case insensitive) should've failed");
-        } catch (Exception ex) {
-            assertTrue(ex.getCause() instanceof IllegalStateException);
-            assertTrue(ex.getMessage().contains("test-Name"));
-        }
     }
 
     @Test
@@ -1176,15 +1155,10 @@ public class ProjectServiceTest extends AuthBaseTest {
     }
 
     @Test
-    // @Ignore("Once proper synchronization is implemented, remove the ignore.")
     public void testCreateMultipleProjectsAtOnceWithSameName() throws Throwable {
         ProjectState state = new ProjectState();
         for (int i = 0; i < 10; i++) {
-            if (i % 2 == 0) {
-                state.name = "test-name";
-            } else {
-                state.name = "test-Name";
-            }
+            state.name = "test-name";
             createProjectNoWait(state);
         }
 
@@ -1272,7 +1246,6 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertTrue(expandedProjectState.members.get(0).id.equals(USER_EMAIL_CONNIE));
     }
 
-
     @Test
     public void testProjectNameIsUnclaimedAfterUpdateOrDelete() throws Throwable {
         ProjectState project = createProject("test-name");
@@ -1320,6 +1293,64 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertTrue(!claimedIndexes.contains(projectIndex));
     }
 
+    @Test
+    public void testProjectNameValidation() throws Throwable {
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < 255; i++) {
+            builder.append("a");
+        }
+        String tooLongName = builder.toString();
+        String[] invalidNames = new String[] { "testName", "TestName", "test&name", "test*name",
+                tooLongName };
+
+        for (String invalidName : invalidNames) {
+            try {
+                createProject(invalidName);
+                fail("Creation of project should have failed due to invalid name");
+            } catch (Throwable ex) {
+                assertTrue(ex instanceof LocalizableValidationException);
+            }
+        }
+
+        String[] validNames = new String[] { "testname", "test123name", "test-name", "test_name",
+                "test.project.name", "1235" };
+
+        for (String validName : validNames) {
+            ProjectState state = createProject(validName);
+            assertNotNull(state.documentSelfLink);
+        }
+    }
+
+    @Test
+    public void testHarborVerifyOnProjectDelete() throws Throwable {
+        ConfigurationState mockHarborUri = new ConfigurationState();
+        mockHarborUri.key = Harbor.CONFIGURATION_URL_PROPERTY_NAME;
+        mockHarborUri.value = "test.uri";
+        mockHarborUri.documentSelfLink = Harbor.CONFIGURATION_URL_PROPERTY_NAME;
+
+        mockHarborUri = doPost(mockHarborUri, ConfigurationFactoryService.SELF_LINK);
+        assertNotNull(mockHarborUri);
+        assertNotNull(mockHarborUri.documentSelfLink);
+
+        ProjectState test = createProject("test-project");
+        assertNotNull(test.documentSelfLink);
+
+        MockHarborApiProxyService.IS_PROJECT_DELETABLE.set(true);
+        deleteProject(test);
+
+        test = createProject("test-project");
+        assertNotNull(test.documentSelfLink);
+
+        MockHarborApiProxyService.IS_PROJECT_DELETABLE.set(false);
+        try {
+            deleteProject(test);
+        } catch (Throwable ex) {
+            assertTrue(ex.getCause() instanceof IllegalStateException);
+            assertTrue(ex.getCause().getMessage().contains("Project is not deletable: mocked "
+                    + "message"));
+        }
+
+    }
 
     private void createProjectNoWait(ProjectState state) {
         Operation op = Operation.createPost(host, ProjectFactoryService.SELF_LINK)

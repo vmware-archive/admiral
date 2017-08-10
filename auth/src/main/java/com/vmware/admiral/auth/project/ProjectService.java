@@ -11,6 +11,9 @@
 
 package com.vmware.admiral.auth.project;
 
+import static com.vmware.admiral.service.common.harbor.HarborApiProxyService.validateProjectDelete;
+import static com.vmware.admiral.service.common.harbor.HarborApiProxyService.validateProjectName;
+
 import java.net.URI;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -66,6 +69,7 @@ public class ProjectService extends StatefulService {
 
     public static final String PROJECT_NAME_ALREADY_USED_MESSAGE = "Project name '%s' "
             + "is already used.";
+
     public static final String PROJECT_NAME_ALREADY_USED_CODE = "auth.projects.name.used";
 
     public static final String FIELD_NAME_CUSTOM_PROPERTIES = "customProperties";
@@ -499,7 +503,20 @@ public class ProjectService extends StatefulService {
         String projectIndexStr = ProjectUtil.getProjectIndex(state);
         int projectIndex = projectIndexStr == null ? -1 : Integer.parseInt(projectIndexStr);
 
-        sendWithDeferredResult(getPlacementsWithProject, QueryTask.class)
+        validateProjectDelete(this, ProjectUtil.getProjectIndex(state))
+                .thenCompose(hbrResponse -> {
+                    if (hbrResponse.deletable == null) {
+                        return DeferredResult.failed(new IllegalStateException(
+                                "null response from harbor if project is deletable."));
+                    }
+
+                    if (!hbrResponse.deletable) {
+                        return DeferredResult.failed(new IllegalStateException(
+                                "Project is not deletable: " + hbrResponse.message));
+                    }
+
+                    return sendWithDeferredResult(getPlacementsWithProject, QueryTask.class);
+                })
                 .thenApply(result -> new Pair<>(result, (Throwable) null))
                 .exceptionally(ex -> new Pair<>(null, ex))
                 .thenCompose(pair -> {
@@ -737,7 +754,7 @@ public class ProjectService extends StatefulService {
 
     private void validateState(ProjectState state) {
         Utils.validateState(getStateDescription(), state);
-        AssertUtil.assertNotNullOrEmpty(state.name, ProjectState.FIELD_NAME_NAME);
+        validateProjectName(state.name);
     }
 
     private DeferredResult<ProjectState> createProjectUserGroups(ProjectState projectState) {

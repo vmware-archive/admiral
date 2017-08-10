@@ -16,16 +16,23 @@ import static com.vmware.admiral.common.util.UriUtilsExtended.getReverseProxyLoc
 
 import java.net.URI;
 import java.util.Base64;
+import java.util.concurrent.CompletionException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.common.util.ServiceClientFactory;
+import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
+import com.vmware.xenon.common.DeferredResult;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceClient;
+import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
 
@@ -36,11 +43,29 @@ public class HarborApiProxyService extends StatelessService {
 
     public static final String SELF_LINK = ManagementUriParts.HBR_REVERSE_PROXY;
 
+    private static final String PROJECT_NAME_CRITERIA_MESSAGE =
+            "Project name is allowed to contain alpha-numeric characters, periods, dashes and "
+                    + "underscores, lowercase only.";
+
+    private static final String PROJECT_NAME_CRITERIA_CODE = "auth.projects.name.criteria";
+
+    private static final String PROJECT_NAME_LENGTH_MESSAGE =
+            "Maximum allowed length for project name is 254 characters.";
+
+    private static final String PROJECT_NAME_LENGTH_CODE = "auth.projects.name.length";
+
     private volatile URI harborUri;
     private volatile ServiceClient client;
     private String harborUser;
     private String harborPassword;
     private String harborAuthHeader;
+
+    public static class HarborProjectDeleteResponse {
+
+        public Boolean deletable;
+
+        public String message;
+    }
 
     public HarborApiProxyService() {
         super.toggleOption(ServiceOption.URI_NAMESPACE_OWNER, true);
@@ -200,6 +225,72 @@ public class HarborApiProxyService extends StatelessService {
                 harborAuthHeader = new String(Base64.getEncoder().encode(s.getBytes()));
                 op.addRequestHeader("Authorization", "Basic " + harborAuthHeader);
             }
+        }
+    }
+
+    public static DeferredResult<String> getHarborUrl(Service service) {
+        Operation getConfigProp = Operation.createGet(service, UriUtils.buildUriPath(
+                ConfigurationFactoryService.SELF_LINK, Harbor.CONFIGURATION_URL_PROPERTY_NAME));
+
+        DeferredResult<String> result = new DeferredResult<>();
+
+        service.sendWithDeferredResult(getConfigProp, ConfigurationState.class)
+                .thenAccept(state -> result.complete(state.value))
+                .exceptionally(ex -> {
+                    ex = (ex instanceof CompletionException) ? ex.getCause() : ex;
+                    if (ex instanceof ServiceNotFoundException) {
+                        result.complete(null);
+                    } else {
+                        result.fail(ex);
+                    }
+                    return null;
+                });
+
+        return result;
+    }
+
+    public static DeferredResult<HarborProjectDeleteResponse> validateProjectDelete(Service service,
+            String projectIndex) {
+
+        if (projectIndex == null || projectIndex.isEmpty()) {
+            return DeferredResult.failed(new IllegalStateException(
+                    "Project index is null or empty."));
+        }
+
+        DeferredResult<String> harborUrl = getHarborUrl(service);
+
+        return harborUrl.thenCompose(url -> {
+            // If there is harbor configured continue the project removal.
+            if (url == null || url.isEmpty()) {
+                HarborProjectDeleteResponse hbrResp = new HarborProjectDeleteResponse();
+                hbrResp.deletable = true;
+                return DeferredResult.completed(hbrResp);
+            }
+
+            String uri = UriUtils.buildUriPath(HarborApiProxyService.SELF_LINK,
+                    buildHarborProjectDeleteVerifyLink(projectIndex));
+
+            Operation verifyProject = Operation.createGet(service, uri);
+
+            return service.sendWithDeferredResult(verifyProject, HarborProjectDeleteResponse.class);
+        });
+    }
+
+    private static String buildHarborProjectDeleteVerifyLink(String projectIndex) {
+        return UriUtils.buildUriPath("/api/projects", projectIndex, "/_deletable");
+    }
+
+    public static void validateProjectName(String name) {
+        AssertUtil.assertNotNullOrEmpty(name, "name");
+
+        if (!Harbor.PROJECT_NAME_PATTERN.matcher(name).matches()) {
+            throw new LocalizableValidationException(PROJECT_NAME_CRITERIA_MESSAGE,
+                    PROJECT_NAME_CRITERIA_CODE);
+        }
+
+        if (name.length() > 254) {
+            throw new LocalizableValidationException(PROJECT_NAME_LENGTH_MESSAGE,
+                    PROJECT_NAME_LENGTH_CODE);
         }
     }
 

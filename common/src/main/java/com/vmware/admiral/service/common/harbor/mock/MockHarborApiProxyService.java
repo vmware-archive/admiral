@@ -11,14 +11,18 @@
 
 package com.vmware.admiral.service.common.harbor.mock;
 
+import static com.vmware.admiral.service.common.harbor.Harbor.ENDPOINT_PROJECTS;
+
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.service.common.harbor.Harbor;
+import com.vmware.admiral.service.common.harbor.HarborApiProxyService.HarborProjectDeleteResponse;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
@@ -32,6 +36,8 @@ public class MockHarborApiProxyService extends StatelessService {
 
     public static final int MOCKED_PROJECT_ID = 1;
     public static final Map<String, Map<String, Object>> mockedRepositories;
+
+    public static final AtomicBoolean IS_PROJECT_DELETABLE = new AtomicBoolean(false);
 
     private static final String REPOSITORY_1_NAME = "library/alpine";
     private static final String REPOSITORY_2_NAME = "library/alpine-again";
@@ -76,6 +82,8 @@ public class MockHarborApiProxyService extends StatelessService {
         URI requestUri = op.getUri();
         if (isRepositoriesRequest(requestUri)) {
             handleRepositoryGet(op);
+        } else if (isProjectDeleteVerifyRequest(requestUri)) {
+            handleProjectDeleteVerify(op);
         } else {
             logWarning("Unsupported URI path: %s", getHarborPath(requestUri.getPath()));
             op.fail(new IllegalStateException(
@@ -110,6 +118,17 @@ public class MockHarborApiProxyService extends StatelessService {
         }
     }
 
+    private void handleProjectDeleteVerify(Operation get) {
+        HarborProjectDeleteResponse resp = new HarborProjectDeleteResponse();
+        if (IS_PROJECT_DELETABLE.get()) {
+            resp.deletable = true;
+        } else {
+            resp.deletable = false;
+            resp.message = "mocked message";
+        }
+        get.setBody(resp).complete();
+    }
+
     private void handleDetailedRepositoryGet(Operation get) {
         logInfo("Handling detailed repository GET");
         get.setBody(new ArrayList<>(mockedRepositories.values()));
@@ -135,6 +154,21 @@ public class MockHarborApiProxyService extends StatelessService {
         String bhrRepos = HBR_API_BASE_ENDPOINT + Harbor.ENDPOINT_REPOSITORIES;
         return path.equalsIgnoreCase(Harbor.ENDPOINT_REPOSITORIES)
                 || path.equalsIgnoreCase(bhrRepos);
+    }
+
+    private boolean isProjectDeleteVerifyRequest(URI requestUri) {
+        if (requestUri == null) {
+            return false;
+        }
+
+        String path = getHarborPath(requestUri.getPath());
+
+        if (path == null || path.isEmpty()) {
+            return false;
+        }
+
+        return path.startsWith("/" + HBR_API_BASE_ENDPOINT + ENDPOINT_PROJECTS)
+                && path.endsWith("_deletable");
     }
 
     private String getHarborPath(String path) {

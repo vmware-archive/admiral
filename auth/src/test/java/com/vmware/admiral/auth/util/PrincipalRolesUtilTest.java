@@ -139,7 +139,7 @@ public class PrincipalRolesUtilTest extends AuthBaseTest {
         // member in 2nd project.
 
         // Create first project and assign fritz as project admin.
-        ProjectState firstProject = createProject("firstProject");
+        ProjectState firstProject = createProject("first-project");
         assertNotNull(firstProject.documentSelfLink);
         ProjectRoles projectRoles = new ProjectRoles();
         PrincipalRoleAssignment admins = new PrincipalRoleAssignment();
@@ -148,7 +148,7 @@ public class PrincipalRolesUtilTest extends AuthBaseTest {
         doPatch(projectRoles, firstProject.documentSelfLink);
 
         // Create second project and assign fritz as project member.
-        ProjectState secondProject = createProject("secondProject");
+        ProjectState secondProject = createProject("second-project");
         assertNotNull(secondProject.documentSelfLink);
         projectRoles = new ProjectRoles();
         PrincipalRoleAssignment members = new PrincipalRoleAssignment();
@@ -255,7 +255,7 @@ public class PrincipalRolesUtilTest extends AuthBaseTest {
                 PrincipalService.ROLES_SUFFIX));
 
         // Create first project and assign nestedGroup1 as project admin.
-        ProjectState firstProject = createProject("firstProject");
+        ProjectState firstProject = createProject("first-project");
         assertNotNull(firstProject.documentSelfLink);
         ProjectRoles projectRoles = new ProjectRoles();
         PrincipalRoleAssignment admins = new PrincipalRoleAssignment();
@@ -264,7 +264,7 @@ public class PrincipalRolesUtilTest extends AuthBaseTest {
         doPatch(projectRoles, firstProject.documentSelfLink);
 
         // Create second project and assign nestedGroup2 as project member.
-        ProjectState secondProject = createProject("secondProject");
+        ProjectState secondProject = createProject("second-project");
         assertNotNull(secondProject.documentSelfLink);
         projectRoles = new ProjectRoles();
         PrincipalRoleAssignment members = new PrincipalRoleAssignment();
