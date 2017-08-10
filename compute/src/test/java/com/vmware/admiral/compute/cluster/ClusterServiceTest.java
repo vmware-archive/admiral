@@ -126,6 +126,11 @@ public class ClusterServiceTest extends ComputeBaseTest {
         Map<String, ComputeState> allComputesExpand = getAllComputeExpand();
         assertTrue(allComputesExpand.keySet().size() == 1);
 
+        List<String> placementZonesLinks = getPlacementZonesLinks();
+        assertEquals(2, placementZonesLinks.size());
+        List<String> placementsLinks = getPlacementsLinks();
+        assertEquals(2, placementsLinks.size());
+
         deleteCluster(Service.getId(clusterDto.documentSelfLink));
 
         allClustersExpand = getClustersExpand();
@@ -133,6 +138,11 @@ public class ClusterServiceTest extends ComputeBaseTest {
         assertTrue(!allClustersExpand.keySet().contains(clusterDto.documentSelfLink));
         allComputesExpand = getAllComputeExpand();
         assertTrue(allComputesExpand.keySet().isEmpty());
+
+        placementZonesLinks = getPlacementZonesLinks();
+        assertEquals(1, placementZonesLinks.size());
+        placementsLinks = getPlacementsLinks();
+        assertEquals(1, placementsLinks.size());
     }
 
     @Test
@@ -152,6 +162,11 @@ public class ClusterServiceTest extends ComputeBaseTest {
         Map<String, ComputeState> allComputesExpand = getAllComputeExpand();
         assertTrue(allComputesExpand.keySet().size() == 1);
 
+        List<String> placementZonesLinks = getPlacementZonesLinks();
+        assertEquals(2, placementZonesLinks.size());
+        List<String> placementsLinks = getPlacementsLinks();
+        assertEquals(2, placementsLinks.size());
+
         deleteCluster(Service.getId(clusterDto.documentSelfLink));
 
         allClustersExpand = getClustersExpand();
@@ -159,6 +174,11 @@ public class ClusterServiceTest extends ComputeBaseTest {
         assertTrue(!allClustersExpand.keySet().contains(clusterDto.documentSelfLink));
         allComputesExpand = getAllComputeExpand();
         assertTrue(allComputesExpand.keySet().isEmpty());
+
+        placementZonesLinks = getPlacementZonesLinks();
+        assertEquals(1, placementZonesLinks.size());
+        placementsLinks = getPlacementsLinks();
+        assertEquals(1, placementsLinks.size());
     }
 
     @Test
@@ -683,6 +703,68 @@ public class ClusterServiceTest extends ComputeBaseTest {
                         } catch (Throwable er) {
                             host.log(Level.SEVERE,
                                     "Failed to retrieve created cluster DTO from response: %s",
+                                    Utils.toString(er));
+                            host.failIteration(er);
+                        }
+                    }
+                });
+
+        host.testStart(1);
+        host.send(get);
+        host.testWait();
+
+        return result;
+    }
+
+    private List<String> getPlacementZonesLinks() {
+        List<String> result = new LinkedList<>();
+        URI uri = UriUtils.buildUri(host,
+                ResourcePoolService.FACTORY_LINK);
+        Operation get = Operation.createGet(host, uri.getPath())
+                .setReferer(host.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        host.log(Level.SEVERE, "Failed to get cluster: %s", Utils.toString(ex));
+                        host.failIteration(ex);
+                    } else {
+                        try {
+                            result.addAll(
+                                    o.getBody(ServiceDocumentQueryResult.class).documentLinks);
+                            host.completeIteration();
+                        } catch (Throwable er) {
+                            host.log(Level.SEVERE,
+                                    "Failed to retrieve placement zones: %s",
+                                    Utils.toString(er));
+                            host.failIteration(er);
+                        }
+                    }
+                });
+
+        host.testStart(1);
+        host.send(get);
+        host.testWait();
+
+        return result;
+    }
+
+    private List<String> getPlacementsLinks() {
+        List<String> result = new LinkedList<>();
+        URI uri = UriUtils.buildUri(host,
+                GroupResourcePlacementService.FACTORY_LINK);
+        Operation get = Operation.createGet(host, uri.getPath())
+                .setReferer(host.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        host.log(Level.SEVERE, "Failed to get cluster: %s", Utils.toString(ex));
+                        host.failIteration(ex);
+                    } else {
+                        try {
+                            result.addAll(
+                                    o.getBody(ServiceDocumentQueryResult.class).documentLinks);
+                            host.completeIteration();
+                        } catch (Throwable er) {
+                            host.log(Level.SEVERE,
+                                    "Failed to retrieve placements: %s",
                                     Utils.toString(er));
                             host.failIteration(er);
                         }

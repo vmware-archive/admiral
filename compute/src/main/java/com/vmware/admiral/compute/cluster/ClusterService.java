@@ -204,7 +204,6 @@ public class ClusterService extends StatelessService {
             return;
         }
 
-
         String clusterId = UriUtils.parseUriPathSegments(patch.getUri(),
                 CLUSTER_PATH_SEGMENT_TEMPLATE).get(CLUSTER_ID_PATH_SEGMENT);
 
@@ -312,8 +311,8 @@ public class ClusterService extends StatelessService {
         }
 
         sendWithDeferredResult(getPlacementZone, ServiceDocumentQueryResult.class)
-                .thenCompose(queryResult -> getInfoFromHostsWihtinPlacementZone
-                        (projectLink, queryResult))
+                .thenCompose(queryResult -> getInfoFromHostsWihtinPlacementZone(projectLink,
+                        queryResult))
                 .thenAccept(clusterDtoList -> {
                     Map<String, Object> ClusterDtoMap = clusterDtoList.stream()
                             .collect(Collectors.toMap(
@@ -362,7 +361,6 @@ public class ClusterService extends StatelessService {
         ClusterUtils.getHostsWithinPlacementZone(get, getHost());
     }
 
-
     private void getSingleHostInSingleCluster(Operation get) {
         Map<String, String> uriParams = UriUtils.parseUriPathSegments(get.getUri(),
                 CLUSTER_PATH_SEGMENT_TEMPLATE);
@@ -389,15 +387,15 @@ public class ClusterService extends StatelessService {
 
     }
 
-
     private DeferredResult<List<ClusterDto>> getInfoFromHostsWihtinPlacementZone(String projectLink,
             ServiceDocumentQueryResult queryResult) {
         Map<String, ElasticPlacementZoneConfigurationState> ePZstates = QueryUtil
                 .extractQueryResult(
                         queryResult, ElasticPlacementZoneConfigurationState.class);
         List<DeferredResult<ClusterDto>> clusterDtoList = ePZstates.keySet().stream()
-                .map(key -> ClusterUtils.getHostsWithinPlacementZone(ePZstates.get(key)
-                                .resourcePoolState.documentSelfLink, projectLink, getHost())
+                .map(key -> ClusterUtils.getHostsWithinPlacementZone(
+                        ePZstates.get(key).resourcePoolState.documentSelfLink, projectLink,
+                        getHost())
                         .thenApply(computeStates -> {
                             return ClusterUtils.placementZoneAndItsHostsToClusterDto(
                                     ePZstates.get(key).resourcePoolState, computeStates);
@@ -406,13 +404,14 @@ public class ClusterService extends StatelessService {
         return DeferredResult.allOf(clusterDtoList);
     }
 
-    private DeferredResult<List<ClusterDto>> getInfoFromHostsWihtinOnePlacementZone(String
-            projectLink, ElasticPlacementZoneConfigurationState queryResult) {
+    private DeferredResult<List<ClusterDto>> getInfoFromHostsWihtinOnePlacementZone(
+            String projectLink, ElasticPlacementZoneConfigurationState queryResult) {
         Map<String, ElasticPlacementZoneConfigurationState> ePZstates = new HashMap<>();
         ePZstates.put(queryResult.documentSelfLink, queryResult);
         List<DeferredResult<ClusterDto>> clusterDtoList = ePZstates.keySet().stream()
-                .map(key -> ClusterUtils.getHostsWithinPlacementZone(ePZstates.get(key)
-                        .resourcePoolState.documentSelfLink, projectLink, getHost())
+                .map(key -> ClusterUtils.getHostsWithinPlacementZone(
+                        ePZstates.get(key).resourcePoolState.documentSelfLink, projectLink,
+                        getHost())
                         .thenApply(computeStates -> {
                             return ClusterUtils.placementZoneAndItsHostsToClusterDto(
                                     ePZstates.get(key).resourcePoolState, computeStates);
@@ -549,7 +548,7 @@ public class ClusterService extends StatelessService {
 
         if (hostTenantLinks == null || hostTenantLinks.isEmpty()
                 || (hostTenantLinks.stream().noneMatch(PATTERN_PROJECT_TENANT_LINK.asPredicate())
-                && hostTenantLinks.stream().noneMatch(PATTERN_TENANT_LINK.asPredicate()))) {
+                        && hostTenantLinks.stream().noneMatch(PATTERN_TENANT_LINK.asPredicate()))) {
             throw new LocalizableValidationException(
                     "Project context is required", "auth.project.context.required");
         }
@@ -638,7 +637,9 @@ public class ClusterService extends StatelessService {
                     if (operation == null || DeploymentProfileConfig.getInstance().isTest()) {
                         //TODO if MockRequestBrokerService behaves as Task service we can remove the
                         // check for test context
-                        ClusterUtils.deletePZ(pZILink, delete, getHost());
+                        ClusterUtils.deletePlacementZoneAndPlacement(pZILink, resourcePoolLink,
+                                delete, getHost());
+
                     } else {
                         String containerHostRemovalTaskState = operation
                                 .getBody(ContainerHostRemovalTaskState.class).documentSelfLink;
@@ -653,7 +654,8 @@ public class ClusterService extends StatelessService {
                                     TaskStage.FAILED, TaskStage.CANCELLED);
                             if (terminalStages.contains(eats.taskInfo.stage)) {
                                 subscriptionManager.close();
-                                ClusterUtils.deletePZ(pZILink, delete, getHost());
+                                ClusterUtils.deletePlacementZoneAndPlacement(pZILink,
+                                        resourcePoolLink, delete, getHost());
                             }
                         }, true, null);
                     }

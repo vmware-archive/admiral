@@ -29,6 +29,7 @@ import com.vmware.admiral.compute.cluster.ClusterService.ClusterDto;
 import com.vmware.admiral.compute.cluster.ClusterService.ClusterStatus;
 import com.vmware.admiral.compute.cluster.ClusterService.ClusterType;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
@@ -170,12 +171,14 @@ public class ClusterUtils {
                 });
     }
 
-    public static void deletePZ(String pathPZId, Operation delete, ServiceHost host) {
+    public static void deletePlacementZoneAndPlacement(String pathPZLink, String resourcePoolLink,
+            Operation delete, ServiceHost host) {
         host.sendWithDeferredResult(
-                Operation.createDelete(UriUtils.buildUri(host, pathPZId))
+                Operation.createDelete(UriUtils.buildUri(host, pathPZLink))
                         .setBody(new ElasticPlacementZoneConfigurationState())
                         .setReferer(host.getUri()),
                 ElasticPlacementZoneConfigurationState.class)
+                .thenCompose(epz -> deletePlacementWithResourcePoolLink(resourcePoolLink, host))
                 .exceptionally(f -> {
                     if (f instanceof ServiceNotFoundException) {
                         return null;
@@ -184,6 +187,37 @@ public class ClusterUtils {
                     }
                 })
                 .whenCompleteNotify(delete);
+    }
+
+    public static DeferredResult<Operation> deletePlacementWithResourcePoolLink(
+            String resourcePoolLink, ServiceHost host) {
+
+        Query.Builder queryBuilder = Query.Builder.create()
+                .addFieldClause(GroupResourcePlacementState.FIELD_NAME_RESOURCE_POOL_LINK,
+                        resourcePoolLink);
+
+        Query query = queryBuilder.build();
+        QueryTask queryTask = QueryUtil.buildQuery(GroupResourcePlacementState.class, true, query);
+
+        return host.sendWithDeferredResult(Operation
+                .createPost(UriUtils.buildUri(host, ServiceUriPaths.CORE_QUERY_TASKS))
+                .setBody(queryTask)
+                .setReferer(host.getUri()), QueryTask.class)
+                .thenCompose(qr -> {
+                    if (qr == null || qr.results == null || qr.results == null
+                            || qr.results.documentLinks == null
+                            || qr.results.documentLinks.size() != 1) {
+                        throw new ServiceNotFoundException(
+                                "Group placement not found for cluster id: "
+                                        + Service.getId(resourcePoolLink));
+                    }
+                    return host.sendWithDeferredResult(
+                            Operation.createDelete(
+                                    UriUtils.buildUri(host, qr.results.documentLinks.get(0)))
+                                    .setBody(new ElasticPlacementZoneConfigurationState())
+                                    .setReferer(host.getUri()));
+                });
+
     }
 
     public static ClusterDto placementZoneAndItsHostsToClusterDto(
