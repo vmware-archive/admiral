@@ -8,7 +8,7 @@ import { Component } from '@angular/core';
   template: `
     <div class="main-view">
       <div class="title">Project Repositories</div>
-      <hbr-repository-stackview [projectId]="projectId" [hasSignedIn]="true"
+      <hbr-repository-stackview [projectId]="projectId" [projectName]="projectName" [hasSignedIn]="true"
         [hasProjectAdminRole]="true" (tagClickEvent)="watchTagClickEvent($event)"
         style="display: block;"></hbr-repository-stackview>
 
@@ -28,11 +28,20 @@ export class RepositoryComponent {
   constructor(private router: Router, private route: ActivatedRoute, private ps: ProjectService) {}
 
   get projectId(): Number {
-    let selectedProject = this.ps && this.ps.getSelectedProject();
+    let selectedProject = this.getSelectedProject();
     let projectIndex = selectedProject && Utils.getCustomPropertyValue(
       selectedProject.customProperties,
       RepositoryComponent.CUSTOM_PROP_PROJECT_INDEX);
     return (projectIndex && Number(projectIndex)) || RepositoryComponent.HBR_DEFAULT_PROJECT_INDEX;
+  }
+
+  get projectName(): string {
+    let selectedProject = this.getSelectedProject();
+    return (selectedProject && selectedProject.name) || 'unknown';
+  }
+
+  private getSelectedProject(): any {
+    return this.ps && this.ps.getSelectedProject();
   }
 
   watchTagClickEvent(tag: TagClickEvent) {

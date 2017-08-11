@@ -36,6 +36,10 @@ export class ProjectDetailsComponent extends BaseDetailsComponent {
     this.router = router;
   }
 
+  get projectName(): string {
+    return (this.entity && this.entity.name) || 'unknown';
+  }
+
   protected entityInitialized() {
     let cs = this.entity.customProperties || {};
     if (cs.__projectIndex) {
