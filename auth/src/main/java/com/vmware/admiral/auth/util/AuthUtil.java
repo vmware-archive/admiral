@@ -35,6 +35,8 @@ import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
 import com.vmware.admiral.compute.container.CompositeDescriptionCloneService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
+import com.vmware.admiral.compute.container.ContainerLogService;
+import com.vmware.admiral.compute.container.ContainerStatsService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection;
 import com.vmware.admiral.compute.container.HostNetworkListDataCollection;
@@ -53,7 +55,7 @@ import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.admiral.service.common.ResourceNamePrefixService;
 import com.vmware.admiral.service.common.UniquePropertiesService;
 import com.vmware.admiral.service.common.harbor.HarborApiProxyService;
-import com.vmware.photon.controller.model.resources.ComputeService;
+import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Claims;
 import com.vmware.xenon.common.Operation;
@@ -366,7 +368,7 @@ public class AuthUtil {
         return userGroupState;
     }
 
-    public static List<Query> fullAccessResourcesForAdmins(String projectSelfLink) {
+    public static List<Query> fullAccessResourcesForAdmins() {
         Query resourceGroupQuery = Query.Builder.create()
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
                         buildUriWithWildcard(PrincipalService.SELF_LINK),
@@ -494,12 +496,21 @@ public class AuthUtil {
                         buildUriWithWildcard(RegistryService.FACTORY_LINK),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
 
+
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
-                        buildUriWithWildcard(ComputeService.FACTORY_LINK),
+                        buildUriWithWildcard(ComputeDescriptionService.FACTORY_LINK),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
 
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
                         buildUriWithWildcard(HarborApiProxyService.SELF_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(ContainerLogService.SELF_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(ContainerStatsService.SELF_LINK),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
 
                 // Give access to credentials, but restrict the system ones.
@@ -587,10 +598,9 @@ public class AuthUtil {
     }
 
     public static ResourceGroupState buildProjectAdminResourceGroup(String projectId) {
-        String projectSelfLink = UriUtils.buildUriPath(ProjectFactoryService.SELF_LINK, projectId);
         ResourceGroupState resourceGroupState = buildCommonProjectResourceGroup(projectId,
                 AuthRole.PROJECT_ADMIN);
-        for (Query query : fullAccessResourcesForAdmins(projectSelfLink)) {
+        for (Query query : fullAccessResourcesForAdmins()) {
             resourceGroupState.query.addBooleanClause(query);
         }
         return resourceGroupState;
