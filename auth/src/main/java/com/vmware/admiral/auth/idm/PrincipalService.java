@@ -19,6 +19,9 @@ import static com.vmware.admiral.auth.util.PrincipalRolesUtil.getDirectlyAssigne
 import static com.vmware.admiral.auth.util.PrincipalUtil.copyPrincipalData;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNullOrEmpty;
 
+import java.net.URI;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -31,6 +34,9 @@ import com.vmware.admiral.auth.util.PrincipalUtil;
 import com.vmware.admiral.auth.util.SecurityContextUtil;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.UriUtilsExtended;
+import com.vmware.admiral.service.common.RegistryService.RegistryAuthState;
+import com.vmware.admiral.service.common.harbor.Harbor;
+import com.vmware.photon.controller.model.security.util.EncryptionUtils;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
@@ -39,6 +45,7 @@ import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
 public class PrincipalService extends StatelessService {
     public static final String SELF_LINK = ManagementUriParts.AUTH_PRINCIPALS;
@@ -256,11 +263,60 @@ public class PrincipalService extends StatelessService {
                 .parseUriPathSegments(post.getUri(), TEMPLATE_PRINCIPAL_SECURITY_CONTEXT)
                 .get(PRINCIPAL_ID_PATH_SEGMENT);
 
-        provider.getPrincipalByCredentials(post, principalId, dto.password)
-                .thenCompose(
-                        principal -> SecurityContextUtil.getSecurityContext(this, post, principal))
-                .thenAccept(securityContext -> post.setBody(securityContext))
-                .whenCompleteNotify(post);
+        URI getCredentials = UriUtils.extendUriWithQuery(
+                UriUtils.buildUri(getHost(), Harbor.DEFAULT_REGISTRY_LINK),
+                UriUtils.URI_PARAM_ODATA_EXPAND, Boolean.toString(true));
+
+        Operation op = Operation.createGet(getCredentials).setCompletion((o, e) -> {
+            String username = null;
+            String password = null;
+
+            if (e != null) {
+                if (e instanceof ServiceNotFoundException) {
+                    // No default Harbor registry or its credentials configured.
+                } else {
+                    post.fail(e);
+                    return;
+                }
+            } else {
+                RegistryAuthState registry = o.getBody(RegistryAuthState.class);
+                AuthCredentialsServiceState credentials = registry.authCredentials;
+
+                if (credentials != null) {
+                    username = credentials.userEmail;
+                    password = credentials.privateKey;
+                }
+            }
+
+            /*
+             * If the provided credentials match the default Harbor registry credentials, the
+             * default Harbor security context (as Cloud Admin) is returned.
+             */
+
+            if (principalId.equals(username)
+                    && dto.password.equals(EncryptionUtils.decrypt(password))) {
+
+                SecurityContext sc = new SecurityContext();
+                sc.id = username;
+                sc.roles = new HashSet<>(Arrays.asList(AuthRole.CLOUD_ADMIN));
+
+                post.setBody(sc).complete();
+                return;
+            }
+
+            /*
+             * Otherwise, get the security context for the provided credentials.
+             */
+
+            provider.getPrincipalByCredentials(post, principalId, dto.password)
+                    .thenCompose(
+                            principal -> SecurityContextUtil.getSecurityContext(this, post,
+                                    principal))
+                    .thenAccept(securityContext -> post.setBody(securityContext))
+                    .whenCompleteNotify(post);
+        });
+
+        sendRequest(op);
     }
 
     @Override

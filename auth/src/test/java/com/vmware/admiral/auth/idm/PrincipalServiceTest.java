@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.BiFunction;
 
 import org.junit.Before;
@@ -39,11 +40,17 @@ import com.vmware.admiral.auth.project.ProjectFactoryService;
 import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.admiral.auth.util.AuthUtil;
+import com.vmware.admiral.service.common.RegistryService;
+import com.vmware.admiral.service.common.RegistryService.RegistryState;
+import com.vmware.admiral.service.common.harbor.Harbor;
+import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.TestContext;
+import com.vmware.xenon.services.common.AuthCredentialsService;
+import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 import com.vmware.xenon.services.common.RoleService;
 import com.vmware.xenon.services.common.RoleService.RoleState;
 import com.vmware.xenon.services.common.UserGroupService;
@@ -336,6 +343,7 @@ public class PrincipalServiceTest extends AuthBaseTest {
         assertTrue(roles.projects.get(0).roles.contains(AuthRole.PROJECT_VIEWER));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void testGetAllRolesForPrincipalWithIndirectRoles() throws Throwable {
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN2));
@@ -528,6 +536,40 @@ public class PrincipalServiceTest extends AuthBaseTest {
         ctx.await();
     }
 
+    @Test
+    public void testGetSecurityContextWithDefaultHarborRegistryCredentials() throws Throwable {
+
+        AuthCredentialsServiceState credentials = new AuthCredentialsServiceState();
+        credentials.userEmail = UUID.randomUUID().toString();
+        credentials.privateKey = UUID.randomUUID().toString();
+        credentials.type = AuthCredentialsType.Password.toString();
+        credentials = getOrCreateDocument(credentials, AuthCredentialsService.FACTORY_LINK);
+        assertNotNull("Failed to create credentials", credentials);
+
+        RegistryState registryState = new RegistryState();
+        registryState.documentSelfLink = Harbor.DEFAULT_REGISTRY_LINK;
+        registryState.endpointType = RegistryState.DOCKER_REGISTRY_ENDPOINT_TYPE;
+        registryState.address = "http://harbor.vic.com";
+        registryState.authCredentialsLink = credentials.documentSelfLink;
+        registryState = getOrCreateDocument(registryState, RegistryService.FACTORY_LINK);
+        assertNotNull("Failed to create registry", registryState);
+
+        SecurityContext securityContext = getSecurityContextByCredentials(credentials.userEmail,
+                credentials.privateKey);
+
+        assertEquals(credentials.userEmail, securityContext.id);
+        assertEquals(1, securityContext.roles.size());
+        assertTrue(securityContext.roles.contains(AuthRole.CLOUD_ADMIN));
+
+        securityContext = getSecurityContextByCredentials(USER_EMAIL_GLORIA, "Password1!");
+
+        assertEquals(USER_NAME_GLORIA, securityContext.name);
+        assertEquals(USER_EMAIL_GLORIA, securityContext.id);
+        assertTrue(securityContext.roles.contains(AuthRole.BASIC_USER));
+        assertTrue(securityContext.roles.contains(AuthRole.BASIC_USER_EXTENDED));
+    }
+
+    @Test
     public void testAssignSystemRoleOnPrincipalWithoutUserState() {
         deleteUser(USER_EMAIL_CONNIE);
         assertDocumentNotExists(AuthUtil.buildUserServicePathFromPrincipalId(USER_EMAIL_CONNIE));

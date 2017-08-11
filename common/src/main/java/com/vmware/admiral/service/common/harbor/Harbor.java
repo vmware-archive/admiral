@@ -30,8 +30,9 @@ public interface Harbor {
     String API_BASE_ENDPOINT = "api";
     String I18N_RESOURCE_SUBPATH = "i18n/lang";
 
+    String DEFAULT_REGISTRY_NAME = "default-harbor-registry";
     String DEFAULT_REGISTRY_LINK = UriUtils.buildUriPath(RegistryService.FACTORY_LINK,
-            "default-harbor-registry");
+            DEFAULT_REGISTRY_NAME);
     String DEFAULT_REGISTRY_USER_PREFIX = "harbor-vic-";
 
 }

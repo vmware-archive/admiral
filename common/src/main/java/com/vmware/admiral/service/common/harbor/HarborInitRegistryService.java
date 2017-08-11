@@ -87,7 +87,7 @@ public class HarborInitRegistryService extends StatelessService {
 
         state.type = AuthCredentialsType.Password.toString();
         state.userEmail = Harbor.DEFAULT_REGISTRY_USER_PREFIX + UUID.randomUUID();
-        state.privateKey =  new BigInteger(160, new SecureRandom()).toString(32);
+        state.privateKey = new BigInteger(160, new SecureRandom()).toString(32);
 
         sendRequest(Operation
                 .createPost(UriUtils.buildUri(getHost(), ServiceUriPaths.CORE_CREDENTIALS))
@@ -109,6 +109,7 @@ public class HarborInitRegistryService extends StatelessService {
         RegistryState state = new RegistryState();
         state.documentSelfLink = Harbor.DEFAULT_REGISTRY_LINK;
         state.address = harborUrl;
+        state.name = Harbor.DEFAULT_REGISTRY_NAME;
         state.endpointType = RegistryState.DOCKER_REGISTRY_ENDPOINT_TYPE;
         state.authCredentialsLink = authCredentialsLink;
         state.customProperties = new HashMap<>();
