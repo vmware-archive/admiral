@@ -38,11 +38,13 @@ import { AdminAuthGuard } from 'app/services/admin-auth-guard.service';
 import { ADMIRAL_DECLARATIONS } from './admiral';
 
 let HBR_SUPPORTED_LANGS = ['en-us', 'zh-cn', 'es-es'];
+let HBR_DEFAULT_LANG = 'en-us';
 
 export function initConfig(ts: TranslateService) {
     return () => {
-        let lng = I18n.language || 'en-us';
+        let lng = I18n.language || HBR_DEFAULT_LANG;
         ts.addLangs(HBR_SUPPORTED_LANGS);
+        ts.setDefaultLang(HBR_DEFAULT_LANG); // fallback language
         ts.use(lng.toLocaleLowerCase());
     };
 }
