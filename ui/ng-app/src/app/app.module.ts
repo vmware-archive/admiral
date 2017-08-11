@@ -59,7 +59,8 @@ export function initHarborConfig() {
         enablei18Support: true,
         langMessageLoader: FT.isHbrEnabled()? "http" : null,
         langMessagePathForHttpLoader: "/hbr-api/i18n/lang/",
-        configurationEndpoint: "/hbr-api/configurations"
+        configurationEndpoint: "/hbr-api/configurations",
+        scanJobEndpoint: "/hbr-api/jobs/scan"
     };
 
     return sc;
