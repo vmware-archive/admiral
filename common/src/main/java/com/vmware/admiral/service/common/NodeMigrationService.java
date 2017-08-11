@@ -199,7 +199,7 @@ public class NodeMigrationService extends StatelessService {
                                     // If a factory is missing on the source this is not a problem
                                     // for the migration. The factory should be skipped.
                                     if (state.taskInfo.failure.message.contains(
-                                            String.valueOf(Operation.STATUS_CODE_NOT_FOUND))) {
+                                            "Failed to get factory config from all source nodes")) {
                                         logInfo("Migration task skipped because it does not exist"
                                                         + " on source: %s", currentTask);
                                         migrationTasksInProgress.remove(currentTask);

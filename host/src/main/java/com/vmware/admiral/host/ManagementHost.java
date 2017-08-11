@@ -181,9 +181,6 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
         log(Level.INFO, "**** Dynamic service loading enabled. ****");
         log(Level.INFO, "**** Migration service starting... ****");
         super.startFactory(new MigrationTaskService());
-        // The service need to be privileged in order to not get forbidden during the migration
-        // process
-        super.addPrivilegedService(NodeMigrationService.class);
         // Clean up authorization context to avoid privileged access.
         setAuthorizationContext(null);
 
@@ -410,6 +407,9 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
         addPrivilegedService(PrincipalService.class);
         addPrivilegedService(ProjectService.class);
         addPrivilegedService(ProjectFactoryService.class);
+        // The service need to be privileged in order to not get forbidden during the migration
+        // process
+        addPrivilegedService(NodeMigrationService.class);
 
         if (AuthUtil.useAuthConfig(this)) {
 
