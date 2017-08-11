@@ -30,7 +30,7 @@ import com.vmware.xenon.common.test.TestRequestSender;
 
 public class CompilationTaskServiceTest {
 
-    public static final int timeForTaskServiceCompletionSeconds = 10;
+    public static final int timeForTaskServiceCompletionSeconds = 100;
 
     private ServiceHost host;
     private TestRequestSender sender;

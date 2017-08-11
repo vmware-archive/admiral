@@ -129,7 +129,8 @@ public class CompilationTaskService
         Operation request = Operation
                 .createPost(requestUri)
                 .setBody(callbackData); // cbLink, task host, download
-
+        System.out.println(callbackData[0]);
+        logInfo("CB to " + callbackData[0]);
         sendRequest(request);
     }
 

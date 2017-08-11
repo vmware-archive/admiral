@@ -196,6 +196,8 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
         if (AuthUtil.isAuthxEnabled(this)) {
             baseArgs.isAuthorizationEnabled = true;
         }
+        // String[] args2 = (new String[] {"--bindAddress=0.0.0.0", "--port=8001"});
+        //String[] args2 = (new String[] {"--bindAddress=0.0.0.0", "--publicUri=http://192.168.56.1:8282", "--port=8282"});
         ServiceHost h = super.initialize(args, baseArgs);
         h.setProcessOwner(true);
         validatePeerArgs();

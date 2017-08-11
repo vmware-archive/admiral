@@ -171,10 +171,17 @@ public class UnikernelCreationTaskService
     private void createUnikernel(UnikernelCreationTaskServiceState task) {
         // No need for self patch here cause the OSv-container responds on final with a Patch
         CompilationData forwardedData = task.data;
-        forwardedData.successCB = getHost().getUri().toString()
-                + UnikernelManagementURIParts.SUCCESS_CB;
-        forwardedData.failureCB = getHost().getUri().toString()
-                + UnikernelManagementURIParts.FAILURE_CB;
+        forwardedData.successCB = UriUtils.buildPublicUri(getHost(),
+                UnikernelManagementURIParts.SUCCESS_CB).toString();
+        forwardedData.failureCB = UriUtils.buildPublicUri(getHost(),
+                UnikernelManagementURIParts.FAILURE_CB).toString();
+        // forwardedData.successCB = getHost().getUri().toString()
+        // + UnikernelManagementURIParts.SUCCESS_CB;
+        // forwardedData.failureCB = getHost().getUri().toString()
+        // + UnikernelManagementURIParts.FAILURE_CB;
+
+        logInfo("SUCCESS CALLBACK" + forwardedData.successCB);
+        logInfo("FAILURE CALLBACK" + forwardedData.failureCB);
 
         URI requestUri = UriUtils
                 .buildUri(compilationURI + UnikernelManagementURIParts.COMPILATION_EXTERNAL);
