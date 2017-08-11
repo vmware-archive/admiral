@@ -39,7 +39,7 @@ public abstract class UpgradeBaseTest extends BaseTestCase {
     protected void startServices(VerificationHost host) throws Throwable {
         DeploymentProfileConfig.getInstance().setTest(true);
 
-        HostInitCommonServiceConfig.startServices(host, true);
+        HostInitCommonServiceConfig.startServices(host);
         HostInitPhotonModelServiceConfig.startServices(host);
         HostInitComputeServicesConfig.startServices(host, true);
         HostInitAuthServiceConfig.startServices(host);

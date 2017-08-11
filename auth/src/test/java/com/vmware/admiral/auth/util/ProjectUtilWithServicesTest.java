@@ -35,8 +35,8 @@ import com.vmware.admiral.compute.cluster.ClusterUtils;
 import com.vmware.admiral.compute.container.CompositeDescriptionService;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
-import com.vmware.admiral.service.common.HbrApiProxyService;
-import com.vmware.admiral.service.common.mock.MockHbrApiProxyService;
+import com.vmware.admiral.service.common.harbor.Harbor;
+import com.vmware.admiral.service.common.harbor.mock.MockHarborApiProxyService;
 import com.vmware.photon.controller.model.query.QueryUtils.QueryTemplate;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
@@ -49,7 +49,7 @@ import com.vmware.xenon.services.common.UserService.UserState;
 public class ProjectUtilWithServicesTest extends AuthBaseTest {
 
     private static final String TEST_PROJECT_NAME = "testProject";
-    private static final String TEST_CLUSTER_NAME = "testClustet";
+    private static final String TEST_CLUSTER_NAME = "testCluster";
     private static final String TEST_TEMPLATE_NAME = "testTemplate";
 
     @Test
@@ -60,7 +60,7 @@ public class ProjectUtilWithServicesTest extends AuthBaseTest {
         String groupName = "test-group";
         List<String> users = Arrays.asList("test-user-a@example.com", "test-user-b@local");
 
-        // create a test gropup
+        // create a test group
         UserGroupState groupState = doPost(AuthUtil.buildUserGroupState(groupName),
                 UserGroupService.FACTORY_LINK);
 
@@ -132,13 +132,13 @@ public class ProjectUtilWithServicesTest extends AuthBaseTest {
 
         // verify repositories
         assertNotNull(expandedState.repositories);
-        assertEquals(MockHbrApiProxyService.mockedRepositories.size(),
+        assertEquals(MockHarborApiProxyService.mockedRepositories.size(),
                 expandedState.repositories.size());
         assertTrue(expandedState.repositories.stream()
-                .allMatch(MockHbrApiProxyService.mockedRepositories::containsKey));
+                .allMatch(MockHarborApiProxyService.mockedRepositories::containsKey));
         assertNotNull(expandedState.numberOfImages);
-        long expectedNumImages = MockHbrApiProxyService.mockedRepositories.values().stream()
-                .map((entry) -> (long) entry.get(HbrApiProxyService.HARBOR_RESP_PROP_TAGS_COUNT))
+        long expectedNumImages = MockHarborApiProxyService.mockedRepositories.values().stream()
+                .map((entry) -> (long) entry.get(Harbor.RESP_PROP_TAGS_COUNT))
                 .reduce(0L, Long::sum);
         assertEquals(expectedNumImages, expandedState.numberOfImages.longValue());
     }
@@ -147,7 +147,7 @@ public class ProjectUtilWithServicesTest extends AuthBaseTest {
         // Prepare harbor id for this project
         HashMap<String, String> customProperties = new HashMap<>();
         customProperties.put(ProjectService.CUSTOM_PROPERTY_PROJECT_INDEX,
-                "" + MockHbrApiProxyService.MOCKED_PROJECT_ID);
+                "" + MockHarborApiProxyService.MOCKED_PROJECT_ID);
 
         // Create project
         ProjectState project = createProject(TEST_PROJECT_NAME, customProperties);

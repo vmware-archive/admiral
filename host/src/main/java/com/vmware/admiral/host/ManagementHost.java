@@ -46,6 +46,7 @@ import com.vmware.admiral.service.common.ConfigurationService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.admiral.service.common.ExtensibilitySubscriptionManager;
 import com.vmware.admiral.service.common.NodeMigrationService;
+import com.vmware.admiral.service.common.harbor.HostInitHarborServices;
 import com.vmware.photon.controller.model.security.util.CertificateUtil;
 import com.vmware.xenon.common.CommandLineArgumentParser;
 import com.vmware.xenon.common.FactoryService;
@@ -274,6 +275,7 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
         HostInitRequestServicesConfig.startServices(this);
         HostInitImageServicesConfig.startServices(this);
         HostInitUiServicesConfig.startServices(this);
+        HostInitHarborServices.startServices(this, startMockHostAdapterInstance);
         HostInitDockerAdapterServiceConfig.startServices(this, startMockHostAdapterInstance);
         HostInitKubernetesAdapterServiceConfig.startServices(this, startMockHostAdapterInstance);
         HostInitRegistryAdapterServiceConfig.startServices(this);

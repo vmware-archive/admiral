@@ -9,14 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.service.common.mock;
-
-import static com.vmware.admiral.service.common.HbrApiProxyService.HARBOR_ENDPOINT_REPOSITORIES;
-import static com.vmware.admiral.service.common.HbrApiProxyService.HARBOR_QUERY_PARAM_DETAIL;
-import static com.vmware.admiral.service.common.HbrApiProxyService.HARBOR_QUERY_PARAM_PROJECT_ID;
-import static com.vmware.admiral.service.common.HbrApiProxyService.HARBOR_RESP_PROP_ID;
-import static com.vmware.admiral.service.common.HbrApiProxyService.HARBOR_RESP_PROP_NAME;
-import static com.vmware.admiral.service.common.HbrApiProxyService.HARBOR_RESP_PROP_TAGS_COUNT;
+package com.vmware.admiral.service.common.harbor.mock;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -25,6 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.service.common.harbor.Harbor;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
@@ -32,7 +26,7 @@ import com.vmware.xenon.common.UriUtils;
 /**
  * Simple reverse proxy service to forward requests to harbor services.
  */
-public class MockHbrApiProxyService extends StatelessService {
+public class MockHarborApiProxyService extends StatelessService {
 
     public static final String SELF_LINK = ManagementUriParts.HBR_REVERSE_PROXY;
 
@@ -45,28 +39,27 @@ public class MockHbrApiProxyService extends StatelessService {
     private static final String REPOSITORY_2_ID = "2";
     private static final long REPOSITORY_1_TAGS_COUNT = 3;
     private static final long REPOSITORY_2_TAGS_COUNT = 1;
+    private static final String HBR_API_BASE_ENDPOINT = "api";
 
     static {
         HashMap<String, Map<String, Object>> repositories = new HashMap<>();
 
         HashMap<String, Object> repository1 = new HashMap<>();
-        repository1.put(HARBOR_RESP_PROP_ID, REPOSITORY_1_ID);
-        repository1.put(HARBOR_RESP_PROP_NAME, REPOSITORY_1_NAME);
-        repository1.put(HARBOR_RESP_PROP_TAGS_COUNT, REPOSITORY_1_TAGS_COUNT);
+        repository1.put(Harbor.RESP_PROP_ID, REPOSITORY_1_ID);
+        repository1.put(Harbor.RESP_PROP_NAME, REPOSITORY_1_NAME);
+        repository1.put(Harbor.RESP_PROP_TAGS_COUNT, REPOSITORY_1_TAGS_COUNT);
         repositories.put(REPOSITORY_1_NAME, repository1);
 
         HashMap<String, Object> repository2 = new HashMap<>();
-        repository2.put(HARBOR_RESP_PROP_ID, REPOSITORY_2_ID);
-        repository2.put(HARBOR_RESP_PROP_NAME, REPOSITORY_2_NAME);
-        repository2.put(HARBOR_RESP_PROP_TAGS_COUNT, REPOSITORY_2_TAGS_COUNT);
+        repository2.put(Harbor.RESP_PROP_ID, REPOSITORY_2_ID);
+        repository2.put(Harbor.RESP_PROP_NAME, REPOSITORY_2_NAME);
+        repository2.put(Harbor.RESP_PROP_TAGS_COUNT, REPOSITORY_2_TAGS_COUNT);
         repositories.put(REPOSITORY_2_NAME, repository2);
 
         mockedRepositories = Collections.unmodifiableMap(repositories);
     }
 
-    private static final String HBR_API_BASE_ENDPOINT = "api";
-
-    public MockHbrApiProxyService() {
+    public MockHarborApiProxyService() {
         super();
         super.toggleOption(ServiceOption.URI_NAMESPACE_OWNER, true);
     }
@@ -95,14 +88,14 @@ public class MockHbrApiProxyService extends StatelessService {
         logInfo("Received repositories request.");
         Map<String, String> queryParams = UriUtils.parseUriQueryParams(get.getUri());
 
-        if (!queryParams.containsKey(HARBOR_QUERY_PARAM_PROJECT_ID)) {
+        if (!queryParams.containsKey(Harbor.QUERY_PARAM_PROJECT_ID)) {
             logWarning("project_id was not set");
             String error = "invalid project_id";
             get.fail(Operation.STATUS_CODE_BAD_REQUEST, new IllegalArgumentException(error), error);
             return;
         }
 
-        String projectId = queryParams.get(HARBOR_QUERY_PARAM_PROJECT_ID);
+        String projectId = queryParams.get(Harbor.QUERY_PARAM_PROJECT_ID);
         if (!projectId.equals("" + MOCKED_PROJECT_ID)) {
             logWarning("Unknown project_id: %s", projectId);
             String error = String.format("project %s not found", projectId);
@@ -110,7 +103,7 @@ public class MockHbrApiProxyService extends StatelessService {
             return;
         }
 
-        if (queryParams.containsKey(HARBOR_QUERY_PARAM_DETAIL)) {
+        if (queryParams.containsKey(Harbor.QUERY_PARAM_DETAIL)) {
             handleDetailedRepositoryGet(get);
         } else {
             handleSimpleRepositoryGet(get);
@@ -139,13 +132,14 @@ public class MockHbrApiProxyService extends StatelessService {
             return false;
         }
 
-        return path.equalsIgnoreCase(HARBOR_ENDPOINT_REPOSITORIES)
-                || path.equalsIgnoreCase(HBR_API_BASE_ENDPOINT + HARBOR_ENDPOINT_REPOSITORIES);
+        String bhrRepos = HBR_API_BASE_ENDPOINT + Harbor.ENDPOINT_REPOSITORIES;
+        return path.equalsIgnoreCase(Harbor.ENDPOINT_REPOSITORIES)
+                || path.equalsIgnoreCase(bhrRepos);
     }
 
     private String getHarborPath(String path) {
         if (path == null) {
-            return path;
+            return null;
         }
 
         return path.substring(SELF_LINK.length());

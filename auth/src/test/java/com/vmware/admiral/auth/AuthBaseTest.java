@@ -51,6 +51,7 @@ import com.vmware.admiral.host.HostInitCommonServiceConfig;
 import com.vmware.admiral.host.HostInitComputeServicesConfig;
 import com.vmware.admiral.host.HostInitPhotonModelServiceConfig;
 import com.vmware.admiral.service.common.AuthBootstrapService;
+import com.vmware.admiral.service.common.harbor.HostInitHarborServices;
 import com.vmware.xenon.common.CommandLineArgumentParser;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
@@ -167,10 +168,11 @@ public abstract class AuthBaseTest extends BaseTestCase {
     protected void startServices(VerificationHost host) throws Throwable {
         DeploymentProfileConfig.getInstance().setTest(true);
 
-        HostInitCommonServiceConfig.startServices(host, true);
+        HostInitCommonServiceConfig.startServices(host);
         HostInitPhotonModelServiceConfig.startServices(host);
         HostInitComputeServicesConfig.startServices(host, true);
         HostInitAuthServiceConfig.startServices(host);
+        HostInitHarborServices.startServices(host, true);
 
         host.registerForServiceAvailability(AuthBootstrapService.startTask(host), true,
                 AuthBootstrapService.FACTORY_LINK);

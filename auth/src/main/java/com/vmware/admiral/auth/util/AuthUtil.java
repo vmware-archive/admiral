@@ -49,10 +49,10 @@ import com.vmware.admiral.image.service.PopularImagesService;
 import com.vmware.admiral.log.EventLogService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
 import com.vmware.admiral.service.common.CounterSubTaskService;
-import com.vmware.admiral.service.common.HbrApiProxyService;
 import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.admiral.service.common.ResourceNamePrefixService;
 import com.vmware.admiral.service.common.UniquePropertiesService;
+import com.vmware.admiral.service.common.harbor.HarborApiProxyService;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Claims;
@@ -499,7 +499,7 @@ public class AuthUtil {
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
 
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
-                        buildUriWithWildcard(HbrApiProxyService.SELF_LINK),
+                        buildUriWithWildcard(HarborApiProxyService.SELF_LINK),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
 
                 // Give access to credentials, but restrict the system ones.
@@ -575,7 +575,7 @@ public class AuthUtil {
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK, projectSelfLink,
                         Occurance.SHOULD_OCCUR)
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
-                        buildUriWithWildcard(HbrApiProxyService.SELF_LINK),
+                        buildUriWithWildcard(HarborApiProxyService.SELF_LINK),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR);
 
         Query resourceGroupQuery = queryBuilder.build();

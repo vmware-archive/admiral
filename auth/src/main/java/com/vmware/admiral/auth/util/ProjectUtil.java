@@ -43,7 +43,8 @@ import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.cluster.ClusterService;
 import com.vmware.admiral.compute.container.CompositeDescriptionFactoryService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
-import com.vmware.admiral.service.common.HbrApiProxyService;
+import com.vmware.admiral.service.common.harbor.Harbor;
+import com.vmware.admiral.service.common.harbor.HarborApiProxyService;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
@@ -304,11 +305,11 @@ public class ProjectUtil {
 
         Operation getRepositories = Operation
                 .createGet(UriUtils.buildUri(service.getHost(),
-                        UriUtils.buildUriPath(HbrApiProxyService.SELF_LINK,
-                                HbrApiProxyService.HARBOR_ENDPOINT_REPOSITORIES),
-                        UriUtils.buildUriQuery(HbrApiProxyService.HARBOR_QUERY_PARAM_PROJECT_ID,
+                        UriUtils.buildUriPath(HarborApiProxyService.SELF_LINK,
+                                Harbor.ENDPOINT_REPOSITORIES),
+                        UriUtils.buildUriQuery(Harbor.QUERY_PARAM_PROJECT_ID,
                                 harborId,
-                                HbrApiProxyService.HARBOR_QUERY_PARAM_DETAIL,
+                                Harbor.QUERY_PARAM_DETAIL,
                                 Boolean.toString(true))))
                 .setReferer(ProjectFactoryService.SELF_LINK);
 

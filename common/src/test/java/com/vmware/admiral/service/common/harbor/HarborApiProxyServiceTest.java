@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.service.common;
+package com.vmware.admiral.service.common.harbor;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -28,7 +28,7 @@ import org.junit.Test;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
-import com.vmware.admiral.service.common.SslTrustImportService.SslTrustImportRequest;
+import com.vmware.admiral.service.common.SslTrustImportService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ReflectionUtils;
 import com.vmware.xenon.common.Service.Action;
@@ -36,7 +36,7 @@ import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.VerificationHost;
 
-public class HbrApiProxyServiceTest {
+public class HarborApiProxyServiceTest {
 
     private static final String HARBOR_URI_FIELD_NAME = "harborUri";
     private static final String HARBOR_CLIENT_FIELD_NAME = "client";
@@ -46,17 +46,13 @@ public class HbrApiProxyServiceTest {
     private static final String SAMPLE_API_PATH = "/sample";
 
     private static final URI SAMPLE_PROXY_URI = UriUtils
-            .buildUri("http://localhost" + HbrApiProxyService.SELF_LINK + SAMPLE_API_PATH);
+            .buildUri("http://localhost" + HarborApiProxyService.SELF_LINK + SAMPLE_API_PATH);
     private static final String SAMPLE_HEADER = "new-header";
     private static final String SAMPLE_HEADER_VALUE = "new-value";
     private static final String SAMPLE_REQUEST_BODY = "request body";
     private static final String SAMPLE_RESPONSE_BODY = "response body";
     private static final URI SAMPLE_HARBOR_URI = UriUtils.buildUri("http://hbr-test.local");
     private static final URI SAMPLE_HARBOR_HTTPS_URI = UriUtils.buildUri("https://hbr-test.local");
-    private static final String HBR_URL_PROP = "harbor.tab.url";
-
-    private static final String HBR_API_BASE_ENDPOINT = "/api";
-    private static final String I18N_RESOURCE_SUBPATH = "/i18n/lang";
 
     @Test
     public void testForwardRequest() {
@@ -79,7 +75,7 @@ public class HbrApiProxyServiceTest {
     public void testNoHbrUrlProvided() {
         AtomicBoolean completed = new AtomicBoolean();
 
-        HbrApiProxyService service = new HbrApiProxyService();
+        HarborApiProxyService service = new HarborApiProxyService();
         Operation actualOp = Operation.createGet(SAMPLE_PROXY_URI)
                 .setCompletion((o, e) -> {
                     assertNotNull(e);
@@ -97,7 +93,7 @@ public class HbrApiProxyServiceTest {
     public void testWrongSelfLink() {
         AtomicBoolean completed = new AtomicBoolean();
 
-        HbrApiProxyService service = new HbrApiProxyService();
+        HarborApiProxyService service = new HarborApiProxyService();
 
         setPrivateField(service, HARBOR_URI_FIELD_NAME, SAMPLE_HARBOR_URI);
 
@@ -119,13 +115,13 @@ public class HbrApiProxyServiceTest {
     public void testNoPath() {
         AtomicBoolean completed = new AtomicBoolean();
 
-        HbrApiProxyService service = new HbrApiProxyService();
+        HarborApiProxyService service = new HarborApiProxyService();
 
         setPrivateField(service, HARBOR_URI_FIELD_NAME, SAMPLE_HARBOR_URI);
 
 
         Operation actualOp = Operation.createGet(UriUtils
-                .buildUri("http://localhost" + HbrApiProxyService.SELF_LINK))
+                .buildUri("http://localhost" + HarborApiProxyService.SELF_LINK))
                 .setCompletion((o, e) -> {
                     assertNotNull(e);
                     assertTrue(e.getMessage().contains("Invalid target URI"));
@@ -140,9 +136,9 @@ public class HbrApiProxyServiceTest {
     @Test
     public void testI18nPath() {
 
-        String resourcePath = I18N_RESOURCE_SUBPATH + "/messages-en.json";
+        String resourcePath = "/" + Harbor.I18N_RESOURCE_SUBPATH + "/messages-en.json";
 
-        HbrApiProxyService service = new HbrApiProxyService();
+        HarborApiProxyService service = new HarborApiProxyService();
         service.setHost(VerificationHost.create());
         ServiceClient client = new MockServiceClient() {
             @Override
@@ -161,7 +157,7 @@ public class HbrApiProxyServiceTest {
         Operation actualOp = new Operation();
         actualOp.setAction(Action.GET);
         actualOp.setUri(UriUtils
-                .buildUri("http://localhost" + HbrApiProxyService.SELF_LINK + resourcePath));
+                .buildUri("http://localhost" + HarborApiProxyService.SELF_LINK + resourcePath));
         actualOp.setCompletion((o, e) -> {
             assertNull(e);
             completed.set(true);
@@ -176,7 +172,7 @@ public class HbrApiProxyServiceTest {
         String movedLocation = "moved";
         URI targetUri = UriUtils.buildUri(SAMPLE_HARBOR_URI, SAMPLE_API_PATH);
 
-        HbrApiProxyService service = new HbrApiProxyService();
+        HarborApiProxyService service = new HarborApiProxyService();
         service.setHost(VerificationHost.create());
         ServiceClient client = new MockServiceClient() {
             @Override
@@ -215,7 +211,7 @@ public class HbrApiProxyServiceTest {
 
     @Test
     public void testBasicAuth() {
-        HbrApiProxyService service = new HbrApiProxyService();
+        HarborApiProxyService service = new HarborApiProxyService();
         service.setHost(VerificationHost.create());
         ServiceClient client = new MockServiceClient() {
             @Override
@@ -236,8 +232,8 @@ public class HbrApiProxyServiceTest {
         service.handleRequest(actualOp);
     }
 
-    private void setPrivateField(HbrApiProxyService service, String fieldName, Object value) {
-        Field field = ReflectionUtils.getField(HbrApiProxyService.class, fieldName);
+    private void setPrivateField(HarborApiProxyService service, String fieldName, Object value) {
+        Field field = ReflectionUtils.getField(HarborApiProxyService.class, fieldName);
         try {
             field.set(service, value);
         } catch (Throwable e) {
@@ -246,7 +242,7 @@ public class HbrApiProxyServiceTest {
     }
 
     private void testResponse(Action action, boolean testFailure) {
-        HbrApiProxyService service = new HbrApiProxyService();
+        HarborApiProxyService service = new HarborApiProxyService();
         service.setHost(VerificationHost.create());
 
         ServiceClient client = new MockServiceClient() {
@@ -257,7 +253,7 @@ public class HbrApiProxyServiceTest {
                 assertEquals(SAMPLE_REQUEST_BODY, op.getBodyRaw());
 
                 URI targetUri = UriUtils
-                        .buildUri(SAMPLE_HARBOR_URI, HBR_API_BASE_ENDPOINT, SAMPLE_API_PATH);
+                        .buildUri(SAMPLE_HARBOR_URI, Harbor.API_BASE_ENDPOINT, SAMPLE_API_PATH);
                 assertEquals(targetUri, op.getUri());
 
                 op.setBodyNoCloning(SAMPLE_RESPONSE_BODY);
@@ -299,44 +295,16 @@ public class HbrApiProxyServiceTest {
     }
 
     @Test
-    public void testImportSSLCertificateOnStart() {
-        AtomicBoolean certificateImportCalled = new AtomicBoolean();
-
-        HbrApiProxyService service = new HbrApiProxyService() {
-            public void sendRequest(Operation op) {
-                String path = op.getUri().getPath();
-                if (path.equals(UriUtils.buildUriPath(ManagementUriParts.CONFIG_PROPS,
-                        HBR_URL_PROP))) {
-                    ConfigurationState state = new ConfigurationState();
-                    state.key = HBR_URL_PROP;
-                    state.value = SAMPLE_HARBOR_HTTPS_URI.toString();
-                    op.setBody(state);
-                    op.complete();
-                } else if (path.equals(SslTrustImportService.SELF_LINK)) {
-                    SslTrustImportRequest sslTrustImport = op.getBody(SslTrustImportRequest.class);
-                    assertTrue(sslTrustImport.acceptCertificate);
-                    assertEquals(SAMPLE_HARBOR_HTTPS_URI, sslTrustImport.hostUri);
-                    certificateImportCalled.set(true);
-                }
-            }
-        };
-        service.setHost(VerificationHost.create());
-        service.handleStart(new Operation());
-
-        assertTrue(certificateImportCalled.get());
-    }
-
-    @Test
     public void testSkipImportSSLCertificateOnStart() {
         AtomicBoolean certificateImportCalled = new AtomicBoolean();
 
-        HbrApiProxyService service = new HbrApiProxyService() {
+        HarborApiProxyService service = new HarborApiProxyService() {
             public void sendRequest(Operation op) {
                 String path = op.getUri().getPath();
                 if (path.equals(UriUtils.buildUriPath(ManagementUriParts.CONFIG_PROPS,
-                        HBR_URL_PROP))) {
+                        Harbor.CONFIGURATION_URL_PROPERTY_NAME))) {
                     ConfigurationState state = new ConfigurationState();
-                    state.key = HBR_URL_PROP;
+                    state.key = Harbor.CONFIGURATION_URL_PROPERTY_NAME;
                     state.value = SAMPLE_HARBOR_URI.toString();
                     op.setBody(state);
                     op.complete();

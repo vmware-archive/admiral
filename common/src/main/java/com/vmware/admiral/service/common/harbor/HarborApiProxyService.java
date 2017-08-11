@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.service.common;
+package com.vmware.admiral.service.common.harbor;
 
 import static com.vmware.admiral.common.ManagementUriParts.CONFIG_PROPS;
 import static com.vmware.admiral.common.util.UriUtilsExtended.getReverseProxyLocation;
@@ -24,7 +24,6 @@ import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
-import com.vmware.admiral.service.common.SslTrustImportService.SslTrustImportRequest;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.StatelessService;
@@ -33,31 +32,17 @@ import com.vmware.xenon.common.UriUtils;
 /**
  * Simple reverse proxy service to forward requests to harbor services.
  */
-public class HbrApiProxyService extends StatelessService {
+public class HarborApiProxyService extends StatelessService {
 
     public static final String SELF_LINK = ManagementUriParts.HBR_REVERSE_PROXY;
-
-    public static final String HARBOR_ENDPOINT_REPOSITORIES = "/repositories";
-
-    public static final String HARBOR_QUERY_PARAM_PROJECT_ID = "project_id";
-    public static final String HARBOR_QUERY_PARAM_DETAIL = "detail";
-
-    public static final String HARBOR_RESP_PROP_ID = "id";
-    public static final String HARBOR_RESP_PROP_NAME = "name";
-    public static final String HARBOR_RESP_PROP_TAGS_COUNT = "tags_count";
-
-    private static final String HBR_URL_PROP = "harbor.tab.url";
-    private static final String HBR_USER_PROP = "harbor.user";
-    private static final String HBR_PASS_PROP = "harbor.password";
-    private static final String HBR_API_BASE_ENDPOINT = "api";
-    private static final String I18N_RESOURCE_SUBPATH = "i18n/lang";
 
     private volatile URI harborUri;
     private volatile ServiceClient client;
     private String harborUser;
     private String harborPassword;
+    private String harborAuthHeader;
 
-    public HbrApiProxyService() {
+    public HarborApiProxyService() {
         super.toggleOption(ServiceOption.URI_NAMESPACE_OWNER, true);
     }
 
@@ -74,39 +59,21 @@ public class HbrApiProxyService extends StatelessService {
     public void handleStart(Operation startOp) {
         startOp.complete();
 
-        getConfigProperty(HBR_USER_PROP, (configState) -> {
-            harborUser = configState.value;
-        });
+        getConfigProperty(Harbor.CONFIGURATION_USER_PROPERTY_NAME,
+                (state) -> harborUser = state.value);
 
-        getConfigProperty(HBR_PASS_PROP, (configState) -> {
-            harborPassword = configState.value;
-        });
+        getConfigProperty(Harbor.CONFIGURATION_PASS_PROPERTY_NAME,
+                (state) -> harborPassword = state.value);
 
-        getConfigProperty(HBR_URL_PROP, (configState) -> {
-            String harborUrl = configState.value;
+        getConfigProperty(Harbor.CONFIGURATION_URL_PROPERTY_NAME, (state) -> {
+            String harborUrl = state.value;
+            logInfo("Harbor url is %s", harborUrl);
 
             if (harborUrl != null && !harborUrl.trim().isEmpty()) {
                 ServerX509TrustManager trustManager = ServerX509TrustManager.create(getHost());
                 client = ServiceClientFactory.createServiceClient(trustManager, null);
 
                 harborUri = UriUtils.buildUri(harborUrl);
-
-                if (harborUri != null && UriUtils.HTTPS_SCHEME.equals(harborUri.getScheme())) {
-                    logFine("Importing ssl trust for harbor uri %s", harborUri);
-                    SslTrustImportRequest sslTrustRequest = new SslTrustImportRequest();
-                    sslTrustRequest.hostUri = harborUri;
-                    sslTrustRequest.acceptCertificate = true;
-
-                    sendRequest(Operation
-                            .createPut(getHost(), SslTrustImportService.SELF_LINK)
-                            .setBody(sslTrustRequest)
-                            .setCompletion((o, e) -> {
-                                if (e != null) {
-                                    logSevere("There was a problem importing SSL trust for harbor"
-                                                    + " URI %s, Error: %s", harborUri, e);
-                                }
-                            }));
-                }
             }
         });
     }
@@ -143,8 +110,8 @@ public class HbrApiProxyService extends StatelessService {
 
     private void forwardRequest(final Operation op, final Function<URI, Operation> createOp) {
         if (harborUri == null) {
-            op.fail(new IllegalStateException(
-                    "Configuration property " + HBR_URL_PROP + " not provided"));
+            op.fail(new IllegalStateException("Configuration property "
+                    + Harbor.CONFIGURATION_URL_PROPERTY_NAME + " not provided"));
             return;
         }
 
@@ -200,9 +167,9 @@ public class HbrApiProxyService extends StatelessService {
             return null;
         }
 
-        String baseEndpoint = HBR_API_BASE_ENDPOINT;
+        String baseEndpoint = Harbor.API_BASE_ENDPOINT;
 
-        if (opPath.contains(I18N_RESOURCE_SUBPATH)) {
+        if (opPath.contains(Harbor.I18N_RESOURCE_SUBPATH)) {
             baseEndpoint = "";
         }
 
@@ -225,10 +192,14 @@ public class HbrApiProxyService extends StatelessService {
     }
 
     private void prepareAuthn(Operation op) {
-        if (harborUser != null && harborPassword != null) {
-            String s = String.format("%s:%s", harborUser, harborPassword);
-            String encoding = new String(Base64.getEncoder().encode(s.getBytes()));
-            op.addRequestHeader("Authorization", "Basic " + encoding);
+        if (harborAuthHeader != null) {
+            op.addRequestHeader("Authorization", "Basic " + harborAuthHeader);
+        } else {
+            if (harborUser != null && harborPassword != null) {
+                String s = String.format("%s:%s", harborUser, harborPassword);
+                harborAuthHeader = new String(Base64.getEncoder().encode(s.getBytes()));
+                op.addRequestHeader("Authorization", "Basic " + harborAuthHeader);
+            }
         }
     }
 

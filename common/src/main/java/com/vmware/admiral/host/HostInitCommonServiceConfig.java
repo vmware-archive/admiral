@@ -24,7 +24,6 @@ import com.vmware.admiral.service.common.CounterSubTaskService;
 import com.vmware.admiral.service.common.EventTopicService;
 import com.vmware.admiral.service.common.ExtensibilitySubscriptionCallbackService;
 import com.vmware.admiral.service.common.ExtensibilitySubscriptionFactoryService;
-import com.vmware.admiral.service.common.HbrApiProxyService;
 import com.vmware.admiral.service.common.LogService;
 import com.vmware.admiral.service.common.LongURIGetService;
 import com.vmware.admiral.service.common.NodeHealthCheckService;
@@ -35,7 +34,6 @@ import com.vmware.admiral.service.common.ReverseProxyService;
 import com.vmware.admiral.service.common.SslTrustCertificateFactoryService;
 import com.vmware.admiral.service.common.SslTrustImportService;
 import com.vmware.admiral.service.common.UniquePropertiesService;
-import com.vmware.admiral.service.common.mock.MockHbrApiProxyService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
@@ -75,10 +73,6 @@ public class HostInitCommonServiceConfig extends HostInitServiceHelper {
 
 
     public static void startServices(ServiceHost host) {
-        startServices(host, false);
-    }
-
-    public static void startServices(ServiceHost host, boolean mockHbrApiProxyService) {
         host.log(Level.INFO, "Start initializing common services");
 
         startServices(host, servicesToStart);
@@ -88,12 +82,6 @@ public class HostInitCommonServiceConfig extends HostInitServiceHelper {
         // trigger common initial boot service and wait to finish, it is responsible for populating
         // configuration properties states
         waitCommonInitialBootInitialization(host);
-
-        if (mockHbrApiProxyService) {
-            startServices(host, MockHbrApiProxyService.class);
-        } else {
-            startServices(host, HbrApiProxyService.class);
-        }
     }
 
     /**
