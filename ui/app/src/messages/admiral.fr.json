@@ -85,6 +85,7 @@
         "update": "Mettre à jour",
         "create": "Créer",
         "certificateWarning": "Le certificat de {{address}} n'est pas valide. Vous pouvez vous connecter à un site Web qui prétend être {{address}}, ce qui pourrait menacer vos informations confidentielles. Voulez-vous toujours vous connecter au site Web ?",
+        "trustedCertificate": "Le certificat de {{address}} est approuvé.",
         "showCertificate": "Afficher le certificat",
         "hideCertificate": "Masquer le certificat",
         "manageCertificates": "Gérer les certificats",
@@ -519,7 +520,7 @@
         "tagsPlaceholder": "Exemple : compliance:yes",
         "endpointLabel": "Point de terminaison",
         "valueLabel": "Valeur",
-        "instanceTypeMappingLabel": "Type d'instance",
+        "instanceTypeMappingLabel": "Type",
         "instanceTypeMappingDisplay": "{{cpuCount}} CPU, {{memoryInMB}} Mo de RAM, {{bootDiskSizeInMB}} Mo sur disque dur",
         "instanceTypeMappingDisplayAWS": "{{cpuCount}} CPU, {{memoryInMB}} Mo de RAM, stockage {{storageType}}, réseau {{networkType}}",
         "imageMappingLabel": "Type d'image",
@@ -642,6 +643,8 @@
         }
       },
       "instanceType": {
+        "addTitle": "Ajouter un profil type",
+        "editTitle": "Modifier le profil type",
         "aws": {
           "small": "Petite (1 CPU, mémoire de 1 Go)",
           "medium": "Moyenne (1 CPU, mémoire de 2 Go)",
@@ -932,7 +935,6 @@
     },
     "container": {
       "list": {
-        "title": "Éléments",
         "titleSearchContainers": "Conteneurs trouvés",
         "titleSearchApplications": "Applications trouvées",
         "searchPlaceholder": "Rechercher des conteneurs",
@@ -960,7 +962,10 @@
           "all": "Tout",
           "containers": "Conteneurs",
           "applications": "Applications"
-        }
+        },
+        "columnName": "Conteneur",
+        "columnStatus": "Statut",
+        "columnRunningSince": "Date de début d'exécution"
       },
       "details": {
         "usages": "Utilisations",

@@ -62,7 +62,7 @@
         "fieldTitleRole": "Rolle in Projekt"
       },
       "editMember": {
-        "title": "Mitgliedsrolle bearbeiten",
+        "title": "Mitgliedsrolle in Projekt bearbeiten",
         "description": "Rolle von Mitglied {{memberId}} in Projekt {{projectName}} bearbeiten."
       },
       "roles": {
@@ -84,7 +84,7 @@
       "public": "Öffentlich",
       "publicDescription": "Wenn eine Projektregistrierung öffentlich gemacht wird, kann jeder auf alle Repositorys zugreifen.",
       "deploymentSecurity": "Bereitstellungssicherheit",
-      "enableContentTrust": "Vertrauenwürdigkeit von Inhalt aktivieren",
+      "enableContentTrust": "Vertrauenswürdigkeit von Inhalt aktivieren",
       "enableContentTrustDescription": "Nur die Bereitstellung verifizierter Images zulassen.",
       "preventVulnerableImagesFromRunning": "Ausführung von Images mit Sicherheitslücken verhindern",
       "preventVulnerableImagesFromRunningDescription_part1": "Bereitstellung von Images mit einem Sicherheitslücken-Schweregrad ab",
@@ -97,7 +97,7 @@
       "placeholder": "Nach Projekten suchen"
     },
     "actions": {
-      "title": "Aktionen",
+      "title": "Projekte",
       "details": "Details",
       "makePublic": "Als öffentlich",
       "makePrivate": "Als privat",
@@ -131,7 +131,7 @@
       "address": "Adresse:",
       "adminPortal": "Admin-Portal:",
       "type": "Typ:",
-      "clusterOverview": "Cluster-Übersicht",
+      "clusterOverview": "Clusterübersicht",
       "clusterResources": "Clusterressourcen",
       "status": "Status:",
       "creationDate": "Erstellt:",
@@ -214,7 +214,10 @@
       "columnCloudAdmin": "Cloud-Admin",
       "columnProjects": "Projekte",
       "count": "Benutzer/Gruppen",
-      "notFound": "Keine Benutzer gefunden"
+      "notFound": "Keine Benutzer gefunden",
+      "assignRoleInProject": {
+      "description": "Legen Sie das Projekt und die Rolle für Benutzer/Gruppe {{principal}} fest."
+      }
     }
   },
   "configuration": {
@@ -238,6 +241,9 @@
       "validTo": "Gültig bis"
     }
   },
+  "tagDetails": {
+    "affectedContainers": "Betroffene Container"
+  },
   "edit": "Bearbeiten",
   "save": "Speichern",
   "add": "Hinzufügen",
@@ -248,7 +254,9 @@
   "unknown": "Unbekannt",
   "assignRoles": "Rollen zuweisen",
   "makeAdmin": " Als Admin",
-
+  "noItems": "Keine Elemente",
+  "reload": "Neu laden",
+  "sessionExpired": "Ihre Sitzung ist nicht mehr gültig, melden Sie sich erneut an.",
   "compute": {
     "resources": "Ressourcen",
     "policies": "Richtlinien",
@@ -257,13 +265,26 @@
       "title": "Endpoints"
     },
     "compute": {
-      "title": "Computing-Ressource"
+      "title": "Berechnen"
     },
     "profiles": {
       "title": "Profile"
     },
+    "flavors": {
+      "title": "Typprofile",
+      "edit": "Bearbeiten",
+      "delete": {
+        "action": "Löschen",
+        "title": "Typprofil löschen"
+      },
+      "endpoint": "Endpoint",
+      "flavors": "Typen"
+    },
     "placements": {
       "title": "Platzierungen"
+    },
+    "placementZones": {
+      "title": "Platzierungszonen"
     },
     "machines": {
       "title": "Maschinen"

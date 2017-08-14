@@ -5,7 +5,7 @@
     "users": "用户",
     "administrators": "管理员",
     "projectRegistry": "项目注册表",
-    "public": "公用",
+    "public": "公共",
     "publicDescription": "对项目注册表的公共访问",
     "private": "专用",
     "clusters": "群集",
@@ -32,7 +32,7 @@
         "title": "项目组",
         "administrators": "项目管理员:",
         "members": "开发人员:",
-        "viewers": "查看器",
+        "viewers": "查看者",
         "users": "用户"
       },
       "repositories": {
@@ -81,14 +81,14 @@
     "config": {
       "title": "配置",
       "projectRegistry": "项目注册表",
-      "public": "公用",
+      "public": "公共",
       "publicDescription": "将项目注册表设为公用将使每个用户都可访问所有存储库。",
       "deploymentSecurity": "部署安全性",
       "enableContentTrust": "启用内容信任",
       "enableContentTrustDescription": "仅允许部署已验证的映像。",
       "preventVulnerableImagesFromRunning": "阻止运行有漏洞的映像",
       "preventVulnerableImagesFromRunningDescription_part1": "阻止部署漏洞严重性为",
-      "preventVulnerableImagesFromRunningDescription_part2": "以及更高的映像。",
+      "preventVulnerableImagesFromRunningDescription_part2": "及以上程度的映像。",
       "vulnerabilityScanning": "漏洞扫描",
       "automaticallyScanImagesOnPush": "推送时自动扫描映像",
       "automaticallyScanImagesOnPushDescription": "将映像推送到项目注册表时自动扫描它们。"
@@ -97,7 +97,7 @@
       "placeholder": "搜索项目"
     },
     "actions": {
-      "title": "操作",
+      "title": "项目",
       "details": "详细信息",
       "makePublic": "设为公用",
       "makePrivate": "设为专用",
@@ -214,7 +214,10 @@
       "columnCloudAdmin": "云管理员",
       "columnProjects": "项目",
       "count": "用户/组",
-      "notFound": "未找到用户"
+      "notFound": "未找到用户",
+      "assignRoleInProject": {
+      "description": "设置用户/组 {{principal}} 的项目和角色。"
+      }
     }
   },
   "configuration": {
@@ -238,6 +241,9 @@
       "validTo": "有效期至"
     }
   },
+  "tagDetails": {
+    "affectedContainers": "受影响的容器"
+  },
   "edit": "编辑",
   "save": "保存",
   "add": "添加",
@@ -248,7 +254,9 @@
   "unknown": "未知",
   "assignRoles": "分配角色",
   "makeAdmin": "设为管理员",
-
+  "noItems": "无任何项",
+  "reload": "重新加载",
+  "sessionExpired": "您的会话不再有效，请重新登录!",
   "compute": {
     "resources": "资源",
     "policies": "策略",
@@ -257,13 +265,26 @@
       "title": "端点"
     },
     "compute": {
-      "title": "计算"
+      "title": "计算资源"
     },
     "profiles": {
       "title": "配置文件"
     },
+    "flavors": {
+      "title": "特定实例配置文件",
+      "edit": "编辑",
+      "delete": {
+        "action": "删除",
+        "title": "删除特定实例配置文件"
+      },
+      "endpoint": "端点",
+      "flavors": "特定实例"
+    },
     "placements": {
       "title": "放置"
+    },
+    "placementZones": {
+      "title": "放置区域"
     },
     "machines": {
       "title": "计算机"

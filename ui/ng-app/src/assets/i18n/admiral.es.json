@@ -97,7 +97,7 @@
       "placeholder": "Buscar proyectos"
     },
     "actions": {
-      "title": "Acciones",
+      "title": "Proyectos",
       "details": "Detalles",
       "makePublic": "Hacer público",
       "makePrivate": "Hacer privado",
@@ -214,7 +214,10 @@
       "columnCloudAdmin": "Administrador de nube",
       "columnProjects": "Proyectos",
       "count": "usuarios/grupos",
-      "notFound": "No se ha encontrado ningún usuario"
+      "notFound": "No se ha encontrado ningún usuario",
+      "assignRoleInProject": {
+      "description": "Establezca el proyecto y la función del usuario/grupo {{principal}}."
+      }
     }
   },
   "configuration": {
@@ -238,6 +241,9 @@
       "validTo": "Válido hasta"
     }
   },
+  "tagDetails": {
+    "affectedContainers": "Contenedores afectados"
+  },
   "edit": "Editar",
   "save": "Guardar",
   "add": "Añadir",
@@ -248,7 +254,9 @@
   "unknown": "Desconocido",
   "assignRoles": "Asignar funciones",
   "makeAdmin": " Convertir en administrador",
-
+  "noItems": "No hay elementos",
+  "reload": "Volver a cargar",
+  "sessionExpired": "La sesión no es válida; vuelva a iniciar sesión.",
   "compute": {
     "resources": "Recursos",
     "policies": "Políticas",
@@ -262,8 +270,21 @@
     "profiles": {
       "title": "Perfiles"
     },
+    "flavors": {
+      "title": "Perfiles de tipo",
+      "edit": "Editar",
+      "delete": {
+        "action": "Eliminar",
+        "title": "Eliminar perfil de tipo"
+      },
+      "endpoint": "Endpoint",
+      "flavors": "Tipos"
+    },
     "placements": {
       "title": "Ubicaciones"
+    },
+    "placementZones": {
+      "title": "Zonas de ubicación"
     },
     "machines": {
       "title": "Máquinas"

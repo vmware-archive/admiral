@@ -85,6 +85,7 @@
         "update": "更新",
         "create": "作成",
         "certificateWarning": "{{address}} の証明書が無効です。接続先の Web サイトが {{address}} になりすましている可能性があり、このために機密情報が危険にさらされる可能性があります。このまま Web サイトに接続しますか?",
+        "trustedCertificate": "{{address}} の証明書は信頼されています。",
         "showCertificate": "証明書の表示",
         "hideCertificate": "証明書を隠す",
         "manageCertificates": "証明書の管理",
@@ -108,7 +109,7 @@
         "titleSearch": "見つかったホスト",
         "searchPlaceholder": "ホストの検索",
         "dataCollect": "データ収集",
-        "dataCollectStart": "データ収集をトリガーしています。完了まで数分かかる場合があります。",
+        "dataCollectStart": "データ収集を開始しています。完了まで数分かかる場合があります。",
         "dataCollectEnd": "データ収集が終了しました。",
         "create": "ホスト"
       },
@@ -280,7 +281,7 @@
         "true": "はい",
         "false": "いいえ",
         "searchCategoryFilterTitle": "表示:",
-        "partialResultWarning": "1 つ以上のクエリが失敗したため、表示されている検索結果は不完全です。",
+        "partialResultWarning": "1 つ以上のクエリが失敗したため、表示されている検索結果は完全なものではありません。",
         "continue": "続行",
         "searchCategory": {
           "all": "すべて",
@@ -519,7 +520,7 @@
         "tagsPlaceholder": "例: compliance:yes",
         "endpointLabel": "エンドポイント",
         "valueLabel": "値",
-        "instanceTypeMappingLabel": "インスタンス タイプ",
+        "instanceTypeMappingLabel": "フレーバー",
         "instanceTypeMappingDisplay": "{{cpuCount}} 個の CPU、 {{memoryInMB}} MB の RAM、{{bootDiskSizeInMB}} MB のディスク",
         "instanceTypeMappingDisplayAWS": "{{cpuCount}} 個の CPU、{{memoryInMB}} MB の RAM、{{storageType}} のストレージ、{{networkType}} のネットワーク",
         "imageMappingLabel": "イメージ タイプ",
@@ -642,6 +643,8 @@
         }
       },
       "instanceType": {
+        "addTitle": "フレーバー プロファイルを追加します",
+        "editTitle": "フレーバー プロファイルを編集します",
         "aws": {
           "small": "小 (1 つの CPU、1 GB のメモリ)",
           "medium": "中 (1 つの CPU、2 GB のメモリ)",
@@ -679,7 +682,7 @@
       "azureDiskCachingType": {
         "none": "なし",
         "readOnly": "読み取り専用",
-        "readWrite": "読み書き"
+        "readWrite": "読み取り/書き込み"
       },
       "vsphereProvisioningTypes": {
         "thin": "シン",
@@ -721,9 +724,9 @@
         "regionIdLabel": "地域 ID",
         "collectLabel": "データ収集",
         "collectInventoryLabel": "インベントリの収集",
-        "collectInventoryMessage": "インベントリ収集をトリガしています。完了まで数分かかる場合があります。",
+        "collectInventoryMessage": "インベントリ収集を開始しています。完了まで数分かかる場合があります。",
         "collectImagesLabel": "イメージ タイプの収集",
-        "collectImagesMessage": "イメージ収集をトリガしています。完了まで数分かかる場合があります。",
+        "collectImagesMessage": "イメージ収集を開始しています。完了まで数分かかる場合があります。",
         "azure": {
           "userLinkLabel": "サブスクリプション ID",
           "tenantIdLabel": "テナント ID"
@@ -932,7 +935,6 @@
     },
     "container": {
       "list": {
-        "title": "アイテム",
         "titleSearchContainers": "見つかったコンテナ",
         "titleSearchApplications": "見つかったアプリケーション",
         "searchPlaceholder": "コンテナの検索",
@@ -960,7 +962,10 @@
           "all": "すべて",
           "containers": "コンテナ",
           "applications": "アプリケーション"
-        }
+        },
+        "columnName": "コンテナ",
+        "columnStatus": "ステータス",
+        "columnRunningSince": "実行開始日: "
       },
       "details": {
         "usages": "使用量",
@@ -1300,7 +1305,7 @@
           "entrypointDescription": "呼び出されるメインの関数 (file_name.function_name の形式)。",
           "logDriverDescription": "クロージャ タスクのログ ドライバ",
           "logConfigOptionsDescription": "各ログ ドライバでサポートされるオプション",
-          "dependenciesDescription": "コードを実行する前に配置する依存関係歩いs",
+          "dependenciesDescription": "コードを実行する前に配置する依存関係",
           "inputDescription": "コードの実行時に使用する入力。この入力は、プリミティブ オブジェクトまたは有効な JSON オブジェクトである必要があります。",
           "outputDescription": "結果を入力する際に使用する出力パラメータ名。"
         },

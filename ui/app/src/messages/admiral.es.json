@@ -85,6 +85,7 @@
         "update": "Actualizar",
         "create": "Crear",
         "certificateWarning": "El certificado para {{address}} no es válido. Es posible que se haya conectado a un sitio que aparenta ser {{address}}, que podría poner en peligro su información confidencial. ¿Desea conectarse al sitio web de todas formas?",
+        "trustedCertificate": "El certificado de {{address}} es de confianza.",
         "showCertificate": "Mostrar certificado",
         "hideCertificate": "Ocultar certificado",
         "manageCertificates": "Administrar certificados",
@@ -238,7 +239,7 @@
         "expirationColumn": "Caducidad",
         "details": {
           "title": "Detalles de certificado",
-          "commonName": "Nombre de la compañía",
+          "commonName": "Nombre de la empresa",
           "issuerName": "Nombre del emisor",
           "serial": "Serie",
           "fingerprint": "Huella digital de SHA",
@@ -519,7 +520,7 @@
         "tagsPlaceholder": "Ejemplo: compliance:yes",
         "endpointLabel": "Endpoint",
         "valueLabel": "Valor",
-        "instanceTypeMappingLabel": "Tipo de instancia",
+        "instanceTypeMappingLabel": "Tipo",
         "instanceTypeMappingDisplay": "{{cpuCount}} CPU, {{memoryInMB}} MB de RAM, {{bootDiskSizeInMB}} MB en disco",
         "instanceTypeMappingDisplayAWS": "{{cpuCount}} CPU, {{memoryInMB}} MB de RAM, almacenamiento de {{storageType}}, red {{networkType}}",
         "imageMappingLabel": "Tipo de imagen",
@@ -642,6 +643,8 @@
         }
       },
       "instanceType": {
+        "addTitle": "Añadir perfil de tipo",
+        "editTitle": "Editar perfil de tipo",
         "aws": {
           "small": "Pequeña (1 CPU, memoria de 1 GB)",
           "medium": "Mediana (1 CPU, memoria de 2 GB)",
@@ -932,7 +935,6 @@
     },
     "container": {
       "list": {
-        "title": "Elementos",
         "titleSearchContainers": "Contenedores encontrados",
         "titleSearchApplications": "Aplicaciones encontradas",
         "searchPlaceholder": "Buscar contenedores",
@@ -960,7 +962,10 @@
           "all": "Todo",
           "containers": "Contenedores",
           "applications": "Aplicaciones"
-        }
+        },
+        "columnName": "Contenedor",
+        "columnStatus": "Estado",
+        "columnRunningSince": "En ejecución desde"
       },
       "details": {
         "usages": "Usos",

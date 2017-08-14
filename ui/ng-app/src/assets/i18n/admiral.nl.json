@@ -97,7 +97,7 @@
       "placeholder": "Zoeken naar projecten"
     },
     "actions": {
-      "title": "Acties",
+      "title": "Projecten",
       "details": "Details",
       "makePublic": "Openbaar maken",
       "makePrivate": "Privé maken",
@@ -214,7 +214,10 @@
       "columnCloudAdmin": "Cloudbeheerder",
       "columnProjects": "Projecten",
       "count": "gebruikers/groepen",
-      "notFound": "Geen gebruikers gevonden"
+      "notFound": "Geen gebruikers gevonden",
+      "assignRoleInProject": {
+      "description": "Project en rol voor de gebruiker/groep {{principal}} instellen."
+      }
     }
   },
   "configuration": {
@@ -238,6 +241,9 @@
       "validTo": "Geldig tot"
     }
   },
+  "tagDetails": {
+    "affectedContainers": "Betrokken containers"
+  },
   "edit": "Bewerken",
   "save": "Opslaan",
   "add": "Toevoegen",
@@ -248,7 +254,9 @@
   "unknown": "Onbekend",
   "assignRoles": "Rollen toewijzen",
   "makeAdmin": " Beheerder maken",
-
+  "noItems": "Geen items",
+  "reload": "Herladen",
+  "sessionExpired": "Uw sessie is niet meer geldig. U moet zich opnieuw aanmelden.",
   "compute": {
     "resources": "Bronnen",
     "policies": "Beleid",
@@ -262,8 +270,21 @@
     "profiles": {
       "title": "Profielen"
     },
+    "flavors": {
+      "title": "Typeprofielen",
+      "edit": "Bewerken",
+      "delete": {
+        "action": "Verwijderen",
+        "title": "Typeprofiel verwijderen"
+      },
+      "endpoint": "Endpoint",
+      "flavors": "Soorten"
+    },
     "placements": {
       "title": "Plaatsingen"
+    },
+    "placementZones": {
+      "title": "Plaatsingszones"
     },
     "machines": {
       "title": "Machines"

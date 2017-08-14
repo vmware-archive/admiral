@@ -85,6 +85,7 @@
         "update": "Atualizar",
         "create": "Criar",
         "certificateWarning": "O certificado para {{address}} é inválido. Talvez você esteja se conectando a um site que está fingindo ser {{address}}, o que pode colocar suas informações confidenciais em risco. Deseja se conectar ao site mesmo assim?",
+        "trustedCertificate": "O certificado para {{address}} é confiável.",
         "showCertificate": "Mostrar certificado",
         "hideCertificate": "Ocultar certificado",
         "manageCertificates": "Gerenciar Certificados",
@@ -519,7 +520,7 @@
         "tagsPlaceholder": "Exemplo: compliance:yes",
         "endpointLabel": "Endpoint",
         "valueLabel": "Valor",
-        "instanceTypeMappingLabel": "Tipo de instância",
+        "instanceTypeMappingLabel": "Tipo",
         "instanceTypeMappingDisplay": "CPU {{cpuCount}}, {{memoryInMB}} MB RAM, {{bootDiskSizeInMB}} MB disco",
         "instanceTypeMappingDisplayAWS": "CPU {{cpuCount}}, {{memoryInMB}} MB RAM, armazenamento {{storageType}}, rede {{networkType}}",
         "imageMappingLabel": "Tipo de imagem",
@@ -642,6 +643,8 @@
         }
       },
       "instanceType": {
+        "addTitle": "Adicionar perfil de sabor",
+        "editTitle": "Editar perfil de sabor",
         "aws": {
           "small": "Pequeno (1 CPU, 1 GB de Memória)",
           "medium": "Médio (1 CPU, 2 GB de Memória)",
@@ -932,7 +935,6 @@
     },
     "container": {
       "list": {
-        "title": "Itens",
         "titleSearchContainers": "Contêineres Encontrados",
         "titleSearchApplications": "Aplicativos Encontrados",
         "searchPlaceholder": "Procurar contêineres",
@@ -960,7 +962,10 @@
           "all": "Tudo",
           "containers": "Contêineres",
           "applications": "Aplicativos"
-        }
+        },
+        "columnName": "Contêiner",
+        "columnStatus": "Status",
+        "columnRunningSince": "Em execução desde"
       },
       "details": {
         "usages": "Usos",

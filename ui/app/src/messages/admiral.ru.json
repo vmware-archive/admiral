@@ -85,6 +85,7 @@
         "update": "Обновить",
         "create": "Создать",
         "certificateWarning": "Сертификат для {{address}} является недействительным. Возможно, вы пытаетесь подключиться к веб-сайту, который выдается за {{address}}, что может поставить под угрозу вашу конфиденциальную информацию. Подключиться к веб-сайту в любом случае?",
+        "trustedCertificate": "Сертификат для {{address}} является доверенным.",
         "showCertificate": "Показать сертификат",
         "hideCertificate": "Скрыть сертификат",
         "manageCertificates": "Управление сертификатами",
@@ -519,7 +520,7 @@
         "tagsPlaceholder": "Пример: соответствие:да",
         "endpointLabel": "Конечная точка",
         "valueLabel": "Значение",
-        "instanceTypeMappingLabel": "Тип экземпляра",
+        "instanceTypeMappingLabel": "Версия",
         "instanceTypeMappingDisplay": "{{cpuCount}} ЦП, {{memoryInMB}} МБ ОЗУ, диск {{bootDiskSizeInMB}} МБ",
         "instanceTypeMappingDisplayAWS": "{{cpuCount}} ЦП, {{memoryInMB}} МБ ОЗУ, хранилище {{storageType}}, сеть {{networkType}}",
         "imageMappingLabel": "Тип образа",
@@ -642,6 +643,8 @@
         }
       },
       "instanceType": {
+        "addTitle": "Добавить профиль версии",
+        "editTitle": "Изменить профиль версии",
         "aws": {
           "small": "Маленький (1 ЦП, 1 ГБ памяти)",
           "medium": "Средний (1 ЦП, 2 ГБ памяти)",
@@ -690,7 +693,7 @@
         "low": "Низкий",
         "normal": "Нормальный",
         "high": "Высокий",
-        "custom": "Пользовательский"
+        "custom": "Пользовательское"
       },
       "awsVolumeTypes": {
         "gp2": "Твердотельный диск общего назначения (GP2)",
@@ -932,7 +935,6 @@
     },
     "container": {
       "list": {
-        "title": "Элементы",
         "titleSearchContainers": "Найденные контейнеры",
         "titleSearchApplications": "Найденные приложения",
         "searchPlaceholder": "Поиск контейнеров",
@@ -960,7 +962,10 @@
           "all": "Все",
           "containers": "Контейнеры",
           "applications": "Приложения"
-        }
+        },
+        "columnName": "Контейнер",
+        "columnStatus": "Состояние",
+        "columnRunningSince": "Запущено"
       },
       "details": {
         "usages": "Использование",

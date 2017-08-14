@@ -85,6 +85,7 @@
         "update": "업데이트",
         "create": "생성",
         "certificateWarning": "{{address}}에 대한 인증서가 유효하지 않습니다. {{address}}(으)로 가장하는 웹 사이트에 연결하는 중일 수 있으며 이 경우 기밀 정보가 위험에 처할 수 있습니다. 그래도 웹 사이트에 연결하시겠습니까?",
+        "trustedCertificate": "{{address}}에 대한 인증서는 신뢰할 수 있습니다.",
         "showCertificate": "인증서 표시",
         "hideCertificate": "인증서 숨김",
         "manageCertificates": "인증서 관리",
@@ -461,7 +462,7 @@
       "title": "이벤트",
       "tabs": {
         "all": "모두",
-        "warnings": "경고",
+        "warnings": "주의",
         "errors": "오류"
       },
       "contextPanelTooltip": "이벤트 로그"
@@ -519,7 +520,7 @@
         "tagsPlaceholder": "예: compliance:yes",
         "endpointLabel": "끝점",
         "valueLabel": "값",
-        "instanceTypeMappingLabel": "인스턴스 유형",
+        "instanceTypeMappingLabel": "플레이버",
         "instanceTypeMappingDisplay": "{{cpuCount}} CPU, {{memoryInMB}}MB RAM, {{bootDiskSizeInMB}}MB 디스크",
         "instanceTypeMappingDisplayAWS": "{{cpuCount}} CPU, {{memoryInMB}}MB RAM, {{storageType}} 스토리지, {{networkType}} 네트워크",
         "imageMappingLabel": "이미지 유형",
@@ -642,6 +643,8 @@
         }
       },
       "instanceType": {
+        "addTitle": "플레이버 프로파일 추가",
+        "editTitle": "플레이버 프로파일 편집",
         "aws": {
           "small": "소형(CPU 1개, 1GB 메모리)",
           "medium": "중형(CPU 1개, 2GB 메모리)",
@@ -932,7 +935,6 @@
     },
     "container": {
       "list": {
-        "title": "항목",
         "titleSearchContainers": "찾은 컨테이너",
         "titleSearchApplications": "찾은 애플리케이션",
         "searchPlaceholder": "컨테이너 검색",
@@ -960,7 +962,10 @@
           "all": "모두",
           "containers": "컨테이너",
           "applications": "애플리케이션"
-        }
+        },
+        "columnName": "컨테이너",
+        "columnStatus": "상태",
+        "columnRunningSince": "다음 이후부터 실행 중:"
       },
       "details": {
         "usages": "사용",

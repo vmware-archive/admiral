@@ -85,6 +85,7 @@
         "update": "更新",
         "create": "创建",
         "certificateWarning": "{{address}} 的证书无效。您可能正连接到伪装成 {{address}} 的网站，这可能会使您的机密信息面临风险。您仍然要连接到该网站吗?",
+        "trustedCertificate": "{{address}} 的证书为受信证书。",
         "showCertificate": "显示证书",
         "hideCertificate": "隐藏证书",
         "manageCertificates": "管理证书",
@@ -519,7 +520,7 @@
         "tagsPlaceholder": "示例: compliance:yes",
         "endpointLabel": "端点",
         "valueLabel": "值",
-        "instanceTypeMappingLabel": "实例类型",
+        "instanceTypeMappingLabel": "特定实例",
         "instanceTypeMappingDisplay": "{{cpuCount}} 个 CPU，{{memoryInMB}} MB RAM，{{bootDiskSizeInMB}} MB 磁盘",
         "instanceTypeMappingDisplayAWS": "{{cpuCount}} 个 CPU，{{memoryInMB}} MB RAM，{{storageType}} 存储，{{networkType}} 网络",
         "imageMappingLabel": "映像类型",
@@ -642,6 +643,8 @@
         }
       },
       "instanceType": {
+        "addTitle": "添加特定实例配置文件",
+        "editTitle": "编辑特定实例配置文件",
         "aws": {
           "small": "小型 (1 个 CPU、1 GB 内存)",
           "medium": "中型 (1 个 CPU、2 GB 内存)",
@@ -862,7 +865,7 @@
         "project": {
           "name": "项目",
           "description": "描述",
-          "public": "公用",
+          "public": "公共",
           "private": "专用",
           "create": "项目",
           "actions": {
@@ -932,7 +935,6 @@
     },
     "container": {
       "list": {
-        "title": "项目",
         "titleSearchContainers": "找到的容器",
         "titleSearchApplications": "找到的应用程序",
         "searchPlaceholder": "搜索容器",
@@ -960,7 +962,10 @@
           "all": "全部",
           "containers": "容器",
           "applications": "应用程序"
-        }
+        },
+        "columnName": "容器",
+        "columnStatus": "状态",
+        "columnRunningSince": "运行开始时间"
       },
       "details": {
         "usages": "使用情况",

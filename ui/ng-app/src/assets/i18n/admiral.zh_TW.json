@@ -97,7 +97,7 @@
       "placeholder": "搜尋專案"
     },
     "actions": {
-      "title": "動作",
+      "title": "專案",
       "details": "詳細資料",
       "makePublic": "設為公用",
       "makePrivate": "設為私人",
@@ -177,7 +177,7 @@
     "state": {
       "ON": "開啟",
       "OFF": "關閉",
-      "UNKNOWN": "未知",
+      "UNKNOWN": "不明",
       "SUSPEND": "已停用"
     }
   },
@@ -207,14 +207,17 @@
     "certificates": "憑證",
     "usersgroups": {
       "title": "使用者和群組",
-      "description": "將使用者和群組匯入系統。然後指派專案角色給使用者或群組。您也可以將使用者設為全域雲端管理員。",
+      "description": "將使用者和群組匯入系統，然後指派專案角色給使用者或群組。您也可以將使用者設為全域雲端管理員。",
       "fieldTitleSearch": "搜尋使用者/群組",
       "columnName": "使用者/群組名稱",
       "columnPrimaryId": "主要識別碼",
       "columnCloudAdmin": "雲端管理員",
       "columnProjects": "專案",
       "count": "使用者/群組",
-      "notFound": "找不到使用者"
+      "notFound": "找不到使用者",
+      "assignRoleInProject": {
+      "description": "針對使用者/群組 {{principal}} 設定專案和角色。"
+      }
     }
   },
   "configuration": {
@@ -238,6 +241,9 @@
       "validTo": "有效期到"
     }
   },
+  "tagDetails": {
+    "affectedContainers": "受影響的容器"
+  },
   "edit": "編輯",
   "save": "儲存",
   "add": "新增",
@@ -245,10 +251,12 @@
   "remove": "移除",
   "delete": "刪除",
   "cancel": "取消",
-  "unknown": "未知",
+  "unknown": "不明",
   "assignRoles": "指派角色",
   "makeAdmin": " 設為管理員",
-
+  "noItems": "沒有項目",
+  "reload": "重新載入",
+  "sessionExpired": "您的工作階段不再有效，請重新登入!",
   "compute": {
     "resources": "資源",
     "policies": "原則",
@@ -262,8 +270,21 @@
     "profiles": {
       "title": "設定檔"
     },
+    "flavors": {
+      "title": "類型模板設定檔",
+      "edit": "編輯",
+      "delete": {
+        "action": "刪除",
+        "title": "刪除類型模板設定檔"
+      },
+      "endpoint": "端點",
+      "flavors": "類型模板"
+    },
     "placements": {
       "title": "放置"
+    },
+    "placementZones": {
+      "title": "放置區域"
     },
     "machines": {
       "title": "機器"

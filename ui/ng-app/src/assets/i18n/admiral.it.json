@@ -97,7 +97,7 @@
       "placeholder": "Cerca progetti"
     },
     "actions": {
-      "title": "Azioni",
+      "title": "Progetti",
       "details": "Dettagli",
       "makePublic": "Rendi pubblico",
       "makePrivate": "Rendi privato",
@@ -119,7 +119,7 @@
     "state": {
       "ON": "ACCESO",
       "OFF": "SPENTO",
-      "DISABLED": "DISATTIVATO",
+      "DISABLED": "DISABILITATO",
       "WARNING": "AVVISO"
     },
     "type": "Tipo",
@@ -178,7 +178,7 @@
       "ON": "ACCESO",
       "OFF": "SPENTO",
       "UNKNOWN": "SCONOSCIUTO",
-      "SUSPEND": "DISATTIVATO"
+      "SUSPEND": "DISABILITATO"
     }
   },
   "logs": {
@@ -214,7 +214,10 @@
       "columnCloudAdmin": "Amministratore cloud",
       "columnProjects": "Progetti",
       "count": "utenti/gruppi",
-      "notFound": "Nessun utente trovato"
+      "notFound": "Nessun utente trovato",
+      "assignRoleInProject": {
+      "description": "Impostare il progetto e il ruolo per l'utente o il gruppo {{principal}}."
+      }
     }
   },
   "configuration": {
@@ -238,6 +241,9 @@
       "validTo": "Valido fino a"
     }
   },
+  "tagDetails": {
+    "affectedContainers": "Contenitori interessati"
+  },
   "edit": "Modifica",
   "save": "Salva",
   "add": "Aggiungi",
@@ -248,7 +254,9 @@
   "unknown": "Sconosciuto",
   "assignRoles": "Assegna ruoli",
   "makeAdmin": " Imposta come amministratore",
-
+  "noItems": "Nessun elemento",
+  "reload": "Ricarica",
+  "sessionExpired": "La sessione non è più valida. Accedere nuovamente.",
   "compute": {
     "resources": "Risorse",
     "policies": "Criteri",
@@ -262,8 +270,21 @@
     "profiles": {
       "title": "Profili"
     },
+    "flavors": {
+      "title": "Profili caratteristica",
+      "edit": "Modifica",
+      "delete": {
+        "action": "Elimina",
+        "title": "Elimina profilo caratteristica"
+      },
+      "endpoint": "Endpoint",
+      "flavors": "Caratteristiche"
+    },
     "placements": {
       "title": "Posizionamenti"
+    },
+    "placementZones": {
+      "title": "Zone di posizionamento"
     },
     "machines": {
       "title": "Macchine"

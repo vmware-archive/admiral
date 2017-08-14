@@ -25,7 +25,7 @@
       "confirmation": "プロジェクト {{projectName}} の削除を確認してください。メンバーおよびクラスタはプロジェクトとの関連付けを解除されます。この操作は元に戻せません。"
     },
     "summary": {
-      "title": "サマリ",
+      "title": "概要",
       "type": "タイプ：",
       "creationDate": "作成日:",
       "team": {
@@ -55,8 +55,8 @@
       "count": "メンバー",
       "addMembers": {
         "title": "ユーザーおよびグループの追加",
-        "description": "ユーザーおよびグループを ID または E メール アドレス別に {{projectName}} に追加します。",
-        "fieldTitleId": "ID または E メール アドレス",
+        "description": "ユーザーおよびグループを ID またはメール アドレス別に {{projectName}} に追加します。",
+        "fieldTitleId": "ID またはメール アドレス",
         "fieldRequiredId": "ID は必須です。",
         "searchPlaceholder": "ユーザーの検索",
         "fieldTitleRole": "プロジェクトのロール"
@@ -84,10 +84,10 @@
       "public": "パブリック",
       "publicDescription": "プロジェクト レジストリをパブリックに設定すると、すべてのユーザーがすべてのリポジトリにアクセスできるようになります。",
       "deploymentSecurity": "展開のセキュリティ",
-      "enableContentTrust": "コンテンツの信頼の有効化",
+      "enableContentTrust": "コンテンツを信頼する",
       "enableContentTrustDescription": "検証されたイメージのみを展開できます。",
       "preventVulnerableImagesFromRunning": "脆弱なイメージの実行を防止",
-      "preventVulnerableImagesFromRunningDescription_part1": "脆弱性の重要度が",
+      "preventVulnerableImagesFromRunningDescription_part1": "脆弱性の深刻度が",
       "preventVulnerableImagesFromRunningDescription_part2": "以上のイメージの展開を防止します。",
       "vulnerabilityScanning": "脆弱性のスキャン",
       "automaticallyScanImagesOnPush": "プッシュ時にイメージを自動スキャン",
@@ -97,7 +97,7 @@
       "placeholder": "プロジェクトの検索"
     },
     "actions": {
-      "title": "アクション",
+      "title": "プロジェクト",
       "details": "詳細",
       "makePublic": "パブリックに設定",
       "makePrivate": "プライベートに設定",
@@ -127,7 +127,7 @@
     "cpu": "CPU",
     "memory": "メモリ",
     "summary": {
-      "title": "サマリ",
+      "title": "概要",
       "address": "アドレス:",
       "adminPortal": "管理者ポータル:",
       "type": "タイプ：",
@@ -214,7 +214,10 @@
       "columnCloudAdmin": "クラウドの管理者",
       "columnProjects": "プロジェクト",
       "count": "ユーザー/グループ",
-      "notFound": "ユーザーが見つかりません"
+      "notFound": "ユーザーが見つかりません",
+      "assignRoleInProject": {
+      "description": "ユーザー/グループにプロジェクトとロールを設定します{{principal}}。"
+      }
     }
   },
   "configuration": {
@@ -238,6 +241,9 @@
       "validTo": "有効期間終了日"
     }
   },
+  "tagDetails": {
+    "affectedContainers": "該当するコンテナ"
+  },
   "edit": "編集",
   "save": "保存",
   "add": "追加",
@@ -247,8 +253,10 @@
   "cancel": "キャンセル",
   "unknown": "不明",
   "assignRoles": "ロールの割り当て",
-  "makeAdmin": "管理者に設定",
-
+  "makeAdmin": " 管理者に設定",
+  "noItems": "アイテムがありません",
+  "reload": "再ロード",
+  "sessionExpired": "セッションが無効になりました。ログインし直してください。",
   "compute": {
     "resources": "リソース",
     "policies": "ポリシー",
@@ -262,8 +270,21 @@
     "profiles": {
       "title": "プロファイル"
     },
+    "flavors": {
+      "title": "フレーバー プロファイル",
+      "edit": "編集",
+      "delete": {
+        "action": "削除",
+        "title": "フレーバー プロファイルの削除"
+      },
+      "endpoint": "エンドポイント",
+      "flavors": "フレーバー"
+    },
     "placements": {
       "title": "配置"
+    },
+    "placementZones": {
+      "title": "配置ゾーン"
     },
     "machines": {
       "title": "マシン"

@@ -85,6 +85,7 @@
         "update": "Bijwerken",
         "create": "Maken",
         "certificateWarning": "Het certificaat voor {{address}} is ongeldig. U maakt mogelijk verbinding met een website die zich voordoet als {{address}} waardoor uw vertrouwelijke gegevens risico kunnen lopen. Wilt u toch verbinding maken met deze website?",
+        "trustedCertificate": "Het certificaat voor {{address}} wordt vertrouwd.",
         "showCertificate": "Certificaat weergeven",
         "hideCertificate": "Certificaat verbergen",
         "manageCertificates": "Certificaten beheren",
@@ -519,7 +520,7 @@
         "tagsPlaceholder": "Voorbeeld: compliance:yes",
         "endpointLabel": "Endpoint",
         "valueLabel": "Waarde",
-        "instanceTypeMappingLabel": "Instantietype",
+        "instanceTypeMappingLabel": "Soort",
         "instanceTypeMappingDisplay": "{{cpuCount}} CPU, {{memoryInMB}} MB RAM, {{bootDiskSizeInMB}} MB schijf",
         "instanceTypeMappingDisplayAWS": "{{cpuCount}} CPU, {{memoryInMB}} MB RAM, {{storageType}}-opslag, {{networkType}}-netwerk",
         "imageMappingLabel": "Imagetype",
@@ -642,6 +643,8 @@
         }
       },
       "instanceType": {
+        "addTitle": "Typeprofiel toevoegen",
+        "editTitle": "Typeprofiel bewerken",
         "aws": {
           "small": "Klein (1 CPU, 1 GB geheugen)",
           "medium": "Medium (1 CPU, 2 GB geheugen)",
@@ -932,7 +935,6 @@
     },
     "container": {
       "list": {
-        "title": "Items",
         "titleSearchContainers": "Containers gevonden",
         "titleSearchApplications": "Toepassingen gevonden",
         "searchPlaceholder": "Zoeken naar containers",
@@ -960,7 +962,10 @@
           "all": "Alles",
           "containers": "Containers",
           "applications": "Toepassingen"
-        }
+        },
+        "columnName": "Container",
+        "columnStatus": "Status",
+        "columnRunningSince": "Uitgevoerd sinds"
       },
       "details": {
         "usages": "Aantal keer gebruikt",

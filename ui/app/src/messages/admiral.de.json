@@ -85,6 +85,7 @@
         "update": "Aktualisieren",
         "create": "Erstellen",
         "certificateWarning": "Das Zertifikat für {{address}} ist ungültig. Sie stellen möglicherweise eine Verbindung zu einer Website her, die vorgibt, folgende zu sein: {{address}}. Damit könnten Ihre vertraulichen Daten einem Risiko ausgesetzt werden. Möchten Sie die Verbindung zu der Website dennoch herstellen?",
+        "trustedCertificate": "Das Zertifikat für {{address}} ist vertrauenswürdig.",
         "showCertificate": "Zertifikat anzeigen",
         "hideCertificate": "Zertifikat ausblenden",
         "manageCertificates": "Zertifikate verwalten",
@@ -519,9 +520,9 @@
         "tagsPlaceholder": "Beispiel: compliance:yes",
         "endpointLabel": "Endpoint",
         "valueLabel": "Wert",
-        "instanceTypeMappingLabel": "Instanztyp",
+        "instanceTypeMappingLabel": "Typ",
         "instanceTypeMappingDisplay": "{{cpuCount}} CPU(s), {{memoryInMB}} MB RAM, {{bootDiskSizeInMB}} MB Festplatte",
-        "instanceTypeMappingDisplayAWS": "{{cpuCount}} CPU(s), {{memoryInMB}} MB RAM, {{storageType}}-Speicher{{networkType}}-Netzwerk",
+        "instanceTypeMappingDisplayAWS": "{{cpuCount}} CPU(s), {{memoryInMB}} MB RAM, {{storageType}}-Speicher, {{networkType}}-Netzwerk",
         "imageMappingLabel": "Image-Typ",
         "diskPropertyMappingLabel": "Festplatteneigenschaften",
         "cpuCountLabel": "CPUs",
@@ -584,8 +585,8 @@
             "storagePolicyEntityLabel": "Speicherrichtlinien",
             "snapshotsLabel": "Snapshots",
             "independentOfSnapshotsLabel": "Unabhängig von Snapshots",
-            "persistentLabel": "Persistent",
-            "nonPersistentLabel": "Nicht persistent",
+            "persistentLabel": "Dauerhaft",
+            "nonPersistentLabel": "Nicht dauerhaft",
             "provisioningSelectDefault": "Bereitstellungstyp auswählen",
             "sharesLevelDefault": "Anteile-Ebene auswählen",
             "datastore": {
@@ -642,6 +643,8 @@
         }
       },
       "instanceType": {
+        "addTitle": "Typprofil hinzufügen",
+        "editTitle": "Typprofil bearbeiten",
         "aws": {
           "small": "Klein (1 CPU, 1 GB Arbeitsspeicher)",
           "medium": "Mittel (1 CPU, 2 GB Arbeitsspeicher)",
@@ -932,7 +935,6 @@
     },
     "container": {
       "list": {
-        "title": "Elemente",
         "titleSearchContainers": "Gefundene Container",
         "titleSearchApplications": "Gefundene Anwendungen",
         "searchPlaceholder": "Container suchen",
@@ -960,7 +962,10 @@
           "all": "Alle",
           "containers": "Container",
           "applications": "Anwendungen"
-        }
+        },
+        "columnName": "Container",
+        "columnStatus": "Status",
+        "columnRunningSince": "Wird ausgeführt seit"
       },
       "details": {
         "usages": "Nutzungen",

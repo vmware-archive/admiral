@@ -85,6 +85,7 @@
         "update": "更新",
         "create": "建立",
         "certificateWarning": "{{address}} 的憑證無效。您可能會連線至偽裝成 {{address}} 的網站，這會使您的機密資訊處於風險之中。仍要連線至該網站嗎?",
+        "trustedCertificate": "{{address}} 的憑證受信任。",
         "showCertificate": "顯示憑證",
         "hideCertificate": "隱藏憑證",
         "manageCertificates": "管理憑證",
@@ -519,9 +520,9 @@
         "tagsPlaceholder": "範例: compliance:yes",
         "endpointLabel": "端點",
         "valueLabel": "值",
-        "instanceTypeMappingLabel": "執行個體類型",
-        "instanceTypeMappingDisplay": "{{cpuCount}} CPU、{{memoryInMB}} MB RAM、{{bootDiskSizeInMB}} MB 磁碟",
-        "instanceTypeMappingDisplayAWS": "{{cpuCount}} CPU、{{memoryInMB}} MB RAM、{{storageType}} 儲存區、{{networkType}} 網路",
+        "instanceTypeMappingLabel": "類型模板",
+        "instanceTypeMappingDisplay": "{{cpuCount}} 個 CPU、{{memoryInMB}} MB RAM、{{bootDiskSizeInMB}} MB 磁碟",
+        "instanceTypeMappingDisplayAWS": "{{cpuCount}} 個 CPU、{{memoryInMB}} MB RAM、{{storageType}} 儲存區、{{networkType}} 網路",
         "imageMappingLabel": "映像類型",
         "diskPropertyMappingLabel": "磁碟內容",
         "cpuCountLabel": "CPU",
@@ -642,6 +643,8 @@
         }
       },
       "instanceType": {
+        "addTitle": "新增類型模板設定檔",
+        "editTitle": "編輯類型模板設定檔",
         "aws": {
           "small": "小·(1 個 CPU，1 GB 記憶體)",
           "medium": "中等·(1 個 CPU，2 GB 記憶體)",
@@ -932,7 +935,6 @@
     },
     "container": {
       "list": {
-        "title": "項目",
         "titleSearchContainers": "找到的容器",
         "titleSearchApplications": "找到的應用程式",
         "searchPlaceholder": "搜尋容器",
@@ -960,7 +962,10 @@
           "all": "全部",
           "containers": "容器",
           "applications": "應用程式"
-        }
+        },
+        "columnName": "容器",
+        "columnStatus": "狀態",
+        "columnRunningSince": "自以下時間後執行"
       },
       "details": {
         "usages": "使用量",

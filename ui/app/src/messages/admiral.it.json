@@ -72,7 +72,7 @@
         "tagsPlaceholder": "Esempio: posizione:ovest",
         "tagsHint": "Consente di immettere i tag chiave:valore",
         "autoConfigure": "Configurazione automatica",
-        "autoConfigureInput": "Attiva configurazione automatica host",
+        "autoConfigureInput": "Abilita configurazione automatica host",
         "autoConfigureHint": "Questa opzione configurerà l'API remoto del docker nell'indirizzo e nella porta forniti con i certificati autofirmati generati. L'operazione verrà eseguita una volta, tramite SSH. I sistemi operativi supportati sono: CoreOS, PhotonOS, Ubuntu Server 16.04 o versioni successive.",
         "reservationPolicy": "Criterio di prenotazione",
         "endpoint": "Endpoint",
@@ -85,6 +85,7 @@
         "update": "Aggiorna",
         "create": "Crea",
         "certificateWarning": "Il certificato per {{address}} non è valido. È possibile che sia in corso la connessione a un sito Web che finge di essere {{address}}. Ciò potrebbe mettere a rischio le informazioni riservate dell'utente. Connettersi comunque al sito Web?",
+        "trustedCertificate": "Il certificato per {{address}} è attendibile.",
         "showCertificate": "Mostra certificato",
         "hideCertificate": "Nascondi certificato",
         "manageCertificates": "Gestisci certificati",
@@ -116,8 +117,8 @@
         "start": "Avvia",
         "stop": "Interrompi",
         "edit": "Modifica",
-        "enable": "Attiva",
-        "disable": "Disattiva",
+        "enable": "Abilita",
+        "disable": "Disabilita",
         "remove": "Rimuovi"
       }
     },
@@ -519,7 +520,7 @@
         "tagsPlaceholder": "Esempio: conformità:sì",
         "endpointLabel": "Endpoint",
         "valueLabel": "Valore",
-        "instanceTypeMappingLabel": "Tipo di istanza",
+        "instanceTypeMappingLabel": "Caratteristica",
         "instanceTypeMappingDisplay": "{{cpuCount}} CPU, {{memoryInMB}} MB di RAM, disco da {{bootDiskSizeInMB}} MB",
         "instanceTypeMappingDisplayAWS": "{{cpuCount}} CPU, {{memoryInMB}} MB di RAM, storage {{storageType}}, rete {{networkType}}",
         "imageMappingLabel": "Tipo di immagine",
@@ -642,6 +643,8 @@
         }
       },
       "instanceType": {
+        "addTitle": "Aggiungi profilo caratteristica",
+        "editTitle": "Modifica profilo caratteristica",
         "aws": {
           "small": "Piccolo (1 CPU, 1 GB di memoria)",
           "medium": "Medio (1 CPU, 2 GB di memoria)",
@@ -932,7 +935,6 @@
     },
     "container": {
       "list": {
-        "title": "Elementi",
         "titleSearchContainers": "Contenitori trovati",
         "titleSearchApplications": "Applicazioni trovate",
         "searchPlaceholder": "Cerca contenitori",
@@ -960,7 +962,10 @@
           "all": "Tutto",
           "containers": "Contenitori",
           "applications": "Applicazioni"
-        }
+        },
+        "columnName": "Contenitore",
+        "columnStatus": "Stato",
+        "columnRunningSince": "In esecuzione da"
       },
       "details": {
         "usages": "Utilizzi",
@@ -1106,7 +1111,7 @@
           "memoryLimit": "Limite di memoria",
           "memoryLimitDescription": "Limite di memoria in byte",
           "memorySwapLimit": "Limite scambio memoria",
-          "memorySwapLimitDescription": "Limite di memoria totale (memoria + scambio). Impostare -1 per disattivare lo scambio. Deve essere utilizzato con la memoria e il valore dello scambio deve essere superiore a quello della memoria.",
+          "memorySwapLimitDescription": "Limite di memoria totale (memoria + scambio). Impostare -1 per disabilitare lo scambio. Deve essere utilizzato con la memoria e il valore dello scambio deve essere superiore a quello della memoria.",
           "affinityConstraints": "Vincoli di affinità",
           "affinityConstraintsDescription": "Condizioni di affinità o anti-affinità dei contenitori distribuiti o non distribuiti nello stesso host. Formato: [!]nomeServizio[:soft|hard].",
           "affinityInputs": {
@@ -1364,10 +1369,10 @@
   "cancel": "Annulla",
   "error": "Errore",
   "delete": "Elimina",
-  "enable": "Attiva",
-  "enabled": "Attivato",
-  "disable": "Disattiva",
-  "disabled": "Disattivato",
+  "enable": "Abilita",
+  "enabled": "Abilitato",
+  "disable": "Disabilita",
+  "disabled": "Disabilitato",
   "close": "Chiudi",
   "edit": "Modifica",
   "remove": "Rimuovi",
@@ -1423,7 +1428,7 @@
   "state": {
     "ON": "ACCESO",
     "OFF": "SPENTO",
-    "SUSPEND": "DISATTIVATO",
+    "SUSPEND": "DISABILITATO",
     "UNKNOWN": "SCONOSCIUTO",
     "stateSinceMessage": "da {{date}}"
   },

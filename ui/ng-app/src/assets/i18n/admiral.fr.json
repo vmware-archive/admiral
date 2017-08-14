@@ -75,7 +75,7 @@
       },
       "deleteMember": {
         "title": "Supprimer le membre du projet",
-        "confirmation": "Voulez-vous supprimer ce membre de ce projet ?"
+        "confirmation": "Voulez-vous vraiment supprimer ce membre de ce projet ?"
       }
     },
     "config": {
@@ -97,7 +97,7 @@
       "placeholder": "Rechercher des projets"
     },
     "actions": {
-      "title": "Actions",
+      "title": "Projets",
       "details": "Détails",
       "makePublic": "Rendre public",
       "makePrivate": "Rendre privé",
@@ -115,7 +115,7 @@
     "title": "Clusters",
     "cluster": "Cluster",
     "new": "Nouveau",
-    "status": "État",
+    "status": "Statut",
     "state": {
       "ON": "ACTIVÉ",
       "OFF": "DÉSACTIVÉ",
@@ -133,7 +133,7 @@
       "type": "Type :",
       "clusterOverview": "Vue d'ensemble du cluster",
       "clusterResources": "Ressources du cluster",
-      "status": "État :",
+      "status": "Statut :",
       "creationDate": "Créé :",
       "containersCount": "Conteneurs :",
       "cpu": "vCPU :",
@@ -143,7 +143,7 @@
       "addHostButton": "Hôte",
       "title": "Ressources",
       "address": "Adresse",
-      "status": "État",
+      "status": "Statut",
       "containersCount": "Conteneurs",
       "memory": "Mémoire",
       "cpu": "CPU",
@@ -161,7 +161,7 @@
       "description": "Description",
       "type": "Type",
       "url": "URL",
-      "urlRequired": "L'URL du cluster est requis.",
+      "urlRequired": "L'URL du cluster est requise.",
       "credentials": "Informations d'identification"
     },
     "delete": {
@@ -214,7 +214,10 @@
       "columnCloudAdmin": "Administrateur Cloud",
       "columnProjects": "Projets",
       "count": "utilisateurs/groupes",
-      "notFound": "Aucun utilisateur trouvé"
+      "notFound": "Aucun utilisateur trouvé",
+      "assignRoleInProject": {
+      "description": "Définissez le projet et le rôle pour le principal {{principal}} de l'utilisateur ou du groupe."
+      }
     }
   },
   "configuration": {
@@ -238,6 +241,9 @@
       "validTo": "Date de fin de validité"
     }
   },
+  "tagDetails": {
+    "affectedContainers": "Conteneurs affectés"
+  },
   "edit": "Modifier",
   "save": "Enregistrer",
   "add": "Ajouter",
@@ -248,7 +254,9 @@
   "unknown": "Inconnu",
   "assignRoles": "Attribuer des rôles",
   "makeAdmin": " Donner le rôle administrateur",
-
+  "noItems": "Aucun élément",
+  "reload": "Recharger",
+  "sessionExpired": "Votre session n'est plus valide. Veuillez vous reconnecter.",
   "compute": {
     "resources": "Ressources",
     "policies": "Stratégies",
@@ -262,8 +270,21 @@
     "profiles": {
       "title": "Profils"
     },
+    "flavors": {
+      "title": "Profils types",
+      "edit": "Modifier",
+      "delete": {
+        "action": "Supprimer",
+        "title": "Supprimer le profil type"
+      },
+      "endpoint": "Point de terminaison",
+      "flavors": "Types"
+    },
     "placements": {
       "title": "Placements"
+    },
+    "placementZones": {
+      "title": "Zones de placement"
     },
     "machines": {
       "title": "Machines"

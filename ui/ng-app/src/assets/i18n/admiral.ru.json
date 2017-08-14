@@ -97,7 +97,7 @@
       "placeholder": "Поиск проектов"
     },
     "actions": {
-      "title": "Действия",
+      "title": "Проекты",
       "details": "Сведения",
       "makePublic": "Сделать общедоступным",
       "makePrivate": "Сделать частным",
@@ -118,7 +118,7 @@
     "status": "Состояние",
     "state": {
       "ON": "Включено",
-      "OFF": "Выключено",
+      "OFF": "ВЫКЛ.",
       "DISABLED": "ОТКЛЮЧЕНО",
       "WARNING": "ПРЕДУПРЕЖДЕНИЕ"
     },
@@ -176,7 +176,7 @@
     },
     "state": {
       "ON": "Включено",
-      "OFF": "Выключено",
+      "OFF": "ВЫКЛ.",
       "UNKNOWN": "НЕТ ДАННЫХ",
       "SUSPEND": "ОТКЛЮЧЕНО"
     }
@@ -184,7 +184,7 @@
   "logs": {
     "title": "Журналы",
     "system": {
-      "title": "Система",
+      "title": "Системное",
       "columnLogEntry": "Запись журнала",
       "columnSeverity": "Серьезность",
       "columnTimeStamp": "Метка времени",
@@ -214,7 +214,10 @@
       "columnCloudAdmin": "Администратор облаков",
       "columnProjects": "Проекты",
       "count": "пользователи/группы",
-      "notFound": "Пользователи не найдены"
+      "notFound": "Пользователи не найдены",
+      "assignRoleInProject": {
+      "description": "Задайте проект и роль для пользователя/группы {{principal}}."
+      }
     }
   },
   "configuration": {
@@ -238,6 +241,9 @@
       "validTo": "Действителен до"
     }
   },
+  "tagDetails": {
+    "affectedContainers": "Затронутые контейнеры"
+  },
   "edit": "Изменить",
   "save": "Сохранить",
   "add": "Добавить",
@@ -248,7 +254,9 @@
   "unknown": "Нет данных",
   "assignRoles": "Присвоить роли",
   "makeAdmin": " Сделать администратором",
-
+  "noItems": "Нет элементов",
+  "reload": "Перезагрузить",
+  "sessionExpired": "Ваш сеанс прекращен. Выполните вход повторно.",
   "compute": {
     "resources": "Ресурсы",
     "policies": "Политики",
@@ -262,8 +270,21 @@
     "profiles": {
       "title": "Профили"
     },
+    "flavors": {
+      "title": "Профили версий",
+      "edit": "Изменить",
+      "delete": {
+        "action": "Удалить",
+        "title": "Удалить профиль версии"
+      },
+      "endpoint": "Конечная точка",
+      "flavors": "Версии"
+    },
     "placements": {
       "title": "Размещения"
+    },
+    "placementZones": {
+      "title": "Зоны размещения"
     },
     "machines": {
       "title": "Компьютеры"
