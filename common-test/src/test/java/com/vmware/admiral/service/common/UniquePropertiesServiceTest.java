@@ -47,7 +47,7 @@ public class UniquePropertiesServiceTest extends BaseTestCase {
 
     private void startServices(VerificationHost host) {
         DeploymentProfileConfig.getInstance().setTest(true);
-        HostInitCommonServiceConfig.startServices(host, true);
+        HostInitCommonServiceConfig.startServices(host);
     }
 
     @Test

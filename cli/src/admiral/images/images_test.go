@@ -43,7 +43,7 @@ func TestMain(m *testing.M) {
 
 func TestQueryImagesAndSort(t *testing.T) {
 	// Testing
-	imageName := "ubuntu"
+	imageName := "nginx"
 	il := &ImagesList{}
 	_, err := il.QueryImages(imageName)
 	CheckTestError(err, t)

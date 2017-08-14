@@ -52,7 +52,7 @@ public class UniquePropertiesUtilTest extends BaseTestCase {
 
     private void startServices(VerificationHost host) {
         DeploymentProfileConfig.getInstance().setTest(true);
-        HostInitCommonServiceConfig.startServices(host, true);
+        HostInitCommonServiceConfig.startServices(host);
     }
 
     @Test
@@ -142,8 +142,8 @@ public class UniquePropertiesUtilTest extends BaseTestCase {
                 });
         ctx1.await();
 
-        UniquePropertiesState state = getDocumentNoWait(UniquePropertiesState.class, testState
-                .documentSelfLink);
+        UniquePropertiesState state = getDocumentNoWait(UniquePropertiesState.class,
+                testState.documentSelfLink);
 
         assertTrue(state.uniqueProperties.size() == 0);
     }
@@ -180,8 +180,8 @@ public class UniquePropertiesUtilTest extends BaseTestCase {
 
         ctx1.await();
 
-        UniquePropertiesState state = getDocumentNoWait(UniquePropertiesState.class, testState
-                .documentSelfLink);
+        UniquePropertiesState state = getDocumentNoWait(UniquePropertiesState.class,
+                testState.documentSelfLink);
 
         assertTrue(state.uniqueProperties.size() == 1);
         assertTrue(state.uniqueProperties.contains(newTestEntry));
