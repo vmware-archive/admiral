@@ -13,7 +13,9 @@ package com.vmware.admiral.compute.cluster;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletionException;
 
@@ -38,6 +40,7 @@ import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.ODataQueryVisitor;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription;
 import com.vmware.xenon.common.ServiceDocumentDescription.Builder;
 import com.vmware.xenon.common.ServiceHost;
@@ -68,6 +71,11 @@ public class ClusterUtils {
 
     public static DeferredResult<List<ComputeState>> getHostsWithinPlacementZone(
             String resourcePoolLink, String projectLink, ServiceHost host) {
+        return getHostsWithinPlacementZone(resourcePoolLink, projectLink, null, host);
+    }
+
+    public static DeferredResult<List<ComputeState>> getHostsWithinPlacementZone(
+            String resourcePoolLink, String projectLink, Operation get, ServiceHost host) {
         if (resourcePoolLink == null) {
             return null;
         }
@@ -86,6 +94,23 @@ public class ClusterUtils {
                 qb.addInCollectionItemClause(ComputeState.FIELD_NAME_TENANT_LINKS,
                         Collections.singletonList(projectLink), Occurance.MUST_OCCUR);
             });
+        }
+
+        if (get != null) {
+            Map<String, String> query = UriUtils.parseUriQueryParams(get.getUri());
+            String hostsFilter = query.getOrDefault(ClusterService.HOSTS_FILTER_QUERY_PARAM, null);
+
+            if (hostsFilter != null) {
+                ServiceDocumentDescription desc = Builder.create().buildDescription(
+                        ComputeState.class);
+
+                Set<String> expandedQueryPropertyNames = QueryTaskUtils
+                        .getExpandedQueryPropertyNames(desc);
+                Query q = new ODataQueryVisitor(expandedQueryPropertyNames).toQuery(hostsFilter);
+                if (q != null) {
+                    helper.setAdditionalQueryClausesProvider(qb -> qb.addClause(q));
+                }
+            }
         }
 
         helper.query((qr) -> {
@@ -266,11 +291,14 @@ public class ClusterUtils {
                 ePZClusterDto.totalCpu = 0.0;
             }
             int containerCounter = 0;
+            ePZClusterDto.nodes = new HashMap<>();
             for (ComputeState computeState : computeStates) {
                 if (!computeState.powerState.equals(computeStates.get(0).powerState)) {
                     ePZClusterDto.status = ClusterStatus.WARNING;
                 }
                 ePZClusterDto.nodeLinks.add(computeState.documentSelfLink);
+                ePZClusterDto.nodes.put(computeState.documentSelfLink,
+                        transformComputeForExpandedCluster(computeState));
                 containerCounter += PropertyUtils.getPropertyInteger(
                         computeState.customProperties,
                         ContainerHostService.NUMBER_OF_CONTAINERS_PER_HOST_PROP_NAME)
@@ -302,5 +330,16 @@ public class ClusterUtils {
 
         throw new IllegalArgumentException(
                 String.format("'%s' is not a placement zone link", placementZoneLink));
+    }
+
+    public static ComputeState transformComputeForExpandedCluster(ComputeState state) {
+        ComputeState outState = new ComputeState();
+        // Cast before passing the compute state in order to use the
+        // copyTo method with ServiceDocument instead of ResourceState.
+        state.copyTo((ServiceDocument) outState);
+        outState.address = state.address;
+        outState.powerState = state.powerState;
+        outState.name = state.name;
+        return outState;
     }
 }

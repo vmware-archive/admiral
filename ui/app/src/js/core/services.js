@@ -829,6 +829,42 @@ services.searchCompute = function(resourcePoolLink, query, limit) {
   });
 };
 
+services.loadClusters = function(query, limit) {
+  var qOps = {
+    any: query.toLowerCase(),
+    powerState: 'ON'
+  };
+
+  var filter = buildHostsQuery(qOps, true);
+
+  var params = $.extend(params || {}, {
+    [DOCUMENT_TYPE_PROP_NAME]: true,
+    [ODATA_COUNT_PROP_NAME]: true,
+    [ODATA_LIMIT_PROP_NAME]: limit || calculateLimit(),
+    [ODATA_ORDERBY_PROP_NAME]: 'creationTimeMicros asc',
+    [EXPAND_QUERY_PROP_NAME]: true
+  });
+
+  if (filter) {
+    params.$hostsFilter = filter;
+  }
+  var url = mergeUrl(links.CONTAINER_CLUSTERS, params);
+
+  return get(url).then(function(data) {
+    var documentLinks = data.documentLinks || [];
+
+    var result = {
+      totalCount: data.totalCount
+    };
+
+    result.items = documentLinks.map((link) => {
+      return data.documents[link];
+    });
+
+    return result;
+  });
+};
+
 services.loadNetwork = function(documentSelfLink) {
   return get(documentSelfLink);
 };

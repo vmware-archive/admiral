@@ -20,7 +20,7 @@ const INITIAL_FILTER = '';
 var initialQueryPromise;
 
 var HOST_DROPDOWN_RENDERER = function(host) {
-  var hostName = utils.getHostName(host);
+  var hostName = host.displayName || utils.getHostName(host);
 
   return `
     <div>
@@ -35,16 +35,25 @@ function hostSearchCallback(q, callback) {
   if (!q) {
     promise = initialQueryPromise;
   } else {
-    promise = services.searchHosts(q, HOST_RESULT_LIMIT);
+    promise = services.loadClusters(q, HOST_RESULT_LIMIT);
   }
-
-  promise.then((result) => {
-    result.items = result.items.map((host) => {
-      host.name = utils.getHostName(host);
-      return host;
-    });
-
-    callback(result);
+  promise.then(function(result) {
+    var hostResult = {};
+    hostResult.items = [];
+    hostResult.totalCount = 0;
+    for (var i = 0; i < result.items.length; i++) {
+      var hostsInCluster = [];
+      var currentCluster = result.items[i];
+      var currentCounter = currentCluster.nodeLinks.length;
+      for (var j = 0; j < currentCluster.nodeLinks.length; j++) {
+        var host = currentCluster.nodes[currentCluster.nodeLinks[j]];
+        host.displayName = host.address + ' (' + currentCluster.name + ')';
+        hostsInCluster.push(host);
+      }
+      hostResult.items.push.apply(hostResult.items, hostsInCluster);
+      hostResult.totalCount += currentCounter;
+    }
+    callback(hostResult);
   });
 }
 
@@ -93,7 +102,7 @@ var HostPicker = Vue.extend({
       viewId: utils.uuid()
     }];
 
-    initialQueryPromise = services.searchHosts(INITIAL_FILTER, HOST_RESULT_LIMIT);
+    initialQueryPromise = services.loadClusters(INITIAL_FILTER, HOST_RESULT_LIMIT);
   },
   detached: function() {
   },

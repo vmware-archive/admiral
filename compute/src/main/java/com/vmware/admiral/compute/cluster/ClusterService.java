@@ -97,6 +97,8 @@ public class ClusterService extends StatelessService {
     public static final String CLUSTER_NAME_CUSTOM_PROP = "__clusterName";
     public static final String CLUSTER_CREATION_TIME_MICROS_CUSTOM_PROP = "__clusterCreationTimeMicros";
 
+    public static final String HOSTS_FILTER_QUERY_PARAM = "$hostsFilter";
+
     public ClusterService() {
         super(ClusterDto.class);
         super.toggleOption(ServiceOption.URI_NAMESPACE_OWNER, true);
@@ -157,6 +159,8 @@ public class ClusterService extends StatelessService {
 
         /** Document links of the {@link ComputeState}s that are part of this cluster */
         public List<String> nodeLinks;
+
+        public Map<String, ComputeState> nodes;
 
         // TODO do we need that and how do we compute that for docker clusters? (VCH reports this,
         // but docker host doesn't)
@@ -312,7 +316,7 @@ public class ClusterService extends StatelessService {
 
         sendWithDeferredResult(getPlacementZone, ServiceDocumentQueryResult.class)
                 .thenCompose(queryResult -> getInfoFromHostsWihtinPlacementZone(projectLink,
-                        queryResult))
+                        queryResult, get))
                 .thenAccept(clusterDtoList -> {
                     Map<String, Object> ClusterDtoMap = clusterDtoList.stream()
                             .collect(Collectors.toMap(
@@ -388,14 +392,13 @@ public class ClusterService extends StatelessService {
     }
 
     private DeferredResult<List<ClusterDto>> getInfoFromHostsWihtinPlacementZone(String projectLink,
-            ServiceDocumentQueryResult queryResult) {
+            ServiceDocumentQueryResult queryResult, Operation get) {
         Map<String, ElasticPlacementZoneConfigurationState> ePZstates = QueryUtil
                 .extractQueryResult(
                         queryResult, ElasticPlacementZoneConfigurationState.class);
         List<DeferredResult<ClusterDto>> clusterDtoList = ePZstates.keySet().stream()
-                .map(key -> ClusterUtils.getHostsWithinPlacementZone(
-                        ePZstates.get(key).resourcePoolState.documentSelfLink, projectLink,
-                        getHost())
+                .map(key -> ClusterUtils.getHostsWithinPlacementZone(ePZstates.get(key)
+                                .resourcePoolState.documentSelfLink, projectLink, get, getHost())
                         .thenApply(computeStates -> {
                             return ClusterUtils.placementZoneAndItsHostsToClusterDto(
                                     ePZstates.get(key).resourcePoolState, computeStates);
