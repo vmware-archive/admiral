@@ -34,6 +34,8 @@ export class ProjectService {
     localStorage.setItem('selectedProject', JSON.stringify(project));
 
     var iframe = document.querySelector(".former-view > iframe:first-of-type");
-    var iWindow = (<HTMLIFrameElement> iframe).contentWindow.location.reload();
+    if (iframe) {
+      var iWindow = (<HTMLIFrameElement> iframe).contentWindow.location.reload();
+    }
   }
 }
