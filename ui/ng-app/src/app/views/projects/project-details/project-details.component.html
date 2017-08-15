@@ -23,7 +23,7 @@
         <app-project-summary [project]="entity"></app-project-summary>
     </clr-tab-content>
     <clr-tab-content [clrTabContentId]="'membersContent'">
-        <app-project-members [project]="entity"></app-project-members>
+        <app-project-members [project]="entity" (onChange)="reloadProject($event)"></app-project-members>
     </clr-tab-content>
     <clr-tab-content *ngIf="isHbrEnabled" [clrTabContentId]="'repositoriesContent'">
         <hbr-repository-stackview [projectId]="hbrProjectId" [projectName]="projectName" [hasSignedIn]="true" [hasProjectAdminRole]="true" (tagClickEvent)="watchTagClickEvent($event)"></hbr-repository-stackview>

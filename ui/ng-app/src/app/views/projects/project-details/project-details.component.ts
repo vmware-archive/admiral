@@ -51,6 +51,12 @@ export class ProjectDetailsComponent extends BaseDetailsComponent {
     this.router.navigate(['repositories', tag.repository_name, 'tags', tag.tag_name], {relativeTo: this.route});
   }
 
+  reloadProject(project: any) {
+    if (project) {
+      this.entity = project;
+    }
+  }
+
   get projectsByIdRouteRestriction() {
     return RoutesRestriction.PROJECTS_ID;
   }

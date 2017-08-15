@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, Input, Output, OnChanges, EventEmitter } from '@angular/core';
 import { DocumentService } from "../../../utils/document.service";
 import * as I18n from 'i18next';
 import { Utils } from "../../../utils/utils";
@@ -25,6 +25,7 @@ import { Utils } from "../../../utils/utils";
 export class ProjectMembersComponent implements OnChanges {
 
     @Input() project: any;
+    @Output() onChange: EventEmitter<any> = new EventEmitter();
 
     showAddMembers: boolean;
 
@@ -48,7 +49,7 @@ export class ProjectMembersComponent implements OnChanges {
 
     addDone() {
         this.showAddMembers = false;
-        this.loadMembers();
+        this.loadProjectAndMembers();
     }
 
     addCanceled() {
@@ -61,7 +62,7 @@ export class ProjectMembersComponent implements OnChanges {
 
     editDone() {
         this.selectedMember = null;
-        this.loadMembers();
+        this.loadProjectAndMembers();
     }
 
     editCanceled() {
@@ -81,43 +82,60 @@ export class ProjectMembersComponent implements OnChanges {
     }
 
     ngOnChanges() {
-        this.loadMembers();
+        if (!this.project) {
+            this.loadProjectAndMembers();
+        } else {
+            this.loadMembersOnly();
+        }
     }
 
-    private loadMembers() {
+    private loadMembers(updatedProject: any) {
         this.members = [];
 
+        if (!updatedProject) {
+            return;
+        }
+
+        updatedProject.administrators.forEach(admin => {
+            if (admin) {
+                admin.role = 'ADMIN'
+                this.members.push(admin);
+            }
+        });
+
+        updatedProject.members.forEach(member => {
+            if (member) {
+                member.role = 'MEMBER'
+                this.members.push(member);
+            }
+        });
+
+        updatedProject.viewers.forEach(viewer => {
+            if (viewer) {
+                viewer.role = 'VIEWER'
+                this.members.push(viewer);
+            }
+        });
+    }
+
+    private loadProjectAndMembers() {        
         if (this.project) {
-
+        
             this.service.get(this.project.documentSelfLink, true).then((updatedProject) => {
-
+        
                 this.project = updatedProject;
-
-                this.project.administrators.forEach(admin => {
-                    if (admin) {
-                        admin.role = 'ADMIN'
-                        this.members.push(admin);
-                    }
-                });
-
-                this.project.members.forEach(member => {
-                    if (member) {
-                        member.role = 'MEMBER'
-                        this.members.push(member);
-                    }
-                });
-
-                this.project.viewers.forEach(viewer => {
-                    if (viewer) {
-                        viewer.role = 'VIEWER'
-                        this.members.push(viewer);
-                    }
-                });
-
+        
+                this.loadMembers(this.project);
+        
+                this.onChange.emit(this.project);
             }).catch((e) => {
                 console.log('failed to update project', e);
             })
         }
+    }
+
+    private loadMembersOnly() {
+        this.loadMembers(this.project);
     }
 
     private deleteMember() {
@@ -186,7 +204,7 @@ export class ProjectMembersComponent implements OnChanges {
             this.memberToDelete = null;
 
             this.project = updatedProject;
-            this.loadMembers();
+            this.onChange.emit(this.project);
         }).catch((error) => {
             console.log("Failed to reload project data", error);
             this.deleteConfirmationAlert = Utils.getErrorMessage(error)._generic;
