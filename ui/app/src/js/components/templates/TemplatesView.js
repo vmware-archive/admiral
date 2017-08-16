@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -23,7 +23,6 @@ import EventLogList from 'components/eventlog/EventLogList'; //eslint-disable-li
 import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin';
 import TemplateExport from 'components/templates/TemplateExport'; //eslint-disable-line
 import VueAdapter from 'components/common/VueAdapter';
-import ResourceGroupsMixin from 'components/templates/ResourceGroupsMixin';
 import GridHolderMixin from 'components/common/GridHolderMixin';
 import constants from 'core/constants';
 import utils from 'core/utils';
@@ -197,7 +196,6 @@ var TemplatesViewVueComponent = Vue.extend({
   components: {
     'container-image-item': {
       template: ListItemImageVue,
-      mixins: [ResourceGroupsMixin],
       props: {
         model: {
           required: true
@@ -216,12 +214,7 @@ var TemplatesViewVueComponent = Vue.extend({
           $event.stopPropagation();
           $event.preventDefault();
 
-          if ($event.shiftKey) {
-            this.showGroupForProvisioning = false;
-          } else {
-            this.handleGroup(TemplateActions.createContainer,
-             [this.model.type, this.model.documentId]);
-          }
+          TemplateActions.createContainer(this.model.type, this.model.documentId);
         },
         provisionContainerAdditionalInfo: function($event) {
           $event.stopPropagation();
@@ -233,7 +226,7 @@ var TemplatesViewVueComponent = Vue.extend({
     },
     'container-template-item': {
       template: ListItemContainerVue,
-      mixins: [DeleteConfirmationSupportMixin, ResourceGroupsMixin],
+      mixins: [DeleteConfirmationSupportMixin],
       props: {
         model: {
           required: true
@@ -253,21 +246,13 @@ var TemplatesViewVueComponent = Vue.extend({
           $event.stopPropagation();
           $event.preventDefault();
 
-          if ($event.shiftKey) {
-            this.showGroupForProvisioning = false;
-          } else {
-            var template = {
-              'documentSelfLink': this.model.documentSelfLink
-            };
+          var template = {
+            'documentSelfLink': this.model.documentSelfLink
+          };
 
-            this.handleGroup(TemplateActions.copyTemplate, [this.model.type, template]);
-          }
+          TemplateActions.copyTemplate(this.model.type, template);
         },
         editTemplate: function($event) {
-          if (this.isSelectingGroup($event)) {
-            return;
-          }
-
           $event.stopPropagation();
           $event.preventDefault();
 
@@ -295,7 +280,7 @@ var TemplatesViewVueComponent = Vue.extend({
     },
     'closure-template-item': {
       template: ListItemClosureVue,
-      mixins: [DeleteConfirmationSupportMixin, ResourceGroupsMixin],
+      mixins: [DeleteConfirmationSupportMixin],
       props: {
         model: {
           required: true
@@ -335,15 +320,11 @@ var TemplatesViewVueComponent = Vue.extend({
           $event.stopPropagation();
           $event.preventDefault();
 
-          if ($event.shiftKey) {
-            this.showGroupForProvisioning = false;
-          } else {
-            var template = {
-              'documentSelfLink': this.model.documentSelfLink
-            };
+          var template = {
+            'documentSelfLink': this.model.documentSelfLink
+          };
 
-            this.handleGroup(TemplateActions.copyTemplate, [this.model.type, template]);
-          }
+          TemplateActions.copyTemplate(this.model.type, template);
         },
         editClosureDescription: function($event) {
           if ($event != null) {
@@ -366,9 +347,7 @@ var TemplatesViewVueComponent = Vue.extend({
           $event.preventDefault();
 
           TemplateActions.openAddClosure(this.model);
-
-          this.handleGroup(TemplateActions.runClosure,
-             [null, this.model, this.model.inputs]);
+          TemplateActions.runClosure(null, this.model, this.model.inputs);
           TemplatesContextToolbarActions.openToolbarClosureResults();
         },
         operationSupported: function(op) {

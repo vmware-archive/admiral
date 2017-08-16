@@ -19,7 +19,7 @@ export default Vue.component('vsphere-compute-profile-editor', {
         :headers="[
           i18n('app.profile.edit.nameLabel'),
           i18n('app.profile.edit.cpuCountLabel'),
-          i18n('app.profile.edit.memoryMbLabel')
+          i18n('app.profile.edit.memoryGbLabel')
         ]"
         :label="i18n('app.profile.edit.instanceTypeMappingLabel')"
         :value="instanceTypeMapping"
@@ -30,7 +30,7 @@ export default Vue.component('vsphere-compute-profile-editor', {
         <multicolumn-cell name="cpuCount">
           <number-control></number-control>
         </multicolumn-cell>
-        <multicolumn-cell name="memoryMb">
+        <multicolumn-cell name="memoryGb">
           <number-control></number-control>
         </multicolumn-cell>
       </multicolumn-editor-group>
@@ -73,7 +73,8 @@ export default Vue.component('vsphere-compute-profile-editor', {
         return {
           name: key,
           cpuCount: instanceTypeMapping[key].cpuCount,
-          memoryMb: instanceTypeMapping[key].memoryMb
+          memoryGb: this.convertMbToGb(instanceTypeMapping[key].memoryMb),
+          originalMemoryMb: instanceTypeMapping[key].memoryMb
         };
       }),
       imageMapping: Object.keys(imageTypeMapping).map((key, index) => {
@@ -116,7 +117,10 @@ export default Vue.component('vsphere-compute-profile-editor', {
             if (current.name) {
               previous[current.name] = {
                 cpuCount: current.cpuCount,
-                memoryMb: current.memoryMb
+                memoryMb: current.originalMemoryMb && current.memoryGb.toString()
+                    === this.convertMbToGb(current.originalMemoryMb).toString()
+                        ? current.originalMemoryMb
+                        : this.convertGbToMb(current.memoryGb)
               };
             }
             return previous;
@@ -141,6 +145,14 @@ export default Vue.component('vsphere-compute-profile-editor', {
         }
       }
       return true;
+    },
+    convertMbToGb: function(mb) {
+        let gb = mb / 1024;
+        return parseFloat(gb.toFixed(2));
+    },
+    convertGbToMb: function(gb) {
+        let mb = gb * 1024;
+        return mb.toFixed(0);
     }
   }
 });

@@ -29,6 +29,10 @@ export class ProjectSummaryComponent implements OnInit {
     return this.project && Utils.getDocumentId(this.project.documentSelfLink);
   }
 
+  get documentSelfLink() {
+    return this.project && this.project.documentSelfLink;
+  }
+
   get projectType() {
       return this.project
                 ? (this.project.isPublic ? "projects.public" : "projects.private")

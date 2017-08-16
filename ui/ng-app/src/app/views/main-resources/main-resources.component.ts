@@ -10,10 +10,16 @@
  */
 
 import { FT } from './../../utils/ft';
+import { Ajax } from './../../utils/ajax.service';
+import { Links } from './../../utils/links';
+import { DocumentListResult, DocumentService } from './../../utils/document.service';
 import { Component, OnInit, ViewEncapsulation, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { Router, NavigationEnd } from '@angular/router';
+import { RoutesRestriction } from './../../utils/routes-restriction';
 import { ProjectService } from './../../utils/project.service';
+import { ErrorService } from '../../utils/error.service';
+import { FormerViewPathBridge, RouteUtils } from './../../utils/route-utils';
 
 @Component({
   selector: 'app-main-resources',
@@ -30,44 +36,49 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
     isHbrEnabled = FT.isHbrEnabled();
 
     routeObserve: Subscription;
+    errorObserve: Subscription;
 
-    formerViewPaths = {
-      'templates': 'templates?$category=templates',
-      'public-repositories': 'templates?$category=images',
-      'closures': 'templates?$category=closures',
-      'placements': 'placements',
-      'hosts': 'hosts',
-      'applications': 'applications',
-      'containers': 'containers',
-      'networks': 'networks',
-      'volumes': 'volumes'
-    }
+    formerViewPaths = [
+      new FormerViewPathBridge('/home/templates/image', '/templates/image'),
+      new FormerViewPathBridge('/home/templates/template', '/templates/template'),
+      new FormerViewPathBridge('/home/templates','/templates','$category=templates'),
+      new FormerViewPathBridge('/home/public-repositories','/templates','$category=images'),
+      new FormerViewPathBridge('/home/closure-definitions','/templates','$category=closures'),
+      new FormerViewPathBridge('/home/closure-definitions','/templates','$category=closures'),
+      new FormerViewPathBridge('/home/placements','/placements'),
+      new FormerViewPathBridge('/home/hosts','/hosts'),
+      new FormerViewPathBridge('/home/applications','/applications'),
+      new FormerViewPathBridge('/home/containers','/containers'),
+      new FormerViewPathBridge('/home/networks','/networks'),
+      new FormerViewPathBridge('/home/volumes','/volumes'),
+      new FormerViewPathBridge('/home/closures','/closures')
+    ];
 
     formerViewPath;
 
     selectedProject;
     projects;
 
-    constructor(private router: Router, private ps: ProjectService) {
+    alertMessage: string;
+
+    constructor(private router: Router, private ds: DocumentService, private ajax: Ajax,
+                private ps: ProjectService, private errorService: ErrorService) {
+
       this.routeObserve = this.router.events.subscribe((event) => {
         if (event instanceof NavigationEnd) {
-          let formerViewPath;
-          if (event.urlAfterRedirects.startsWith("/home/")) {
-            let url = event.urlAfterRedirects.replace("/home/", "");
-            for (let key in this.formerViewPaths) {
-              if (url.startsWith(key)) {
-                formerViewPath = this.formerViewPaths[key]
-              }
-            }
-          }
 
-          this.formerViewPath = formerViewPath;
+          this.formerViewPath =
+              RouteUtils.toFormerViewPath(event.urlAfterRedirects, this.formerViewPaths);
         }
+      });
+
+      this.errorObserve = this.errorService.errorMessages.subscribe((event) => {
+          this.alertMessage = event;
       });
     }
 
     ngOnInit() {
-      this.ps.list().then((result) => {
+      this.ds.listProjects().then((result) => {
         this.projects = result.documents;
 
         if (!this.projects || this.projects.length === 0) {
@@ -96,10 +107,49 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
       this.routeObserve.unsubscribe();
+      this.errorObserve.unsubscribe();
     }
 
     selectProject(project) {
-      this.selectedProject = project
+      this.selectedProject = project;
       this.ps.setSelectedProject(this.selectedProject);
+    }
+
+    onFormerViewRouteChange(newFormerPath: string) {
+      if (!this.formerViewPath) {
+        // not yet initialized
+        return;
+      }
+
+      let viewPath = RouteUtils.fromFormerViewPath(newFormerPath, this.formerViewPaths);
+      if (viewPath) {
+        this.router.navigateByUrl(viewPath);
+      }
+    }
+
+    resetAlert() {
+        this.alertMessage = null;
+    }
+
+    get deploymentsRouteRestriction() {
+        return RoutesRestriction.DEPLOYMENTS;
+    }
+
+    get clustersRouteRestriction() {
+        return RoutesRestriction.CLUSTERS;
+    }
+
+    get templatesRouteRestriction() {
+        return RoutesRestriction.TEMPLATES;
+    }
+
+    get publicReposRouteRestriction() {
+        return RoutesRestriction.PUBLIC_REPOSITORIES;
+    }
+
+    get currentProjectLink() {
+        if (this.selectedProject) {
+          return this.selectedProject.documentSelfLink;
+        }
     }
 }

@@ -23,11 +23,17 @@ var computeConstants = Immutable({
     PROFILES: {
       name: 'profiles'
     },
+    INSTANCETYPE: {
+      name: 'instance-type'
+    },
     ENDPOINTS: {
       name: 'endpoints'
     },
     PLACEMENTS: {
       name: 'placements'
+    },
+    PLACEMENT_ZONES: {
+      name: 'placementZones'
     },
     COMPUTE: {
       name: 'compute'

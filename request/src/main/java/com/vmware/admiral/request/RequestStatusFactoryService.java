@@ -12,8 +12,10 @@
 package com.vmware.admiral.request;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.request.RequestStatusService.RequestStatus;
 import com.vmware.xenon.common.FactoryService;
+import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 
 /**
@@ -36,4 +38,9 @@ public class RequestStatusFactoryService extends FactoryService {
         return new RequestStatusService();
     }
 
+    @Override
+    public void handleGet(Operation get) {
+        OperationUtil.transformProjectHeaderToFilterQuery(get);
+        super.handleGet(get);
+    }
 }

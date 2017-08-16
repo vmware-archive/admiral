@@ -20,18 +20,24 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.logging.Level;
 
 import org.junit.Before;
 import org.junit.Test;
 
+import com.vmware.admiral.closures.drivers.DriverConstants;
+import com.vmware.admiral.closures.services.closuredescription.ClosureDescription;
+import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptionFactoryService;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.TemplateSearchService.Response;
 import com.vmware.admiral.compute.container.TemplateSpec.TemplateType;
+import com.vmware.admiral.host.interceptor.OperationInterceptorRegistry;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
 
 /**
  * Test template search service
@@ -42,14 +48,23 @@ public class TemplateSearchServiceTest extends ComputeBaseTest {
     private static final String TEST_CONTAINER_DESC_NAME = "mysql";
     private static final String TEST_IMAGE_NAME = "library/mysql-5";
 
+    private static final String TEST_CLOSURE_DESC_NAME = "test-closure";
+
     // match both the CompositeDesc and the ContainerDesc name
     private static final String TEST_COMMON = "*y*";
 
     private String containerDescSelfLink;
     private String compositeDescSelfLink;
+    private String closureDescSelfLink;
+
+    @Override
+    protected void registerInterceptors(OperationInterceptorRegistry registry) {
+        super.registerInterceptors(registry);
+    }
 
     @Before
     public void setUp() throws Throwable {
+
         waitForServiceAvailability(ContainerDescriptionService.FACTORY_LINK);
         createContainerDescription(false);
 
@@ -67,11 +82,12 @@ public class TemplateSearchServiceTest extends ComputeBaseTest {
     @Test
     public void testCompositeDescAndUnexistingGroupSearch() throws Throwable {
         String tenantLink = "/tenants/otherGroup";
-        verifyTemplateSearchResult(TEST_COMPOSITE_DESC_NAME, true, false, false, tenantLink, (o) -> {
-            Response response = o.getBody(Response.class);
-            assertNotNull("results", response.results);
-            assertEquals("results.size", 0, response.results.size());
-        });
+        verifyTemplateSearchResult(TEST_COMPOSITE_DESC_NAME, true, false, false, false,
+                tenantLink, (o) -> {
+                    Response response = o.getBody(Response.class);
+                    assertNotNull("results", response.results);
+                    assertEquals("results.size", 0, response.results.size());
+                });
     }
 
     @Test
@@ -79,14 +95,15 @@ public class TemplateSearchServiceTest extends ComputeBaseTest {
         String tenantLink = "/tenants/someGroup";
         createCompositeDescription(tenantLink, false);
         // do a global search, verify that application from the tenant is returned
-        verifyTemplateSearchResult(TEST_COMPOSITE_DESC_NAME, true, false, false, tenantLink, (o) -> {
-            Response response = o.getBody(Response.class);
-            assertNotNull("results", response.results);
-            assertEquals("results.size", 1, response.results.size());
-            for (TemplateSpec template : response.results) {
-                assertEquals(Collections.singletonList(tenantLink), template.tenantLinks);
-            }
-        });
+        verifyTemplateSearchResult(TEST_COMPOSITE_DESC_NAME, true, false, false, false,
+                tenantLink, (o) -> {
+                    Response response = o.getBody(Response.class);
+                    assertNotNull("results", response.results);
+                    assertEquals("results.size", 1, response.results.size());
+                    for (TemplateSpec template : response.results) {
+                        assertEquals(Collections.singletonList(tenantLink), template.tenantLinks);
+                    }
+                });
     }
 
     /**
@@ -101,7 +118,7 @@ public class TemplateSearchServiceTest extends ComputeBaseTest {
                 .setBody(Operation.EMPTY_JSON_BODY));
         createCompositeDescription(tenantLink, false);
 
-        verifyTemplateSearchResult("gibberish", true, false, false, tenantLink, (o) -> {
+        verifyTemplateSearchResult("gibberish", true, false, false, false, tenantLink, (o) -> {
             Response response = o.getBody(Response.class);
             assertNotNull("results", response.results);
             assertEquals("results.size", 0, response.results.size());
@@ -117,27 +134,29 @@ public class TemplateSearchServiceTest extends ComputeBaseTest {
                 .setBody(Operation.EMPTY_JSON_BODY));
         createCompositeDescription(tenantLink, false);
 
-        verifyTemplateSearchResult(TEST_COMPOSITE_DESC_NAME, true, false, false, tenantLink, (o) -> {
-            Response response = o.getBody(Response.class);
-            assertNotNull("results", response.results);
-            assertEquals("results.size", 1, response.results.size());
-            TemplateSpec templateSpec = response.results.iterator().next();
-            assertEquals("results[0].tenantLinks", Collections.singletonList(tenantLink),
-                    templateSpec.tenantLinks);
-        });
+        verifyTemplateSearchResult(TEST_COMPOSITE_DESC_NAME, true, false, false, false,
+                tenantLink, (o) -> {
+                    Response response = o.getBody(Response.class);
+                    assertNotNull("results", response.results);
+                    assertEquals("results.size", 1, response.results.size());
+                    TemplateSpec templateSpec = response.results.iterator().next();
+                    assertEquals("results[0].tenantLinks", Collections.singletonList(tenantLink),
+                            templateSpec.tenantLinks);
+                });
     }
 
     @Test
     public void testCompositeDescAndOnlyParents() throws Throwable {
         createCompositeDescription(null, true);
 
-        verifyTemplateSearchResult(TEST_COMPOSITE_DESC_NAME, true, true, false, null, (o) -> {
-            Response response = o.getBody(Response.class);
-            assertNotNull("results", response.results);
-            assertEquals("results.size", 1, response.results.size());
-            TemplateSpec templateSpec = response.results.iterator().next();
-            assertEquals("results[0].name", TEST_COMPOSITE_DESC_NAME, templateSpec.name);
-        });
+        verifyTemplateSearchResult(TEST_COMPOSITE_DESC_NAME, true, true, false, false, null,
+                (o) -> {
+                    Response response = o.getBody(Response.class);
+                    assertNotNull("results", response.results);
+                    assertEquals("results.size", 1, response.results.size());
+                    TemplateSpec templateSpec = response.results.iterator().next();
+                    assertEquals("results[0].name", TEST_COMPOSITE_DESC_NAME, templateSpec.name);
+                });
     }
 
     @Test
@@ -148,6 +167,28 @@ public class TemplateSearchServiceTest extends ComputeBaseTest {
     @Test
     public void testContainedContainerDescImageTest() throws Throwable {
         verifyTemplateSearchResult(TEST_IMAGE_NAME);
+    }
+
+    @Test
+    public void testClosureDesc() throws Throwable {
+        String testTenantLink = "/projects/test";
+        startClosureDescriptionService();
+
+        waitForServiceAvailability(ClosureDescriptionFactoryService.FACTORY_LINK);
+        createClosureDescription(testTenantLink);
+
+        ClosureDescription desc = getDocumentNoWait(ClosureDescription.class, closureDescSelfLink);
+        assertNotNull(desc.documentSelfLink);
+
+        verifyTemplateSearchResult(TEST_CLOSURE_DESC_NAME, false, false, false, true,
+                testTenantLink,
+                (o) -> {
+                    Response response = o.getBody(Response.class);
+                    assertNotNull("results", response.results);
+                    assertEquals("results.size", 1, response.results.size());
+                    TemplateSpec templateSpec = response.results.iterator().next();
+                    assertEquals("results[0].name", TEST_CLOSURE_DESC_NAME, templateSpec.name);
+                });
     }
 
     /**
@@ -163,21 +204,23 @@ public class TemplateSearchServiceTest extends ComputeBaseTest {
 
     @Test
     public void testImagesOnlyDoesntReturnCompositeDesc() throws Throwable {
-        verifyTemplateSearchResult(TEST_COMPOSITE_DESC_NAME, false, false, true, null, (o) -> {
-            Response response = o.getBody(Response.class);
-            assertNotNull("results", response.results);
-            assertEquals("results.size", 0, response.results.size());
-        });
+        verifyTemplateSearchResult(TEST_COMPOSITE_DESC_NAME, false, false, true, false,
+                null, (o) -> {
+                    Response response = o.getBody(Response.class);
+                    assertNotNull("results", response.results);
+                    assertEquals("results.size", 0, response.results.size());
+                });
     }
 
     @Test(expected = LocalizableValidationException.class)
     public void testImagesOnlyAndTemplatesOnlyNotAllowed() throws Throwable {
-        verifyTemplateSearchResult(TEST_COMPOSITE_DESC_NAME, true, false, true, null, (o) -> {
-        });
+        verifyTemplateSearchResult(TEST_COMPOSITE_DESC_NAME, true, false, true, false, null,
+                (o) -> {
+                });
     }
 
     private void verifyTemplateSearchResult(String query) throws Throwable {
-        verifyTemplateSearchResult(query, true, false, false, null, (o) -> {
+        verifyTemplateSearchResult(query, true, false, false, false, null, (o) -> {
             Response response = o.getBody(Response.class);
             assertNotNull("results", response.results);
             assertEquals("results.size", 1, response.results.size());
@@ -188,26 +231,29 @@ public class TemplateSearchServiceTest extends ComputeBaseTest {
     }
 
     private void verifyTemplateSearchResult(String query, boolean templatesOnly,
-            boolean templatesParentOnly, boolean imagesOnly, String group,
+            boolean templatesParentOnly, boolean imagesOnly, boolean closuresOnly, String group,
             Consumer<Operation> verification) throws Throwable {
 
         URI templateSearchUri = UriUtils.buildUri(host, TemplateSearchService.SELF_LINK);
 
         final List<String> keyValues = new ArrayList<String>(Arrays.asList(
                 TemplateSearchService.TEMPLATES_ONLY_PARAM, String.valueOf(templatesOnly),
-                TemplateSearchService.TEMPLATES_PARENT_ONLY_PARAM, String.valueOf(templatesParentOnly),
+                TemplateSearchService.TEMPLATES_PARENT_ONLY_PARAM,
+                String.valueOf(templatesParentOnly),
                 TemplateSearchService.IMAGES_ONLY_PARAM, String.valueOf(imagesOnly),
+                TemplateSearchService.CLOSURES_ONLY_PARAM, String.valueOf(closuresOnly),
                 TemplateSearchService.QUERY_PARAM, query));
-
-        if (group != null) {
-            keyValues.add(TemplateSearchService.GROUP_PARAM);
-            keyValues.add(group);
-        }
 
         templateSearchUri = UriUtils.extendUriWithQuery(templateSearchUri,
                 keyValues.toArray(new String[keyValues.size()]));
 
-        verifyOperation(Operation.createGet(templateSearchUri), verification);
+        Operation get = Operation.createGet(templateSearchUri);
+
+        if (group != null) {
+            get.addRequestHeader(OperationUtil.PROJECT_ADMIRAL_HEADER, group);
+        }
+
+        verifyOperation(get, verification);
 
     }
 
@@ -223,10 +269,29 @@ public class TemplateSearchServiceTest extends ComputeBaseTest {
 
         verifyOperation(OperationUtil.createForcedPost(
                 UriUtils.buildFactoryUri(host, ContainerDescriptionService.class))
-                .setBody(containerDesc),
+                        .setBody(containerDesc),
                 (o) -> {
                     ContainerDescription cd = o.getBody(ContainerDescription.class);
                     containerDescSelfLink = cd.documentSelfLink;
+                });
+
+    }
+
+    private void createClosureDescription(String tenantLink) throws Throwable {
+        ClosureDescription closureDesc = new ClosureDescription();
+        closureDesc.documentSelfLink = TEST_CLOSURE_DESC_NAME;
+        closureDesc.name = TEST_CLOSURE_DESC_NAME;
+        closureDesc.runtime = DriverConstants.RUNTIME_NODEJS_4;
+        closureDesc.source = "test";
+        closureDesc.tenantLinks = Collections.singletonList(tenantLink);
+
+        verifyOperation(OperationUtil.createForcedPost(
+                UriUtils.buildFactoryUri(host, ClosureDescriptionFactoryService.class))
+                        .setBody(closureDesc)
+                        .addRequestHeader(OperationUtil.PROJECT_ADMIRAL_HEADER, tenantLink),
+                (o) -> {
+                    ClosureDescription cd = o.getBody(ClosureDescription.class);
+                    closureDescSelfLink = cd.documentSelfLink;
                 });
 
     }
@@ -237,7 +302,7 @@ public class TemplateSearchServiceTest extends ComputeBaseTest {
 
         if (cloned) {
             compositeDesc.parentDescriptionLink = TEST_COMPOSITE_DESC_NAME;
-            compositeDesc.documentSelfLink =  TEST_COMPOSITE_DESC_NAME_CLONED;
+            compositeDesc.documentSelfLink = TEST_COMPOSITE_DESC_NAME_CLONED;
         }
 
         if (tenantLink != null) {
@@ -248,11 +313,25 @@ public class TemplateSearchServiceTest extends ComputeBaseTest {
         System.out.println(getFactoryUrl(CompositeDescriptionFactoryService.class).toString());
         verifyOperation(OperationUtil.createForcedPost(
                 getFactoryUrl(CompositeDescriptionFactoryService.class))
-                .setBody(compositeDesc),
+                        .setBody(compositeDesc),
                 (o) -> {
                     CompositeDescription cd = o.getBody(CompositeDescription.class);
                     compositeDescSelfLink = cd.documentSelfLink;
                 });
     }
 
+    private void startClosureDescriptionService() {
+        host.startService(
+                Operation.createPost(UriUtils.buildFactoryUri(host,
+                        ClosureDescriptionFactoryService.class))
+                        .setCompletion((o, ex) -> {
+                            if (ex != null) {
+                                // shutdown the server when encountering an error
+                                host.log(Level.SEVERE, "Failed to start service %s: %s",
+                                        o.getUri(), Utils.toString(ex));
+                                host.stop();
+                            }
+                        }), new ClosureDescriptionFactoryService());
+
+    }
 }

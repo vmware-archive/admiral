@@ -50,6 +50,8 @@ public class AuthContentService extends StatelessService {
         public List<String> administrators;
 
         public List<String> members;
+
+        public List<String> viewers;
     }
 
     @Override
@@ -113,8 +115,8 @@ public class AuthContentService extends StatelessService {
                 UriUtils.buildUriPath(PrincipalService.SELF_LINK, principalId,
                         PrincipalService.ROLES_SUFFIX))
                 .setBody(rolePatch))
-                .thenAccept(ignore -> {
-                });
+                        .thenAccept(ignore -> {
+                        });
     }
 
     private DeferredResult<Void> unassignPrincipal(String role, String principalId) {
@@ -126,8 +128,8 @@ public class AuthContentService extends StatelessService {
                 UriUtils.buildUriPath(PrincipalService.SELF_LINK, principalId,
                         PrincipalService.ROLES_SUFFIX))
                 .setBody(rolePatch))
-                .thenAccept(ignore -> {
-                });
+                        .thenAccept(ignore -> {
+                        });
     }
 
     private void handleProjects(AuthContentBody body, Operation post) {
@@ -171,12 +173,27 @@ public class AuthContentService extends StatelessService {
     private void updateProjectWithMembers(ProjectState state, ProjectContentBody projectContent,
             Runnable callback) {
         ProjectRoles projectRoles = new ProjectRoles();
-        projectRoles.administrators = new PrincipalRoleAssignment();
-        projectRoles.administrators.add = new ArrayList<>();
-        projectRoles.administrators.add.addAll(projectContent.administrators);
-        projectRoles.members = new PrincipalRoleAssignment();
-        projectRoles.members.add = new ArrayList<>();
-        projectRoles.members.add.addAll(projectContent.members);
+        if (projectContent.administrators != null) {
+            projectRoles.administrators = new PrincipalRoleAssignment();
+            projectRoles.administrators.add = new ArrayList<>();
+            projectRoles.administrators.add.addAll(projectContent.administrators);
+        }
+        if (projectContent.members != null) {
+            projectRoles.members = new PrincipalRoleAssignment();
+            projectRoles.members.add = new ArrayList<>();
+            projectRoles.members.add.addAll(projectContent.members);
+        }
+        if (projectContent.viewers != null) {
+            projectRoles.viewers = new PrincipalRoleAssignment();
+            projectRoles.viewers.add = new ArrayList<>();
+            projectRoles.viewers.add.addAll(projectContent.viewers);
+        }
+
+        if ((projectRoles.administrators == null) && (projectRoles.members == null)
+                && (projectRoles.viewers == null)) {
+            callback.run();
+            return;
+        }
 
         sendRequest(Operation.createPatch(this, state.documentSelfLink)
                 .setReferer(getHost().getUri())

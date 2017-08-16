@@ -22,12 +22,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
-import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
@@ -55,11 +53,6 @@ public class ComputeRemovalTaskServiceTest extends ComputeRequestBaseTest {
                 cd.documentSelfLink);
         request.tenantLinks = computeGroupPlacementState.tenantLinks;
         request.resourceCount = 1;
-    }
-
-    @After
-    public void tearDown() throws Throwable {
-        DeploymentProfileConfig.getInstance().setTest(false);
     }
 
     @Test
@@ -96,7 +89,8 @@ public class ComputeRemovalTaskServiceTest extends ComputeRequestBaseTest {
     }
 
     @Test
-    public void testComputeRemovalResourceOperationCycleAfterAllocationShouldFail() throws Throwable {
+    public void testComputeRemovalResourceOperationCycleAfterAllocationShouldSucceed() throws
+            Throwable {
         // compute states after compute allocation request
         createComputeAllocationRequest();
 
@@ -112,7 +106,7 @@ public class ComputeRemovalTaskServiceTest extends ComputeRequestBaseTest {
         String taskSelfLink = state.documentSelfLink;
         assertNotNull("task self link is missing", taskSelfLink);
 
-        waitForTaskError(taskSelfLink, ComputeRemovalTaskState.class);
+        waitForTaskSuccess(taskSelfLink, ComputeRemovalTaskState.class);
     }
 
     @Test

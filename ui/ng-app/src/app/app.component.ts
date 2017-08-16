@@ -9,13 +9,14 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { ViewExpandRequestService } from './services/view-expand-request.service';
 import { FT } from './utils/ft';
 import { Utils } from './utils/utils';
 import { DocumentService } from './utils/document.service';
 import { AuthService } from './utils/auth.service';
+import { RoutesRestriction } from './utils/routes-restriction';
+import { SessionTimedOutSubject } from './utils/ajax.service';
 
 @Component({
     selector: 'my-app',
@@ -25,17 +26,31 @@ import { AuthService } from './utils/auth.service';
 export class AppComponent {
     fullScreen: boolean;
     userSecurityContext: any;
+    showSessionTimeout: boolean;
 
-    constructor(private viewExpandRequestor: ViewExpandRequestService, private documentService: DocumentService,
-    private authService: AuthService) {
+    constructor(private viewExpandRequestor: ViewExpandRequestService,
+        private documentService: DocumentService,
+        private authService: AuthService,
+        private sessionTimedOutSubject: SessionTimedOutSubject,
+        private cd: ChangeDetectorRef) {
         this.viewExpandRequestor.getFullScreenRequestEmitter().subscribe(isFullScreen => {
             this.fullScreen = isFullScreen;
         });
 
-        this.documentService.loadCurrentUserSecurityContext().then((securityContext) => {
-            this.userSecurityContext = securityContext;
-        }).catch((ex) => {
-            console.log(ex);
+        if(!this.embedded) {
+            this.authService.getCachedSecurityContext().then((securityContext) => {
+                this.userSecurityContext = securityContext;
+            }).catch((ex) => {
+                console.log(ex);
+            });
+        }
+
+        this.sessionTimedOutSubject.subscribe(e => {
+            this.showSessionTimeout = !FT.isApplicationEmbedded();
+            // Since anyone can call sessionTimedOutSubject,
+            // an update can happen outside of the Angular Zone and would not
+            // detect a change, therefore call it manually
+            this.cd.detectChanges();
         });
     }
 
@@ -51,9 +66,17 @@ export class AppComponent {
         return FT.isCompute();
     }
 
+    get vic(): boolean {
+        return FT.isVic();
+    }
+
+    get admiral(): boolean {
+        return !this.compute && !this.vic;
+    }
+
     get userName(): String {
         if (this.userSecurityContext) {
-            return this.userSecurityContext.name || this.userSecurityContext.email;
+            return this.userSecurityContext.name || this.userSecurityContext.id;
         }
         return null;
     }
@@ -64,13 +87,27 @@ export class AppComponent {
                 // Already shown above
                 return null;
             }
-            return this.userSecurityContext.email;
+            return this.userSecurityContext.id;
         }
     }
 
     logout() {
-        this.authService.logout().then(() => {
-            window.location.reload();
+        this.authService.logout().then((location) => {
+            if (location !== null) {
+                window.location.href = location;
+            } else {
+                window.location.reload();
+            }
+        }, (e) => {
+            console.log(e);
         });
+    }
+
+    reload() {
+        window.location.reload();
+    }
+
+    get administrationRouteRestriction() {
+        return RoutesRestriction.ADMINISTRATION;
     }
 }

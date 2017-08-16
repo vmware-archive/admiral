@@ -122,6 +122,9 @@
   .status.RETIRED {
     color: $secondary_inactive_button_color;
   }
+  .status.PROVISIONING {
+    color: $secondary_inactive_button_color;
+  }
   .status.ON {
     color: $status_running_color;
   }
@@ -987,6 +990,9 @@ $elements-side-margin: $elements-margin / 2;
 .images-view .template-details.closure-form {
   overflow: auto;
   z-index: 102;
+  left: 0px;
+  top: 0px;
+  margin-top: 0px;
 }
 
 .template-details .edit-network.closable-view .control-btns,
@@ -1062,7 +1068,11 @@ $elements-side-margin: $elements-margin / 2;
   margin-top: 20px;
 }
 
-.placements-view, .profiles-view, .center-view > .endpoints-view, .registry-view {
+.center-view > .placement-zones-view > .main-panel {
+  margin: 24px;
+}
+
+.placements-view, .placement-zones-view, .profiles-view, .center-view > .endpoints-view, .registry-view {
   > .main-panel {
     @extend .position-expand;
     z-index: 1;

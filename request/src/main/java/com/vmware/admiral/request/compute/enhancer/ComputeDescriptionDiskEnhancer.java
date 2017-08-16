@@ -11,8 +11,10 @@
 
 package com.vmware.admiral.request.compute.enhancer;
 
+import static com.vmware.admiral.compute.ComputeConstants.COMPUTE_STORAGE_CONSTRAINT_KEY;
+
 import java.net.URI;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -97,25 +99,44 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
                     .get(computeDesc.instanceType);
             long diskSizeMbFromProfile = instanceDesc != null ? instanceDesc.diskSizeMb : 0;
             // Default is 8 GB
-            rootDisk.capacityMBytes = diskSizeMbFromProfile > 0 ? diskSizeMbFromProfile
-                    : (8 * 1024);
+            rootDisk.capacityMBytes = diskSizeMbFromProfile > 0 ? diskSizeMbFromProfile : (8 * 1024);
+            fillInBootConfigContent(context, computeDesc, rootDisk);
 
-            StorageItemExpanded storageItem = findDefaultStorageItem(context.profile);
+            // If there is global constraint for storage, use that for image disks.
+            if (computeDesc.constraints != null) {
+                Constraint diskConstraint = computeDesc.constraints
+                        .get(COMPUTE_STORAGE_CONSTRAINT_KEY);
+                if (diskConstraint != null) {
+                    rootDisk.constraint = diskConstraint;
+                }
+            }
+            StorageItemExpanded storageItem;
+            if (rootDisk.constraint != null) {
+                storageItem = findStorageItem(context.profile, rootDisk);
+                // If storage item is null, then it means hard constraint, hence fail the request
+                if (storageItem == null) {
+                    throw new IllegalStateException(String.format(
+                            "No matching storage defined in profile: %s, for image disk.",
+                            context.profile.documentSelfLink));
+                }
+            } else {
+                storageItem = findDefaultStorageItem(context.profile);
+            }
             if (storageItem != null) {
                 updateDiskStateWithStorageItemProperties(rootDisk, storageItem, computeDesc);
             }
-
-            fillInBootConfigContent(context, computeDesc, rootDisk);
-            DeferredResult<ComputeDescription> result = this.host
-                    .sendWithDeferredResult(createDiskDescriptionState(rootDisk),
-                            DiskState.class)
+            return createDiskDescriptionState(context, rootDisk)
                     .thenApply(diskState -> {
-                        this.host.log(Level.INFO, "Resource created: %s",
-                                diskState.documentSelfLink);
-                        computeDesc.diskDescLinks = Arrays.asList(diskState.documentSelfLink);
+                        if (computeDesc.diskDescLinks == null) {
+                            computeDesc.diskDescLinks = new ArrayList<>();
+                        } else {
+                            // This is to avoid if the input was constructed with non-expandable
+                            // or add not supported List.
+                            computeDesc.diskDescLinks = new ArrayList<>(computeDesc.diskDescLinks);
+                        }
+                        computeDesc.diskDescLinks.add(diskState.documentSelfLink);
                         return computeDesc;
                     });
-            return result;
         } catch (Throwable t) {
             return DeferredResult.failed(t);
         }
@@ -135,10 +156,6 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
                     return this.host.sendWithDeferredResult(getOp, DiskState.class);
                 })
                 .map(dr -> dr.thenCompose(diskState -> {
-                    if (diskState.type != null && diskState.type == DiskService.DiskType.HDD
-                            && diskState.bootOrder == 1) {
-                        fillInBootConfigContent(context, cd, diskState);
-                    }
                     // Match the constraints from Disk to the profile to extract the
                     // provider specific properties.
                     StorageItemExpanded storageItem = findStorageItem(context.profile, diskState);
@@ -150,20 +167,21 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
                     } else {
                         updateDiskStateWithStorageItemProperties(diskState, storageItem, cd);
                     }
-                    return this.host
-                            .sendWithDeferredResult(updateDiskDescriptionState(diskState),
-                                    DiskState.class);
+                    return updateDiskDescriptionState(context, diskState);
                 }))
-                .map(dr -> dr
-                        .thenApply(ds -> Pair.of(ds, (Throwable) null))
-                        .exceptionally(t -> Pair.of(null, t)))
+                .map(diskDr -> diskDr
+                        .thenApply(diskState -> Pair.of(diskState, (Throwable) null))
+                        .exceptionally(exc -> Pair.of(null, exc.getCause())))
                 .collect(Collectors.toList());
-        DeferredResult<ComputeDescription> result = DeferredResult.allOf(diskStateResults)
+
+        DeferredResult<ComputeDescription> osDiskResult = createOsDiskState(context, cd);
+        DeferredResult<ComputeDescription> additionalDiskResult = DeferredResult.allOf(diskStateResults)
                 .thenCompose(pairs -> {
                     // Collect error messages if any for all the disks.
                     StringJoiner stringJoiner = new StringJoiner(",");
-                    pairs.stream().filter(p -> p.left == null).forEach(p -> stringJoiner.add(p
-                            .right.getMessage()));
+                    pairs.stream().filter(p -> p.left == null)
+                            .forEach(p -> stringJoiner.add(p
+                                    .right.getMessage()));
                     if (stringJoiner.length() > 0) {
                         return DeferredResult.failed(new Throwable(stringJoiner
                                 .toString()));
@@ -171,6 +189,9 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
                         return DeferredResult.completed(cd);
                     }
                 });
+
+        DeferredResult<ComputeDescription> result = osDiskResult.thenCompose(computeDescription ->
+                additionalDiskResult);
         return result;
     }
 
@@ -254,9 +275,9 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
         // If all are matched then that storage item is chosen, if not then the max matching item
         // will be chosen.
         // Step 3: If all are soft and nothing matches then default properties are picked.
+
         return TagConstraintUtils.filterByConstraints(
-                StorageProfileUtils.extractStorageTagConditions(diskState.constraint, profile
-                        .tenantLinks),
+                StorageProfileUtils.extractStorageTagConditions(host, diskState, profile.tenantLinks),
                 storageItemsStream(profile.storageProfile),
                 si -> collectStorageItemTagLinks(si), (i1, i2) -> {
                     if (i1.defaultItem && i2.defaultItem) {
@@ -321,6 +342,10 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
         if (siExpanded.resourceGroupState != null
                 && siExpanded.resourceGroupState.tagLinks != null) {
             tagLinks.addAll(siExpanded.resourceGroupState.tagLinks);
+        }
+
+        if (siExpanded.name != null) {
+            host.log(Level.INFO, "Storage Item %s tag Links %s", siExpanded.name, tagLinks);
         }
         return tagLinks;
     }
@@ -394,19 +419,37 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
     /**
      * Construct create disk operation
      */
-    private Operation createDiskDescriptionState(DiskState diskState) {
-        return Operation.createPost(UriUtils.buildUri(this.host, DiskService.FACTORY_LINK))
-                .setReferer(this.referer)
+    private DeferredResult<DiskState> createDiskDescriptionState(EnhanceContext ctx, DiskState diskState) {
+        if (ctx.skipPersistence) {
+            return DeferredResult.completed(diskState);
+        }
+
+        Operation createDiskOp = Operation
+                .createPost(UriUtils.buildUri(host, DiskService.FACTORY_LINK))
+                .setReferer(referer)
                 .setBody(diskState);
+
+        return host.sendWithDeferredResult(createDiskOp, DiskState.class)
+                .thenApply(dS -> {
+                    host.log(Level.INFO, "DiskState created: %s", diskState.documentSelfLink);
+                    return dS;
+                });
     }
 
     /**
      * Construct update (put) disk operation
      */
-    private Operation updateDiskDescriptionState(DiskState diskState) {
-        return Operation.createPut(UriUtils.buildUri(this.host, diskState.documentSelfLink))
-                .setReferer(this.referer)
+    private DeferredResult<DiskState> updateDiskDescriptionState(EnhanceContext ctx, DiskState diskState) {
+        if (ctx.skipPersistence) {
+            return DeferredResult.completed(diskState);
+        }
+
+        Operation updateDiskOp = Operation
+                .createPut(UriUtils.buildUri(this.host, diskState.documentSelfLink))
+                .setReferer(referer)
                 .setBody(diskState);
+
+        return host.sendWithDeferredResult(updateDiskOp, DiskState.class);
     }
 
     /**

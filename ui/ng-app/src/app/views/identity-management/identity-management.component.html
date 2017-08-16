@@ -14,7 +14,7 @@
   <clr-tabs>
     <clr-tab-link [clrTabLinkId]="'identityCredentialsTab'" [clrTabLinkActive]="true">{{"identity.credentials" | i18n}}</clr-tab-link>
     <clr-tab-link [clrTabLinkId]="'identityCertificatesTab'">{{"identity.certificates" | i18n}}</clr-tab-link>
-    <clr-tab-link [clrTabLinkId]="'identityUsersGroupsTab'">{{"identity.usersgroups.title" | i18n}}</clr-tab-link>
+    <clr-tab-link *ngIf="!embedded" [clrTabLinkId]="'identityUsersGroupsTab'">{{"identity.usersgroups.title" | i18n}}</clr-tab-link>
 
     <clr-tab-content [clrTabContentId]="'identityCredentialsContent'" [clrTabContentActive]="true">
       <former-view path="credentials"></former-view>
@@ -22,7 +22,7 @@
     <clr-tab-content [clrTabContentId]="'identityCertificatesContent'">
       <former-view path="certificates"></former-view>
     </clr-tab-content>
-    <clr-tab-content [clrTabContentId]="'identityUsersGroupsContent'">
+    <clr-tab-content *ngIf="!embedded" [clrTabContentId]="'identityUsersGroupsContent'">
       <app-identity-usersgroups></app-identity-usersgroups>
     </clr-tab-content>
   </clr-tabs>

@@ -18,8 +18,11 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import com.vmware.admiral.compute.ComputeConstants;
@@ -167,6 +170,34 @@ public class TagConstraintUtilsTest extends RequestBaseTest {
         assertEquals(2, filteredSubnets.size());
         assertEquals(subnet1, filteredSubnets.iterator().next());
     }
+
+    @Test
+    public void testMemoize() throws Throwable {
+
+        AtomicInteger numberOfCalls = new AtomicInteger(0);
+
+        Function<String, Integer> strLength = str -> {
+            numberOfCalls.incrementAndGet();
+            return str.length();
+        };
+
+        strLength.apply("test str");
+        strLength.apply("test str");
+        Assert.assertEquals("Number of calls mismatch before memoize", 2, numberOfCalls.get());
+
+        strLength = TagConstraintUtils.memoize(strLength);
+
+        strLength.apply("test str");
+        strLength.apply("test str");
+        Assert.assertEquals("Number of calls mismatch after memoize", 3, numberOfCalls.get());
+
+        strLength.apply("different test str");
+        strLength.apply("different test str");
+        Assert.assertEquals("Number of calls mismatch after memoize", 4, numberOfCalls.get());
+
+        Assert.assertSame("Memoizing a function should be idempotent", strLength, TagConstraintUtils.memoize(strLength));
+    }
+
 
     private static Map<String, Constraint> createConstraints(List<Condition> conditions) {
         Constraint constraint = new Constraint();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,13 +11,11 @@
 
 import ContainerRequestFormVue from 'components/containers/ContainerRequestFormVue.html';
 import ContainerDefinitionForm from 'components/containers/ContainerDefinitionForm';
-import ResourceGroupsMixin from 'components/templates/ResourceGroupsMixin';
 import { TemplateActions, ContainerActions } from 'actions/Actions';
 import constants from 'core/constants';
 
 var ContainerRequestForm = Vue.extend({
   template: ContainerRequestFormVue,
-  mixins: [ResourceGroupsMixin],
   props: {
     model: {
       required: true,
@@ -46,12 +44,11 @@ var ContainerRequestForm = Vue.extend({
         this.creatingContainer = true;
         var containerDescription = this.definitionForm.getContainerDescription();
 
-        var acitonCallback = TemplateActions.createContainerWithDetails;
         if (this.useResourceAction) {
-          acitonCallback = ContainerActions.createContainer;
+          ContainerActions.createContainer(containerDescription);
+        } else {
+          TemplateActions.createContainerWithDetails(containerDescription);
         }
-
-        this.handleGroup(acitonCallback, [containerDescription]);
       }
     },
     saveTemplate: function() {
@@ -71,8 +68,6 @@ var ContainerRequestForm = Vue.extend({
     this.unwatchModel = this.$watch('model.definitionInstance', (data) => {
       this.creatingContainer = false;
       this.savingTemplate = false;
-
-      this.toggleGroupsDisplay();
 
       if (data) {
         this.definitionForm.setData(data);

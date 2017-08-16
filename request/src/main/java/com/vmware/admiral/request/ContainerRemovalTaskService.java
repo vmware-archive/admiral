@@ -625,7 +625,7 @@ public class ContainerRemovalTaskService
     }
 
     @Override
-    protected Class<? extends ResourceState> getRelatedResourceStateType() {
+    protected Class<? extends ResourceState> getRelatedResourceStateType(ContainerRemovalTaskState state) {
         return ContainerState.class;
     }
 

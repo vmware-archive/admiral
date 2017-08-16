@@ -11,22 +11,32 @@
 
 package com.vmware.admiral.auth.util;
 
-import java.net.URI;
+import static com.vmware.admiral.auth.util.AuthUtil.addReplicationFactor;
+
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.vmware.admiral.auth.idm.Principal;
+import com.vmware.admiral.auth.idm.Principal.PrincipalSource;
 import com.vmware.admiral.auth.idm.Principal.PrincipalType;
 import com.vmware.admiral.auth.idm.PrincipalService;
-import com.vmware.admiral.auth.idm.local.LocalPrincipalFactoryService;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalState;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalType;
+import com.vmware.photon.controller.model.adapters.util.Pair;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
-import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.RoleService.RoleState;
+import com.vmware.xenon.services.common.ServiceUriPaths;
+import com.vmware.xenon.services.common.UserGroupService;
+import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
+import com.vmware.xenon.services.common.UserService.UserState;
 
 public class PrincipalUtil {
 
@@ -38,10 +48,11 @@ public class PrincipalUtil {
 
         Principal principal = new Principal();
         principal.email = state.email;
-        principal.name = state.name;
+        principal.name = toPrincipalName(state);
         principal.id = state.id;
         principal.password = state.password;
         principal.type = PrincipalType.valueOf(state.type.name());
+        principal.source = PrincipalSource.LOCAL;
 
         return principal;
     }
@@ -92,15 +103,191 @@ public class PrincipalUtil {
         return dst;
     }
 
-    public static DeferredResult<Principal> getPrincipal(ServiceHost host, String principalId) {
-        Operation getPrincipalOp = Operation.createGet(host, UriUtils.buildUriPath(
-                PrincipalService.SELF_LINK, principalId))
-                .setReferer(host.getUri());
-        return host.sendWithDeferredResult(getPrincipalOp, Principal.class);
+    public static DeferredResult<Principal> getPrincipal(Service requestorService,
+            Operation requestorOperation, String principalId) {
+        Operation getOp = Operation.createGet(requestorService,
+                UriUtils.buildUriPath(PrincipalService.SELF_LINK, principalId));
+
+        requestorService.setAuthorizationContext(getOp,
+                requestorOperation.getAuthorizationContext());
+
+        return requestorService.sendWithDeferredResult(getOp, Principal.class);
     }
 
-    public static URI buildLocalPrincipalStateSelfLink(ServiceHost host, String id) {
-        return UriUtils.buildUri(host, LocalPrincipalFactoryService.SELF_LINK + "/" + id);
+    public static Pair<String, String> toNameAndDomain(String principalId) {
+
+        // UPN format: NAME@DOMAIN
+        String[] parts = principalId.split("@");
+        if (parts.length == 2) {
+            return new Pair<>(parts[0], parts[1]);
+        }
+
+        // NETBIOS format: DOMAIN\NAME
+        parts = principalId.split("\\\\");
+        if (parts.length == 2) {
+            return new Pair<>(parts[1], parts[0]);
+        }
+
+        throw new IllegalArgumentException("Invalid principalId format: '" + principalId + "'");
     }
 
+    public static String toPrincipalId(String name, String domain) {
+        if ((name == null) || (name.isEmpty())) {
+            throw new IllegalArgumentException("Invalid principal name: '" + name + "'");
+        }
+        StringBuilder sb = new StringBuilder(name);
+        if (domain != null) {
+            sb.append("@").append(domain);
+        }
+        return sb.toString().toLowerCase();
+    }
+
+    public static String toPrincipalName(String firstName, String lastName) {
+        StringBuilder sb = new StringBuilder();
+        if ((firstName != null) && (!firstName.trim().isEmpty())) {
+            sb.append(firstName.trim());
+        }
+        if ((lastName != null) && (!lastName.trim().isEmpty())) {
+            sb.append(" ").append(lastName.trim());
+        }
+        return sb.toString();
+    }
+
+    private static String toPrincipalName(LocalPrincipalState state) {
+        if ((state.name != null) && (!state.name.trim().isEmpty())) {
+            return state.name;
+        }
+        return state.id.split("@")[0];
+    }
+
+    public static DeferredResult<Principal> getPrincipal(Service service, String principalId) {
+        Operation getPrincipalOp = Operation.createGet(service, UriUtils.buildUriPath(
+                PrincipalService.SELF_LINK, principalId));
+
+        return service.sendWithDeferredResult(getPrincipalOp, Principal.class);
+    }
+
+    public static DeferredResult<UserState> getOrCreateUser(Service service, String principalId) {
+        Operation getUser = Operation.createGet(service,
+                AuthUtil.buildUserServicePathFromPrincipalId(principalId));
+
+        return getPrincipal(service, principalId)
+                .thenCompose(principal -> {
+                    if (principal.type != PrincipalType.USER) {
+                        String message = String.format("Principal %s is not of type USER, user "
+                                + "state cannot be created.", principal.id);
+                        return DeferredResult.failed(new IllegalStateException(message));
+                    }
+                    return service.sendWithDeferredResult(getUser, UserState.class);
+                })
+                .thenApply(userState -> new Pair<>(userState, (Throwable) null))
+                .exceptionally(ex -> new Pair<>(null, ex))
+                .thenCompose(pair -> {
+                    if (pair.right != null) {
+                        if (pair.right.getCause() instanceof ServiceNotFoundException) {
+                            // Create the user and assign basic user role.
+                            return createUser(service, principalId)
+                                    .thenCompose(user -> UserGroupsUpdater.create()
+                                            .setService(service)
+                                            .setGroupLink(AuthUtil.BASIC_USERS_USER_GROUP_LINK)
+                                            .setUsersToAdd(Collections.singletonList(principalId))
+                                            .update())
+                                    .thenCompose(ignore -> service.sendWithDeferredResult(getUser,
+                                            UserState.class));
+                        }
+                        return DeferredResult.failed(pair.right);
+                    }
+                    return DeferredResult.completed(pair.left);
+                });
+    }
+
+    public static DeferredResult<UserGroupState> getOrCreateUserGroup(Service service,
+            String principalId) {
+        Operation getUserGroup = Operation.createGet(service,
+                UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, principalId));
+
+        return getPrincipal(service, principalId)
+                .thenCompose(principal -> {
+                    if (principal.type != PrincipalType.GROUP) {
+                        String message = String.format("Principal %s is not of type GROUP, user "
+                                + "group cannot be created.", principal.id);
+                        return DeferredResult.failed(new IllegalStateException(message));
+                    }
+                    return service.sendWithDeferredResult(getUserGroup, UserGroupState.class);
+                })
+                .thenApply(userGroupState -> new Pair<>(userGroupState, (Throwable) null))
+                .exceptionally(ex -> new Pair<>(null, ex))
+                .thenCompose(pair -> {
+                    if (pair.right != null) {
+                        if (pair.right.getCause() instanceof ServiceNotFoundException) {
+                            return createUserGroup(service, principalId)
+                                    .thenCompose(userGroup -> assignUserGroupToBasicUsers(service,
+                                            userGroup))
+                                    .thenCompose(ignore -> service.sendWithDeferredResult(
+                                            getUserGroup, UserGroupState.class));
+                        }
+                        return DeferredResult.failed(pair.right);
+                    }
+                    return DeferredResult.completed(pair.left);
+                });
+    }
+
+    private static DeferredResult<UserState> createUser(Service service, String principalId) {
+        UserState user = new UserState();
+        user.email = principalId;
+        user.documentSelfLink = principalId;
+
+        Operation postUser = Operation
+                .createPost(service, AuthUtil.buildUserServicePathFromPrincipalId(""))
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
+                .setBody(user);
+
+        addReplicationFactor(postUser);
+        return service.sendWithDeferredResult(postUser, UserState.class);
+    }
+
+    private static DeferredResult<UserGroupState> createUserGroup(Service service,
+            String principalId) {
+        String userGroupSelfLink = UriUtils
+                .buildUriPath(UserGroupService.FACTORY_LINK, principalId);
+        Query userGroupQuery = AuthUtil.buildQueryForUsers(userGroupSelfLink);
+
+        UserGroupState userGroupState = UserGroupState.Builder.create()
+                .withSelfLink(userGroupSelfLink)
+                .withQuery(userGroupQuery)
+                .build();
+
+        Operation postGroup = Operation.createPost(service, ServiceUriPaths.CORE_AUTHZ_USER_GROUPS)
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
+                .setBody(userGroupState);
+
+        addReplicationFactor(postGroup);
+        return service.sendWithDeferredResult(postGroup, UserGroupState.class);
+    }
+
+    private static DeferredResult<Void> assignUserGroupToBasicUsers(Service service,
+            UserGroupState state) {
+
+        String userGroupId = Service.getId(state.documentSelfLink);
+
+        RoleState basicUserRole = AuthUtil.buildBasicUsersRole(userGroupId, state.documentSelfLink);
+
+        RoleState basicUserExtendedRole = AuthUtil.buildBasicUsersExtendedRole(userGroupId,
+                state.documentSelfLink);
+
+        Operation postRole = Operation.createPost(service, ServiceUriPaths.CORE_AUTHZ_ROLES)
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
+                .setBody(basicUserRole);
+
+        Operation postExtendedRole = Operation.createPost(service, ServiceUriPaths.CORE_AUTHZ_ROLES)
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
+                .setBody(basicUserExtendedRole);
+
+        addReplicationFactor(postRole);
+        addReplicationFactor(postExtendedRole);
+
+        return DeferredResult.allOf(
+                service.sendWithDeferredResult(postRole),
+                service.sendWithDeferredResult(postExtendedRole));
+    }
 }

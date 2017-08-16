@@ -83,6 +83,11 @@ public class ComputeNetworkDescriptionService extends StatefulService {
                 PropertyUsageOption.OPTIONAL })
         public Set<String> securityGroupLinks;
 
+        @Documentation(description = "Whether or not instances connected to this network have "
+                + "outbound access")
+        @PropertyOptions(usage = { PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL,
+                PropertyUsageOption.OPTIONAL })
+        public Boolean outboundAccess;
 
         @JsonAnyGetter
         private Map<String, String> getProperties() {

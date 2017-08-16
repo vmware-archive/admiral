@@ -17,6 +17,7 @@ import java.util.Map;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.profile.ImageProfileService.ImageProfileState;
+import com.vmware.admiral.compute.profile.InstanceTypeService.InstanceTypeFactoryService;
 import com.vmware.admiral.compute.profile.InstanceTypeService.InstanceTypeState;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
@@ -83,7 +84,7 @@ public class ComputeProfileService extends StatefulService {
                         .thenApply(ip -> state.imageProfileLink = ip.documentSelfLink)
                         .thenCompose(
                                 x -> sendWithDeferredResult(
-                                        Operation.createPost(this, InstanceTypeService.FACTORY_LINK)
+                                        Operation.createPost(this, InstanceTypeFactoryService.SELF_LINK)
                                                 .setBody(instanceTypeState),
                                         InstanceTypeState.class))
                         .thenApply(it -> state.instanceTypeProfileLink = it.documentSelfLink)
@@ -178,6 +179,7 @@ public class ComputeProfileService extends StatefulService {
         InstanceTypeState its = new InstanceTypeState();
         its.name = "instance";
         its.endpointType = state.endpointType;
+        its.endpointLink = state.endpointLink;
         its.instanceTypeMapping = state.instanceTypeMapping;
         its.tenantLinks = state.tenantLinks;
         return its;

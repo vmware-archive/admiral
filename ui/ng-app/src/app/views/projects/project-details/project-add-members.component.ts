@@ -1,3 +1,4 @@
+import { AuthService } from './../../../utils/auth.service';
 /*
  * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
  *
@@ -45,7 +46,7 @@ export class ProjectAddMembersComponent {
     // error
     alertMessage: string;
 
-    constructor(protected service: DocumentService) { }
+    constructor(protected service: DocumentService, private authService: AuthService) { }
 
     get description(): string {
         return I18n.t('projects.members.addMembers.description',
@@ -57,7 +58,7 @@ export class ProjectAddMembersComponent {
             return [];
         }
 
-        this.service.findPrincipals($eventData.query, false).then((principalsResult) => {
+        this.authService.findPrincipals($eventData.query, false).then((principalsResult) => {
             this.members = principalsResult;
 
             this.membersSuggestions = this.members.map((principal) => {

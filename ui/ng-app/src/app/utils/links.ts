@@ -11,6 +11,7 @@
 
 export class Links {
 
+  public static HOME = '/home';
   public static RESOURCES = '/resources';
   public static UTIL = '/util';
   public static PODS = Links.RESOURCES + '/kubernetes-pods';
@@ -20,8 +21,10 @@ export class Links {
   public static CONTAINER_LOGS = Links.RESOURCES + '/container-logs';
   public static POD_LOGS = Links.RESOURCES + '/kubernetes-pod-logs';
   public static CLUSTERS = Links.RESOURCES + '/clusters';
+  public static CONTAINERS = Links.RESOURCES + '/containers';
   public static GROUPS = '/groups';
   public static PROJECTS = '/projects';
+  public static EVENT_LOGS = Links.RESOURCES + '/event-logs';
 
   public static COMPOSITE_DESCRIPTIONS = Links.RESOURCES + '/composite-descriptions';
   public static COMPOSITE_DESCRIPTIONS_CLONE = Links.RESOURCES + '/composite-descriptions-clone';
@@ -30,11 +33,14 @@ export class Links {
 
   public static CONFIG = '/config';
   public static CONFIG_PROPS = Links.CONFIG + '/props';
+  public static INSTANCE_TYPES = Links.CONFIG + '/instance-types';
+  public static REGISTRIES = Links.CONFIG + '/registries';
 
   public static AUTH = '/auth';
   public static USER_SESSION = Links.AUTH + '/session';
   public static AUTH_IDM = Links.AUTH + '/idm';
   public static AUTH_PRINCIPALS = Links.AUTH_IDM + '/principals';
+  public static AUTH_LOGOUT = Links.USER_SESSION + '/logout';
   public static BASIC_AUTH = '/core/authn/basic';
 
   public static CREDENTIALS = '/core/auth/credentials';

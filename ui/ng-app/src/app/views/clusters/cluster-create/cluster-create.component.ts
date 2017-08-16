@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, OnInit, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ViewEncapsulation } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormGroup, FormControl, Validators } from "@angular/forms";
 import { Links } from '../../../utils/links';
@@ -23,12 +23,13 @@ import { BaseDetailsComponent } from '../../../components/base/base-details.comp
 @Component({
   selector: 'app-cluster-create',
   templateUrl: './cluster-create.component.html',
-  styleUrls: ['./cluster-create.component.scss']
+  styleUrls: ['./cluster-create.component.scss'],
+  encapsulation: ViewEncapsulation.None,
 })
 /**
  * Modal for cluster creation.
  */
-export class ClusterCreateComponent extends BaseDetailsComponent implements AfterViewInit, OnInit {
+export class ClusterCreateComponent extends BaseDetailsComponent implements AfterViewInit, OnInit, OnDestroy {
   opened: boolean;
   isEdit: boolean;
   credentials: any[];
@@ -39,6 +40,8 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
   isSaving: boolean;
   alertMessage: string;
 
+  private sub: any;
+
   clusterForm = new FormGroup({
     name: new FormControl('', Validators.required),
     description: new FormControl(''),
@@ -47,7 +50,17 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
     credentials: new FormControl('')
   });
 
-  constructor(private router: Router, route: ActivatedRoute, service: DocumentService, private ps: ProjectService) {
+  credentialsTitle = I18n.t('dropdownSearchMenu.title', {
+    ns: 'base',
+    entity: I18n.t('app.credential.entity', {ns: 'base'})
+  } as I18n.TranslationOptions );
+
+  credentialsSearchPlaceholder = I18n.t('dropdownSearchMenu.searchPlaceholder', {
+    ns: 'base',
+    entity: I18n.t('app.credential.entity', {ns: 'base'})
+  } as I18n.TranslationOptions );
+
+  constructor(private router: Router, route: ActivatedRoute, service: DocumentService) {
     super(route, service, Links.CLUSTERS);
   }
 
@@ -67,13 +80,29 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
     }
   }
 
+  ngOnInit() {
+    this.sub = this.route.params.subscribe(params => {
+      let projectId = params['projectId'];
+      if (projectId) {
+        this.projectLink = Links.PROJECTS + '/' + projectId;
+      }
+      super.ngOnInit();
+    });
+  }
+
+  ngOnDestroy() {
+    this.sub.unsubscribe();
+  }
+
   ngAfterViewInit() {
     setTimeout(() => {
       this.opened = true;
       this.showCertificateWarning = false;
     });
     this.service.list(Links.CREDENTIALS, {}).then(credentials => {
-      this.credentials = credentials.documents;
+      this.credentials = credentials.documents
+          .filter(c => !Utils.areSystemScopedCredentials(c))
+          .map(this.toCredentialViewModel);
     });
   }
 
@@ -81,17 +110,19 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
     this.opened = open;
     if (!open) {
       let path: any[] = this.isEdit
-                        ? ['../../' + Utils.getDocumentId(this.entity.documentSelfLink)] : ['../'];
+                        ? ['../../' + Utils.getDocumentId(this.entity.documentSelfLink)] : ['../../'];
       this.router.navigate(path, { relativeTo: this.route });
     }
   }
 
-  getCredentialsName(credentials) {
-    let name = credentials.customProperties ? credentials.customProperties.__authCredentialsName : '';
-    if (!name) {
-      return credentials.documentId;
+  toCredentialViewModel(credential) {
+    let vm:any = {};
+    vm.documentSelfLink = credential.documentSelfLink;
+    vm.name = credential.customProperties ? credential.customProperties.__authCredentialsName : '';
+    if (!vm.name) {
+      vm.name = credential.documentId;
     }
-    return name;
+    return vm;
   }
 
   saveCluster() {
@@ -111,7 +142,7 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
         'details':  description
       };
       this.isSaving = true;
-      this.service.patch(this.entity.documentSelfLink, clusterDtoPatch).then(() => {
+      this.service.patch(this.entity.documentSelfLink, clusterDtoPatch, this.projectLink).then(() => {
         this.toggleModal(false);
       }).catch(error => {
         this.isSaving = false;
@@ -122,18 +153,11 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
 
   private createCluster(certificateAccepted: boolean) {
     if (this.clusterForm.valid) {
-      let selectedProject = this.ps.getSelectedProject();
-      if (!selectedProject || !selectedProject.documentSelfLink) {
-        this.alertMessage = I18n.t('projects.errors.noSelectedProject');
-        return;
-      }
-
       this.isSaving = true;
 
       let formInput = this.clusterForm.value;
       let hostState = {
         'address': formInput.url,
-        'tenantLinks': [ selectedProject.documentSelfLink ],
         'customProperties': {
           '__containerHostType': formInput.type,
           '__adapterDockerType': 'API',
@@ -142,7 +166,7 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
       };
 
       if (formInput.credentials) {
-        hostState.customProperties['__authCredentialsLink'] = formInput.credentials;
+        hostState.customProperties['__authCredentialsLink'] = formInput.credentials.documentSelfLink;
       }
 
       if (formInput.description) {
@@ -153,7 +177,7 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
         'hostState': hostState,
         'acceptCertificate': certificateAccepted
       };
-      this.service.post(Links.CLUSTERS, hostSpec).then((response) => {
+      this.service.post(Links.CLUSTERS, hostSpec, this.projectLink).then((response) => {
         if (response.certificate) {
           this.certificate = response;
           this.showCertificateWarning = true;

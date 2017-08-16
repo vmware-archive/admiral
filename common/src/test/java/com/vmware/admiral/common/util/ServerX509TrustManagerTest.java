@@ -49,6 +49,7 @@ public class ServerX509TrustManagerTest {
 
         };
 
+        ServerX509TrustManager.invalidate();
         trustManager = ServerX509TrustManager.init(host);
     }
 

@@ -26,12 +26,12 @@ import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.NetworkType;
 import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
-import com.vmware.admiral.request.RequestBaseTest;
 import com.vmware.admiral.request.compute.ComputeNetworkAllocationTaskService.ComputeNetworkAllocationTaskState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
+import com.vmware.xenon.common.ServiceErrorResponse;
 
-public class ComputeNetworkAllocationTaskServiceTest extends RequestBaseTest {
+public class ComputeNetworkAllocationTaskServiceTest extends ComputeRequestBaseTest {
 
     private ComputeNetworkDescription computeNetworkDesc;
 
@@ -45,6 +45,8 @@ public class ComputeNetworkAllocationTaskServiceTest extends RequestBaseTest {
 
     @Test
     public void testAllocationTaskServiceLifeCycle() throws Throwable {
+        createProfile();
+
         ComputeNetworkAllocationTaskState allocationTask = createComputeNetworkAllocationTask(
                 computeNetworkDesc.documentSelfLink, 1);
         allocationTask = allocate(allocationTask);
@@ -60,7 +62,20 @@ public class ComputeNetworkAllocationTaskServiceTest extends RequestBaseTest {
     }
 
     @Test
+    public void testAllocationFailureIfProfileNotFound() throws Throwable {
+        ComputeNetworkAllocationTaskState allocationTask = createComputeNetworkAllocationTask(
+                computeNetworkDesc.documentSelfLink, 1);
+        allocationTask = allocateFailure(allocationTask);
+
+        assertNull(allocationTask.resourceLinks);
+        assertNotNull(allocationTask.taskInfo.failure);
+        assertEquals(true, allocationTask.taskInfo.failure instanceof ServiceErrorResponse);
+    }
+
+    @Test
     public void testExternalNetworkAllocation() throws Throwable {
+        createProfile();
+
         ComputeNetworkDescription networkDescription = createNetworkDescription("my net", NetworkType.EXTERNAL);
         networkDescription = doPost(networkDescription,
                 ComputeNetworkDescriptionService.FACTORY_LINK);
@@ -83,6 +98,8 @@ public class ComputeNetworkAllocationTaskServiceTest extends RequestBaseTest {
 
     @Test
     public void testIsolatedNetworkAllocation() throws Throwable {
+        createIsolatedSubnetNetworkProfile();
+
         ComputeNetworkDescription networkDescription = createNetworkDescription("isolated net",
                 NetworkType.ISOLATED);
         networkDescription = doPost(networkDescription,
@@ -129,6 +146,19 @@ public class ComputeNetworkAllocationTaskServiceTest extends RequestBaseTest {
                 allocationTask.resourceLinks);
         assertEquals("Resource count not equal for: " + allocationTask.documentSelfLink,
                 allocationTask.resourceCount, Long.valueOf(allocationTask.resourceLinks.size()));
+
+        host.log("Finished allocation test: " + allocationTask.documentSelfLink);
+        return allocationTask;
+    }
+
+    private ComputeNetworkAllocationTaskState allocateFailure(
+            ComputeNetworkAllocationTaskState allocationTask)
+            throws Throwable {
+        allocationTask = startAllocationTask(allocationTask);
+        host.log("Start allocation test: " + allocationTask.documentSelfLink);
+
+        allocationTask = waitForTaskError(allocationTask.documentSelfLink,
+                ComputeNetworkAllocationTaskState.class);
 
         host.log("Finished allocation test: " + allocationTask.documentSelfLink);
         return allocationTask;

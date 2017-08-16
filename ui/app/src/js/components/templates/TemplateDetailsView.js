@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -17,7 +17,6 @@ import KubernetesTemplateItem from 'components/templates/kubernetes/KubernetesTe
 import ContainerDefinitionForm from 'components/containers/ContainerDefinitionForm';
 import InlineDeleteConfirmationTemplate from 'components/common/InlineDeleteConfirmationTemplate.html'; //eslint-disable-line
 import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin';
-import ResourceGroupsMixin from 'components/templates/ResourceGroupsMixin';
 import GridHolderMixin from 'components/common/GridHolderMixin';
 import ActionConfirmationSupportMixin from 'components/common/ActionConfirmationSupportMixin';
 import ConnectorMixin from 'components/templates/ConnectorMixin';
@@ -452,7 +451,6 @@ var TemplateDetailsView = Vue.extend({
     },
     'container-image-item': {
       template: ListItemImageVue,
-      mixins: [ResourceGroupsMixin],
       props: {
         model: {required: true}
       },
@@ -507,7 +505,7 @@ var TemplateDetailsView = Vue.extend({
     'kubernetes-definition-form': KubernetesDefinitionForm,
     'kubernetes-template-item': KubernetesTemplateItem
   },
-  mixins: [GridHolderMixin, ConnectorMixin, ResourceConnectionsDataMixin, ResourceGroupsMixin,
+  mixins: [GridHolderMixin, ConnectorMixin, ResourceConnectionsDataMixin,
             ActionConfirmationSupportMixin],
   attached: function() {
     var $detailsContent = $(this.$el);
@@ -722,15 +720,11 @@ var TemplateDetailsView = Vue.extend({
       $event.stopPropagation();
       $event.preventDefault();
 
-      if ($event.shiftKey) {
-        this.showGroupForProvisioning = false;
-      } else {
-        var template = {
-          'documentSelfLink': this.model.templateDetails.documentSelfLink
-        };
+      var template = {
+        'documentSelfLink': this.model.templateDetails.documentSelfLink
+      };
 
-        this.handleGroup(TemplateActions.copyTemplate, [this.model.type, template]);
-      }
+      TemplateActions.copyTemplate(this.model.type, template);
     },
     handleConfirmation: function(actionName) {
       // remove template

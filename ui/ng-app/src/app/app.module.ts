@@ -24,38 +24,48 @@ import { AppComponent } from './app.component';
 import { ROUTING } from "./app.routing";
 import { Ajax, SessionTimedOutSubject } from './utils/ajax.service';
 import { DocumentService } from './utils/document.service';
+import { ErrorService } from './utils/error.service';
 import { ProjectService } from './utils/project.service';
 import { AuthService } from './utils/auth.service';
 import { TemplateService } from './utils/template.service';
 import { ViewExpandRequestService } from './services/view-expand-request.service';
 import { HarborLibraryModule, SERVICE_CONFIG, IServiceConfig } from 'harbor-ui';
 import * as I18n from 'i18next';
+import { FT } from './utils/ft';
+import { HomeAuthGuard } from 'app/services/home-auth-guard.service';
+import { AdminAuthGuard } from 'app/services/admin-auth-guard.service';
 
 import { ADMIRAL_DECLARATIONS } from './admiral';
 
-export const ServiceConfig:IServiceConfig = {
-    systemInfoEndpoint: "/hbr-api/systeminfo",
-    repositoryBaseEndpoint: "/hbr-api/repositories",
-    vulnerabilityScanningBaseEndpoint: "/hbr-api/repositories",
-    logBaseEndpoint: "/hbr-api/logs",
-    targetBaseEndpoint: "/hbr-api/targets",
-    replicationRuleEndpoint: "/hbr-api/policies/replication",
-    replicationJobEndpoint: "/hbr-api/jobs/replication",
-    enablei18Support: true,
-    langMessageLoader: "http",
-    langMessagePathForHttpLoader: "/hbr-api/i18n/lang/",
-    configurationEndpoint: "/hbr-api/configurations"
-};
-
-
 let HBR_SUPPORTED_LANGS = ['en-us', 'zh-cn', 'es-es'];
+let HBR_DEFAULT_LANG = 'en-us';
 
 export function initConfig(ts: TranslateService) {
     return () => {
-        let lng = I18n.language || 'en-us';
+        let lng = I18n.language || HBR_DEFAULT_LANG;
         ts.addLangs(HBR_SUPPORTED_LANGS);
+        ts.setDefaultLang(HBR_DEFAULT_LANG); // fallback language
         ts.use(lng.toLocaleLowerCase());
     };
+}
+
+export function initHarborConfig() {
+    var sc:IServiceConfig = {
+        systemInfoEndpoint: "/hbr-api/systeminfo",
+        repositoryBaseEndpoint: "/hbr-api/repositories",
+        vulnerabilityScanningBaseEndpoint: "/hbr-api/repositories",
+        logBaseEndpoint: "/hbr-api/logs",
+        targetBaseEndpoint: "/hbr-api/targets",
+        replicationRuleEndpoint: "/hbr-api/policies/replication",
+        replicationJobEndpoint: "/hbr-api/jobs/replication",
+        enablei18Support: true,
+        langMessageLoader: FT.isHbrEnabled()? "http" : null,
+        langMessagePathForHttpLoader: "/hbr-api/i18n/lang/",
+        configurationEndpoint: "/hbr-api/configurations",
+        scanJobEndpoint: "/hbr-api/jobs/scan"
+    };
+
+    return sc;
 }
 
 
@@ -73,13 +83,15 @@ export function initConfig(ts: TranslateService) {
         HarborLibraryModule.forChild({
             config: {
                 provide: SERVICE_CONFIG,
-                useValue: ServiceConfig
+                useFactory: initHarborConfig
             }
         }),
         InfiniteScrollModule,
     ],
     providers: [
         Ajax,
+        HomeAuthGuard,
+        AdminAuthGuard,
         SessionTimedOutSubject,
         DocumentService,
         ProjectService,
@@ -87,6 +99,7 @@ export function initConfig(ts: TranslateService) {
         TemplateService,
         ViewExpandRequestService,
         TranslateService,
+        ErrorService,
         {
             provide: APP_INITIALIZER,
             useFactory: initConfig,

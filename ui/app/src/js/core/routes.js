@@ -68,6 +68,11 @@ crossroads.addRoute('/placements', function() {
   actions.PlacementActions.openPlacements();
 });
 
+crossroads.addRoute('/placementZones', function() {
+  actions.AppActions.openView(computeConstants.VIEWS.PLACEMENT_ZONES.name);
+  actions.PlacementZonesActions.retrievePlacementZones();
+});
+
 crossroads.addRoute('/projects:?query:', function(query) {
   actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.PROJECTS.name);
 
@@ -275,9 +280,21 @@ crossroads.addRoute('/profiles/new', function() {
   actions.ProfileActions.openAddProfile();
 });
 
+crossroads.addRoute('/instance-types/new', function() {
+  actions.AppActions.openView(computeConstants.VIEWS.INSTANCETYPE.name);
+  actions.ProfileActions.openAddInstanceType();
+  actions.EndpointsActions.retrieveEndpoints();
+});
+
 crossroads.addRoute('/profiles/{id*}', function(id) {
   actions.AppActions.openView(computeConstants.VIEWS.PROFILES.name);
   actions.ProfileActions.editProfile(id);
+});
+
+crossroads.addRoute('/instance-types/edit/{id*}', function(id) {
+  actions.AppActions.openView(computeConstants.VIEWS.INSTANCETYPE.name);
+  actions.ProfileActions.editInstanceType(id);
+  actions.EndpointsActions.retrieveEndpoints();
 });
 
 crossroads.addRoute('/endpoints', function() {
@@ -497,6 +514,22 @@ actions.NavigationActions.openAddEndpoint.listen(function() {
 
 actions.NavigationActions.openProfiles.listen(function(queryOptions) {
   hasher.setHash(getHashWithQuery('profiles', queryOptions));
+});
+
+actions.NavigationActions.openInstanceTypes.listen(function() {
+  // TODO: find a better way
+  // Navigate to home so the view is hidden from the stage
+  actions.AppActions.openView(null);
+  actions.ProfileActions.clearProfile();
+  window.top.location.href = window.origin + '/#compute/instance-types';
+});
+
+actions.NavigationActions.openAddInstanceType.listen(function() {
+  hasher.setHash('instance-types/new');
+});
+
+actions.NavigationActions.editInstanceType.listen(function(id) {
+  hasher.setHash('instance-types/edit/' + id);
 });
 
 actions.NavigationActions.openAddProfile.listen(function() {

@@ -10,7 +10,7 @@
  */
 
 import services from 'core/services';
-import utils from 'core/utils';
+import { formatUtils } from 'admiral-ui-common';
 
 const ISOLATION_TYPES = [{
   name: i18n.t('app.profile.edit.noneIsolationTypeLabel'),
@@ -132,13 +132,13 @@ export default Vue.component('azure-network-profile-editor', {
     },
     renderIsolationNetwork(network) {
       let secondary = i18n.t('app.profile.edit.cidrLabel') + ': ' +
-          utils.escapeHtml(network.subnetCIDR) + ', ' +
+          formatUtils.escapeHtml(network.subnetCIDR) + ', ' +
           i18n.t('app.profile.edit.resourceGroupsLabel') + ': ' +
-          (network.groupNames ? utils.escapeHtml(network.groupNames.join(', ')) : '');
+          (network.groupNames ? formatUtils.escapeHtml(network.groupNames.join(', ')) : '');
       return `
         <div>
           <div class="host-picker-item-primary" title="${network.name}">
-            ${utils.escapeHtml(network.name)}
+            ${formatUtils.escapeHtml(network.name)}
           </div>
           <div class="host-picker-item-secondary truncateText" title="${secondary}">
             ${secondary}
@@ -170,11 +170,12 @@ export default Vue.component('azure-network-profile-editor', {
     },
     renderSecurityGroup(securityGroup) {
       let secondary = i18n.t('app.profile.edit.resourceGroupsLabel') + ': ' +
-          (securityGroup.groupNames ? utils.escapeHtml(securityGroup.groupNames.join(', ')) : '');
+          (securityGroup.groupNames ?
+           formatUtils.escapeHtml(securityGroup.groupNames.join(', ')) : '');
       return `
         <div>
           <div class="host-picker-item-primary" title="${securityGroup.name}">
-            ${utils.escapeHtml(securityGroup.name)}
+            ${formatUtils.escapeHtml(securityGroup.name)}
           </div>
           <div class="host-picker-item-secondary truncateText" title="${secondary}">
             ${secondary}

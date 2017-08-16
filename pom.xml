@@ -43,6 +43,8 @@
         <module>ui</module>
         <module>host</module>
         <module>adapter</module>
+        <module>upgrade</module>
+        <module>consumer-iaas-api</module>
 		<module>unikernels</module>
     </modules>
 
@@ -72,22 +74,21 @@
         <m2e.lifecycle-mapping>1.0.0</m2e.lifecycle-mapping>
 
         <!-- xenon -->
-        <xenon.version>1.5.0</xenon.version>
+        <xenon.version>1.5.4-CR1</xenon.version>
         <xenon.common.version>${xenon.version}</xenon.common.version>
         <xenon.ui.version>${xenon.version}</xenon.ui.version>
-        <xenon.swagger.version>0.0.1</xenon.swagger.version>
+        <xenon.swagger.version>0.0.2</xenon.swagger.version>
         <xenon.group>com.vmware.xenon</xenon.group>
 
         <!-- Photon Model -->
-        <photon.model.version>0.6.24-SNAPSHOT</photon.model.version>
+        <photon.model.version>0.6.31</photon.model.version>
 
         <!-- other -->
         <bouncycastle.version>1.56</bouncycastle.version>
         <jackson.version>2.8.6</jackson.version>
         <httpclient.version>4.5.2</httpclient.version>
         <guava.version>20.0</guava.version>
-        <gson.version>2.3.1</gson.version>
-
+        <joda-time.version>2.8.1</joda-time.version>
 
         <!-- JS -->
         <maven.plugin.frontend.version>1.3</maven.plugin.frontend.version>
@@ -216,6 +217,16 @@
             </dependency>
 
             <!-- added because of mismatch between azure-sdk and xenon-swagger -->
+            <dependency>
+                <groupId>com.fasterxml.jackson.datatype</groupId>
+                <artifactId>jackson-datatype-joda</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>joda-time</groupId>
+                <artifactId>joda-time</artifactId>
+                <version>${joda-time.version}</version>
+            </dependency>
             <dependency>
               <groupId>com.google.guava</groupId>
               <artifactId>guava</artifactId>

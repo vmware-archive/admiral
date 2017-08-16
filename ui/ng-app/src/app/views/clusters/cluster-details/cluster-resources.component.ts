@@ -26,6 +26,7 @@ import { GridViewComponent } from '../../../components/grid-view/grid-view.compo
 export class ClusterResourcesComponent implements OnChanges {
 
   @Input() cluster: any;
+  @Input() projectLink: string;
   @ViewChild('gridView') gridView: GridViewComponent;
 
   serviceEndpoint: string;
@@ -43,7 +44,8 @@ export class ClusterResourcesComponent implements OnChanges {
 
   get deleteConfirmationDescription(): string {
     return this.hostToDelete && I18n.t('hosts.delete.confirmation',
-            { hostName: this.getHostName(this.hostToDelete) } as I18n.TranslationOptions);
+            { hostName: this.getHostName(this.hostToDelete),
+              interpolation: { escapeValue: false } } as I18n.TranslationOptions);
   }
 
   deleteHost(event, host) {
@@ -54,7 +56,7 @@ export class ClusterResourcesComponent implements OnChanges {
   }
 
   deleteConfirmed() {
-    this.service.delete(this.serviceEndpoint + '/' + Utils.getDocumentId(this.hostToDelete.documentSelfLink))
+    this.service.delete(this.serviceEndpoint + '/' + Utils.getDocumentId(this.hostToDelete.documentSelfLink), this.projectLink)
         .then(result => {
           this.hostToDelete = null;
           this.gridView.refresh();

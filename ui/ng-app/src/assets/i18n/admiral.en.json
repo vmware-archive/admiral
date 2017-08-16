@@ -1,4 +1,19 @@
 {
+  "header": {
+    "title": {
+      "admiral": "Admiral",
+      "vic": "vSphere Integrated Containers",
+      "compute": "Infrastructure"
+    },
+    "navigation": {
+      "home": "Home",
+      "administration": "Administration"
+    },
+    "actions": {
+      "perferences": "Preferences",
+      "logout": "Log out"
+    }
+  },
   "projects": {
     "title": "Projects",
     "project": "Project",
@@ -13,6 +28,8 @@
     "infrastructure": "Infrastructure",
     "registryReplication": "Registry Replication",
     "configuration": "Configuration",
+    "globalSelectLabel": "Project",
+    "globalSelectLabelEmbedded": "Group",
     "edit": {
       "titleNew": "New Project",
       "titleEdit": "Edit Project",
@@ -97,15 +114,12 @@
       "placeholder": "Search for projects"
     },
     "actions": {
-      "title": "Actions",
+      "title": "Projects",
       "details": "Details",
       "makePublic": "Make public",
       "makePrivate": "Make private",
       "addUsersAndGroups": "Add users and groups",
       "addClusters": "Add clusters"
-    },
-    "errors": {
-      "noSelectedProject": "Cannot load current project."
     }
   },
   "registries": {
@@ -132,6 +146,7 @@
     "summary": {
       "title": "Summary",
       "address": "Address:",
+      "adminPortal": "Admin Portal:",
       "type": "Type:",
       "clusterOverview": "Cluster Overview",
       "clusterResources": "Cluster Resources",
@@ -186,10 +201,21 @@
   "logs": {
     "title": "Logs",
     "system": {
-      "title": "System"
+      "title": "System",
+      "columnLogEntry": "Log Entry",
+      "columnSeverity": "Severity",
+      "columnTimeStamp": "Timestamp",
+      "entriesCount": "log entries"
     },
     "registry": {
       "title": "Registry"
+    },
+    "event": {
+      "type": {
+          "info": "Information",
+          "warning": "Warning",
+          "error": "Error"
+      }
     }
   },
   "identity": {
@@ -206,9 +232,8 @@
       "columnProjects": "Projects",
       "count": "users/groups",
       "notFound": "No users found",
-      "projectRole": {
-        "admin": "Project Admin",
-        "member": "Developer"
+      "assignRoleInProject": {
+      "description": "Set the project and role for the user/group {{principal}}."
       }
     }
   },
@@ -233,6 +258,9 @@
       "validTo": "Valid to"
     }
   },
+  "tagDetails": {
+    "affectedContainers": "Containers affected"
+  },
   "edit": "Edit",
   "save": "Save",
   "add": "Add",
@@ -243,7 +271,32 @@
   "unknown": "Unknown",
   "assignRoles": "Assign Roles",
   "makeAdmin": " Make Admin",
-
+  "noItems": "No items",
+  "reload": "Reload",
+  "sessionExpired": "Your session is no longer valid, please log in again!",
+  "navigation": {
+    "home": "Home",
+    "administration": "Administration",
+    "deployments": "Deployments",
+    "applications": "Applications",
+    "containers": "Containers",
+    "networks": "Networks",
+    "volumes": "Volumes",
+    "closures": "Closures",
+    "library": "Library",
+    "templates": "Templates",
+    "projectRepositories": "Project repositories",
+    "publicRepositories": "Public repositories",
+    "infrastructure": "Infrastructure",
+    "clusters": "Clusters",
+    "hosts": "Hosts",
+    "placements": "Placements",
+    "identityManagement": "Identity Management",
+    "projects": "Projects",
+    "registries": "Registries",
+    "configuration": "Configuration",
+    "logs": "Logs"
+  },
   "compute": {
     "resources": "Resources",
     "policies": "Policies",
@@ -257,8 +310,21 @@
     "profiles": {
       "title": "Profiles"
     },
+    "flavors": {
+      "title": "Flavor Profiles",
+      "edit": "Edit",
+      "delete": {
+        "action": "Delete",
+        "title": "Delete Flavor Profile"
+      },
+      "endpoint": "Endpoint",
+      "flavors": "Flavors"
+    },
     "placements": {
       "title": "Placements"
+    },
+    "placementZones": {
+      "title": "Placement Zones"
     },
     "machines": {
       "title": "Machines"

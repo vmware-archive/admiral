@@ -342,7 +342,7 @@ public abstract class BaseManagementHostClusterIT {
     protected static void waitAuthServices(ManagementHost host) {
         TestContext context = new TestContext(1,
                 Duration.ofSeconds(DEFAULT_WAIT_SECONDS_FOR_AUTH_SERVICES));
-        AuthUtil.getPreferredProvider(AuthConfigProvider.class).waitForInitConfig(host,
+        AuthUtil.getPreferredProvider(AuthConfigProvider.class).waitForInitBootConfig(host,
                 host.localUsers, context::completeIteration, context::failIteration);
         context.await();
     }

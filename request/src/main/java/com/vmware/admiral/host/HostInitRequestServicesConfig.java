@@ -18,6 +18,11 @@ import com.vmware.admiral.request.ClusteringTaskService;
 import com.vmware.admiral.request.ContainerAllocationTaskFactoryService;
 import com.vmware.admiral.request.ContainerControlLoopService;
 import com.vmware.admiral.request.ContainerHostRemovalTaskFactoryService;
+import com.vmware.admiral.request.ContainerLoadBalancerAllocationTaskService;
+import com.vmware.admiral.request.ContainerLoadBalancerBootstrapService;
+import com.vmware.admiral.request.ContainerLoadBalancerProvisionTaskService;
+import com.vmware.admiral.request.ContainerLoadBalancerReconfigureTaskService;
+import com.vmware.admiral.request.ContainerLoadBalancerRemovalTaskService;
 import com.vmware.admiral.request.ContainerNetworkAllocationTaskService;
 import com.vmware.admiral.request.ContainerNetworkProvisionTaskService;
 import com.vmware.admiral.request.ContainerNetworkRemovalTaskService;
@@ -49,6 +54,8 @@ import com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService;
 import com.vmware.admiral.request.compute.ComputeProvisionTaskService;
 import com.vmware.admiral.request.compute.ComputeRemovalTaskService;
 import com.vmware.admiral.request.compute.ComputeReservationTaskService;
+import com.vmware.admiral.request.compute.IsolatedSecurityGroupProvisionTaskService;
+import com.vmware.admiral.request.compute.IsolatedSubnetProvisionTaskService;
 import com.vmware.admiral.request.compute.LoadBalancerAllocationTaskService;
 import com.vmware.admiral.request.compute.LoadBalancerOperationTaskService;
 import com.vmware.admiral.request.compute.LoadBalancerProvisionTaskService;
@@ -92,10 +99,17 @@ public class HostInitRequestServicesConfig extends HostInitServiceHelper {
                 ContainerNetworkProvisionTaskService.class,
                 ComputeNetworkAllocationTaskService.class,
                 ComputeNetworkProvisionTaskService.class,
+                IsolatedSubnetProvisionTaskService.class,
+                IsolatedSecurityGroupProvisionTaskService.class,
                 ComputeNetworkRemovalTaskService.class,
                 LoadBalancerAllocationTaskService.class,
                 LoadBalancerProvisionTaskService.class,
                 LoadBalancerRemovalTaskService.class,
+                ContainerLoadBalancerAllocationTaskService.class,
+                ContainerLoadBalancerProvisionTaskService.class,
+                ContainerLoadBalancerRemovalTaskService.class,
+                ContainerLoadBalancerReconfigureTaskService.class,
+                ContainerLoadBalancerBootstrapService.class,
                 ContainerNetworkRemovalTaskService.class,
                 ContainerVolumeAllocationTaskService.class,
                 ContainerVolumeProvisionTaskService.class,

@@ -29,12 +29,13 @@ import org.junit.Test;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.test.BaseTestCase;
+import com.vmware.admiral.common.util.CertificateUtilExtended;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
 import com.vmware.admiral.compute.profile.ComputeProfileService;
 import com.vmware.admiral.compute.profile.ImageProfileService;
-import com.vmware.admiral.compute.profile.InstanceTypeService;
+import com.vmware.admiral.compute.profile.InstanceTypeService.InstanceTypeFactoryService;
 import com.vmware.admiral.compute.profile.NetworkProfileService;
 import com.vmware.admiral.compute.profile.ProfileService;
 import com.vmware.admiral.compute.profile.StorageProfileService;
@@ -77,12 +78,11 @@ public class ComputeStateEnhancersTest extends BaseTestCase {
     public void setup() throws Throwable {
         host.registerForServiceAvailability(CaSigningCertService.startTask(host), true,
                 CaSigningCertService.FACTORY_LINK);
-        HostInitServiceHelper.startServices(host,
-                TestInitialBootService.class);
+        HostInitServiceHelper.startServices(host, TestInitialBootService.class,
+                InstanceTypeFactoryService.class);
         HostInitServiceHelper.startServiceFactories(host,
                 CaSigningCertService.class, ProfileService.class,
                 ComputeProfileService.class, StorageProfileService.class, ImageProfileService.class,
-                InstanceTypeService.class,
                 NetworkProfileService.class, ComputeDescriptionService.class);
         waitForServiceAvailability(ProfileService.FACTORY_LINK);
         waitForServiceAvailability(CaSigningCertService.FACTORY_LINK);
@@ -424,8 +424,8 @@ public class ComputeStateEnhancersTest extends BaseTestCase {
         state.type = AuthCredentialsType.PublicKey.name();
         state.userEmail = UUID.randomUUID().toString();
         generateKeyPair((key, ssh) -> {
-            state.publicKey = KeyUtil.toPEMFormat(key.getPublic());
-            state.privateKey = KeyUtil.toPEMFormat(key.getPrivate());
+            state.publicKey = CertificateUtilExtended.toPEMFormat(key.getPublic(), host);
+            state.privateKey = CertificateUtilExtended.toPEMFormat(key.getPrivate(), host);
         });
         return doPost(state, AuthCredentialsService.FACTORY_LINK);
     }
@@ -435,8 +435,8 @@ public class ComputeStateEnhancersTest extends BaseTestCase {
         state.type = AuthCredentialsType.PublicKey.name();
         state.userEmail = UUID.randomUUID().toString();
         generateKeyPair((key, ssh) -> {
-            state.publicKey = KeyUtil.toPEMFormat(key.getPublic());
-            state.privateKey = KeyUtil.toPEMFormat(key.getPrivate());
+            state.publicKey = CertificateUtilExtended.toPEMFormat(key.getPublic(), host);
+            state.privateKey = CertificateUtilExtended.toPEMFormat(key.getPrivate(), host);
             state.customProperties = new HashMap<>();
             state.customProperties.put(ComputeConstants.CUSTOM_PROP_SSH_AUTHORIZED_KEY_NAME, ssh);
         });

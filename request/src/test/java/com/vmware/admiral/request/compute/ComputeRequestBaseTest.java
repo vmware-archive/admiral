@@ -11,11 +11,14 @@
 
 package com.vmware.admiral.request.compute;
 
+import static org.junit.Assert.assertNotNull;
+
 import static com.vmware.admiral.common.test.CommonTestStateFactory.ENDPOINT_ID;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -27,12 +30,15 @@ import org.junit.Before;
 
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
+import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService;
+import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService.ComputeNetworkCIDRAllocationState;
 import com.vmware.admiral.compute.profile.ComputeImageDescription;
 import com.vmware.admiral.compute.profile.ComputeProfileService;
 import com.vmware.admiral.compute.profile.ComputeProfileService.ComputeProfile;
 import com.vmware.admiral.compute.profile.InstanceTypeDescription;
 import com.vmware.admiral.compute.profile.NetworkProfileService;
 import com.vmware.admiral.compute.profile.NetworkProfileService.NetworkProfile;
+import com.vmware.admiral.compute.profile.NetworkProfileService.NetworkProfile.IsolationSupportType;
 import com.vmware.admiral.compute.profile.ProfileService;
 import com.vmware.admiral.compute.profile.ProfileService.ProfileState;
 import com.vmware.admiral.compute.profile.ProfileService.ProfileStateExpanded;
@@ -44,18 +50,30 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.resources.DiskService;
+import com.vmware.photon.controller.model.resources.DiskService.DiskState;
 import com.vmware.photon.controller.model.resources.EndpointService;
+import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService.NetworkInterfaceDescription;
 import com.vmware.photon.controller.model.resources.NetworkService;
+import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;
+import com.vmware.photon.controller.model.resources.StorageDescriptionService.StorageDescription;
+import com.vmware.photon.controller.model.resources.SubnetRangeService;
+import com.vmware.photon.controller.model.resources.SubnetRangeService.SubnetRangeState;
 import com.vmware.photon.controller.model.resources.SubnetService;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.photon.controller.model.resources.TagService;
+import com.vmware.photon.controller.model.support.IPVersion;
 import com.vmware.xenon.common.UriUtils;
 
 public class ComputeRequestBaseTest extends RequestBaseTest {
 
     static final String TEST_VM_NAME = "testVM";
+    public static final String NETWORK_NAME = "test-nic";
+    public static final String NETWORK_ADDRESS = "192.168.0.0";
+    public static final int NETWORK_CIDR_PREFIX = 29;
+    public static final String NETWORK_CIDR = NETWORK_ADDRESS + "/" + NETWORK_CIDR_PREFIX;
 
     protected ComputeState vmHostCompute;
 
@@ -66,7 +84,9 @@ public class ComputeRequestBaseTest extends RequestBaseTest {
         createComputeResourcePool();
         computeGroupPlacementState = createComputeGroupResourcePlacement(computeResourcePool, 10);
         // create a single powered-on compute available for placement
-        vmHostCompute = createVmHostCompute(true);
+        StorageDescription datastore = createDatastore(5000);
+        vmHostCompute = createVmHostCompute(true, null,
+                Collections.singleton(datastore.documentSelfLink));
     }
 
     protected ComputeDescription createVMComputeDescription(boolean attachNic) throws Throwable {
@@ -86,7 +106,7 @@ public class ComputeRequestBaseTest extends RequestBaseTest {
 
         SubnetState subnet = createSubnet("my-subnet");
         if (attachNic) {
-            NetworkInterfaceDescription nid = createNetworkInterface("test-nic",
+            NetworkInterfaceDescription nid = createNetworkInterface(NETWORK_NAME,
                     subnet.documentSelfLink);
             cd.networkInterfaceDescLinks = new ArrayList<>();
             cd.networkInterfaceDescLinks.add(nid.documentSelfLink);
@@ -94,6 +114,19 @@ public class ComputeRequestBaseTest extends RequestBaseTest {
             cd.customProperties.put("subnetworkLink", subnet.documentSelfLink);
         }
         return cd;
+    }
+
+    protected ComputeDescription createComputeDescriptionWithDisks(List<Long> disksCapacity) throws
+            Throwable {
+
+        ComputeDescription desc = createComputeDescription(false);
+        desc.diskDescLinks = new ArrayList<>();
+        for (Long capacity : disksCapacity) {
+            DiskState disk = createDiskState(capacity);
+            desc.diskDescLinks.add(disk.documentSelfLink);
+        }
+
+        return desc;
     }
 
     protected ComputeDescription createComputeDescriptionWithNetwork(String networkName) throws
@@ -165,6 +198,7 @@ public class ComputeRequestBaseTest extends RequestBaseTest {
         compute.descriptionLink = descLink;
         compute.customProperties = new HashMap<>();
         compute.customProperties.put(FIELD_NAME_CONTEXT_ID_KEY, contextId);
+        compute.tenantLinks = TestRequestStateFactory.getTenantLinks();
         return doPost(compute, ComputeService.FACTORY_LINK);
     }
 
@@ -179,6 +213,16 @@ public class ComputeRequestBaseTest extends RequestBaseTest {
 
         NetworkInterfaceDescription returnState = doPost(nid,
                 NetworkInterfaceDescriptionService.FACTORY_LINK);
+        return returnState;
+    }
+
+    private DiskState createDiskState(long capacityMB) throws Throwable {
+        DiskState disk = new DiskState();
+        disk.id = UUID.randomUUID().toString();
+        disk.name = disk.id;
+        disk.capacityMBytes = capacityMB;
+
+        DiskState returnState = doPost(disk, DiskService.FACTORY_LINK);
         return returnState;
     }
 
@@ -324,5 +368,110 @@ public class ComputeRequestBaseTest extends RequestBaseTest {
         tags.add(nonCriticalTag.documentSelfLink);
 
         return tags;
+    }
+
+    protected ProfileState createProfile()
+            throws Throwable {
+        NetworkProfile networkProfile = new NetworkProfile();
+        networkProfile.isolationType = IsolationSupportType.NONE;
+        networkProfile.subnetLinks = Arrays.asList(createSubnetState(null).documentSelfLink);
+        networkProfile = doPost(networkProfile, NetworkProfileService.FACTORY_LINK);
+        ProfileState profile = createProfile(null, null, networkProfile, null, null);
+        assertNotNull(profile);
+
+        return profile;
+    }
+
+    protected ProfileState createIsolatedSubnetNetworkProfileWithExternalSubnetLink()
+            throws Throwable {
+        NetworkProfile networkProfile = createNetworkProfile();
+        SubnetState subnetState = createSubnet("external-subnet");
+        createSubnetRange(subnetState, "192.168.0.10", "192.168.0.20");
+        networkProfile.isolationExternalSubnetLink = subnetState.documentSelfLink;
+        doPatch(networkProfile, networkProfile.documentSelfLink);
+        ProfileState profile = createProfile(null, null, networkProfile, null, null);
+        assertNotNull(profile);
+
+        return profile;
+    }
+
+    protected SubnetRangeState createSubnetRange(SubnetState subnetState, String startIp, String endIp)
+            throws Throwable {
+        SubnetRangeState subnetRangeState = new SubnetRangeState();
+        subnetRangeState.startIPAddress = startIp;
+        subnetRangeState.endIPAddress = endIp;
+        subnetRangeState.ipVersion = IPVersion.IPv4;
+        subnetRangeState.subnetLink = subnetState.documentSelfLink;
+        return doPost(subnetRangeState, SubnetRangeService.FACTORY_LINK);
+    }
+
+    protected ProfileState createIsolatedSubnetNetworkProfile() throws Throwable {
+        ProfileState profile = createProfile(null, null, createNetworkProfile(), null, null);
+        assertNotNull(profile);
+
+        return profile;
+    }
+
+    protected ProfileService.ProfileStateExpanded createExpandedIsolatedSubnetNetworkProfile()
+            throws Throwable {
+        ProfileService.ProfileStateExpanded p1 = createProfileWithInstanceTypeAndNetworkProfile(
+                "small", "t2.micro", "coreos", "ami-234355", null, createNetworkProfile(),
+                computeGroupPlacementState);
+        assertNotNull(p1);
+        return p1;
+    }
+
+    protected ProfileStateExpanded createProfileWithInstanceTypeAndNetworkProfile(
+            String instanceTypeKey,
+            String instanceTypeValue, String imageKey, String imageValue,
+            StorageProfile storageProfile,
+            NetworkProfile np, GroupResourcePlacementState computeGroupPlacementState)
+            throws Throwable {
+        ComputeProfile cp1 = new ComputeProfile();
+        cp1.instanceTypeMapping = new HashMap<>();
+        InstanceTypeDescription itd = new InstanceTypeDescription();
+        itd.instanceType = instanceTypeValue;
+        cp1.instanceTypeMapping.put(instanceTypeKey, itd);
+
+        ComputeImageDescription cid = new ComputeImageDescription();
+        cid.image = imageValue;
+        cp1.imageMapping = new HashMap<>();
+        cp1.imageMapping.put(imageKey, cid);
+
+        return createProfile(cp1, storageProfile, np, computeGroupPlacementState.tenantLinks, null);
+    }
+
+    protected NetworkProfile createNetworkProfile() throws Throwable {
+        ComputeNetworkCIDRAllocationState cidrAllocation = createNetworkCIDRAllocationState();
+
+        NetworkProfile networkProfile = new NetworkProfile();
+        networkProfile.name = "networkProfileName";
+        networkProfile.isolationType = IsolationSupportType.SUBNET;
+        networkProfile.isolationNetworkLink = cidrAllocation.networkLink;
+        networkProfile.isolationNetworkCIDR = "192.168.0.0/16";
+        networkProfile.isolatedSubnetCIDRPrefix = 16;
+        return doPost(networkProfile, NetworkProfileService.FACTORY_LINK);
+
+    }
+
+    protected ComputeNetworkCIDRAllocationState createNetworkCIDRAllocationState() throws
+            Throwable {
+        EndpointState epState = TestRequestStateFactory.createEndpoint();
+        NetworkState network = new NetworkState();
+        network.subnetCIDR = NETWORK_CIDR;
+        network.name = "IsolatedNetwork";
+        network.endpointLink = epState.documentSelfLink;
+        network.instanceAdapterReference = UriUtils.buildUri("/instance-adapter-reference");
+        network.resourcePoolLink = "/dummy-resource-pool-link";
+        network.regionId = "dummy-region-id";
+        network = doPost(network, NetworkService.FACTORY_LINK);
+        return createNetworkCIDRAllocationState(network.documentSelfLink);
+    }
+
+    protected ComputeNetworkCIDRAllocationState createNetworkCIDRAllocationState(String networkLink)
+            throws Throwable {
+        ComputeNetworkCIDRAllocationState state = new ComputeNetworkCIDRAllocationState();
+        state.networkLink = networkLink;
+        return doPost(state, ComputeNetworkCIDRAllocationService.FACTORY_LINK);
     }
 }

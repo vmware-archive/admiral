@@ -20,6 +20,7 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOp
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SERVICE_USE;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -75,6 +76,8 @@ public class ClusteringTaskService extends
 
             static final Set<SubStage> TRANSIENT_SUB_STAGES = new HashSet<>(
                     Arrays.asList(CLUSTERING));
+            static final Set<SubStage> SUBSCRIPTION_SUB_STAGES = new HashSet<>(
+                    Arrays.asList(COMPLETED));
         }
 
         public String contextId;
@@ -105,6 +108,25 @@ public class ClusteringTaskService extends
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);
         super.transientSubStages = SubStage.TRANSIENT_SUB_STAGES;
+        super.subscriptionSubStages = EnumSet.copyOf(SubStage.SUBSCRIPTION_SUB_STAGES);
+    }
+
+    protected static class ExtensibilityCallbackResponse extends BaseExtensibilityCallbackResponse {
+    }
+
+    @Override
+    protected Collection<String> getRelatedResourcesLinks(ClusteringTaskState state) {
+        return state.resourceLinks;
+    }
+
+    @Override
+    protected Class<? extends ResourceState> getRelatedResourceStateType(ClusteringTaskState state) {
+        return getStateClass(state.resourceType);
+    }
+
+    @Override
+    protected BaseExtensibilityCallbackResponse notificationPayload(ClusteringTaskState state) {
+        return new ExtensibilityCallbackResponse();
     }
 
     @Override

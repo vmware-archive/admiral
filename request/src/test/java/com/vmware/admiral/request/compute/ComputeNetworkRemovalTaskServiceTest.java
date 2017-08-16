@@ -109,7 +109,7 @@ public class ComputeNetworkRemovalTaskServiceTest extends RequestBaseTest {
         validateResourcesRemove(removalTask.resourceLinks.iterator().next(),
                 subnet.documentSelfLink, null, resourceGroup.documentSelfLink);
 
-        validateCIDRDeallocated(cidrAllocationState.documentSelfLink, subnet.id);
+        validateCIDRDeallocated(cidrAllocationState.documentSelfLink, subnet.documentSelfLink);
     }
 
     @Test

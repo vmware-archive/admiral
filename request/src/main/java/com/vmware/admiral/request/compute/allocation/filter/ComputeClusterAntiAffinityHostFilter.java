@@ -15,6 +15,7 @@ import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_I
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -147,7 +148,7 @@ public class ComputeClusterAntiAffinityHostFilter
 
         // get host up to the resourceCounts starting with the ones that have the lowest number
         // of containers already allocated.
-        final Map<String, HostSelection> filteredHostSelectionMap = new HashMap<>();
+        final Map<String, HostSelection> filteredHostSelectionMap = new LinkedHashMap<>();
         for (HostSelection hostSelection : sortedEntries) {
             if (hostSelection.resourceCount == lowestValue
                     || filteredHostSelectionMap.size() < filterContext.resourceCount) {

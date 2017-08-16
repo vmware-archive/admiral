@@ -1,0 +1,29 @@
+<!--
+  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<clr-datagrid class="systemLogsGrid">
+    <clr-dg-column>{{"logs.system.columnLogEntry" | i18n}}</clr-dg-column>
+    <clr-dg-column>{{"logs.system.columnSeverity" | i18n}}</clr-dg-column>
+    <clr-dg-column>{{"logs.system.columnTimeStamp" | i18n}}</clr-dg-column>
+
+    <clr-dg-row *clrDgItems="let logEntry of logEntries" [clrDgItem]="member">
+        <clr-dg-cell><div class="systemLogColumnContent systemLogEntryDescription">{{ logEntry.description }}</div></clr-dg-cell>
+        <clr-dg-cell><div class="systemLogColumnContent">{{ logEntry.eventLogType | severityText }}</div></clr-dg-cell>
+        <clr-dg-cell><div class="systemLogColumnContent">{{ logEntry.documentUpdateTimeMicros | microtime | date:'yyyy-mm-dd HH:mm:ss' }}</div></clr-dg-cell>
+    </clr-dg-row>
+
+    <clr-dg-footer>
+        {{pagination.firstItem + 1}} - {{pagination.lastItem + 1}}
+        of {{pagination.totalItems}} {{"logs.system.entriesCount" | i18n}}
+        <clr-dg-pagination #pagination [clrDgPageSize]="10"></clr-dg-pagination>
+    </clr-dg-footer>
+
+</clr-datagrid>

@@ -1,0 +1,296 @@
+{
+  "projects": {
+    "title": "Progetti",
+    "project": "Progetto",
+    "users": "Utenti",
+    "administrators": "Amministratori",
+    "projectRegistry": "Registro di progetto",
+    "public": "Pubblico",
+    "publicDescription": "Accesso pubblico al registro di progetto",
+    "private": "Privato",
+    "clusters": "Cluster",
+    "repositories": "Repository",
+    "infrastructure": "Infrastruttura",
+    "registryReplication": "Replica registro",
+    "configuration": "Configurazione",
+    "edit": {
+      "titleNew": "Nuovo progetto",
+      "titleEdit": "Modifica progetto",
+      "name": "Nome",
+      "nameRequired": "Il nome è obbligatorio.",
+      "description": "Descrizione"
+    },
+    "delete": {
+      "title": "Rimuovi progetto",
+      "confirmation": "Conferma di rimozione del progetto {{projectName}}. I membri e i cluster verranno dissociati dal progetto. L'operazione non potrà essere annullata."
+    },
+    "summary": {
+      "title": "Riepilogo",
+      "type": "Tipo:",
+      "creationDate": "Data creazione:",
+      "team": {
+        "title": "Team di progetto",
+        "administrators": "Amministratori di progetto:",
+        "members": "Sviluppatori:",
+        "viewers": "Visualizzatori",
+        "users": "utenti"
+      },
+      "repositories": {
+        "title": "Repository di progetto",
+        "repositories": "Repository:"
+      },
+      "resources": {
+        "title": "Risorse di progetto",
+        "clusters": "Cluster:",
+        "templates": "Modelli di app:",
+        "images": "Immagini:"
+      }
+    },
+    "members": {
+      "title": "Membri",
+      "columnName": "Nome",
+      "columnPrimaryId": "ID primario",
+      "columnSource": "Origine",
+      "columnRole": "Ruolo",
+      "count": "membri",
+      "addMembers": {
+        "title": "Aggiungi utenti e gruppi",
+        "description": "Aggiungi utenti e gruppi a {{projectName}} in base all'ID o all'email.",
+        "fieldTitleId": "ID o email",
+        "fieldRequiredId": "L'ID è obbligatorio.",
+        "searchPlaceholder": "Cerca utenti",
+        "fieldTitleRole": "Ruolo nel progetto"
+      },
+      "editMember": {
+        "title": "Modifica ruolo membro nel progetto",
+        "description": "Modifica il ruolo del membro {{memberId}} nel progetto {{projectName}}."
+      },
+      "roles": {
+        "administrator": "Amministratore DevOps",
+        "member": "Sviluppatore",
+        "viewer": "Visualizzatore"
+      },
+      "source": {
+        "local": "Locale"
+      },
+      "deleteMember": {
+        "title": "Rimuovi membro dal progetto",
+        "confirmation": "Rimuovere il membro da questo progetto?"
+      }
+    },
+    "config": {
+      "title": "Configurazione",
+      "projectRegistry": "Registro di progetto",
+      "public": "Pubblico",
+      "publicDescription": "L'impostazione di un registro di progetto come pubblico renderà tutti i repository accessibili a chiunque.",
+      "deploymentSecurity": "Sicurezza distribuzione",
+      "enableContentTrust": "Abilita attendibilità contenuto",
+      "enableContentTrustDescription": "Consente di distribuire solo le immagini verificate.",
+      "preventVulnerableImagesFromRunning": "Impedisci esecuzione immagini vulnerabili",
+      "preventVulnerableImagesFromRunningDescription_part1": "Impedisce che le immagini con un livello di vulnerabilità pari a",
+      "preventVulnerableImagesFromRunningDescription_part2": "e superiore vengano distribuite.",
+      "vulnerabilityScanning": "Scansione vulnerabilità",
+      "automaticallyScanImagesOnPush": "Esegui scansione automatica delle immagini sottoposte a push",
+      "automaticallyScanImagesOnPushDescription": "Esegue automaticamente la scansione delle immagini sottoposte a push nel registro di progetto."
+    },
+    "search": {
+      "placeholder": "Cerca progetti"
+    },
+    "actions": {
+      "title": "Progetti",
+      "details": "Dettagli",
+      "makePublic": "Rendi pubblico",
+      "makePrivate": "Rendi privato",
+      "addUsersAndGroups": "Aggiungi utenti e gruppi",
+      "addClusters": "Aggiungi cluster"
+    }
+  },
+  "registries": {
+    "title": "Registri",
+    "sourceRegistries": "Registri di origine",
+    "replicationEndpoints": "Endpoint di replica",
+    "replicationRules": "Regole di replica"
+  },
+  "clusters": {
+    "title": "Cluster",
+    "cluster": "Cluster",
+    "new": "Nuovo",
+    "status": "Stato",
+    "state": {
+      "ON": "ACCESO",
+      "OFF": "SPENTO",
+      "DISABLED": "DISABILITATO",
+      "WARNING": "AVVISO"
+    },
+    "type": "Tipo",
+    "containers": "Contenitori",
+    "cpu": "CPU",
+    "memory": "Memoria",
+    "summary": {
+      "title": "Riepilogo",
+      "address": "Indirizzo:",
+      "adminPortal": "Portale di amministrazione:",
+      "type": "Tipo:",
+      "clusterOverview": "Panoramica cluster",
+      "clusterResources": "Risorse cluster",
+      "status": "Stato:",
+      "creationDate": "Data creazione:",
+      "containersCount": "Contenitori:",
+      "cpu": "vCPU:",
+      "memory": "Memoria:"
+    },
+    "resources": {
+      "addHostButton": "Host",
+      "title": "Risorse",
+      "address": "Indirizzo",
+      "status": "Stato",
+      "containersCount": "Contenitori",
+      "memory": "Memoria",
+      "cpu": "CPU",
+      "addHost": {
+        "title": "Aggiungi host",
+        "address": "Indirizzo",
+        "addressRequired": "L'indirizzo è obbligatorio."
+      }
+    },
+    "edit": {
+      "titleNew": "Nuovo cluster",
+      "titleEdit": "Modifica cluster",
+      "name": "Nome",
+      "nameRequired": "Il nome è obbligatorio.",
+      "description": "Descrizione",
+      "type": "Tipo",
+      "url": "URL",
+      "urlRequired": "L'URL del cluster è obbligatorio.",
+      "credentials": "Credenziali"
+    },
+    "delete": {
+      "title": "Rimuovi cluster",
+      "confirmation": "Conferma di rimozione del cluster {{clusterName}}. L'operazione non potrà essere annullata."
+    }
+  },
+  "hosts": {
+    "delete":{
+      "title": "Rimuovi host",
+      "confirmation": "Conferma di rimozione dell'host {{hostName}}. L'operazione non potrà essere annullata."
+    },
+    "state": {
+      "ON": "ACCESO",
+      "OFF": "SPENTO",
+      "UNKNOWN": "SCONOSCIUTO",
+      "SUSPEND": "DISABILITATO"
+    }
+  },
+  "logs": {
+    "title": "Registri",
+    "system": {
+      "title": "Sistema",
+      "columnLogEntry": "Voce di registro",
+      "columnSeverity": "Gravità",
+      "columnTimeStamp": "Timestamp",
+      "entriesCount": "voci di registro"
+    },
+    "registry": {
+      "title": "Registro"
+    },
+    "event": {
+      "type": {
+          "info": "Informazioni",
+          "warning": "Avviso",
+          "error": "Errore"
+      }
+    }
+  },
+  "identity": {
+    "title": "Gestione identità",
+    "credentials": "Credenziali",
+    "certificates": "Certificati",
+    "usersgroups": {
+      "title": "Utenti e gruppi",
+      "description": "Importare utenti e gruppi nel sistema, quindi assegnare i ruoli di progetto a un utente o un gruppo. È anche possibile impostare un utente come amministratore cloud globale.",
+      "fieldTitleSearch": "Cerca utenti/gruppi",
+      "columnName": "Nome utente/gruppo",
+      "columnPrimaryId": "ID primario",
+      "columnCloudAdmin": "Amministratore cloud",
+      "columnProjects": "Progetti",
+      "count": "utenti/gruppi",
+      "notFound": "Nessun utente trovato",
+      "assignRoleInProject": {
+      "description": "Impostare il progetto e il ruolo per l'utente o il gruppo {{principal}}."
+      }
+    }
+  },
+  "configuration": {
+    "title": "Configurazione",
+    "registry": "Registro"
+  },
+  "errors": {
+    "itemNotFound": "L'elemento non è stato trovato."
+  },
+  "certificate": {
+    "certificateWarning": "Il certificato per {{address}} non è valido. È possibile che sia in corso la connessione a un sito Web che finge di essere {{address}}. Ciò potrebbe mettere a rischio le informazioni riservate dell'utente. Connettersi comunque al sito Web?",
+    "show": "Mostra certificato",
+    "hide": "Nascondi certificato",
+    "validateTitle": "Verifica certificato",
+    "details": {
+      "commonName": "Nome comune",
+      "issuerName": "Nome autorità emittente",
+      "serial": "Seriale",
+      "fingerprint": "Impronta digitale SHA",
+      "validSince": "Valido da",
+      "validTo": "Valido fino a"
+    }
+  },
+  "tagDetails": {
+    "affectedContainers": "Contenitori interessati"
+  },
+  "edit": "Modifica",
+  "save": "Salva",
+  "add": "Aggiungi",
+  "yes": "Sì",
+  "remove": "Rimuovi",
+  "delete": "Elimina",
+  "cancel": "Annulla",
+  "unknown": "Sconosciuto",
+  "assignRoles": "Assegna ruoli",
+  "makeAdmin": " Imposta come amministratore",
+  "noItems": "Nessun elemento",
+  "reload": "Ricarica",
+  "sessionExpired": "La sessione non è più valida. Accedere nuovamente.",
+  "compute": {
+    "resources": "Risorse",
+    "policies": "Criteri",
+    "deployments": "Distribuzioni",
+    "endpoints": {
+      "title": "Endpoint"
+    },
+    "compute": {
+      "title": "Risorsa di elaborazione"
+    },
+    "profiles": {
+      "title": "Profili"
+    },
+    "flavors": {
+      "title": "Profili caratteristica",
+      "edit": "Modifica",
+      "delete": {
+        "action": "Elimina",
+        "title": "Elimina profilo caratteristica"
+      },
+      "endpoint": "Endpoint",
+      "flavors": "Caratteristiche"
+    },
+    "placements": {
+      "title": "Posizionamenti"
+    },
+    "placementZones": {
+      "title": "Zone di posizionamento"
+    },
+    "machines": {
+      "title": "Macchine"
+    },
+    "networks": {
+      "title": "Reti"
+    }
+  }
+}

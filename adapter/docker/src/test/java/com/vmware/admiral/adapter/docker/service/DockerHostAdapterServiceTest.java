@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -36,7 +36,6 @@ import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.ContainerFactoryService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService.ContainerHostDataCollectionState;
-import com.vmware.admiral.compute.container.ContainerService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
@@ -139,7 +138,7 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
                 Action.PATCH);
         waitFor(() -> {
             dockerHostState = retrieveDockerHostState();
-            return PowerState.SUSPEND.equals(dockerHostState.powerState);
+            return PowerState.SUSPEND == dockerHostState.powerState;
         });
         dockerHostState = requestDockerHostOperation(MockDockerPathConstants.INFO,
                 ContainerHostOperationType.INFO);
@@ -175,7 +174,7 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
     public void testHostAvailableAfterFailure() throws Throwable {
         ComputeState state = new ComputeState();
         state.powerState = PowerState.SUSPEND;
-        Map<String, String> properties = new HashMap<String, String>();
+        Map<String, String> properties = new HashMap<>();
         properties.put(ContainerHostService.RETRIES_COUNT_PROP_NAME, "1");
         state.customProperties = properties;
         doOperation(state,
@@ -183,11 +182,12 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
                 Action.PATCH);
         waitFor(() -> {
             dockerHostState = retrieveDockerHostState();
-            return PowerState.SUSPEND.equals(dockerHostState.powerState);
+            return PowerState.SUSPEND == dockerHostState.powerState;
         });
 
-        ContainerHostDataCollectionState dataCollectionState = new ContainerHostDataCollectionState();
-        dataCollectionState.computeContainerHostLinks = new ArrayList<String>();
+        ContainerHostDataCollectionState dataCollectionState =
+                new ContainerHostDataCollectionState();
+        dataCollectionState.computeContainerHostLinks = new ArrayList<>();
         dataCollectionState.computeContainerHostLinks
                 .add(retrieveDockerHostState().documentSelfLink);
         doOperation(dataCollectionState, UriUtils.buildUri(host,
@@ -197,7 +197,7 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
 
         waitFor(() -> {
             dockerHostState = retrieveDockerHostState();
-            return PowerState.ON.equals(dockerHostState.powerState);
+            return PowerState.ON == dockerHostState.powerState;
         });
     }
 
@@ -210,15 +210,16 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
                 Action.PATCH);
         waitFor(() -> {
             dockerHostState = retrieveDockerHostState();
-            return PowerState.ON.equals(dockerHostState.powerState);
+            return PowerState.ON == dockerHostState.powerState;
         });
         MockDockerHostService service = new MockDockerHostService();
         service.setSelfLink(
                 MockDockerPathConstants.BASE_VERSIONED_PATH + MockDockerPathConstants.INFO);
         mockDockerHost.stopService(service);
 
-        ContainerHostDataCollectionState dataCollectionState = new ContainerHostDataCollectionState();
-        dataCollectionState.computeContainerHostLinks = new ArrayList<String>();
+        ContainerHostDataCollectionState dataCollectionState = new
+                ContainerHostDataCollectionState();
+        dataCollectionState.computeContainerHostLinks = new ArrayList<>();
         dataCollectionState.computeContainerHostLinks
                 .add(retrieveDockerHostState().documentSelfLink);
         doOperation(dataCollectionState, UriUtils.buildUri(host,
@@ -228,7 +229,7 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
 
         waitFor(() -> {
             dockerHostState = retrieveDockerHostState();
-            return PowerState.SUSPEND.equals(dockerHostState.powerState);
+            return PowerState.SUSPEND == dockerHostState.powerState;
         });
     }
 
@@ -236,7 +237,7 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
     public void testHostPermanentlyNotAvailable() throws Throwable {
         ComputeState state = new ComputeState();
         state.powerState = PowerState.SUSPEND;
-        Map<String, String> properties = new HashMap<String, String>();
+        Map<String, String> properties = new HashMap<>();
         properties.put(ContainerHostService.RETRIES_COUNT_PROP_NAME, "2");
         state.customProperties = properties;
         doOperation(state,
@@ -244,15 +245,16 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
                 Action.PATCH);
         waitFor(() -> {
             dockerHostState = retrieveDockerHostState();
-            return PowerState.SUSPEND.equals(dockerHostState.powerState);
+            return PowerState.SUSPEND == dockerHostState.powerState;
         });
         MockDockerHostService service = new MockDockerHostService();
         service.setSelfLink(
                 MockDockerPathConstants.BASE_VERSIONED_PATH + MockDockerPathConstants.INFO);
         mockDockerHost.stopService(service);
 
-        ContainerHostDataCollectionState dataCollectionState = new ContainerHostDataCollectionState();
-        dataCollectionState.computeContainerHostLinks = new ArrayList<String>();
+        ContainerHostDataCollectionState dataCollectionState =
+                new ContainerHostDataCollectionState();
+        dataCollectionState.computeContainerHostLinks = new ArrayList<>();
         dataCollectionState.computeContainerHostLinks
                 .add(retrieveDockerHostState().documentSelfLink);
         doOperation(dataCollectionState, UriUtils.buildUri(host,
@@ -262,7 +264,7 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
 
         waitFor(() -> {
             ComputeState dockerHostState = retrieveDockerHostState();
-            return PowerState.OFF.equals(dockerHostState.powerState);
+            return PowerState.OFF == dockerHostState.powerState;
         });
     }
 
@@ -270,7 +272,7 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
     public void testMarkContainerInErrorWhenNotAvailable() throws Throwable {
         ComputeState state = new ComputeState();
         state.powerState = PowerState.SUSPEND;
-        Map<String, String> properties = new HashMap<String, String>();
+        Map<String, String> properties = new HashMap<>();
         properties.put(ContainerHostService.RETRIES_COUNT_PROP_NAME, "2");
         state.customProperties = properties;
         doOperation(state,
@@ -278,15 +280,16 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
                 Action.PATCH);
         waitFor(() -> {
             dockerHostState = retrieveDockerHostState();
-            return PowerState.SUSPEND.equals(dockerHostState.powerState);
+            return PowerState.SUSPEND == dockerHostState.powerState;
         });
         MockDockerHostService service = new MockDockerHostService();
         service.setSelfLink(
                 MockDockerPathConstants.BASE_VERSIONED_PATH + MockDockerPathConstants.INFO);
         mockDockerHost.stopService(service);
 
-        ContainerHostDataCollectionState dataCollectionState = new ContainerHostDataCollectionState();
-        dataCollectionState.computeContainerHostLinks = new ArrayList<String>();
+        ContainerHostDataCollectionState dataCollectionState =
+                new ContainerHostDataCollectionState();
+        dataCollectionState.computeContainerHostLinks = new ArrayList<>();
         dataCollectionState.computeContainerHostLinks
                 .add(retrieveDockerHostState().documentSelfLink);
 
@@ -297,8 +300,7 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
 
         waitFor(() -> {
             ContainerState containerState = retrieveShellContainerState();
-            return ContainerService.ContainerState.PowerState.ERROR
-                    .equals(containerState.powerState);
+            return ContainerState.PowerState.ERROR == containerState.powerState;
         });
     }
 
@@ -306,7 +308,7 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
         waitForServiceAvailability(ComputeService.FACTORY_LINK);
 
         ComputeDescription computeDescription = new ComputeDescription();
-        computeDescription.customProperties = new HashMap<String, String>();
+        computeDescription.customProperties = new HashMap<>();
         computeDescription.id = UUID.randomUUID().toString();
         String computeDescriptionLink = doPost(computeDescription,
                 ComputeDescriptionService.FACTORY_LINK).documentSelfLink;
@@ -314,7 +316,7 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
         ComputeState computeState = new ComputeState();
         computeState.id = "testParentComputeState";
         computeState.descriptionLink = computeDescriptionLink;
-        computeState.customProperties = new HashMap<String, String>();
+        computeState.customProperties = new HashMap<>();
         computeState.customProperties.put(
                 ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME, testDockerCredentialsLink);
         computeState.customProperties.put(
@@ -337,7 +339,7 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
         PortBinding portBinding = new PortBinding();
         portBinding.containerPort = "80";
         portBinding.hostPort = "80";
-        state.ports = new ArrayList<PortBinding>();
+        state.ports = new ArrayList<>();
         state.ports.add(portBinding);
 
         shellContainerState = doPost(state, ContainerFactoryService.SELF_LINK);

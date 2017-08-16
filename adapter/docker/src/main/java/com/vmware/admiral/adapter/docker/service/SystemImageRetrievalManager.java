@@ -168,16 +168,15 @@ public class SystemImageRetrievalManager {
     }
 
     private void getResourceAgentImage(String containerImage, Consumer<byte[]> callback) {
-        InputStream resourceAsStream = Thread.currentThread().getContextClassLoader()
-                .getResourceAsStream(containerImage);
-        if (resourceAsStream == null) {
-            callback.accept(null);
-        } else {
-            try {
-                callback.accept(IOUtils.toByteArray(resourceAsStream));
-            } catch (IOException e) {
+        try (InputStream resourceAsStream = Thread.currentThread().getContextClassLoader()
+                .getResourceAsStream(containerImage)) {
+            if (resourceAsStream == null) {
                 callback.accept(null);
+            } else {
+                callback.accept(IOUtils.toByteArray(resourceAsStream));
             }
+        } catch (IOException e) {
+            callback.accept(null);
         }
     }
 

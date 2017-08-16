@@ -79,6 +79,7 @@ public class NodeMigrationService extends StatelessService {
         services.add("/resources/pools");
         services.add("/resources/groups");
         services.add("/resources/tags");
+        services.add("/resources/compute-descriptions");
 
         // Do not migrate these services
         services.remove(ManagementUriParts.HOST_CONTAINER_LIST_DATA_COLLECTION);
@@ -87,6 +88,7 @@ public class NodeMigrationService extends StatelessService {
         services.remove(ManagementUriParts.HOST_NETWORK_LIST_DATA_COLLECTION);
         services.remove(ManagementUriParts.HOST_VOLUME_LIST_DATA_COLLECTION);
         services.remove(ManagementUriParts.EVENT_TOPIC);
+        services.remove(ManagementUriParts.EXTENSIBILITY_SUBSCRIPTION);
 
         patch.complete();
     }
@@ -197,7 +199,7 @@ public class NodeMigrationService extends StatelessService {
                                     // If a factory is missing on the source this is not a problem
                                     // for the migration. The factory should be skipped.
                                     if (state.taskInfo.failure.message.contains(
-                                            String.valueOf(Operation.STATUS_CODE_NOT_FOUND))) {
+                                            "Failed to get factory config from all source nodes")) {
                                         logInfo("Migration task skipped because it does not exist"
                                                         + " on source: %s", currentTask);
                                         migrationTasksInProgress.remove(currentTask);

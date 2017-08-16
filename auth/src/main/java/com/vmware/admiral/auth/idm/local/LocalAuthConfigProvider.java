@@ -47,6 +47,7 @@ import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.UserService;
+import com.vmware.xenon.services.common.UserService.UserState;
 import com.vmware.xenon.services.common.authn.BasicAuthenticationService;
 
 public class LocalAuthConfigProvider implements AuthConfigProvider {
@@ -70,7 +71,7 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
     }
 
     @Override
-    public void initConfig(ServiceHost host, Operation post) {
+    public void initBootConfig(ServiceHost host, Operation post) {
 
         String localUsers = AuthUtil.getLocalUsersFile(host);
 
@@ -112,6 +113,11 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
             }
         }, true, servicePaths);
 
+    }
+
+    @Override
+    public void initConfig(ServiceHost host, Operation post) {
+        // Nothing to do here...
     }
 
     private static Config getConfig(ServiceHost host, String localUsers) {
@@ -221,7 +227,7 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
     }
 
     @Override
-    public void waitForInitConfig(ServiceHost host, String localUsers,
+    public void waitForInitBootConfig(ServiceHost host, String localUsers,
             Runnable successfulCallback, Consumer<Throwable> failureCallback) {
 
         if (!AuthUtil.useLocalUsers(host)) {
@@ -296,12 +302,22 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
     }
 
     private static String buildUserUri(Claims claims) {
-        return UserService.FACTORY_LINK + "/" + claims.getSubject();
+        return UserService.FACTORY_LINK + "/" + claims.getSubject().toLowerCase();
     }
 
     @Override
     public Collection<FactoryService> createServiceFactories() {
         return Collections.emptyList();
+    }
+
+    @Override
+    public Collection<Service> createServices() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public Class<? extends UserState> getUserStateClass() {
+        return UserState.class;
     }
 
 }

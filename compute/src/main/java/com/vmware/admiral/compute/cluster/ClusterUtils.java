@@ -11,11 +11,18 @@
 
 package com.vmware.admiral.compute.cluster;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletionException;
-import java.util.stream.Collectors;
 
+import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.PropertyUtils;
+import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService.ElasticPlacementZoneConfigurationState;
@@ -24,17 +31,26 @@ import com.vmware.admiral.compute.cluster.ClusterService.ClusterDto;
 import com.vmware.admiral.compute.cluster.ClusterService.ClusterStatus;
 import com.vmware.admiral.compute.cluster.ClusterService.ClusterType;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
-import com.vmware.photon.controller.model.query.QueryUtils;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
+import com.vmware.photon.controller.model.tasks.helpers.ResourcePoolQueryHelper;
 import com.vmware.xenon.common.DeferredResult;
+import com.vmware.xenon.common.ODataQueryVisitor;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
+import com.vmware.xenon.common.ServiceDocument;
+import com.vmware.xenon.common.ServiceDocumentDescription;
+import com.vmware.xenon.common.ServiceDocumentDescription.Builder;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
+import com.vmware.xenon.services.common.QueryTaskUtils;
+import com.vmware.xenon.services.common.ServiceUriPaths;
 
 public class ClusterUtils {
 
@@ -53,38 +69,180 @@ public class ClusterUtils {
         }
     }
 
-    public static DeferredResult<List<ComputeState>> getHostsWihtinPlacementZone(
-            String resourcePoolLink, ServiceHost host) {
+    public static DeferredResult<List<ComputeState>> getHostsWithinPlacementZone(
+            String resourcePoolLink, String projectLink, ServiceHost host) {
+        return getHostsWithinPlacementZone(resourcePoolLink, projectLink, null, host);
+    }
+
+    public static DeferredResult<List<ComputeState>> getHostsWithinPlacementZone(
+            String resourcePoolLink, String projectLink, Operation get, ServiceHost host) {
         if (resourcePoolLink == null) {
             return null;
         }
+        DeferredResult<List<ComputeState>> result = new DeferredResult<>();
 
-        Query query = Query.Builder.create()
-                .addKindFieldClause(ComputeState.class)
-                .addFieldClause(ComputeState.FIELD_NAME_RESOURCE_POOL_LINK, resourcePoolLink)
-                .addCompositeFieldClause(ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
-                        ComputeConstants.COMPUTE_CONTAINER_HOST_PROP_NAME, "true")
-                .build();
+        ResourcePoolQueryHelper helper = ResourcePoolQueryHelper.createForResourcePool(host,
+                resourcePoolLink);
+        helper.setExpandComputes(true);
+        helper.setAdditionalQueryClausesProvider(qb -> {
+            qb.addCompositeFieldClause(ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
+                    ComputeConstants.COMPUTE_CONTAINER_HOST_PROP_NAME, "true");
+        });
 
-        QueryUtils.QueryByPages<ComputeState> queryHelper = new QueryUtils.QueryByPages<>(
-                host, query, ComputeState.class, null);
-        return queryHelper.collectDocuments(Collectors.toList());
+        if (projectLink != null && !projectLink.isEmpty()) {
+            helper.setAdditionalQueryClausesProvider(qb -> {
+                qb.addInCollectionItemClause(ComputeState.FIELD_NAME_TENANT_LINKS,
+                        Collections.singletonList(projectLink), Occurance.MUST_OCCUR);
+            });
+        }
+
+        if (get != null) {
+            Map<String, String> query = UriUtils.parseUriQueryParams(get.getUri());
+            String hostsFilter = query.getOrDefault(ClusterService.HOSTS_FILTER_QUERY_PARAM, null);
+
+            if (hostsFilter != null) {
+                ServiceDocumentDescription desc = Builder.create().buildDescription(
+                        ComputeState.class);
+
+                Set<String> expandedQueryPropertyNames = QueryTaskUtils
+                        .getExpandedQueryPropertyNames(desc);
+                Query q = new ODataQueryVisitor(expandedQueryPropertyNames).toQuery(hostsFilter);
+                if (q != null) {
+                    helper.setAdditionalQueryClausesProvider(qb -> qb.addClause(q));
+                }
+            }
+        }
+
+        helper.query((qr) -> {
+            if (qr.error != null) {
+                result.fail(qr.error);
+            } else {
+                result.complete(new ArrayList<>(qr.computesByLink.values()));
+            }
+        });
+
+        return result;
     }
 
-    public static void deletePZ(String pathPZId, Operation delete, ServiceHost host) {
+    public static void getHostsWithinPlacementZone(
+            Operation get, ServiceHost host) {
+
+        String clusterId = UriUtils.parseUriPathSegments(get.getUri(),
+                ClusterService.CLUSTER_PATH_SEGMENT_TEMPLATE)
+                .get(ClusterService.CLUSTER_ID_PATH_SEGMENT);
+        String resourcePoolLink = UriUtils.buildUriPath(
+                ResourcePoolService.FACTORY_LINK, clusterId);
+        String projectLink = OperationUtil.extractProjectFromHeader(get);
+
+        if (resourcePoolLink == null) {
+            return;
+        }
+
+        Operation getRpOp = Operation.createGet(host, resourcePoolLink).setReferer(host.getUri());
+        host.sendWithDeferredResult(getRpOp, ResourcePoolState.class)
+                .thenCompose(currentRpState -> {
+                    Query.Builder queryBuilder = Query.Builder.create()
+                            .addClause(currentRpState.query)
+                            .addCompositeFieldClause(ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
+                                    ComputeConstants.COMPUTE_CONTAINER_HOST_PROP_NAME, "true");
+                    if (projectLink != null && !projectLink.isEmpty()) {
+                        queryBuilder.addInCollectionItemClause(ComputeState.FIELD_NAME_TENANT_LINKS,
+                                Collections.singletonList(projectLink), Occurance.MUST_OCCUR);
+                    }
+
+                    String filter = UriUtils.getODataFilterParamValue(get.getUri());
+                    if (filter != null) {
+                        ServiceDocumentDescription desc = Builder.create().buildDescription(
+                                ComputeState.class);
+
+                        Set<String> expandedQueryPropertyNames = QueryTaskUtils
+                                .getExpandedQueryPropertyNames(desc);
+                        Query q = new ODataQueryVisitor(expandedQueryPropertyNames).toQuery(filter);
+                        if (q != null) {
+                            queryBuilder.addClause(q);
+                        }
+                    }
+                    Query query = queryBuilder.build();
+                    QueryTask queryTask = QueryUtil.buildQuery(ComputeState.class, true, query);
+                    QueryUtil.addExpandOption(queryTask);
+
+                    Integer limit = UriUtils.getODataLimitParamValue(get.getUri());
+                    if (limit != null && limit > 0) {
+                        queryTask.querySpec.resultLimit = limit;
+                    } else {
+                        queryTask.querySpec.resultLimit = ServiceDocumentQuery.DEFAULT_QUERY_RESULT_LIMIT;
+                    }
+                    queryTask.documentExpirationTimeMicros = ServiceDocumentQuery
+                            .getDefaultQueryExpiration();
+
+                    return host.sendWithDeferredResult(Operation
+                            .createPost(UriUtils.buildUri(host, ServiceUriPaths.CORE_QUERY_TASKS))
+                            .setBody(queryTask)
+                            .setReferer(host.getUri()), QueryTask.class);
+
+                }).thenCompose(qrt -> {
+                    if (qrt.results.nextPageLink != null) {
+                        return host.sendWithDeferredResult(Operation
+                                .createGet(UriUtils.buildUri(host, qrt.results.nextPageLink))
+                                .setReferer(host.getUri()), QueryTask.class);
+                    }
+                    return DeferredResult.completed(qrt);
+                }).thenAccept(queryPage -> {
+                    get.setBody(queryPage.results);
+                    get.complete();
+                }).exceptionally(ex -> {
+                    get.fail(ex);
+                    return null;
+                });
+    }
+
+    public static void deletePlacementZoneAndPlacement(String pathPZLink, String resourcePoolLink,
+            Operation delete, ServiceHost host) {
         host.sendWithDeferredResult(
-                Operation.createDelete(UriUtils.buildUri(host, pathPZId))
+                Operation.createDelete(UriUtils.buildUri(host, pathPZLink))
                         .setBody(new ElasticPlacementZoneConfigurationState())
                         .setReferer(host.getUri()),
                 ElasticPlacementZoneConfigurationState.class)
-                        .exceptionally(f -> {
-                            if (f instanceof ServiceNotFoundException) {
-                                return null;
-                            } else {
-                                throw new CompletionException(f);
-                            }
-                        })
-                        .whenCompleteNotify(delete);
+                .thenCompose(epz -> deletePlacementWithResourcePoolLink(resourcePoolLink, host))
+                .exceptionally(f -> {
+                    if (f instanceof ServiceNotFoundException) {
+                        return null;
+                    } else {
+                        throw new CompletionException(f);
+                    }
+                })
+                .whenCompleteNotify(delete);
+    }
+
+    public static DeferredResult<Operation> deletePlacementWithResourcePoolLink(
+            String resourcePoolLink, ServiceHost host) {
+
+        Query.Builder queryBuilder = Query.Builder.create()
+                .addFieldClause(GroupResourcePlacementState.FIELD_NAME_RESOURCE_POOL_LINK,
+                        resourcePoolLink);
+
+        Query query = queryBuilder.build();
+        QueryTask queryTask = QueryUtil.buildQuery(GroupResourcePlacementState.class, true, query);
+
+        return host.sendWithDeferredResult(Operation
+                .createPost(UriUtils.buildUri(host, ServiceUriPaths.CORE_QUERY_TASKS))
+                .setBody(queryTask)
+                .setReferer(host.getUri()), QueryTask.class)
+                .thenCompose(qr -> {
+                    if (qr == null || qr.results == null || qr.results == null
+                            || qr.results.documentLinks == null
+                            || qr.results.documentLinks.size() != 1) {
+                        throw new ServiceNotFoundException(
+                                "Group placement not found for cluster id: "
+                                        + Service.getId(resourcePoolLink));
+                    }
+                    return host.sendWithDeferredResult(
+                            Operation.createDelete(
+                                    UriUtils.buildUri(host, qr.results.documentLinks.get(0)))
+                                    .setBody(new ElasticPlacementZoneConfigurationState())
+                                    .setReferer(host.getUri()));
+                });
+
     }
 
     public static ClusterDto placementZoneAndItsHostsToClusterDto(
@@ -133,11 +291,14 @@ public class ClusterUtils {
                 ePZClusterDto.totalCpu = 0.0;
             }
             int containerCounter = 0;
+            ePZClusterDto.nodes = new HashMap<>();
             for (ComputeState computeState : computeStates) {
                 if (!computeState.powerState.equals(computeStates.get(0).powerState)) {
                     ePZClusterDto.status = ClusterStatus.WARNING;
                 }
                 ePZClusterDto.nodeLinks.add(computeState.documentSelfLink);
+                ePZClusterDto.nodes.put(computeState.documentSelfLink,
+                        transformComputeForExpandedCluster(computeState));
                 containerCounter += PropertyUtils.getPropertyInteger(
                         computeState.customProperties,
                         ContainerHostService.NUMBER_OF_CONTAINERS_PER_HOST_PROP_NAME)
@@ -169,5 +330,16 @@ public class ClusterUtils {
 
         throw new IllegalArgumentException(
                 String.format("'%s' is not a placement zone link", placementZoneLink));
+    }
+
+    public static ComputeState transformComputeForExpandedCluster(ComputeState state) {
+        ComputeState outState = new ComputeState();
+        // Cast before passing the compute state in order to use the
+        // copyTo method with ServiceDocument instead of ResourceState.
+        state.copyTo((ServiceDocument) outState);
+        outState.address = state.address;
+        outState.powerState = state.powerState;
+        outState.name = state.name;
+        return outState;
     }
 }

@@ -1,12 +1,32 @@
 {
   "users": [{
-    "email": "administrator@admiral.com",
-    "password": "Password1!"
+    "name": "Gloria",
+    "email": "gloria@admiral.com",
+    "password": "Password1!",
+    "isAdmin": false
   }, {
+    "name": "Fritz",
     "email": "fritz@admiral.com",
     "password": "Password1!"
   }, {
-    "email": "tony@admiral.com",
+    "name": "Administrator",
+    "email": "administrator@admiral.com",
     "password": "Password1!"
+  }, {
+    "name": "Connie",
+    "email": "connie@admiral.com",
+    "password": "Password1!"
+  }, {
+    "name": "Tony",
+    "email": "tony@admiral.com",
+    "password": "Password1!",
+    "isAdmin": false
+  }],
+  "groups": [{
+    "name": "superusers",
+    "members": ["fritz@admiral.com"]
+  }, {
+    "name": "developers",
+    "members": ["connie@admiral.com", "gloria@admiral.com"]
   }]
 }

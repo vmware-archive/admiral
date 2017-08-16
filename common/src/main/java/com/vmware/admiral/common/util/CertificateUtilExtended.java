@@ -11,15 +11,23 @@
 
 package com.vmware.admiral.common.util;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.security.InvalidKeyException;
+import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.SignatureException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
-import com.vmware.photon.controller.model.security.util.CertificateUtil;
+import org.bouncycastle.openssl.PEMWriter;
 
+import com.vmware.photon.controller.model.security.util.CertificateUtil;
+import com.vmware.photon.controller.model.security.util.KeyUtil;
+import com.vmware.xenon.common.ServiceHost;
+
+@SuppressWarnings("deprecation")
 public class CertificateUtilExtended {
 
     public static boolean isSelfSignedCertificate(String certPEM) {
@@ -49,4 +57,83 @@ public class CertificateUtilExtended {
             return false;
         }
     }
+
+    /**
+     * PSC 6.5 SAML requirement due to Bouncycastle library conflicts.
+     */
+    public static String toPEMformat(X509Certificate certificate, ServiceHost host) {
+        if (useAuthConfig(host)) {
+            return certToPEMformat(certificate);
+        } else {
+            return CertificateUtil.toPEMformat(certificate);
+        }
+    }
+
+    /**
+     * PSC 6.5 SAML requirement due to Bouncycastle library conflicts.
+     */
+    public static String toPEMformat(X509Certificate[] certificateChain, ServiceHost host) {
+        StringWriter sw = new StringWriter();
+        for (X509Certificate certificate : certificateChain) {
+            sw.append(toPEMformat(certificate, host));
+        }
+        return sw.toString();
+    }
+
+    /**
+     * PSC 6.5 SAML requirement due to Bouncycastle library conflicts.
+     */
+    public static String toPEMFormat(Key key, ServiceHost host) {
+        if (useAuthConfig(host)) {
+            return keyToPEMFormat(key);
+        } else {
+            return KeyUtil.toPEMFormat(key);
+        }
+    }
+
+    /**
+     * Serialize Key in PEM format, compatible version for bcprov 1.50
+     */
+    private static String keyToPEMFormat(Key key) {
+        StringWriter sw = new StringWriter();
+        PEMWriter pemWriter = new PEMWriter(sw);
+        try {
+            pemWriter.writeObject(key);
+            pemWriter.close();
+
+            return sw.toString();
+
+        } catch (IOException x) {
+            throw new RuntimeException("Failed to serialize key", x);
+        }
+    }
+
+    /**
+     * Serialize Certificate in PEM format, compatible version for bcprov 1.50
+     */
+    private static String certToPEMformat(X509Certificate certificate) {
+        StringWriter sw = new StringWriter();
+        PEMWriter pemWriter = new PEMWriter(sw);
+        try {
+            pemWriter.writeObject(certificate);
+            pemWriter.close();
+
+            return sw.toString();
+
+        } catch (IOException x) {
+            throw new RuntimeException("Failed to serialize certificate", x);
+        }
+    }
+
+    private static boolean useAuthConfig(ServiceHost host) {
+        String field = getAuthConfigFile(host);
+        return (field != null) && (!field.isEmpty());
+    }
+
+    private static final String AUTH_CONFIG_FILE = "authConfig";
+
+    private static String getAuthConfigFile(ServiceHost host) {
+        return PropertyUtils.getValue(host, AUTH_CONFIG_FILE);
+    }
+
 }

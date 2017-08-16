@@ -22,6 +22,8 @@ import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -109,6 +111,10 @@ public class SslCertificateResolver {
         });
     }
 
+    public static void invalidateTrustManager() {
+        trustManager = null;
+    }
+
     private SslCertificateResolver(URI uri) {
         this(uri, DEFAULT_CONNECTION_TIMEOUT_MILLIS);
     }
@@ -123,6 +129,8 @@ public class SslCertificateResolver {
     private SslCertificateResolver connect() {
         logger.entering(logger.getName(), "connect");
         connectionCertificates = new ArrayList<>();
+        Throwable[] validationError = new Throwable[1];
+
         // create a SocketFactory without TrustManager (well with one that accepts anything)
         TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
             @Override
@@ -139,12 +147,18 @@ public class SslCertificateResolver {
             @Override
             public void checkServerTrusted(java.security.cert.X509Certificate[] certs,
                     String authType) throws CertificateException {
-                certs[0].checkValidity();
+                logger.finest("checkServerTrusted: checking " + Arrays.toString(certs));
+
+                try {
+                    certs[0].checkValidity();
+                } catch (CertificateException e) {
+                    validationError[0] = e;
+                    logger.severe(e.getMessage());
+                    throw e;
+                }
                 certsTrusted = validateIfTrusted(certs, authType);
 
-                for (X509Certificate certificate : certs) {
-                    connectionCertificates.add(certificate);
-                }
+                Collections.addAll(connectionCertificates, certs);
             }
         } };
 
@@ -154,7 +168,6 @@ public class SslCertificateResolver {
                 sslContext.init(null, trustAllCerts, new SecureRandom());
             }
         } catch (KeyManagementException | NoSuchAlgorithmException e) {
-            logger.throwing(logger.getName(), "connect", e);
             throw new LocalizableValidationException(e, "Failed to initialize SSL context.",
                     "common.ssh.context.init");
         }
@@ -170,7 +183,6 @@ public class SslCertificateResolver {
                         "Exception while resolving certificate for host: [%s]. Error: %s ",
                         uri, e.getMessage());
             } else {
-                logger.throwing(logger.getName(), "connect", e);
                 if (e instanceof SocketTimeoutException) {
                     throw new LocalizableValidationException(e, "Connection timeout",
                             "common.connection.timeout");
@@ -184,9 +196,10 @@ public class SslCertificateResolver {
         }
 
         if (connectionCertificates.size() == 0) {
+            String errorMsg = validationError[0] != null ? validationError[0].getMessage() : "-";
             LocalizableValidationException e = new LocalizableValidationException(
-                    "Importing ssl certificate failed for server: " + uri,
-                    "common.certificate.import.failed", uri);
+                    "Importing ssl certificate failed for server: " + uri + ", error: " + errorMsg,
+                    "common.certificate.import.failed", uri, errorMsg);
 
             logger.throwing(logger.getName(), "connect", e);
             throw e;

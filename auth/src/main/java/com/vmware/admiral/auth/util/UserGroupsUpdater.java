@@ -27,7 +27,7 @@ import com.vmware.photon.controller.model.adapters.util.Pair;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.ServiceStateCollectionUpdateRequest;
 import com.vmware.xenon.common.UriUtils;
@@ -36,40 +36,27 @@ import com.vmware.xenon.services.common.UserService.UserState;
 public class UserGroupsUpdater {
 
     private boolean skipPrincipalVerification;
-
-    private ServiceHost host;
-
+    private Service service;
     private String groupLink;
-
-    private String referrer;
-
     private List<String> usersToAdd;
-
     private List<String> usersToRemove;
 
-    private UserGroupsUpdater(ServiceHost serviceHost, String groupLink, String referrer,
-            List<String> usersToAdd, List<String> usersToRemove,
-            Boolean skipPrincipalVerification) {
-        this.setHost(serviceHost);
+    private UserGroupsUpdater(Service service, String groupLink, List<String> usersToAdd,
+            List<String> usersToRemove, Boolean skipPrincipalVerification) {
+        this.setService(service);
         this.setGroupLink(groupLink);
-        this.setReferrer(referrer);
         this.setUsersToAdd(usersToAdd);
         this.setUsersToRemove(usersToRemove);
         this.setSkipPrincipalVerification(skipPrincipalVerification);
     }
 
-    public UserGroupsUpdater setHost(ServiceHost host) {
-        this.host = host;
+    public UserGroupsUpdater setService(Service service) {
+        this.service = service;
         return this;
     }
 
     public UserGroupsUpdater setGroupLink(String groupLink) {
         this.groupLink = groupLink;
-        return this;
-    }
-
-    public UserGroupsUpdater setReferrer(String referrer) {
-        this.referrer = referrer;
         return this;
     }
 
@@ -97,14 +84,13 @@ public class UserGroupsUpdater {
     }
 
     public static UserGroupsUpdater create() {
-        return new UserGroupsUpdater(null, null, null,
-                null, null, false);
+        return new UserGroupsUpdater(null, null, null, null, false);
     }
 
-    public static UserGroupsUpdater create(ServiceHost host, String groupLink, String referrer,
+    public static UserGroupsUpdater create(Service service, String groupLink,
             List<String> usersToAdd, List<String> usersToRemove,
             Boolean skipPrincipalVerification) {
-        return new UserGroupsUpdater(host, groupLink, referrer, usersToAdd,
+        return new UserGroupsUpdater(service, groupLink, usersToAdd,
                 usersToRemove, skipPrincipalVerification);
     }
 
@@ -115,7 +101,7 @@ public class UserGroupsUpdater {
     private DeferredResult<Void> handleUpdate() {
         try {
             AssertUtil.assertNotEmpty(groupLink, "groupLink");
-            AssertUtil.assertNotNull(host, "serviceHost");
+            AssertUtil.assertNotNull(service, "service");
             validateUsersForDuplicates();
         } catch (LocalizableValidationException ex) {
             return DeferredResult.failed(ex);
@@ -140,31 +126,21 @@ public class UserGroupsUpdater {
     }
 
     // TODO: Create the user if not exist.
-    private DeferredResult<UserState> patchUserState(String user,
-            boolean isRemove) {
-
+    private DeferredResult<UserState> patchUserState(String user, boolean isRemove) {
         String userStateLink = AuthUtil.buildUserServicePathFromPrincipalId(user);
 
-        String opReferer = (referrer == null) ? host.getUri().toString() : referrer;
-
         DeferredResult<UserState> result;
-
         if (!this.skipPrincipalVerification) {
-
             String principalUri = UriUtils.buildUriPath(PrincipalService.SELF_LINK, user);
-            Operation getPrincipal = Operation.createGet(host, principalUri).setReferer(opReferer);
-
-            result = host.sendWithDeferredResult(getPrincipal, Principal.class)
+            Operation getPrincipal = Operation.createGet(service, principalUri);
+            result = service.sendWithDeferredResult(getPrincipal, Principal.class)
                     .thenCompose(ignore -> {
-                        Operation getUserState = Operation.createGet(host, userStateLink)
-                                .setReferer(opReferer);
-                        return host.sendWithDeferredResult(getUserState, UserState.class);
+                        Operation getUserState = Operation.createGet(service, userStateLink);
+                        return service.sendWithDeferredResult(getUserState, UserState.class);
                     });
         } else {
-
-            Operation getUserState = Operation.createGet(host, userStateLink).setReferer(opReferer);
-
-            result = host.sendWithDeferredResult(getUserState, UserState.class);
+            Operation getUserState = Operation.createGet(service, userStateLink);
+            result = service.sendWithDeferredResult(getUserState, UserState.class);
         }
 
         result.thenApply(us -> new Pair<>(us, (Throwable) null))
@@ -175,12 +151,11 @@ public class UserGroupsUpdater {
                             UserState userState = new UserState();
                             userState.email = user;
                             userState.documentSelfLink = user;
-                            Operation createUser = Operation.createPost(host,
+                            Operation createUser = Operation.createPost(service,
                                     AuthUtil.buildUserServicePathFromPrincipalId(""))
-                                    .setReferer(opReferer)
                                     .setBody(userState);
                             addReplicationFactor(createUser);
-                            return host.sendWithDeferredResult(createUser, UserState.class);
+                            return service.sendWithDeferredResult(createUser, UserState.class);
                         }
                         return DeferredResult.failed(pair.right);
                     }
@@ -192,20 +167,17 @@ public class UserGroupsUpdater {
                         Map<String, Collection<Object>> patchGroupLinks = new HashMap<>();
                         patchGroupLinks.put(UserState.FIELD_NAME_USER_GROUP_LINKS,
                                 Collections.singletonList(groupLink));
-                        patch = ServiceStateCollectionUpdateRequest
-                                .create(null, patchGroupLinks);
+                        patch = ServiceStateCollectionUpdateRequest.create(null, patchGroupLinks);
                     } else {
                         Map<String, Collection<Object>> patchGroupLinks = new HashMap<>();
                         patchGroupLinks.put(UserState.FIELD_NAME_USER_GROUP_LINKS,
                                 Collections.singletonList(groupLink));
-                        patch = ServiceStateCollectionUpdateRequest
-                                .create(patchGroupLinks, null);
+                        patch = ServiceStateCollectionUpdateRequest.create(patchGroupLinks, null);
                     }
-                    Operation patchOp = Operation.createPatch(host, userStateLink)
-                            .setBody(patch)
-                            .setReferer(opReferer);
+                    Operation patchOp = Operation.createPatch(service, userStateLink)
+                            .setBody(patch);
 
-                    return host.sendWithDeferredResult(patchOp, UserState.class);
+                    return service.sendWithDeferredResult(patchOp, UserState.class);
                 });
 
         return result;
@@ -216,4 +188,5 @@ public class UserGroupsUpdater {
             throw new IllegalStateException("Unable to assign and unassign role for same user.");
         }
     }
+
 }

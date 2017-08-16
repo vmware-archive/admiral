@@ -11,7 +11,7 @@
 
 import constants from 'core/constants';
 import services from 'core/services';
-import utils from 'core/utils';
+import { formatUtils } from 'admiral-ui-common';
 
 const SEPARATOR = constants.TAGS.SEPARATOR;
 const SEPARATOR_REGEX = new RegExp(constants.TAGS.SEPARATOR, 'g');
@@ -20,7 +20,7 @@ const SEPARATOR_ENTITY = constants.TAGS.SEPARATOR_ENTITY;
 const SEPARATOR_ENTITY_REGEX = new RegExp(constants.TAGS.SEPARATOR_ENTITY, 'g');
 
 function encode(value) {
-  return utils.escapeHtml(value.replace(SEPARATOR_REGEX, SEPARATOR_ENTITY));
+  return formatUtils.escapeHtml(value.replace(SEPARATOR_REGEX, SEPARATOR_ENTITY));
 }
 
 function decode(value) {

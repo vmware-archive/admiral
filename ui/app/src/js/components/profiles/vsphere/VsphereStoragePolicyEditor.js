@@ -65,6 +65,8 @@ export default Vue.component('vsphere-storage-policy-editor', {
       var tagRequest = utils.createTagAssignmentRequest(toSave.documentSelfLink,
         this.model.item.tags || [], this.tags);
       VsphereStoragePolicyActions.updateStoragePolicy(toSave, tagRequest);
+      VsphereStoragePolicyActions
+        .retrieveStoragePolicies(this.model.item.customProperties.__endpointLink);
     },
     getModel() {
       return $.extend(true, {}, this.model.item, {

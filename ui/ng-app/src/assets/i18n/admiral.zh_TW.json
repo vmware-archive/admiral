@@ -1,0 +1,296 @@
+{
+  "projects": {
+    "title": "專案",
+    "project": "專案",
+    "users": "使用者",
+    "administrators": "管理員",
+    "projectRegistry": "專案登錄",
+    "public": "公用",
+    "publicDescription": "專案登錄的公用存取權",
+    "private": "私人",
+    "clusters": "叢集",
+    "repositories": "存放庫",
+    "infrastructure": "基礎結構",
+    "registryReplication": "登錄複寫",
+    "configuration": "組態",
+    "edit": {
+      "titleNew": "新增專案",
+      "titleEdit": "編輯專案",
+      "name": "名稱",
+      "nameRequired": "名稱為必填。",
+      "description": "說明"
+    },
+    "delete": {
+      "title": "移除專案",
+      "confirmation": "確認移除專案 {{projectName}}。將解除成員和叢集與該專案的關聯。此作業無法復原。"
+    },
+    "summary": {
+      "title": "摘要",
+      "type": "類型:",
+      "creationDate": "建立時間:",
+      "team": {
+        "title": "專案團隊",
+        "administrators": "專案管理員:",
+        "members": "開發人員:",
+        "viewers": "檢視者",
+        "users": "使用者"
+      },
+      "repositories": {
+        "title": "專案存放庫",
+        "repositories": "存放庫:"
+      },
+      "resources": {
+        "title": "專案資源",
+        "clusters": "叢集:",
+        "templates": "應用程式範本:",
+        "images": "映像:"
+      }
+    },
+    "members": {
+      "title": "成員",
+      "columnName": "名稱",
+      "columnPrimaryId": "主要識別碼",
+      "columnSource": "來源",
+      "columnRole": "角色",
+      "count": "成員",
+      "addMembers": {
+        "title": "新增使用者和群組",
+        "description": "透過使用者和群組的識別碼或電子郵件將其新增至 {{projectName}}。",
+        "fieldTitleId": "識別碼或電子郵件",
+        "fieldRequiredId": "識別碼為必填。",
+        "searchPlaceholder": "搜尋使用者",
+        "fieldTitleRole": "專案中的角色"
+      },
+      "editMember": {
+        "title": "編輯專案中的成員角色",
+        "description": "編輯專案 {{projectName}} 中的成員 {{memberId}} 角色。"
+      },
+      "roles": {
+        "administrator": "DevOps 管理員",
+        "member": "開發人員",
+        "viewer": "檢視者"
+      },
+      "source": {
+        "local": "本機"
+      },
+      "deleteMember": {
+        "title": "從專案移除成員",
+        "confirmation": "確定要從此專案移除成員嗎?"
+      }
+    },
+    "config": {
+      "title": "組態",
+      "projectRegistry": "專案登錄",
+      "public": "公用",
+      "publicDescription": "將專案登錄設為公用會讓所有存放庫可供每個人存取。",
+      "deploymentSecurity": "部署安全性",
+      "enableContentTrust": "啟用內容信任",
+      "enableContentTrustDescription": "僅允許部署已驗證的映像。",
+      "preventVulnerableImagesFromRunning": "防止執行有弱點的映像",
+      "preventVulnerableImagesFromRunningDescription_part1": "防止部署弱點嚴重性層級為",
+      "preventVulnerableImagesFromRunningDescription_part2": "及以上的映像。",
+      "vulnerabilityScanning": "弱點掃描",
+      "automaticallyScanImagesOnPush": "自動掃描推送的映像",
+      "automaticallyScanImagesOnPushDescription": "在將映像推送至專案登錄時自動掃描映像。"
+    },
+    "search": {
+      "placeholder": "搜尋專案"
+    },
+    "actions": {
+      "title": "專案",
+      "details": "詳細資料",
+      "makePublic": "設為公用",
+      "makePrivate": "設為私人",
+      "addUsersAndGroups": "新增使用者和群組",
+      "addClusters": "新增叢集"
+    }
+  },
+  "registries": {
+    "title": "登錄",
+    "sourceRegistries": "來源登錄",
+    "replicationEndpoints": "複寫端點",
+    "replicationRules": "複寫規則"
+  },
+  "clusters": {
+    "title": "叢集",
+    "cluster": "叢集",
+    "new": "新增",
+    "status": "狀態",
+    "state": {
+      "ON": "開啟",
+      "OFF": "關閉",
+      "DISABLED": "已停用",
+      "WARNING": "警告"
+    },
+    "type": "類型",
+    "containers": "容器",
+    "cpu": "CPU",
+    "memory": "記憶體",
+    "summary": {
+      "title": "摘要",
+      "address": "位址:",
+      "adminPortal": "管理入口網站:",
+      "type": "類型:",
+      "clusterOverview": "叢集概觀",
+      "clusterResources": "叢集資源",
+      "status": "狀態:",
+      "creationDate": "建立時間:",
+      "containersCount": "容器:",
+      "cpu": "vCPU:",
+      "memory": "記憶體:"
+    },
+    "resources": {
+      "addHostButton": "主機",
+      "title": "資源",
+      "address": "位址",
+      "status": "狀態",
+      "containersCount": "容器",
+      "memory": "記憶體",
+      "cpu": "CPU",
+      "addHost": {
+        "title": "新增主機",
+        "address": "位址",
+        "addressRequired": "位址為必填。"
+      }
+    },
+    "edit": {
+      "titleNew": "新增叢集",
+      "titleEdit": "編輯叢集",
+      "name": "名稱",
+      "nameRequired": "名稱為必填。",
+      "description": "說明",
+      "type": "類型",
+      "url": "URL",
+      "urlRequired": "叢集 URL 為必填。",
+      "credentials": "認證"
+    },
+    "delete": {
+      "title": "移除叢集",
+      "confirmation": "確認移除叢集 {{clusterName}}。此作業無法復原。"
+    }
+  },
+  "hosts": {
+    "delete":{
+      "title": "移除主機",
+      "confirmation": "確認移除主機 {{hostName}}。此作業無法復原。"
+    },
+    "state": {
+      "ON": "開啟",
+      "OFF": "關閉",
+      "UNKNOWN": "不明",
+      "SUSPEND": "已停用"
+    }
+  },
+  "logs": {
+    "title": "記錄",
+    "system": {
+      "title": "系統",
+      "columnLogEntry": "記錄項目",
+      "columnSeverity": "嚴重性",
+      "columnTimeStamp": "時間戳記",
+      "entriesCount": "記錄項目"
+    },
+    "registry": {
+      "title": "登錄"
+    },
+    "event": {
+      "type": {
+          "info": "資訊",
+          "warning": "警告",
+          "error": "錯誤"
+      }
+    }
+  },
+  "identity": {
+    "title": "身分識別管理",
+    "credentials": "認證",
+    "certificates": "憑證",
+    "usersgroups": {
+      "title": "使用者和群組",
+      "description": "將使用者和群組匯入系統，然後指派專案角色給使用者或群組。您也可以將使用者設為全域雲端管理員。",
+      "fieldTitleSearch": "搜尋使用者/群組",
+      "columnName": "使用者/群組名稱",
+      "columnPrimaryId": "主要識別碼",
+      "columnCloudAdmin": "雲端管理員",
+      "columnProjects": "專案",
+      "count": "使用者/群組",
+      "notFound": "找不到使用者",
+      "assignRoleInProject": {
+      "description": "針對使用者/群組 {{principal}} 設定專案和角色。"
+      }
+    }
+  },
+  "configuration": {
+    "title": "組態",
+    "registry": "登錄"
+  },
+  "errors": {
+    "itemNotFound": "找不到項目。"
+  },
+  "certificate": {
+    "certificateWarning": "{{address}} 的憑證無效。您可能會連線至偽裝成 {{address}} 的網站，這會使您的機密資訊處於風險之中。仍要連線至該網站嗎?",
+    "show": "顯示憑證",
+    "hide": "隱藏憑證",
+    "validateTitle": "驗證憑證",
+    "details": {
+      "commonName": "一般名稱",
+      "issuerName": "核發者名稱",
+      "serial": "序列",
+      "fingerprint": "SHA 指紋",
+      "validSince": "有效期自",
+      "validTo": "有效期到"
+    }
+  },
+  "tagDetails": {
+    "affectedContainers": "受影響的容器"
+  },
+  "edit": "編輯",
+  "save": "儲存",
+  "add": "新增",
+  "yes": "是",
+  "remove": "移除",
+  "delete": "刪除",
+  "cancel": "取消",
+  "unknown": "不明",
+  "assignRoles": "指派角色",
+  "makeAdmin": " 設為管理員",
+  "noItems": "沒有項目",
+  "reload": "重新載入",
+  "sessionExpired": "您的工作階段不再有效，請重新登入!",
+  "compute": {
+    "resources": "資源",
+    "policies": "原則",
+    "deployments": "部署",
+    "endpoints": {
+      "title": "端點"
+    },
+    "compute": {
+      "title": "計算資源"
+    },
+    "profiles": {
+      "title": "設定檔"
+    },
+    "flavors": {
+      "title": "類型模板設定檔",
+      "edit": "編輯",
+      "delete": {
+        "action": "刪除",
+        "title": "刪除類型模板設定檔"
+      },
+      "endpoint": "端點",
+      "flavors": "類型模板"
+    },
+    "placements": {
+      "title": "放置"
+    },
+    "placementZones": {
+      "title": "放置區域"
+    },
+    "machines": {
+      "title": "機器"
+    },
+    "networks": {
+      "title": "網路"
+    }
+  }
+}

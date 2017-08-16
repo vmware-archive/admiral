@@ -1,12 +1,5 @@
 /* Clarity - Bootstrap gap */
-@import "buttons/buttons.clarity";
-@import "grid/grid.clarity";
-@import "dropdown/dropdown.clarity";
-@import "images/images.clarity";
-@import "typography/typography.clarity";
-@import "forms/forms.clarity";
-@import "tooltips/tooltips.clarity";
-@import "progress-bars/progress-bars.clarity";
+@import "clarity-ui/src/main";
 
 .hide {
   display: none !important;
@@ -36,8 +29,8 @@ form .form-group .ace_editor span {
 }
 
 input:not([type]) {
-  @extend %custom-inputs;
-  @extend %clr-form-fields-appearance;
+  @include custom-inputs($clr-baselineRem_1);
+  @include clr-form-fields-appearance($clr-baselineRem_2_5, $clr-form-field-border-color);
   @include input-border-bottom-animation();
   padding: 0 $clr_baselineRem_0_25;
 }
@@ -59,21 +52,8 @@ input:not([type]) {
   margin-left: 0;
 }
 
-.dropdown .dropdown-menu li a {
-  @extend .dropdown-item;
-  margin: 0;
-}
-
-.dropdown .dropdown-menu span {
-  margin: 0;
-}
-
-.dropdown .dropdown-menu .divider {
-  @extend .dropdown-divider;
-}
-
 .app-view .tokenfield {
-  @extend %clr-form-fields-appearance;
+  @include clr-form-fields-appearance($clr-baselineRem_2_5, $clr-form-field-border-color);
   @include input-border-bottom-animation();
 }
 
@@ -152,75 +132,5 @@ input:not([type]) {
     > a {
       pointer-events: none;
     }
-  }
-}
-
-.form-group .dropdown.dropdown-select {
-  $select-hover-background: rgba(221, 221, 221, 0.5);
-  $select-after-color: $gray-dark-midtone;
-  $select-after-hover-color: $gray-dark;
-  height: $clr_baselineRem_1;
-
-  margin-top: $clr_baselineRem_0_25;
-  margin-bottom: $clr_baselineRem_0_25;
-
-  .dropdown-toggle {
-    @extend %custom-inputs;
-    @extend %clr-form-fields-appearance;
-    @include input-border-bottom-animation();
-
-    position: relative;
-    padding: 0 ($clr-dropdown-caret-icon-dimension + 2 * $clr_baselineRem_0_25) 0 $clr_baselineRem_0_25;
-    cursor: pointer;
-    width: 100%;
-    z-index: map-get($clr-layers, select-box);
-
-    &:hover,
-    &:active {
-      border-color: $select-hover-background;
-      background: $select-hover-background;
-    }
-
-    &:disabled {
-      @extend %form-fields-disabled;
-    }
-  }
-
-  //Selectbox custom arrow
-  &::after {
-    position: absolute;
-    content: '';
-    height: $clr-dropdown-caret-icon-dimension;
-    width: $clr-dropdown-caret-icon-dimension;
-    top: ($clr_baselineRem_1 - $clr-dropdown-caret-icon-dimension) / 2;
-    right: $clr_baselineRem_0_25;
-    background-image: generateCaretIcon();
-    @include icon-background-styles();
-    margin: 0;
-  }
-
-  &:hover::after {
-    color: $select-after-hover-color;
-  }
-
-  &.disabled {
-    @extend %form-fields-disabled;
-
-    &:hover::after {
-      color: $select-after-color;
-    }
-  }
-
-  &.disabled > select, select:disabled {
-    @extend %form-fields-disabled;
-
-    &:hover {
-      background: none;
-      border-color: $clr-form-field-border-color;
-    }
-  }
-
-  .spinner.spinner-inline {
-    margin: 0;
   }
 }

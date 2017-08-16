@@ -11,17 +11,21 @@
 
 package com.vmware.admiral.compute.transformation;
 
+import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
+import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService.ElasticPlacementZoneConfigurationState;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
-import com.vmware.photon.controller.model.resources.ResourcePoolService;
-import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.QueryTask;
@@ -40,32 +44,39 @@ public class ResourcePoolTransformationService extends StatelessService {
 
     @Override
     public void handlePost(Operation post) {
-
-        QueryTask queryTask = QueryUtil.buildQuery(ResourcePoolState.class, true);
-        QueryUtil.addExpandOption(queryTask);
-        List<ResourcePoolState> pools = new ArrayList<ResourcePoolState>();
-        new ServiceDocumentQuery<ResourcePoolState>(getHost(), ResourcePoolState.class)
-                .query(queryTask, (r) -> {
-                    if (r.hasException()) {
+        URI serviceUri = UriUtils.buildUri(ElasticPlacementZoneConfigurationService.SELF_LINK);
+        Operation.createGet(this, UriUtils.buildExpandLinksQueryUri(serviceUri).toString())
+                .setReferer(UriUtils.buildUri(getHost(), SELF_LINK))
+                .setCompletion((op, ex) -> {
+                    if (ex != null) {
                         logSevere("Failed to get resource pool states");
-                        post.fail(r.getException());
-                    } else if (r.hasResult()) {
-                        pools.add(r.getResult());
+                        post.fail(ex);
                     } else {
-                        logInfo("Number of resource pool states found %d", pools.size());
-                        poolsCount = new AtomicInteger(pools.size());
-                        processPools(pools, post);
+                        ServiceDocumentQueryResult queryResult = op
+                                .getBody(ServiceDocumentQueryResult.class);
+                        Map<String, ElasticPlacementZoneConfigurationState> states = QueryUtil
+                                .extractQueryResult(
+                                        queryResult, ElasticPlacementZoneConfigurationState.class);
+                        logInfo("Number of resource pool states found %d", states.size());
+                        if (states.isEmpty()) {
+                            logInfo("No resource pools found. Tranformation completed successfully");
+                            post.complete();
+                            return;
+                        }
+                        poolsCount = new AtomicInteger(states.size());
+                        processPools(states.values(), post);
                     }
-                });
+                }).sendWith(getHost());
     }
 
-    private void processPools(List<ResourcePoolState> pools, Operation post) {
+    private void processPools(Collection<ElasticPlacementZoneConfigurationState> collection,
+            Operation post) {
         // Get the placements for every pool. If there is more that one placement, clone the pool
         // and point one of the placements to it.
-        for (ResourcePoolState state : pools) {
+        for (ElasticPlacementZoneConfigurationState state : collection) {
             QueryTask queryTask = QueryUtil.buildPropertyQuery(GroupResourcePlacementState.class,
                     GroupResourcePlacementState.FIELD_NAME_RESOURCE_POOL_LINK,
-                    state.documentSelfLink);
+                    state.resourcePoolState.documentSelfLink);
             QueryUtil.addExpandOption(queryTask);
 
             QueryUtil.addBroadcastOption(queryTask);
@@ -89,18 +100,29 @@ public class ResourcePoolTransformationService extends StatelessService {
         }
     }
 
-    private void processPlacement(ResourcePoolState state,
+    private void processPlacement(ElasticPlacementZoneConfigurationState state,
             List<GroupResourcePlacementState> placements, Operation post) {
-
         if (placements.size() > 1) {
-            // skip the first placement. Only the duplicates should be updated and for the a new
-            // pool should be created
+            // Update only tenant links for the pool of the first placement
+            updatePoolTenantLinks(state, post, placements.get(0), false);
+            // skip the first placement. Only the duplicates should be updated and a new pool should
+            // be created
             AtomicInteger processedCount = new AtomicInteger();
+            String poolName = state.resourcePoolState.name;
             for (int i = 1; i < placements.size(); i++) {
                 GroupResourcePlacementState placement = placements.get(i);
-                state.id = null;
+                state.resourcePoolState.id = null;
+                state.resourcePoolState.documentSelfLink = null;
+                state.resourcePoolState.name = poolName + "-" + placement.name;
+                if (state.epzState != null) {
+                    state.epzState.documentSelfLink = null;
+                }
+                state.resourcePoolState.tenantLinks = new ArrayList<>();
+                if (placement.tenantLinks != null) {
+                    state.resourcePoolState.tenantLinks.addAll(placement.tenantLinks);
+                }
                 state.documentSelfLink = null;
-                Operation.createPost(this, ResourcePoolService.FACTORY_LINK)
+                Operation.createPost(this, ElasticPlacementZoneConfigurationService.SELF_LINK)
                         .setBody(state)
                         .setReferer(UriUtils.buildUri(getHost(), SELF_LINK))
                         .setCompletion((o, ex) -> {
@@ -109,9 +131,11 @@ public class ResourcePoolTransformationService extends StatelessService {
                                 post.fail(ex);
                             } else {
                                 logInfo("Resource pool created: %s",
-                                        o.getBody(ResourcePoolState.class).documentSelfLink);
+                                        o.getBody(
+                                                ElasticPlacementZoneConfigurationState.class).documentSelfLink);
                                 placement.resourcePoolLink = o
-                                        .getBody(ResourcePoolState.class).documentSelfLink;
+                                        .getBody(
+                                                ElasticPlacementZoneConfigurationState.class).resourcePoolState.documentSelfLink;
                                 sendRequest(Operation
                                         .createPut(this, placement.documentSelfLink)
                                         .setBody(placement)
@@ -138,9 +162,38 @@ public class ResourcePoolTransformationService extends StatelessService {
                             }
                         }).sendWith(getHost());
             }
-        } else if (poolsCount.decrementAndGet() == 0) {
-            logInfo("Resource pool tranformation completed successfully");
-            post.complete();
+        } else {
+            GroupResourcePlacementState placement = placements.get(0);
+            updatePoolTenantLinks(state, post, placement, true);
         }
+
+    }
+
+    private void updatePoolTenantLinks(ElasticPlacementZoneConfigurationState state, Operation post,
+            GroupResourcePlacementState placement, boolean decrementCount) {
+        state.resourcePoolState.tenantLinks = new ArrayList<>();
+
+        if (placement.tenantLinks != null) {
+            state.resourcePoolState.tenantLinks.addAll(placement.tenantLinks);
+        }
+        Operation.createPost(this, ElasticPlacementZoneConfigurationService.SELF_LINK)
+                .setBody(state)
+                .setReferer(UriUtils.buildUri(getHost(), SELF_LINK))
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        logSevere("Failed to update resource pool with tenant links");
+                        post.fail(ex);
+                    } else {
+                        logInfo("Resource pool %s updated with tenant links",
+                                state.documentSelfLink);
+                        if (decrementCount) {
+                            if (poolsCount.decrementAndGet() == 0) {
+                                // add tenant links to the pool
+                                logInfo("Resource pool tranformation completed successfully");
+                                post.complete();
+                            }
+                        }
+                    }
+                }).sendWith(getHost());
     }
 }

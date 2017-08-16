@@ -1,0 +1,66 @@
+<!--
+  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<grid-view #gridView [serviceEndpoint]="serviceEndpoint">
+  <div title>{{"compute.flavors.title" | i18n}}</div>
+  <div toolbar>
+    <button class="btn btn-link" [routerLink]="['./new']"><i class="fa fa-plus"></i>New</button>
+  </div>
+  <delete-confirmation [title]="'compute.flavors.delete.title' | i18n"
+                       [description]="deleteConfirmationDescription"
+                       [(alert)]="deleteConfirmationAlert"
+                       [visible]="instanceTypeToDelete"
+                       (onDelete)="deleteConfirmed()"
+                       (onCancel)="deleteCanceled()">
+  </delete-confirmation>
+  <ng-template let-item="item">
+    <!-- TODO: add a details link when the view is ready-->
+    <card [routerLink]="['./edit/' + item.documentId]" [ngClass]="{'card-actions-selected': isItemSelected(item)}">
+      <div card-header>
+        <clr-icon shape="scroll" size="48"></clr-icon>
+        {{ item.name }}
+
+        <clr-dropdown class="card-actions" [clrMenuPosition]="'left-top'" (click)="selectItem($event, item)">
+          <button class="btn btn-sm btn-link" clrDropdownToggle>
+              <clr-icon shape="ellipsis-vertical" size="20"></clr-icon>
+          </button>
+
+          <div class="dropdown-menu">
+              <a href="..." clrDropdownItem *ngIf="item.endpointType != null"
+                [routerLink]="['./edit/' + item.documentId]"><clr-icon shape="edit" size="20"
+                                                                  class="card-drop-down-actions"></clr-icon>{{"compute.flavors.edit" | i18n}}</a>
+              <a href="..." clrDropdownItem
+                (click)="deleteInstanceType($event, item)"><clr-icon shape="trash" size="20"
+                                                                class="card-drop-down-actions"></clr-icon>{{"compute.flavors.delete.action" | i18n}}</a>
+          </div>
+        </clr-dropdown>
+        <div>
+          <span *ngFor="let tag of item.tags" class="badge badge-info">{{tag.key}}:{{tag.value}}</span>
+        </div>
+      </div>
+      <div card-content>
+        <div class="form-group">
+          <label>{{"compute.flavors.endpoint" | i18n}}</label>
+          <img [src]="getAdapterIcon(item)" class="endpointIcon" width="24" height="24"/>
+          <span *ngIf="item.endpoint">{{item.endpoint.name}}</span>
+        </div>
+        <div class="form-group">
+          <label>{{"compute.flavors.flavors" | i18n}}</label>
+          <div>{{getFlavorsCount(item)}}</div>
+        </div>
+      </div>
+    </card>
+  </ng-template>
+</grid-view>
+
+<navigation-container>
+  <router-outlet></router-outlet>
+</navigation-container>

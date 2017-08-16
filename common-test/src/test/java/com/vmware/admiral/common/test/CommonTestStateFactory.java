@@ -31,6 +31,7 @@ public class CommonTestStateFactory {
     public static final String DOCKER_COMPUTE_ID = "test-docker-host-compute-id";
     public static final String ENDPOINT_ID = "test-endpoint-id";
     public static final String ENDPOINT_REGION_ID = "eu-west-1"; // used for zoneId too
+    public static final String ZONE_ID = "zone";
 
     public static AuthCredentialsServiceState createAuthCredentials(boolean uniqueSelfLink) {
         AuthCredentialsServiceState authCredentials = new AuthCredentialsServiceState();

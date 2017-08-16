@@ -173,9 +173,15 @@ public class ComputeNetworkRemovalTaskService extends
             return;
         }
 
+        List<String> networkNames = computeNetworks.stream().map(cn -> cn.name)
+                .collect(Collectors.toList());
+        logInfo("Removing networks with names: ", networkNames);
+
         // Check if subnets should be deleted
+        // TODO: add Isolation type to network
         List<ComputeNetwork> isolatedComputeNetworks = computeNetworks.stream()
-                .filter(n -> n.networkType == NetworkType.ISOLATED && n.subnetLink != null)
+                .filter(n -> n.networkType == NetworkType.ISOLATED && n.subnetLink != null
+                && (n.securityGroupLinks == null || n.securityGroupLinks.isEmpty()))
                 .collect(Collectors.toList());
         if (isolatedComputeNetworks.size() == 0) {
             proceedTo(SubStage.SUBNET_INSTANCES_REMOVED);
@@ -189,6 +195,10 @@ public class ComputeNetworkRemovalTaskService extends
         ServiceTaskCallback<SubStage> callback = ServiceTaskCallback.create(getUri());
         callback.onSuccessTo(SubStage.SUBNET_INSTANCES_REMOVED);
         callback.onErrorTo(SubStage.ERROR);
+
+        List<String> networkNames = computeNetworks.stream().map(cn -> cn.name)
+                .collect(Collectors.toList());
+        logInfo("Deleting subnets for isolated networks with names: ", networkNames);
 
         try {
             isolatedComputeNetworks.forEach(isolatedComputeNetwork ->
@@ -256,7 +266,7 @@ public class ComputeNetworkRemovalTaskService extends
         }
 
         ComputeNetworkCIDRAllocationRequest request =
-                deallocationRequest(context.subnet.id);
+                deallocationRequest(context.subnet.documentSelfLink);
 
         return this.sendWithDeferredResult(
                 Operation.createPatch(this, context.cidrAllocationServiceLink)
@@ -291,6 +301,9 @@ public class ComputeNetworkRemovalTaskService extends
             return;
         }
 
+        List<String> networkNames = isolatedNetworks.stream().map(cn -> cn.name)
+                .collect(Collectors.toList());
+        logInfo("Removing security group instances for networks with names: ", networkNames);
         deleteSecurityGroups(isolatedNetworks, state.tenantLinks);
     }
 
@@ -381,6 +394,10 @@ public class ComputeNetworkRemovalTaskService extends
                     removeComputeNetworkStates(state, networks, subTaskLink));
             return;
         }
+
+        List<String> networkNames = computeNetworks.stream().map(cn -> cn.name)
+                .collect(Collectors.toList());
+        logInfo("Removing compute network states with names: ", networkNames);
 
         for (ComputeNetwork computeNetwork : computeNetworks) {
             Operation.createDelete(this, computeNetwork.documentSelfLink)

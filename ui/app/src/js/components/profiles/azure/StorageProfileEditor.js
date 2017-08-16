@@ -11,6 +11,7 @@
 
 import services from 'core/services';
 import utils from 'core/utils';
+import { formatUtils } from 'admiral-ui-common';
 import StorageItemVue from 'components/profiles/azure/StorageItemVue.html';
 
 export default Vue.component('azure-storage-profile-editor', {
@@ -183,15 +184,15 @@ Vue.component('azure-storage-item', {
     renderStorageAccount(storageAccount) {
       let props = [
         i18n.t('app.profile.edit.storage.azure.typeLabel') + ': ' +
-          utils.escapeHtml(storageAccount.type),
+          formatUtils.escapeHtml(storageAccount.type),
         i18n.t('app.profile.edit.storage.azure.encryptionLabel') + ': ' +
-          utils.escapeHtml(storageAccount.supportsEncryption)
+          formatUtils.escapeHtml(storageAccount.supportsEncryption)
       ];
       let secondary = props.join(', ');
       return `
         <div>
           <div class="host-picker-item-primary">
-            ${utils.escapeHtml(storageAccount.name)}
+            ${formatUtils.escapeHtml(storageAccount.name)}
         </div>
         <div class="host-picker-item-secondary" title="${secondary}">
             ${secondary}

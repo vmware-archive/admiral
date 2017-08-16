@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -88,30 +89,58 @@ public class DockerVolumeAdapterServiceTest extends BaseMockDockerTestCase {
 
     @Before
     public void startServices() throws Throwable {
-
+        long initTime = System.nanoTime();
         URL testImageResource = DockerAdapterServiceTest.class.getResource(TEST_IMAGE_FILE);
         assertNotNull("Missing test resource: " + TEST_IMAGE_FILE, testImageResource);
         File file = new File(testImageResource.toURI());
         imageReference = UriUtils.buildPublicUri(host, TEST_IMAGE_URL_PATH);
         host.startService(Operation.createPost(imageReference), new FileContentService(file));
+
+        host.log(Level.INFO, ">>>>>>> DockerVolumeAdapterServiceTest.startServices took %d millis",
+                TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - initTime));
     }
 
     @Before
     public void setupVolumeState() throws Throwable {
+        long initTime = System.nanoTime();
         createTestDockerAuthCredentials();
+        long initTime1 = System.nanoTime();
 
         setupDockerVolumeAdapterService();
+        long initTime2 = System.nanoTime();
 
         createParentComputeState();
+        long initTime3 = System.nanoTime();
 
         ContainerVolumeDescription desc = createVolumeDescription(TEST_VOLUME_NAME);
+        long initTime4 = System.nanoTime();
 
         createVolumeState(desc);
+        long initTime5 = System.nanoTime();
 
         createVolume();
+        long initTime6 = System.nanoTime();
 
         // Volume creation is not direct operation, this means it will take some time.
         waitForVolumeCreation();
+        long initTime7 = System.nanoTime();
+
+        host.log(Level.INFO,
+                ">>>>>>> DockerVolumeAdapterServiceTest.setupVolumeState: " +
+                        "createTestDockerAuthCredentials: %d millis, " +
+                        "setupDockerVolumeAdapterService: %d millis, " +
+                        "createParentComputeState: %d millis," +
+                        "createVolumeDescription: %d millis," +
+                        "createVolumeState: %d millis," +
+                        "createVolume: %d millis," +
+                        "waitForVolumeCreation: %d millis",
+                TimeUnit.NANOSECONDS.toMillis(initTime1 - initTime),
+                TimeUnit.NANOSECONDS.toMillis(initTime2 - initTime1),
+                TimeUnit.NANOSECONDS.toMillis(initTime3 - initTime2),
+                TimeUnit.NANOSECONDS.toMillis(initTime4 - initTime3),
+                TimeUnit.NANOSECONDS.toMillis(initTime5 - initTime4),
+                TimeUnit.NANOSECONDS.toMillis(initTime6 - initTime5),
+                TimeUnit.NANOSECONDS.toMillis(initTime7 - initTime6));
     }
 
     @After
@@ -126,12 +155,14 @@ public class DockerVolumeAdapterServiceTest extends BaseMockDockerTestCase {
 
     @Test
     public void testVolumeInspect() throws Throwable {
+        long initTime = System.nanoTime();
 
         CommandInput commandInput = new CommandInput().withDockerUri(getDockerVersionedUri())
                 .withCredentials(getDockerCredentials());
         commandInput.getProperties().put(TEST_VOLUME_NAME_KEY, TEST_VOLUME_NAME);
 
         host.testStart(1);
+        long initTime1 = System.nanoTime();
         getTestCommandExecutor().inspectVolume(commandInput, (o, ex) -> {
             if (ex != null) {
                 host.failIteration(ex);
@@ -152,8 +183,18 @@ public class DockerVolumeAdapterServiceTest extends BaseMockDockerTestCase {
             }
         });
 
+        long initTime2 = System.nanoTime();
         host.testWait();
+        long initTime3 = System.nanoTime();
 
+        host.log(Level.INFO,
+                ">>>>>>> DockerVolumeAdapterServiceTest.testVolumeInspect: " +
+                        "testStart: %d millis, " +
+                        "getTestCommandExecutor: %d millis, " +
+                        "testWait: %d millis",
+                TimeUnit.NANOSECONDS.toMillis(initTime1 - initTime),
+                TimeUnit.NANOSECONDS.toMillis(initTime2 - initTime1),
+                TimeUnit.NANOSECONDS.toMillis(initTime3 - initTime2));
     }
 
     protected void createParentComputeState() throws Throwable {
@@ -325,10 +366,13 @@ public class DockerVolumeAdapterServiceTest extends BaseMockDockerTestCase {
 
     protected void verifyVolumeListContainsId(String volumeName) throws Throwable {
 
+        long initTime = System.nanoTime();
         CommandInput commandInput = new CommandInput().withDockerUri(getDockerVersionedUri())
                 .withCredentials(getDockerCredentials());
+        long initTime1 = System.nanoTime();
 
         host.testStart(1);
+
         getTestCommandExecutor().listVolumes(commandInput, (o, ex) -> {
             if (ex != null) {
                 host.failIteration(ex);
@@ -352,7 +396,18 @@ public class DockerVolumeAdapterServiceTest extends BaseMockDockerTestCase {
 
             }
         });
+        long initTime2 = System.nanoTime();
         host.testWait();
+        long initTime3 = System.nanoTime();
+
+        host.log(Level.INFO,
+                ">>>>>>> DockerVolumeAdapterServiceTest.verifyVolumeListContainsId: " +
+                        "testStart: %d millis, " +
+                        "getTestCommandExecutor: %d millis, " +
+                        "testWait: %d millis",
+                TimeUnit.NANOSECONDS.toMillis(initTime1 - initTime),
+                TimeUnit.NANOSECONDS.toMillis(initTime2 - initTime1),
+                TimeUnit.NANOSECONDS.toMillis(initTime3 - initTime2));
     }
 
     private void waitForVolumeCreation() throws InterruptedException {

@@ -36,6 +36,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -74,12 +75,13 @@ import com.vmware.photon.controller.model.adapterapi.EndpointConfigRequest;
 import com.vmware.photon.controller.model.data.SchemaBuilder;
 import com.vmware.photon.controller.model.data.SchemaField.Type;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
+import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.photon.controller.model.tasks.helpers.ResourcePoolQueryHelper;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.TaskState.TaskStage;
@@ -109,18 +111,7 @@ public class ComputeReservationTaskService extends
             com.vmware.admiral.service.common.TaskServiceDocument<ComputeReservationTaskState.SubStage> {
 
         public static enum SubStage {
-            CREATED,
-            NETWORK_CONSTRAINTS_COLLECTED,
-            SELECTED,
-            PLACEMENT,
-            HOSTS_SELECTED,
-            QUERYING_GLOBAL,
-            SELECTED_GLOBAL,
-            PLACEMENT_GLOBAL,
-            HOSTS_SELECTED_GLOBAL,
-            RESERVATION_SELECTED,
-            COMPLETED,
-            ERROR;
+            CREATED, NETWORK_CONSTRAINTS_COLLECTED, SELECTED, PLACEMENT, HOSTS_SELECTED, QUERYING_GLOBAL, SELECTED_GLOBAL, PLACEMENT_GLOBAL, HOSTS_SELECTED_GLOBAL, RESERVATION_SELECTED, COMPLETED, ERROR;
 
             static final Set<ComputeReservationTaskState.SubStage> SUBSCRIPTION_SUB_STAGES = new HashSet<>(
                     Arrays.asList(SELECTED));
@@ -292,10 +283,10 @@ public class ComputeReservationTaskService extends
         List<String> tgl = QueryUtil.getTenantAndGroupLinks(tenantLinks);
         if (tgl == null || tgl.isEmpty()) {
             logInfo("Querying for global placements for resource description: [%s] and resource"
-                            + " count: [%s]..", state.resourceDescriptionLink, state.resourceCount);
+                    + " count: [%s]..", state.resourceDescriptionLink, state.resourceCount);
         } else {
             logInfo("Querying for group placements in [%s], for resource description: [%s] and"
-                            + " resource count: [%s]...",
+                    + " resource count: [%s]...",
                     tgl, state.resourceDescriptionLink, state.resourceCount);
         }
 
@@ -398,9 +389,13 @@ public class ComputeReservationTaskService extends
 
         if (state.resourcePoolsPerGroupPlacementLinks != null) {
             state.resourcePoolsPerGroupPlacementLinks = state.resourcePoolsPerGroupPlacementLinks
-                    .entrySet().stream().filter((e) -> resourcePools.contains(e.getValue()))
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
-                            (k1, k2) -> k1, LinkedHashMap::new));
+                    .entrySet().stream()
+                    .filter(e -> resourcePools.contains(e.getValue()))
+                    .collect(Collectors.toMap(
+                            Map.Entry::getKey,
+                            Map.Entry::getValue,
+                            (k1, k2) -> k1,
+                            LinkedHashMap::new));
         } else {
             state.resourcePoolsPerGroupPlacementLinks = new LinkedHashMap<>();
         }
@@ -453,12 +448,12 @@ public class ComputeReservationTaskService extends
                     URI referer = UriUtils.buildUri(getHost().getPublicUri(), getSelfLink());
                     ComputeDescriptionProfileEnhancer pe = new ComputeDescriptionProfileEnhancer(
                             getHost(), referer);
-                    ComputeDescriptionInstanceTypeEnhancer instanceTypeEnhancer =
-                            new ComputeDescriptionInstanceTypeEnhancer(getHost(), referer);
-                    ComputeDescriptionImageEnhancer imageEnhancer =
-                            new ComputeDescriptionImageEnhancer(getHost(), referer);
-                    ComputeDescriptionDiskEnhancer diskEnhancer = new
-                            ComputeDescriptionDiskEnhancer(getHost(), referer);
+                    ComputeDescriptionInstanceTypeEnhancer instanceTypeEnhancer = new ComputeDescriptionInstanceTypeEnhancer(
+                            getHost(), referer);
+                    ComputeDescriptionImageEnhancer imageEnhancer = new ComputeDescriptionImageEnhancer(
+                            getHost(), referer);
+                    ComputeDescriptionDiskEnhancer diskEnhancer = new ComputeDescriptionDiskEnhancer(
+                            getHost(), referer);
 
                     List<DeferredResult<Triple<ComputeDescription, ProfileEntry, Throwable>>> list = profileEntries
                             .stream()
@@ -468,6 +463,8 @@ public class ComputeReservationTaskService extends
                                         EnhanceContext context = new EnhanceContext();
                                         context.profileLink = profileLink;
                                         context.skipNetwork = true;
+                                        // Instruct enhancers to NOT persist any state.
+                                        context.skipPersistence = true;
                                         String regionId = profileEntry.endpoint.regionId;
                                         if (regionId == null) {
                                             // TODO [adimitrov]: Remove this once all adapters set
@@ -481,8 +478,7 @@ public class ComputeReservationTaskService extends
                                         return Pair.of(context, cloned);
                                     })
                                     .map(p -> {
-                                        DeferredResult<Triple<ComputeDescription, ProfileEntry, Throwable>> r =
-                                                new DeferredResult<>();
+                                        DeferredResult<Triple<ComputeDescription, ProfileEntry, Throwable>> r = new DeferredResult<>();
                                         pe.enhance(p.getLeft(), p.getRight())
                                                 .thenCompose(cd -> instanceTypeEnhancer
                                                         .enhance(p.getLeft(), cd))
@@ -492,8 +488,8 @@ public class ComputeReservationTaskService extends
                                                         .enhance(p.getLeft(), cd))
                                                 .whenComplete((cd, t) -> {
                                                     if (t != null) {
-                                                        logInfo(() -> Utils.toString(t));
-                                                        r.complete(Triple.of(cd, null, t));
+                                                        r.complete(Triple.of(cd, null,
+                                                                t.getCause() != null ? t.getCause() : t));
                                                         return;
                                                     }
                                                     r.complete(Triple.of(cd, profileEntry, null));
@@ -521,16 +517,19 @@ public class ComputeReservationTaskService extends
                             // Now collect the posisble reasons for failure.
                             StringJoiner stringJoiner = new StringJoiner(",");
                             all.stream().filter(p -> p.getRight() != null).forEach(triple -> {
+                                logInfo(() -> Utils.toString(triple.getRight()));
                                 stringJoiner.add(triple.getRight().getMessage());
                             });
 
                             String errorMessage = "No candidate placements left after endpoint filtering";
                             if (stringJoiner.length() > 0) {
-                                errorMessage = String.format("%s%s Error: %s", stringJoiner.toString(),
+                                errorMessage = String.format("%s%s Error: %s",
+                                        stringJoiner.toString(),
                                         stringJoiner.toString().endsWith(".") ? "" : ".",
                                         errorMessage);
                             }
-                            failTask(stringJoiner.toString(), new IllegalStateException(errorMessage));
+                            failTask(stringJoiner.toString(),
+                                    new IllegalStateException(errorMessage));
                             return;
                         }
 
@@ -543,6 +542,7 @@ public class ComputeReservationTaskService extends
     private void filterPlacementsByRequirements(ComputeReservationTaskState state,
             List<GroupResourcePlacementState> placements, List<String> tenantLinks,
             ComputeDescription computeDesc) {
+
         // retrieve the tag links from constraint conditions
         Map<Condition, String> tagLinkByCondition = TagConstraintUtils
                 .extractPlacementTagConditions(
@@ -566,52 +566,85 @@ public class ComputeReservationTaskService extends
             return;
         }
 
-        // retrieve resource pool instances in order to check which ones satisfy the constraint
-        Map<String, ResourcePoolState> resourcePoolsByLink = new HashMap<>();
-        List<Operation> getOperations = placements.stream()
-                .map(gp -> Operation
-                        .createGet(getHost(), gp.resourcePoolLink)
-                        .setReferer(getUri())
-                        .setCompletion((o, e) -> {
-                            if (e == null) {
-                                resourcePoolsByLink.put(gp.resourcePoolLink,
-                                        o.getBody(ResourcePoolState.class));
-                            }
-                        }))
-                .collect(Collectors.toList());
-        OperationJoin.create(getOperations).setCompletion((ops, exs) -> {
-            if (exs != null) {
-                failTask("Error retrieving resource pools: " + Utils.toString(exs),
-                        exs.values().iterator().next());
+        // Two placements might point to the same PZ/RP so use distinct set
+        final Set<String> rpLinks = placements.stream()
+                .map(placement -> placement.resourcePoolLink)
+                .collect(Collectors.toSet());
+
+        // Retrieve ResPools and their Hosts to check which ones satisfy the constraint
+        ResourcePoolQueryHelper resPoolsAndHostsResolver = ResourcePoolQueryHelper
+                .createForResourcePools(getHost(), rpLinks);
+
+        resPoolsAndHostsResolver.setExpandComputes(true);
+
+        resPoolsAndHostsResolver.query().thenAccept(resPoolsAndHostsResult -> {
+
+            if (resPoolsAndHostsResult.error != null) {
+                failTask("Error retrieving resource pools and hosts: "
+                        + Utils.toString(resPoolsAndHostsResult.error),
+                        resPoolsAndHostsResult.error);
                 return;
             }
+
+            // Placement tags = bestHostMatch(union(ResPool tags, Host_i tags))
+            Function<GroupResourcePlacementState, Set<String>> placementTagLinksSupplier = placement -> {
+
+                ResourcePoolState resPoolState = resPoolsAndHostsResult.resourcesPools
+                        .get(placement.resourcePoolLink).resourcePoolState;
+
+                Stream<ComputeState> hostsPerRP = resPoolsAndHostsResult.getComputesByResPool(
+                        resPoolState.documentSelfLink);
+
+                Function<ComputeState, Set<String>> hostTagLinksSupplier = rpHost -> {
+
+                    Set<String> hostTags = TagConstraintUtils.mergeResourcePoolAndHostTags(resPoolState, rpHost);
+
+                    logFine("Calculated tags for host '%s': %s",
+                            rpHost.name != null ? rpHost.name : rpHost.documentSelfLink, hostTags);
+
+                    return hostTags;
+                };
+
+                // Memoize hostTagLinksSupplier cause it's used twice:
+                // - once as argument to filterByConstraints
+                // - and second by 'return' statement
+                hostTagLinksSupplier = TagConstraintUtils.memoize(hostTagLinksSupplier);
+
+                // Try to find the best matching host (part of this RP) that satisfies CD constraint
+                Optional<ComputeState> bestMatchingHost = TagConstraintUtils.filterByConstraints(
+                        tagLinkByCondition,
+                        hostsPerRP,
+                        hostTagLinksSupplier,
+                        null /* host sort criteria */).findFirst();
+
+                final Set<String> placementTags;
+
+                if (bestMatchingHost.isPresent()) {
+                    // Return union(ResPool tags, Host_i tags) as Placement tags
+                    placementTags = hostTagLinksSupplier.apply(bestMatchingHost.get());
+                } else {
+                    // Return only ResPool tags as Placement tags
+                    placementTags = getResourcePoolTags(resPoolState);
+                }
+
+                logFine("Calculated tags for placement '%s': %s", placement.name, placementTags);
+
+                return placementTags;
+            };
 
             // filter out placements that do not satisfy the HARD constraints, and then sort
             // remaining placements by listing first those with more soft constraints satisfied
             // (placement priority being used as a second criteria)
-            LinkedHashMap<String, String> placementsAfterTagFilter = TagConstraintUtils
+            LinkedHashMap<String, Pair<String, String>> placementsAfterTagFilter = TagConstraintUtils
                     .filterByConstraints(
                             tagLinkByCondition,
                             placements.stream(),
-                            p -> getResourcePoolTags(
-                                    resourcePoolsByLink.get(p.resourcePoolLink)),
-                            (g1, g2) -> g1.priority - g2.priority)
+                            placementTagLinksSupplier,
+                            (placement1, placement2) -> placement1.priority - placement2.priority)
                     .collect(Collectors.toMap(gp -> gp.documentSelfLink,
-                            gp -> gp.resourcePoolLink,
-                            (k1, k2) -> k1, LinkedHashMap::new));
-
-            LinkedHashMap<String, Pair<String, String>> allPlacementsLinksAndNames =
-                    TagConstraintUtils
-                            .filterByConstraints(
-                                    tagLinkByCondition,
-                                    placements.stream(),
-                                    p -> getResourcePoolTags(
-                                            resourcePoolsByLink.get(p.resourcePoolLink)),
-                                    (g1, g2) -> g1.priority - g2.priority)
-                            .collect(Collectors.toMap(gp -> gp.documentSelfLink,
-                                    gp -> Pair.of(gp.name, gp.resourcePoolLink),
-                                    (k1, k2) -> k1,
-                                    () -> new LinkedHashMap<String, Pair<String, String>>()));
+                            gp -> Pair.of(gp.name, gp.resourcePoolLink),
+                            (k1, k2) -> k1,
+                            () -> new LinkedHashMap<String, Pair<String, String>>()));
 
             if (!placements.isEmpty() && placementsAfterTagFilter.isEmpty()) {
                 logInfo("No candidate placements after tag filtering");
@@ -628,14 +661,17 @@ public class ComputeReservationTaskService extends
             }
 
             proceedTo(isGlobal(state) ? SubStage.SELECTED_GLOBAL : SubStage.SELECTED, s -> {
-                s.resourcePoolsPerGroupPlacementLinks = placementsAfterTagFilter;
-                s.groupPlacementsLinksAndNames = allPlacementsLinksAndNames;
-            });
-        }).sendWith(getHost());
-    }
+                s.groupPlacementsLinksAndNames = placementsAfterTagFilter;
 
-    private static Set<String> getResourcePoolTags(ResourcePoolState rp) {
-        return rp != null && rp.tagLinks != null ? rp.tagLinks : new HashSet<>();
+                s.resourcePoolsPerGroupPlacementLinks = placementsAfterTagFilter.entrySet()
+                        .stream()
+                        .collect(Collectors.toMap(
+                                Map.Entry::getKey,
+                                e -> e.getValue().getRight(),
+                                (e1, e2) -> e1,
+                                LinkedHashMap::new));
+            });
+        });
     }
 
     private Stream<GroupResourcePlacementState> supportsCD(ComputeReservationTaskState state,
@@ -652,6 +688,10 @@ public class ComputeReservationTaskService extends
                     }
                     return false;
                 });
+    }
+
+    private static Set<String> getResourcePoolTags(ResourcePoolState rp) {
+        return rp != null && rp.tagLinks != null ? rp.tagLinks : new HashSet<>();
     }
 
     private String getProp(Map<String, String> customProperties, String key) {
@@ -703,7 +743,7 @@ public class ComputeReservationTaskService extends
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         logWarning("Failure reserving group placement: %s. Retrying with the next"
-                                        + " one...", e.getMessage());
+                                + " one...", e.getMessage());
                         selectReservation(state, resourcePoolsPerGroupPlacementLinks);
                         return;
                     }
@@ -714,8 +754,7 @@ public class ComputeReservationTaskService extends
                         s.customProperties = mergeCustomProperties(state.customProperties,
                                 placement.customProperties);
                         s.groupResourcePlacementLink = placement.documentSelfLink;
-                        s.resourcePoolsPerGroupPlacementLinks =
-                                state.resourcePoolsPerGroupPlacementLinks;
+                        s.resourcePoolsPerGroupPlacementLinks = state.resourcePoolsPerGroupPlacementLinks;
                     });
                 }));
     }
@@ -743,7 +782,7 @@ public class ComputeReservationTaskService extends
         computeReservationEventTopic(host);
     }
 
-    //Compute reservation topic
+    // Compute reservation topic
     private static final String COMPUTE_RESERVATION_TOPIC_TASK_SELF_LINK = "compute-reservation";
     private static final String COMPUTE_RESERVATION_TOPIC_ID = "com.vmware.compute.reservation.pre";
     private static final String COMPUTE_RESERVATION_TOPIC_NAME = "Compute reservation";
@@ -751,8 +790,7 @@ public class ComputeReservationTaskService extends
             + "compute resoures";
     private static final String COMPUTE_RESERVATION_TOPIC_FIELD_PLACEMENTS = "placements";
     private static final String COMPUTE_RESERVATION_TOPIC_FIELD_PLACEMENTS_LABEL = "Placements";
-    private static final String COMPUTE_RESERVATION_TOPIC_FIELD_PLACEMENTS_DESCRIPTION =
-            "Applicable Placements";
+    private static final String COMPUTE_RESERVATION_TOPIC_FIELD_PLACEMENTS_DESCRIPTION = "Applicable Placements";
 
     private void computeReservationEventTopic(ServiceHost host) {
         EventTopicService.TopicTaskInfo taskInfo = new EventTopicService.TopicTaskInfo();
@@ -786,8 +824,8 @@ public class ComputeReservationTaskService extends
     }
 
     @Override
-    protected BaseExtensibilityCallbackResponse notificationPayload(ComputeReservationTaskState
-            state) {
+    protected BaseExtensibilityCallbackResponse notificationPayload(
+            ComputeReservationTaskState state) {
         return new ExtensibilityCallbackResponse();
     }
 
@@ -797,7 +835,8 @@ public class ComputeReservationTaskService extends
     }
 
     @Override
-    protected Class<? extends ResourceState> getRelatedResourceStateType() {
+    protected Class<? extends ResourceState> getRelatedResourceStateType(
+            ComputeReservationTaskState state) {
         return ComputeDescription.class;
     }
 
@@ -806,8 +845,7 @@ public class ComputeReservationTaskService extends
             Collection<ResourceState> relatedStates,
             BaseExtensibilityCallbackResponse notificationPayload) {
 
-        ExtensibilityCallbackResponse payload = (ExtensibilityCallbackResponse)
-                notificationPayload;
+        ExtensibilityCallbackResponse payload = (ExtensibilityCallbackResponse) notificationPayload;
 
         payload.placements = state.groupPlacementsLinksAndNames.values().stream()
                 .map(p -> p.getLeft())
@@ -841,12 +879,13 @@ public class ComputeReservationTaskService extends
                         .stream().filter(p -> p.getValue().getLeft().equals(placement))
                         .findFirst();
                 if (!found.isPresent()) {
-                    return DeferredResult.failed(new IllegalArgumentException("Invalid placement '" + placement +
-                            "' " + "specified."));
+                    return DeferredResult
+                            .failed(new IllegalArgumentException("Invalid placement '" + placement +
+                                    "' " + "specified."));
                 } else {
                     Entry<String, Pair<String, String>> entry = found.get();
-                    patch.resourcePoolsPerGroupPlacementLinks.put(entry.getKey(), entry.getValue
-                            ().getRight());
+                    patch.resourcePoolsPerGroupPlacementLinks.put(entry.getKey(),
+                            entry.getValue().getRight());
                 }
             }
 

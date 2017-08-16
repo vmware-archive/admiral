@@ -9,10 +9,11 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<grid-view #gridView [serviceEndpoint]="serviceEndpoint">
-  <div title>{{ "clusters.title" | i18n }}</div>
+<grid-view #gridView [serviceEndpoint]="serviceEndpoint" [projectLink]="projectLink">
+  <div [hidden]="hideTitle" title>{{ "clusters.title" | i18n }}</div>
   <div toolbar>
-    <button class="btn btn-link" [routerLink]="['./new']"><i class="fa fa-plus"></i>{{ "clusters.new" | i18n | uppercase }}</button>
+    <button class="btn btn-link" allowNavigation [roles]="clustersNewRouteRestrictions"
+        [routerLink]="['./cluster/new']"><i class="fa fa-plus"></i>{{ "clusters.new" | i18n | uppercase }}</button>
   </div>
   <delete-confirmation [title]="'clusters.delete.title' | i18n"
                        [description]="deleteConfirmationDescription"
@@ -22,23 +23,23 @@
                        (onCancel)="deleteCanceled()">
   </delete-confirmation>
   <ng-template let-item="item">
-    <card class="clusterCard" [routerLink]="['./' + item.documentId]" [ngClass]="{'card-actions-selected': isItemSelected(item)}">
+    <card class="clusterCard" [routerLink]="['./cluster/' + item.documentId]" [ngClass]="{'card-actions-selected': isItemSelected(item)}">
       <div card-header>
         <div class="clusterIcon">
           <clr-icon shape="rack-server" size="48"></clr-icon>
         </div>
         <div class="titleHolder">
-          <div>{{ item.name }}</div>
-          <div *ngIf="item.address" class="clusterAddress">{{ item.address }}</div>
+          <div class="truncate">{{ item.name }}</div>
+          <div *ngIf="item.address" class="clusterAddress truncate">{{ item.address }}</div>
         </div>
 
-        <clr-dropdown class="card-actions" [clrMenuPosition]="'left-top'" (click)="selectItem($event, item)">
+        <clr-dropdown class="card-actions" allowNavigation [roles]="clustersCardViewActions" [clrMenuPosition]="'left-top'" (click)="selectItem($event, item)">
           <button class="btn btn-sm btn-link" clrDropdownToggle>
               <clr-icon shape="ellipsis-vertical" size="20"></clr-icon>
           </button>
           <div class="dropdown-menu">
             <a href="..." clrDropdownItem
-               [routerLink]="['./' + item.documentId]"><clr-icon shape="eye" size="20"
+               [routerLink]="['./cluster/' + item.documentId]"><clr-icon shape="eye" size="20"
                                                                  class="card-drop-down-actions"></clr-icon>{{ "projects.actions.details" | i18n }}</a>
             <a href="..." clrDropdownItem
                (click)="deleteCluster($event, item)"><clr-icon shape="trash" size="20"
@@ -67,7 +68,7 @@
                 <div class="progress-meter" attr.data-value="{{ cpuPercentageLevel(item) }}"></div>
               </div>
             </div>
-            <div class="col-sm-8 progress-details p7">{{ getResourceLabel(item.cpuUsage, item.totalCpu) }}GHz</div>
+            <div class="col-sm-8 progress-details p7">{{ getResourceLabel(item.cpuUsage, item.totalCpu, 'GHz') }}</div>
           </div>
         </div>
         <div class="form-group">
@@ -78,7 +79,7 @@
                 <div class="progress-meter" attr.data-value="{{ memoryPercentageLevel(item) }}"></div>
               </div>
             </div>
-            <div class="col-sm-8 progress-details p7">{{ getResourceLabel(item.memoryUsage, item.totalMemory) }}B</div>
+            <div class="col-sm-8 progress-details p7">{{ getResourceLabel(item.memoryUsage, item.totalMemory, 'B') }}</div>
           </div>
         </div>
         <div class="progress-static top">

@@ -23,7 +23,11 @@
           <label for="deploymentsCollapse">{{"compute.policies" | i18n}}</label>
           <ul class="nav-list">
               <li><a class="nav-link" routerLink="profiles" routerLinkActive="active">{{"compute.profiles.title" | i18n}}</a></li>
+              <li *ngIf="isProfilesSplitEnabled">
+                <a class="nav-link" routerLink="instance-types" routerLinkActive="active">{{"compute.flavors.title" | i18n}}</a>
+              </li>
               <li><a class="nav-link" routerLink="placements" routerLinkActive="active">{{"compute.placements.title" | i18n}}</a></li>
+              <li><a class="nav-link" routerLink="placementZones" routerLinkActive="active">{{"compute.placementZones.title" | i18n}}</a></li>
           </ul>
       </section>
 

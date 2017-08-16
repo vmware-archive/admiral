@@ -26,9 +26,6 @@
                   ></search>
       <span class="separator"></span>
       <button (click)="refresh()" class="btn btn-link" title="Refresh"><i class="fa fa-refresh"></i></button>
-      <span class="separator"></span>
-      <button (click)="toggleCardView(true)" class="btn btn-link" title="Card View"><i class="fa fa-th"></i></button>
-      <button (click)="toggleCardView(false)" class="btn btn-link" title="List View"><i class="fa fa-list"></i></button>
     </div>
   </div>
 
@@ -43,7 +40,7 @@
       </ng-template>
     </span>
     <span *ngIf="items.length === 0 && !loading" class="content-empty">
-      No items
+      {{ "noItems" | i18n }}
     </span>
   </div>
   <div *ngIf="loading" class="central-block-loading">

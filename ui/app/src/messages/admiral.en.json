@@ -85,6 +85,7 @@
         "update": "Update",
         "create": "Create",
         "certificateWarning": "The certificate for {{address}} is invalid. You may be connecting to a website that is pretending to be {{address}}, which could put your confidential information at risk. Would you like to connect to the website anyway?",
+        "trustedCertificate": "The certificate for {{address}} is trusted.",
         "showCertificate": "Show certificate",
         "hideCertificate": "Hide certificate",
         "manageCertificates": "Manage Certificates",
@@ -519,19 +520,20 @@
         "tagsPlaceholder": "Example: compliance:yes",
         "endpointLabel": "Endpoint",
         "valueLabel": "Value",
-        "instanceTypeMappingLabel": "Instance type",
+        "instanceTypeMappingLabel": "Flavor",
         "instanceTypeMappingDisplay": "{{cpuCount}} CPU, {{memoryInMB}} MB RAM, {{bootDiskSizeInMB}} MB disk",
         "instanceTypeMappingDisplayAWS": "{{cpuCount}} CPU, {{memoryInMB}} MB RAM, {{storageType}} Storage, {{networkType}} Network",
         "imageMappingLabel": "Image type",
         "diskPropertyMappingLabel": "Disk Properties",
         "cpuCountLabel": "CPUs",
-        "memoryMbLabel": "Memory (MB)",
+        "memoryGbLabel": "Memory (GB)",
         "generalLabel": "General",
         "existingLabel": "Existing",
         "subnetworksLabel": "Subnetworks",
         "isolationLabel": "Isolation",
         "isolationTypeLabel": "Type",
         "isolationNetworkLabel": "Network",
+        "isolationExternalSubnetLabel": "External Subnet",
         "noneIsolationTypeLabel": "None",
         "subnetIsolationTypeLabel": "Subnetwork",
         "securityGroupIsolationTypeLabel": "Security Group",
@@ -582,7 +584,12 @@
             "storagePolicyContextPanelTooltip": "Storage Policies",
             "datastoreEntityLabel": "Datastores",
             "storagePolicyEntityLabel": "Storage Policies",
-            "snapshotsLabel": "Independent of Snapshots",
+            "snapshotsLabel": "Snapshots",
+            "independentOfSnapshotsLabel": "Independent of Snapshots",
+            "persistentLabel": "Persistent",
+            "nonPersistentLabel": "Non-Persistent",
+            "provisioningSelectDefault": "Select type of provisioning",
+            "sharesLevelDefault": "Select shares level",
             "datastore": {
               "typeLabel": "Type",
               "capacityLabel": "Capacity",
@@ -637,6 +644,8 @@
         }
       },
       "instanceType": {
+        "addTitle": "Add Flavor Profile",
+        "editTitle": "Edit Flavor Profile",
         "aws": {
           "small": "Small (1 CPU, 1 GB Memory)",
           "medium": "Medium (1 CPU, 2 GB Memory)",
@@ -927,7 +936,6 @@
     },
     "container": {
       "list": {
-        "title": "Items",
         "titleSearchContainers": "Found Containers",
         "titleSearchApplications": "Found Applications",
         "searchPlaceholder": "Search for containers",
@@ -955,7 +963,10 @@
           "all": "All",
           "containers": "Containers",
           "applications": "Applications"
-        }
+        },
+        "columnName": "Container",
+        "columnStatus": "Status",
+        "columnRunningSince": "Running since"
       },
       "details": {
         "usages": "Usages",

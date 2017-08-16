@@ -18,10 +18,13 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.JarURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.util.Base64;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.logging.Level;
+import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -73,6 +76,25 @@ public final class ClosureUtils {
         }
 
         return ClosureUtils.calculateHash(params);
+    }
+
+    public static String compress(String str) {
+        if (str == null || str.length() == 0) {
+            return str;
+        }
+
+        try (java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+                GZIPOutputStream gzip = new GZIPOutputStream(out);) {
+            gzip.write(str.getBytes());
+            gzip.finish();
+
+            byte[] encoded = Base64.getEncoder().encode(out.toByteArray());
+            return new String(encoded, StandardCharsets.UTF_8);
+        } catch (Exception ex) {
+            logError("Unable to compress trusted certificates %s", ex);
+        }
+
+        return str;
     }
 
     public static String calculateHash(String[] envs) {

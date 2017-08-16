@@ -12,6 +12,7 @@
 package com.vmware.admiral.compute.container;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -204,12 +205,12 @@ public class ContainerStatsServiceTest extends ComputeBaseTest {
 
     @Test
     public void testContainerStats() throws Throwable {
-        MockStatsAdapterService mockStatsAdapterService = new MockStatsAdapterService();
+        MockAdapterService mockAdapterService = new MockAdapterService();
         try {
-            stopService(mockStatsAdapterService);
+            stopService(mockAdapterService);
 
             URI adapterServiceUri = UriUtils.buildUri(host, ManagementUriParts.ADAPTER_DOCKER);
-            host.startService(Operation.createPost(adapterServiceUri), mockStatsAdapterService);
+            host.startService(Operation.createPost(adapterServiceUri), mockAdapterService);
             waitForServiceAvailability(ManagementUriParts.ADAPTER_DOCKER);
 
             String mockContainerDescriptionLink = UriUtils.buildUriPath(
@@ -224,17 +225,29 @@ public class ContainerStatsServiceTest extends ComputeBaseTest {
             containerState = doPost(containerState, ContainerFactoryService.SELF_LINK);
             host.log("container = " + Utils.toJson(containerState));
 
-            TestRequestSender sender = host.getTestRequestSender();
+            String containerLink = containerState.documentSelfLink;
             String query = String.format("%s=%s", ContainerStatsService.CONTAINER_ID_QUERY_PARAM,
-                    UriUtils.getLastPathSegment(containerState.documentSelfLink));
+                    UriUtils.getLastPathSegment(containerLink));
             URI uri = UriUtils.buildUri(host, ContainerStatsService.SELF_LINK, query);
+            TestRequestSender sender = host.getTestRequestSender();
             Operation response = sender.sendAndWait(Operation.createGet(uri));
             assertEquals(Operation.STATUS_CODE_OK, response.getStatusCode());
             ServiceStats stats = response.getBody(ServiceStats.class);
             assertNotNull(stats);
             assertEquals(ServiceStats.KIND, stats.documentKind);
+            assertTrue(mockAdapterService.isStatsInvokedForResource(containerLink));
+            assertTrue(mockAdapterService.isInspectInvokedForResource(containerLink));
+
+            mockAdapterService.reset();
+            response = sender.sendAndWait(Operation.createGet(uri));
+            assertEquals(Operation.STATUS_CODE_OK, response.getStatusCode());
+            stats = response.getBody(ServiceStats.class);
+            assertNotNull(stats);
+            assertEquals(ServiceStats.KIND, stats.documentKind);
+            assertTrue(mockAdapterService.isStatsInvokedForResource(containerLink));
+            assertFalse(mockAdapterService.isInspectInvokedForResource(containerLink));
         } finally {
-            stopService(mockStatsAdapterService);
+            stopService(mockAdapterService);
         }
     }
 
@@ -329,23 +342,36 @@ public class ContainerStatsServiceTest extends ComputeBaseTest {
         return healthConfig;
     }
 
-    public static class MockStatsAdapterService extends StatelessService {
+    public static class MockAdapterService extends StatelessService {
         public static final String SELF_LINK = ManagementUriParts.ADAPTER_DOCKER;
 
-        private final Set<URI> resourcesInvokedStats = new ConcurrentSkipListSet<>();
+        private final Set<String> resourcesInvokedStats = new ConcurrentSkipListSet<>();
+        private final Set<String> resourcesInvokedInspect = new ConcurrentSkipListSet<>();
 
-        public boolean isInspectInvokedForResource(URI resource) {
-            return resourcesInvokedStats.contains(resource);
+        public boolean isInspectInvokedForResource(String link) {
+            return resourcesInvokedInspect.contains(link);
+        }
+
+        public boolean isStatsInvokedForResource(String link) {
+            return resourcesInvokedStats.contains(link);
+        }
+
+        public void reset() {
+            resourcesInvokedStats.clear();
+            resourcesInvokedInspect.clear();
         }
 
         @Override
         public void handlePatch(Operation op) {
             AdapterRequest state = op.getBody(AdapterRequest.class);
             if (ContainerOperationType.STATS.id.equals(state.operationTypeId)) {
-                logInfo(
-                        ">>>> Invoking MockStatsAdapterService handlePatch for Stats for: %s ",
+                logInfo(">>>> Invoking MockAdapterService handlePatch for Stats for: %s",
                         state.resourceReference);
-                resourcesInvokedStats.add(state.resourceReference);
+                resourcesInvokedStats.add(state.resourceReference.getPath());
+            } else if (ContainerOperationType.INSPECT.id.equals(state.operationTypeId)) {
+                logInfo(">>>> Invoking MockAdapterService handlePatch for Inspect for: %s",
+                        state.resourceReference);
+                resourcesInvokedInspect.add(state.resourceReference.getPath());
             }
             op.complete();
         }

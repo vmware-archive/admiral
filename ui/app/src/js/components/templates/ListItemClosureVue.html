@@ -13,7 +13,7 @@
      role="alert" v-if="model.alert"><i class="fa alert-icon"
   v-bind:class="{'fa-check': model.alert.type === 'success', 'fa-exclamation-circle': model.alert.type === 'fail'}"
   ></i><span>{{model.alert.message}}</span></div>
-<div class="image-item" v-on:click="hideGroups($event)">
+<div class="image-item">
   <div class="image-header">
     <img v-bind:src="closureIcon" />
     <div v-bind:class="'icons icons-' + numberOfIcons">
@@ -56,20 +56,6 @@
             disabled="disabled">{{i18n("app.closure.request.run")}}<i class="fa fa-spinner fa-spin loader"></i></button>
     <template v-else>
       <div>
-        <template v-if="showGroupForProvisioning">
-        <div class="provisionGroup">
-          <select v-model="preferredGroupId">
-            <option v-for="option in groupOptions" track-by="id"
-                    :value="option.id">
-              {{option.name}}
-            </option>
-            <option v-if="clearSelectionSupported()" value="">{{i18n('noSelection')}}</option>
-          </select>
-          <button type="button" class="btn btn-primary create-container-with-group-btn"
-                  v-on:click="createTemplate($event)">{{i18n("app.template.list.provision")}}</button>
-        </div>
-      </template>
-      <template v-else>
         <div class="dropdown">
           <button type="button" class="btn create-container-btn"
                   v-on:click="runClosure($event)">{{i18n("app.closure.request.run")}}</button>
@@ -83,9 +69,8 @@
                    v-on:click="editClosureDescription($event)">{{i18n("app.template.list.editTemplate")}}</a></li>
           </ul>
         </div>
+      </div>
     </template>
-    </div>
-  </template>
   </div>
   <div style="clear: both;display: none;"></div>
 </div>

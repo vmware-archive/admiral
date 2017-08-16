@@ -9,6 +9,8 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
+const $ = require('jquery');
+
 var byteUnits = ['Bytes', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
 
 var configurationAdapters = null;
@@ -71,6 +73,10 @@ var utils = {
     }
 
     return size;
+  },
+
+  escapeHtml: function(htmlString) {
+    return $('<div>').text(htmlString).html();
   }
 };
 

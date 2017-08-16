@@ -206,7 +206,7 @@ public class ContainerHostRemovalTaskService extends
     }
 
     private void queryContainers(ContainerHostRemovalTaskState state) {
-        QueryTask containerQuery = QueryUtil.buildQuery(ContainerState.class, false);
+        QueryTask containerQuery = QueryUtil.buildQuery(ContainerState.class, true);
 
         QueryUtil.addListValueClause(containerQuery,
                 ContainerState.FIELD_NAME_PARENT_LINK, state.resourceLinks);

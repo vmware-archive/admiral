@@ -39,6 +39,10 @@
                    v-bind:model="model.centerView.data"
                    v-ref:center-view>
       </placements-view>
+      <placement-zones-view v-if="model.centerView.name === computeConstants.VIEWS.PLACEMENT_ZONES.name"
+                   v-bind:model="model.centerView.data"
+                   v-ref:center-view>
+      </placement-zones-view>
       <machines-view v-if="model.centerView.name === computeConstants.VIEWS.RESOURCES.VIEWS.MACHINES.name"
                    v-bind:model="model.centerView.data"
                    v-ref:center-view>
@@ -48,6 +52,14 @@
                    v-bind:model="model.centerView.data"
                    v-ref:center-view>
       </compute-view>
+      <div v-if="model.centerView.name === computeConstants.VIEWS.INSTANCETYPE.name"
+                transition="slide-and-fade" class="closable-view">
+        <a class="close-button" v-on:click="goBackToInstanceTypes($event)"><i
+          class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
+
+        <instance-type-edit-view v-bind:model="model.centerView.data.editingItemData" class="content"></instance-type-edit-view>
+      </div>
+
       <div class="core-build-number" v-if="buildNumberSupported()">{{i18n("buildNumber")}} {{buildNumber}}</div>
     </div>
   </div>

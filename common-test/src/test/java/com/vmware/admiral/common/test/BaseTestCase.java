@@ -66,6 +66,7 @@ import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -163,6 +164,14 @@ public abstract class BaseTestCase {
         host = null;
     }
 
+    protected static void restoreSystemProperty(String key, String value) {
+        if (value == null) {
+            System.clearProperty(key);
+        } else {
+            System.setProperty(key, value);
+        }
+    }
+
     protected ServiceHost.Arguments getHostArguments() {
         ServiceHost.Arguments args = new ServiceHost.Arguments();
         args.sandbox = null; // ask runtime to pick a random storage location
@@ -195,6 +204,8 @@ public abstract class BaseTestCase {
         VerificationHost resultHost = VerificationHost.initialize(customizationHost, args);
         resultHost.setMaintenanceIntervalMicros(this.getMaintenanceIntervalMillis() * 1000);
         resultHost.setTimeoutSeconds(HOST_TIMEOUT_SECONDS);
+
+        setPrivilegedServices(resultHost);
 
         resultHost.start();
 
@@ -283,6 +294,9 @@ public abstract class BaseTestCase {
         TestContext ctx = testCreate(serviceLinks.length);
         h.registerForServiceAvailability(ctx.getCompletion(), serviceLinks);
         ctx.await();
+    }
+
+    protected void setPrivilegedServices(VerificationHost host) {
     }
 
     protected URI register(VerificationHost host, Class<? extends Service> type)
@@ -777,6 +791,26 @@ public abstract class BaseTestCase {
         }
     }
 
+    protected ServiceDocumentQueryResult getDocumentsWithinProject(String factoryLink,
+            String projectLink) {
+        TestContext ctx = testCreate(1);
+        final ServiceDocumentQueryResult[] result = new ServiceDocumentQueryResult[1];
+        Operation get = Operation.createGet(host, factoryLink)
+                .setReferer(host.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        ctx.failIteration(ex);
+                        return;
+                    }
+                    result[0] = o.getBody(ServiceDocumentQueryResult.class);
+                    ctx.completeIteration();
+                });
+        setProjectHeader(projectLink, get);
+        host.send(get);
+        ctx.await();
+        return result[0];
+    }
+
     protected <T extends ServiceDocument> T doPost(T inState, String fabricServiceUrlPath)
             throws Throwable {
         return doPost(inState, UriUtils.buildUri(host, fabricServiceUrlPath), false);
@@ -794,6 +828,32 @@ public abstract class BaseTestCase {
             outState.documentSelfLink = documentSelfLink;
         }
         return outState;
+    }
+
+    protected <T> T doPostWithProjectHeader(Object body, String factoryLink, String projectLink,
+            Class<T> stateType) {
+        TestContext ctx = testCreate(1);
+        final Object[] responseBody = new Object[1];
+        Operation create = Operation.createPost(host, factoryLink)
+                .setBody(body)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        ctx.failIteration(ex);
+                        return;
+                    }
+                    responseBody[0] = o.getBodyRaw();
+                    ctx.completeIteration();
+                });
+
+        setProjectHeader(projectLink, create);
+        host.send(create);
+        ctx.await();
+        return Utils.fromJson(responseBody[0], stateType);
+    }
+
+    public static Operation setProjectHeader(String projectLink, Operation op) {
+        op.addRequestHeader(OperationUtil.PROJECT_ADMIRAL_HEADER, projectLink);
+        return op;
     }
 
     protected <T extends ServiceDocument> T doPatch(T inState, String serviceDocumentSelfLink)
@@ -837,6 +897,22 @@ public abstract class BaseTestCase {
                 resultClazz,
                 uri);
         return outState;
+    }
+
+    protected void doPatch(Object state, String documentSelfLink) {
+        TestContext ctx = testCreate(1);
+        Operation patch = Operation.createPatch(host, documentSelfLink)
+                .setBody(state)
+                .setReferer(host.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        ctx.failIteration(ex);
+                        return;
+                    }
+                    ctx.completeIteration();
+                });
+        host.send(patch);
+        ctx.await();
     }
 
     protected <T extends ServiceDocument> T doPut(T inState)
@@ -1066,6 +1142,49 @@ public abstract class BaseTestCase {
 
                     return serviceStopped.get();
                 });
+    }
+
+    protected void assertDocumentExists(String documentLink) {
+        assertNotNull(documentLink);
+
+        host.testStart(1);
+        Operation.createGet(host, documentLink)
+                .setReferer(host.getUri())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        host.failIteration(e);
+                    } else {
+                        try {
+                            assertNotNull(o.getBodyRaw());
+                            host.completeIteration();
+                        } catch (AssertionError er) {
+                            host.failIteration(er);
+                        }
+                    }
+                }).sendWith(host);
+        host.testWait();
+    }
+
+    protected void assertDocumentNotExists(String documentLink) {
+        assertNotNull(documentLink);
+
+        host.testStart(1);
+        Operation.createGet(host, documentLink)
+                .setReferer(host.getUri())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        if (e instanceof ServiceNotFoundException) {
+                            host.completeIteration();
+                            return;
+                        }
+
+                        host.failIteration(e);
+                    } else {
+                        host.failIteration(new Exception(
+                                String.format("%s should've not exist!", documentLink)));
+                    }
+                }).sendWith(host);
+        host.testWait();
     }
 
     @FunctionalInterface

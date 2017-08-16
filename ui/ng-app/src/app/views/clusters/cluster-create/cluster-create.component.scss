@@ -1,3 +1,20 @@
 .form-group select {
     margin-top: 6px;
 }
+
+.form-group dropdown {
+    width: 100%;
+}
+
+.form-group .dropdown {
+    .dropdown-menu {
+        padding: 4px 0;
+
+        .divider {
+            margin: 4px 0;
+        }
+    }
+    .dropdown-options {
+        max-height: 120px;
+    }
+}

@@ -20,6 +20,7 @@ import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.services.common.UserService.UserState;
 
 public interface AuthConfigProvider {
 
@@ -29,9 +30,20 @@ public interface AuthConfigProvider {
         SYSTEM
     }
 
+    /**
+     * Initialization method to be executed as a first-boot script.
+     */
+    void initBootConfig(ServiceHost host, Operation post);
+
+    /**
+     * Initialization method to be executed as an every-boot script.
+     */
     void initConfig(ServiceHost host, Operation post);
 
-    void waitForInitConfig(ServiceHost host, String configFile, Runnable successfulCallback,
+    /**
+     * Waits for the first-boot initialization to be completed (for testing purposes).
+     */
+    void waitForInitBootConfig(ServiceHost host, String configFile, Runnable successfulCallback,
             Consumer<Throwable> failureCallback);
 
     Service getAuthenticationService();
@@ -41,5 +53,9 @@ public interface AuthConfigProvider {
     Function<Claims, String> getAuthenticationServiceUserLinkBuilder();
 
     Collection<FactoryService> createServiceFactories();
+
+    Collection<Service> createServices();
+
+    Class<? extends UserState> getUserStateClass();
 
 }

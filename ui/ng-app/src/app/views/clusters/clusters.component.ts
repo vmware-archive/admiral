@@ -1,4 +1,16 @@
-import { Component, ViewChild, OnInit } from '@angular/core';
+/*
+ * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ *
+ * This product is licensed to you under the Apache License, Version 2.0 (the "License").
+ * You may not use this product except in compliance with the License.
+ *
+ * This product may include a number of subcomponents with separate copyright notices
+ * and license terms. Your use of these subcomponents is subject to the terms and
+ * conditions of the subcomponent's license, as noted in the LICENSE file.
+ */
+
+import { RoutesRestriction } from './../../utils/routes-restriction';
+import { Component, ViewChild, OnInit, Input } from '@angular/core';
 import { Links } from '../../utils/links';
 import { DocumentService } from '../../utils/document.service';
 import * as I18n from 'i18next';
@@ -14,6 +26,9 @@ export class ClustersComponent implements OnInit {
 
   constructor(private service: DocumentService) { }
 
+  @Input() hideTitle: boolean = false;
+  @Input() projectLink: string;
+
   serviceEndpoint = Links.CLUSTERS;
   clusterToDelete: any;
   deleteConfirmationAlert: string;
@@ -27,8 +42,8 @@ export class ClustersComponent implements OnInit {
 
   get deleteConfirmationDescription(): string {
     return this.clusterToDelete && this.clusterToDelete.name
-            && I18n.t('clusters.delete.confirmation',
-            { clusterName:  this.clusterToDelete.name } as I18n.TranslationOptions);
+            && I18n.t('clusters.delete.confirmation', { clusterName:  this.clusterToDelete.name,
+               interpolation: { escapeValue: false } } as I18n.TranslationOptions);
   }
 
   deleteCluster(event, cluster) {
@@ -41,7 +56,7 @@ export class ClustersComponent implements OnInit {
   }
 
   deleteConfirmed() {
-    this.service.delete(this.clusterToDelete.documentSelfLink)
+    this.service.delete(this.clusterToDelete.documentSelfLink, this.projectLink)
         .then(result => {
           this.clusterToDelete = null;
           this.gridView.refresh();
@@ -69,12 +84,12 @@ export class ClustersComponent implements OnInit {
     return Math.floor(cluster.memoryUsage / cluster.totalMemory * 100);
   }
 
-  getResourceLabel(b1, b2) {
-    if (b1 == 0 || b2 ==0) {
-      return b1 + ' of ' + b2;
+  getResourceLabel(b1, b2, unit) {
+    if (b2 == 0) {
+      return 'N/A';
     }
     let m = Utils.getMagnitude(b2);
-    return Utils.formatBytes(b1, m) + ' of ' + Utils.formatBytes(b2, m) + Utils.magnitudes[m];
+    return Utils.formatBytes(b1, m) + ' of ' + Utils.formatBytes(b2, m) + Utils.magnitudes[m] + unit;
   }
 
   clusterState(cluster) {
@@ -95,4 +110,12 @@ export class ClustersComponent implements OnInit {
   isItemSelected(item: any) {
     return item === this.selectedItem;
   }
-}
+
+  get clustersNewRouteRestrictions() {
+    return RoutesRestriction.CLUSTERS_NEW;
+  }
+
+  get clustersCardViewActions() {
+    return RoutesRestriction.CLUSTERS_ID;
+  }
+ }

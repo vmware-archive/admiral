@@ -11,16 +11,20 @@
 
 package com.vmware.admiral.auth.project;
 
+import static com.vmware.admiral.service.common.harbor.HarborApiProxyService.validateProjectDelete;
+import static com.vmware.admiral.service.common.harbor.HarborApiProxyService.validateProjectName;
+
 import java.net.URI;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
-
-import javax.management.ServiceNotFoundException;
 
 import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
 
@@ -33,8 +37,8 @@ import com.vmware.admiral.auth.util.UserGroupsUpdater;
 import com.vmware.admiral.common.serialization.ReleaseConstants;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.PropertyUtils;
-import com.vmware.admiral.common.util.QueryUtil;
-import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.admiral.common.util.UniquePropertiesUtil;
+import com.vmware.admiral.service.common.UniquePropertiesService;
 import com.vmware.photon.controller.model.ServiceUtils;
 import com.vmware.photon.controller.model.adapters.util.Pair;
 import com.vmware.photon.controller.model.resources.ResourceState;
@@ -45,12 +49,11 @@ import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
-import com.vmware.xenon.common.ServiceDocumentQueryResult;
+import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
-import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.ResourceGroupService;
 import com.vmware.xenon.services.common.ResourceGroupService.ResourceGroupState;
 import com.vmware.xenon.services.common.RoleService;
@@ -66,6 +69,7 @@ public class ProjectService extends StatefulService {
 
     public static final String PROJECT_NAME_ALREADY_USED_MESSAGE = "Project name '%s' "
             + "is already used.";
+
     public static final String PROJECT_NAME_ALREADY_USED_CODE = "auth.projects.name.used";
 
     public static final String FIELD_NAME_CUSTOM_PROPERTIES = "customProperties";
@@ -76,6 +80,14 @@ public class ProjectService extends StatefulService {
     public static final String DEFAULT_PROJECT_INDEX = "1";
     public static final String DEFAULT_PROJECT_LINK = UriUtils
             .buildUriPath(ProjectFactoryService.SELF_LINK, DEFAULT_PROJECT_ID);
+
+    public static final String UNIQUE_PROJECT_NAMES_SERVICE_LINK = UriUtils
+            .buildUriPath(UniquePropertiesService.FACTORY_LINK,
+                    UniquePropertiesService.PROJECT_NAMES_ID);
+
+    public static final String UNIQUE_PROJECT_INDEXES_SERVICE_LINK = UriUtils
+            .buildUriPath(UniquePropertiesService.FACTORY_LINK,
+                    UniquePropertiesService.PROJECT_INDEXES_ID);
 
     public static ProjectState buildDefaultProjectInstance() {
         ProjectState project = new ProjectState();
@@ -95,14 +107,15 @@ public class ProjectService extends StatefulService {
     public static class ProjectState extends ResourceState {
         public static final String FIELD_NAME_PUBLIC = "isPublic";
         public static final String FIELD_NAME_DESCRIPTION = "description";
-        public static final String FIELD_NAME_ADMINISTRATORS_USER_GROUP_LINKS = "administratorsUserGroupLinks";
+        public static final String FIELD_NAME_ADMINISTRATORS_USER_GROUP_LINKS =
+                "administratorsUserGroupLinks";
         public static final String FIELD_NAME_MEMBERS_USER_GROUP_LINKS = "membersUserGroupLinks";
         public static final String FIELD_NAME_VIEWERS_USER_GROUP_LINKS = "viewersUserGroupLinks";
 
         @Documentation(description = "Used for define a public project")
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
-        public boolean isPublic;
+        public Boolean isPublic;
 
         @Documentation(description = "Used for descripe the purpose of the project")
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
@@ -116,7 +129,7 @@ public class ProjectService extends StatefulService {
         @Documentation(description = "Links to the groups of administrators for this project.")
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
-        public List<String> administratorsUserGroupLinks;
+        public Set<String> administratorsUserGroupLinks;
 
         /**
          * Links to the groups of members for this project.
@@ -125,7 +138,7 @@ public class ProjectService extends StatefulService {
         @Documentation(description = "Links to the groups of members for this project.")
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
-        public List<String> membersUserGroupLinks;
+        public Set<String> membersUserGroupLinks;
 
         /**
          * Links to the groups of viewers for this project.
@@ -133,7 +146,7 @@ public class ProjectService extends StatefulService {
         @Documentation(description = "Links to the groups of viewers for this project.")
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
-        public List<String> viewersUserGroupLinks;
+        public Set<String> viewersUserGroupLinks;
 
         @Deprecated
         @Documentation(description = "Link to the group of administrators for this project.")
@@ -152,25 +165,17 @@ public class ProjectService extends StatefulService {
             destination.isPublic = this.isPublic;
             destination.description = this.description;
 
-            if (this.administratorsUserGroupLinks != null
-                    && !this.administratorsUserGroupLinks.isEmpty()) {
-                destination.administratorsUserGroupLinks = new ArrayList<>(
-                        this.administratorsUserGroupLinks.size());
-                destination.administratorsUserGroupLinks.addAll(this.administratorsUserGroupLinks);
+            if (this.administratorsUserGroupLinks != null) {
+                destination.administratorsUserGroupLinks =
+                        new HashSet<>(this.administratorsUserGroupLinks);
             }
 
-            if (this.membersUserGroupLinks != null
-                    && !this.membersUserGroupLinks.isEmpty()) {
-                destination.membersUserGroupLinks = new ArrayList<>(
-                        this.membersUserGroupLinks.size());
-                destination.membersUserGroupLinks.addAll(this.membersUserGroupLinks);
+            if (this.membersUserGroupLinks != null) {
+                destination.membersUserGroupLinks = new HashSet<>(this.membersUserGroupLinks);
             }
 
-            if (this.viewersUserGroupLinks != null
-                    && !this.viewersUserGroupLinks.isEmpty()) {
-                destination.viewersUserGroupLinks = new ArrayList<>(
-                        this.viewersUserGroupLinks.size());
-                destination.viewersUserGroupLinks.addAll(this.viewersUserGroupLinks);
+            if (this.viewersUserGroupLinks != null) {
+                destination.viewersUserGroupLinks = new HashSet<>(this.viewersUserGroupLinks);
             }
         }
 
@@ -265,31 +270,57 @@ public class ProjectService extends StatefulService {
         ProjectState createBody = post.getBody(ProjectState.class);
         validateState(createBody);
         createBody.creationTimeMicros = Instant.now().toEpochMilli();
+        if (createBody.isPublic == null) {
+            createBody.isPublic = false;
+        }
 
-
-        isProjectNameUsed(createBody.name, createBody.documentSelfLink)
-                .whenComplete((isNameUsed, ex) -> {
-                    if (ex != null) {
-                        logWarning("Error during project name check: %s", Utils.toString(ex));
-                        post.fail(ex);
-                        return;
-                    }
+        String message = String.format(PROJECT_NAME_ALREADY_USED_MESSAGE,
+                createBody.name);
+        claimProjectName(createBody.name)
+                .thenCompose((isNameUsed) -> {
                     if (isNameUsed) {
-                        String message = String.format(PROJECT_NAME_ALREADY_USED_MESSAGE,
-                                createBody.name);
-                        post.fail(new LocalizableValidationException(message,
-                                PROJECT_NAME_ALREADY_USED_CODE, createBody.name));
+
+                        // Do not fail with localizable exception now, because xenon overrides the
+                        // status code to 400 but we need 409.
+                        return DeferredResult.failed(new IllegalStateException(message));
+                    }
+                    return generateProjectIndex();
+                })
+                .thenApply(index -> handleProjectIndex(index, createBody))
+                .thenCompose(this::createProjectUserGroups)
+                .thenApply(projectState -> {
+                    projectState.membersUserGroupLink = null;
+                    projectState.administratorsUserGroupLink = null;
+
+                    if (projectState.tenantLinks == null) {
+                        projectState.tenantLinks = new ArrayList<>();
+                    }
+
+                    if (!projectState.tenantLinks.contains(projectState.documentSelfLink)) {
+                        projectState.tenantLinks.add(projectState.documentSelfLink);
+                    }
+
+                    return projectState;
+                })
+                .whenComplete((ps, ex) -> {
+                    if (ex != null) {
+                        // Have error as final.
+                        Throwable error = (ex instanceof CompletionException) ? ex.getCause() : ex;
+                        //TODO: fail with 409 when there is name conflict, same for patch and put.
+                        if (error.getMessage().equalsIgnoreCase(message)) {
+                            post.fail(error);
+                            return;
+                        }
+                        String projectIndexStr = ProjectUtil.getProjectIndex(createBody);
+                        int projectIndex = projectIndexStr == null ? -1 : Integer.parseInt(projectIndexStr);
+                        //Clear already claimed name and project index.
+                        freeProjectName(createBody.name)
+                                .thenCompose(ignore -> freeProjectIndex(projectIndex))
+                                .whenComplete((ignore, err) -> post.fail(error));
                         return;
                     }
-                    generateProjectIndex()
-                            .thenApply(index -> handleProjectIndex(index, createBody))
-                            .thenCompose(this::createProjectUserGroups)
-                            .thenAccept(projectState -> {
-                                projectState.membersUserGroupLink = null;
-                                projectState.administratorsUserGroupLink = null;
-                                post.setBody(projectState);
-                            })
-                            .whenCompleteNotify(post);
+
+                    post.setBody(ps).complete();
                 });
 
     }
@@ -314,7 +345,8 @@ public class ProjectService extends StatefulService {
             ProjectRoles rolesPut = put.getBody(ProjectRoles.class);
 
             // this is an update of the roles
-            new ProjectRolesHandler(getHost(), getSelfLink()).handleRolesUpdate(currentState, rolesPut)
+            new ProjectRolesHandler(this, getSelfLink())
+                    .handleRolesUpdate(currentState, rolesPut, put)
                     .whenComplete((ignore, ex) -> {
                         if (ex != null) {
                             if (ex.getCause() instanceof ServiceNotFoundException) {
@@ -331,23 +363,25 @@ public class ProjectService extends StatefulService {
             // this is an update of the state
             ProjectState projectPut = put.getBody(ProjectState.class);
             validateState(projectPut);
-            isProjectNameUsed(projectPut.name, currentState.documentSelfLink)
-                    .whenComplete((isNameUsed, e) -> {
-                        if (e != null) {
-                            logWarning("Error during project name check: %s",
-                                    Utils.toString(e));
-                            put.fail(e);
-                            return;
-                        }
-                        if (isNameUsed) {
-                            String message = String.format(PROJECT_NAME_ALREADY_USED_MESSAGE,
-                                    projectPut.name);
-                            put.fail(new LocalizableValidationException(message,
-                                    PROJECT_NAME_ALREADY_USED_CODE, projectPut.name));
-                            return;
-                        }
-                        handleProjectPut(projectPut, put);
-                    });
+
+            DeferredResult<Boolean> deferredResult;
+
+            if (projectPut.name.equalsIgnoreCase(currentState.name)) {
+                deferredResult = DeferredResult.completed(false);
+            } else {
+                deferredResult = updateClaimedProjectName(projectPut.name, currentState.name);
+            }
+
+            deferredResult.thenAccept(isNameUsed -> {
+                if (isNameUsed) {
+                    String message = String.format(PROJECT_NAME_ALREADY_USED_MESSAGE,
+                            projectPut.name);
+                    put.fail(new IllegalStateException(message));
+                    return;
+                }
+                handleProjectPut(projectPut, put);
+            });
+
         }
     }
 
@@ -361,61 +395,59 @@ public class ProjectService extends StatefulService {
 
         ProjectState projectPatch = patch.getBody(ProjectState.class);
         ProjectState currentState = getState(patch);
-        isProjectNameUsed(projectPatch.name, currentState.documentSelfLink)
-                .whenComplete((isNameUsed, e) -> {
-                    if (e != null) {
-                        logWarning("Error during project name check: %s", Utils.toString(e));
-                        patch.fail(e);
-                        return;
-                    }
+
+        DeferredResult<Boolean> deferredResult;
+
+        if (projectPatch.name != null && !projectPatch.name.equalsIgnoreCase(currentState.name)) {
+            deferredResult = updateClaimedProjectName(projectPatch.name, currentState.name);
+        } else {
+            deferredResult = DeferredResult.completed(false);
+        }
+
+        deferredResult
+                .thenCompose(isNameUsed -> {
                     if (isNameUsed) {
                         String message = String.format(PROJECT_NAME_ALREADY_USED_MESSAGE,
                                 projectPatch.name);
-                        patch.fail(new LocalizableValidationException(message,
-                                PROJECT_NAME_ALREADY_USED_CODE, projectPatch.name));
-                        return;
+                        return DeferredResult.failed(new IllegalStateException(message));
                     }
-
-                    DeferredResult<ProjectState> projectDefRes = new DeferredResult<>();
 
                     if (ProjectRolesHandler.isProjectRolesUpdate(patch)) {
-                        projectDefRes = new ProjectRolesHandler(getHost(), getSelfLink())
-                            .handleRolesUpdate(currentState, patch.getBody(ProjectRoles.class));
+                        return new ProjectRolesHandler(this, getSelfLink())
+                                .handleRolesUpdate(currentState, patch.getBody(ProjectRoles.class),
+                                        patch);
                     } else {
-                        projectDefRes.complete(currentState);
+                        return DeferredResult.completed(currentState);
                     }
-
-                    projectDefRes.thenCompose(project -> {
-                        return handleProjectPatch(project, projectPatch);
-                    }).whenComplete((ignore, ex) -> {
-                        if (ex != null) {
-                            if (ex.getCause() instanceof ServiceNotFoundException) {
-                                patch.fail(Operation.STATUS_CODE_BAD_REQUEST,
-                                        ex.getCause(), ex.getCause());
-                                return;
-                            }
-                            patch.fail(ex);
+                })
+                .thenCompose(projectState -> handleProjectPatch(projectState, projectPatch))
+                .whenComplete((ignore, ex) -> {
+                    if (ex != null) {
+                        if (ex.getCause() instanceof ServiceNotFoundException) {
+                            patch.fail(Operation.STATUS_CODE_BAD_REQUEST,
+                                    ex.getCause(), ex.getCause());
                             return;
                         }
-
-                        patch.complete();
-                    });
+                        patch.fail(ex);
+                        return;
+                    }
+                    patch.complete();
                 });
     }
 
     /**
      * Returns whether the projects state signature was changed after the patch.
      */
-    private DeferredResult<Boolean> handleProjectPatch(ProjectState currentState, ProjectState
-            patchState) {
+    private DeferredResult<Boolean> handleProjectPatch(ProjectState currentState,
+            ProjectState patchState) {
         ServiceDocumentDescription docDesc = getDocumentTemplate().documentDescription;
         String currentSignature = Utils.computeSignature(currentState, docDesc);
-        DeferredResult<Long> projectIndex;
+        DeferredResult<Integer> projectIndex;
 
         if (currentState.customProperties == null) {
             projectIndex = generateProjectIndex();
         } else {
-            projectIndex = DeferredResult.completed(Long.parseLong(
+            projectIndex = DeferredResult.completed(Integer.parseInt(
                     currentState.customProperties.get(CUSTOM_PROPERTY_PROJECT_INDEX)));
         }
 
@@ -433,11 +465,11 @@ public class ProjectService extends StatefulService {
 
     private void handleProjectPut(ProjectState putState, Operation put) {
         ProjectState currentState = getState(put);
-        DeferredResult<Long> projectIndex;
+        DeferredResult<Integer> projectIndex;
         if (currentState.customProperties == null) {
             projectIndex = generateProjectIndex();
         } else {
-            projectIndex = DeferredResult.completed(Long.parseLong(
+            projectIndex = DeferredResult.completed(Integer.parseInt(
                     currentState.customProperties.get(CUSTOM_PROPERTY_PROJECT_INDEX)));
         }
 
@@ -468,7 +500,23 @@ public class ProjectService extends StatefulService {
                 .createPost(getHost(), ServiceUriPaths.CORE_QUERY_TASKS)
                 .setBody(queryTask);
 
-        sendWithDeferredResult(getPlacementsWithProject, ServiceDocumentQueryResult.class)
+        String projectIndexStr = ProjectUtil.getProjectIndex(state);
+        int projectIndex = projectIndexStr == null ? -1 : Integer.parseInt(projectIndexStr);
+
+        validateProjectDelete(this, ProjectUtil.getProjectIndex(state))
+                .thenCompose(hbrResponse -> {
+                    if (hbrResponse.deletable == null) {
+                        return DeferredResult.failed(new IllegalStateException(
+                                "null response from harbor if project is deletable."));
+                    }
+
+                    if (!hbrResponse.deletable) {
+                        return DeferredResult.failed(new IllegalStateException(
+                                "Project is not deletable: " + hbrResponse.message));
+                    }
+
+                    return sendWithDeferredResult(getPlacementsWithProject, QueryTask.class);
+                })
                 .thenApply(result -> new Pair<>(result, (Throwable) null))
                 .exceptionally(ex -> new Pair<>(null, ex))
                 .thenCompose(pair -> {
@@ -477,7 +525,7 @@ public class ProjectService extends StatefulService {
                                 state.documentSelfLink);
                         return DeferredResult.failed(pair.right);
                     } else {
-                        Long documentCount = pair.left.documentCount;
+                        Long documentCount = pair.left.results.documentCount;
                         if (documentCount != null && documentCount != 0) {
                             return DeferredResult.failed(new LocalizableValidationException(
                                     ProjectUtil.PROJECT_IN_USE_MESSAGE,
@@ -488,6 +536,9 @@ public class ProjectService extends StatefulService {
                         return deleteDefaultProjectGroups(projectId, delete);
                     }
                 })
+                .thenCompose(ignore -> deleteDuplicatedRolesAndResourceGroups(state))
+                .thenCompose(ignore -> freeProjectName(state.name))
+                .thenCompose(ignore -> freeProjectIndex(projectIndex))
                 .whenComplete((ignore, ex) -> {
                     if (ex != null) {
                         delete.fail(ex);
@@ -495,7 +546,6 @@ public class ProjectService extends StatefulService {
                     }
                     super.handleDelete(delete);
                 });
-
     }
 
     private DeferredResult<Void> deleteDefaultProjectGroups(String projectId,
@@ -510,38 +560,63 @@ public class ProjectService extends StatefulService {
         String viewersUserGroupUri = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
                 AuthRole.PROJECT_VIEWER.buildRoleWithSuffix(projectId));
 
-        String resourceGroupUri = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
-                projectId);
+        String adminsResourceGroupUri = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(projectId));
 
-        String adminsRoleUri = UriUtils.buildUriPath(RoleService.FACTORY_LINK, AuthRole
-                .PROJECT_ADMIN.buildRoleWithSuffix(projectId, Service.getId(adminsUserGroupUri)));
+        String membersResourceGroupUri = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(projectId));
 
-        String membersRoleUri = UriUtils.buildUriPath(RoleService.FACTORY_LINK, AuthRole
-                .PROJECT_MEMBER.buildRoleWithSuffix(projectId, Service.getId(membersUserGroupUri)));
+        String viewersResourceGroupUri = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_VIEWER.buildRoleWithSuffix(projectId));
 
-        String viewersRoleUri = UriUtils.buildUriPath(RoleService.FACTORY_LINK, AuthRole
-                .PROJECT_VIEWER.buildRoleWithSuffix(projectId, Service.getId(viewersUserGroupUri)));
+        String extendedResourceGroupUri = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId));
+
+        String adminsRoleUri = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
+                AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(projectId));
+
+        String membersRoleUri = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
+                AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(projectId));
+
+        String extendedMembersRoleUri = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
+                AuthRole.PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId));
+
+        String viewersRoleUri = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
+                AuthRole.PROJECT_VIEWER.buildRoleWithSuffix(projectId));
 
         return DeferredResult.allOf(
                 // First remove groups from user states
                 removeProjectDefaultGroupFromUserStates(adminsUserGroupUri, delete.getUri()),
                 removeProjectDefaultGroupFromUserStates(membersUserGroupUri, delete.getUri()),
-                removeProjectDefaultGroupFromUserStates(viewersUserGroupUri, delete.getUri())
-                ).thenCompose((ignore) -> {
+                removeProjectDefaultGroupFromUserStates(viewersUserGroupUri, delete.getUri()))
+                .thenCompose((ignore) -> {
                     // Then delete the user groups
                     return DeferredResult.allOf(
-                            doDeleteDocument(adminsUserGroupUri, UserGroupState.class, delete.getUri()),
-                            doDeleteDocument(membersUserGroupUri, UserGroupState.class, delete.getUri()),
-                            doDeleteDocument(viewersUserGroupUri, UserGroupState.class, delete.getUri()));
+                            doDeleteDocument(adminsUserGroupUri, UserGroupState.class,
+                                    delete.getUri()),
+                            doDeleteDocument(membersUserGroupUri, UserGroupState.class,
+                                    delete.getUri()),
+                            doDeleteDocument(viewersUserGroupUri, UserGroupState.class,
+                                    delete.getUri()));
                 }).thenCompose((ignore) -> {
                     // Then delete the resource group
-                    return doDeleteDocument(resourceGroupUri, ResourceGroupState.class, delete.getUri());
+                    return DeferredResult.allOf(
+                            doDeleteDocument(adminsResourceGroupUri, ResourceGroupState.class,
+                                    delete.getUri()),
+                            doDeleteDocument(membersResourceGroupUri, ResourceGroupState.class,
+                                    delete.getUri()),
+                            doDeleteDocument(viewersResourceGroupUri, ResourceGroupState.class,
+                                    delete.getUri()),
+                            doDeleteDocument(extendedResourceGroupUri, ResourceGroupState.class,
+                                    delete.getUri()));
                 }).thenCompose((ignore) -> {
-                 // Then delete the groups
+                    // Then delete the groups
                     return DeferredResult.allOf(
                             doDeleteDocument(adminsRoleUri, RoleState.class, delete.getUri()),
                             doDeleteDocument(membersRoleUri, RoleState.class, delete.getUri()),
-                            doDeleteDocument(viewersRoleUri, RoleState.class, delete.getUri()));
+                            doDeleteDocument(viewersRoleUri, RoleState.class, delete.getUri()),
+                            doDeleteDocument(extendedMembersRoleUri, RoleState.class,
+                                    delete.getUri()));
                 });
     }
 
@@ -570,6 +645,61 @@ public class ProjectService extends StatefulService {
                 });
     }
 
+    private DeferredResult<Void> deleteDuplicatedRolesAndResourceGroups(ProjectState state) {
+        String projectId = Service.getId(state.documentSelfLink);
+        String defaultAdminsLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(projectId));
+        String defaultMembersLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(projectId));
+        String defaultViewersLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_VIEWER.buildRoleWithSuffix(projectId));
+
+        state.membersUserGroupLinks.remove(defaultMembersLink);
+        state.administratorsUserGroupLinks.remove(defaultAdminsLink);
+        state.viewersUserGroupLinks.remove(defaultViewersLink);
+
+        List<String> resourcesToRemove = new ArrayList<>();
+
+        // Duplicated roles.
+        for (String link : state.viewersUserGroupLinks) {
+            resourcesToRemove.add(UriUtils.buildUriPath(RoleService.FACTORY_LINK,
+                    AuthRole.PROJECT_VIEWER.buildRoleWithSuffix(projectId, Service.getId(link))));
+        }
+
+        for (String link : state.administratorsUserGroupLinks) {
+            resourcesToRemove.add(UriUtils.buildUriPath(RoleService.FACTORY_LINK,
+                    AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(projectId, Service.getId(link))));
+        }
+
+        for (String link : state.membersUserGroupLinks) {
+            resourcesToRemove.add(UriUtils.buildUriPath(RoleService.FACTORY_LINK,
+                    AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(projectId, Service.getId(link))));
+            resourcesToRemove.add(UriUtils.buildUriPath(RoleService.FACTORY_LINK,
+                    AuthRole.PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId,
+                            Service.getId(link))));
+            // Duplicated resource groups for extended members.
+            resourcesToRemove.add(UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
+                    AuthRole.PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId,
+                            Service.getId(link))));
+        }
+
+        List<DeferredResult<Operation>> results = new ArrayList<>();
+
+        for (String link : resourcesToRemove) {
+            Operation delete = Operation.createDelete(this, link)
+                    .setReferer(this.getUri());
+            results.add(sendWithDeferredResult(delete)
+                    .exceptionally(ex -> {
+                        logWarning("Error when deleting project resource %s: %s",
+                                link, Utils.toString(ex));
+                        return null;
+                    }));
+        }
+
+        return DeferredResult.allOf(results).thenAccept(ignore -> {
+        });
+    }
+
     private <T> DeferredResult<T> doDeleteDocument(String groupLink, Class<T> documentClass,
             URI referer) {
         return sendWithDeferredResult(Operation.createDelete(this, groupLink)
@@ -587,14 +717,14 @@ public class ProjectService extends StatefulService {
         if (groupState == null) {
             return DeferredResult.completed(null);
         }
-        return ProjectUtil.retrieveUserStatesForGroup(getHost(), groupState)
+        return ProjectUtil.retrieveUserStatesForGroup(this, groupState)
                 .thenCompose(userStates -> {
                     List<String> userLinks = userStates.stream()
                             .map(us -> Service.getId(us.documentSelfLink))
                             .collect(Collectors.toList());
                     return UserGroupsUpdater.create()
+                            .setService(this)
                             .setGroupLink(groupState.documentSelfLink)
-                            .setHost(getHost())
                             .setUsersToRemove(userLinks)
                             .update();
                 });
@@ -609,77 +739,80 @@ public class ProjectService extends StatefulService {
         template.id = "project-id";
         template.description = "project1";
         template.isPublic = true;
-        template.viewersUserGroupLinks = Collections.singletonList("viewers-group");
-        template.membersUserGroupLinks = Collections.singletonList("members-group");
-        template.administratorsUserGroupLinks = Collections.singletonList("admins-group");
+        template.viewersUserGroupLinks = Collections.singleton("viewers-group");
+        template.membersUserGroupLinks = Collections.singleton("members-group");
+        template.administratorsUserGroupLinks = Collections.singleton("admins-group");
 
         return template;
     }
 
     private void retrieveExpandedState(ProjectState simpleState, Operation get) {
-        ProjectUtil.expandProjectState(getHost(), simpleState, getUri())
-                .thenAccept((expandedState) -> get.setBody(expandedState))
+        ProjectUtil.expandProjectState(this, get, simpleState, getUri())
+                .thenAccept(get::setBody)
                 .whenCompleteNotify(get);
     }
 
     private void validateState(ProjectState state) {
         Utils.validateState(getStateDescription(), state);
-        AssertUtil.assertNotNullOrEmpty(state.name, ProjectState.FIELD_NAME_NAME);
+        validateProjectName(state.name);
     }
 
     private DeferredResult<ProjectState> createProjectUserGroups(ProjectState projectState) {
-        if (projectState.documentSelfLink.equals(DEFAULT_PROJECT_LINK)) {
-            return DeferredResult.completed(projectState);
-        }
 
         String projectId = Service.getId(projectState.documentSelfLink);
         UserGroupState membersGroupState = AuthUtil.buildProjectMembersUserGroup(projectId);
         UserGroupState adminsGroupState = AuthUtil.buildProjectAdminsUserGroup(projectId);
         UserGroupState viewersGroupState = AuthUtil.buildProjectViewersUserGroup(projectId);
 
-
         if (projectState.administratorsUserGroupLinks != null
                 && projectState.membersUserGroupLinks != null
                 && projectState.viewersUserGroupLinks != null
                 && projectState.administratorsUserGroupLinks.contains(
-                adminsGroupState.documentSelfLink)
+                        adminsGroupState.documentSelfLink)
                 && projectState.membersUserGroupLinks.contains(
-                membersGroupState.documentSelfLink)
+                        membersGroupState.documentSelfLink)
                 && projectState.viewersUserGroupLinks.contains(
                         viewersGroupState.documentSelfLink)) {
             // No groups to create
             return DeferredResult.completed(projectState);
         }
 
-
         if (projectState.administratorsUserGroupLinks == null) {
-            projectState.administratorsUserGroupLinks = new ArrayList<>();
+            projectState.administratorsUserGroupLinks = new HashSet<>();
         }
         if (projectState.membersUserGroupLinks == null) {
-            projectState.membersUserGroupLinks = new ArrayList<>();
+            projectState.membersUserGroupLinks = new HashSet<>();
         }
         if (projectState.viewersUserGroupLinks == null) {
-            projectState.viewersUserGroupLinks = new ArrayList<>();
+            projectState.viewersUserGroupLinks = new HashSet<>();
         }
 
         return DeferredResult.allOf(
                 createProjectUserGroup(projectState.administratorsUserGroupLinks, adminsGroupState),
                 createProjectUserGroup(projectState.membersUserGroupLinks, membersGroupState),
-                createProjectUserGroup(projectState.viewersUserGroupLinks, viewersGroupState))
-                .thenCompose((ignore) -> {
-                    return createProjectResourceGroup(projectState);
-                })
-                .thenCompose((resourceGroup) -> {
-                    return DeferredResult.allOf(
-                            createProjectAdminRole(projectState, resourceGroup.documentSelfLink),
-                            createProjectMemberRole(projectState, resourceGroup.documentSelfLink),
-                            createProjectViewerRole(projectState, resourceGroup.documentSelfLink));
-                }).thenCompose((ignore) -> {
-                    return DeferredResult.completed(projectState);
-                });
+                createProjectUserGroup(projectState.viewersUserGroupLinks, viewersGroupState),
+
+                createProjectResourceGroup(projectState, AuthRole.PROJECT_ADMIN)
+                    .thenCompose(resourceGroup -> createProjectAdminRole(projectState,
+                            resourceGroup.documentSelfLink, adminsGroupState.documentSelfLink)),
+
+                createProjectResourceGroup(projectState, AuthRole.PROJECT_MEMBER)
+                    .thenCompose(resourceGroup -> createProjectMemberRole(projectState,
+                            resourceGroup.documentSelfLink, membersGroupState.documentSelfLink)),
+
+                createProjectResourceGroup(projectState, AuthRole.PROJECT_MEMBER_EXTENDED)
+                    .thenCompose(resourceGroup -> createProjectExtendedMemberRole(projectState,
+                            resourceGroup.documentSelfLink, membersGroupState.documentSelfLink)),
+
+                createProjectResourceGroup(projectState, AuthRole.PROJECT_VIEWER)
+                    .thenCompose(resourceGroup -> createProjectViewerRole(projectState,
+                            resourceGroup.documentSelfLink, viewersGroupState.documentSelfLink)))
+
+                .thenApply(ignore -> projectState);
     }
 
-    private DeferredResult<Void> createProjectUserGroup(List<String> addTo, UserGroupState groupState) {
+    private DeferredResult<Void> createProjectUserGroup(Set<String> addTo,
+            UserGroupState groupState) {
         AssertUtil.assertNotNull(addTo, "addTo");
         AssertUtil.assertNotNull(groupState, "groupState");
 
@@ -693,81 +826,103 @@ public class ProjectService extends StatefulService {
 
     }
 
-    private DeferredResult<ResourceGroupState> createProjectResourceGroup(ProjectState projectState) {
+    private DeferredResult<ResourceGroupState> createProjectResourceGroup(ProjectState projectState,
+            AuthRole role) {
         String projectId = Service.getId(projectState.documentSelfLink);
-        ResourceGroupState resourceGroupState = AuthUtil.buildProjectResourceGroup(projectId);
+        ResourceGroupState resourceGroupState;
+
+        switch (role) {
+        case PROJECT_ADMIN:
+            resourceGroupState = AuthUtil.buildProjectAdminResourceGroup(projectId);
+            break;
+        case PROJECT_VIEWER:
+            resourceGroupState = AuthUtil.buildProjectViewerResourceGroup(projectId);
+            break;
+        case PROJECT_MEMBER:
+            resourceGroupState = AuthUtil.buildProjectMemberResourceGroup(projectId);
+            break;
+        case PROJECT_MEMBER_EXTENDED:
+            resourceGroupState = AuthUtil.buildProjectExtendedMemberResourceGroup(projectId);
+            break;
+        default:
+            String message = String.format("%s is not project role.", role.name());
+            throw new IllegalStateException(message);
+        }
 
         return getHost().sendWithDeferredResult(
                 buildCreateResourceGroupOperation(resourceGroupState), ResourceGroupState.class);
     }
 
-    private DeferredResult<List<RoleState>> createProjectAdminRole(ProjectState projectState,
-            String resourceGroupLink) {
+    private DeferredResult<RoleState> createProjectAdminRole(ProjectState projectState,
+            String resourceGroupLink, String userGroupLink) {
         String projectId = Service.getId(projectState.documentSelfLink);
 
-        List<DeferredResult<RoleState>> deferredResultRoles = projectState.administratorsUserGroupLinks
-                .stream().map((userGroupLink) -> {
-                    RoleState projectAdminRoleState = AuthUtil.buildProjectAdminsRole(projectId,
-                            userGroupLink, resourceGroupLink);
-                    return getHost().sendWithDeferredResult(
-                            buildCreateRoleOperation(projectAdminRoleState), RoleState.class);
-                }).collect(Collectors.toList());
+        RoleState projectAdminRoleState = AuthUtil.buildProjectAdminsRole(projectId,
+                userGroupLink, resourceGroupLink);
 
-        return DeferredResult.allOf(deferredResultRoles);
+        return getHost().sendWithDeferredResult(
+                buildCreateRoleOperation(projectAdminRoleState), RoleState.class);
+
     }
 
-    private DeferredResult<List<RoleState>> createProjectMemberRole(ProjectState projectState,
-            String resourceGroupLink) {
+    private DeferredResult<RoleState> createProjectMemberRole(ProjectState projectState,
+            String resourceGroupLink, String userGroupLink) {
         String projectId = Service.getId(projectState.documentSelfLink);
 
-        List<DeferredResult<RoleState>> deferredResultRoles = projectState.membersUserGroupLinks
-                .stream().map((userGroupLink) -> {
-                    RoleState projectMemberRoleState = AuthUtil.buildProjectMembersRole(projectId,
-                            userGroupLink, resourceGroupLink);
-                    return getHost().sendWithDeferredResult(
-                            buildCreateRoleOperation(projectMemberRoleState), RoleState.class);
-                }).collect(Collectors.toList());
+        RoleState projectMemberRoleState = AuthUtil.buildProjectMembersRole(projectId,
+                userGroupLink, resourceGroupLink);
 
-        return DeferredResult.allOf(deferredResultRoles);
+        return getHost().sendWithDeferredResult(
+                buildCreateRoleOperation(projectMemberRoleState), RoleState.class);
     }
 
-    private DeferredResult<List<RoleState>> createProjectViewerRole(ProjectState projectState,
-            String resourceGroupLink) {
+    private DeferredResult<RoleState> createProjectExtendedMemberRole(ProjectState projectState,
+            String resourceGroupLink, String userGroupLink) {
         String projectId = Service.getId(projectState.documentSelfLink);
 
-        List<DeferredResult<RoleState>> deferredResultRoles = projectState.viewersUserGroupLinks
-                .stream().map((userGroupLink) -> {
-                    RoleState projectViewerRoleState = AuthUtil.buildProjectViewersRole(projectId,
-                            userGroupLink, resourceGroupLink);
-                    return getHost().sendWithDeferredResult(
-                            buildCreateRoleOperation(projectViewerRoleState), RoleState.class);
-                }).collect(Collectors.toList());
+        RoleState projectMemberRoleState = AuthUtil.buildProjectExtendedMembersRole(projectId,
+                userGroupLink, resourceGroupLink);
 
-        return DeferredResult.allOf(deferredResultRoles);
+        return getHost().sendWithDeferredResult(
+                buildCreateRoleOperation(projectMemberRoleState), RoleState.class);
+    }
+
+    private DeferredResult<RoleState> createProjectViewerRole(ProjectState projectState,
+            String resourceGroupLink, String userGroupLink) {
+        String projectId = Service.getId(projectState.documentSelfLink);
+
+        RoleState projectViewerRoleState = AuthUtil.buildProjectViewersRole(projectId,
+                userGroupLink, resourceGroupLink);
+
+        return getHost().sendWithDeferredResult(
+                buildCreateRoleOperation(projectViewerRoleState), RoleState.class);
     }
 
     private Operation buildCreateUserGroupOperation(UserGroupState state) {
         return Operation.createPost(getHost(), UserGroupService.FACTORY_LINK)
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
                 .setReferer(getHost().getUri())
                 .setBody(state);
     }
 
     private Operation buildCreateResourceGroupOperation(ResourceGroupState state) {
         return Operation.createPost(getHost(), ResourceGroupService.FACTORY_LINK)
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
                 .setReferer(getHost().getUri())
                 .setBody(state);
     }
 
     private Operation buildCreateRoleOperation(RoleState state) {
         return Operation.createPost(getHost(), RoleService.FACTORY_LINK)
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
                 .setReferer(getHost().getUri())
                 .setBody(state);
     }
 
-    private DeferredResult<Long> generateProjectIndex() {
-        long random = ProjectUtil.generateRandomUnsignedInt();
+    private DeferredResult<Integer> generateProjectIndex() {
+        int random = ProjectUtil.generateRandomInt();
 
-        return isProjectIndexUsed(random)
+        return claimProjectIndex(random)
                 .thenCompose(isUsed -> {
                     if (!isUsed) {
                         return DeferredResult.completed(random);
@@ -776,62 +931,53 @@ public class ProjectService extends StatefulService {
                 });
     }
 
-    private DeferredResult<Boolean> isProjectNameUsed(String name, String currentStateSelfLink) {
-        if (name == null || name.isEmpty()) {
-            return DeferredResult.completed(false);
-        }
-        DeferredResult<Boolean> result = new DeferredResult<>();
+    private DeferredResult<Boolean> claimProjectName(String name) {
 
-        List<ProjectState> foundProjects = new ArrayList<>();
-
-        Query query = ProjectUtil.buildQueryForProjectsFromName(name, currentStateSelfLink);
-
-        QueryTask queryTask = QueryUtil.buildQuery(ProjectState.class, true, query);
-        QueryUtil.addExpandOption(queryTask);
-
-        new ServiceDocumentQuery<>(getHost(), ProjectState.class).query(queryTask, (r) -> {
-            if (r.hasException()) {
-                result.fail(r.getException());
-            } else if (r.hasResult()) {
-                foundProjects.add(r.getResult());
-            } else {
-                if (foundProjects.isEmpty()) {
-                    result.complete(false);
-                } else {
-                    result.complete(true);
-                }
-            }
-        });
-
-        return result;
+        return UniquePropertiesUtil.claimProperty(this,
+                UniquePropertiesService.PROJECT_NAMES_ID, name);
     }
 
-    private DeferredResult<Boolean> isProjectIndexUsed(long random) {
+    private DeferredResult<Void> freeProjectName(String name) {
 
-        DeferredResult<Boolean> result = new DeferredResult<>();
+        return UniquePropertiesUtil.freeProperty(this,
+                UniquePropertiesService.PROJECT_NAMES_ID, name)
+                .exceptionally(ex -> {
+                    logWarning("Unable to free name %s: %s", name, Utils.toString(ex));
+                    return null;
+                });
 
-        List<ProjectState> foundProjects = new ArrayList<>();
+    }
 
-        Query query = ProjectUtil.buildQueryForProjectsFromProjectIndex(random);
+    private DeferredResult<Boolean> updateClaimedProjectName(String newName, String oldName) {
+        return UniquePropertiesUtil.updateClaimedProperty(this,
+                UniquePropertiesService.PROJECT_NAMES_ID, newName, oldName);
+    }
 
-        QueryTask queryTask = QueryUtil.buildQuery(ProjectState.class, true, query);
-        QueryUtil.addExpandOption(queryTask);
+    private DeferredResult<Boolean> claimProjectIndex(int index) {
 
-        new ServiceDocumentQuery<>(getHost(), ProjectState.class).query(queryTask, (r) -> {
-            if (r.hasException()) {
-                result.fail(r.getException());
-            } else if (r.hasResult()) {
-                foundProjects.add(r.getResult());
-            } else {
-                if (foundProjects.isEmpty()) {
-                    result.complete(false);
-                } else {
-                    result.complete(true);
-                }
-            }
-        });
+        return UniquePropertiesUtil.claimProperty(this,
+                UniquePropertiesService.PROJECT_INDEXES_ID, Integer.toString(index));
+    }
 
-        return result;
+    private DeferredResult<Void> freeProjectIndex(int index) {
+        if (index < 0) {
+            return DeferredResult.completed(null);
+        }
+
+        return UniquePropertiesUtil.freeProperty(this,
+                UniquePropertiesService.PROJECT_INDEXES_ID, Integer.toString(index))
+                .exceptionally(ex -> {
+                    logWarning("Unable to free project index %d: %s",
+                            index, Utils.toString(ex));
+                    return null;
+                });
+
+    }
+
+    private DeferredResult<Boolean> updateClaimedProjectIndex(int newIndex, int oldIndex) {
+        return UniquePropertiesUtil.updateClaimedProperty(this,
+                UniquePropertiesService.PROJECT_INDEXES_ID, Integer.toString(newIndex),
+                Integer.toString(oldIndex));
     }
 
     private ProjectState handleProjectIndex(long projectIndex, ProjectState state) {
@@ -842,11 +988,12 @@ public class ProjectService extends StatefulService {
         // In case it's the default project do not override the index.
         if (state.customProperties.containsKey(CUSTOM_PROPERTY_PROJECT_INDEX)
                 && state.customProperties.get(CUSTOM_PROPERTY_PROJECT_INDEX)
-                .equalsIgnoreCase(DEFAULT_PROJECT_INDEX)) {
+                        .equalsIgnoreCase(DEFAULT_PROJECT_INDEX)) {
             return state;
         }
         state.customProperties.put(CUSTOM_PROPERTY_PROJECT_INDEX,
                 Long.toString(projectIndex));
         return state;
     }
+
 }

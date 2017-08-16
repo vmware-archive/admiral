@@ -163,6 +163,8 @@ public class CompositeComponentService extends StatefulService {
             currentState.componentLinks = PropertyUtils.mergeLists(currentState.componentLinks,
                     patchBody.componentLinks);
         }
+        currentState.tenantLinks = PropertyUtils.mergeLists(currentState.tenantLinks,
+                patchBody.tenantLinks);
 
         String newSignature = Utils.computeSignature(currentState, docDesc);
 

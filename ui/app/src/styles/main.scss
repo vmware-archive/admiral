@@ -1,5 +1,5 @@
 @import "font-awesome.css";
-@import "components/clarity-overrides";
+@import "clarity-bootstrap-gap";
 @import "node_modules/admiral-ui-common/css/variables";
 @import "node_modules/admiral-ui-common/css/mixins";
 
@@ -11,8 +11,7 @@
 @import "tokenfield-typeahead.css";
 @import "node_modules/admiral-ui-common/css/tokenfield-override";
 
-@import "clarity-bootstrap-gap";
-@import "clarity-ui.min.css";
+
 @import "radialProgress.css";
 
 @import "components/machine-details";
@@ -23,6 +22,7 @@
 @import "components/closures-request";
 @import "components/profile";
 @import "node_modules/admiral-ui-common/css/query-search";
+@import "node_modules/admiral-ui-common/css/dropdown";
 @import "components/networks";
 @import "components/volumes";
 @import "components/resource-links";
@@ -583,100 +583,6 @@ $main-list-view-right: 10px;
   margin: 12px 0;
 }
 
-.form-group .dropdown-holder {
-  @extend .form-control;
-  padding: 0;
-}
-
-.form-group .dropdown button, .form-group .dropdown .dropdown-menu {
-  width: 100%;
-  max-width: 100%;
-}
-
-.form-group .dropdown .dropdown-menu {
-  .search-input {
-    margin-bottom: 20px;
-  }
-}
-
-.form-group .dropdown {
-  width: 100%;
-  .dropdown-toggle {
-    width: 100%;
-    max-width: 100%;
-    padding-right: 10px;
-
-    .loading {
-      width: 18px;
-      float: left;
-      margin-left: 5px;
-    }
-
-    .dropdown-title {
-      float: left;
-      color: #333;
-      span {
-        color: #999;
-        margin: 0;
-      }
-    }
-
-    .dropdown-title.placeholder {
-      color: #999 !important;
-    }
-
-    .caret {
-      float: right;
-      margin-top: 15px;
-    }
-  }
-}
-
-.form-group .dropdown .dropdown-search {
-  margin-left: 15px;
-  margin-right: 15px;
-}
-
-.form-group .help-block:empty {
-  margin: 0;
-  display: none;
-}
-
-.form-group .dropdown .dropdown-options, .form-group .dropdown .dropdown-manage {
-  display: block;
-  border: none;
-  @include box-shadow(none);
-  position: relative;
-  max-height: $search-result-list-max-height;
-  overflow-y: auto;
-  font-size: 15px;
-
-  > li {
-    display: block;
-  }
-}
-
-.form-group .dropdown .divider {
-  width: 100%;
-}
-
-.form-group .dropdown .dropdown-manage li {
-  position: relative;
-  padding-left: 0;
-}
-
-.form-group .dropdown .dropdown-manage li > a {
-  margin-left: 0;
-  position: relative;
-  padding: 5px 0 5px 41px;
-}
-
-.form-group .dropdown .dropdown-manage li > a > .fa {
-  position: absolute;
-  top: 10px;
-  left: 20px;
-}
-
 #connectionType .form-input-group {
   line-height: 2.5em;
 }
@@ -826,6 +732,7 @@ $main-list-view-right: 10px;
 .compute-edit-view,
 .profile-edit-view,
 .machine-edit-view,
+.instance-type-edit-view,
 .registry-view {
   > .main-panel {
     @extend .position-expand;
@@ -843,6 +750,7 @@ $main-list-view-right: 10px;
 .endpoints-view.right-context-expanded,
 .compute-edit-view.right-context-expanded,
 .profile-edit-view.right-context-expanded,
+.instance-type-edit-view.right-context-expanded,
 .machine-edit-view.right-context-expanded,
 .registry-view.right-context-expanded {
   > .main-panel {
@@ -887,7 +795,8 @@ $main-list-view-right: 10px;
   }
 }
 
-.profile-edit-view {
+.profile-edit-view,
+.instance-type-edit-view {
   > .main-panel {
     @extend .position-expand;
     background-color: $context-view-background-color;
@@ -1962,56 +1871,6 @@ $alert-text-color: #ffffff;
   color: $brand-danger;
 }
 
-.provisionGroup {
-  margin-top: 0px;
-  margin-bottom: 0px;
-  display: flex;
-
-  label {
-    color: $main_color;
-    font-weight: normal;
-  }
-
-  $input-height-small: 30px;
-
-  select {
-    color: $main_color;
-    font-weight: normal;
-
-    height: $input-height-small;
-    line-height: $input-height-small;
-
-    flex: 0 1 50%;
-    margin: 3px 5px 0 0;
-
-    background-color: #fff;
-    border: 1px solid $main_color;
-    border-radius: 1px;
-
-    option {
-      color: $main_color;
-    }
-  }
-
-  button {
-    flex: 0 1 50%;
-    margin: 0;
-  }
-
-  .btn-circle {
-    margin-left: 5px;
-    width: 30px;
-    min-width: 30px;
-    height: 30px;
-    line-height: 26px;
-    border-width: 2px;
-    border-radius: 16px;
-    text-align: center;
-    padding: 0;
-    background-color: #fff;
-  }
-}
-
 .title-second-day-operations {
   display: inline;
   border-bottom: 1px solid #9a9a9a;
@@ -2061,42 +1920,6 @@ $alert-text-color: #ffffff;
     position: absolute;
     top: 6px;
     right: 10px;
-  }
-}
-
-.app-view .search-input, .app-view .image-tags-input, .app-view .multicolumn-inputs-list .search-input {
-  position: relative;
-
-  input, .twitter-typeahead input {
-    padding-left: 30px;
-    width: 100%;
-  }
-
-  input:not(.tt-input) {
-  }
-
-  .search-input span, .image-tags-input span {
-    left: 0;
-  }
-
-  .loader-inline, .search-hint {
-    z-index: 1;
-    left: 5px;
-    bottom: 10px;
-    position: absolute;
-  }
-
-  .loader-inline {
-    display: none;
-  }
-}
-
-.app-view .search-input.loading, .app-view .image-tags-input.loading {
-  .loader-inline {
-    display: block;
-  }
-  .search-hint {
-    display: none;
   }
 }
 
@@ -2459,4 +2282,12 @@ $request-graph-header-color: #0b40c8;
   thead, td {
     opacity: 1 !important;
   }
+}
+
+.default-option {
+  color: #999;
+}
+
+.persistence-radio-group {
+  margin-left: 15px;
 }

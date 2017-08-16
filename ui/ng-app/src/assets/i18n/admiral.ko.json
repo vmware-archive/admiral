@@ -1,0 +1,296 @@
+{
+  "projects": {
+    "title": "프로젝트",
+    "project": "프로젝트",
+    "users": "사용자",
+    "administrators": "관리자",
+    "projectRegistry": "프로젝트 레지스트리",
+    "public": "공용",
+    "publicDescription": "프로젝트 레지스트리에 대한 공용 액세스",
+    "private": "전용",
+    "clusters": "클러스터",
+    "repositories": "저장소",
+    "infrastructure": "인프라",
+    "registryReplication": "레지스트리 복제",
+    "configuration": "구성",
+    "edit": {
+      "titleNew": "새 프로젝트",
+      "titleEdit": "프로젝트 편집",
+      "name": "이름",
+      "nameRequired": "이름은 필수입니다.",
+      "description": "설명"
+    },
+    "delete": {
+      "title": "프로젝트 제거",
+      "confirmation": "{{projectName}} 프로젝트 제거 확인. 구성원 및 클러스터가 프로젝트와 연결이 끊어집니다. 이 작업은 실행 취소할 수 없습니다."
+    },
+    "summary": {
+      "title": "요약",
+      "type": "유형:",
+      "creationDate": "생성일:",
+      "team": {
+        "title": "프로젝트 팀",
+        "administrators": "프로젝트 관리자:",
+        "members": "개발자:",
+        "viewers": "뷰어",
+        "users": "사용자"
+      },
+      "repositories": {
+        "title": "프로젝트 저장소",
+        "repositories": "저장소:"
+      },
+      "resources": {
+        "title": "프로젝트 리소스",
+        "clusters": "클러스터:",
+        "templates": "애플리케이션 템플릿:",
+        "images": "이미지:"
+      }
+    },
+    "members": {
+      "title": "구성원",
+      "columnName": "이름",
+      "columnPrimaryId": "기본 ID",
+      "columnSource": "소스",
+      "columnRole": "역할",
+      "count": "구성원",
+      "addMembers": {
+        "title": "사용자 및 그룹 추가",
+        "description": "ID 또는 이메일로 사용자 및 그룹을 {{projectName}}에 추가합니다.",
+        "fieldTitleId": "ID 또는 이메일",
+        "fieldRequiredId": "ID는 필수입니다.",
+        "searchPlaceholder": "사용자 검색",
+        "fieldTitleRole": "프로젝트에서의 역할"
+      },
+      "editMember": {
+        "title": "프로젝트에서 구성원 역할 편집",
+        "description": "{{projectName}} 프로젝트에서 {{memberId}} 구성원 역할을 편집합니다."
+      },
+      "roles": {
+        "administrator": "DevOps 관리자",
+        "member": "개발자",
+        "viewer": "뷰어"
+      },
+      "source": {
+        "local": "로컬"
+      },
+      "deleteMember": {
+        "title": "프로젝트에서 구성원 제거",
+        "confirmation": "이 프로젝트에서 구성원을 제거하시겠습니까?"
+      }
+    },
+    "config": {
+      "title": "구성",
+      "projectRegistry": "프로젝트 레지스트리",
+      "public": "공용",
+      "publicDescription": "프로젝트 레지스트리를 공용으로 만들면 누구나 모든 저장소에 액세스할 수 있습니다.",
+      "deploymentSecurity": "배포 보안",
+      "enableContentTrust": "컨텐츠 신뢰 사용",
+      "enableContentTrustDescription": "확인된 이미지만 배포하도록 허용합니다.",
+      "preventVulnerableImagesFromRunning": "공격에 취약한 이미지 실행 방지",
+      "preventVulnerableImagesFromRunningDescription_part1": "취약성 심각도가",
+      "preventVulnerableImagesFromRunningDescription_part2": "이상인 이미지가 배포되지 않도록 방지합니다.",
+      "vulnerabilityScanning": "취약성 검색",
+      "automaticallyScanImagesOnPush": "푸시될 때 자동으로 이미지 검색",
+      "automaticallyScanImagesOnPushDescription": "이미지가 프로젝트 레지스트리에 푸시될 때 이미지를 자동으로 검색합니다."
+    },
+    "search": {
+      "placeholder": "프로젝트 검색"
+    },
+    "actions": {
+      "title": "프로젝트",
+      "details": "세부 정보",
+      "makePublic": "공용으로 전환",
+      "makePrivate": "전용으로 전환",
+      "addUsersAndGroups": "사용자 및 그룹 추가",
+      "addClusters": "클러스터 추가"
+    }
+  },
+  "registries": {
+    "title": "레지스트리",
+    "sourceRegistries": "소스 레지스트리",
+    "replicationEndpoints": "복제 끝점",
+    "replicationRules": "복제 규칙"
+  },
+  "clusters": {
+    "title": "클러스터",
+    "cluster": "클러스터",
+    "new": "새로 만들기",
+    "status": "상태",
+    "state": {
+      "ON": "켜짐",
+      "OFF": "꺼짐",
+      "DISABLED": "사용 안 함",
+      "WARNING": "주의"
+    },
+    "type": "유형",
+    "containers": "컨테이너",
+    "cpu": "CPU",
+    "memory": "메모리",
+    "summary": {
+      "title": "요약",
+      "address": "주소:",
+      "adminPortal": "관리 포털:",
+      "type": "유형:",
+      "clusterOverview": "클러스터 개요",
+      "clusterResources": "클러스터 리소스",
+      "status": "상태:",
+      "creationDate": "생성일:",
+      "containersCount": "컨테이너:",
+      "cpu": "vCPU:",
+      "memory": "메모리:"
+    },
+    "resources": {
+      "addHostButton": "호스트",
+      "title": "리소스",
+      "address": "주소",
+      "status": "상태",
+      "containersCount": "컨테이너",
+      "memory": "메모리",
+      "cpu": "CPU",
+      "addHost": {
+        "title": "호스트 추가",
+        "address": "주소",
+        "addressRequired": "주소는 필수입니다."
+      }
+    },
+    "edit": {
+      "titleNew": "새 클러스터",
+      "titleEdit": "클러스터 편집",
+      "name": "이름",
+      "nameRequired": "이름은 필수입니다.",
+      "description": "설명",
+      "type": "유형",
+      "url": "URL",
+      "urlRequired": "클러스터 URL은 필수입니다.",
+      "credentials": "자격 증명"
+    },
+    "delete": {
+      "title": "클러스터 제거",
+      "confirmation": "{{clusterName}} 클러스터 제거 확인. 이 작업은 실행 취소할 수 없습니다."
+    }
+  },
+  "hosts": {
+    "delete":{
+      "title": "호스트 제거",
+      "confirmation": "{{hostName}} 호스트 제거 확인. 이 작업은 실행 취소할 수 없습니다."
+    },
+    "state": {
+      "ON": "켜짐",
+      "OFF": "꺼짐",
+      "UNKNOWN": "알 수 없음",
+      "SUSPEND": "사용 안 함"
+    }
+  },
+  "logs": {
+    "title": "로그",
+    "system": {
+      "title": "시스템",
+      "columnLogEntry": "로그 항목",
+      "columnSeverity": "심각도",
+      "columnTimeStamp": "타임 스탬프",
+      "entriesCount": "로그 항목"
+    },
+    "registry": {
+      "title": "레지스트리"
+    },
+    "event": {
+      "type": {
+          "info": "정보",
+          "warning": "주의",
+          "error": "오류"
+      }
+    }
+  },
+  "identity": {
+    "title": "ID 관리",
+    "credentials": "자격 증명",
+    "certificates": "인증서",
+    "usersgroups": {
+      "title": "사용자 및 그룹",
+      "description": "사용자 및 그룹을 시스템으로 가져옵니다. 그런 다음 사용자 또는 그룹에 프로젝트 역할을 할당합니다. 사용자를 글로벌 클라우드 관리자로 만들 수도 있습니다.",
+      "fieldTitleSearch": "사용자/그룹 검색",
+      "columnName": "사용자/그룹 이름",
+      "columnPrimaryId": "기본 ID",
+      "columnCloudAdmin": "클라우드 관리자",
+      "columnProjects": "프로젝트",
+      "count": "사용자/그룹",
+      "notFound": "사용자 없음",
+      "assignRoleInProject": {
+      "description": "사용자/그룹 {{principal}}에 대한 프로젝트 및 역할을 설정합니다."
+      }
+    }
+  },
+  "configuration": {
+    "title": "구성",
+    "registry": "레지스트리"
+  },
+  "errors": {
+    "itemNotFound": "항목이 없습니다."
+  },
+  "certificate": {
+    "certificateWarning": "{{address}}에 대한 인증서가 유효하지 않습니다. {{address}}(으)로 가장하는 웹 사이트에 연결하는 중일 수 있으며 이 경우 기밀 정보가 위험에 처할 수 있습니다. 그래도 웹 사이트에 연결하시겠습니까?",
+    "show": "인증서 표시",
+    "hide": "인증서 숨김",
+    "validateTitle": "인증서 확인",
+    "details": {
+      "commonName": "일반 이름",
+      "issuerName": "발급자 이름",
+      "serial": "일련 번호",
+      "fingerprint": "SHA 지문",
+      "validSince": "유효 기간 시작",
+      "validTo": "유효 기간 종료"
+    }
+  },
+  "tagDetails": {
+    "affectedContainers": "영향받은 컨테이너"
+  },
+  "edit": "편집",
+  "save": "저장",
+  "add": "추가",
+  "yes": "예",
+  "remove": "제거",
+  "delete": "삭제",
+  "cancel": "취소",
+  "unknown": "알 수 없음",
+  "assignRoles": "역할 할당 ",
+  "makeAdmin": " 관리자로 전환",
+  "noItems": "항목 없음",
+  "reload": "다시 로드",
+  "sessionExpired": "세션이 더 이상 유효하지 않습니다. 다시 로그인하십시오!",
+  "compute": {
+    "resources": "리소스",
+    "policies": "정책",
+    "deployments": "배포",
+    "endpoints": {
+      "title": "끝점"
+    },
+    "compute": {
+      "title": "계산 리소스"
+    },
+    "profiles": {
+      "title": "프로파일"
+    },
+    "flavors": {
+      "title": "플레이버 프로파일",
+      "edit": "편집",
+      "delete": {
+        "action": "삭제",
+        "title": "플레이버 프로파일 삭제"
+      },
+      "endpoint": "끝점",
+      "flavors": "플레이버"
+    },
+    "placements": {
+      "title": "배치"
+    },
+    "placementZones": {
+      "title": "배치 영역"
+    },
+    "machines": {
+      "title": "시스템"
+    },
+    "networks": {
+      "title": "네트워크"
+    }
+  }
+}

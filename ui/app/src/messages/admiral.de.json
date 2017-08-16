@@ -72,7 +72,7 @@
         "tagsPlaceholder": "Beispiel: location:west",
         "tagsHint": "Schlüssel:Wert-Tags eingeben",
         "autoConfigure": "Automatisch konfigurieren",
-        "autoConfigureInput":"Automatische Hostkonfiguration aktivieren",
+        "autoConfigureInput": "Automatische Hostkonfiguration aktivieren",
         "autoConfigureHint": "Mit dieser Option wird die Docker-Remote-API an der angegebenen Adresse und dem angegebenen Port mit selbstsignierten Zertifikaten erstellt. Dies erfolgt einmalig über SSH. Folgende Betriebssysteme werden unterstützt: CoreOS, PhotonOS, Ubuntu Server 16.04 oder höher.",
         "reservationPolicy": "Reservierungsrichtlinie",
         "endpoint": "Endpoint",
@@ -85,6 +85,7 @@
         "update": "Aktualisieren",
         "create": "Erstellen",
         "certificateWarning": "Das Zertifikat für {{address}} ist ungültig. Sie stellen möglicherweise eine Verbindung zu einer Website her, die vorgibt, folgende zu sein: {{address}}. Damit könnten Ihre vertraulichen Daten einem Risiko ausgesetzt werden. Möchten Sie die Verbindung zu der Website dennoch herstellen?",
+        "trustedCertificate": "Das Zertifikat für {{address}} ist vertrauenswürdig.",
         "showCertificate": "Zertifikat anzeigen",
         "hideCertificate": "Zertifikat ausblenden",
         "manageCertificates": "Zertifikate verwalten",
@@ -109,7 +110,8 @@
         "searchPlaceholder": "Hosts suchen",
         "dataCollect": "Datenerfassung",
         "dataCollectStart": "Die Datenerfassung wird ausgelöst. Es kann einige Minuten dauern, bis der Vorgang abgeschlossen ist.",
-        "dataCollectEnd": "Datenerfassung wurde abgeschlossen."
+        "dataCollectEnd": "Datenerfassung wurde abgeschlossen.",
+        "create": "Host"
       },
       "actions": {
         "start": "Starten",
@@ -126,7 +128,7 @@
       "entity": "Platzierungszonen",
       "list": {
         "title": "Platzierungszonen",
-        "addButton": "Hinzufügen",
+        "addButton": "Platzierungszone",
         "nameColumn": "Name",
         "cpuColumn": "CPU",
         "memoryColumn": "Arbeitsspeicher",
@@ -160,7 +162,7 @@
       "contextPanelTooltip": "Projekte",
       "list": {
         "title": "Projekt",
-        "addButton": "Hinzufügen",
+        "addButton": "Projekt",
         "nameColumn": "Name",
         "details": {
           "title": "Projektdetails"
@@ -179,7 +181,7 @@
       "contextPanelTooltip": "Anmeldedaten",
       "list": {
         "title": "Anmeldedaten",
-        "addButton": "Hinzufügen",
+        "addButton": "Anmeldedaten",
         "nameColumn": "Name",
         "typeColumn": "Typ",
         "credentialsColumn": "Anmeldedaten"
@@ -209,7 +211,7 @@
       "contextPanelTooltip": "Bereitstellungsrichtlinien",
       "list": {
         "title": "Bereitstellungsrichtlinien",
-        "addButton": "Hinzufügen",
+        "addButton": "Richtlinie",
         "nameColumn": "Name",
         "descriptionColumn": "Beschreibung",
         "details": {
@@ -230,7 +232,7 @@
       "contextPanelTooltip": "Zertifikate",
       "list": {
         "title": "Zertifikate",
-        "addButton": "Hinzufügen",
+        "addButton": "Zertifikat",
         "nameColumn": "Name",
         "serialColumn": "Seriennummer",
         "shaColumn": "SHA",
@@ -259,8 +261,10 @@
       "list": {
         "title": "Beliebte Vorlagen",
         "titleSearch": "Gefundene Vorlagen",
+        "popularRepositories": "Beliebte Repositorys",
         "searchImagesTemplatesPlaceholder": "Images und Vorlagen suchen",
         "searchImagesPlaceholder": "Images suchen",
+        "searchRepositoriesPlaceholder": "Repositorys suchen",
         "searchTemplatesPlaceholder": "Vorlagen suchen",
         "searchClosuresPlaceholder": "Abschlüssen suchen",
         "manageRegistry": "Registrierungen verwalten",
@@ -283,7 +287,8 @@
           "all": "Alle",
           "images": "Images",
           "templates": "Vorlagen",
-          "closures": "Abschlüsse"
+          "closures": "Abschlüsse",
+          "repositories": "Repositorys"
         }
       },
       "details": {
@@ -333,12 +338,12 @@
           "ipamConfigGatewayHint": "Beispiel: 172.16.238.1",
           "customProperties": "Benutzerdefinierte Eigenschaften"
         },
-        "editClosures" :{
+        "editClosures": {
           "newTitle": "Abschluss hinzufügen",
           "editTitle": "Abschluss bearbeiten",
           "name": "Name"
         },
-        "editVolume" :{
+        "editVolume": {
           "newLabel": "Volume hinzufügen",
           "newTitle": "Volume hinzufügen",
           "newDropdownTitle": "Volume hinzufügen...",
@@ -349,9 +354,9 @@
           "driverOptions": {
             "label": "Treiberoptionen",
             "keyTitle": "Option",
-            "keyHint": "Beispiel: size",
+            "keyHint": "Beispiel: o",
             "valueTitle": "Wert",
-            "valueHint": "Beispiel: 20GB"
+            "valueHint": "Beispiel: Größe=100 m"
           },
           "existingVolume": "Vorhanden",
           "showingCount": "{{count}} von {{totalCount}} werden angezeigt",
@@ -416,7 +421,7 @@
     "placement": {
       "list": {
         "title": "Platzierungen",
-        "addButton": "Hinzufügen",
+        "addButton": "Platzierung",
         "nameColumn": "Name",
         "groupColumn": "Projekt",
         "businessGroupColumn": "Business-Gruppe",
@@ -465,7 +470,7 @@
     "registry": {
       "list": {
         "title": "Vorhandene Registrierungen",
-        "addButton": "Hinzufügen",
+        "addButton": "Registrierung",
         "addressColumn": "Adresse",
         "nameColumn": "Name",
         "statusColumn": "Status"
@@ -487,7 +492,7 @@
         "title": "Profile",
         "titleSearch": "Gefundene Profile",
         "searchPlaceholder": "Profile suchen",
-        "addButton": "Profil erstellen",
+        "addButton": "Profil",
         "addPropertyButton": "Eigenschaft hinzufügen",
         "nameColumn": "Name",
         "endpointTypeColumn": "Endpoint-Typ",
@@ -515,24 +520,131 @@
         "tagsPlaceholder": "Beispiel: compliance:yes",
         "endpointLabel": "Endpoint",
         "valueLabel": "Wert",
-        "instanceTypeMappingLabel": "Instanztyp",
+        "instanceTypeMappingLabel": "Typ",
+        "instanceTypeMappingDisplay": "{{cpuCount}} CPU(s), {{memoryInMB}} MB RAM, {{bootDiskSizeInMB}} MB Festplatte",
+        "instanceTypeMappingDisplayAWS": "{{cpuCount}} CPU(s), {{memoryInMB}} MB RAM, {{storageType}}-Speicher, {{networkType}}-Netzwerk",
         "imageMappingLabel": "Image-Typ",
-        "bootDiskPropertyMappingLabel": "Eigenschaft des Startdatenträgers",
+        "diskPropertyMappingLabel": "Festplatteneigenschaften",
         "cpuCountLabel": "CPUs",
-        "diskSizeMbLabel": "Festplattengröße (MB)",
-        "memoryMbLabel": "Arbeitsspeicher (MB)",
+        "memoryGbLabel": "Arbeitsspeicher (GB)",
+        "generalLabel": "Allgemein",
+        "existingLabel": "Vorhanden",
         "subnetworksLabel": "Subnetzwerke",
-        "isolationTypeLabel": "Isolierungstyp",
-        "isolationNetworkLabel": "Isolierungsnetzwerk",
+        "isolationLabel": "Isolierung",
+        "isolationTypeLabel": "Typ",
+        "isolationNetworkLabel": "Netzwerk",
         "noneIsolationTypeLabel": "Keine",
         "subnetIsolationTypeLabel": "Subnetzwerk",
-        "securityGroupIsolationTypeLabel": "Keine",
+        "securityGroupIsolationTypeLabel": "Sicherheitsgruppe",
+        "securityGroups": "Sicherheitsgruppen",
+        "vpc": "VPC",
         "cidrLabel": "CIDR",
         "cidrLabelHint": "0.0.0.0/0",
+        "cidrPrefixLabel": "Subnetzpräfixlänge",
+        "networkLabel": "Netzwerk",
+        "resourceGroupsLabel": "Ressourcengruppen",
         "supportPublicIpAddressLabel": "Öffentliche IP unterstützen",
-        "defaultForZoneLabel": "Standard für Zone"
+        "defaultForZoneLabel": "Standard für Zone",
+        "addStorageItem": "Speicherelement hinzufügen",
+        "defaultLabel": "Standard",
+        "makeDescriptorDefault": "Dieses Speicherelement als Standard",
+        "itemHeader": "Speicherelement",
+        "storage": {
+          "azure": {
+            "selectAccountLabel": "Konto auswählen",
+            "storageAccountTypeLabel": "Speicherkontotyp",
+            "osDiskCachingLabel": "BS-Festplatten-Zwischenspeicherung",
+            "dataDiskCachingLabel": "Datenfestplatten-Zwischenspeicherung",
+            "contextPanelTooltip": "Speicherkonten",
+            "typeLabel": "Typ",
+            "encryptionLabel": "Speicherdienstverschlüsselung",
+            "entityLabel": "Speicherkonten",
+            "list": {
+              "title": "Speicherkonten",
+              "nameColumn": "Name",
+              "typeColumn": "Typ",
+              "encryptionColumn": "Speicherdienstverschlüsselung",
+              "edit": {
+                "title": "Speicherkonto bearbeiten",
+                "nameLabel": "Kontoname",
+                "typeLabel": "Kontotyp",
+                "encryptionLabel": "Speicherdienstverschlüsselung"
+              }
+            }
+          },
+          "vsphere": {
+            "storagePolicyLabel": "Speicherrichtlinie",
+            "provisioningTypeLabel": "Bereitstellungstyp",
+            "datastoreLabel": "Datenspeicher",
+            "sharesLevelLabel": "Anteile-Ebene",
+            "sharesLabel": "Anteile",
+            "limitLabel": "Grenzwert IOPS",
+            "datastoreContextPanelTooltip": "Datenspeicher",
+            "storagePolicyContextPanelTooltip": "Speicherrichtlinien",
+            "datastoreEntityLabel": "Datenspeicher",
+            "storagePolicyEntityLabel": "Speicherrichtlinien",
+            "snapshotsLabel": "Snapshots",
+            "independentOfSnapshotsLabel": "Unabhängig von Snapshots",
+            "persistentLabel": "Dauerhaft",
+            "nonPersistentLabel": "Nicht dauerhaft",
+            "provisioningSelectDefault": "Bereitstellungstyp auswählen",
+            "sharesLevelDefault": "Anteile-Ebene auswählen",
+            "datastore": {
+              "typeLabel": "Typ",
+              "capacityLabel": "Kapazität",
+              "capacityUnit": "GB",
+              "list": {
+                "title": "Datenspeicher",
+                "nameColumn": "Name",
+                "typeColumn": "Typ",
+                "capacityColumn": "Kapazität (GB)",
+                "encryptionColumn": "Unterstützt Verschlüsselung",
+                "edit": {
+                  "title": "Datenspeicher bearbeiten",
+                  "nameLabel": "Datenspeicher",
+                  "typeLabel": "Typ",
+                  "encryptionLabel": "Unterstützt Verschlüsselung",
+                  "capacityLabel": "Kapazität (GB)"
+                }
+              }
+            },
+            "storagePolicy": {
+              "descriptionLabel": "Beschreibung",
+              "list": {
+                "title": "Speicherrichtlinien",
+                "nameColumn": "Name",
+                "descColumn": "Beschreibung",
+                "encryptionColumn": "Unterstützt Verschlüsselung",
+                "edit": {
+                  "title": "Speicherrichtlinie bearbeiten",
+                  "nameLabel": "Name",
+                  "descLabel": "Beschreibung",
+                  "customPropertiesLabel": "Benutzerdefinierte Eigenschaften",
+                  "customPropertiesTable": {
+                    "keyColumn": "Schlüssel",
+                    "valueColumn": "Wert"
+                  }
+                }
+              }
+            }
+          },
+          "aws": {
+            "volumeTypeLabel": "Volume-Typ",
+            "deviceTypeLabel": "Gerätetyp",
+            "iopsLabel": "Max. IOPS",
+            "iopsHint": "Je nach Festplattenkapazität können die tatsächlich bereitgestellten IOPS niedriger sein",
+            "fileSystemLabel": "Dateisystem",
+            "encryptedLabel": "Unterstützt Verschlüsselung"
+          }
+        },
+        "validation": {
+          "valueNotMoreThan": "Wert darf nicht höher sein als {{max}}",
+          "valueInRange": "Wert sollte im Bereich zwischen {{min}} und {{max}} liegen"
+        }
       },
       "instanceType": {
+        "addTitle": "Typprofil hinzufügen",
+        "editTitle": "Typprofil bearbeiten",
         "aws": {
           "small": "Klein (1 CPU, 1 GB Arbeitsspeicher)",
           "medium": "Mittel (1 CPU, 2 GB Arbeitsspeicher)",
@@ -559,12 +671,46 @@
         "coreos": "CoreOS",
         "photon": "Photon OS",
         "ubuntu-1604": "Ubuntu"
+      },
+      "azureStorageAccountType": {
+        "standardLRS": "Standard-LRS",
+        "standardZRS": "Standard-ZRS",
+        "standardGRS": "Standard-GRS",
+        "standardRAGRS": "Standard-RAGRS",
+        "premiumLRS": "Premium-LRS"
+      },
+      "azureDiskCachingType": {
+        "none": "Keine",
+        "readOnly": "Schreibgeschützt",
+        "readWrite": "Lesen/Schreiben"
+      },
+      "vsphereProvisioningTypes": {
+        "thin": "Thin",
+        "thick": "Thick",
+        "eagerZeroedThick": "Eager-Zeroed Thick"
+      },
+      "vsphereSharesLevel": {
+        "low": "Niedrig",
+        "normal": "Normal",
+        "high": "Hoch",
+        "custom": "Benutzerdefiniert"
+      },
+      "awsVolumeTypes": {
+        "gp2": "Allzweck-SSD (GP2)",
+        "io1": "SSD mit bereitgestellten IOPS (IO1)",
+        "sc1": "Selten genutzte HDD (SC1)",
+        "st1": "Für Durchsatz optimierte HDD (ST1)",
+        "standard": "Magnetisch"
+      },
+      "awsDeviceTypes": {
+        "ebs": "EBS",
+        "instanceStore": "Instanzenspeicher"
       }
     },
     "endpoint": {
       "list": {
         "title": "Endpoints",
-        "addButton": "Hinzufügen",
+        "addButton": "Endpoint",
         "nameColumn": "Name",
         "typeColumn": "Typ"
       },
@@ -576,6 +722,11 @@
         "privateKeyIdLabel": "Zugriffsschlüssel-ID",
         "privateKeyLabel": "Geheimer Zugriffsschlüssel",
         "regionIdLabel": "Regions-ID",
+        "collectLabel": "Datenerfassung",
+        "collectInventoryLabel": "Bestand erfassen",
+        "collectInventoryMessage": "Die Bestandserfassung wird ausgelöst. Es kann einige Minuten dauern, bis der Vorgang abgeschlossen ist.",
+        "collectImagesLabel": "Image-Typen erfassen",
+        "collectImagesMessage": "Die Image-Erfassung wird ausgelöst. Es kann einige Minuten dauern, bis der Vorgang abgeschlossen ist.",
         "azure": {
           "userLinkLabel": "Abonnement-ID",
           "tenantIdLabel": "Mandanten-ID"
@@ -585,7 +736,7 @@
           "privateKeyIdLabel": "Benutzername",
           "privateKeyLabel": "Kennwort",
           "regionIdLabel": "Datencenter",
-          "linkedEndpointLabel": "NSX-T-Endpoint"
+          "linkedEndpointLabel": "NSX-Endpoint"
         }
       },
       "entity": "Endpoint",
@@ -600,7 +751,7 @@
         "title": "Maschinen",
         "titleSearch": "Gefundene Maschinen",
         "searchPlaceholder": "Maschinen suchen",
-        "addButton": "Maschine erstellen"
+        "addButton": "Maschine"
       },
       "edit": {
         "addTitle": "Maschine erstellen",
@@ -611,6 +762,25 @@
         "loadButton": "Laden aus Datei",
         "importTemplateHint": "Zusammengesetzte Beschreibung, die eine oder mehrere Maschinenbeschreibungen enthält",
         "importPlaceholder": ""
+      },
+      "details": {
+        "propertyName": "Name",
+        "propertyValue": "Wert",
+        "general": {
+          "id": "ID",
+          "placementHost": "Platzierungs-Host",
+          "address": "Adresse",
+          "endpoint": "Endpoint",
+          "properties": "Eigenschaften",
+          "usages": "Nutzungen",
+          "powerState": "Betriebszustand",
+          "environment": "Umgebung",
+          "region": "Region",
+          "profile": "Profil"
+        },
+        "customProperties": {
+          "title": "Benutzerdefinierte Eigenschaften"
+        }
       }
     },
     "compute": {
@@ -621,22 +791,37 @@
         "searchPlaceholder": "Computing-Ressource suchen"
       },
       "details": {
-        "type": "Typ"
+        "type": "Typ",
+        "zone": "Verfügbarkeitsbereich",
+        "vm_host": "Region",
+        "clustercomputeresource": "Cluster",
+        "computeresource": "Host",
+        "endpoint": "Endpoint",
+        "hostsystem": "Host",
+        "resourcepool": "Ressourcenpool"
       },
       "edit": {
         "title": "Computing-Ressource bearbeiten",
         "nameLabel": "Name"
+      },
+      "actions": {
+        "details": "Details"
       }
     },
     "network": {
       "entity": "Netzwerk"
     },
+    "securityGroup": {
+      "entity": "Sicherheitsgruppe"
+    },
     "subnetwork": {
       "list": {
         "title": "Subnetzwerke",
-        "addButton": "Hinzufügen",
+        "addButton": "Subnetzwerk",
         "nameColumn": "Name",
-        "cidrColumn": "CIDR"
+        "cidrColumn": "CIDR",
+        "supportPublicIpAddressColumn": "Öffentliche IP unterstützen",
+        "networkColumn": "Netzwerk"
       },
       "edit": {
         "addNew": "Subnetzwerk hinzufügen",
@@ -668,7 +853,7 @@
           "connectedContainers": "Container",
           "parentHosts": "Hosts",
           "external": "Extern",
-          "create": "Netzwerk erstellen",
+          "create": "Netzwerk",
           "state": {
             "UNKNOWN": "UNBEKANNT",
             "PROVISIONING": "BEREITSTELLUNG",
@@ -682,26 +867,26 @@
           "description": "Beschreibung",
           "public": "Öffentlich",
           "private": "Privat",
-          "create": "Projekt erstellen",
+          "create": "Projekt",
           "actions": {
             "edit": "Bearbeiten",
             "remove": "Entfernen"
           }
         },
         "container": {
-          "create": "Container erstellen"
+          "create": "Container"
         },
         "application": {
-          "create": "Anwendung erstellen"
+          "create": "Anwendung"
         },
         "closure": {
-          "create": "Abschluss erstellen"
+          "create": "Abschluss"
         },
         "kubernetes": {
-          "create": "Erstellen"
+          "create": "Definition"
         },
         "volume": {
-          "create": "Volume erstellen",
+          "create": "Volume",
           "connectedDateLabel": "Verbunden",
           "driverLabel": "Treiber",
           "driverOptionsLabel": "Treiberoptionen",
@@ -750,7 +935,6 @@
     },
     "container": {
       "list": {
-        "title": "Elemente",
         "titleSearchContainers": "Gefundene Container",
         "titleSearchApplications": "Gefundene Anwendungen",
         "searchPlaceholder": "Container suchen",
@@ -778,7 +962,10 @@
           "all": "Alle",
           "containers": "Container",
           "applications": "Anwendungen"
-        }
+        },
+        "columnName": "Container",
+        "columnStatus": "Status",
+        "columnRunningSince": "Wird ausgeführt seit"
       },
       "details": {
         "usages": "Nutzungen",
@@ -977,12 +1164,12 @@
           },
           "logConfigOptions": "Optionen",
           "logConfigOptionsDescription": "Unterstützte Optionen für jeden Protokollierungstreiber",
-          "logConfigOptionsInputs" : {
+          "logConfigOptionsInputs": {
             "name": "Name",
             "nameHint": "Beispiel: max-size",
             "value": "Wert",
             "valueHint": "Beispiel: 10m"
-           }
+          }
         }
       },
       "state": {
@@ -1038,7 +1225,7 @@
       "details": {
         "name": "Name",
         "description": "Beschreibung",
-        "runtime" : "Laufzeit",
+        "runtime": "Laufzeit",
         "state": "Status",
         "id": "ID",
         "inputs": "Eingaben",
@@ -1059,7 +1246,7 @@
         "FAILED": "FEHLGESCHLAGEN",
         "CANCELLED": "ABGEBROCHEN"
       },
-      "list" : {
+      "list": {
         "name": "Abschluss",
         "closuresCountLabel": "Abschlüsse",
         "closureRunsLabel": "Abschlussausführungen",
@@ -1082,22 +1269,22 @@
             "powershell": "Powershell 6",
             "java": "Java 8"
           },
-          "logConfigOptionsInputs" : {
+          "logConfigOptionsInputs": {
             "name": "Name",
             "nameHint": "Beispiel: max-size",
             "value": "Wert",
             "valueHint": "Beispiel: 10m"
-           },
-           "closureInputs" : {
+          },
+          "closureInputs": {
             "name": "Name",
             "nameHint": "Beispiel: a",
             "value": "Wert",
             "valueHint": "Beispiel: 1"
-           },
-           "closureOutputs" : {
+          },
+          "closureOutputs": {
             "name": "Name",
             "nameHint": "Beispiel: result"
-           },
+          },
           "memoryLimit": "Arbeitsspeicherlimit (Megabyte)",
           "timeout": "Zeitüberschreitung (Sekunden)",
           "entrypoint": "Einstiegspunkt-Handler",
@@ -1138,101 +1325,115 @@
         "outputs": "Ausgaben"
       }
     },
+    "image": {
+      "entity": "Image"
+    },
     "help": {
-        "link": "Hilfe",
-        "description": "Mit Ensemble können Sie auf relevante Informationen für den Kontext der derzeit von Ihnen ausgeführten Aufgabe zugreifen. Die Funktion wird automatisch mit Anleitungen aktualisiert, wenn Sie Ihre Arbeit fortsetzen. Verwenden Sie einen zweiten Bildschirm oder eine Bildschirmaufteilung, um auf die Informationen in Echtzeit zuzugreifen. Sie können ein Mobilgerät, einen Fernseher oder beliebige andere Bildschirme verwenden, unabhängig davon, ob sie mit Ihrem Computer verbunden sind oder nicht. Sie können Ensemble außerhalb des vertrauenswürdigen Netzwerks verwenden und gleichzeitig weiterhin unmittelbare Updates erhalten.",
-        "descriptionOpen": "Um Ensemble zu öffnen, klicken Sie auf <strong>In neuer Registerkarte öffnen</strong> oder scannen Sie den QR-Code mit Ihrem Mobilgerät."
-      },
-      "resources": {
-        "selectMultiple": "Elemente auswählen",
-        "message": {
-          "selectShift": "Verwenden Sie die Umschalttaste, um mehrere Elemente auszuwählen"
-        }
+      "link": "Hilfe",
+      "description": "Mit Ensemble können Sie auf relevante Informationen für den Kontext der derzeit von Ihnen ausgeführten Aufgabe zugreifen. Die Funktion wird automatisch mit Anleitungen aktualisiert, wenn Sie Ihre Arbeit fortsetzen. Verwenden Sie einen zweiten Bildschirm oder eine Bildschirmaufteilung, um auf die Informationen in Echtzeit zuzugreifen. Sie können ein Mobilgerät, einen Fernseher oder beliebige andere Bildschirme verwenden, unabhängig davon, ob sie mit Ihrem Computer verbunden sind oder nicht. Sie können Ensemble außerhalb des vertrauenswürdigen Netzwerks verwenden und gleichzeitig weiterhin unmittelbare Updates erhalten.",
+      "descriptionOpen": "Um Ensemble zu öffnen, klicken Sie auf <strong>In neuer Registerkarte öffnen</strong> oder scannen Sie den QR-Code mit Ihrem Mobilgerät."
+    },
+    "resources": {
+      "selectMultiple": "Elemente auswählen",
+      "message": {
+        "selectShift": "Verwenden Sie die Umschalttaste, um mehrere Elemente auszuwählen"
       }
     },
-    "loginPanel": {
-      "login": "Anmelden",
-      "logout": "Abmelden",
-      "username": "Benutzername",
-      "password": "Kennwort",
-      "success": "Authentifizierung erfolgreich",
-      "failure": "Authentifizierungsfehler"
-    },
-    "dropdownSearchMenu": {
-      "title": "Aus {{entity}}-Liste wählen",
-      "searchPlaceholder": "{{entity}} suchen",
-      "clear": "Auswahl löschen",
-      "showingCount": "{{count}} von {{totalCount}} werden angezeigt",
-      "noResults": "Keine Elemente gefunden"
-    },
-    "customProperties": {
-      "name": "Name",
-      "nameHint": "Beispiel: speedchecker",
-      "value": "Wert",
-      "valueHint": "Beispiel: slow"
-    },
-    "yes": "Ja",
-    "ok": "OK",
-    "cancel": "Abbrechen",
-    "error": "Fehler",
-    "delete": "Löschen",
-    "enable": "Aktivieren",
-    "enabled": "Aktiviert",
-    "disable": "Deaktivieren",
-    "disabled": "Deaktiviert",
-    "close": "Schließen",
-    "edit": "Bearbeiten",
-    "remove": "Entfernen",
-    "add": "Hinzufügen",
-    "save": "Speichern",
-    "back": "Zurück",
-    "refresh": "Aktualisieren",
-    "clear": "Löschen",
-    "deleteAll": "Alle löschen",
-    "pendingOperationCancel": "Vorgang in",
-    "openInNewTab": "In neuer Registerkarte öffnen",
-    "unavailable": "N/A",
-    "advanced": "Erweitert",
-    "noSelection": "Keine Auswahl",
-    "buildNumber": "Build-Nummer",
-    "errors": {
-      "hostIp": "Wert muss ein Hostname oder eine IP-Adresse sein.",
-      "urlPath": "URL-Pfad ist ungültig.",
-      "propertyNameRequired": "Eigenschaftenname ist erforderlich.",
-      "propertyContainerNameInvalid": "Ungültiger Container-Name, es sind nur [a-zA-Z0-9][a-zA-Z0-9_.-] zulässig.",
-      "propertyNamesNotUnique": "Eigenschaftennamen müssen eindeutig sein.",
-      "nonNegativeNumber": "Der Wert muss eine nicht negative Ganzzahl kleiner als 2147483648 sein.",
-      "positiveNumber": "Der Wert muss eine positive Ganzzahl kleiner als 2147483648 sein.",
-      "nonNegativeNumberAndMinusOne": "Der Wert muss eine Ganzzahl zwischen -1 und 2147483647 sein.",
-      "portNumber": "Ungültige Portnummer. Ein gültige Portnummer liegt im Bereich zwischen 0 und 65535.",
-      "containerMemory": "Arbeitsspeicher muss 0 (kein Limit) oder mindestens 4194304 Byte (4 MB) betragen.",
-      "required": "Wert ist erforderlich.",
-      "requiredAll": "Alle Felder sind erforderlich.",
-      "serviceNameRequired": "Dienstname ist erforderlich.",
-      "networkRequired": "Netzwerk ist erforderlich.",
-      "itemNotFound": "Element wurde nicht gefunden.",
-      "networkExists": "Netzwerk ist bereits in Vorlage vorhanden.",
-      "volumeDestinationRequired": "Volume-Ziel ist erforderlich.",
-      "invalidInputValue": "Ungültiger Eingabewert",
-      "invalidPath": "Wert muss ein absoluter Pfad sein.",
-      "invalidPathOrName": "Wert muss ein absoluter Pfad oder ein gültiger Volume-Name sein.",
-      "containersConnected": "Es sind verbundene Container vorhanden.",
-      "managedByCatalog": "Von Katalog verwaltet",
-      "projectsUnexpectedError": "Es ist ein unbekannter Fehler aufgetreten"
-    },
-    "infoMessages": {
-      "created": "Erfolgreich erstellt.",
-      "updated": "Erfolgreich aktualisiert."
-    },
-    "occurrence": {
-      "all": "Alle abgleichen",
-      "any": "Beliebige abgleichen"
-    },
-    "state": {
-      "ON": "EIN",
-      "OFF": "AUS",
-      "SUSPEND": "DEAKTIVIERT",
-      "UNKNOWN": "UNBEKANNT",
-      "stateSinceMessage": "seit {{date}}"
-    }
+    "noneLabel": "Keine"
+  },
+  "loginPanel": {
+    "login": "Anmelden",
+    "logout": "Abmelden",
+    "username": "Benutzername",
+    "password": "Kennwort",
+    "welcomeTo": "Willkommen bei",
+    "success": "Authentifizierung erfolgreich",
+    "failure": "Authentifizierungsfehler"
+  },
+  "dropdownSearchMenu": {
+    "title": "Aus {{entity}}-Liste wählen",
+    "searchPlaceholder": "{{entity}} suchen",
+    "clear": "Auswahl löschen",
+    "showingCount": "{{count}} von {{totalCount}} werden angezeigt",
+    "noResults": "Keine Elemente gefunden"
+  },
+  "customProperties": {
+    "name": "Name",
+    "nameHint": "Beispiel: speedchecker",
+    "value": "Wert",
+    "valueHint": "Beispiel: slow"
+  },
+  "yes": "Ja",
+  "no": "Nein",
+  "ok": "OK",
+  "cancel": "Abbrechen",
+  "error": "Fehler",
+  "delete": "Löschen",
+  "enable": "Aktivieren",
+  "enabled": "Aktiviert",
+  "disable": "Deaktivieren",
+  "disabled": "Deaktiviert",
+  "close": "Schließen",
+  "edit": "Bearbeiten",
+  "remove": "Entfernen",
+  "add": "Hinzufügen",
+  "save": "Speichern",
+  "verify": "Überprüfen",
+  "verified": "Erfolgreich überprüft.",
+  "back": "Zurück",
+  "refresh": "Aktualisieren",
+  "clear": "Löschen",
+  "deleteAll": "Alle löschen",
+  "pendingOperationCancel": "Vorgang in",
+  "openInNewTab": "In neuer Registerkarte öffnen",
+  "unavailable": "N/A",
+  "advanced": "Erweitert",
+  "noSelection": "Keine Auswahl",
+  "buildNumber": "Build-Nummer",
+  "errors": {
+    "hostIp": "Wert muss ein Hostname oder eine IP-Adresse sein.",
+    "urlPath": "URL-Pfad ist ungültig.",
+    "propertyNameRequired": "Eigenschaftenname ist erforderlich.",
+    "propertyContainerNameInvalid": "Ungültiger Container-Name, es sind nur [a-zA-Z0-9][a-zA-Z0-9_.-] zulässig.",
+    "propertyNamesNotUnique": "Eigenschaftennamen müssen eindeutig sein.",
+    "nonNegativeNumber": "Der Wert muss eine nicht negative Ganzzahl kleiner als 2147483648 sein.",
+    "positiveNumber": "Der Wert muss eine positive Ganzzahl kleiner als 2147483648 sein.",
+    "nonNegativeNumberAndMinusOne": "Der Wert muss eine Ganzzahl zwischen -1 und 2147483647 sein.",
+    "portNumber": "Ungültige Portnummer. Ein gültige Portnummer liegt im Bereich zwischen 0 und 65535.",
+    "containerMemory": "Arbeitsspeicher muss 0 (kein Limit) oder mindestens 4194304 Byte (4 MB) betragen.",
+    "required": "Wert ist erforderlich.",
+    "requiredAll": "Alle Felder sind erforderlich.",
+    "serviceNameRequired": "Dienstname ist erforderlich.",
+    "networkRequired": "Netzwerk ist erforderlich.",
+    "itemNotFound": "Element wurde nicht gefunden.",
+    "networkExists": "Netzwerk ist bereits in Vorlage vorhanden.",
+    "volumeDestinationRequired": "Volume-Ziel ist erforderlich.",
+    "invalidInputValue": "Ungültiger Eingabewert",
+    "invalidPath": "Wert muss ein absoluter Pfad sein.",
+    "invalidPathOrName": "Wert muss ein absoluter Pfad oder ein gültiger Volume-Name sein.",
+    "containersConnected": "Es sind verbundene Container vorhanden.",
+    "managedByCatalog": "Von Katalog verwaltet",
+    "projectsUnexpectedError": "Es ist ein unbekannter Fehler aufgetreten"
+  },
+  "infoMessages": {
+    "created": "Erfolgreich erstellt.",
+    "updated": "Erfolgreich aktualisiert.",
+    "notFound": "Nicht gefunden",
+    "showingCount": "{{count}} von {{totalCount}} werden angezeigt"
+  },
+  "occurrence": {
+    "all": "Alle abgleichen",
+    "any": "Beliebige abgleichen"
+  },
+  "state": {
+    "ON": "EIN",
+    "OFF": "AUS",
+    "SUSPEND": "DEAKTIVIERT",
+    "UNKNOWN": "UNBEKANNT",
+    "stateSinceMessage": "seit {{date}}"
+  },
+  "productNames": {
+    "admiral": "Admiral",
+    "vic": "vSphere Integrated Containers"
+  }
 }

@@ -4,11 +4,11 @@
       "port": 443,
       "backends": [
         {
-          "host": "www.dir.bg",
+          "host": "www.backend-one.bg",
           "port": 443
         },
         {
-          "host": "www.actualno.bg",
+          "host": "www.backend-two.com",
           "port": 442
         }
       ]
@@ -17,11 +17,11 @@
       "port": 80,
       "backends": [
         {
-          "host": "www.novini.bg",
+          "host": "www.one-backend.bg",
           "port": 8080
         },
         {
-          "host": "www.vesti.bg",
+          "host": "www.two-backend.net",
           "port": 8008
         }
       ]

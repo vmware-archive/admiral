@@ -13,7 +13,9 @@ package com.vmware.admiral.compute.container;
 
 import static com.vmware.admiral.common.util.ServiceUtils.addServiceRequestRoute;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerOperationType;
@@ -32,6 +34,17 @@ public class ContainerStatsService extends StatelessService {
     public static final String SELF_LINK = ManagementUriParts.CONTAINER_STATS;
 
     public static final String CONTAINER_ID_QUERY_PARAM = "id";
+
+    private static final long INSPECT_INTERVAL = TimeUnit.SECONDS.toMicros(70);
+    private static final int MAX_SIZE = 10;
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Long> inspectCache = new LinkedHashMap(16, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry eldest) {
+            return size() > MAX_SIZE;
+        }
+    };
 
     @Override
     public void handleGet(Operation get) {
@@ -60,8 +73,11 @@ public class ContainerStatsService extends StatelessService {
                         op.fail(Operation.STATUS_CODE_NOT_FOUND);
                         return;
                     }
-                    ServiceUtils.handleExceptions(op, () ->
-                            processStatsRequest(op, o.getBody(ContainerState.class)));
+                    ServiceUtils.handleExceptions(op, () -> {
+                        ContainerState containerState = o.getBody(ContainerState.class);
+                        processInspect(containerState, () ->
+                                processStatsRequest(op, containerState));
+                    });
                 }));
     }
 
@@ -79,7 +95,7 @@ public class ContainerStatsService extends StatelessService {
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         // do not return, just log warning, previous /stats will be returned
-                        Utils.logWarning("Exception in stats request for container: %s. Error: %s",
+                        logWarning("Exception in stats request for container: %s. Error: %s",
                                 containerState.documentSelfLink, Utils.toString(ex));
                     }
                     forwardStatsResponse(op, containerState);
@@ -103,6 +119,37 @@ public class ContainerStatsService extends StatelessService {
                         op.complete();
                     }
                 }));
+    }
+
+    private void processInspect(ContainerState container, Runnable callback) {
+        if (!isInspectionNeeded(container)) {
+            callback.run();
+            return;
+        }
+
+        AdapterRequest request = new AdapterRequest();
+        request.resourceReference = UriUtils.buildPublicUri(getHost(), container.documentSelfLink);
+        request.operationTypeId = ContainerOperationType.INSPECT.id;
+        request.serviceTaskCallback = ServiceTaskCallback.createEmpty();
+        sendRequest(Operation
+                .createPatch(getHost(), container.adapterManagementReference.toString())
+                .setBodyNoCloning(request)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        logWarning("Error while inspect request for container: %s. Error: %s",
+                                container.documentSelfLink, Utils.toString(ex));
+                    }
+                    callback.run();
+                }));
+    }
+
+    private boolean isInspectionNeeded(ContainerState container) {
+        Long lastInspect = inspectCache.get(container.documentSelfLink);
+        if (lastInspect == null || lastInspect < Utils.fromNowMicrosUtc(-INSPECT_INTERVAL)) {
+            inspectCache.put(container.documentSelfLink, Utils.getNowMicrosUtc());
+            return true;
+        }
+        return false;
     }
 
     @Override

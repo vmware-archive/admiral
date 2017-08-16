@@ -26,6 +26,7 @@ import java.util.Map.Entry;
 import java.util.logging.Level;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.AuthUtils;
 import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.xenon.common.Claims;
 import com.vmware.xenon.common.FileUtils;
@@ -42,7 +43,7 @@ import com.vmware.xenon.services.common.ServiceUriPaths;
 
 public abstract class BaseUiService extends StatelessService {
     public static final String HTML_RESOURCE_EXTENSION = ".html";
-    public static final String LOGIN_PATH = "/login/";
+    public static final String LOGIN_PATH = ManagementUriParts.LOGIN;
     public static final String INDEX_PATH = "index" + HTML_RESOURCE_EXTENSION;
     public static final String I18NEXT_COOKIE = "i18next";
 
@@ -255,7 +256,8 @@ public abstract class BaseUiService extends StatelessService {
             boolean showHomePage = isLoginPage && isValidUser;
 
             if (loginRequired) {
-                // Redirect the browser to the login page
+                // Redirect the browser to the login page cleanup session data.
+                AuthUtils.cleanupSessionData(op);
                 String location = ManagementUriParts.UI_SERVICE + LOGIN_PATH;
                 location = location.replaceAll("//", "/");
                 op.addResponseHeader(Operation.LOCATION_HEADER, location);
@@ -308,7 +310,6 @@ public abstract class BaseUiService extends StatelessService {
             }
 
             URI uri = get.getUri();
-
             if (redirect) {
                 String path = uri.getPath();
                 path = path.replace(this.sourcePath, this.targetPath);
@@ -324,15 +325,15 @@ public abstract class BaseUiService extends StatelessService {
                 return;
             }
 
-            String uriStr = uri.toString();
-            uriStr = uriStr.replace(this.sourcePath, this.targetPath);
+            String uriPath = uri.getPath();
+            uriPath = uriPath.replace(this.sourcePath, this.targetPath);
 
-            if (uriStr.endsWith(targetPath) && uriStr.endsWith(UriUtils.URI_PATH_CHAR)) {
-                uriStr += INDEX_PATH;
+            if (uriPath.endsWith(targetPath) && uriPath.endsWith(UriUtils.URI_PATH_CHAR)) {
+                uriPath += INDEX_PATH;
             }
 
             Operation operation = get.clone();
-            operation.setUri(UriUtils.buildUri(uriStr))
+            operation.setUri(UriUtils.buildUri(getHost(), uriPath))
                     .setCompletion((o, e) -> {
                         get.setBody(o.getBodyRaw())
                                 .setStatusCode(o.getStatusCode())

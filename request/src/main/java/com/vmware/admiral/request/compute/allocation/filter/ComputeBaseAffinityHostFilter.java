@@ -16,6 +16,7 @@ import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_I
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.logging.Level;
 
@@ -178,7 +179,7 @@ public abstract class ComputeBaseAffinityHostFilter
 
         QueryUtil.addExpandOption(queryTask);
 
-        final Map<String, HostSelection> filteredHostSelectionMap = new HashMap<>();
+        final Map<String, HostSelection> filteredHostSelectionMap = new LinkedHashMap<>();
         DeferredResult<Map<String, HostSelection>> result = new DeferredResult<>();
         new ServiceDocumentQuery<>(host, ComputeState.class)
                 .query(queryTask, r -> {

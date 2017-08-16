@@ -30,6 +30,7 @@ export class GridViewComponent implements OnInit, OnChanges {
   @Input() searchPlaceholder: string;
   @Input() searchSuggestionProperties: Array<string>;
   @Input() searchQueryOptions: any;
+  @Input() projectLink: string;
 
   @ViewChildren('cardItem') cards;
   @ViewChild('itemsHolder') itemsHolder;
@@ -47,6 +48,7 @@ export class GridViewComponent implements OnInit, OnChanges {
   nextPageLink: string;
   loadingPromise: CancelablePromise<DocumentListResult>;
   hidePartialRows: boolean = false;
+  loadPagesTimeout;
 
   searchOccurrenceProperties = [{
     name: searchConstants.SEARCH_OCCURRENCE.ALL,
@@ -59,20 +61,18 @@ export class GridViewComponent implements OnInit, OnChanges {
   constructor(protected service: DocumentService, private router: Router, private route: ActivatedRoute) { }
 
   ngOnInit() {
-    if (this.serviceEndpoint) {
-      // Items can be loaded from backend or provided as an input
-      this.hidePartialRows = true;
-      this.list();
-    }
+    const urlTree = this.router.createUrlTree(['.'], { relativeTo: this.route });
+    const currentPath = this.router.serializeUrl(urlTree);
 
     this.routerSub = this.router.events.subscribe((event) => {
-      this.hidePartialRows = true;
-      this.list();
+      if (event instanceof NavigationEnd && event.url === currentPath) {
+        this.refresh();
+      }
     });
 
     this.querySub = this.route.queryParams.subscribe(queryParams => {
       this.searchQueryOptions = queryParams;
-      this.list();
+      this.refresh(true);
     });
   }
 
@@ -93,8 +93,8 @@ export class GridViewComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes.serviceEndpoint && this.serviceEndpoint) {
-      this.list();
+    if (changes.serviceEndpoint && this.serviceEndpoint || changes.projectLink) {
+      this.refresh();
     }
   }
 
@@ -257,11 +257,21 @@ export class GridViewComponent implements OnInit, OnChanges {
     }
   }
 
-  refresh() {
-    var pagesToLoad = this.loadedPages;
+  refresh(resetLoadedPages?) {
+    var pagesToLoad = resetLoadedPages ? 1 : this.loadedPages;
 
+    clearTimeout(this.loadPagesTimeout);
+    this.loadPagesTimeout = setTimeout(() => this.doLoadPages(pagesToLoad), 0);
+  }
+
+  trackByFn(index, item){
+    return item.documentSelfLink;
+  }
+
+  private doLoadPages(pagesToLoad) {
+    console.log('doLoadPages');
     let loadMore = () => {
-      if (pagesToLoad < this.loadedPages && this.nextPageLink) {
+      if (pagesToLoad > this.loadedPages && this.nextPageLink) {
         this.loadNextPage().then(loadMore);
       }
     };
@@ -269,18 +279,19 @@ export class GridViewComponent implements OnInit, OnChanges {
     this.list().then(loadMore);
   }
 
-  trackByFn(index, item){
-    return item.documentSelfLink;
-  }
-
   private list() {
+    console.log('list');
     if (this.loadingPromise) {
       this.loadingPromise.cancel();
     }
 
+    // Partial rows are displayed only when data is provided from outside,
+    // Otherwise for better UX when doing infinite scroll show only full rows
+    this.hidePartialRows = true;
+
     this.loading = true;
     this.loadedPages = 0;
-    this.loadingPromise = new CancelablePromise(this.service.list(this.serviceEndpoint, this.searchQueryOptions));
+    this.loadingPromise = new CancelablePromise(this.service.list(this.serviceEndpoint, this.searchQueryOptions, this.projectLink));
     return this.loadingPromise.getPromise()
     .then(result => {
       this.loading = false;
@@ -305,7 +316,7 @@ export class GridViewComponent implements OnInit, OnChanges {
     }
 
     this.loading = true;
-    this.loadingPromise = new CancelablePromise(this.service.loadNextPage(this.nextPageLink));
+    this.loadingPromise = new CancelablePromise(this.service.loadNextPage(this.nextPageLink, this.projectLink));
     return this.loadingPromise.getPromise()
     .then(result => {
       this.loading = false;

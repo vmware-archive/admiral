@@ -20,25 +20,42 @@ export class ProjectMembersCountPipe implements PipeTransform {
     public transform(project: any): number {
         let admins = project.administrators;
         let members = project.members;
+        let viewers = project.viewers;
 
-        let count = (admins && admins.length) || 0;
-        if (members && members.length > 0) {
-            if (count > 0) {
-                // eliminate duplicates
-                members.forEach((member) => {
-                    let adminFound = admins.find((admin) => {
-                        return admin.email === member.email;
-                    });
+        let mergedCollection = this.mergeCollections(admins, members, viewers);
 
-                    if (!adminFound) {
-                      count++;
-                    }
-                });
-            } else {
-                count += members.length;
-            }
+        return mergedCollection.length;
+    }
+
+    private mergeCollections(collection1: any, collection2: any, collection3: any): any {
+        let resultCollection = [];
+        
+        if (collection1) {
+            this.trasnferPrincipals(collection1, resultCollection);
         }
 
-        return count;
+        if (collection2) {
+            this.trasnferPrincipals(collection2, resultCollection);
+        }
+
+        if (collection3) {
+            this.trasnferPrincipals(collection3, resultCollection);
+        }
+        
+        return resultCollection;
+    }
+
+    private trasnferPrincipals(srcCol: any, dstCol: any) {
+        if (!srcCol || !dstCol) {
+            return;
+        }
+        srcCol.forEach(p => {
+            let alreadyAdded = dstCol.find(x => {
+                return x.email === p.email;
+            });
+            if (!alreadyAdded) {
+                dstCol.push(p);
+            }
+        });
     }
 }

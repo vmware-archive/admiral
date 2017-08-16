@@ -1,13 +1,8 @@
 /* You can add global styles to this file, and also import other style files */
-@import "node_modules/clarity-ui/src/color/utils/colors.clarity";
-@import "node_modules/clarity-ui/src/utils/variables.clarity";
+@import "node_modules/clarity-ui/src/main";
 @import 'node_modules/admiral-ui-common/css/variables';
 @import "node_modules/admiral-ui-common/css/tokenfield-override";
-@import "node_modules/clarity-ui/src/utils/mixins.clarity";
-@import "node_modules/clarity-ui/src/utils/helpers.clarity";
-@import "node_modules/clarity-ui/src/image/images.clarity";
-@import "node_modules/clarity-ui/src/typography/typography.clarity";
-@import "node_modules/clarity-ui/src/forms/forms.clarity";
+@import "node_modules/admiral-ui-common/css/dropdown";
 
 
 .main-container {
@@ -21,11 +16,19 @@
   }
   .content-container .content-area {
     display: flex;
+    flex-wrap: wrap;
     flex: 1 1 auto;
-    > *:not(router-outlet) {
+    -webkit-flex-direction: column;
+    flex-direction: column;
+
+    > *:not(router-outlet):not(clr-alert) {
       display: flex;
       flex: 1 1 auto;
       position: relative;
+    }
+
+    clr-alert {
+      padding: 0 5px 5px 5px;
     }
   }
 
@@ -41,9 +44,18 @@
     }
   }
 
-
+  // former views
   .content-container .content-area.expanded {
-    padding: 0;
+    padding: 0px;
+  }
+
+  // ng views
+  .content-container .content-area:not(.expanded) {
+    padding-top: 24px;
+
+    clr-alert {
+      margin: -24px -24px 24px -24px;
+    }
   }
 }
 

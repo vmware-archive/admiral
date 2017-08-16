@@ -35,7 +35,6 @@ func TestMain(m *testing.M) {
 	IsTest = true
 	config.GetCfgForTests()
 	auth.Login(tc.Username, tc.Password, tc.AdmiralAddress)
-
 	code := m.Run()
 	os.Exit(code)
 }

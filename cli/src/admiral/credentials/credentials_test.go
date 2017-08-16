@@ -21,6 +21,8 @@ import (
 	"admiral/auth"
 	. "admiral/common/utils"
 	"admiral/config"
+	"admiral/placement_zones"
+	"admiral/placements"
 )
 
 var tc = &TestConfig{}
@@ -35,7 +37,8 @@ func TestMain(m *testing.M) {
 	IsTest = true
 	config.GetCfgForTests()
 	auth.Login(tc.Username, tc.Password, tc.AdmiralAddress)
-
+	placement_zones.BuildDefaultPlacementZone()
+	placements.BuildDefaultPlacement()
 	code := m.Run()
 	os.Exit(code)
 }

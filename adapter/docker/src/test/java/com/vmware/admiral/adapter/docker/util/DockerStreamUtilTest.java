@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -21,7 +21,7 @@ import org.junit.Test;
 public class DockerStreamUtilTest {
 
     @Test
-    public void testDecodeFullRawResponce() throws EOFException {
+    public void testDecodeFullRawResponse() throws EOFException {
         byte[] raw = new byte[] { 1, 0, 0, 0, 0, 0, 0, 4, 98, 105, 110, 10, 1, 0, 0, 0, 0, 0, 0,
                 125, 99, 111, 112, 121, 45, 99, 101, 114, 116, 105, 102, 105, 99, 97, 116, 101, 46,
                 115, 104, 10, 100, 101, 118, 10, 101, 116, 99, 10, 103, 111, 10, 104, 111, 109,
@@ -32,7 +32,7 @@ public class DockerStreamUtilTest {
                 114, 10, 119, 104, 105, 116, 101, 45, 111, 110, 45, 98, 108, 97, 99, 107, 46, 99,
                 115, 115, 10 };
 
-        String decoded = DockerStreamUtil.decodeFullRawResponce(raw);
+        String decoded = DockerStreamUtil.decodeFullRawResponse(raw);
 
         String expected = "bin\n"
                 + "copy-certificate.sh\n"
@@ -62,7 +62,7 @@ public class DockerStreamUtilTest {
     public void testDecodePartialResponse() throws EOFException {
         byte[] raw = new byte[] { 1, 0, 0, 0, 0, 0, 0, 4, 98, 105, 110, 10 };
 
-        String decoded = DockerStreamUtil.decodeFullRawResponce(raw);
+        String decoded = DockerStreamUtil.decodeFullRawResponse(raw);
 
         String expected = "bin\n";
         assertEquals(expected, decoded);
@@ -72,7 +72,7 @@ public class DockerStreamUtilTest {
     public void testDecodeWithShorterFrame() throws EOFException {
         byte[] raw = new byte[] { 1, 0, 0, 0, 0, 0, 0, 4, 98, 105, 110 };
 
-        DockerStreamUtil.decodeFullRawResponce(raw);
+        DockerStreamUtil.decodeFullRawResponse(raw);
         fail("expected to throw exception");
     }
 
@@ -80,7 +80,7 @@ public class DockerStreamUtilTest {
     public void testDecodeWithLongerFrame() throws EOFException {
         byte[] raw = new byte[] { 1, 0, 0, 0, 0, 0, 0, 4, 98, 105, 110, 10, 110 };
 
-        DockerStreamUtil.decodeFullRawResponce(raw);
+        DockerStreamUtil.decodeFullRawResponse(raw);
     }
 
 }

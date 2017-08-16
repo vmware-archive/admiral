@@ -11,9 +11,17 @@
 
 package com.vmware.admiral.request.compute;
 
+import static java.util.Arrays.asList;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+
+import static com.vmware.admiral.compute.ComputeConstants.COMPUTE_PLACEMENT_CONSTRAINT_KEY;
+import static com.vmware.admiral.compute.ComputeConstants.COMPUTE_STORAGE_CONSTRAINT_KEY;
+
+import static com.vmware.admiral.request.util.TestRequestStateFactory.createGroupResourcePlacementState;
+import static com.vmware.admiral.request.util.TestRequestStateFactory.createTenantLinks;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -22,15 +30,24 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
+import com.google.common.collect.Sets;
+
+import org.junit.Assert;
 import org.junit.Test;
 
-import com.vmware.admiral.compute.ComputeConstants;
+import com.vmware.admiral.compute.ElasticPlacementZoneService;
+import com.vmware.admiral.compute.ElasticPlacementZoneService.ElasticPlacementZoneState;
+import com.vmware.admiral.compute.PlacementZoneConstants;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
 import com.vmware.admiral.compute.profile.StorageProfileService;
+import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSelection;
 import com.vmware.admiral.request.compute.ComputeReservationTaskService.ComputeReservationTaskState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.service.common.MultiTenantDocument;
@@ -214,7 +231,7 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
     public void testReservationTaskLifeCycleWithNoGroup() throws Throwable {
         EndpointState globalEndpoint = createGlobalEndpoint();
         ResourcePoolState rp = createResourcePoolForEndpoint(globalEndpoint);
-        createVmHostCompute(globalEndpoint, rp);
+        createVmHostCompute(globalEndpoint, rp.documentSelfLink);
         GroupResourcePlacementState globalGroupState = createGroupPlacementFor(rp);
         addForDeletion(globalGroupState);
 
@@ -245,7 +262,7 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
     public void testReservationTaskLifeCycleForVsphere() throws Throwable {
         EndpointState vsphereEndpoint = createVsphereEndpoint();
         ResourcePoolState rp = createResourcePoolForEndpoint(vsphereEndpoint);
-        createVmHostCompute(vsphereEndpoint, rp);
+        createVmHostCompute(vsphereEndpoint, rp.documentSelfLink);
         GroupResourcePlacementState globalGroupState = createGroupPlacementFor(rp);
         globalGroupState.priority = 3;
         addForDeletion(globalGroupState);
@@ -267,7 +284,7 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         task = waitForTaskSuccess(task.documentSelfLink, ComputeReservationTaskState.class);
 
         globalGroupState = getDocument(GroupResourcePlacementState.class,
-              globalGroupState.documentSelfLink);
+                globalGroupState.documentSelfLink);
 
         assertEquals(globalGroupState.documentSelfLink, task.groupResourcePlacementLink);
 
@@ -288,7 +305,7 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         // applicable.
         EndpointState globalEndpoint = createGlobalEndpoint();
         ResourcePoolState rp = createResourcePoolForEndpoint(globalEndpoint);
-        createVmHostCompute(globalEndpoint, rp);
+        createVmHostCompute(globalEndpoint, rp.documentSelfLink);
         GroupResourcePlacementState globalGroupState = createGroupPlacementFor(rp);
         addForDeletion(globalGroupState);
 
@@ -326,19 +343,10 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         addForDeletion(groupPlacementState);
 
         ComputeDescription descPatch = new ComputeDescription();
-        addConstraintToComputeDesc(descPatch, "cap", "pci", true, true);
+        setConstraintToComputeDesc(descPatch, "cap", "pci", true, true);
         doPatch(descPatch, hostDesc.documentSelfLink);
 
-        ComputeReservationTaskState task = new ComputeReservationTaskState();
-        task.tenantLinks = groupPlacementState.tenantLinks;
-        task.resourceDescriptionLink = hostDesc.documentSelfLink;
-        task.resourceCount = 1;
-        task.serviceTaskCallback = ServiceTaskCallback.createEmpty();
-
-        task = doPost(task, ComputeReservationTaskService.FACTORY_LINK);
-        assertNotNull(task);
-
-        task = waitForTaskSuccess(task.documentSelfLink, ComputeReservationTaskState.class);
+        kickOffComputeReservationTask(hostDesc);
     }
 
     @Test
@@ -362,19 +370,194 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         doPatch(rpPatch, computeResourcePool.documentSelfLink);
 
         ComputeDescription descPatch = new ComputeDescription();
-        addConstraintToComputeDesc(descPatch, "cap", "pci", true, false);
+        setConstraintToComputeDesc(descPatch, "cap", "pci", true, false);
         doPatch(descPatch, hostDesc.documentSelfLink);
 
+        kickOffComputeReservationTask(hostDesc);
+    }
+
+    @Test
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public void testMergedResPoolAndHostsTags() throws Throwable {
+
+        // Helper createXXX functions
+
+        final Function<String, TagState> createTag = tagName -> {
+            final TagState tag = new TagState();
+            tag.key = tagName + ".key";
+            tag.value = tagName + ".value";
+            tag.tenantLinks = createTenantLinks(TestRequestStateFactory.TENANT_NAME);
+            try {
+                return doPost(tag, TagService.FACTORY_LINK);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        };
+
+        final Function<List, GroupResourcePlacementState> createPlacement = args -> {
+            Object index = args.get(0);
+            List<TagState> rpTags = args.subList(1, args.size());
+            try {
+                ResourcePoolState resPool = TestRequestStateFactory.createResourcePool(
+                        "respool" + index, endpoint.documentSelfLink);
+
+                resPool.tagLinks = rpTags.stream()
+                        .map(rpTag -> rpTag.documentSelfLink)
+                        .collect(Collectors.toSet());
+
+                resPool.customProperties.put(
+                        PlacementZoneConstants.RESOURCE_TYPE_CUSTOM_PROP_NAME,
+                        ResourceType.COMPUTE_TYPE.getName());
+
+                resPool = doPost(resPool, ResourcePoolService.FACTORY_LINK);
+
+                GroupResourcePlacementState placement = createGroupResourcePlacementState(
+                        ResourceType.COMPUTE_TYPE, "placement" + index);
+
+                placement.resourcePoolLink = resPool.documentSelfLink;
+
+                placement = doPost(placement, GroupResourcePlacementService.FACTORY_LINK);
+
+                return placement;
+
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        };
+
+        final Function<List, ComputeState> createHost = args -> {
+            Object index = args.get(0);
+            GroupResourcePlacementState placement = (GroupResourcePlacementState) args.get(1);
+            List<TagState> hostTags = args.subList(2, args.size());
+            try {
+                ComputeState host = createVmHostCompute(endpoint, placement.resourcePoolLink);
+
+                host.name = "host" + index;
+
+                host.tagLinks = hostTags.stream()
+                        .map(hostTag -> hostTag.documentSelfLink)
+                        .collect(Collectors.toSet());
+
+                return doPatch(host, host.documentSelfLink);
+
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        };
+
+        final Consumer<List> assertReservationTask = (expected) -> {
+
+            GroupResourcePlacementState expectedPlacement = (GroupResourcePlacementState) expected.get(0);
+            ComputeState expectedHost = (ComputeState) expected.get(1);
+
+            ComputeReservationTaskState reservationTask;
+            try {
+                reservationTask = kickOffComputeReservationTask(hostDesc);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+
+            Assert.assertEquals("Selected placement mismatch",
+                    expectedPlacement.documentSelfLink,
+                    reservationTask.groupResourcePlacementLink);
+
+            HostSelection selectedHost = reservationTask.selectedComputePlacementHosts.get(0);
+
+            Assert.assertEquals("Selected placement host mismatch",
+                    expectedHost.documentSelfLink, selectedHost.hostLink);
+
+            Assert.assertTrue("Selected placement host's resourcePoolLinks mismatch",
+                    selectedHost.resourcePoolLinks.contains(expectedPlacement.resourcePoolLink));
+        };
+
+        final TagState rpTag_hard = createTag.apply("rpTag_hard");
+        final TagState rpTag_soft = createTag.apply("rpTag_soft");
+        final TagState hostTag_hard = createTag.apply("hostTag_hard");
+        final TagState hostTag_soft = createTag.apply("hostTag_soft");
+
+        // Configure constraints on CD:
+        // - rpTag HARD condition should be satisfied at ResPool level
+        // - rpTag SOFT condition might be satisfied at ResPool level
+        // - hostTag HARD condition should be satisfied at Host level
+        // - hostTag SOFT condition might be satisfied at Host level
+        setConstraintToComputeDesc(hostDesc, COMPUTE_PLACEMENT_CONSTRAINT_KEY,
+                new ConditionSpec(rpTag_hard.key, rpTag_hard.value, /* hard */ true, false),
+                new ConditionSpec(rpTag_soft.key, rpTag_soft.value, /* soft */ false, false),
+                new ConditionSpec(hostTag_hard.key, hostTag_hard.value, /* hard */ true, false),
+                new ConditionSpec(hostTag_soft.key, hostTag_soft.value, /* soft */ false, false));
+        doPatch(hostDesc, hostDesc.documentSelfLink);
+
+        // Use-cases under testing
+
+        // This should never be matched cause RP_HARD and HOST_HARD are NOT satisfied
+        {
+            GroupResourcePlacementState placement0 = createPlacement.apply(asList("0", rpTag_soft));
+
+            createHost.apply(asList("0", placement0, hostTag_soft));
+
+            kickOffComputeReservationTask(hostDesc, false);
+        }
+
+        // This matches both RP_HARD and HOST_HARD tags
+        {
+            GroupResourcePlacementState placement1 = createPlacement.apply(asList("1", rpTag_hard));
+
+            ComputeState host1 = createHost.apply(asList("1", placement1, hostTag_hard));
+
+            assertReservationTask.accept(asList(placement1, host1));
+        }
+
+        final ComputeState sharedHost;
+
+        // This matches both RP_HARD and HOST_HARD/SOFT tags
+        {
+            GroupResourcePlacementState placement2 = createPlacement.apply(asList("2", rpTag_hard));
+
+            sharedHost = createHost.apply(asList("shared", placement2, hostTag_hard, hostTag_soft));
+
+            assertReservationTask.accept(asList(placement2, sharedHost));
+        }
+
+        // This matches both RP_HARD/SOFT and HOST_HARD/SOFT tags
+        {
+            GroupResourcePlacementState placement3 = createPlacement.apply(
+                    asList("3", rpTag_hard, rpTag_soft));
+
+            // Elastic PZ which includes all hosts with 'hostTag_hard'
+            final ElasticPlacementZoneState elasticPZ = new ElasticPlacementZoneState();
+            elasticPZ.resourcePoolLink = placement3.resourcePoolLink;
+            elasticPZ.tagLinksToMatch = Sets.newHashSet(hostTag_hard.documentSelfLink);
+            doPost(elasticPZ, ElasticPlacementZoneService.FACTORY_LINK);
+
+            assertReservationTask.accept(asList(placement3, sharedHost));
+        }
+    }
+
+    private ComputeReservationTaskState kickOffComputeReservationTask(ComputeDescription compDesc,
+            boolean waitForSuccess)
+            throws Throwable {
+
         ComputeReservationTaskState task = new ComputeReservationTaskState();
-        task.tenantLinks = groupPlacementState.tenantLinks;
-        task.resourceDescriptionLink = hostDesc.documentSelfLink;
+        task.tenantLinks = compDesc.tenantLinks;
+        task.resourceDescriptionLink = compDesc.documentSelfLink;
         task.resourceCount = 1;
         task.serviceTaskCallback = ServiceTaskCallback.createEmpty();
 
         task = doPost(task, ComputeReservationTaskService.FACTORY_LINK);
-        assertNotNull(task);
 
-        waitForTaskSuccess(task.documentSelfLink, ComputeReservationTaskState.class);
+        if (waitForSuccess) {
+            task = waitForTaskSuccess(task.documentSelfLink, ComputeReservationTaskState.class);
+        } else {
+            task = waitForTaskError(task.documentSelfLink, ComputeReservationTaskState.class);
+        }
+
+        return task;
+    }
+
+    private ComputeReservationTaskState kickOffComputeReservationTask(ComputeDescription compDesc)
+            throws Throwable {
+
+        return kickOffComputeReservationTask(compDesc, true);
     }
 
     @Test
@@ -398,27 +581,18 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         doPatch(rpPatch, computeResourcePool.documentSelfLink);
 
         ComputeDescription descPatch = new ComputeDescription();
-        addConstraintToComputeDesc(descPatch, "cap", "pci", true, false);
+        setConstraintToComputeDesc(descPatch, "cap", "pci", true, false);
         descPatch.diskDescLinks = buildDiskStateWithHardConstraint();
         doPatch(descPatch, hostDesc.documentSelfLink);
 
-        StorageProfileService.StorageProfile storageProfile = buildStorageProfileWithConstraints
-                (groupPlacementState.tenantLinks);
+        StorageProfileService.StorageProfile storageProfile = buildStorageProfileWithConstraints(
+                groupPlacementState.tenantLinks);
         createProfileWithInstanceType(
                 "small", "t1.micro", "coreos", "ami-123456", storageProfile, groupPlacementState);
         createProfileWithInstanceType(
                 "small", "t2.micro", "coreos", "ami-234355", storageProfile, groupPlacementState);
 
-        ComputeReservationTaskState task = new ComputeReservationTaskState();
-        task.tenantLinks = groupPlacementState.tenantLinks;
-        task.resourceDescriptionLink = hostDesc.documentSelfLink;
-        task.resourceCount = 1;
-        task.serviceTaskCallback = ServiceTaskCallback.createEmpty();
-
-        task = doPost(task, ComputeReservationTaskService.FACTORY_LINK);
-        assertNotNull(task);
-
-        waitForTaskSuccess(task.documentSelfLink, ComputeReservationTaskState.class);
+        kickOffComputeReservationTask(hostDesc);
     }
 
     @Test
@@ -442,7 +616,7 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         doPatch(rpPatch, computeResourcePool.documentSelfLink);
 
         ComputeDescription descPatch = new ComputeDescription();
-        addConstraintToComputeDesc(descPatch, "cap", "pci", true, false);
+        setConstraintToComputeDesc(descPatch, "cap", "pci", true, false);
         descPatch.diskDescLinks = buildDiskStateWithHardConstraint();
         doPatch(descPatch, hostDesc.documentSelfLink);
 
@@ -455,9 +629,51 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         task = doPost(task, ComputeReservationTaskService.FACTORY_LINK);
         assertNotNull(task);
 
-        ComputeReservationTaskState taskState =  waitForTaskError(task.documentSelfLink,
+        ComputeReservationTaskState taskState = waitForTaskError(task.documentSelfLink,
                 ComputeReservationTaskState.class);
-        assertTrue(taskState.taskInfo.failure.message.contains("No matching storage defined in profile"));
+        assertTrue(taskState.taskInfo.failure.message
+                .contains("No matching storage defined in profile"));
+    }
+
+    @Test
+    public void testImageDiskUnSatisfiedHardRequirement() throws Throwable {
+        GroupResourcePlacementState groupPlacementState = TestRequestStateFactory
+                .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE);
+        groupPlacementState.resourcePoolLink = computeResourcePool.documentSelfLink;
+        groupPlacementState = doPost(groupPlacementState,
+                GroupResourcePlacementService.FACTORY_LINK);
+        addForDeletion(groupPlacementState);
+
+        TagState tag = new TagState();
+        tag.key = "cap";
+        tag.value = "pci";
+        tag.tenantLinks = TestRequestStateFactory
+                .createTenantLinks(TestRequestStateFactory.TENANT_NAME);
+        tag = doPost(tag, TagService.FACTORY_LINK);
+
+        ResourcePoolState rpPatch = new ResourcePoolState();
+        rpPatch.tagLinks = Collections.singleton(tag.documentSelfLink);
+        doPatch(rpPatch, computeResourcePool.documentSelfLink);
+
+        ComputeDescription descPatch = new ComputeDescription();
+        setConstraintToComputeDesc(descPatch, "cap", "pci", true, false);
+        setConstraintToComputeDesc(descPatch, COMPUTE_STORAGE_CONSTRAINT_KEY,
+                new ConditionSpec("HA", "", true, false));
+        doPatch(descPatch, hostDesc.documentSelfLink);
+
+        ComputeReservationTaskState task = new ComputeReservationTaskState();
+        task.tenantLinks = groupPlacementState.tenantLinks;
+        task.resourceDescriptionLink = hostDesc.documentSelfLink;
+        task.resourceCount = 1;
+        task.serviceTaskCallback = ServiceTaskCallback.createEmpty();
+
+        task = doPost(task, ComputeReservationTaskService.FACTORY_LINK);
+        assertNotNull(task);
+
+        ComputeReservationTaskState taskState = waitForTaskError(task.documentSelfLink,
+                ComputeReservationTaskState.class);
+        assertTrue(taskState.taskInfo.failure.message
+                .contains("No matching storage defined in profile"));
     }
 
     @Test
@@ -481,25 +697,17 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         doPatch(rpPatch, computeResourcePool.documentSelfLink);
 
         ComputeDescription descPatch = new ComputeDescription();
-        addConstraintToComputeDesc(descPatch, "cap", "pci", true, false);
+        setConstraintToComputeDesc(descPatch, "cap", "pci", true, false);
         descPatch.diskDescLinks = buildDiskStateWithSoftConstraint();
         doPatch(descPatch, hostDesc.documentSelfLink);
 
-        StorageProfileService.StorageProfile storageProfile = buildStorageProfileWithConstraints
-                (groupPlacementState.tenantLinks);
+        StorageProfileService.StorageProfile storageProfile = buildStorageProfileWithConstraints(
+                groupPlacementState.tenantLinks);
         createProfileWithInstanceType(
                 "small", "t1.micro", "coreos", "ami-123456", storageProfile, groupPlacementState);
 
-        ComputeReservationTaskState task = new ComputeReservationTaskState();
-        task.tenantLinks = groupPlacementState.tenantLinks;
-        task.resourceDescriptionLink = hostDesc.documentSelfLink;
-        task.resourceCount = 1;
-        task.serviceTaskCallback = ServiceTaskCallback.createEmpty();
-
-        task = doPost(task, ComputeReservationTaskService.FACTORY_LINK);
-        assertNotNull(task);
-
-        waitForTaskSuccess(task.documentSelfLink, ComputeReservationTaskState.class);
+        kickOffComputeReservationTask(hostDesc);
+        ;
     }
 
     @Test
@@ -511,7 +719,7 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         addForDeletion(groupPlacementState);
 
         ComputeDescription descPatch = new ComputeDescription();
-        addConstraintToComputeDesc(descPatch, "cap", "pci", true, false);
+        setConstraintToComputeDesc(descPatch, "cap", "pci", true, false);
         doPatch(descPatch, hostDesc.documentSelfLink);
 
         ComputeReservationTaskState task = new ComputeReservationTaskState();
@@ -539,19 +747,10 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         addForDeletion(groupPlacementState);
 
         ComputeDescription descPatch = new ComputeDescription();
-        addConstraintToComputeDesc(descPatch, "cap", "pci", false, false);
+        setConstraintToComputeDesc(descPatch, "cap", "pci", false, false);
         doPatch(descPatch, hostDesc.documentSelfLink);
 
-        ComputeReservationTaskState task = new ComputeReservationTaskState();
-        task.tenantLinks = groupPlacementState.tenantLinks;
-        task.resourceDescriptionLink = hostDesc.documentSelfLink;
-        task.resourceCount = 1;
-        task.serviceTaskCallback = ServiceTaskCallback.createEmpty();
-
-        task = doPost(task, ComputeReservationTaskService.FACTORY_LINK);
-        assertNotNull(task);
-
-        waitForTaskSuccess(task.documentSelfLink, ComputeReservationTaskState.class);
+        kickOffComputeReservationTask(hostDesc);
     }
 
     @Test
@@ -560,32 +759,22 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         service.setHost(host);
 
         GroupResourcePlacementState groupPlacementState1 = doPost(TestRequestStateFactory
-                        .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE, "p-1"),
+                .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE, "p-1"),
                 GroupResourcePlacementService.FACTORY_LINK);
         GroupResourcePlacementState groupPlacementState2 = doPost(TestRequestStateFactory
-                        .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE,
-                                "p-2"),
+                .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE,
+                        "p-2"),
                 GroupResourcePlacementService.FACTORY_LINK);
 
         addForDeletion(groupPlacementState1);
         addForDeletion(groupPlacementState2);
 
-        ComputeReservationTaskState task = new ComputeReservationTaskState();
-        task.tenantLinks = groupPlacementState1.tenantLinks;
-        task.resourceDescriptionLink = hostDesc.documentSelfLink;
-        task.resourceCount = 1;
-        task.serviceTaskCallback = ServiceTaskCallback.createEmpty();
-
-        task = doPost(task, ComputeReservationTaskService.FACTORY_LINK);
-        assertNotNull(task);
-
-        task = waitForTaskSuccess(task.documentSelfLink, ComputeReservationTaskState.class);
+        ComputeReservationTaskState task = kickOffComputeReservationTask(hostDesc);
 
         String taskLink = task.documentSelfLink;
 
-        ComputeReservationTaskService.ExtensibilityCallbackResponse payload =
-                (ComputeReservationTaskService.ExtensibilityCallbackResponse) service
-                        .notificationPayload(task);
+        ComputeReservationTaskService.ExtensibilityCallbackResponse payload = (ComputeReservationTaskService.ExtensibilityCallbackResponse) service
+                .notificationPayload(task);
 
         payload.placements = Arrays.asList("p-2");
 
@@ -613,13 +802,42 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         context.await();
     }
 
-    private static void addConstraintToComputeDesc(ComputeDescription computeDesc, String tagKey,
-            String tagValue, boolean isHard, boolean isAnti) {
-        Constraint constraint = new Constraint();
-        constraint.conditions = Arrays.asList(TestRequestStateFactory.createCondition(tagKey,
-                tagValue, isHard, isAnti));
-        computeDesc.constraints = new HashMap<>();
-        computeDesc.constraints.put(ComputeConstants.COMPUTE_PLACEMENT_CONSTRAINT_KEY, constraint);
+    public static class ConditionSpec {
+
+        final String tagKey;
+        final String tagValue;
+        final boolean isHard;
+        final boolean isAnti;
+
+        public ConditionSpec(String tagKey, String tagValue, boolean isHard, boolean isAnti) {
+            this.tagKey = tagKey;
+            this.tagValue = tagValue;
+            this.isHard = isHard;
+            this.isAnti = isAnti;
+        }
+    }
+
+    private static void setConstraintToComputeDesc(
+            ComputeDescription computeDesc, String constraintKey, ConditionSpec... constraintSpecs) {
+
+        final Constraint constraint = new Constraint();
+        constraint.conditions = Arrays.stream(constraintSpecs)
+                .map(constraintSpec -> TestRequestStateFactory.createCondition(
+                        constraintSpec.tagKey,
+                        constraintSpec.tagValue,
+                        constraintSpec.isHard,
+                        constraintSpec.isAnti))
+                .collect(Collectors.toList());
+
+        computeDesc.constraints = Collections.singletonMap(constraintKey, constraint);
+    }
+
+    private static void setConstraintToComputeDesc(ComputeDescription computeDesc,
+            String tagKey, String tagValue, boolean isHard, boolean isAnti) {
+
+        setConstraintToComputeDesc(computeDesc, COMPUTE_PLACEMENT_CONSTRAINT_KEY,
+                new ConditionSpec(
+                        tagKey, tagValue, isHard, isAnti));
     }
 
     private ArrayList<String> buildDiskStateWithHardConstraint() throws Throwable {
@@ -719,7 +937,7 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         return rgp;
     }
 
-    private ComputeState createVmHostCompute(EndpointState endpoint, ResourcePoolState rp)
+    private ComputeState createVmHostCompute(EndpointState endpoint, String rpLink)
             throws Throwable {
         ComputeDescription cd = TestRequestStateFactory
                 .createComputeDescriptionForVmGuestChildren();
@@ -731,11 +949,13 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         ComputeState vmHostComputeState = TestRequestStateFactory.createVmHostComputeState();
         vmHostComputeState.id = UUID.randomUUID().toString();
         vmHostComputeState.documentSelfLink = vmHostComputeState.id;
-        vmHostComputeState.resourcePoolLink = rp.documentSelfLink;
+        vmHostComputeState.resourcePoolLink = rpLink;
         vmHostComputeState.descriptionLink = cd.documentSelfLink;
         vmHostComputeState.type = ComputeType.VM_HOST;
         vmHostComputeState.powerState = PowerState.ON;
         vmHostComputeState.tenantLinks = endpoint.tenantLinks;
+        vmHostComputeState.endpointLink = endpoint.documentSelfLink;
+
         vmHostComputeState = getOrCreateDocument(vmHostComputeState, ComputeService.FACTORY_LINK);
         assertNotNull(vmHostComputeState);
 

@@ -15,7 +15,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -42,20 +41,15 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
     private PrincipalProvider provider = new LocalPrincipalProvider();
 
     @Before
-    public void injectHost() throws Exception {
-        Field hostField = provider.getClass().getDeclaredField("host");
-        if (!hostField.isAccessible()) {
-            hostField.setAccessible(true);
-        }
+    public void injectHost() throws Throwable {
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
-        hostField.set(provider, host);
-        hostField.setAccessible(false);
+        provider.init(privilegedTestService);
     }
 
     @Test
     public void testGetPrincipal() {
         String principalId = "connie@admiral.com";
-        DeferredResult<Principal> result = provider.getPrincipal(principalId);
+        DeferredResult<Principal> result = provider.getPrincipal(null, principalId);
 
         TestContext ctx = testCreate(1);
         result.whenComplete((p, ex) -> {
@@ -73,12 +67,13 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
         assertEquals(principalId, principal.id);
         assertEquals("Connie", principal.name);
         assertEquals(PrincipalType.USER, principal.type);
+        assertTrue(principal.groups.contains(USER_GROUP_DEVELOPERS));
     }
 
     @Test
     public void testGetPrincipalsOfTypeGroup() {
         String principalId = "superusers";
-        DeferredResult<List<Principal>> result = provider.getPrincipals(principalId);
+        DeferredResult<List<Principal>> result = provider.getPrincipals(null, principalId);
 
         TestContext ctx = testCreate(1);
         result.whenComplete((p, ex) -> {
@@ -107,7 +102,7 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
         lazyPeonUser = doPost(lazyPeonUser, LocalPrincipalFactoryService.SELF_LINK);
 
         // Get by email.
-        DeferredResult<List<Principal>> result = provider.getPrincipals(lazyPeonUser.email);
+        DeferredResult<List<Principal>> result = provider.getPrincipals(null, lazyPeonUser.email);
 
         TestContext ctx = testCreate(1);
         result.whenComplete((p, ex) -> {
@@ -127,7 +122,7 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
         assertEquals(lazyPeonUser.email, principal.email);
 
         // Get by name.
-        result = provider.getPrincipals(lazyPeonUser.name);
+        result = provider.getPrincipals(null, lazyPeonUser.name);
 
         TestContext ctx1 = testCreate(1);
         result.whenComplete((p, ex) -> {
@@ -154,9 +149,9 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
         String expectedPrincipal2 = "fritz@admiral.com";
         String expectedPrincipal3 = "gloria@admiral.com";
         String expectedPrincipal4 = "tony@admiral.com";
-        String expectedPrincipal5 = "admin@admiral.com";
+        String expectedPrincipal5 = "administrator@admiral.com";
 
-        DeferredResult<List<Principal>> result = provider.getPrincipals(criteria);
+        DeferredResult<List<Principal>> result = provider.getPrincipals(null, criteria);
 
         TestContext ctx = testCreate(1);
         result.whenComplete((p, ex) -> {
@@ -173,6 +168,9 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
         assertEquals(EXPECTED_PRINCIPALS_COUNT, principals.size());
 
         for (Principal p : principals) {
+            if (p.id.equals(expectedPrincipal1)) {
+                assertTrue(p.groups.contains(USER_GROUP_DEVELOPERS));
+            }
             assertTrue(p.email.equals(expectedPrincipal1)
                     || p.email.equals(expectedPrincipal2)
                     || p.email.equals(expectedPrincipal3)
@@ -189,7 +187,7 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
         principal.name = "test";
         principal.password = "testPassword";
 
-        DeferredResult<Principal> result = provider.createPrincipal(principal);
+        DeferredResult<Principal> result = provider.createPrincipal(null, principal);
 
         TestContext ctx = testCreate(1);
         result.whenComplete((p, ex) -> {
@@ -201,7 +199,7 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
         });
         ctx.await();
 
-        result = provider.getPrincipal(principal.email);
+        result = provider.getPrincipal(null, principal.email);
 
         TestContext ctx1 = testCreate(1);
         result.whenComplete((p, ex) -> {
@@ -229,7 +227,7 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
         principal.name = "test";
         principal.password = "testPassword";
 
-        DeferredResult<Principal> result = provider.createPrincipal(principal);
+        DeferredResult<Principal> result = provider.createPrincipal(null, principal);
 
         TestContext ctx = testCreate(1);
         result.whenComplete((p, ex) -> {
@@ -242,7 +240,7 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
         ctx.await();
         principal = result.getNow(new Principal());
         principal.name = "NewName";
-        result = provider.updatePrincipal(principal);
+        result = provider.updatePrincipal(null, principal);
 
         TestContext ctx1 = testCreate(1);
         result.whenComplete((p, ex) -> {
@@ -254,7 +252,7 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
         });
         ctx1.await();
 
-        result = provider.getPrincipal(principal.email);
+        result = provider.getPrincipal(null, principal.email);
 
         TestContext ctx2 = testCreate(1);
         result.whenComplete((p, ex) -> {
@@ -280,7 +278,7 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
         principal.name = "test";
         principal.password = "testPassword";
 
-        DeferredResult<Principal> result = provider.createPrincipal(principal);
+        DeferredResult<Principal> result = provider.createPrincipal(null, principal);
 
         TestContext ctx = testCreate(1);
         result.whenComplete((p, ex) -> {
@@ -293,7 +291,7 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
         ctx.await();
         principal = result.getNow(new Principal());
 
-        result = provider.deletePrincipal(principal.id);
+        result = provider.deletePrincipal(null, principal.id);
         TestContext ctx1 = testCreate(1);
         result.whenComplete((p, ex) -> {
             if (ex != null) {
@@ -304,7 +302,7 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
         });
         ctx1.await();
 
-        result = provider.getPrincipal(principal.id);
+        result = provider.getPrincipal(null, principal.id);
         TestContext ctx2 = testCreate(1);
         result.whenComplete((p, ex) -> {
             if (ex != null) {
@@ -342,7 +340,7 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
 
         // fritz is part of "superusers" which is part of "it", and "it" is part of "organization"
         // verify when get groups for fritz "superusers", "it" and "organization is returned"
-        DeferredResult<Set<String>> result = provider.getAllGroupsForPrincipal(
+        DeferredResult<Set<String>> result = provider.getAllGroupsForPrincipal(null,
                 USER_EMAIL_ADMIN);
 
         TestContext ctx = testCreate(1);
@@ -366,7 +364,7 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
 
     @Test
     public void testSimpleGetGroupsForPrincipal() {
-        DeferredResult<Set<String>> result = provider.getAllGroupsForPrincipal(
+        DeferredResult<Set<String>> result = provider.getAllGroupsForPrincipal(null,
                 USER_EMAIL_ADMIN);
 
         TestContext ctx = testCreate(1);
@@ -405,8 +403,7 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
         organization = doPost(organization, LocalPrincipalFactoryService.SELF_LINK);
         assertNotNull(organization);
 
-        DeferredResult<Set<String>> result = provider.getAllGroupsForPrincipal(
-                "superusers");
+        DeferredResult<Set<String>> result = provider.getAllGroupsForPrincipal(null, "superusers");
 
         TestContext ctx = testCreate(1);
         Set<String> results = new HashSet<>();

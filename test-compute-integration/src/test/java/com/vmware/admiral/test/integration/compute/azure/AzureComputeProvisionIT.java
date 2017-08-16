@@ -29,8 +29,8 @@ public class AzureComputeProvisionIT extends BaseComputeProvisionIT {
     public static final String ACCESS_KEY_PROP = "test.azure.access.key";
     public static final String ACCESS_SECRET_PROP = "test.azure.secret.key";
 
-    private static final String VM_ADMIN_USERNAME = "test.azure.vm.admin.username";
-    private static final String VM_ADMIN_PASSWORD = "test.azure.vm.admin.password";
+    public static final String VM_ADMIN_USERNAME = "test.azure.vm.admin.username";
+    public static final String VM_ADMIN_PASSWORD = "test.azure.vm.admin.password";
 
     public static final String REGION_ID_PROP = "test.azure.region.id";
 

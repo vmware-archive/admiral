@@ -10,20 +10,39 @@
   -->
 
 <clr-main-container *ngIf="!isLogin">
+  <clr-alert [clrAlertType]="'alert-danger'"
+    [clrAlertAppLevel]="true"
+    [clrAlertClosable]="false"
+    *ngIf="showSessionTimeout"
+    class="above-modal-backdrop">
+    <div class="alert-item">
+        <span class="alert-text">
+            {{ 'sessionExpired' | i18n }}
+        </span>
+        <div class="alert-actions">
+            <button class="btn alert-action"
+                (click)="reload()">{{ 'reload' | i18n }}</button>
+        </div>
+    </div>
+  </clr-alert>
   <clr-header class="header-5" *ngIf="!embedded">
     <div class="branding">
-        <a class="nav-link" routerLink="/" *ngIf="!compute">
+        <a class="nav-link" routerLink="/" *ngIf="admiral">
             <clr-icon shape="vm-bug"></clr-icon>
-            <span class="title">vSphere Integrated Containers</span>
+            <span class="title">{{"header.title.admiral" | i18n}}</span>
+        </a>
+        <a class="nav-link" routerLink="/" *ngIf="vic">
+            <clr-icon shape="vm-bug"></clr-icon>
+            <span class="title">{{"header.title.vic" | i18n}}</span>
         </a>
         <a class="nav-link" routerLink="/compute" *ngIf="compute">
             <clr-icon shape="vm-bug"></clr-icon>
-            <span class="title">Infrastructure</span>
+            <span class="title">{{"header.title.compute" | i18n}}</span>
         </a>
     </div>
     <div class="header-nav" *ngIf="!compute">
-        <a class="nav-link nav-text" routerLink="/home" routerLinkActive="active">Home</a>
-        <a class="nav-link nav-text" routerLink="/administration" routerLinkActive="active">Administration</a>
+        <a class="nav-link nav-text" routerLink="/home" routerLinkActive="active">{{ "navigation.home" | i18n }}</a>
+        <a class="nav-link nav-text" allowNavigation [roles]="administrationRouteRestriction" routerLink="/administration" routerLinkActive="active">{{ "navigation.administration" | i18n }}</a>
     </div>
     <div class="header-actions">
         <clr-dropdown clrMenuPosition="bottom-right" class="dropdown" *ngIf="userName">
@@ -33,8 +52,7 @@
             </button>
             <div class="dropdown-menu">
                 <div class="dropdown-header" *ngIf="userNameDetail">{{userNameDetail}}</div>
-                <a href="..." clrDropdownItem>Preferences</a>
-                <a (click)="logout()" clrDropdownItem>Log out</a>
+                <a (click)="logout()" clrDropdownItem>{{"loginPanel.logout" | i18n: { "ns": "base" } }}</a>
             </div>
         </clr-dropdown>
     </div>

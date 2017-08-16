@@ -5,3 +5,7 @@
 .projects-details-header-title {
   margin-bottom: 10px;
 }
+
+:host /deep/ .grid-content {
+    position: static;
+}

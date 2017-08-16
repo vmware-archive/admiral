@@ -35,7 +35,8 @@ public class ComputeDescriptionInstanceTypeEnhancer extends ComputeDescriptionEn
             ComputeDescription cd) {
 
         if (VsphereConstants.COMPUTE_VSPHERE_TYPE.equals(cd.customProperties.get(
-                VsphereConstants.COMPUTE_COMPONENT_TYPE_ID))) {
+                VsphereConstants.COMPUTE_COMPONENT_TYPE_ID)) && cd.instanceType == null
+                && !cd.customProperties.containsKey(REQUESTED_INSTANCE_TYPE)) {
             if (cd.cpuCount < 1) {
                 return DeferredResult.failed(new IllegalStateException(
                      "CPU count cannot be 0 for Endpoint specific blueprints."));

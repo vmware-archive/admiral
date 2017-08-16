@@ -11,7 +11,6 @@
 
 package com.vmware.admiral.request.compute.allocation.filter;
 
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import static com.vmware.admiral.request.allocation.filter.AffinityConstraint.AffinityConstraintType.ANTI_AFFINITY_PREFIX;
@@ -19,13 +18,11 @@ import static com.vmware.admiral.request.allocation.filter.AffinityConstraint.Af
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.UUID;
 
 import org.junit.Test;
 
 import com.vmware.admiral.compute.content.TemplateComputeDescription;
 import com.vmware.admiral.request.utils.RequestUtils;
-import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 
@@ -201,7 +198,7 @@ public class ComputeServiceAntiAffinityHostFilterTest extends BaseComputeAffinit
 
         // The third host is a soft constraint but the fourth compute points to the same host and
         // it is a hard constraint
-        filter(Collections.emptyList());
+        filter(Collections.<String>emptyList());
 
         // filter even soft constraints when more than one host available
 
@@ -225,18 +222,4 @@ public class ComputeServiceAntiAffinityHostFilterTest extends BaseComputeAffinit
         return createDescriptions(name, null);
     }
 
-    private ComputeDescription createDescriptions(String name, String[] affinity)
-            throws Throwable {
-        // loop a few times to make sure the right host is not chosen by chance
-        ComputeDescription desc = new ComputeDescription();
-        desc.documentSelfLink = UUID.randomUUID().toString();
-        desc.name = name;
-        TemplateComputeDescription.setAffinityNames(desc, affinity == null ?
-                Collections.emptyList() : Arrays.asList(affinity));
-        desc = doPost(desc, ComputeDescriptionService.FACTORY_LINK);
-        assertNotNull(desc);
-        addForDeletion(desc);
-
-        return desc;
-    }
 }

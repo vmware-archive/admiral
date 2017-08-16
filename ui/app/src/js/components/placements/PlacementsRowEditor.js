@@ -14,7 +14,7 @@ import {
   PlacementContextToolbarActions, PlacementActions
 }
 from 'actions/Actions';
-import DropdownSearchMenu from 'components/common/DropdownSearchMenu';
+import { DropdownSearchMenu } from 'admiral-ui-common';
 import Alert from 'components/common/Alert';
 import constants from 'core/constants';
 import utils from 'core/utils';

@@ -28,7 +28,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
-import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService;
+import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService.ComputeNetworkCIDRAllocationState;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
@@ -43,18 +43,13 @@ import com.vmware.admiral.request.compute.ComputeNetworkProvisionTaskService.Com
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
-import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.NetworkService;
-import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;
 import com.vmware.photon.controller.model.resources.SecurityGroupService;
 import com.vmware.photon.controller.model.resources.SecurityGroupService.SecurityGroupState;
-import com.vmware.xenon.common.UriUtils;
+import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 
 public class ComputeNetworkProvisionTaskServiceTest extends ComputeRequestBaseTest {
 
-    private static final String NETWORK_ADDRESS = "192.168.0.0";
-    private static final int NETWORK_CIDR_PREFIX = 29;
-    private static final String NETWORK_CIDR = NETWORK_ADDRESS + "/" + NETWORK_CIDR_PREFIX;
     private static final String NETWORK_LINK = NetworkService.FACTORY_LINK + "/myNetwork";
 
     @Override
@@ -67,13 +62,13 @@ public class ComputeNetworkProvisionTaskServiceTest extends ComputeRequestBaseTe
     @Test
     public void testProvisionIsolatedNetworkNoCompute() throws Throwable {
         ComputeNetworkDescription computeNetworkDesc = createComputeNetworkDescription(UUID
-                .randomUUID().toString(), NetworkType.ISOLATED);
+                .randomUUID().toString(), NetworkType.ISOLATED, false);
 
         ComputeNetwork computeNetwork = createComputeNetwork(computeNetworkDesc,
                 createIsolatedNetworkProfile(createSecurityGroupState()).documentSelfLink);
 
         ComputeNetworkProvisionTaskState provisioningTask = createComputeNetworkProvisionTask(
-                computeNetworkDesc.documentSelfLink, computeNetwork.documentSelfLink, null, 1);
+                computeNetworkDesc.documentSelfLink, computeNetwork, null, 1);
         provisioningTask = provision(provisioningTask);
 
         ComputeNetwork networkState = getDocument(ComputeNetwork.class,
@@ -88,13 +83,13 @@ public class ComputeNetworkProvisionTaskServiceTest extends ComputeRequestBaseTe
     @Test
     public void testProvisionExternalNetworkNoCompute() throws Throwable {
         ComputeNetworkDescription computeNetworkDesc = createComputeNetworkDescription(UUID
-                .randomUUID().toString(), NetworkType.EXTERNAL);
+                .randomUUID().toString(), NetworkType.EXTERNAL, false);
 
         ComputeNetwork computeNetwork = createComputeNetwork(computeNetworkDesc,
                 createProfile().documentSelfLink);
 
         ComputeNetworkProvisionTaskState provisioningTask = createComputeNetworkProvisionTask(
-                computeNetworkDesc.documentSelfLink, computeNetwork.documentSelfLink, null, 1);
+                computeNetworkDesc.documentSelfLink, computeNetwork, null, 1);
         provisioningTask = provision(provisioningTask);
 
         ComputeNetwork networkState = getDocument(ComputeNetwork.class,
@@ -109,7 +104,7 @@ public class ComputeNetworkProvisionTaskServiceTest extends ComputeRequestBaseTe
     @Test
     public void testProvisionIsolatedSubnetNetwork() throws Throwable {
         ComputeNetworkDescription computeNetworkDesc = createComputeNetworkDescription(UUID
-                .randomUUID().toString(), NetworkType.ISOLATED);
+                .randomUUID().toString(), NetworkType.ISOLATED, false);
 
         ComputeNetwork computeNetwork = createComputeNetwork(computeNetworkDesc,
                 createIsolatedSubnetNetworkProfile().documentSelfLink);
@@ -119,7 +114,7 @@ public class ComputeNetworkProvisionTaskServiceTest extends ComputeRequestBaseTe
         createComputeState(cd.documentSelfLink, contextId);
 
         ComputeNetworkProvisionTaskState provisioningTask = createComputeNetworkProvisionTask(
-                computeNetworkDesc.documentSelfLink, computeNetwork.documentSelfLink, contextId, 1);
+                computeNetworkDesc.documentSelfLink, computeNetwork, contextId, 1);
         provisioningTask = provision(provisioningTask);
 
         ComputeNetwork networkState = getDocument(ComputeNetwork.class,
@@ -129,12 +124,56 @@ public class ComputeNetworkProvisionTaskServiceTest extends ComputeRequestBaseTe
         assertEquals(computeNetworkDesc.documentSelfLink, networkState.descriptionLink);
         assertTrue(networkState.name.contains(computeNetworkDesc.name));
         assertEquals(provisioningTask.resourceLinks.iterator().next(), networkState.documentSelfLink);
+        assertEquals(computeNetworkDesc.documentSelfLink, networkState.descriptionLink);
+        assertTrue(networkState.name.contains(computeNetworkDesc.name));
+        assertEquals(provisioningTask.resourceLinks.iterator().next(),
+                networkState.documentSelfLink);
+        assertNotNull(networkState.subnetLink);
+        SubnetState subnetState = getDocument(SubnetState.class, networkState.subnetLink);
+        assertEquals(networkState.tenantLinks, subnetState.tenantLinks);
+        assertNotNull(subnetState.customProperties);
+        String sgContextId = subnetState.customProperties.get(FIELD_NAME_CONTEXT_ID_KEY);
+        assertNotNull(sgContextId);
+        assertEquals(contextId, sgContextId);
+    }
+
+    @Test
+    public void testProvisionIsolatedSubnetNetworkWithExternalIPAllocation() throws Throwable {
+        ComputeNetworkDescription computeNetworkDesc = createComputeNetworkDescription(UUID
+                .randomUUID().toString(), NetworkType.ISOLATED, true);
+
+        ComputeNetwork computeNetwork = createComputeNetwork(computeNetworkDesc,
+                createIsolatedSubnetNetworkProfileWithExternalSubnetLink().documentSelfLink);
+
+        String contextId = UUID.randomUUID().toString();
+        ComputeDescription cd = createComputeDescriptionWithNetwork(computeNetwork.name);
+        createComputeState(cd.documentSelfLink, contextId);
+
+        ComputeNetworkProvisionTaskState provisioningTask = createComputeNetworkProvisionTask(
+                computeNetworkDesc.documentSelfLink, computeNetwork, contextId, 1);
+        provisioningTask = provision(provisioningTask);
+
+        ComputeNetwork networkState = getDocument(ComputeNetwork.class,
+                provisioningTask.resourceLinks.iterator().next());
+
+        assertNotNull(networkState);
+        assertEquals(computeNetworkDesc.documentSelfLink, networkState.descriptionLink);
+        assertTrue(networkState.name.contains(computeNetworkDesc.name));
+        assertEquals(provisioningTask.resourceLinks.iterator().next(), networkState.documentSelfLink);
+        assertNotNull(networkState.subnetLink);
+
+        SubnetState subnetState = getDocument(SubnetState.class, networkState.subnetLink);
+        assertNotNull(subnetState);
+        assertNotNull(subnetState.customProperties);
+        assertNotNull(subnetState.customProperties.get(
+                ComputeConstants.CUSTOM_PROP_ISOLATION_EXTERNAL_IP_ADDRESS_LINK));
+        assertNotNull(subnetState.externalSubnetLink);
     }
 
     @Test
     public void testProvisionIsolatedSecurityGroupNetwork() throws Throwable {
         ComputeNetworkDescription computeNetworkDesc = createComputeNetworkDescription(UUID
-                .randomUUID().toString(), NetworkType.ISOLATED);
+                .randomUUID().toString(), NetworkType.ISOLATED, false);
 
         ComputeNetwork computeNetwork = createComputeNetwork(computeNetworkDesc,
                 createIsolatedSecurityGroupNetworkProfile().documentSelfLink);
@@ -144,7 +183,7 @@ public class ComputeNetworkProvisionTaskServiceTest extends ComputeRequestBaseTe
         createComputeState(cd.documentSelfLink, contextId);
 
         ComputeNetworkProvisionTaskState provisioningTask = createComputeNetworkProvisionTask(
-                computeNetworkDesc.documentSelfLink, computeNetwork.documentSelfLink, contextId, 1);
+                computeNetworkDesc.documentSelfLink, computeNetwork, contextId,1);
         provisioningTask = provision(provisioningTask);
 
         ComputeNetwork networkState = getDocument(ComputeNetwork.class,
@@ -154,15 +193,24 @@ public class ComputeNetworkProvisionTaskServiceTest extends ComputeRequestBaseTe
         assertEquals(computeNetworkDesc.documentSelfLink, networkState.descriptionLink);
         assertTrue(networkState.name.contains(computeNetworkDesc.name));
         assertEquals(provisioningTask.resourceLinks.iterator().next(), networkState.documentSelfLink);
+        assertNotNull(networkState.securityGroupLinks);
+        assertEquals(1, networkState.securityGroupLinks.size());
+        SecurityGroupState securityGroupState = getDocument(SecurityGroupState.class,
+                networkState.securityGroupLinks.iterator().next());
+        assertEquals(networkState.tenantLinks, securityGroupState.tenantLinks);
+        assertNotNull(securityGroupState.customProperties);
+        String sgContextId = securityGroupState.customProperties.get(FIELD_NAME_CONTEXT_ID_KEY);
+        assertNotNull(sgContextId);
+        assertEquals(contextId, sgContextId);
     }
 
     private ComputeNetworkProvisionTaskState createComputeNetworkProvisionTask(
-            String networkDescriptionSelfLink, String networkStateSelfLink, String contextId,
+            String networkDescriptionSelfLink, ComputeNetwork networkState, String contextId,
             long resourceCount) {
 
         ComputeNetworkProvisionTaskState provisionTask = new ComputeNetworkProvisionTaskState();
         provisionTask.resourceLinks = new HashSet<>();
-        provisionTask.resourceLinks.add(networkStateSelfLink);
+        provisionTask.resourceLinks.add(networkState.documentSelfLink);
         provisionTask.resourceDescriptionLink = networkDescriptionSelfLink;
         provisionTask.resourceCount = resourceCount;
         provisionTask.serviceTaskCallback = ServiceTaskCallback.createEmpty();
@@ -170,6 +218,7 @@ public class ComputeNetworkProvisionTaskServiceTest extends ComputeRequestBaseTe
         if (contextId != null) {
             provisionTask.customProperties.put(FIELD_NAME_CONTEXT_ID_KEY, contextId);
         }
+        provisionTask.tenantLinks = networkState.tenantLinks;
         return provisionTask;
     }
 
@@ -199,9 +248,10 @@ public class ComputeNetworkProvisionTaskServiceTest extends ComputeRequestBaseTe
         return outProvisionTask;
     }
 
-    private ComputeNetworkDescription createComputeNetworkDescription(String name, NetworkType networkType)
-            throws Throwable {
+    private ComputeNetworkDescription createComputeNetworkDescription(String name,
+            NetworkType networkType, boolean outboundAccess) throws Throwable {
         ComputeNetworkDescription desc = createNetworkDescription(name, networkType);
+        desc.outboundAccess = outboundAccess;
         desc = doPost(desc,
                 ComputeNetworkDescriptionService.FACTORY_LINK);
         assertNotNull(desc);
@@ -250,18 +300,6 @@ public class ComputeNetworkProvisionTaskServiceTest extends ComputeRequestBaseTe
         return securityGroupState;
     }
 
-    private ProfileState createProfile()
-            throws Throwable {
-        NetworkProfile networkProfile = new NetworkProfile();
-        networkProfile.isolationType = IsolationSupportType.NONE;
-        networkProfile.subnetLinks = Arrays.asList(createSubnetState(null).documentSelfLink);
-        networkProfile = doPost(networkProfile, NetworkProfileService.FACTORY_LINK);
-        ProfileState profile = super.createProfile(null, null, networkProfile, null, null);
-        assertNotNull(profile);
-
-        return profile;
-    }
-
     private ProfileState createIsolatedNetworkProfile(SecurityGroupState securityGroupState) throws Throwable {
 
         ComputeNetworkCIDRAllocationState cidrAllocation = createNetworkCIDRAllocationState();
@@ -272,24 +310,6 @@ public class ComputeNetworkProvisionTaskServiceTest extends ComputeRequestBaseTe
         networkProfile.isolationNetworkCIDR = "192.168.0.0/16";
         networkProfile.securityGroupLinks = Arrays.asList(securityGroupState.documentSelfLink);
 
-        networkProfile = doPost(networkProfile, NetworkProfileService.FACTORY_LINK);
-
-        ProfileState profile = super.createProfile(null, null, networkProfile, null, null);
-        assertNotNull(profile);
-
-        return profile;
-    }
-
-    private ProfileState createIsolatedSubnetNetworkProfile() throws Throwable {
-
-        ComputeNetworkCIDRAllocationState cidrAllocation = createNetworkCIDRAllocationState();
-
-        NetworkProfile networkProfile = new NetworkProfile();
-        networkProfile.name = "networkProfileName";
-        networkProfile.isolationType = IsolationSupportType.SUBNET;
-        networkProfile.isolationNetworkLink = cidrAllocation.networkLink;
-        networkProfile.isolationNetworkCIDR = "192.168.0.0/16";
-        networkProfile.isolatedSubnetCIDRPrefix = 16;
         networkProfile = doPost(networkProfile, NetworkProfileService.FACTORY_LINK);
 
         ProfileState profile = super.createProfile(null, null, networkProfile, null, null);
@@ -310,25 +330,5 @@ public class ComputeNetworkProvisionTaskServiceTest extends ComputeRequestBaseTe
         assertNotNull(profile);
 
         return profile;
-    }
-
-    private ComputeNetworkCIDRAllocationState createNetworkCIDRAllocationState() throws Throwable {
-        EndpointState epState = TestRequestStateFactory.createEndpoint();
-        NetworkState network = new NetworkState();
-        network.subnetCIDR = NETWORK_CIDR;
-        network.name = "IsolatedNetwork";
-        network.endpointLink = epState.documentSelfLink;
-        network.instanceAdapterReference = UriUtils.buildUri("/instance-adapter-reference");
-        network.resourcePoolLink = "/dummy-resource-pool-link";
-        network.regionId = "dummy-region-id";
-        network = doPost(network, NetworkService.FACTORY_LINK);
-        return createNetworkCIDRAllocationState(network.documentSelfLink);
-    }
-
-    private ComputeNetworkCIDRAllocationState createNetworkCIDRAllocationState(String networkLink)
-            throws Throwable {
-        ComputeNetworkCIDRAllocationState state = new ComputeNetworkCIDRAllocationState();
-        state.networkLink = networkLink;
-        return doPost(state, ComputeNetworkCIDRAllocationService.FACTORY_LINK);
     }
 }

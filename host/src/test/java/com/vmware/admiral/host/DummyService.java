@@ -12,6 +12,7 @@
 package com.vmware.admiral.host;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
@@ -20,6 +21,7 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.host.DummyService.DummyServiceTaskState.SubStage;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 
@@ -104,6 +106,16 @@ public class DummyService
     @Override
     protected ServiceTaskCallbackResponse replyPayload(DummyServiceTaskState state) {
         return new CallbackCompleteResponse();
+    }
+
+    @Override
+    protected Collection<String> getRelatedResourcesLinks(DummyServiceTaskState state) {
+        return Arrays.asList();
+    }
+
+    @Override
+    protected Class<? extends ResourceState> getRelatedResourceStateType(DummyServiceTaskState state) {
+        return ResourceState.class;
     }
 
     protected static class CallbackCompleteResponse extends BaseExtensibilityCallbackResponse {

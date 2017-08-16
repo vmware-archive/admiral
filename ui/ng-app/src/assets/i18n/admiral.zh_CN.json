@@ -1,0 +1,296 @@
+{
+  "projects": {
+    "title": "项目",
+    "project": "项目",
+    "users": "用户",
+    "administrators": "管理员",
+    "projectRegistry": "项目注册表",
+    "public": "公共",
+    "publicDescription": "对项目注册表的公共访问",
+    "private": "专用",
+    "clusters": "群集",
+    "repositories": "存储库",
+    "infrastructure": "基础架构",
+    "registryReplication": "注册表复制",
+    "configuration": "配置",
+    "edit": {
+      "titleNew": "新建项目",
+      "titleEdit": "编辑项目",
+      "name": "名称",
+      "nameRequired": "“名称”是必填字段。",
+      "description": "描述"
+    },
+    "delete": {
+      "title": "移除项目",
+      "confirmation": "确认移除项目 {{projectName}}。成员和群集将与项目取消关联。此操作无法撤消。"
+    },
+    "summary": {
+      "title": "摘要",
+      "type": "类型:",
+      "creationDate": "创建时间:",
+      "team": {
+        "title": "项目组",
+        "administrators": "项目管理员:",
+        "members": "开发人员:",
+        "viewers": "查看者",
+        "users": "用户"
+      },
+      "repositories": {
+        "title": "项目存储库",
+        "repositories": "存储库:"
+      },
+      "resources": {
+        "title": "项目资源",
+        "clusters": "群集:",
+        "templates": "应用程序模板:",
+        "images": "映像:"
+      }
+    },
+    "members": {
+      "title": "成员",
+      "columnName": "名称",
+      "columnPrimaryId": "主 ID",
+      "columnSource": "源",
+      "columnRole": "角色",
+      "count": "成员",
+      "addMembers": {
+        "title": "添加用户和组",
+        "description": "按 ID 或电子邮件将用户和组添加到 {{projectName}}。",
+        "fieldTitleId": "ID 或电子邮件",
+        "fieldRequiredId": "“ID”是必填字段。",
+        "searchPlaceholder": "搜索用户",
+        "fieldTitleRole": "项目中的角色"
+      },
+      "editMember": {
+        "title": "编辑项目中的成员角色",
+        "description": "编辑项目 {{projectName}} 中的成员 {{memberId}} 角色。"
+      },
+      "roles": {
+        "administrator": "开发运维管理员",
+        "member": "开发人员",
+        "viewer": "查看器"
+      },
+      "source": {
+        "local": "本地"
+      },
+      "deleteMember": {
+        "title": "从项目中移除成员",
+        "confirmation": "是否确定要从此项目中移除成员?"
+      }
+    },
+    "config": {
+      "title": "配置",
+      "projectRegistry": "项目注册表",
+      "public": "公共",
+      "publicDescription": "将项目注册表设为公用将使每个用户都可访问所有存储库。",
+      "deploymentSecurity": "部署安全性",
+      "enableContentTrust": "启用内容信任",
+      "enableContentTrustDescription": "仅允许部署已验证的映像。",
+      "preventVulnerableImagesFromRunning": "阻止运行有漏洞的映像",
+      "preventVulnerableImagesFromRunningDescription_part1": "阻止部署漏洞严重性为",
+      "preventVulnerableImagesFromRunningDescription_part2": "及以上程度的映像。",
+      "vulnerabilityScanning": "漏洞扫描",
+      "automaticallyScanImagesOnPush": "推送时自动扫描映像",
+      "automaticallyScanImagesOnPushDescription": "将映像推送到项目注册表时自动扫描它们。"
+    },
+    "search": {
+      "placeholder": "搜索项目"
+    },
+    "actions": {
+      "title": "项目",
+      "details": "详细信息",
+      "makePublic": "设为公用",
+      "makePrivate": "设为专用",
+      "addUsersAndGroups": "添加用户和组",
+      "addClusters": "添加群集"
+    }
+  },
+  "registries": {
+    "title": "注册表",
+    "sourceRegistries": "源注册表",
+    "replicationEndpoints": "复制端点",
+    "replicationRules": "复制规则"
+  },
+  "clusters": {
+    "title": "群集",
+    "cluster": "群集",
+    "new": "新建",
+    "status": "状态",
+    "state": {
+      "ON": "开启",
+      "OFF": "关闭",
+      "DISABLED": "已禁用",
+      "WARNING": "警告"
+    },
+    "type": "类型",
+    "containers": "容器",
+    "cpu": "CPU",
+    "memory": "内存",
+    "summary": {
+      "title": "摘要",
+      "address": "地址:",
+      "adminPortal": "管理员门户:",
+      "type": "类型:",
+      "clusterOverview": "群集概述",
+      "clusterResources": "群集资源",
+      "status": "状态:",
+      "creationDate": "创建时间:",
+      "containersCount": "容器:",
+      "cpu": "vCPU:",
+      "memory": "内存:"
+    },
+    "resources": {
+      "addHostButton": "主机",
+      "title": "资源",
+      "address": "地址",
+      "status": "状态",
+      "containersCount": "容器",
+      "memory": "内存",
+      "cpu": "CPU",
+      "addHost": {
+        "title": "添加主机",
+        "address": "地址",
+        "addressRequired": "“地址”是必填字段。"
+      }
+    },
+    "edit": {
+      "titleNew": "新建群集",
+      "titleEdit": "编辑群集",
+      "name": "名称",
+      "nameRequired": "“名称”是必填字段。",
+      "description": "描述",
+      "type": "类型",
+      "url": "URL",
+      "urlRequired": "“群集 URL”是必填字段。",
+      "credentials": "凭据"
+    },
+    "delete": {
+      "title": "移除群集",
+      "confirmation": "确认移除群集 {{clusterName}}。此操作无法撤消。"
+    }
+  },
+  "hosts": {
+    "delete":{
+      "title": "移除主机",
+      "confirmation": "确认移除主机 {{hostName}}。此操作无法撤消。"
+    },
+    "state": {
+      "ON": "开启",
+      "OFF": "关闭",
+      "UNKNOWN": "未知",
+      "SUSPEND": "已禁用"
+    }
+  },
+  "logs": {
+    "title": "日志",
+    "system": {
+      "title": "系统",
+      "columnLogEntry": "日志条目",
+      "columnSeverity": "严重性",
+      "columnTimeStamp": "时间戳",
+      "entriesCount": "日志条目"
+    },
+    "registry": {
+      "title": "注册表"
+    },
+    "event": {
+      "type": {
+          "info": "信息",
+          "warning": "警告",
+          "error": "错误"
+      }
+    }
+  },
+  "identity": {
+    "title": "身份管理",
+    "credentials": "凭据",
+    "certificates": "证书",
+    "usersgroups": {
+      "title": "用户和组",
+      "description": "将用户和组导入到系统中。然后将项目角色分配给用户或组。也可以将用户设为全局云管理员。",
+      "fieldTitleSearch": "搜索用户/组",
+      "columnName": "用户/组名称",
+      "columnPrimaryId": "主 ID",
+      "columnCloudAdmin": "云管理员",
+      "columnProjects": "项目",
+      "count": "用户/组",
+      "notFound": "未找到用户",
+      "assignRoleInProject": {
+      "description": "设置用户/组 {{principal}} 的项目和角色。"
+      }
+    }
+  },
+  "configuration": {
+    "title": "配置",
+    "registry": "注册表"
+  },
+  "errors": {
+    "itemNotFound": "未找到项目。"
+  },
+  "certificate": {
+    "certificateWarning": "{{address}} 的证书无效。您可能正连接到伪装成 {{address}} 的网站，这可能会使您的机密信息面临风险。您仍然要连接到该网站吗?",
+    "show": "显示证书",
+    "hide": "隐藏证书",
+    "validateTitle": "验证证书",
+    "details": {
+      "commonName": "公用名称",
+      "issuerName": "颁发机构名称",
+      "serial": "序列号",
+      "fingerprint": "SHA 指纹",
+      "validSince": "有效期自",
+      "validTo": "有效期至"
+    }
+  },
+  "tagDetails": {
+    "affectedContainers": "受影响的容器"
+  },
+  "edit": "编辑",
+  "save": "保存",
+  "add": "添加",
+  "yes": "是",
+  "remove": "移除",
+  "delete": "删除",
+  "cancel": "取消",
+  "unknown": "未知",
+  "assignRoles": "分配角色",
+  "makeAdmin": "设为管理员",
+  "noItems": "无任何项",
+  "reload": "重新加载",
+  "sessionExpired": "您的会话不再有效，请重新登录!",
+  "compute": {
+    "resources": "资源",
+    "policies": "策略",
+    "deployments": "部署",
+    "endpoints": {
+      "title": "端点"
+    },
+    "compute": {
+      "title": "计算资源"
+    },
+    "profiles": {
+      "title": "配置文件"
+    },
+    "flavors": {
+      "title": "特定实例配置文件",
+      "edit": "编辑",
+      "delete": {
+        "action": "删除",
+        "title": "删除特定实例配置文件"
+      },
+      "endpoint": "端点",
+      "flavors": "特定实例"
+    },
+    "placements": {
+      "title": "放置"
+    },
+    "placementZones": {
+      "title": "放置区域"
+    },
+    "machines": {
+      "title": "计算机"
+    },
+    "networks": {
+      "title": "网络"
+    }
+  }
+}

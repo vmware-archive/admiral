@@ -72,7 +72,7 @@
         "tagsPlaceholder": "예: location:west",
         "tagsHint": "키:값 태그 입력",
         "autoConfigure": "자동 구성",
-        "autoConfigureInput":"호스트 자동 구성 사용",
+        "autoConfigureInput": "호스트 자동 구성 사용",
         "autoConfigureHint": "이 옵션은 생성된 자체 서명된 인증서를 사용하여, 제공된 주소와 포트에 docker 원격 API를 구성합니다. 이 작업은 SSH를 통해 한 번 수행됩니다. 지원되는 운영 체제는 CoreOS, PhotonOS, Ubuntu Server 16.04 이상입니다.",
         "reservationPolicy": "예약 정책",
         "endpoint": "끝점",
@@ -85,6 +85,7 @@
         "update": "업데이트",
         "create": "생성",
         "certificateWarning": "{{address}}에 대한 인증서가 유효하지 않습니다. {{address}}(으)로 가장하는 웹 사이트에 연결하는 중일 수 있으며 이 경우 기밀 정보가 위험에 처할 수 있습니다. 그래도 웹 사이트에 연결하시겠습니까?",
+        "trustedCertificate": "{{address}}에 대한 인증서는 신뢰할 수 있습니다.",
         "showCertificate": "인증서 표시",
         "hideCertificate": "인증서 숨김",
         "manageCertificates": "인증서 관리",
@@ -109,7 +110,8 @@
         "searchPlaceholder": "호스트 검색",
         "dataCollect": "데이터 수집",
         "dataCollectStart": "데이터 수집 실행 중입니다. 완료하는 데 몇 분이 걸릴 수 있습니다.",
-        "dataCollectEnd": "데이터 수집이 완료되었습니다."
+        "dataCollectEnd": "데이터 수집이 완료되었습니다.",
+        "create": "호스트"
       },
       "actions": {
         "start": "시작",
@@ -126,7 +128,7 @@
       "entity": "배치 영역",
       "list": {
         "title": "배치 영역",
-        "addButton": "추가",
+        "addButton": "배치 영역",
         "nameColumn": "이름",
         "cpuColumn": "CPU",
         "memoryColumn": "메모리",
@@ -160,7 +162,7 @@
       "contextPanelTooltip": "프로젝트",
       "list": {
         "title": "프로젝트",
-        "addButton": "추가",
+        "addButton": "프로젝트",
         "nameColumn": "이름",
         "details": {
           "title": "프로젝트 세부 정보"
@@ -179,7 +181,7 @@
       "contextPanelTooltip": "자격 증명",
       "list": {
         "title": "자격 증명",
-        "addButton": "추가",
+        "addButton": "자격 증명",
         "nameColumn": "이름",
         "typeColumn": "유형",
         "credentialsColumn": "자격 증명"
@@ -209,7 +211,7 @@
       "contextPanelTooltip": "배포 정책",
       "list": {
         "title": "배포 정책",
-        "addButton": "추가",
+        "addButton": "정책",
         "nameColumn": "이름",
         "descriptionColumn": "설명",
         "details": {
@@ -230,7 +232,7 @@
       "contextPanelTooltip": "인증서",
       "list": {
         "title": "인증서",
-        "addButton": "추가",
+        "addButton": "인증서",
         "nameColumn": "이름",
         "serialColumn": "일련 번호",
         "shaColumn": "SHA",
@@ -259,8 +261,10 @@
       "list": {
         "title": "인기 템플릿",
         "titleSearch": "찾은 템플릿",
+        "popularRepositories": "인기 저장소",
         "searchImagesTemplatesPlaceholder": "이미지, 템플릿 검색",
         "searchImagesPlaceholder": "이미지 검색",
+        "searchRepositoriesPlaceholder": "저장소 검색",
         "searchTemplatesPlaceholder": "템플릿 검색",
         "searchClosuresPlaceholder": "클로저 검색",
         "manageRegistry": "레지스트리 관리",
@@ -283,7 +287,8 @@
           "all": "모두",
           "images": "이미지",
           "templates": "템플릿",
-          "closures": "클로저"
+          "closures": "클로저",
+          "repositories": "저장소"
         }
       },
       "details": {
@@ -333,12 +338,12 @@
           "ipamConfigGatewayHint": "예: 172.16.238.1",
           "customProperties": "사용자 지정 속성"
         },
-        "editClosures" :{
+        "editClosures": {
           "newTitle": "클로저 추가",
           "editTitle": "클로저 편집",
           "name": "이름"
         },
-        "editVolume" :{
+        "editVolume": {
           "newLabel": "볼륨 추가",
           "newTitle": "볼륨 추가",
           "newDropdownTitle": "볼륨 추가...",
@@ -349,9 +354,9 @@
           "driverOptions": {
             "label": "드라이버 옵션",
             "keyTitle": "옵션",
-            "keyHint": "예: size",
+            "keyHint": "예: o",
             "valueTitle": "값",
-            "valueHint": "예: 20GB"
+            "valueHint": "예: size=100m"
           },
           "existingVolume": "기존",
           "showingCount": "{{count}}개 항목 표시 중(총 {{totalCount}}개 항목)",
@@ -416,7 +421,7 @@
     "placement": {
       "list": {
         "title": "배치",
-        "addButton": "추가",
+        "addButton": "배치",
         "nameColumn": "이름",
         "groupColumn": "프로젝트",
         "businessGroupColumn": "비즈니스 그룹",
@@ -457,7 +462,7 @@
       "title": "이벤트",
       "tabs": {
         "all": "모두",
-        "warnings": "경고",
+        "warnings": "주의",
         "errors": "오류"
       },
       "contextPanelTooltip": "이벤트 로그"
@@ -465,7 +470,7 @@
     "registry": {
       "list": {
         "title": "기존 레지스트리",
-        "addButton": "추가",
+        "addButton": "레지스트리",
         "addressColumn": "주소",
         "nameColumn": "이름",
         "statusColumn": "상태"
@@ -487,7 +492,7 @@
         "title": "프로파일",
         "titleSearch": "찾은 프로파일",
         "searchPlaceholder": "프로파일 검색",
-        "addButton": "프로파일 만들기",
+        "addButton": "프로파일",
         "addPropertyButton": "속성 추가",
         "nameColumn": "이름",
         "endpointTypeColumn": "끝점 유형",
@@ -515,24 +520,131 @@
         "tagsPlaceholder": "예: compliance:yes",
         "endpointLabel": "끝점",
         "valueLabel": "값",
-        "instanceTypeMappingLabel": "인스턴스 유형",
+        "instanceTypeMappingLabel": "플레이버",
+        "instanceTypeMappingDisplay": "{{cpuCount}} CPU, {{memoryInMB}}MB RAM, {{bootDiskSizeInMB}}MB 디스크",
+        "instanceTypeMappingDisplayAWS": "{{cpuCount}} CPU, {{memoryInMB}}MB RAM, {{storageType}} 스토리지, {{networkType}} 네트워크",
         "imageMappingLabel": "이미지 유형",
-        "bootDiskPropertyMappingLabel": "부트 디스크 속성",
+        "diskPropertyMappingLabel": "디스크 속성",
         "cpuCountLabel": "CPU",
-        "diskSizeMbLabel": "디스크 크기(MB)",
-        "memoryMbLabel": "메모리(MB)",
+        "memoryGbLabel": "메모리(GB)",
+        "generalLabel": "일반",
+        "existingLabel": "기존",
         "subnetworksLabel": "하위 네트워크",
-        "isolationTypeLabel": "분리 유형",
-        "isolationNetworkLabel": "분리 네트워크",
+        "isolationLabel": "분리",
+        "isolationTypeLabel": "유형",
+        "isolationNetworkLabel": "네트워크",
         "noneIsolationTypeLabel": "없음",
         "subnetIsolationTypeLabel": "하위 네트워크",
-        "securityGroupIsolationTypeLabel": "없음",
+        "securityGroupIsolationTypeLabel": "보안 그룹",
+        "securityGroups": "보안 그룹",
+        "vpc": "VPC",
         "cidrLabel": "CIDR",
         "cidrLabelHint": "0.0.0.0/0",
+        "cidrPrefixLabel": "서브넷 접두사 길이",
+        "networkLabel": "네트워크",
+        "resourceGroupsLabel": "리소스 그룹",
         "supportPublicIpAddressLabel": "공용 IP 지원",
-        "defaultForZoneLabel": "영역에 대한 기본값"
+        "defaultForZoneLabel": "영역에 대한 기본값",
+        "addStorageItem": "스토리지 항목 추가",
+        "defaultLabel": "기본값",
+        "makeDescriptorDefault": "이 스토리지 항목을 기본값으로 지정",
+        "itemHeader": "스토리지 항목",
+        "storage": {
+          "azure": {
+            "selectAccountLabel": "계정 선택",
+            "storageAccountTypeLabel": "스토리지 계정 유형",
+            "osDiskCachingLabel": "OS 디스크 캐싱",
+            "dataDiskCachingLabel": "데이터 디스크 캐싱",
+            "contextPanelTooltip": "스토리지 계정",
+            "typeLabel": "유형",
+            "encryptionLabel": "스토리지 서비스 암호화",
+            "entityLabel": "스토리지 계정",
+            "list": {
+              "title": "스토리지 계정",
+              "nameColumn": "이름",
+              "typeColumn": "유형",
+              "encryptionColumn": "스토리지 서비스 암호화",
+              "edit": {
+                "title": "스토리지 계정 편집",
+                "nameLabel": "계정 이름",
+                "typeLabel": "계정 유형",
+                "encryptionLabel": "스토리지 서비스 암호화"
+              }
+            }
+          },
+          "vsphere": {
+            "storagePolicyLabel": "스토리지 정책",
+            "provisioningTypeLabel": "프로비저닝 유형",
+            "datastoreLabel": "데이터스토어",
+            "sharesLevelLabel": "공유 수준",
+            "sharesLabel": "공유",
+            "limitLabel": "IOPS 제한",
+            "datastoreContextPanelTooltip": "데이터스토어",
+            "storagePolicyContextPanelTooltip": "스토리지 정책",
+            "datastoreEntityLabel": "데이터스토어",
+            "storagePolicyEntityLabel": "스토리지 정책",
+            "snapshotsLabel": "스냅샷",
+            "independentOfSnapshotsLabel": "스냅샷에 대해 독립적",
+            "persistentLabel": "영구",
+            "nonPersistentLabel": "비영구",
+            "provisioningSelectDefault": "프로비저닝 유형 선택",
+            "sharesLevelDefault": "공유 수준 선택",
+            "datastore": {
+              "typeLabel": "유형",
+              "capacityLabel": "용량",
+              "capacityUnit": "GB",
+              "list": {
+                "title": "데이터스토어",
+                "nameColumn": "이름",
+                "typeColumn": "유형",
+                "capacityColumn": "용량(GB)",
+                "encryptionColumn": "암호화 지원",
+                "edit": {
+                  "title": "데이터스토어 편집",
+                  "nameLabel": "데이터스토어",
+                  "typeLabel": "유형",
+                  "encryptionLabel": "암호화 지원",
+                  "capacityLabel": "용량(GB)"
+                }
+              }
+            },
+            "storagePolicy": {
+              "descriptionLabel": "설명",
+              "list": {
+                "title": "스토리지 정책",
+                "nameColumn": "이름",
+                "descColumn": "설명",
+                "encryptionColumn": "암호화 지원",
+                "edit": {
+                  "title": "스토리지 정책 편집",
+                  "nameLabel": "이름",
+                  "descLabel": "설명",
+                  "customPropertiesLabel": "사용자 지정 속성",
+                  "customPropertiesTable": {
+                    "keyColumn": "키",
+                    "valueColumn": "값"
+                  }
+                }
+              }
+            }
+          },
+          "aws": {
+            "volumeTypeLabel": "볼륨 유형",
+            "deviceTypeLabel": "디바이스 유형",
+            "iopsLabel": "최대 IOPS",
+            "iopsHint": "실제 프로비저닝된 IOPS는 디스크 용량에 따라 더 적을 수 있습니다.",
+            "fileSystemLabel": "파일 시스템",
+            "encryptedLabel": "암호화 지원"
+          }
+        },
+        "validation": {
+          "valueNotMoreThan": "값은 {{max}}보다 클 수 없습니다.",
+          "valueInRange": "값은 {{min}}~{{max}} 사이여야 합니다."
+        }
       },
       "instanceType": {
+        "addTitle": "플레이버 프로파일 추가",
+        "editTitle": "플레이버 프로파일 편집",
         "aws": {
           "small": "소형(CPU 1개, 1GB 메모리)",
           "medium": "중형(CPU 1개, 2GB 메모리)",
@@ -559,12 +671,46 @@
         "coreos": "CoreOS",
         "photon": "Photon OS",
         "ubuntu-1604": "Ubuntu"
+      },
+      "azureStorageAccountType": {
+        "standardLRS": "표준 LRS",
+        "standardZRS": "표준 ZRS",
+        "standardGRS": "표준 GRS",
+        "standardRAGRS": "표준 RAGRS",
+        "premiumLRS": "프리미엄 LRS"
+      },
+      "azureDiskCachingType": {
+        "none": "없음",
+        "readOnly": "읽기 전용",
+        "readWrite": "읽기 쓰기"
+      },
+      "vsphereProvisioningTypes": {
+        "thin": "씬",
+        "thick": "씩",
+        "eagerZeroedThick": "빠르게 비워지는 씩"
+      },
+      "vsphereSharesLevel": {
+        "low": "낮음",
+        "normal": "일반",
+        "high": "높음",
+        "custom": "사용자 지정"
+      },
+      "awsVolumeTypes": {
+        "gp2": "범용 SSD(GP2)",
+        "io1": "프로비저닝된 IOPS SSD(IO1)",
+        "sc1": "콜드 HDD(SC1)",
+        "st1": "처리량이 최적화된 HDD(ST1)",
+        "standard": "자기"
+      },
+      "awsDeviceTypes": {
+        "ebs": "EBS",
+        "instanceStore": "인스턴스 저장소"
       }
     },
     "endpoint": {
       "list": {
         "title": "끝점",
-        "addButton": "추가",
+        "addButton": "끝점",
         "nameColumn": "이름",
         "typeColumn": "유형"
       },
@@ -576,6 +722,11 @@
         "privateKeyIdLabel": "액세스 키 ID",
         "privateKeyLabel": "비밀 액세스 키",
         "regionIdLabel": "영역 ID",
+        "collectLabel": "데이터 수집",
+        "collectInventoryLabel": "인벤토리 수집",
+        "collectInventoryMessage": "인벤토리 수집 실행 중입니다. 완료하는 데 몇 분이 걸릴 수 있습니다.",
+        "collectImagesLabel": "이미지 유형 수집",
+        "collectImagesMessage": "이미지 수집 실행 중입니다. 완료하는 데 몇 분이 걸릴 수 있습니다.",
         "azure": {
           "userLinkLabel": "구독 ID",
           "tenantIdLabel": "테넌트 ID"
@@ -585,7 +736,7 @@
           "privateKeyIdLabel": "사용자 이름",
           "privateKeyLabel": "암호",
           "regionIdLabel": "데이터 센터",
-          "linkedEndpointLabel": "NSX-T 끝점"
+          "linkedEndpointLabel": "NSX 끝점"
         }
       },
       "entity": "끝점",
@@ -600,7 +751,7 @@
         "title": "시스템",
         "titleSearch": "찾은 시스템",
         "searchPlaceholder": "시스템 검색",
-        "addButton": "시스템 만들기"
+        "addButton": "시스템"
       },
       "edit": {
         "addTitle": "시스템 만들기",
@@ -611,6 +762,25 @@
         "loadButton": "파일에서 로드",
         "importTemplateHint": "하나 이상의 시스템 설명이 포함된 복합 설명",
         "importPlaceholder": ""
+      },
+      "details": {
+        "propertyName": "이름",
+        "propertyValue": "값",
+        "general": {
+          "id": "ID",
+          "placementHost": "배치 호스트",
+          "address": "주소",
+          "endpoint": "끝점",
+          "properties": "속성",
+          "usages": "사용",
+          "powerState": "전원 상태",
+          "environment": "환경",
+          "region": "영역",
+          "profile": "프로파일"
+        },
+        "customProperties": {
+          "title": "사용자 지정 속성"
+        }
       }
     },
     "compute": {
@@ -621,22 +791,37 @@
         "searchPlaceholder": "계산 리소스 검색"
       },
       "details": {
-        "type": "유형"
+        "type": "유형",
+        "zone": "가용성 영역",
+        "vm_host": "영역",
+        "clustercomputeresource": "클러스터",
+        "computeresource": "호스트",
+        "endpoint": "끝점",
+        "hostsystem": "호스트",
+        "resourcepool": "리소스 풀"
       },
       "edit": {
         "title": "계산 리소스 편집",
         "nameLabel": "이름"
+      },
+      "actions": {
+        "details": "세부 정보"
       }
     },
     "network": {
       "entity": "네트워크"
     },
+    "securityGroup": {
+      "entity": "보안 그룹"
+    },
     "subnetwork": {
       "list": {
         "title": "하위 네트워크",
-        "addButton": "추가",
+        "addButton": "하위 네트워크",
         "nameColumn": "이름",
-        "cidrColumn": "CIDR"
+        "cidrColumn": "CIDR",
+        "supportPublicIpAddressColumn": "공용 IP 지원",
+        "networkColumn": "네트워크"
       },
       "edit": {
         "addNew": "하위 네트워크 추가",
@@ -668,7 +853,7 @@
           "connectedContainers": "컨테이너",
           "parentHosts": "호스트",
           "external": "외부",
-          "create": "네트워크 생성",
+          "create": "네트워크",
           "state": {
             "UNKNOWN": "알 수 없음",
             "PROVISIONING": "프로비저닝",
@@ -682,26 +867,26 @@
           "description": "설명",
           "public": "공용",
           "private": "전용",
-          "create": "프로젝트 생성",
+          "create": "프로젝트",
           "actions": {
             "edit": "편집",
             "remove": "제거"
           }
         },
         "container": {
-          "create": "컨테이너 생성"
+          "create": "컨테이너"
         },
         "application": {
-          "create": "애플리케이션 생성"
+          "create": "애플리케이션"
         },
         "closure": {
-          "create": "클로저 생성"
+          "create": "클로저"
         },
         "kubernetes": {
-          "create": "생성"
+          "create": "정의"
         },
         "volume": {
-          "create": "볼륨 만들기",
+          "create": "볼륨",
           "connectedDateLabel": "연결됨",
           "driverLabel": "드라이버",
           "driverOptionsLabel": "드라이버 옵션",
@@ -750,7 +935,6 @@
     },
     "container": {
       "list": {
-        "title": "항목",
         "titleSearchContainers": "찾은 컨테이너",
         "titleSearchApplications": "찾은 애플리케이션",
         "searchPlaceholder": "컨테이너 검색",
@@ -778,7 +962,10 @@
           "all": "모두",
           "containers": "컨테이너",
           "applications": "애플리케이션"
-        }
+        },
+        "columnName": "컨테이너",
+        "columnStatus": "상태",
+        "columnRunningSince": "다음 이후부터 실행 중:"
       },
       "details": {
         "usages": "사용",
@@ -977,12 +1164,12 @@
           },
           "logConfigOptions": "옵션",
           "logConfigOptionsDescription": "각 로깅 드라이버에 대한 지원 옵션",
-          "logConfigOptionsInputs" : {
+          "logConfigOptionsInputs": {
             "name": "이름",
             "nameHint": "예: max-size",
             "value": "값",
             "valueHint": "예: 10m"
-           }
+          }
         }
       },
       "state": {
@@ -1038,7 +1225,7 @@
       "details": {
         "name": "이름",
         "description": "설명",
-        "runtime" : "런타임",
+        "runtime": "런타임",
         "state": "상태",
         "id": "ID",
         "inputs": "입력",
@@ -1059,7 +1246,7 @@
         "FAILED": "실패",
         "CANCELLED": "취소됨"
       },
-      "list" : {
+      "list": {
         "name": "클로저",
         "closuresCountLabel": "클로저",
         "closureRunsLabel": "클로저 실행",
@@ -1079,25 +1266,25 @@
           "runtimeTypes": {
             "nodejs": "NodeJs 4",
             "python": "Python 3",
-            "powershell": "Powershell 6",
+            "powershell": "PowerShell 6",
             "java": "Java 8"
           },
-          "logConfigOptionsInputs" : {
+          "logConfigOptionsInputs": {
             "name": "이름",
             "nameHint": "예: max-size",
             "value": "값",
             "valueHint": "예: 10m"
-           },
-           "closureInputs" : {
+          },
+          "closureInputs": {
             "name": "이름",
             "nameHint": "예: a",
             "value": "값",
             "valueHint": "예: 1"
-           },
-           "closureOutputs" : {
+          },
+          "closureOutputs": {
             "name": "이름",
             "nameHint": "예: result"
-           },
+          },
           "memoryLimit": "메모리 제한(MB)",
           "timeout": "시간 초과(초)",
           "entrypoint": "진입점 핸들러",
@@ -1138,101 +1325,115 @@
         "outputs": "출력"
       }
     },
+    "image": {
+      "entity": "이미지"
+    },
     "help": {
-        "link": "도움말",
-        "description": "Ensemble을 사용하면 현재 수행 중인 작업의 컨텍스트에 대한 관련 정보에 액세스할 수 있습니다. 이 정보는 작업을 계속하면서 지침에 따라 자동으로 새로 고쳐집니다. 실시간으로 정보에 액세스하려면 두 번째 화면 또는 분할 화면을 사용하십시오. 컴퓨터에 연결되었는지와 상관 없이 모바일 디바이스, TV 및 기타 화면을 사용할 수 있습니다. Ensemble은 신뢰할 수 있는 네트워크 외부에서 사용할 수 있으며 동시에 즉시 업데이트를 받을 수 있습니다.",
-        "descriptionOpen": "Ensemble을 열려면 <strong>새 탭에서 열기</strong>를 클릭하거나 모바일 디바이스로 QR 코드를 스캔하십시오."
-      },
-      "resources": {
-        "selectMultiple": "항목 선택",
-        "message": {
-          "selectShift": "여러 항목을 선택하려면 Shift 키를 사용하십시오."
-        }
+      "link": "도움말",
+      "description": "Ensemble을 사용하면 현재 수행 중인 작업의 컨텍스트에 대한 관련 정보에 액세스할 수 있습니다. 이 정보는 작업을 계속하면서 지침에 따라 자동으로 새로 고쳐집니다. 실시간으로 정보에 액세스하려면 두 번째 화면 또는 분할 화면을 사용하십시오. 컴퓨터에 연결되었는지와 상관 없이 모바일 디바이스, TV 및 기타 화면을 사용할 수 있습니다. Ensemble은 신뢰할 수 있는 네트워크 외부에서 사용할 수 있으며 동시에 즉시 업데이트를 받을 수 있습니다.",
+      "descriptionOpen": "Ensemble을 열려면 <strong>새 탭에서 열기</strong>를 클릭하거나 모바일 디바이스로 QR 코드를 스캔하십시오."
+    },
+    "resources": {
+      "selectMultiple": "항목 선택",
+      "message": {
+        "selectShift": "여러 항목을 선택하려면 Shift 키를 사용하십시오."
       }
     },
-    "loginPanel": {
-      "login": "로그인",
-      "logout": "로그아웃",
-      "username": "사용자 이름",
-      "password": "암호",
-      "success": "인증 완료",
-      "failure": "인증 오류"
-    },
-    "dropdownSearchMenu": {
-      "title": "{{entity}} 목록에서 선택",
-      "searchPlaceholder": "{{entity}} 검색",
-      "clear": "선택 지우기",
-      "showingCount": "{{count}}개 항목 표시 중(총 {{totalCount}}개 항목)",
-      "noResults": "항목 없음"
-    },
-    "customProperties": {
-      "name": "이름",
-      "nameHint": "예: speedchecker",
-      "value": "값",
-      "valueHint": "예: slow"
-    },
-    "yes": "예",
-    "ok": "확인",
-    "cancel": "취소",
-    "error": "오류",
-    "delete": "삭제",
-    "enable": "사용",
-    "enabled": "사용 설정됨",
-    "disable": "사용 안 함",
-    "disabled": "사용 안 함으로 설정됨",
-    "close": "닫기",
-    "edit": "편집",
-    "remove": "제거",
-    "add": "추가",
-    "save": "저장",
-    "back": "뒤로",
-    "refresh": "새로 고침",
-    "clear": "지우기",
-    "deleteAll": "모두 삭제",
-    "pendingOperationCancel": "작업 위치",
-    "openInNewTab": "새 탭에서 열기",
-    "unavailable": "해당 없음",
-    "advanced": "고급",
-    "noSelection": "선택 항목 없음",
-    "buildNumber": "빌드 번호",
-    "errors": {
-      "hostIp": "값은 호스트 이름 또는 IP 주소여야 합니다.",
-      "urlPath": "URL 경로가 잘못되었습니다.",
-      "propertyNameRequired": "속성 이름은 필수입니다.",
-      "propertyContainerNameInvalid": "잘못된 컨테이너 이름입니다. [a-zA-Z0-9][a-zA-Z0-9_.-]만 허용됩니다.",
-      "propertyNamesNotUnique": "속성 이름은 고유해야 합니다.",
-      "nonNegativeNumber": "값은 2147483648 미만의 음이 아닌 정수여야 합니다.",
-      "positiveNumber": "값은 2147483648 미만인 양의 정수여야 합니다.",
-      "nonNegativeNumberAndMinusOne": "값은 -1과 2147483647 사이의 정수여야 합니다.",
-      "portNumber": "잘못된 포트 번호입니다. 유효한 포트 번호의 범위는 0 ~ 65535입니다.",
-      "containerMemory": "메모리는 0(무제한) 또는 4194304 바이트(4MB) 이상이어야 합니다.",
-      "required": "값은 필수입니다.",
-      "requiredAll": "모든 필드는 필수입니다.",
-      "serviceNameRequired": "서비스 이름은 필수입니다.",
-      "networkRequired": "네트워크는 필수입니다.",
-      "itemNotFound": "항목이 없습니다.",
-      "networkExists": "네트워크가 이미 템플릿에 있습니다.",
-      "volumeDestinationRequired": "볼륨 대상은 필수입니다.",
-      "invalidInputValue": "잘못된 입력 값",
-      "invalidPath": "값은 절대 경로여야 합니다.",
-      "invalidPathOrName": "값은 절대 경로이거나 유효한 볼륨 이름이어야 합니다.",
-      "containersConnected": "연결된 컨테이너가 있습니다.",
-      "managedByCatalog": "카탈로그별 관리",
-      "projectsUnexpectedError": "예기치 않은 오류가 발생했습니다."
-    },
-    "infoMessages": {
-      "created": "생성 완료!",
-      "updated": "업데이트 완료!"
-    },
-    "occurrence": {
-      "all": "모두 일치",
-      "any": "임의 일치"
-    },
-    "state": {
-      "ON": "켜짐",
-      "OFF": "꺼짐",
-      "SUSPEND": "사용 안 함",
-      "UNKNOWN": "알 수 없음",
-      "stateSinceMessage": "{{date}} 이후"
-    }
+    "noneLabel": "없음"
+  },
+  "loginPanel": {
+    "login": "로그인",
+    "logout": "로그아웃",
+    "username": "사용자 이름",
+    "password": "암호",
+    "welcomeTo": "시작",
+    "success": "인증 완료",
+    "failure": "인증 오류"
+  },
+  "dropdownSearchMenu": {
+    "title": "{{entity}} 목록에서 선택",
+    "searchPlaceholder": "{{entity}} 검색",
+    "clear": "선택 지우기",
+    "showingCount": "{{count}}개 항목 표시 중(총 {{totalCount}}개 항목)",
+    "noResults": "항목 없음"
+  },
+  "customProperties": {
+    "name": "이름",
+    "nameHint": "예: speedchecker",
+    "value": "값",
+    "valueHint": "예: slow"
+  },
+  "yes": "예",
+  "no": "아니요",
+  "ok": "확인",
+  "cancel": "취소",
+  "error": "오류",
+  "delete": "삭제",
+  "enable": "사용",
+  "enabled": "사용 설정됨",
+  "disable": "사용 안 함",
+  "disabled": "사용 안 함",
+  "close": "닫기",
+  "edit": "편집",
+  "remove": "제거",
+  "add": "추가",
+  "save": "저장",
+  "verify": "확인",
+  "verified": "확인이 완료되었습니다!",
+  "back": "뒤로",
+  "refresh": "새로 고침",
+  "clear": "지우기",
+  "deleteAll": "모두 삭제",
+  "pendingOperationCancel": "작업 위치",
+  "openInNewTab": "새 탭에서 열기",
+  "unavailable": "해당 없음",
+  "advanced": "고급",
+  "noSelection": "선택 항목 없음",
+  "buildNumber": "빌드 번호",
+  "errors": {
+    "hostIp": "값은 호스트 이름 또는 IP 주소여야 합니다.",
+    "urlPath": "URL 경로가 잘못되었습니다.",
+    "propertyNameRequired": "속성 이름은 필수입니다.",
+    "propertyContainerNameInvalid": "잘못된 컨테이너 이름입니다. [a-zA-Z0-9][a-zA-Z0-9_.-]만 허용됩니다.",
+    "propertyNamesNotUnique": "속성 이름은 고유해야 합니다.",
+    "nonNegativeNumber": "값은 2147483648 미만의 음이 아닌 정수여야 합니다.",
+    "positiveNumber": "값은 2147483648 미만인 양의 정수여야 합니다.",
+    "nonNegativeNumberAndMinusOne": "값은 -1과 2147483647 사이의 정수여야 합니다.",
+    "portNumber": "잘못된 포트 번호입니다. 유효한 포트 번호의 범위는 0 ~ 65535입니다.",
+    "containerMemory": "메모리는 0(무제한) 또는 4194304 바이트(4MB) 이상이어야 합니다.",
+    "required": "값은 필수입니다.",
+    "requiredAll": "모든 필드는 필수입니다.",
+    "serviceNameRequired": "서비스 이름은 필수입니다.",
+    "networkRequired": "네트워크는 필수입니다.",
+    "itemNotFound": "항목이 없습니다.",
+    "networkExists": "네트워크가 이미 템플릿에 있습니다.",
+    "volumeDestinationRequired": "볼륨 대상은 필수입니다.",
+    "invalidInputValue": "잘못된 입력 값",
+    "invalidPath": "값은 절대 경로여야 합니다.",
+    "invalidPathOrName": "값은 절대 경로이거나 유효한 볼륨 이름이어야 합니다.",
+    "containersConnected": "연결된 컨테이너가 있습니다.",
+    "managedByCatalog": "카탈로그별 관리",
+    "projectsUnexpectedError": "예기치 않은 오류가 발생했습니다."
+  },
+  "infoMessages": {
+    "created": "생성 완료!",
+    "updated": "업데이트 완료!",
+    "notFound": "찾을 수 없음",
+    "showingCount": "{{count}}개 항목 표시 중(총 {{totalCount}}개 항목)"
+  },
+  "occurrence": {
+    "all": "모두 일치",
+    "any": "임의 일치"
+  },
+  "state": {
+    "ON": "켜짐",
+    "OFF": "꺼짐",
+    "SUSPEND": "사용 안 함",
+    "UNKNOWN": "알 수 없음",
+    "stateSinceMessage": "{{date}} 이후"
+  },
+  "productNames": {
+    "admiral": "Admiral",
+    "vic": "vSphere Integrated Containers"
+  }
 }

@@ -35,9 +35,11 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import jdk.nashorn.internal.ir.WithNode;
+import org.apache.http.conn.HttpClientConnectionManager;
+import org.apache.http.config.ConnectionConfig;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -68,12 +70,18 @@ public class AppRunner {
     private static final String STATE_FINISHED = "FINISHED";
     private static final String STATE_FAILED = "FAILED";
 
-    private static final int BUFFER_SIZE = 10 * 1024;
+    private static final int SOCKET_BUFFER_SIZE = 256 * 1024; // 256 KB
 
     private CloseableHttpClient client;
+    private SSLRunnerConnectionFactory connectionFactory;
 
     public AppRunner() {
-        client = createHttpClient();
+        try {
+            connectionFactory = new SSLRunnerConnectionFactory(TRUSTED_CERTS);
+            client = newSecureHttpClient();
+        } catch (Exception ex) {
+            System.err.println("Unable to initialize closure runner: " + ex.getMessage());
+        }
     }
 
     public static void main(String[] args) {
@@ -184,8 +192,21 @@ public class AppRunner {
         return Character.toUpperCase(name.charAt(0)) + name.substring(1);
     }
 
-    private CloseableHttpClient createHttpClient() {
-        return HttpClientBuilder.create().build();
+    private CloseableHttpClient newSecureHttpClient() {
+        HttpClientBuilder clientBuilder = HttpClientBuilder.create();
+        try {
+            HttpClientConnectionManager connectionManager = connectionFactory
+                    .createConnectionManager();
+
+            ConnectionConfig connConfig = ConnectionConfig.custom()
+                    .setBufferSize(SOCKET_BUFFER_SIZE).build();
+            clientBuilder.setDefaultConnectionConfig(connConfig);
+            clientBuilder.setConnectionManager(connectionManager);
+
+            return clientBuilder.build();
+        } catch (Exception e) {
+            throw new IllegalStateException("Unable create secure client: " + e.getMessage());
+        }
     }
 
     public void printOutput(InputStream input) {
@@ -291,7 +312,7 @@ public class AppRunner {
 
                     try (FileOutputStream fileOutputStream = new FileOutputStream(newFile)) {
                         int len;
-                        byte[] buffer = new byte[BUFFER_SIZE];
+                        byte[] buffer = new byte[SOCKET_BUFFER_SIZE];
                         while ((len = zipInput.read(buffer)) > 0) {
                             fileOutputStream.write(buffer, 0, len);
                         }
@@ -306,8 +327,9 @@ public class AppRunner {
     public String[] createEntryPoint(JsonObject closureDescription) throws Exception {
         String handlerName = closureDescription.get("name").getAsString();
         String[] defaultEntrypoint = { handlerName, handlerName };
-        if (closureDescription.has("entrypoint")) {
-            String entryPointStr = closureDescription.get("entrypoint").getAsString();
+        JsonElement entrypoint = closureDescription.get("entrypoint");
+        if (entrypoint != null && !entrypoint.isJsonNull()) {
+            String entryPointStr = entrypoint.getAsString();
             if (entryPointStr.isEmpty()) {
                 return defaultEntrypoint;
             }
@@ -374,13 +396,15 @@ public class AppRunner {
                 String moduleName = moduleAndIndexNames[0];
                 String handlerName = moduleAndIndexNames[1];
 
-                if (!closureDescJson.has(SOURCE_URL) || getSourceUrl(closureDescJson).isEmpty()) {
+                JsonElement sourceUrl = closureDescJson.get(SOURCE_URL);
+                if (sourceUrl == null || sourceUrl.isJsonNull() || sourceUrl.getAsString()
+                        .isEmpty()) {
                     saveSourceInFile(closureDescJson, moduleName);
                     executeSource(inputs, closureSemaphore, moduleName, handlerName, false);
                     return;
                 }
 
-                String contentType = downloadAngGetContentType(getSourceUrl(closureDescJson));
+                String contentType = downloadAngGetContentType(sourceUrl.getAsString());
                 handleExternalSourceUrl(inputs, closureSemaphore, moduleName, handlerName,
                         contentType);
             } else {
@@ -394,10 +418,6 @@ public class AppRunner {
             e.printStackTrace();
             patchFailedState(closureSemaphore, e.getMessage());
         }
-    }
-
-    private String getSourceUrl(JsonObject jsonObj) {
-        return jsonObj.get(SOURCE_URL).getAsString();
     }
 
     private void handleExternalSourceUrl(JsonObject inputs, String closureSemaphore, String
@@ -422,7 +442,8 @@ public class AppRunner {
     }
 
     public void patchClosureStarted(String closureSemaphore) throws Exception {
-        String data = String.format("{\"state\": %s, \"closureSemaphore\": %s}", STATE_STARTED,
+        String data = String.format("{\"state\": \"%s\", \"closureSemaphore\": \"%s\"}",
+                STATE_STARTED,
                 closureSemaphore);
         HttpPatch patch = null;
         try {
@@ -440,7 +461,8 @@ public class AppRunner {
     }
 
     public void patchFinishedState(String outputs, String closureSemaphore) throws Exception {
-        String data = String.format("{\"state\": %s, \"closureSemaphore\": %s, \"outputs\": %s}",
+        String data = String.format("{\"state\": \"%s\", \"closureSemaphore\": \"%s\", "
+                        + "\"outputs\": %s}",
                 STATE_FINISHED, closureSemaphore, outputs);
         HttpPatch patch = null;
         try {
@@ -460,7 +482,8 @@ public class AppRunner {
     }
 
     public void patchFailedState(String closureSemaphore, String error) {
-        String data = String.format("{\"state\": %s,\"closureSemaphore\": %s, \"errorMsg\": %s}",
+        String data = String.format("{\"state\": \"%s\",\"closureSemaphore\": \"%s\", "
+                        + "\"errorMsg\": \"%s\"}",
                 STATE_FAILED, closureSemaphore, error);
         HttpPatch patch = null;
         try {

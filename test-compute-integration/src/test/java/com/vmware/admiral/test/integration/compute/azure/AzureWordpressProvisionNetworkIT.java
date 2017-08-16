@@ -86,7 +86,10 @@ public class AzureWordpressProvisionNetworkIT extends BaseWordpressComputeProvis
                                 ::validateIsolatedNic },
                 { "WordPress_with_MySQL_compute_isolated_sg_network.yaml",
                         (BiConsumer<Set<ServiceDocument>, String>) BaseWordpressComputeProvisionIT
-                                ::validateIsolatedNic }
+                                ::validateIsolatedNic },
+                { "WordPress_with_MySQL_compute_isolated_outbound_network.yaml",
+                        (BiConsumer<Set<ServiceDocument>, String>) BaseWordpressComputeProvisionIT
+                                ::validateOutboundAccess }
         });
     }
 

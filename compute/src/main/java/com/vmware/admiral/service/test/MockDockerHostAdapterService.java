@@ -12,22 +12,30 @@
 package com.vmware.admiral.service.test;
 
 import java.net.HttpURLConnection;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerHostOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.ContainerListCallback;
 import com.vmware.admiral.compute.container.HostNetworkListDataCollection.NetworkListCallback;
 import com.vmware.admiral.compute.container.HostVolumeListDataCollection.VolumeListCallback;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
+import com.vmware.admiral.service.test.MockDockerVolumeToHostService.MockDockerVolumeToHostState;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.QueryTask;
 
 public class MockDockerHostAdapterService extends BaseMockAdapterService {
     public static final String SELF_LINK = ManagementUriParts.ADAPTER_DOCKER_HOST;
@@ -80,6 +88,8 @@ public class MockDockerHostAdapterService extends BaseMockAdapterService {
                         MockDockerAdapterService.getContainerNames(containerId));
                 callbackResponse.containerIdsAndImage.put(containerId,
                         MockDockerAdapterService.getContainerImage(containerId));
+                callbackResponse.containerIdsAndState.put(containerId,
+                        MockDockerAdapterService.getContainerPowerState(containerId));
             }
             patchTaskStage(request, null, callbackResponse);
             op.setBody(callbackResponse);
@@ -100,12 +110,15 @@ public class MockDockerHostAdapterService extends BaseMockAdapterService {
         } else if (ContainerHostOperationType.LIST_VOLUMES.id.equals(request.operationTypeId)) {
             VolumeListCallback callbackResponse = new VolumeListCallback();
             callbackResponse.containerHostLink = request.resourceReference.getPath();
-            String hostId = Service.getId(request.resourceReference.getPath());
-            MockDockerVolumeAdapterService.getVolumesByHost(hostId)
-                    .forEach(volume -> callbackResponse.add(volume));
-            patchTaskStage(request, null, callbackResponse);
-            op.setBody(callbackResponse);
-            op.complete();
+            queryVolumesByHost(request, (volumeStates) -> {
+                for (ContainerVolumeState volumeState : volumeStates) {
+                    callbackResponse.add(volumeState);
+                }
+                patchTaskStage(request, null, callbackResponse);
+                op.setBody(callbackResponse);
+                op.complete();
+            });
+
         } else if (ContainerHostOperationType.INFO.id.equals(request.operationTypeId)) {
             sendRequest(Operation
                     .createGet(request.resourceReference)
@@ -154,5 +167,34 @@ public class MockDockerHostAdapterService extends BaseMockAdapterService {
                 .createPatch(request.resourceReference)
                 .setBody(computeState)
                 .setCompletion((o, ex) -> patchTaskStage(request, ex)));
+    }
+
+    private void queryVolumesByHost(AdapterRequest state, Consumer<List<ContainerVolumeState>> callback) {
+        String hostLink = state.resourceReference.getPath();
+        QueryTask q = QueryUtil.buildPropertyQuery(MockDockerVolumeToHostState.class,
+                MockDockerVolumeToHostState.FIELD_NAME_HOST_LINK, hostLink);
+        QueryUtil.addExpandOption(q);
+
+        List<ContainerVolumeState> volumeStates = new ArrayList< >();
+        new ServiceDocumentQuery<>(getHost(),
+                MockDockerVolumeToHostState.class).query(q,
+                        (r) -> {
+                            if (r.hasException()) {
+                                patchTaskStage(state, r.getException());
+                            } else if (r.hasResult()) {
+                                volumeStates.add(buildContainerVolume(r.getResult()));
+                            } else {
+                                callback.accept(volumeStates);
+                            }
+                        });
+    }
+
+    private ContainerVolumeState buildContainerVolume(MockDockerVolumeToHostState volumeToHostState) {
+        ContainerVolumeState volumeState = new ContainerVolumeState();
+        volumeState.name = volumeToHostState.name;
+        volumeState.originatingHostLink = volumeToHostState.hostLink;
+        volumeState.driver = volumeToHostState.driver;
+        volumeState.scope = volumeToHostState.scope;
+        return volumeState;
     }
 }

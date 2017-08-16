@@ -13,7 +13,6 @@ package com.vmware.admiral.service.common;
 
 import static com.vmware.admiral.common.util.ServiceUtils.addServiceRequestRoute;
 
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -62,7 +61,7 @@ public class NodeHealthCheckService extends StatelessService {
     private void doHealthCheck(Operation get) {
 
         AtomicInteger numberOfServicesToCheck = new AtomicInteger(services.size());
-        Set<String> unavailableServices = new HashSet<>();
+        Set<String> unavailableServices = ConcurrentHashMap.newKeySet();
 
         Iterator<String> servicesIterator = services.iterator();
 

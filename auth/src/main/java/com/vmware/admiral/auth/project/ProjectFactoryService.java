@@ -11,7 +11,10 @@
 
 package com.vmware.admiral.auth.project;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.vmware.admiral.auth.project.ProjectService.ExpandedProjectState;
@@ -34,6 +37,16 @@ import com.vmware.xenon.common.Utils;
 public class ProjectFactoryService extends FactoryService {
     public static final String SELF_LINK = ManagementUriParts.PROJECTS;
 
+    public static final String QUERY_PARAM_PUBLIC = "public";
+
+    public static class PublicProjectDto {
+        public String name;
+
+        public String documentSelfLink;
+
+        public Map<String, String> customProperties;
+    }
+
     public ProjectFactoryService() {
         super(ProjectState.class);
     }
@@ -44,12 +57,39 @@ public class ProjectFactoryService extends FactoryService {
     }
 
     @Override
+    public void authorizeRequest(Operation op) {
+        if (isPublicProjectsAccess(op)) {
+            op.complete();
+            return;
+        }
+        super.authorizeRequest(op);
+    }
+
+    @Override
     public void handleRequest(Operation op) {
-        if (op.getAction() == Action.GET && UriUtils.hasODataExpandParamValue(op.getUri())) {
+        if (isPublicProjectsAccess(op)) {
+            // Set system authorization and add expand query if not present.
+            if (!UriUtils.hasODataExpandParamValue(op.getUri())) {
+                op.setUri(UriUtils.extendUriWithQuery(op.getUri(),
+                        UriUtils.URI_PARAM_ODATA_EXPAND_NO_DOLLAR_SIGN, Boolean.TRUE.toString()));
+            }
+            setAuthorizationContext(op, getSystemAuthorizationContext());
+            op.nestCompletion(this::filterNonPublicProjects);
+        } else if (op.getAction() == Action.GET && UriUtils.hasODataExpandParamValue(op.getUri())) {
             op.nestCompletion(this::expandGetResults);
         }
 
         super.handleRequest(op);
+    }
+
+    /*
+     * Accepts ?public, ?public= or ?public=true, but nothing else.
+     */
+    public static boolean isPublicProjectsAccess(Operation op) {
+        Map<String, String> queryParams = UriUtils.parseUriQueryParams(op.getUri());
+        return (op.getAction() == Action.GET) && queryParams.containsKey(QUERY_PARAM_PUBLIC) &&
+                (queryParams.get(QUERY_PARAM_PUBLIC).isEmpty()
+                        || Boolean.parseBoolean(queryParams.get(QUERY_PARAM_PUBLIC)));
     }
 
     private void expandGetResults(Operation op, Throwable ex) {
@@ -62,7 +102,7 @@ public class ProjectFactoryService extends FactoryService {
                     .stream()
                     .map((jsonProject) -> {
                         ProjectState projectState = Utils.fromJson(jsonProject, ProjectState.class);
-                        return ProjectUtil.expandProjectState(getHost(), projectState, getUri());
+                        return ProjectUtil.expandProjectState(this, op, projectState, getUri());
                     }).collect(Collectors.toList());
             DeferredResult.allOf(deferredExpands).thenAccept((expandedStates) -> {
                 expandedStates.forEach((expandedState) -> {
@@ -73,6 +113,37 @@ public class ProjectFactoryService extends FactoryService {
         } else {
             op.complete();
         }
+    }
+
+    private void filterNonPublicProjects(Operation op, Throwable ex) {
+        if (ex != null) {
+            op.fail(ex);
+        }
+        ServiceDocumentQueryResult body = op.getBody(ServiceDocumentQueryResult.class);
+        if (body.documents != null) {
+            List<PublicProjectDto> publicProjects = body.documents.values().stream()
+                    .map(doc -> Utils.fromJson(doc, ProjectState.class))
+                    // TODO - filtering wouldn't be not needed if the odata query had explicitly
+                    // public = true
+                    .filter(doc -> doc.isPublic != null && doc.isPublic)
+                    .map(doc -> {
+                        PublicProjectDto publicProjectDto = new PublicProjectDto();
+                        publicProjectDto.name = doc.name;
+                        publicProjectDto.documentSelfLink = doc.documentSelfLink;
+                        publicProjectDto.customProperties = doc.customProperties;
+                        return publicProjectDto;
+                    }).collect(Collectors.toList());
+            ServiceDocumentQueryResult newBody = new ServiceDocumentQueryResult();
+            newBody.documentLinks = new ArrayList<>();
+            newBody.documents = new HashMap<>();
+            newBody.documentCount = (long) publicProjects.size();
+            for (PublicProjectDto publicProjectDto : publicProjects) {
+                newBody.documentLinks.add(publicProjectDto.documentSelfLink);
+                newBody.documents.put(publicProjectDto.documentSelfLink, publicProjectDto);
+            }
+            op.setBodyNoCloning(newBody);
+        }
+        op.complete();
     }
 
 }

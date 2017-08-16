@@ -12,7 +12,7 @@
 package com.vmware.admiral.request.compute.allocation.filter;
 
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -72,7 +72,7 @@ public class ComputeServiceAntiAffinityHostFilter extends ComputeServiceAffinity
             final Map<String, HostSelection> hardAffinityHosts = result.get(0);
             final Map<String, HostSelection> softAffinityHosts = result.get(1);
 
-            final Map<String, HostSelection> hostSelectionMap = new HashMap<>(initHostSelectionMap);
+            final Map<String, HostSelection> hostSelectionMap = new LinkedHashMap<>(initHostSelectionMap);
             for (HostSelection hostSelection : hardAffinityHosts.values()) {
                 hostSelectionMap.remove(hostSelection.hostLink);
             }

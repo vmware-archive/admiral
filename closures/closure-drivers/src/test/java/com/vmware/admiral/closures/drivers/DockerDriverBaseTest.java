@@ -11,8 +11,11 @@
 
 package com.vmware.admiral.closures.drivers;
 
+import static junit.framework.TestCase.assertNull;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -21,6 +24,7 @@ import com.vmware.admiral.closures.drivers.docker.ClosureDockerClientFactoryImpl
 import com.vmware.admiral.closures.drivers.docker.DockerDriverBase;
 import com.vmware.admiral.closures.services.closure.Closure;
 import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.common.UriUtils;
 
 public class DockerDriverBaseTest {
 
@@ -29,8 +33,9 @@ public class DockerDriverBaseTest {
     @Before
     public void setup() {
         ServiceHost host = mock(ServiceHost.class);
+        when(host.getUri()).thenReturn(UriUtils.buildUri("http://test_uri"));
         DriverRegistry driverRegistry = mock(DriverRegistry.class);
-        dockerDriver = new DockerDriverBase(host, driverRegistry, new
+        dockerDriver = new TestDriver(host, driverRegistry, new
                 ClosureDockerClientFactoryImpl(host)) {
             @Override
             public String getDockerImage() {
@@ -65,6 +70,58 @@ public class DockerDriverBaseTest {
         );
 
         assertNotNull(errors[0]);
+    }
+
+    @Test
+    public void inspectImageClosureTest() {
+        final Object[] errors = { null };
+        Closure closure = new Closure();
+        dockerDriver.inspectImage("test_image", "image_link", (error) -> errors[0] = error
+        );
+
+        assertNull(errors[0]);
+    }
+
+    @Test
+    public void inspectImageNoImageLinkTest() {
+        final Object[] errors = { null };
+        Closure closure = new Closure();
+        dockerDriver.inspectImage("test_image", null, (error) -> errors[0] = error
+        );
+
+        assertNotNull(errors[0]);
+    }
+
+    @Test
+    public void buildConfiguredCallbackUriTest() {
+        assertEquals("http://callbackUri/testLink", dockerDriver.buildConfiguredCallbackUri
+                ("http://callbackUri", "/testLink").toString());
+
+        assertEquals("http://callbackUri/testLink", dockerDriver.buildConfiguredCallbackUri
+                ("http://callbackUri/", "/testLink").toString());
+    }
+
+    @Test
+    public void buildConfiguredCallbackInvalidUriTest() {
+        assertNull(dockerDriver.buildConfiguredCallbackUri("http://callbackUri", "/ invalid ;;;"));
+    }
+
+    @Test
+    public void buildConfiguredCallbackSecondInvalidUriTest() {
+        assertNull(dockerDriver.buildConfiguredCallbackUri(null, "/testLink"));
+    }
+
+    private static class TestDriver extends DockerDriverBase {
+
+        public TestDriver(ServiceHost serviceHost,
+                DriverRegistry driverRegistry,
+                ClosureDockerClientFactory dockerClientFactory) {
+            super(serviceHost, driverRegistry, dockerClientFactory);
+        }
+
+        @Override public String getDockerImage() {
+            return "test_image";
+        }
     }
 
 }

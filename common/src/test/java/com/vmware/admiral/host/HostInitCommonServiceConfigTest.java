@@ -80,7 +80,7 @@ public class HostInitCommonServiceConfigTest {
                 new ServiceDocument());
 
         mockCommonInitialBootService.behaviour = 0;
-        HostInitCommonServiceConfig.startServices(host, true);
+        HostInitCommonServiceConfig.startServices(host);
     }
 
     @Test
@@ -110,7 +110,7 @@ public class HostInitCommonServiceConfigTest {
 
         try {
             mockCommonInitialBootService.behaviour = 2;
-            HostInitCommonServiceConfig.startServices(host, true);
+            HostInitCommonServiceConfig.startServices(host);
             fail("should not get here");
         } catch (Exception e) {
             assertTrue(e.getCause() instanceof TimeoutException);

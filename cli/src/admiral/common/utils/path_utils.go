@@ -13,10 +13,9 @@ package utils
 
 import (
 	"fmt"
+	"github.com/mitchellh/go-homedir"
 	"os"
 	"runtime"
-
-	"github.com/mitchellh/go-homedir"
 )
 
 const WINDOWS_PATH_SEPARATOR = "\\"

@@ -204,6 +204,13 @@ let ProfilesStore = Reflux.createStore({
     this.emitChange();
   },
 
+  onOpenAddInstanceType() {
+    this.setInData(['editingItemData', 'item'], {});
+    this.setInData(['editingItemData', 'endpoints'], this.data.endpoints);
+    this.emitChange();
+  },
+
+
   onEditProfile(profileId) {
     services.loadProfile(profileId).then((document) => {
       var promises = [];
@@ -253,7 +260,17 @@ let ProfilesStore = Reflux.createStore({
         promises.push(Promise.resolve());
       }
 
-      Promise.all(promises).then(([endpoint, tags, images, subnetworks, isolationNetwork]) => {
+      if (document.networkProfile && document.networkProfile.isolationExternalSubnetLink) {
+        promises.push(
+            services.loadSubnet(
+                document.networkProfile.isolationExternalSubnetLink).catch(() =>
+                    Promise.resolve()));
+      } else {
+        promises.push(Promise.resolve());
+      }
+
+      Promise.all(promises).then(([endpoint, tags, images, subnetworks, isolationNetwork,
+          isolationExternalSubnet]) => {
         if (document.endpointLink && endpoint) {
           document.endpoint = endpoint;
         }
@@ -261,6 +278,9 @@ let ProfilesStore = Reflux.createStore({
         document.computeProfile.images = images || [];
         if (document.networkProfile.isolationNetworkLink && isolationNetwork) {
           document.networkProfile.isolationNetwork = isolationNetwork;
+        }
+        if (document.networkProfile.isolationExternalSubnetLink && isolationExternalSubnet) {
+          document.networkProfile.isolationExternalSubnet = isolationExternalSubnet;
         }
 
         new Promise((resolve, reject) => {
@@ -291,8 +311,23 @@ let ProfilesStore = Reflux.createStore({
     this.emitChange();
   },
 
+  onEditInstanceType(instanceTypeId) {
+    services.loadInstanceType(instanceTypeId).then((document) => {
+      this.setInData(['editingItemData', 'item'], Immutable(document));
+      this.setInData(['editingItemData', 'endpoints'], this.data.endpoints);
+      this.emitChange();
+    }).catch(this.onGenericEditError);
+
+    this.emitChange();
+  },
+
   onCancelEditProfile() {
     this.setInData(['editingItemData'], null);
+    this.emitChange();
+  },
+
+  onClearProfile() {
+    this.setInData(['editingItemData', 'item'], {});
     this.emitChange();
   },
 
@@ -349,6 +384,37 @@ let ProfilesStore = Reflux.createStore({
           this.emitChange();
         }).catch(this.onGenericEditError);
       }).catch(this.onGenericEditError);
+    this.setInData(['editingItemData', 'item'], model);
+    this.setInData(['editingItemData', 'validationErrors'], null);
+    this.setInData(['editingItemData', 'saving'], true);
+    this.emitChange();
+  },
+
+  onCreateInstanceType(model, tagRequest) {
+    this.onPersistInstanceType(model, tagRequest, services.createInstanceType);
+  },
+
+  onUpdateInstanceType(model, tagRequest) {
+    this.onPersistInstanceType(model, tagRequest, services.updateInstanceType);
+  },
+
+  onPersistInstanceType(model, tagRequest, persistFunction) {
+    persistFunction(model).then((profile) => {
+      if (tagRequest) {
+        tagRequest.resourceLink = profile.documentSelfLink;
+        return services.updateTagAssignment(tagRequest);
+      }
+      return Promise.resolve();
+    }).then(() => {
+      NavigationActions.openInstanceTypes();
+      // update the model after a slight timeout so the view can change context
+      setTimeout(() => {
+        this.setInData(['editingItemData', 'item'], {});
+        this.setInData(['editingItemData', 'saving'], false);
+        this.emitChange();
+      }, 500);
+    }).catch(this.onGenericEditError);
+
     this.setInData(['editingItemData', 'item'], model);
     this.setInData(['editingItemData', 'validationErrors'], null);
     this.setInData(['editingItemData', 'saving'], true);

@@ -34,6 +34,7 @@ import com.vmware.admiral.compute.content.ConstraintConverter;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.NetworkType;
 import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
+import com.vmware.admiral.compute.profile.NetworkProfileService;
 import com.vmware.admiral.compute.profile.NetworkProfileService.NetworkProfile.IsolationSupportType;
 import com.vmware.admiral.compute.profile.ProfileService.ProfileState;
 import com.vmware.admiral.compute.profile.ProfileService.ProfileStateExpanded;
@@ -82,49 +83,51 @@ public class NetworkProfileQueryUtils {
     /** Select Subnet that is applicable for compute network interface. */
     public static void getSubnetForComputeNic(ComputeNetwork computeNetwork,
             ComputeNetworkDescription networkDescription,
-            ProfileStateExpanded profileState, BiConsumer<SubnetState, Throwable> consumer) {
+            NetworkProfileService.NetworkProfileExpanded profileState, BiConsumer<SubnetState, Throwable> consumer) {
 
-        List<String> constraints = new ArrayList<>();
+        Map<Condition, String> constraints = getConstraints(networkDescription);
+        Set<SubnetState> subnets = getSubnets(computeNetwork, profileState, constraints);
 
-        DeferredResult<SubnetState> subnet;
-        // Validate network description constraints against selected profile
-        Map<Condition, String> placementConstraints = TagConstraintUtils
-                .extractPlacementTagConditions(
-                        networkDescription.constraints,
-                        networkDescription.tenantLinks);
-        if (placementConstraints != null) {
-            constraints.addAll(placementConstraints.keySet().stream()
-                    .map(c -> ConstraintConverter.encodeCondition(c).tag)
-                    .collect(Collectors.toList()));
+        SubnetState subnet = null;
+        if (subnets.size() > 0) {
+            subnet = subnets.iterator().next();
         }
-        Stream<SubnetState> subnetsStream = TagConstraintUtils
-                .filterByConstraints(
-                        placementConstraints,
-                        profileState.networkProfile.subnetStates
-                                .stream(),
-                        s -> combineTags(profileState, s),
-                        null);
+        DeferredResult<SubnetState> subnetDr = DeferredResult.completed(subnet);
 
-        if (computeNetwork.networkType == NetworkType.PUBLIC) {
-            subnetsStream = subnetsStream.filter(s -> Boolean.TRUE
-                    .equals(s.supportPublicIpAddress));
-        }
-        subnet = DeferredResult.completed(subnetsStream.findAny().orElse(null));
-
-        subnet.whenComplete((s, ex) -> {
+        subnetDr.whenComplete((s, ex) -> {
             if (ex != null) {
                 consumer.accept(null, ex);
             } else if (s == null) {
                 consumer.accept(null, new LocalizableValidationException(
                         String.format(
                                 "Selected profile '%s' doesn't satisfy network '%s' constraints %s.",
-                                profileState.name, networkDescription.name, constraints),
+                                profileState.name, computeNetwork.name, constraints),
                         "compute.network.constraints.not.satisfied.by.profile",
-                        profileState.name, networkDescription.name, constraints));
+                        profileState.name, computeNetwork.name, constraints));
             } else {
                 consumer.accept(s, null);
             }
         });
+    }
+
+    public static Set<SubnetState> getSubnets(ComputeNetwork computeNetwork,
+            NetworkProfileService.NetworkProfileExpanded networkProfile, Map<Condition, String> constraints) {
+        Stream<SubnetState> subnetsStream = TagConstraintUtils
+                .filterByConstraints(constraints, networkProfile.subnetStates.stream(),
+                        s -> combineTags(networkProfile, s), null);
+
+        if (computeNetwork.networkType == NetworkType.PUBLIC) {
+            subnetsStream = subnetsStream.filter(s -> Boolean.TRUE
+                    .equals(s.supportPublicIpAddress));
+        }
+        return subnetsStream.collect(Collectors.toSet());
+    }
+
+    public static Map<Condition, String> getConstraints(ComputeNetworkDescription networkDescription) {
+        // Validate network description constraints against selected profile
+        return TagConstraintUtils
+                .extractPlacementTagConditions(networkDescription.constraints,
+                        networkDescription.tenantLinks);
     }
 
     /** Get profiles that can be used to provision compute networks. */
@@ -196,6 +199,11 @@ public class NetworkProfileQueryUtils {
                                             env -> combineTags(env),
                                             null)
                                     .filter(env -> env.networkProfile.isolationType != IsolationSupportType.NONE)
+                                    .filter(env -> networkDescription.outboundAccess == null ||
+                                            networkDescription.outboundAccess == false ||
+                                            (env.networkProfile.isolationExternalSubnetLink !=
+                                                    null || env.networkProfile.isolationType ==
+                                                    IsolationSupportType.SECURITY_GROUP))
                                     .map(env -> env.documentSelfLink)
                                     .distinct()
                                     .collect(Collectors.toList());
@@ -214,23 +222,16 @@ public class NetworkProfileQueryUtils {
                                     .filterByConstraints(
                                             placementConstraints,
                                             pairs,
-                                            p -> combineTags(p.left, p.right),
+                                            p -> combineTags(p.left.networkProfile, p.right),
                                             null)
                                     .map(p -> p.left.documentSelfLink)
                                     .distinct()
                                     .collect(Collectors.toList());
                         }
-                        if (placementConstraints != null && !placementConstraints.isEmpty()
-                                && selectedProfiles.isEmpty()) {
-                            List<String> constraints = placementConstraints.keySet().stream()
-                                    .map(c -> ConstraintConverter.encodeCondition(c).tag)
-                                    .collect(Collectors.toList());
-                            consumer.accept(null, new LocalizableValidationException(
-                                    String.format(
-                                            "Could not find any profiles to satisfy all of network '%s' constraints %s.",
-                                            networkDescription.name, constraints),
-                                    "compute.network.no.profiles.satisfy.constraints",
-                                    networkDescription.name, constraints));
+                        // if no profiles are found, return an error
+                        if (selectedProfiles.isEmpty()) {
+                            consumer.accept(null, getNetworkProfileSearchException(
+                                    placementConstraints, networkDescription));
                         } else {
                             consumer.accept(selectedProfiles, null);
                         }
@@ -335,12 +336,16 @@ public class NetworkProfileQueryUtils {
                 "compute.network.component.not.found", networkInterfaceName);
     }
 
-    private static Set<String> combineTags(ProfileStateExpanded profile,
-            SubnetState subnetState) {
-        Set<String> tagLinks = combineTags(profile);
+    private static Set<String> combineTags(ResourceState left, ResourceState right) {
 
-        if (subnetState.tagLinks != null) {
-            tagLinks.addAll(subnetState.tagLinks);
+        Set<String> tagLinks = new HashSet<>();
+
+        if (left.tagLinks != null) {
+            tagLinks.addAll(left.tagLinks);
+        }
+
+        if (right.tagLinks != null) {
+            tagLinks.addAll(right.tagLinks);
         }
 
         return tagLinks;
@@ -438,7 +443,7 @@ public class NetworkProfileQueryUtils {
                 } else {
                     DeferredResult<SubnetState> subnetDeferred = new DeferredResult<>();
                     NetworkProfileQueryUtils.getSubnetForComputeNic(computeNetwork,
-                            computeNetworkDescription, profile,
+                            computeNetworkDescription, profile.networkProfile,
                             (s, ex) -> {
                                 if (ex != null) {
                                     subnetDeferred.fail(ex);
@@ -588,5 +593,38 @@ public class NetworkProfileQueryUtils {
         }
 
         return securityGroups;
+    }
+
+    private static Exception getNetworkProfileSearchException(
+            Map<Condition, String> placementConstraints,
+            ComputeNetworkDescription networkDescription) {
+        List<String> constraints = new ArrayList<>();
+        if (placementConstraints != null && !placementConstraints.isEmpty()) {
+            constraints = placementConstraints.keySet().stream()
+                    .map(c -> ConstraintConverter.encodeCondition(c).tag)
+                    .collect(Collectors.toList());
+        }
+
+        String networkType = networkDescription.networkType == null ? NetworkType.EXTERNAL.name() :
+                networkDescription.networkType.name();
+
+        if (networkDescription.outboundAccess != null && networkDescription.outboundAccess.equals(
+                Boolean.TRUE)) {
+            return new LocalizableValidationException(
+                    String.format(
+                            "Could not find any profile to match network '%s' of type %s with "
+                                    + "outbound access and constraints %s.",
+                            networkDescription.name, networkType, constraints),
+                    "compute.network.no.profiles.match.outbound.access",
+                    networkDescription.name, networkType, constraints);
+        } else {
+            return new LocalizableValidationException(
+                    String.format(
+                            "Could not find any profile to match network '%s' of type %s with "
+                                    + "constraints %s.",
+                            networkDescription.name, networkType, constraints),
+                    "compute.network.no.profiles.match",
+                    networkDescription.name, networkType, constraints);
+        }
     }
 }

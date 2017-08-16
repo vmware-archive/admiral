@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -110,31 +110,26 @@ public class ContainerHealthEvaluator {
 
             host.sendRequest(Operation
                     .createPatch(host, containerState.documentSelfLink)
-                    .setBody(state)
+                    .setBodyNoCloning(state)
                     .setReferer(host.getUri())
-                    .setCompletion(
-                            (o, ex) -> {
-                                if (ex != null) {
-                                    host.log(
-                                            Level.WARNING,
-                                            "Failed to update container health state after periodic maintenance: %s",
-                                            o.getUri());
-                                } else {
-                                    host.log(
-                                            Level.FINE,
-                                            "Container health updated successfully after periodic maintenance: %s",
-                                            o.getUri());
-                                }
-                            }));
+                    .setCompletion((o, ex) -> {
+                        if (ex != null) {
+                            host.log(Level.WARNING, "Failed to update container health state after"
+                                    + " periodic maintenance: %s", o.getUri());
+                        } else {
+                            host.log(Level.FINE, "Container health updated successfully after"
+                                    + " periodic maintenance: %s", o.getUri());
+                        }
+                    }));
         }
     }
 
     private void publishEventLog(ContainerStats patchHealth) {
         EventLogState eventLog = new EventLogState();
-        eventLog.description = String.format(
-                "Health check failed for container %s after %d tries, container state will be set to ERROR.",
+        eventLog.description = String.format("Health check failed for container %s after %d tries,"
+                        + " container state will be set to ERROR.",
                 containerState.documentSelfLink, patchHealth.healthFailureCount);
-        ;
+
         eventLog.eventLogType = EventLogType.ERROR;
         eventLog.resourceType = getClass().getName();
         eventLog.tenantLinks = containerState.tenantLinks;
@@ -142,7 +137,7 @@ public class ContainerHealthEvaluator {
         host.log(Level.WARNING, eventLog.description);
 
         host.sendRequest(Operation.createPost(host, EventLogService.FACTORY_LINK)
-                .setBody(eventLog)
+                .setBodyNoCloning(eventLog)
                 .setReferer(ContainerFactoryService.SELF_LINK)
                 .setCompletion((o, e) -> {
                     if (e != null) {
@@ -155,9 +150,10 @@ public class ContainerHealthEvaluator {
     private void getHealthConfig(String containerDescriptionLink,
             Consumer<HealthConfig> callback) {
 
-        ServiceDocumentQuery<ContainerDescription> query = new ServiceDocumentQuery<ContainerDescription>(
-                host,
-                ContainerDescription.class);
+        ServiceDocumentQuery<ContainerDescription> query =
+                new ServiceDocumentQuery<ContainerDescription>(
+                        host,
+                        ContainerDescription.class);
         String healthConfigUriPath = UriUtils.buildUriPath(containerDescriptionLink);
         query.queryDocument(healthConfigUriPath,
                 (r) -> {
@@ -183,4 +179,5 @@ public class ContainerHealthEvaluator {
         defaultConfig.unhealthyThreshold = DEFAULT_UNHEALTHY_THRESHOLD;
         return defaultConfig;
     }
+
 }

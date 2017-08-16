@@ -26,21 +26,29 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.auth.AuthBaseTest;
 import com.vmware.admiral.auth.idm.AuthRole;
+import com.vmware.admiral.auth.idm.Principal;
 import com.vmware.admiral.auth.idm.PrincipalRolesHandler.PrincipalRoleAssignment;
+import com.vmware.admiral.auth.idm.SecurityContext;
+import com.vmware.admiral.auth.idm.SecurityContext.ProjectEntry;
 import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles;
 import com.vmware.admiral.auth.project.ProjectService.ExpandedProjectState;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
+import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.auth.util.ProjectUtil;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
+import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
+import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
+import com.vmware.admiral.service.common.UniquePropertiesService.UniquePropertiesState;
+import com.vmware.admiral.service.common.harbor.Harbor;
+import com.vmware.admiral.service.common.harbor.mock.MockHarborApiProxyService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.LocalizableValidationException;
@@ -58,11 +66,12 @@ import com.vmware.xenon.services.common.RoleService;
 import com.vmware.xenon.services.common.RoleService.RoleState;
 import com.vmware.xenon.services.common.UserGroupService;
 import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
+import com.vmware.xenon.services.common.UserService;
 import com.vmware.xenon.services.common.UserService.UserState;
 
 public class ProjectServiceTest extends AuthBaseTest {
 
-    private static final String PROJECT_NAME = "testName";
+    private static final String PROJECT_NAME = "test.name";
     private static final String PROJECT_DESCRIPTION = "testDescription";
     private static final boolean PROJECT_IS_PUBLIC = false;
 
@@ -80,6 +89,7 @@ public class ProjectServiceTest extends AuthBaseTest {
 
     @Before
     public void setUp() throws Throwable {
+        waitForServiceAvailability(ProjectService.UNIQUE_PROJECT_NAMES_SERVICE_LINK);
         waitForServiceAvailability(ProjectFactoryService.SELF_LINK);
         waitForServiceAvailability(GroupResourcePlacementService.FACTORY_LINK);
 
@@ -120,9 +130,187 @@ public class ProjectServiceTest extends AuthBaseTest {
     }
 
     @Test
+    public void testProjectRolesLifeCycle() throws Throwable {
+        // Create project
+        ProjectState testProject = createProject("project-test");
+        String projectId = Service.getId(testProject.documentSelfLink);
+
+        String defaultAdminsRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
+                AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(projectId));
+        String defaultMembersRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
+                AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(projectId));
+        String defaultViewersRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
+                AuthRole.PROJECT_VIEWER.buildRoleWithSuffix(projectId));
+
+        String defaultAdminsLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(projectId));
+        String defaultMembersLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(projectId));
+        String defaultViewersLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_VIEWER.buildRoleWithSuffix(projectId));
+
+        String defaultAdminsResGroupLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(projectId));
+        String defaultMembersResGroupLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(projectId));
+        String defaultViewersResGroupLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_VIEWER.buildRoleWithSuffix(projectId));
+
+        String membersExtendedResourceGroupLink = UriUtils.buildUriPath(
+                ResourceGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId));
+        String membersExtendedRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
+                AuthRole.PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId));
+
+        // Verify default documents are created.
+        assertDocumentExists(defaultAdminsLink);
+        assertDocumentExists(defaultMembersLink);
+        assertDocumentExists(defaultViewersLink);
+        assertDocumentExists(defaultAdminsRoleLink);
+        assertDocumentExists(defaultMembersRoleLink);
+        assertDocumentExists(defaultViewersRoleLink);
+        assertDocumentExists(defaultAdminsResGroupLink);
+        assertDocumentExists(defaultMembersResGroupLink);
+        assertDocumentExists(defaultViewersResGroupLink);
+        assertDocumentExists(membersExtendedRoleLink);
+        assertDocumentExists(membersExtendedResourceGroupLink);
+
+        // Assign principal of type user and validate.
+        ProjectRoles projectRoles = new ProjectRoles();
+        projectRoles.administrators = new PrincipalRoleAssignment();
+        projectRoles.members = new PrincipalRoleAssignment();
+        projectRoles.administrators.add = Collections.singletonList(USER_EMAIL_CONNIE);
+        projectRoles.members.add = Collections.singletonList(USER_EMAIL_GLORIA);
+        doPatch(projectRoles, testProject.documentSelfLink);
+
+        ExpandedProjectState expandedState = getExpandedProjectState(testProject.documentSelfLink);
+        assertTrue(expandedState.administrators.size() == 1);
+        assertTrue(expandedState.administrators.get(0).email.equals(USER_EMAIL_CONNIE));
+        assertTrue(expandedState.members.size() == 1);
+        assertTrue(expandedState.members.get(0).email.equals(USER_EMAIL_GLORIA));
+
+        UserState connieState = getDocumentNoWait(UserState.class, buildUserServicePath(
+                USER_EMAIL_CONNIE));
+        UserState gloriaState = getDocumentNoWait(UserState.class, buildUserServicePath(
+                USER_EMAIL_GLORIA));
+        assertTrue(connieState.userGroupLinks.contains(defaultAdminsLink));
+        assertTrue(gloriaState.userGroupLinks.contains(defaultMembersLink));
+
+        // Unassign principal of type user and validate
+        projectRoles = new ProjectRoles();
+        projectRoles.administrators = new PrincipalRoleAssignment();
+        projectRoles.members = new PrincipalRoleAssignment();
+        projectRoles.administrators.remove = Collections.singletonList(USER_EMAIL_CONNIE);
+        projectRoles.members.remove = Collections.singletonList(USER_EMAIL_GLORIA);
+        doPatch(projectRoles, testProject.documentSelfLink);
+
+        expandedState = getExpandedProjectState(testProject.documentSelfLink);
+        assertTrue(expandedState.administrators.size() == 0);
+        assertTrue(expandedState.members.size() == 0);
+
+        connieState = getDocumentNoWait(UserState.class, buildUserServicePath(
+                USER_EMAIL_CONNIE));
+        gloriaState = getDocumentNoWait(UserState.class, buildUserServicePath(
+                USER_EMAIL_GLORIA));
+        assertTrue(!connieState.userGroupLinks.contains(defaultAdminsLink));
+        assertTrue(!gloriaState.userGroupLinks.contains(defaultMembersLink));
+
+        // Assign principal of type group and validate
+        projectRoles = new ProjectRoles();
+        projectRoles.administrators = new PrincipalRoleAssignment();
+        projectRoles.members = new PrincipalRoleAssignment();
+        projectRoles.administrators.add = Collections.singletonList(USER_GROUP_SUPERUSERS);
+        projectRoles.members.add = Collections.singletonList(USER_GROUP_DEVELOPERS);
+        doPatch(projectRoles, testProject.documentSelfLink);
+
+        testProject = getDocumentNoWait(ProjectState.class, testProject.documentSelfLink);
+        assertTrue(testProject.administratorsUserGroupLinks.size() == 2);
+        assertTrue(testProject.membersUserGroupLinks.size() == 2);
+
+        String superusersRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
+                AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(projectId, USER_GROUP_SUPERUSERS));
+
+        String developersRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
+                AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(projectId, USER_GROUP_DEVELOPERS));
+
+        String developerExtendedRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
+                AuthRole.PROJECT_MEMBER_EXTENDED
+                        .buildRoleWithSuffix(projectId, USER_GROUP_DEVELOPERS));
+
+        String developersExtendedResourceGroupLink = UriUtils
+                .buildUriPath(ResourceGroupService.FACTORY_LINK, AuthRole.PROJECT_MEMBER_EXTENDED
+                        .buildRoleWithSuffix(projectId, USER_GROUP_DEVELOPERS));
+
+        assertDocumentExists(superusersRoleLink);
+        assertDocumentExists(developersRoleLink);
+        assertDocumentExists(developerExtendedRoleLink);
+        assertDocumentExists(developersExtendedResourceGroupLink);
+
+        expandedState = getExpandedProjectState(testProject.documentSelfLink);
+        assertTrue(expandedState.administrators.size() == 1);
+        assertTrue(expandedState.administrators.get(0).id.equals(USER_GROUP_SUPERUSERS));
+        assertTrue(expandedState.members.size() == 1);
+        assertTrue(expandedState.members.get(0).id.equals(USER_GROUP_DEVELOPERS));
+
+        // Unassign principal of type group and validate.
+        projectRoles = new ProjectRoles();
+        projectRoles.administrators = new PrincipalRoleAssignment();
+        projectRoles.members = new PrincipalRoleAssignment();
+        projectRoles.administrators.remove = Collections.singletonList(USER_GROUP_SUPERUSERS);
+        projectRoles.members.remove = Collections.singletonList(USER_GROUP_DEVELOPERS);
+        doPatch(projectRoles, testProject.documentSelfLink);
+
+        assertDocumentNotExists(superusersRoleLink);
+        assertDocumentNotExists(developersRoleLink);
+        assertDocumentNotExists(developerExtendedRoleLink);
+        assertDocumentNotExists(developersExtendedResourceGroupLink);
+
+        expandedState = getExpandedProjectState(testProject.documentSelfLink);
+        assertTrue(expandedState.administrators.size() == 0);
+        assertTrue(expandedState.members.size() == 0);
+
+        // Assign principal of type group and user and delete the project, validate that all
+        // resources are cleaned.
+        projectRoles.administrators = new PrincipalRoleAssignment();
+        projectRoles.members = new PrincipalRoleAssignment();
+        projectRoles.administrators.add = Arrays.asList(USER_GROUP_SUPERUSERS, USER_EMAIL_CONNIE);
+        projectRoles.members.add = Arrays.asList(USER_GROUP_DEVELOPERS, USER_EMAIL_GLORIA);
+        doPatch(projectRoles, testProject.documentSelfLink);
+
+        assertDocumentExists(superusersRoleLink);
+        assertDocumentExists(developersRoleLink);
+        assertDocumentExists(developerExtendedRoleLink);
+        assertDocumentExists(developersExtendedResourceGroupLink);
+
+        deleteProject(testProject);
+
+        assertDocumentNotExists(superusersRoleLink);
+        assertDocumentNotExists(developersRoleLink);
+        assertDocumentNotExists(developerExtendedRoleLink);
+        assertDocumentNotExists(developersExtendedResourceGroupLink);
+        assertDocumentNotExists(defaultAdminsLink);
+        assertDocumentNotExists(defaultMembersLink);
+        assertDocumentNotExists(defaultViewersLink);
+        assertDocumentNotExists(defaultAdminsResGroupLink);
+        assertDocumentNotExists(defaultMembersResGroupLink);
+        assertDocumentNotExists(defaultViewersResGroupLink);
+        assertDocumentNotExists(defaultAdminsRoleLink);
+        assertDocumentNotExists(defaultMembersRoleLink);
+        assertDocumentNotExists(defaultViewersRoleLink);
+        assertDocumentNotExists(membersExtendedRoleLink);
+        assertDocumentNotExists(membersExtendedResourceGroupLink);
+
+        connieState = getDocumentNoWait(UserState.class, connieState.documentSelfLink);
+        gloriaState = getDocumentNoWait(UserState.class, gloriaState.documentSelfLink);
+        assertTrue(!connieState.userGroupLinks.contains(defaultAdminsLink));
+        assertTrue(!gloriaState.userGroupLinks.contains(defaultMembersLink));
+
+    }
+
+    @Test
     public void testPatch() throws Throwable {
 
-        final String patchedName = "patchedName";
+        final String patchedName = "patched-name";
         final String patchedDescription = "patchedDescription";
         final boolean patchedIsPublic = true;
 
@@ -151,6 +339,7 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertEquals(patchedIsPublic, updatedProject.isPublic);
     }
 
+    //TODO: Remove waitFor() once patch is stable.
     @Test
     public void testProjectRolesPatch() throws Throwable {
         // verify initial state
@@ -171,6 +360,36 @@ public class ProjectServiceTest extends AuthBaseTest {
         projectRoles.members.remove = Arrays.asList(USER_EMAIL_ADMIN);
         projectRoles.members.add = Arrays.asList(USER_EMAIL_GLORIA, USER_EMAIL_CONNIE);
         doPatch(projectRoles, expandedState.documentSelfLink);
+
+        waitFor(() -> {
+            UserState gloria = getDocumentNoWait(UserState.class,
+                    UriUtils.buildUriPath(UserService.FACTORY_LINK, USER_EMAIL_GLORIA));
+
+            String groupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                    AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(
+                            Service.getId(project.documentSelfLink)));
+            return gloria.userGroupLinks.contains(groupLink);
+        });
+
+        waitFor(() -> {
+            UserState connie = getDocumentNoWait(UserState.class,
+                    UriUtils.buildUriPath(UserService.FACTORY_LINK, USER_EMAIL_CONNIE));
+
+            String groupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                    AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(
+                            Service.getId(project.documentSelfLink)));
+            return connie.userGroupLinks.contains(groupLink);
+        });
+
+        waitFor(() -> {
+            UserState admin = getDocumentNoWait(UserState.class,
+                    UriUtils.buildUriPath(UserService.FACTORY_LINK, USER_EMAIL_ADMIN));
+
+            String groupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                    AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(
+                            Service.getId(project.documentSelfLink)));
+            return !admin.userGroupLinks.contains(groupLink);
+        });
 
         // verify result
         expandedState = getExpandedProjectState(project.documentSelfLink);
@@ -207,6 +426,36 @@ public class ProjectServiceTest extends AuthBaseTest {
                 USER_EMAIL_CONNIE);
         doPatch(projectRoles, expandedState.documentSelfLink);
 
+        waitFor(() -> {
+            UserState gloria = getDocumentNoWait(UserState.class,
+                    UriUtils.buildUriPath(UserService.FACTORY_LINK, USER_EMAIL_GLORIA));
+
+            String groupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                    AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(
+                            Service.getId(project.documentSelfLink)));
+            return !gloria.userGroupLinks.contains(groupLink);
+        });
+
+        waitFor(() -> {
+            UserState connie = getDocumentNoWait(UserState.class,
+                    UriUtils.buildUriPath(UserService.FACTORY_LINK, USER_EMAIL_CONNIE));
+
+            String groupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                    AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(
+                            Service.getId(project.documentSelfLink)));
+            return !connie.userGroupLinks.contains(groupLink);
+        });
+
+        waitFor(() -> {
+            UserState admin = getDocumentNoWait(UserState.class,
+                    UriUtils.buildUriPath(UserService.FACTORY_LINK, USER_EMAIL_ADMIN));
+
+            String groupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                    AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(
+                            Service.getId(project.documentSelfLink)));
+            return !admin.userGroupLinks.contains(groupLink);
+        });
+
         // verify result
         expandedState = getExpandedProjectState(project.documentSelfLink);
         assertNotNull(expandedState.members);
@@ -216,6 +465,7 @@ public class ProjectServiceTest extends AuthBaseTest {
     /**
      * Test with a PATCH request that updates both the project state and the user roles.
      */
+    //TODO: remove waitFor() once Patch is stable.
     @Test
     public void testMixedPatch() throws Throwable {
         // verify initial state
@@ -232,7 +482,7 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertEquals(USER_EMAIL_BASIC_USER, expandedState.viewers.iterator().next().email);
 
         // Patch name, public flag and roles at the same time
-        final String patchedName = "patchedName";
+        final String patchedName = "patched-name";
         final boolean patchedPublicFlag = !PROJECT_IS_PUBLIC;
         ProjectMixedPatchDto patchBody = new ProjectMixedPatchDto();
         patchBody.name = patchedName;
@@ -240,6 +490,26 @@ public class ProjectServiceTest extends AuthBaseTest {
         patchBody.members = new PrincipalRoleAssignment();
         patchBody.members.add = Arrays.asList(USER_EMAIL_GLORIA, USER_EMAIL_CONNIE);
         doPatch(patchBody, expandedState.documentSelfLink);
+
+        waitFor(() -> {
+            UserState gloria = getDocumentNoWait(UserState.class,
+                    UriUtils.buildUriPath(UserService.FACTORY_LINK, USER_EMAIL_GLORIA));
+
+            String groupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                    AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(
+                            Service.getId(project.documentSelfLink)));
+            return gloria.userGroupLinks.contains(groupLink);
+        });
+
+        waitFor(() -> {
+            UserState connie = getDocumentNoWait(UserState.class,
+                    UriUtils.buildUriPath(UserService.FACTORY_LINK, USER_EMAIL_CONNIE));
+
+            String groupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                    AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(
+                            Service.getId(project.documentSelfLink)));
+            return connie.userGroupLinks.contains(groupLink);
+        });
 
         // Verify result
         expandedState = getExpandedProjectState(project.documentSelfLink);
@@ -263,7 +533,7 @@ public class ProjectServiceTest extends AuthBaseTest {
 
     @Test
     public void testPut() throws Throwable {
-        final String updatedName = "updatedName";
+        final String updatedName = "updated-name";
         final String updatedDescription = "updatedDescription";
         final boolean updatedIsPublic = !PROJECT_IS_PUBLIC;
 
@@ -358,13 +628,18 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertEquals(1, expandedState.administrators.size());
         assertEquals(1, expandedState.members.size());
 
-        String expectedAdministratorsUserGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
-                AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(Service.getId(project.documentSelfLink)));
+        String expectedAdministratorsUserGroupLink = UriUtils.buildUriPath(
+                UserGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_ADMIN
+                        .buildRoleWithSuffix(Service.getId(project.documentSelfLink)));
         String expectedMembersUserGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
-                AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(Service.getId(project.documentSelfLink)));
+                AuthRole.PROJECT_MEMBER
+                        .buildRoleWithSuffix(Service.getId(project.documentSelfLink)));
 
-        assertEquals(expectedAdministratorsUserGroupLink, expandedState.administratorsUserGroupLinks.iterator().next());
-        assertEquals(expectedMembersUserGroupLink, expandedState.membersUserGroupLinks.iterator().next());
+        assertEquals(expectedAdministratorsUserGroupLink,
+                expandedState.administratorsUserGroupLinks.iterator().next());
+        assertEquals(expectedMembersUserGroupLink,
+                expandedState.membersUserGroupLinks.iterator().next());
 
         // make a batch user operation: add and remove group
         ProjectRoles projectRoles = new ProjectRoles();
@@ -373,7 +648,8 @@ public class ProjectServiceTest extends AuthBaseTest {
 
         // assert that the new role does not exist
         String roleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
-                AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(Service.getId(project.documentSelfLink), USER_GROUP_DEVELOPERS));
+                AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(Service.getId(project.documentSelfLink),
+                        USER_GROUP_DEVELOPERS));
         assertDocumentNotExists(roleLink);
 
         host.testStart(1);
@@ -404,7 +680,8 @@ public class ProjectServiceTest extends AuthBaseTest {
 
         assertTrue(expandedState.membersUserGroupLinks.stream()
                 .anyMatch((userGroupLink) -> userGroupLink.equals(
-                        UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, USER_GROUP_DEVELOPERS))));
+                        UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                                USER_GROUP_DEVELOPERS))));
     }
 
     @Test
@@ -423,13 +700,18 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertEquals(USER_EMAIL_ADMIN, expandedState.members.iterator().next().email);
         assertEquals(USER_EMAIL_BASIC_USER, expandedState.viewers.iterator().next().email);
 
-        String expectedAdministratorsUserGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
-                AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(Service.getId(project.documentSelfLink)));
+        String expectedAdministratorsUserGroupLink = UriUtils.buildUriPath(
+                UserGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_ADMIN
+                        .buildRoleWithSuffix(Service.getId(project.documentSelfLink)));
         String expectedMembersUserGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
-                AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(Service.getId(project.documentSelfLink)));
+                AuthRole.PROJECT_MEMBER
+                        .buildRoleWithSuffix(Service.getId(project.documentSelfLink)));
 
-        assertEquals(expectedAdministratorsUserGroupLink, expandedState.administratorsUserGroupLinks.iterator().next());
-        assertEquals(expectedMembersUserGroupLink, expandedState.membersUserGroupLinks.iterator().next());
+        assertEquals(expectedAdministratorsUserGroupLink,
+                expandedState.administratorsUserGroupLinks.iterator().next());
+        assertEquals(expectedMembersUserGroupLink,
+                expandedState.membersUserGroupLinks.iterator().next());
 
         // make a batch user operation: add group
         ProjectRoles projectRoles = new ProjectRoles();
@@ -438,7 +720,8 @@ public class ProjectServiceTest extends AuthBaseTest {
 
         // assert that the new role does not exist
         String roleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
-                AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(Service.getId(project.documentSelfLink), USER_GROUP_DEVELOPERS));
+                AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(Service.getId(project.documentSelfLink),
+                        USER_GROUP_DEVELOPERS));
         assertDocumentNotExists(roleLink);
 
         host.testStart(1);
@@ -469,7 +752,8 @@ public class ProjectServiceTest extends AuthBaseTest {
         // verify that the user group link is added to the members group links
         assertTrue(expandedState.membersUserGroupLinks.stream()
                 .anyMatch((userGroupLink) -> userGroupLink.equals(
-                        UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, USER_GROUP_DEVELOPERS))));
+                        UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                                USER_GROUP_DEVELOPERS))));
 
         // verify that the user group is added to the members
         assertTrue(expandedState.members.stream()
@@ -586,11 +870,11 @@ public class ProjectServiceTest extends AuthBaseTest {
 
         try {
             deleteProject(project);
-        } catch (LocalizableValidationException e) {
-            verifyExceptionMessage(e.getMessage(),
-                    ProjectUtil.PROJECT_IN_USE_MESSAGE);
+        } catch (Exception e) {
+            if (!e.getMessage().contains(ProjectUtil.PROJECT_IN_USE_MESSAGE)) {
+                throw e;
+            }
         }
-
     }
 
     @Test
@@ -653,39 +937,42 @@ public class ProjectServiceTest extends AuthBaseTest {
 
     @Test
     public void testResourceGroupsAutoCreatedOnProjectCreate() {
-        String resourceGroupLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
-                Service.getId(project.documentSelfLink));
-        assertDocumentExists(resourceGroupLink);
+        String projectId = Service.getId(project.documentSelfLink);
+        String adminsResourceGroupLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(projectId));
+        String membersResourceGroupLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(projectId));
+        String viewersResourceGroupLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_VIEWER.buildRoleWithSuffix(projectId));
+        String extendedMembersResourceGroupLink = UriUtils.buildUriPath(
+                ResourceGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId));
+        assertDocumentExists(adminsResourceGroupLink);
+        assertDocumentExists(membersResourceGroupLink);
+        assertDocumentExists(viewersResourceGroupLink);
+        assertDocumentExists(extendedMembersResourceGroupLink);
     }
 
     @Test
     public void testRolesAutoCreatedOnProjectCreate() {
-        String adminsUserGroupId = Service
-                .getId(UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, AuthRole.PROJECT_ADMIN
-                        .buildRoleWithSuffix(Service.getId(project.documentSelfLink))));
-        String membersUserGroupId = Service
-                .getId(UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, AuthRole.PROJECT_MEMBER
-                        .buildRoleWithSuffix(Service.getId(project.documentSelfLink))));
-        String viewersUserGroupId = Service
-                .getId(UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, AuthRole.PROJECT_VIEWER
-                        .buildRoleWithSuffix(Service.getId(project.documentSelfLink))));
-
         String adminsRoleLinks = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
                 AuthRole.PROJECT_ADMIN
-                        .buildRoleWithSuffix(Service.getId(project.documentSelfLink),
-                                adminsUserGroupId));
+                        .buildRoleWithSuffix(Service.getId(project.documentSelfLink)));
         String membersRoleLinks = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
                 AuthRole.PROJECT_MEMBER
-                        .buildRoleWithSuffix(Service.getId(project.documentSelfLink),
-                                membersUserGroupId));
+                        .buildRoleWithSuffix(Service.getId(project.documentSelfLink)));
         String viewersRoleLinks = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
                 AuthRole.PROJECT_VIEWER
-                        .buildRoleWithSuffix(Service.getId(project.documentSelfLink),
-                                viewersUserGroupId));
+                        .buildRoleWithSuffix(Service.getId(project.documentSelfLink)));
+
+        String extendedMembersRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
+                AuthRole.PROJECT_MEMBER_EXTENDED
+                        .buildRoleWithSuffix(Service.getId(project.documentSelfLink)));
 
         assertDocumentExists(adminsRoleLinks);
         assertDocumentExists(membersRoleLinks);
         assertDocumentExists(viewersRoleLinks);
+        assertDocumentExists(extendedMembersRoleLink);
     }
 
     @Test
@@ -756,23 +1043,43 @@ public class ProjectServiceTest extends AuthBaseTest {
     }
 
     @Test
+    public void testDefaultProjectUserGroupsAreCreated() throws Throwable {
+        ProjectState defaultProject = getDocumentNoWait(ProjectState.class,
+                ProjectService.DEFAULT_PROJECT_LINK);
+
+        assertNotNull(defaultProject);
+        assertNotNull(defaultProject.documentSelfLink);
+        assertNotNull(defaultProject.administratorsUserGroupLinks);
+        assertNotNull(defaultProject.membersUserGroupLinks);
+        assertNotNull(defaultProject.viewersUserGroupLinks);
+
+        assertEquals(1, defaultProject.administratorsUserGroupLinks.size());
+        assertEquals(1, defaultProject.membersUserGroupLinks.size());
+        assertEquals(1, defaultProject.viewersUserGroupLinks.size());
+
+        String adminsGroupLink = defaultProject.administratorsUserGroupLinks.iterator().next();
+        String membersGroupLink = defaultProject.membersUserGroupLinks.iterator().next();
+        String viewersGroupLink = defaultProject.viewersUserGroupLinks.iterator().next();
+
+        UserGroupState adminGroup = getDocumentNoWait(UserGroupState.class, adminsGroupLink);
+        UserGroupState membersGroup = getDocumentNoWait(UserGroupState.class, membersGroupLink);
+        UserGroupState viewersGroup = getDocumentNoWait(UserGroupState.class, viewersGroupLink);
+
+        assertNotNull(adminGroup.documentSelfLink);
+        assertNotNull(membersGroup.documentSelfLink);
+        assertNotNull(viewersGroup.documentSelfLink);
+    }
+
+    @Test
     public void testCreateProjectWithDuplicateNameShouldFail() throws Throwable {
         createProject("test-name");
 
         try {
-            createProject("test-name");
+            createProjectExpectFailure("test-name");
             fail("Project create with same name should've failed");
         } catch (Exception ex) {
-            assertTrue(ex instanceof LocalizableValidationException);
+            assertTrue(ex instanceof IllegalStateException);
             assertTrue(ex.getMessage().contains("test-name"));
-        }
-
-        try {
-            createProject("test-Name");
-            fail("Project create with same name (case insensitive) should've failed");
-        } catch (Exception ex) {
-            assertTrue(ex instanceof LocalizableValidationException);
-            assertTrue(ex.getMessage().contains("test-Name"));
         }
     }
 
@@ -788,18 +1095,10 @@ public class ProjectServiceTest extends AuthBaseTest {
             updateProject(state);
             fail("Project update with same name should've failed");
         } catch (Exception ex) {
-            assertTrue(ex instanceof LocalizableValidationException);
+            assertTrue(ex instanceof IllegalStateException);
             assertTrue(ex.getMessage().contains("test-name"));
         }
 
-        state.name = "test-Name";
-        try {
-            updateProject(state);
-            fail("Project update with same name (case insensitive) should've failed");
-        } catch (Exception ex) {
-            assertTrue(ex instanceof LocalizableValidationException);
-            assertTrue(ex.getMessage().contains("test-Name"));
-        }
     }
 
     @Test
@@ -814,18 +1113,10 @@ public class ProjectServiceTest extends AuthBaseTest {
             patchProject(state, state.documentSelfLink);
             fail("Project update with same name should've failed");
         } catch (Exception ex) {
-            assertTrue(ex instanceof LocalizableValidationException);
+            assertTrue(ex.getCause() instanceof IllegalStateException);
             assertTrue(ex.getMessage().contains("test-name"));
         }
 
-        state.name = "test-Name";
-        try {
-            patchProject(state, state.documentSelfLink);
-            fail("Project update with same name (case insensitive) should've failed");
-        } catch (Exception ex) {
-            assertTrue(ex instanceof LocalizableValidationException);
-            assertTrue(ex.getMessage().contains("test-Name"));
-        }
     }
 
     @Test
@@ -864,15 +1155,10 @@ public class ProjectServiceTest extends AuthBaseTest {
     }
 
     @Test
-    @Ignore("Once proper synchronization is implemented, remove the ignore.")
     public void testCreateMultipleProjectsAtOnceWithSameName() throws Throwable {
         ProjectState state = new ProjectState();
         for (int i = 0; i < 10; i++) {
-            if (i % 2 == 0) {
-                state.name = "test-name";
-            } else {
-                state.name = "test-Name";
-            }
+            state.name = "test-name";
             createProjectNoWait(state);
         }
 
@@ -899,6 +1185,171 @@ public class ProjectServiceTest extends AuthBaseTest {
                 .collect(Collectors.toList());
 
         assertEquals(1, testProjects.size());
+    }
+
+    @Test
+    public void testAssignProjectRoleToPrincipalWithoutUserState() throws Throwable {
+        deleteUser(USER_EMAIL_CONNIE);
+        assertDocumentNotExists(AuthUtil.buildUserServicePathFromPrincipalId(USER_EMAIL_CONNIE));
+
+        ProjectState projectState = createProject("test-test");
+
+        ProjectRoles roleAssignment = new ProjectRoles();
+        roleAssignment.administrators = new PrincipalRoleAssignment();
+        roleAssignment.administrators.add = Collections.singletonList(USER_EMAIL_CONNIE);
+
+        doPatch(roleAssignment, projectState.documentSelfLink);
+
+        ExpandedProjectState expandedProjectState = getExpandedProjectState(
+                projectState.documentSelfLink);
+
+        assertTrue(expandedProjectState.administrators.size() == 1);
+
+        Principal principal = expandedProjectState.administrators.get(0);
+        assertEquals(USER_EMAIL_CONNIE, principal.id);
+
+        assertDocumentExists(AuthUtil.buildUserServicePathFromPrincipalId(USER_EMAIL_CONNIE));
+
+        SecurityContext connieContext = getSecurityContext(USER_EMAIL_CONNIE);
+
+        assertTrue(connieContext.roles.contains(AuthRole.BASIC_USER));
+        assertTrue(connieContext.roles.contains(AuthRole.BASIC_USER_EXTENDED));
+
+        assertTrue(connieContext.projects.size() == 1);
+
+        ProjectEntry entry = connieContext.projects.get(0);
+        assertEquals(projectState.documentSelfLink, entry.documentSelfLink);
+        assertEquals(projectState.name, entry.name);
+        assertTrue(entry.roles.contains(AuthRole.PROJECT_ADMIN));
+    }
+
+    @Test
+    public void testDevOpsAdminCanAssignUsersToProject() throws Throwable {
+        ProjectState project = createProject("project");
+        ProjectRoles roles = new ProjectRoles();
+        roles.administrators = new PrincipalRoleAssignment();
+        roles.administrators.add = Collections.singletonList(USER_EMAIL_BASIC_USER);
+        doPatch(roles, project.documentSelfLink);
+
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_BASIC_USER));
+        ProjectRoles roles1 = new ProjectRoles();
+        roles1.members = new PrincipalRoleAssignment();
+        roles1.members.add = Collections.singletonList(USER_EMAIL_CONNIE);
+        doPatch(roles1, project.documentSelfLink);
+
+        ExpandedProjectState expandedProjectState = getExpandedProjectState(project
+                .documentSelfLink);
+
+        assertTrue(expandedProjectState.administrators.size() == 1);
+        assertTrue(expandedProjectState.administrators.get(0).id.equals(USER_EMAIL_BASIC_USER));
+        assertTrue(expandedProjectState.members.size() == 1);
+        assertTrue(expandedProjectState.members.get(0).id.equals(USER_EMAIL_CONNIE));
+    }
+
+    @Test
+    public void testProjectNameIsUnclaimedAfterUpdateOrDelete() throws Throwable {
+        ProjectState project = createProject("test-name");
+        assertNotNull(project.documentSelfLink);
+
+        ProjectState project1 = new ProjectState();
+        project1.name = "new-name";
+        project = patchProject(project1, project.documentSelfLink);
+        assertEquals(project1.name, project.name);
+
+        project1 = createProject("test-name");
+        assertNotNull(project1.documentSelfLink);
+
+        deleteProject(project1);
+
+        project1 = createProject("test-name");
+        assertNotNull(project1.documentSelfLink);
+
+        ProjectState projectPut = new ProjectState();
+        projectPut.name = "updated-name";
+        projectPut.documentSelfLink = project1.documentSelfLink;
+        updateProject(projectPut);
+
+        project1 = createProject("test-name");
+        assertNotNull(project1.documentSelfLink);
+    }
+
+    @Test
+    public void testProjectIndexClaim() throws Throwable {
+        ProjectState project = createProject("test-name");
+        String projectIndex = project.customProperties.get(ProjectService
+                .CUSTOM_PROPERTY_PROJECT_INDEX);
+
+        String projectIndexesUri = ProjectService.UNIQUE_PROJECT_INDEXES_SERVICE_LINK;
+        List<String> claimedIndexes = getDocumentNoWait(UniquePropertiesState.class,
+                projectIndexesUri).uniqueProperties;
+
+        assertTrue(claimedIndexes.contains(projectIndex));
+
+        deleteProject(project);
+
+        claimedIndexes = getDocumentNoWait(UniquePropertiesState.class,
+                projectIndexesUri).uniqueProperties;
+
+        assertTrue(!claimedIndexes.contains(projectIndex));
+    }
+
+    @Test
+    public void testProjectNameValidation() throws Throwable {
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < 255; i++) {
+            builder.append("a");
+        }
+        String tooLongName = builder.toString();
+        String[] invalidNames = new String[] { "testName", "TestName", "test&name", "test*name",
+                tooLongName };
+
+        for (String invalidName : invalidNames) {
+            try {
+                createProject(invalidName);
+                fail("Creation of project should have failed due to invalid name");
+            } catch (Throwable ex) {
+                assertTrue(ex instanceof LocalizableValidationException);
+            }
+        }
+
+        String[] validNames = new String[] { "testname", "test123name", "test-name", "test_name",
+                "test.project.name", "1235" };
+
+        for (String validName : validNames) {
+            ProjectState state = createProject(validName);
+            assertNotNull(state.documentSelfLink);
+        }
+    }
+
+    @Test
+    public void testHarborVerifyOnProjectDelete() throws Throwable {
+        ConfigurationState mockHarborUri = new ConfigurationState();
+        mockHarborUri.key = Harbor.CONFIGURATION_URL_PROPERTY_NAME;
+        mockHarborUri.value = "test.uri";
+        mockHarborUri.documentSelfLink = Harbor.CONFIGURATION_URL_PROPERTY_NAME;
+
+        mockHarborUri = doPost(mockHarborUri, ConfigurationFactoryService.SELF_LINK);
+        assertNotNull(mockHarborUri);
+        assertNotNull(mockHarborUri.documentSelfLink);
+
+        ProjectState test = createProject("test-project");
+        assertNotNull(test.documentSelfLink);
+
+        MockHarborApiProxyService.IS_PROJECT_DELETABLE.set(true);
+        deleteProject(test);
+
+        test = createProject("test-project");
+        assertNotNull(test.documentSelfLink);
+
+        MockHarborApiProxyService.IS_PROJECT_DELETABLE.set(false);
+        try {
+            deleteProject(test);
+        } catch (Throwable ex) {
+            assertTrue(ex.getCause() instanceof IllegalStateException);
+            assertTrue(ex.getCause().getMessage().contains("Project is not deletable: mocked "
+                    + "message"));
+        }
+
     }
 
     private void createProjectNoWait(ProjectState state) {

@@ -11,6 +11,9 @@
 
 package com.vmware.admiral.request.compute;
 
+import static com.vmware.admiral.request.compute.TagConstraintUtils.extractPlacementTagConditions;
+import static com.vmware.admiral.request.compute.TagConstraintUtils.filterByConstraints;
+import static com.vmware.admiral.request.compute.TagConstraintUtils.mergeResourcePoolAndHostTags;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.LINK;
@@ -23,15 +26,20 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOp
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Queue;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
+
+import org.apache.commons.lang3.tuple.Pair;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.serialization.ReleaseConstants;
@@ -44,10 +52,12 @@ import com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService.C
 import com.vmware.admiral.request.compute.allocation.filter.FilterContext;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
+import com.vmware.photon.controller.model.Constraint.Condition;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
+import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.photon.controller.model.tasks.helpers.ResourcePoolQueryHelper;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
@@ -145,7 +155,7 @@ public class ComputePlacementSelectionTaskService extends
     protected void handleStartedStagePatch(ComputePlacementSelectionTaskState state) {
         switch (state.taskSubStage) {
         case CREATED:
-            selectPlacement(state);
+            selectPlacement(state, computeDescription);
             break;
         case FILTER:
             filter(state, computeDescription);
@@ -178,15 +188,23 @@ public class ComputePlacementSelectionTaskService extends
         return finishedResponse;
     }
 
-    private void selectPlacement(ComputePlacementSelectionTaskState state) {
+    private void selectPlacement(ComputePlacementSelectionTaskState state, ComputeDescription desc) {
+
+        if (desc == null) {
+            getComputeDescription(state,
+                    (description) -> this.selectPlacement(state, description));
+            return;
+        }
 
         ResourcePoolQueryHelper helper = ResourcePoolQueryHelper.createForResourcePools(getHost(),
                 state.resourcePoolLinks);
         helper.setExpandComputes(true);
+
         helper.setAdditionalQueryClausesProvider(qb -> {
-            qb.addFieldClause(ComputeState.FIELD_NAME_POWER_STATE, PowerState.ON.toString())
-                    .addInClause(ComputeState.FIELD_NAME_TYPE,
-                            Arrays.asList(ComputeType.VM_HOST.name(), ComputeType.ZONE.name()));
+            qb.addFieldClause(ComputeState.FIELD_NAME_POWER_STATE, PowerState.ON.toString());
+            qb.addInClause(
+                    ComputeState.FIELD_NAME_TYPE,
+                    Arrays.asList(ComputeType.VM_HOST.name(), ComputeType.ZONE.name()));
         });
 
         helper.setAdditionalResourcePoolQueryClausesProvider(qb -> {
@@ -208,7 +226,8 @@ public class ComputePlacementSelectionTaskService extends
                 return;
             }
 
-            Map<String, HostSelection> hostSelectionMap = buildHostSelectionMap(qr);
+            Map<String, HostSelection> hostSelectionMap = buildHostSelectionMap(
+                    qr, computeDescription);
 
             proceedTo(SubStage.FILTER, s -> {
                 s.hostSelectionMap = hostSelectionMap;
@@ -249,35 +268,124 @@ public class ComputePlacementSelectionTaskService extends
         if (filter == null) {
             selection(state, hostSelectionMap);
         } else {
-            filter.filter(filterContext, hostSelectionMap, (filteredHostSelectionMap, e) -> {
-                if (e != null) {
-                    if (e instanceof HostSelectionFilter.HostSelectionFilterException) {
-                        failTask("Allocation filter error: " + e.getMessage(), null);
-                    } else {
-                        failTask("Allocation filter exception", e);
+            if (filter.isActive()) {
+                filter.filter(filterContext, hostSelectionMap, (filteredHostSelectionMap, e) -> {
+                    if (e != null) {
+                        if (e instanceof HostSelectionFilter.HostSelectionFilterException) {
+                            failTask("Allocation filter error: " + e.getMessage(), null);
+                        } else {
+                            failTask("Allocation filter exception", e);
+                        }
+                        return;
                     }
-                    return;
-                }
-                filter(state, filterContext, filteredHostSelectionMap, filters);
-            });
+                    filter(state, filterContext, filteredHostSelectionMap, filters);
+                });
+            } else {
+                filter(state, filterContext, hostSelectionMap, filters);
+            }
         }
     }
 
+    /**
+     * Create HostSelection per each host ComputeState.
+     */
     private Map<String, HostSelection> buildHostSelectionMap(
-            ResourcePoolQueryHelper.QueryResult rpQueryResult) {
-        Collection<ComputeState> computes = rpQueryResult.computesByLink.values();
-        final Map<String, HostSelection> initHostSelectionMap = new LinkedHashMap<>(
-                computes.size());
-        for (ComputeState computeState : computes) {
-            final HostSelection hostSelection = new HostSelection();
-            hostSelection.hostLink = computeState.documentSelfLink;
-            hostSelection.resourcePoolLinks = rpQueryResult.rpLinksByComputeLink
-                    .get(computeState.documentSelfLink);
-            hostSelection.deploymentPolicyLink = computeState.customProperties
-                    .get(ContainerHostService.CUSTOM_PROPERTY_DEPLOYMENT_POLICY);
-            hostSelection.name = computeState.name != null ? computeState.name : "N/A";
-            initHostSelectionMap.put(hostSelection.hostLink, hostSelection);
+            ResourcePoolQueryHelper.QueryResult rpQueryResult, ComputeDescription computeDesc) {
+
+        final Map<String, HostSelection> initHostSelectionMap = new LinkedHashMap<>();
+
+        // Retrieve constraint conditions from ComputeDescription
+        Map<Condition, String> cdRequirements = extractPlacementTagConditions(
+                computeDesc.constraints, computeDesc.tenantLinks);
+
+        if (cdRequirements != null) {
+            // Create stream of (ComputeState x ResourcePoolState) pairs (cartesian product)
+            Stream<Pair<ComputeState, ResourcePoolState>> hostXresPoolPairs = rpQueryResult.computesByLink
+                    .keySet()
+                    .stream()
+                    .flatMap(hostLink -> {
+                        ComputeState host = rpQueryResult.computesByLink.get(hostLink);
+
+                        Set<String> rpLinksPerHost = rpQueryResult.rpLinksByComputeLink.get(
+                                hostLink);
+
+                        return rpLinksPerHost
+                                .stream()
+                                .map(rpLink -> {
+                                    ResourcePoolState resPool = rpQueryResult.resourcesPools
+                                            .get(rpLink).resourcePoolState;
+                                    return Pair.of(host, resPool);
+                                });
+                    });
+
+            // Tag links supplier returning a union of Host tags and ResPool tags
+            Function<Pair<ComputeState, ResourcePoolState>, Set<String>> hostXresPoolTagsSupplier = hostXresPoolPair -> {
+
+                ResourcePoolState resPool = hostXresPoolPair.getRight();
+                ComputeState host = hostXresPoolPair.getLeft();
+
+                Set<String> hostXresPoolTags = mergeResourcePoolAndHostTags(resPool, host);
+
+                logFine("Calculated tags for '%s' host and '%s' res pool: %s",
+                        host.name != null ? host.name : host.id,
+                        resPool.name != null ? resPool.name : resPool.id,
+                        hostXresPoolTags);
+
+                return hostXresPoolTags;
+            };
+
+            // Filter Host-ResPool pairs by input requirements
+            Stream<Pair<ComputeState, ResourcePoolState>> hostXresPoolFiltered = filterByConstraints(
+                    cdRequirements,
+                    hostXresPoolPairs,
+                    hostXresPoolTagsSupplier,
+                    null);
+
+            // Group Host-ResPool pairs by host
+            Map<ComputeState, List<String>> hostXresPoolGroupBy = hostXresPoolFiltered
+                    .collect(Collectors.groupingBy(
+                            Pair::getLeft,
+                            LinkedHashMap::new,
+                            Collectors.mapping(
+                                    hostXresPool -> hostXresPool.getRight().documentSelfLink,
+                                    Collectors.toList())));
+
+            for (Entry<ComputeState, List<String>> hostByResPool : hostXresPoolGroupBy.entrySet()) {
+
+                final ComputeState host = hostByResPool.getKey();
+
+                final HostSelection hostSelection = new HostSelection();
+
+                hostSelection.hostLink = host.documentSelfLink;
+                hostSelection.resourcePoolLinks = hostByResPool.getValue();
+                hostSelection.deploymentPolicyLink = host.customProperties
+                        .get(ContainerHostService.CUSTOM_PROPERTY_DEPLOYMENT_POLICY);
+                hostSelection.name = host.name != null ? host.name : host.id;
+
+                initHostSelectionMap.put(hostSelection.hostLink, hostSelection);
+
+                logFine("Host selection created for host '%s' and '%s' res pools",
+                        host.name != null ? host.name : host.id,
+                        hostSelection.resourcePoolLinks);
+            }
+        } else {
+            Collection<ComputeState> computes = rpQueryResult.computesByLink.values();
+
+            for (ComputeState computeState : computes) {
+
+                final HostSelection hostSelection = new HostSelection();
+
+                hostSelection.hostLink = computeState.documentSelfLink;
+                hostSelection.resourcePoolLinks = rpQueryResult.rpLinksByComputeLink
+                        .get(computeState.documentSelfLink);
+                hostSelection.deploymentPolicyLink = computeState.customProperties
+                        .get(ContainerHostService.CUSTOM_PROPERTY_DEPLOYMENT_POLICY);
+                hostSelection.name = computeState.name != null ? computeState.name : computeState.id;
+
+                initHostSelectionMap.put(hostSelection.hostLink, hostSelection);
+            }
         }
+
         return initHostSelectionMap;
     }
 
@@ -288,7 +396,6 @@ public class ComputePlacementSelectionTaskService extends
             return;
         }
         ArrayList<HostSelection> selectedComputeHosts = new ArrayList<>(filtered.values());
-        Collections.shuffle(selectedComputeHosts);
 
         int initialSize = selectedComputeHosts.size();
         int diff = (int) (state.resourceCount - initialSize);

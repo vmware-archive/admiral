@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.test.integration;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.net.URI;
@@ -31,6 +32,7 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService.Containe
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.compute.container.ShellContainerExecutorService;
+import com.vmware.admiral.compute.container.ShellContainerExecutorService.ShellContainerExecutorResult;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpMethod;
 import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpResponse;
@@ -121,6 +123,10 @@ public class RegistryProxyIT extends BaseProvisioningOnCoreOsIT {
         SimpleHttpsClient.HttpResponse response = SimpleHttpsClient
                 .execute(SimpleHttpsClient.HttpMethod.POST, url,
                         Utils.toJson(command));
+        ShellContainerExecutorResult result = Utils.fromJson(response.responseBody,
+                ShellContainerExecutorResult.class);
+
+        logger.info("Exit code : %s, Exec output : %s", result.exitCode, result.output);
 
         logger.info("Start admiral container.");
         ContainerDescription containerDescAdmiral = new ContainerDescription();
@@ -154,7 +160,10 @@ public class RegistryProxyIT extends BaseProvisioningOnCoreOsIT {
         response = SimpleHttpsClient
                 .execute(SimpleHttpsClient.HttpMethod.POST, url,
                         Utils.toJson(command));
-        assertTrue(response.responseBody.isEmpty());
+        result = Utils.fromJson(response.responseBody,
+                ShellContainerExecutorResult.class);
+        assertTrue(result.output.isEmpty());
+        assertEquals(Integer.valueOf(0), result.exitCode);
         logger.info("Make admiral container search request.");
 
         waitFor(t -> {
@@ -188,11 +197,13 @@ public class RegistryProxyIT extends BaseProvisioningOnCoreOsIT {
         response = SimpleHttpsClient
                 .execute(SimpleHttpsClient.HttpMethod.POST, url,
                         Utils.toJson(command));
+        result = Utils.fromJson(response.responseBody,
+                ShellContainerExecutorResult.class);
+
         if (withExceptionList) {
-            assertTrue(response.responseBody.isEmpty());
+            assertTrue(result.output.isEmpty());
         } else {
-            assertTrue(
-                    response.responseBody.contains("https://registry.hub.docker.com/v1/search?"));
+            assertTrue(result.output.contains("https://registry.hub.docker.com/v1/search?"));
         }
     }
 

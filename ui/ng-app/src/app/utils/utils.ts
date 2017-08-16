@@ -13,6 +13,8 @@ import * as I18n from 'i18next';
 
 const LOGIN_PATH="/login/"
 
+const REGISTRY_SCHEME_REG_EXP = /^(https?):\/\//;
+
 export class Utils {
   public static ERROR_NOT_FOUND = 404;
 
@@ -81,6 +83,10 @@ export class Utils {
     return this.configurationProperties && this.configurationProperties[property];
   }
 
+  public static getConfigurationProperties() {
+    return this.configurationProperties;
+  }
+
   public static getConfigurationPropertyBoolean(property) {
     return this.configurationProperties && this.configurationProperties[property] === 'true';
   }
@@ -139,7 +145,7 @@ export class Utils {
     if (bytes == 0) {
       return 0;
     }
-    var decimals = 2;
+    var decimals = 1;
     return parseFloat((bytes / Math.pow(1024, magnitude)).toFixed(decimals));
   }
 
@@ -189,6 +195,14 @@ export class Utils {
       query: search,
       fragment: parser.hash
     };
+  }
+
+  public static areSystemScopedCredentials(credentials) {
+    if (credentials) {
+      let scope = this.getCustomPropertyValue(credentials.customProperties, 'scope');
+      return 'SYSTEM' == scope;
+    }
+    return false;
   }
 
   public static getHostName(host) {
@@ -241,6 +255,13 @@ export class Utils {
 
   public static isLogin(): boolean {
     return location.pathname.indexOf(LOGIN_PATH) > -1;
+  }
+
+  public static getHbrContainerImage(registryAddress, repositoryId, tagId): string {
+    registryAddress = registryAddress.replace(REGISTRY_SCHEME_REG_EXP, '');
+    let harborImageRef = registryAddress + ':*/' + repositoryId + ':' + tagId;
+
+    return harborImageRef;
   }
 }
 

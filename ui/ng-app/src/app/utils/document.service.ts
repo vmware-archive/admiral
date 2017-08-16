@@ -9,14 +9,18 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
+import { Headers } from '@angular/http';
 import { Injectable } from '@angular/core';
 import { Ajax } from './ajax.service';
+import { ProjectService } from './project.service';
+import { FT } from './ft';
 import { Utils } from './utils';
 import { Links } from './links';
 import { URLSearchParams } from '@angular/http';
-import { searchConstants, serviceUtils} from 'admiral-ui-common';
+import { searchConstants, serviceUtils } from 'admiral-ui-common';
 
 const FILTER_VALUE_ALL_FIELDS = 'ALL_FIELDS';
+const HEADER_PROJECT = "x-project";
 
 let toArrayIfDefined = function(obj) {
   if (!obj) {
@@ -33,12 +37,15 @@ let getFilter = function(queryOptions: any): string {
   let newQueryOptions = {};
   newQueryOptions[searchConstants.SEARCH_OCCURRENCE.PARAM] = queryOptions[searchConstants.SEARCH_OCCURRENCE.PARAM];
 
+  var wildCard = queryOptions._strictFilter ? '' : '*';
+  delete queryOptions._strictFilter;
+
   var anyArray = toArrayIfDefined(queryOptions.any);
   if (anyArray) {
     newQueryOptions[FILTER_VALUE_ALL_FIELDS] = [];
     for (let i = 0; i < anyArray.length; i++) {
       newQueryOptions[FILTER_VALUE_ALL_FIELDS].push({
-        val: '*' + anyArray[i].toLowerCase() + '*',
+        val: wildCard + anyArray[i].toLowerCase() + wildCard,
         op: 'eq'
       });
     }
@@ -52,7 +59,7 @@ let getFilter = function(queryOptions: any): string {
         newQueryOptions[key] = [];
         for (let i = 0; i < valArray.length; i++) {
           newQueryOptions[key].push({
-            val: '*' + valArray[i].toLowerCase() + '*',
+            val: wildCard + valArray[i].toLowerCase() + wildCard,
             op: 'eq'
           });
         }
@@ -77,9 +84,9 @@ const PAGE_LIMIT : string = '50';
 @Injectable()
 export class DocumentService {
 
-  constructor(private ajax: Ajax) { }
+  constructor(public ajax: Ajax, private ps: ProjectService) { }
 
-  public list(factoryLink: string, queryOptions: any): Promise<DocumentListResult> {
+  public list(factoryLink: string, queryOptions: any, projectLink?: string): Promise<DocumentListResult> {
     let params = new URLSearchParams();
     // params.set('$limit', serviceUtils.calculateLimit().toString());
     params.set('$limit', PAGE_LIMIT);
@@ -88,7 +95,10 @@ export class DocumentService {
     params.set('$count', 'true');
 
     if (queryOptions) {
-      params.set('$filter', getFilter(queryOptions));
+      let filter = getFilter(queryOptions);
+      if(filter){
+        params.set('$filter', filter);
+      }
     }
     let op;
     // 2000 is th max url length. Here we don't know the hostname, so 50 chars extra
@@ -100,7 +110,7 @@ export class DocumentService {
 
       op = this.post(factoryLink, data);
     } else {
-      op = this.ajax.get(factoryLink, params);
+      op = this.ajax.get(factoryLink, params, undefined, this.buildHeaders(projectLink));
     }
 
     return op.then(result => {
@@ -113,31 +123,36 @@ export class DocumentService {
     }).then(result => slowPromise(result));
   }
 
-  public loadNextPage(nextPageLink): Promise<DocumentListResult> {
-    return this.ajax.get(nextPageLink).then(result => {
-      let documents = result.documentLinks.map(link => {
-        let document = result.documents[link];
-        document.documentId = Utils.getDocumentId(link);
-        return document;
-      });
-      return new DocumentListResult(documents, result.nextPageLink, result.totalCount);
-    }).then(result => slowPromise(result));
+  public loadNextPage(nextPageLink, projectLink?: string): Promise<DocumentListResult> {
+    return this.ajax.get(nextPageLink, undefined, undefined, this.buildHeaders(projectLink))
+      .then(result => {
+        let documents = result.documentLinks.map(link => {
+          let document = result.documents[link];
+          document.documentId = Utils.getDocumentId(link);
+          return document;
+        });
+        return new DocumentListResult(documents, result.nextPageLink, result.totalCount);
+      }).then(result => slowPromise(result));
   }
 
-  public get(documentSelfLink, expand: boolean = false): Promise<any> {
+  public get(documentSelfLink, expand: boolean = false, projectLink?: string): Promise<any> {
     if (expand) {
       let params = new URLSearchParams();
       params.set('expand', 'true');
 
-      return this.ajax.get(documentSelfLink, params);
+      return this.ajax.get(documentSelfLink, params, undefined, this.buildHeaders(projectLink));
     }
 
-    return this.ajax.get(documentSelfLink);
+    return this.ajax.get(documentSelfLink, undefined, undefined, this.buildHeaders(projectLink));
   }
 
-   public getById(factoryLink: string, documentId: string): Promise<any> {
+   public getById(factoryLink: string, documentId: string, projectLink?: string): Promise<any> {
     let documentSelfLink = factoryLink + '/' + documentId
-    return this.get(documentSelfLink, true);
+    return this.get(documentSelfLink, true, projectLink);
+  }
+
+  public getByCriteria(factoryLink: string, searchParams: URLSearchParams): Promise<any> {
+    return this.ajax.get(factoryLink, searchParams);
   }
 
 
@@ -149,60 +164,90 @@ export class DocumentService {
         logRequestUriPath += '&since=' + sinceSeconds;
       }
 
-      this.ajax.get(logsServiceLink, new URLSearchParams(logRequestUriPath)).then((logServiceState) => {
-        if (logServiceState) {
-          if (logServiceState.logs) {
-            let decodedLogs = atob(logServiceState.logs);
-            resolve(decodedLogs);
-          } else {
-            for (let component in logServiceState) {
-              logServiceState[component] = atob(logServiceState[component].logs);
+      this.ajax.get(logsServiceLink, new URLSearchParams(logRequestUriPath), undefined, this.buildHeaders())
+        .then((logServiceState) => {
+          if (logServiceState) {
+            if (logServiceState.logs) {
+              let decodedLogs = atob(logServiceState.logs);
+              resolve(decodedLogs);
+            } else {
+              for (let component in logServiceState) {
+                logServiceState[component] = atob(logServiceState[component].logs);
+              }
+              resolve(logServiceState);
             }
-            resolve(logServiceState);
+          } else {
+            resolve('');
           }
-        } else {
-          resolve('');
-        }
-      }).catch(reject);
+        }).catch(reject);
     });
   }
 
-  public patch(documentSelfLink, patchBody): Promise<any> {
-    return this.ajax.patch(documentSelfLink, null, patchBody);
+  public patch(documentSelfLink, patchBody, projectLink?: string): Promise<any> {
+    return this.ajax.patch(documentSelfLink, undefined, patchBody, this.buildHeaders(projectLink));
   }
 
-  public post(factoryLink, postBody): Promise<any> {
-    return this.ajax.post(factoryLink, null, postBody);
+  public post(factoryLink, postBody, projectLink?: string): Promise<any> {
+    return this.ajax.post(factoryLink, undefined, postBody, this.buildHeaders(projectLink));
   }
+
+  public postWithHeader(factoryLink, postBody, headers: Headers): Promise<any> {
+    return this.ajax.post(factoryLink, null, postBody, headers);
+  }
+
 
   public put(documentSelfLink, putBody): Promise<any> {
-    return this.ajax.put(documentSelfLink, null, putBody);
+    return this.ajax.put(documentSelfLink, undefined, putBody, this.buildHeaders());
   }
 
-  public delete(documentSelfLink): Promise<any> {
-    return this.ajax.delete(documentSelfLink);
+  public delete(documentSelfLink, projectLink?: string): Promise<any> {
+    return this.ajax.delete(documentSelfLink, undefined, undefined, this.buildHeaders(projectLink));
   }
 
-  public loadCurrentUserSecurityContext(): Promise<any> {
-    return this.ajax.get(Links.USER_SESSION);
-  }
+  public listProjects() {
+      if (FT.isApplicationEmbedded()) {
+        return this.ajax.get(Links.GROUPS, null).then(result => {
+          let documents = result || [];
+          return new DocumentListResult(documents, result.nextPageLink, result.totalCount);
+        });
+      } else {
+        return this.list(Links.PROJECTS, null);
+      }
+    }
 
-  public getPrincipalById(principalId): Promise<any> {
-    return this.getById(Links.AUTH_PRINCIPALS, principalId)
-  }
+  private buildHeaders(projectLink?: string): Headers {
+    if (!this.ps && !projectLink) {
+      return undefined;
+    }
 
-  public findPrincipals(searchString, includeRoles): Promise<any> {
-      return new Promise((resolve, reject) => {
-          let searchParams = new URLSearchParams();
-          searchParams.append('criteria', searchString);
-          if (includeRoles) {
-              searchParams.append('roles', 'all');
-          }
+    let selectedProject = this.ps.getSelectedProject();
 
-          this.ajax.get(Links.AUTH_PRINCIPALS, searchParams).then((principalsResult) => {
-              resolve(principalsResult);
-          }).catch(reject);
-      });
+    let calculateHeaders = function(projectId) {
+      if (!projectId || /^\s*$/.test(projectId)) {
+        return undefined;
+      }
+
+      let headers = new Headers();
+      headers.append(HEADER_PROJECT, projectId);
+      return headers;
+    }
+
+    if (FT.isApplicationEmbedded()) {
+      if (!selectedProject) {
+        return undefined
+      }
+      return calculateHeaders(selectedProject.id);
+    } else {
+      if (!projectLink) {
+        if (selectedProject) {
+          projectLink = selectedProject.documentSelfLink;
+        } else {
+          return undefined;
+        }
+      }
+
+      return calculateHeaders(projectLink);
+    }
   }
 }
 

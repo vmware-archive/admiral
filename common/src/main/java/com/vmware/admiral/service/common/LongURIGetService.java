@@ -29,6 +29,11 @@ public class LongURIGetService extends StatelessService {
     }
 
     @Override
+    public void authorizeRequest(Operation op) {
+        op.complete();
+    }
+
+    @Override
     public void handlePost(Operation post) {
         LongURIRequest body = post.getBody(LongURIRequest.class);
         sendRequest(Operation.createGet(this, body.uri).setCompletion((o, e) -> {

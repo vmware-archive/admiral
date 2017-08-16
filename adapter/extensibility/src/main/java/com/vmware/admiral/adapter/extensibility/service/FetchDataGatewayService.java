@@ -76,15 +76,17 @@ public class FetchDataGatewayService extends StatelessService {
                             forwardUri = getHost().getUri();
                         }
                         URI backendURI = forwardUri.resolve(servicePath);
-                        String shallStartWith = UriUtils.buildUriPath(UriPaths.ADAPTER, cfg.id);
+                        String epPrefix = UriUtils.buildUriPath(UriPaths.ADAPTER, cfg.id);
+                        String commonPrefix = UriUtils.buildUriPath(UriPaths.ADAPTER, "common");
                         String pathToCheck = backendURI.getPath();
-                        if (pathToCheck.startsWith(shallStartWith)) {
+                        if (pathToCheck.startsWith(epPrefix)
+                                || pathToCheck.startsWith(commonPrefix)) {
                             sendRequest(UrlEncodedReverseProxyService
                                     .createForwardOperation(patch, backendURI,
                                             Operation::createPatch));
                         } else {
                             patch.fail(new IllegalArgumentException(
-                                    "Requested servicePath shall start with: " + shallStartWith
+                                    "Requested servicePath shall start with: " + epPrefix
                                             + ". Actual: " + pathToCheck));
                         }
                     }
@@ -107,10 +109,15 @@ public class FetchDataGatewayService extends StatelessService {
         case EndpointType: {
             return DeferredResult.completed(fetchDataRequest.entityId);
         }
+        case Endpoint: {
+            String entityId = fetchDataRequest.entityId;
+            AssertUtil.assertNotNull(entityId, "'fetchDataRequest.entityId' must be set.");
+            return getEndpointType(entityId);
+        }
         case ResourceDetails:
         case ResourceOperation: {
             String entityId = fetchDataRequest.entityId;
-            AssertUtil.assertNotNull(entityId, "'entityId.requestType' must be set.");
+            AssertUtil.assertNotNull(entityId, "'fetchDataRequest.entityId' must be set.");
             return sendWithDeferredResult(Operation.createGet(this, entityId),
                     EndpointLinkAware.class)
                     .thenCompose(epla -> getEndpointType(epla.endpointLink));

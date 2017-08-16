@@ -20,10 +20,10 @@ import java.util.logging.Level;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.CertificateUtilExtended;
 import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.SslCertificateResolver;
-import com.vmware.photon.controller.model.security.util.CertificateUtil;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
@@ -256,7 +256,8 @@ public class RegistryService extends StatefulService {
         return template;
     }
 
-    public static void fetchRegistryCertificate(RegistryState registry, Consumer<String> callback) {
+    public static void fetchRegistryCertificate(RegistryState registry, Consumer<String> callback,
+            ServiceHost host) {
         if (DeploymentProfileConfig.getInstance().isTest()) {
             Utils.logWarning("No ssl trust validation is performed in test mode...");
             return;
@@ -282,7 +283,7 @@ public class RegistryService extends StatefulService {
             }
             X509Certificate[] certificateChain = resolver.getCertificateChain();
 
-            String certificate = CertificateUtil.toPEMformat(certificateChain);
+            String certificate = CertificateUtilExtended.toPEMformat(certificateChain, host);
             callback.accept(certificate);
         });
     }

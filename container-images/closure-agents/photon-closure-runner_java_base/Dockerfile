@@ -22,5 +22,6 @@ RUN tyum install wget curl tar gzip -y &&\
     wget http://central.maven.org/maven2/org/apache/httpcomponents/httpcore/4.4.1/httpcore-4.4.1.jar &&\
     wget http://central.maven.org/maven2/commons-logging/commons-logging/1.2/commons-logging-1.2.jar &&\
     rm -fr jdk-8u121-linux-x64.tar.gz &&\
-    tyum remove wget tar gzip vim -y  &&\
-    tyum clean all
+    tyum remove wget tar vim -y  &&\
+    tyum clean all && \
+    rm -fr /var/cache/tdnf/*

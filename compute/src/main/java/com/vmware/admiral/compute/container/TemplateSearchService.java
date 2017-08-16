@@ -42,6 +42,7 @@ import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptio
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptionFactoryService;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.ServiceDocumentQuery.ServiceDocumentQueryElementResult;
@@ -138,7 +139,7 @@ public class TemplateSearchService extends StatelessService {
                     };
 
             if (!imagesOnly) {
-                executeTemplateQuery(query, queryParams, resultConsumer);
+                executeTemplateQuery(get, query, queryParams, resultConsumer);
             }
             if (!templatesOnly) {
                 executeImageQuery(queryParams, resultConsumer);
@@ -168,13 +169,13 @@ public class TemplateSearchService extends StatelessService {
             }
         };
 
-        executeClosuresQuery(query, queryParams, resultConsumer);
+        executeClosuresQuery(get, query, queryParams, resultConsumer);
     }
 
-    private void executeClosuresQuery(String query, Map<String, String> queryParams,
+    private void executeClosuresQuery(Operation get, String query, Map<String, String> queryParams,
             Consumer<ServiceDocumentQueryElementResult<ClosureDescription>> resultConsumer) {
 
-        String tenantLink = queryParams.get(GROUP_PARAM);
+        String tenantLink = OperationUtil.extractProjectFromHeader(get);
         List<String> tenantLinks = null;
         if (tenantLink != null) {
             tenantLinks = Arrays.asList(tenantLink.split("\\s*,\\s*"));
@@ -253,7 +254,7 @@ public class TemplateSearchService extends StatelessService {
                 }));
     }
 
-    private void executeTemplateQuery(String query, Map<String, String> queryParams,
+    private void executeTemplateQuery(Operation get, String query, Map<String, String> queryParams,
             BiConsumer<ServiceDocumentQueryElementResult<TemplateSpec>, Boolean> resultConsumer) {
 
         if (!query.startsWith(URI_WILDCARD_CHAR)) {
@@ -264,7 +265,7 @@ public class TemplateSearchService extends StatelessService {
             query = query + URI_WILDCARD_CHAR;
         }
 
-        String tenantLink = queryParams.get(GROUP_PARAM);
+        String tenantLink = OperationUtil.extractProjectFromHeader(get);
         List<String> tenantLinks = null;
         if (tenantLink != null) {
             tenantLinks = Arrays.asList(tenantLink.split("\\s*,\\s*"));

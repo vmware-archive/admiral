@@ -44,12 +44,10 @@ public final class DriverRegistryImpl implements DriverRegistry {
         supportedRuntimes
                 .put(DriverConstants.RUNTIME_POWERSHELL_6, DriverConstants.POWERSHEL_6_IMAGE);
         supportedRuntimes.put(DriverConstants.RUNTIME_JAVA_8, DriverConstants.JAVA_8_IMAGE);
-        supportedRuntimes.put(DriverConstants.RUNTIME_NASHORN, null);
     }
 
     public void register(String runtime, ExecutionDriver driver) {
-        logger.info("Registering execution driver for supported runtimes: %s",
-                String.join(", ", getSupportedRuntimes().keySet()));
+        logger.info("Registering execution driver for runtime: " + runtime);
         executionDrivers.put(runtime, driver);
     }
 

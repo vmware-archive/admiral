@@ -111,6 +111,14 @@ public class ServerX509TrustManager implements X509TrustManager, Closeable {
         return INSTANCE;
     }
 
+    /**
+     * Invalidate the instance, if created/initialized and the copy in SslCertificateResolver
+     */
+    public static synchronized void invalidate() {
+        INSTANCE = null;
+        SslCertificateResolver.invalidateTrustManager();
+    }
+
     protected ServerX509TrustManager(ServiceHost host) {
         AssertUtil.assertNotNull(host, "serviceHost");
         this.host = host;
@@ -207,7 +215,7 @@ public class ServerX509TrustManager implements X509TrustManager, Closeable {
 
         Runnable task = () -> {
             try {
-                host.log(Level.INFO, "Host %s reloading all certificates", host.getPublicUri());
+                host.log(Level.FINE, "Host %s reloading all certificates", host.getPublicUri());
                 documentUpdateTimeMicros = 0;
                 loadSslTrustCertServices();
 

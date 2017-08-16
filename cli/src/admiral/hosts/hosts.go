@@ -53,14 +53,15 @@ var (
 type Host struct {
 	base_types.ServiceDocument
 
-	Id               string             `json:"id,omitempty"`
-	Address          string             `json:"address,omitempty"`
-	PowerState       string             `json:"powerState,omitempty"`
-	CustomProperties map[string]*string `json:"customProperties,omitempty"`
-	ResourcePoolLink string             `json:"resourcePoolLink,omitempty"`
-	TagLinks         []string           `json:"tagLinks,omitempty"`
-	Name             string             `json:"name,omitempty"`
-	DescriptionLink  string             `json:"descriptionLink,omitempty"`
+	Id                         string             `json:"id,omitempty"`
+	Address                    string             `json:"address,omitempty"`
+	PowerState                 string             `json:"powerState,omitempty"`
+	CustomProperties           map[string]*string `json:"customProperties,omitempty"`
+	ResourcePoolLink           string             `json:"resourcePoolLink,omitempty"`
+	TagLinks                   []string           `json:"tagLinks,omitempty"`
+	Name                       string             `json:"name,omitempty"`
+	DescriptionLink            string             `json:"descriptionLink,omitempty"`
+	AdapterManagementReference string             `json:"adapterManagementReference"`
 
 	CreationTimeMicros interface{} `json:"creationTimeMicros,omitempty"`
 }

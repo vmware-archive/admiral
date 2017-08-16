@@ -15,6 +15,7 @@ import { DocumentService } from '../../utils/document.service';
 import { GridViewComponent } from '../../components/grid-view/grid-view.component';
 import { Utils } from '../../utils/utils';
 import * as I18n from 'i18next';
+import { RoutesRestriction } from './../../utils/routes-restriction';
 
 @Component({
   selector: 'app-projects',
@@ -83,5 +84,18 @@ export class ProjectsComponent {
 
   isItemSelected(item: any) {
       return item === this.selectedItem;
+  }
+
+  get projectsNewRouteRestriction() {
+    return RoutesRestriction.PROJECTS_NEW;
+  }
+
+  get projectsDetailsRouteRestriction() {
+    return RoutesRestriction.PROJECTS_ID;
+  }
+
+
+  get projectsCardViewActions() {
+    return RoutesRestriction.PROJECT_CARD_VIEW_ACTIONS;
   }
 }

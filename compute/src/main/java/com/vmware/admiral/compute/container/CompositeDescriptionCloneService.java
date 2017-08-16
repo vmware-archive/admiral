@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.compute.ComponentDescription;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescriptionExpanded;
@@ -56,12 +57,14 @@ public class CompositeDescriptionCloneService extends StatelessService {
         String reverseParam = queryParams.remove(REVERSE_PARENT_LINKS_PARAM);
         boolean reverse = Boolean.TRUE.equals(Boolean.parseBoolean(reverseParam));
 
+        String projectLink = OperationUtil.extractProjectFromHeader(post);
+
         try {
             CompositeDescription cd = post.getBody(CompositeDescription.class);
             validateStateOnStart(cd);
 
             String requestURL = cd.documentSelfLink + ManagementUriParts.EXPAND_SUFFIX;
-            cloneCompositeDescription(requestURL, reverse, null,
+            cloneCompositeDescription(requestURL, reverse, null, projectLink,
                     (cdClone) -> post.setBody(cdClone).complete());
         } catch (Throwable e) {
             logSevere(e);
@@ -74,11 +77,11 @@ public class CompositeDescriptionCloneService extends StatelessService {
     }
 
     private void cloneCompositeDescription(String compDescLink, boolean reverse,
-            CompositeDescriptionExpanded cdExpanded,
+            CompositeDescriptionExpanded cdExpanded, String projectLink,
             Consumer<CompositeDescription> callbackFunction) {
         if (cdExpanded == null) {
-            getCompositeDesc(compDescLink, (compDesc) -> cloneCompositeDescription(compDescLink,
-                    reverse, compDesc, callbackFunction));
+            getCompositeDesc(compDescLink, projectLink, (compDesc) -> cloneCompositeDescription(
+                    compDescLink, reverse, compDesc, projectLink, callbackFunction));
             return;
         }
 
@@ -91,7 +94,8 @@ public class CompositeDescriptionCloneService extends StatelessService {
                 cloneOperations.add(
                         ((CloneableResource) desc.getServiceDocument()).createCloneOperation(this));
             } else {
-                cloneOperations.add(createCloneOperation(desc.type, desc.getServiceDocument()));
+                cloneOperations.add(createCloneOperation(desc.type, desc.getServiceDocument(),
+                        projectLink));
             }
         }
 
@@ -104,6 +108,11 @@ public class CompositeDescriptionCloneService extends StatelessService {
                         return;
                     }
                 });
+
+        if (projectLink != null && !projectLink.isEmpty()) {
+            cloneCompositeDescOp.addRequestHeader(OperationUtil.PROJECT_ADMIRAL_HEADER,
+                    projectLink);
+        }
 
         if (!cloneOperations.isEmpty()) {
             OperationJoin cloneComponentsJoin = OperationJoin.create(cloneOperations);
@@ -136,7 +145,8 @@ public class CompositeDescriptionCloneService extends StatelessService {
                         }
                         Operation o = ops.get(cloneCompositeDescOp.getId());
                         CompositeDescription cdCloned = o.getBody(CompositeDescription.class);
-                        patchDescriptionsAndAccept(cdExpanded, cdCloned, reverse, callbackFunction);
+                        patchDescriptionsAndAccept(cdExpanded, cdCloned, reverse, projectLink,
+                                callbackFunction);
                     }).sendWith(this);
 
             return;
@@ -150,12 +160,13 @@ public class CompositeDescriptionCloneService extends StatelessService {
                         return;
                     }
                     CompositeDescription cdCloned = o.getBody(CompositeDescription.class);
-                    patchDescriptionsAndAccept(cdExpanded, cdCloned, reverse, callbackFunction);
+                    patchDescriptionsAndAccept(cdExpanded, cdCloned, reverse, projectLink,
+                            callbackFunction);
                 }).sendWith(this);
     }
 
     private void patchDescriptionsAndAccept(CompositeDescription cd, CompositeDescription cdCloned,
-            boolean reverse, Consumer<CompositeDescription> callbackFunction) {
+            boolean reverse, String projectLink, Consumer<CompositeDescription> callbackFunction) {
 
         if (!reverse) {
             // standard clone
@@ -178,6 +189,11 @@ public class CompositeDescriptionCloneService extends StatelessService {
                     }
                     callbackFunction.accept(cdCloned);
                 });
+
+        if (projectLink != null && !projectLink.isEmpty()) {
+            patchOriginalDescriptionOp.addRequestHeader(OperationUtil.PROJECT_ADMIRAL_HEADER,
+                    projectLink);
+        }
 
         if ((cdCloned.descriptionLinks == null) || cdCloned.descriptionLinks.isEmpty()) {
             // no components to reverse, only the composite description itself
@@ -209,10 +225,10 @@ public class CompositeDescriptionCloneService extends StatelessService {
                     String clonedParentDescriptionLink = (String) parentField.get(body);
 
                     doReverseOperations.add(createPatchParentDescriptionLinkOperation(clazz,
-                            parentField, descriptionLink, clonedParentDescriptionLink));
+                            parentField, descriptionLink, clonedParentDescriptionLink, projectLink));
 
                     doReverseOperations.add(createPatchParentDescriptionLinkOperation(clazz,
-                            parentField, "", descriptionLink));
+                            parentField, "", descriptionLink, projectLink));
 
                 } catch (Exception ex) {
                     logSevere("Failed to reverse component description parent link: %s",
@@ -247,12 +263,13 @@ public class CompositeDescriptionCloneService extends StatelessService {
     }
 
     private Operation createPatchParentDescriptionLinkOperation(Class<?> clazz, Field parentField,
-            String parentDescriptionLink, String descriptionLink) throws Exception {
+            String parentDescriptionLink, String descriptionLink, String projectLink)
+            throws Exception {
 
         Object patchBody = clazz.newInstance();
         parentField.set(patchBody, parentDescriptionLink);
 
-        return Operation.createPatch(this, descriptionLink)
+        Operation patch = Operation.createPatch(this, descriptionLink)
                 .setBody(patchBody)
                 .setCompletion((o, e) -> {
                     if (e != null) {
@@ -262,9 +279,16 @@ public class CompositeDescriptionCloneService extends StatelessService {
                         return;
                     }
                 });
+
+        if (projectLink != null && projectLink.isEmpty()) {
+            patch.addRequestHeader(OperationUtil.PROJECT_ADMIRAL_HEADER, projectLink);
+        }
+
+        return patch;
     }
 
-    private Operation createCloneOperation(String resourceType, ServiceDocument component) {
+    private Operation createCloneOperation(String resourceType, ServiceDocument component,
+            String projectLink) {
         if (component instanceof ResourceState) {
             String factoryLink = CompositeComponentRegistry
                     .descriptionFactoryLinkByDescriptionLink(component.documentSelfLink);
@@ -280,15 +304,24 @@ public class CompositeDescriptionCloneService extends StatelessService {
             cloned.customProperties.put(CloneableResource.PARENT_RESOURCE_LINK_PROPERTY_NAME,
                     cloned.documentSelfLink);
             cloned.documentSelfLink = null;
-            return Operation.createPost(this, factoryLink).setBody(cloned);
+
+            Operation post = Operation.createPost(this, factoryLink)
+                    .setBody(cloned);
+
+            if (projectLink != null && projectLink.isEmpty()) {
+                post.addRequestHeader(OperationUtil.PROJECT_ADMIRAL_HEADER, projectLink);
+            }
+
+            return post;
         }
         throw new LocalizableValidationException("Cannot clone unsupported type " + resourceType,
                 "compute.clone.unsupported.type", resourceType);
     }
 
-    private void getCompositeDesc(String compDescLink,
+    private void getCompositeDesc(String compDescLink, String projectLink,
             Consumer<CompositeDescriptionExpanded> callback) {
-        sendRequest(Operation
+
+        Operation get = Operation
                 .createGet(this, compDescLink)
                 .setCompletion((o, e) -> {
                     if (e != null) {
@@ -299,7 +332,13 @@ public class CompositeDescriptionCloneService extends StatelessService {
                     CompositeDescriptionExpanded compositeDescription = o
                             .getBody(CompositeDescriptionExpanded.class);
                     callback.accept(compositeDescription);
-                }));
+                });
+
+        if (projectLink != null && !projectLink.isEmpty()) {
+            get.addRequestHeader(OperationUtil.PROJECT_ADMIRAL_HEADER, projectLink);
+        }
+
+        sendRequest(get);
     }
 
     private CompositeDescription prepareCompositeDescriptionForClone(

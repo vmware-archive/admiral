@@ -24,6 +24,8 @@ RUN tyum install wget curl npm tar gzip -y &&\
     npm install /app/closure_module --production &&\
     rm -fr ~/.npm &&\
     rm -fr node-v4.8.1-linux-x64.tar.gz &&\
-    tyum remove wget tar gzip vim findutils -y  &&\
-    tyum clean all
+    tyum remove wget tar vim findutils -y  &&\
+    tyum clean all && \
+    rm -fr /var/cache/tdnf/*
+
 

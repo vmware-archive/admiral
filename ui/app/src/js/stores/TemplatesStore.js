@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -2057,7 +2057,7 @@ let TemplatesStore = Reflux.createStore({
     });
   },
 
-  onCreateContainer: function(type, itemId, group) {
+  onCreateContainer: function(type, itemId) {
     var items = this.data.listView.items.asMutable();
     for (var i = 0; i < items.length; i++) {
       if (items[i].documentId === itemId) {
@@ -2092,22 +2092,22 @@ let TemplatesStore = Reflux.createStore({
         publishAll: true
       };
 
-      services.createContainer(containerDescription, group).then((request) => {
+      services.createContainer(containerDescription).then((request) => {
         onContainerCreated(request);
 
       }).catch(this.onGenericCreateError);
 
     } else if (type === constants.TEMPLATES.TYPES.TEMPLATE) {
 
-      services.createMultiContainerFromTemplate(itemId, group).then((request) => {
+      services.createMultiContainerFromTemplate(itemId).then((request) => {
         onContainerCreated(request);
 
       }).catch(this.onGenericCreateError);
     }
   },
 
-  onCreateContainerWithDetails: function(containerDescription, group) {
-    services.createContainer(containerDescription, group).then((request) => {
+  onCreateContainerWithDetails: function(containerDescription) {
+    services.createContainer(containerDescription).then((request) => {
       navigateTemplatesAndOpenRequests.call(this, request);
     }).catch(this.onGenericCreateError);
   },
@@ -2210,10 +2210,10 @@ let TemplatesStore = Reflux.createStore({
     }).catch(this.onGenericEditError);
   },
 
-  onCopyTemplate: function(type, template, group) {
+  onCopyTemplate: function(type, template) {
     services.copyContainerTemplate(template, false).then((result) => {
       actions.TemplateActions.createContainer(type,
-        utils.getDocumentId(result.documentSelfLink), group);
+        utils.getDocumentId(result.documentSelfLink));
     }).catch(this.onGenericCreateError);
   },
 

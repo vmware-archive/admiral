@@ -84,10 +84,11 @@ public class ComputeNetworkCIDRAllocationService extends StatefulService {
         public RequestType requestType;
 
         /**
-         * In case of allocation request: id of the subnet that will consume the allocated CIDR.
-         * In case of deallocation request: id to the subnet which CIDR will be deallocated for.
+         * In case of allocation request: link to the subnet that will consume the allocated CIDR.
+         * In case of deallocation request: link to the subnet which CIDR will be deallocated
+         * for.
          */
-        public String subnetId;
+        public String subnetLink;
 
         /**
          * In case of allocation request: the desired allocated subnet CIDR length;
@@ -101,27 +102,27 @@ public class ComputeNetworkCIDRAllocationService extends StatefulService {
          */
         public String networkCIDR;
 
-        public static ComputeNetworkCIDRAllocationRequest allocationRequest(String subnetId,
+        public static ComputeNetworkCIDRAllocationRequest allocationRequest(String subnetLink,
                 int subnetPrefixLength) {
-            return new ComputeNetworkCIDRAllocationRequest(RequestType.ALLOCATE, subnetId,
+            return new ComputeNetworkCIDRAllocationRequest(RequestType.ALLOCATE, subnetLink,
                     subnetPrefixLength, null);
         }
 
-        public static ComputeNetworkCIDRAllocationRequest allocationRequest(String subnetId,
+        public static ComputeNetworkCIDRAllocationRequest allocationRequest(String subnetLink,
                 int subnetPrefixLength, String networkCIDR) {
-            return new ComputeNetworkCIDRAllocationRequest(RequestType.ALLOCATE, subnetId,
+            return new ComputeNetworkCIDRAllocationRequest(RequestType.ALLOCATE, subnetLink,
                     subnetPrefixLength, networkCIDR);
         }
 
-        public static ComputeNetworkCIDRAllocationRequest deallocationRequest(String subnetId) {
-            return new ComputeNetworkCIDRAllocationRequest(RequestType.DEALLOCATE, subnetId,
+        public static ComputeNetworkCIDRAllocationRequest deallocationRequest(String subnetLink) {
+            return new ComputeNetworkCIDRAllocationRequest(RequestType.DEALLOCATE, subnetLink,
                     null, null);
         }
 
-        private ComputeNetworkCIDRAllocationRequest(RequestType requestType, String subnetId,
+        private ComputeNetworkCIDRAllocationRequest(RequestType requestType, String subnetLink,
                 Integer subnetPrefixLength, String networkCIDR) {
             this.requestType = requestType;
-            this.subnetId = subnetId;
+            this.subnetLink = subnetLink;
             this.subnetPrefixLength = subnetPrefixLength;
             this.networkCIDR = networkCIDR;
         }
@@ -193,7 +194,7 @@ public class ComputeNetworkCIDRAllocationService extends StatefulService {
     private void handleAllocation(Operation patch, ComputeNetworkCIDRAllocationState state,
             ComputeNetworkCIDRAllocationRequest request) {
 
-        logFine("Allocate CIDR for subnet id: [%s].", request.subnetId);
+        logFine("Allocate CIDR for subnet: [%s].", request.subnetLink);
 
         DeferredResult.completed(new AllocationContext(request, state))
                 .thenCompose(this::populateNetwork)
@@ -212,7 +213,7 @@ public class ComputeNetworkCIDRAllocationService extends StatefulService {
     private void handleDeallocation(Operation patch, ComputeNetworkCIDRAllocationState state,
             ComputeNetworkCIDRAllocationRequest request) {
 
-        logFine("Deallocate subnet id: [%s].",request.subnetId);
+        logFine("Deallocate subnet: [%s].", request.subnetLink);
 
         deallocateCIDR(state, request);
         patch.setBody(state).complete();
@@ -295,15 +296,15 @@ public class ComputeNetworkCIDRAllocationService extends StatefulService {
         String allocatedSubnetCIDR = IpHelper.calculateCidrFromIpV4Range(createdIpv4Range.low,
                 createdIpv4Range.high);
 
-        logFine("Newly allocated CIDR: [%s] for subnet id: [%s].", allocatedSubnetCIDR,
-                context.request.subnetId);
+        logFine("Newly allocated CIDR: [%s] for subnet: [%s].", allocatedSubnetCIDR,
+                context.request.subnetLink);
 
         AssertUtil.assertTrue(!context.state.allocatedCIDRs.containsValue(allocatedSubnetCIDR),
                 "Attempt to double allocate the same subnet CIDR: [" +
                         allocatedSubnetCIDR + "].");
 
         // Update service document state.
-        context.state.allocatedCIDRs.put(context.request.subnetId, allocatedSubnetCIDR);
+        context.state.allocatedCIDRs.put(context.request.subnetLink, allocatedSubnetCIDR);
         return DeferredResult.completed(context);
     }
 
@@ -412,10 +413,10 @@ public class ComputeNetworkCIDRAllocationService extends StatefulService {
         AssertUtil.assertNotNull(request, "request");
 
         // Update service document state.
-        String deallocatedCIDR = state.allocatedCIDRs.remove(request.subnetId);
+        String deallocatedCIDR = state.allocatedCIDRs.remove(request.subnetLink);
         if (deallocatedCIDR == null) {
-            this.logWarning("Unable to deallocate CIDR for subnet id [%s].No previous allocation"
-                    + " record for this subnet.", request.subnetId);
+            this.logWarning("Unable to deallocate CIDR for subnet [%s]. No previous allocation"
+                    + " record for this subnet.", request.subnetLink);
         }
     }
 
@@ -430,8 +431,8 @@ public class ComputeNetworkCIDRAllocationService extends StatefulService {
             return false;
         }
 
-        if (StringUtils.isEmpty(request.subnetId)) {
-            logWarning("Subnet id is mandatory.");
+        if (StringUtils.isEmpty(request.subnetLink)) {
+            logWarning("Subnet link is mandatory.");
             return false;
         }
 

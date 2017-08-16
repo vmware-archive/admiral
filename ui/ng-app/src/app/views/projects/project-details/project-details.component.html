@@ -14,27 +14,25 @@
 <clr-tabs>
     <clr-tab-link [clrTabLinkId]="'summaryTab'" [clrTabLinkActive]="true">{{"projects.summary.title" | i18n}}</clr-tab-link>
     <clr-tab-link [clrTabLinkId]="'membersTab'">{{"projects.members.title" | i18n}}</clr-tab-link>
-    <clr-tab-link [clrTabLinkId]="'repositoriesTab'">{{"projects.repositories" | i18n}}</clr-tab-link>
+    <clr-tab-link *ngIf="isHbrEnabled" [clrTabLinkId]="'repositoriesTab'">{{"projects.repositories" | i18n}}</clr-tab-link>
     <clr-tab-link [clrTabLinkId]="'infrastructureTab'">{{"projects.infrastructure" | i18n}}</clr-tab-link>
-    <clr-tab-link [clrTabLinkId]="'registryReplicationTab'">{{"projects.registryReplication" | i18n}}</clr-tab-link>
+    <clr-tab-link *ngIf="isHbrEnabled" [clrTabLinkId]="'registryReplicationTab'">{{"projects.registryReplication" | i18n}}</clr-tab-link>
     <clr-tab-link [clrTabLinkId]="'configurationTab'">{{"projects.config.title" | i18n}}</clr-tab-link>
 
     <clr-tab-content [clrTabContentId]="'summaryContent'" [clrTabContentActive]="true">
         <app-project-summary [project]="entity"></app-project-summary>
     </clr-tab-content>
     <clr-tab-content [clrTabContentId]="'membersContent'">
-        <app-project-members [project]="entity"></app-project-members>
+        <app-project-members [project]="entity" (onChange)="reloadProject($event)"></app-project-members>
     </clr-tab-content>
-    <clr-tab-content [clrTabContentId]="'repositoriesContent'">
-        <hbr-repository-stackview *ngIf="hbrProjectId" [projectId]="hbrProjectId" [hasSignedIn]="true" [hasProjectAdminRole]="true" (tagClickEvent)="watchTagClickEvent($event)"></hbr-repository-stackview>
-        <p *ngIf="!hbrProjectId">{{"unavailable" | i18n: { "ns": "base" } }}</p>
+    <clr-tab-content *ngIf="isHbrEnabled" [clrTabContentId]="'repositoriesContent'">
+        <hbr-repository-stackview [projectId]="hbrProjectId" [projectName]="projectName" [hasSignedIn]="true" [hasProjectAdminRole]="true" (tagClickEvent)="watchTagClickEvent($event)"></hbr-repository-stackview>
     </clr-tab-content>
     <clr-tab-content [clrTabContentId]="'infrastructureContent'">
-        <p>Content for infrastructure tab.</p>
+        <app-clusters [hideTitle]="true" [projectLink]="entity?.documentSelfLink"></app-clusters>
     </clr-tab-content>
-    <clr-tab-content [clrTabContentId]="'registryReplicationContent'">
-        <hbr-replication *ngIf="hbrProjectId" [projectId]="hbrProjectId" [withReplicationJob]="true"></hbr-replication>
-        <p *ngIf="!hbrProjectId">{{"unavailable" | i18n: { "ns": "base" } }}</p>
+    <clr-tab-content *ngIf="isHbrEnabled" [clrTabContentId]="'registryReplicationContent'">
+        <hbr-replication [projectId]="hbrProjectId" [withReplicationJob]="true"></hbr-replication>
     </clr-tab-content>
     <clr-tab-content [clrTabContentId]="'configurationContent'">
         <app-project-configuration [project]="entity"></app-project-configuration>

@@ -9,7 +9,7 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<grid-view #gridView [serviceEndpoint]="serviceEndpoint">
+<grid-view #gridView [serviceEndpoint]="serviceEndpoint" [projectLink]="projectLink">
   <div toolbar>
     <button class="btn btn-link" (click)="onAddHost()"><i class="fa fa-plus"></i>{{ "clusters.resources.addHostButton" | i18n }}</button>
   </div>
@@ -27,7 +27,7 @@
         {{ getHostName(item) }}
         <clr-dropdown class="card-actions" [clrMenuPosition]="'left-top'" (click)="$event.stopPropagation()">
           <button class="btn btn-sm btn-link" clrDropdownToggle>
-              <clr-icon shape="ellipsis-vertical"></clr-icon>
+              <clr-icon shape="ellipsis-vertical" size="20"></clr-icon>
           </button>
           <div class="dropdown-menu">
             <a href="..." clrDropdownItem (click)="deleteHost($event, item)">
@@ -79,4 +79,4 @@
   </ng-template>
 </grid-view>
 
-<app-cluster-add-host [cluster]="cluster" [visible]="showAddHost" (onCancel)="onAddHostCanceled()" (onChange)="onHostAdded()"></app-cluster-add-host>
+<app-cluster-add-host [cluster]="cluster" [visible]="showAddHost" (onCancel)="onAddHostCanceled()" (onChange)="onHostAdded()" [projectLink]="projectLink"></app-cluster-add-host>

@@ -67,6 +67,12 @@
             <version>${project.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.vmware.admiral</groupId>
+            <artifactId>admiral-auth</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- TEST -->
         <dependency>
             <groupId>${project.groupId}</groupId>

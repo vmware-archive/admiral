@@ -12,22 +12,31 @@
 package com.vmware.admiral.auth.idm;
 
 import static com.vmware.admiral.auth.util.PrincipalRolesUtil.getAllRolesForPrincipals;
-import static com.vmware.admiral.auth.util.PrincipalRolesUtil.getDirectlyAssignedProjectRoles;
-import static com.vmware.admiral.auth.util.PrincipalRolesUtil.getDirectlyAssignedSystemRoles;
+import static com.vmware.admiral.auth.util.PrincipalRolesUtil.getDirectlyAssignedProjectRolesForGroup;
+import static com.vmware.admiral.auth.util.PrincipalRolesUtil.getDirectlyAssignedProjectRolesForUser;
+import static com.vmware.admiral.auth.util.PrincipalRolesUtil.getDirectlyAssignedSystemRolesForGroup;
+import static com.vmware.admiral.auth.util.PrincipalRolesUtil.getDirectlyAssignedSystemRolesForUser;
 import static com.vmware.admiral.auth.util.PrincipalUtil.copyPrincipalData;
+import static com.vmware.admiral.common.util.AssertUtil.assertNotNullOrEmpty;
 
+import java.net.URI;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Pattern;
 
+import com.vmware.admiral.auth.idm.Principal.PrincipalType;
 import com.vmware.admiral.auth.idm.PrincipalRolesHandler.PrincipalRoleAssignment;
-import com.vmware.admiral.auth.idm.local.LocalPrincipalProvider;
+import com.vmware.admiral.auth.idm.SecurityContext.SecurityContextPostDto;
 import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.auth.util.PrincipalUtil;
 import com.vmware.admiral.auth.util.SecurityContextUtil;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.UriUtilsExtended;
+import com.vmware.admiral.service.common.RegistryService.RegistryAuthState;
+import com.vmware.admiral.service.common.harbor.Harbor;
+import com.vmware.photon.controller.model.security.util.EncryptionUtils;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
@@ -36,6 +45,7 @@ import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
 public class PrincipalService extends StatelessService {
     public static final String SELF_LINK = ManagementUriParts.AUTH_PRINCIPALS;
@@ -44,7 +54,6 @@ public class PrincipalService extends StatelessService {
     public static final String ROLES_QUERY_VALUE = "all";
     public static final String SECURITY_CONTEXT_SUFFIX = "/security-context";
     public static final String ROLES_SUFFIX = "/roles";
-    public static final String GROUPS_SUFFIX = "/groups";
 
     private static final String PRINCIPAL_ID_PATH_SEGMENT = "principalId";
 
@@ -81,13 +90,6 @@ public class PrincipalService extends StatelessService {
             .compile(String.format("^%s\\/[^\\/]+%s\\/?$", SELF_LINK.replaceAll("/", "\\\\/"),
                     ROLES_SUFFIX));
 
-    /**
-     * Matches /auth/idm/principals/{principal-id}/groups
-     */
-    private static final Pattern PATTERN_PRINCIPAL_GROUPS = Pattern
-            .compile(String.format("^%s\\/[^\\/]+%s\\/?$", SELF_LINK.replaceAll("/", "\\\\/"),
-                    GROUPS_SUFFIX));
-
     private PrincipalProvider provider;
 
     public PrincipalService() {
@@ -98,20 +100,14 @@ public class PrincipalService extends StatelessService {
     @Override
     public void handleStart(Operation startPost) {
         provider = AuthUtil.getPreferredProvider(PrincipalProvider.class);
-
-        // TODO - replace it with some host-based init method perhaps
-        if (provider instanceof LocalPrincipalProvider) {
-            ((LocalPrincipalProvider) provider).setServiceHost(getHost());
-        }
-
+        provider.init(this);
         startPost.complete();
     }
 
     @Override
     public void handleGet(Operation get) {
         if (isPrincipalByIdRequest(get)) {
-            handleSearchById(UriUtils.parseUriPathSegments(get.getUri(),
-                    TEMPLATE_PRINCIPAL_ID_PATH_SEGMENT).get(PRINCIPAL_ID_PATH_SEGMENT), get);
+            handleSearchById(get);
 
         } else if (isPrincipalByCriteriaRequest(get)) {
             Map<String, String> queryParams = UriUtils.parseUriQueryParams(get.getUri());
@@ -122,9 +118,6 @@ public class PrincipalService extends StatelessService {
 
         } else if (isSecurityContextRequest(get)) {
             handleGetSecurityContext(get);
-
-        } else if (isGroupsRequest(get)) {
-            handleGetGroups(get);
 
         } else if (isRolesRequest(get)) {
             handleGetPrincipalRoles(get);
@@ -139,6 +132,11 @@ public class PrincipalService extends StatelessService {
         return UriUtilsExtended.uriPathMatches(op.getUri(), PATTERN_PRINCIPAL_GET_BY_ID);
     }
 
+    private String getIdFromPrincipalByIdRequest(Operation op) {
+        return UriUtils.parseUriPathSegments(op.getUri(), TEMPLATE_PRINCIPAL_ID_PATH_SEGMENT)
+                .get(PRINCIPAL_ID_PATH_SEGMENT);
+    }
+
     private boolean isPrincipalByCriteriaRequest(Operation op) {
         if (!UriUtilsExtended.uriPathMatches(op.getUri(), PATTERN_PRINCIPAL_SERVICE_BASE)) {
             return false;
@@ -151,19 +149,23 @@ public class PrincipalService extends StatelessService {
         return UriUtilsExtended.uriPathMatches(op.getUri(), PATTERN_PRINCIPAL_SECURITY_CONTEXT);
     }
 
+    private String getIdFromSecurityContextRequest(Operation op) {
+        return UriUtils.parseUriPathSegments(op.getUri(), TEMPLATE_PRINCIPAL_SECURITY_CONTEXT)
+                .get(PRINCIPAL_ID_PATH_SEGMENT);
+    }
+
     private boolean isRolesRequest(Operation op) {
         return UriUtilsExtended.uriPathMatches(op.getUri(), PATTERN_PRINCIPAL_ROLES);
     }
 
-    private boolean isGroupsRequest(Operation op) {
-        return UriUtilsExtended.uriPathMatches(op.getUri(), PATTERN_PRINCIPAL_GROUPS);
+    private String getIdFromRolesRequest(Operation op) {
+        return UriUtils.parseUriPathSegments(op.getUri(), TEMPLATE_PRINCIPAL_SECURITY_CONTEXT)
+                .get(PRINCIPAL_ID_PATH_SEGMENT);
     }
 
     private void handleGetSecurityContext(Operation get) {
-        String principalId = UriUtils
-                .parseUriPathSegments(get.getUri(), TEMPLATE_PRINCIPAL_SECURITY_CONTEXT)
-                .get(PRINCIPAL_ID_PATH_SEGMENT);
-        SecurityContextUtil.getSecurityContext(this, principalId)
+        String principalId = getIdFromSecurityContextRequest(get);
+        SecurityContextUtil.getSecurityContext(this, get, principalId)
                 .thenAccept((context) -> {
                     get.setBody(context);
                     get.complete();
@@ -177,17 +179,17 @@ public class PrincipalService extends StatelessService {
                         rsp.stackTrace = null;
                         get.fail(Operation.STATUS_CODE_NOT_FOUND, ex, rsp);
                     } else {
-                        logWarning("Failed to retrieve security context for user %s: %s", principalId,
-                                Utils.toString(ex));
+                        logWarning("Failed to retrieve security context for user %s: %s",
+                                principalId, Utils.toString(ex));
                         get.fail(ex);
                     }
                     return null;
                 });
     }
 
-    private void handleSearchById(String principalId, Operation get) {
-        DeferredResult<Principal> result = provider.getPrincipal(principalId);
-
+    private void handleSearchById(Operation get) {
+        String principalId = getIdFromPrincipalByIdRequest(get);
+        DeferredResult<Principal> result = provider.getPrincipal(get, principalId);
         result.whenComplete((principal, ex) -> {
             if (ex != null) {
                 if (ex.getCause() instanceof ServiceNotFoundException) {
@@ -202,10 +204,10 @@ public class PrincipalService extends StatelessService {
     }
 
     private void handleSearchByCriteria(String criteria, String roles, Operation get) {
-        DeferredResult<List<Principal>> result = provider.getPrincipals(criteria);
+        DeferredResult<List<Principal>> result = provider.getPrincipals(get, criteria);
 
         if (roles != null && roles.equalsIgnoreCase(ROLES_QUERY_VALUE)) {
-            result.thenCompose(principals -> getAllRolesForPrincipals(getHost(), principals))
+            result.thenCompose(principals -> getAllRolesForPrincipals(this, get, principals))
                     .thenAccept(principalRoles -> get.setBody(principalRoles))
                     .whenCompleteNotify(get);
             return;
@@ -215,42 +217,106 @@ public class PrincipalService extends StatelessService {
                 .whenCompleteNotify(get);
     }
 
-    private void handleGetGroups(Operation get) {
-
-        String principalId = UriUtils
-                .parseUriPathSegments(get.getUri(), TEMPLATE_PRINCIPAL_SECURITY_CONTEXT)
-                .get(PRINCIPAL_ID_PATH_SEGMENT);
-
-        DeferredResult<Set<String>> groupsResult = provider.getAllGroupsForPrincipal(principalId);
-
-        groupsResult.whenComplete((groups, ex) -> {
-            if (ex != null) {
-                logWarning("Unable to get groups for principal %s: %s",
-                        principalId, Utils.toString(ex));
-                get.fail(ex);
-                return;
-            }
-            get.setBody(groups);
-            get.complete();
-        });
-    }
-
     private void handleGetPrincipalRoles(Operation get) {
-        String principalId = UriUtils
-                .parseUriPathSegments(get.getUri(), TEMPLATE_PRINCIPAL_SECURITY_CONTEXT)
-                .get(PRINCIPAL_ID_PATH_SEGMENT);
-
+        String principalId = getIdFromRolesRequest(get);
         PrincipalRoles rolesResponse = new PrincipalRoles();
-
-        PrincipalUtil.getPrincipal(getHost(), principalId)
+        PrincipalUtil.getPrincipal(this, get, principalId)
                 .thenAccept(principal -> copyPrincipalData(principal, rolesResponse))
-                .thenCompose(ignore -> getDirectlyAssignedProjectRoles(getHost(), rolesResponse))
+                .thenCompose(ignore -> {
+                    if (rolesResponse.type == PrincipalType.GROUP) {
+                        return getDirectlyAssignedProjectRolesForGroup(this, rolesResponse);
+                    }
+                    return getDirectlyAssignedProjectRolesForUser(this, rolesResponse);
+                })
                 .thenAccept(projectEntries -> rolesResponse.projects = projectEntries)
-                .thenCompose(ignore -> getDirectlyAssignedSystemRoles(getHost(), rolesResponse))
+                .thenCompose(ignore -> {
+                    if (rolesResponse.type == PrincipalType.GROUP) {
+                        return getDirectlyAssignedSystemRolesForGroup(this, rolesResponse);
+                    }
+                    return getDirectlyAssignedSystemRolesForUser(this, rolesResponse);
+                })
                 .thenAccept(systemRoles -> rolesResponse.roles = systemRoles)
                 .thenAccept(ignore -> get.setBody(rolesResponse))
                 .whenCompleteNotify(get);
+    }
 
+    @Override
+    public void handlePost(Operation post) {
+        if (isSecurityContextRequest(post)) {
+            handlePostSecurityContext(post);
+            return;
+        }
+
+        super.handlePost(post);
+    }
+
+    private void handlePostSecurityContext(Operation post) {
+        if (!post.hasBody()) {
+            post.fail(new LocalizableValidationException("body is required",
+                    "auth.body.required"));
+            return;
+        }
+
+        SecurityContextPostDto dto = post.getBody(SecurityContextPostDto.class);
+        assertNotNullOrEmpty(dto.password, "password");
+        String principalId = UriUtils
+                .parseUriPathSegments(post.getUri(), TEMPLATE_PRINCIPAL_SECURITY_CONTEXT)
+                .get(PRINCIPAL_ID_PATH_SEGMENT);
+
+        URI getCredentials = UriUtils.extendUriWithQuery(
+                UriUtils.buildUri(getHost(), Harbor.DEFAULT_REGISTRY_LINK),
+                UriUtils.URI_PARAM_ODATA_EXPAND, Boolean.toString(true));
+
+        Operation op = Operation.createGet(getCredentials).setCompletion((o, e) -> {
+            String username = null;
+            String password = null;
+
+            if (e != null) {
+                if (e instanceof ServiceNotFoundException) {
+                    // No default Harbor registry or its credentials configured.
+                } else {
+                    post.fail(e);
+                    return;
+                }
+            } else {
+                RegistryAuthState registry = o.getBody(RegistryAuthState.class);
+                AuthCredentialsServiceState credentials = registry.authCredentials;
+
+                if (credentials != null) {
+                    username = credentials.userEmail;
+                    password = credentials.privateKey;
+                }
+            }
+
+            /*
+             * If the provided credentials match the default Harbor registry credentials, the
+             * default Harbor security context (as Cloud Admin) is returned.
+             */
+
+            if (principalId.equals(username)
+                    && dto.password.equals(EncryptionUtils.decrypt(password))) {
+
+                SecurityContext sc = new SecurityContext();
+                sc.id = username;
+                sc.roles = new HashSet<>(Arrays.asList(AuthRole.CLOUD_ADMIN));
+
+                post.setBody(sc).complete();
+                return;
+            }
+
+            /*
+             * Otherwise, get the security context for the provided credentials.
+             */
+
+            provider.getPrincipalByCredentials(post, principalId, dto.password)
+                    .thenCompose(
+                            principal -> SecurityContextUtil.getSecurityContext(this, post,
+                                    principal))
+                    .thenAccept(securityContext -> post.setBody(securityContext))
+                    .whenCompleteNotify(post);
+        });
+
+        sendRequest(op);
     }
 
     @Override
@@ -286,7 +352,7 @@ public class PrincipalService extends StatelessService {
         PrincipalRoleAssignment body = patch.getBody(PrincipalRoleAssignment.class);
 
         DeferredResult<Void> result = PrincipalRolesHandler.create()
-                .setHost(getHost())
+                .setService(this)
                 .setPrincipalId(principalId)
                 .setRoleAssignment(body)
                 .update();
@@ -300,4 +366,3 @@ public class PrincipalService extends StatelessService {
         });
     }
 }
-

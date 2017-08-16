@@ -16,9 +16,12 @@ import static com.vmware.admiral.request.compute.TagConstraintUtils.getTagLinkFo
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.photon.controller.model.Constraint;
+import com.vmware.photon.controller.model.resources.DiskService;
+import com.vmware.xenon.common.ServiceHost;
 
 /**
  * Contains methods that are needed by placement for selecting the storage profile.
@@ -28,21 +31,22 @@ public class StorageProfileUtils {
     /**
      * Get tag link for each of the condition
      */
-    public static Map<Constraint.Condition, String> extractStorageTagConditions(
-            Constraint constraint, List<String> tenantLinks) {
+    public static Map<Constraint.Condition, String> extractStorageTagConditions(ServiceHost host,
+            DiskService.DiskState diskState, List<String> tenantLinks) {
         Map<Constraint.Condition, String> tagLinkByCondition = new HashMap<>();
-        if (constraint == null) {
+        if (diskState.constraint == null) {
             return tagLinkByCondition;
         }
 
         List<String> tLinks = QueryUtil.getTenantLinks(tenantLinks);
-        for (Constraint.Condition condition : constraint.conditions) {
+        for (Constraint.Condition condition : diskState.constraint.conditions) {
             String tagLink = getTagLinkForCondition(condition, tLinks);
             if (tagLink != null) {
                 tagLinkByCondition.put(condition, tagLink);
             }
         }
-
+        host.log(Level.INFO, "Tag Links for disk %s constraint: %s", diskState.name,
+                tagLinkByCondition.values());
         return tagLinkByCondition;
     }
 }

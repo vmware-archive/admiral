@@ -10,7 +10,7 @@
   -->
 
 <div class="machine-item">
-  <div :class="'status ' + stateMessage(model.powerState)"><span class="status-state">{{stateMessage(model.powerState)}}</span></div>
+  <div :class="'status ' + stateMessage()"><span class="status-state">{{i18n(stateMessage())}}</span></div>
   <div :title="hostName" class="title truncateText">{{hostName}}</div>
   <div class="details form-horizontal">
     <div class="form-group">

@@ -10,7 +10,7 @@
  */
 
 import services from 'core/services';
-import utils from 'core/utils';
+import { formatUtils } from 'admiral-ui-common';
 
 export default Vue.component('subnetwork-search', {
   template: `
@@ -73,8 +73,10 @@ export default Vue.component('subnetwork-search', {
   methods: {
     renderSubnetwork(subnetwork) {
       let props = [
-        i18n.t('app.profile.edit.cidrLabel') + ': ' + utils.escapeHtml(subnetwork.subnetCIDR),
-        i18n.t('app.profile.edit.networkLabel') + ': ' + utils.escapeHtml(subnetwork.networkName)
+        i18n.t('app.profile.edit.cidrLabel') + ': ' +
+          formatUtils.escapeHtml(subnetwork.subnetCIDR),
+        i18n.t('app.profile.edit.networkLabel') + ': ' +
+          formatUtils.escapeHtml(subnetwork.networkName)
       ];
       if (subnetwork.supportPublicIpAddress) {
         props.push(i18n.t('app.profile.edit.supportPublicIpAddressLabel'));
@@ -86,7 +88,7 @@ export default Vue.component('subnetwork-search', {
       return `
         <div>
           <div class="host-picker-item-primary" title="${subnetwork.name}">
-            ${utils.escapeHtml(subnetwork.name)}
+            ${formatUtils.escapeHtml(subnetwork.name)}
           </div>
           <div class="host-picker-item-secondary" title="${secondary}">
             ${secondary}
@@ -95,8 +97,10 @@ export default Vue.component('subnetwork-search', {
     },
     renderSubnetworkValue(subnetwork) {
       let props = [
-        i18n.t('app.profile.edit.cidrLabel') + ': ' + utils.escapeHtml(subnetwork.subnetCIDR),
-        i18n.t('app.profile.edit.networkLabel') + ': ' + utils.escapeHtml(subnetwork.networkName)
+        i18n.t('app.profile.edit.cidrLabel') + ': ' +
+          formatUtils.escapeHtml(subnetwork.subnetCIDR),
+        i18n.t('app.profile.edit.networkLabel') + ': ' +
+          formatUtils.escapeHtml(subnetwork.networkName)
       ];
       if (subnetwork.supportPublicIpAddress) {
         props.push(i18n.t('app.profile.edit.supportPublicIpAddressLabel'));
@@ -105,7 +109,7 @@ export default Vue.component('subnetwork-search', {
         props.push(i18n.t('app.profile.edit.defaultForZoneLabel'));
       }
       let secondary = props.join(', ');
-      return `${utils.escapeHtml(subnetwork.name)} <span>(${secondary})</span>`;
+      return `${formatUtils.escapeHtml(subnetwork.name)} <span>(${secondary})</span>`;
     },
     searchSubnetworks(...args) {
       return new Promise((resolve, reject) => {

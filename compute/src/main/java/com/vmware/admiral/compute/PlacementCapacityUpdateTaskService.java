@@ -413,7 +413,7 @@ public class PlacementCapacityUpdateTaskService extends
                 .addFieldClause(GroupResourcePlacementState.FIELD_NAME_RESOURCE_POOL_LINK,
                         state.resourcePoolLink)
                 .build();
-        QueryTask queryTask = QueryTask.Builder.create()
+        QueryTask queryTask = QueryTask.Builder.createDirectTask()
                 .setQuery(query)
                 .addOption(QueryOption.EXPAND_CONTENT)
                 .build();

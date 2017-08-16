@@ -33,7 +33,7 @@ import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 public class QueryUtil {
 
     public static final long QUERY_RETRY_INTERVAL_MILLIS = Long.getLong(
-            "com.vmware.admiral.common.util.query.retry.interval.millis", 500);
+            "com.vmware.admiral.common.util.query.retry.interval.millis", 300);
 
     /**
      * prefix for tenants. e.g. /tenants/t1
@@ -350,7 +350,8 @@ public class QueryUtil {
 
         } else {
             groupClause = addListValueClause(propertyName, tenantLinks.stream()
-                    .filter(tenantLink -> tenantLink.startsWith(MultiTenantDocument.TENANTS_PREFIX))
+                    .filter(tenantLink -> tenantLink.startsWith(MultiTenantDocument.TENANTS_PREFIX)
+                            || tenantLink.startsWith(MultiTenantDocument.PROJECTS_IDENTIFIER))
                     .filter(tenantLink -> !tenantLink.contains(MultiTenantDocument.GROUP_IDENTIFIER))
                     .collect(Collectors.toList()), MatchType.TERM);
         }

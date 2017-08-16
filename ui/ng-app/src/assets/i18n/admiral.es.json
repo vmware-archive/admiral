@@ -1,0 +1,296 @@
+{
+  "projects": {
+    "title": "Proyectos",
+    "project": "Proyecto",
+    "users": "Usuarios",
+    "administrators": "Administradores",
+    "projectRegistry": "Registro de proyectos",
+    "public": "Público",
+    "publicDescription": "Acceso público al registro de proyectos",
+    "private": "Privado",
+    "clusters": "Clústeres",
+    "repositories": "Repositorios",
+    "infrastructure": "Infraestructura",
+    "registryReplication": "Replicación de registro",
+    "configuration": "Configuración",
+    "edit": {
+      "titleNew": "Nuevo proyecto",
+      "titleEdit": "Editar proyecto",
+      "name": "Nombre",
+      "nameRequired": "El nombre es obligatorio.",
+      "description": "Descripción"
+    },
+    "delete": {
+      "title": "Quitar proyecto",
+      "confirmation": "Confirme la eliminación del proyecto {{projectName}}. Los miembros y los clústeres no se disociarán del proyecto. La operación no se puede deshacer."
+    },
+    "summary": {
+      "title": "Resumen",
+      "type": "Tipo:",
+      "creationDate": "Creación:",
+      "team": {
+        "title": "Equipo del proyecto",
+        "administrators": "Administradores del proyecto:",
+        "members": "Desarrolladores:",
+        "viewers": "Visores",
+        "users": "usuarios"
+      },
+      "repositories": {
+        "title": "Repositorios del proyecto",
+        "repositories": "Repositorios:"
+      },
+      "resources": {
+        "title": "Recursos del proyecto",
+        "clusters": "Clústeres:",
+        "templates": "Plantillas de la aplicación:",
+        "images": "Imágenes:"
+      }
+    },
+    "members": {
+      "title": "Miembros",
+      "columnName": "Nombre",
+      "columnPrimaryId": "ID principal",
+      "columnSource": "Origen",
+      "columnRole": "Función",
+      "count": "miembros",
+      "addMembers": {
+        "title": "Agregar usuarios y grupos",
+        "description": "Agregue usuarios y grupos a {{projectName}} mediante su ID o correo electrónico.",
+        "fieldTitleId": "ID o correo electrónico",
+        "fieldRequiredId": "El ID es obligatorio.",
+        "searchPlaceholder": "Buscar usuarios",
+        "fieldTitleRole": "Función en proyecto"
+      },
+      "editMember": {
+        "title": "Editar la función del miembro en el proyecto",
+        "description": "Edite la función del miembro {{memberId}} en el proyecto {{projectName}}."
+      },
+      "roles": {
+        "administrator": "Administrador de DevOps",
+        "member": "Desarrollador",
+        "viewer": "Visor"
+      },
+      "source": {
+        "local": "Local"
+      },
+      "deleteMember": {
+        "title": "Quitar miembro del proyecto",
+        "confirmation": "¿Está seguro de que desea quitar el miembro de este proyecto?"
+      }
+    },
+    "config": {
+      "title": "Configuración",
+      "projectRegistry": "Registro de proyectos",
+      "public": "Público",
+      "publicDescription": "Al convertir en público un registro de proyecto, todos los usuarios podrán acceder a todos los repositorios.",
+      "deploymentSecurity": "Seguridad de implementación",
+      "enableContentTrust": "Permitir contenido de confianza",
+      "enableContentTrustDescription": "Permita que se implementen solo imágenes verificadas.",
+      "preventVulnerableImagesFromRunning": "Evitar que se ejecuten imágenes vulnerables",
+      "preventVulnerableImagesFromRunningDescription_part1": "Evite que se implementen imágenes con la gravedad de vulnerabilidad de",
+      "preventVulnerableImagesFromRunningDescription_part2": "y superior.",
+      "vulnerabilityScanning": "Análisis de vulnerabilidad",
+      "automaticallyScanImagesOnPush": "Analizar automáticamente las imágenes en inserción",
+      "automaticallyScanImagesOnPushDescription": "Analice automáticamente las imágenes que se insertan en el registro del proyecto."
+    },
+    "search": {
+      "placeholder": "Buscar proyectos"
+    },
+    "actions": {
+      "title": "Proyectos",
+      "details": "Detalles",
+      "makePublic": "Hacer público",
+      "makePrivate": "Hacer privado",
+      "addUsersAndGroups": "Agregar usuarios y grupos",
+      "addClusters": "Agregar clústeres"
+    }
+  },
+  "registries": {
+    "title": "Registros",
+    "sourceRegistries": "Registros de origen",
+    "replicationEndpoints": "Endpoints de replicación",
+    "replicationRules": "Reglas de replicación"
+  },
+  "clusters": {
+    "title": "Clústeres",
+    "cluster": "Clúster",
+    "new": "Nuevo",
+    "status": "Estado",
+    "state": {
+      "ON": "CONECTADO",
+      "OFF": "DESCONECTADO",
+      "DISABLED": "DESHABILITADO",
+      "WARNING": "ADVERTENCIA"
+    },
+    "type": "Tipo",
+    "containers": "Contenedores",
+    "cpu": "CPU",
+    "memory": "Memoria",
+    "summary": {
+      "title": "Resumen",
+      "address": "Dirección:",
+      "adminPortal": "Portal de administración:",
+      "type": "Tipo:",
+      "clusterOverview": "Descripción del clúster",
+      "clusterResources": "Recursos del clúster",
+      "status": "Estado:",
+      "creationDate": "Creación:",
+      "containersCount": "Contenedores:",
+      "cpu": "vCPU:",
+      "memory": "Memoria:"
+    },
+    "resources": {
+      "addHostButton": "Host",
+      "title": "Recursos",
+      "address": "Dirección",
+      "status": "Estado",
+      "containersCount": "Contenedores",
+      "memory": "Memoria",
+      "cpu": "CPU",
+      "addHost": {
+        "title": "Añadir host",
+        "address": "Dirección",
+        "addressRequired": "La dirección es obligatoria."
+      }
+    },
+    "edit": {
+      "titleNew": "Nuevo clúster",
+      "titleEdit": "Editar clúster",
+      "name": "Nombre",
+      "nameRequired": "El nombre es obligatorio.",
+      "description": "Descripción",
+      "type": "Tipo",
+      "url": "URL",
+      "urlRequired": "La dirección URL del clúster es obligatoria.",
+      "credentials": "Credenciales"
+    },
+    "delete": {
+      "title": "Quitar clúster",
+      "confirmation": "Confirme la eliminación del clúster {{clusterName}}. La operación no se puede deshacer."
+    }
+  },
+  "hosts": {
+    "delete":{
+      "title": "Quitar host",
+      "confirmation": "Confirme la eliminación del host {{hostName}}. La operación no se puede deshacer."
+    },
+    "state": {
+      "ON": "CONECTADO",
+      "OFF": "DESCONECTADO",
+      "UNKNOWN": "DESCONOCIDO",
+      "SUSPEND": "DESHABILITADO"
+    }
+  },
+  "logs": {
+    "title": "Logs",
+    "system": {
+      "title": "Sistema",
+      "columnLogEntry": "Entrada del log",
+      "columnSeverity": "Gravedad",
+      "columnTimeStamp": "Marca de hora",
+      "entriesCount": "entradas del log"
+    },
+    "registry": {
+      "title": "Registro"
+    },
+    "event": {
+      "type": {
+          "info": "Información",
+          "warning": "Advertencia",
+          "error": "Error"
+      }
+    }
+  },
+  "identity": {
+    "title": "Administración de identidades",
+    "credentials": "Credenciales",
+    "certificates": "Certificados",
+    "usersgroups": {
+      "title": "Usuarios y grupos",
+      "description": "Importe usuarios y grupos en el sistema. Después, asigne las funciones del proyecto a un usuario o un grupo. También puede convertir a un usuario en administrador global de la nube.",
+      "fieldTitleSearch": "Buscar usuarios/grupos",
+      "columnName": "Nombre de usuario/grupo",
+      "columnPrimaryId": "ID principal",
+      "columnCloudAdmin": "Administrador de nube",
+      "columnProjects": "Proyectos",
+      "count": "usuarios/grupos",
+      "notFound": "No se ha encontrado ningún usuario",
+      "assignRoleInProject": {
+      "description": "Establezca el proyecto y la función del usuario/grupo {{principal}}."
+      }
+    }
+  },
+  "configuration": {
+    "title": "Configuración",
+    "registry": "Registro"
+  },
+  "errors": {
+    "itemNotFound": "No se encontró el elemento."
+  },
+  "certificate": {
+    "certificateWarning": "El certificado para {{address}} no es válido. Es posible que se haya conectado a un sitio que aparenta ser {{address}}, que podría poner en peligro su información confidencial. ¿Desea conectarse al sitio web de todas formas?",
+    "show": "Mostrar certificado",
+    "hide": "Ocultar certificado",
+    "validateTitle": "Verificar certificado",
+    "details": {
+      "commonName": "Nombre común",
+      "issuerName": "Nombre del emisor",
+      "serial": "Serie",
+      "fingerprint": "Huella digital de SHA",
+      "validSince": "Válido desde",
+      "validTo": "Válido hasta"
+    }
+  },
+  "tagDetails": {
+    "affectedContainers": "Contenedores afectados"
+  },
+  "edit": "Editar",
+  "save": "Guardar",
+  "add": "Añadir",
+  "yes": "Sí",
+  "remove": "Quitar",
+  "delete": "Eliminar",
+  "cancel": "Cancelar",
+  "unknown": "Desconocido",
+  "assignRoles": "Asignar funciones",
+  "makeAdmin": " Convertir en administrador",
+  "noItems": "No hay elementos",
+  "reload": "Volver a cargar",
+  "sessionExpired": "La sesión no es válida; vuelva a iniciar sesión.",
+  "compute": {
+    "resources": "Recursos",
+    "policies": "Políticas",
+    "deployments": "Implementaciones",
+    "endpoints": {
+      "title": "Endpoints"
+    },
+    "compute": {
+      "title": "Recurso informático"
+    },
+    "profiles": {
+      "title": "Perfiles"
+    },
+    "flavors": {
+      "title": "Perfiles de tipo",
+      "edit": "Editar",
+      "delete": {
+        "action": "Eliminar",
+        "title": "Eliminar perfil de tipo"
+      },
+      "endpoint": "Endpoint",
+      "flavors": "Tipos"
+    },
+    "placements": {
+      "title": "Ubicaciones"
+    },
+    "placementZones": {
+      "title": "Zonas de ubicación"
+    },
+    "machines": {
+      "title": "Máquinas"
+    },
+    "networks": {
+      "title": "Redes"
+    }
+  }
+}

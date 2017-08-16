@@ -17,6 +17,8 @@ import (
 	"log"
 	"fmt"
 	"io/ioutil"
+	"flag"
+	"strings"
 )
 
 const templateFileStr string = "/etc/haproxy/haproxy.cfg.tmpl"
@@ -24,34 +26,52 @@ const configFileStr string = "/etc/haproxy/haproxy.cfg"
 
 func main() {
 
-	var cfg, errRead = common.ReadFromInput(os.Stdin, "Enter load balancer configuration as json: ")
+	var jsonConfig = flag.String("config", "", "HA Proxy configuration in JSON format")
+	flag.Parse()
+
+	if *jsonConfig == "" {
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+	fmt.Printf("New configuration: [%s]\n", *jsonConfig)
+
+	var cfg, errRead = common.ReadFromInput(strings.NewReader(*jsonConfig))
 	if errRead != nil {
 		log.Fatalf("Can not read ha proxy configuration from input: %v", errRead)
 	}
 
-    var tmpl, err = template.ParseFiles(templateFileStr)
+	updateHAProxy(cfg, configFileStr, templateFileStr)
+
+	var fileContent, testErr = ioutil.ReadFile(configFileStr)
+	if testErr != nil {
+		log.Println(testErr)
+	}
+	fmt.Printf("Generated HA proxy config file:\n%s\n", string(fileContent))
+}
+
+func updateHAProxy(services *common.Config, strConfigFile string, strTemplateFile string) {
+	var tmpl, err = template.ParseFiles(strTemplateFile)
 	if err != nil {
 		log.Fatalf("Can not parse template file!: %v", err)
 	}
 
-	var configFile, configFileErr = os.OpenFile(configFileStr, os.O_CREATE|os.O_RDWR, 0777)
+	var configFile, configFileErr = os.OpenFile(strConfigFile, os.O_RDWR, 0777)
 	if configFileErr != nil {
 		log.Fatalf("Can not open HA proxy configuration file!: %v", configFileErr)
 	}
 
-
-	updateHAProxy(cfg, configFile, tmpl)
-	configFile.Close()
-
-	var fileContent, testErr = ioutil.ReadFile(configFileStr);
-	if testErr != nil {
-		log.Println(testErr)
+	//Cleanup the old content of haproxy config file
+	var truncateErr = configFile.Truncate(0)
+	if truncateErr != nil {
+		log.Fatalf("Error cleaning old content of file %s:  %v", strConfigFile, truncateErr)
 	}
-	fmt.Println(cfg)
-	fmt.Println(string(fileContent))
+
+	//Execute template file, using common.Config configuration and
+	executeHAproxyTemplate(services, configFile, tmpl)
+	configFile.Close()
 }
 
-func updateHAProxy(services *common.Config, configFile *os.File, templateFile *template.Template) {
+func executeHAproxyTemplate(services *common.Config, configFile *os.File, templateFile *template.Template) {
 	var err = templateFile.Execute(configFile, services)
 	if err != nil {
 		log.Fatalf("Error applying services over template!", err)

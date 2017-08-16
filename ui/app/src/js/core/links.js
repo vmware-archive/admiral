@@ -24,6 +24,7 @@ var links = Immutable({
   COMPUTE_PROFILES: CONFIG + '/compute-profiles',
   NETWORK_PROFILES: CONFIG + '/network-profiles',
   STORAGE_PROFILES: CONFIG + '/storage-profiles',
+  INSTANCE_TYPES: CONFIG + '/instance-types',
 
   COMPUTE_DESCRIPTIONS: RESOURCES + '/compute-descriptions',
   COMPUTE_RESOURCES: RESOURCES + '/compute',
@@ -46,6 +47,7 @@ var links = Immutable({
   STORAGE_DESCRIPTIONS: RESOURCES + '/storage-descriptions',
 
   CONTAINER_HOSTS: RESOURCES + '/hosts',
+  CONTAINER_CLUSTERS: RESOURCES + '/clusters',
   CONTAINERS: RESOURCES + '/containers',
   CONTAINER_STATS: RESOURCES + '/container-stats',
   CONTAINER_LOGS: RESOURCES + '/container-logs',
@@ -102,6 +104,7 @@ var links = Immutable({
 
   IMAGE_ENUMERATION: PROVISIONING + '/image-enumeration-tasks',
   RESOURCE_ENUMERATION: PROVISIONING + '/resource-enumeration-tasks',
+  AWS_VOLUME_TYPE_ENUMERATION: PROVISIONING + '/aws/volume-type-enumeration-adapter',
 
   LONG_URI_GET: UTIL + '/long-uri-get'
 });

@@ -19,11 +19,11 @@ import static com.vmware.admiral.service.common.ResourceNamePrefixService.Resour
 import static com.vmware.admiral.service.common.ResourceNamePrefixService.ResourceNamePrefixState.MAX_PREFIX_LENGTH;
 import static com.vmware.admiral.service.common.ResourceNamePrefixService.ResourceNamePrefixState.RANDOM_GENERATED_TOKEN_DELIMITER;
 
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.List;
-import java.util.Random;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.xenon.common.LocalizableValidationException;
@@ -57,7 +57,7 @@ public class ResourceNamePrefixService extends StatefulService {
         state.prefix = DEFAULT_NAME_PREFIX;
         state.numberOfDigits = ResourceNamePrefixState.DEFAULT_NUMBER_OF_DIGITS;
         state.addRandomToken = DEFAULT_ADD_RANDOM_TOKEN;
-        Random r = new Random();
+        SecureRandom r = new SecureRandom();
         int low = 1;
         int high = 999;
         int randomStartNumber = r.nextInt(high - low) + low;

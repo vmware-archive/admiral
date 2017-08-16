@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -21,16 +21,17 @@ public class DockerStreamUtil {
     private static final int FRAME_SIZE_OFFSET = 4;
 
     /**
-     * Decodes a byte array as fetched by xenon client and from {@link com.vmware.xenon.common.Operation#getBodyRaw()}.
+     * Decodes a byte array as fetched by xenon client and from
+     * {@link com.vmware.xenon.common.Operation#getBodyRaw()}.
      * Implemented by the algorithms Docker described in
      * https://docs.docker.com/engine/reference/api/docker_remote_api_v1.21/#attach-to-a-container.
      * Applicable for requests attaching to a container, executing a command and reading stream.
      *
-     * @param body
-     * @return
-     * @throws EOFException
+     * @param body encoded docker output
+     * @return decoded string
+     * @throws EOFException when bytes cannot be decoded because of wrong header or frame size
      */
-    public static String decodeFullRawResponce(byte[] body) throws EOFException {
+    public static String decodeFullRawResponse(byte[] body) throws EOFException {
         StringBuilder sb = new StringBuilder();
 
         ByteArrayInputStream is = new ByteArrayInputStream(body);

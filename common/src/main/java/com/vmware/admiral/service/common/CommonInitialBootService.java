@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -12,12 +12,14 @@
 package com.vmware.admiral.service.common;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
+import com.vmware.admiral.service.common.UniquePropertiesService.UniquePropertiesState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
+import com.vmware.xenon.common.UriUtils;
 
 /**
  * Initial boot service for creating system default documents for the common module.
@@ -27,11 +29,11 @@ public class CommonInitialBootService extends AbstractInitialBootService {
 
     @Override
     public void handlePost(Operation post) {
-        ConfigurationState[] configs = ConfigurationService.getConfigurationProperties();
-        initInstances(Operation.createGet(null), true, false, configs);
-
         List<ServiceDocument> resources = new ArrayList<>();
+        Collections.addAll(resources, ConfigurationService.getConfigurationProperties());
         resources.add(ResourceNamePrefixService.buildDefaultStateInstance());
+        resources.add(buildUniqueProjectNamesInstance());
+        resources.add(buildUniqueProjectIndexesInstance());
 
         ServiceDocument defaultRegistryState = RegistryService.buildDefaultStateInstance(getHost());
         if (defaultRegistryState != null) {
@@ -40,4 +42,21 @@ public class CommonInitialBootService extends AbstractInitialBootService {
 
         initInstances(post, resources.toArray(new ServiceDocument[resources.size()]));
     }
+
+    public static UniquePropertiesState buildUniqueProjectNamesInstance() {
+        UniquePropertiesState state = new UniquePropertiesState();
+        state.uniqueProperties = new ArrayList<>();
+        state.documentSelfLink = UriUtils.buildUriPath(UniquePropertiesService.FACTORY_LINK,
+                UniquePropertiesService.PROJECT_NAMES_ID);
+        return state;
+    }
+
+    public static UniquePropertiesState buildUniqueProjectIndexesInstance() {
+        UniquePropertiesState state = new UniquePropertiesState();
+        state.uniqueProperties = new ArrayList<>();
+        state.documentSelfLink = UriUtils.buildUriPath(UniquePropertiesService.FACTORY_LINK,
+                UniquePropertiesService.PROJECT_INDEXES_ID);
+        return state;
+    }
+
 }

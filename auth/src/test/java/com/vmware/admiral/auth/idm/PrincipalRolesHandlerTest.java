@@ -120,8 +120,8 @@ public class PrincipalRolesHandlerTest extends AuthBaseTest {
         doRoleAssignment(roleAssignment, "developers");
 
         // Verify.
-        String developersRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, AuthRole
-                .CLOUD_ADMIN.buildRoleWithSuffix("developers"));
+        String developersRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
+                AuthRole.CLOUD_ADMIN.buildRoleWithSuffix("developers"));
         TestContext ctx2 = testCreate(1);
         Operation getSuperusersRole = Operation.createGet(host, developersRoleLink)
                 .setReferer(host.getUri())
@@ -144,7 +144,7 @@ public class PrincipalRolesHandlerTest extends AuthBaseTest {
     private void doRoleAssignment(PrincipalRoleAssignment roleAssignment, String principalId) {
         TestContext ctx = testCreate(1);
         PrincipalRolesHandler.create()
-                .setHost(host)
+                .setService(privilegedTestService)
                 .setPrincipalId(principalId)
                 .setRoleAssignment(roleAssignment)
                 .update()

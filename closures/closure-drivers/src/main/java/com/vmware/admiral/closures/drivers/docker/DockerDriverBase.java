@@ -11,9 +11,13 @@
 
 package com.vmware.admiral.closures.drivers.docker;
 
+import static com.vmware.admiral.service.common.SslTrustCertificateService.SSL_TRUST_LAST_UPDATED_DOCUMENT_KEY;
+
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 
@@ -28,7 +32,10 @@ import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptio
 import com.vmware.admiral.closures.util.ClosureProps;
 import com.vmware.admiral.closures.util.ClosureUtils;
 import com.vmware.admiral.common.util.ConfigurationUtil;
-import com.vmware.admiral.common.util.FileUtil;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.admiral.common.util.SubscriptionManager;
+import com.vmware.admiral.service.common.ConfigurationService;
+import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
@@ -40,14 +47,23 @@ import com.vmware.xenon.common.Utils;
  */
 public abstract class DockerDriverBase implements ExecutionDriver {
 
+    private static final String SSL_TRUST_CONFIG_SUBSCRIBE_FOR_LINK = UriUtils.buildUriPath(
+            ConfigurationService.ConfigurationFactoryService.SELF_LINK,
+            SSL_TRUST_LAST_UPDATED_DOCUMENT_KEY);
+
+    private static String CLOSURE_SERVICE_CALLBACK_URI = getConfigProperty(
+            ClosureProps.CLOSURE_SERVICE_CALLBACK_URI);
+
     private final ServiceHost serviceHost;
     private final DriverRegistry driverRegistry;
     private final ClosureDockerClientFactory dockerClientFactory;
 
-    private static final String TRUST_CERT_PATH = getConfigProperty(
-            ClosureProps.CALLBACK_TRUST_CERT_FILE_PATH);
-    private static final String CLOSURE_SERVICE_CALLBACK_URI = getConfigProperty(
-            ClosureProps.CLOSURE_SERVICE_CALLBACK_URI);
+    private SubscriptionManager<ConfigurationService.ConfigurationState> subscriptionManager;
+    private ServiceDocumentQuery<SslTrustCertificateState> sslTrustQuery;
+    private ClosureSslTrustQueryCompletionHandler queryHandler;
+    private volatile long documentUpdateTimeMicros;
+
+    private AtomicReference<String> trustCertificates;
 
     public abstract String getDockerImage();
 
@@ -56,6 +72,62 @@ public abstract class DockerDriverBase implements ExecutionDriver {
         this.serviceHost = serviceHost;
         this.driverRegistry = driverRegistry;
         this.dockerClientFactory = dockerClientFactory;
+
+        this.trustCertificates = new AtomicReference<>();
+
+        this.subscriptionManager = new SubscriptionManager<>(serviceHost,
+                serviceHost.getId() + getDockerImage(), SSL_TRUST_CONFIG_SUBSCRIBE_FOR_LINK,
+                ConfigurationService.ConfigurationState.class, true);
+
+        this.sslTrustQuery = new ServiceDocumentQuery<SslTrustCertificateState>(serviceHost,
+                SslTrustCertificateState.class);
+        queryHandler = new ClosureSslTrustQueryCompletionHandler();
+
+        subscribeForSslTrustCertNotifications();
+        loadSslTrustCertServices();
+    }
+
+    private void subscribeForSslTrustCertNotifications() {
+        this.subscriptionManager.start((n) -> {
+            loadSslTrustCertServices();
+        }, null);
+    }
+
+    private void loadSslTrustCertServices() {
+        // make sure first get the time, then issue the query not to miss an interval with updates
+        logInfo("reloadSslTrustCertServices........" + this.documentUpdateTimeMicros);
+
+        long currentDocumentUpdateTimeMicros = Utils.getNowMicrosUtc();
+        sslTrustQuery.queryUpdatedSince(documentUpdateTimeMicros, queryHandler);
+        this.documentUpdateTimeMicros = currentDocumentUpdateTimeMicros;
+    }
+
+    private class ClosureSslTrustQueryCompletionHandler implements
+            Consumer<ServiceDocumentQuery.ServiceDocumentQueryElementResult<SslTrustCertificateState>> {
+
+        List<SslTrustCertificateState> trustedCerts = new ArrayList<>();
+
+        @Override
+        public void accept(
+                ServiceDocumentQuery.ServiceDocumentQueryElementResult<SslTrustCertificateState> result) {
+            if (result.hasException()) {
+                Utils.logWarning("Exception during ssl trust cert loading: %s",
+                        (result.getException() instanceof CancellationException)
+                                ? result.getException().getClass().getName()
+                                : Utils.toString(result.getException()));
+            } else if (result.hasResult()) {
+                SslTrustCertificateState sslTrustCert = result.getResult();
+                trustedCerts.add(sslTrustCert);
+            } else {
+                StringBuilder sb = new StringBuilder();
+                for (SslTrustCertificateState cert : trustedCerts) {
+                    sb.append("\n").append(cert.certificate);
+                }
+
+                trustCertificates.set(ClosureUtils.compress((sb.toString())));
+            }
+        }
+
     }
 
     @Override
@@ -189,11 +261,10 @@ public abstract class DockerDriverBase implements ExecutionDriver {
         if (!ClosureUtils.isEmpty(token)) {
             vars.add(ClosureProps.ENV_PROP_TOKEN + "=" + token);
         }
-        String cert = "";
-        if (TRUST_CERT_PATH != null) {
-            cert = FileUtil.getResourceAsString(TRUST_CERT_PATH, false);
-        }
-        vars.add(ClosureProps.ENV_TRUST_CERTS + "=" + cert);
+        String certs = trustCertificates.get();
+
+        certs = certs == null ? "" : certs;
+        vars.add(ClosureProps.ENV_TRUST_CERTS + "=" + certs);
 
         return vars;
     }

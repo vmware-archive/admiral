@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.logging.Logger;
 
@@ -31,6 +32,13 @@ import com.vmware.xenon.common.UriUtils;
 public class UrlEncodedReverseProxyService extends StatelessService {
     private static final Logger LOGGER = Logger
             .getLogger(UrlEncodedReverseProxyService.class.getName());
+    public static final String VM_ARG_HOST_ADAPTER_SHARED_URI = "host.adapter.shared.uri";
+    private static final String CUSTOM_HOST_ADAPTER_SHARED_URI;
+    private static final String DEFAULT_HOST_ADAPTER_SHARED_URI = "/adapter/shared-content";
+
+    static {
+        CUSTOM_HOST_ADAPTER_SHARED_URI = System.getProperty(VM_ARG_HOST_ADAPTER_SHARED_URI);
+    }
 
     private static final Collection<String> URI_PROTOCOLS = Arrays.asList(
             UriUtils.HTTP_SCHEME,
@@ -38,7 +46,7 @@ public class UrlEncodedReverseProxyService extends StatelessService {
             UriUtils.FILE_SCHEME);
     //Do not perform authorization for static files with these extensions (web page related)
     private static final Set<String> NO_AUTHZ_EXTENSIONS = new HashSet<>(
-            Arrays.asList("html", "htm", "css", "js", "png"));
+            Arrays.asList("html", "htm", "css", "js", "png", "woff", "woff2"));
 
     public static final String SELF_LINK = "/uerp";
     /**
@@ -112,7 +120,7 @@ public class UrlEncodedReverseProxyService extends StatelessService {
         String scheme = uri.getScheme();
         String schemeSpecificPart = uri.getSchemeSpecificPart();
         String authority = uri.getAuthority();
-        String path = uri.getPath();
+        String path = uri.getRawPath();
         String query = uri.getQuery();
         String fragment = uri.getFragment();
 
@@ -169,7 +177,7 @@ public class UrlEncodedReverseProxyService extends StatelessService {
      * @return the backend uri to use
      * @see URLEncoder#encode(String, String)
      */
-    public static URI extractBackendURI(URI uri, Function<String, URI> hostResolver) {
+    public static URI extractBackendURI(URI uri, BiFunction<String, String, URI> hostResolver) {
         String uriPath = uri.getPath();
 
         int rpIndex = uriPath.indexOf(SELF_LINK);
@@ -211,12 +219,9 @@ public class UrlEncodedReverseProxyService extends StatelessService {
             if (hostKey == null) {
                 hostKey = KEY_HOST_URI;
             }
-            URI host = hostResolver.apply(hostKey);
-            if (host != null) {
-                if (!path.startsWith(UriUtils.URI_PATH_CHAR)) {
-                    path = UriUtils.URI_PATH_CHAR + path;
-                }
-                opURI = host.resolve(path);
+            URI resolved = hostResolver.apply(hostKey, path);
+            if (resolved != null) {
+                opURI = resolved;
             } else {
                 LOGGER.warning(String.format("Cannot resolve %s for uri %s ",
                         hostKey, uriPath));
@@ -231,9 +236,18 @@ public class UrlEncodedReverseProxyService extends StatelessService {
         URI opURI = op.getUri();
         URI backendURI;
         try {
-            backendURI = extractBackendURI(op.getUri(), p -> {
-                if (KEY_HOST_URI.equals(p)) {
-                    return getHost().getUri();
+            backendURI = extractBackendURI(op.getUri(), (k, p) -> {
+                if (KEY_HOST_URI.equals(k)) {
+                    return getHost().getUri().resolve(p);
+                } else if (VM_ARG_HOST_ADAPTER_SHARED_URI.equals(k)) {
+                    if (!p.startsWith(UriUtils.URI_PATH_CHAR)) {
+                        p = UriUtils.URI_PATH_CHAR + p;
+                    }
+                    if (CUSTOM_HOST_ADAPTER_SHARED_URI != null) {
+                        return URI.create(CUSTOM_HOST_ADAPTER_SHARED_URI + p);
+                    } else {
+                        return getHost().getUri().resolve(DEFAULT_HOST_ADAPTER_SHARED_URI + p);
+                    }
                 } else {
                     return null;
                 }

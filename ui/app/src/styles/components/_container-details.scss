@@ -67,6 +67,10 @@ $elements-side-margin: $elements-margin / 2;
     color: $secondary_inactive_button_color;
   }
 
+  > .container-details-header .status.PROVISIONING {
+    color: $secondary_inactive_button_color;
+  }
+
   > .container-details-header .status.FINISHED {
     color: $status_running_color;
   }

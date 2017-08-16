@@ -32,15 +32,18 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.apache.commons.lang3.math.NumberUtils;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
@@ -357,17 +360,62 @@ public class ComputeAllocationTaskService
                 .addCompositeFieldClause(ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
                         FIELD_NAME_CONTEXT_ID_KEY, contextId);
 
-        QueryTask q = QueryTask.Builder.create().setQuery(queryBuilder.build()).build();
+        QueryTask q = QueryTask.Builder.create().setQuery(queryBuilder.build())
+                .addOption(QueryTask.QuerySpecification.QueryOption.EXPAND_CONTENT).build();
 
-        Set<String> computeResourceLinks = new HashSet<>(state.resourceCount.intValue());
+        Set<String> computeResourceLinks = new LinkedHashSet<>(state.resourceCount.intValue());
+        Map<Integer, String> clusterIndexResources = new HashMap<>();
+        Map<String, String> tempResourceLinks = new HashMap<>();
         new ServiceDocumentQuery<>(
                 getHost(), ComputeState.class).query(q, (r) -> {
                     if (r.hasException()) {
                         failTask("Failed to query for provisioned resources", r.getException());
                         return;
                     } else if (r.hasResult()) {
-                        computeResourceLinks.add(r.getDocumentSelfLink());
+                        String indexStr = r.getResult().customProperties.get(RequestUtils.FIELD_NAME_CLUSTER_INDEX);
+                        if (indexStr != null && NumberUtils.isNumber(indexStr)) {
+                            clusterIndexResources.put(Integer.valueOf(indexStr), r.getDocumentSelfLink());
+                        } else {
+                            tempResourceLinks.put(r.getResult().name, r.getDocumentSelfLink()) ;
+                        }
                     } else {
+                        // Idea here is to create a sequence for new resources as composition depends on sequence
+                        // case 1: new deployment with resource a,b,c - so sort them based on names
+                        // as 0:a, 1:b, 2:c, the returned resources will have no cluster_index value set
+                        // on successful provisioning persist these cluster_index values in ComputeState within customProperties
+                        // case 2: scale out deployment add 2 resources d and e; between d, e name sorting helps the sequence
+                        // here query returns 5 resources a(0),b(1),c(2),d(),e() with d and e should be at last so that
+                        // they can be identified by index only. This way we return resources = [a,b,c,d,e] with allocation
+                        // and during provisioning if d fails then removal task queries as resources[3] = d for rollback
+
+                        LinkedHashMap<Integer, String> indexResources = clusterIndexResources.entrySet().stream()
+                                .sorted(Map.Entry.comparingByKey())
+                                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+                                    (oldValue, newValue) -> oldValue, LinkedHashMap::new));
+
+                        List<String> newResources = tempResourceLinks.entrySet().stream()
+                                .sorted(Map.Entry.comparingByKey())
+                                .map(Map.Entry::getValue)
+                                .collect(Collectors.toList());
+
+                        // Here in case a hole exists, fill it with the new resource as also done by composition.
+                        // Consider case 2 above, if d resource provisioning fails and rolls back you will have a(0),b(1),c(2),e(4)
+                        // now you scale out again with 2 new resources with f, g
+                        // Composition here will fill this hole at 3 and hence we need sequence as
+                        // a(0),b(1),c(2),f(),e(4),g(). After provisioning final state persisted will be as
+                        // a(0),b(1),c(2),f(3),e(4),g(5) in both systems - Composition/Catalog and admiral
+
+                        int max = indexResources.size() > 0 ? indexResources.keySet().stream().max(Integer::compare).get() : -1;
+                        for (int i = 0; i <= max; i++) {
+                            if (indexResources.get(i) != null) {
+                                computeResourceLinks.add(indexResources.get(i));
+                            } else {
+                                computeResourceLinks.add(newResources.remove(0));
+                            }
+                        }
+                        newResources.forEach((name) -> {
+                            computeResourceLinks.add(name);
+                        });
                         proceedTo(SubStage.COMPLETED, s -> {
                             s.resourceLinks = computeResourceLinks;
                         });
@@ -634,6 +682,12 @@ public class ComputeAllocationTaskService
                 ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_RESOURCE_POOL_LINK);
         resource.endpointLink = state.endpointLink;
         resource.diskLinks = diskLinks;
+
+        resource.address = state.getCustomProperty(
+                ComputeConstants.CUSTOM_PROP_IP_ADDRESS);
+
+        resource.hostName = state.getCustomProperty(
+                ComputeConstants.CUSTOM_PROP_HOST_NAME);
 
         // networkLinks may be null (in which case they may be set during network provisioning if
         // there are networks defined in the blueprint)
@@ -1059,7 +1113,7 @@ public class ComputeAllocationTaskService
     }
 
     @Override
-    protected Class<? extends ResourceState> getRelatedResourceStateType() {
+    protected Class<? extends ResourceState> getRelatedResourceStateType(ComputeAllocationTaskState state) {
         return ComputeDescription.class;
     }
 
@@ -1094,11 +1148,9 @@ public class ComputeAllocationTaskService
                 ().map(hs -> hs.name).collect(Collectors.toList());
         List<String> responseHostSelections = response.hostSelections;
 
-        if (responseHostSelections.size() != selectionsForNotificationPayload.size()) {
-            String missmatchInSelections = String.format("There is discrepancy between number of "
-                            + "existing host selections: %s and provided by extensibility: %s",
-                    selectionsForNotificationPayload.size(), responseHostSelections.size());
-            failTask(missmatchInSelections, new Throwable(missmatchInSelections));
+        if (responseHostSelections == null || responseHostSelections.isEmpty()) {
+            logInfo("Host selections are empty.");
+            callback.run();
             return;
         }
 
@@ -1239,25 +1291,6 @@ public class ComputeAllocationTaskService
                 .withLabel(COMPUTE_ALLOCATION_TOPIC_FIELD_HOST_SELECTIONS_LABEL)
                 .withDescription(COMPUTE_ALLOCATION_TOPIC_FIELD_HOST_SELECTIONS_DESCRIPTION)
                 .done();
-    }
-
-    private Map<String, String> loadResourceToHostNameForNotificationPayload(
-            ComputeAllocationTaskState state) {
-
-        Map<String, String> resourceToHost = new TreeMap<>();
-        if (state.selectedComputePlacementHosts != null && !state.selectedComputePlacementHosts
-                .isEmpty()) {
-
-            Iterator<HostSelection> placementComputeLinkIterator = state.selectedComputePlacementHosts
-                    .iterator();
-            Iterator<String> namesIterator = state.resourceNames.iterator();
-            while (namesIterator.hasNext() && placementComputeLinkIterator.hasNext()) {
-                resourceToHost
-                        .put(namesIterator.next(), placementComputeLinkIterator.next().name);
-            }
-
-        }
-        return resourceToHost;
     }
 
     @Override

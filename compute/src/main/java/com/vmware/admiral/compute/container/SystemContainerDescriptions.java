@@ -41,9 +41,8 @@ public class SystemContainerDescriptions {
     static final String[] AGENT_CONTAINER_VOLUMES = {
             "/var/run/docker.sock:/var/run/docker.sock",
             "/etc/docker:/etc/docker" };
-    public static final String AGENT_IMAGE_VERSION_PROPERTY_NAME =
-            "dcp.management.images.agent.version";
-    private static final String AGENT_IMAGE_VERSION = "0.9.3";
+    public static final String AGENT_IMAGE_VERSION_PROPERTY_NAME = "dcp.management.images.agent.version";
+    private static final String AGENT_IMAGE_VERSION = "1.2.0";
 
     /** Create a container description to be used for installing host agents containers. */
     public static ContainerDescription buildCoreAgentContainerDescription() {

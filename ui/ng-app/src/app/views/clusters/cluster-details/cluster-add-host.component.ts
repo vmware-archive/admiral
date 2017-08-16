@@ -29,6 +29,7 @@ export class ClusterAddHostComponent implements AfterViewInit {
 
     @Input() cluster: any;
     @Input() visible: boolean;
+    @Input() projectLink: string;
 
     credentials: any[];
     isAddingHost: boolean;
@@ -44,11 +45,12 @@ export class ClusterAddHostComponent implements AfterViewInit {
         credentials: new FormControl('')
     });
 
-    constructor(private ds: DocumentService, private ps: ProjectService) { }
+    constructor(private ds: DocumentService) { }
 
     ngAfterViewInit() {
         this.ds.list(Links.CREDENTIALS, {}).then(credentials => {
-            this.credentials = credentials.documents;
+            this.credentials = credentials.documents
+                .filter(c => !Utils.areSystemScopedCredentials(c));
         });
     }
 
@@ -85,18 +87,11 @@ export class ClusterAddHostComponent implements AfterViewInit {
 
     addHost(certificateAccepted: boolean) {
         if (this.addHostToClusterForm.valid) {
-            let selectedProject = this.ps.getSelectedProject();
-            if (!selectedProject || !selectedProject.documentSelfLink) {
-                this.alertMessage = I18n.t('projects.errors.noSelectedProject');
-                return;
-            }
-
             this.isAddingHost = true;
 
             let formInput = this.addHostToClusterForm.value;
             let hostState = {
                 'address': formInput.address,
-                'tenantLinks': [Links.PROJECTS + '/default-project'],
                 'customProperties': {
                     '__containerHostType': 'DOCKER',
                     '__adapterDockerType': 'API'
@@ -111,7 +106,7 @@ export class ClusterAddHostComponent implements AfterViewInit {
                 'hostState': hostState,
                 'acceptCertificate': certificateAccepted
             };
-            this.ds.post(this.cluster.documentSelfLink + '/hosts', hostSpec).then((response) => {
+            this.ds.post(this.cluster.documentSelfLink + '/hosts', hostSpec, this.projectLink).then((response) => {
                 if (response && response.certificate) {
                     this.certificate = response;
                     this.showCertificateWarning = true;

@@ -14,7 +14,10 @@ package com.vmware.admiral.request;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import static com.vmware.admiral.common.test.CommonTestStateFactory.ENDPOINT_REGION_ID;
 import static com.vmware.admiral.request.compute.ResourceGroupUtils.COMPUTE_DEPLOYMENT_TYPE_VALUE;
+import static com.vmware.admiral.request.compute.allocation.filter.ComputeToNetworkAffinityHostFilter.PREFIX_NETWORK;
+import static com.vmware.admiral.request.compute.allocation.filter.ComputeToStorageAffinityFilter.PREFIX_DATASTORE;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,6 +32,7 @@ import java.util.UUID;
 
 import org.junit.Before;
 
+import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.common.test.HostInitTestDcpServicesConfig;
@@ -54,6 +58,9 @@ import com.vmware.admiral.compute.container.HealthChecker.HealthConfig.RequestPr
 import com.vmware.admiral.compute.container.HostContainerListDataCollection;
 import com.vmware.admiral.compute.container.HostPortProfileService;
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
+import com.vmware.admiral.compute.container.loadbalancer.ContainerLoadBalancerDescriptionService;
+import com.vmware.admiral.compute.container.loadbalancer.ContainerLoadBalancerDescriptionService
+        .ContainerLoadBalancerDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService;
@@ -67,6 +74,7 @@ import com.vmware.admiral.host.HostInitCommonServiceConfig;
 import com.vmware.admiral.host.HostInitComputeServicesConfig;
 import com.vmware.admiral.host.HostInitDockerAdapterServiceConfig;
 import com.vmware.admiral.host.HostInitKubernetesAdapterServiceConfig;
+import com.vmware.admiral.host.HostInitLoadBalancerServiceConfig;
 import com.vmware.admiral.host.HostInitPhotonModelServiceConfig;
 import com.vmware.admiral.host.HostInitRequestServicesConfig;
 import com.vmware.admiral.host.RequestInitialBootService;
@@ -87,12 +95,12 @@ import com.vmware.admiral.service.common.ResourceNamePrefixService;
 import com.vmware.admiral.service.test.MockComputeHostInstanceAdapter;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.admiral.service.test.MockDockerNetworkAdapterService;
-import com.vmware.admiral.service.test.MockDockerVolumeAdapterService;
 import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.adapters.awsadapter.AWSLoadBalancerService;
 import com.vmware.photon.controller.model.adapters.awsadapter.AWSNetworkService;
 import com.vmware.photon.controller.model.adapters.awsadapter.AWSSecurityGroupService;
 import com.vmware.photon.controller.model.adapters.awsadapter.AWSSubnetService;
+import com.vmware.photon.controller.model.adapters.vsphere.CustomProperties;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
@@ -113,6 +121,8 @@ import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.photon.controller.model.resources.SecurityGroupService;
 import com.vmware.photon.controller.model.resources.SecurityGroupService.SecurityGroupState;
+import com.vmware.photon.controller.model.resources.StorageDescriptionService;
+import com.vmware.photon.controller.model.resources.StorageDescriptionService.StorageDescription;
 import com.vmware.photon.controller.model.resources.SubnetService;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.xenon.common.ServiceDocument;
@@ -176,7 +186,6 @@ public abstract class RequestBaseTest extends BaseTestCase {
         startServices(host);
         MockDockerAdapterService.resetContainers();
         MockDockerNetworkAdapterService.resetNetworks();
-        MockDockerVolumeAdapterService.resetVolumes();
         setUpDockerHostAuthentication();
 
         createEndpoint();
@@ -248,6 +257,10 @@ public abstract class RequestBaseTest extends BaseTestCase {
     }
 
     protected void startServices(VerificationHost h) throws Throwable {
+        // some of the services do different init based on this so make sure it is set before
+        // starting them
+        DeploymentProfileConfig.getInstance().setTest(true);
+
         h.registerForServiceAvailability(CaSigningCertService.startTask(h), true,
                 CaSigningCertService.FACTORY_LINK);
         HostInitTestDcpServicesConfig.startServices(h);
@@ -257,6 +270,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
         HostInitRequestServicesConfig.startServices(h);
         HostInitDockerAdapterServiceConfig.startServices(h, true);
         HostInitKubernetesAdapterServiceConfig.startServices(h, true);
+        HostInitLoadBalancerServiceConfig.startServices(h);
 
         for (String factoryLink : getFactoryServiceList()) {
             waitForServiceAvailability(factoryLink);
@@ -514,6 +528,24 @@ public abstract class RequestBaseTest extends BaseTestCase {
     }
 
     protected ComputeState createVmHostCompute(boolean generateId) throws Throwable {
+        return createVmHostCompute(generateId, null, ENDPOINT_REGION_ID,
+                TestRequestStateFactory.ZONE_ID);
+    }
+
+    protected ComputeState createVmHostCompute(boolean generateId, Set<String> networkLinks,
+            String region, String zone) throws Throwable {
+        return createVmHostCompute(generateId, networkLinks, null, region, zone);
+    }
+
+    protected ComputeState createVmHostCompute(boolean generateId, Set<String> networkLinks,
+            Set<String> storageLinks) throws Throwable {
+        return createVmHostCompute(generateId, networkLinks, storageLinks, ENDPOINT_REGION_ID,
+                TestRequestStateFactory.ZONE_ID);
+    }
+
+    protected ComputeState createVmHostCompute(boolean generateId, Set<String> networkLinks,
+            Set<String> storageLinks, String region, String zone) throws Throwable {
+
         ComputeState vmHostComputeState = TestRequestStateFactory.createVmHostComputeState();
         if (generateId) {
             vmHostComputeState.id = UUID.randomUUID().toString();
@@ -524,12 +556,51 @@ public abstract class RequestBaseTest extends BaseTestCase {
         vmHostComputeState.type = ComputeType.VM_HOST;
         vmHostComputeState.name = UUID.randomUUID().toString();
         vmHostComputeState.endpointLink = endpoint.documentSelfLink;
-        vmHostComputeState = getOrCreateDocument(vmHostComputeState, ComputeService.FACTORY_LINK);
+        vmHostComputeState.regionId = region;
+        vmHostComputeState.zoneId = zone;
+
+        Set<String> resourceGroupLinks = new HashSet<>();
+        if (networkLinks != null) {
+            for (String networkLink : networkLinks) {
+                ResourceGroupState state = createResourceGroupWithTargetLink(
+                        PREFIX_NETWORK + UUID.randomUUID().toString(),
+                        networkLink);
+                resourceGroupLinks.add(state.documentSelfLink);
+            }
+        }
+
+        if (storageLinks != null) {
+            for (String storageLink : storageLinks) {
+                ResourceGroupState state = createResourceGroupWithTargetLink(
+                        PREFIX_DATASTORE + UUID.randomUUID().toString(),
+                        storageLink);
+                resourceGroupLinks.add(state.documentSelfLink);
+            }
+        }
+
+        vmHostComputeState.groupLinks = resourceGroupLinks;
         assertNotNull(vmHostComputeState);
+
+        vmHostComputeState = getOrCreateDocument(vmHostComputeState, ComputeService.FACTORY_LINK);
+
         if (generateId) {
             documentsForDeletion.add(vmHostComputeState);
         }
         return vmHostComputeState;
+    }
+
+    protected ResourceGroupState createResourceGroupWithTargetLink(String documentSelfLink,
+            String targetLink) throws Throwable {
+        ResourceGroupState resourceGroupStateRequest = new ResourceGroupState();
+        resourceGroupStateRequest.name = UriUtils.getLastPathSegment(targetLink);
+        resourceGroupStateRequest.customProperties = new HashMap<>();
+        resourceGroupStateRequest.documentSelfLink = documentSelfLink;
+        resourceGroupStateRequest.customProperties
+                .put(CustomProperties.TARGET_LINK, targetLink);
+
+        ResourceGroupState state = doPost(resourceGroupStateRequest,
+                ResourceGroupService.FACTORY_LINK);
+        return state;
     }
 
     protected void createHostPortProfile() throws Throwable {
@@ -552,6 +623,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
         if (generateId) {
             vmGuestComputeState.id = UUID.randomUUID().toString();
         }
+        vmGuestComputeState.endpointLink = endpoint.documentSelfLink;
         vmGuestComputeState.documentSelfLink = vmGuestComputeState.id;
         vmGuestComputeState.resourcePoolLink = createComputeResourcePool().documentSelfLink;
         vmGuestComputeState.descriptionLink = createVmGuestComputeDescriptionWithRandomSelfLink().documentSelfLink;
@@ -805,6 +877,8 @@ public abstract class RequestBaseTest extends BaseTestCase {
                 desc = doPost(desc, ContainerVolumeDescriptionService.FACTORY_LINK);
             } else if (desc instanceof LoadBalancerDescriptionService.LoadBalancerDescription) {
                 desc = doPost(desc, LoadBalancerDescriptionService.FACTORY_LINK);
+            } else if (desc instanceof ContainerLoadBalancerDescription) {
+                desc = doPost(desc, ContainerLoadBalancerDescriptionService.FACTORY_LINK);
             } else if (desc instanceof ComputeNetworkDescriptionService.ComputeNetworkDescription) {
                 desc = doPost(desc, ComputeNetworkDescriptionService.FACTORY_LINK);
             } else {
@@ -958,4 +1032,19 @@ public abstract class RequestBaseTest extends BaseTestCase {
         securityGroup.customProperties.put(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY, contextId);
         return doPost(securityGroup, SecurityGroupService.FACTORY_LINK);
     }
+
+    protected StorageDescription createDatastore(long capacityMB) throws Throwable {
+
+        StorageDescription datastore = new StorageDescription();
+
+        datastore.name = UUID.randomUUID().toString();
+        datastore.capacityBytes = capacityMB * 1024;
+        datastore.endpointLink = endpoint.documentSelfLink;
+        datastore.resourcePoolLink = endpoint.resourcePoolLink;
+        datastore.regionId = ENDPOINT_REGION_ID;
+        datastore.tenantLinks = endpoint.tenantLinks;
+
+        return doPost(datastore, StorageDescriptionService.FACTORY_LINK);
+    }
+
 }

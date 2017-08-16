@@ -64,6 +64,9 @@ public class AwsWordpressProvisionNetworkIT extends BaseWordpressComputeProvisio
                 {"WordPress_with_MySQL_compute_isolated_sg_network.yaml",
                         (BiConsumer<Set<ServiceDocument>, String>) BaseWordpressComputeProvisionIT
                                 ::validateIsolatedNic },
+                {"WordPress_with_MySQL_compute_isolated_outbound_network.yaml",
+                        (BiConsumer<Set<ServiceDocument>, String>) BaseWordpressComputeProvisionIT
+                                ::validateOutboundAccess },
                 //{"WordPress_with_MySQL_compute_with_load_balancer.yaml", null }
         });
     }
@@ -89,8 +92,13 @@ public class AwsWordpressProvisionNetworkIT extends BaseWordpressComputeProvisio
         createProfile(loadComputeProfile(getEndpointType()), createIsolatedSubnetNetworkProfile(
                 AWS_ISOLATED_VPC_NAME, CIDR_PREFIX), new StorageProfile());
 
-        createProfile(loadComputeProfile(getEndpointType()), createIsolatedSecurityGroupNetworkProfile(
-                AWS_DEFAULT_SUBNET_NAME, Sets.newHashSet(createTag("type", "sg"))),
+        createProfile(loadComputeProfile(getEndpointType()),
+                createIsolatedSecurityGroupNetworkProfile(AWS_DEFAULT_SUBNET_NAME,
+                        Sets.newHashSet(createTag("type", "sg"))), new StorageProfile());
+
+        createProfile(loadComputeProfile(getEndpointType()),
+                createIsolatedSubnetWithOutboundAccessNetworkProfile(
+                        AWS_DEFAULT_VPC_NAME, CIDR_PREFIX, AWS_EXTERNAL_SUBNET_NAME),
                 new StorageProfile());
     }
 

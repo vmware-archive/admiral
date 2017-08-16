@@ -98,13 +98,12 @@
                   @error="onEditorError">
                 </div>
 
-                <iframe id="htmlComputeProfileEditor"
+                <iframe id="html_computeProfileEditor"
                         v-if="computeProfileEditorType === 'html'"
                         width="100%" frameborder="0"
-                        :src="htmlComputeProfileEditorSrc"
+                        :src="html_computeProfileEditor_src"
                         scrolling="no"
-                        @load="htmlComputeProfileEditorInit"
-                >
+                        @load="htmlProfileEditorInit">
                 </iframe>
 
               </form>
@@ -113,7 +112,7 @@
               <form>
                 <div
                   v-for="adapter in adapters"
-                  v-if="endpointType === adapter.id"
+                  v-if="endpointType === adapter.id && networkProfileEditorType !== 'html'"
                   :endpoint="endpoint"
                   :is="adapter.networkProfileEditor"
                   :model="model.item.networkProfile || {}"
@@ -122,19 +121,37 @@
                   @manage.subnetworks="onNetworkManageSubnetworks"
                   @error="onEditorError">
                 </div>
+
+                <iframe id="html_networkProfileEditor"
+                        v-if="networkProfileEditorType === 'html'"
+                        width="100%" frameborder="0"
+                        :src="html_networkProfileEditor_src"
+                        scrolling="no"
+                        @load="htmlProfileEditorInit">
+                </iframe>
+
               </form>
             </div>
             <div role="tabpanel" class="tab-pane" id="storage">
               <form>
                 <div
                   v-for="adapter in adapters"
-                  v-if="endpointType === adapter.id"
+                  v-if="endpointType === adapter.id && storageProfileEditorType !== 'html'"
                   :endpoint="endpoint"
                   :is="adapter.storageProfileEditor"
                   :model="model.item.storageProfile || {}"
                   @change="onStorageProfileEditorChange"
                   @error="onEditorError">
                 </div>
+
+                <iframe id="html_storageProfileEditor"
+                        v-if="storageProfileEditorType === 'html'"
+                        width="100%" frameborder="0"
+                        :src="html_storageProfileEditor_src"
+                        scrolling="no"
+                        @load="htmlProfileEditorInit">
+                </iframe>
+
               </form>
             </div>
           </div>
@@ -197,9 +214,11 @@
         endpoint && endpoint.endpointType === 'azure'"
         :model="model.contextView.activeItem.data"></azure-storage-accounts-list>
       <vsphere-datastores-list v-if="activeContextItem === 'vsphere_datastores'"
-        :model="model.contextView.activeItem.data"></vsphere-datastores-list>
+        :model="model.contextView.activeItem.data"
+        :endpoint="endpoint"></vsphere-datastores-list>
       <vsphere-storage-policies-list v-if="activeContextItem === 'vsphere_storage_policies'"
-        :model="model.contextView.activeItem.data"></vsphere-storage-policies-list>
+        :model="model.contextView.activeItem.data"
+        :endpoint="endpoint"></vsphere-storage-policies-list>
     </div>
   </context-sidepanel>
 

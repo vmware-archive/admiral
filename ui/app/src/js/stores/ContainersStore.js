@@ -858,8 +858,8 @@ let ContainersStore = Reflux.createStore({
     this.emitChange();
   },
 
-  onCreateContainer: function(containerDescription, group) {
-    services.createContainer(containerDescription, group).then((request) => {
+  onCreateContainer: function(containerDescription) {
+    services.createContainer(containerDescription).then((request) => {
       this.navigateContainersListViewAndOpenRequests(request);
     }).catch(this.onGenericCreateError);
   },
@@ -888,8 +888,8 @@ let ContainersStore = Reflux.createStore({
     }).catch(this.onGenericCreateError);
   },
 
-  onCreateKubernetesEntities: function(entitiesContent, group) {
-    services.createKubernetesEntities(entitiesContent, group).then((request) => {
+  onCreateKubernetesEntities: function(entitiesContent) {
+    services.createKubernetesEntities(entitiesContent).then((request) => {
       this.navigateContainersListViewAndOpenRequests(request);
     }).catch(this.onGenericCreateError);
   },

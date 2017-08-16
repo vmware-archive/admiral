@@ -200,38 +200,43 @@ public class RegistryHostValidatingHelperServiceIT extends BaseTestCase {
 
     @Test
     public void testAddHostWhenSelfSignNotAccepted() throws Throwable {
-        registryState.address = TEST_REGISTRY_ADDRESS;
-        // remove previously added certificates to simulate 'not accepted' case
-        cleanTrustCertificate();
+        try {
+            registryState.address = TEST_REGISTRY_ADDRESS;
+            // remove previously added certificates to simulate 'not accepted' case
+            cleanTrustCertificate();
 
-        Operation op = Operation
-                .createPut(helperUri)
-                .setBody(hostState)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        host.failIteration(e);
-                        return;
-                    }
-                    if (o.getStatusCode() != HttpURLConnection.HTTP_OK) {
-                        host.failIteration(new IllegalStateException(
-                                "Expected status code 200 when ssl cert not accepted. Status: "
-                                        + o.getStatusCode()));
-                        return;
-                    }
-                    SslTrustCertificateState body = o
-                            .getBody(SslTrustCertificateState.class);
-                    if (body == null) {
-                        host.failIteration(new IllegalStateException(
-                                "Expected SslTrustCertificateState in the body to be accepted."));
-                        return;
-                    }
+            Operation op = Operation
+                    .createPut(helperUri)
+                    .setBody(hostState)
+                    .setCompletion((o, e) -> {
+                        if (e != null) {
+                            host.failIteration(e);
+                            return;
+                        }
+                        if (o.getStatusCode() != HttpURLConnection.HTTP_OK) {
+                            host.failIteration(new IllegalStateException(
+                                    "Expected status code 200 when ssl cert not accepted. Status: "
+                                            + o.getStatusCode()));
+                            return;
+                        }
+                        SslTrustCertificateState body = o
+                                .getBody(SslTrustCertificateState.class);
+                        if (body == null) {
+                            host.failIteration(new IllegalStateException(
+                                    "Expected SslTrustCertificateState in the body to be accepted."));
+                            return;
+                        }
 
-                    host.completeIteration();
-                });
+                        host.completeIteration();
+                    });
 
-        host.testStart(1);
-        host.send(op);
-        host.testWait();
+            host.testStart(1);
+            host.send(op);
+            host.testWait();
+        } finally {
+            // invalidate trust manager to avoid side effects
+            ServerX509TrustManager.invalidate();
+        }
     }
 
     private void cleanTrustCertificate() throws NoSuchFieldException, IllegalAccessException {

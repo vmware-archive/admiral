@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.SubscriptionManager;
@@ -43,6 +44,7 @@ import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService.Elast
 import com.vmware.admiral.compute.PlacementZoneConstants.PlacementZoneType;
 import com.vmware.admiral.compute.PlacementZoneUtil;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
+import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
 import com.vmware.photon.controller.model.adapters.util.Pair;
 import com.vmware.photon.controller.model.resources.ComputeService;
@@ -80,6 +82,9 @@ public class ClusterService extends StatelessService {
 
     private static final Pattern PATTERN_PROJECT_TENANT_LINK = Pattern
             .compile(String.format("^%s\\/[^\\/]+", ManagementUriParts.PROJECTS));
+    private static final Pattern PATTERN_TENANT_LINK = Pattern
+            .compile(String.format("^\\%s\\/[^\\/]+\\%s\\/[^\\/]+",
+                    MultiTenantDocument.TENANTS_PREFIX, MultiTenantDocument.GROUP_IDENTIFIER));
 
     public static final String HOST_NOT_IN_THIS_CLUSTER_EXCEPTION_TEMPLATE = "No host with id %s found in cluster with id %s";
 
@@ -91,6 +96,8 @@ public class ClusterService extends StatelessService {
     public static final String CLUSTER_DETAILS_CUSTOM_PROP = "__clusterDetails";
     public static final String CLUSTER_NAME_CUSTOM_PROP = "__clusterName";
     public static final String CLUSTER_CREATION_TIME_MICROS_CUSTOM_PROP = "__clusterCreationTimeMicros";
+
+    public static final String HOSTS_FILTER_QUERY_PARAM = "$hostsFilter";
 
     public ClusterService() {
         super(ClusterDto.class);
@@ -153,6 +160,8 @@ public class ClusterService extends StatelessService {
         /** Document links of the {@link ComputeState}s that are part of this cluster */
         public List<String> nodeLinks;
 
+        public Map<String, ComputeState> nodes;
+
         // TODO do we need that and how do we compute that for docker clusters? (VCH reports this,
         // but docker host doesn't)
         public double totalCpu;
@@ -201,6 +210,9 @@ public class ClusterService extends StatelessService {
 
         String clusterId = UriUtils.parseUriPathSegments(patch.getUri(),
                 CLUSTER_PATH_SEGMENT_TEMPLATE).get(CLUSTER_ID_PATH_SEGMENT);
+
+        String projectLink = OperationUtil.extractProjectFromHeader(patch);
+
         String pathPZId = UriUtils.buildUriPath(
                 ElasticPlacementZoneConfigurationService.SELF_LINK,
                 ResourcePoolService.FACTORY_LINK, clusterId);
@@ -222,7 +234,8 @@ public class ClusterService extends StatelessService {
                         .setReferer(getHost().getUri())
                         .setBody(placementZone),
                 ElasticPlacementZoneConfigurationState.class)
-                        .thenCompose(this::getInfoFromHostsWihtinOnePlacementZone)
+                        .thenCompose(epzConfigState -> getInfoFromHostsWihtinOnePlacementZone(
+                                projectLink, epzConfigState))
                         .thenAccept(clusterDtoList -> {
                             if (!clusterDtoList.isEmpty()) {
                                 patch.setBody(clusterDtoList.get(0));
@@ -243,7 +256,6 @@ public class ClusterService extends StatelessService {
             return;
         }
         delete.fail(Operation.STATUS_CODE_NOT_FOUND);
-
     }
 
     @Override
@@ -285,31 +297,42 @@ public class ClusterService extends StatelessService {
 
     private void getAllClusters(Operation get) {
         boolean expand = UriUtils.hasODataExpandParamValue(get.getUri());
-        URI elasticPlacementZoneConfigurationUri = UriUtils.buildUri(getHost(),
+        URI placementZoneUri = UriUtils.buildUri(getHost(),
                 ElasticPlacementZoneConfigurationService.SELF_LINK, get.getUri().getQuery());
 
-        sendWithDeferredResult(Operation
-                .createGet(
-                        UriUtils.buildExpandLinksQueryUri(elasticPlacementZoneConfigurationUri))
-                .setReferer(getUri()),
-                ServiceDocumentQueryResult.class)
-                        .thenCompose(this::getInfoFromHostsWihtinPlacementZone)
-                        .thenAccept(clusterDtoList -> {
-                            Map<String, Object> ClusterDtoMap = clusterDtoList.stream()
-                                    .collect(Collectors.toMap(
-                                            clusterDto -> clusterDto.documentSelfLink,
-                                            Function.identity()));
+        placementZoneUri = UriUtils.extendUriWithQuery(placementZoneUri,
+                UriUtils.URI_PARAM_ODATA_EXPAND_NO_DOLLAR_SIGN, "");
 
-                            ServiceDocumentQueryResult queryResult = new ServiceDocumentQueryResult();
-                            queryResult.documentLinks = new LinkedList<>(
-                                    ClusterDtoMap.keySet());
-                            queryResult.documentCount = Long.valueOf(ClusterDtoMap.size());
-                            if (expand) {
-                                queryResult.documents = ClusterDtoMap;
-                            }
-                            get.setBody(queryResult);
-                        })
-                        .whenCompleteNotify(get);
+        String projectLink = OperationUtil.extractProjectFromHeader(get);
+
+        Operation getPlacementZone = Operation
+                .createGet(placementZoneUri)
+                .setReferer(getUri());
+
+        if (projectLink != null && !projectLink.isEmpty()) {
+            getPlacementZone.addRequestHeader(OperationUtil.PROJECT_ADMIRAL_HEADER, projectLink);
+            OperationUtil.transformProjectHeaderToFilterQuery(getPlacementZone);
+        }
+
+        sendWithDeferredResult(getPlacementZone, ServiceDocumentQueryResult.class)
+                .thenCompose(queryResult -> getInfoFromHostsWihtinPlacementZone(projectLink,
+                        queryResult, get))
+                .thenAccept(clusterDtoList -> {
+                    Map<String, Object> ClusterDtoMap = clusterDtoList.stream()
+                            .collect(Collectors.toMap(
+                                    clusterDto -> clusterDto.documentSelfLink,
+                                    Function.identity()));
+
+                    ServiceDocumentQueryResult queryResult = new ServiceDocumentQueryResult();
+                    queryResult.documentLinks = new LinkedList<>(
+                            ClusterDtoMap.keySet());
+                    queryResult.documentCount = Long.valueOf(ClusterDtoMap.size());
+                    if (expand) {
+                        queryResult.documents = ClusterDtoMap;
+                    }
+                    get.setBody(queryResult);
+                })
+                .whenCompleteNotify(get);
     }
 
     private void getSingleCluster(Operation get) {
@@ -318,6 +341,7 @@ public class ClusterService extends StatelessService {
         String pathPZId = UriUtils.buildUriPath(
                 ElasticPlacementZoneConfigurationService.SELF_LINK,
                 ResourcePoolService.FACTORY_LINK, clusterId);
+        String projectLink = OperationUtil.extractProjectFromHeader(get);
 
         URI elasticPlacementZoneConfigurationUri = UriUtils.buildUri(getHost(),
                 pathPZId, get.getUri().getQuery());
@@ -326,7 +350,8 @@ public class ClusterService extends StatelessService {
                         UriUtils.buildExpandLinksQueryUri(elasticPlacementZoneConfigurationUri))
                 .setReferer(getUri()),
                 ElasticPlacementZoneConfigurationState.class)
-                        .thenCompose(this::getInfoFromHostsWihtinOnePlacementZone)
+                        .thenCompose(epzConfigState -> getInfoFromHostsWihtinOnePlacementZone(
+                                projectLink, epzConfigState))
                         .thenAccept(clusterDtoList -> {
                             if (!clusterDtoList.isEmpty()) {
                                 get.setBody(clusterDtoList.get(0));
@@ -337,32 +362,7 @@ public class ClusterService extends StatelessService {
     }
 
     private void getAllHostsInSingleCluster(Operation get) {
-        String clusterId = UriUtils.parseUriPathSegments(get.getUri(),
-                CLUSTER_PATH_SEGMENT_TEMPLATE).get(CLUSTER_ID_PATH_SEGMENT);
-        String resourcePoolLink = UriUtils.buildUriPath(
-                ResourcePoolService.FACTORY_LINK, clusterId);
-        boolean expand = UriUtils.hasODataExpandParamValue(get.getUri());
-
-        ClusterUtils.getHostsWihtinPlacementZone(
-                resourcePoolLink, getHost())
-                .thenAccept(computeStates -> {
-                    ServiceDocumentQueryResult queryResult = new ServiceDocumentQueryResult();
-
-                    if (computeStates.isEmpty()) {
-                        get.setBody(queryResult);
-                    } else {
-                        queryResult.documentLinks = computeStates.stream().map(computeState -> {
-                            return computeState.documentSelfLink;
-                        }).collect(Collectors.toList());
-                        queryResult.documentCount = Long.valueOf(computeStates.size());
-                        if (expand) {
-                            queryResult.documents = computeStates.stream().collect(Collectors.toMap(
-                                    computeState -> computeState.documentSelfLink,
-                                    Function.identity()));
-                        }
-                    }
-                    get.setBody(queryResult);
-                }).whenCompleteNotify(get);
+        ClusterUtils.getHostsWithinPlacementZone(get, getHost());
     }
 
     private void getSingleHostInSingleCluster(Operation get) {
@@ -391,14 +391,14 @@ public class ClusterService extends StatelessService {
 
     }
 
-    private DeferredResult<List<ClusterDto>> getInfoFromHostsWihtinPlacementZone(
-            ServiceDocumentQueryResult queryResult) {
+    private DeferredResult<List<ClusterDto>> getInfoFromHostsWihtinPlacementZone(String projectLink,
+            ServiceDocumentQueryResult queryResult, Operation get) {
         Map<String, ElasticPlacementZoneConfigurationState> ePZstates = QueryUtil
                 .extractQueryResult(
                         queryResult, ElasticPlacementZoneConfigurationState.class);
         List<DeferredResult<ClusterDto>> clusterDtoList = ePZstates.keySet().stream()
-                .map(key -> ClusterUtils.getHostsWihtinPlacementZone(
-                        ePZstates.get(key).resourcePoolState.documentSelfLink, getHost())
+                .map(key -> ClusterUtils.getHostsWithinPlacementZone(ePZstates.get(key)
+                                .resourcePoolState.documentSelfLink, projectLink, get, getHost())
                         .thenApply(computeStates -> {
                             return ClusterUtils.placementZoneAndItsHostsToClusterDto(
                                     ePZstates.get(key).resourcePoolState, computeStates);
@@ -408,12 +408,13 @@ public class ClusterService extends StatelessService {
     }
 
     private DeferredResult<List<ClusterDto>> getInfoFromHostsWihtinOnePlacementZone(
-            ElasticPlacementZoneConfigurationState queryResult) {
+            String projectLink, ElasticPlacementZoneConfigurationState queryResult) {
         Map<String, ElasticPlacementZoneConfigurationState> ePZstates = new HashMap<>();
         ePZstates.put(queryResult.documentSelfLink, queryResult);
         List<DeferredResult<ClusterDto>> clusterDtoList = ePZstates.keySet().stream()
-                .map(key -> ClusterUtils.getHostsWihtinPlacementZone(
-                        ePZstates.get(key).resourcePoolState.documentSelfLink, getHost())
+                .map(key -> ClusterUtils.getHostsWithinPlacementZone(
+                        ePZstates.get(key).resourcePoolState.documentSelfLink, projectLink,
+                        getHost())
                         .thenApply(computeStates -> {
                             return ClusterUtils.placementZoneAndItsHostsToClusterDto(
                                     ePZstates.get(key).resourcePoolState, computeStates);
@@ -422,11 +423,11 @@ public class ClusterService extends StatelessService {
         return DeferredResult.allOf(clusterDtoList);
     }
 
-    private DeferredResult<Operation> deleteHostsWihtinOnePlacementZone(
-            ServiceHost host, String resourcePoolLink) {
+    private DeferredResult<Operation> deleteHostsWihtinOnePlacementZone(ServiceHost host,
+            String resourcePoolLink, String projectLink) {
 
-        DeferredResult<Operation> deleteNodesDR = ClusterUtils.getHostsWihtinPlacementZone(
-                resourcePoolLink, getHost())
+        DeferredResult<Operation> deleteNodesDR = ClusterUtils.getHostsWithinPlacementZone(
+                resourcePoolLink, projectLink, getHost())
                 .thenCompose(computeStates -> {
 
                     if (computeStates.isEmpty()) {
@@ -514,9 +515,7 @@ public class ClusterService extends StatelessService {
         hs.hostState.customProperties.put(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME,
                 PropertyUtils.getPropertyString(hostSpec.hostState.customProperties,
                         ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME)
-                        .orElseThrow(() -> new LocalizableValidationException(
-                                "Certificate must not be null.",
-                                "common.certificate.null")));
+                        .orElse(null));
 
         sendWithDeferredResult(Operation
                 .createPut(UriUtils.buildUri(getHost(),
@@ -551,7 +550,8 @@ public class ClusterService extends StatelessService {
         List<String> hostTenantLinks = hostSpec.getHostTenantLinks();
 
         if (hostTenantLinks == null || hostTenantLinks.isEmpty()
-                || hostTenantLinks.stream().noneMatch(PATTERN_PROJECT_TENANT_LINK.asPredicate())) {
+                || (hostTenantLinks.stream().noneMatch(PATTERN_PROJECT_TENANT_LINK.asPredicate())
+                        && hostTenantLinks.stream().noneMatch(PATTERN_TENANT_LINK.asPredicate()))) {
             throw new LocalizableValidationException(
                     "Project context is required", "auth.project.context.required");
         }
@@ -634,12 +634,15 @@ public class ClusterService extends StatelessService {
                 ResourcePoolService.FACTORY_LINK, clusterId);
         String resourcePoolLink = UriUtils.buildUriPath(
                 ResourcePoolService.FACTORY_LINK, clusterId);
-        deleteHostsWihtinOnePlacementZone(getHost(), resourcePoolLink)
+        String projectLink = OperationUtil.extractProjectFromHeader(delete);
+        deleteHostsWihtinOnePlacementZone(getHost(), resourcePoolLink, projectLink)
                 .thenAccept(operation -> {
                     if (operation == null || DeploymentProfileConfig.getInstance().isTest()) {
                         //TODO if MockRequestBrokerService behaves as Task service we can remove the
                         // check for test context
-                        ClusterUtils.deletePZ(pZILink, delete, getHost());
+                        ClusterUtils.deletePlacementZoneAndPlacement(pZILink, resourcePoolLink,
+                                delete, getHost());
+
                     } else {
                         String containerHostRemovalTaskState = operation
                                 .getBody(ContainerHostRemovalTaskState.class).documentSelfLink;
@@ -654,7 +657,8 @@ public class ClusterService extends StatelessService {
                                     TaskStage.FAILED, TaskStage.CANCELLED);
                             if (terminalStages.contains(eats.taskInfo.stage)) {
                                 subscriptionManager.close();
-                                ClusterUtils.deletePZ(pZILink, delete, getHost());
+                                ClusterUtils.deletePlacementZoneAndPlacement(pZILink,
+                                        resourcePoolLink, delete, getHost());
                             }
                         }, true, null);
                     }

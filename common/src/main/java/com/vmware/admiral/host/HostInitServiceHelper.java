@@ -102,11 +102,10 @@ public abstract class HostInitServiceHelper {
             try {
                 Field selfLink = serviceClass.getDeclaredField(factoryOrSelfLink);
                 if (selfLink != null) {
-                    selfLink.setAccessible(true);
                     Object value = selfLink.get(serviceInstance);
                     servicesForHelathceck.add(value.toString());
                 }
-            } catch (NoSuchFieldException | SecurityException | IllegalAccessException
+            } catch (NoSuchFieldException | IllegalAccessException
                     | IllegalArgumentException e) {
                 host.log(Level.SEVERE, "Exception while getting %s field for Service: %s :%s",
                         factoryOrSelfLink, serviceClass, e);

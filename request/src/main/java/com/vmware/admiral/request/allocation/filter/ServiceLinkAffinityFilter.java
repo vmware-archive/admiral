@@ -67,7 +67,6 @@ public class ServiceLinkAffinityFilter extends BaseAffinityHostFilter {
         QueryTask q = QueryUtil.buildPropertyQuery(ContainerState.class,
                 ContainerState.FIELD_NAME_COMPOSITE_COMPONENT_LINK, UriUtils.buildUriPath(
                         CompositeComponentFactoryService.SELF_LINK, state.contextId));
-        q.taskInfo.isDirect = false;
         q.querySpec.resultLimit = ServiceDocumentQuery.DEFAULT_QUERY_RESULT_LIMIT;
         QueryUtil.addExpandOption(q);
 

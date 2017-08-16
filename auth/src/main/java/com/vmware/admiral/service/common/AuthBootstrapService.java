@@ -73,23 +73,23 @@ public class AuthBootstrapService extends StatefulService {
 
     @Override
     public void handleStart(Operation post) {
-        getHost().log(Level.INFO, "handleStart");
+        AuthConfigProvider provider = AuthUtil.getPreferredProvider(AuthConfigProvider.class);
 
         if (!ServiceHost.isServiceCreate(post)) {
             // do not perform bootstrap logic when the post is NOT from direct client, eg: node
             // restart
+            provider.initConfig(getHost(), post);
             post.complete();
             return;
         }
 
-        AuthConfigProvider provider = AuthUtil.getPreferredProvider(AuthConfigProvider.class);
+        provider.initBootConfig(getHost(), post);
         provider.initConfig(getHost(), post);
+        post.complete();
     }
 
     @Override
     public void handlePut(Operation put) {
-        getHost().log(Level.INFO, "handlePut");
-
         if (put.hasPragmaDirective(Operation.PRAGMA_DIRECTIVE_POST_TO_PUT)) {
             // converted PUT due to IDEMPOTENT_POST option
             logInfo("Task has already started. Ignoring converted PUT.");

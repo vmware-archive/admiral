@@ -13,7 +13,9 @@ import { AppComponent } from './app.component';
 import { TranslatePipe } from './utils/i18n.pipe';
 import { ArrayElementsCountPipe } from './utils/count.pipe';
 import { ProjectNamePipe } from './utils/project-name.pipe';
-import { ProjectMembersCountPipe } from "./utils/members-count.pipe";
+import { ProjectMembersCountPipe } from './utils/members-count.pipe';
+import { MicroTimePipe } from './utils/microtime-pipe';
+import { SeverityTextPipe } from './utils/severity-text.pipe';
 import { BreakOutModalDirective } from "./directives/shared/break-out-modal.directive";
 
 import { AdministrationComponent } from './views/administration/administration.component';
@@ -22,6 +24,8 @@ import { MainResourcesComputeComponent } from './views/main-resources-compute/ma
 
 import { IdentityManagementComponent } from './views/identity-management/identity-management.component';
 import { UsersGroupsComponent } from "./views/identity-management/users-groups.component";
+import { UsersGroupsAssignRolesComponent } from "./views/identity-management/users-groups-assign-roles.component";
+
 import { ProjectsComponent } from './views/projects/projects.component';
 import { ProjectDetailsComponent } from './views/projects/project-details/project-details.component';
 import { ProjectSummaryComponent } from "./views/projects/project-details/project-summary.component";
@@ -35,6 +39,7 @@ import { DeleteConfirmationComponent } from './views/delete-confirmation/delete-
 import { RegistriesComponent } from './views/registries/registries.component';
 import { ConfigurationComponent } from './views/configuration/configuration.component';
 import { LogsComponent } from './views/logs/logs.component';
+import { SystemLogsComponent } from './views/logs/system-logs.component';
 
 import { DashboardComponent } from './views/dashboard/dashboard.component';
 import { FormerViewComponent, FormerPlaceholderViewComponent } from './views/former-view/former-view.component';
@@ -46,6 +51,7 @@ import { ClusterResourcesComponent } from './views/clusters/cluster-details/clus
 import { ClusterAddHostComponent } from './views/clusters/cluster-details/cluster-add-host.component';
 import { ClusterCreateComponent } from './views/clusters/cluster-create/cluster-create.component';
 import { VerifyCertificateComponent } from "./views/verify-certificate/verify-certificate.component";
+import { TagDetailsContainersComponent } from "./views/tag-details/tag-details-containers.component";
 
 import { GridViewComponent } from './components/grid-view/grid-view.component';
 import { CardComponent } from './components/card/card.component';
@@ -55,6 +61,7 @@ import { MaximizableBehaviourComponent } from "./components/maximizable-behaviou
 import { BackButtonComponent } from "./components/back-button/back-button.component";
 import { SearchComponent } from "./components/search/search.component";
 import { SimpleSearchComponent } from './components/search/simple-search.component';
+import { DropdownComponent } from './components/dropdown/dropdown.component';
 import { NavigationContainerComponent } from "./components/navigation-container/navigation-container.component";
 import { LoginComponent } from './components/login/login.component';
 
@@ -66,7 +73,12 @@ import { DeploymentDetailsComponent } from './kubernetes/deployments/details/dep
 import { ServiceListComponent } from './kubernetes/services/list/service-list.component';
 import { ServiceDetailsComponent } from './kubernetes/services/details/service-details.component';
 import { TagDetailsComponent } from './views/tag-details/tag-details.component';
+import { AllowNavigationDirective } from './directives/shared/allow-navigation.directive';
 
+import { DummyComponent } from './components/dummy/dummy.component';
+
+// compute views
+import { InstanceTypesComponent } from './views/profiles/instance-types/instance-types.component';
 
 export const ADMIRAL_DECLARATIONS = [
   AppComponent,
@@ -74,7 +86,10 @@ export const ADMIRAL_DECLARATIONS = [
   ArrayElementsCountPipe,
   ProjectNamePipe,
   ProjectMembersCountPipe,
+  MicroTimePipe,
+  SeverityTextPipe,
   BreakOutModalDirective,
+  AllowNavigationDirective,
 
   AdministrationComponent,
   MainResourcesComponent,
@@ -86,6 +101,7 @@ export const ADMIRAL_DECLARATIONS = [
 
   IdentityManagementComponent,
   UsersGroupsComponent,
+  UsersGroupsAssignRolesComponent,
   ProjectsComponent,
   ProjectDetailsComponent,
   ProjectSummaryComponent,
@@ -98,6 +114,8 @@ export const ADMIRAL_DECLARATIONS = [
   RegistriesComponent,
   ConfigurationComponent,
   LogsComponent,
+  SystemLogsComponent,
+  TagDetailsContainersComponent,
 
   DashboardComponent,
   FormerViewComponent,
@@ -117,6 +135,7 @@ export const ADMIRAL_DECLARATIONS = [
   MaximizableBehaviourComponent,
   BackButtonComponent,
   SearchComponent,
+  DropdownComponent,
   NavigationContainerComponent,
   LoginComponent,
 
@@ -127,5 +146,10 @@ export const ADMIRAL_DECLARATIONS = [
   DeploymentDetailsComponent,
   ServiceListComponent,
   ServiceDetailsComponent,
-  TagDetailsComponent
+  TagDetailsComponent,
+
+  DummyComponent,
+
+  // compute exports
+  InstanceTypesComponent
 ];

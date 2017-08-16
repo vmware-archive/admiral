@@ -18,6 +18,7 @@ import java.util.logging.Level;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.container.ShellContainerExecutorService;
+import com.vmware.admiral.compute.container.ShellContainerExecutorService.ShellContainerExecutorResult;
 import com.vmware.admiral.compute.container.ShellContainerExecutorService.ShellContainerExecutorState;
 import com.vmware.admiral.log.EventLogService;
 import com.vmware.admiral.log.EventLogService.EventLogState;
@@ -33,6 +34,7 @@ import com.vmware.xenon.common.Utils;
  * See: https://docs.docker.com/docker-trusted-registry/userguide/
  */
 public class AbstractCertificateDistributionService extends StatelessService {
+
     public static final int MAX_RETRIES = Integer.getInteger(
             "cmp.management.query.certificatedistribution.maxRetry", 3);
     public static final long QUERY_RETRIEVAL_RETRY_INTERVAL_SECONDS = Integer.getInteger(
@@ -84,16 +86,19 @@ public class AbstractCertificateDistributionService extends StatelessService {
                 } else {
                     String errMsg = "Failed to upload registry certificate for [%s] to host [%s]"
                             + " after %s attempts. Your host may experience issues connecting to"
-                            + " this registry. For more info see: https://docs.docker.com/registry/insecure/#/using-self-signed-certificates";
+                            + " this registry. For more info see:"
+                            + " https://docs.docker.com/registry/insecure/#/using-self-signed-certificates";
                     logSevere(errMsg, registryAddress, hostLink, MAX_RETRIES);
                     publishEventLog(String.format(errMsg, registryAddress, hostLink, MAX_RETRIES),
                             tenantLinks);
                 }
             } else {
-                logInfo("Registry certificate successfully uploaded to host %s for registry %s",
-                        hostLink, getCertificateDirName(registryAddress));
+                ShellContainerExecutorResult result = o.getBody(ShellContainerExecutorResult.class);
+                logInfo("Registry certificate successfully uploaded to host %s for registry %s."
+                                + " Exit code: %s",
+                        hostLink, getCertificateDirName(registryAddress), result.exitCode);
                 log(Level.FINEST, "Command result (possibly truncated):\n---\n%1.1024s\n---\n",
-                        o.getBody(String.class));
+                        result.output);
             }
         }));
     }

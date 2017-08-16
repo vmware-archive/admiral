@@ -88,7 +88,7 @@ public class EndpointInterceptor {
         List<String> profileLinks = new ArrayList<>();
         return queryHelper.queryLinks(link -> profileLinks.add(link))
                 .thenCompose(ignore -> {
-                    return DeferredResult.allOf(profileLinks.stream()
+                    return DeferredResult.<Operation>allOf(profileLinks.stream()
                             .map(link -> Operation.createDelete(service.getHost(), link)
                                     .setReferer(service.getUri()))
                             .map(op -> service.getHost().sendWithDeferredResult(op))

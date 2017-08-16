@@ -8,6 +8,7 @@
  * and license terms. Your use of these subcomponents is subject to the terms and
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
+var $ = require('jquery');
 var byteUnits = ['Bytes', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
 var configurationAdapters = null;
 var configurationProperties = null;
@@ -59,6 +60,9 @@ var utils = {
             size.unit = byteUnits[1]; // kB
         }
         return size;
+    },
+    escapeHtml: function (htmlString) {
+        return $('<div>').text(htmlString).html();
     }
 };
 module.exports = utils;

@@ -16,8 +16,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import static com.vmware.admiral.compute.ComputeConstants.COMPUTE_STORAGE_CONSTRAINT_KEY;
+
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -27,9 +30,11 @@ import org.junit.Test;
 
 import com.vmware.admiral.common.test.CommonTestStateFactory;
 import com.vmware.admiral.compute.ComputeConstants;
+import com.vmware.admiral.compute.profile.ComputeImageDescription;
 import com.vmware.admiral.compute.profile.ComputeProfileService;
 import com.vmware.admiral.compute.profile.ImageProfileService;
-import com.vmware.admiral.compute.profile.InstanceTypeService;
+import com.vmware.admiral.compute.profile.InstanceTypeDescription;
+import com.vmware.admiral.compute.profile.InstanceTypeService.InstanceTypeFactoryService;
 import com.vmware.admiral.compute.profile.NetworkProfileService;
 import com.vmware.admiral.compute.profile.ProfileService;
 import com.vmware.admiral.compute.profile.StorageProfileService;
@@ -40,6 +45,7 @@ import com.vmware.photon.controller.model.adapters.vsphere.CustomProperties;
 import com.vmware.photon.controller.model.constants.PhotonModelConstants;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.DiskService;
+import com.vmware.photon.controller.model.resources.DiskService.DiskState;
 import com.vmware.photon.controller.model.resources.ResourceGroupService;
 import com.vmware.photon.controller.model.resources.StorageDescriptionService;
 import com.vmware.photon.controller.model.resources.TagFactoryService;
@@ -59,12 +65,13 @@ public class ComputeDescriptionDiskEnhancerTest extends BaseComputeDescriptionEn
 
     @Before
     public void setup() throws Throwable {
-        HostInitServiceHelper.startServices(host, TestInitialBootService.class);
+        HostInitServiceHelper.startServices(host, TestInitialBootService.class,
+                InstanceTypeFactoryService.class);
         HostInitServiceHelper.startServiceFactories(host,
                 ProfileService.class,
                 ComputeProfileService.class, StorageProfileService.class, ImageProfileService.class,
-                InstanceTypeService.class, NetworkProfileService.class,
-                DiskService.class, StorageDescriptionService.class, ResourceGroupService.class);
+                NetworkProfileService.class, DiskService.class, StorageDescriptionService.class,
+                ResourceGroupService.class);
         host.startFactory(TagService.class, TagFactoryService::new);
         waitForServiceAvailability(ProfileService.FACTORY_LINK);
         host.sendRequest(Operation.createPost(
@@ -83,7 +90,10 @@ public class ComputeDescriptionDiskEnhancerTest extends BaseComputeDescriptionEn
     public void testEnhanceDisk() throws Throwable {
         // Build disk description
         cd.diskDescLinks = buildDiskStates();
-
+        cd.constraints = new HashMap<>();
+        Constraint constraint = new Constraint();
+        constraint.conditions = buildConstraintConditions();
+        cd.constraints.put(COMPUTE_STORAGE_CONSTRAINT_KEY, constraint);
         createEnhanceContext(buildStorageProfileWithConstraints());
         // Use case 1: CD (Disk1) with all hard constraints
         // Use case 2: CD (Disk2) with all soft constraints & all matching
@@ -94,8 +104,10 @@ public class ComputeDescriptionDiskEnhancerTest extends BaseComputeDescriptionEn
 
         enhance(new ComputeDescriptionDiskEnhancer(host, host.getReferer()));
 
+        assertEquals(7, cd.diskDescLinks.size());
         assertDiskStates(diskState -> {
-            if (diskState.name.equals("Disk1") || diskState.name.equals("Disk3")) {
+            if (diskState.name.equals("Disk1") || diskState.name.equals("Disk3") || diskState.name
+                    .equals("boot-disk")) {
                 assertNotNull(diskState.customProperties);
                 assertEquals(1, diskState.customProperties.size());
             } else if (diskState.name.equals("Disk2")) {
@@ -114,7 +126,8 @@ public class ComputeDescriptionDiskEnhancerTest extends BaseComputeDescriptionEn
     @Test
     public void testEnhanceDiskWithDefaultStorageItem() throws Throwable {
         // Build disk description
-        cd.diskDescLinks = Arrays.asList(buildDiskState1(false, false).documentSelfLink);
+        cd.diskDescLinks = new ArrayList<>();
+        cd.diskDescLinks.add(buildDiskState1(false, false).documentSelfLink);
 
         createEnhanceContext(buildStorageProfileWithConstraints());
         // Use case 1: CD (Disk1) with no constraints and has default storage item as a match
@@ -122,7 +135,7 @@ public class ComputeDescriptionDiskEnhancerTest extends BaseComputeDescriptionEn
         enhance(new ComputeDescriptionDiskEnhancer(host, host.getReferer()));
 
         assertDiskStates(diskState -> {
-            if (diskState.name.equals("Disk1")) {
+            if (diskState.name.equals("Disk1") || diskState.name.equals("boot-disk")) {
                 assertNotNull(diskState.customProperties);
                 assertEquals(2, diskState.customProperties.size());
             }
@@ -132,7 +145,27 @@ public class ComputeDescriptionDiskEnhancerTest extends BaseComputeDescriptionEn
     @Test
     public void testFailureEnhanceEncryptedDiskWithDefaultStorageItem() throws Throwable {
         // Build disk description
-        cd.diskDescLinks = Arrays.asList(buildDiskState1(true, false).documentSelfLink);
+        cd.diskDescLinks = new ArrayList<>();
+        cd.diskDescLinks.add(buildDiskState1(true, false).documentSelfLink);
+
+        createEnhanceContext(buildStorageProfileWithConstraints());
+        // Use case 1: CD (Disk1) with no constraints and has default storage item as a match
+
+        enhanceDiskFailure();
+    }
+
+    @Test
+    public void testFailureImageDiskConstraint() throws Throwable {
+        // Build disk description
+        cd.constraints = new HashMap<>();
+        Constraint constraint = new Constraint();
+        List<Constraint.Condition> conditions = new ArrayList<>();
+        conditions.add(Constraint.Condition.forTag("TEST", null,
+                Constraint.Condition.Enforcement.HARD, QueryTask.Query.Occurance.MUST_OCCUR));
+        constraint.conditions = conditions;
+        cd.constraints.put(COMPUTE_STORAGE_CONSTRAINT_KEY, constraint);
+        cd.diskDescLinks = new ArrayList<>();
+        cd.diskDescLinks.add(buildDiskState1(true, false).documentSelfLink);
 
         createEnhanceContext(buildStorageProfileWithConstraints());
         // Use case 1: CD (Disk1) with no constraints and has default storage item as a match
@@ -143,7 +176,8 @@ public class ComputeDescriptionDiskEnhancerTest extends BaseComputeDescriptionEn
     @Test
     public void testEnhanceDiskWithNoConstraintAndEncryption() throws Throwable {
         // Build disk description
-        cd.diskDescLinks = Arrays.asList(buildDiskState1(true, false).documentSelfLink);
+        cd.diskDescLinks = new ArrayList<>();
+        cd.diskDescLinks.add(buildDiskState1(true, false).documentSelfLink);
 
         createEnhanceContext(buildStorageProfileForEncryption());
 
@@ -189,13 +223,21 @@ public class ComputeDescriptionDiskEnhancerTest extends BaseComputeDescriptionEn
         enhanceDiskFailure();
 
         // Now get all the disk states to find the properties size.
-        assertDiskStates(diskState -> assertNull(diskState.customProperties));
+        assertDiskStates(diskState -> {
+            if (diskState.name.equals("boot-disk")) {
+                assertNotNull(diskState.customProperties);
+                assertEquals(2, diskState.customProperties.size());
+            } else {
+                assertNull(diskState.customProperties);
+            }
+        });
     }
 
     @Test
     public void testEnhanceDiskWithResourceGroup() throws Throwable {
         // Build disk description
-        cd.diskDescLinks = Arrays.asList(buildDiskState1(true).documentSelfLink);
+        cd.diskDescLinks = new ArrayList<>();
+        cd.diskDescLinks.add(buildDiskState1(true).documentSelfLink);
 
         createEnhanceContext(buildStorageProfileForEncryption(createResourceGroupState()
                 .documentSelfLink));
@@ -205,17 +247,23 @@ public class ComputeDescriptionDiskEnhancerTest extends BaseComputeDescriptionEn
         enhance(new ComputeDescriptionDiskEnhancer(host, host.getReferer()));
 
         assertDiskStates(diskState -> {
-            assertNotNull(diskState.customProperties);
-            assertEquals(1, diskState.customProperties.size());
-            assertNotNull(diskState.groupLinks);
-            assertEquals(1, diskState.groupLinks.size());
+            if (diskState.name.equals("boot-disk")) {
+                assertNotNull(diskState.customProperties);
+                assertEquals(2, diskState.customProperties.size());
+            } else {
+                assertNotNull(diskState.customProperties);
+                assertEquals(1, diskState.customProperties.size());
+                assertNotNull(diskState.groupLinks);
+                assertEquals(1, diskState.groupLinks.size());
+            }
         });
     }
 
     @Test
     public void testEnhanceDiskWithSDAndResourceGroup() throws Throwable {
         // Build disk description
-        cd.diskDescLinks = Arrays.asList(buildDiskState1(true).documentSelfLink);
+        cd.diskDescLinks = new ArrayList<>();
+        cd.diskDescLinks.add(buildDiskState1(true).documentSelfLink);
 
         createEnhanceContext(buildStorageProfileForEncryption());
         // Use case 1: CD (Disk1) with all hard constraints & encryption for matching SI with RG
@@ -224,15 +272,21 @@ public class ComputeDescriptionDiskEnhancerTest extends BaseComputeDescriptionEn
         enhance(new ComputeDescriptionDiskEnhancer(host, host.getReferer()));
 
         assertDiskStates(diskState -> {
-            assertNotNull(diskState.customProperties);
-            assertEquals(1, diskState.customProperties.size());
+            if (diskState.name.equals("boot-disk")) {
+                assertNotNull(diskState.customProperties);
+                assertEquals(2, diskState.customProperties.size());
+            } else {
+                assertNotNull(diskState.customProperties);
+                assertEquals(1, diskState.customProperties.size());
+            }
         });
     }
 
     @Test
     public void testEnhanceDiskWithDefaultEncryption() throws Throwable {
         // Build disk description
-        cd.diskDescLinks = Arrays.asList(buildDiskState1(true).documentSelfLink);
+        cd.diskDescLinks = new ArrayList<>();
+        cd.diskDescLinks.add(buildDiskState1(true).documentSelfLink);
 
         createEnhanceContext(buildStorageProfileForEncryption((String) null));
         // Use case 1: CD (Disk2) with all soft constraints & encryption for matching SI's
@@ -288,6 +342,39 @@ public class ComputeDescriptionDiskEnhancerTest extends BaseComputeDescriptionEn
         assertDiskStates(diskState -> assertNull(diskState.customProperties));
     }
 
+    @Test
+    public void testEnhanceDiskCreateOsDisk() throws Throwable {
+
+        cd.diskDescLinks = Collections.emptyList();
+
+        createEnhanceContext();
+
+        enhance(new ComputeDescriptionDiskEnhancer(host, host.getReferer()));
+
+        assertEquals("OS DiskState is not created", 1, cd.diskDescLinks.size());
+
+        // Guarantees the OS Disk State is persisted
+        assertDiskStates(diskState -> {
+        });
+    }
+
+    @Test
+    public void testEnhanceDiskCreateOsDisk_skipPersistence() throws Throwable {
+
+        cd.diskDescLinks = Collections.emptyList();
+
+        createEnhanceContext();
+        context.skipPersistence = true;
+
+        enhance(new ComputeDescriptionDiskEnhancer(host, host.getReferer()));
+
+        assertEquals("OS DiskState is not created", 1, cd.diskDescLinks.size());
+
+        // Guarantees the OS Disk State is NOT persisted
+        List<String> diskStateLinks = getDocumentLinksOfType(DiskState.class);
+        assertTrue("OS DiskState should not have been persisted", diskStateLinks.isEmpty());
+    }
+
     private void enhanceDiskFailure() {
         ComputeDescriptionDiskEnhancer enhancer = new ComputeDescriptionDiskEnhancer(host,
                 host.getReferer());
@@ -295,6 +382,7 @@ public class ComputeDescriptionDiskEnhancerTest extends BaseComputeDescriptionEn
 
         TestContext ctx = testCreate(1);
         result.whenComplete((desc, t) -> {
+            assertNotNull(t);
             if (t != null) {
                 assertNotNull(t.getMessage());
                 assertTrue(t.getMessage().contains("No matching storage defined in profile"));
@@ -326,6 +414,16 @@ public class ComputeDescriptionDiskEnhancerTest extends BaseComputeDescriptionEn
     private ProfileService.ProfileStateExpanded buildProfileServiceWithStorage(
             StorageProfile storageProfile) throws Throwable {
         ComputeProfileService.ComputeProfile compute = new ComputeProfileService.ComputeProfile();
+        compute.imageMapping = new HashMap<>();
+        ComputeImageDescription ciDesc = new ComputeImageDescription();
+        ciDesc.imageByRegion = new HashMap<>();
+        ciDesc.imageByRegion.put("eu-west-1", "ami-2f575749");
+        ciDesc.imageByRegion.put("us-east-1", "ami-74f46e62");
+        compute.imageMapping.put("coreos", ciDesc);
+        compute.instanceTypeMapping = new HashMap<>();
+        InstanceTypeDescription itDesc = new InstanceTypeDescription();
+        itDesc.instanceType = "t2.micro";
+        compute.instanceTypeMapping.put("small", itDesc);
         compute = doPost(compute, ComputeProfileService.FACTORY_LINK);
         StorageProfile storage = storageProfile;
         NetworkProfileService.NetworkProfile networkProfile = new NetworkProfileService.NetworkProfile();
@@ -484,15 +582,14 @@ public class ComputeDescriptionDiskEnhancerTest extends BaseComputeDescriptionEn
         DiskService.DiskState diskState2 = new DiskService.DiskState();
         diskState2.capacityMBytes = 2048;
         diskState2.type = DiskService.DiskType.SSD;
-        diskState2.bootOrder = 2;
         diskState2.name = "Disk2";
         diskState2.constraint = new Constraint();
 
         List<Constraint.Condition> conditions = new ArrayList<>();
         conditions.add(Constraint.Condition.forTag("LOGS_OPTIMIZED", null,
-                Constraint.Condition.Enforcement.SOFT, QueryTask.Query.Occurance.MUST_OCCUR));
+                Constraint.Condition.Enforcement.SOFT, QueryTask.Query.Occurance.SHOULD_OCCUR));
         conditions.add(Constraint.Condition.forTag("REPLICATED", null,
-                Constraint.Condition.Enforcement.SOFT, QueryTask.Query.Occurance.MUST_OCCUR));
+                Constraint.Condition.Enforcement.SOFT, QueryTask.Query.Occurance.SHOULD_OCCUR));
         diskState2.constraint.conditions = conditions;
         diskState2 = doPost(diskState2, DiskService.FACTORY_LINK);
         diskLinks.add(diskState2.documentSelfLink);
@@ -500,7 +597,6 @@ public class ComputeDescriptionDiskEnhancerTest extends BaseComputeDescriptionEn
         DiskService.DiskState diskState3 = new DiskService.DiskState();
         diskState3.capacityMBytes = 1024;
         diskState3.type = DiskService.DiskType.CDROM;
-        diskState3.bootOrder = 3;
         diskState3.name = "Disk3";
         diskState3.constraint = new Constraint();
 
@@ -508,7 +604,7 @@ public class ComputeDescriptionDiskEnhancerTest extends BaseComputeDescriptionEn
         conditions.add(Constraint.Condition.forTag("FAST", null,
                 Constraint.Condition.Enforcement.HARD, QueryTask.Query.Occurance.MUST_OCCUR));
         conditions.add(Constraint.Condition.forTag("HA", null,
-                Constraint.Condition.Enforcement.SOFT, QueryTask.Query.Occurance.MUST_OCCUR));
+                Constraint.Condition.Enforcement.SOFT, QueryTask.Query.Occurance.SHOULD_OCCUR));
         diskState3.constraint.conditions = conditions;
         diskState3 = doPost(diskState3, DiskService.FACTORY_LINK);
         diskLinks.add(diskState3.documentSelfLink);
@@ -516,17 +612,16 @@ public class ComputeDescriptionDiskEnhancerTest extends BaseComputeDescriptionEn
         DiskService.DiskState diskState4 = new DiskService.DiskState();
         diskState4.capacityMBytes = 1024;
         diskState4.type = DiskService.DiskType.HDD;
-        diskState4.bootOrder = 4;
         diskState4.name = "Disk4";
         diskState4.constraint = new Constraint();
 
         conditions = new ArrayList<>();
         conditions.add(Constraint.Condition.forTag("CRITICAL", null,
-                Constraint.Condition.Enforcement.SOFT, QueryTask.Query.Occurance.MUST_OCCUR));
+                Constraint.Condition.Enforcement.SOFT, QueryTask.Query.Occurance.SHOULD_OCCUR));
         conditions.add(Constraint.Condition.forTag("NON_REPLICATED", null,
-                Constraint.Condition.Enforcement.SOFT, QueryTask.Query.Occurance.MUST_OCCUR));
+                Constraint.Condition.Enforcement.SOFT, QueryTask.Query.Occurance.SHOULD_OCCUR));
         conditions.add(Constraint.Condition.forTag("NORMAL", null,
-                Constraint.Condition.Enforcement.SOFT, QueryTask.Query.Occurance.MUST_OCCUR));
+                Constraint.Condition.Enforcement.SOFT, QueryTask.Query.Occurance.SHOULD_OCCUR));
         diskState4.constraint.conditions = conditions;
         diskState4 = doPost(diskState4, DiskService.FACTORY_LINK);
         diskLinks.add(diskState4.documentSelfLink);
@@ -534,15 +629,14 @@ public class ComputeDescriptionDiskEnhancerTest extends BaseComputeDescriptionEn
         DiskService.DiskState diskState5 = new DiskService.DiskState();
         diskState5.capacityMBytes = 512;
         diskState5.type = DiskService.DiskType.FLOPPY;
-        diskState5.bootOrder = 5;
         diskState5.name = "Disk5";
         diskState5.constraint = new Constraint();
 
         conditions = new ArrayList<>();
         conditions.add(Constraint.Condition.forTag("NON_REPLICATED", null,
-                Constraint.Condition.Enforcement.SOFT, QueryTask.Query.Occurance.MUST_OCCUR));
+                Constraint.Condition.Enforcement.SOFT, QueryTask.Query.Occurance.SHOULD_OCCUR));
         conditions.add(Constraint.Condition.forTag("NORMAL", null,
-                Constraint.Condition.Enforcement.SOFT, QueryTask.Query.Occurance.MUST_OCCUR));
+                Constraint.Condition.Enforcement.SOFT, QueryTask.Query.Occurance.SHOULD_OCCUR));
         diskState5.constraint.conditions = conditions;
         diskState5 = doPost(diskState5, DiskService.FACTORY_LINK);
         diskLinks.add(diskState5.documentSelfLink);
@@ -550,7 +644,6 @@ public class ComputeDescriptionDiskEnhancerTest extends BaseComputeDescriptionEn
         DiskService.DiskState diskState6 = new DiskService.DiskState();
         diskState6.capacityMBytes = 512;
         diskState6.type = DiskService.DiskType.FLOPPY;
-        diskState6.bootOrder = 6;
         diskState6.name = "Disk6";
         diskState6.constraint = null;
 
@@ -570,10 +663,8 @@ public class ComputeDescriptionDiskEnhancerTest extends BaseComputeDescriptionEn
         DiskService.DiskState diskState2 = new DiskService.DiskState();
         diskState2.capacityMBytes = 2048;
         diskState2.type = DiskService.DiskType.SSD;
-        diskState2.bootOrder = 2;
         diskState2.name = "Disk2";
         diskState2.encrypted = true;
-        diskState2.persistent = true;
         diskState2.constraint = new Constraint();
 
         List<Constraint.Condition> conditions = new ArrayList<>();
@@ -693,23 +784,24 @@ public class ComputeDescriptionDiskEnhancerTest extends BaseComputeDescriptionEn
         DiskService.DiskState diskState1 = new DiskService.DiskState();
         diskState1.capacityMBytes = 1024;
         diskState1.type = DiskService.DiskType.HDD;
-        diskState1.bootOrder = 1;
         diskState1.name = "Disk1";
         diskState1.encrypted = isEncrypted;
-        diskState1.persistent = true;
         if (withConstraints) {
             diskState1.constraint = new Constraint();
-
-            List<Constraint.Condition> conditions = new ArrayList<>();
-            conditions.add(Constraint.Condition.forTag("FAST", null,
-                    Constraint.Condition.Enforcement.HARD, QueryTask.Query.Occurance.MUST_OCCUR));
-            conditions.add(Constraint.Condition.forTag("HA", null,
-                    Constraint.Condition.Enforcement.HARD, QueryTask.Query.Occurance.MUST_OCCUR));
-            diskState1.constraint.conditions = conditions;
+            diskState1.constraint.conditions = buildConstraintConditions();
         }
         diskState1 = doPost(diskState1, DiskService.FACTORY_LINK);
 
         return diskState1;
+    }
+
+    private List<Constraint.Condition> buildConstraintConditions() {
+        List<Constraint.Condition> conditions = new ArrayList<>();
+        conditions.add(Constraint.Condition.forTag("FAST", null,
+                Constraint.Condition.Enforcement.HARD, QueryTask.Query.Occurance.MUST_OCCUR));
+        conditions.add(Constraint.Condition.forTag("HA", null,
+                Constraint.Condition.Enforcement.HARD, QueryTask.Query.Occurance.MUST_OCCUR));
+        return conditions;
     }
 
     private ArrayList<String> buildDiskStatesForNoStorageItems() throws Throwable {
@@ -718,23 +810,15 @@ public class ComputeDescriptionDiskEnhancerTest extends BaseComputeDescriptionEn
         DiskService.DiskState diskState1 = new DiskService.DiskState();
         diskState1.capacityMBytes = 1024;
         diskState1.type = DiskService.DiskType.HDD;
-        diskState1.bootOrder = 1;
         diskState1.name = "Disk1";
         diskState1.constraint = new Constraint();
-
-        List<Constraint.Condition> conditions = new ArrayList<>();
-        conditions.add(Constraint.Condition.forTag("FAST", null,
-                Constraint.Condition.Enforcement.HARD, QueryTask.Query.Occurance.MUST_OCCUR));
-        conditions.add(Constraint.Condition.forTag("HA", null,
-                Constraint.Condition.Enforcement.HARD, QueryTask.Query.Occurance.MUST_OCCUR));
-        diskState1.constraint.conditions = conditions;
+        diskState1.constraint.conditions = buildConstraintConditions();
         diskState1 = doPost(diskState1, DiskService.FACTORY_LINK);
         diskLinks.add(diskState1.documentSelfLink);
 
         DiskService.DiskState diskState2 = new DiskService.DiskState();
         diskState2.capacityMBytes = 1024;
         diskState2.type = DiskService.DiskType.CDROM;
-        diskState2.bootOrder = 3;
         diskState2.name = "Disk2";
         diskState2.constraint = new Constraint();
         diskState2 = doPost(diskState2, DiskService.FACTORY_LINK);
@@ -749,15 +833,14 @@ public class ComputeDescriptionDiskEnhancerTest extends BaseComputeDescriptionEn
         DiskService.DiskState diskState2 = new DiskService.DiskState();
         diskState2.capacityMBytes = 2048;
         diskState2.type = DiskService.DiskType.SSD;
-        diskState2.bootOrder = 2;
         diskState2.name = "Disk1";
         diskState2.constraint = new Constraint();
 
         List<Constraint.Condition> conditions = new ArrayList<>();
         conditions.add(Constraint.Condition.forTag("LOGS_OPTIMIZED", null,
-                Constraint.Condition.Enforcement.SOFT, QueryTask.Query.Occurance.MUST_OCCUR));
+                Constraint.Condition.Enforcement.SOFT, QueryTask.Query.Occurance.SHOULD_OCCUR));
         conditions.add(Constraint.Condition.forTag("REPLICATED", null,
-                Constraint.Condition.Enforcement.SOFT, QueryTask.Query.Occurance.MUST_OCCUR));
+                Constraint.Condition.Enforcement.SOFT, QueryTask.Query.Occurance.SHOULD_OCCUR));
         diskState2.constraint.conditions = conditions;
         diskState2 = doPost(diskState2, DiskService.FACTORY_LINK);
         diskLinks.add(diskState2.documentSelfLink);

@@ -23,6 +23,7 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.photon.controller.model.resources.EndpointService;
@@ -49,7 +50,7 @@ public class ImageSearchService extends StatelessService {
      * Input query parameters supported:
      * <ul>
      * <li>{@value #URI_PARAM_ENDPOINT}: mandatory end-point query which should be resolved to
-     * single end-point state</li>
+     * specific end-point states</li>
      * <li>{@value UriUtils#URI_PARAM_ODATA_FILTER}: optional image specific filter</li>
      * <li>{@value UriUtils#URI_PARAM_ODATA_TENANTLINKS}: optional single tenant</li>
      * </ul>
@@ -127,32 +128,23 @@ public class ImageSearchService extends StatelessService {
                         return;
                     }
 
-                    Map<String, Object> endpointStates = op
+                    Map<String, Object> endpointStateDocuments = op
                             .getBody(ODataFactoryQueryResult.class).documents;
 
-                    if (endpointStates.size() == 0) {
+                    if (endpointStateDocuments.size() == 0) {
                         getOp.fail(new IllegalArgumentException(
                                 "'" + URI_PARAM_ENDPOINT + "' query param ("
                                         + endpointQuery + ") is not resolved to EndpointState"));
                         return;
                     }
 
-                    if (endpointStates.size() > 1) {
-                        getOp.fail(new IllegalArgumentException(
-                                "'" + URI_PARAM_ENDPOINT + "' query param ("
-                                        + endpointQuery + ") is resolved to multiple ("
-                                        + endpointStates.size() + ") EndpointStates"));
-                        return;
-                    }
+                    List<EndpointState> endpointStates = endpointStateDocuments.values().stream()
+                            .map(json -> Utils.fromJson(json, EndpointState.class)).collect(Collectors.toList());
 
-                    // Once end-point is resolved continue with image search
-                    EndpointState endpointState = Utils.fromJson(
-                            endpointStates.values().iterator().next(), EndpointState.class);
+                    logFine("'%s' endpoint query resolved to '%s' endpoints.", endpointQuery,
+                            endpointStates.size());
 
-                    logFine("'%s' endpoint query resolved to '%s' endpoint.", endpointQuery,
-                            endpointState.name);
-
-                    String imagesFilter = calculateImagesFilter(filter, tenantLink, endpointState);
+                    String imagesFilter = calculateImagesFilter(filter, tenantLink, endpointStates);
 
                     searchImages(getOp, queryParams, imagesFilter);
                 }));
@@ -170,28 +162,36 @@ public class ImageSearchService extends StatelessService {
     String calculateImagesFilter(
             String filter,
             String tenantLink,
-            EndpointState endpointState) {
-
-        final String endpointLinkFilter = ImageState.FIELD_NAME_ENDPOINT_LINK + " eq '"
-                + endpointState.documentSelfLink + "'";
-
-        final String endpointTypeFilter = ImageState.FIELD_NAME_ENDPOINT_TYPE + " eq '"
-                + endpointState.endpointType + "'";
+            List<EndpointState> endpointStates) {
 
         String tenantLinkFilter = null;
-
         if (tenantLink != null && !tenantLink.isEmpty()) {
-            tenantLinkFilter = ImageState.FIELD_NAME_TENANT_LINKS + "/item eq '" + tenantLink + "'";
+            tenantLinkFilter =
+                  ImageState.FIELD_NAME_TENANT_LINKS + "/item eq '" + tenantLink + "'";
         }
 
-        // IMPORTANT: The order of boolean clauses and the brackets used is of HIGH importance!
-        // Also tenantLinks related clauses are very sensitive.
-        // Please, touch with care.
+        String generatedFilter = null;
+        for (EndpointState endpointState : endpointStates) {
+            // IMPORTANT: The order of boolean clauses and the brackets used is of HIGH importance!
+            // Also tenantLinks related clauses are very sensitive.
+            // Please, touch with care.
+            final String endpointLinkFilter = ImageState.FIELD_NAME_ENDPOINT_LINK + " eq '"
+                    + endpointState.documentSelfLink + "'";
+            String publicCriteria = ImageState.FIELD_NAME_ENDPOINT_TYPE + " eq '"
+                    + endpointState.endpointType + "'";
+            String privateCriteria = bool(endpointLinkFilter, "and", tenantLinkFilter);
+            String publicOrPrivateCriteria = bool(publicCriteria, "or", privateCriteria);
 
-        String publicCriteria = endpointTypeFilter;
-        String privateCriteria = bool(endpointLinkFilter, "and", tenantLinkFilter);
+            if (generatedFilter == null) {
+                generatedFilter = publicOrPrivateCriteria;
+            } else {
+                //Union of all the private and public images belonging to endpointState with
+                // image set
+                generatedFilter = bool(generatedFilter, "or", publicOrPrivateCriteria);
+            }
 
-        return bool(filter, "and", bool(publicCriteria, "or", privateCriteria));
+        }
+        return bool(filter, "and", generatedFilter);
     }
 
     /**

@@ -14,6 +14,7 @@ package com.vmware.admiral.adapter.docker.mock;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 import org.junit.After;
@@ -70,6 +71,7 @@ public class BaseMockDockerTestCase extends BaseTestCase {
 
     @Before
     public void setUpMockDockerHost() throws Throwable {
+        long initTime = System.nanoTime();
         HostInitTestDcpServicesConfig.startServices(host);
         HostInitPhotonModelServiceConfig.startServices(host);
         HostInitCommonServiceConfig.startServices(host);
@@ -121,6 +123,8 @@ public class BaseMockDockerTestCase extends BaseTestCase {
                 Operation.createPost(UriUtils.buildUri(host, MockTaskFactoryService.SELF_LINK)),
                 new MockTaskFactoryService());
 
+        host.log(Level.INFO, ">>>>>>> setUpMockDockerHost took %d millis",
+                TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - initTime));
     }
 
     @After

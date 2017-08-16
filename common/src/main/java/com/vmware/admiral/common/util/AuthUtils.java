@@ -15,7 +15,10 @@ import java.util.Base64;
 
 import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
 import com.vmware.photon.controller.model.security.util.EncryptionUtils;
+import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
+import com.vmware.xenon.services.common.authn.AuthenticationConstants;
+import com.vmware.xenon.services.common.authn.BasicAuthenticationUtils;
 
 public class AuthUtils {
 
@@ -39,4 +42,16 @@ public class AuthUtils {
         return null;
     }
 
+    public static void cleanupSessionData(Operation op) {
+        String sessionId = BasicAuthenticationUtils.getAuthToken(op);
+        if (sessionId != null && !sessionId.isEmpty()) {
+            op.addResponseHeader(Operation.REQUEST_AUTH_TOKEN_HEADER, "");
+
+            StringBuilder buf = new StringBuilder()
+                    .append(AuthenticationConstants.REQUEST_AUTH_TOKEN_COOKIE).append('=')
+                    .append(sessionId).append("; Path=/; Max-Age=0");
+
+            op.addResponseHeader(Operation.SET_COOKIE_HEADER, buf.toString());
+        }
+    }
 }

@@ -37,25 +37,14 @@ import com.vmware.admiral.auth.project.ProjectFactoryService;
 import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.xenon.common.DeferredResult;
-import com.vmware.xenon.common.ServiceHost;
-import com.vmware.xenon.common.StatelessService;
+import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.TestContext;
 
 public class SecurityContextUtilTest extends AuthBaseTest {
 
-    private static final String REQUESTOR_SERVICE_SELF_LINK = "/test/service/";
-
-    private class TestService extends StatelessService {
-        @Override
-        public ServiceHost getHost() {
-            return host;
-        }
-    }
-
     private Set<AuthRole> rolesAvailableToBasicUsers;
     private Set<AuthRole> rolesAvailableToCloudAdmin;
-    private TestService requestorService;
 
     @Before
     public void init() {
@@ -66,19 +55,19 @@ public class SecurityContextUtilTest extends AuthBaseTest {
 
         // init cloud admin roles
         rolesAvailableToCloudAdmin.add(AuthRole.CLOUD_ADMIN);
-
-        // init requestor service
-        host.addPrivilegedService(TestService.class);
-        requestorService = new TestService();
-        requestorService.setSelfLink(REQUESTOR_SERVICE_SELF_LINK);
     }
 
     @Test
     public void testSecurityContextForCloudAdminAndBasicUser() throws GeneralSecurityException {
-        // Verify for cloud admin.
+        Operation testOperationByAdmin = createAuthorizedOperation(
+                host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN)));
+        Operation testOperationByBasicUser = createAuthorizedOperation(
+                host.assumeIdentity(buildUserServicePath(USER_EMAIL_BASIC_USER)));
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
+
+        // Verify for cloud admin.
         DeferredResult<SecurityContext> result = SecurityContextUtil.getSecurityContext(
-                requestorService, USER_EMAIL_ADMIN);
+                privilegedTestService, testOperationByAdmin);
 
         final SecurityContext[] context = new SecurityContext[1];
         TestContext ctx = testCreate(1);
@@ -98,8 +87,8 @@ public class SecurityContextUtilTest extends AuthBaseTest {
         assertTrue(context[0].roles.contains(AuthRole.BASIC_USER_EXTENDED));
 
         // Verify for basic user.
-        result = SecurityContextUtil.getSecurityContext(
-                requestorService, USER_EMAIL_BASIC_USER);
+        result = SecurityContextUtil.getSecurityContext(privilegedTestService,
+                testOperationByBasicUser);
         TestContext ctx1 = testCreate(1);
         result.whenComplete((securityContext, ex) -> {
             if (ex != null) {
@@ -118,7 +107,9 @@ public class SecurityContextUtilTest extends AuthBaseTest {
 
     @Test
     public void testSecurityContextContainsDirectlyAssignedProjectRoles() throws Throwable {
-        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
+        Operation testOperationByAdmin = createAuthorizedOperation(
+                host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN)));
+
         ProjectState project = new ProjectState();
         project.name = "test";
         project.description = "test-description";
@@ -134,7 +125,7 @@ public class SecurityContextUtilTest extends AuthBaseTest {
         doPatch(projectRoles, project.documentSelfLink);
 
         DeferredResult<SecurityContext> result = SecurityContextUtil.getSecurityContext(
-                requestorService, USER_EMAIL_ADMIN);
+                privilegedTestService, testOperationByAdmin);
 
         final SecurityContext[] context = new SecurityContext[1];
         TestContext ctx = testCreate(1);
@@ -153,17 +144,21 @@ public class SecurityContextUtilTest extends AuthBaseTest {
         assertEquals(project.documentSelfLink, context[0].projects.get(0).documentSelfLink);
         assertTrue(context[0].projects.get(0).roles.contains(AuthRole.PROJECT_ADMIN));
         assertTrue(context[0].projects.get(0).roles.contains(AuthRole.PROJECT_MEMBER));
+        assertTrue(context[0].projects.get(0).roles.contains(AuthRole.PROJECT_MEMBER_EXTENDED));
         assertTrue(context[0].projects.get(0).roles.contains(AuthRole.PROJECT_VIEWER));
     }
 
     @Test
     public void testSecurityContextContainsAllRolesForMultipleProjects() throws Throwable {
+        Operation testOperationByAdmin = createAuthorizedOperation(
+                host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN)));
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN2));
+
         // Scenario: create 2 projects, assign fritz as project admin in 1st and as project
         // member in 2nd project.
 
         // Create first project and assign fritz as project admin.
-        ProjectState firstProject = createProject("firstProject");
+        ProjectState firstProject = createProject("first-project");
         assertNotNull(firstProject.documentSelfLink);
         ProjectRoles projectRoles = new ProjectRoles();
         PrincipalRoleAssignment admins = new PrincipalRoleAssignment();
@@ -172,7 +167,7 @@ public class SecurityContextUtilTest extends AuthBaseTest {
         doPatch(projectRoles, firstProject.documentSelfLink);
 
         // Create second project and assign fritz as project member.
-        ProjectState secondProject = createProject("secondProject");
+        ProjectState secondProject = createProject("second-project");
         assertNotNull(secondProject.documentSelfLink);
         projectRoles = new ProjectRoles();
         PrincipalRoleAssignment members = new PrincipalRoleAssignment();
@@ -181,7 +176,7 @@ public class SecurityContextUtilTest extends AuthBaseTest {
         doPatch(projectRoles, secondProject.documentSelfLink);
 
         DeferredResult<SecurityContext> result = SecurityContextUtil.getSecurityContext(
-                requestorService, USER_EMAIL_ADMIN);
+                privilegedTestService, testOperationByAdmin);
 
         final SecurityContext[] context = new SecurityContext[1];
         TestContext ctx = testCreate(1);
@@ -227,13 +222,16 @@ public class SecurityContextUtilTest extends AuthBaseTest {
 
         assertEquals(secondProject.name, secondProjectEntry.name);
         assertEquals(secondProject.documentSelfLink, secondProjectEntry.documentSelfLink);
-        assertEquals(1, secondProjectEntry.roles.size());
+        assertEquals(2, secondProjectEntry.roles.size());
         assertTrue(secondProjectEntry.roles.contains(AuthRole.PROJECT_MEMBER));
     }
 
     @Test
     public void testSecurityContextContainsIndirectAssignedRoles() throws Throwable {
+        Operation testOperationByBasicUser = createAuthorizedOperation(
+                host.assumeIdentity(buildUserServicePath(USER_EMAIL_CONNIE)));
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN2));
+
         // Scenario: create a group which will contain Connie which is basic user and the group
         // will be assigned to cloud admins. Create nested groups and add Connie in them, assign
         // the nested groups to project roles. Verify that PrincipalRoles for Connie contains all
@@ -274,7 +272,7 @@ public class SecurityContextUtilTest extends AuthBaseTest {
                 PrincipalService.ROLES_SUFFIX));
 
         // Create first project and assign nestedGroup1 as project admin.
-        ProjectState firstProject = createProject("firstProject");
+        ProjectState firstProject = createProject("first-project");
         assertNotNull(firstProject.documentSelfLink);
         ProjectRoles projectRoles = new ProjectRoles();
         PrincipalRoleAssignment admins = new PrincipalRoleAssignment();
@@ -283,7 +281,7 @@ public class SecurityContextUtilTest extends AuthBaseTest {
         doPatch(projectRoles, firstProject.documentSelfLink);
 
         // Create second project and assign nestedGroup2 as project member.
-        ProjectState secondProject = createProject("secondProject");
+        ProjectState secondProject = createProject("second-project");
         assertNotNull(secondProject.documentSelfLink);
         projectRoles = new ProjectRoles();
         PrincipalRoleAssignment members = new PrincipalRoleAssignment();
@@ -292,7 +290,7 @@ public class SecurityContextUtilTest extends AuthBaseTest {
         doPatch(projectRoles, secondProject.documentSelfLink);
 
         DeferredResult<SecurityContext> result = SecurityContextUtil.getSecurityContext(
-                requestorService, USER_EMAIL_CONNIE);
+                privilegedTestService, testOperationByBasicUser);
 
         final SecurityContext[] context = new SecurityContext[1];
         TestContext ctx = testCreate(1);
@@ -318,29 +316,27 @@ public class SecurityContextUtilTest extends AuthBaseTest {
         assertTrue(securityContext.roles.contains(AuthRole.BASIC_USER));
         assertTrue(securityContext.roles.contains(AuthRole.BASIC_USER_EXTENDED));
 
-        // Uncomment this once group assignment for project roles is implemented.
+        assertEquals(2, securityContext.projects.size());
 
-        // assertEquals(2, connieRoles.projects.size());
+        ProjectEntry firstProjectEntry;
+        ProjectEntry secondProjectEntry;
 
-        // ProjectEntry firstProjectEntry;
-        // ProjectEntry secondProjectEntry;
-        //
-        // if (connieRoles.projects.get(0).name.equalsIgnoreCase(firstProject.name)) {
-        //     firstProjectEntry = connieRoles.projects.get(0);
-        //     secondProjectEntry = connieRoles.projects.get(1);
-        // } else {
-        //     firstProjectEntry = connieRoles.projects.get(1);
-        //     secondProjectEntry = connieRoles.projects.get(0);
-        // }
-        //
-        // assertEquals(firstProject.name, firstProjectEntry.name);
-        // assertEquals(firstProject.documentSelfLink, firstProjectEntry.documentSelfLink);
-        // assertEquals(1, firstProjectEntry.roles.size());
-        // assertTrue(firstProjectEntry.roles.contains(AuthRole.PROJECT_ADMIN));
-        //
-        // assertEquals(secondProject.name, secondProjectEntry.name);
-        // assertEquals(secondProject.documentSelfLink, secondProjectEntry.documentSelfLink);
-        // assertEquals(1, secondProjectEntry.roles.size());
-        // assertTrue(secondProjectEntry.roles.contains(AuthRole.PROJECT_MEMBER));
+        if (securityContext.projects.get(0).name.equalsIgnoreCase(firstProject.name)) {
+            firstProjectEntry = securityContext.projects.get(0);
+            secondProjectEntry = securityContext.projects.get(1);
+        } else {
+            firstProjectEntry = securityContext.projects.get(1);
+            secondProjectEntry = securityContext.projects.get(0);
+        }
+
+        assertEquals(firstProject.name, firstProjectEntry.name);
+        assertEquals(firstProject.documentSelfLink, firstProjectEntry.documentSelfLink);
+        assertEquals(1, firstProjectEntry.roles.size());
+        assertTrue(firstProjectEntry.roles.contains(AuthRole.PROJECT_ADMIN));
+
+        assertEquals(secondProject.name, secondProjectEntry.name);
+        assertEquals(secondProject.documentSelfLink, secondProjectEntry.documentSelfLink);
+        assertEquals(2, secondProjectEntry.roles.size());
+        assertTrue(secondProjectEntry.roles.contains(AuthRole.PROJECT_MEMBER));
     }
 }

@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 
-import com.vmware.admiral.log.EventLogService;
+import com.vmware.admiral.log.EventLogFactoryService;
 import com.vmware.admiral.service.common.ClusterMonitoringService;
 import com.vmware.admiral.service.common.CommonInitialBootService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
@@ -24,7 +24,6 @@ import com.vmware.admiral.service.common.CounterSubTaskService;
 import com.vmware.admiral.service.common.EventTopicService;
 import com.vmware.admiral.service.common.ExtensibilitySubscriptionCallbackService;
 import com.vmware.admiral.service.common.ExtensibilitySubscriptionFactoryService;
-import com.vmware.admiral.service.common.HbrApiProxyService;
 import com.vmware.admiral.service.common.LogService;
 import com.vmware.admiral.service.common.LongURIGetService;
 import com.vmware.admiral.service.common.NodeHealthCheckService;
@@ -34,7 +33,7 @@ import com.vmware.admiral.service.common.ResourceNamePrefixService;
 import com.vmware.admiral.service.common.ReverseProxyService;
 import com.vmware.admiral.service.common.SslTrustCertificateFactoryService;
 import com.vmware.admiral.service.common.SslTrustImportService;
-import com.vmware.admiral.service.common.mock.MockHbrApiProxyService;
+import com.vmware.admiral.service.common.UniquePropertiesService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
@@ -57,7 +56,8 @@ public class HostInitCommonServiceConfig extends HostInitServiceHelper {
             CommonInitialBootService.class,
             ReverseProxyService.class,
             ExtensibilitySubscriptionFactoryService.class,
-            LongURIGetService.class
+            LongURIGetService.class,
+            EventLogFactoryService.class
     };
 
     @SuppressWarnings("unchecked")
@@ -65,32 +65,30 @@ public class HostInitCommonServiceConfig extends HostInitServiceHelper {
             ResourceNamePrefixService.class,
             RegistryService.class,
             LogService.class,
-            EventLogService.class,
             CounterSubTaskService.class,
             ExtensibilitySubscriptionCallbackService.class,
-            EventTopicService.class
+            EventTopicService.class,
+            UniquePropertiesService.class
     };
 
 
     public static void startServices(ServiceHost host) {
-        startServices(host, false);
-    }
-
-    public static void startServices(ServiceHost host, boolean mockHbrApiProxyService) {
         host.log(Level.INFO, "Start initializing common services");
 
         startServices(host, servicesToStart);
 
-        if (mockHbrApiProxyService) {
-            startServices(host, MockHbrApiProxyService.class);
-        } else {
-            startServices(host, HbrApiProxyService.class);
-        }
-
         startServiceFactories(host, serviceFactoriesToStart);
 
-        // start initialization of system documents, posting with pragma to queue a request,
-        // for a service to become available
+        // trigger common initial boot service and wait to finish, it is responsible for populating
+        // configuration properties states
+        waitCommonInitialBootInitialization(host);
+    }
+
+    /**
+     * Start initialization of system documents, posting with pragma to queue a request, for a
+     * service to become available
+     */
+    private static void waitCommonInitialBootInitialization(ServiceHost host) {
         Throwable[] t = new Throwable[1];
         CountDownLatch l = new CountDownLatch(1);
         host.sendRequest(Operation
@@ -119,7 +117,6 @@ public class HostInitCommonServiceConfig extends HostInitServiceHelper {
                         + " timed out.");
                 host.log(Level.SEVERE, "Waiting for service availability of common services timed"
                                 + " out: %s", t[0]);
-
             }
         } catch (InterruptedException e1) {
             host.log(Level.SEVERE, "Waiting for service availability of common services was"

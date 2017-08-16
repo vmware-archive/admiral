@@ -13,6 +13,7 @@ package com.vmware.admiral.adapter.docker.service;
 
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_COMMAND_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_CONFIG_PROP_NAME;
+import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_CREATE_USE_BUNDLED_IMAGE;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_CREATE_USE_LOCAL_IMAGE_WITH_PRIORITY;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_DOMAINNAME_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_ENTRYPOINT_PROP_NAME;
@@ -147,10 +148,12 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
 
     public static final String SELF_LINK = ManagementUriParts.ADAPTER_DOCKER;
 
-    public static final String PROVISION_CONTAINER_RETRIES_COUNT_PARAM_NAME = "provision.container.retries.count";
+    public static final String PROVISION_CONTAINER_RETRIES_COUNT_PARAM_NAME =
+            "provision.container.retries.count";
     public static final int PROVISION_CONTAINER_RETRIES_COUNT_DEFAULT = 3;
 
-    public static final String PROVISION_CONTAINER_PULL_RETRIES_COUNT_PARAM_NAME = "provision.container.pull-image.retries.count";
+    public static final String PROVISION_CONTAINER_PULL_RETRIES_COUNT_PARAM_NAME =
+            "provision.container.pull-image.retries.count";
 
     private SystemImageRetrievalManager imageRetrievalManager;
 
@@ -211,20 +214,16 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
 
         ContainerInstanceRequest containerRequest = (ContainerInstanceRequest) context.request;
         ContainerOperationType operationType = containerRequest.getOperationType();
-        if (ContainerOperationType.STATS != operationType
-                && ContainerOperationType.INSPECT != operationType
-                && ContainerOperationType.FETCH_LOGS != operationType) {
-            logInfo("Processing operation request %s for resource %s %s",
-                    operationType, containerRequest.resourceReference,
-                    containerRequest.getRequestTrackingLog());
-        }
+        logInfo("Processing operation request %s for resource %s %s",
+                operationType, containerRequest.resourceReference,
+                containerRequest.getRequestTrackingLog());
 
         if (ContainerOperationType.EXEC == operationType
                 || ContainerOperationType.STATS == operationType) {
             // Exec is direct operation, stats will complete operation after completion
             context.operation = op;
         } else {
-            op.complete();// TODO: can't return the operation if state not persisted.
+            op.complete();
         }
         processContainerRequest(context);
     }
@@ -243,8 +242,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                         }
                     } else {
                         handleExceptions(context.request, context.operation, () -> {
-                            context.containerState = o
-                                    .getBody(ContainerState.class);
+                            context.containerState = o.getBody(ContainerState.class);
                             processContainerState(context);
                         });
                     }
@@ -330,44 +328,41 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         CommandInput fetchLogCommandInput = constructFetchLogCommandInput(context.request,
                 context.commandInput, context.containerState);
 
-        context.executor.fetchContainerLog(fetchLogCommandInput,
-                (operation, excep) -> {
-                    if (excep != null) {
-                        logWarning("Failure while fetching logs for container [%s] of host [%s]",
-                                context.containerState.documentSelfLink,
-                                context.computeState.documentSelfLink);
-                        fail(context.request, operation, excep);
-                    } else {
-                        /* Write this to the log service */
-                        handleExceptions(context.request, context.operation, () -> {
-                            byte[] log = null;
-                            if (operation.getBodyRaw() != null) {
-                                if (Operation.MEDIA_TYPE_APPLICATION_OCTET_STREAM.equals(
-                                        operation.getContentType())) {
+        context.executor.fetchContainerLog(fetchLogCommandInput, (op, ex) -> {
+            if (ex != null) {
+                logWarning("Failure while fetching logs for container [%s] of host [%s]",
+                        context.containerState.documentSelfLink,
+                        context.computeState.documentSelfLink);
+                fail(context.request, op, ex);
+            } else {
+                /* Write this to the log service */
+                handleExceptions(context.request, context.operation, () -> {
+                    byte[] log = null;
+                    if (op.getBodyRaw() != null) {
+                        if (Operation.MEDIA_TYPE_APPLICATION_OCTET_STREAM.equals(
+                                op.getContentType())) {
 
-                                    log = operation.getBody(byte[].class);
-
-                                } else {
-                                    /* TODO check for encoding header */
-                                    String logStr = operation.getBody(String.class);
-                                    if (logStr != null) {
-                                        log = logStr.getBytes();
-                                    }
-                                }
+                            log = op.getBody(byte[].class);
+                        } else {
+                            /* TODO check for encoding header */
+                            String logStr = op.getBody(String.class);
+                            if (logStr != null) {
+                                log = logStr.getBytes();
                             }
-
-                            if (log == null) {
-                                log = "--".getBytes();
-                                // log a warning
-                                String containerId = Service
-                                        .getId(context.containerState.documentSelfLink);
-                                logWarning("Found empty logs for container %s", containerId);
-                            }
-
-                            processContainerLogResponse(context, log);
-                        });
+                        }
                     }
+
+                    if (log == null) {
+                        log = "--".getBytes();
+                        // log a warning
+                        String containerId = Service.getId(context.containerState.documentSelfLink);
+                        logWarning("Found empty logs for container %s", containerId);
+                    }
+
+                    processContainerLogResponse(context, log);
                 });
+            }
+        });
     }
 
     private CommandInput constructFetchLogCommandInput(AdapterRequest request,
@@ -456,7 +451,8 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
     }
 
     private void processContainerDescription(RequestContext context) {
-        context.containerState.adapterManagementReference = context.containerDescription.instanceAdapterReference;
+        context.containerState.adapterManagementReference =
+                context.containerDescription.instanceAdapterReference;
 
         CommandInput createImageCommandInput = new CommandInput(context.commandInput);
 
@@ -484,13 +480,20 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                 processLoadedImageData(context, imageData, ref, imageCompletionHandler);
             });
         } else if (shouldTryCreateFromLocalImage(context.containerDescription)) {
-            // try to create the container from a local image first. Only if the image is not
-            // available it will be fetched according to the settings.
-            logInfo("Trying to create the container using local image first...");
-            handleExceptions(
-                    context.request,
-                    context.operation,
-                    () -> processCreateContainer(context, 0));
+            if (getBundledImage(context.containerDescription) != null) {
+                String ref = getBundledImage(context.containerDescription);
+                imageRetrievalManager.retrieveAgentImage(ref, context.request, (imageData) -> {
+                    processLoadedImageData(context, imageData, ref, imageCompletionHandler);
+                });
+            } else {
+                // try to create the container from a local image first. Only if the image is not
+                // available it will be fetched according to the settings.
+                logInfo("Trying to create the container using local image first...");
+                handleExceptions(
+                        context.request,
+                        context.operation,
+                        () -> processCreateContainer(context, 0));
+            }
         } else if (imageReference == null) {
             // canonicalize the image name (add latest tag if needed)
             String fullImageName = DockerImage.fromImageName(context.containerDescription.image)
@@ -882,6 +885,14 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         return Boolean.valueOf(useLocalImageFirst);
     }
 
+    private String getBundledImage(ContainerDescription containerDescription) {
+        if (containerDescription.customProperties == null) {
+            return null;
+        }
+        // container image which is bundled and should be uploaded to the host.
+        return containerDescription.customProperties.get(DOCKER_CONTAINER_CREATE_USE_BUNDLED_IMAGE);
+    }
+
     /**
      * get a mapped value or add a new one if it's not mapped yet
      *
@@ -1111,9 +1122,10 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         context.executor.execContainer(execCommandInput, (op, ex) -> {
             if (ex != null) {
                 context.operation.fail(ex);
+                fail(context.request, op, ex);
             } else {
                 if (op.hasBody()) {
-                    context.operation.setBodyNoCloning(op.getBody(String.class));
+                    context.operation.setBodyNoCloning(op.getBodyRaw());
                 }
                 context.operation.complete();
             }
@@ -1257,14 +1269,14 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
             if (ex != null) {
                 if (RETRIABLE_HTTP_STATUSES.contains(o.getStatusCode())
                         && retryCount.getAndIncrement() < maxRetryCount) {
-                    logWarning("Starting container %s failed with %s. Retries left %d",
-                            context.containerState.names.get(0), Utils.toString(ex),
-                            maxRetryCount - retryCount.get());
+                    logWarning("Starting container %s failed, retries left %d. code=%s, error=%s",
+                            context.containerState.names.get(0),
+                            maxRetryCount - retryCount.get(), o.getStatusCode(), ex.getMessage());
                     processStartContainerWithRetry(context, retryCount.get(), maxRetryCount);
                 } else {
-                    logWarning("Failure while starting container [%s] of host [%s]",
+                    logSevere("Failure starting container [%s] of host [%s] (status code: %s)",
                             context.containerState.documentSelfLink,
-                            context.computeState.documentSelfLink);
+                            context.computeState.documentSelfLink, o.getStatusCode());
                     fail(context.request, o, ex);
                 }
             } else {
@@ -1291,14 +1303,14 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
             if (ex != null) {
                 if (RETRIABLE_HTTP_STATUSES.contains(o.getStatusCode())
                         && retryCount.getAndIncrement() < maxRetryCount) {
-                    logWarning("Stopping container %s failed with %s. Retries left %d",
-                            context.containerState.names.get(0), Utils.toString(ex),
-                            maxRetryCount - retryCount.get());
+                    logWarning("Stopping container %s failed, retries left %d. code=%s, error=%s",
+                            context.containerState.names.get(0),
+                            maxRetryCount - retryCount.get(), o.getStatusCode(), ex.getMessage());
                     processStopContainerWithRetry(context, retryCount.get(), maxRetryCount);
                 } else {
-                    logWarning("Failure while stopping container [%s] of host [%s]",
+                    logSevere("Failure stopping container [%s] of host [%s] (status code: %s)",
                             context.containerState.documentSelfLink,
-                            context.computeState.documentSelfLink);
+                            context.computeState.documentSelfLink, o.getStatusCode());
                     fail(context.request, o, ex);
                 }
             } else {
@@ -1344,7 +1356,8 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                                     o.getBody(ConfigurationState.class).value);
                             callback.accept(pullRetriesCount);
                         } else {
-                            /* in case of exception the default retry count will be set to the PROVISION_CONTAINER_RETRIES_COUNT_PARAM_NAME */
+                            /* in case of exception the default retry count will be set to the
+                             PROVISION_CONTAINER_RETRIES_COUNT_PARAM_NAME */
                             ensurePropertyExists(retriesCount -> {
                                 pullRetriesCount = retriesCount;
                                 callback.accept(pullRetriesCount);

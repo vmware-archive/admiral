@@ -23,12 +23,13 @@ import javax.net.ssl.SSLContext;
 import io.swagger.models.Info;
 
 import com.vmware.admiral.auth.idm.AuthConfigProvider;
+import com.vmware.admiral.auth.idm.PrincipalService;
 import com.vmware.admiral.auth.idm.SessionService;
-import com.vmware.admiral.auth.project.ProjectInterceptor;
+import com.vmware.admiral.auth.project.ProjectFactoryService;
+import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
-import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.host.interceptor.AuthCredentialsInterceptor;
 import com.vmware.admiral.host.interceptor.ComputePlacementZoneInterceptor;
 import com.vmware.admiral.host.interceptor.EndpointInterceptor;
@@ -36,13 +37,16 @@ import com.vmware.admiral.host.interceptor.InUsePlacementZoneInterceptor;
 import com.vmware.admiral.host.interceptor.OperationInterceptorRegistry;
 import com.vmware.admiral.host.interceptor.PhotonModelMockRequestInterceptor;
 import com.vmware.admiral.host.interceptor.ProfileInterceptor;
+import com.vmware.admiral.host.interceptor.ProjectInterceptor;
 import com.vmware.admiral.host.interceptor.ResourceGroupInterceptor;
 import com.vmware.admiral.host.interceptor.SchedulerPlacementZoneInterceptor;
+import com.vmware.admiral.request.ContainerLoadBalancerBootstrapService;
 import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.admiral.service.common.ConfigurationService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.admiral.service.common.ExtensibilitySubscriptionManager;
 import com.vmware.admiral.service.common.NodeMigrationService;
+import com.vmware.admiral.service.common.harbor.HostInitHarborServices;
 import com.vmware.photon.controller.model.security.util.CertificateUtil;
 import com.vmware.xenon.common.CommandLineArgumentParser;
 import com.vmware.xenon.common.FactoryService;
@@ -53,7 +57,6 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.AuthorizationContext;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceClient;
-import com.vmware.xenon.common.ServiceConfigUpdateRequest;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.http.netty.NettyHttpListener;
@@ -178,13 +181,8 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
         log(Level.INFO, "**** Dynamic service loading enabled. ****");
         log(Level.INFO, "**** Migration service starting... ****");
         super.startFactory(new MigrationTaskService());
-        // The service need to be privileged in order to not get forbidden during the migration
-        // process
-        super.addPrivilegedService(NodeMigrationService.class);
         // Clean up authorization context to avoid privileged access.
         setAuthorizationContext(null);
-
-        postInitialization();
 
         return this;
     }
@@ -201,6 +199,16 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
         ServiceHost h = super.initialize(args, baseArgs);
         h.setProcessOwner(true);
         validatePeerArgs();
+
+        // if only secure connection is used, make the auth cookie secure
+        if (h.getPort() == ServiceHost.PORT_VALUE_LISTENER_DISABLED
+                && h.getSecurePort() != ServiceHost.PORT_VALUE_LISTENER_DISABLED) {
+            // Default netty listener is created during startup
+            // getSecureListener will return null here
+            NettyHttpListener listener = new NettyHttpListener(h);
+            listener.setSecureAuthCookie(true);
+            h.setSecureListener(listener);
+        }
 
         ConfigurationState[] configs = ConfigurationService.getConfigurationProperties();
         ConfigurationUtil.initialize(configs);
@@ -242,6 +250,7 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
 
         HostInitCommonServiceConfig.startServices(this);
         HostInitAuthServiceConfig.startServices(this);
+        HostInitUpgradeServiceConfig.startServices(this);
 
         registerForServiceAvailability(AuthBootstrapService.startTask(this), true,
                 AuthBootstrapService.FACTORY_LINK);
@@ -257,12 +266,15 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
 
         registerForServiceAvailability(CaSigningCertService.startTask(this), true,
                 CaSigningCertService.FACTORY_LINK);
+        registerForServiceAvailability(ContainerLoadBalancerBootstrapService.startTask(this), true,
+                ContainerLoadBalancerBootstrapService.FACTORY_LINK);
 
         HostInitComputeServicesConfig.startServices(this, false);
         HostInitComputeBackgroundServicesConfig.startServices(this);
         HostInitRequestServicesConfig.startServices(this);
         HostInitImageServicesConfig.startServices(this);
         HostInitUiServicesConfig.startServices(this);
+        HostInitHarborServices.startServices(this, startMockHostAdapterInstance);
         HostInitDockerAdapterServiceConfig.startServices(this, startMockHostAdapterInstance);
         HostInitKubernetesAdapterServiceConfig.startServices(this, startMockHostAdapterInstance);
         HostInitRegistryAdapterServiceConfig.startServices(this);
@@ -300,8 +312,8 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
 
         // Serve swagger on default uri
         this.startService(swagger);
-        this.log(Level.INFO, "Swagger service started. Checkout Swagger UI at: "
-                + this.getUri() + ServiceUriPaths.SWAGGER + "/ui");
+        this.log(Level.INFO, "Swagger service started. Checkout Swagger UI at: %s%s/ui",
+                this.getUri(), ServiceUriPaths.SWAGGER);
     }
 
     private void startExtensibilityRegistry() {
@@ -395,6 +407,12 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
         // TODO this should be moved to HostInitAuthServiceConfig once HostInitServiceHelper gets
         // support for privileged services
         addPrivilegedService(SessionService.class);
+        addPrivilegedService(PrincipalService.class);
+        addPrivilegedService(ProjectService.class);
+        addPrivilegedService(ProjectFactoryService.class);
+        // The service need to be privileged in order to not get forbidden during the migration
+        // process
+        addPrivilegedService(NodeMigrationService.class);
 
         if (AuthUtil.useAuthConfig(this)) {
 
@@ -410,6 +428,18 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
         super.start();
 
         startDefaultCoreServicesSynchronously();
+
+        if (AuthUtil.useAuthConfig(this)) {
+            Collection<FactoryService> authServiceFactories = authProvider.createServiceFactories();
+            if ((authServiceFactories != null && !authServiceFactories.isEmpty())) {
+                startFactoryServicesSynchronously(authServiceFactories.toArray(new Service[] {}));
+            }
+            Collection<Service> authServices = authProvider.createServices();
+            if ((authServices != null && !authServices.isEmpty())) {
+                startCoreServicesSynchronously(authServices.toArray(new Service[] {}));
+            }
+        }
+
         startPeerListener();
 
         log(Level.INFO, "Setting authorization context ...");
@@ -418,46 +448,12 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
 
         startCommonServices();
 
-        if (AuthUtil.useAuthConfig(this)) {
-            Collection<FactoryService> authServiceFactories = authProvider.createServiceFactories();
-            if ((authServiceFactories != null && !authServiceFactories.isEmpty())) {
-                startFactoryServicesSynchronously(authServiceFactories.toArray(new Service[] {}));
-            }
-        }
-
         startExtensibilityRegistry();
 
         // now start ServerX509TrustManager
         trustManager.start();
         setAuthorizationContext(null);
         return this;
-    }
-
-    /**
-     * Execute code after all services are started.
-     */
-    private void postInitialization() {
-        // hack to set new retention limits for 2 services from photon model
-        // - resource pool - placement zones
-        // - groups placement - placements
-        registerForServiceAvailability(
-                (o, e) -> {
-                    setNewLimits(GroupResourcePlacementService.DEFAULT_RESOURCE_POOL_LINK);
-                    setNewLimits(GroupResourcePlacementService.DEFAULT_RESOURCE_PLACEMENT_LINK);
-                },
-                GroupResourcePlacementService.DEFAULT_RESOURCE_POOL_LINK,
-                GroupResourcePlacementService.DEFAULT_RESOURCE_PLACEMENT_LINK);
-    }
-
-    private void setNewLimits(String service) {
-        log(Level.INFO, "Set new retention limit for %s", service);
-        ServiceConfigUpdateRequest configUpdate = ServiceConfigUpdateRequest.create();
-        configUpdate.versionRetentionLimit = 5L;
-        configUpdate.versionRetentionFloor = 5L;
-        Operation.createPatch(UriUtils.buildConfigUri(this, service))
-                .setBodyNoCloning(configUpdate)
-                .setReferer(this.getPublicUri())
-                .sendWith(this);
     }
 
     private ServiceClient createServiceClient(SSLContext sslContext,

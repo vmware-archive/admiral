@@ -10,7 +10,7 @@
  */
 
 import services from 'core/services';
-import utils from 'core/utils';
+import { formatUtils } from 'admiral-ui-common';
 
 const ISOLATION_TYPES = [{
   name: i18n.t('app.profile.edit.noneIsolationTypeLabel'),
@@ -131,11 +131,11 @@ export default Vue.component('vsphere-network-profile-editor', {
     },
     renderIsolationNetwork(network) {
       let secondary = i18n.t('app.profile.edit.cidrLabel') + ': ' +
-          utils.escapeHtml(network.subnetCIDR);
+          formatUtils.escapeHtml(network.subnetCIDR);
       return `
         <div>
           <div class="host-picker-item-primary" title="${network.name}">
-            ${utils.escapeHtml(network.name)}
+            ${formatUtils.escapeHtml(network.name)}
           </div>
           <div class="host-picker-item-secondary truncateText" title="${secondary}">
             ${secondary}

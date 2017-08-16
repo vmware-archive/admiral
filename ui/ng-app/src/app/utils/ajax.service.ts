@@ -73,24 +73,8 @@ export class Ajax {
 
     return this.http.request(new Request(requestOptions))
       .toPromise()
-      .then(result => this.trimMetadata(result.json()))
+      .then(result => result.json())
       .catch(error => this.handleAjaxError(error));
-  }
-
-  /**
-   * Trims metadata out from the result payload.
-   *
-   * Basically, it only returns the 'content' attribute if present in the result payload.
-   *
-   * @param  {Object} result    the result payload from the API call
-   * @return {Object}           the payload trimmed to only its content
-   */
-  private trimMetadata(result) {
-    if (result && result.content) {
-      return result.content;
-    } else {
-      return result;
-    }
   }
 
   /**
@@ -101,7 +85,8 @@ export class Ajax {
    */
   private handleAjaxError(error) {
     // handle session timeout
-    if (error && error.status && error.status === 401) {
+    let status = error && error.status;
+    if (status === 401 || status === 403) {
       this.sessionTimedOutSubject.setError(error);
       throw error; // propagate the initial error
     }

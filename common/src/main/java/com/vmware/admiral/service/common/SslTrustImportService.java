@@ -20,6 +20,7 @@ import java.security.cert.X509Certificate;
 import java.util.List;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.CertificateUtilExtended;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.SslCertificateResolver;
@@ -100,15 +101,18 @@ public class SslTrustImportService extends StatelessService {
             }
 
             X509Certificate[] certificateChain = resolver.getCertificateChain();
+
+            SslTrustCertificateState sslTrustState;
             try {
                 CertificateUtil.validateCertificateChain(certificateChain);
+                // moved in the try/catch block to prevent UI hangs in case of unexpected errors,
+                // e.g. SecurityException thrown by bouncy castle
+                sslTrustState = createSslTrustCertificateState(request, certificateChain);
             } catch (Exception e) {
                 op.fail(e);
                 return;
             }
 
-            SslTrustCertificateState sslTrustState = createSslTrustCertificateState(
-                    request, certificateChain);
 
             if (resolver.isCertsTrusted()) {
                 // No need to store the certificate since it is signed by a known CA.
@@ -181,9 +185,9 @@ public class SslTrustImportService extends StatelessService {
                 }));
     }
 
-    private static SslTrustCertificateState createSslTrustCertificateState(
+    private SslTrustCertificateState createSslTrustCertificateState(
             SslTrustImportRequest request, X509Certificate[] certChain) {
-        String sslTrust = CertificateUtil.toPEMformat(certChain);
+        String sslTrust = CertificateUtilExtended.toPEMformat(certChain, getHost());
 
         SslTrustCertificateState sslTrustState = new SslTrustCertificateState();
         sslTrustState.certificate = sslTrust;

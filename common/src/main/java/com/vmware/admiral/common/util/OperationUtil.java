@@ -14,9 +14,12 @@ package com.vmware.admiral.common.util;
 import static com.vmware.admiral.common.util.UriUtilsExtended.MEDIA_TYPE_APPLICATION_YAML;
 
 import java.net.URI;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.AuthorizationContext;
 import com.vmware.xenon.common.Service;
@@ -24,6 +27,7 @@ import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.GuestUserService;
+import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
 
 public class OperationUtil {
     public static final String PROJECT_ADMIRAL_HEADER = "x-project";
@@ -121,6 +125,58 @@ public class OperationUtil {
                 || ctx.getClaims().getSubject() == null
                 || ctx.getClaims().getSubject().isEmpty()
                 || ctx.getClaims().getSubject().equals(GuestUserService.SELF_LINK);
+    }
+
+    /**
+     * Extract the project link from the header and extend operation's URI
+     * with filter that contains clause to return only documents which have the
+     * project link from the header in their tenantLinks field.
+     *
+     * If there is no project link in header the URI is not modified.
+     * If there is already filter query the method will not override it, but
+     * extend it with 'and' and the new clause, example for this case:
+     * If there operation's URI have existing filter: "name eq 'test'", after the
+     * modification the filter will look like:
+     * "name eq 'test' and tenantLinks.item eq '/projects/test'"
+     * @param get
+     */
+    public static void transformProjectHeaderToFilterQuery(Operation get) {
+        String projectLink = OperationUtil.extractProjectFromHeader(get);
+        if (projectLink == null || projectLink.isEmpty()) {
+            return;
+        }
+
+        URI opUri = get.getUri();
+        String filterQuery = UriUtils.getODataFilterParamValue(opUri);
+        if (filterQuery == null || filterQuery.isEmpty()) {
+            filterQuery = constructFilterWithTenantLinks(projectLink);
+        } else {
+            filterQuery = filterQuery + " and " + constructFilterWithTenantLinks(projectLink);
+        }
+        Map<String, String> queryMap = UriUtils.parseUriQueryParams(opUri);
+        queryMap.put(UriUtils.URI_PARAM_ODATA_FILTER, filterQuery);
+
+        String[] queryKeyVals = new String[queryMap.size() * 2];
+        int i = 0;
+        for (Entry<String, String> entry : queryMap.entrySet()) {
+            queryKeyVals[i] = entry.getKey();
+            i++;
+            queryKeyVals[i] = entry.getValue();
+            i++;
+        }
+
+        opUri = UriUtils.buildUri(opUri.getScheme(), opUri.getHost(), opUri.getPort(),
+                opUri.getPath(), UriUtils.buildUriQuery(queryKeyVals));
+
+        get.setUri(opUri);
+    }
+
+    public static String constructFilterWithTenantLinks(String projectLink) {
+        return ResourceState.FIELD_NAME_TENANT_LINKS
+                + QuerySpecification.FIELD_NAME_CHARACTER
+                + QuerySpecification.COLLECTION_FIELD_SUFFIX
+                + " eq '" + projectLink + "'";
+
     }
 
 }

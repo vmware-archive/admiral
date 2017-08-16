@@ -33,11 +33,18 @@ public interface ManagementUriParts {
     String IMAGE_PROFILES = CONFIG + "/image-profiles";
     String INSTANCE_TYPE_PROFILES = CONFIG + "/instance-types";
     String MIGRATION = CONFIG + "/migration";
+    String UNIQUE_PROPERTIES = CONFIG + "/unique-properties";
 
     String COMPOSITE_DESCRIPTION_UPGRADE_TRANSFORM_PATH = UPGRADE_TRANSFORM_PREFIX
             + "/composite-descriptions";
-    String CONTAINERS_UPGRADE_TRANSFORM_PATH = UPGRADE_TRANSFORM_PREFIX + "containers";
+    String CONTAINERS_UPGRADE_TRANSFORM_PATH = UPGRADE_TRANSFORM_PREFIX + "/containers";
+    String CONTAINER_VOLUMES_UPGRADE_TRANSFORM_PATH = UPGRADE_TRANSFORM_PREFIX + "/volumes";
+    String CONTAINER_NETWORKS_UPGRADE_TRANSFORM_PATH = UPGRADE_TRANSFORM_PREFIX + "/networks";
+    String COMPOSITE_COMPONENTS_UPGRADE_TRANSFORM_PATH = UPGRADE_TRANSFORM_PREFIX
+            + "/composite-components";
     String RESOURCE_POOL_UPGRADE_TRANSFORM_PATH = UPGRADE_TRANSFORM_PREFIX + "/pools";
+    String REGISTRY_UPGRADE_TRANSFORM_PATH = UPGRADE_TRANSFORM_PREFIX + "/registries";
+    String COMPUTE_UPGRADE_TRANSFORM_PATH = UPGRADE_TRANSFORM_PREFIX + "/computes";
 
     String UTIL = "/util";
     String LONG_URI_GET = UTIL + "/long-uri-get";
@@ -130,6 +137,7 @@ public interface ManagementUriParts {
 
     String CONTAINER_VOLUMES = RESOURCES + "/container-volumes";
     String CONTAINER_VOLUMES_DESC = RESOURCES + "/container-volume" + DESCRIPTION_SUFFIX;
+    String MOCK_CONTAINER_VOLUMES = CONTAINER_VOLUMES + "-mock";
 
     String COMPUTE_NETWORKS = RESOURCES + "/compute-networks";
     String COMPUTE_NETWORK_DESC = RESOURCES + "/compute-network" + DESCRIPTION_SUFFIX;
@@ -157,12 +165,23 @@ public interface ManagementUriParts {
 
     String REQUEST_COMPUTE_NETWORK_ALLOCATION_TASKS = REQUEST + "/compute-network-allocation-tasks";
     String REQUEST_PROVISION_COMPUTE_NETWORK_TASKS = REQUEST + "/provision-compute-network-tasks";
+    String REQUEST_PROVISION_ISOLATED_SUBNET_TASKS = REQUEST + "/provision-isolated-subnet-tasks";
+    String REQUEST_PROVISION_ISOLATED_SECURITY_GROUP_TASKS = REQUEST + "/provision-isolated-security-group-tasks";
     String REQUEST_COMPUTE_NETWORK_REMOVAL_TASKS = REQUEST + "/compute-network-removal-tasks";
 
     String REQUEST_LOAD_BALANCER_ALLOCATION_TASKS = REQUEST + "/load-balancer-allocation-tasks";
     String REQUEST_LOAD_BALANCER_PROVISION_TASKS = REQUEST + "/load-balancer-provision-tasks";
     String REQUEST_LOAD_BALANCER_OPERATION_TASKS = REQUEST + "/load-balancer-resource-operations";
     String REQUEST_LOAD_BALANCER_REMOVAL_TASKS = REQUEST + "/load-balancer-removal-tasks";
+
+    String REQUEST_CONTAINER_LOAD_BALANCER_ALLOCATION_TASKS = REQUEST +
+            "/container-load-balancer-allocation-tasks";
+    String REQUEST_CONTAINER_LOAD_BALANCER_PROVISION_TASKS = REQUEST +
+            "/container-load-balancer-provision-tasks";
+    String REQUEST_CONTAINER_LOAD_BALANCER_REMOVAL_TASKS = REQUEST +
+            "/container-load-balancer-removal-tasks";
+    String REQUEST_CONTAINER_LOAD_BALANCER_RECONFIG_TASKS = REQUEST +
+            "/container-load-balancer-reconfig-tasks";
 
     String REQUEST_CONTAINER_NETWORK_ALLOCATION_TASKS = REQUEST
             + "/container-network-allocation-tasks";
@@ -247,6 +266,7 @@ public interface ManagementUriParts {
     String UI_NG_SERVICE = UriUtils.buildUriPath(UI_SERVICE, "ng");
     String UI_OG_SERVICE = UriUtils.buildUriPath(UI_SERVICE, "ogui");
     String UI_COMPUTE_SERVICE = UriUtils.buildUriPath(UI_SERVICE, "iaas");
+    String LOGIN = "/login/";
 
     String CONTAINER_ICONS_RESOURCE_PATH = UriUtils.buildUriPath(UI_SERVICE, "/container-icons");
     String CONTAINER_IDENTICONS_RESOURCE_PATH = UriUtils.buildUriPath(UI_SERVICE,

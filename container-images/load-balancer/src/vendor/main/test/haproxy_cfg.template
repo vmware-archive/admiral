@@ -1,9 +1,10 @@
-{{range $frontend := .Frontends}}
-frontend https-{{$frontend.Port}}
-    use_backend backend-{{$frontend.Port}}
+{{range $frontendIndex, $frontend := .Frontends}}
+frontend https-{{$frontendIndex}}
+    bind 0.0.0.0:{{$frontend.Port}}
+    use_backend backend-{{$frontendIndex}}-{{$frontend.Port}}
 
-backend backend-{{$frontend.Port}}
-    {{range $backend := $frontend.Backends}}
-    server {{$backend.Host}} {{$backend.Host}}:{{$backend.Port}} maxconn 500
+backend backend-{{$frontendIndex}}-{{$frontend.Port}}
+    {{range $backendIndex, $backend := $frontend.Backends}}
+    server node{{$backendIndex}} {{$backend.Host}}:{{$backend.Port}} maxconn 500
     {{end}}
 {{end}}

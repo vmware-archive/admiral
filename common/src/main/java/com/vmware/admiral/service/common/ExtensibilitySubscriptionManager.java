@@ -20,6 +20,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import com.google.gson.JsonObject;
+
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.CommonContinuousQueries;
 import com.vmware.admiral.common.util.CommonContinuousQueries.ContinuousQueryId;
@@ -87,10 +89,8 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
         super.handleStop(delete);
     }
 
-    <T extends TaskServiceDocument<?>> void handleStagePatch(
-            ServiceTaskCallbackResponse notificationPayload,
-            ServiceTaskCallbackResponse replyPayload, T state,
-            Consumer<T> callback, Runnable notificationCallback) {
+    <T extends TaskServiceDocument<?>> void handleStagePatch(T state, Consumer<T> callback,
+            Runnable notificationCallback) {
 
         ExtensibilitySubscription extensibilitySubscription = getExtensibilitySubscription(state);
 
@@ -216,7 +216,8 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
         QueryTask queryTask = op.getBody(QueryTask.class);
         if (queryTask.results != null) {
             for (ExtensibilitySubscription subscription : queryTask.results.documents.values()
-                    .stream().map(o -> (ExtensibilitySubscription) o)
+                    .stream().map(o -> o instanceof JsonObject ? Utils.fromJson(o,
+                            ExtensibilitySubscription.class) : (ExtensibilitySubscription) o)
                     .collect(Collectors.toList())) {
 
                 if (Action.DELETE.toString().equals(subscription.documentUpdateAction)) {
@@ -332,6 +333,8 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
         String stateAsJson = Utils.toJson(state);
         ServiceTaskCallbackResponse notificationPayloadData = Utils.fromJson(
                 stateAsJson, notificationPayload.getClass());
+        notificationPayloadData.taskInfo.stage = TaskStage.STARTED;
+        notificationPayloadData.taskSubStage = DefaultSubStage.CREATED;
         String payLoadAsJson = Utils.toJson(notificationPayloadData);
         // Filter task fields in order to leave only notification payload fields.
         T filteredTask = (T) Utils.fromJson(payLoadAsJson, state.getClass());
@@ -445,13 +448,13 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
     }
 
     private void addExtensibilitySubscription(ExtensibilitySubscription state) {
-        logFine("Added extensibility [%s] with callback [%s]",
+        logInfo("Added extensibility [%s] with callback [%s]",
                 state.documentSelfLink, state.callbackReference);
         subscriptions.put(UriUtils.getLastPathSegment(state.documentSelfLink), state);
     }
 
     private void removeExtensibilitySubscription(String extensibilityLink) {
-        logFine("Remove extensibility for [%s]", extensibilityLink);
+        logInfo("Remove extensibility for [%s]", extensibilityLink);
         subscriptions.remove(UriUtils.getLastPathSegment(extensibilityLink));
     }
 

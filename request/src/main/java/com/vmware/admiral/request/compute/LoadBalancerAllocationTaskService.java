@@ -22,6 +22,7 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
@@ -170,10 +171,17 @@ public class LoadBalancerAllocationTaskService extends
             return;
         }
 
+        // merge request/allocation properties and load balancer description properties
+        // over the request's custom properties
+        Map<String, String> customProperties = mergeCustomProperties(
+                this.lbDescription.customProperties,
+                state.customProperties);
+
         switch (state.taskSubStage) {
         case CREATED:
             retrieveEndpointDetails(state).thenAccept(endpointDetails -> {
                 proceedTo(LoadBalancerAllocationTaskState.SubStage.DETERMINE_LB_NAME, s -> {
+                    s.customProperties = customProperties;
                     s.endpointLink = endpointDetails.get(0);
                     s.endpointType = endpointDetails.get(1);
                     s.regionId = endpointDetails.get(2);

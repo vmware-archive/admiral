@@ -246,7 +246,7 @@ public class RegistryHostConfigService extends StatelessService {
                     RegistryConfigCertificateDistributionService.SELF_LINK)
                     .setContextId(parentOp.getContextId())
                     .setBody(distributionState));
-        });
+        }, getHost());
     }
 
     /**

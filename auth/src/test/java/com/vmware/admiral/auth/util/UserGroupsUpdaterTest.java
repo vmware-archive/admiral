@@ -28,6 +28,7 @@ import com.vmware.xenon.common.test.TestContext;
 import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.UserGroupService;
 import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
+import com.vmware.xenon.services.common.UserService;
 import com.vmware.xenon.services.common.UserService.UserState;
 
 public class UserGroupsUpdaterTest extends AuthBaseTest {
@@ -37,6 +38,7 @@ public class UserGroupsUpdaterTest extends AuthBaseTest {
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
     }
 
+    //TODO: Remove waitFor() once patch is stable.
     @Test
     public void testUserGroupsUpdater() throws Throwable {
         // Create test user group.
@@ -53,9 +55,8 @@ public class UserGroupsUpdaterTest extends AuthBaseTest {
 
         // Add users.
         DeferredResult<Void> result = UserGroupsUpdater.create()
-                .setHost(host)
+                .setService(privilegedTestService)
                 .setGroupLink(userGroupSelfLink)
-                .setReferrer(host.getUri().toString())
                 .setUsersToAdd(Arrays.asList(USER_EMAIL_ADMIN, USER_EMAIL_CONNIE))
                 .update();
 
@@ -67,6 +68,25 @@ public class UserGroupsUpdaterTest extends AuthBaseTest {
             }
             ctx.completeIteration();
         });
+        ctx.await();
+
+        waitFor(() -> {
+            UserState connieState = getDocumentNoWait(UserState.class, UriUtils.buildUriPath(
+                    UserService.FACTORY_LINK, USER_EMAIL_CONNIE));
+            if (!connieState.userGroupLinks.contains(userGroupSelfLink)) {
+                return false;
+            }
+            return true;
+        });
+
+        waitFor(() -> {
+            UserState adminState = getDocumentNoWait(UserState.class, UriUtils.buildUriPath(
+                    UserService.FACTORY_LINK, USER_EMAIL_ADMIN));
+            if (!adminState.userGroupLinks.contains(userGroupSelfLink)) {
+                return false;
+            }
+            return true;
+        });
 
         // Verify users are added.
         List<UserState> users = getUsersFromUserGroup(userGroupState.documentSelfLink);
@@ -77,9 +97,8 @@ public class UserGroupsUpdaterTest extends AuthBaseTest {
 
         // Remove user.
         result = UserGroupsUpdater.create()
-                .setHost(host)
+                .setService(privilegedTestService)
                 .setGroupLink(userGroupSelfLink)
-                .setReferrer(host.getUri().toString())
                 .setUsersToRemove(Arrays.asList(USER_EMAIL_CONNIE))
                 .update();
 
@@ -91,11 +110,16 @@ public class UserGroupsUpdaterTest extends AuthBaseTest {
             }
             ctx1.completeIteration();
         });
+        ctx1.await();
 
         // Verify user is removed.
-        users = getUsersFromUserGroup(userGroupState.documentSelfLink);
-        for (UserState state : users) {
-            assertTrue(!state.email.equals(USER_EMAIL_CONNIE));
-        }
+        waitFor(() -> {
+            UserState connieState = getDocumentNoWait(UserState.class, UriUtils.buildUriPath(
+                    UserService.FACTORY_LINK, USER_EMAIL_CONNIE));
+            if (connieState.userGroupLinks.contains(userGroupSelfLink)) {
+                return false;
+            }
+            return true;
+        });
     }
 }

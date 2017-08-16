@@ -15,7 +15,7 @@
 
   <div title>{{"projects.title" | i18n | titlecase}}</div>
   <div toolbar>
-    <button class="btn btn-link" [routerLink]="['./new']"><i class="fa fa-plus"></i>{{"projects.project" | i18n}}</button>
+    <button class="btn btn-link" allowNavigation [roles]="projectsNewRouteRestriction" [routerLink]="['./new']"><i class="fa fa-plus"></i>{{"projects.project" | i18n}}</button>
   </div>
 
   <delete-confirmation [title]="'projects.delete.title' | i18n"
@@ -32,7 +32,9 @@
       <div card-header>
         <img [src]="'/container-image-icons?container-image=' + item.documentSelfLink"/>
         {{item.name}}
-        <clr-dropdown class="card-actions" [clrMenuPosition]="'left-top'" (click)="selectItem($event, item)">
+        <clr-dropdown class="card-actions" allowNavigation [projectSelfLink]="item.documentSelfLink"
+          [roles]="projectsCardViewActions"
+          [clrMenuPosition]="'left-top'" (click)="selectItem($event, item)">
           <button class="btn btn-sm btn-link" clrDropdownToggle>
               <clr-icon shape="ellipsis-vertical" size="20"></clr-icon>
           </button>
@@ -73,6 +75,6 @@
 </grid-view>
 
 <navigation-container>
-  <back-button [routerLink]="['./']">{{"projects.actions.title" | i18n}}</back-button>
+  <back-button [routerLink]="['./']">{{"projects.title" | i18n}}</back-button>
   <router-outlet></router-outlet>
 </navigation-container>

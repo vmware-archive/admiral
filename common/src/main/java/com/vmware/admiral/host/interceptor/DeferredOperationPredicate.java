@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.host.interceptor;
 
+import java.util.concurrent.CompletionException;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.logging.Level;
@@ -63,9 +64,15 @@ public class DeferredOperationPredicate implements Predicate<Operation> {
         dr.whenComplete((ignore, e) -> {
             if (e != null) {
                 this.service.getHost().log(Level.INFO,
-                        "Operation interceptor %s::%s returned error: %s",
-                        this.service.getClass().getCanonicalName(), this.action.name(),
+                        "Operation interceptor %s: Action: %s returned error: %s",
+                        this.service.getClass().getCanonicalName(), this.action,
                         e.toString());
+
+                if (e instanceof CompletionException && e.getCause().getMessage().contains("forbidden")
+                        || e.getMessage().contains("forbidden")) {
+                    operation.fail(Operation.STATUS_CODE_FORBIDDEN, e, e);
+                    return;
+                }
                 operation.fail(e);
             } else {
                 this.service.getOperationProcessingChain().resumeProcessingRequest(operation, this);

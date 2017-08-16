@@ -17,7 +17,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 import java.io.InputStream;
-
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
@@ -92,7 +91,6 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
-import com.vmware.photon.controller.model.resources.DiskService;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService;
 import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;
@@ -111,6 +109,7 @@ import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.ServiceUriPaths;
 
 public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
@@ -145,6 +144,9 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
 
     public static final String OPERATION_PAYLOAD_PROP_NAME = "__operationPayload";
 
+    public static final String COMPOSITION_CONTEXT_ID_PROP_NAME = "__composition_context_id";
+    public static final String CLUSTER_INDEX_PROP_NAME = "__cluster_index";
+
     public static final String DAY_2_OPERATION_POWER_ON = "Compute.PowerOn";
     public static final String DAY_2_OPERATION_POWER_OFF = "Compute.PowerOff";
     public static final String DAY_2_OPERATION_RESTART = ResourceOperation.RESTART.operation;
@@ -159,9 +161,9 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
     protected final TestDocumentLifeCycle documentLifeCycle = TestDocumentLifeCycle.FOR_DELETE;
     protected ResourcePoolState vmsResourcePool;
 
-
     private AuthCredentialsServiceState dockerRemoteApiClientCredentials;
     protected EndpointState endpoint;
+    protected String compositionContextId;
 
     @Before
     public void setUp() throws Throwable {
@@ -219,7 +221,8 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         super.baseTearDown();
 
         if (endpoint != null) {
-            delete(UriUtils.buildUriPath(EndpointAdapterService.SELF_LINK, endpoint.documentSelfLink));
+            delete(UriUtils.buildUriPath(EndpointAdapterService.SELF_LINK,
+                    endpoint.documentSelfLink));
         }
     }
 
@@ -283,6 +286,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
 
     protected RequestBrokerState allocateAndProvision(
             String resourceDescriptionLink) throws Exception {
+        compositionContextId = UUID.randomUUID().toString();
         RequestBrokerState allocateRequest = requestCompute(resourceDescriptionLink, true, null);
 
         allocateRequest = getDocument(allocateRequest.documentSelfLink, RequestBrokerState.class);
@@ -294,6 +298,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
             assertNotNull(computeState);
             computesToDelete.put(link, computeState);
         }
+        logger.info("Allocation of compute request completed successfully");
 
         RequestBrokerState provisionRequest = requestCompute(resourceDescriptionLink, false,
                 allocateRequest.resourceLinks);
@@ -304,6 +309,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         for (String link : allocateRequest.resourceLinks) {
             computesToDelete.remove(link);
         }
+        logger.info("Provisioning of compute request completed successfully");
         return provisionRequest;
     }
 
@@ -324,11 +330,18 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         requestBrokerState.resourceLinks = resourceLinks;
         requestBrokerState.tenantLinks = getTenantLinks();
         requestBrokerState.customProperties = new HashMap<>();
+        requestBrokerState.customProperties.put(COMPOSITION_CONTEXT_ID_PROP_NAME,
+                compositionContextId);
+
         if (allocation) {
             requestBrokerState.customProperties.put(RequestUtils.FIELD_NAME_ALLOCATION_REQUEST,
                     "true");
+            requestBrokerState.customProperties.put(ComputeConstants.CUSTOM_PROP_CLUSTER_SIZE_KEY,
+                    "1");
         } else {
             requestBrokerState.operation = ContainerOperationType.CREATE.id;
+            requestBrokerState.customProperties.put(CLUSTER_INDEX_PROP_NAME,
+                    "0");
         }
 
         RequestBrokerState request = postDocument(RequestBrokerFactoryService.SELF_LINK,
@@ -390,41 +403,53 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
 
     protected void createProfile(ComputeProfile computeProfile, NetworkProfile networkProfile,
             StorageProfile storageProfile) {
-        List<ServiceDocument> docs = new ArrayList<>();
         String id = UUID.randomUUID().toString();
         ProfileState profile = new ProfileState();
         profile.name = getProfileName();
         profile.documentSelfLink = UriUtils.buildUriPath(ProfileService.FACTORY_LINK, id);
         profile.endpointLink = endpoint.documentSelfLink;
         profile.tenantLinks = getTenantLinks();
-        docs.add(profile);
 
+        List<ServiceDocument> docs = new ArrayList<>();
         if (computeProfile != null) {
-            profile.computeProfileLink = UriUtils.buildUriPath(ComputeProfileService.FACTORY_LINK, id);
+            profile.computeProfileLink = UriUtils.buildUriPath(ComputeProfileService.FACTORY_LINK,
+                    id);
             computeProfile.documentSelfLink = profile.computeProfileLink;
             computeProfile.tenantLinks = profile.tenantLinks;
             docs.add(computeProfile);
         }
         if (networkProfile != null) {
-            profile.networkProfileLink = UriUtils.buildUriPath(NetworkProfileService.FACTORY_LINK, id);
+            profile.networkProfileLink = UriUtils.buildUriPath(NetworkProfileService.FACTORY_LINK,
+                    id);
             networkProfile.documentSelfLink = profile.networkProfileLink;
             networkProfile.tenantLinks = profile.tenantLinks;
             docs.add(networkProfile);
         }
         if (storageProfile != null) {
-            profile.storageProfileLink = UriUtils.buildUriPath(StorageProfileService.FACTORY_LINK, id);
+            profile.storageProfileLink = UriUtils.buildUriPath(StorageProfileService.FACTORY_LINK,
+                    id);
             storageProfile.documentSelfLink = profile.storageProfileLink;
             storageProfile.tenantLinks = profile.tenantLinks;
             docs.add(storageProfile);
         }
 
+        // Post compute, network and storage profiles.
         docs.forEach(d -> {
             try {
                 postDocument(UriUtils.getParentPath(d.documentSelfLink), d);
+                logger.info("%s created successfully", d.documentSelfLink);
             } catch (Exception e) {
+                logger.info("%s failed to create", d.documentSelfLink);
                 throw new RuntimeException(e);
             }
         });
+        // Now post profile as this invokes update of its child profiles, so that the subsequent
+        // patch on the child profiles succeed.
+        try {
+            postDocument(UriUtils.getParentPath(profile.documentSelfLink), profile);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     protected String getProfileName() {
@@ -475,27 +500,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
     }
 
     protected List<String> createDiskStates() throws Exception {
-        List<String> diskLinks = new ArrayList<>();
-        diskLinks.add(prepareRootDisk().documentSelfLink);
-        return diskLinks;
-    }
-
-    protected DiskService.DiskState prepareRootDisk() throws Exception {
-        DiskService.DiskState rootDisk = new DiskService.DiskState();
-        rootDisk.id = UUID.randomUUID().toString();
-        rootDisk.documentSelfLink = rootDisk.id;
-        rootDisk.name = "boot-disk";
-        rootDisk.type = DiskService.DiskType.HDD;
-        rootDisk.bootOrder = 1;
-        rootDisk.capacityMBytes = getRootDiskSize();
-
-        rootDisk = postDocument(DiskService.FACTORY_LINK, rootDisk, documentLifeCycle);
-
-        return rootDisk;
-    }
-
-    protected long getRootDiskSize() {
-        return DEFAULT_DISK_SIZE;
+        return Collections.emptyList();
     }
 
     protected ComputeDescription prepareComputeDescription(String imageId) throws Exception {
@@ -612,8 +617,8 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         validateDisks(computeState.diskLinks);
     }
 
-    protected void validateDisks(List<String> diskLinks) throws Exception{
-        //The actual validations are added in the Disk related tests
+    protected void validateDisks(List<String> diskLinks) throws Exception {
+        // The actual validations are added in the Disk related tests
     }
 
     protected void validateAfterStart(String resourceDescLink, RequestBrokerState request)
@@ -784,7 +789,8 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         return compositeDescriptionLink;
     }
 
-    protected NetworkProfile createNetworkProfile(String subnetName, String securityGroupName, Set<String> tagLinks) throws Exception {
+    protected NetworkProfile createNetworkProfile(String subnetName, String securityGroupName,
+            Set<String> tagLinks) throws Exception {
 
         String subnetLink = loadResource(SubnetState.class, subnetName);
         NetworkProfile np = new NetworkProfile();
@@ -798,6 +804,12 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
     }
 
     protected NetworkProfile createIsolatedSubnetNetworkProfile(String isolatedNetworkName, int cidrPrefix) throws Exception {
+        return createIsolatedSubnetWithOutboundAccessNetworkProfile(isolatedNetworkName, cidrPrefix, null);
+    }
+
+    protected NetworkProfile createIsolatedSubnetWithOutboundAccessNetworkProfile(
+            String isolatedNetworkName, int cidrPrefix,
+            String isolationExternalSubnetName) throws Exception {
         String networkLink = loadResource(NetworkState.class, isolatedNetworkName);
 
         NetworkProfile np = new NetworkProfile();
@@ -805,10 +817,15 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         np.isolationType = IsolationSupportType.SUBNET;
         np.isolationNetworkLink = networkLink;
         np.isolatedSubnetCIDRPrefix = cidrPrefix;
+        if (isolationExternalSubnetName != null) {
+            String subnetLink = loadResource(SubnetState.class, isolationExternalSubnetName);
+            np.isolationExternalSubnetLink = subnetLink;
+        }
         return np;
     }
 
-    protected String loadResource(Class<? extends ServiceDocument> resourceClass, String name) throws Exception {
+    protected String loadResource(Class<? extends ServiceDocument> resourceClass, String name)
+            throws Exception {
         QueryTask.Query query = QueryTask.Query.Builder.create()
                 .addKindFieldClause(resourceClass)
                 .addCaseInsensitiveFieldClause(ResourceState.FIELD_NAME_NAME, name,
@@ -877,6 +894,115 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         d2oRequest = postDocument(RequestBrokerFactoryService.SELF_LINK, d2oRequest);
 
         waitForTaskToComplete(d2oRequest.documentSelfLink);
+    }
+
+    protected Set<String> testScaleOperations(String resourceDescriptionLink) throws Throwable {
+        // First scale out from 1 to 3
+        // scale out is two phase - allocate and provision
+        RequestBrokerState d2oRequest = new RequestBrokerState();
+        d2oRequest.resourceType = ResourceType.COMPUTE_TYPE.getName();
+        d2oRequest.resourceDescriptionLink = resourceDescriptionLink;
+        d2oRequest.operation = RequestBrokerState.CLUSTER_RESOURCE_OPERATION;
+        int newResourceCount = 3;
+        d2oRequest.resourceCount = newResourceCount;
+        d2oRequest.customProperties = new HashMap<>();
+        d2oRequest.customProperties.put("__allocation_request", "true");
+        d2oRequest.customProperties.put(COMPOSITION_CONTEXT_ID_PROP_NAME, compositionContextId);
+        d2oRequest.tenantLinks = getTenantLinks();
+        d2oRequest = postDocument(RequestBrokerFactoryService.SELF_LINK, d2oRequest);
+        waitForTaskToComplete(d2oRequest.documentSelfLink);
+
+        RequestBrokerState d2oResponse = getDocument(d2oRequest.documentSelfLink,
+                RequestBrokerState.class);
+        assertNotNull(d2oResponse.resourceLinks);
+        assertEquals(newResourceCount, d2oResponse.resourceLinks.size());
+        for (String link : d2oResponse.resourceLinks) {
+            ComputeState computeState = getDocument(link, ComputeState.class);
+            assertNotNull(computeState);
+            computesToDelete.put(link, computeState);
+        }
+
+        List<String> resourceLinks = new ArrayList<>(d2oResponse.resourceLinks.size());
+        resourceLinks.addAll(d2oResponse.resourceLinks);
+
+        Integer clusterIndex = 1;
+        RequestBrokerState d2oRequest2 = new RequestBrokerState();
+        d2oRequest2.resourceType = ResourceType.COMPUTE_TYPE.getName();
+        d2oRequest2.resourceDescriptionLink = resourceDescriptionLink;
+        d2oRequest2.operation = ContainerOperationType.CREATE.id;
+        d2oRequest2.resourceCount = 0;
+        d2oRequest2.customProperties = new HashMap<>();
+        d2oRequest2.customProperties.put(CLUSTER_INDEX_PROP_NAME, clusterIndex.toString());
+        d2oRequest2.customProperties.put(COMPOSITION_CONTEXT_ID_PROP_NAME, compositionContextId);
+        d2oRequest2.tenantLinks = getTenantLinks();
+        d2oRequest2.resourceLinks = new HashSet<String>(1);
+        d2oRequest2.resourceLinks.add(resourceLinks.get(clusterIndex));
+        d2oRequest2 = postDocument(RequestBrokerFactoryService.SELF_LINK, d2oRequest2);
+
+        clusterIndex = 2;
+        RequestBrokerState d2oRequest3 = new RequestBrokerState();
+        d2oRequest3.resourceType = ResourceType.COMPUTE_TYPE.getName();
+        d2oRequest3.resourceDescriptionLink = resourceDescriptionLink;
+        d2oRequest3.operation = ContainerOperationType.CREATE.id;
+        d2oRequest3.resourceCount = 0;
+        d2oRequest3.customProperties = new HashMap<>();
+        d2oRequest3.customProperties.put(CLUSTER_INDEX_PROP_NAME, clusterIndex.toString());
+        d2oRequest3.customProperties.put(COMPOSITION_CONTEXT_ID_PROP_NAME, compositionContextId);
+        d2oRequest3.tenantLinks = getTenantLinks();
+        d2oRequest3.resourceLinks = new HashSet<String>(1);
+        d2oRequest3.resourceLinks.add(resourceLinks.get(clusterIndex));
+        d2oRequest3 = postDocument(RequestBrokerFactoryService.SELF_LINK, d2oRequest3);
+
+        waitForTaskToComplete(d2oRequest2.documentSelfLink);
+        waitForTaskToComplete(d2oRequest3.documentSelfLink);
+
+        List<String> actualComputeStateLinks = queryComputeByDescriptionLink(
+                d2oRequest3.resourceDescriptionLink);
+        assertEquals(newResourceCount, actualComputeStateLinks.size());
+
+        // Scale-in is one step delete operation, LIFO seq
+        // based on cluster index last resource is selected by composition for deletion
+        clusterIndex = 2;
+        newResourceCount = 2;
+        RequestBrokerState d2oRequest4 = new RequestBrokerState();
+        d2oRequest4.resourceType = ResourceType.COMPUTE_TYPE.getName();
+        d2oRequest4.resourceDescriptionLink = resourceDescriptionLink;
+        d2oRequest4.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
+        d2oRequest4.resourceCount = 0;
+        d2oRequest4.customProperties = new HashMap<>();
+        d2oRequest4.customProperties.put(CLUSTER_INDEX_PROP_NAME, clusterIndex.toString());
+        d2oRequest4.tenantLinks = getTenantLinks();
+        d2oRequest4.resourceLinks = new HashSet<String>(1);
+        d2oRequest4.resourceLinks.add(resourceLinks.get(clusterIndex));
+        d2oRequest4 = postDocument(RequestBrokerFactoryService.SELF_LINK, d2oRequest4);
+
+        waitForTaskToComplete(d2oRequest4.documentSelfLink);
+
+        actualComputeStateLinks = queryComputeByDescriptionLink(
+                d2oRequest4.resourceDescriptionLink);
+        assertEquals(newResourceCount, actualComputeStateLinks.size());
+
+        for (String link : d2oResponse.resourceLinks) {
+            computesToDelete.remove(link);
+        }
+        return new HashSet<String>(actualComputeStateLinks);
+    }
+
+    protected List<String> queryComputeByDescriptionLink(
+            String descriptionLink) throws Exception {
+        Query.Builder queryBuilder = Query.Builder.create()
+                .addKindFieldClause(ComputeState.class)
+                .addFieldClause(ComputeState.FIELD_NAME_DESCRIPTION_LINK,
+                        descriptionLink);
+
+        QueryTask qt = QueryTask.Builder.createDirectTask().setQuery(queryBuilder.build()).build();
+        String responseJson = sendRequest(SimpleHttpsClient.HttpMethod.POST,
+                ServiceUriPaths.CORE_QUERY_TASKS,
+                Utils.toJson(qt));
+        QueryTask result = Utils.fromJson(responseJson, QueryTask.class);
+        assertNotNull(result.results);
+        assertNotNull(result.results.documentCount);
+        return result.results.documentLinks;
     }
 
 }

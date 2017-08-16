@@ -35,12 +35,14 @@ public class RegistryServiceIT {
     private static final String TEST_REGISTRY_ADDRESS_INVALID = "https://127.0.0.1:7890";
     private static final String TEST_REGISTRY_ADDRESS_HTTP = "http://127.0.0.1:7809";
     private RegistryState registryState;
+    private ServiceHost host = new ServiceHost() {
+    };
 
     @Before
     public void setUp() {
         DeploymentProfileConfig.getInstance().setTest(false);
         registryState = new RegistryState();
-        ServerX509TrustManager.init(new ServiceHost() { });
+        ServerX509TrustManager.init(host);
     }
 
     @After
@@ -56,7 +58,7 @@ public class RegistryServiceIT {
         RegistryService.fetchRegistryCertificate(registryState, (cert) -> {
             certificate.append(cert);
             latch.countDown();
-        });
+        }, host);
         latch.await(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         Assert.assertNotEquals(0, certificate.length());
     }
@@ -75,7 +77,7 @@ public class RegistryServiceIT {
         RegistryService.fetchRegistryCertificate(registryState, (cert) -> {
             Assert.fail("should not return certificate");
             latch.countDown();
-        });
+        }, host);
         latch.await(TEST_TIMEOUT_SHORT_SECONDS, TimeUnit.SECONDS);
     }
 

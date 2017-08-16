@@ -665,10 +665,6 @@ var utils = {
     return locationSearch.indexOf('compute') !== -1 || locationPath.indexOf('/iaas/') !== -1;
   },
 
-  escapeHtml: function(htmlString) {
-    return $('<div>').text(htmlString).html();
-  },
-
   /**
    * The build number consists of the release version + the number of last
    * succesful build of this version. For example: 0.9.1 (1423)
@@ -1403,8 +1399,28 @@ var utils = {
     });
   },
 
+  getSelectedProject() {
+    try {
+      return JSON.parse(localStorage.getItem('selectedProject'));
+    } catch (e) {
+      console.log('Failed to retrieve selectedProject entry from local storage.');
+    }
+  },
+
   convertToGigabytes(bytes) {
     return (bytes / 1073741824).toFixed(2);
+  },
+
+  getUnifiedState(cs) {
+    if (!cs) {
+      return null;
+    }
+
+    var state = cs.lifecycleState;
+    if (state === 'RETIRED' || state === 'PROVISIONING') {
+      return state;
+    }
+    return cs.powerState;
   }
 };
 

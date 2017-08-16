@@ -17,6 +17,7 @@ import ComputeView from 'components/compute/ComputeView';//eslint-disable-line
 import PlacementsView from 'components/placements/PlacementsView';//eslint-disable-line
 import ProfilesView from 'components/profiles/ProfilesView';//eslint-disable-line
 import EndpointsView from 'components/endpoints/EndpointsView';//eslint-disable-line
+import { NavigationActions } from 'actions/Actions';
 import computeConstants from 'core/computeConstants';
 
 var AppComputeVueComponent = Vue.extend({
@@ -26,6 +27,11 @@ var AppComputeVueComponent = Vue.extend({
     return {
       computeConstants: computeConstants
     };
+  },
+  methods: {
+    goBackToInstanceTypes: function() {
+      NavigationActions.openInstanceTypes();
+    }
   }
 });
 

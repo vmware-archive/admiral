@@ -73,7 +73,7 @@ public class ClusterServiceLinkAffinityHostFilter extends BaseAffinityHostFilter
             final HostSelectionFilterCompletion callback) {
 
         // get descriptionLinks for the containers in the same component as the current container
-        QueryTask q = QueryUtil.buildQuery(ContainerState.class, false);
+        QueryTask q = QueryUtil.buildQuery(ContainerState.class, true);
         String contextId = state.customProperties.get(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY);
         String contextLink = UriUtils.buildUriPath(CompositeComponentFactoryService.SELF_LINK, contextId);
         QueryTask.Query contextClause = new QueryTask.Query()

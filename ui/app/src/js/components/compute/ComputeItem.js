@@ -40,8 +40,8 @@ export default Vue.component('compute-grid-item', {
     }
   },
   methods: {
-    stateMessage(state) {
-      return i18n.t('state.' + state);
+    stateMessage() {
+      return utils.getUnifiedState(this.model);
     },
     percentageLevel(percentage) {
       if (percentage < 50) {

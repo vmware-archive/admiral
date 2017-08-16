@@ -17,6 +17,10 @@ import java.util.Set;
 
 public class SecurityContext {
 
+    public static class SecurityContextPostDto {
+        public String password;
+    }
+
     public static class ProjectEntry {
 
         public String documentSelfLink;
@@ -38,5 +42,30 @@ public class SecurityContext {
     public Set<AuthRole> roles;
 
     public List<ProjectEntry> projects;
+
+    public boolean isCloudAdmin() {
+        return this.roles.contains(AuthRole.CLOUD_ADMIN);
+    }
+
+    public boolean isProjectAdmin(String projectLink) {
+        return checkProjectRoleInProjectEntries(AuthRole.PROJECT_ADMIN, projectLink);
+    }
+
+    public boolean isProjectMember(String projectLink) {
+        return checkProjectRoleInProjectEntries(AuthRole.PROJECT_MEMBER, projectLink);
+    }
+
+    public boolean isProjectViewer(String projectLink) {
+        return checkProjectRoleInProjectEntries(AuthRole.PROJECT_VIEWER, projectLink);
+    }
+
+    private boolean checkProjectRoleInProjectEntries(AuthRole role, String projectLink) {
+        for (ProjectEntry entry : this.projects) {
+            if (entry.documentSelfLink.equals(projectLink)) {
+                return entry.roles.contains(role);
+            }
+        }
+        return false;
+    }
 
 }

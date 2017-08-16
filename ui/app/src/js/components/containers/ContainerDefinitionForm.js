@@ -310,10 +310,10 @@ class ContainerDefinitionForm extends Component {
 
     this.$el.find('.fa-question-circle').tooltip({html: true});
 
-    this.$imageSearch = this.$el.find('.container-image-input .search-input .form-control');
+    this.$imageSearch = this.$el.find('.container-image-input .image-name-input .form-control');
     this.$imageSearch.typeahead({}, {
       name: 'images',
-      source: typeaheadSource(this.$el.find('.container-image-input .search-input'))
+      source: typeaheadSource(this.$el.find('.container-image-input .image-name-input'))
     });
 
     this.$imageTags = this.$el.find('.container-image-input .image-tags-input .form-control');

@@ -205,7 +205,7 @@ module.exports = {
     dest: dest + '/styles',
     includePaths: [
       './node_modules/bootstrap-sass/assets/stylesheets',
-      './node_modules/clarity-ui/src'
+      './node_modules/'
     ]
   },
   i18n: {

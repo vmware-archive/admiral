@@ -21,7 +21,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -33,8 +32,6 @@ import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.admiral.common.util.QueryUtil;
-import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
@@ -42,7 +39,9 @@ import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAl
 import com.vmware.admiral.request.compute.ComputeProvisionTaskService.ComputeProvisionTaskState.SubStage;
 import com.vmware.admiral.request.compute.enhancer.ComputeStateEnhancers;
 import com.vmware.admiral.request.compute.enhancer.Enhancer.EnhanceContext;
+import com.vmware.admiral.request.utils.ComputeStateUtils;
 import com.vmware.admiral.request.utils.EventTopicUtils;
+import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.EventTopicDeclarator;
 import com.vmware.admiral.service.common.EventTopicService;
@@ -54,8 +53,6 @@ import com.vmware.photon.controller.model.data.SchemaBuilder;
 import com.vmware.photon.controller.model.data.SchemaField.Type;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeStateWithDescription;
-import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService.IpAssignment;
-import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService.NetworkInterfaceDescription;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceService.NetworkInterfaceState;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
@@ -192,11 +189,16 @@ public class ComputeProvisionTaskService extends
 
     private void customizeCompute(ComputeProvisionTaskState state) {
         URI referer = UriUtils.buildUri(getHost().getPublicUri(), getSelfLink());
+        final String clusterIndex = (state.customProperties != null && !state.customProperties.isEmpty())
+                ? state.customProperties.get(RequestUtils.FIELD_NAME_CLUSTER_INDEX) : null;
         List<DeferredResult<Operation>> results = state.resourceLinks.stream()
                 .map(link -> Operation.createGet(this, link))
                 .map(o -> sendWithDeferredResult(o, ComputeState.class))
                 .map(dr -> {
                     return dr.thenCompose(cs -> {
+                        if (clusterIndex != null) {
+                            cs.customProperties.put(RequestUtils.FIELD_NAME_CLUSTER_INDEX, clusterIndex);
+                        }
                         EnhanceContext context = new EnhanceContext();
                         context.endpointType = cs.customProperties
                                 .get(ComputeConstants.CUSTOM_PROP_ENDPOINT_TYPE_NAME);
@@ -211,8 +213,9 @@ public class ComputeProvisionTaskService extends
             if (t != null) {
                 failTask("Error patching compute states", t);
                 return;
+            } else {
+                proceedTo(SubStage.CUSTOMIZING_COMPUTE);
             }
-            proceedTo(SubStage.CUSTOMIZING_COMPUTE);
         });
     }
 
@@ -447,7 +450,7 @@ public class ComputeProvisionTaskService extends
     }
 
     @Override
-    protected Class<? extends ResourceState> getRelatedResourceStateType() {
+    protected Class<? extends ResourceState> getRelatedResourceStateType(ComputeProvisionTaskState state) {
         return ComputeState.class;
     }
 
@@ -521,12 +524,19 @@ public class ComputeProvisionTaskService extends
                 return;
             }
 
-            retrieveSubnetwork(state, extensibilityResponse, callback);
+            ComputeStateUtils.patchSubnetsNicsAndDescriptions(getHost(), state.resourceLinks,
+                    extensibilityResponse.addresses,
+                    extensibilityResponse.subnetName).whenComplete((o, e) -> {
+                        if (e != null) {
+                            failTask(e.getMessage(), e);
+                        } else {
+                            callback.run();
+                        }
+                    });
         } else {
             //Host address is not provided by client => Resume task.
             callback.run();
         }
-
     }
 
     @Override
@@ -559,25 +569,6 @@ public class ComputeProvisionTaskService extends
                 Boolean.TRUE, computePostProvisionTopicSchema(), taskInfo, host);
     }
 
-    private DeferredResult<Set<String>> getNicStates(ComputeProvisionTaskState state) {
-
-        List<DeferredResult<ComputeState>> results = state.resourceLinks.stream()
-                .map(c -> Operation.createGet(this, c))
-                .map(o -> sendWithDeferredResult(o, ComputeState.class))
-                .collect(Collectors.toList());
-
-        return DeferredResult.allOf(results).thenApply(computes ->
-                /**
-                 * Get NIC links from Compute(s) with only one (default) NIC.
-                 */
-                computes.stream()
-                        .filter(c -> c.networkInterfaceLinks != null &&
-                                c.networkInterfaceLinks.size() == 1)
-                        .map(c -> c.networkInterfaceLinks.get(0))
-                        .collect(Collectors.toSet())
-        );
-    }
-
     private DeferredResult<Set<String>> getSubnetsLinks(Set<String> netStateLinks) {
 
         List<DeferredResult<NetworkInterfaceState>> results = netStateLinks.stream()
@@ -608,81 +599,6 @@ public class ComputeProvisionTaskService extends
                 }
 
         );
-    }
-
-    private DeferredResult<Set<String>> patchNicStates(Set<String> nicStates, Set<String>
-            staticIps,
-            SubnetState subnet) {
-
-        Iterator<String> ipIterator = staticIps.iterator();
-
-        List<DeferredResult<NetworkInterfaceState>> results = nicStates.stream()
-                /**
-                 * Filter base on size of ip list and number of NICs. For example:
-                 * 1) IP list: [1,2,3], Computes: [A,B] => A[1], B[2]; ip 3 - will be ignored.
-                 * 2) IP list: [1,2], Computes: [A,B,C] => A[1], B[2]; Compute C - will be ignored.
-                 */
-                .filter(nic -> ipIterator.hasNext())
-                .map(nicSelfLink -> patchNicStateOperation(subnet, ipIterator.next(), nicSelfLink))
-                .map(o -> sendWithDeferredResult(o, NetworkInterfaceState.class))
-                .collect(Collectors.toList());
-
-        return DeferredResult.allOf(results).thenApply(nics -> nics.stream().map(nic -> nic
-                .networkInterfaceDescriptionLink)
-                .collect(Collectors.toSet()));
-
-    }
-
-    private DeferredResult<List<NetworkInterfaceDescription>> patchNicDescriptions(
-            Set<String> nicDescriptions,
-            Set<String> staticIps, SubnetState subnet) {
-
-        Iterator<String> ipIterator = staticIps.iterator();
-
-        List<DeferredResult<NetworkInterfaceDescription>> results = nicDescriptions.stream()
-                .filter(nic -> ipIterator.hasNext())
-                .map(nicSelfLink -> patchNicDescriptionOperation(ipIterator.next(), nicSelfLink))
-                .map(o -> sendWithDeferredResult(o, NetworkInterfaceDescription.class))
-                .collect(Collectors.toList());
-
-        return DeferredResult.allOf(results);
-    }
-
-    protected Operation patchNicDescriptionOperation(String staticIp, String nicDescLink) {
-
-        NetworkInterfaceDescription patch = new NetworkInterfaceDescription();
-        patch.assignment = IpAssignment.STATIC;
-        patch.address = staticIp;
-
-        return Operation.createPatch(getHost(), nicDescLink)
-                .setBody(patch)
-                .setReferer(getHost().getUri())
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        getHost().log(Level.SEVERE, e.getMessage());
-                        failTask(e.getMessage(), new Throwable(e));
-                    }
-                });
-    }
-
-    protected Operation patchNicStateOperation(SubnetState subnet, String
-            staticIp, String nicLink) {
-
-        NetworkInterfaceState patch = new NetworkInterfaceState();
-        patch.networkLink = null;
-        patch.subnetLink = subnet.documentSelfLink;
-        patch.address = staticIp;
-
-        return (Operation.createPatch(getHost(), nicLink)
-                .setBody(patch)
-                .setReferer(getHost().getUri())
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        getHost().log(Level.SEVERE, e.getMessage());
-                        failTask(e.getMessage(), new Throwable(e));
-                    }
-                }));
-
     }
 
     private SchemaBuilder computePreProvisionTopicSchema() {
@@ -725,55 +641,5 @@ public class ComputeProvisionTaskService extends
     public void registerEventTopics(ServiceHost host) {
         computePreProvisionEventTopic(host);
         computePostProvisionEventTopic(host);
-    }
-
-    protected void retrieveSubnetwork(ComputeProvisionTaskState state,
-            ExtensibilityCallbackResponse response, Runnable callback) {
-
-        QueryTask.Query.Builder queryBuilder = QueryTask.Query.Builder.create()
-                .addKindFieldClause(SubnetState.class)
-                .addFieldClause("name", response.subnetName);
-
-        QueryTask q = QueryTask.Builder.create().setQuery(queryBuilder.build()).build();
-        q.querySpec.resultLimit = ServiceDocumentQuery.DEFAULT_QUERY_RESULT_LIMIT;
-        QueryUtil.addExpandOption(q);
-
-        //It is expected one particular subnet provided by client.
-        final SubnetState[] subnet = new SubnetState[1];
-
-        new ServiceDocumentQuery<>(getHost(), SubnetState.class).query(q, (r) -> {
-            if (r.hasException()) {
-                getHost().log(Level.WARNING,
-                        "Exception while quering SubnetState with name [%s]. Error: [%s]",
-                        response.subnetName, r.getException().getMessage());
-                failTask(r.getException().getMessage(), r.getException());
-            } else if (r.hasResult()) {
-                subnet[0] = r.getResult();
-            } else {
-                if (subnet.length == 0) {
-                    failTask("No subnets with name [%s] found.", new Throwable());
-                    return;
-                }
-                /**
-                 * 1. Get ComputeStates in order to retrieve their {@link NetworkInterfaceState}
-                 * 2. Link {@link NetworkInterfaceState} to above {@link SubnetState}
-                 * 3. Link {@link NetworkInterfaceDescription} to above {@link SubnetState}
-                 * 4. Resume the task
-                 */
-                getNicStates(state)
-                        .thenCompose(nicStates -> patchNicStates(nicStates, response.addresses, subnet[0]))
-                        .thenCompose(nicDesciptions -> patchNicDescriptions(nicDesciptions,
-                                        response.addresses, subnet[0])
-                        ).whenComplete((result, exception) -> {
-                            if (exception != null) {
-                                failTask(exception.getMessage(), exception);
-                            } else {
-                                // Finished with NicDescriptions => invoke callback and resume the task now.
-                                callback.run();
-                            }
-                        });
-            }
-        });
-
     }
 }

@@ -74,6 +74,9 @@ public class MockDockerAdapterService extends BaseMockAdapterService {
     // Map of container ids and image by hostId. hostId -> Map of containerId -> container image
     private static final Map<String, Map<String, String>> CONTAINER_IDS_AND_IMAGE =
             new ConcurrentHashMap<>();
+    // Map of container ids and their power state
+    private static final Map<String, PowerState> CONTAINER_IDS_AND_STATE =
+            new ConcurrentHashMap<>();
 
     private static class MockAdapterRequest extends AdapterRequest {
 
@@ -128,7 +131,7 @@ public class MockDockerAdapterService extends BaseMockAdapterService {
         }
 
         if (op.getReferer().getPath().equals(ShellContainerExecutorService.SELF_LINK)) {
-            op.setBodyNoCloning("");
+            op.setBodyNoCloning(emptyExecResult());
         }
 
         op.setStatusCode(Operation.STATUS_CODE_ACCEPTED).complete();
@@ -428,6 +431,13 @@ public class MockDockerAdapterService extends BaseMockAdapterService {
                 }));
     }
 
+    private Map<String, Object> emptyExecResult() {
+        Map<String, Object> result = new HashMap<>();
+        result.put("__output", "");
+        result.put("ExitCode", 0);
+        return result;
+    }
+
     public static synchronized void resetContainers() {
         CONTAINER_IDS.clear();
         CONTAINER_IDS_AND_NAMES.clear();
@@ -539,6 +549,14 @@ public class MockDockerAdapterService extends BaseMockAdapterService {
             CONTAINER_IDS_AND_IMAGE.put(hostId, new ConcurrentHashMap<>());
         }
         CONTAINER_IDS_AND_IMAGE.get(hostId).put(containerId, image);
+    }
+
+    public static synchronized PowerState getContainerPowerState(String containerId) {
+        return CONTAINER_IDS_AND_STATE.get(containerId);
+    }
+
+    public static synchronized void addContainerState(String containerId, PowerState state) {
+        CONTAINER_IDS_AND_STATE.put(containerId, state);
     }
 
 }

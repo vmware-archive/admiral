@@ -40,7 +40,7 @@ import com.vmware.admiral.compute.profile.ComputeProfileService;
 import com.vmware.admiral.compute.profile.ComputeProfileService.ComputeProfile;
 import com.vmware.admiral.compute.profile.ImageProfileService;
 import com.vmware.admiral.compute.profile.InstanceTypeDescription;
-import com.vmware.admiral.compute.profile.InstanceTypeService;
+import com.vmware.admiral.compute.profile.InstanceTypeService.InstanceTypeFactoryService;
 import com.vmware.admiral.compute.profile.NetworkProfileService;
 import com.vmware.admiral.compute.profile.NetworkProfileService.NetworkProfile;
 import com.vmware.admiral.compute.profile.ProfileService;
@@ -78,12 +78,12 @@ public class ComputeDescriptionEnhancersTest extends BaseComputeDescriptionEnhan
     public void setup() throws Throwable {
         host.registerForServiceAvailability(CaSigningCertService.startTask(host), true,
                 CaSigningCertService.FACTORY_LINK);
-        HostInitServiceHelper.startServices(host, TestInitialBootService.class);
+        HostInitServiceHelper.startServices(host, TestInitialBootService.class,
+                InstanceTypeFactoryService.class);
         HostInitServiceHelper.startServiceFactories(host,
                 CaSigningCertService.class, ProfileService.class,
                 ComputeProfileService.class, StorageProfileService.class, ImageProfileService.class,
-                InstanceTypeService.class, NetworkProfileService.class,
-                NetworkInterfaceDescriptionService.class,
+                NetworkProfileService.class, NetworkInterfaceDescriptionService.class,
                 DiskService.class, StorageDescriptionService.class, ResourceGroupService.class);
         host.startFactory(TagService.class, TagFactoryService::new);
         waitForServiceAvailability(ProfileService.FACTORY_LINK);

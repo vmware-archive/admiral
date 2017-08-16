@@ -11,6 +11,7 @@
 
 import services from 'core/services';
 import utils from 'core/utils';
+import { formatUtils } from 'admiral-ui-common';
 import StorageItemVue from 'components/profiles/vsphere/StorageItemVue.html';
 
 export default Vue.component('vsphere-storage-profile-editor', {
@@ -27,11 +28,9 @@ export default Vue.component('vsphere-storage-profile-editor', {
       :storage-item="item"
       :endpoint="endpoint"
       :index="index"
-      :resource-group-state="storageItemsExpanded &&
-        storageItemsExpanded[$index] &&
+      :resource-group-state="storageItemsExpanded[$index] &&
         storageItemsExpanded[$index].resourceGroupState || {}"
-      :storage-description="storageItemsExpanded &&
-        storageItemsExpanded[$index] &&
+      :storage-description="storageItemsExpanded[$index] &&
         storageItemsExpanded[$index].storageDescription || {}"
       @change="onStorageItemChange"
       @remove="onRemoveStorageItem"
@@ -52,8 +51,9 @@ export default Vue.component('vsphere-storage-profile-editor', {
   data() {
     let storageItems = this.model.storageItems &&
       this.model.storageItems.asMutable({deep: true}) || [];
-    let storageItemsExpanded = this.model.storageItemsExpanded;
-    return {
+    let storageItemsExpanded = this.model.storageItemsExpanded &&
+      this.model.storageItemsExpanded.asMutable({deep: true}) || [];
+  return {
       storageItemsSize: this.model.storageItems && this.model.storageItems.length || 0,
       storageItems: storageItems,
       storageItemsExpanded: storageItemsExpanded
@@ -86,6 +86,7 @@ export default Vue.component('vsphere-storage-profile-editor', {
     onRemoveStorageItem(index) {
       let isDefault = this.storageItems[index].defaultItem;
       this.storageItems.splice(index, 1);
+      this.storageItemsExpanded.splice(index, 1);
       if (this.storageItems.length && isDefault) {
         this.storageItems[0].defaultItem = true;
       }
@@ -187,15 +188,16 @@ Vue.component('vsphere-storage-item', {
       tags: [],
       provisioningTypes: PROVISIONTNG_TYPES,
       sharesLevelTypes: SHARES_LEVEL,
-      provisioningType: diskProperties.provisioningType || 'thin',
-      sharesLevel: diskProperties.sharesLevel || SHARES_LEVEL_VALUES.normal,
-      shares: diskProperties.shares || SHARES_VALUES.normal,
+      provisioningType: diskProperties.provisioningType || '',
+      sharesLevel: diskProperties.sharesLevel || '',
+      shares: diskProperties.shares || '',
       isSharesValid: true,
       sharesInvalidMsg: '',
       limitIops: diskProperties.limitIops || '',
       isLimitIopsValid: true,
       limitIopsInvalidMsg: '',
-      independent: diskProperties.independent === 'true'
+      independent: diskProperties.independent === 'true',
+      persistent: !(diskProperties.persistent === 'false')
     };
   },
   computed: {
@@ -216,15 +218,17 @@ Vue.component('vsphere-storage-item', {
   },
   attached() {
     this.onDiskPropertyChange('sharesLevel',
-      this.storageItem.diskProperties.sharesLevel || SHARES_LEVEL_VALUES.normal);
+      this.storageItem.diskProperties.sharesLevel || '');
     this.onDiskPropertyChange('shares',
-      this.storageItem.diskProperties.shares || SHARES_VALUES.normal);
+      this.storageItem.diskProperties.shares || '');
     this.onDiskPropertyChange('limitIops',
       this.storageItem.diskProperties.limitIops || '');
     this.onDiskPropertyChange('provisioningType',
-      this.storageItem.diskProperties.provisioningType || 'thin');
+      this.storageItem.diskProperties.provisioningType || '');
     this.onDiskPropertyChange('independent',
-      this.storageItem.diskProperties.independent || false);
+      this.storageItem.diskProperties.independent || 'false');
+    this.onDiskPropertyChange('persistent',
+      this.storageItem.diskProperties.persistent || 'true');
     this.storageItem.valid = this.isValid();
     this.$emit('change');
   },
@@ -271,6 +275,8 @@ Vue.component('vsphere-storage-item', {
           this.customShares = true;
           this.shares = '';
           break;
+        case '':
+          this.shares = '';
       }
       this.onDiskPropertyChange('sharesLevel', $event.target.value);
       this.onDiskPropertyChange('shares', this.shares);
@@ -283,12 +289,14 @@ Vue.component('vsphere-storage-item', {
       this.onDiskPropertyChange('shares', this.shares);
     },
     isValid() {
-      this.isSharesValid = parseInt(this.storageItem.diskProperties.shares, 10) <= SHARES_RANGE.max
-        && parseInt(this.storageItem.diskProperties.shares, 10) >= SHARES_RANGE.min;
+      let shares = this.storageItem.diskProperties.shares;
+      let limitIops = this.storageItem.diskProperties.limitIops;
+      this.isSharesValid = parseInt(shares, 10) <= SHARES_RANGE.max
+        && parseInt(shares, 10) >= SHARES_RANGE.min || shares === '';
       this.isLimitIopsValid =
-        parseInt(this.storageItem.diskProperties.limitIops, 10) <= LIMIT_RANGE.max
-        && parseInt(this.storageItem.diskProperties.limitIops, 10) >= LIMIT_RANGE.min
-        || this.storageItem.diskProperties.limitIops === '';
+        parseInt(limitIops, 10) <= LIMIT_RANGE.max
+        && parseInt(limitIops, 10) >= LIMIT_RANGE.min
+        || limitIops === '';
 
       this.sharesInvalidMsg = this.isSharesValid ? '' :
         i18n.t('app.profile.edit.validation.valueInRange', {
@@ -301,10 +309,9 @@ Vue.component('vsphere-storage-item', {
           max: LIMIT_RANGE.max
         });
 
-      return !!(this.storageItem.name
+      return this.storageItem.name
         && this.isLimitIopsValid
-        && this.isSharesValid
-        && this.storageItem.storageDescriptionLink);
+        && this.isSharesValid;
     },
     searchVsphereDatastores(filterString) {
       return new Promise((resolve, reject) => {
@@ -322,16 +329,16 @@ Vue.component('vsphere-storage-item', {
     renderDatastore(datastore) {
       let props = [
         i18n.t('app.profile.edit.storage.vsphere.datastore.typeLabel') + ': ' +
-        utils.escapeHtml(datastore.type),
+        formatUtils.escapeHtml(datastore.type),
         i18n.t('app.profile.edit.storage.vsphere.datastore.capacityLabel') + ': ' +
-        utils.escapeHtml(utils.convertToGigabytes(datastore.capacityBytes)) +
+        formatUtils.escapeHtml(utils.convertToGigabytes(datastore.capacityBytes)) +
         i18n.t('app.profile.edit.storage.vsphere.datastore.capacityUnit')
       ];
       let secondary = props.join(', ');
       return `
         <div>
           <div class="host-picker-item-primary">
-            ${utils.escapeHtml(datastore.name)}
+            ${formatUtils.escapeHtml(datastore.name)}
         </div>
         <div class="host-picker-item-secondary" title="${secondary}">
             ${secondary}
@@ -352,12 +359,12 @@ Vue.component('vsphere-storage-item', {
     renderStoragePolicy(storagePolicy) {
       let props = [
         i18n.t('app.profile.edit.storage.vsphere.storagePolicy.descriptionLabel')
-        + ': ' + utils.escapeHtml(storagePolicy.desc)
+        + ': ' + formatUtils.escapeHtml(storagePolicy.desc)
       ];
       return `
       <div>
         <div class="host-picker-item-primary">
-          ${utils.escapeHtml(storagePolicy.name)}
+          ${formatUtils.escapeHtml(storagePolicy.name)}
         </div>
         <div class="host-picker-item-secondary" title="${props}">
           ${props}
@@ -378,8 +385,19 @@ Vue.component('vsphere-storage-item', {
       this.storageItem.valid = this.isValid();
       this.$emit('change');
     },
-    onIndependentChange(value) {
-      this.onDiskPropertyChange('independent', value);
+    onIndependentChange($event) {
+      let value = $event.target.checked;
+      this.onDiskPropertyChange('independent', value && 'true' || 'false');
+      this.independent = value;
+      //set persistent field to true when independent is unchecked
+      if (value === false) {
+        this.onDiskPropertyChange('persistent', 'true');
+        this.persistent = true;
+      }
+    },
+    onPersistentChange($event) {
+      this.onDiskPropertyChange('persistent', $event.target.value);
+      this.persistent = !($event.target.value === 'false');
     }
   }
 });

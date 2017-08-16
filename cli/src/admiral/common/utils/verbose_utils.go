@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 )
 
 var Verbose bool
@@ -24,11 +25,11 @@ var Quiet bool
 
 //If verbose flag is provided, will print the request send to the API.
 func CheckVerboseRequest(req *http.Request) {
-	if !Verbose || Quiet || !IsApplicationJson(req.Header) {
+	if !Verbose || !IsApplicationJson(req.Header) {
 		return
 	}
 
-	fmt.Printf("%s %s\n", req.Method, req.URL)
+	fmt.Fprintf(os.Stderr, "%s %s\n", req.Method, req.URL)
 
 	if req.Body == nil || !IsApplicationJson(req.Header) {
 		return
@@ -55,12 +56,12 @@ func CheckVerboseRequest(req *http.Request) {
 	//Set unmodified reader.
 	req.Body = rdrToSet
 
-	fmt.Println(string(body))
+	fmt.Fprintln(os.Stderr, string(body))
 }
 
 //If verbose flag is provided, will print the response send from the API.
 func CheckVerboseResponse(resp *http.Response) {
-	if !Verbose || resp == nil || Quiet || resp.Body == nil || !IsApplicationJson(resp.Header) {
+	if !Verbose || resp == nil || resp.Body == nil || !IsApplicationJson(resp.Header) {
 		return
 	}
 	//Read
@@ -76,14 +77,14 @@ func CheckVerboseResponse(resp *http.Response) {
 	jsonBody, err := ioutil.ReadAll(rdrToUse)
 	CheckBlockingError(err)
 	if len(jsonBody) < 1 {
-		fmt.Printf("Response status: %s\n", resp.Status)
+		fmt.Fprintf(os.Stderr, "Response status: %s\n", resp.Status)
 		resp.Body = rdrToSet
 		return
 	}
-	fmt.Printf("Response status: %s\n", resp.Status)
+	fmt.Fprintf(os.Stderr, "Response status: %s\n", resp.Status)
 	var indentBody bytes.Buffer
 	err = json.Indent(&indentBody, jsonBody, "", "    ")
-	fmt.Println(string(indentBody.Bytes()))
+	fmt.Fprintln(os.Stderr, string(indentBody.Bytes()))
 	resp.Body = rdrToSet
 }
 

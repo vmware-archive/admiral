@@ -11,10 +11,14 @@
 
 package com.vmware.admiral.service.test;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import com.amazonaws.services.elasticloadbalancing.model.InvalidConfigurationRequestException;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.cluster.ClusterService.ContainerHostRemovalTaskState;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 
 public class MockRequestBrokerService extends BaseMockAdapterService {
@@ -29,20 +33,19 @@ public class MockRequestBrokerService extends BaseMockAdapterService {
                     .equals(ContainerHostRemovalTaskState.RESOURCE_TYPE_CONTAINER_HOST)
                     && containerHostRemovalTaskState.operation
                             .equals(ContainerHostRemovalTaskState.OPERATION_REMOVE_RESOURCE)) {
-                for (String computeDocumentSelfLink : containerHostRemovalTaskState.resourceLinks) {
-                    deleteCompute(computeDocumentSelfLink);
-                }
-                op.complete();
+
+                List<DeferredResult<Operation>> computeRemoveDeferredOperations = containerHostRemovalTaskState.resourceLinks
+                        .stream()
+                        .map(computeDocumentSelfLink -> getHost().sendWithDeferredResult(
+                                Operation.createDelete(getHost(), computeDocumentSelfLink)
+                                        .setReferer(getHost().getUri())))
+                        .collect(Collectors.toList());
+                DeferredResult.allOf(computeRemoveDeferredOperations)
+                        .whenCompleteNotify(op);
                 return;
             }
         }
-        op.fail(new InvalidConfigurationRequestException("Operation not supported in MockRequestBrokerService"));
-    }
-
-    private void deleteCompute(String computeDocumentSelfLink) {
-        getHost().sendWithDeferredResult(
-                Operation.createDelete(getHost(), computeDocumentSelfLink)
-                        .setReferer(getHost().getUri())
-        );
+        op.fail(new InvalidConfigurationRequestException(
+                "Operation not supported in MockRequestBrokerService"));
     }
 }

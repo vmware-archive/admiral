@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,12 +11,10 @@
 
 import KubernetesRequestFormVue from 'components/kubernetes/KubernetesRequestFormVue.html';
 import KubernetesDefinitionForm from 'components/kubernetes/KubernetesDefinitionForm';
-import ResourceGroupsMixin from 'components/templates/ResourceGroupsMixin';
 import { KubernetesActions } from 'actions/Actions';
 
 var KubernetesRequestForm = Vue.extend({
   template: KubernetesRequestFormVue,
-  mixins: [ResourceGroupsMixin],
   props: {
     model: {
       required: true,
@@ -46,7 +44,7 @@ var KubernetesRequestForm = Vue.extend({
       var content = this.entitiesContent && this.entitiesContent.trim();
       if (content) {
         this.creating = true;
-        this.handleGroup(KubernetesActions.createKubernetesEntities, [content]);
+        KubernetesActions.createKubernetesEntities(content);
       }
     }
   },

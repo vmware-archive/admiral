@@ -14,19 +14,12 @@ package com.vmware.admiral.auth;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
-import static com.vmware.admiral.auth.util.AuthUtil.BASIC_USERS_RESOURCE_GROUP_LINK;
-import static com.vmware.admiral.auth.util.AuthUtil.BASIC_USERS_USER_GROUP_LINK;
-import static com.vmware.admiral.auth.util.AuthUtil.CLOUD_ADMINS_RESOURCE_GROUP_LINK;
-import static com.vmware.admiral.auth.util.AuthUtil.CLOUD_ADMINS_USER_GROUP_LINK;
-import static com.vmware.admiral.auth.util.AuthUtil.DEFAULT_BASIC_USERS_ROLE_LINK;
-import static com.vmware.admiral.auth.util.AuthUtil.DEFAULT_CLOUD_ADMINS_ROLE_LINK;
-import static com.vmware.admiral.auth.util.ProjectUtil.retrieveUserStatesForGroup;
-
 import java.io.File;
 import java.net.URI;
 import java.nio.file.Files;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -39,53 +32,58 @@ import com.vmware.admiral.auth.idm.AuthConfigProvider;
 import com.vmware.admiral.auth.idm.Principal;
 import com.vmware.admiral.auth.idm.PrincipalService;
 import com.vmware.admiral.auth.idm.SecurityContext;
+import com.vmware.admiral.auth.idm.SecurityContext.SecurityContextPostDto;
 import com.vmware.admiral.auth.idm.SessionService;
 import com.vmware.admiral.auth.idm.content.AuthContentService;
 import com.vmware.admiral.auth.idm.content.AuthContentService.AuthContentBody;
 import com.vmware.admiral.auth.idm.local.LocalAuthConfigProvider.Config;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalState;
 import com.vmware.admiral.auth.project.ProjectFactoryService;
-import com.vmware.admiral.auth.project.ProjectInterceptor;
+import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.auth.project.ProjectService.ExpandedProjectState;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.admiral.auth.util.AuthUtil;
+import com.vmware.admiral.auth.util.ProjectUtil;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.test.BaseTestCase;
-import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.host.HostInitAuthServiceConfig;
 import com.vmware.admiral.host.HostInitCommonServiceConfig;
 import com.vmware.admiral.host.HostInitComputeServicesConfig;
 import com.vmware.admiral.host.HostInitPhotonModelServiceConfig;
-import com.vmware.admiral.host.interceptor.OperationInterceptorRegistry;
 import com.vmware.admiral.service.common.AuthBootstrapService;
+import com.vmware.admiral.service.common.harbor.HostInitHarborServices;
 import com.vmware.xenon.common.CommandLineArgumentParser;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
+import com.vmware.xenon.common.Operation.AuthorizationContext;
+import com.vmware.xenon.common.Service;
+import com.vmware.xenon.common.Service.Action;
+import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.test.TestContext;
 import com.vmware.xenon.common.test.VerificationHost;
+import com.vmware.xenon.services.common.UserGroupService;
 import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
 import com.vmware.xenon.services.common.UserService.UserState;
 
 public abstract class AuthBaseTest extends BaseTestCase {
-    public static final int DEFAULT_WAIT_SECONDS_FOR_AUTH_SERVICES = 180;
-
     protected static final String USER_EMAIL_ADMIN = "fritz@admiral.com";
-    protected static final String USER_EMAIL_ADMIN2 = "admin@admiral.com";
+    protected static final String USER_EMAIL_ADMIN2 = "administrator@admiral.com";
     protected static final String USER_EMAIL_BASIC_USER = "tony@admiral.com";
     protected static final String USER_EMAIL_GLORIA = "gloria@admiral.com";
     protected static final String USER_EMAIL_CONNIE = "connie@admiral.com";
 
     protected static final String USER_NAME_ADMIN = "Fritz";
-    protected static final String USER_NAME_ADMIN2 = "Admin";
+    protected static final String USER_NAME_ADMIN2 = "Administrator";
     protected static final String USER_NAME_BASIC_USER = "Tony";
     protected static final String USER_NAME_GLORIA = "Gloria";
     protected static final String USER_NAME_CONNIE = "Connie";
 
     protected static final String USER_GROUP_SUPERUSERS = "superusers";
     protected static final String USER_GROUP_DEVELOPERS = "developers";
+
+    public static final int DEFAULT_WAIT_SECONDS_FOR_AUTH_SERVICES = 180;
 
     protected static final String PROJECT_NAME_TEST_PROJECT_1 = "testProject1";
     protected static final String PROJECT_NAME_TEST_PROJECT_2 = "testProject2";
@@ -99,11 +97,25 @@ public abstract class AuthBaseTest extends BaseTestCase {
     protected List<String> loadedUsers;
     protected List<String> loadedGroups;
 
+    protected class TestService extends StatelessService {
+        public static final String SELF_LINK = "/test/service/";
+    }
+
+    public static class PrivilegedTestService extends StatelessService {
+        public static final String SELF_LINK = "/test/privileged-service/";
+
+        public PrivilegedTestService() {
+            super();
+        }
+    }
+
+    protected Service testService;
+    protected Service privilegedTestService;
+
     @Before
     public void beforeForAuthBase() throws Throwable {
         host.setSystemAuthorizationContext();
 
-        setPrivilegedServices();
         startServices(host);
 
         waitForServiceAvailability(AuthInitialBootService.SELF_LINK);
@@ -112,11 +124,19 @@ public abstract class AuthBaseTest extends BaseTestCase {
         waitForDefaultUsersAndGroups();
         TestContext ctx = new TestContext(1,
                 Duration.ofSeconds(DEFAULT_WAIT_SECONDS_FOR_AUTH_SERVICES));
-        AuthUtil.getPreferredProvider(AuthConfigProvider.class).waitForInitConfig(host,
+        AuthUtil.getPreferredProvider(AuthConfigProvider.class).waitForInitBootConfig(host,
                 ((CustomizationVerificationHost) host).localUsers,
                 ctx::completeIteration, ctx::failIteration);
         ctx.await();
+
+        privilegedTestService = host.startServiceAndWait(PrivilegedTestService.class,
+                PrivilegedTestService.SELF_LINK);
+
         host.resetAuthorizationContext();
+
+        testService = new TestService();
+        testService.setSelfLink(TestService.SELF_LINK);
+        testService.setHost(host);
     }
 
     @Override
@@ -131,21 +151,28 @@ public abstract class AuthBaseTest extends BaseTestCase {
     }
 
     @Override
-    protected void registerInterceptors(OperationInterceptorRegistry registry) {
-        ProjectInterceptor.register(registry);
+    protected void setPrivilegedServices(VerificationHost host) {
+        host.addPrivilegedService(SessionService.class);
+        host.addPrivilegedService(PrincipalService.class);
+        host.addPrivilegedService(ProjectService.class);
+        host.addPrivilegedService(ProjectFactoryService.class);
+        host.addPrivilegedService(PrivilegedTestService.class);
     }
 
-    protected void setPrivilegedServices() {
-        host.addPrivilegedService(SessionService.class);
+    protected Operation createAuthorizedOperation(AuthorizationContext authorizationContext) {
+        Operation op = Operation.createGet(UriUtils.buildUri("http://localhost/foo/bar"));
+        privilegedTestService.setAuthorizationContext(op, authorizationContext);
+        return op;
     }
 
     protected void startServices(VerificationHost host) throws Throwable {
         DeploymentProfileConfig.getInstance().setTest(true);
 
-        HostInitCommonServiceConfig.startServices(host, true);
+        HostInitCommonServiceConfig.startServices(host);
         HostInitPhotonModelServiceConfig.startServices(host);
         HostInitComputeServicesConfig.startServices(host, true);
         HostInitAuthServiceConfig.startServices(host);
+        HostInitHarborServices.startServices(host, true);
 
         host.registerForServiceAvailability(AuthBootstrapService.startTask(host), true,
                 AuthBootstrapService.FACTORY_LINK);
@@ -187,9 +214,9 @@ public abstract class AuthBaseTest extends BaseTestCase {
         projectState.name = name;
         projectState.description = description;
         projectState.isPublic = isPublic;
-        projectState.administratorsUserGroupLinks = new ArrayList<>();
-        projectState.membersUserGroupLinks = new ArrayList<>();
-        projectState.viewersUserGroupLinks = new ArrayList<>();
+        projectState.administratorsUserGroupLinks = new HashSet<>();
+        projectState.membersUserGroupLinks = new HashSet<>();
+        projectState.viewersUserGroupLinks = new HashSet<>();
         projectState.customProperties = customProperties;
 
         if (adminsGroupLink != null) {
@@ -205,6 +232,14 @@ public abstract class AuthBaseTest extends BaseTestCase {
         projectState = doPost(projectState, ProjectFactoryService.SELF_LINK);
 
         return projectState;
+    }
+
+    protected ProjectState createProjectExpectFailure(String name) throws Throwable {
+        ProjectState state = new ProjectState();
+        state.name = name;
+        state = doOperation(state, UriUtils.buildUri(host, ProjectFactoryService.SELF_LINK),
+                ProjectState.class, true, Action.POST);
+        return state;
     }
 
     protected ProjectState patchProject(ProjectState patchState, String projectSelfLink)
@@ -232,10 +267,6 @@ public abstract class AuthBaseTest extends BaseTestCase {
                     message);
             throw new IllegalStateException(errorMessage);
         }
-    }
-
-    protected String buildUserServicePath(String email) {
-        return AuthUtil.buildUserServicePathFromPrincipalId(email);
     }
 
     protected void doPatch(Object state, String documentSelfLink) {
@@ -283,12 +314,12 @@ public abstract class AuthBaseTest extends BaseTestCase {
     }
 
     private void waitForDefaultRoles() throws Throwable {
-        waitForServiceAvailability(CLOUD_ADMINS_RESOURCE_GROUP_LINK,
-                CLOUD_ADMINS_USER_GROUP_LINK,
-                DEFAULT_CLOUD_ADMINS_ROLE_LINK,
-                DEFAULT_BASIC_USERS_ROLE_LINK,
-                BASIC_USERS_USER_GROUP_LINK,
-                BASIC_USERS_RESOURCE_GROUP_LINK);
+        waitForServiceAvailability(AuthUtil.CLOUD_ADMINS_RESOURCE_GROUP_LINK,
+                AuthUtil.CLOUD_ADMINS_USER_GROUP_LINK,
+                AuthUtil.DEFAULT_CLOUD_ADMINS_ROLE_LINK,
+                AuthUtil.DEFAULT_BASIC_USERS_ROLE_LINK,
+                AuthUtil.BASIC_USERS_USER_GROUP_LINK,
+                AuthUtil.BASIC_USERS_RESOURCE_GROUP_LINK);
     }
 
     private void waitForDefaultUsersAndGroups() throws Throwable {
@@ -309,7 +340,8 @@ public abstract class AuthBaseTest extends BaseTestCase {
         assertNotNull(state);
         assertNotNull(state.query);
 
-        DeferredResult<List<UserState>> result = retrieveUserStatesForGroup(host, state);
+        DeferredResult<List<UserState>> result = ProjectUtil
+                .retrieveUserStatesForGroup(testService, state);
 
         List<UserState> resultList = new ArrayList<>();
 
@@ -377,6 +409,46 @@ public abstract class AuthBaseTest extends BaseTestCase {
         return context[0];
     }
 
+    protected SecurityContext getSecurityContext(String principalId) {
+        final SecurityContext[] context = new SecurityContext[1];
+        TestContext ctx = testCreate(1);
+        host.send(Operation.createGet(host, UriUtils.buildUriPath(PrincipalService.SELF_LINK,
+                principalId, PrincipalService.SECURITY_CONTEXT_SUFFIX))
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        ctx.failIteration(ex);
+                        return;
+                    }
+                    context[0] = o.getBody(SecurityContext.class);
+                    ctx.completeIteration();
+                }));
+        ctx.await();
+        return context[0];
+    }
+
+    protected SecurityContext getSecurityContextByCredentials(String principalId, String password) {
+        SecurityContextPostDto dto = new SecurityContextPostDto();
+        dto.password = password;
+
+        final SecurityContext[] result = new SecurityContext[1];
+        TestContext ctx = testCreate(1);
+        Operation post = Operation
+                .createPost(host, UriUtils.buildUriPath(PrincipalService.SELF_LINK, principalId,
+                        PrincipalService.SECURITY_CONTEXT_SUFFIX))
+                .setBody(dto)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        ctx.failIteration(ex);
+                        return;
+                    }
+                    result[0] = o.getBody(SecurityContext.class);
+                    ctx.completeIteration();
+                });
+        host.send(post);
+        ctx.await();
+        return result[0];
+    }
+
     protected ExpandedProjectState getExpandedProjectState(String projectLink) {
         URI uriWithExpand = UriUtils.extendUriWithQuery(UriUtils.buildUri(host, projectLink),
                 UriUtils.URI_PARAM_ODATA_EXPAND, Boolean.toString(true));
@@ -418,72 +490,41 @@ public abstract class AuthBaseTest extends BaseTestCase {
         return principal[0];
     }
 
-    protected void assertDocumentExists(String documentLink) {
-        assertNotNull(documentLink);
-
-        host.testStart(1);
-        Operation.createGet(host, documentLink)
-                .setReferer(host.getUri())
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        host.failIteration(e);
-                    } else {
-                        try {
-                            assertNotNull(o.getBodyRaw());
-                            host.completeIteration();
-                        } catch (AssertionError er) {
-                            host.failIteration(er);
-                        }
-                    }
-                }).sendWith(host);
-        host.testWait();
-    }
-
-    protected void assertDocumentNotExists(String documentLink) {
-        assertNotNull(documentLink);
-
-        host.testStart(1);
-        Operation.createGet(host, documentLink)
-                .setReferer(host.getUri())
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        if (e instanceof ServiceNotFoundException) {
-                            host.completeIteration();
-                            return;
-                        }
-
-                        host.failIteration(e);
-                    } else {
-                        host.failIteration(new Exception(
-                                String.format("%s should've not exist!", documentLink)));
-                    }
-                }).sendWith(host);
-        host.testWait();
-    }
-
-    protected <T> T doPostWithProjectHeader(Object body, String factoryLink, String
-            projectLink, Class<T> stateType) {
+    public void deleteUser(String user) {
         TestContext ctx = testCreate(1);
-        final Object[] responseBody = new Object[1];
-        Operation create = Operation.createPost(host, factoryLink)
-                .setBody(body)
+
+        Operation delete = Operation.createDelete(host, AuthUtil
+                .buildUserServicePathFromPrincipalId(user))
+                .setReferer(host.getUri())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         ctx.failIteration(ex);
                         return;
                     }
-                    responseBody[0] = o.getBodyRaw();
                     ctx.completeIteration();
                 });
-
-        setProjectHeader(projectLink, create);
-        host.send(create);
+        host.send(delete);
         ctx.await();
-        return Utils.fromJson(responseBody[0], stateType);
     }
 
-    public static Operation setProjectHeader(String projectLink, Operation op) {
-        op.addRequestHeader(OperationUtil.PROJECT_ADMIRAL_HEADER, projectLink);
-        return op;
+    public void deleteUserGroup(String userGroup) {
+        TestContext ctx = testCreate(1);
+
+        Operation delete = Operation
+                .createDelete(host, UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, userGroup))
+                .setReferer(host.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        ctx.failIteration(ex);
+                        return;
+                    }
+                    ctx.completeIteration();
+                });
+        host.send(delete);
+        ctx.await();
+    }
+
+    protected String buildUserServicePath(String email) {
+        return AuthUtil.buildUserServicePathFromPrincipalId(email);
     }
 }

@@ -84,6 +84,7 @@ initializer.init = function(initProperties, callback) {
   const DEFAULT_ADAPTERS = {
     'aws': {
       icon: 'image-assets/endpoints/aws.png',
+      instanceTypeEditor: 'aws-instance-type-search',
       endpointEditor: 'aws-endpoint-editor',
       computeProfileEditor: 'aws-compute-profile-editor',
       networkProfileEditor: 'aws-network-profile-editor',
@@ -91,6 +92,7 @@ initializer.init = function(initProperties, callback) {
     },
     'azure': {
       icon: 'image-assets/endpoints/azure.png',
+      instanceTypeEditor: 'azure-instance-type-search',
       endpointEditor: 'azure-endpoint-editor',
       computeProfileEditor: 'azure-compute-profile-editor',
       networkProfileEditor: 'azure-network-profile-editor',
@@ -98,6 +100,7 @@ initializer.init = function(initProperties, callback) {
     },
     'vsphere': {
       icon: 'image-assets/endpoints/vsphere.png',
+      instanceTypeEditor: 'vsphere-instance-type',
       endpointEditor: 'vsphere-endpoint-editor',
       computeProfileEditor: 'vsphere-compute-profile-editor',
       networkProfileEditor: 'vsphere-network-profile-editor',
@@ -150,8 +153,11 @@ initializer.init = function(initProperties, callback) {
         iconSrc: fixupAdapterStaticResourcePath(customProperties.icon),
         endpointEditor: customProperties.endpointEditor,
         computeProfileEditorType: customProperties.computeProfileEditorType,
+        instanceTypeEditor: customProperties.instanceTypeEditor,
         computeProfileEditor: customProperties.computeProfileEditor,
+        networkProfileEditorType: customProperties.networkProfileEditorType,
         networkProfileEditor: customProperties.networkProfileEditor,
+        storageProfileEditorType: customProperties.storageProfileEditorType,
         storageProfileEditor: customProperties.storageProfileEditor,
         endpointEditorType: customProperties.endpointEditorType
       };

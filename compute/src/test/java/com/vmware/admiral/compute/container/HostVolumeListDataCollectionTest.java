@@ -26,7 +26,6 @@ import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -40,6 +39,8 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeService.Contai
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState.PowerState;
 import com.vmware.admiral.service.test.MockDockerHostAdapterService;
 import com.vmware.admiral.service.test.MockDockerVolumeAdapterService;
+import com.vmware.admiral.service.test.MockDockerVolumeToHostService;
+import com.vmware.admiral.service.test.MockDockerVolumeToHostService.MockDockerVolumeToHostState;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService;
@@ -56,7 +57,9 @@ public class HostVolumeListDataCollectionTest extends ComputeBaseTest {
     private static final String TEST_HOST_ID = "test-host-id-234:2376";
     private static final String COMPUTE_HOST_LINK = UriUtils.buildUriPath(
             ComputeService.FACTORY_LINK, TEST_HOST_ID);
+    private static final String LOCAL_DRIVER = "local";
     private static final String VMDK_DRIVER = "vmdk";
+    private static final String LOCAL_SCOPE = "local";
     private static final String GLOBAL_SCOPE = "global";
 
     private VolumeListCallback volumeListCallback;
@@ -67,6 +70,7 @@ public class HostVolumeListDataCollectionTest extends ComputeBaseTest {
                 MockDockerVolumeAdapterService.class)), new MockDockerVolumeAdapterService());
         host.startService(Operation.createPost(UriUtils.buildUri(host,
                 MockDockerHostAdapterService.class)), new MockDockerHostAdapterService());
+        host.startFactory(new MockDockerVolumeToHostService());
 
         waitForServiceAvailability(ContainerHostDataCollectionService.FACTORY_LINK);
         waitForServiceAvailability(ComputeService.FACTORY_LINK);
@@ -79,6 +83,7 @@ public class HostVolumeListDataCollectionTest extends ComputeBaseTest {
         waitForServiceAvailability(ContainerVolumeService.FACTORY_LINK);
 
         waitForServiceAvailability(MockDockerVolumeAdapterService.SELF_LINK);
+        waitForServiceAvailability(MockDockerVolumeToHostService.FACTORY_LINK);
         waitForServiceAvailability(MockDockerHostAdapterService.SELF_LINK);
         waitForServiceAvailability(
                 HostVolumeListDataCollection.DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_LINK);
@@ -93,29 +98,21 @@ public class HostVolumeListDataCollectionTest extends ComputeBaseTest {
         cs.id = TEST_HOST_ID;
         cs.documentSelfLink = TEST_HOST_ID;
         cs.descriptionLink = computeDesc.documentSelfLink;
-        cs.customProperties = new HashMap<String, String>();
+        cs.customProperties = new HashMap<>();
 
         doPost(cs, ComputeService.FACTORY_LINK);
-    }
-
-    @After
-    public void tearDown() throws Throwable {
-        MockDockerVolumeAdapterService.resetVolumes();
     }
 
     @Test
     public void testDiscoverExistingVolumeOnHost() throws Throwable {
         // add preexisting volume to the adapter service
-        String reference = UriUtils.buildUri(host, UriUtils
-                .buildUriPath(ContainerVolumeService.FACTORY_LINK, TEST_PREEXISTING_VOLUME_NAME))
-                .toString();
-        addVolumeToMockAdapter(TEST_HOST_ID, reference, TEST_PREEXISTING_VOLUME_NAME);
+        addVolumeToMockAdapter(COMPUTE_HOST_LINK, TEST_PREEXISTING_VOLUME_NAME, LOCAL_DRIVER, LOCAL_SCOPE);
 
         // run data collection on preexisting volume
         startAndWaitHostVolumeListDataCollection();
 
         List<ContainerVolumeState> volumeStates = getVolumeStates();
-        assertEquals(volumeStates.size(), 1);
+        assertEquals(1, volumeStates.size());
         ContainerVolumeState preexistingVolumeState = volumeStates.get(0);
         assertNotNull("Preexisting volume not created or can't be retrieved.", preexistingVolumeState);
         assertEquals(TEST_PREEXISTING_VOLUME_NAME, preexistingVolumeState.name);
@@ -153,14 +150,14 @@ public class HostVolumeListDataCollectionTest extends ComputeBaseTest {
         startAndWaitHostVolumeListDataCollection();
 
         volume = getDocument(ContainerVolumeState.class, volume.documentSelfLink);
-        assertEquals(new Integer(1), volume._healthFailureCount);
+        assertEquals(volume._healthFailureCount, Integer.valueOf(1));
         assertEquals(PowerState.RETIRED, volume.powerState);
 
         // 2nd data collection
         startAndWaitHostVolumeListDataCollection();
 
         volume = getDocument(ContainerVolumeState.class, volume.documentSelfLink);
-        assertEquals(new Integer(2), volume._healthFailureCount);
+        assertEquals(volume._healthFailureCount, Integer.valueOf(2));
         assertEquals(PowerState.RETIRED, volume.powerState);
 
         // 3rd data collection
@@ -172,16 +169,13 @@ public class HostVolumeListDataCollectionTest extends ComputeBaseTest {
     @Test
     public void testDiscoverSharedVolumes() throws Throwable {
         // 1. add a global volume to the volume adapter
-        String reference = UriUtils.buildUri(host, UriUtils
-                .buildUriPath(ContainerVolumeService.FACTORY_LINK, TEST_PREEXISTING_VOLUME_NAME))
-                .toString();
-        MockDockerVolumeAdapterService.addVolume(TEST_HOST_ID, reference,
-                TEST_PREEXISTING_VOLUME_NAME, VMDK_DRIVER, GLOBAL_SCOPE);
+        addVolumeToMockAdapter(COMPUTE_HOST_LINK, TEST_PREEXISTING_VOLUME_NAME, LOCAL_DRIVER,
+                LOCAL_SCOPE);
 
         startAndWaitHostVolumeListDataCollection();
 
         List<ContainerVolumeState> volumeStates = getVolumeStates();
-        assertEquals(volumeStates.size(), 1);
+        assertEquals(1, volumeStates.size());
         ContainerVolumeState volume = volumeStates.get(0);
         assertEquals(TEST_PREEXISTING_VOLUME_NAME, volume.name);
         // driver and scope must not be assigned during volume data collection
@@ -199,14 +193,14 @@ public class HostVolumeListDataCollectionTest extends ComputeBaseTest {
         // 2. add a second instance of the same volume on another host
         String secondHostId = "test-host-id-999:2376";
         String secondHostLink = UriUtils.buildUriPath(ComputeService.FACTORY_LINK, secondHostId);
-        MockDockerVolumeAdapterService.addVolume(secondHostId, reference,
-                TEST_PREEXISTING_VOLUME_NAME, VMDK_DRIVER, GLOBAL_SCOPE);
+        addVolumeToMockAdapter(secondHostLink, TEST_PREEXISTING_VOLUME_NAME, VMDK_DRIVER,
+                GLOBAL_SCOPE);
 
         volumeListCallback.containerHostLink = secondHostLink;
         startAndWaitHostVolumeListDataCollection();
 
         volumeStates = getVolumeStates();
-        assertEquals(volumeStates.size(), 1);
+        assertEquals(1, volumeStates.size());
         volume = volumeStates.get(0);
         assertEquals(TEST_PREEXISTING_VOLUME_NAME, volume.name);
         assertEquals(VMDK_DRIVER, volume.driver);
@@ -295,7 +289,26 @@ public class HostVolumeListDataCollectionTest extends ComputeBaseTest {
         return volumeState;
     }
 
-    private void addVolumeToMockAdapter(String hostId, String reference, String volumeName) {
-        MockDockerVolumeAdapterService.addVolume(hostId, reference, volumeName);
+    private void addVolumeToMockAdapter(String hostLink, String volumeName, String driver, String scope) throws Throwable {
+        MockDockerVolumeToHostState mockVolumeToHostState = new MockDockerVolumeToHostState();
+        mockVolumeToHostState.documentSelfLink = UriUtils.buildUriPath(
+                MockDockerVolumeToHostService.FACTORY_LINK, UUID.randomUUID().toString());
+        mockVolumeToHostState.name = volumeName;
+        mockVolumeToHostState.hostLink = hostLink;
+        mockVolumeToHostState.driver = driver;
+        mockVolumeToHostState.scope = scope;
+        host.sendRequest(Operation.createPost(host, MockDockerVolumeToHostService.FACTORY_LINK)
+                .setBody(mockVolumeToHostState)
+                .setReferer(host.getUri())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        host.log("Cannot create mock volume to host state. Error: %s", e.getMessage());
+                    }
+                }));
+        // wait until volume to host is created in the mock adapter
+        waitFor(() -> {
+            getDocument(MockDockerVolumeToHostState.class, mockVolumeToHostState.documentSelfLink);
+            return true;
+        });
     }
 }

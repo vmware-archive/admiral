@@ -36,6 +36,7 @@ import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;
 import com.vmware.photon.controller.model.resources.ResourceUtils;
 import com.vmware.photon.controller.model.resources.SecurityGroupService;
 import com.vmware.photon.controller.model.resources.SecurityGroupService.SecurityGroupState;
+import com.vmware.photon.controller.model.resources.SubnetService;
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.UriUtils;
 
@@ -45,6 +46,7 @@ public class NetworkProfileServiceTest extends ComputeBaseTest {
     private static final int NETWORK_CIDR_PREFIX = 29;
     private static final String NETWORK_CIDR = NETWORK_ADDRESS + "/" + NETWORK_CIDR_PREFIX;
     private static final String NETWORK_LINK = NetworkService.FACTORY_LINK + "/myNetwork";
+    private static final String EXTERNAL_SUBNET_LINK = SubnetService.FACTORY_LINK + "/mySubnet";
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
@@ -114,6 +116,7 @@ public class NetworkProfileServiceTest extends ComputeBaseTest {
         networkProfile.name = "networkProfileName";
         networkProfile.isolationNetworkLink = cidrAllocation.networkLink;
         networkProfile.isolationNetworkCIDR = "192.168.0.0/16";
+        networkProfile.isolationExternalSubnetLink = EXTERNAL_SUBNET_LINK;
         networkProfile.securityGroupLinks = Arrays.asList(securityGroupState.documentSelfLink);
 
         networkProfile = doPost(networkProfile, NetworkProfileService.FACTORY_LINK);
@@ -128,6 +131,7 @@ public class NetworkProfileServiceTest extends ComputeBaseTest {
         assertEquals(networkProfile.isolatedSubnetCIDRPrefix, expanded.isolatedSubnetCIDRPrefix);
         assertEquals(networkProfile.isolationNetworkCIDR, expanded.isolationNetworkCIDR);
         assertEquals(networkProfile.isolationNetworkLink, expanded.isolationNetworkLink);
+        assertEquals(networkProfile.isolationExternalSubnetLink, expanded.isolationExternalSubnetLink);
         assertEquals(securityGroupState.documentSelfLink, expanded.securityGroupStates.iterator().next().documentSelfLink);
     }
 
@@ -188,7 +192,7 @@ public class NetworkProfileServiceTest extends ComputeBaseTest {
     public void testChangeIsolatedNetworkCIDRPrefixLength() throws Throwable {
         NetworkProfile networkProfile = new NetworkProfile();
         networkProfile.name = "networkProfileName";
-        networkProfile.isolationNetworkLink = NETWORK_LINK;
+        networkProfile.isolationExternalSubnetLink = EXTERNAL_SUBNET_LINK;
         networkProfile.isolatedSubnetCIDRPrefix = 24;
 
         networkProfile = doPost(networkProfile, NetworkProfileService.FACTORY_LINK);
@@ -197,6 +201,20 @@ public class NetworkProfileServiceTest extends ComputeBaseTest {
 
         networkProfile = doPatch(networkProfile, networkProfile.documentSelfLink);
         assertEquals((Object)20, networkProfile.isolatedSubnetCIDRPrefix);
+    }
+
+    @Test
+    public void testCreateNetworkProfileWithExtension() throws Throwable {
+        // use another network profile as extension
+        NetworkProfile networkProfileExtension = new NetworkProfile();
+        networkProfileExtension.name = "networkProfileExtension";
+
+        NetworkProfile networkProfile = new NetworkProfile();
+        networkProfile.name = "networkProfile";
+        networkProfile.extensionData = networkProfileExtension;
+
+        networkProfile = doPost(networkProfile, NetworkProfileService.FACTORY_LINK);
+        assertNotNull(networkProfile.extensionData);
     }
 
     private ComputeNetworkCIDRAllocationState createNetworkCIDRAllocationState() throws Throwable {

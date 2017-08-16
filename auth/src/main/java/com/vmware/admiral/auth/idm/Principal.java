@@ -11,11 +11,16 @@
 
 package com.vmware.admiral.auth.idm;
 
+import java.util.Set;
+
 public class Principal {
 
     public enum PrincipalType {
-        USER,
-        GROUP
+        USER, GROUP
+    }
+
+    public enum PrincipalSource {
+        LOCAL, LDAP
     }
 
     public String id;
@@ -26,6 +31,10 @@ public class Principal {
 
     public String email;
 
+    public Set<String> groups;
+
     public PrincipalType type;
+
+    public PrincipalSource source;
 
 }

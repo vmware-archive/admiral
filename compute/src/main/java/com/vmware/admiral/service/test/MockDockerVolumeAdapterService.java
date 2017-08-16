@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,31 +11,31 @@
 
 package com.vmware.admiral.service.test;
 
-import java.net.URI;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.VolumeOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState.PowerState;
+import com.vmware.admiral.service.test.MockDockerVolumeToHostService.MockDockerVolumeToHostState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.QueryTask;
 
 /**
  * Mock Docker Adapter service for volumes in order to be used in unit and integration tests.
+ * Keeps state of existing volumes in the host in {@link MockDockerVolumeToHostService}
  */
 public class MockDockerVolumeAdapterService extends BaseMockAdapterService {
 
@@ -47,9 +47,6 @@ public class MockDockerVolumeAdapterService extends BaseMockAdapterService {
 
     public boolean isFailureExpected;
     public String computeHostIpAddress = MOCK_HOST_ASSIGNED_ADDRESS;
-
-    // Map of volume names by hostId. hostId -> Map of volumeReference -> volume state
-    private static final Map<String, Map<String, ContainerVolumeState>> VOLUME_NAMES = new ConcurrentHashMap<>();
 
     private static class MockAdapterRequest extends AdapterRequest {
 
@@ -83,7 +80,7 @@ public class MockDockerVolumeAdapterService extends BaseMockAdapterService {
             }
             if (op.hasBody()) {
                 MockAdapterRequest state = op.getBody(MockAdapterRequest.class);
-                removeVolumeByReference(state.resourceReference);
+                removeVolumeByReference(state);
                 op.complete();
                 return;
             } else {
@@ -137,13 +134,6 @@ public class MockDockerVolumeAdapterService extends BaseMockAdapterService {
 
     private void processRequest(MockAdapterRequest state, TaskState taskInfo,
             ContainerVolumeState volume, ContainerVolumeDescription volumeDesc) {
-        if (TaskStage.FAILED == taskInfo.stage) {
-            logInfo("Failed request based on volume resource:  %s",
-                    state.resourceReference);
-            patchTaskStage(state, taskInfo.failure);
-            return;
-        }
-
         if (volume == null) {
             getDocument(ContainerVolumeState.class, state.resourceReference, taskInfo,
                     (volumeState) -> processRequest(state, taskInfo, volumeState, volumeDesc));
@@ -165,20 +155,36 @@ public class MockDockerVolumeAdapterService extends BaseMockAdapterService {
         }
 
         if (state.isProvisioning()) {
-            patchContainerVolumeState(state, volume);
+            createVolumeToHost(state, volume);
         } else if (state.isDeprovisioning()) {
-            removeVolumeByReference(state.resourceReference);
-            patchTaskStage(state, (Throwable) null);
+            removeVolumeByReference(state);
         } else if (VolumeOperationType.INSPECT.id.equals(state.operationTypeId)) {
             patchTaskStage(state, (Throwable) null);
         }
     }
 
+    private void createVolumeToHost(MockAdapterRequest state,
+            ContainerVolumeState volumeState) {
+        MockDockerVolumeToHostState volumeToHostState = new MockDockerVolumeToHostState();
+        volumeToHostState.hostLink = volumeState.originatingHostLink;
+        volumeToHostState.name = volumeState.name;
+        volumeToHostState.driver = volumeState.driver;
+
+        sendRequest(Operation
+                .createPost(this, MockDockerVolumeToHostService.FACTORY_LINK)
+                .setBody(volumeToHostState)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        patchTaskStage(state, e);
+                    } else {
+                        logInfo("Mock Volume in docker host created successfully");
+                        patchContainerVolumeState(state, volumeState);
+                    }
+                }));
+    }
+
     private void patchContainerVolumeState(MockAdapterRequest state,
             ContainerVolumeState volumeState) {
-        addVolume(Service.getId(volumeState.originatingHostLink),
-                state.resourceReference.toString(), volumeState.name);
-
         volumeState.powerState = PowerState.CONNECTED;
         volumeState.scope = "local";
         sendRequest(Operation.createPatch(state.resourceReference)
@@ -186,61 +192,43 @@ public class MockDockerVolumeAdapterService extends BaseMockAdapterService {
                 .setCompletion((o, e) -> {
                     Throwable patchException = null;
                     if (e != null) {
-                        logSevere(e);
                         patchException = e;
                     }
                     patchTaskStage(state, patchException);
                 }));
     }
 
-    public static synchronized void resetVolumes() {
-        VOLUME_NAMES.clear();
+    private void removeVolumeByReference(MockAdapterRequest state) {
+        String volumeName = Service.getId(state.resourceReference.getPath());
+        QueryTask q = QueryUtil.buildPropertyQuery(MockDockerVolumeToHostState.class,
+                MockDockerVolumeToHostState.FIELD_NAME_NAME, volumeName);
+        List<String> mockVolumeToHostLinks = new ArrayList<>();
+        new ServiceDocumentQuery<>(getHost(),
+                MockDockerVolumeToHostState.class).query(q,
+                        (r) -> {
+                            if (r.hasException()) {
+                                patchTaskStage(state, r.getException());
+                            } else if (r.hasResult()) {
+                                mockVolumeToHostLinks.add(r.getDocumentSelfLink());
+                            } else {
+                                removeMockVolumeFromHost(state, mockVolumeToHostLinks);
+                            }
+                        });
     }
 
-    private synchronized void removeVolumeByReference(URI volumeReference) {
-        Iterator<Map<String, ContainerVolumeState>> itHost = VOLUME_NAMES.values().iterator();
-        while (itHost.hasNext()) {
-            Map<String, ContainerVolumeState> volumeNamesByHost = itHost.next();
-            Iterator<Entry<String, ContainerVolumeState>> itVolumes = volumeNamesByHost.entrySet()
-                    .iterator();
-            while (itVolumes.hasNext()) {
-                Entry<String, ContainerVolumeState> entry = itVolumes.next();
-                if (entry.getKey().endsWith(volumeReference.getPath())) {
-                    Utils.log(MockDockerVolumeAdapterService.class,
-                            MockDockerVolumeAdapterService.class.getSimpleName(), Level.INFO,
-                            "Volume with reference: %s and container name: %s removed.",
-                            entry.getKey(), entry.getValue());
-                    itVolumes.remove();
-                    return;
-                }
-            }
+    private void removeMockVolumeFromHost(MockAdapterRequest state, List<String> mockVolumeToHostLinks) {
+        for (String mockVolumeToHostLink : mockVolumeToHostLinks) {
+            sendRequest(Operation.createDelete(this, mockVolumeToHostLink)
+                    .setBody(new ServiceDocument())
+                    .setCompletion((o, e) -> {
+                        if (e != null) {
+                            logWarning("No mock volume %s found in host in mock adapter. Error %s",
+                                    mockVolumeToHostLink, e.getMessage());
+                        } else {
+                            logInfo("MOck volume %s removed from mock adapter", mockVolumeToHostLink);
+                        }
+                    }));
         }
-        Utils.logWarning("**************** No volumeId found for reference: %s",
-                volumeReference.getPath());
-    }
-
-    public static synchronized void addVolume(String hostId, String reference, String volumeName) {
-        addVolume(hostId, reference, volumeName, "local", "local");
-    }
-
-    public static synchronized void addVolume(String hostId, String reference,
-            String volumeName, String driver, String scope) {
-
-        Utils.log(MockDockerAdapterService.class, MockDockerAdapterService.class.getSimpleName(),
-                Level.INFO, "Volume with name: %s created on host: %s.", volumeName, hostId);
-        ContainerVolumeState volume = new ContainerVolumeState();
-        volume.name = volumeName;
-        volume.driver = driver;
-        volume.scope = scope;
-        VOLUME_NAMES.computeIfAbsent(hostId, h -> new ConcurrentHashMap<>())
-                .put(reference, volume);
-    }
-
-    public static synchronized Collection<ContainerVolumeState> getVolumesByHost(String hostId) {
-        if (VOLUME_NAMES.containsKey(hostId)) {
-            return VOLUME_NAMES.get(hostId).values();
-        } else {
-            return Collections.emptySet();
-        }
+        patchTaskStage(state, (Throwable) null);
     }
 }
