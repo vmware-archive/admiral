@@ -167,8 +167,7 @@ public class MockHarborApiProxyService extends StatelessService {
             return false;
         }
 
-        return path.startsWith("/" + HBR_API_BASE_ENDPOINT + ENDPOINT_PROJECTS)
-                && path.endsWith("_deletable");
+        return path.startsWith(ENDPOINT_PROJECTS) && path.endsWith("_deletable");
     }
 
     private String getHarborPath(String path) {

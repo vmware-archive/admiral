@@ -277,7 +277,8 @@ public class HarborApiProxyService extends StatelessService {
     }
 
     private static String buildHarborProjectDeleteVerifyLink(String projectIndex) {
-        return UriUtils.buildUriPath("/api/projects", projectIndex, "/_deletable");
+        return UriUtils.buildUriPath(Harbor.ENDPOINT_PROJECTS, projectIndex,
+                Harbor.PROJECTS_DELETE_VERIFICATION_SUFFIX);
     }
 
     public static void validateProjectName(String name) {

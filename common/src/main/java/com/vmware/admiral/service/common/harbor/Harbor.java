@@ -38,6 +38,8 @@ public interface Harbor {
             DEFAULT_REGISTRY_NAME);
     String DEFAULT_REGISTRY_USER_PREFIX = "harbor-vic-";
 
+    String PROJECTS_DELETE_VERIFICATION_SUFFIX = "_deletable";
+
     Pattern PROJECT_NAME_PATTERN = Pattern.compile("[a-z0-9]+(?:[._-][a-z0-9]+)*");
 
 }
