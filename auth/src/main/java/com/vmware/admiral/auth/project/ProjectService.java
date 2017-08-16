@@ -327,11 +327,12 @@ public class ProjectService extends StatefulService {
 
     @Override
     public void handleGet(Operation get) {
-        if (UriUtils.hasODataExpandParamValue(get.getUri())) {
-            retrieveExpandedState(getState(get), get);
-        } else {
+        if (!UriUtils.hasODataExpandParamValue(get.getUri())) {
             super.handleGet(get);
+            return;
         }
+
+        retrieveExpandedState(getState(get), get);
     }
 
     @Override
@@ -747,7 +748,7 @@ public class ProjectService extends StatefulService {
     }
 
     private void retrieveExpandedState(ProjectState simpleState, Operation get) {
-        ProjectUtil.expandProjectState(this, get, simpleState, getUri())
+        ProjectUtil.expandProjectState(this, get, simpleState, get.getUri())
                 .thenAccept(get::setBody)
                 .whenCompleteNotify(get);
     }

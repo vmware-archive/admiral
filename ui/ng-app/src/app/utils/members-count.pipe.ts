@@ -51,7 +51,7 @@ export class ProjectMembersCountPipe implements PipeTransform {
         }
         srcCol.forEach(p => {
             let alreadyAdded = dstCol.find(x => {
-                return x.email === p.email;
+                return x.id === p.id;
             });
             if (!alreadyAdded) {
                 dstCol.push(p);

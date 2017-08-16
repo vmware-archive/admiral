@@ -13,15 +13,19 @@ package com.vmware.admiral.auth.project;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.net.URI;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.auth.AuthBaseTest;
+import com.vmware.admiral.auth.idm.Principal;
 import com.vmware.admiral.auth.idm.PrincipalRolesHandler.PrincipalRoleAssignment;
 import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles;
 import com.vmware.admiral.auth.project.ProjectService.ExpandedProjectState;
@@ -90,13 +94,16 @@ public class ProjectFactoryServiceTest extends AuthBaseTest {
                             assertNotNull(stateWithMembers);
                             assertNotNull(stateWithMembers.administrators);
                             assertEquals(1, stateWithMembers.administrators.size());
-                            assertEquals(USER_EMAIL_ADMIN, stateWithMembers.administrators.iterator().next().email);
+                            assertEquals(USER_EMAIL_ADMIN,
+                                    stateWithMembers.administrators.iterator().next().id);
                             assertNotNull(stateWithMembers.members);
                             assertEquals(1, stateWithMembers.members.size());
-                            assertEquals(USER_EMAIL_ADMIN, stateWithMembers.members.iterator().next().email);
+                            assertEquals(USER_EMAIL_ADMIN,
+                                    stateWithMembers.members.iterator().next().id);
                             assertNotNull(stateWithMembers.viewers);
                             assertEquals(1, stateWithMembers.viewers.size());
-                            assertEquals(USER_EMAIL_BASIC_USER, stateWithMembers.viewers.iterator().next().email);
+                            assertEquals(USER_EMAIL_BASIC_USER,
+                                    stateWithMembers.viewers.iterator().next().id);
 
                             host.completeIteration();
                         } catch (Throwable ex) {
@@ -133,6 +140,52 @@ public class ProjectFactoryServiceTest extends AuthBaseTest {
         assertTrue(getResult.documentLinks.contains(testProject2.documentSelfLink));
         assertTrue(!getResult.documentLinks.contains(testProject3.documentSelfLink));
         assertTrue(!getResult.documentLinks.contains(testProject4.documentSelfLink));
+    }
+
+    @Test
+    public void testGetBasicExpand() throws Throwable {
+        URI uri = UriUtils.buildUri(ProjectFactoryService.SELF_LINK);
+        uri = UriUtils.extendUriWithQuery(uri, UriUtils.URI_PARAM_ODATA_EXPAND_NO_DOLLAR_SIGN,
+                Boolean.TRUE.toString());
+
+        ServiceDocumentQueryResult result = getDocumentNoWait(ServiceDocumentQueryResult.class,
+                uri.toString());
+
+        assertEquals(2, result.documentLinks.size());
+        assertEquals(2, result.documents.size());
+
+        ExpandedProjectState expandedProjectState = null;
+
+        for (Object obj : result.documents.values()) {
+            ExpandedProjectState state = Utils.fromJson(obj, ExpandedProjectState.class);
+            if (state.name.equalsIgnoreCase(project.name)) {
+                expandedProjectState = state;
+                break;
+            }
+        }
+
+        assertNotNull(expandedProjectState);
+        assertEquals(project.name, expandedProjectState.name);
+        assertEquals(project.isPublic, expandedProjectState.isPublic);
+        assertNotNull(expandedProjectState.members);
+        assertNotNull(expandedProjectState.viewers);
+        assertNotNull(expandedProjectState.administrators);
+
+        assertEquals(1, expandedProjectState.members.size());
+        assertEquals(1, expandedProjectState.viewers.size());
+        assertEquals(1, expandedProjectState.administrators.size());
+
+        List<Principal> principals = Arrays.asList(expandedProjectState.members.iterator().next(),
+                expandedProjectState.administrators.iterator().next(),
+                expandedProjectState.viewers.iterator().next());
+
+        for (Principal p : principals) {
+            assertNotNull(p.id);
+            assertNull(p.email);
+            assertNull(p.type);
+            assertNull(p.name);
+            assertNull(p.source);
+        }
     }
 
 }

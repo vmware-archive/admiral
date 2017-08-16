@@ -98,17 +98,21 @@ public class ProjectFactoryService extends FactoryService {
         }
         ServiceDocumentQueryResult body = op.getBody(ServiceDocumentQueryResult.class);
         if (body.documents != null) {
+
             List<DeferredResult<ExpandedProjectState>> deferredExpands = body.documents.values()
                     .stream()
                     .map((jsonProject) -> {
                         ProjectState projectState = Utils.fromJson(jsonProject, ProjectState.class);
-                        return ProjectUtil.expandProjectState(this, op, projectState, getUri());
+
+                        return ProjectUtil.basicExpandProjectState(this, projectState, getUri());
                     }).collect(Collectors.toList());
-            DeferredResult.allOf(deferredExpands).thenAccept((expandedStates) -> {
-                expandedStates.forEach((expandedState) -> {
-                    body.documents.put(expandedState.documentSelfLink, expandedState);
-                });
-            }).thenAccept((ignore) -> op.setBodyNoCloning(body))
+
+            DeferredResult.allOf(deferredExpands)
+                    .thenAccept((expandedStates) ->
+                            expandedStates.forEach((expandedState) -> {
+                                body.documents.put(expandedState.documentSelfLink, expandedState);
+                            }))
+                    .thenAccept((ignore) -> op.setBodyNoCloning(body))
                     .whenCompleteNotify(op);
         } else {
             op.complete();

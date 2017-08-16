@@ -236,6 +236,94 @@ public class ProjectUtil {
                 .thenApply((ignore) -> expandedState);
     }
 
+    public static DeferredResult<ExpandedProjectState> basicExpandProjectState(Service service,
+            ProjectState simpleState, URI referer) {
+
+        ExpandedProjectState expandedState = new ExpandedProjectState();
+        simpleState.copyTo(expandedState);
+        expandedState.administrators = new ArrayList<>();
+        expandedState.members = new ArrayList<>();
+        expandedState.viewers = new ArrayList<>();
+
+        String projectId = Service.getId(simpleState.documentSelfLink);
+
+        String adminsGroupLink = isNullOrEmpty(simpleState.administratorsUserGroupLinks) ? null :
+                UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                        AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(projectId));
+
+        String membersGroupLink = isNullOrEmpty(simpleState.membersUserGroupLinks) ? null :
+                UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                        AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(projectId));
+
+        String viewersGroupLink = isNullOrEmpty(simpleState.viewersUserGroupLinks) ? null :
+                UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                        AuthRole.PROJECT_VIEWER.buildRoleWithSuffix(projectId));
+
+        expandedState.administrators.addAll(transformGroupLinksToBasicPrincipals(
+                expandedState.administratorsUserGroupLinks, adminsGroupLink));
+
+        expandedState.members.addAll(transformGroupLinksToBasicPrincipals(
+                expandedState.membersUserGroupLinks, membersGroupLink));
+
+        expandedState.viewers.addAll(transformGroupLinksToBasicPrincipals(
+                expandedState.viewersUserGroupLinks, viewersGroupLink));
+
+        DeferredResult<Void> retrieveAdmins = retrieveUserGroupMembers(service,
+                adminsGroupLink, referer)
+                .thenAccept((admins) -> admins.forEach(a ->
+                        expandedState.administrators.add(transformUserStateToBasicPrincipal(a))));
+
+        DeferredResult<Void> retrieveMembers = retrieveUserGroupMembers(service,
+                membersGroupLink, referer)
+                .thenAccept((members) -> members.forEach(m ->
+                        expandedState.members.add(transformUserStateToBasicPrincipal(m))));
+
+        DeferredResult<Void> retrieveViewers = retrieveUserGroupMembers(service,
+                viewersGroupLink, referer)
+                .thenAccept((viewers) -> viewers.forEach(v ->
+                        expandedState.viewers.add(transformUserStateToBasicPrincipal(v))));
+
+        DeferredResult<Void> retrieveClusterLinks = retrieveClusterLinks(service,
+                simpleState.documentSelfLink)
+                .thenAccept((clusterLinks) -> expandedState.clusterLinks = clusterLinks);
+
+        DeferredResult<Void> retrieveTemplateLinks = retrieveTemplateLinks(service,
+                simpleState.documentSelfLink)
+                .thenAccept((templateLinks) -> expandedState.templateLinks = templateLinks);
+
+        return DeferredResult.allOf(retrieveAdmins, retrieveMembers, retrieveViewers,
+                retrieveClusterLinks, retrieveTemplateLinks)
+                .thenApply(ignore -> expandedState);
+    }
+
+    private static Principal transformUserStateToBasicPrincipal(UserState state) {
+        if (state == null) {
+            return null;
+        }
+        Principal p = new Principal();
+        p.id = Service.getId(state.documentSelfLink);
+        return p;
+    }
+
+    private static List<Principal> transformGroupLinksToBasicPrincipals(Set<String> groupLinks,
+            String defaultGroupLink) {
+        List<Principal> principals = new ArrayList<>();
+
+        for (String groupLink : groupLinks) {
+            if (groupLink == null || groupLink.trim().isEmpty()) {
+                continue;
+            }
+
+            if (groupLink.equalsIgnoreCase(defaultGroupLink)) {
+                continue;
+            }
+            Principal p = new Principal();
+            p.id = Service.getId(groupLink);
+            principals.add(p);
+        }
+        return principals;
+    }
+
     private static DeferredResult<List<Principal>> getGroupPrincipals(Service service,
             Operation requestorOperation, Set<String> groupLinks, String projectId,
             AuthRole role) {
