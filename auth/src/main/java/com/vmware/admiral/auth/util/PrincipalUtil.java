@@ -142,7 +142,7 @@ public class PrincipalUtil {
         return sb.toString().toLowerCase();
     }
 
-    public static String toPrincipalName(String firstName, String lastName) {
+    private static String toPrincipalName(String firstName, String lastName) {
         StringBuilder sb = new StringBuilder();
         if ((firstName != null) && (!firstName.trim().isEmpty())) {
             sb.append(firstName.trim());
@@ -151,6 +151,11 @@ public class PrincipalUtil {
             sb.append(" ").append(lastName.trim());
         }
         return sb.toString();
+    }
+
+    public static String toPrincipalName(String firstName, String lastName, String defaultName) {
+        String name = toPrincipalName(firstName, lastName).trim();
+        return (!name.isEmpty()) ? name : defaultName;
     }
 
     private static String toPrincipalName(LocalPrincipalState state) {

@@ -70,10 +70,10 @@ public class PrincipalUtilTest {
         localPrincipal.name = "Super Admins";
         localPrincipal.type = LocalPrincipalType.GROUP;
         localPrincipal.groupMembersLinks = new ArrayList<>();
-        localPrincipal.groupMembersLinks.add(UriUtils.buildUriPath(LocalPrincipalFactoryService
-                .SELF_LINK, "connie@admiral.com"));
-        localPrincipal.groupMembersLinks.add(UriUtils.buildUriPath(LocalPrincipalFactoryService
-                .SELF_LINK, "fritz@admiral.com"));
+        localPrincipal.groupMembersLinks.add(UriUtils
+                .buildUriPath(LocalPrincipalFactoryService.SELF_LINK, "connie@admiral.com"));
+        localPrincipal.groupMembersLinks.add(
+                UriUtils.buildUriPath(LocalPrincipalFactoryService.SELF_LINK, "fritz@admiral.com"));
 
         Principal principal = fromLocalPrincipalToPrincipal(localPrincipal);
         assertEquals(localPrincipal.id, principal.id);
@@ -118,5 +118,35 @@ public class PrincipalUtilTest {
         assertEquals(principal.id, localPrincipal.id);
         assertEquals(principal.name, localPrincipal.name);
         assertEquals(LocalPrincipalType.GROUP, localPrincipal.type);
+    }
+
+    @Test
+    public void testGetPrincipalName() {
+        String name = PrincipalUtil.toPrincipalName("First", "Last", "firstlast@test.local");
+        assertEquals("First Last", name);
+
+        name = PrincipalUtil.toPrincipalName("First", "", "firstlast@test.local");
+        assertEquals("First", name);
+
+        name = PrincipalUtil.toPrincipalName("First", null, "firstlast@test.local");
+        assertEquals("First", name);
+
+        name = PrincipalUtil.toPrincipalName("", "Last", "firstlast@test.local");
+        assertEquals("Last", name);
+
+        name = PrincipalUtil.toPrincipalName(null, "Last", "firstlast@test.local");
+        assertEquals("Last", name);
+
+        name = PrincipalUtil.toPrincipalName("", "", "firstlast@test.local");
+        assertEquals("firstlast@test.local", name);
+
+        name = PrincipalUtil.toPrincipalName(null, null, "firstlast@test.local");
+        assertEquals("firstlast@test.local", name);
+
+        name = PrincipalUtil.toPrincipalName(null, null, "");
+        assertEquals("", name);
+
+        name = PrincipalUtil.toPrincipalName(null, null, null);
+        assertEquals(null, name);
     }
 }
