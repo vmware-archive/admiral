@@ -69,7 +69,6 @@ else
     send_transformation_request $2 "upgrade-transforms/volumes" $3
     send_transformation_request $2 "upgrade-transforms/composite-components" $3
     send_transformation_request $2 "upgrade-transforms/composite-descriptions" $3
-    send_transformation_request $2 "upgrade-transforms/registries" $3
     exit 0
   fi
 fi

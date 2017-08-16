@@ -17,7 +17,6 @@ import com.vmware.admiral.upgrade.transformation.ComputePlacementPoolRelationTra
 import com.vmware.admiral.upgrade.transformation.ContainerNetworksTransformationService;
 import com.vmware.admiral.upgrade.transformation.ContainerVolumesTransformationService;
 import com.vmware.admiral.upgrade.transformation.ContainersTransformationService;
-import com.vmware.admiral.upgrade.transformation.RegistryTransformationService;
 import com.vmware.xenon.common.ServiceHost;
 
 public class HostInitUpgradeServiceConfig extends HostInitServiceHelper {
@@ -27,7 +26,6 @@ public class HostInitUpgradeServiceConfig extends HostInitServiceHelper {
         startServices(host,
                 CompositeDescriptionTransformationService.class,
                 ContainersTransformationService.class,
-                RegistryTransformationService.class,
                 ComputePlacementPoolRelationTransformationService.class,
                 ContainerVolumesTransformationService.class,
                 ContainerNetworksTransformationService.class,

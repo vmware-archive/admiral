@@ -43,7 +43,6 @@ public interface ManagementUriParts {
     String COMPOSITE_COMPONENTS_UPGRADE_TRANSFORM_PATH = UPGRADE_TRANSFORM_PREFIX
             + "/composite-components";
     String RESOURCE_POOL_UPGRADE_TRANSFORM_PATH = UPGRADE_TRANSFORM_PREFIX + "/pools";
-    String REGISTRY_UPGRADE_TRANSFORM_PATH = UPGRADE_TRANSFORM_PREFIX + "/registries";
     String COMPUTE_UPGRADE_TRANSFORM_PATH = UPGRADE_TRANSFORM_PREFIX + "/computes";
 
     String UTIL = "/util";
