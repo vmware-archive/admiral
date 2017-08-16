@@ -178,6 +178,35 @@ let searchImages = function(queryOptions, searchOnlyImages, forContainerDefiniti
   });
 };
 
+let searchUnikernels = function(queryOptions) {
+  var listViewPath = ['listView'];
+
+  var operation = this.requestCancellableOperation(OPERATION.LIST, queryOptions);
+  if (!operation) {
+    return;
+  }
+  this.emitChange();
+
+   operation.forPromise(services.loadUnikernelDownloadLinks()).then((data) => {
+    var unikernelLinks = data;
+
+   for (var i = 0; i < unikernelLinks.length; i++) {
+     console.log(unikernelLinks[i]);
+   }
+    this.setInData(listViewPath.concat(['items']), unikernelLinks);
+    this.setInData(listViewPath.concat(['itemsLoading']), false);
+    this.emitChange();
+  }).catch((e) => {
+     console.log('error');
+    this.setInData(listViewPath.concat(['items']), []);
+    this.setInData(listViewPath.concat(['itemsLoading']), false);
+    this.setInData(listViewPath.concat(['searchedItems']), true);
+    this.setInData(listViewPath.concat(['error']),
+      e.responseJSON.message || e.statusText);
+    this.emitChange();
+   });
+};
+
 let processClosures = function(closuresResult) {
   // Transforming from associative array to array
   var closures = [];
@@ -234,6 +263,7 @@ let searchClosures = function(queryOptions, searchOnlyImages, forContainerDefini
     this.emitChange();
   });
 };
+
 
 let loadRecommended = function(forContainerDefinition) {
   var listViewPath;
@@ -769,7 +799,8 @@ let TemplatesStore = Reflux.createStore({
     actions.RegistryActions,
     actions.TemplatesContextToolbarActions,
     actions.NavigationActions,
-    actions.PlacementActions
+    actions.PlacementActions,
+    actions.unikernelTemplateActions
   ],
 
   onOpenTemplates: function(queryOptions, forceReload) {
@@ -783,8 +814,10 @@ let TemplatesStore = Reflux.createStore({
     this.setInData(['listView', 'error'], null);
     this.setInData(['registries'], null);
     this.setInData(['importTemplate'], null);
+    this.setInData(['unikernelImportTemplate'], null);
     this.setInData(['selectedItem'], null);
     this.setInData(['selectedItemDetails'], null);
+    this.setInData(['unikernels'], null);
     this.setInData(['contextView'], {});
 
 
@@ -808,6 +841,9 @@ let TemplatesStore = Reflux.createStore({
     } else if (queryOptions[constants.SEARCH_CATEGORY_PARAM] ===
       constants.TEMPLATES.SEARCH_CATEGORY.CLOSURES) {
       searchClosures.call(this, queryOptions);
+    } else if (queryOptions[constants.SEARCH_CATEGORY_PARAM] ===
+      constants.TEMPLATES.SEARCH_CATEGORY.UNIKERNELS) {
+      searchUnikernels.call(this, queryOptions);
     } else {
       searchImages.call(this, queryOptions);
     }
@@ -2267,6 +2303,11 @@ let TemplatesStore = Reflux.createStore({
     this.emitChange();
   },
 
+   onOpenUnikernelImportTemplate: function() {
+    this.setInData(['unikernelImportTemplate', 'isImportingTemplate'], false);
+    this.emitChange();
+  },
+
   onImportTemplate: function(templateContent) {
     this.setInData(['importTemplate', 'error'], null);
     this.setInData(['importTemplate', 'isImportingTemplate'], true);
@@ -2280,6 +2321,16 @@ let TemplatesStore = Reflux.createStore({
       actions.NavigationActions.openTemplateDetails(constants.TEMPLATES.TYPES.TEMPLATE,
         documentId);
     }).catch(this.onImportTemplateError);
+  },
+
+  onSendDockerfile: function(templateContent) {
+    console.log(templateContent);
+
+    services.postUnikernelCreationData(templateContent).then(() => {
+
+    }).catch((e) => {
+      console.log(e);
+    });
   },
 
   onImportTemplateError: function(e) {
@@ -2336,3 +2387,4 @@ let TemplatesStore = Reflux.createStore({
 });
 
 export default TemplatesStore;
+

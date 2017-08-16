@@ -292,13 +292,15 @@ var constants = Immutable({
     TYPES: {
       TEMPLATE: 'TEMPLATE',
       IMAGE: 'IMAGE',
-      CLOSURE: 'CLOSURE'
+      CLOSURE: 'CLOSURE',
+      UNIKERNEL: 'UNIKERNEL'
     },
     SEARCH_CATEGORY: {
       ALL: 'all',
       IMAGES: 'images',
       TEMPLATES: 'templates',
-      CLOSURES: 'closures'
+      CLOSURES: 'closures',
+      UNIKERNELS: 'unikernels'
     },
     SEARCH_SUGGESTIONS: ['name', 'repository', 'size', 'description'],
     STATUS: {
@@ -400,3 +402,4 @@ var constants = Immutable({
 });
 
 export default constants;
+

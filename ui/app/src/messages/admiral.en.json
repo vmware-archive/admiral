@@ -288,7 +288,8 @@
           "images": "Images",
           "templates": "Templates",
           "closures": "Closures",
-          "repositories": "Repositories"
+          "repositories": "Repositories",
+          "unikernels": "Unikernels"
         }
       },
       "details": {
@@ -418,6 +419,14 @@
         }
       }
     },
+    "unikernels" : {
+      "importButtonUnikernel": "Import Unikernel",
+      "downloadLink": "Download links",
+      "importUnikernelTitle": "Unikernel Creation",
+      "importUnikernelHint": "Import Dockerfile in the form: \nFROM ... \nCOPY ... ...\n WORKDIR ... \n CMD .... \n\n Also, add github repo as a comment",
+      "importUnikernelButton": "Start Unikernel Creation",
+      "contentPlaceholder": "Place Dockerfile here..."
+    },
     "placement": {
       "list": {
         "title": "Placements",
@@ -533,7 +542,6 @@
         "isolationLabel": "Isolation",
         "isolationTypeLabel": "Type",
         "isolationNetworkLabel": "Network",
-        "isolationExternalSubnetLabel": "External Subnet",
         "noneIsolationTypeLabel": "None",
         "subnetIsolationTypeLabel": "Subnetwork",
         "securityGroupIsolationTypeLabel": "Security Group",
@@ -1438,3 +1446,4 @@
     "vic": "vSphere Integrated Containers"
   }
 }
+

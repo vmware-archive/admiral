@@ -829,42 +829,6 @@ services.searchCompute = function(resourcePoolLink, query, limit) {
   });
 };
 
-services.loadClusters = function(query, limit) {
-  var qOps = {
-    any: query.toLowerCase(),
-    powerState: 'ON'
-  };
-
-  var filter = buildHostsQuery(qOps, true);
-
-  var params = $.extend(params || {}, {
-    [DOCUMENT_TYPE_PROP_NAME]: true,
-    [ODATA_COUNT_PROP_NAME]: true,
-    [ODATA_LIMIT_PROP_NAME]: limit || calculateLimit(),
-    [ODATA_ORDERBY_PROP_NAME]: 'creationTimeMicros asc',
-    [EXPAND_QUERY_PROP_NAME]: true
-  });
-
-  if (filter) {
-    params.$hostsFilter = filter;
-  }
-  var url = mergeUrl(links.CONTAINER_CLUSTERS, params);
-
-  return get(url).then(function(data) {
-    var documentLinks = data.documentLinks || [];
-
-    var result = {
-      totalCount: data.totalCount
-    };
-
-    result.items = documentLinks.map((link) => {
-      return data.documents[link];
-    });
-
-    return result;
-  });
-};
-
 services.loadNetwork = function(documentSelfLink) {
   return get(documentSelfLink);
 };
@@ -962,10 +926,6 @@ services.searchSecurityGroups = function(endpointLink, query, limit) {
   });
 };
 
-services.loadSubnet = function(documentSelfLink) {
-  return get(documentSelfLink);
-};
-
 services.loadSubnetworks = function(endpointLink, documentSelfLinks) {
   var params = {};
   if (documentSelfLinks && documentSelfLinks.length) {
@@ -994,30 +954,6 @@ services.searchSubnetworks = function(endpointLink, query, limit) {
   var qOps = {
     any: query.toLowerCase(),
     endpoint: endpointLink
-  };
-
-  let filter = buildSearchQuery(qOps);
-  let url = buildPaginationUrl(links.SUBNETWORKS, filter, true,
-                               'documentUpdateTimeMicros desc', limit);
-  return get(url).then(function(data) {
-    var documentLinks = data.documentLinks || [];
-
-    var result = {
-      totalCount: data.totalCount
-    };
-
-    result.items = documentLinks.map((link) => {
-      return data.documents[link];
-    });
-
-    return result;
-  });
-};
-
-services.searchSubnetsByNetwork = function(networkLink, query, limit) {
-  var qOps = {
-    any: query.toLowerCase(),
-    network: networkLink
   };
 
   let filter = buildSearchQuery(qOps);
@@ -1220,6 +1156,33 @@ services.loadTemplates = function(queryOptions) {
       results: results,
       isPartialResult: isPartialResult
     };
+  });
+};
+
+services.loadUnikernelDownloadLinks = function() {
+  return get(links.UNIKERNEL_SEARCH);
+};
+
+services.postUnikernelCreationData = function(templateContent) {
+ let requestBody = {
+        'dockerfile': templateContent,
+        'compilationPlatform': 'qemu'
+      };
+
+  return new Promise(function(resolve, reject) {
+    $.ajax({
+      method: 'POST',
+      url: utils.serviceUrl(links.UNIKERNEL_CREATION),
+      dataType: 'json',
+      data: JSON.stringify(requestBody),
+      headers: buildHeaders(),
+      contentType: 'application/json',
+      accepts: {
+        json: 'application/json'
+      }
+    }).done(function(data, status, xhr) {
+      resolve([data, status, xhr]);
+    }).fail(reject);
   });
 };
 
@@ -2963,16 +2926,6 @@ var buildSearchQuery = function(queryOptions) {
     });
   }
 
-  var networkArray = toArrayIfDefined(queryOptions.network);
-  if (networkArray) {
-    userQueryOps.networkLink = networkArray.map((network) => {
-      return {
-        val: network,
-        op: 'eq'
-      };
-    });
-  }
-
   var queryOptionsOccurrence = queryOptions[constants.SEARCH_OCCURRENCE.PARAM];
   if (queryOptionsOccurrence) {
     userQueryOps[constants.SEARCH_OCCURRENCE.PARAM] = queryOptionsOccurrence;
@@ -3058,3 +3011,4 @@ window.mcp = window.mcp || {};
 window.mcp.client = mcpClient;
 
 export default services;
+

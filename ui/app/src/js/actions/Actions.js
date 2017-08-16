@@ -62,6 +62,10 @@ export var TemplateActions = Reflux.createActions([
 ].concat(containerDefinitionTemplateActions, networkTemplateActions, closureTemplateActions,
   volumeTemplateActions, kubernetesTemplateActions));
 
+export var unikernelTemplateActions = Reflux.createActions([
+  'openUnikernelImportTemplate', 'sendDockerfile'
+]);
+
 export var ContainerActions = Reflux.createActions([
   'openContainers', 'openContainersNext', 'openContainerDetails', 'openClusterDetails',
   'openCompositeContainerDetails', 'openManageContainers', 'openManageComposite',
@@ -243,3 +247,4 @@ export var NavigationActions = Reflux.createActions([
   'openCompositeClosureDetails', 'openEndpoints', 'openEndpointsSilently', 'openAddEndpoint',
   'openVolumes', 'openInstanceTypes', 'editInstanceType'
 ]);
+

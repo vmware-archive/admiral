@@ -15,5 +15,5 @@ public interface OSvInformation {
     String propertyTag = "__compilation";
     String propertyValue = "osv";
     String name = "osv-builder";
-    String repo = "bellevue-ci.eng.vmware.com:5005/vmware/osv-builder";
+    String repo = "antonoo/osv-builder"; //"bellevue-ci.eng.vmware.com:5005/vmware/osv-builder";
 }

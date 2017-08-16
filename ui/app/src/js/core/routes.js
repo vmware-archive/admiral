@@ -129,6 +129,7 @@ crossroads.addRoute('/closures:?query:', function(query) {
 });
 
 crossroads.addRoute('/templates:?query:', function(query) {
+  console.log(query);
   actions.AppActions.openView(constants.VIEWS.TEMPLATES.name);
   actions.TemplateActions.openTemplates(query, true);
 });
@@ -169,6 +170,11 @@ crossroads.addRoute('/certificates', function() {
 crossroads.addRoute('/import-template', function() {
   actions.AppActions.openView(constants.VIEWS.TEMPLATES.name);
   actions.TemplateActions.openImportTemplate();
+});
+
+crossroads.addRoute('/import-unikernel-template', function() {
+  actions.AppActions.openView(constants.VIEWS.TEMPLATES.name);
+  actions.unikernelTemplateActions.openUnikernelImportTemplate();
 });
 
 crossroads.addRoute('/containers:?query:', function(query) {
@@ -625,3 +631,4 @@ var routes = {
 };
 
 export default routes;
+

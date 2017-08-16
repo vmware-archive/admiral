@@ -25,7 +25,8 @@ const ENDPOINTS = [
   '/messages/*',
   '/fonts/*',
   '/util/*',
-  '/adapter/*'
+  '/adapter/*',
+  '/unikernel/*'
 ];
 
 var configure = function(env) {
@@ -75,3 +76,4 @@ var configs = configure({
 });
 
 module.exports = configs;
+

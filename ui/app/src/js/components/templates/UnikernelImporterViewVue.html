@@ -1,0 +1,33 @@
+<!--
+  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="templateImport">
+  <div class="templateImport-header">
+    <div class="title">{{i18n("app.unikernels.importUnikernelTitle")}}</div>
+  </div>
+  <div class="templateImport-properties">
+    <div class="template-import-option">
+      <a class="btn btn-sm btn-secondary fileUpload" v-on:click="browseFile" v-bind:class="{'disabled': model.isImportingTemplate}">
+        <span>{{i18n("app.template.import.loadButton")}}</span>
+      </a>
+      <input type="file" class="upload" v-on:change="onFileChange"/>
+      <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="right" v-tooltip="i18n('app.unikernels.importUnikernelHint')"></i>
+    </div>
+    <textarea v-model="templateContent" class="template-input" v-bind:disabled="model.isImportingTemplate" :placeholder="i18n('app.unikernels.contentPlaceholder')"></textarea>
+    <div class="templateImport-toolbar">
+    <button type="submit" class="btn btn-primary"
+                v-bind:class="{'disabled': !templateContent, 'loading': model.isImportingTemplate}"
+                v-on:click="sendDockerfile">{{i18n("app.unikernels.importUnikernelButton")}}<i class="fa fa-spinner fa-spin loader-inline"></i>
+    </button>
+  </div>
+  </div>
+</div>
+

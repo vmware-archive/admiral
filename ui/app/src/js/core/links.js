@@ -13,6 +13,7 @@ const CONFIG = '/config';
 const PROVISIONING = '/provisioning';
 const RESOURCES = '/resources';
 const UTIL = '/util';
+const UNIKERNEL = '/unikernel';
 
 var links = Immutable({
   CONFIG: '/config',
@@ -47,7 +48,6 @@ var links = Immutable({
   STORAGE_DESCRIPTIONS: RESOURCES + '/storage-descriptions',
 
   CONTAINER_HOSTS: RESOURCES + '/hosts',
-  CONTAINER_CLUSTERS: RESOURCES + '/clusters',
   CONTAINERS: RESOURCES + '/containers',
   CONTAINER_STATS: RESOURCES + '/container-stats',
   CONTAINER_LOGS: RESOURCES + '/container-logs',
@@ -106,7 +106,11 @@ var links = Immutable({
   RESOURCE_ENUMERATION: PROVISIONING + '/resource-enumeration-tasks',
   AWS_VOLUME_TYPE_ENUMERATION: PROVISIONING + '/aws/volume-type-enumeration-adapter',
 
-  LONG_URI_GET: UTIL + '/long-uri-get'
+  LONG_URI_GET: UTIL + '/long-uri-get',
+
+  UNIKERNEL_SEARCH: UNIKERNEL + '/download',
+  UNIKERNEL_CREATION: UNIKERNEL + '/translate'
 });
 
 export default links;
+

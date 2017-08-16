@@ -41,7 +41,7 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
       new FormerViewPathBridge('/home/templates/image', '/templates/image'),
       new FormerViewPathBridge('/home/templates/template', '/templates/template'),
       new FormerViewPathBridge('/home/templates','/templates','$category=templates'),
-      new FormerViewPathBridge('/home/unikernels', '/templates', '$category=templates'),
+      new FormerViewPathBridge('/home/unikernels', '/templates', '$category=unikernels'),
       new FormerViewPathBridge('/home/public-repositories','/templates','$category=images'),
       new FormerViewPathBridge('/home/closure-definitions','/templates','$category=closures'),
       new FormerViewPathBridge('/home/closure-definitions','/templates','$category=closures'),

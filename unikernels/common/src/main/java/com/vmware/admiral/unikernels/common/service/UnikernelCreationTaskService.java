@@ -195,6 +195,7 @@ public class UnikernelCreationTaskService
 
         new ServiceDocumentQuery<>(getHost(), ContainerState.class).query(queryTask, (r) -> {
             if (r.hasException()) {
+                logWarning(r.getException().getMessage());
                 sendSelfPatch(task, TaskStage.FAILED, SubStage.SEARCH_EXISTING_CONTAINER);
             } else if (r.hasResult()) {
                 foundOSVContainers.add(r.getResult());

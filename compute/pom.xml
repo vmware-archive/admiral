@@ -53,18 +53,24 @@
 			<version>${project.version}</version>
 		</dependency>
 
-		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-databind</artifactId>
-		</dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>consumer-iaas-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
-		<!-- TEST -->
-		<dependency>
-			<groupId>${project.groupId}</groupId>
-			<artifactId>admiral-common-test</artifactId>
-			<version>${project.version}</version>
-			<classifier>tests</classifier>
-			<scope>test</scope>
-		</dependency>
-	</dependencies>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+
+        <!-- TEST -->
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>admiral-common-test</artifactId>
+            <version>${project.version}</version>
+            <classifier>tests</classifier>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 </project>

@@ -16,6 +16,7 @@ import ListItemClosureVue from 'components/templates/ListItemClosureVue.html';
 import TemplateDetailsView from 'components/templates/TemplateDetailsView'; // eslint-disable-line
 import RegistryView from 'components/registries/RegistryView'; // eslint-disable-line
 import TemplateImporterView from 'components/templates/TemplateImporterView'; // eslint-disable-line
+import UnikernelImporterView from 'components/templates/UnikernelImporterView'; // eslint-disable-line
 import ContainerRequestForm from 'components/containers/ContainerRequestForm'; // eslint-disable-line
 import ClosureRequestForm from 'components/closures/ClosureRequestForm'; // eslint-disable-line
 import RequestsList from 'components/requests/RequestsList'; //eslint-disable-line
@@ -44,7 +45,8 @@ var TemplatesViewVueComponent = Vue.extend({
       default: () => {
         return {
           listView: {},
-          contextView: {}
+          contextView: {},
+          unikernels: []
         };
       }
     }
@@ -131,16 +133,22 @@ var TemplatesViewVueComponent = Vue.extend({
         return i18n.t('app.template.list.searchCategory.templates');
       } else if (this.selectedCategory === constants.TEMPLATES.SEARCH_CATEGORY.CLOSURES) {
         return i18n.t('app.template.list.searchCategory.closures');
-      }
+      } else if (this.selectedCategory === constants.TEMPLATES.SEARCH_CATEGORY.UNIKERNELS) {
+        return i18n.t('app.template.list.searchCategory.unikernels');
+      } else {
       return i18n.t('app.template.list.popularRepositories');
+      }
     },
     titleSearch: function() {
       if (this.selectedCategory === constants.TEMPLATES.SEARCH_CATEGORY.TEMPLATES) {
         return i18n.t('app.template.list.searchCategory.templates');
       } else if (this.selectedCategory === constants.TEMPLATES.SEARCH_CATEGORY.CLOSURES) {
         return i18n.t('app.template.list.searchCategory.closures');
+      } else if (this.selectedCategory === constants.TEMPLATES.SEARCH_CATEGORY.UNIKERNELS) {
+        return i18n.t('app.template.list.searchCategory.unikernels');
+      } else {
+      return i18n.t('app.template.list.popularRepositories');
       }
-      return i18n.t('app.template.list.searchCategory.repositories');
     }
   },
   mixins: [GridHolderMixin],
@@ -464,3 +472,4 @@ function TemplatesView($el) {
 
 
 export default TemplatesView;
+
