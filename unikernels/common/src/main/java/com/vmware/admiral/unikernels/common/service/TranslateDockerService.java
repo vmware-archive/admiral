@@ -31,7 +31,7 @@ public class TranslateDockerService extends StatelessService {
         TranslationData data = post.getBody(TranslationData.class);
         CompilationData forwardedData = null;
         try {
-            String capstan = getTranslatedDfrString(data);
+            String capstan = getTranslatedDfrStringAndSetSources(data);
             forwardedData = createCompilationData(data, capstan);
         } catch (DockerFileFormatException e1) {
             logWarning(e1.getMessage());
@@ -55,11 +55,20 @@ public class TranslateDockerService extends StatelessService {
         sendRequest(request);
     }
 
-    private String getTranslatedDfrString(TranslationData data) throws DockerFileFormatException {
+    private String getTranslatedDfrStringAndSetSources(TranslationData data)
+            throws DockerFileFormatException {
         parser.readString(data.dockerfile);
         DescriptiveFileReference dfr = parser.parseDocker();
         Translator translator = new Translator(dfr);
         DescriptiveFileReference translatedDfr = translator.translate(Platform.OSv);
+
+        //set githubSources if they exist
+        if (dfr.githubSources != null) {
+            if (!dfr.githubSources.equals("")) {
+                data.sources = dfr.githubSources;
+            }
+        }
+
         return translatedDfr.getDocumentString();
     }
 
@@ -67,9 +76,10 @@ public class TranslateDockerService extends StatelessService {
         CompilationData data = new CompilationData();
         data.capstanfile = capstan;
         data.compilationPlatform = translationData.compilationPlatform;
-        data.sources = translationData.sources;
         data.successCB = translationData.successCB;
         data.failureCB = translationData.failureCB;
+        data.sources = translationData.sources;
+
         return data;
     }
 }

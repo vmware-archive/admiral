@@ -16,7 +16,6 @@ import { DocumentListResult, DocumentService } from './../../utils/document.serv
 import { Component, OnInit, ViewEncapsulation, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { Router, NavigationEnd } from '@angular/router';
-import { RoutesRestriction } from './../../utils/routes-restriction';
 import { ProjectService } from './../../utils/project.service';
 import { ErrorService } from '../../utils/error.service';
 import { FormerViewPathBridge, RouteUtils } from './../../utils/route-utils';
@@ -42,6 +41,7 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
       new FormerViewPathBridge('/home/templates/image', '/templates/image'),
       new FormerViewPathBridge('/home/templates/template', '/templates/template'),
       new FormerViewPathBridge('/home/templates','/templates','$category=templates'),
+      new FormerViewPathBridge('/home/unikernels', '/templates', '$category=templates'),
       new FormerViewPathBridge('/home/public-repositories','/templates','$category=images'),
       new FormerViewPathBridge('/home/closure-definitions','/templates','$category=closures'),
       new FormerViewPathBridge('/home/closure-definitions','/templates','$category=closures'),
@@ -78,7 +78,7 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-      this.ds.listProjects().then((result) => {
+      this.listProjects().then((result) => {
         this.projects = result.documents;
 
         if (!this.projects || this.projects.length === 0) {
@@ -110,6 +110,17 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
       this.errorObserve.unsubscribe();
     }
 
+    listProjects() {
+      if (FT.isApplicationEmbedded()) {
+        return this.ajax.get(Links.GROUPS, null).then(result => {
+          let documents = result || [];
+          return new DocumentListResult(documents, result.nextPageLink, result.totalCount);
+        });
+      } else {
+        return this.ds.list(Links.PROJECTS, null);
+      }
+    }
+
     selectProject(project) {
       this.selectedProject = project;
       this.ps.setSelectedProject(this.selectedProject);
@@ -130,26 +141,5 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
     resetAlert() {
         this.alertMessage = null;
     }
-
-    get deploymentsRouteRestriction() {
-        return RoutesRestriction.DEPLOYMENTS;
-    }
-
-    get clustersRouteRestriction() {
-        return RoutesRestriction.CLUSTERS;
-    }
-
-    get templatesRouteRestriction() {
-        return RoutesRestriction.TEMPLATES;
-    }
-
-    get publicReposRouteRestriction() {
-        return RoutesRestriction.PUBLIC_REPOSITORIES;
-    }
-
-    get currentProjectLink() {
-        if (this.selectedProject) {
-          return this.selectedProject.documentSelfLink;
-        }
-    }
 }
+

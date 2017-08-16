@@ -282,9 +282,9 @@
     "containers": "Containers",
     "networks": "Networks",
     "volumes": "Volumes",
-    "closures": "Closures",
     "library": "Library",
     "templates": "Templates",
+    "unikernels": "Unikernels",
     "projectRepositories": "Project repositories",
     "publicRepositories": "Public repositories",
     "infrastructure": "Infrastructure",
@@ -334,3 +334,4 @@
     }
   }
 }
+

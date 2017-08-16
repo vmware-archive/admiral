@@ -22,6 +22,7 @@ public abstract class DescriptiveFileReference {
     protected String workDir;
     protected String executableName;
     protected String givenName;
+    public String githubSources;
 
     // Do not include FROM tag or base: tag or any tag inside the actual used base
     protected String getOnlyBase(String baseLine) {

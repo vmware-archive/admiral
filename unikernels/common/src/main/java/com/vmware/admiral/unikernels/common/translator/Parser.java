@@ -83,15 +83,31 @@ public class Parser {
         return "";
     }
 
+    private String parseGithubSources(String gitSource) {
+        if (gitSource.length() > 1) {
+            return gitSource.trim().substring(1, gitSource.length());
+        } else {
+            return "";
+        }
+    }
+
     public CapstanFileReference parseCapstan() throws CapstanFileFormatException {
         // files are annotated below the files: tag with a
         // double space before
-        return new CapstanFileReference(getTagArgs("base"), getTagArgs("cmdline"),
+        CapstanFileReference cfr = new CapstanFileReference(getTagArgs("base"),
+                getTagArgs("cmdline"),
                 getTagArgs("  "));
+
+        cfr.githubSources = parseGithubSources(getTagArgs("github"));
+        return cfr;
     }
 
     public DockerFileReference parseDocker() throws DockerFileFormatException {
-        return new DockerFileReference(getTagArgs("FROM"), getTagArgs("CMD"), getTagArgs("COPY"),
+        DockerFileReference dfr = new DockerFileReference(getTagArgs("FROM"), getTagArgs("CMD"),
+                getTagArgs("COPY"),
                 getTagArgs("WORKDIR"));
+
+        dfr.githubSources = parseGithubSources(getTagArgs("github"));
+        return dfr;
     }
 }
