@@ -14,7 +14,6 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgModule, APP_INITIALIZER } from '@angular/core';
 import { Injectable } from '@angular/core';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { HttpModule } from '@angular/http';
 import { ClarityModule } from 'clarity-angular';
@@ -36,18 +35,6 @@ import { HomeAuthGuard } from 'app/services/home-auth-guard.service';
 import { AdminAuthGuard } from 'app/services/admin-auth-guard.service';
 
 import { ADMIRAL_DECLARATIONS } from './admiral';
-
-let HBR_SUPPORTED_LANGS = ['en-us', 'zh-cn', 'es-es'];
-let HBR_DEFAULT_LANG = 'en-us';
-
-export function initConfig(ts: TranslateService) {
-    return () => {
-        let lng = I18n.language || HBR_DEFAULT_LANG;
-        ts.addLangs(HBR_SUPPORTED_LANGS);
-        ts.setDefaultLang(HBR_DEFAULT_LANG); // fallback language
-        ts.use(lng.toLocaleLowerCase());
-    };
-}
 
 export function initHarborConfig() {
     var sc:IServiceConfig = {
@@ -80,7 +67,7 @@ export function initHarborConfig() {
         ClarityModule.forRoot(),
         CookieModule.forRoot(),
         ROUTING,
-        HarborLibraryModule.forChild({
+        HarborLibraryModule.forRoot({
             config: {
                 provide: SERVICE_CONFIG,
                 useFactory: initHarborConfig
@@ -98,14 +85,7 @@ export function initHarborConfig() {
         AuthService,
         TemplateService,
         ViewExpandRequestService,
-        TranslateService,
-        ErrorService,
-        {
-            provide: APP_INITIALIZER,
-            useFactory: initConfig,
-            deps: [TranslateService],
-            multi: true
-        },
+        ErrorService
     ],
     bootstrap: [AppComponent]
 })
