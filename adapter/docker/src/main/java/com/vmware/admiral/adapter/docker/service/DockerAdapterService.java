@@ -148,12 +148,10 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
 
     public static final String SELF_LINK = ManagementUriParts.ADAPTER_DOCKER;
 
-    public static final String PROVISION_CONTAINER_RETRIES_COUNT_PARAM_NAME =
-            "provision.container.retries.count";
+    public static final String PROVISION_CONTAINER_RETRIES_COUNT_PARAM_NAME = "provision.container.retries.count";
     public static final int PROVISION_CONTAINER_RETRIES_COUNT_DEFAULT = 3;
 
-    public static final String PROVISION_CONTAINER_PULL_RETRIES_COUNT_PARAM_NAME =
-            "provision.container.pull-image.retries.count";
+    public static final String PROVISION_CONTAINER_PULL_RETRIES_COUNT_PARAM_NAME = "provision.container.pull-image.retries.count";
 
     private SystemImageRetrievalManager imageRetrievalManager;
 
@@ -172,8 +170,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
             HttpStatus.SC_INTERNAL_SERVER_ERROR,
             HttpStatus.SC_BAD_GATEWAY,
             HttpStatus.SC_SERVICE_UNAVAILABLE,
-            HttpStatus.SC_GATEWAY_TIMEOUT
-    );
+            HttpStatus.SC_GATEWAY_TIMEOUT);
     private static final String DELETE_CONTAINER_MISSING_ERROR = "error 404 for DELETE";
 
     private volatile Integer retriesCount;
@@ -451,8 +448,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
     }
 
     private void processContainerDescription(RequestContext context) {
-        context.containerState.adapterManagementReference =
-                context.containerDescription.instanceAdapterReference;
+        context.containerState.adapterManagementReference = context.containerDescription.instanceAdapterReference;
 
         CommandInput createImageCommandInput = new CommandInput(context.commandInput);
 
@@ -793,7 +789,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                                     if (e != null) {
                                         logWarning(
                                                 "Could not patch container state "
-                                                + "for created container %s",
+                                                        + "for created container %s",
                                                 context.computeState.name);
                                     }
                                     processCreatedContainer(context);
@@ -1356,8 +1352,10 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                                     o.getBody(ConfigurationState.class).value);
                             callback.accept(pullRetriesCount);
                         } else {
-                            /* in case of exception the default retry count will be set to the
-                             PROVISION_CONTAINER_RETRIES_COUNT_PARAM_NAME */
+                            /*
+                             * in case of exception the default retry count will be set to the
+                             * PROVISION_CONTAINER_RETRIES_COUNT_PARAM_NAME
+                             */
                             ensurePropertyExists(retriesCount -> {
                                 pullRetriesCount = retriesCount;
                                 callback.accept(pullRetriesCount);
@@ -1368,9 +1366,9 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
     }
 
     /**
-     * Filter out volume bindings without host-src or volume name. Each volume binding is a
-     * string in the following form: [volume-name|host-src:]container-dest[:ro] Both host-src,
-     * and container-dest must be an absolute path.
+     * Filter out volume bindings without host-src or volume name. Each volume binding is a string
+     * in the following form: [volume-name|host-src:]container-dest[:ro] Both host-src, and
+     * container-dest must be an absolute path.
      */
     private List<String> filterVolumeBindings(String[] volumes) {
         List<String> volumeBindings = new ArrayList<>();

@@ -38,7 +38,7 @@ public class CompilationSuccessHandlerService extends StatelessService {
         UnikernelCreationTaskServiceState wrappedData = new UnikernelCreationTaskServiceState();
         wrappedData.taskInfo = new TaskState();
         wrappedData.taskInfo.stage = TaskStage.STARTED;
-        wrappedData.subStage = SubStage.HANDLE_CALLBACK;
+        wrappedData.taskSubStage = SubStage.HANDLE_CALLBACK;
         wrappedData.data = data;
 
         URI creationTaskServiceURI = UriUtils.buildUri(receivedData[1]);

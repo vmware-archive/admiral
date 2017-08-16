@@ -11,8 +11,6 @@
 
 package com.vmware.admiral.unikernels.common.service;
 
-import com.vmware.admiral.unikernels.common.translator.Platform;
-
 /*
  * All of the data is packed in this class rather than only
  * the dockerfile excluding the platform & capstanfile, just
@@ -23,7 +21,7 @@ public class TranslationData {
 
     public String dockerfile;
     public String capstanfile;
-    public Platform platform;
+    //public Platform platform;
     public String sources;
     public String compilationPlatform;
     public String successCB;

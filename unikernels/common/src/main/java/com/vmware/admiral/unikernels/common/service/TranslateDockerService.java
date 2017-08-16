@@ -15,6 +15,7 @@ import com.vmware.admiral.unikernels.common.exceptions.DockerFileFormatException
 import com.vmware.admiral.unikernels.common.service.UnikernelCreationTaskService.UnikernelCreationTaskServiceState;
 import com.vmware.admiral.unikernels.common.translator.DescriptiveFileReference;
 import com.vmware.admiral.unikernels.common.translator.Parser;
+import com.vmware.admiral.unikernels.common.translator.Platform;
 import com.vmware.admiral.unikernels.common.translator.Translator;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatelessService;
@@ -58,7 +59,7 @@ public class TranslateDockerService extends StatelessService {
         parser.readString(data.dockerfile);
         DescriptiveFileReference dfr = parser.parseDocker();
         Translator translator = new Translator(dfr);
-        DescriptiveFileReference translatedDfr = translator.translate(data.platform);
+        DescriptiveFileReference translatedDfr = translator.translate(Platform.OSv);
         return translatedDfr.getDocumentString();
     }
 

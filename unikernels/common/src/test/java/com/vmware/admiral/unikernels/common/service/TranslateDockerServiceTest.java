@@ -82,7 +82,7 @@ public class TranslateDockerServiceTest {
                 + "\nWORKDIR /"
                 + "\nCMD java -jar OSv-service.jar";
         translationData.sources = "github";
-        translationData.platform = Platform.OSv;
+      //  translationData.platform = Platform.OSv;
         translationData.successCB = "success";
         translationData.failureCB = "failure";
         translationData.compilationPlatform = "vbox";
