@@ -88,7 +88,8 @@
         "viewer": "Viewer"
       },
       "source": {
-        "local": "Local"
+        "local": "Local",
+        "ldap": "LDAP"
       },
       "deleteMember": {
         "title": "Remove Member from Project",
