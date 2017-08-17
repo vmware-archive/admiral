@@ -162,9 +162,15 @@ public class ResourcePoolTransformationService extends StatelessService {
                             }
                         }).sendWith(getHost());
             }
-        } else {
+        } else if (!placements.isEmpty()) {
             GroupResourcePlacementState placement = placements.get(0);
             updatePoolTenantLinks(state, post, placement, true);
+        } else {
+            if (poolsCount.decrementAndGet() == 0) {
+                // add tenant links to the pool
+                logInfo("Resource pool tranformation completed successfully");
+                post.complete();
+            }
         }
 
     }

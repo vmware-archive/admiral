@@ -118,6 +118,14 @@ public class ResourcePoolTransformationServiceTest extends ComputeBaseTest {
         Assert.assertFalse(placement2.resourcePoolLink.equals(placement3.resourcePoolLink));
     }
 
+    @Test
+    public void testNoPlacementsForPool() throws Throwable {
+        ResourcePoolState pool1 = createResourcePool();
+        doPost(pool1, ResourcePoolTransformationService.SELF_LINK);
+        pool1 = getDocument(ResourcePoolState.class, pool1.documentSelfLink);
+        Assert.assertTrue(pool1.tenantLinks == null);
+    }
+
     private ResourcePoolState createResourcePool() throws Throwable {
         ResourcePoolState pool = new ResourcePoolState();
         pool.name = "pool";
