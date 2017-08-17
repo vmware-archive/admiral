@@ -110,10 +110,12 @@ export class AppComponent implements OnInit {
     }
 
     ngOnInit() {
-        if (this.vic) {
-            this.title.setTitle("vSphere Integrated Containers");
-        } else {
-            this.title.setTitle("Admiral");
+        if (!this.embedded) {
+            if (this.vic) {
+                this.title.setTitle("vSphere Integrated Containers");
+            } else {
+                this.title.setTitle("Admiral");
+            }
         }
     }
 

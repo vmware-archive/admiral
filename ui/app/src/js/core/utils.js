@@ -24,6 +24,8 @@ const RE_UNIX_ABS_PATH_OR_NAME = new RegExp('^((' + RX_NAME + ')|(' + RX_UNIX_AB
 
 const VERSION_REG_EX = /^(\*|\d+(\.\d+){0,2}(\.\*)?)/g;
 
+const OFFICIAL_REGISTRY_LIST = ['registry.hub.docker.com', 'docker.io'];
+
 var isSingleView = window.isSingleView;
 var isNavigationLess = window.isNavigationLess;
 
@@ -831,11 +833,13 @@ var utils = {
       urlParts.scheme = 'https';
     }
 
+    var isDefaultDockerRegistry = OFFICIAL_REGISTRY_LIST.indexOf(urlParts.host) !== -1;
+
     if (!urlParts.port) {
-      if (urlParts.scheme.toLowerCase() === 'https') {
+      if (urlParts.scheme.toLowerCase() === 'https' && !isDefaultDockerRegistry) {
         urlParts.port = 443;
       }
-      if (urlParts.scheme.toLowerCase() === 'http') {
+      if (urlParts.scheme.toLowerCase() === 'http' && !isDefaultDockerRegistry) {
         urlParts.port = 80;
       }
     }

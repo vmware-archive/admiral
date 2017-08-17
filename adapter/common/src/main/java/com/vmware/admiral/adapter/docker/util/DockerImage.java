@@ -11,8 +11,8 @@
 
 package com.vmware.admiral.adapter.docker.util;
 
-import java.util.Arrays;
-import java.util.List;
+import static com.vmware.admiral.common.util.UriUtilsExtended.OFFICIAL_REGISTRY_LIST;
+
 import java.util.regex.Pattern;
 
 /**
@@ -24,9 +24,6 @@ public class DockerImage {
     public static final String DEFAULT_NAMESPACE = "library";
     public static final String DEFAULT_TAG = "latest";
     private static final Pattern NAMESPACE_PATTERN = Pattern.compile("[a-z0-9_]+");
-    private static final List<String> OFFICIAL_REGISTRY_LIST = Arrays.asList(
-            "registry.hub.docker.com",
-            "docker.io");
 
     private String host;
     private String namespace;

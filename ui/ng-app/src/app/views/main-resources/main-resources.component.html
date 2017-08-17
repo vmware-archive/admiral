@@ -47,7 +47,7 @@
               </li>
           </ul>
       </section>
-      <section class="nav-group collapsible">
+      <section *ngIf="showLibrary"class="nav-group collapsible">
           <input id="libraryCollapse" type="checkbox">
           <label for="libraryCollapse">{{ "navigation.library" | i18n }}</label>
           <ul class="nav-list">

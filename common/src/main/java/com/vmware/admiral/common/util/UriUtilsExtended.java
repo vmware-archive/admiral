@@ -15,7 +15,10 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -33,6 +36,12 @@ public class UriUtilsExtended {
     private static final String DEFAULT_DOCKER_REGISTRY_SCHEME = UriUtils.HTTPS_SCHEME;
     private static final int DEFAULT_DOCKER_REGISTRY_HTTP_PORT = 80;
     private static final int DEFAULT_DOCKER_REGISTRY_HTTPS_PORT = 443;
+
+    public static final List<String> OFFICIAL_REGISTRY_LIST = Collections
+            .unmodifiableList(Arrays.asList(
+                    "registry.hub.docker.com",
+                    "docker.io"));
+
     /* Host URL pattern */
     public static final Pattern PATTERN_HOST_URL = Pattern
             .compile("((?<scheme>\\w[\\w\\d+-\\.]*)(://))?"
@@ -62,21 +71,26 @@ public class UriUtilsExtended {
                     "common.unsupported.scheme", scheme);
         }
 
+        String serviceHost = matcher.group("host");
+        boolean isDefaultDockerRegistry = OFFICIAL_REGISTRY_LIST.contains(serviceHost);
+
         String servicePort = matcher.group("port");
-        int port = DEFAULT_DOCKER_REGISTRY_HTTPS_PORT;
+        Integer port = null;
         if (servicePort != null && !servicePort.isEmpty()) {
             port = Integer.parseInt(servicePort);
         } else {
-            if (UriUtils.HTTP_SCHEME.equals(scheme)) {
+            // Do not append default port if it's official docker registry.
+            if (UriUtils.HTTP_SCHEME.equals(scheme) && !isDefaultDockerRegistry) {
                 port = DEFAULT_DOCKER_REGISTRY_HTTP_PORT;
-            } else {
+            } else if (UriUtils.HTTPS_SCHEME.equals(scheme) && !isDefaultDockerRegistry) {
                 port = DEFAULT_DOCKER_REGISTRY_HTTPS_PORT;
             }
         }
 
-        String serviceHost = matcher.group("host");
-
         try {
+            if (port == null) {
+                return new URI(scheme, serviceHost, null, null);
+            }
             return new URI(scheme, null, serviceHost, port, null, null, null);
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException(e);

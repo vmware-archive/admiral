@@ -10,6 +10,7 @@
  */
 
 import { FT } from './../../utils/ft';
+import { Roles } from './../../utils/roles';
 import { Ajax } from './../../utils/ajax.service';
 import { Links } from './../../utils/links';
 import { DocumentListResult, DocumentService } from './../../utils/document.service';
@@ -18,6 +19,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { Router, NavigationEnd } from '@angular/router';
 import { RoutesRestriction } from './../../utils/routes-restriction';
 import { ProjectService } from './../../utils/project.service';
+import { AuthService } from './../../utils/auth.service';
 import { ErrorService } from '../../utils/error.service';
 import { FormerViewPathBridge, RouteUtils } from './../../utils/route-utils';
 
@@ -58,11 +60,12 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
 
     selectedProject;
     projects;
+    showLibrary: boolean;
 
     alertMessage: string;
 
     constructor(private router: Router, private ds: DocumentService, private ajax: Ajax,
-                private ps: ProjectService, private errorService: ErrorService) {
+                private ps: ProjectService, private errorService: ErrorService, private authService: AuthService) {
 
       this.routeObserve = this.router.events.subscribe((event) => {
         if (event instanceof NavigationEnd) {
@@ -104,6 +107,7 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
         }
 
         this.ps.setSelectedProject(this.selectedProject);
+        this.checkShowLibrary();
       });
     }
 
@@ -115,6 +119,7 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
     selectProject(project) {
       this.selectedProject = project;
       this.ps.setSelectedProject(this.selectedProject);
+      this.checkShowLibrary();
     }
 
     onFormerViewRouteChange(newFormerPath: string) {
@@ -145,6 +150,34 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
 
         return 0;
       });
+    }
+
+    checkShowLibrary() {
+      if (this.isHbrEnabled || !this.selectedProject) {
+        this.showLibrary = true;
+        return;
+      }
+
+      let selectedProjectLink = this.selectedProject.documentSelfLink;
+      this.authService.getCachedSecurityContext().then(securityContext => {
+        let foundProject = securityContext.projects.find(x => {
+          return x.documentSelfLink === selectedProjectLink;
+        });
+
+        if (foundProject && foundProject.roles) {
+          if (foundProject.roles.indexOf(Roles.PROJECT_ADMIN) == -1
+            && foundProject.roles.indexOf(Roles.PROJECT_MEMBER) == -1) {
+              this.showLibrary = false;
+            } else {
+              this.showLibrary = true;
+            }
+        } else {
+          this.showLibrary = false;
+        }
+        
+      }).catch(e => {
+        this.showLibrary = true;
+      })
     }
 
     get deploymentsRouteRestriction() {
