@@ -9,7 +9,8 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, ChangeDetectorRef } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
+import { Title } from '@angular/platform-browser';
 import { ViewExpandRequestService } from './services/view-expand-request.service';
 import { FT } from './utils/ft';
 import { Utils } from './utils/utils';
@@ -23,7 +24,7 @@ import { SessionTimedOutSubject } from './utils/ajax.service';
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.scss']
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
     fullScreen: boolean;
     userSecurityContext: any;
     showSessionTimeout: boolean;
@@ -32,7 +33,8 @@ export class AppComponent {
         private documentService: DocumentService,
         private authService: AuthService,
         private sessionTimedOutSubject: SessionTimedOutSubject,
-        private cd: ChangeDetectorRef) {
+        private cd: ChangeDetectorRef,
+        private title: Title) {
         this.viewExpandRequestor.getFullScreenRequestEmitter().subscribe(isFullScreen => {
             this.fullScreen = isFullScreen;
         });
@@ -105,6 +107,14 @@ export class AppComponent {
 
     reload() {
         window.location.reload();
+    }
+
+    ngOnInit() {
+        if (this.vic) {
+            this.title.setTitle("vSphere Integrated Containers");
+        } else {
+            this.title.setTitle("Admiral");
+        }
     }
 
     get administrationRouteRestriction() {

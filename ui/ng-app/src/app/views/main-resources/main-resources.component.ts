@@ -85,6 +85,8 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
           return;
         }
 
+        this.sortProjects();
+
         this.selectedProject = null;
         let localProject = this.ps.getSelectedProject();
 
@@ -129,6 +131,20 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
 
     resetAlert() {
         this.alertMessage = null;
+    }
+
+    sortProjects() {
+      this.projects.sort((x1, x2) => {
+        if (x1.name > x2.name) {
+          return 1;
+        }
+
+        if (x1.name < x2.name) {
+          return -1;
+        }
+
+        return 0;
+      });
     }
 
     get deploymentsRouteRestriction() {
