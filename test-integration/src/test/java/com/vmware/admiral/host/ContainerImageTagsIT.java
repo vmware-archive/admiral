@@ -50,6 +50,7 @@ import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpResponse;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.common.test.VerificationHost;
 
 public class ContainerImageTagsIT extends BaseTestCase {
     private static final String TENANT = "/tenants/docker-test";
@@ -58,8 +59,7 @@ public class ContainerImageTagsIT extends BaseTestCase {
 
     private static final String TEST_IMAGE = "vmware/bellevue";
     private static final String TEST_IMAGE_DOCKER_HUB = "alpine";
-    private static final String TEST_IMAGE_DOCKER_HUB_FULL_ADDRESS =
-            "registry.hub.docker.com/library/alpine";
+    private static final String TEST_IMAGE_DOCKER_HUB_FULL_ADDRESS = "registry.hub.docker.com/library/alpine";
 
     private static String v1RegistryAddress;
     private static String v2RegistryAddress;
@@ -71,6 +71,11 @@ public class ContainerImageTagsIT extends BaseTestCase {
         v2RegistryAddress = getTestRequiredProp("docker.v2.registry.host.address");
         defaultRegistryAddress = getPrivateField(
                 RegistryService.class.getDeclaredField("DEFAULT_REGISTRY_ADDRESS"), null);
+    }
+
+    @Override
+    protected void setPrivilegedServices(VerificationHost host) {
+        host.addPrivilegedService(RegistryAdapterService.class);
     }
 
     @Before
@@ -111,14 +116,14 @@ public class ContainerImageTagsIT extends BaseTestCase {
         // Docker Hub list tags requests are expected to use the v2 endpoint,
         // otherwise we get fewer tags, in our case only "2.6" and "2.7".
         configureRegistry(defaultRegistryAddress, TENANT);
-        String[] expectedTags = new String[] {  "2.6", "2.7", "3.1", "3.2", "3.3", "3.4" };
+        String[] expectedTags = new String[] { "2.6", "2.7", "3.1", "3.2", "3.3", "3.4" };
         verifyImageTags(TEST_IMAGE_DOCKER_HUB, TENANT, expectedTags);
     }
 
     @Test
     public void testListTagsFromDockerHubFullImageName() throws Throwable {
         configureRegistry(defaultRegistryAddress, TENANT);
-        String[] expectedTags = new String[] {  "2.6", "2.7", "3.1", "3.2", "3.3", "3.4" };
+        String[] expectedTags = new String[] { "2.6", "2.7", "3.1", "3.2", "3.3", "3.4" };
         verifyImageTags(TEST_IMAGE_DOCKER_HUB_FULL_ADDRESS, TENANT, expectedTags);
     }
 

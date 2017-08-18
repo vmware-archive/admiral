@@ -251,7 +251,7 @@ public class RegistryAdapterService extends StatelessService {
     }
 
     private void fetchRegistry(RequestContext context, Runnable callback) {
-        URI registryStateUri =  UriUtils.extendUriWithQuery(context.request.resourceReference,
+        URI registryStateUri = UriUtils.extendUriWithQuery(context.request.resourceReference,
                 UriUtils.URI_PARAM_ODATA_EXPAND, Boolean.TRUE.toString());
 
         Operation getRegistry = Operation.createGet(registryStateUri)
@@ -287,8 +287,8 @@ public class RegistryAdapterService extends StatelessService {
                         return;
                     }
 
-                    AuthCredentialsServiceState authCredentialsState =
-                            o.getBody(AuthCredentialsServiceState.class);
+                    AuthCredentialsServiceState authCredentialsState = o
+                            .getBody(AuthCredentialsServiceState.class);
                     processAuthentication(context, authCredentialsState);
 
                     callback.run();
@@ -423,11 +423,10 @@ public class RegistryAdapterService extends StatelessService {
                         context.operation.fail(ex);
                         return;
                     } else {
-                        V2RegistryCatalogResponse body =
-                                o.getBody(V2RegistryCatalogResponse.class);
+                        V2RegistryCatalogResponse body = o.getBody(V2RegistryCatalogResponse.class);
 
                         if (body.repositories != null) {
-                            for (String repository: body.repositories) {
+                            for (String repository : body.repositories) {
                                 if (repository.toLowerCase().contains(searchTerm)) {
                                     Result r = new Result();
                                     r.name = repository;
@@ -678,7 +677,7 @@ public class RegistryAdapterService extends StatelessService {
      */
     private String getHeader(String header, Map<String, String> headers) {
         header = header.toLowerCase();
-        for (Entry<String, String> entry: headers.entrySet()) {
+        for (Entry<String, String> entry : headers.entrySet()) {
             if (header.equals(entry.getKey().toLowerCase())) {
                 return entry.getValue();
             }
@@ -719,8 +718,8 @@ public class RegistryAdapterService extends StatelessService {
                             return;
                         }
 
-                        TokenServiceResponse tokenServiceResponse =
-                                op.getBody(TokenServiceResponse.class);
+                        TokenServiceResponse tokenServiceResponse = op
+                                .getBody(TokenServiceResponse.class);
                         String authorizationHeaderValue = String.format("%s %s",
                                 BEARER_TOKEN_PREFIX, tokenServiceResponse.token);
                         context.request.customProperties.put(AUTHORIZATION_HEADER,
@@ -734,6 +733,9 @@ public class RegistryAdapterService extends StatelessService {
             if (authorization != null) {
                 getTokenOp.addRequestHeader(AUTHORIZATION_HEADER, authorization);
             }
+
+            // Remove Xenon's auth token header from the request to the Registry
+            setAuthorizationContext(getTokenOp, null);
 
             sendOperationWithClient(getTokenOp, context);
         } catch (Exception e) {

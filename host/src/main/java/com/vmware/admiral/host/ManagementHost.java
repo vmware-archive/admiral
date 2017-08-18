@@ -22,6 +22,7 @@ import javax.net.ssl.SSLContext;
 
 import io.swagger.models.Info;
 
+import com.vmware.admiral.adapter.registry.service.RegistryAdapterService;
 import com.vmware.admiral.auth.idm.AuthConfigProvider;
 import com.vmware.admiral.auth.idm.PrincipalService;
 import com.vmware.admiral.auth.idm.SessionService;
@@ -407,9 +408,14 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
         addPrivilegedService(PrincipalService.class);
         addPrivilegedService(ProjectService.class);
         addPrivilegedService(ProjectFactoryService.class);
-        // The service need to be privileged in order to not get forbidden during the migration
-        // process
+
+        // NodeMigrationService needs to be privileged in order to not get forbidden during the
+        // migration process.
         addPrivilegedService(NodeMigrationService.class);
+
+        // RegistryAdapterService needs to be privileged to remove the Xenon auth when getting an
+        // authorization token from a repository (Harbor may misbehave with it).
+        addPrivilegedService(RegistryAdapterService.class);
 
         if (AuthUtil.useAuthConfig(this)) {
 
