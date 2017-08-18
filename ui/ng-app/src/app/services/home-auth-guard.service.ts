@@ -57,13 +57,13 @@ export class HomeAuthGuard implements CanActivate {
         }
 
         let selectedProject = this.ps.getSelectedProject();
-        let selectedProjectLink;
         // If there is still no project selected, select and do the check.
-        if (selectedProject) {
+        if (!selectedProject) {
           this.selectProjectAndCheckRoles(securityContext, roles, path, resolve);
           return;
         }
 
+        let selectedProjectLink = selectedProject.documentSelfLink;
         let foundProject = securityContext.projects.find(p => p.documentSelfLink === selectedProjectLink);
         // If selected project is not valid for the principal, select available and do the check.
         if (!foundProject) {
