@@ -41,12 +41,8 @@ var updateHeader = function() {
 
   if (utils.isVic()) {
     $('body').append($(VICTemplate()));
-    $('head title').text('vSphere Integrated Containers');
-    $('head').append('<link rel="icon" type="image/x-icon" href="image-assets/vic-favicon.ico" />');
   } else {
     $('body').append($(DefaultTemplate()));
-    $('head title').text('Admiral');
-    $('head').append('<link rel="icon" type="image/x-icon" href="image-assets/favicon.ico" />');
   }
 
   var baseRegistryUrl = utils.getHarborTabUrl();

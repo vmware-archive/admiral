@@ -113,8 +113,10 @@ export class AppComponent implements OnInit {
         if (!this.embedded) {
             if (this.vic) {
                 this.title.setTitle("vSphere Integrated Containers");
+                document.getElementById('appFavicon').setAttribute('href', '../assets/images/vic-favicon.ico');
             } else {
                 this.title.setTitle("Admiral");
+                document.getElementById('appFavicon').setAttribute('href', '../assets/images/favicon.ico');
             }
         }
     }

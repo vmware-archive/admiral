@@ -174,7 +174,7 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
         } else {
           this.showLibrary = false;
         }
-        
+
       }).catch(e => {
         this.showLibrary = true;
       })
