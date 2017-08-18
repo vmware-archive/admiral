@@ -61,7 +61,8 @@
     <router-outlet></router-outlet>
   </div>
 </clr-main-container>
+
 <div *ngIf="isLogin">
-    <span style="display: none"><router-outlet></router-outlet></span>
-    <login></login>
+  <router-outlet></router-outlet>
+  <login></login>
 </div>

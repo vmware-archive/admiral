@@ -282,3 +282,7 @@ navigation-container > :not(.with-back-button) > back-button {
 .card-actions-selected .card.clickable {
   background: rgba(216, 216, 216, 0.3);
 }
+
+router-outlet {
+  display: none;
+}
