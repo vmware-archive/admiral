@@ -160,6 +160,17 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
 
       let selectedProjectLink = this.selectedProject.documentSelfLink;
       this.authService.getCachedSecurityContext().then(securityContext => {
+        if (!securityContext) {
+          this.showLibrary = false;
+          return;
+        }
+
+        // If principal is cloud admin show it.
+        if (securityContext.roles && securityContext.roles.indexOf(Roles.CLOUD_ADMIN) != -1) {
+          this.showLibrary = true;
+          return;
+        }
+
         let foundProject = securityContext.projects.find(x => {
           return x.documentSelfLink === selectedProjectLink;
         });
