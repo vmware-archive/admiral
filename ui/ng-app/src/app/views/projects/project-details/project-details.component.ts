@@ -1,3 +1,4 @@
+import { AuthService } from './../../../utils/auth.service';
 /*
  * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
  *
@@ -9,7 +10,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component } from '@angular/core';
+import { Component, ViewChild, Input, enableProdMode, ContentChild } from '@angular/core';
 import { BaseDetailsComponent } from './../../../components/base/base-details.component';
 import { DocumentService } from './../../../utils/document.service';
 import { ActivatedRoute } from '@angular/router';
@@ -18,6 +19,7 @@ import { TagClickEvent } from 'harbor-ui';
 import { RoutesRestriction } from './../../../utils/routes-restriction';
 import { FT } from './../../../utils/ft';
 import { Router } from '@angular/router';
+import { Utils } from './../../../utils/utils';
 
 @Component({
   selector: 'app-project-details',
@@ -29,11 +31,22 @@ export class ProjectDetailsComponent extends BaseDetailsComponent {
   hbrProjectId;
   hbrSessionInfo = {};
   router: Router;
+  authService: AuthService;
   isHbrEnabled = FT.isHbrEnabled();
+  userSecurityContext: any;
 
-  constructor(route: ActivatedRoute, service: DocumentService, router: Router) {
+  constructor(route: ActivatedRoute, service: DocumentService, router: Router, authService: AuthService) {
     super(route, service, Links.PROJECTS);
     this.router = router;
+    this.authService = authService;
+
+    if(!this.embedded) {
+      this.authService.getCachedSecurityContext().then((securityContext) => {
+          this.userSecurityContext = securityContext;
+      }).catch((ex) => {
+          console.log(ex);
+      });
+    }
   }
 
   get projectName(): string {
@@ -57,7 +70,20 @@ export class ProjectDetailsComponent extends BaseDetailsComponent {
     }
   }
 
+  get admiralProjectSelfLink() {
+    return this.entity && this.entity.documentSelfLink;
+  }
+
   get projectsByIdRouteRestriction() {
     return RoutesRestriction.PROJECTS_ID;
+  }
+
+  get isRegistryReplicationReadOnly() {
+    let accessAllowed = Utils.isAccessAllowed(this.userSecurityContext, this.admiralProjectSelfLink, RoutesRestriction.PROJECT_REGISTRY_REPLICATION);
+    return !accessAllowed;
+  }
+
+  get embedded(): boolean {
+    return FT.isApplicationEmbedded();
   }
 }

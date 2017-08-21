@@ -39,36 +39,7 @@ export class AllowNavigationDirective implements OnChanges {
       return;
     }
     this.authService.getCachedSecurityContext().then((securityContext) => {
-      let show = false;
-      if (securityContext && securityContext.roles) {
-        securityContext.roles.forEach(role => {
-          if (this.roles.indexOf(role) != -1) {
-            show = true;
-            return;
-          }
-        });
-      }
-
-      if (securityContext && securityContext.projects) {
-        securityContext.projects.forEach(project => {
-          if (project && project.roles) {
-            project.roles.forEach(role => {
-              if (this.projectSelfLink) {
-                if (project.documentSelfLink === this.projectSelfLink && this.roles.indexOf(role) != -1) {
-                  show = true;
-                  return;
-                }
-              } else {
-                if (this.roles.indexOf(role) != -1) {
-                  show = true;
-                  return;
-                }
-              }
-            });
-          }
-        });
-      }
-
+      let show = Utils.isAccessAllowed(securityContext, this.projectSelfLink, this.roles);
       this.renderer.setElementStyle(this.el.nativeElement, 'display', show ? 'block' : 'none');
     }).catch((ex) => {
       // show in case of no authentication

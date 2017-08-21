@@ -32,7 +32,7 @@
         <app-clusters [hideTitle]="true" [projectLink]="entity?.documentSelfLink"></app-clusters>
     </clr-tab-content>
     <clr-tab-content *ngIf="isHbrEnabled" [clrTabContentId]="'registryReplicationContent'">
-        <hbr-replication [projectId]="hbrProjectId" [withReplicationJob]="true"></hbr-replication>
+        <hbr-replication [projectId]="hbrProjectId" [withReplicationJob]="true" [readonly]="isRegistryReplicationReadOnly"></hbr-replication>
     </clr-tab-content>
     <clr-tab-content [clrTabContentId]="'configurationContent'">
         <app-project-configuration [project]="entity"></app-project-configuration>

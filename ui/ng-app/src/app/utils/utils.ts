@@ -10,6 +10,7 @@
  */
 
 import * as I18n from 'i18next';
+import { FT } from './ft';
 
 const LOGIN_PATH="/login/"
 
@@ -262,6 +263,50 @@ export class Utils {
     let harborImageRef = registryAddress + ':*/' + repositoryId + ':' + tagId;
 
     return harborImageRef;
+  }
+
+  public static isAccessAllowed(securityContext, projectSelfLink, roles): boolean {
+    if (FT.isApplicationEmbedded()) {
+      return true;
+    }
+
+    if (!roles) {
+      throw new Error("Roles not provided!");
+    }
+
+    let allowAccess = false;
+    // check for system roles
+    if (securityContext && securityContext.roles) {
+      securityContext.roles.forEach(role => {
+        if (roles.indexOf(role) != -1) {
+          allowAccess = true;
+          return;
+        }
+      });
+    }
+
+    // check for project roles
+    if (securityContext && securityContext.projects) {
+      securityContext.projects.forEach(project => {
+        if (project && project.roles) {
+          project.roles.forEach(role => {
+            if (projectSelfLink) {
+              if (project.documentSelfLink === projectSelfLink && roles.indexOf(role) != -1) {
+                allowAccess = true;
+                return;
+              }
+            } else {
+              if (roles.indexOf(role) != -1) {
+                allowAccess = true;
+                return;
+              }
+            }
+          });
+        }
+      });
+    }
+
+    return allowAccess;
   }
 }
 
