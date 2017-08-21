@@ -126,6 +126,30 @@ public class ResourcePoolTransformationServiceTest extends ComputeBaseTest {
         Assert.assertTrue(pool1.tenantLinks == null);
     }
 
+    @Test
+    public void testPoolHasAlreadyTenantLinks() throws Throwable {
+        ResourcePoolState pool = createResourcePool();
+        pool.tenantLinks = new ArrayList<>();
+        pool.tenantLinks.add("test");
+        pool = doPatch(pool, pool.documentSelfLink);
+        Assert.assertTrue(pool.tenantLinks.size() == 1);
+
+        GroupResourcePlacementState placement1 = new GroupResourcePlacementState();
+        placement1.name = "placement";
+        placement1.resourcePoolLink = pool.documentSelfLink;
+        placement1.tenantLinks = new ArrayList<>();
+        placement1.tenantLinks.add("tenant1");
+        placement1.tenantLinks.add("tenant2");
+
+        placement1 = doPost(placement1, GroupResourcePlacementService.FACTORY_LINK);
+
+        doPost(placement1, ResourcePoolTransformationService.SELF_LINK);
+        pool = getDocument(ResourcePoolState.class, pool.documentSelfLink);
+        Assert.assertTrue(pool.tenantLinks.size() == 2);
+        Assert.assertTrue(pool.tenantLinks.contains("tenant1"));
+        Assert.assertTrue(pool.tenantLinks.contains("tenant2"));
+    }
+
     private ResourcePoolState createResourcePool() throws Throwable {
         ResourcePoolState pool = new ResourcePoolState();
         pool.name = "pool";

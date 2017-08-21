@@ -167,7 +167,6 @@ public class ResourcePoolTransformationService extends StatelessService {
             updatePoolTenantLinks(state, post, placement, true);
         } else {
             if (poolsCount.decrementAndGet() == 0) {
-                // add tenant links to the pool
                 logInfo("Resource pool tranformation completed successfully");
                 post.complete();
             }
@@ -178,7 +177,7 @@ public class ResourcePoolTransformationService extends StatelessService {
     private void updatePoolTenantLinks(ElasticPlacementZoneConfigurationState state, Operation post,
             GroupResourcePlacementState placement, boolean decrementCount) {
         state.resourcePoolState.tenantLinks = new ArrayList<>();
-
+        state.tenantLinks = null;
         if (placement.tenantLinks != null) {
             state.resourcePoolState.tenantLinks.addAll(placement.tenantLinks);
         }
