@@ -15,7 +15,7 @@
     <clr-tab-link [clrTabLinkId]="'registryConfigTab'" [clrTabLinkActive]="true">{{"configuration.registry" | i18n}}</clr-tab-link>
 
     <clr-tab-content [clrTabContentId]="'registryConfigContent'" [clrTabContentActive]="true">
-      <hbr-registry-config></hbr-registry-config>
+      <hbr-registry-config [hasAdminRole]="hasAdminRole"></hbr-registry-config>
     </clr-tab-content>
   </clr-tabs>
 </div>
