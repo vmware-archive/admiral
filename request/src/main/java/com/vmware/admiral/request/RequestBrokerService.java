@@ -123,7 +123,6 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService.Co
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceErrorResponse;
 import com.vmware.xenon.common.TaskState.TaskStage;
@@ -2261,61 +2260,22 @@ public class RequestBrokerService extends
                         }
                     }
                     if (foundEntry == null) {
-                        return DeferredResult.failed(new IllegalStateException("Principal does "
+                        return DeferredResult.failed(new IllegalAccessError("Principal does "
                                 + "not belong to selected project."));
                     }
-                    return isUserAuthorized(foundEntry, securityContext, state);
+                    return isUserAuthorized(foundEntry, securityContext);
                 });
     }
 
-    private DeferredResult<Void> isUserAuthorized(ProjectEntry entry, SecurityContext context,
-            RequestBrokerState state) {
+    private DeferredResult<Void> isUserAuthorized(ProjectEntry entry, SecurityContext context) {
 
-        if (context.isProjectAdmin(entry.documentSelfLink)) {
+        if (context.isProjectAdmin(entry.documentSelfLink)
+                || context.isProjectMember(entry.documentSelfLink)) {
             return DeferredResult.completed(null);
         }
 
-        if (context.isProjectViewer(entry.documentSelfLink)
-                && !context.isProjectMember(entry.documentSelfLink)) {
-            return DeferredResult.failed(new IllegalStateException("Project Viewer cannot request "
-                    + "operations over resources."));
-        }
-
-        if (isProvisionOperation(state)) {
-            return DeferredResult.completed(null);
-        }
-
-        return validateProjectMemberOperation(context, state);
-
-    }
-
-    /**
-     * In case the RequestBroker operation is not provisioning, and the principal is project member
-     * validate that he is owner of all documents he attempt to modify.
-     */
-    private DeferredResult<Void> validateProjectMemberOperation(SecurityContext context,
-            RequestBrokerState state) {
-
-        List<DeferredResult<Void>> results = new ArrayList<>(state.resourceLinks.size());
-        for (String resLink : state.resourceLinks) {
-            Operation getResource = Operation.createGet(this, resLink)
-                    .setReferer(this.getUri());
-            DeferredResult<Void> tempResult = sendWithDeferredResult(
-                    getResource, ServiceDocument.class)
-                    .thenCompose(doc -> {
-                        String documentPrincipalId = Service.getId(doc.documentAuthPrincipalLink);
-                        if (!documentPrincipalId.equalsIgnoreCase(context.id)) {
-                            String errMsg = String.format("Principal %s does not own resource: %s",
-                                    context.id, doc.documentSelfLink);
-                            return DeferredResult.failed(new IllegalAccessError(errMsg));
-                        }
-                        return DeferredResult.completed(null);
-                    });
-            results.add(tempResult);
-        }
-
-        return DeferredResult.allOf(results).thenAccept(ignore -> {
-        });
+        return DeferredResult.failed(new IllegalAccessError("Project Viewer cannot request "
+                + "operations over resources."));
 
     }
 }
