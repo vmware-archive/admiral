@@ -615,6 +615,10 @@ public class ContainerHostService extends StatelessService {
         cs.customProperties.put(ComputeConstants.COMPUTE_HOST_PROP_NAME, "true");
         cs.customProperties.put(ComputeConstants.DOCKER_URI_PROP_NAME, hostSpec.uri.toString());
         cs.customProperties.put(CONTAINER_HOST_TYPE_PROP_NAME, hostType.toString());
+        if (hostSpec.sslTrust != null) {
+            cs.customProperties.put(ComputeConstants.HOST_TRUST_CERTS_PROP_NAME, hostSpec.sslTrust
+                    .documentSelfLink);
+        }
 
         sendRequest(store
                 .setBody(cs)

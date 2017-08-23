@@ -15,6 +15,8 @@ public class ComputeConstants {
 
     public static final String HOST_AUTH_CREDENTIALS_PROP_NAME = "__authCredentialsLink";
 
+    public static final String HOST_TRUST_CERTS_PROP_NAME = "__trustCertLink";
+
     public static final String ENDPOINT_AUTH_CREDENTIALS_PROP_NAME = "__endpointAuthCredentialsLink";
 
     public static final String COMPUTE_HOST_PROP_NAME = "__computeHost";

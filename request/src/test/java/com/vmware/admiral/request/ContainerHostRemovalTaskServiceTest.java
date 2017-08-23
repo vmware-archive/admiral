@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -51,6 +52,7 @@ import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler.Servic
 import com.vmware.admiral.request.ContainerHostRemovalTaskService.ContainerHostRemovalTaskState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
+import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 
@@ -92,6 +94,104 @@ public class ContainerHostRemovalTaskServiceTest extends RequestBaseTest {
         waitForTaskSuccess(state.documentSelfLink, ContainerHostRemovalTaskState.class);
 
         validateHostRemoved(containerStateLinks);
+    }
+
+    /**
+     * Do not delete the compute which is created with the endpoint.
+     * This compute is created without "__trustCertLink" custom property.
+     * If there is such compute we forbid the automatic deletion of trust
+     * certificates.
+     */
+    @Test
+    public void testTrustCertRemovedAfterContainerHostRemoval() throws
+            Throwable {
+
+        //get trust certificates initial size
+        List<String> trustCertList = getDocumentLinksOfType(SslTrustCertificateState.class);
+        int trustCertInitialSize = trustCertList.size();
+
+        // create a host removal task
+        ContainerHostRemovalTaskState state = new ContainerHostRemovalTaskState();
+        state.resourceLinks = new HashSet<>(Collections.singletonList(
+                computeHost.documentSelfLink));
+        state = doPost(state, ContainerHostRemovalTaskFactoryService.SELF_LINK);
+
+        assertNotNull("task is null", state);
+        waitForTaskSuccess(state.documentSelfLink, ContainerHostRemovalTaskState.class);
+
+        //validation
+        validateHostRemoved(new LinkedList<>(Collections.singletonList(
+                computeHost.documentSelfLink)));
+
+        trustCertList = getDocumentLinksOfType(SslTrustCertificateState.class);
+        assertEquals(trustCertInitialSize, trustCertList.size());
+
+    }
+
+    /**
+     * First, delete the compute which is created with the endpoint.
+     * This compute is created without "__trustCertLink" custom property.
+     * If there is such compute we forbid the automatic deletion of trust
+     * certificates.
+     */
+    @Test
+    public void testTrustCertRemovedAfterContainerHostRemovalComputeWithoutSpecialProperty() throws
+            Throwable {
+
+        ContainerHostRemovalTaskState computeEndpointRemovaleStare = new ContainerHostRemovalTaskState();
+        computeEndpointRemovaleStare.resourceLinks = new HashSet<>(Collections.singletonList(
+                endpoint.computeLink));
+        computeEndpointRemovaleStare = doPost(computeEndpointRemovaleStare,
+                ContainerHostRemovalTaskFactoryService.SELF_LINK);
+
+        assertNotNull("task is null", computeEndpointRemovaleStare);
+        waitForTaskSuccess(computeEndpointRemovaleStare.documentSelfLink,
+                ContainerHostRemovalTaskState.class);
+
+        Collection<String> computeSelfLinks = findResourceLinks(ComputeState.class,
+                Collections.singletonList(endpoint.computeLink));
+        assertTrue("Endpoint ComputeState was not deleted: " + computeSelfLinks,
+                computeSelfLinks.isEmpty());
+
+        ComputeState cs = createDockerHost(dockerHostDesc, resourcePool, true);
+
+        //get trust certificates initial size
+        List<String> trustCertList = getDocumentLinksOfType(SslTrustCertificateState.class);
+        int trustCertInitialSize = trustCertList.size();
+
+        // create a host removal task
+        ContainerHostRemovalTaskState state = new ContainerHostRemovalTaskState();
+        state.resourceLinks = new HashSet<>(Collections.singletonList(
+                cs.documentSelfLink));
+        state = doPost(state, ContainerHostRemovalTaskFactoryService.SELF_LINK);
+
+        assertNotNull("task is null", state);
+        waitForTaskSuccess(state.documentSelfLink, ContainerHostRemovalTaskState.class);
+
+        computeSelfLinks = findResourceLinks(ComputeState.class,
+                Collections.singletonList(cs.documentSelfLink));
+        assertTrue("CS computeState was not deleted: " + computeSelfLinks, computeSelfLinks
+                .isEmpty());
+
+        trustCertList = getDocumentLinksOfType(SslTrustCertificateState.class);
+        assertEquals(trustCertInitialSize, trustCertList.size());
+
+        // create a host removal task
+        state = new ContainerHostRemovalTaskState();
+        state.resourceLinks = new HashSet<>(Collections.singletonList(
+                computeHost.documentSelfLink));
+        state = doPost(state, ContainerHostRemovalTaskFactoryService.SELF_LINK);
+
+        assertNotNull("task is null", state);
+        waitForTaskSuccess(state.documentSelfLink, ContainerHostRemovalTaskState.class);
+
+        computeSelfLinks = findResourceLinks(ComputeState.class,
+                Collections.singletonList(computeHost.documentSelfLink));
+        assertTrue("ComputeHost ComputeState was not deleted: " + computeSelfLinks,
+                computeSelfLinks.isEmpty());
+
+        trustCertList = getDocumentLinksOfType(SslTrustCertificateState.class);
+        assertEquals(trustCertInitialSize - 1, trustCertList.size());
     }
 
     @Test
@@ -361,7 +461,8 @@ public class ContainerHostRemovalTaskServiceTest extends RequestBaseTest {
     }
 
     @Test
-    public void testRequestBrokerContainerHostRemovalWithAutoGeneratedPlacementZoneAndPlacement() throws Throwable {
+    public void testRequestBrokerContainerHostRemovalWithAutoGeneratedPlacementZoneAndPlacement()
+            throws Throwable {
         // set placement zone to be automatically removed on host deletion
         ComputeState patchState = new ComputeState();
         patchState.customProperties = new HashMap<>();
@@ -415,8 +516,10 @@ public class ContainerHostRemovalTaskServiceTest extends RequestBaseTest {
         assertTrue("ResourcePoolState was not deleted: " + pzSelfLinks, pzSelfLinks.isEmpty());
 
         // verify that the placement was removed
-        Collection<String> placementsSelfLinks = findResourceLinks(GroupResourcePlacementState.class,
+        Collection<String> placementsSelfLinks = findResourceLinks(
+                GroupResourcePlacementState.class,
                 Collections.singletonList(groupPlacementState.documentSelfLink));
-        assertTrue("Placement was not deleted: " + placementsSelfLinks, placementsSelfLinks.isEmpty());
+        assertTrue("Placement was not deleted: " + placementsSelfLinks,
+                placementsSelfLinks.isEmpty());
     }
 }

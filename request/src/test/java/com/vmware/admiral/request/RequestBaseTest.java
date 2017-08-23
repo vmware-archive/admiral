@@ -35,6 +35,7 @@ import org.junit.Before;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.test.BaseTestCase;
+import com.vmware.admiral.common.test.CommonTestStateFactory;
 import com.vmware.admiral.common.test.HostInitTestDcpServicesConfig;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
@@ -91,6 +92,8 @@ import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState
 import com.vmware.admiral.service.common.CounterSubTaskService;
 import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.admiral.service.common.ResourceNamePrefixService;
+import com.vmware.admiral.service.common.SslTrustCertificateService;
+import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
 import com.vmware.admiral.service.test.MockComputeHostInstanceAdapter;
 import com.vmware.admiral.service.test.MockDockerContainerToHostService.MockDockerContainerToHostState;
 import com.vmware.photon.controller.model.ComputeProperties;
@@ -157,6 +160,8 @@ public abstract class RequestBaseTest extends BaseTestCase {
 
     protected ComputeDescription hostDesc;
 
+    protected  ComputeDescription dockerHostDesc;
+
     protected ComputeState computeHost;
 
     protected ComputeDescription vmGuestComputeDescription;
@@ -179,6 +184,8 @@ public abstract class RequestBaseTest extends BaseTestCase {
 
     protected GroupResourcePlacementState computeGroupPlacementState;
 
+    protected  SslTrustCertificateState sslTrustCert;
+
     @Before
     public void setUp() throws Throwable {
         startServices(host);
@@ -189,7 +196,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
         createResourcePool();
         // setup Group Placement:
         groupPlacementState = createGroupResourcePlacement(resourcePool);
-        ComputeDescription dockerHostDesc = createDockerHostDescription();
+        dockerHostDesc = createDockerHostDescription();
         createDockerHost(dockerHostDesc, resourcePool);
         createHostPortProfile();
 
@@ -510,12 +517,27 @@ public abstract class RequestBaseTest extends BaseTestCase {
         containerHost.customProperties.put(ContainerHostService.DOCKER_HOST_PLUGINS_PROP_NAME,
                 createSupportedPluginsInfoString(volumeDrivers));
 
+        containerHost.customProperties.put(ComputeConstants.HOST_TRUST_CERTS_PROP_NAME,
+                createSslTrustCert().documentSelfLink);
+
         containerHost = getOrCreateDocument(containerHost, ComputeService.FACTORY_LINK);
         assertNotNull(containerHost);
         if (generateId) {
             documentsForDeletion.add(containerHost);
         }
         return containerHost;
+    }
+
+    private SslTrustCertificateState createSslTrustCert() throws Throwable {
+        if (sslTrustCert == null) {
+            String sslTrust1 = CommonTestStateFactory.getFileContent("test_ssl_trust.PEM").trim();
+            // String sslTrust2 = CommonTestStateFactory.getFileContent("test_ssl_trust2.PEM").trim();
+            sslTrustCert = new SslTrustCertificateState();
+            sslTrustCert.certificate = sslTrust1;
+
+            sslTrustCert = doPost(sslTrustCert, SslTrustCertificateService.FACTORY_LINK);
+        }
+        return sslTrustCert;
     }
 
     protected ComputeState createDockerHost(ComputeDescription computeDesc,

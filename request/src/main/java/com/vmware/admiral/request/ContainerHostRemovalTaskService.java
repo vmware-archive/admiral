@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.request;
 
+import static com.vmware.admiral.common.util.QueryUtil.createKindClause;
 import static com.vmware.admiral.compute.ContainerHostUtil.filterKubernetesHostLinks;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
@@ -25,10 +26,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
+import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
+
+import com.vmware.admiral.common.serialization.ReleaseConstants;
+import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.ServiceUtils;
+import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.HostPortProfileService;
@@ -44,14 +51,21 @@ import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.CounterSubTaskService;
 import com.vmware.admiral.service.common.CounterSubTaskService.CounterSubTaskState;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
+import com.vmware.admiral.service.common.SslTrustCertificateService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
+import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
+import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
+import com.vmware.xenon.services.common.ServiceUriPaths;
 
 /**
  * Task implementing removal of container hosts (including removing all the ContainerStates that
@@ -72,6 +86,14 @@ public class ContainerHostRemovalTaskService extends
          */
         @PropertyOptions(usage = { REQUIRED, SINGLE_ASSIGNMENT }, indexing = STORE_ONLY)
         public Set<String> resourceLinks;
+
+        /**
+         * The credentials that potentially we can delete after deleting the container hosts.
+         */
+        @Since(ReleaseConstants.RELEASE_VERSION_1_2_2)
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL },
+                indexing = STORE_ONLY)
+        public List<String> trustCertificatesForDelete;
 
         /**
          * (Internal) Set by Task for the query to retrieve all the containers for the given hosts.
@@ -96,6 +118,8 @@ public class ContainerHostRemovalTaskService extends
             REMOVED_KUBERNETES_RESOURCES,
             REMOVING_PORT_PROFILES,
             REMOVED_PORT_PROFILES,
+            REMOVING_CERTIFICATES,
+            REMOVED_CERTIFICATES,
             REMOVING_HOSTS,
             COMPLETED,
             ERROR;
@@ -149,6 +173,11 @@ public class ContainerHostRemovalTaskService extends
         case REMOVING_PORT_PROFILES:
             break;
         case REMOVED_PORT_PROFILES:
+            removeTrustCerts(state);
+            break;
+        case REMOVING_CERTIFICATES:
+            break;
+        case REMOVED_CERTIFICATES:
             removeHosts(state, null);
             break;
         case REMOVING_HOSTS:
@@ -539,5 +568,104 @@ public class ContainerHostRemovalTaskService extends
         } catch (Throwable e) {
             failTask("Unexpected exception while deleting container host instances", e);
         }
+    }
+
+    private DeferredResult<List<String>> collectTrustCert(ContainerHostRemovalTaskState state) {
+        List<DeferredResult<String>> a = state.resourceLinks.stream().map(resourceLink ->
+                sendWithDeferredResult(Operation
+                        .createGet(this, resourceLink), ComputeState.class)
+                        .thenApply(o ->
+
+                                PropertyUtils
+                                        .getPropertyString(o.customProperties,
+                                                ComputeConstants.HOST_TRUST_CERTS_PROP_NAME)
+                                        .orElse(null))
+
+        ).collect(Collectors.toList());
+
+        return DeferredResult.allOf(a);
+    }
+
+    private void removeTrustCerts(ContainerHostRemovalTaskState state) {
+        QueryTask queryTask = new QueryTask();
+        queryTask.querySpec = new QueryTask.QuerySpecification();
+        queryTask.taskInfo.isDirect = true;
+
+        Query q = Query.Builder.create()
+                .addFieldClause(QuerySpecification
+                                .buildCompositeFieldName(ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
+                                        ComputeConstants.HOST_TRUST_CERTS_PROP_NAME),
+                        UriUtils.URI_WILDCARD_CHAR, MatchType.WILDCARD,
+                        Occurance.MUST_NOT_OCCUR).build();
+        q.addBooleanClause(createKindClause(ComputeState.class));
+
+        queryTask.querySpec.query.addBooleanClause(q);
+
+        sendWithDeferredResult(Operation
+                .createPost(UriUtils.buildUri(getHost(),
+                        ServiceUriPaths.CORE_QUERY_TASKS))
+                .setBody(queryTask)
+                .setReferer(getHost().getUri()), QueryTask.class)
+                .thenAccept(qrt -> {
+                    if (qrt.results.documentCount == 0) {
+                        doRemoveTrustCerts(state);
+
+                    } else {
+                        proceedTo(SubStage.REMOVED_CERTIFICATES);
+                    }
+                }).exceptionally(e -> {
+                    logWarning("Failed to remove unused trust certificate.", e);
+                    proceedTo(SubStage.REMOVED_CERTIFICATES);
+                    return null;
+                });
+    }
+
+    private void doRemoveTrustCerts(ContainerHostRemovalTaskState state) {
+
+        collectTrustCert(state)
+                .thenAccept(trustCertSelfLinks -> {
+                    List l = trustCertSelfLinks.stream().map(trustCertSelfLink -> {
+
+                        if (trustCertSelfLink == null || !trustCertSelfLink.startsWith
+                                (SslTrustCertificateService.FACTORY_LINK)) {
+                            return DeferredResult.completed(null);
+                        }
+
+                        Query.Builder queryBuilder = Query.Builder.create()
+                                .addCompositeFieldClause(ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
+                                        ComputeConstants.HOST_TRUST_CERTS_PROP_NAME,
+                                        trustCertSelfLink);
+
+                        Query query = queryBuilder.build();
+                        QueryTask queryTask = QueryUtil.buildQuery(ComputeState.class, true, query);
+                        QueryUtil.addExpandOption(queryTask);
+
+                        return sendWithDeferredResult(Operation
+                                .createPost(UriUtils.buildUri(getHost(),
+                                        ServiceUriPaths.CORE_QUERY_TASKS))
+                                .setBody(queryTask)
+                                .setReferer(getHost().getUri()), QueryTask.class)
+                                .thenCompose(qrt -> {
+                                    if (qrt.results.documentCount == 0 || state.resourceLinks
+                                            .containsAll(qrt.results.documentLinks)) {
+                                        return sendWithDeferredResult(Operation
+                                                .createDelete(UriUtils.buildUri(getHost(),
+                                                        trustCertSelfLink))
+                                                .setReferer(getHost().getUri()), QueryTask.class);
+                                    }
+                                    return DeferredResult.completed(qrt);
+                                }).exceptionally(e -> {
+                                    logWarning("Failed to remove unused trust certificate.", e);
+                                    proceedTo(SubStage.REMOVED_CERTIFICATES);
+                                    return null;
+                                });
+                    }).collect(Collectors.toList());
+
+                    DeferredResult.allOf(l)
+                            .thenAccept(oo -> {
+                                proceedTo(SubStage.REMOVED_CERTIFICATES);
+                            });
+                });
+
     }
 }
