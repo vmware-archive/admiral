@@ -12,6 +12,7 @@
 package com.vmware.admiral.upgrade.transformation;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -100,6 +101,8 @@ public class ContainersTransformationService extends StatelessService {
                 container.tenantLinks = state.tenantLinks;
             } else {
                 container.tenantLinks.addAll(state.tenantLinks);
+                container.tenantLinks = new ArrayList<String>(
+                        new LinkedHashSet<String>(container.tenantLinks));
             }
             Operation.createPatch(this, container.documentSelfLink)
                     .setBody(container)

@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.compute.transformation;
+package com.vmware.admiral.upgrade.transformation;
 
 import java.net.URI;
 import java.util.ArrayList;

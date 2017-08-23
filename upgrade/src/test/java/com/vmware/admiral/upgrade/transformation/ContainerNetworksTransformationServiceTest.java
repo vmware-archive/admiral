@@ -164,6 +164,35 @@ public class ContainerNetworksTransformationServiceTest extends UpgradeBaseTest 
         Assert.assertTrue(secondNetworkHost2.tenantLinks.contains(networkTenantLink));
     }
 
+    @Test
+    public void testNetworkHasTenantLinks() throws Throwable {
+        List<String> tenantLinks = new ArrayList<String>();
+        String tenant = "project1";
+        tenantLinks.add(tenant);
+        ComputeState cs = createComputeState("TestID1", tenantLinks);
+        cs = doPost(cs, ComputeService.FACTORY_LINK);
+
+        ContainerNetworkState containerNetwork1 = createNetwork(cs.documentSelfLink);
+        containerNetwork1.tenantLinks = new ArrayList<>();
+        containerNetwork1.tenantLinks.add(tenant);
+        containerNetwork1 = doPost(containerNetwork1, ContainerNetworkFactoryService.SELF_LINK);
+        ContainerNetworkState containerNetwork2 = createNetwork(cs.documentSelfLink);
+        containerNetwork2 = doPost(containerNetwork2, ContainerNetworkFactoryService.SELF_LINK);
+        doOperation(new ServiceDocument(),
+                UriUtils.buildUri(host, ContainerNetworksTransformationService.SELF_LINK), false,
+                Service.Action.POST);
+
+        containerNetwork1 = getDocument(ContainerNetworkState.class,
+                containerNetwork1.documentSelfLink);
+        containerNetwork2 = getDocument(ContainerNetworkState.class,
+                containerNetwork2.documentSelfLink);
+
+        Assert.assertTrue(containerNetwork1.tenantLinks.size() == 1);
+        Assert.assertTrue(containerNetwork2.tenantLinks.size() == 1);
+        Assert.assertTrue(containerNetwork1.tenantLinks.containsAll(tenantLinks));
+        Assert.assertTrue(containerNetwork2.tenantLinks.containsAll(tenantLinks));
+    }
+
     private ContainerNetworkState createNetwork(String parentLink) {
         ContainerNetworkState network = new ContainerNetworkState();
         network.id = UUID.randomUUID().toString();

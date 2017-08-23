@@ -162,6 +162,36 @@ public class ContainerVolumesTransformationServiceTest extends UpgradeBaseTest {
         Assert.assertTrue(secondVolumeHost2.tenantLinks.contains(volumeTenantLink));
     }
 
+    @Test
+    public void testVolumeHasTenantLinks() throws Throwable {
+        List<String> tenantLinks = new ArrayList<String>();
+        tenantLinks.add("project1");
+        String commonTenantLink = "tenant";
+        tenantLinks.add(commonTenantLink);
+        ComputeState cs = createComputeState("TestID1", tenantLinks);
+        cs = doPost(cs, ComputeService.FACTORY_LINK);
+
+        ContainerVolumeState containerVolume1 = createVolume(cs.documentSelfLink);
+        containerVolume1.tenantLinks = new ArrayList<>();
+        containerVolume1.tenantLinks.add(commonTenantLink);
+        containerVolume1 = doPost(containerVolume1, ContainerVolumeFactoryService.SELF_LINK);
+        ContainerVolumeState containerVolume2 = createVolume(cs.documentSelfLink);
+        containerVolume2 = doPost(containerVolume2, ContainerVolumeFactoryService.SELF_LINK);
+        doOperation(new ServiceDocument(),
+                UriUtils.buildUri(host, ContainerVolumesTransformationService.SELF_LINK), false,
+                Service.Action.POST);
+
+        containerVolume1 = getDocument(ContainerVolumeState.class,
+                containerVolume1.documentSelfLink);
+        containerVolume2 = getDocument(ContainerVolumeState.class,
+                containerVolume2.documentSelfLink);
+
+        Assert.assertTrue(containerVolume1.tenantLinks.size() == 2);
+        Assert.assertTrue(containerVolume2.tenantLinks.size() == 2);
+        Assert.assertTrue(containerVolume1.tenantLinks.containsAll(tenantLinks));
+        Assert.assertTrue(containerVolume2.tenantLinks.containsAll(tenantLinks));
+    }
+
     private ContainerVolumeState createVolume(String parentLink) {
         ContainerVolumeState volume = new ContainerVolumeState();
         volume.id = UUID.randomUUID().toString();

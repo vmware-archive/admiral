@@ -157,6 +157,36 @@ public class ContainersTransformationServiceTest extends UpgradeBaseTest {
         Assert.assertTrue(secondContainerHost2.tenantLinks.contains(containerTenantLink));
     }
 
+    @Test
+    public void testContainerHasTenantLinks() throws Throwable {
+        List<String> tenantLinks = new ArrayList<String>();
+        String commonTenantLink = "tenant";
+        tenantLinks.add("project1");
+        tenantLinks.add(commonTenantLink);
+        ComputeState cs = createComputeState("TestID1", tenantLinks);
+        cs = doPost(cs, ComputeService.FACTORY_LINK);
+
+        ContainerState containerState1 = createContainer(cs.documentSelfLink);
+        containerState1.tenantLinks = new ArrayList<>();
+        containerState1.tenantLinks.add(commonTenantLink);
+        containerState1 = doPost(containerState1, ContainerFactoryService.SELF_LINK);
+        ContainerState containerState2 = createContainer(cs.documentSelfLink);
+        containerState2 = doPost(containerState2, ContainerFactoryService.SELF_LINK);
+        doOperation(new ServiceDocument(),
+                UriUtils.buildUri(host, ContainersTransformationService.SELF_LINK), false,
+                Service.Action.POST);
+
+        containerState1 = getDocument(ContainerState.class, containerState1.documentSelfLink);
+        containerState2 = getDocument(ContainerState.class, containerState2.documentSelfLink);
+
+        Assert.assertTrue(containerState1.tenantLinks.size() == 2);
+        Assert.assertTrue(containerState2.tenantLinks.size() == 2);
+
+        Assert.assertTrue(containerState1.tenantLinks.containsAll(tenantLinks));
+        Assert.assertTrue(containerState1.tenantLinks.contains(commonTenantLink));
+        Assert.assertTrue(containerState2.tenantLinks.containsAll(tenantLinks));
+    }
+
     private ContainerState createContainer(String parentLink) {
         ContainerState containerState = new ContainerState();
         containerState.id = UUID.randomUUID().toString();

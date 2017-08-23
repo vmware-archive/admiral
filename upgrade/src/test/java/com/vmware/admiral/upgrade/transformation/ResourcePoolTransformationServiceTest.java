@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.compute.transformation;
+package com.vmware.admiral.upgrade.transformation;
 
 import java.util.ArrayList;
 
@@ -18,13 +18,13 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
-import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
+import com.vmware.admiral.upgrade.UpgradeBaseTest;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 
-public class ResourcePoolTransformationServiceTest extends ComputeBaseTest {
+public class ResourcePoolTransformationServiceTest extends UpgradeBaseTest {
 
     @Before
     public void setUp() throws Throwable {
