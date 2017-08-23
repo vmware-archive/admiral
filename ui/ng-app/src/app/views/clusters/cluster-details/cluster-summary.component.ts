@@ -11,6 +11,7 @@
 
 import {Component, Input, OnInit} from '@angular/core';
 import { Utils } from '../../../utils/utils';
+import { FT } from '../../../utils/ft';
 
 @Component({
   selector: 'app-cluster-summary',
@@ -35,6 +36,20 @@ export class ClusterSummaryComponent implements OnInit {
       return 'https://' + urlParts.host + ':2378';
     }
     return '';
+  }
+
+  get clusterOverviewTextKey() {
+    if (FT.isVic()) {
+      return 'clusters.summary.clusterOverviewVic';
+    }
+    return 'clusters.summary.clusterOverview';
+  }
+
+  get clusterResourcesTextKey() {
+    if (FT.isVic()) {
+      return 'clusters.summary.clusterResourcesVic';
+    }
+    return 'clusters.summary.clusterResources';
   }
 
   ngOnInit() {

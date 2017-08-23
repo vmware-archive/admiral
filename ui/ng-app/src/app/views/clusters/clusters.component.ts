@@ -15,6 +15,7 @@ import { Links } from '../../utils/links';
 import { DocumentService } from '../../utils/document.service';
 import * as I18n from 'i18next';
 import { Utils } from '../../utils/utils';
+import { FT } from '../../utils/ft';
 import { GridViewComponent } from '../../components/grid-view/grid-view.component';
 
 @Component({
@@ -41,9 +42,30 @@ export class ClustersComponent implements OnInit {
   }
 
   get deleteConfirmationDescription(): string {
+    if (FT.isVic()) {
+      return this.clusterToDelete && this.clusterToDelete.name
+        && I18n.t('clusters.delete.confirmationVic', { clusterName:  this.clusterToDelete.name,
+          interpolation: { escapeValue: false } } as I18n.TranslationOptions);
+    }
     return this.clusterToDelete && this.clusterToDelete.name
-            && I18n.t('clusters.delete.confirmation', { clusterName:  this.clusterToDelete.name,
-               interpolation: { escapeValue: false } } as I18n.TranslationOptions);
+      && I18n.t('clusters.delete.confirmation', { clusterName:  this.clusterToDelete.name,
+        interpolation: { escapeValue: false } } as I18n.TranslationOptions);
+  }
+
+  get deleteTitle() {
+    if (FT.isVic()) {
+      return this.clusterToDelete && this.clusterToDelete.name
+        && I18n.t('clusters.delete.titleVic');
+    }
+    return this.clusterToDelete && this.clusterToDelete.name
+      && I18n.t('clusters.delete.title');
+  }
+
+  get title() {
+    if (FT.isVic()) {
+      return I18n.t('clusters.titleVic');
+    }
+    return I18n.t('clusters.title');
   }
 
   deleteCluster(event, cluster) {
@@ -118,4 +140,5 @@ export class ClustersComponent implements OnInit {
   get clustersCardViewActions() {
     return RoutesRestriction.CLUSTERS_ID;
   }
+
  }

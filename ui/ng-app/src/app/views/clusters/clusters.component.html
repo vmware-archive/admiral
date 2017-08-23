@@ -10,12 +10,12 @@
   -->
 
 <grid-view #gridView [serviceEndpoint]="serviceEndpoint" [projectLink]="projectLink">
-  <div [hidden]="hideTitle" title>{{ "clusters.title" | i18n }}</div>
+  <div [hidden]="hideTitle" title>{{ title }}</div>
   <div toolbar>
     <button class="btn btn-link" allowNavigation [roles]="clustersNewRouteRestrictions"
         [routerLink]="['./cluster/new']"><i class="fa fa-plus"></i>{{ "clusters.new" | i18n | uppercase }}</button>
   </div>
-  <delete-confirmation [title]="'clusters.delete.title' | i18n"
+  <delete-confirmation [title]="deleteTitle"
                        [description]="deleteConfirmationDescription"
                        [(alert)]="deleteConfirmationAlert"
                        [visible]="clusterToDelete"
@@ -91,6 +91,6 @@
 </grid-view>
 
 <navigation-container>
-  <back-button [routerLink]="['./']">{{"clusters.title" | i18n}}</back-button>
+  <back-button [routerLink]="['./']">{{ title }}</back-button>
   <router-outlet></router-outlet>
 </navigation-container>

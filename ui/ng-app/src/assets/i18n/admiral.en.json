@@ -24,6 +24,7 @@
     "publicDescription": "Public access to project registry",
     "private": "Private",
     "clusters": "Clusters",
+    "clustersVic": "Container Hosts",
     "repositories": "Repositories",
     "infrastructure": "Infrastructure",
     "registryReplication": "Registry Replication",
@@ -39,7 +40,8 @@
     },
     "delete": {
       "title": "Remove Project",
-      "confirmation": "Confirm removing of project {{projectName}}. Members and clusters will be unasociated from project. The operation cannot be undone."
+      "confirmation": "Confirm removing of project {{projectName}}. Members and clusters will be unasociated from project. The operation cannot be undone.",
+      "confirmationVic": "Confirm removing of project {{projectName}}. Members and container hosts will be unasociated from project. The operation cannot be undone."
     },
     "summary": {
       "title": "Summary",
@@ -59,6 +61,7 @@
       "resources": {
         "title": "Project Resources",
         "clusters": "Clusters:",
+        "clustersVic": "Container Hosts:",
         "templates": "App Templates:",
         "images": "Images:"
       }
@@ -120,7 +123,8 @@
       "makePublic": "Make public",
       "makePrivate": "Make private",
       "addUsersAndGroups": "Add users and groups",
-      "addClusters": "Add clusters"
+      "addClusters": "Add clusters",
+      "addClustersVic": "Add container hosts"
     }
   },
   "registries": {
@@ -131,7 +135,9 @@
   },
   "clusters": {
     "title": "Clusters",
+    "titleVic": "Container Hosts",
     "cluster": "Cluster",
+    "clusterVic": "Container Host",
     "new": "New",
     "status": "Status",
     "state": {
@@ -150,7 +156,9 @@
       "adminPortal": "Admin Portal:",
       "type": "Type:",
       "clusterOverview": "Cluster Overview",
+      "clusterOverviewVic": "Container Host Overview",
       "clusterResources": "Cluster Resources",
+      "clusterResourcesVic": "Container Host Resources",
       "status": "Status:",
       "creationDate": "Created:",
       "containersCount": "Containers:",
@@ -173,18 +181,23 @@
     },
     "edit": {
       "titleNew": "New Cluster",
+      "titleNewVic": "New Container Host",
       "titleEdit": "Edit Cluster",
+      "titleEditVic": "Edit Container Host",
       "name": "Name",
       "nameRequired": "Name is required.",
       "description": "Description",
       "type": "Type",
       "url": "URL",
       "urlRequired": "Cluster URL is required.",
+      "urlRequiredVic": "Container host URL is required.",
       "credentials": "Credentials"
     },
     "delete": {
       "title": "Remove Cluster",
-      "confirmation": "Confirm removing of cluster {{clusterName}}. The operation cannot be undone."
+      "titleVic": "Remove Container Host",
+      "confirmation": "Confirm removing of cluster {{clusterName}}. The operation cannot be undone.",
+      "confirmationVic": "Confirm removing of container host {{clusterName}}. The operation cannot be undone."
     }
   },
   "hosts": {
@@ -290,6 +303,7 @@
     "publicRepositories": "Public repositories",
     "infrastructure": "Infrastructure",
     "clusters": "Clusters",
+    "clustersVic": "Container Hosts",
     "hosts": "Hosts",
     "placements": "Placements",
     "identityManagement": "Identity Management",

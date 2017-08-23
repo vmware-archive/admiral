@@ -45,7 +45,7 @@
           <label for="url" aria-haspopup="true" role="tooltip" class="tooltip tooltip-validation tooltip-sm tooltip-right"
               [class.invalid]="clusterForm.get('url').invalid && (clusterForm.get('url').dirty || clusterForm.get('url').touched)">
             <input id="url" type="text" placeholder="https://hostname:2376" formControlName="url" [attr.disabled]="isEdit">
-            <span class="tooltip-content">{{ "clusters.edit.urlRequired" | i18n }}</span>
+            <span class="tooltip-content">{{ urlRequiredTextKey | i18n }}</span>
           </label>
         </div>
         <div class="form-group" *ngIf="!isEdit">

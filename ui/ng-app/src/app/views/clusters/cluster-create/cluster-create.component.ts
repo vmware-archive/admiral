@@ -14,6 +14,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { FormGroup, FormControl, Validators } from "@angular/forms";
 import { Links } from '../../../utils/links';
 import { Utils } from "../../../utils/utils";
+import { FT } from "../../../utils/ft";
 import { DocumentService } from '../../../utils/document.service';
 import { ProjectService } from '../../../utils/project.service';
 import * as I18n from 'i18next';
@@ -65,9 +66,19 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
   }
 
   get title() {
-    return this.isEdit ? "clusters.edit.titleEdit" : "clusters.edit.titleNew";
+    if (FT.isVic()) {
+      return this.isEdit ? 'clusters.edit.titleEditVic' : 'clusters.edit.titleNewVic';    
+    }
+    return this.isEdit ? 'clusters.edit.titleEdit' : 'clusters.edit.titleNew';  
   }
 
+  get urlRequiredTextKey() {
+    if (FT.isVic()) {
+      return 'clusters.edit.urlRequiredVic'
+    }
+    return 'clusters.edit.urlRequired'
+  }
+  
   entityInitialized() {
     this.isEdit = true;
     this.clusterForm.get('name').setValue(this.entity.name);

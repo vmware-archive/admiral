@@ -1,3 +1,4 @@
+import { FT } from './../../utils/ft';
 /*
  * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
  *
@@ -42,9 +43,16 @@ export class ProjectsComponent {
   }
 
   get deleteConfirmationDescription(): string {
-    return this.projectToDelete && this.projectToDelete.name
-            && I18n.t('projects.delete.confirmation',
-            { projectName:  this.projectToDelete.name } as I18n.TranslationOptions);
+
+    if (this.projectToDelete && this.projectToDelete.name) {
+      if (FT.isVic()) {
+        return I18n.t('projects.delete.confirmationVic',
+          { projectName:  this.projectToDelete.name } as I18n.TranslationOptions);
+      } else {
+        return I18n.t('projects.delete.confirmation',
+          { projectName:  this.projectToDelete.name } as I18n.TranslationOptions);
+      }
+    }
   }
 
   deleteProject(event, project) {
@@ -97,5 +105,12 @@ export class ProjectsComponent {
 
   get projectsCardViewActions() {
     return RoutesRestriction.PROJECT_CARD_VIEW_ACTIONS;
+  }
+
+  get clustersTitle() {
+    if (FT.isVic()) {
+      return 'projects.clustersVic';
+    }
+    return 'projects.clusters';
   }
 }

@@ -212,4 +212,13 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
           return this.selectedProject.documentSelfLink;
         }
     }
+
+    get navigationClustersTextKey() {
+      if (FT.isVic()) {
+        return "navigation.clustersVic";
+      }
+      return "navigation.clusters";
+    }
+
+
 }

@@ -20,7 +20,7 @@
     <div class="summary-description">{{ cluster?.details }}</div>
 
     <div class="summary-subsection">
-        <div class="summary-subsection-title">{{ "clusters.summary.clusterOverview" | i18n }}</div>
+        <div class="summary-subsection-title">{{ clusterOverviewTextKey | i18n }}</div>
         <div *ngIf="cluster && cluster.address" class="summary-subsection-content-row">
             <div class="left-column">{{ "clusters.summary.address" | i18n }}</div>
             <div class="right-column">{{ cluster?.address }}</div>
@@ -49,7 +49,7 @@
     </div>
 
     <div class="summary-subsection">
-        <div class="summary-subsection-title">{{ "clusters.summary.clusterResources" | i18n }}</div>
+        <div class="summary-subsection-title">{{ clusterResourcesTextKey | i18n }}</div>
         <div class="summary-subsection-content-row">
             <div class="left-column">{{ "clusters.summary.containersCount" | i18n }}</div>
             <div class="right-column">{{ cluster?.containerCount }}</div>

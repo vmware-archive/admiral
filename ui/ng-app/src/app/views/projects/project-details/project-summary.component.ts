@@ -11,6 +11,7 @@
 
 import {Component, Input, OnInit} from '@angular/core';
 import { Utils } from '../../../utils/utils';
+import { FT } from '../../../utils/ft';
 import { RoutesRestriction } from './../../../utils/routes-restriction';
 
 @Component({
@@ -42,6 +43,13 @@ export class ProjectSummaryComponent implements OnInit {
 
   get projectSummaryEditRestrictions() {
     return RoutesRestriction.PROJECT_SUMMARY_EDIT;
+  }
+
+  get clustersTextKey() {
+    if (FT.isVic()) {
+      return 'projects.summary.resources.clustersVic'
+    }
+    return 'projects.summary.resources.clusters'
   }
 
   ngOnInit() {

@@ -62,7 +62,7 @@
           <input id="infrastructureCollapse" type="checkbox">
           <label for="infrastructureCollapse">{{ "navigation.infrastructure" | i18n }}</label>
           <ul class="nav-list">
-              <li><a class="nav-link" routerLink="clusters" routerLinkActive="active">{{ "navigation.clusters" | i18n }}</a></li>
+              <li><a class="nav-link" routerLink="clusters" routerLinkActive="active">{{ navigationClustersTextKey | i18n }}</a></li>
               <li *ngIf="embeddedMode"><a class="nav-link" routerLink="hosts" routerLinkActive="active">{{ "navigation.hosts" | i18n }}</a></li>
           </ul>
       </section>
