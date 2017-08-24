@@ -179,4 +179,16 @@ public class OperationUtil {
 
     }
 
+    public static String extractTenantFromProjectHeader(Operation op) {
+        String businessGroup = op.getRequestHeader(PROJECT_ADMIRAL_HEADER);
+        if (businessGroup == null) {
+            return null;
+        }
+        int index = businessGroup.indexOf("/", businessGroup.indexOf("/", 1) + 1);
+        if (index == -1) {
+            return null;
+        }
+        String tenantLink = businessGroup.substring(0, index);
+        return tenantLink;
+    }
 }

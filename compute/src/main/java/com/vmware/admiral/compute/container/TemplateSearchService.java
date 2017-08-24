@@ -42,6 +42,7 @@ import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptio
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptionFactoryService;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
@@ -265,7 +266,14 @@ public class TemplateSearchService extends StatelessService {
             query = query + URI_WILDCARD_CHAR;
         }
 
-        String tenantLink = OperationUtil.extractProjectFromHeader(get);
+        // in vRA the templates are global for the business groups inside a tenant
+        String tenantLink;
+        if (ConfigurationUtil.isEmbedded()) {
+            tenantLink = OperationUtil.extractTenantFromProjectHeader(get);
+        } else {
+            tenantLink = OperationUtil.extractProjectFromHeader(get);
+        }
+
         List<String> tenantLinks = null;
         if (tenantLink != null) {
             tenantLinks = Arrays.asList(tenantLink.split("\\s*,\\s*"));
