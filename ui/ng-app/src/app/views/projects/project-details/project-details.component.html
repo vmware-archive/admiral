@@ -26,7 +26,7 @@
         <app-project-members [project]="entity" (onChange)="reloadProject($event)"></app-project-members>
     </clr-tab-content>
     <clr-tab-content *ngIf="isHbrEnabled" [clrTabContentId]="'repositoriesContent'">
-        <hbr-repository-stackview [projectId]="hbrProjectId" [projectName]="projectName" [hasSignedIn]="true" [hasProjectAdminRole]="true" (tagClickEvent)="watchTagClickEvent($event)"></hbr-repository-stackview>
+        <hbr-repository-stackview [projectId]="hbrProjectId" [projectName]="projectName" [hasSignedIn]="true" [hasProjectAdminRole]="hasProjectAdminRole" (tagClickEvent)="watchTagClickEvent($event)"></hbr-repository-stackview>
     </clr-tab-content>
     <clr-tab-content [clrTabContentId]="'infrastructureContent'">
         <app-clusters [hideTitle]="true" [projectLink]="entity?.documentSelfLink"></app-clusters>

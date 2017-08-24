@@ -1,4 +1,3 @@
-import { AuthService } from './../../../utils/auth.service';
 /*
  * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
  *
@@ -20,6 +19,8 @@ import { RoutesRestriction } from './../../../utils/routes-restriction';
 import { FT } from './../../../utils/ft';
 import { Router } from '@angular/router';
 import { Utils } from './../../../utils/utils';
+import { AuthService } from './../../../utils/auth.service';
+import { Roles } from './../../../utils/roles';
 
 @Component({
   selector: 'app-project-details',
@@ -30,15 +31,12 @@ export class ProjectDetailsComponent extends BaseDetailsComponent {
 
   hbrProjectId;
   hbrSessionInfo = {};
-  router: Router;
-  authService: AuthService;
   isHbrEnabled = FT.isHbrEnabled();
   userSecurityContext: any;
 
-  constructor(route: ActivatedRoute, service: DocumentService, router: Router, authService: AuthService) {
+  constructor(route: ActivatedRoute, service: DocumentService,
+    private router: Router, private authService: AuthService) {
     super(route, service, Links.PROJECTS);
-    this.router = router;
-    this.authService = authService;
 
     if(!this.embedded) {
       this.authService.getCachedSecurityContext().then((securityContext) => {
@@ -68,6 +66,10 @@ export class ProjectDetailsComponent extends BaseDetailsComponent {
     if (project) {
       this.entity = project;
     }
+  }
+
+  get hasProjectAdminRole(): boolean {
+    return Utils.isAccessAllowed(this.userSecurityContext, this.admiralProjectSelfLink, [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN]);
   }
 
   get admiralProjectSelfLink() {

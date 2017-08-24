@@ -11,40 +11,27 @@
 
 import { Roles } from './../../utils/roles';
 import { AuthService } from './../../utils/auth.service';
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
+import { Utils } from './../../utils/utils';
 
 @Component({
   selector: 'app-configuration',
   templateUrl: './configuration.component.html',
   styleUrls: ['./configuration.component.scss']
 })
-export class ConfigurationComponent implements OnInit {
+export class ConfigurationComponent {
 
-  hasAdminRole: boolean;
+  private userSecurityContext: any;
 
-  constructor(private authService: AuthService) { 
-    
-  }
-
-  ngOnInit() {
-    this.setIsAdmin();
-  }
-
-  private setIsAdmin() {
-    
-    this.authService.getCachedSecurityContext().then(securityContext => {
-      let isAdmin = false;
-      if (securityContext && securityContext.roles) {
-        for (var index = 0; index < securityContext.roles.length; index++) {
-          var role = securityContext.roles[index];
-          if (Roles.CLOUD_ADMIN === role) {
-            isAdmin = true;
-            break;
-          }
-        }
-      }
-      this.hasAdminRole = isAdmin;
+  constructor(authService: AuthService) {
+    authService.getCachedSecurityContext().then((securityContext) => {
+      this.userSecurityContext = securityContext;
+    }).catch((ex) => {
+      console.log(ex);
     });
+  }
 
+  get hasAdminRole(): boolean {
+    return Utils.isAccessAllowed(this.userSecurityContext, null, Roles.CLOUD_ADMIN);
   }
 }
