@@ -363,6 +363,14 @@ public class ProjectService extends StatefulService {
         } else {
             // this is an update of the state
             ProjectState projectPut = put.getBody(ProjectState.class);
+            if (projectPut.documentSelfLink != null
+                    && projectPut.documentSelfLink.endsWith(ProjectService.DEFAULT_PROJECT_ID)
+                    && (projectPut.administratorsUserGroupLink != null
+                            || projectPut.membersUserGroupLink != null)) {
+                put.setStatusCode(Operation.STATUS_CODE_NOT_MODIFIED);
+                put.complete();
+                return;
+            }
             validateState(projectPut);
 
             DeferredResult<Boolean> deferredResult;

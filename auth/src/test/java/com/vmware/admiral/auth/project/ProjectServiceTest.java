@@ -549,6 +549,18 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertEquals(updatedIsPublic, updatedState.isPublic);
     }
 
+    // https://github.com/vmware/admiral/issues/183 - On migration of the data VIC 1.1 to 1.2
+    // default project should not be updated
+    @Test
+    public void testPostUpgradeDefaultProject() throws Throwable {
+        ProjectState projectState = new ProjectState();
+        projectState.name = "test";
+        projectState.documentSelfLink = ProjectService.DEFAULT_PROJECT_LINK;
+        projectState.administratorsUserGroupLink = "test";
+        ProjectState updatedState = doPost(projectState, ProjectFactoryService.SELF_LINK);
+        assertNull(updatedState.administratorsUserGroupLink);
+    }
+
     @Test
     public void testPutWithSameName() throws Throwable {
         final String updatedDescription = "updatedDescription";
