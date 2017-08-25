@@ -17,7 +17,7 @@
     </tr>
   </thead>
   <tbody>
-    <tr v-if="model.hostName && model.hostDocumentId">
+    <tr v-if="isHostsViewLinksEnabled">
       <td>{{i18n("app.container.details.attributes.host")}}</td>
       <td class="container-properties-value-cell"><a class="navigation-link"
         :href="'#/hosts?documentId=' + model.hostDocumentId" v-on:click="showHost($event)">{{model.hostName}}</a></td>

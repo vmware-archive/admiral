@@ -29,7 +29,7 @@
   </div>
   <hr/>
   <div class="container-content">
-    <div class="container-host-holder">
+    <div class="container-host-holder" v-if="isHostsViewLinksEnabled">
       <span class="container-label">{{i18n("app.container.list.hostLabel")}}</span>
       <a class="navigation-link" :href="'#/hosts?documentId=' + model.hostDocumentId"
          v-on:click="showHost($event)">{{model.hostName}}</a>

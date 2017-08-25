@@ -16,6 +16,7 @@ import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmation
 import utils from 'core/utils';
 import links from 'core/links';
 import constants from 'core/constants';
+import ft from 'core/ft';
 import { ContainerActions, NavigationActions } from 'actions/Actions';
 
 var CompositeContainersListItem = Vue.extend({
@@ -35,6 +36,9 @@ var CompositeContainersListItem = Vue.extend({
     },
     hostsCount: function() {
       return this.model.hostLinks && this.model.hostLinks.length;
+    },
+    isHostsViewLinksEnabled: function() {
+      return ft.isHostsViewLinksEnabled();
     },
     containersCount: function() {
       return this.model.componentLinks.filter(cl => cl.indexOf(links.CONTAINERS) === 0).length;

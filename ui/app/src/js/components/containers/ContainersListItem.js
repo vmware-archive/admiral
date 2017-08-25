@@ -14,6 +14,7 @@ import AlertItemMixin from 'components/common/AlertItemMixin';
 import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin';
 import constants from 'core/constants';
 import utils from 'core/utils';
+import ft from 'core/ft';
 import { ContainerActions, NavigationActions } from 'actions/Actions';
 
 var ContainersListItem = Vue.extend({
@@ -41,6 +42,9 @@ var ContainersListItem = Vue.extend({
     },
     networkIds: function() {
       return this.model.networks && Object.keys(this.model.networks);
+    },
+    isHostsViewLinksEnabled: function() {
+      return ft.isHostsViewLinksEnabled();
     }
   },
   attached: function() {

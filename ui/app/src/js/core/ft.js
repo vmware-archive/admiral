@@ -69,6 +69,10 @@ var ft = {
 
   isDeploymentPoliciesEnabled: function() {
     return utils.isApplicationEmbedded() && !utils.isApplicationCompute();
+  },
+
+  isHostsViewLinksEnabled: function() {
+    return utils.getConfigurationPropertyBoolean('allow.ft.hosts.view.links');
   }
 };
 

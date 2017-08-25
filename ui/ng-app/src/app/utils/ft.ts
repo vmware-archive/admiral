@@ -87,4 +87,8 @@ export class FT {
   public static isProfilesSplitEnabled() {
     return Utils.getConfigurationPropertyBoolean('allow.ft.profiles.split');
   }
+
+  public static isHostsViewLinksEnabled() {
+    return Utils.getConfigurationPropertyBoolean('allow.ft.hosts.view.links');
+  }
 };

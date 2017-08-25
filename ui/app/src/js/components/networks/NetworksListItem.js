@@ -10,6 +10,7 @@
  */
 
 import utils from 'core/utils';
+import ft from 'core/ft';
 import constants from 'core/constants';
 
 import NetworksListItemVue from 'components/networks/NetworksListItemVue.html';
@@ -50,6 +51,10 @@ var NetworksListItem = Vue.extend({
 
     parentHostsCount: function() {
       return this.model.parentLinks ? this.model.parentLinks.length : 0;
+    },
+
+    isHostsViewLinksEnabled: function() {
+      return ft.isHostsViewLinksEnabled();
     },
 
     supportsDay2Operations: function() {

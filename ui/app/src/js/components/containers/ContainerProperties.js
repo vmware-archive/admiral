@@ -13,6 +13,7 @@ import ContainerPropertiesVue from 'components/containers/ContainerPropertiesVue
 import { NavigationActions } from 'actions/Actions';
 import constants from 'core/constants';
 import utils from 'core/utils';
+import ft from 'core/ft';
 
 var ContainerProperties = Vue.extend({
   template: ContainerPropertiesVue,
@@ -20,6 +21,9 @@ var ContainerProperties = Vue.extend({
     model: { required: true }
   },
   computed: {
+    isHostsViewLinksEnabled: function() {
+      return this.model.hostName && this.model.hostDocumentId && ft.isHostsViewLinksEnabled();
+    },
     portLinks: function() {
       return utils.getPortLinks(this.model.hostAddress, this.model.ports);
     },

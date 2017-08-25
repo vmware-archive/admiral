@@ -52,6 +52,7 @@
   </div>
   <div class="relations-holder">
     <navigation-link v-bind:show="parentHostsCount > 0"
+                     v-if="isHostsViewLinksEnabled"
                      v-bind:label="parentHostsCount"
                      icon-name="image-assets/hosts-nav-link.png"
                      v-bind:tooltip="i18n('app.resource.list.relations.hosts')"
