@@ -13,6 +13,7 @@ import { RoutesRestriction } from './../../utils/routes-restriction';
 import { Component, ViewChild, OnInit, Input } from '@angular/core';
 import { Links } from '../../utils/links';
 import { DocumentService } from '../../utils/document.service';
+import { ProjectService } from "../../utils/project.service";
 import * as I18n from 'i18next';
 import { Utils } from '../../utils/utils';
 import { FT } from '../../utils/ft';
@@ -24,9 +25,6 @@ import { GridViewComponent } from '../../components/grid-view/grid-view.componen
   styleUrls: ['./clusters.component.scss']
 })
 export class ClustersComponent implements OnInit {
-
-  constructor(private service: DocumentService) { }
-
   @Input() hideTitle: boolean = false;
   @Input() projectLink: string;
 
@@ -37,6 +35,14 @@ export class ClustersComponent implements OnInit {
   selectedItem: any;
 
   @ViewChild('gridView') gridView:GridViewComponent;
+
+  constructor(private service: DocumentService, private projectService: ProjectService) {
+
+    projectService.activeProject.subscribe((value) => {
+
+      this.projectLink = value && value.documentSelfLink;
+    });
+  }
 
   ngOnInit() {
   }

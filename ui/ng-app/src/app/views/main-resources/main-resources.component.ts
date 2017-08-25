@@ -12,16 +12,17 @@
 import { FT } from './../../utils/ft';
 import { Roles } from './../../utils/roles';
 import { Ajax } from './../../utils/ajax.service';
-import { Links } from './../../utils/links';
-import { DocumentListResult, DocumentService } from './../../utils/document.service';
+import { DocumentService } from './../../utils/document.service';
 import { Component, OnInit, ViewEncapsulation, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { Router, NavigationEnd } from '@angular/router';
+
 import { RoutesRestriction } from './../../utils/routes-restriction';
-import { ProjectService } from './../../utils/project.service';
+import { FormerViewPathBridge, RouteUtils } from './../../utils/route-utils';
+
 import { AuthService } from './../../utils/auth.service';
 import { ErrorService } from '../../utils/error.service';
-import { FormerViewPathBridge, RouteUtils } from './../../utils/route-utils';
+import { ProjectService } from './../../utils/project.service';
 
 @Component({
   selector: 'app-main-resources',
@@ -65,7 +66,8 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
     alertMessage: string;
 
     constructor(private router: Router, private ds: DocumentService, private ajax: Ajax,
-                private ps: ProjectService, private errorService: ErrorService, private authService: AuthService) {
+                private projectService: ProjectService, private errorService: ErrorService,
+                private authService: AuthService) {
 
       this.routeObserve = this.router.events.subscribe((event) => {
         if (event instanceof NavigationEnd) {
@@ -77,6 +79,16 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
 
       this.errorObserve = this.errorService.errorMessages.subscribe((event) => {
           this.alertMessage = event;
+      });
+
+
+      this.projectService.activeProject.subscribe((value) => {
+        // reload former view iframe
+        var iframeFormerView =
+            document.querySelector(".former-view > iframe:first-of-type");
+        if (iframeFormerView) {
+          var iWindow = (<HTMLIFrameElement> iframeFormerView).contentWindow.location.reload();
+        }
       });
     }
 
@@ -91,7 +103,7 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
         this.sortProjects();
 
         this.selectedProject = null;
-        let localProject = this.ps.getSelectedProject();
+        let localProject = this.projectService.getSelectedProject();
 
         if (localProject) {
           this.projects.forEach(p => {
@@ -106,7 +118,7 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
           this.selectedProject = this.projects[0];
         }
 
-        this.ps.setSelectedProject(this.selectedProject);
+        this.projectService.setSelectedProject(this.selectedProject);
         this.checkShowLibrary();
       });
     }
@@ -118,7 +130,7 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
 
     selectProject(project) {
       this.selectedProject = project;
-      this.ps.setSelectedProject(this.selectedProject);
+      this.projectService.setSelectedProject(this.selectedProject);
       this.checkShowLibrary();
     }
 

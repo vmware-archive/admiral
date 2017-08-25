@@ -10,11 +10,14 @@
  */
 
 import { Injectable } from '@angular/core';
+import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 
 @Injectable()
 export class ProjectService {
 
   private selectedProject;
+
+  activeProject:BehaviorSubject<any> = new BehaviorSubject(null);
 
   public getSelectedProject() {
     if (this.selectedProject) {
@@ -25,7 +28,7 @@ export class ProjectService {
       let localProject = JSON.parse(localStorage.getItem('selectedProject'));
       return localProject;
     } catch (e) {
-
+      console.log("Failed getting the selected project", e);
     }
   }
 
@@ -33,9 +36,7 @@ export class ProjectService {
     this.selectedProject = project;
     localStorage.setItem('selectedProject', JSON.stringify(project));
 
-    var iframe = document.querySelector(".former-view > iframe:first-of-type");
-    if (iframe) {
-      var iWindow = (<HTMLIFrameElement> iframe).contentWindow.location.reload();
-    }
+    // notify subscribers
+    this.activeProject.next(project);
   }
 }
