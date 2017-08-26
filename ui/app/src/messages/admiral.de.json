@@ -533,6 +533,7 @@
         "isolationLabel": "Isolierung",
         "isolationTypeLabel": "Typ",
         "isolationNetworkLabel": "Netzwerk",
+        "isolationExternalSubnetLabel": "Externes Subnetz",
         "noneIsolationTypeLabel": "Keine",
         "subnetIsolationTypeLabel": "Subnetzwerk",
         "securityGroupIsolationTypeLabel": "Sicherheitsgruppe",

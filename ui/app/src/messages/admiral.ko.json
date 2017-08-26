@@ -533,6 +533,7 @@
         "isolationLabel": "분리",
         "isolationTypeLabel": "유형",
         "isolationNetworkLabel": "네트워크",
+        "isolationExternalSubnetLabel": "외부 서브넷",
         "noneIsolationTypeLabel": "없음",
         "subnetIsolationTypeLabel": "하위 네트워크",
         "securityGroupIsolationTypeLabel": "보안 그룹",

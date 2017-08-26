@@ -1,4 +1,19 @@
 {
+  "header": {
+    "title": {
+      "admiral": "Admiral",
+      "vic": "vSphere Integrated Containers",
+      "compute": "Infrastruttura"
+    },
+    "navigation": {
+      "home": "Home",
+      "administration": "Amministrazione"
+    },
+    "actions": {
+      "perferences": "Preferenze",
+      "logout": "Esci"
+    }
+  },
   "projects": {
     "title": "Progetti",
     "project": "Progetto",
@@ -13,6 +28,8 @@
     "infrastructure": "Infrastruttura",
     "registryReplication": "Replica registro",
     "configuration": "Configurazione",
+    "globalSelectLabel": "Progetto",
+    "globalSelectLabelEmbedded": "Gruppo",
     "edit": {
       "titleNew": "Nuovo progetto",
       "titleEdit": "Modifica progetto",
@@ -36,7 +53,7 @@
         "users": "utenti"
       },
       "repositories": {
-        "title": "Repository di progetto",
+        "title": "Repository del progetto",
         "repositories": "Repository:"
       },
       "resources": {
@@ -71,7 +88,8 @@
         "viewer": "Visualizzatore"
       },
       "source": {
-        "local": "Locale"
+        "local": "Locale",
+        "ldap": "LDAP"
       },
       "deleteMember": {
         "title": "Rimuovi membro dal progetto",
@@ -257,6 +275,29 @@
   "noItems": "Nessun elemento",
   "reload": "Ricarica",
   "sessionExpired": "La sessione non è più valida. Accedere nuovamente.",
+  "navigation": {
+    "home": "Home",
+    "administration": "Amministrazione",
+    "deployments": "Distribuzioni",
+    "applications": "Applicazioni",
+    "containers": "Contenitori",
+    "networks": "Reti",
+    "volumes": "Volumi",
+    "closures": "Chiusure",
+    "library": "Libreria",
+    "templates": "Modelli",
+    "projectRepositories": "Repository del progetto",
+    "publicRepositories": "Repository pubblici",
+    "infrastructure": "Infrastruttura",
+    "clusters": "Cluster",
+    "hosts": "Host",
+    "placements": "Posizionamenti",
+    "identityManagement": "Gestione identità",
+    "projects": "Progetti",
+    "registries": "Registri",
+    "configuration": "Configurazione",
+    "logs": "Registri"
+  },
   "compute": {
     "resources": "Risorse",
     "policies": "Criteri",

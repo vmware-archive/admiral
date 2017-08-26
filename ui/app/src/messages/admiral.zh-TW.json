@@ -533,6 +533,7 @@
         "isolationLabel": "隔離",
         "isolationTypeLabel": "類型",
         "isolationNetworkLabel": "網路",
+        "isolationExternalSubnetLabel": "外部子網路",
         "noneIsolationTypeLabel": "無",
         "subnetIsolationTypeLabel": "子網路",
         "securityGroupIsolationTypeLabel": "安全群組",

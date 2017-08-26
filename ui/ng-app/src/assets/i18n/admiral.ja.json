@@ -1,4 +1,19 @@
 {
+  "header": {
+    "title": {
+      "admiral": "Admiral",
+      "vic": "vSphere Integrated Containers",
+      "compute": "インフラストラクチャ"
+    },
+    "navigation": {
+      "home": "ホーム",
+      "administration": "管理"
+    },
+    "actions": {
+      "perferences": "設定",
+      "logout": "ログアウト"
+    }
+  },
   "projects": {
     "title": "プロジェクト",
     "project": "プロジェクト",
@@ -13,6 +28,8 @@
     "infrastructure": "インフラストラクチャ",
     "registryReplication": "レジストリのレプリケーション",
     "configuration": "構成",
+    "globalSelectLabel": "プロジェクト",
+    "globalSelectLabelEmbedded": "グループ",
     "edit": {
       "titleNew": "新規プロジェクト",
       "titleEdit": "プロジェクトの編集",
@@ -71,7 +88,8 @@
         "viewer": "閲覧者"
       },
       "source": {
-        "local": "ローカル"
+        "local": "ローカル",
+        "ldap": "LDAP"
       },
       "deleteMember": {
         "title": "プロジェクトからのメンバーの削除",
@@ -257,6 +275,29 @@
   "noItems": "アイテムがありません",
   "reload": "再ロード",
   "sessionExpired": "セッションが無効になりました。ログインし直してください。",
+  "navigation": {
+    "home": "ホーム",
+    "administration": "管理",
+    "deployments": "展開",
+    "applications": "アプリケーション",
+    "containers": "コンテナ",
+    "networks": "ネットワーク",
+    "volumes": "ボリューム",
+    "closures": "クロージャ",
+    "library": "ライブラリ",
+    "templates": "テンプレート",
+    "projectRepositories": "プロジェクト リポジトリ",
+    "publicRepositories": "パブリック リポジトリ",
+    "infrastructure": "インフラストラクチャ",
+    "clusters": "クラスタ",
+    "hosts": "ホスト",
+    "placements": "配置",
+    "identityManagement": "ID 管理",
+    "projects": "プロジェクト",
+    "registries": "レジストリ",
+    "configuration": "構成",
+    "logs": "ログ"
+  },
   "compute": {
     "resources": "リソース",
     "policies": "ポリシー",

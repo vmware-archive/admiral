@@ -533,6 +533,7 @@
         "isolationLabel": "分離",
         "isolationTypeLabel": "タイプ",
         "isolationNetworkLabel": "ネットワーク",
+        "isolationExternalSubnetLabel": "外部サブネット",
         "noneIsolationTypeLabel": "なし",
         "subnetIsolationTypeLabel": "サブネットワーク",
         "securityGroupIsolationTypeLabel": "セキュリティ グループ",

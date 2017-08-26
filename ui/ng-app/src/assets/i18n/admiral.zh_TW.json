@@ -1,4 +1,19 @@
 {
+  "header": {
+    "title": {
+      "admiral": "Admiral",
+      "vic": "vSphere Integrated Containers",
+      "compute": "基礎結構"
+    },
+    "navigation": {
+      "home": "首頁",
+      "administration": "管理"
+    },
+    "actions": {
+      "perferences": "喜好設定",
+      "logout": "登出"
+    }
+  },
   "projects": {
     "title": "專案",
     "project": "專案",
@@ -13,6 +28,8 @@
     "infrastructure": "基礎結構",
     "registryReplication": "登錄複寫",
     "configuration": "組態",
+    "globalSelectLabel": "專案",
+    "globalSelectLabelEmbedded": "群組",
     "edit": {
       "titleNew": "新增專案",
       "titleEdit": "編輯專案",
@@ -71,7 +88,8 @@
         "viewer": "檢視者"
       },
       "source": {
-        "local": "本機"
+        "local": "本機",
+        "ldap": "LDAP"
       },
       "deleteMember": {
         "title": "從專案移除成員",
@@ -257,6 +275,29 @@
   "noItems": "沒有項目",
   "reload": "重新載入",
   "sessionExpired": "您的工作階段不再有效，請重新登入!",
+  "navigation": {
+    "home": "首頁",
+    "administration": "管理",
+    "deployments": "部署",
+    "applications": "應用程式",
+    "containers": "容器",
+    "networks": "網路",
+    "volumes": "磁碟區",
+    "closures": "閉包",
+    "library": "程式庫",
+    "templates": "範本",
+    "projectRepositories": "專案存放庫",
+    "publicRepositories": "公用存放庫",
+    "infrastructure": "基礎結構",
+    "clusters": "叢集",
+    "hosts": "主機",
+    "placements": "放置",
+    "identityManagement": "身分識別管理",
+    "projects": "專案",
+    "registries": "登錄",
+    "configuration": "組態",
+    "logs": "記錄"
+  },
   "compute": {
     "resources": "資源",
     "policies": "原則",

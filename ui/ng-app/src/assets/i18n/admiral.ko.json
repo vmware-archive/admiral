@@ -1,4 +1,19 @@
 {
+  "header": {
+    "title": {
+      "admiral": "Admiral",
+      "vic": "vSphere Integrated Containers",
+      "compute": "인프라"
+    },
+    "navigation": {
+      "home": "홈",
+      "administration": "관리"
+    },
+    "actions": {
+      "perferences": "기본 설정",
+      "logout": "로그아웃"
+    }
+  },
   "projects": {
     "title": "프로젝트",
     "project": "프로젝트",
@@ -13,6 +28,8 @@
     "infrastructure": "인프라",
     "registryReplication": "레지스트리 복제",
     "configuration": "구성",
+    "globalSelectLabel": "프로젝트",
+    "globalSelectLabelEmbedded": "그룹",
     "edit": {
       "titleNew": "새 프로젝트",
       "titleEdit": "프로젝트 편집",
@@ -71,7 +88,8 @@
         "viewer": "뷰어"
       },
       "source": {
-        "local": "로컬"
+        "local": "로컬",
+        "ldap": "LDAP"
       },
       "deleteMember": {
         "title": "프로젝트에서 구성원 제거",
@@ -257,6 +275,29 @@
   "noItems": "항목 없음",
   "reload": "다시 로드",
   "sessionExpired": "세션이 더 이상 유효하지 않습니다. 다시 로그인하십시오!",
+  "navigation": {
+    "home": "홈",
+    "administration": "관리",
+    "deployments": "배포",
+    "applications": "애플리케이션",
+    "containers": "컨테이너",
+    "networks": "네트워크",
+    "volumes": "볼륨",
+    "closures": "클로저",
+    "library": "라이브러리",
+    "templates": "템플릿",
+    "projectRepositories": "프로젝트 저장소",
+    "publicRepositories": "공용 저장소",
+    "infrastructure": "인프라",
+    "clusters": "클러스터",
+    "hosts": "호스트",
+    "placements": "배치",
+    "identityManagement": "ID 관리",
+    "projects": "프로젝트",
+    "registries": "레지스트리",
+    "configuration": "구성",
+    "logs": "로그"
+  },
   "compute": {
     "resources": "리소스",
     "policies": "정책",

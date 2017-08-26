@@ -533,6 +533,7 @@
         "isolationLabel": "Aislamiento",
         "isolationTypeLabel": "Tipo",
         "isolationNetworkLabel": "Red",
+        "isolationExternalSubnetLabel": "Subred externa",
         "noneIsolationTypeLabel": "Ninguno",
         "subnetIsolationTypeLabel": "Subred",
         "securityGroupIsolationTypeLabel": "Grupo de seguridad",

@@ -533,6 +533,7 @@
         "isolationLabel": "Изоляция",
         "isolationTypeLabel": "Тип",
         "isolationNetworkLabel": "Сеть",
+        "isolationExternalSubnetLabel": "Внешняя подсеть",
         "noneIsolationTypeLabel": "Нет",
         "subnetIsolationTypeLabel": "Подсеть",
         "securityGroupIsolationTypeLabel": "Группа безопасности",

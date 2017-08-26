@@ -1,4 +1,19 @@
 {
+  "header": {
+    "title": {
+      "admiral": "Admiral",
+      "vic": "vSphere Integrated Containers",
+      "compute": "基础架构"
+    },
+    "navigation": {
+      "home": "主页",
+      "administration": "管理"
+    },
+    "actions": {
+      "perferences": "首选项",
+      "logout": "注销"
+    }
+  },
   "projects": {
     "title": "项目",
     "project": "项目",
@@ -13,6 +28,8 @@
     "infrastructure": "基础架构",
     "registryReplication": "注册表复制",
     "configuration": "配置",
+    "globalSelectLabel": "项目",
+    "globalSelectLabelEmbedded": "组",
     "edit": {
       "titleNew": "新建项目",
       "titleEdit": "编辑项目",
@@ -71,7 +88,8 @@
         "viewer": "查看器"
       },
       "source": {
-        "local": "本地"
+        "local": "本地",
+        "ldap": "LDAP"
       },
       "deleteMember": {
         "title": "从项目中移除成员",
@@ -257,6 +275,29 @@
   "noItems": "无任何项",
   "reload": "重新加载",
   "sessionExpired": "您的会话不再有效，请重新登录!",
+  "navigation": {
+    "home": "主页",
+    "administration": "管理",
+    "deployments": "部署",
+    "applications": "应用程序",
+    "containers": "容器",
+    "networks": "网络",
+    "volumes": "卷",
+    "closures": "闭包服务",
+    "library": "库",
+    "templates": "模板",
+    "projectRepositories": "项目存储库",
+    "publicRepositories": "公用存储库",
+    "infrastructure": "基础架构",
+    "clusters": "群集",
+    "hosts": "主机",
+    "placements": "放置",
+    "identityManagement": "身份管理",
+    "projects": "项目",
+    "registries": "注册表",
+    "configuration": "配置",
+    "logs": "日志"
+  },
   "compute": {
     "resources": "资源",
     "policies": "策略",

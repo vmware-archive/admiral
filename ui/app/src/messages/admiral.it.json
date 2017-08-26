@@ -1,7 +1,7 @@
 {
   "app": {
     "header": {
-      "management": "Gestione",
+      "management": "Management",
       "registry": "Registro"
     },
     "homepage": {
@@ -533,6 +533,7 @@
         "isolationLabel": "Isolamento",
         "isolationTypeLabel": "Tipo",
         "isolationNetworkLabel": "Rete",
+        "isolationExternalSubnetLabel": "Subnet esterna",
         "noneIsolationTypeLabel": "Nessuno",
         "subnetIsolationTypeLabel": "Sottorete",
         "securityGroupIsolationTypeLabel": "Gruppo di sicurezza",

@@ -1,4 +1,19 @@
 {
+  "header": {
+    "title": {
+      "admiral": "Admiral",
+      "vic": "vSphere Integrated Containers",
+      "compute": "Infraestructura"
+    },
+    "navigation": {
+      "home": "Inicio",
+      "administration": "Administración"
+    },
+    "actions": {
+      "perferences": "Preferencias",
+      "logout": "Cerrar sesión"
+    }
+  },
   "projects": {
     "title": "Proyectos",
     "project": "Proyecto",
@@ -13,6 +28,8 @@
     "infrastructure": "Infraestructura",
     "registryReplication": "Replicación de registro",
     "configuration": "Configuración",
+    "globalSelectLabel": "Proyecto",
+    "globalSelectLabelEmbedded": "Grupo",
     "edit": {
       "titleNew": "Nuevo proyecto",
       "titleEdit": "Editar proyecto",
@@ -71,7 +88,8 @@
         "viewer": "Visor"
       },
       "source": {
-        "local": "Local"
+        "local": "Local",
+        "ldap": "LDAP"
       },
       "deleteMember": {
         "title": "Quitar miembro del proyecto",
@@ -257,6 +275,29 @@
   "noItems": "No hay elementos",
   "reload": "Volver a cargar",
   "sessionExpired": "La sesión no es válida; vuelva a iniciar sesión.",
+  "navigation": {
+    "home": "Inicio",
+    "administration": "Administración",
+    "deployments": "Implementaciones",
+    "applications": "Aplicaciones",
+    "containers": "Contenedores",
+    "networks": "Redes",
+    "volumes": "Volúmenes",
+    "closures": "Clausuras",
+    "library": "Biblioteca",
+    "templates": "Plantillas",
+    "projectRepositories": "Repositorios de proyecto",
+    "publicRepositories": "Repositorios públicos",
+    "infrastructure": "Infraestructura",
+    "clusters": "Clústeres",
+    "hosts": "Hosts",
+    "placements": "Ubicaciones",
+    "identityManagement": "Administración de identidades",
+    "projects": "Proyectos",
+    "registries": "Registros",
+    "configuration": "Configuración",
+    "logs": "Logs"
+  },
   "compute": {
     "resources": "Recursos",
     "policies": "Políticas",

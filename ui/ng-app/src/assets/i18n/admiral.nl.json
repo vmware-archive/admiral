@@ -1,4 +1,19 @@
 {
+  "header": {
+    "title": {
+      "admiral": "Admiral",
+      "vic": "vSphere Integrated Containers",
+      "compute": "Infrastructuur"
+    },
+    "navigation": {
+      "home": "Home",
+      "administration": "Beheer"
+    },
+    "actions": {
+      "perferences": "Voorkeuren",
+      "logout": "Afmelden"
+    }
+  },
   "projects": {
     "title": "Projecten",
     "project": "Project",
@@ -13,6 +28,8 @@
     "infrastructure": "Infrastructuur",
     "registryReplication": "Registerreplicatie",
     "configuration": "Configuratie",
+    "globalSelectLabel": "Project",
+    "globalSelectLabelEmbedded": "Groep",
     "edit": {
       "titleNew": "Nieuw project",
       "titleEdit": "Project bewerken",
@@ -71,7 +88,8 @@
         "viewer": "Kijker"
       },
       "source": {
-        "local": "Lokaal"
+        "local": "Lokaal",
+        "ldap": "LDAP"
       },
       "deleteMember": {
         "title": "Lid uit project verwijderen",
@@ -257,6 +275,29 @@
   "noItems": "Geen items",
   "reload": "Herladen",
   "sessionExpired": "Uw sessie is niet meer geldig. U moet zich opnieuw aanmelden.",
+  "navigation": {
+    "home": "Home",
+    "administration": "Beheer",
+    "deployments": "Implementaties",
+    "applications": "Toepassingen",
+    "containers": "Containers",
+    "networks": "Netwerken",
+    "volumes": "Volumes",
+    "closures": "Sluitingen",
+    "library": "Bibliotheek",
+    "templates": "Sjablonen",
+    "projectRepositories": "Projectopslagplaatsen",
+    "publicRepositories": "Openbare opslagplaatsen",
+    "infrastructure": "Infrastructuur",
+    "clusters": "Clusters",
+    "hosts": "Hosts",
+    "placements": "Plaatsingen",
+    "identityManagement": "Identiteitsbeheer",
+    "projects": "Projecten",
+    "registries": "Registers",
+    "configuration": "Configuratie",
+    "logs": "Logboeken"
+  },
   "compute": {
     "resources": "Bronnen",
     "policies": "Beleid",

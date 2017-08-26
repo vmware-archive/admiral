@@ -1,4 +1,19 @@
 {
+  "header": {
+    "title": {
+      "admiral": "Admiral",
+      "vic": "vSphere Integrated Containers",
+      "compute": "Инфраструктура"
+    },
+    "navigation": {
+      "home": "Главная страница",
+      "administration": "Администрирование"
+    },
+    "actions": {
+      "perferences": "Параметры",
+      "logout": "Выйти"
+    }
+  },
   "projects": {
     "title": "Проекты",
     "project": "Проект",
@@ -13,6 +28,8 @@
     "infrastructure": "Инфраструктура",
     "registryReplication": "Репликация реестра",
     "configuration": "Конфигурация",
+    "globalSelectLabel": "Проект",
+    "globalSelectLabelEmbedded": "Группа",
     "edit": {
       "titleNew": "Новый проект",
       "titleEdit": "Изменить проект",
@@ -71,7 +88,8 @@
         "viewer": "Наблюдатель"
       },
       "source": {
-        "local": "Локальный"
+        "local": "Локальный",
+        "ldap": "LDAP"
       },
       "deleteMember": {
         "title": "Удалить участника из проекта",
@@ -257,6 +275,29 @@
   "noItems": "Нет элементов",
   "reload": "Перезагрузить",
   "sessionExpired": "Ваш сеанс прекращен. Выполните вход повторно.",
+  "navigation": {
+    "home": "Главная страница",
+    "administration": "Администрирование",
+    "deployments": "Развертывания",
+    "applications": "Приложения",
+    "containers": "Контейнеры",
+    "networks": "Сети",
+    "volumes": "Тома",
+    "closures": "Закрытия",
+    "library": "Библиотека",
+    "templates": "Шаблоны",
+    "projectRepositories": "Репозитории проекта",
+    "publicRepositories": "Общедоступные репозитории",
+    "infrastructure": "Инфраструктура",
+    "clusters": "Кластеры",
+    "hosts": "Узлы",
+    "placements": "Размещения",
+    "identityManagement": "Управление идентификацией",
+    "projects": "Проекты",
+    "registries": "Реестры",
+    "configuration": "Конфигурация",
+    "logs": "Журналы"
+  },
   "compute": {
     "resources": "Ресурсы",
     "policies": "Политики",
