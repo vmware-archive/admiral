@@ -28,7 +28,10 @@ export class FormerViewComponent {
 
   @Input()
   set path(val: string) {
-    val = val || '/containers';
+    if (!val) {
+      // no path to view provided, skipping frame loading
+      return;
+    }
 
     this.url = window.location.pathname + 'ogui/index-no-navigation.html';
 
@@ -45,21 +48,24 @@ export class FormerViewComponent {
     let iframeEl = this.theFrame.nativeElement;
     if (!iframeEl.src) {
       this.frameLoading = true;
+
       iframeEl.onload = () => {
         this.frameLoading = false;
         iframeEl.src = this.url;
 
         iframeEl.contentWindow.notifyNavigation = (hash) => {
           this.onRouteChange.emit(hash);
-        }
+        };
 
         iframeEl.contentWindow.notifySessionTimeout = () => {
           this.sessionTimedOutSubject.setError({});
-        }
-      }
+        };
+      };
 
       iframeEl.src = this.url;
-    } else if (!this.frameLoading){
+
+    } else if (!this.frameLoading) {
+
       iframeEl.src = this.url;
     }
   }

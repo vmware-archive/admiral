@@ -13,7 +13,7 @@ import { Component, ViewEncapsulation } from '@angular/core';
 
 @Component({
     selector: 'dummy-component',
-    template: '<div style="display: none"></div>',
+    template: '<div style="display: none;"></div>',
     encapsulation: ViewEncapsulation.None
 })
 export class DummyComponent {

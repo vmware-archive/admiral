@@ -89,5 +89,6 @@
             <span class="alert-text">{{ alertMessage }}</span>
         </div>
     </clr-alert>
-    <former-view [path]="formerViewPath" (onRouteChange)="onFormerViewRouteChange($event)"></former-view>
+    <former-view *ngIf="formerViewPath" [path]="formerViewPath"
+                 (onRouteChange)="onFormerViewRouteChange($event)"></former-view>
 </div>
