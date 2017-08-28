@@ -17,8 +17,8 @@
   ],
   "roles": {
     "CLOUD_ADMIN": {
-      "add": ["tony@admiral.com", "superusers"],
-      "remove": ["connie@admiral.com", "developers"]
+      "add": ["tony@admiral.com", "superusers@admiral.com"],
+      "remove": ["connie@admiral.com", "developers@admiral.com"]
     }
   }
 }

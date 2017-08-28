@@ -44,6 +44,7 @@ import static com.vmware.admiral.auth.util.AuthUtil.buildProjectViewersUserGroup
 import static com.vmware.admiral.auth.util.AuthUtil.buildResourceGroupState;
 import static com.vmware.admiral.auth.util.AuthUtil.buildRoleState;
 import static com.vmware.admiral.auth.util.AuthUtil.buildUserGroupState;
+import static com.vmware.admiral.auth.util.PrincipalUtil.encode;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -269,7 +270,7 @@ public class AuthUtilTest {
         // roles are introduced. Also, a case for developer authorization context and cloud admin
         // need to be added.
         Claims devOpsClaims = new Claims.Builder()
-                .setSubject(AuthUtil.buildUserServicePathFromPrincipalId("some-user@local"))
+                .setSubject(AuthUtil.buildUserServicePathFromPrincipalId(encode("some-user@local")))
                 .getResult();
         AuthorizationContext devOpsContext = AuthorizationContext.Builder.create()
                 .setClaims(devOpsClaims).getResult();

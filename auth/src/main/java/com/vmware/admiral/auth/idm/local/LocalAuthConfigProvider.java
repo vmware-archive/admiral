@@ -19,6 +19,7 @@ import static com.vmware.admiral.auth.util.AuthUtil.CLOUD_ADMINS_USER_GROUP_LINK
 import static com.vmware.admiral.auth.util.AuthUtil.DEFAULT_BASIC_USERS_EXTENDED_ROLE_LINK;
 import static com.vmware.admiral.auth.util.AuthUtil.DEFAULT_BASIC_USERS_ROLE_LINK;
 import static com.vmware.admiral.auth.util.AuthUtil.DEFAULT_CLOUD_ADMINS_ROLE_LINK;
+import static com.vmware.admiral.auth.util.PrincipalUtil.encode;
 import static com.vmware.xenon.common.UriUtils.buildUriPath;
 
 import java.io.File;
@@ -216,7 +217,7 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
         state.name = group.name;
         state.type = LocalPrincipalType.GROUP;
         state.groupMembersLinks = group.members.stream()
-                .map(u -> UriUtils.buildUriPath(LocalPrincipalFactoryService.SELF_LINK, u))
+                .map(u -> UriUtils.buildUriPath(LocalPrincipalFactoryService.SELF_LINK, encode(u)))
                 .collect(Collectors.toList());
 
         Operation op = Operation.createPost(host, LocalPrincipalFactoryService.SELF_LINK)
@@ -283,7 +284,7 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
                 }
             }
         }, true,
-                buildUriPath(LocalPrincipalFactoryService.SELF_LINK, user.email));
+                buildUriPath(LocalPrincipalFactoryService.SELF_LINK, encode(user.email)));
     }
 
     @Override
@@ -302,7 +303,7 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
     }
 
     private static String buildUserUri(Claims claims) {
-        return UserService.FACTORY_LINK + "/" + claims.getSubject().toLowerCase();
+        return UserService.FACTORY_LINK + "/" + claims.getSubject();
     }
 
     @Override

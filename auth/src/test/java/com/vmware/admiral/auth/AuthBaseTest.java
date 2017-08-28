@@ -14,6 +14,8 @@ package com.vmware.admiral.auth;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
+import static com.vmware.admiral.auth.util.PrincipalUtil.encode;
+
 import java.io.File;
 import java.net.URI;
 import java.nio.file.Files;
@@ -80,8 +82,8 @@ public abstract class AuthBaseTest extends BaseTestCase {
     protected static final String USER_NAME_GLORIA = "Gloria";
     protected static final String USER_NAME_CONNIE = "Connie";
 
-    protected static final String USER_GROUP_SUPERUSERS = "superusers";
-    protected static final String USER_GROUP_DEVELOPERS = "developers";
+    protected static final String USER_GROUP_SUPERUSERS = "superusers@admiral.com";
+    protected static final String USER_GROUP_DEVELOPERS = "developers@admiral.com";
 
     public static final int DEFAULT_WAIT_SECONDS_FOR_AUTH_SERVICES = 180;
 
@@ -525,6 +527,6 @@ public abstract class AuthBaseTest extends BaseTestCase {
     }
 
     protected String buildUserServicePath(String email) {
-        return AuthUtil.buildUserServicePathFromPrincipalId(email);
+        return AuthUtil.buildUserServicePathFromPrincipalId(encode(email));
     }
 }

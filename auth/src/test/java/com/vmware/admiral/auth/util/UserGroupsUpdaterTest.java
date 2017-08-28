@@ -14,6 +14,8 @@ package com.vmware.admiral.auth.util;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import static com.vmware.admiral.auth.util.PrincipalUtil.encode;
+
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.List;
@@ -42,7 +44,7 @@ public class UserGroupsUpdaterTest extends AuthBaseTest {
     @Test
     public void testUserGroupsUpdater() throws Throwable {
         // Create test user group.
-        String userGroupSelfLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, "testId");
+        String userGroupSelfLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, encode("testId"));
         Query userGroupQuery = AuthUtil.buildQueryForUsers(userGroupSelfLink);
         UserGroupState userGroupState = UserGroupState.Builder
                 .create()
@@ -57,7 +59,7 @@ public class UserGroupsUpdaterTest extends AuthBaseTest {
         DeferredResult<Void> result = UserGroupsUpdater.create()
                 .setService(privilegedTestService)
                 .setGroupLink(userGroupSelfLink)
-                .setUsersToAdd(Arrays.asList(USER_EMAIL_ADMIN, USER_EMAIL_CONNIE))
+                .setUsersToAdd(Arrays.asList(encode(USER_EMAIL_ADMIN), encode(USER_EMAIL_CONNIE)))
                 .update();
 
         TestContext ctx = testCreate(1);
@@ -72,7 +74,7 @@ public class UserGroupsUpdaterTest extends AuthBaseTest {
 
         waitFor(() -> {
             UserState connieState = getDocumentNoWait(UserState.class, UriUtils.buildUriPath(
-                    UserService.FACTORY_LINK, USER_EMAIL_CONNIE));
+                    UserService.FACTORY_LINK, encode(USER_EMAIL_CONNIE)));
             if (!connieState.userGroupLinks.contains(userGroupSelfLink)) {
                 return false;
             }
@@ -81,7 +83,7 @@ public class UserGroupsUpdaterTest extends AuthBaseTest {
 
         waitFor(() -> {
             UserState adminState = getDocumentNoWait(UserState.class, UriUtils.buildUriPath(
-                    UserService.FACTORY_LINK, USER_EMAIL_ADMIN));
+                    UserService.FACTORY_LINK, encode(USER_EMAIL_ADMIN)));
             if (!adminState.userGroupLinks.contains(userGroupSelfLink)) {
                 return false;
             }
@@ -99,7 +101,7 @@ public class UserGroupsUpdaterTest extends AuthBaseTest {
         result = UserGroupsUpdater.create()
                 .setService(privilegedTestService)
                 .setGroupLink(userGroupSelfLink)
-                .setUsersToRemove(Arrays.asList(USER_EMAIL_CONNIE))
+                .setUsersToRemove(Arrays.asList(encode(USER_EMAIL_CONNIE)))
                 .update();
 
         TestContext ctx1 = testCreate(1);
@@ -115,7 +117,7 @@ public class UserGroupsUpdaterTest extends AuthBaseTest {
         // Verify user is removed.
         waitFor(() -> {
             UserState connieState = getDocumentNoWait(UserState.class, UriUtils.buildUriPath(
-                    UserService.FACTORY_LINK, USER_EMAIL_CONNIE));
+                    UserService.FACTORY_LINK, encode(USER_EMAIL_CONNIE)));
             if (connieState.userGroupLinks.contains(userGroupSelfLink)) {
                 return false;
             }

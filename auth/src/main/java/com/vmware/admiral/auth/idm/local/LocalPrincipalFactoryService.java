@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.auth.idm.local;
 
+import static com.vmware.admiral.auth.util.PrincipalUtil.encode;
+
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalState;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalType;
 import com.vmware.admiral.common.ManagementUriParts;
@@ -35,9 +37,9 @@ public class LocalPrincipalFactoryService extends FactoryService {
     protected String buildDefaultChildSelfLink(ServiceDocument document) {
         LocalPrincipalState state = (LocalPrincipalState) document;
         if (state.type == null || LocalPrincipalType.USER == state.type) {
-            return state.email;
+            return encode(state.email);
         }
         // In this case the state is group.
-        return state.name;
+        return encode(state.name);
     }
 }

@@ -751,7 +751,7 @@ public class AuthUtil {
                 || authContext.getClaims().getSubject() == null) {
             return null;
         }
-        return authContext.getClaims().getSubject().toLowerCase();
+        return authContext.getClaims().getSubject();
     }
 
     /**

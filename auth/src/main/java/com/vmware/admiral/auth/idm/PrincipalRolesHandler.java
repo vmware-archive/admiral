@@ -14,12 +14,14 @@ package com.vmware.admiral.auth.idm;
 import static com.vmware.admiral.auth.util.AuthUtil.CLOUD_ADMINS_USER_GROUP_LINK;
 import static com.vmware.admiral.auth.util.AuthUtil.addReplicationFactor;
 import static com.vmware.admiral.auth.util.AuthUtil.buildCloudAdminsRole;
+import static com.vmware.admiral.auth.util.PrincipalUtil.encode;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.vmware.admiral.auth.idm.Principal.PrincipalType;
 import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.auth.util.PrincipalUtil;
 import com.vmware.admiral.auth.util.UserGroupsUpdater;
@@ -38,8 +40,6 @@ public class PrincipalRolesHandler {
     private static final String ROLE_NOT_SUPPORTED_MESSAGE = "Assign/unassign operations for role"
             + " %s not supported.";
     private static final String ROLE_NOT_SUPPORTED_MESSAGE_CODE = "auth.role.not.supported";
-
-    public static final String PRINCIPAL_AT_SIGN = "@";
 
     public static class PrincipalRoleAssignment {
         public List<String> add;
@@ -96,10 +96,13 @@ public class PrincipalRolesHandler {
             return DeferredResult.completed(null);
         }
 
-        if (principalId.contains(PRINCIPAL_AT_SIGN)) {
-            return handleUser();
-        }
-        return handleUserGroup();
+        return PrincipalUtil.getPrincipal(service, encode(principalId))
+                .thenCompose(principal -> {
+                    if (principal.type == PrincipalType.GROUP) {
+                        return handleUserGroup();
+                    }
+                    return handleUser();
+                });
     }
 
     private DeferredResult<Void> handleUser() {
@@ -194,7 +197,7 @@ public class PrincipalRolesHandler {
 
     private DeferredResult<Void> handleCloudAdminGroupUnassignment() {
         String roleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, AuthRole.CLOUD_ADMIN
-                .buildRoleWithSuffix(principalId));
+                .buildRoleWithSuffix(encode(principalId)));
         Operation getRole = Operation.createGet(service, roleLink);
 
         DeferredResult<Void> result = new DeferredResult<>();
@@ -224,7 +227,7 @@ public class PrincipalRolesHandler {
     private DeferredResult<Void> handleCloudAdminGroupAssignment(String principalId) {
         return PrincipalUtil.getOrCreateUserGroup(service, principalId)
                 .thenCompose(userGroup -> {
-                    RoleState roleState = buildCloudAdminsRole(principalId,
+                    RoleState roleState = buildCloudAdminsRole(encode(principalId),
                             userGroup.documentSelfLink);
                     Operation createRoleOp = Operation
                             .createPost(service, RoleService.FACTORY_LINK)

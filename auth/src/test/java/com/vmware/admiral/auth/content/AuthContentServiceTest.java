@@ -17,6 +17,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import static com.vmware.admiral.auth.util.AuthUtil.CLOUD_ADMINS_USER_GROUP_LINK;
+import static com.vmware.admiral.auth.util.PrincipalUtil.encode;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -115,7 +116,7 @@ public class AuthContentServiceTest extends AuthBaseTest {
     public void testImportContentToAssignAndUnassignGroups() throws Throwable {
         // First assign developers to cloud admins role, because
         // from config file will we will unassign them.
-        String developers = "developers";
+        String developers = USER_GROUP_DEVELOPERS;
         PrincipalRoleAssignment roleAssignment = new PrincipalRoleAssignment();
         roleAssignment.add = new ArrayList<>();
         roleAssignment.add.add(AuthRole.CLOUD_ADMIN.name());
@@ -123,7 +124,7 @@ public class AuthContentServiceTest extends AuthBaseTest {
                 PrincipalService.ROLES_SUFFIX));
 
         RoleState roleState = getDocument(RoleState.class, UriUtils.buildUriPath(
-                RoleService.FACTORY_LINK, AuthRole.CLOUD_ADMIN.buildRoleWithSuffix(developers)));
+                RoleService.FACTORY_LINK, AuthRole.CLOUD_ADMIN.buildRoleWithSuffix(encode(developers))));
         assertNotNull(roleState);
 
         // Import content
@@ -144,9 +145,8 @@ public class AuthContentServiceTest extends AuthBaseTest {
         assertTrue(!connieState.userGroupLinks.contains(CLOUD_ADMINS_USER_GROUP_LINK));
 
         // Verify superusers are cloud admins.
-        String superusers = "superusers";
         roleState = getDocument(RoleState.class, UriUtils.buildUriPath(RoleService.FACTORY_LINK,
-                AuthRole.CLOUD_ADMIN.buildRoleWithSuffix(superusers)));
+                AuthRole.CLOUD_ADMIN.buildRoleWithSuffix(encode(USER_GROUP_SUPERUSERS))));
         assertNotNull(roleState);
 
         // Verify developers are unassigned from cloud admins.

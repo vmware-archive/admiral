@@ -18,6 +18,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import static com.vmware.admiral.auth.util.PrincipalUtil.encode;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -228,18 +230,18 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertTrue(testProject.membersUserGroupLinks.size() == 2);
 
         String superusersRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
-                AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(projectId, USER_GROUP_SUPERUSERS));
+                AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(projectId, encode(USER_GROUP_SUPERUSERS)));
 
         String developersRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
-                AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(projectId, USER_GROUP_DEVELOPERS));
+                AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(projectId, encode(USER_GROUP_DEVELOPERS)));
 
         String developerExtendedRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
                 AuthRole.PROJECT_MEMBER_EXTENDED
-                        .buildRoleWithSuffix(projectId, USER_GROUP_DEVELOPERS));
+                        .buildRoleWithSuffix(projectId, encode(USER_GROUP_DEVELOPERS)));
 
         String developersExtendedResourceGroupLink = UriUtils
                 .buildUriPath(ResourceGroupService.FACTORY_LINK, AuthRole.PROJECT_MEMBER_EXTENDED
-                        .buildRoleWithSuffix(projectId, USER_GROUP_DEVELOPERS));
+                        .buildRoleWithSuffix(projectId, encode(USER_GROUP_DEVELOPERS)));
 
         assertDocumentExists(superusersRoleLink);
         assertDocumentExists(developersRoleLink);
@@ -363,7 +365,7 @@ public class ProjectServiceTest extends AuthBaseTest {
 
         waitFor(() -> {
             UserState gloria = getDocumentNoWait(UserState.class,
-                    UriUtils.buildUriPath(UserService.FACTORY_LINK, USER_EMAIL_GLORIA));
+                    UriUtils.buildUriPath(UserService.FACTORY_LINK, encode(USER_EMAIL_GLORIA)));
 
             String groupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
                     AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(
@@ -373,7 +375,7 @@ public class ProjectServiceTest extends AuthBaseTest {
 
         waitFor(() -> {
             UserState connie = getDocumentNoWait(UserState.class,
-                    UriUtils.buildUriPath(UserService.FACTORY_LINK, USER_EMAIL_CONNIE));
+                    UriUtils.buildUriPath(UserService.FACTORY_LINK, encode(USER_EMAIL_CONNIE)));
 
             String groupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
                     AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(
@@ -383,7 +385,7 @@ public class ProjectServiceTest extends AuthBaseTest {
 
         waitFor(() -> {
             UserState admin = getDocumentNoWait(UserState.class,
-                    UriUtils.buildUriPath(UserService.FACTORY_LINK, USER_EMAIL_ADMIN));
+                    UriUtils.buildUriPath(UserService.FACTORY_LINK, encode(USER_EMAIL_ADMIN)));
 
             String groupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
                     AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(
@@ -428,7 +430,7 @@ public class ProjectServiceTest extends AuthBaseTest {
 
         waitFor(() -> {
             UserState gloria = getDocumentNoWait(UserState.class,
-                    UriUtils.buildUriPath(UserService.FACTORY_LINK, USER_EMAIL_GLORIA));
+                    UriUtils.buildUriPath(UserService.FACTORY_LINK, encode(USER_EMAIL_GLORIA)));
 
             String groupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
                     AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(
@@ -438,7 +440,7 @@ public class ProjectServiceTest extends AuthBaseTest {
 
         waitFor(() -> {
             UserState connie = getDocumentNoWait(UserState.class,
-                    UriUtils.buildUriPath(UserService.FACTORY_LINK, USER_EMAIL_CONNIE));
+                    UriUtils.buildUriPath(UserService.FACTORY_LINK, encode(USER_EMAIL_CONNIE)));
 
             String groupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
                     AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(
@@ -448,7 +450,7 @@ public class ProjectServiceTest extends AuthBaseTest {
 
         waitFor(() -> {
             UserState admin = getDocumentNoWait(UserState.class,
-                    UriUtils.buildUriPath(UserService.FACTORY_LINK, USER_EMAIL_ADMIN));
+                    UriUtils.buildUriPath(UserService.FACTORY_LINK, encode(USER_EMAIL_ADMIN)));
 
             String groupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
                     AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(
@@ -493,7 +495,7 @@ public class ProjectServiceTest extends AuthBaseTest {
 
         waitFor(() -> {
             UserState gloria = getDocumentNoWait(UserState.class,
-                    UriUtils.buildUriPath(UserService.FACTORY_LINK, USER_EMAIL_GLORIA));
+                    UriUtils.buildUriPath(UserService.FACTORY_LINK, encode(USER_EMAIL_GLORIA)));
 
             String groupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
                     AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(
@@ -503,7 +505,7 @@ public class ProjectServiceTest extends AuthBaseTest {
 
         waitFor(() -> {
             UserState connie = getDocumentNoWait(UserState.class,
-                    UriUtils.buildUriPath(UserService.FACTORY_LINK, USER_EMAIL_CONNIE));
+                    UriUtils.buildUriPath(UserService.FACTORY_LINK, encode(USER_EMAIL_CONNIE)));
 
             String groupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
                     AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(
@@ -661,7 +663,7 @@ public class ProjectServiceTest extends AuthBaseTest {
         // assert that the new role does not exist
         String roleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
                 AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(Service.getId(project.documentSelfLink),
-                        USER_GROUP_DEVELOPERS));
+                        encode(USER_GROUP_DEVELOPERS)));
         assertDocumentNotExists(roleLink);
 
         host.testStart(1);
@@ -689,11 +691,11 @@ public class ProjectServiceTest extends AuthBaseTest {
 
         // verify that the user group is added to the project
         expandedState = getExpandedProjectState(project.documentSelfLink);
-
+        assertEquals(2, expandedState.membersUserGroupLinks.size());
         assertTrue(expandedState.membersUserGroupLinks.stream()
                 .anyMatch((userGroupLink) -> userGroupLink.equals(
                         UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
-                                USER_GROUP_DEVELOPERS))));
+                                encode(USER_GROUP_DEVELOPERS)))));
     }
 
     @Test
@@ -733,7 +735,7 @@ public class ProjectServiceTest extends AuthBaseTest {
         // assert that the new role does not exist
         String roleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
                 AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(Service.getId(project.documentSelfLink),
-                        USER_GROUP_DEVELOPERS));
+                        encode(USER_GROUP_DEVELOPERS)));
         assertDocumentNotExists(roleLink);
 
         host.testStart(1);
@@ -760,12 +762,12 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertDocumentExists(roleLink);
 
         expandedState = getExpandedProjectState(project.documentSelfLink);
-
+        assertEquals(2, expandedState.membersUserGroupLinks.size());
         // verify that the user group link is added to the members group links
         assertTrue(expandedState.membersUserGroupLinks.stream()
                 .anyMatch((userGroupLink) -> userGroupLink.equals(
                         UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
-                                USER_GROUP_DEVELOPERS))));
+                                encode(USER_GROUP_DEVELOPERS)))));
 
         // verify that the user group is added to the members
         assertTrue(expandedState.members.stream()
@@ -1201,8 +1203,8 @@ public class ProjectServiceTest extends AuthBaseTest {
 
     @Test
     public void testAssignProjectRoleToPrincipalWithoutUserState() throws Throwable {
-        deleteUser(USER_EMAIL_CONNIE);
-        assertDocumentNotExists(AuthUtil.buildUserServicePathFromPrincipalId(USER_EMAIL_CONNIE));
+        deleteUser(encode(USER_EMAIL_CONNIE));
+        assertDocumentNotExists(AuthUtil.buildUserServicePathFromPrincipalId(encode(USER_EMAIL_CONNIE)));
 
         ProjectState projectState = createProject("test-test");
 
@@ -1220,7 +1222,7 @@ public class ProjectServiceTest extends AuthBaseTest {
         Principal principal = expandedProjectState.administrators.get(0);
         assertEquals(USER_EMAIL_CONNIE, principal.id);
 
-        assertDocumentExists(AuthUtil.buildUserServicePathFromPrincipalId(USER_EMAIL_CONNIE));
+        assertDocumentExists(AuthUtil.buildUserServicePathFromPrincipalId(encode(USER_EMAIL_CONNIE)));
 
         SecurityContext connieContext = getSecurityContext(USER_EMAIL_CONNIE);
 

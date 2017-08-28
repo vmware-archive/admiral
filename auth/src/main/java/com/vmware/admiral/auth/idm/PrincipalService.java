@@ -17,6 +17,7 @@ import static com.vmware.admiral.auth.util.PrincipalRolesUtil.getDirectlyAssigne
 import static com.vmware.admiral.auth.util.PrincipalRolesUtil.getDirectlyAssignedSystemRolesForGroup;
 import static com.vmware.admiral.auth.util.PrincipalRolesUtil.getDirectlyAssignedSystemRolesForUser;
 import static com.vmware.admiral.auth.util.PrincipalUtil.copyPrincipalData;
+import static com.vmware.admiral.auth.util.PrincipalUtil.encode;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNullOrEmpty;
 
 import java.net.URI;
@@ -24,6 +25,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.vmware.admiral.auth.idm.Principal.PrincipalType;
@@ -57,9 +59,6 @@ public class PrincipalService extends StatelessService {
 
     private static final String PRINCIPAL_ID_PATH_SEGMENT = "principalId";
 
-    private static final String TEMPLATE_PRINCIPAL_ID_PATH_SEGMENT = UriUtils
-            .buildUriPath(SELF_LINK,
-                    String.format("{%s}", PRINCIPAL_ID_PATH_SEGMENT));
     private static final String TEMPLATE_PRINCIPAL_SECURITY_CONTEXT = UriUtils
             .buildUriPath(SELF_LINK,
                     String.format("{%s}", PRINCIPAL_ID_PATH_SEGMENT), SECURITY_CONTEXT_SUFFIX);
@@ -71,24 +70,18 @@ public class PrincipalService extends StatelessService {
             .compile(String.format("^%s\\/?$", SELF_LINK.replaceAll("/", "\\\\/")));
 
     /**
-     * Matches /auth/idm/principals/{principal-id}
-     */
-    private static final Pattern PATTERN_PRINCIPAL_GET_BY_ID = Pattern
-            .compile(String.format("^%s\\/[^\\/]+\\/?$", SELF_LINK.replaceAll("/", "\\\\/")));
-
-    /**
      * Matches /auth/idm/principals/{principal-id}/security-context
      */
     private static final Pattern PATTERN_PRINCIPAL_SECURITY_CONTEXT = Pattern
-            .compile(String.format("^%s\\/[^\\/]+%s\\/?$", SELF_LINK.replaceAll("/", "\\\\/"),
-                    SECURITY_CONTEXT_SUFFIX));
+            .compile(String.format("^%s\\/(?<%s>.+?)%s\\/?$", SELF_LINK.replaceAll("/", "\\\\/"),
+                    PRINCIPAL_ID_PATH_SEGMENT, SECURITY_CONTEXT_SUFFIX));
 
     /**
      * Matches /auth/idm/principals/{principal-id}/roles
      */
     private static final Pattern PATTERN_PRINCIPAL_ROLES = Pattern
-            .compile(String.format("^%s\\/[^\\/]+%s\\/?$", SELF_LINK.replaceAll("/", "\\\\/"),
-                    ROLES_SUFFIX));
+            .compile(String.format("^%s\\/(?<%s>.+?)%s\\/?$", SELF_LINK.replaceAll("/", "\\\\/"),
+                    PRINCIPAL_ID_PATH_SEGMENT, ROLES_SUFFIX));
 
     private PrincipalProvider provider;
 
@@ -106,7 +99,12 @@ public class PrincipalService extends StatelessService {
 
     @Override
     public void handleGet(Operation get) {
-        if (isPrincipalByIdRequest(get)) {
+        if (isSecurityContextRequest(get)) {
+            handleGetSecurityContext(get);
+        } else if (isRolesRequest(get)) {
+            handleGetPrincipalRoles(get);
+
+        } else if (isPrincipalByIdRequest(get)) {
             handleSearchById(get);
 
         } else if (isPrincipalByCriteriaRequest(get)) {
@@ -116,25 +114,22 @@ public class PrincipalService extends StatelessService {
 
             handleSearchByCriteria(queryParams.get(CRITERIA_QUERY), roleQueryValue, get);
 
-        } else if (isSecurityContextRequest(get)) {
-            handleGetSecurityContext(get);
-
-        } else if (isRolesRequest(get)) {
-            handleGetPrincipalRoles(get);
-
         } else {
             get.fail(new IllegalArgumentException(
                     "Provide either criteria or principalId to search for."));
         }
     }
 
+    /**
+     * Checks whether a principal ID was specified. Ignores suffixes like {@link #ROLES_SUFFIX}
+     * or {@link #SECURITY_CONTEXT_SUFFIX}. Additional checks are needed when those are expected.
+     */
     private boolean isPrincipalByIdRequest(Operation op) {
-        return UriUtilsExtended.uriPathMatches(op.getUri(), PATTERN_PRINCIPAL_GET_BY_ID);
+        return op.getUri().getPath().length() > SELF_LINK.length() + 1;
     }
 
     private String getIdFromPrincipalByIdRequest(Operation op) {
-        return UriUtils.parseUriPathSegments(op.getUri(), TEMPLATE_PRINCIPAL_ID_PATH_SEGMENT)
-                .get(PRINCIPAL_ID_PATH_SEGMENT);
+        return op.getUri().getPath().substring(SELF_LINK.length() + 1);
     }
 
     private boolean isPrincipalByCriteriaRequest(Operation op) {
@@ -149,22 +144,20 @@ public class PrincipalService extends StatelessService {
         return UriUtilsExtended.uriPathMatches(op.getUri(), PATTERN_PRINCIPAL_SECURITY_CONTEXT);
     }
 
-    private String getIdFromSecurityContextRequest(Operation op) {
-        return UriUtils.parseUriPathSegments(op.getUri(), TEMPLATE_PRINCIPAL_SECURITY_CONTEXT)
-                .get(PRINCIPAL_ID_PATH_SEGMENT);
-    }
-
     private boolean isRolesRequest(Operation op) {
         return UriUtilsExtended.uriPathMatches(op.getUri(), PATTERN_PRINCIPAL_ROLES);
     }
 
-    private String getIdFromRolesRequest(Operation op) {
-        return UriUtils.parseUriPathSegments(op.getUri(), TEMPLATE_PRINCIPAL_SECURITY_CONTEXT)
-                .get(PRINCIPAL_ID_PATH_SEGMENT);
-    }
-
     private void handleGetSecurityContext(Operation get) {
-        String principalId = getIdFromSecurityContextRequest(get);
+        String principalId = extractPropertyFromPath(PATTERN_PRINCIPAL_SECURITY_CONTEXT,
+                PRINCIPAL_ID_PATH_SEGMENT, get.getUri().getPath());
+
+        if (principalId == null) {
+            get.fail(new LocalizableValidationException("Principal ID is required in URI path.",
+                    "auth.principalId.required"));
+            return;
+        }
+
         SecurityContextUtil.getSecurityContext(this, get, principalId)
                 .thenAccept((context) -> {
                     get.setBody(context);
@@ -189,7 +182,7 @@ public class PrincipalService extends StatelessService {
 
     private void handleSearchById(Operation get) {
         String principalId = getIdFromPrincipalByIdRequest(get);
-        DeferredResult<Principal> result = provider.getPrincipal(get, principalId);
+        DeferredResult<Principal> result = provider.getPrincipal(get, encode(principalId));
         result.whenComplete((principal, ex) -> {
             if (ex != null) {
                 if (ex.getCause() instanceof ServiceNotFoundException) {
@@ -218,7 +211,14 @@ public class PrincipalService extends StatelessService {
     }
 
     private void handleGetPrincipalRoles(Operation get) {
-        String principalId = getIdFromRolesRequest(get);
+        String principalId = extractPropertyFromPath(PATTERN_PRINCIPAL_ROLES,
+                PRINCIPAL_ID_PATH_SEGMENT, get.getUri().getPath());
+
+        if (principalId == null) {
+            get.fail(new LocalizableValidationException("Principal ID is required in URI path.",
+                    "auth.principalId.required"));
+            return;
+        }
         PrincipalRoles rolesResponse = new PrincipalRoles();
         PrincipalUtil.getPrincipal(this, get, principalId)
                 .thenAccept(principal -> copyPrincipalData(principal, rolesResponse))
@@ -334,10 +334,10 @@ public class PrincipalService extends StatelessService {
             return;
         }
 
-        String principalId = UriUtils.parseUriPathSegments(patch.getUri(),
-                TEMPLATE_PRINCIPAL_ID_PATH_SEGMENT).get(PRINCIPAL_ID_PATH_SEGMENT);
+        String principalId = extractPropertyFromPath(PATTERN_PRINCIPAL_ROLES,
+                PRINCIPAL_ID_PATH_SEGMENT, patch.getUri().getPath());
 
-        if (principalId == null || principalId.isEmpty()) {
+        if (principalId == null) {
             patch.fail(new LocalizableValidationException("Principal ID is required in URI path.",
                     "auth.principalId.required"));
             return;
@@ -364,5 +364,14 @@ public class PrincipalService extends StatelessService {
             }
             patch.complete();
         });
+    }
+
+    private static String extractPropertyFromPath(Pattern pattern, String groupName, String path) {
+        Matcher matcher = pattern.matcher(path);
+        if (!matcher.matches()) {
+            return null;
+        }
+
+        return matcher.group(groupName);
     }
 }

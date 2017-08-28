@@ -15,6 +15,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import static com.vmware.admiral.auth.util.PrincipalUtil.encode;
+
 import java.util.Collections;
 
 import org.junit.Before;
@@ -68,13 +70,13 @@ public class ProjectRolesHandlerTest extends AuthBaseTest {
         projectRoles.administrators.add = Collections.singletonList(USER_GROUP_SUPERUSERS);
 
         String userGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
-                USER_GROUP_SUPERUSERS);
+                encode(USER_GROUP_SUPERUSERS));
         String resourceGroupLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
                 AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(Service.getId(project
                         .documentSelfLink)));
         String roleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
                 AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(Service.getId(project.documentSelfLink),
-                        USER_GROUP_SUPERUSERS));
+                        encode(USER_GROUP_SUPERUSERS)));
 
         assertDocumentExists(userGroupLink);
         assertDocumentExists(resourceGroupLink);
@@ -108,12 +110,12 @@ public class ProjectRolesHandlerTest extends AuthBaseTest {
         projectRoles.administrators.remove = Collections.singletonList(USER_GROUP_SUPERUSERS);
 
         String userGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
-                USER_GROUP_SUPERUSERS);
+                encode(USER_GROUP_SUPERUSERS));
         String resourceGroupLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
                 Service.getId(project.documentSelfLink));
         String roleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
                 AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(Service.getId(project.documentSelfLink),
-                        USER_GROUP_SUPERUSERS));
+                        encode(USER_GROUP_SUPERUSERS)));
 
         assertDocumentNotExists(roleLink);
 
@@ -177,7 +179,7 @@ public class ProjectRolesHandlerTest extends AuthBaseTest {
         projectRoles.members.add = Collections.singletonList(USER_GROUP_SUPERUSERS);
 
         String userGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
-                USER_GROUP_SUPERUSERS);
+                encode(USER_GROUP_SUPERUSERS));
 
         // delete the existing user group
         doDelete(UriUtils.buildUri(host, userGroupLink), false);
@@ -200,7 +202,7 @@ public class ProjectRolesHandlerTest extends AuthBaseTest {
 
     @Test
     public void testAssignPrincipalAsGroup() {
-        String groupId = "superusers";
+        String groupId = "superusers@admiral.com";
 
         ProjectRoles projectRoles = new ProjectRoles();
         projectRoles.members = new PrincipalRoleAssignment();
@@ -211,10 +213,10 @@ public class ProjectRolesHandlerTest extends AuthBaseTest {
         doPatch(projectRoles, project.documentSelfLink);
 
         String resourceGroupLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
-                AuthRole.PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId, groupId));
+                AuthRole.PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId, encode(groupId)));
 
         String roleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
-                AuthRole.PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId, groupId));
+                AuthRole.PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId, encode(groupId)));
 
         assertDocumentExists(resourceGroupLink);
         assertDocumentExists(roleLink);
@@ -231,7 +233,7 @@ public class ProjectRolesHandlerTest extends AuthBaseTest {
 
     @Test
     public void testAssignPrincipalOfTypeGroupTwice() {
-        String groupId = "superusers";
+        String groupId = "superusers@admiral.com";
 
         ProjectRoles projectRoles = new ProjectRoles();
         projectRoles.members = new PrincipalRoleAssignment();
@@ -245,10 +247,10 @@ public class ProjectRolesHandlerTest extends AuthBaseTest {
         doPatch(projectRoles, project.documentSelfLink);
 
         String resourceGroupLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
-                AuthRole.PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId, groupId));
+                AuthRole.PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId, encode(groupId)));
 
         String roleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
-                AuthRole.PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId, groupId));
+                AuthRole.PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId, encode(groupId)));
 
         assertDocumentExists(resourceGroupLink);
         assertDocumentExists(roleLink);

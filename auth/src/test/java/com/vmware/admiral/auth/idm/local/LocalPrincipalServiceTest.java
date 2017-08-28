@@ -18,6 +18,7 @@ import static org.junit.Assert.assertTrue;
 
 import static com.vmware.admiral.auth.util.AuthUtil.BASIC_USERS_USER_GROUP_LINK;
 import static com.vmware.admiral.auth.util.AuthUtil.CLOUD_ADMINS_USER_GROUP_LINK;
+import static com.vmware.admiral.auth.util.PrincipalUtil.encode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,7 +52,7 @@ public class LocalPrincipalServiceTest extends AuthBaseTest {
     public void testUserSpecificResourceAreCreatedWhenUserIsCreated() throws Throwable {
         // Assert user specific UserGroup, ResourceGroup and Role are created.
         String fritzEmail = "fritz@admiral.com";
-        String fritzSelfLink = LocalPrincipalFactoryService.SELF_LINK + "/" + fritzEmail;
+        String fritzSelfLink = LocalPrincipalFactoryService.SELF_LINK + "/" + encode(fritzEmail);
 
         LocalPrincipalState state = getDocumentNoWait(LocalPrincipalState.class, fritzSelfLink);
         assertNotNull(state);
@@ -60,15 +61,15 @@ public class LocalPrincipalServiceTest extends AuthBaseTest {
         assertNotNull(userState);
 
         ResourceGroupState resourceGroupState = getDocumentNoWait(ResourceGroupState.class,
-                UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK, fritzEmail));
+                UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK, encode(fritzEmail)));
         assertNotNull(resourceGroupState);
 
         UserGroupState userGroupState = getDocumentNoWait(UserGroupState.class,
-                UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, fritzEmail));
+                UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, encode(fritzEmail)));
         assertNotNull(userGroupState);
 
         RoleState roleState = getDocumentNoWait(RoleState.class,
-                UriUtils.buildUriPath(RoleService.FACTORY_LINK, fritzEmail));
+                UriUtils.buildUriPath(RoleService.FACTORY_LINK, encode(fritzEmail)));
         assertNotNull(roleState);
         assertEquals(userGroupState.documentSelfLink, roleState.userGroupLink);
         assertEquals(resourceGroupState.documentSelfLink, roleState.resourceGroupLink);
@@ -80,9 +81,9 @@ public class LocalPrincipalServiceTest extends AuthBaseTest {
         String connieEmail = "connie@admiral.com";
         String gloriaEmail = "gloria@admiral.com";
 
-        String fritzSelfLink = LocalPrincipalFactoryService.SELF_LINK + "/" + fritzEmail;
-        String connieSelfLink = LocalPrincipalFactoryService.SELF_LINK + "/" + connieEmail;
-        String gloriaSelfLink = LocalPrincipalFactoryService.SELF_LINK + "/" + gloriaEmail;
+        String fritzSelfLink = LocalPrincipalFactoryService.SELF_LINK + "/" + encode(fritzEmail);
+        String connieSelfLink = LocalPrincipalFactoryService.SELF_LINK + "/" + encode(connieEmail);
+        String gloriaSelfLink = LocalPrincipalFactoryService.SELF_LINK + "/" + encode(gloriaEmail);
 
         LocalPrincipalState fritzState = getDocument(LocalPrincipalState.class, fritzSelfLink);
         LocalPrincipalState connieState = getDocument(LocalPrincipalState.class, connieSelfLink);
@@ -107,7 +108,7 @@ public class LocalPrincipalServiceTest extends AuthBaseTest {
     @Test
     public void testDeletePrincipalShouldDeleteUserState() throws Throwable {
         String fritzEmail = "fritz@admiral.com";
-        String fritzSelfLink = LocalPrincipalFactoryService.SELF_LINK + "/" + fritzEmail;
+        String fritzSelfLink = LocalPrincipalFactoryService.SELF_LINK + "/" + encode(fritzEmail);
 
         doDelete(UriUtils.buildUri(host, fritzSelfLink), false);
 
@@ -118,15 +119,15 @@ public class LocalPrincipalServiceTest extends AuthBaseTest {
         assertNull(userState);
 
         ResourceGroupState resourceGroupState = getDocumentNoWait(ResourceGroupState.class,
-                UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK, fritzEmail));
+                UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK, encode(fritzEmail)));
         assertNull(resourceGroupState);
 
         UserGroupState userGroupState = getDocumentNoWait(UserGroupState.class,
-                UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, fritzEmail));
+                UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, encode(fritzEmail)));
         assertNull(userGroupState);
 
         RoleState roleState = getDocumentNoWait(RoleState.class,
-                UriUtils.buildUriPath(RoleService.FACTORY_LINK, fritzEmail));
+                UriUtils.buildUriPath(RoleService.FACTORY_LINK, encode(fritzEmail)));
         assertNull(roleState);
 
     }
@@ -137,15 +138,16 @@ public class LocalPrincipalServiceTest extends AuthBaseTest {
         LocalPrincipalState fritzState = new LocalPrincipalState();
         fritzState.name = name;
 
-        fritzState = doPatch(fritzState, LocalPrincipalFactoryService.SELF_LINK +
-                "/fritz@admiral.com");
+        fritzState = doPatch(fritzState, UriUtils.buildUriPath(
+                LocalPrincipalFactoryService.SELF_LINK, encode(USER_EMAIL_ADMIN)));
 
         assertEquals(name, fritzState.name);
     }
 
     @Test
     public void testPatchUserIdOrEmailShouldFail() {
-        String fritzSelfLink = LocalPrincipalFactoryService.SELF_LINK + "/fritz@admiral.com";
+        String fritzSelfLink = UriUtils.buildUriPath(LocalPrincipalFactoryService.SELF_LINK,
+                encode(USER_EMAIL_ADMIN));
         TestContext ctx = testCreate(1);
         TestContext ctx1 = testCreate(1);
 
@@ -200,7 +202,6 @@ public class LocalPrincipalServiceTest extends AuthBaseTest {
         assertEquals(testUser.name, createdUser.name);
         assertEquals(testUser.email, createdUser.email);
         assertEquals(testUser.email, createdUser.id);
-        assertTrue(createdUser.documentSelfLink.endsWith(testUser.email));
 
         UserState userState = getDocument(UserState.class,
                 buildUserServicePath("test@admiral.com"));
@@ -233,7 +234,7 @@ public class LocalPrincipalServiceTest extends AuthBaseTest {
         // Create group with already created users.
         LocalPrincipalState testGroup = new LocalPrincipalState();
         testGroup.type = LocalPrincipalType.GROUP;
-        testGroup.name = "TestGroup";
+        testGroup.name = "TestGroup@admiral.com";
         testGroup.groupMembersLinks = new ArrayList<>();
         testGroup.groupMembersLinks.add(testUser.documentSelfLink);
         testGroup.groupMembersLinks.add(testUser1.documentSelfLink);
@@ -244,11 +245,11 @@ public class LocalPrincipalServiceTest extends AuthBaseTest {
         assertEquals(2, testGroup.groupMembersLinks.size());
         assertTrue(testGroup.groupMembersLinks.contains(testUser.documentSelfLink));
         assertTrue(testGroup.groupMembersLinks.contains(testUser1.documentSelfLink));
-        assertTrue(testGroup.documentSelfLink.contains(testGroup.id));
+        assertTrue(testGroup.documentSelfLink.contains(encode(testGroup.id)));
 
         // Verify UserGroupState is created.
         UserGroupState groupState = getDocument(UserGroupState.class,
-                UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, testGroup.name));
+                UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, encode(testGroup.name)));
         assertNotNull(groupState);
 
         // Verify users are patched.
@@ -260,8 +261,8 @@ public class LocalPrincipalServiceTest extends AuthBaseTest {
             assertTrue(userState.email.equals(testUser.email)
                     || userState.email.equals(testUser1.email));
 
-            assertTrue(userState.documentSelfLink.endsWith(testUser.email)
-                    || userState.documentSelfLink.endsWith(testUser1.email));
+            assertTrue(userState.documentSelfLink.endsWith(encode(testUser.email))
+                    || userState.documentSelfLink.endsWith(encode(testUser1.email)));
         }
 
         // Delete the group
@@ -303,36 +304,36 @@ public class LocalPrincipalServiceTest extends AuthBaseTest {
 
     @Test
     public void testGroupsAreCreatedOnInitBoot() throws Throwable {
-        String developers = "developers";
-        String superusers = "superusers";
+        String developers = "developers@admiral.com";
+        String superusers = "superusers@admiral.com";
 
         String developerSelfLink = UriUtils.buildUriPath(LocalPrincipalFactoryService.SELF_LINK,
-                developers);
+                encode(developers));
         String developerUserGroupSelfLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
-                developers);
+                encode(developers));
 
         String superusersSelfLink = UriUtils.buildUriPath(LocalPrincipalFactoryService.SELF_LINK,
-                superusers);
+                encode(superusers));
         String superusersUserGroupSelfLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
-                superusers);
+                encode(superusers));
 
         UserGroupState developersUg = getDocument(UserGroupState.class, developerUserGroupSelfLink);
         assertNotNull(developersUg);
-        assertTrue(developersUg.documentSelfLink.endsWith(developers));
+        assertTrue(developersUg.documentSelfLink.endsWith(encode(developers)));
 
         LocalPrincipalState developersPrincipalState = getDocument(LocalPrincipalState.class,
                 developerSelfLink);
         assertNotNull(developersPrincipalState);
-        assertTrue(developersPrincipalState.documentSelfLink.endsWith(developers));
+        assertTrue(developersPrincipalState.documentSelfLink.endsWith(encode(developers)));
 
         UserGroupState superusersUg = getDocument(UserGroupState.class,
                 superusersUserGroupSelfLink);
         assertNotNull(superusersUg);
-        assertTrue(superusersUg.documentSelfLink.endsWith(superusers));
+        assertTrue(superusersUg.documentSelfLink.endsWith(encode(superusers)));
 
         LocalPrincipalState superusersPrincipalState = getDocument(LocalPrincipalState.class,
                 superusersSelfLink);
         assertNotNull(superusersPrincipalState);
-        assertTrue(superusersPrincipalState.documentSelfLink.endsWith(superusers));
+        assertTrue(superusersPrincipalState.documentSelfLink.endsWith(encode(superusers)));
     }
 }

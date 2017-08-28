@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.auth.util;
 
+import static com.vmware.admiral.auth.util.PrincipalUtil.encode;
+
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -47,7 +49,7 @@ public class SecurityContextUtil {
             Operation requestorOperation, String userId) {
 
 
-        return PrincipalUtil.getPrincipal(requestorService, requestorOperation, userId)
+        return PrincipalUtil.getPrincipal(requestorService, requestorOperation, encode(userId))
                 .thenCompose(principal -> PrincipalRolesUtil.getAllRolesForPrincipal(
                         requestorService, requestorOperation, principal))
                 .thenApply(SecurityContextUtil::fromPrincipalRolesToSecurityContext);

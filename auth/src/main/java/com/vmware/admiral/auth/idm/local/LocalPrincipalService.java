@@ -15,6 +15,7 @@ import static com.vmware.admiral.auth.idm.AuthConfigProvider.PROPERTY_SCOPE;
 import static com.vmware.admiral.auth.util.AuthUtil.BASIC_USERS_USER_GROUP_LINK;
 import static com.vmware.admiral.auth.util.AuthUtil.CLOUD_ADMINS_USER_GROUP_LINK;
 import static com.vmware.admiral.auth.util.AuthUtil.addReplicationFactor;
+import static com.vmware.admiral.auth.util.PrincipalUtil.encode;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 
 import java.net.URI;
@@ -30,7 +31,6 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import com.vmware.admiral.auth.idm.AuthConfigProvider.CredentialsScope;
-import com.vmware.admiral.auth.idm.PrincipalRolesHandler;
 import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.auth.util.UserGroupsUpdater;
 import com.vmware.admiral.common.util.PropertyUtils;
@@ -149,8 +149,9 @@ public class LocalPrincipalService extends StatefulService {
     @Override
     public void handleDelete(Operation delete) {
         LocalPrincipalState state = getState(delete);
+        String stateId = Service.getId(state.documentSelfLink);
         if (state.type == null || LocalPrincipalType.USER == state.type) {
-            deleteUserState(state.id, delete);
+            deleteUserState(stateId, delete);
         } else {
             deleteUserGroupState(state, delete);
         }
@@ -201,7 +202,7 @@ public class LocalPrincipalService extends StatefulService {
     private void createUserState(LocalPrincipalState state, Operation op) {
         UserState user = new UserState();
         user.email = state.email.toLowerCase();
-        user.documentSelfLink = user.email;
+        user.documentSelfLink = encode(user.email);
 
         URI userFactoryUri = UriUtils.buildUri(getHost(),
                 AuthUtil.buildUserServicePathFromPrincipalId(""));
@@ -215,6 +216,9 @@ public class LocalPrincipalService extends StatefulService {
                         op.fail(ex);
                         return;
                     }
+                    UserState us = o.getBody(UserState.class);
+                    logInfo("UserState created email: %s link: %s ", us.email,
+                            us.documentSelfLink);
                     createUserCredentials(state, op);
                 });
 
@@ -238,7 +242,7 @@ public class LocalPrincipalService extends StatefulService {
         auth.privateKey = state.password;
         auth.customProperties = new HashMap<>();
         auth.customProperties.put(PROPERTY_SCOPE, CredentialsScope.SYSTEM.toString());
-        auth.documentSelfLink = state.email;
+        auth.documentSelfLink = encode(state.email);
 
         URI credentialFactoryUri = UriUtils.buildUri(getHost(), ServiceUriPaths.CORE_CREDENTIALS);
         Operation postCreds = Operation.createPost(credentialFactoryUri)
@@ -258,15 +262,16 @@ public class LocalPrincipalService extends StatefulService {
 
     private void createUserSpecificRole(LocalPrincipalState state, Operation op) {
         // Create query for user specific user group, which will match only this user.
+        String stateId = encode(state.email);
 
-        String userGroupUri = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, state.id);
+        String userGroupUri = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, stateId);
         String resourceGroupUri = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
-                state.id);
-        String roleUri = UriUtils.buildUriPath(RoleService.FACTORY_LINK, state.id);
+                stateId);
+        String roleUri = UriUtils.buildUriPath(RoleService.FACTORY_LINK, stateId);
 
         Query userGroupQuery = Query.Builder.create()
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
-                        AuthUtil.buildUserServicePathFromPrincipalId(state.id))
+                        AuthUtil.buildUserServicePathFromPrincipalId(stateId))
                 .build();
 
         UserGroupState groupState = UserGroupState.Builder.create()
@@ -275,7 +280,7 @@ public class LocalPrincipalService extends StatefulService {
 
         Query resourceGroupQuery = Query.Builder.create()
                 .addFieldClause(ServiceDocument.FIELD_NAME_AUTH_PRINCIPAL_LINK,
-                        state.documentSelfLink)
+                        AuthUtil.buildUserServicePathFromPrincipalId(stateId))
                 .build();
 
         ResourceGroupState resourceGroupState = ResourceGroupState.Builder.create()
@@ -321,7 +326,7 @@ public class LocalPrincipalService extends StatefulService {
             result.add(UserGroupsUpdater.create()
                     .setService(this)
                     .setUsersToRemove(null)
-                    .setUsersToAdd(Collections.singletonList(state.email))
+                    .setUsersToAdd(Collections.singletonList(encode(state.email)))
                     .setGroupLink(CLOUD_ADMINS_USER_GROUP_LINK)
                     .setSkipPrincipalVerification(true)
                     .update());
@@ -331,13 +336,21 @@ public class LocalPrincipalService extends StatefulService {
         result.add(UserGroupsUpdater.create()
                 .setService(this)
                 .setUsersToRemove(null)
-                .setUsersToAdd(Collections.singletonList(state.email))
+                .setUsersToAdd(Collections.singletonList(encode(state.email)))
                 .setGroupLink(BASIC_USERS_USER_GROUP_LINK)
                 .setSkipPrincipalVerification(true)
                 .update());
 
         DeferredResult.allOf(result)
                 .whenComplete((ignore, ex) -> {
+
+                    if (ex != null) {
+                        logWarning("Error when initializing user %s: %s", state.email,
+                                Utils.toString(ex));
+                        op.fail(ex);
+                        return;
+                    }
+
                     logInfo("User %s successfully created.", state.email);
                     state.password = null;
                     op.setBody(state);
@@ -346,7 +359,8 @@ public class LocalPrincipalService extends StatefulService {
     }
 
     private void createUserGroup(LocalPrincipalState state, Operation op) {
-        String userGroupSelfLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, state.name);
+        String userGroupSelfLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                encode(state.name));
         Query userGroupQuery = AuthUtil.buildQueryForUsers(userGroupSelfLink);
 
         UserGroupState userGroupState = UserGroupState.Builder.create()
@@ -374,36 +388,55 @@ public class LocalPrincipalService extends StatefulService {
     }
 
     private void addUsersToGroup(LocalPrincipalState group, String groupLink, Operation op) {
-        List<String> groupMembersOfTypeUser = group.groupMembersLinks.stream()
-                .filter(m -> Service.getId(m).contains(PrincipalRolesHandler.PRINCIPAL_AT_SIGN))
-                .collect(Collectors.toList());
 
-        if (groupMembersOfTypeUser.isEmpty()) {
+        if (group.groupMembersLinks == null || group.groupMembersLinks.isEmpty()) {
             op.setBody(group).complete();
             return;
         }
 
-        AtomicInteger counter = new AtomicInteger(groupMembersOfTypeUser.size());
-        AtomicBoolean hasError = new AtomicBoolean(false);
+        List<DeferredResult<LocalPrincipalState>> groupMembers = group.groupMembersLinks.stream()
+                .map(member -> {
+                    Operation get = Operation.createGet(this, UriUtils.buildUriPath(
+                            LocalPrincipalFactoryService.SELF_LINK, encode(Service.getId(member))));
+                    return sendWithDeferredResult(get, LocalPrincipalState.class);
+                }).collect(Collectors.toList());
 
-        for (String localPrincipalLink : groupMembersOfTypeUser) {
-            addUserToGroup(localPrincipalLink, groupLink,
-                    (ex) -> {
-                        if (ex != null) {
-                            if (hasError.compareAndSet(false, true)) {
-                                op.fail(ex);
-                            } else {
-                                logWarning("Error when adding user %s to group %s: %s",
-                                        localPrincipalLink, groupLink, Utils.toString(ex));
-                            }
-                        } else {
-                            if (counter.decrementAndGet() == 0 && !hasError.get()) {
-                                op.setBody(group);
-                                op.complete();
-                            }
-                        }
-                    });
-        }
+        DeferredResult.allOf(groupMembers)
+                .thenAccept(groupMembersStates -> {
+                    List<String> groupMembersOfTypeUser = groupMembersStates.stream()
+                            .filter(m -> m.type == LocalPrincipalType.USER)
+                            .map(m -> m.documentSelfLink)
+                            .collect(Collectors.toList());
+
+                    if (groupMembersOfTypeUser.size() < 1) {
+                        op.setBody(group).complete();
+                        return;
+                    }
+
+                    AtomicInteger counter = new AtomicInteger(groupMembersOfTypeUser.size());
+                    AtomicBoolean hasError = new AtomicBoolean(false);
+
+                    for (String localPrincipalLink : groupMembersOfTypeUser) {
+                        addUserToGroup(localPrincipalLink, groupLink,
+                                (ex) -> {
+                                    if (ex != null) {
+                                        if (hasError.compareAndSet(false, true)) {
+                                            op.fail(ex);
+                                        } else {
+                                            logWarning("Error when adding user %s to group %s: %s",
+                                                    localPrincipalLink, groupLink,
+                                                    Utils.toString(ex));
+                                        }
+                                    } else {
+                                        if (counter.decrementAndGet() == 0 && !hasError.get()) {
+                                            op.setBody(group);
+                                            op.complete();
+                                        }
+                                    }
+                                });
+                    }
+                });
+
     }
 
     private void addUserToGroup(String localPrincipalLink, String groupLink,
@@ -469,7 +502,8 @@ public class LocalPrincipalService extends StatefulService {
     }
 
     private void deleteUserGroupState(LocalPrincipalState state, Operation delete) {
-        String userGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, state.id);
+        String userGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                Service.getId(state.documentSelfLink));
 
         sendRequest(Operation.createDelete(getHost(), userGroupLink)
                 .setReferer(delete.getUri())

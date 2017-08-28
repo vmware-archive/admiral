@@ -16,6 +16,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import static com.vmware.admiral.auth.util.AuthUtil.CLOUD_ADMINS_USER_GROUP_LINK;
+import static com.vmware.admiral.auth.util.PrincipalUtil.encode;
 
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
@@ -86,14 +87,14 @@ public class PrincipalRolesHandlerTest extends AuthBaseTest {
         roleAssignment.add = new ArrayList<>();
         roleAssignment.add.add(AuthRole.CLOUD_ADMIN.name());
 
-        doRoleAssignment(roleAssignment, "developers");
+        doRoleAssignment(roleAssignment, USER_GROUP_DEVELOPERS);
 
         RoleState roleState = getDocument(RoleState.class,
                 UriUtils.buildUriPath(RoleService.FACTORY_LINK, AuthRole.CLOUD_ADMIN
-                        .buildRoleWithSuffix("developers")));
+                        .buildRoleWithSuffix(encode(USER_GROUP_DEVELOPERS))));
         assertNotNull(roleState);
-        assertEquals(UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, "developers"),
-                roleState.userGroupLink);
+        assertEquals(UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                encode(USER_GROUP_DEVELOPERS)), roleState.userGroupLink);
     }
 
     @Test
@@ -103,25 +104,25 @@ public class PrincipalRolesHandlerTest extends AuthBaseTest {
         roleAssignment.add.add(AuthRole.CLOUD_ADMIN.name());
 
         // Assign.
-        doRoleAssignment(roleAssignment, "developers");
+        doRoleAssignment(roleAssignment, USER_GROUP_DEVELOPERS);
 
         RoleState roleState = getDocument(RoleState.class,
                 UriUtils.buildUriPath(RoleService.FACTORY_LINK, AuthRole.CLOUD_ADMIN
-                        .buildRoleWithSuffix("developers")));
+                        .buildRoleWithSuffix(encode(USER_GROUP_DEVELOPERS))));
         assertNotNull(roleState);
-        assertEquals(UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, "developers"),
-                roleState.userGroupLink);
+        assertEquals(UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                encode(USER_GROUP_DEVELOPERS)), roleState.userGroupLink);
 
         // Unassign
         roleAssignment = new PrincipalRoleAssignment();
         roleAssignment.remove = new ArrayList<>();
         roleAssignment.remove.add(AuthRole.CLOUD_ADMIN.name());
 
-        doRoleAssignment(roleAssignment, "developers");
+        doRoleAssignment(roleAssignment, USER_GROUP_DEVELOPERS);
 
         // Verify.
         String developersRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
-                AuthRole.CLOUD_ADMIN.buildRoleWithSuffix("developers"));
+                AuthRole.CLOUD_ADMIN.buildRoleWithSuffix(encode(USER_GROUP_DEVELOPERS)));
         TestContext ctx2 = testCreate(1);
         Operation getSuperusersRole = Operation.createGet(host, developersRoleLink)
                 .setReferer(host.getUri())

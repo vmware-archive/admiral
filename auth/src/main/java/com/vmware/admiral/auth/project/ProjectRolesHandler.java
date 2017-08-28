@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.auth.project;
 
+import static com.vmware.admiral.auth.util.PrincipalUtil.encode;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -232,7 +234,7 @@ public class ProjectRolesHandler {
                     .thenCompose(user -> UserGroupsUpdater.create()
                             .setGroupLink(groupLink)
                             .setService(service)
-                            .setUsersToAdd(Collections.singletonList(principal))
+                            .setUsersToAdd(Collections.singletonList(encode(principal)))
                             .update()));
         }
 
@@ -241,7 +243,7 @@ public class ProjectRolesHandler {
                     .thenCompose(user -> UserGroupsUpdater.create()
                             .setGroupLink(groupLink)
                             .setService(service)
-                            .setUsersToRemove(Collections.singletonList(principal))
+                            .setUsersToRemove(Collections.singletonList(encode(principal)))
                             .update()));
         }
 
@@ -286,60 +288,63 @@ public class ProjectRolesHandler {
 
     private DeferredResult<Void> handleProjectViewerGroupAssignment(ProjectState projectState,
             String groupId) {
-        String userGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, groupId);
+        String encodedGroupId = encode(groupId);
+        String userGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, encodedGroupId);
         if (projectState.viewersUserGroupLinks.contains(userGroupLink)) {
             return DeferredResult.completed(null);
         }
         String projectId = Service.getId(projectState.documentSelfLink);
-        RoleState role = AuthUtil.buildProjectViewersRole(projectId, groupId, null);
-        return createRole(projectId, AuthRole.PROJECT_VIEWER, groupId, role)
+        RoleState role = AuthUtil.buildProjectViewersRole(projectId, encodedGroupId, null);
+        return createRole(projectId, AuthRole.PROJECT_VIEWER, encodedGroupId, role)
                 .thenAccept(ignore -> projectState.viewersUserGroupLinks.add(role.userGroupLink));
     }
 
     private DeferredResult<Void> handleProjectViewerGroupUnssignment(ProjectState projectState,
             String groupId) {
         String projectId = Service.getId(projectState.documentSelfLink);
-
-        String roleLink = AuthRole.PROJECT_VIEWER.buildRoleWithSuffix(projectId, groupId);
-        String userGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, groupId);
+        String encodedGroupId = encode(groupId);
+        String roleLink = AuthRole.PROJECT_VIEWER.buildRoleWithSuffix(projectId, encodedGroupId);
+        String userGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, encodedGroupId);
         return deleteRole(roleLink)
                 .thenAccept(ignore -> projectState.viewersUserGroupLinks.remove(userGroupLink));
     }
 
     private DeferredResult<Void> handleProjectMemberGroupAssignment(ProjectState projectState,
             String groupId) {
-        String userGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, groupId);
+        String encodedGroupId = encode(groupId);
+        String userGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, encodedGroupId);
         if (projectState.administratorsUserGroupLinks.contains(userGroupLink)) {
             return DeferredResult.completed(null);
         }
         String projectId = Service.getId(projectState.documentSelfLink);
-        RoleState role = AuthUtil.buildProjectMembersRole(projectId, groupId, null);
-        return createRole(projectId, AuthRole.PROJECT_MEMBER, groupId, role)
-                .thenCompose(ignore -> createExtendedMemberRole(projectId, groupId))
+        RoleState role = AuthUtil.buildProjectMembersRole(projectId, encodedGroupId, null);
+        return createRole(projectId, AuthRole.PROJECT_MEMBER, encodedGroupId, role)
+                .thenCompose(ignore -> createExtendedMemberRole(projectId, encodedGroupId))
                 .thenAccept(ignore -> projectState.membersUserGroupLinks.add(role.userGroupLink));
     }
 
     private DeferredResult<Void> handleProjectMemberGroupUnssignment(ProjectState projectState,
             String groupId) {
         String projectId = Service.getId(projectState.documentSelfLink);
-
-        String roleLink = AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(projectId, groupId);
-        String userGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, groupId);
+        String encodedGroupId = encode(groupId);
+        String roleLink = AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(projectId, encodedGroupId);
+        String userGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, encodedGroupId);
 
         return deleteRole(roleLink)
-                .thenCompose(ignore -> deleteExtendedMemberRole(projectId, groupId))
+                .thenCompose(ignore -> deleteExtendedMemberRole(projectId, encodedGroupId))
                 .thenAccept(ignore -> projectState.membersUserGroupLinks.remove(userGroupLink));
     }
 
     private DeferredResult<Void> handleProjectAdminGroupAssignment(ProjectState projectState,
             String groupId) {
-        String userGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, groupId);
+        String encodedGroupId = encode(groupId);
+        String userGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, encodedGroupId);
         if (projectState.administratorsUserGroupLinks.contains(userGroupLink)) {
             return DeferredResult.completed(null);
         }
         String projectId = Service.getId(projectState.documentSelfLink);
-        RoleState role = AuthUtil.buildProjectAdminsRole(projectId, groupId, null);
-        return createRole(projectId, AuthRole.PROJECT_ADMIN, groupId, role)
+        RoleState role = AuthUtil.buildProjectAdminsRole(projectId, encodedGroupId, null);
+        return createRole(projectId, AuthRole.PROJECT_ADMIN, encodedGroupId, role)
                 .thenAccept(ignore -> projectState.administratorsUserGroupLinks
                         .add(role.userGroupLink));
     }
@@ -347,8 +352,9 @@ public class ProjectRolesHandler {
     private DeferredResult<Void> handleProjectAdminGroupUnassignment(ProjectState projectState,
             String groupId) {
         String projectId = Service.getId(projectState.documentSelfLink);
-        String roleLink = AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(projectId, groupId);
-        String userGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, groupId);
+        String encodedGroupId = encode(groupId);
+        String roleLink = AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(projectId, encodedGroupId);
+        String userGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, encodedGroupId);
 
         return deleteRole(roleLink)
                 .thenAccept(
@@ -357,11 +363,12 @@ public class ProjectRolesHandler {
 
     private DeferredResult<RoleState> createRole(String projectId, AuthRole role, String groupId,
             RoleState roleState) {
+        String encodedGroupId = encode(groupId);
         Operation principalGroupOp = Operation
-                .createGet(service, UriUtils.buildUriPath(PrincipalService.SELF_LINK, groupId));
+                .createGet(service, UriUtils.buildUriPath(PrincipalService.SELF_LINK, encodedGroupId));
 
         Operation userGroupGetOp = Operation
-                .createGet(service, UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, groupId));
+                .createGet(service, UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, encodedGroupId));
 
         Operation userGroupPostOp = Operation
                 .createPost(service, UriUtils.buildUriPath(UserGroupService.FACTORY_LINK))
@@ -386,7 +393,7 @@ public class ProjectRolesHandler {
                     // create UserGroupState if doesn't exist
                     if (pair.right != null) {
                         userGroupPostOp
-                                .setBody(AuthUtil.buildProjectMembersUserGroupByGroupId(groupId));
+                                .setBody(AuthUtil.buildProjectMembersUserGroupByGroupId(encodedGroupId));
                         return service.sendWithDeferredResult(userGroupPostOp,
                                 UserGroupState.class);
                     }
@@ -407,11 +414,12 @@ public class ProjectRolesHandler {
     }
 
     private DeferredResult<Void> createExtendedMemberRole(String projectId, String groupId) {
+        String encodedGroupId = encode(groupId);
 
-        String userGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, groupId);
+        String userGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, encodedGroupId);
 
         ResourceGroupState resourceGroupState = AuthUtil.buildProjectExtendedMemberResourceGroup(
-                projectId, groupId);
+                projectId, encodedGroupId);
 
         RoleState roleState = AuthUtil.buildProjectExtendedMembersRole(projectId, userGroupLink,
                 resourceGroupState.documentSelfLink);
@@ -442,11 +450,13 @@ public class ProjectRolesHandler {
     }
 
     private DeferredResult<Void> deleteExtendedMemberRole(String projectId, String groupId) {
+        String encodedGroupId = encode(groupId);
+
         String roleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
-                AuthRole.PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId, groupId));
+                AuthRole.PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId, encodedGroupId));
 
         String resourceGroupLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
-                AuthRole.PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId, groupId));
+                AuthRole.PROJECT_MEMBER_EXTENDED.buildRoleWithSuffix(projectId, encodedGroupId));
 
         Operation deleteRgOp = Operation.createDelete(service, resourceGroupLink);
 

@@ -15,6 +15,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import static com.vmware.admiral.auth.util.PrincipalUtil.encode;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -36,7 +38,7 @@ import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.TestContext;
 
 public class LocalPrincipalProviderTest extends AuthBaseTest {
-    private static final int EXPECTED_PRINCIPALS_COUNT = 5;
+    private static final int EXPECTED_PRINCIPALS_COUNT = 7;
 
     private PrincipalProvider provider = new LocalPrincipalProvider();
 
@@ -72,7 +74,7 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
 
     @Test
     public void testGetPrincipalsOfTypeGroup() {
-        String principalId = "superusers";
+        String principalId = "superusers@admiral.com";
         DeferredResult<List<Principal>> result = provider.getPrincipals(null, principalId);
 
         TestContext ctx = testCreate(1);
@@ -88,7 +90,7 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
         Principal principal = result.getNow(Collections.singletonList(new Principal())).get(0);
         assertNotNull(principal);
         assertEquals(principalId, principal.id);
-        assertEquals("superusers", principal.name);
+        assertEquals("superusers@admiral.com", principal.name);
         assertEquals(PrincipalType.GROUP, principal.type);
     }
 
@@ -150,6 +152,8 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
         String expectedPrincipal3 = "gloria@admiral.com";
         String expectedPrincipal4 = "tony@admiral.com";
         String expectedPrincipal5 = "administrator@admiral.com";
+        String expectedPrincipal6 = "developers@admiral.com";
+        String expectedPrincipal7 = "superusers@admiral.com";
 
         DeferredResult<List<Principal>> result = provider.getPrincipals(null, criteria);
 
@@ -171,11 +175,13 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
             if (p.id.equals(expectedPrincipal1)) {
                 assertTrue(p.groups.contains(USER_GROUP_DEVELOPERS));
             }
-            assertTrue(p.email.equals(expectedPrincipal1)
-                    || p.email.equals(expectedPrincipal2)
-                    || p.email.equals(expectedPrincipal3)
-                    || p.email.equals(expectedPrincipal4)
-                    || p.email.equals(expectedPrincipal5));
+            assertTrue(p.id.equals(expectedPrincipal1)
+                    || p.id.equals(expectedPrincipal2)
+                    || p.id.equals(expectedPrincipal3)
+                    || p.id.equals(expectedPrincipal4)
+                    || p.id.equals(expectedPrincipal5)
+                    || p.id.equals(expectedPrincipal6)
+                    || p.id.equals(expectedPrincipal7));
         }
     }
 
@@ -186,6 +192,7 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
         principal.email = "test@admiral.com";
         principal.name = "test";
         principal.password = "testPassword";
+        principal.id = principal.email;
 
         DeferredResult<Principal> result = provider.createPrincipal(null, principal);
 
@@ -226,6 +233,7 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
         principal.email = "test@admiral.com";
         principal.name = "test";
         principal.password = "testPassword";
+        principal.id = principal.email;
 
         DeferredResult<Principal> result = provider.createPrincipal(null, principal);
 
@@ -277,6 +285,7 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
         principal.email = "test@admiral.com";
         principal.name = "test";
         principal.password = "testPassword";
+        principal.id = principal.email;
 
         DeferredResult<Principal> result = provider.createPrincipal(null, principal);
 
@@ -323,18 +332,18 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
     public void testNestedGetGroupsForPrincipal() throws Throwable {
         // Create nested groups.
         LocalPrincipalState itGroup = new LocalPrincipalState();
-        itGroup.name = "it";
+        itGroup.name = "it@admiral.com";
         itGroup.type = LocalPrincipalType.GROUP;
         itGroup.groupMembersLinks = Collections.singletonList(UriUtils.buildUriPath(
-                LocalPrincipalFactoryService.SELF_LINK, "superusers"));
+                LocalPrincipalFactoryService.SELF_LINK, encode("superusers@admiral.com")));
         itGroup = doPost(itGroup, LocalPrincipalFactoryService.SELF_LINK);
         assertNotNull(itGroup);
 
         LocalPrincipalState organization = new LocalPrincipalState();
-        organization.name = "organization";
+        organization.name = "organization@admiral.com";
         organization.type = LocalPrincipalType.GROUP;
         organization.groupMembersLinks = Collections.singletonList(UriUtils.buildUriPath(
-                LocalPrincipalFactoryService.SELF_LINK, "it"));
+                LocalPrincipalFactoryService.SELF_LINK, encode("it@admiral.com")));
         organization = doPost(organization, LocalPrincipalFactoryService.SELF_LINK);
         assertNotNull(organization);
 
@@ -357,9 +366,9 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
 
         ctx.await();
 
-        assertTrue(results.contains("superusers"));
-        assertTrue(results.contains("it"));
-        assertTrue(results.contains("organization"));
+        assertTrue(results.contains("superusers@admiral.com"));
+        assertTrue(results.contains("it@admiral.com"));
+        assertTrue(results.contains("organization@admiral.com"));
     }
 
     @Test
@@ -381,29 +390,29 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
 
         ctx.await();
 
-        assertTrue(results.contains("superusers"));
+        assertTrue(results.contains("superusers@admiral.com"));
     }
 
     @Test
     public void testNestedGetGroupsForPrincipalOfTypeGroup() throws Throwable {
         // Create nested groups.
         LocalPrincipalState itGroup = new LocalPrincipalState();
-        itGroup.name = "it";
+        itGroup.name = "it@admiral.com";
         itGroup.type = LocalPrincipalType.GROUP;
         itGroup.groupMembersLinks = Collections.singletonList(UriUtils.buildUriPath(
-                LocalPrincipalFactoryService.SELF_LINK, "superusers"));
+                LocalPrincipalFactoryService.SELF_LINK, encode(USER_GROUP_SUPERUSERS)));
         itGroup = doPost(itGroup, LocalPrincipalFactoryService.SELF_LINK);
         assertNotNull(itGroup);
 
         LocalPrincipalState organization = new LocalPrincipalState();
-        organization.name = "organization";
+        organization.name = "organization@admiral.com";
         organization.type = LocalPrincipalType.GROUP;
         organization.groupMembersLinks = Collections.singletonList(UriUtils.buildUriPath(
-                LocalPrincipalFactoryService.SELF_LINK, "it"));
+                LocalPrincipalFactoryService.SELF_LINK, encode("it@admiral.com")));
         organization = doPost(organization, LocalPrincipalFactoryService.SELF_LINK);
         assertNotNull(organization);
 
-        DeferredResult<Set<String>> result = provider.getAllGroupsForPrincipal(null, "superusers");
+        DeferredResult<Set<String>> result = provider.getAllGroupsForPrincipal(null, USER_GROUP_SUPERUSERS);
 
         TestContext ctx = testCreate(1);
         Set<String> results = new HashSet<>();
@@ -419,8 +428,8 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
 
         ctx.await();
 
-        assertTrue(results.contains("it"));
-        assertTrue(results.contains("organization"));
+        assertTrue(results.contains("it@admiral.com"));
+        assertTrue(results.contains("organization@admiral.com"));
     }
 
 }

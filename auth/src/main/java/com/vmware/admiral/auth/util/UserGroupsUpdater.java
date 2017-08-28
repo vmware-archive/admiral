@@ -12,6 +12,8 @@
 package com.vmware.admiral.auth.util;
 
 import static com.vmware.admiral.auth.util.AuthUtil.addReplicationFactor;
+import static com.vmware.admiral.auth.util.PrincipalUtil.decode;
+import static com.vmware.admiral.auth.util.PrincipalUtil.encode;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -127,7 +129,8 @@ public class UserGroupsUpdater {
 
     // TODO: Create the user if not exist.
     private DeferredResult<UserState> patchUserState(String user, boolean isRemove) {
-        String userStateLink = AuthUtil.buildUserServicePathFromPrincipalId(user);
+        String encodedUser = encode(user);
+        String userStateLink = AuthUtil.buildUserServicePathFromPrincipalId(encodedUser);
 
         DeferredResult<UserState> result;
         if (!this.skipPrincipalVerification) {
@@ -149,8 +152,8 @@ public class UserGroupsUpdater {
                     if (pair.right != null) {
                         if (pair.right.getCause() instanceof ServiceNotFoundException) {
                             UserState userState = new UserState();
-                            userState.email = user;
-                            userState.documentSelfLink = user;
+                            userState.email = decode(user);
+                            userState.documentSelfLink = encodedUser;
                             Operation createUser = Operation.createPost(service,
                                     AuthUtil.buildUserServicePathFromPrincipalId(""))
                                     .setBody(userState);

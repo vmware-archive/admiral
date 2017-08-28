@@ -15,6 +15,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import static com.vmware.admiral.auth.util.PrincipalUtil.encode;
+
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -223,9 +225,9 @@ public class PrincipalRolesUtilTest extends AuthBaseTest {
         // root is the group where Connie belongs and we assign the group to cloud admins role.
         LocalPrincipalState root = new LocalPrincipalState();
         root.type = LocalPrincipalType.GROUP;
-        root.name = "root";
+        root.name = "root@admiral.com";
         root.groupMembersLinks = Collections.singletonList(UriUtils.buildUriPath(
-                LocalPrincipalFactoryService.SELF_LINK, USER_EMAIL_CONNIE));
+                LocalPrincipalFactoryService.SELF_LINK, encode(USER_EMAIL_CONNIE)));
         root = doPost(root, LocalPrincipalFactoryService.SELF_LINK);
         assertNotNull(root.documentSelfLink);
 
@@ -234,16 +236,16 @@ public class PrincipalRolesUtilTest extends AuthBaseTest {
         // nestedGroup2.
         LocalPrincipalState nestedGroup1 = new LocalPrincipalState();
         nestedGroup1.type = LocalPrincipalType.GROUP;
-        nestedGroup1.name = "nestedGroup1";
+        nestedGroup1.name = "nestedGroup1@admiral.com";
         nestedGroup1.groupMembersLinks = Collections.singletonList(UriUtils.buildUriPath(
-                LocalPrincipalFactoryService.SELF_LINK, USER_EMAIL_CONNIE));
+                LocalPrincipalFactoryService.SELF_LINK, encode(USER_EMAIL_CONNIE)));
         nestedGroup1 = doPost(nestedGroup1, LocalPrincipalFactoryService.SELF_LINK);
         assertNotNull(nestedGroup1.documentSelfLink);
 
         // nestedGroup2 is the group which contains nestedGroup1
         LocalPrincipalState nestedGroup2 = new LocalPrincipalState();
         nestedGroup2.type = LocalPrincipalType.GROUP;
-        nestedGroup2.name = "nestedGroup2";
+        nestedGroup2.name = "nestedGroup2@admiral.com";
         nestedGroup2.groupMembersLinks = Collections.singletonList(nestedGroup1.documentSelfLink);
         nestedGroup2 = doPost(nestedGroup2, LocalPrincipalFactoryService.SELF_LINK);
         assertNotNull(nestedGroup2.documentSelfLink);

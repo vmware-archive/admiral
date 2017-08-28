@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.auth.idm.local;
 
+import static com.vmware.admiral.auth.util.PrincipalUtil.decode;
+import static com.vmware.admiral.auth.util.PrincipalUtil.encode;
 import static com.vmware.admiral.auth.util.PrincipalUtil.fromLocalPrincipalToPrincipal;
 import static com.vmware.admiral.auth.util.PrincipalUtil.fromPrincipalToLocalPrincipal;
 import static com.vmware.admiral.auth.util.PrincipalUtil.fromQueryResultToPrincipalList;
@@ -58,7 +60,7 @@ public class LocalPrincipalProvider implements PrincipalProvider {
         assertNotNullOrEmpty(principalId, "principalId");
 
         Operation get = Operation.createGet(service,
-                UriUtils.buildUriPath(LocalPrincipalFactoryService.SELF_LINK, principalId));
+                UriUtils.buildUriPath(LocalPrincipalFactoryService.SELF_LINK, encode(principalId)));
 
         service.setAuthorizationContext(get, service.getSystemAuthorizationContext());
 
@@ -104,6 +106,7 @@ public class LocalPrincipalProvider implements PrincipalProvider {
     @Override
     public DeferredResult<Principal> createPrincipal(Operation op, Principal principal) {
         LocalPrincipalState stateToCreate = fromPrincipalToLocalPrincipal(principal);
+        stateToCreate.documentSelfLink = encode(principal.id);
 
         Operation post = Operation.createPost(service, LocalPrincipalFactoryService.SELF_LINK)
                 .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
@@ -120,7 +123,8 @@ public class LocalPrincipalProvider implements PrincipalProvider {
         LocalPrincipalState stateToPatch = fromPrincipalToLocalPrincipal(principal);
 
         Operation patch = Operation.createPatch(service,
-                UriUtils.buildUriPath(LocalPrincipalFactoryService.SELF_LINK, stateToPatch.id))
+                UriUtils.buildUriPath(LocalPrincipalFactoryService.SELF_LINK,
+                        encode(stateToPatch.id)))
                 .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
                 .setBody(stateToPatch);
 
@@ -135,7 +139,7 @@ public class LocalPrincipalProvider implements PrincipalProvider {
         assertNotNullOrEmpty(principalId, "principalId");
 
         Operation delete = Operation.createDelete(service,
-                UriUtils.buildUriPath(LocalPrincipalFactoryService.SELF_LINK, principalId));
+                UriUtils.buildUriPath(LocalPrincipalFactoryService.SELF_LINK, encode(principalId)));
 
         service.setAuthorizationContext(delete, service.getSystemAuthorizationContext());
 
@@ -155,7 +159,7 @@ public class LocalPrincipalProvider implements PrincipalProvider {
     public DeferredResult<Principal> getPrincipalByCredentials(Operation get, String principalId,
             String password) {
 
-        return tryLogin(principalId, password)
+        return tryLogin(decode(principalId), password)
                 .thenCompose(isAuthenticated -> {
                     if (!isAuthenticated) {
                         return DeferredResult.failed(new IllegalAccessError("Unable to "
@@ -190,7 +194,7 @@ public class LocalPrincipalProvider implements PrincipalProvider {
 
     private DeferredResult<Set<String>> getDirectlyAssignedGroupsForPrincipal(String principalId) {
         String principalSelfLink = UriUtils.buildUriPath(LocalPrincipalFactoryService.SELF_LINK,
-                principalId);
+                encode(principalId));
 
         DeferredResult<Set<String>> result = new DeferredResult<>();
 
@@ -240,7 +244,7 @@ public class LocalPrincipalProvider implements PrincipalProvider {
         DeferredResult<Set<String>> result = new DeferredResult<>();
 
         List<String> groupsToCheckLinks = groupsToCheck.stream()
-                .map(g -> UriUtils.buildUriPath(LocalPrincipalFactoryService.SELF_LINK, g))
+                .map(g -> UriUtils.buildUriPath(LocalPrincipalFactoryService.SELF_LINK, encode(g)))
                 .collect(Collectors.toList());
 
         Query query = Query.Builder.create()

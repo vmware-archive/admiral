@@ -23,10 +23,10 @@
     "isAdmin": false
   }],
   "groups": [{
-    "name": "superusers",
+    "name": "superusers@admiral.com",
     "members": ["fritz@admiral.com"]
     }, {
-    "name": "developers",
+    "name": "developers@admiral.com",
     "members": ["connie@admiral.com", "gloria@admiral.com"]
   }]
 }

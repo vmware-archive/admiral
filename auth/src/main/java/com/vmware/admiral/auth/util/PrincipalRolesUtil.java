@@ -12,6 +12,7 @@
 package com.vmware.admiral.auth.util;
 
 import static com.vmware.admiral.auth.util.AuthUtil.extractDataFromRoleStateId;
+import static com.vmware.admiral.auth.util.PrincipalUtil.encode;
 import static com.vmware.admiral.auth.util.SecurityContextUtil.buildProjectEntries;
 
 import java.util.ArrayList;
@@ -58,6 +59,7 @@ public class PrincipalRolesUtil {
 
     public static DeferredResult<Set<AuthRole>> getDirectlyAssignedSystemRolesForUser(
             Service requestorService, Principal principal) {
+
         return getUserState(requestorService, principal.id).thenApply(userState -> {
             if ((userState == null) || (userState.userGroupLinks == null)
                     || (userState.userGroupLinks.isEmpty())) {
@@ -94,10 +96,10 @@ public class PrincipalRolesUtil {
 
     public static DeferredResult<Set<AuthRole>> getDirectlyAssignedSystemRolesForGroup(
             Service requestorService, Principal principal) {
-        String roleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, principal.id);
+        String roleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, encode(principal.id));
 
         Query query = Query.Builder.create()
-                .addCaseInsensitiveFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
                         roleLink, MatchType.PREFIX, Occurance.SHOULD_OCCUR)
                 .build();
 
@@ -130,7 +132,9 @@ public class PrincipalRolesUtil {
     public static DeferredResult<List<ProjectEntry>> getDirectlyAssignedProjectRolesForGroup(
             Service requestorService, Principal principal) {
 
-        String userGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, principal.id);
+        String userGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                encode(principal.id));
+
         List<String> userGroupLinkList = Collections.singletonList(userGroupLink);
 
         Query query = Query.Builder.create()
@@ -240,7 +244,7 @@ public class PrincipalRolesUtil {
         Map<String, List<RoleState>> result = new HashMap<>();
 
         for (String group : groups) {
-            String groupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, group);
+            String groupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, encode(group));
             Query query = QueryUtil.addListValueClause(RoleState.FIELD_NAME_USER_GROUP_LINK,
                     Collections.singletonList(groupLink), MatchType.TERM);
 
@@ -400,7 +404,7 @@ public class PrincipalRolesUtil {
     private static DeferredResult<UserState> getUserState(Service requestorService,
             String principalId) {
         Operation getUserStateOp = Operation.createGet(requestorService,
-                AuthUtil.buildUserServicePathFromPrincipalId(principalId));
+                AuthUtil.buildUserServicePathFromPrincipalId(encode(principalId)));
 
         requestorService.setAuthorizationContext(getUserStateOp,
                 requestorService.getSystemAuthorizationContext());

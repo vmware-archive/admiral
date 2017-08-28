@@ -14,6 +14,8 @@ package com.vmware.admiral.auth.util;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import static com.vmware.admiral.auth.util.PrincipalUtil.decode;
+import static com.vmware.admiral.auth.util.PrincipalUtil.encode;
 import static com.vmware.admiral.auth.util.PrincipalUtil.fromLocalPrincipalToPrincipal;
 import static com.vmware.admiral.auth.util.PrincipalUtil.fromPrincipalToLocalPrincipal;
 import static com.vmware.admiral.auth.util.PrincipalUtil.fromQueryResultToPrincipalList;
@@ -148,5 +150,13 @@ public class PrincipalUtilTest {
 
         name = PrincipalUtil.toPrincipalName(null, null, null);
         assertEquals(null, name);
+    }
+
+    @Test
+    public void testEncodeDecode() {
+        String fritzEmail = "fritz@admiral.com";
+        String encodedEmail = encode(fritzEmail);
+        String decodedEmail = decode(encodedEmail);
+        assertEquals(fritzEmail, decodedEmail);
     }
 }

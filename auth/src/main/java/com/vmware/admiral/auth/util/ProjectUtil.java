@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.auth.util;
 
+import static com.vmware.admiral.auth.util.PrincipalUtil.decode;
 import static com.vmware.admiral.common.util.AssertUtil.PROPERTY_CANNOT_BE_EMPTY_MESSAGE_FORMAT;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.isNullOrEmpty;
 
@@ -316,7 +317,7 @@ public class ProjectUtil {
             return null;
         }
         Principal p = new Principal();
-        p.id = Service.getId(state.documentSelfLink);
+        p.id = decode(Service.getId(state.documentSelfLink));
         return p;
     }
 
@@ -333,7 +334,7 @@ public class ProjectUtil {
                 continue;
             }
             Principal p = new Principal();
-            p.id = Service.getId(groupLink);
+            p.id = decode(Service.getId(groupLink));
             principals.add(p);
         }
         return principals;
@@ -502,7 +503,7 @@ public class ProjectUtil {
 
     /**
      * Builds a {@link Query} that selects all projects that contain any of the specified groups in
-     * one of the administrators or members group lists
+     * one of the administrators, members or viewers group lists
      */
     public static Query buildQueryProjectsFromGroups(Collection<String> groupLinks) {
         Query query = new Query();

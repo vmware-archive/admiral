@@ -16,6 +16,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import static com.vmware.admiral.auth.util.PrincipalUtil.encode;
 import static com.vmware.admiral.host.ManagementHostAuthUsersTest.DEFAULT_WAIT_SECONDS_FOR_AUTH_SERVICES;
 import static com.vmware.admiral.request.util.TestRequestStateFactory.COMPUTE_ADDRESS;
 
@@ -666,7 +667,7 @@ public class ProjectInterceptorTest extends BaseTestCase {
     }
 
     private String buildUserServicePath(String email) {
-        return AuthUtil.buildUserServicePathFromPrincipalId(email);
+        return AuthUtil.buildUserServicePathFromPrincipalId(encode(email));
     }
 
     private ProjectState createProject(String name) throws Throwable {

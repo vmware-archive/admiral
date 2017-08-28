@@ -15,6 +15,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import static com.vmware.admiral.auth.util.PrincipalUtil.encode;
+
 import java.net.URI;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
@@ -111,7 +113,8 @@ public class PrincipalServiceTest extends AuthBaseTest {
                 PrincipalService.SELF_LINK, PrincipalService.CRITERIA_QUERY, "i"), false, null,
                 ArrayList.class);
         List<String> expectedPrincipals = Arrays.asList(USER_EMAIL_ADMIN, USER_EMAIL_BASIC_USER,
-                USER_EMAIL_GLORIA, USER_EMAIL_CONNIE, USER_EMAIL_ADMIN2);
+                USER_EMAIL_GLORIA, USER_EMAIL_CONNIE, USER_EMAIL_ADMIN2, USER_GROUP_SUPERUSERS,
+                USER_GROUP_DEVELOPERS);
         assertEquals(expectedPrincipals.size(), principals.size());
         assertTrue(USER_EMAIL_ADMIN, principals.stream().allMatch((principal) -> {
             return expectedPrincipals.contains(principal.id);
@@ -208,18 +211,17 @@ public class PrincipalServiceTest extends AuthBaseTest {
 
     @Test
     public void testAssignAndUnassignExistingGroupsToRole() throws Throwable {
-        String superusers = "superusers";
         PrincipalRoleAssignment roleAssignment = new PrincipalRoleAssignment();
         roleAssignment.add = new ArrayList<>();
         roleAssignment.add.add(AuthRole.CLOUD_ADMIN.name());
 
-        String uri = UriUtils.buildUriPath(PrincipalService.SELF_LINK, superusers, "roles");
+        String uri = UriUtils.buildUriPath(PrincipalService.SELF_LINK, USER_GROUP_SUPERUSERS, "roles");
         // Assingn superusers to cloud admins
         doPatch(roleAssignment, uri);
 
         // Verify superusers got assigned and required roles are created.
         String superusersRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
-                AuthRole.CLOUD_ADMIN.buildRoleWithSuffix(superusers));
+                AuthRole.CLOUD_ADMIN.buildRoleWithSuffix(encode(USER_GROUP_SUPERUSERS)));
 
         RoleState roleState = getDocument(RoleState.class, superusersRoleLink);
         assertNotNull(roleState);
@@ -254,18 +256,18 @@ public class PrincipalServiceTest extends AuthBaseTest {
     @Test
     public void testNestedGetGroupsForPrincipal() throws Throwable {
         LocalPrincipalState itGroup = new LocalPrincipalState();
-        itGroup.name = "it";
+        itGroup.name = "it@admiral.com";
         itGroup.type = LocalPrincipalType.GROUP;
         itGroup.groupMembersLinks = Collections.singletonList(UriUtils.buildUriPath(
-                LocalPrincipalFactoryService.SELF_LINK, "superusers"));
+                LocalPrincipalFactoryService.SELF_LINK, encode(USER_GROUP_SUPERUSERS)));
         itGroup = doPost(itGroup, LocalPrincipalFactoryService.SELF_LINK);
         assertNotNull(itGroup);
 
         LocalPrincipalState organization = new LocalPrincipalState();
-        organization.name = "organization";
+        organization.name = "organization@admiral.com";
         organization.type = LocalPrincipalType.GROUP;
         organization.groupMembersLinks = Collections.singletonList(UriUtils.buildUriPath(
-                LocalPrincipalFactoryService.SELF_LINK, "it"));
+                LocalPrincipalFactoryService.SELF_LINK, encode("it@admiral.com")));
         organization = doPost(organization, LocalPrincipalFactoryService.SELF_LINK);
         assertNotNull(organization);
 
@@ -286,9 +288,9 @@ public class PrincipalServiceTest extends AuthBaseTest {
                 }));
         ctx.await();
 
-        assertTrue(groups.contains("superusers"));
-        assertTrue(groups.contains("it"));
-        assertTrue(groups.contains("organization"));
+        assertTrue(groups.contains(USER_GROUP_SUPERUSERS));
+        assertTrue(groups.contains("it@admiral.com"));
+        assertTrue(groups.contains("organization@admiral.com"));
     }
 
     @Test
@@ -308,7 +310,7 @@ public class PrincipalServiceTest extends AuthBaseTest {
                 }));
         ctx.await();
 
-        assertTrue(groups.contains("superusers"));
+        assertTrue(groups.contains("superusers@admiral.com"));
 
     }
 
@@ -357,7 +359,7 @@ public class PrincipalServiceTest extends AuthBaseTest {
         root.type = LocalPrincipalType.GROUP;
         root.name = "root";
         root.groupMembersLinks = Collections.singletonList(UriUtils.buildUriPath(
-                LocalPrincipalFactoryService.SELF_LINK, USER_EMAIL_CONNIE));
+                LocalPrincipalFactoryService.SELF_LINK, encode(USER_EMAIL_CONNIE)));
         root = doPost(root, LocalPrincipalFactoryService.SELF_LINK);
         assertNotNull(root.documentSelfLink);
 
@@ -368,7 +370,7 @@ public class PrincipalServiceTest extends AuthBaseTest {
         nestedGroup1.type = LocalPrincipalType.GROUP;
         nestedGroup1.name = "nestedGroup1";
         nestedGroup1.groupMembersLinks = Collections.singletonList(UriUtils.buildUriPath(
-                LocalPrincipalFactoryService.SELF_LINK, USER_EMAIL_CONNIE));
+                LocalPrincipalFactoryService.SELF_LINK, encode(USER_EMAIL_CONNIE)));
         nestedGroup1 = doPost(nestedGroup1, LocalPrincipalFactoryService.SELF_LINK);
         assertNotNull(nestedGroup1.documentSelfLink);
 
@@ -571,14 +573,17 @@ public class PrincipalServiceTest extends AuthBaseTest {
 
     @Test
     public void testAssignSystemRoleOnPrincipalWithoutUserState() {
-        deleteUser(USER_EMAIL_CONNIE);
-        assertDocumentNotExists(AuthUtil.buildUserServicePathFromPrincipalId(USER_EMAIL_CONNIE));
+        deleteUser(encode(USER_EMAIL_CONNIE));
+
+        assertDocumentNotExists(AuthUtil.buildUserServicePathFromPrincipalId(
+                encode(USER_EMAIL_CONNIE)));
+
         PrincipalRoleAssignment roleAssignment = new PrincipalRoleAssignment();
         roleAssignment.add = Collections.singletonList(AuthRole.CLOUD_ADMIN.name());
         doPatch(roleAssignment, UriUtils.buildUriPath(PrincipalService.SELF_LINK,
                 USER_EMAIL_CONNIE, PrincipalService.ROLES_SUFFIX));
 
-        assertDocumentExists(AuthUtil.buildUserServicePathFromPrincipalId(USER_EMAIL_CONNIE));
+        assertDocumentExists(AuthUtil.buildUserServicePathFromPrincipalId(encode(USER_EMAIL_CONNIE)));
 
         SecurityContext connieContext = getSecurityContext(USER_EMAIL_CONNIE);
 
@@ -589,9 +594,9 @@ public class PrincipalServiceTest extends AuthBaseTest {
 
     @Test
     public void testAssignSystemRoleOnPrincipalWithoutUserGroupState() {
-        deleteUserGroup(USER_GROUP_DEVELOPERS);
+        deleteUserGroup(encode(USER_GROUP_DEVELOPERS));
         assertDocumentNotExists(UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
-                USER_GROUP_DEVELOPERS));
+                encode(USER_GROUP_DEVELOPERS)));
 
         PrincipalRoleAssignment roleAssignment = new PrincipalRoleAssignment();
         roleAssignment.add = Collections.singletonList(AuthRole.CLOUD_ADMIN.name());
@@ -600,7 +605,7 @@ public class PrincipalServiceTest extends AuthBaseTest {
                 USER_GROUP_DEVELOPERS, PrincipalService.ROLES_SUFFIX));
 
         assertDocumentExists(UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
-                USER_GROUP_DEVELOPERS));
+                encode(USER_GROUP_DEVELOPERS)));
 
         SecurityContext developersContext = getSecurityContext(USER_GROUP_DEVELOPERS);
 

@@ -73,6 +73,10 @@ public class RoleRestrictionsTest extends AuthBaseTest {
 
         ExpandedProjectState expandedProjectState = getExpandedProjectState(createdProject.documentSelfLink);
         doPatch(projectRoles, expandedProjectState.documentSelfLink);
+        expandedProjectState = getExpandedProjectState(createdProject.documentSelfLink);
+        assertTrue(expandedProjectState.administrators.size() == 1);
+        assertTrue(expandedProjectState.administrators.iterator().next().email
+                .equalsIgnoreCase(USER_EMAIL_GLORIA));
     }
 
     @Test

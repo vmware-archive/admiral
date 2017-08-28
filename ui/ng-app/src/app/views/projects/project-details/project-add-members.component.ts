@@ -154,7 +154,7 @@ export class ProjectAddMembersComponent {
 
     addCanceled() {
         this.clearState();
-
+        this.resetAlert();
         this.onCancel.emit(null);
     }
 

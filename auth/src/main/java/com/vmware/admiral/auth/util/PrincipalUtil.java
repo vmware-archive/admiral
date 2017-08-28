@@ -13,7 +13,9 @@ package com.vmware.admiral.auth.util;
 
 import static com.vmware.admiral.auth.util.AuthUtil.addReplicationFactor;
 
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 
@@ -39,6 +41,8 @@ import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
 import com.vmware.xenon.services.common.UserService.UserState;
 
 public class PrincipalUtil {
+    public static final String ENCODE_MARKER = "@";
+    public static final String ENCODE_CHARSET = "UTF-8";
 
     public static Principal fromLocalPrincipalToPrincipal(LocalPrincipalState state) {
 
@@ -106,7 +110,7 @@ public class PrincipalUtil {
     public static DeferredResult<Principal> getPrincipal(Service requestorService,
             Operation requestorOperation, String principalId) {
         Operation getOp = Operation.createGet(requestorService,
-                UriUtils.buildUriPath(PrincipalService.SELF_LINK, principalId));
+                UriUtils.buildUriPath(PrincipalService.SELF_LINK, encode(principalId)));
 
         requestorService.setAuthorizationContext(getOp,
                 requestorOperation.getAuthorizationContext());
@@ -115,20 +119,20 @@ public class PrincipalUtil {
     }
 
     public static Pair<String, String> toNameAndDomain(String principalId) {
-
+        String decodedPrincipalId = decode(principalId);
         // UPN format: NAME@DOMAIN
-        String[] parts = principalId.split("@");
+        String[] parts = decodedPrincipalId.split("@");
         if (parts.length == 2) {
             return new Pair<>(parts[0], parts[1]);
         }
 
         // NETBIOS format: DOMAIN\NAME
-        parts = principalId.split("\\\\");
+        parts = decodedPrincipalId.split("\\\\");
         if (parts.length == 2) {
             return new Pair<>(parts[1], parts[0]);
         }
 
-        throw new IllegalArgumentException("Invalid principalId format: '" + principalId + "'");
+        throw new IllegalArgumentException("Invalid principalId format: '" + decodedPrincipalId + "'");
     }
 
     public static String toPrincipalId(String name, String domain) {
@@ -167,16 +171,17 @@ public class PrincipalUtil {
 
     public static DeferredResult<Principal> getPrincipal(Service service, String principalId) {
         Operation getPrincipalOp = Operation.createGet(service, UriUtils.buildUriPath(
-                PrincipalService.SELF_LINK, principalId));
+                PrincipalService.SELF_LINK, encode(principalId)));
 
         return service.sendWithDeferredResult(getPrincipalOp, Principal.class);
     }
 
     public static DeferredResult<UserState> getOrCreateUser(Service service, String principalId) {
+        String encodedPrincipalId = encode(principalId);
         Operation getUser = Operation.createGet(service,
-                AuthUtil.buildUserServicePathFromPrincipalId(principalId));
+                AuthUtil.buildUserServicePathFromPrincipalId(encodedPrincipalId));
 
-        return getPrincipal(service, principalId)
+        return getPrincipal(service, encodedPrincipalId)
                 .thenCompose(principal -> {
                     if (principal.type != PrincipalType.USER) {
                         String message = String.format("Principal %s is not of type USER, user "
@@ -195,7 +200,7 @@ public class PrincipalUtil {
                                     .thenCompose(user -> UserGroupsUpdater.create()
                                             .setService(service)
                                             .setGroupLink(AuthUtil.BASIC_USERS_USER_GROUP_LINK)
-                                            .setUsersToAdd(Collections.singletonList(principalId))
+                                            .setUsersToAdd(Collections.singletonList(encodedPrincipalId))
                                             .update())
                                     .thenCompose(ignore -> service.sendWithDeferredResult(getUser,
                                             UserState.class));
@@ -209,7 +214,7 @@ public class PrincipalUtil {
     public static DeferredResult<UserGroupState> getOrCreateUserGroup(Service service,
             String principalId) {
         Operation getUserGroup = Operation.createGet(service,
-                UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, principalId));
+                UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, encode(principalId)));
 
         return getPrincipal(service, principalId)
                 .thenCompose(principal -> {
@@ -239,8 +244,8 @@ public class PrincipalUtil {
 
     private static DeferredResult<UserState> createUser(Service service, String principalId) {
         UserState user = new UserState();
-        user.email = principalId;
-        user.documentSelfLink = principalId;
+        user.email = decode(principalId);
+        user.documentSelfLink = encode(principalId);
 
         Operation postUser = Operation
                 .createPost(service, AuthUtil.buildUserServicePathFromPrincipalId(""))
@@ -254,7 +259,7 @@ public class PrincipalUtil {
     private static DeferredResult<UserGroupState> createUserGroup(Service service,
             String principalId) {
         String userGroupSelfLink = UriUtils
-                .buildUriPath(UserGroupService.FACTORY_LINK, principalId);
+                .buildUriPath(UserGroupService.FACTORY_LINK, encode(principalId));
         Query userGroupQuery = AuthUtil.buildQueryForUsers(userGroupSelfLink);
 
         UserGroupState userGroupState = UserGroupState.Builder.create()
@@ -294,5 +299,44 @@ public class PrincipalUtil {
         return DeferredResult.allOf(
                 service.sendWithDeferredResult(postRole),
                 service.sendWithDeferredResult(postExtendedRole));
+    }
+
+    public static String encode(String principalId) {
+        if (principalId == null || principalId.isEmpty()) {
+            return principalId;
+        }
+
+        if (!principalId.contains(ENCODE_MARKER)) {
+            return principalId;
+        }
+
+        try {
+            return Base64.getUrlEncoder().encodeToString(principalId.getBytes(ENCODE_CHARSET));
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static String decode(String principalId) {
+        if (principalId == null || principalId.isEmpty()) {
+            return principalId;
+        }
+
+        if (principalId.contains(ENCODE_MARKER)) {
+            return principalId;
+        }
+
+        try {
+            return new String(Base64.getUrlDecoder().decode(principalId), ENCODE_CHARSET);
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalArgumentException iae) {
+            if (iae.getMessage().contains("Illegal base64 character")) {
+                // In this case principal id is not encoded string without @ sign in it
+                // so the decoding is failing, we return the same string.
+                return principalId;
+            }
+            throw new RuntimeException(iae);
+        }
     }
 }

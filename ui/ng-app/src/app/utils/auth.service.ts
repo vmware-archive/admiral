@@ -104,7 +104,7 @@ export class AuthService {
   }
 
   public assignRoleCloudAdmin(principalId) {
-      let link = Links.AUTH_PRINCIPALS + '/' + principalId + '/roles';
+      let link = Links.AUTH_PRINCIPALS + '/' + encodeURIComponent(principalId) + '/roles';
       let patchValue = {
           'add': ['CLOUD_ADMIN']
       };
@@ -113,7 +113,7 @@ export class AuthService {
   }
 
     public unassignRoleCloudAdmin(principalId) {
-        let link = Links.AUTH_PRINCIPALS + '/' + principalId + '/roles';
+        let link = Links.AUTH_PRINCIPALS + '/' + encodeURIComponent(principalId) + '/roles';
         let patchValue = {
             'remove': ['CLOUD_ADMIN']
         };
