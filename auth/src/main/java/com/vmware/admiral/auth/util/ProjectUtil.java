@@ -291,8 +291,23 @@ public class ProjectUtil {
                 simpleState.documentSelfLink)
                 .thenAccept((templateLinks) -> expandedState.templateLinks = templateLinks);
 
+        DeferredResult<Void> retrieveRepositoriesAndImagesCount = retrieveRepositoriesAndTagsCount(
+                service,
+                simpleState.documentSelfLink, getProjectIndex(simpleState))
+                        .thenAccept(
+                                (repositories) -> {
+                                    expandedState.repositories = new ArrayList<>(
+                                            repositories.size());
+                                    expandedState.numberOfImages = 0L;
+
+                                    repositories.forEach((entry) -> {
+                                        expandedState.repositories.add(entry.name);
+                                        expandedState.numberOfImages += entry.tagsCount;
+                                    });
+                                });
+
         return DeferredResult.allOf(retrieveAdmins, retrieveMembers, retrieveViewers,
-                retrieveClusterLinks, retrieveTemplateLinks)
+                retrieveClusterLinks, retrieveTemplateLinks, retrieveRepositoriesAndImagesCount)
                 .thenApply(ignore -> expandedState);
     }
 
