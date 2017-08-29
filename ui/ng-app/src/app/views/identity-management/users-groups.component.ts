@@ -111,25 +111,35 @@ export class UsersGroupsComponent {
         this.showAssignRolesDialog = false;
     }
 
-    onMakeAdmin(selectedPrincipals) {
-        let roles = [];
-        roles.concat(selectedPrincipals[0].roles);
+    hasRoleCloudAdmin(selectedPrincipal) {
+        let roles = selectedPrincipal.roles;
 
-        let isAdmin = roles.find((role) => {
+        return roles.find((role) => {
             return role === Roles.CLOUD_ADMIN;
         });
-        if (isAdmin) {
-            console.log('Already a cloud admin!');
-            return;
-        }
+    }
 
-        this.authService.makeCloudAdmin(selectedPrincipals[0].id).then(() => {
+    onMakeCloudAdmin(selectedPrincipal) {
+        let roles = selectedPrincipal.roles;
+
+        this.authService.assignRoleCloudAdmin(selectedPrincipal.id).then(() => {
             // update screen
             roles.push(Roles.CLOUD_ADMIN);
-            selectedPrincipals[0].roles = roles;
+            selectedPrincipal.roles = roles;
         }).catch((error) => {
             console.log("Failed to make cloud admin", error);
         });
     }
 
+    onUnmakeCloudAdmin(selectedPrincipal) {
+        let roles = selectedPrincipal.roles;
+
+        this.authService.unassignRoleCloudAdmin(selectedPrincipal.id).then(() => {
+            // update screen
+            roles.splice(roles.indexOf(Roles.CLOUD_ADMIN));
+            selectedPrincipal.roles = roles;
+        }).catch((error) => {
+            console.log("Failed to unmake cloud admin", error);
+        });
+    }
 }

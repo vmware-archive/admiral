@@ -22,12 +22,20 @@
 <clr-datagrid [(clrDgSelected)]="selected" [clrDgLoading]="loading">
     <clr-dg-action-bar>
         <div class="btn-group">
-            <button type="button" class="btn btn-sm btn-secondary" (click)="onAssignRoles()"
-                    *ngIf="selected.length == 1"><clr-icon shape="pencil"></clr-icon><span
+            <button *ngIf="selected.length == 1"
+                    type="button" class="btn btn-sm btn-secondary" (click)="onAssignRoles()"
+                        ><clr-icon shape="pencil"></clr-icon><span
                 class="btn-spaced-text">{{"assignRoles" | i18n}}</span></button>
-            <button type="button" class="btn btn-sm btn-secondary" (click)="onMakeAdmin(selected)"
-                    *ngIf="selected.length == 1"><clr-icon shape="pencil"></clr-icon><span
-                class="btn-spaced-text">{{"makeAdmin" | i18n}}</span></button>
+            <button *ngIf="selected.length == 1 && !hasRoleCloudAdmin(selected && selected[0])"
+                    type="button" class="btn btn-sm btn-secondary"
+                    (click)="onMakeCloudAdmin(selected && selected[0])"
+                        ><clr-icon shape="pencil"></clr-icon><span
+                            class="btn-spaced-text">{{"makeAdmin" | i18n}}</span></button>
+            <button *ngIf="selected.length == 1 && hasRoleCloudAdmin(selected[0])"
+                    type="button" class="btn btn-sm btn-secondary"
+                    (click)="onUnmakeCloudAdmin(selected && selected[0])"
+                        ><clr-icon shape="pencil"></clr-icon><span
+                            class="btn-spaced-text">{{"unmakeAdmin" | i18n}}</span></button>
         </div>
     </clr-dg-action-bar>
     <clr-dg-column>{{"identity.usersgroups.columnName" | i18n}}</clr-dg-column>
