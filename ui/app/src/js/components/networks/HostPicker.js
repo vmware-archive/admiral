@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -20,7 +20,7 @@ const INITIAL_FILTER = '';
 var initialQueryPromise;
 
 var HOST_DROPDOWN_RENDERER = function(host) {
-  var hostName = host.displayName || utils.getHostName(host);
+  var hostName = host.name || utils.getHostName(host);
 
   return `
     <div>
@@ -47,7 +47,7 @@ function hostSearchCallback(q, callback) {
       var currentCounter = currentCluster.nodeLinks.length;
       for (var j = 0; j < currentCluster.nodeLinks.length; j++) {
         var host = currentCluster.nodes[currentCluster.nodeLinks[j]];
-        host.displayName = host.address + ' (' + currentCluster.name + ')';
+        host.name = host.address + ' (' + currentCluster.name + ')';
         hostsInCluster.push(host);
       }
       hostResult.items.push.apply(hostResult.items, hostsInCluster);
