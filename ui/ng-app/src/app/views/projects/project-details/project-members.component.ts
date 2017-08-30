@@ -34,6 +34,8 @@ export class ProjectMembersComponent implements OnChanges {
 
     selectedMember: any;
 
+    loading:boolean = false;
+
     get deleteConfirmationDescription(): string {
         return this.memberToDelete && this.memberToDelete.id
             && I18n.t('projects.members.deleteMember.confirmation',
@@ -98,38 +100,41 @@ export class ProjectMembersComponent implements OnChanges {
 
         updatedProject.administrators.forEach(admin => {
             if (admin) {
-                admin.role = 'ADMIN'
+                admin.role = 'ADMIN';
                 this.members.push(admin);
             }
         });
 
         updatedProject.members.forEach(member => {
             if (member) {
-                member.role = 'MEMBER'
+                member.role = 'MEMBER';
                 this.members.push(member);
             }
         });
 
         updatedProject.viewers.forEach(viewer => {
             if (viewer) {
-                viewer.role = 'VIEWER'
+                viewer.role = 'VIEWER';
                 this.members.push(viewer);
             }
         });
     }
 
-    private loadProjectAndMembers() {        
+    private loadProjectAndMembers() {
         if (this.project) {
-        
+
+            this.loading = true;
+
             this.service.get(this.project.documentSelfLink, true).then((updatedProject) => {
-        
+                this.loading = false;
+
                 this.project = updatedProject;
-        
                 this.loadMembers(this.project);
-        
                 this.onChange.emit(this.project);
+
             }).catch((e) => {
                 console.log('failed to update project', e);
+                this.loading = false;
             })
         }
     }
@@ -157,10 +162,14 @@ export class ProjectMembersComponent implements OnChanges {
             };
         }
 
+        this.loading = true;
         this.service.patch(this.project.documentSelfLink, patchValue).then(() => {
             // Successfully removed member
+            this.loading = false;
             this.updateStateAfterDelete();
+
         }).catch((error) => {
+            this.loading = false;
             if (error.status === 304) {
                 // Refresh data
                 this.updateStateAfterDelete();
@@ -200,13 +209,16 @@ export class ProjectMembersComponent implements OnChanges {
     }
 
     updateStateAfterDelete() {
+        this.loading = true;
         this.service.get(this.project.documentSelfLink, true).then((updatedProject) => {
+            this.loading = false;
             this.memberToDelete = null;
 
             this.project = updatedProject;
             this.onChange.emit(this.project);
         }).catch((error) => {
             console.log("Failed to reload project data", error);
+            this.loading = false;
             this.deleteConfirmationAlert = Utils.getErrorMessage(error)._generic;
         });
     }

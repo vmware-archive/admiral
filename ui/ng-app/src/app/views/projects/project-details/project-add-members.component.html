@@ -13,7 +13,7 @@
            (clrModalOpenChange)="addCanceled()" [clrModalSize]="'lg'">
     <h3 class="modal-title">{{ 'projects.members.addMembers.title' | i18n }}</h3>
     <div class="modal-body">
-        <clr-alert [clrAlertType]="'alert-danger'" [(clrAlertClosed)]="!alertMessage"  (clrAlertClosedChange)="resetAlert()">
+        <clr-alert [clrAlertType]="'alert-danger'" [(clrAlertClosed)]="!alertMessage" (clrAlertClosedChange)="resetAlert()">
             <div class="alert-item">
                 <span class="alert-text">{{ alertMessage }}</span>
             </div>
@@ -25,7 +25,8 @@
                     <label>{{"projects.members.addMembers.fieldTitleId" | i18n}}</label>
                     <simple-search displayPropertyName="id"
                                    (searchChange)="getMembers($event)"
-                                   (searchSelectionChange)="onSearchSelection($event)"></simple-search>
+                                   (searchSelectionChange)="onSearchSelection($event)"></simple-search><div
+                    *ngIf="searching" class="searching"><i class="fa fa-lg fa-spinner fa-spin"></i></div>
                 </div>
                 <div class="form-group">
                     <div class="selected-members-container">
@@ -48,11 +49,13 @@
             </section>
         </form>
     </div>
+
     <div class="modal-footer">
-        <button type="button" class="btn btn-outline"
+        <button type="button" class="btn btn-outline" [disabled]="saving"
                 (click)="addCanceled()">{{ "cancel" | i18n }}</button>
         <button type="button" class="btn btn-primary"
-                [disabled]="addMembersToProjectForm.invalid"
-                (click)="addConfirmed()">{{ "ok" | i18n }}</button>
+                [disabled]="addMembersToProjectForm.invalid || saving"
+                (click)="addConfirmed()">{{ "ok" | i18n }}<div
+            *ngIf="saving" class="saving"><i class="fa fa-lg fa-spinner fa-spin"></i></div></button>
     </div>
 </clr-modal>

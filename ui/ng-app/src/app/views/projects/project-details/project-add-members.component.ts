@@ -43,6 +43,9 @@ export class ProjectAddMembersComponent {
     members: any[];
     membersSuggestions: any[];
 
+    searching:boolean = false;
+    saving:boolean = false;
+
     // error
     alertMessage: string;
 
@@ -58,7 +61,10 @@ export class ProjectAddMembersComponent {
             return [];
         }
 
+        this.searching = true;
+
         this.authService.findPrincipals($eventData.query, false).then((principalsResult) => {
+            this.searching = false;
             this.members = principalsResult;
 
             this.membersSuggestions = this.members.map((principal) => {
@@ -73,6 +79,7 @@ export class ProjectAddMembersComponent {
 
         }).catch((error) => {
             console.log('Failed to find members', error);
+            this.searching = false;
         });
     }
 
@@ -123,11 +130,15 @@ export class ProjectAddMembersComponent {
                 };
             }
 
+            this.saving = true;
             this.service.patch(this.project.documentSelfLink, patchValue).then(() => {
+                this.saving = false;
+
                 this.clearState();
                 this.onChange.emit(null);
             }).catch((error) => {
                 console.log("Failed to add members", error);
+                this.saving = false;
                 this.alertMessage = Utils.getErrorMessage(error)._generic;
             });
         }

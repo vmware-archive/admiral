@@ -13,8 +13,11 @@
 
 <div class="search-holder">
     <form class="form" [formGroup]="searchPrincipalsForm">
-        <div class="search-users"><clr-icon shape="search" size="20"></clr-icon></div>
-        <input id="searchField" type="text" placeholder="username@domain" formControlName="searchField" (keyup.enter)="searchIt($event)">
+        <div class="search-users"><clr-icon
+            *ngIf="!loading" shape="search" size="20"></clr-icon><i
+            *ngIf="loading" class="fa fa-lg fa-spinner fa-spin"></i></div>
+        <input id="searchField" type="text" placeholder="username@domain"
+               formControlName="searchField" (keyup.enter)="searchIt($event)">
     </form>
 </div>
 
@@ -51,10 +54,14 @@
         <clr-dg-cell>{{principal.id}}</clr-dg-cell>
         <clr-dg-cell> <clr-icon *ngIf="isCloudAdmin(principal)" shape="check" class="user-cloud-admin-check"></clr-icon>
             <clr-icon *ngIf="!isCloudAdmin(principal)" shape="minus"></clr-icon></clr-dg-cell>
-        <clr-dg-cell><span *ngFor="let projectRole of getProjectsRoles(principal)" class="label label-project-role">{{ projectRole.projectName }}
-            <span class="badge" *ngIf="projectRole.projectRole == 'PROJECT_ADMIN'">{{ "projects.members.roles.administrator" | i18n }}</span>
-            <span class="badge" *ngIf="projectRole.projectRole == 'PROJECT_MEMBER'">{{ "projects.members.roles.member" | i18n }}</span>
-            <span class="badge" *ngIf="projectRole.projectRole == 'PROJECT_VIEWER'">{{ "projects.members.roles.viewer" | i18n }}</span>
+        <clr-dg-cell><span *ngFor="let projectRole of getProjectsRoles(principal)"
+                           class="label label-project-role">{{ projectRole.projectName }}
+            <span class="badge" *ngIf="projectRole.projectRole == 'PROJECT_ADMIN'"
+                    >{{ "projects.members.roles.administrator" | i18n }}</span>
+            <span class="badge" *ngIf="projectRole.projectRole == 'PROJECT_MEMBER'"
+                    >{{ "projects.members.roles.member" | i18n }}</span>
+            <span class="badge" *ngIf="projectRole.projectRole == 'PROJECT_VIEWER'"
+                    >{{ "projects.members.roles.viewer" | i18n }}</span>
         </span></clr-dg-cell>
     </clr-dg-row>
 
