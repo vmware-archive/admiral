@@ -14,8 +14,11 @@ package com.vmware.admiral.auth.idm;
 import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.auth.util.SecurityContextUtil;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.AuthUtils;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.StatelessService;
+import com.vmware.xenon.common.Utils;
 
 public class SessionService extends StatelessService {
     public static final String SELF_LINK = ManagementUriParts.AUTH_SESSION;
@@ -40,8 +43,22 @@ public class SessionService extends StatelessService {
             provider.doLogout(get);
         } else if (isSessionRequest(get)) {
             SecurityContextUtil.getSecurityContext(this, get)
-                    .thenApply(get::setBody)
-                    .whenCompleteNotify(get);
+                    .thenAccept((context) -> {
+                        get.setBody(context).complete();
+                    })
+                    .exceptionally((ex) -> {
+                        if (ex.getCause() instanceof ServiceNotFoundException) {
+                            logWarning("Failed to retrieve session for current user!");
+                            // Clean-up auth token header and cookie
+                            AuthUtils.cleanupSessionData(get);
+                            get.setStatusCode(Operation.STATUS_CODE_UNAUTHORIZED).complete();
+                        } else {
+                            logWarning("Failed to retrieve session for current user: %s",
+                                    Utils.toString(ex));
+                            get.fail(ex);
+                        }
+                        return null;
+                    });
         } else {
             Operation.failServiceNotFound(get);
         }
