@@ -36,12 +36,29 @@ var ContainersListItem = Vue.extend({
     networkCount: function() {
       return this.model.networks && Object.keys(this.model.networks).length || 0;
     },
+    volumesCount: function() {
+      return this.model.volumes && this.model.volumes.length || 0;
+    },
     applicationId: function() {
       return this.model.compositeComponentLink
                ? utils.getDocumentId(this.model.compositeComponentLink) : null;
     },
     networkIds: function() {
       return this.model.networks && Object.keys(this.model.networks);
+    },
+    volumeIds: function() {
+      if (!this.model.volumes) {
+        return null;
+      }
+
+      var resultIds = [];
+      this.model.volumes.forEach(v => {
+        var volumeParts = v.split(':');
+        if (volumeParts.length === 2 && volumeParts[0]) {
+          resultIds.push(volumeParts[0]);
+        }
+      });
+      return resultIds;
     },
     isHostsViewLinksEnabled: function() {
       return ft.isHostsViewLinksEnabled();
@@ -152,6 +169,19 @@ var ContainersListItem = Vue.extend({
       };
 
       NavigationActions.openNetworks(queryOptions);
+    },
+
+    showVolumes: function($event) {
+      $event.preventDefault();
+      $event.stopPropagation();
+
+      let queryOptions = {
+        $category: constants.RESOURCES.SEARCH_CATEGORY.VOLUMES,
+        $occurrence: constants.SEARCH_OCCURRENCE.ANY,
+        any: this.volumeIds
+      };
+
+      NavigationActions.openVolumes(queryOptions);
     },
 
     operationSupported: function(op) {

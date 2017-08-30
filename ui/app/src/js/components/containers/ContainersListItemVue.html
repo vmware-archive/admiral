@@ -62,6 +62,12 @@
                      v-bind:tooltip="i18n('app.resource.list.relations.networks')"
                      v-bind:lone="!model.compositeComponentLink"
                      v-on:click="showNetworks($event)"></navigation-link>
+    <navigation-link v-bind:show="volumesCount > 0"
+                     v-bind:label="volumesCount"
+                     icon-name="image-assets/volumes-nav-link.png"
+                     v-bind:tooltip="i18n('app.resource.list.relations.volumes')"
+                     v-bind:lone="!model.compositeComponentLink"
+                     v-on:click="showVolumes($event)"></navigation-link>
   </div>
   <div class="container-actions" v-bind:class="{'hide': showDeleteConfirmation}">
     <action-button name="details" icon-name="eye"

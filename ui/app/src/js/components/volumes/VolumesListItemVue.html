@@ -57,11 +57,6 @@
                      icon-name="image-assets/hosts-nav-link.png"
                      v-bind:tooltip="i18n('app.resource.list.relations.hosts')"
                      v-on:click="showHosts($event)"></navigation-link>
-    <navigation-link v-bind:show="(connectedContainersCount > 0)"
-                     v-bind:label="connectedContainersCount"
-                     icon-name="image-assets/containers-nav-link.png"
-                     v-bind:tooltip="i18n('app.resource.list.relations.containers')"
-                     v-on:click="openConnectedContainers($event)"></navigation-link>
     <navigation-link v-bind:show="applicationsCount > 0"
                      v-bind:label="applicationsCount"
                      icon-name="image-assets/applications-nav-link.png"
