@@ -11,12 +11,18 @@
 
 package com.vmware.admiral.common.util;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigInteger;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.security.cert.X509Certificate;
 import java.util.Properties;
 
 import org.junit.BeforeClass;
@@ -71,5 +77,13 @@ public class CertificateUtilExtendedTest {
     public void testInvalidCertificate() {
         assertFalse(CertificateUtilExtended.isSelfSignedCertificate("invalid certificate"));
         assertFalse(CertificateUtilExtended.isSelfSignedCertificate(null));
+    }
+
+    @Test
+    public void testFromFile() throws URISyntaxException {
+        URL resource = CertificateUtilExtendedTest.class.getResource("/certs/docker.com.chain.crt");
+        X509Certificate[] certChain = CertificateUtilExtended.fromFile(new File(resource.toURI()));
+        assertEquals(3, certChain.length);
+        assertEquals(BigInteger.valueOf(26021L), certChain[0].getSerialNumber());
     }
 }

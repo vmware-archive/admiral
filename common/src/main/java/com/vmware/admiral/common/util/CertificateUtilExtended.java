@@ -11,8 +11,10 @@
 
 package com.vmware.admiral.common.util;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.nio.file.Files;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
@@ -55,6 +57,18 @@ public class CertificateUtilExtended {
         } catch (InvalidKeyException keyEx) {
             // Invalid key --> not self-signed
             return false;
+        }
+    }
+
+    /**
+     * Serialize the content of a .crt file to X509 certificate chain
+     */
+    public static X509Certificate[] fromFile(File certFile) {
+        try {
+            String content = new String(Files.readAllBytes(certFile.toPath()));
+            return CertificateUtil.createCertificateChain(content);
+        } catch (Exception e) {
+            return null;
         }
     }
 

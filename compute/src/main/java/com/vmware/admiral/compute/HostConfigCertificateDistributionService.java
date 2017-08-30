@@ -11,17 +11,25 @@
 
 package com.vmware.admiral.compute;
 
+import static com.vmware.admiral.common.ManagementUriParts.CONFIG_PROPS;
 import static com.vmware.admiral.common.util.CertificateUtilExtended.isSelfSignedCertificate;
 
+import java.io.File;
+import java.net.URI;
+import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.function.Consumer;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.common.util.CertificateUtilExtended;
+import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
+import com.vmware.admiral.service.common.harbor.Harbor;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
 /**
@@ -30,6 +38,12 @@ import com.vmware.xenon.common.Utils;
 public class HostConfigCertificateDistributionService extends
         AbstractCertificateDistributionService {
     public static final String SELF_LINK = ManagementUriParts.CERT_DISTRIBUTION_ADD_HOST;
+
+    public static final String VIC_PROP_NAME = "vic";
+
+    protected volatile String vicCertificateChain;
+    protected volatile String harborUrl;
+    protected volatile Boolean isVic;
 
     public static class HostConfigCertificateDistributionState {
         public String hostLink;
@@ -54,6 +68,8 @@ public class HostConfigCertificateDistributionService extends
     }
 
     private void handleAddDockerHostOperation(String hostLink, List<String> tenantLinks) {
+        handleVicCertificate(hostLink);
+
         sendRequest(Operation.createGet(this, RegistryService.FACTORY_LINK)
                 .setCompletion((o, e) -> {
                     if (e != null) {
@@ -94,4 +110,62 @@ public class HostConfigCertificateDistributionService extends
                 }));
     }
 
+    /**
+     * When part of VIC product upload Admiral certificate to the respective Docker host to
+     * enable communication with Harbor. Admiral and Harbor certificates are the same.
+     */
+    protected void handleVicCertificate(String hostLink) {
+        if (isVic == null) {
+            getConfigProperty(VIC_PROP_NAME, (vic) -> {
+                isVic =  Boolean.valueOf(vic);
+                handleVicCertificate(hostLink);
+            });
+            return;
+        }
+
+        if (!isVic) {
+            return;
+        }
+
+        if (harborUrl == null) {
+            getConfigProperty(Harbor.CONFIGURATION_URL_PROPERTY_NAME, (harborTabUrl) -> {
+                if (harborTabUrl == null) {
+                    return;
+                }
+
+                this.harborUrl = harborTabUrl;
+                handleVicCertificate(hostLink);
+            });
+            return;
+        }
+
+        if (vicCertificateChain == null) {
+            URI certFileUri = getHost().getState().certificateFileReference;
+            if (certFileUri == null) {
+                return;
+            }
+
+            X509Certificate[] certChain = CertificateUtilExtended.fromFile(new File(certFileUri));
+            if (certChain != null) {
+                vicCertificateChain = CertificateUtilExtended.toPEMformat(certChain, getHost());
+            }
+        }
+
+        if (vicCertificateChain != null && harborUrl != null) {
+            uploadCertificate(hostLink, harborUrl, vicCertificateChain, null);
+        }
+    }
+
+    private void getConfigProperty(String propName, Consumer<String> callback) {
+        sendRequest(Operation
+                .createGet(getHost(), UriUtils.buildUriPath(CONFIG_PROPS, propName))
+                .setCompletion((res, ex) -> {
+                    if (ex != null) {
+                        callback.accept(null);
+                        return;
+                    }
+                    ConfigurationState body = res.getBody(ConfigurationState.class);
+                    callback.accept(body.value);
+                }));
+    }
 }
