@@ -11,6 +11,7 @@ import { FT } from './../../utils/ft';
  */
 
 import { Component, ViewChild } from '@angular/core';
+import { Router } from '@angular/router';
 import { Links } from '../../utils/links';
 import { DocumentService } from '../../utils/document.service';
 import { GridViewComponent } from '../../components/grid-view/grid-view.component';
@@ -28,7 +29,7 @@ import { RoutesRestriction } from './../../utils/routes-restriction';
  */
 export class ProjectsComponent {
 
-  constructor(private service: DocumentService) { }
+  constructor(private router: Router, private service: DocumentService) { }
 
   serviceEndpoint = Links.PROJECTS;
   projectToDelete: any;
@@ -102,6 +103,23 @@ export class ProjectsComponent {
     return RoutesRestriction.PROJECTS_ID;
   }
 
+  get backButtonLink() {
+    var currentUrl = this.router.url;
+    var idx = currentUrl.indexOf('cluster');
+    if (idx > -1) {
+      return currentUrl.substring(0, idx);
+    }
+    return './';
+  }
+
+  get backButtonLabel() {
+    var currentUrl = this.router.url;
+    var idx = currentUrl.indexOf('cluster');
+    if (idx > -1) {
+      return I18n.t('back');
+    }
+    return I18n.t('projects.title');;
+  }
 
   get projectsCardViewActions() {
     return RoutesRestriction.PROJECT_CARD_VIEW_ACTIONS;

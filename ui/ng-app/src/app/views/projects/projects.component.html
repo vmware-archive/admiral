@@ -75,6 +75,6 @@
 </grid-view>
 
 <navigation-container>
-  <back-button [routerLink]="['./']">{{"projects.title" | i18n}}</back-button>
+  <back-button [routerLink]="backButtonLink">{{ backButtonLabel }}</back-button>
   <router-outlet></router-outlet>
 </navigation-container>

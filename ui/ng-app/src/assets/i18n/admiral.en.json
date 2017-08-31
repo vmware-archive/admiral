@@ -282,6 +282,7 @@
   "remove": "Remove",
   "delete": "Delete",
   "cancel": "Cancel",
+  "back": "Back",
   "unknown": "Unknown",
   "assignRoles": "Assign Project Roles",
   "makeAdmin": " Assign Admin Role",
