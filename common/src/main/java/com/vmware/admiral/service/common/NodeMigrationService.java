@@ -160,7 +160,7 @@ public class NodeMigrationService extends StatelessService {
                                     "Failure when calling migration task. Error: %s",
                                     ex.getMessage());
                             if (hasError.compareAndSet(false, true)) {
-                                post.fail(new Throwable("Failure when calling migration task"));
+                                post.fail(new Throwable("Failure when calling migration task", ex));
                             }
                         } else {
                             State state = o.getBody(State.class);

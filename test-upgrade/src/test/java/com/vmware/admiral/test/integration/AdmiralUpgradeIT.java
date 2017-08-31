@@ -162,7 +162,7 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
             throws Exception {
         // wait for the admiral container to start. In 0.9.1 health check service is not available.
         // This is needed in case only validated is run
-        Thread.sleep(20000);
+        Thread.sleep(30000);
         String parent = targetContainer.parentLink;
         ComputeState computeState = getDocument(parent, ComputeState.class);
         String source = String.format("http://%s:%s", computeState.address,
