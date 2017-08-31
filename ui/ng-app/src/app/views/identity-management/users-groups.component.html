@@ -29,14 +29,14 @@
                     type="button" class="btn btn-sm btn-secondary" (click)="onAssignRoles()"
                         ><clr-icon shape="pencil"></clr-icon><span
                 class="btn-spaced-text">{{"assignRoles" | i18n}}</span></button>
-            <button *ngIf="selected.length == 1 && !hasRoleCloudAdmin(selected && selected[0])"
+            <button *ngIf="selected.length == 1 && !selected[0].isCloudAdmin"
                     type="button" class="btn btn-sm btn-secondary"
                     (click)="onMakeCloudAdmin(selected && selected[0])"
                         ><clr-icon shape="pencil"></clr-icon><span
                             class="btn-spaced-text">{{"makeAdmin" | i18n}}</span></button>
-            <button *ngIf="selected.length == 1 && hasRoleCloudAdmin(selected[0])"
+            <button *ngIf="selected.length == 1 && selected[0].isCloudAdmin"
                     type="button" class="btn btn-sm btn-secondary"
-                    (click)="onUnmakeCloudAdmin(selected && selected[0])"
+                    (click)="onUnmakeCloudAdmin(selected[0])"
                         ><clr-icon shape="pencil"></clr-icon><span
                             class="btn-spaced-text">{{"unmakeAdmin" | i18n}}</span></button>
         </div>
@@ -52,9 +52,9 @@
         <clr-dg-cell><clr-icon *ngIf="principal.type == 'USER'" shape="user"></clr-icon>
             <clr-icon *ngIf="principal.type == 'GROUP'" shape="group"></clr-icon> {{principal.name}}</clr-dg-cell>
         <clr-dg-cell>{{principal.id}}</clr-dg-cell>
-        <clr-dg-cell> <clr-icon *ngIf="isCloudAdmin(principal)" shape="check" class="user-cloud-admin-check"></clr-icon>
-            <clr-icon *ngIf="!isCloudAdmin(principal)" shape="minus"></clr-icon></clr-dg-cell>
-        <clr-dg-cell><span *ngFor="let projectRole of getProjectsRoles(principal)"
+        <clr-dg-cell> <clr-icon *ngIf="principal.isCloudAdmin" shape="check" class="user-cloud-admin-check"></clr-icon>
+            <clr-icon *ngIf="!principal.isCloudAdmin" shape="minus"></clr-icon></clr-dg-cell>
+        <clr-dg-cell><span *ngFor="let projectRole of principal.projectRoles"
                            class="label label-project-role">{{ projectRole.projectName }}
             <span class="badge" *ngIf="projectRole.projectRole == 'PROJECT_ADMIN'"
                     >{{ "projects.members.roles.administrator" | i18n }}</span>

@@ -30,6 +30,7 @@ export class UsersGroupsComponent {
 
     searchTerm: string = '';
     loading: boolean = false;
+
     selected: any[] = [];
     selectedPrincipals: any[] = [];
 
@@ -46,14 +47,75 @@ export class UsersGroupsComponent {
             return;
         }
 
+        this.loadPrincipals();
+    }
+
+    onAssignRoles() {
+        this.showAssignRolesDialog = true;
+    }
+
+    onAssignRolesDone() {
+        this.showAssignRolesDialog = false;
+        // refresh
+        this.loadPrincipals();
+    }
+
+    onAssignRolesCanceled() {
+        this.showAssignRolesDialog = false;
+    }
+
+    onMakeCloudAdmin(selectedPrincipal) {
+        this.authService.assignRoleCloudAdmin(selectedPrincipal.id).then(() => {
+            // update screen
+            selectedPrincipal.isCloudAdmin = true;
+        }).catch((error) => {
+            console.log("Failed to make cloud admin", error);
+        });
+    }
+
+    onUnmakeCloudAdmin(selectedPrincipal) {
+        this.authService.unassignRoleCloudAdmin(selectedPrincipal.id).then(() => {
+            // update screen
+            selectedPrincipal.isCloudAdmin = false;
+        }).catch((error) => {
+            console.log("Failed to unmake cloud admin", error);
+        });
+    }
+
+    loadPrincipals() {
         this.loading = true;
-        this.authService.findPrincipals(this.searchTerm, true).then((principalsResult) => {
-            this.selectedPrincipals = principalsResult;
+
+        this.authService.findPrincipals(this.searchTerm, true)
+        .then((principalsResult) => {
             this.loading = false;
+            this.formatResult(principalsResult);
+
         }).catch((error) => {
             console.log('Failed to find principals', error);
             this.loading = false;
         });
+    }
+
+    formatResult(principalsResult) {
+        if (!principalsResult) {
+            this.selectedPrincipals = [];
+            return;
+        }
+
+        let principals: any[] = [];
+        principalsResult.forEach((selectedPrincipal) => {
+            let principal = {
+                id: selectedPrincipal.id,
+                name: selectedPrincipal.name,
+                type: selectedPrincipal.type,
+                isCloudAdmin: this.isCloudAdmin(selectedPrincipal),
+                projectRoles: this.getProjectsRoles(selectedPrincipal),
+                projects: selectedPrincipal.projects
+            };
+            principals.push(principal);
+        });
+
+        this.selectedPrincipals = principals;
     }
 
     isCloudAdmin(principal: any) {
@@ -90,56 +152,5 @@ export class UsersGroupsComponent {
         }
 
         return projectsRoles;
-    }
-
-    onAssignRoles() {
-        this.showAssignRolesDialog = true;
-    }
-
-    onAssignRolesDone() {
-        this.showAssignRolesDialog = false;
-
-        // refresh
-        this.authService.findPrincipals(this.searchTerm, true).then((principalsResult) => {
-            this.selectedPrincipals = principalsResult;
-        }).catch((error) => {
-            console.log('Failed to find principals', error);
-        });
-    }
-
-    onAssignRolesCanceled() {
-        this.showAssignRolesDialog = false;
-    }
-
-    hasRoleCloudAdmin(selectedPrincipal) {
-        let roles = selectedPrincipal.roles;
-
-        return roles.find((role) => {
-            return role === Roles.CLOUD_ADMIN;
-        });
-    }
-
-    onMakeCloudAdmin(selectedPrincipal) {
-        let roles = selectedPrincipal.roles;
-
-        this.authService.assignRoleCloudAdmin(selectedPrincipal.id).then(() => {
-            // update screen
-            roles.push(Roles.CLOUD_ADMIN);
-            selectedPrincipal.roles = roles;
-        }).catch((error) => {
-            console.log("Failed to make cloud admin", error);
-        });
-    }
-
-    onUnmakeCloudAdmin(selectedPrincipal) {
-        let roles = selectedPrincipal.roles;
-
-        this.authService.unassignRoleCloudAdmin(selectedPrincipal.id).then(() => {
-            // update screen
-            roles.splice(roles.indexOf(Roles.CLOUD_ADMIN));
-            selectedPrincipal.roles = roles;
-        }).catch((error) => {
-            console.log("Failed to unmake cloud admin", error);
-        });
     }
 }
