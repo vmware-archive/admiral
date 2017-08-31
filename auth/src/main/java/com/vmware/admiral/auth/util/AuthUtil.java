@@ -119,9 +119,6 @@ public class AuthUtil {
     public static final String DEFAULT_BASIC_USERS_EXTENDED_ROLE_LINK = UriUtils
             .buildUriPath(RoleService.FACTORY_LINK, DEFAULT_BASIC_USERS_EXTENDED);
 
-    public static final String SOLUTION_USERS_USER_GROUP_LINK = UriUtils
-            .buildUriPath(UserGroupService.FACTORY_LINK, "solutionusers@vsphere.local");
-
     public static final Map<AuthRole, String> MAP_ROLE_TO_SYSTEM_USER_GROUP;
 
     public static final Map<AuthRole, String> MAP_ROLE_TO_SYSTEM_RESOURCE_GROUP;
