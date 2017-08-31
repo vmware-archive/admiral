@@ -167,7 +167,6 @@ public class ProjectRolesHandler {
      * Iterates through the specified {@link PrincipalRoleAssignment} and fills the provided lists
      * with users and groups to add/remove from a given project.
      *
-     * @param requestorService
      * @param requestorOperation
      */
     private void buildAddRemoveLists(PrincipalRoleAssignment assignment,
@@ -235,6 +234,7 @@ public class ProjectRolesHandler {
                             .setGroupLink(groupLink)
                             .setService(service)
                             .setUsersToAdd(Collections.singletonList(encode(principal)))
+                            .setSkipPrincipalVerification(true)
                             .update()));
         }
 
@@ -244,6 +244,7 @@ public class ProjectRolesHandler {
                             .setGroupLink(groupLink)
                             .setService(service)
                             .setUsersToRemove(Collections.singletonList(encode(principal)))
+                            .setSkipPrincipalVerification(true)
                             .update()));
         }
 
