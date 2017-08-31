@@ -16,6 +16,8 @@ import { DocumentService } from "../../../utils/document.service";
 import { Utils } from "../../../utils/utils";
 import * as I18n from 'i18next';
 
+const SEARCH_TIMEOUT_MILLIS = 1000;
+
 @Component({
     selector: 'app-project-add-members',
     templateUrl: './project-add-members.component.html',
@@ -49,6 +51,9 @@ export class ProjectAddMembersComponent {
     // error
     alertMessage: string;
 
+    searchTimeout: any;
+    searchEventData: any;
+
     constructor(protected service: DocumentService, private authService: AuthService) { }
 
     get description(): string {
@@ -58,12 +63,26 @@ export class ProjectAddMembersComponent {
 
     getMembers($eventData: any) {
         if ($eventData.query === '') {
+            clearTimeout(this.searchTimeout);
+            this.searching = false;
             return [];
         }
 
-        this.searching = true;
+        this.searchEventData = $eventData;
 
-        this.authService.findPrincipals($eventData.query, false).then((principalsResult) => {
+        // Clear the timeout in case there is already set.
+        if (this.searchTimeout) {
+            clearTimeout(this.searchTimeout);
+        }
+        
+        // Schedule the search to begin after 1 second.
+        this.searching = true;
+        this.searchTimeout = setTimeout(() => this.getAndPropagatePrincipals(), SEARCH_TIMEOUT_MILLIS);
+        
+    }
+
+    getAndPropagatePrincipals() {
+        this.authService.findPrincipals(this.searchEventData.query, false).then((principalsResult) => {
             this.searching = false;
             this.members = principalsResult;
 
@@ -75,7 +94,7 @@ export class ProjectAddMembersComponent {
                 return searchResult;
             });
             // notify search component
-            $eventData.callback(this.membersSuggestions);
+            this.searchEventData.callback(this.membersSuggestions);
 
         }).catch((error) => {
             console.log('Failed to find members', error);
