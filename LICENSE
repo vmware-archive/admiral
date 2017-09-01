@@ -1,8 +1,8 @@
-open_source_licenses.txt
+﻿LICENSE
 
-Admiral version 1.2.0 GA
+Admiral 
 
-Copyright 2017 VMware, Inc.  All rights reserved.
+Copyright (c) 2016-2017 VMware, Inc.  All rights reserved.
 
 This product is licensed to you under the Apache License version 2.0 (the License).  You may not use this product except in compliance with the License.
 
@@ -96,16 +96,12 @@ of the following licenses.
 
 ======================= TABLE OF CONTENTS =============================
 
-
 The following is a listing of the open source components detailed in
 this document. This list is provided for your convenience; please read
 further if you wish to review the copyright notice(s) and the full text
 of the license associated with each component.
 
-
-
 SECTION 1: BSD-STYLE, MIT-STYLE, OR SIMILAR STYLE LICENSES
-
    >>> ace-builds-1.2.2
    >>> ansi_up-1.3.0
    >>> bootstrap-sass-4.0.0-alpha.5
@@ -150,10 +146,7 @@ SECTION 1: BSD-STYLE, MIT-STYLE, OR SIMILAR STYLE LICENSES
    >>> vue-infinite-scroll-0.2.2
    >>> wamda-typeahead-0.11.1
 
-
-
 SECTION 2: Apache License, V2.0
-
    >>> Sirupsen/logrus-08a8a7c27e3d058a8989316a850daad1c10bf4ab
    >>> com.amazonaws:aws-java-sdk-cloudwatch-1.11.36
    >>> com.amazonaws:aws-java-sdk-core-1.11.105
@@ -216,31 +209,17 @@ SECTION 2: Apache License, V2.0
    >>> seamless-immutable-2.4.2
    >>> spf13/cobra-9c28e4bbd74e5c3ed7aacbc552b2cab7cfdfe744
 
-
-
 SECTION 3: Common Development and Distribution License, V1.0
-
    >>> javax.activation:activation-1.1
 
-
-
 SECTION 4: Common Development and Distribution License, V1.1
-
    >>> javax.mail:mail-1.4.7
 
-
-
 SECTION 5: Creative Commons Attribution 2.5
-
    >>> net.jcip jcip-annotations-1.0
 
-
-
 SECTION 6: Mozilla Public License, V2.0
-
    >>> hashicorp/go-cleanhttp-ad28ea4487f05916463e2423a55166280e8254b5
-
-
 
 APPENDIX. Standard License Files
 
@@ -259,9 +238,6 @@ APPENDIX. Standard License Files
    >>> GNU Lesser General Public License, V3.0
    
    >>> SIL OPEN FONT LICENSE, V1.1
-
-
-
 
 --------------- SECTION 1:  BSD-STYLE, MIT-STYLE, OR SIMILAR STYLE LICENSES ----------
 
@@ -2940,7 +2916,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-
 >>> net.vrallev.ecc:ecc-25519-java-1.0.1
 
 Copyright (C) 2014 Ralf Wondratschek
@@ -2956,7 +2931,6 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License
-
 
 ADDITIONAL LICENSE INFORMATION:
 
@@ -3016,7 +2990,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-
 
 >>> org.apache.commons:commons-lang3-3.2.1
 
@@ -3093,7 +3066,6 @@ License: The Apache Software License, Version 2.0  (http://www.apache.org/licens
 - Apache HttpCore (http://hc.apache.org/httpcomponents-core-ga) org.apache.httpcomponents:httpcore:jar:4.4.4
 License: Apache License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
 
-
 >>> org.apache.httpcomponents:httpclient-4.4.4
 
 Apache HttpCore
@@ -3121,7 +3093,6 @@ software distributed under the License is distributed on an
 KIND, either express or implied.  See the License for the
 specific language governing permissions and limitations
 under the License.
-
 
 ADDITIONAL LICENSE INFORMATION:
 
@@ -3190,7 +3161,6 @@ Each time You distribute or publicly digitally perform a Derivative Work, Licens
 If any provision of this License is invalid or unenforceable under applicable law, it shall not affect the validity or enforceability of the remainder of the terms of this License, and without further action by the parties to this agreement, such provision shall be reformed to the minimum extent necessary to make such provision valid and enforceable.
 No term or provision of this License shall be deemed waived and no breach consented to unless such waiver or consent shall be in writing and signed by the party to be charged with such waiver or consent.
 This License constitutes the entire agreement between the parties with respect to the Work licensed here. There are no understandings, agreements or representations with respect to the Work not specified here. Licensor shall not be bound by any additional provisions that may appear in any communication from You. This License may not be modified without the mutual written agreement of the Licensor and You.
-
 
 >>> org.apache.httpcomponents:httpcore-4.4.4
 
@@ -3534,8 +3504,6 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
-
 The levenshtein automata tables in core/src/java/org/apache/lucene/util/automaton
 were automatically generated with the moman/finenight FSA package.
 Here is the copyright for those sources:
@@ -3796,7 +3764,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-
 ADDITIONAL LICENSE INFORMATION:
 
 > BSD
@@ -3872,7 +3839,6 @@ own identifying information: Portions Copyright [yyyy]
 
 Copyright 2002-2005 Sun Microsystems, Inc. All Rights Reserved.
 
-
 --------------- SECTION 4: Common Development and Distribution License, V1.1 ----------
 
 Common Development and Distribution License, V1.1 is applicable to the following component(s).
@@ -3920,7 +3886,6 @@ and therefore, elected the GPL Version 2 license, then the option applies
 only if the new code is made subject to such option by the copyright
 holder.
 
-
 --------------- SECTION 5: Creative Commons Attribution 2.5  ----------
 
 Creative Commons Attribution 2.5 is applicable to the following component(s).
@@ -3936,7 +3901,6 @@ Official home: http://www.jcip.net
 Any republication or derived work distributed in source code form
 must include this copyright and license notice.
 
-
 --------------- SECTION 6: Mozilla Public License, V2.0 ----------
 
 Mozilla Public License, V2.0 is applicable to the following component(s).
@@ -3946,12 +3910,9 @@ Mozilla Public License, V2.0 is applicable to the following component(s).
 
 LICENSE: MPL 2.0
 
+=============== APPENDIX. Standard License Files =================== 
 
-=============== APPENDIX. Standard License Files ============== 
-
-
-
---------------- SECTION 1: Apache License, V2.0 -----------
+--------------- SECTION 1: Apache License, V2.0 --------------------
 
 Apache License 
 
@@ -4128,7 +4089,7 @@ warranty or additional liability.
 
 END OF TERMS AND CONDITIONS 
 
---------------- SECTION 2: Common Development and Distribution License, V1.1 -----------
+--------------- SECTION 2: Common Development and Distribution License, V1.1 -----------------
 
 COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL)Version 1.1 
 
@@ -4238,7 +4199,7 @@ As between Initial Developer and the Contributors, each party is responsible for
 NOTICE PURSUANT TO SECTION 9 OF THE COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) 
 The code released under the CDDL shall be governed by the laws of the State of California (excluding conflict-of-law provisions). Any litigation relating to this License shall be subject to the jurisdiction of the Federal Courts of the Northern District of California and the state courts of the State of California, with venue lying in Santa Clara County, California.
 
---------------- SECTION 3: Mozilla Public License, V2.0 -----------
+--------------- SECTION 3: Mozilla Public License, V2.0 ----------------------
 
 Mozilla Public License
 Version 2.0
@@ -4421,9 +4382,7 @@ Exhibit B - “Incompatible With Secondary Licenses” Notice
 
 This Source Code Form is “Incompatible With Secondary Licenses”, as defined by the Mozilla Public License, v. 2.0.
 
-
-
---------------- SECTION 4: Common Development and Distribution License, V1.0 -----------
+--------------- SECTION 4: Common Development and Distribution License, V1.0 -------------------
 
 COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0
 
@@ -4754,9 +4713,7 @@ with Initial Developer and Contributors to distribute such responsibility
 on an equitable basis. Nothing herein is intended or shall be deemed to
 constitute any admission of liability.
 
-
-
---------------- SECTION 5: Creative Commons Attribution 2.5  -----------
+--------------- SECTION 5: Creative Commons Attribution 2.5  ---------------------
 
 CREATIVE COMMONS CORPORATION IS NOT A LAW FIRM AND DOES NOT PROVIDE LEGAL SERVICES. DISTRIBUTION OF THIS LICENSE DOES NOT CREATE AN ATTORNEY-CLIENT RELATIONSHIP. CREATIVE COMMONS PROVIDES THIS INFORMATION ON AN "AS-IS" BASIS. CREATIVE COMMONS MAKES NO WARRANTIES REGARDING THE INFORMATION PROVIDED, AND DISCLAIMS LIABILITY FOR DAMAGES RESULTING FROM ITS USE.
 
@@ -4820,9 +4777,7 @@ UNLESS OTHERWISE MUTUALLY AGREED TO BY THE PARTIES IN WRITING, LICENSOR OFFERS T
     No term or provision of this License shall be deemed waived and no breach consented to unless such waiver or consent shall be in writing and signed by the party to be charged with such waiver or consent.
     This License constitutes the entire agreement between the parties with respect to the Work licensed here. There are no understandings, agreements or representations with respect to the Work not specified here. Licensor shall not be bound by any additional provisions that may appear in any communication from You. This License may not be modified without the mutual written agreement of the Licensor and You.
 	
-
-	
---------------- SECTION 6: Common Public License, V1.0  -----------
+--------------- SECTION 6: Common Public License, V1.0  ----------------------
 
 Common Public License Version 1.0
 
@@ -5054,8 +5009,6 @@ this Agreement will bring a legal action under this Agreement more than
 one year after the cause of action arose. Each party waives its rights
 to a jury trial in any resulting litigation.
 
-
-
 --------------- SECTION 7: GNU Lesser General Public License, V3.0  -----------
 
 		   GNU LESSER GENERAL PUBLIC LICENSE
@@ -5224,9 +5177,7 @@ apply, that proxy's public statement of acceptance of any version is
 permanent authorization for you to choose that version for the
 Library.
 
-
-
---------------- SECTION 8: SIL OPEN FONT LICENSE, V1.1  -----------
+--------------- SECTION 8: SIL OPEN FONT LICENSE, V1.1  ---------------
 
 SIL OPEN FONT LICENSE
 
@@ -5275,10 +5226,7 @@ Standard License Header
 
 There is no standard license header for the license
 
-
-
-===========================================================================
-
+==========================================================================
 
 To the extent any open source components are licensed under the GPL
 and/or LGPL, or other similar licenses that require the source code
