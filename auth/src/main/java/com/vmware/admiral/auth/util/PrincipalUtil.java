@@ -13,7 +13,7 @@ package com.vmware.admiral.auth.util;
 
 import static com.vmware.admiral.auth.util.AuthUtil.addReplicationFactor;
 
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
@@ -42,7 +42,6 @@ import com.vmware.xenon.services.common.UserService.UserState;
 
 public class PrincipalUtil {
     public static final String ENCODE_MARKER = "@";
-    public static final String ENCODE_CHARSET = "UTF-8";
 
     public static Principal fromLocalPrincipalToPrincipal(LocalPrincipalState state) {
 
@@ -310,11 +309,8 @@ public class PrincipalUtil {
             return principalId;
         }
 
-        try {
-            return Base64.getUrlEncoder().encodeToString(principalId.getBytes(ENCODE_CHARSET));
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
+        return new String(Base64.getUrlEncoder().encode(
+                principalId.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
     }
 
     public static String decode(String principalId) {
@@ -327,9 +323,8 @@ public class PrincipalUtil {
         }
 
         try {
-            return new String(Base64.getUrlDecoder().decode(principalId), ENCODE_CHARSET);
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
+            return new String(Base64.getUrlDecoder().decode(
+                    principalId.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
         } catch (IllegalArgumentException iae) {
             if (iae.getMessage().contains("Illegal base64 character")) {
                 // In this case principal id is not encoded string without @ sign in it
