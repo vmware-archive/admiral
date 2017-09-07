@@ -131,7 +131,8 @@ public class PrincipalUtil {
             return new Pair<>(parts[1], parts[0]);
         }
 
-        throw new IllegalArgumentException("Invalid principalId format: '" + decodedPrincipalId + "'");
+        throw new IllegalArgumentException(
+                "Invalid principalId format: '" + decodedPrincipalId + "'");
     }
 
     public static String toPrincipalId(String name, String domain) {
@@ -199,7 +200,8 @@ public class PrincipalUtil {
                                     .thenCompose(user -> UserGroupsUpdater.create()
                                             .setService(service)
                                             .setGroupLink(AuthUtil.BASIC_USERS_USER_GROUP_LINK)
-                                            .setUsersToAdd(Collections.singletonList(encodedPrincipalId))
+                                            .setUsersToAdd(
+                                                    Collections.singletonList(encodedPrincipalId))
                                             .update())
                                     .thenCompose(ignore -> service.sendWithDeferredResult(getUser,
                                             UserState.class));
@@ -326,7 +328,8 @@ public class PrincipalUtil {
             return new String(Base64.getUrlDecoder().decode(
                     principalId.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
         } catch (IllegalArgumentException iae) {
-            if (iae.getMessage().contains("Illegal base64 character")) {
+            if (iae.getMessage().contains("Illegal base64 character")
+                    || (iae.getMessage().contains("Last unit does not have enough valid bits"))) {
                 // In this case principal id is not encoded string without @ sign in it
                 // so the decoding is failing, we return the same string.
                 return principalId;
