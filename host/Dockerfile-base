@@ -2,7 +2,9 @@ FROM vmware/photon:1.0
 
 MAINTAINER Admiral Team, https://vmware.github.io/admiral/
 
-RUN tyum install -y openjre.x86_64 && \
+RUN tdnf distro-sync --refresh -y && \
+    tdnf clean all && \
+    tyum install -y openjre.x86_64 && \
     tyum clean all && \
     mkdir -p /usr/lib/jvm && \
     export JAVA_HOME="/usr/lib/jvm/default-jvm" && \
