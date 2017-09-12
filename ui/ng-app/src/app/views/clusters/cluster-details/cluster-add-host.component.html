@@ -21,7 +21,7 @@
             <section class="form-block">
                 <div class="form-group">
                     <label for="address" class="required">{{ "clusters.resources.addHost.address" | i18n }}</label>
-                    <label for="address" aria-haspopup="true" role="tooltip" class="tooltip tooltip-validation tooltip-sm tooltip-right"
+                    <label for="address" aria-haspopup="true" role="tooltip" class="tooltip tooltip-validation tooltip-sm tooltip-bottom-left"
                             [class.invalid]="addHostToClusterForm.get('address').invalid && (addHostToClusterForm.get('address').dirty || addHostToClusterForm.get('address').touched)">
                         <input type="text" formControlName="address">
                         <span class="tooltip-content">{{ "clusters.resources.addHost.addressRequired" | i18n }}</span>
