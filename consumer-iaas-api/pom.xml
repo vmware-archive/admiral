@@ -18,12 +18,12 @@
     <parent>
         <groupId>com.vmware.admiral</groupId>
         <artifactId>admiral</artifactId>
-        <version>1.2.0-SNAPSHOT</version>
+        <version>1.2.0</version>
     </parent>
 
     <groupId>com.vmware.admiral</groupId>
     <artifactId>consumer-iaas-api</artifactId>
-    <version>1.2.0-SNAPSHOT</version>
+    <version>1.2.0</version>
     <packaging>jar</packaging>
 
 
@@ -47,7 +47,7 @@
         <dependency>
             <groupId>com.vmware.admiral</groupId>
             <artifactId>admiral-common</artifactId>
-            <version>1.2.0-SNAPSHOT</version>
+            <version>1.2.0</version>
         </dependency>
         <!-- TEST -->
         <dependency>

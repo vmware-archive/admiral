@@ -1,6 +1,22 @@
 # CHANGELOG
 
-## 1.2.0-SNAPSHOT
+## 1.2.0
+
+* Pluggable integration with PSC for SSO support in VIC.
+
+* Added RBAC capabilities.
+
+* Pluggable integration with [Harbor](https://vmware.github.io/harbor/) to configure and manage a default VIC registry.
+
+* Deprecated usage of Placements and Placement Zones in favor of Clusters.
+
+* Promoted the Project entities as a central resources and roles management entity. 
+
+* Extended adoption and integration with [Clarity](https://vmware.github.io/clarity/).
+
+* Added new features to the basic authentication service based on local users. 
+
+* Bug fixes around VIC integration.
 
 ## 1.1.1
 
