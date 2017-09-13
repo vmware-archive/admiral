@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 1.2.2-SNAPSHOT
+
+## 1.2.1
+
+* Bug fixes around PSC integration in VIC.
+
 ## 1.2.0
 
 * Pluggable integration with PSC for SSO support in VIC.

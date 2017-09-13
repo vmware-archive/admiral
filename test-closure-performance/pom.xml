@@ -18,12 +18,12 @@
     <parent>
         <groupId>com.vmware.admiral</groupId>
         <artifactId>admiral</artifactId>
-        <version>1.2.0</version>
+        <version>1.2.2-SNAPSHOT</version>
     </parent>
 
     <artifactId>test-closure-performance</artifactId>
     <groupId>com.vmware.admiral</groupId>
-    <version>1.2.0</version>
+    <version>1.2.2-SNAPSHOT</version>
 
     <build>
         <directory>${buildDirectory}</directory>
