@@ -18,7 +18,7 @@
   <div :class="'status ' + model.powerState">
     <i class="fa fa-lock" title="Managed by catalog"
        v-show="operationSupported('MANAGE')"></i>
-    <span class="status-state">{{containerStatusDisplay(model.powerState, model.started)}}</span>
+    <span class="status-state">{{{containerStatusDisplay(model.powerState, model.started)}}}</span>
   </div>
   <div class="container-header">
     <img v-bind:src="model.icon"/>

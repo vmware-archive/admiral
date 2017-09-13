@@ -22,7 +22,7 @@
 
   <div class="container-details-header">
     <div class="title">{{model.instance.names}}<refresh-button v-on:click="refresh()"></refresh-button></div>
-    <div :class="'status ' + model.instance.powerState">{{containerStatusDisplay(model.instance.powerState, model.instance.started, model.instance.status)}}</div>
+    <div :class="'status ' + model.instance.powerState">{{{containerStatusDisplay(model.instance.powerState, model.instance.started, model.instance.status)}}}</div>
     <div class="toolbar-actions">
       <template v-if="hasOperationInProgress() || confirmationOperation">
         <div class="progress-holder">
