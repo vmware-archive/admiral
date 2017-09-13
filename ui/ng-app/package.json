@@ -40,6 +40,7 @@
     "i18next-browser-languagedetector": "1.0.1",
     "i18next-xhr-backend": "1.2.0",
     "jquery": "3.1.1",
+    "moment": "2.10.6",
     "mutationobserver-shim": "0.3.2",
     "ngx-cookie": "1.0.0",
     "ngx-infinite-scroll": "0.5.1",

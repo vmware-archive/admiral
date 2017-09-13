@@ -16,6 +16,7 @@ import { ProjectNamePipe } from './utils/project-name.pipe';
 import { ProjectMembersCountPipe } from './utils/members-count.pipe';
 import { MicroTimePipe } from './utils/microtime-pipe';
 import { SeverityTextPipe } from './utils/severity-text.pipe';
+import { LocaleDatePipe } from './utils/locale-date.pipe';
 import { BreakOutModalDirective } from "./directives/shared/break-out-modal.directive";
 
 import { AdministrationComponent } from './views/administration/administration.component';
@@ -87,6 +88,7 @@ export const ADMIRAL_DECLARATIONS = [
   ProjectNamePipe,
   ProjectMembersCountPipe,
   MicroTimePipe,
+  LocaleDatePipe,
   SeverityTextPipe,
   BreakOutModalDirective,
   AllowNavigationDirective,

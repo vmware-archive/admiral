@@ -43,7 +43,7 @@
         </div>
         <div class="summary-subsection-content-row">
             <div class="left-column">{{ "clusters.summary.creationDate" | i18n }}</div>
-            <div class="right-column">{{ cluster?.clusterCreationTimeMicros | date:'medium' }}</div>
+            <div class="right-column">{{ cluster?.clusterCreationTimeMicros | localeDate }}</div>
             <div class="clear"></div>
         </div>
     </div>
