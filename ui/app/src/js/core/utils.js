@@ -1244,7 +1244,11 @@ var utils = {
 
       if (errorResponse) {
         if (errorResponse.errors && errorResponse.errors.length > 0) {
-          errorMessage = errorResponse.errors[0].systemMessage;
+          if (errorResponse.errors[0].message) {
+            errorMessage = errorResponse.errors[0].message;
+          } else {
+            errorMessage = errorResponse.errors[0].systemMessage;
+          }
         } else if (errorResponse.message) {
           errorMessage = errorResponse.message;
         }
