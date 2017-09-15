@@ -11,6 +11,7 @@
 
 import { CertificatesActions } from 'actions/Actions';
 import services from 'core/services';
+import utils from 'core/utils';
 
 let ImportedCertificatesStore = Reflux.createStore({
   listenables: [CertificatesActions],
@@ -37,7 +38,7 @@ let ImportedCertificatesStore = Reflux.createStore({
         this.trigger(certificateImportInfo);
       }
     }).catch((e) => {
-      certificateImportInfo.error = e.responseJSON.message;
+      certificateImportInfo.error = utils.getValidationErrors(e)._generic;
       this.trigger(certificateImportInfo);
     });
   }
