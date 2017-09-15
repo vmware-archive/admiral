@@ -2291,3 +2291,7 @@ $request-graph-header-color: #0b40c8;
 .persistence-radio-group {
   margin-left: 15px;
 }
+
+[placeholder] {
+    text-overflow: ellipsis;
+}
