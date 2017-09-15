@@ -252,7 +252,7 @@
         "update": "Edit Certficate",
         "urlTitle": "Enter URL",
         "importOptionTitle": "Import from URL",
-        "importOptionHint": "Instead of entering the certificate manually, \"Import from URL\" will let you enter a URL. Our system will then import the certificate from the URL you enetered.",
+        "importOptionHint": "Instead of entering the certificate manually, \"Import from URL\" will let you enter a URL. Our system will then import the certificate from the URL you entered.",
         "importButton": "Import",
         "certificateTitle": "Enter certificate"
       }
