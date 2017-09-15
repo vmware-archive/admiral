@@ -14,6 +14,7 @@ package com.vmware.admiral.host;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.security.Security;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.logging.Level;
@@ -78,6 +79,12 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
         if (System.getProperty("service.document.version.retention.floor") == null) {
             System.setProperty("service.document.version.retention.floor", "2");
         }
+
+        // Disable TLS v1.0 by default due to the BEAST vulnerability.
+        // (see https://en.wikipedia.org/wiki/Transport_Layer_Security#BEAST_attack)
+        String disabledAlgorithms = Security.getProperty("jdk.tls.disabledAlgorithms");
+        disabledAlgorithms = "TLSv1, " + disabledAlgorithms;
+        Security.setProperty("jdk.tls.disabledAlgorithms", disabledAlgorithms);
     }
 
     /**
