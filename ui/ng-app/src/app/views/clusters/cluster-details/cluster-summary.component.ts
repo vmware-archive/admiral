@@ -12,6 +12,7 @@
 import {Component, Input, OnInit} from '@angular/core';
 import { Utils } from '../../../utils/utils';
 import { FT } from '../../../utils/ft';
+import * as I18n from 'i18next';
 
 @Component({
   selector: 'app-cluster-summary',
@@ -50,6 +51,20 @@ export class ClusterSummaryComponent implements OnInit {
       return 'clusters.summary.clusterResourcesVic';
     }
     return 'clusters.summary.clusterResources';
+  }
+
+  get clusterStatus() {
+    if (this.cluster) {
+      return I18n.t(this.cluster.status);
+    }
+    return '';
+  }
+
+  get clusterState() {
+    if (this.cluster) {
+      return I18n.t('clusters.state.' + this.cluster.status);
+    }
+    return '';
   }
 
   ngOnInit() {

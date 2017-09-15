@@ -50,7 +50,7 @@
       <div card-content>
         <div class="form-group">
           <label>{{ "clusters.status" | i18n }}</label>
-          <div class="status {{ clusterState(item) }}">{{ clusterState(item) }}</div>
+          <div class="status {{ item.status }}">{{ clusterState(item) }}</div>
         </div>
         <div class="form-group">
           <label>{{ "clusters.type" | i18n }}</label>
