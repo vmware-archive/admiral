@@ -851,6 +851,12 @@ $main-list-view-right: 10px;
   }
 }
 
+.inline-edit-holder.registryEditHolder {
+  .form-block {
+    margin-bottom: 20px;
+  }
+}
+
 .endpoint-icon,
 .dropdown-holder .dropdown-options {
   img {
