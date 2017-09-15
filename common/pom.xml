@@ -25,6 +25,60 @@
     <packaging>jar</packaging>
 
     <build>
+        <plugins>
+            <!--
+                Re-encodes the i18n properties files to ISO-8859-1 compliant
+                format so they can be loaded by the java ResourceBundle API normally.
+                Refer to https://stackoverflow.com/a/7105774 and also note the comments
+                about src/dest/workDir. Also, there is a working example (that does not
+                follow the code in the same github repo):
+                https://github.com/khajavi/native2ascii-maven-plugin/blob/b741d254921ac3d26c785603aa22f5201ca10276/example/pom.xml
+             -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>native2ascii-maven-plugin</artifactId>
+                <version>1.0-beta-1</version>
+                <executions>
+                    <execution>
+                        <id>native2ascii-utf8-i18n-resources</id>
+                        <!--
+                            process-classes will happen after proccess-resources,
+                            so the resource bundles will already be available
+                        -->
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>native2ascii</goal>
+                        </goals>
+                        <configuration>
+                            <workDir>target/classes/i18n</workDir>
+                            <encoding>UTF-8</encoding>
+                            <includes>
+                                <include>messages*.properties</include>
+                            </includes>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>native2ascii-utf8-i18n-test-resources</id>
+                        <!--
+                            process-test-classes will happen after proccess-test-resources,
+                            so the resource bundles will already be available
+                        -->
+                        <phase>process-test-classes</phase>
+                        <goals>
+                            <goal>native2ascii</goal>
+                        </goals>
+                        <configuration>
+                            <workDir>target/test-classes/i18n</workDir>
+                            <encoding>UTF-8</encoding>
+                            <includes>
+                                <include>messages*.properties</include>
+                            </includes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
