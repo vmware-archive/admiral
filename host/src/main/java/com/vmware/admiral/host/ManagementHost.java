@@ -21,7 +21,9 @@ import java.util.logging.Level;
 
 import javax.net.ssl.SSLContext;
 
+import io.swagger.models.Contact;
 import io.swagger.models.Info;
+import io.swagger.models.License;
 
 import com.vmware.admiral.adapter.registry.service.RegistryAdapterService;
 import com.vmware.admiral.auth.idm.AuthConfigProvider;
@@ -299,19 +301,35 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
 
         // Exclude some core services
         swagger.setExcludedPrefixes(
-                "/core/transactions",
-                "/core/node-groups");
+                "/favicon.ico",
+                "/index.html",
+                "/index-embedded.html",
+                "/inline.",
+                "/fontawesome-webfont.",
+                "/ng",
+                "/ogui",
+                "/iaas", // TODO - remove it!
+                "/META-INF/",
+                "/assets/",
+                "/login/assets/",
+                "/container-icons/",
+                "/container-identicons/",
+                "/container-image-icons",
+                "/main.",
+                "/vendor.",
+                "/scripts.",
+                "/styles.",
+                "/core/");
         swagger.setExcludeUtilities(true);
 
         // Provide API metainfo
         Info apiInfo = new Info();
-        apiInfo.setVersion("0.0.1");
-        apiInfo.setTitle("Container Management");
+        apiInfo.setVersion("1.2.2");
+        apiInfo.setTitle("Admiral");
 
-        // TODO - TBD
-        // apiInfo.setLicense(new License().name("Apache 2.0")
-        // .url("https://github.com/vmware/xenon/blob/master/LICENSE"));
-        // apiInfo.setContact(new Contact().url("https://github.com/vmware/xenon"));
+        apiInfo.setLicense(new License().name("Apache 2.0")
+                .url("https://github.com/vmware/admiral/blob/master/LICENSE"));
+        apiInfo.setContact(new Contact().url("https://github.com/vmware/admiral"));
 
         swagger.setInfo(apiInfo);
 

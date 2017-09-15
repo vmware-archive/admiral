@@ -76,7 +76,7 @@
         <xenon.version>1.5.4-CR1</xenon.version>
         <xenon.common.version>${xenon.version}</xenon.common.version>
         <xenon.ui.version>${xenon.version}</xenon.ui.version>
-        <xenon.swagger.version>0.0.2</xenon.swagger.version>
+        <xenon.swagger.version>0.0.7</xenon.swagger.version>
         <xenon.group>com.vmware.xenon</xenon.group>
 
         <!-- Photon Model -->
