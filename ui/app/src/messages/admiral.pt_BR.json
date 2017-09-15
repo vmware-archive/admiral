@@ -1,0 +1,1440 @@
+{
+  "app": {
+    "header": {
+      "management": "Gerenciamento",
+      "registry": "Registro"
+    },
+    "homepage": {
+      "welcome": "Bem-vindo!",
+      "description": "Este é o lugar para você <b>criar, provisionar, gerenciar e monitorar aplicativos em contêineres.</b>",
+      "descriptionCompute": "Este é o lugar para você <b>criar, provisionar, gerenciar e monitorar qualquer aplicativo em qualquer nuvem.</b>",
+      "start": "Vamos começar agora!",
+      "addHost": "Adicionar um Host",
+      "addEndpoint": "Adicionar um Endpoint",
+      "enter": "Entrar",
+      "helpCenter": "Ajuda",
+      "steps": {
+        "description": "Criar um aplicativo é tão simples quanto contar até 3",
+        "addHost": "Adicionar um Host",
+        "findImage": "Encontrar uma Imagem",
+        "designApplication": "Projetar um Aplicativo"
+      }
+    },
+    "navbar": {
+      "resources": "Recursos",
+      "hosts": "Hosts",
+      "policies": "Políticas",
+      "placements": "Posicionamentos",
+      "registries": "Registros",
+      "templates": "Modelos",
+      "deployment": "Implantações",
+      "projects": "Projetos",
+      "containers": "Contêineres",
+      "applications": "Aplicativos",
+      "networks": "Redes",
+      "volumes": "Volumes",
+      "closures": "Execuções rápidas",
+      "eventlog": "Log de Eventos",
+      "placementZones": "Zonas de Posicionamento",
+      "profiles": "Perfis",
+      "endpoints": "Endpoints",
+      "machines": "Máquinas",
+      "compute": "Recurso de Processamento",
+      "kubernetesResources": "Recursos K8S",
+      "kubernetesDeployments": "Implantações",
+      "kubernetesPods": "Pods",
+      "kubernetesServices": "Serviços",
+      "kubernetesReplicationControllers": "Controladores de Replicação"
+    },
+    "host": {
+      "entity": "host",
+      "details": {
+        "title": {
+          "add": "Adicionar Host",
+          "create": "Criar Host",
+          "edit": "Editar Host"
+        },
+        "address": "Endereço",
+        "addressPlaceholder": "Exemplo: https://hostname:2376",
+        "addressHint": "Especifique o esquema e a porta apropriados, por exemplo: https://myhost.com:2376. Esquema padrão: 'https'. Portas padrão: https/443, http/80.",
+        "hostAlias": "Nome",
+        "hostAddress": "Endereço",
+        "hostType": "Tipo de host",
+        "placementZone": "Zona de posicionamento",
+        "placementZoneInputPlaceholder": "Exemplo: vic:hostname:2376",
+        "placementZoneInputHint": "Uma zona de posicionamento agendada com este nome será criada automaticamente",
+        "credential": "Credenciais de login",
+        "guestCredential": "Credencial de guest",
+        "destination": "Destino",
+        "destinationPlaceholder": "Procurar destino",
+        "deploymentPolicy": "Política de implantação",
+        "tags": "Tags",
+        "tagsPlaceholder": "Exemplo: location:west",
+        "tagsHint": "Inserir tags de chave:valor",
+        "autoConfigure": "Configuração automática",
+        "autoConfigureInput": "Habilitar configuração automática do host",
+        "autoConfigureHint": "Esta opção vai configurar o docker do API remoto no endereço fornecido e a porta com certificados gerados de assinatura automática. Será feito uma vez, sobre SSH. Os sistemas operacionais suportados são: CoreOS, PhotonOS, Ubuntu Server 16.04 ou superior.",
+        "reservationPolicy": "Política de reserva",
+        "endpoint": "Endpoint",
+        "connectionType": "Tipo de conexão",
+        "connectionTypeShort": "Conexão",
+        "customProperties": "Propriedades personalizadas",
+        "verify": "Verificar",
+        "verified": "Verificado com êxito!",
+        "add": "Adicionar",
+        "update": "Atualizar",
+        "create": "Criar",
+        "certificateWarning": "O certificado para {{address}} é inválido. Talvez você esteja se conectando a um site que está fingindo ser {{address}}, o que pode colocar suas informações confidenciais em risco. Deseja se conectar ao site mesmo assim?",
+        "trustedCertificate": "O certificado para {{address}} é confiável.",
+        "showCertificate": "Mostrar certificado",
+        "hideCertificate": "Ocultar certificado",
+        "manageCertificates": "Gerenciar Certificados",
+        "containers": "Contêineres",
+        "nodes": "Nós",
+        "cpu": "CPU",
+        "memory": "Memória",
+        "storage": "Armazenamento",
+        "providerType": "Tipo de nuvem",
+        "regionId": "ID da Região",
+        "name": "Nome",
+        "namePlaceholder": "Exemplo: host-name",
+        "instanceType": "Tipo de instância",
+        "imageType": "SO",
+        "port": "Porta",
+        "clusterSize": "Contagem de instâncias",
+        "unlimited": "Ilimitado"
+      },
+      "list": {
+        "title": "Hosts",
+        "titleSearch": "Hosts Encontrados",
+        "searchPlaceholder": "Procurar hosts",
+        "dataCollect": "Coleta de dados",
+        "dataCollectStart": "Acionando coleta de dados. A operação pode demorar alguns minutos para ser concluída.",
+        "dataCollectEnd": "A coleta de dados foi concluída.",
+        "create": "Host"
+      },
+      "actions": {
+        "start": "Iniciar",
+        "stop": "Parar",
+        "edit": "Editar",
+        "enable": "Habilitar",
+        "disable": "Desabilitar",
+        "remove": "Remover"
+      }
+    },
+    "placementZone": {
+      "createNew": "Nova Zona de Posicionamento",
+      "manage": "Gerenciar Zonas de Posicionamento",
+      "entity": "zona de posicionamento",
+      "list": {
+        "title": "Zonas de Posicionamento",
+        "addButton": "Zona de Posicionamento",
+        "nameColumn": "Nome",
+        "cpuColumn": "CPU",
+        "memoryColumn": "Memória",
+        "storageColumn": "Armazenamento",
+        "hostsColumn": "Hosts"
+      },
+      "edit": {
+        "createNew": "Nova Zona de Posicionamento",
+        "update": "Editar Zona de Posicionamento",
+        "nameTitle": "Nome da zona de posicionamento",
+        "endpointTitle": "Endpoint",
+        "placementPolicy": "Política de Posicionamento Avançada",
+        "placementPolicyHint": "Por padrão, os recursos são colocados em hosts aleatórios. Uma das seguintes estratégias pode ser aplicadas opcionalmente:<br><br><b>BINPACK</b> - colocar no host com o maior uso de memória.<br><br><b>SPREAD</b> - colocar no host com o menor número de recursos.",
+        "dynamicTitle": "Alocar recursos dinamicamente para esta zona",
+        "tagsTitle": "Tags",
+        "tagsHint": "Inserir tags de chave:valor",
+        "tagsPlaceholder": "Exemplo: compliance:yes",
+        "tagsToMatchTitle": "Tags para corresponder",
+        "tagsToMatchHint": "Inserir tags de chave:valor para corresponder",
+        "tagsToMatchPlaceholder": "Exemplo: location:west"
+      },
+      "contextPanelTooltip": "Zonas de Posicionamento"
+    },
+    "businessGroup": {
+      "entity": "grupo de negócios"
+    },
+    "group": {
+      "createNew": "Novo Projeto",
+      "manage": "Gerenciar Projetos",
+      "entity": "projeto",
+      "contextPanelTooltip": "Projetos",
+      "list": {
+        "title": "Projeto",
+        "addButton": "Projeto",
+        "nameColumn": "Nome",
+        "details": {
+          "title": "Detalhes do projeto"
+        }
+      },
+      "edit": {
+        "createNew": "Novo Projeto",
+        "update": "Editar Projeto",
+        "nameTitle": "Nome do projeto"
+      }
+    },
+    "credential": {
+      "createNew": "Nova Credencial",
+      "manage": "Gerenciar Credenciais",
+      "entity": "credencial",
+      "contextPanelTooltip": "Credenciais",
+      "list": {
+        "title": "Credenciais",
+        "addButton": "Credencial",
+        "nameColumn": "Nome",
+        "typeColumn": "Tipo",
+        "credentialsColumn": "Credenciais"
+      },
+      "edit": {
+        "createNew": "Nova Credencial",
+        "update": "Editar Credencial",
+        "nameTitle": "Nome",
+        "usernamePasswordTitle": "Nome de Usuário",
+        "usernameTitle": "Nome de Usuário",
+        "passwordTitle": "Senha",
+        "showPassword": "Mostrar senha",
+        "hidePassword": "Ocultar senha",
+        "usePrivateKey": "Usar chave privada",
+        "usePassword": "Usar senha",
+        "certificateTitle": "Certificado",
+        "publicTitle": "Chave pública",
+        "publicCertificateTitle": "Certificado público",
+        "privateCertificateTitle": "Certificado privado",
+        "customProperties": "Propriedades personalizadas"
+      }
+    },
+    "deploymentPolicy": {
+      "createNew": "Nova Política de Implantação",
+      "entity": "política de implantação",
+      "manage": "Gerenciar Políticas de Implantação",
+      "contextPanelTooltip": "Políticas Implant",
+      "list": {
+        "title": "Políticas de Implantação",
+        "addButton": "Política",
+        "nameColumn": "Nome",
+        "descriptionColumn": "Descrição",
+        "details": {
+          "title": "Detalhes da política de implantação"
+        }
+      },
+      "edit": {
+        "createNew": "Nova Política de Implantação",
+        "update": "Editar Política de Implantação",
+        "nameTitle": "Nome da política de implantação",
+        "descriptionTitle": "Descrição da política de implantação"
+      }
+    },
+    "certificate": {
+      "createNew": "Novo Certificado",
+      "manage": "Gerenciar Certificados",
+      "entity": "certificado",
+      "contextPanelTooltip": "Certificados",
+      "list": {
+        "title": "Certificados",
+        "addButton": "Certificado",
+        "nameColumn": "Nome",
+        "serialColumn": "Serial",
+        "shaColumn": "SHA",
+        "expirationColumn": "Expiração",
+        "details": {
+          "title": "Detalhes do certificado",
+          "commonName": "Nome da empresa",
+          "issuerName": "Nome do emissor",
+          "serial": "Serial",
+          "fingerprint": "Impressão digital SHA",
+          "validSince": "Válido desde",
+          "validTo": "Válido até"
+        }
+      },
+      "edit": {
+        "createNew": "Novo Certificado",
+        "update": "Editar Certificado",
+        "urlTitle": "Inserir URL",
+        "importOptionTitle": "Importar da URL",
+        "importOptionHint": "Em vez de inserir o certificado manualmente, a opção \"Importar da URL\" permitirá que você insira uma URL. Nosso sistema então importará o certificado da URL que você inseriu.",
+        "importButton": "Importar",
+        "certificateTitle": "Inserir certificado"
+      }
+    },
+    "template": {
+      "list": {
+        "title": "Modelos Populares",
+        "titleSearch": "Modelos Encontrados",
+        "popularRepositories": "Repositórios populares",
+        "searchImagesTemplatesPlaceholder": "Procurar imagens, modelos",
+        "searchImagesPlaceholder": "Procurar imagens",
+        "searchRepositoriesPlaceholder": "Pesquisar repositórios",
+        "searchTemplatesPlaceholder": "Procurar modelos",
+        "searchClosuresPlaceholder": "Procurar execuções rápidas",
+        "manageRegistry": "Gerenciar Registros",
+        "provision": "Provisionar",
+        "provisionAdditionalInfo": "Inserir informações adicionais",
+        "editTemplate": "Editar/Exibir Detalhes",
+        "official": "Oficial",
+        "trusted": "Confiável",
+        "stars": "Estrelas",
+        "linksLabel": "Links",
+        "addLinkLabel": "Adicionar um link",
+        "containers": "Selecionar um contêiner do qual depender",
+        "alias": "Inserir Alias",
+        "true": "Sim",
+        "false": "Não",
+        "searchCategoryFilterTitle": "Exibir:",
+        "partialResultWarning": "Você está vendo resultados de pesquisa incompletos devido a uma ou mais falhas de consulta.",
+        "continue": "Continuar",
+        "searchCategory": {
+          "all": "Tudo",
+          "images": "Imagens",
+          "templates": "Modelos",
+          "closures": "Execuções rápidas",
+          "repositories": "Repositórios"
+        }
+      },
+      "details": {
+        "create": "Criar Modelo",
+        "createNameHint": "Nome do Modelo",
+        "createProceed": "Prosseguir",
+        "edit": "Editar Modelo",
+        "newDefinition": {
+          "newLabel": "Adicionar Contêiner",
+          "title": "Adicionar Definição de Contêiner",
+          "selectImage": "Selecionar uma Imagem",
+          "imageListTitle": "Imagens Populares",
+          "imageListTitleSearch": "Imagens Encontradas",
+          "containerDefinitionInfo": "Informações de Definição de Contêiner"
+        },
+        "editDefinition": {
+          "title": "Editar Definição de Contêiner"
+        },
+        "editProject": {
+          "createTitle": "Criar Projeto",
+          "updateTitle": "Atualizar Projeto",
+          "name": "Nome",
+          "create": "Criar",
+          "update": "Atualizar",
+          "publicCheckboxLabel": "Tornar este projeto público"
+        },
+        "editNetwork": {
+          "newLabel": "Adicionar Rede",
+          "newTitle": "Adicionar Configuração de Rede",
+          "newDropdownTitle": "Adicionar Rede...",
+          "editTitle": "Editar Configuração de Rede",
+          "name": "Nome",
+          "existingNetwork": "Existente",
+          "showingCount": "Mostrando {{count}} de {{totalCount}}",
+          "showingInstances": "instâncias",
+          "noResults": "Nenhuma rede encontrada",
+          "hosts": "Hosts",
+          "hostsSearchPlaceholder": "Procurar host",
+          "create": "Criar",
+          "createTitle": "Criar Rede",
+          "ipamConfig": "Configuração IPAM",
+          "ipamConfigSubnet": "Sub-rede",
+          "ipamConfigSubnetHint": "Exemplo: 172.16.238.0/24",
+          "ipamConfigIPRange": "Intervalo de IPs",
+          "ipamConfigIPRangeHint": "Exemplo: 172.28.5.0/24",
+          "ipamConfigGateway": "Gateway",
+          "ipamConfigGatewayHint": "Exemplo: 172.16.238.1",
+          "customProperties": "Propriedades personalizadas"
+        },
+        "editClosures": {
+          "newTitle": "Adicionar Execução Rápida",
+          "editTitle": "Editar Execução Rápida",
+          "name": "Nome"
+        },
+        "editVolume": {
+          "newLabel": "Adicionar Volume",
+          "newTitle": "Adicionar Volume",
+          "newDropdownTitle": "Adicionar Volume...",
+          "editTitle": "Editar Volume",
+          "name": "Nome",
+          "driver": "Driver",
+          "driverPlaceholder": "Exemplo: local",
+          "driverOptions": {
+            "label": "Opções de Driver",
+            "keyTitle": "Opção",
+            "keyHint": "Exemplo: o",
+            "valueTitle": "Valor",
+            "valueHint": "Exemplo: size=100m"
+          },
+          "existingVolume": "Existente",
+          "showingCount": "Mostrando {{count}} de {{totalCount}}",
+          "showingInstances": "instâncias",
+          "noResults": "Nenhum volume encontrado",
+          "mountpoint": "Host Mountpoint",
+          "hosts": "Host",
+          "hostsSearchPlaceholder": "Procurar host",
+          "create": "Criar",
+          "createTitle": "Criar Volume",
+          "customProperties": "Propriedades personalizadas"
+        },
+        "editKubernetes": {
+          "newTitle": "Adicionar Kubernetes",
+          "editTitle": "Editar Kubernetes",
+          "createEntities": {
+            "title": "Criar Entidades Kubernetes",
+            "button": "Criar",
+            "hint": "Provisionar entidades Kubernetes das definições YAML ao carregar um arquivo ou inserir manualmente o seu conteúdo. Suporta definições múltiplas, separadas por \"---\", ex: par de Implantação/Serviço.",
+            "placeholder": "Insira definições YAML ou Kubernetes... "
+          }
+        },
+        "network": {
+          "drag": "Arraste para anexar o contêiner a esta rede",
+          "drop": "Solte para anexar o contêiner a esta rede"
+        },
+        "volume": {
+          "drag": "Arraste para anexar o contêiner a este volume",
+          "drop": "Solte para anexar o contêiner a este volume",
+          "editContainerPath": "Caminho do Contêiner:"
+        }
+      },
+      "actions": {
+        "edit": "Editar",
+        "provision": "Provisionar",
+        "publish": "Enviar",
+        "export": "Exportar",
+        "import": "Importar",
+        "remove": "Remover"
+      },
+      "publish": {
+        "tooltip": "Enviar para Blueprint",
+        "success": "Enviado com êxito",
+        "fail": "Erro ao enviar o modelo para o Blueprint"
+      },
+      "import": {
+        "title": "Importar Modelo",
+        "loadButton": "Carregar do Arquivo",
+        "importTemplateTooltip": "Importar modelo ou Docker Compose",
+        "importTemplateHint": "Importe um modelo ou um arquivo do Docker Compose, ou insira seu conteúdo manualmente.",
+        "contentPlaceholder": "Inserir modelo ou Docker Compose...",
+        "importButton": "Importar"
+      },
+      "export": {
+        "formatPromptMessage": "Selecione o formato para o qual exportar o modelo:",
+        "format": {
+          "compositeBlueprint": "Blueprint YAML",
+          "dockerCompose": "Docker Compose"
+        }
+      }
+    },
+    "placement": {
+      "list": {
+        "title": "Posicionamentos",
+        "addButton": "Colocação",
+        "nameColumn": "Nome",
+        "groupColumn": "Projeto",
+        "businessGroupColumn": "Grupo de Negócios",
+        "placementZoneColumn": "Zona de Posicionamento",
+        "deploymentPolicyColumn": "Política de Implantação",
+        "priorityColumn": "Prioridade",
+        "instancesColumn": "Instâncias",
+        "memoryColumn": "Limite de Memória",
+        "storageColumn": "Limite de Armazenamento",
+        "instancesPerPlacement": "Mostrar instâncias por posicionamento",
+        "unlimitedInstances": "Ilimitado",
+        "unlimitedMemoryLimit": "Ilimitado"
+      },
+      "edit": {
+        "createNew": "Novo Posicionamento",
+        "update": "Editar Posicionamento",
+        "nameLabel": "Nome",
+        "groupLabel": "Projeto",
+        "selectGroup": "Selecionar Projeto",
+        "businessGroupLabel": "Grupo de Negócios",
+        "selectBusinessGroup": "Selecionar Grupo de Negócios",
+        "placementZoneLabel": "Zona de Posicionamento",
+        "selectPlacementZone": "Selecionar Zona de Posicionamento",
+        "deploymentPolicyLabel": "Política de Implantação",
+        "selectDeploymentPolicy": "Selecionar Política de Implantação",
+        "priorityLabel": "Prioridade",
+        "priorityPlaceholder": "Número positivo",
+        "priorityHint": "Deixe em branco para definir a prioridade mais baixa",
+        "instancesLabel": "Instâncias",
+        "instancesPlaceholder": "Número de instâncias",
+        "instancesHint": "Número inteiro positivo para limitar o número máximo de instâncias. Deixe vazio ou 0 para um número ilimitado.",
+        "cpuSharesLabel": "Compartilhamentos de CPU",
+        "memoryLimitLabel": "Limite de memória",
+        "storageLimitLabel": "Limite de armazenamento"
+      }
+    },
+    "eventlog": {
+      "title": "Eventos",
+      "tabs": {
+        "all": "Tudo",
+        "warnings": "Avisos",
+        "errors": "Erros"
+      },
+      "contextPanelTooltip": "Log de Eventos"
+    },
+    "registry": {
+      "list": {
+        "title": "Registros Existentes",
+        "addButton": "Registro",
+        "addressColumn": "Endereço",
+        "nameColumn": "Nome",
+        "statusColumn": "Status"
+      },
+      "edit": {
+        "createNew": "Novo Registro",
+        "update": "Editar Registro",
+        "addressTitle": "Endereço",
+        "addressHint": "Especifique o esquema e a porta apropriados, por exemplo: https://myregistry.com:5000. Esquema padrão: 'https'. Portas padrão: https/443, http/80.",
+        "insecureRegistryHint": "Registro http simples detectado: verifique se os seus hosts estão corretamente configurados e podem se conectar a eles. <a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">Mais informações</a>",
+        "nameTitle": "Nome",
+        "credentialTitle": "Credenciais de login",
+        "verifyButton": "Verificar",
+        "verified": "Verificado com êxito!"
+      }
+    },
+    "profile": {
+      "list": {
+        "title": "Perfis",
+        "titleSearch": "Perfis encontrados",
+        "searchPlaceholder": "Procurar por perfis",
+        "addButton": "Profile",
+        "addPropertyButton": "Adicionar Propriedade",
+        "nameColumn": "Nome",
+        "endpointTypeColumn": "Tipo de Endpoint",
+        "propertiesColumn": "Propriedades",
+        "mappingsColumn": "Mapeamentos"
+      },
+      "details": {
+        "endpoint": "Endpoint"
+      },
+      "actions": {
+        "edit": "Editar",
+        "remove": "Remover"
+      },
+      "edit": {
+        "addTitle": "Adicionar Perfil",
+        "editTitle": "Editar Perfil",
+        "save": "Salvar",
+        "basicTab": "Básico",
+        "computeTab": "Recurso de Processamento",
+        "networkTab": "Rede",
+        "storageTab": "Armazenamento",
+        "nameLabel": "Nome",
+        "tagsLabel": "Tags",
+        "tagsHint": "Inserir tags de chave:valor",
+        "tagsPlaceholder": "Exemplo: compliance:yes",
+        "endpointLabel": "Endpoint",
+        "valueLabel": "Valor",
+        "instanceTypeMappingLabel": "Tipo",
+        "instanceTypeMappingDisplay": "CPU {{cpuCount}}, {{memoryInMB}} MB RAM, {{bootDiskSizeInMB}} MB disco",
+        "instanceTypeMappingDisplayAWS": "CPU {{cpuCount}}, {{memoryInMB}} MB RAM, armazenamento {{storageType}}, rede {{networkType}}",
+        "imageMappingLabel": "Tipo de imagem",
+        "diskPropertyMappingLabel": "Propriedades do disco",
+        "cpuCountLabel": "CPUs",
+        "memoryGbLabel": "Memória (GB)",
+        "generalLabel": "Geral",
+        "existingLabel": "Existente",
+        "subnetworksLabel": "Sub-redes",
+        "isolationLabel": "Isolamento",
+        "isolationTypeLabel": "Tipo",
+        "isolationNetworkLabel": "Rede",
+        "isolationExternalSubnetLabel": "Sub-Rede Externa",
+        "noneIsolationTypeLabel": "Nenhum",
+        "subnetIsolationTypeLabel": "Sub-rede",
+        "securityGroupIsolationTypeLabel": "Grupo de segurança",
+        "securityGroups": "Grupos de segurança",
+        "vpc": "VPC",
+        "cidrLabel": "CIDR",
+        "cidrLabelHint": "0.0.0.0/0",
+        "cidrPrefixLabel": "Comprimento do prefixo de sub-redes",
+        "networkLabel": "Rede",
+        "resourceGroupsLabel": "Grupos de recursos",
+        "supportPublicIpAddressLabel": "IP Público Suportado",
+        "defaultForZoneLabel": "Padrão para Zona",
+        "addStorageItem": "Adicionar item de armazenamento",
+        "defaultLabel": "Padrão",
+        "makeDescriptorDefault": "Tornar este item de armazenamento padrão",
+        "itemHeader": "Item de armazenamento",
+        "storage": {
+          "azure": {
+            "selectAccountLabel": "Selecionar conta",
+            "storageAccountTypeLabel": "Tipo de conta de armazenamento",
+            "osDiskCachingLabel": "Cache de disco do sistema operacional",
+            "dataDiskCachingLabel": "Cache do disco de dados",
+            "contextPanelTooltip": "Contas de armazenamento",
+            "typeLabel": "Tipo",
+            "encryptionLabel": "Criptografia do serviço de armazenamento",
+            "entityLabel": "Contas de armazenamento",
+            "list": {
+              "title": "Contas de armazenamento",
+              "nameColumn": "Nome",
+              "typeColumn": "Tipo",
+              "encryptionColumn": "Criptografia do serviço de armazenamento",
+              "edit": {
+                "title": "Editar conta de armazenamento",
+                "nameLabel": "Nome da conta",
+                "typeLabel": "Tipo de conta",
+                "encryptionLabel": "Criptografia do serviço de armazenamento"
+              }
+            }
+          },
+          "vsphere": {
+            "storagePolicyLabel": "Política de armazenamento",
+            "provisioningTypeLabel": "Tipo de provisionamento",
+            "datastoreLabel": "Repositório de dados",
+            "sharesLevelLabel": "Nível de compartilhamentos",
+            "sharesLabel": "Compartilhamentos",
+            "limitLabel": "Limitar IOPS",
+            "datastoreContextPanelTooltip": "Repositórios de dados",
+            "storagePolicyContextPanelTooltip": "Políticas de armazenamento",
+            "datastoreEntityLabel": "Repositórios de dados",
+            "storagePolicyEntityLabel": "Políticas de armazenamento",
+            "snapshotsLabel": "Snapshots",
+            "independentOfSnapshotsLabel": "Independente de snapshots",
+            "persistentLabel": "Persistente",
+            "nonPersistentLabel": "Não persistente",
+            "provisioningSelectDefault": "Selecionar tipo de provisionamento",
+            "sharesLevelDefault": "Selecionar nível de compartilhamentos",
+            "datastore": {
+              "typeLabel": "Tipo",
+              "capacityLabel": "Capacidade",
+              "capacityUnit": "GB",
+              "list": {
+                "title": "Repositórios de dados",
+                "nameColumn": "Nome",
+                "typeColumn": "Tipo",
+                "capacityColumn": "Capacidade (GB)",
+                "encryptionColumn": "Suporta criptografia",
+                "edit": {
+                  "title": "Editar armazenamento de dados",
+                  "nameLabel": "Repositório de dados",
+                  "typeLabel": "Tipo",
+                  "encryptionLabel": "Suporta criptografia",
+                  "capacityLabel": "Capacidade (GB)"
+                }
+              }
+            },
+            "storagePolicy": {
+              "descriptionLabel": "Descrição",
+              "list": {
+                "title": "Políticas de armazenamento",
+                "nameColumn": "Nome",
+                "descColumn": "Descrição",
+                "encryptionColumn": "Suporta criptografia",
+                "edit": {
+                  "title": "Editar política de armazenamento",
+                  "nameLabel": "Nome",
+                  "descLabel": "Descrição",
+                  "customPropertiesLabel": "Propriedades Personalizadas",
+                  "customPropertiesTable": {
+                    "keyColumn": "Chave",
+                    "valueColumn": "Valor"
+                  }
+                }
+              }
+            }
+          },
+          "aws": {
+            "volumeTypeLabel": "Tipo de volume",
+            "deviceTypeLabel": "Tipo de dispositivo",
+            "iopsLabel": "IPOS máx.",
+            "iopsHint": "O IPOS efetivamente provisionado poderá ser menor, dependendo da capacidade do disco",
+            "fileSystemLabel": "Sistema de arquivos",
+            "encryptedLabel": "Suporta criptografia"
+          }
+        },
+        "validation": {
+          "valueNotMoreThan": "O valor não pode ser maior que {{max}}",
+          "valueInRange": "O valor deve estar entre {{min}} e {{max}}"
+        }
+      },
+      "instanceType": {
+        "addTitle": "Adicionar perfil de sabor",
+        "editTitle": "Editar perfil de sabor",
+        "aws": {
+          "small": "Pequeno (1 CPU, 1 GB de Memória)",
+          "medium": "Médio (1 CPU, 2 GB de Memória)",
+          "large": "Grande (2 CPUs, 8 GB de Memória)",
+          "xlarge": "Extragrande (4 CPUs, 16 GB de Memória)"
+        },
+        "azure": {
+          "small": "Pequeno (1 CPU, 0,75 GB de Memória)",
+          "medium": "Médio (1 CPU, 1,75 GB de Memória)",
+          "large": "Grande (2 CPUs, 3,50 GB de Memória)",
+          "xlarge": "Extragrande (4 CPUs, 14 GB de Memória)"
+        },
+        "vsphere": {
+          "small": "Pequeno (1 CPU, 1 GB de Memória)",
+          "medium": "Médio (1 CPU, 2 GB de Memória)",
+          "large": "Grande (2 CPUs, 8 GB de Memória)",
+          "xlarge": "Extragrande (4 CPUs, 16 GB de Memória)"
+        },
+        "nimbus": {
+          "small": "Pequeno (1 CPU, 1 GB de Memória)"
+        }
+      },
+      "imageType": {
+        "coreos": "CoreOS",
+        "photon": "Photon OS",
+        "ubuntu-1604": "Ubuntu"
+      },
+      "azureStorageAccountType": {
+        "standardLRS": "LRS padrão",
+        "standardZRS": "ZRS padrão",
+        "standardGRS": "GRS padrão",
+        "standardRAGRS": "RAGRS padrão",
+        "premiumLRS": "LRS premium"
+      },
+      "azureDiskCachingType": {
+        "none": "Nenhum",
+        "readOnly": "Somente Leitura",
+        "readWrite": "Ler/escrever"
+      },
+      "vsphereProvisioningTypes": {
+        "thin": "Thin",
+        "thick": "Thick",
+        "eagerZeroedThick": "Eager Zeroed Thick"
+      },
+      "vsphereSharesLevel": {
+        "low": "Baixo",
+        "normal": "Normal",
+        "high": "Alto",
+        "custom": "Personalizar"
+      },
+      "awsVolumeTypes": {
+        "gp2": "SSD de propósito geral (GP2)",
+        "io1": "SSD de IOPS provisionado (IO1)",
+        "sc1": "Cold HDD (SC1)",
+        "st1": "HDD com rendimento otimizado (ST1)",
+        "standard": "Magnético"
+      },
+      "awsDeviceTypes": {
+        "ebs": "EBS",
+        "instanceStore": "Armazenamento da instância"
+      }
+    },
+    "endpoint": {
+      "list": {
+        "title": "Endpoints",
+        "addButton": "Endpoint",
+        "nameColumn": "Nome",
+        "typeColumn": "Tipo"
+      },
+      "edit": {
+        "addNew": "Novo Endpoint",
+        "update": "Editar Endpoint",
+        "nameLabel": "Nome",
+        "typeLabel": "Tipo",
+        "privateKeyIdLabel": "ID da chave de acesso",
+        "privateKeyLabel": "Chave secreta de acesso",
+        "regionIdLabel": "ID da Região",
+        "collectLabel": "Coleta de dados",
+        "collectInventoryLabel": "Coletar inventário",
+        "collectInventoryMessage": "Ativando coleta de inventário. Pode demorar alguns minutos para concluir.",
+        "collectImagesLabel": "Coletar tipos de imagem",
+        "collectImagesMessage": "Ativando coleta de imagem. Pode levar alguns minutos para concluir.",
+        "azure": {
+          "userLinkLabel": "ID da Inscrição",
+          "tenantIdLabel": "ID do Tenant"
+        },
+        "vsphere": {
+          "hostNameLabel": "Nome do host ou IP",
+          "privateKeyIdLabel": "Nome de Usuário",
+          "privateKeyLabel": "Senha",
+          "regionIdLabel": "Datacenter",
+          "linkedEndpointLabel": "Endpoint de NSX"
+        }
+      },
+      "entity": "endpoint",
+      "typeEntity": "tipo",
+      "datacenterEntity": "datacenter",
+      "createNew": "Novo Endpoint",
+      "manage": "Gerenciar Endpoints",
+      "contextPanelTooltip": "Endpoints"
+    },
+    "machine": {
+      "list": {
+        "title": "Máquinas",
+        "titleSearch": "Máquinas Encontradas",
+        "searchPlaceholder": "Procurar máquinas",
+        "addButton": "Máquina"
+      },
+      "edit": {
+        "addTitle": "Criar Máquina",
+        "editTitle": "Editar máquina",
+        "nameLabel": "Nome",
+        "save": "Salvar",
+        "create": "Criar",
+        "loadButton": "Carregar do arquivo",
+        "importTemplateHint": "Descrição composta contendo uma ou múltiplas descrições de máquina",
+        "importPlaceholder": ""
+      },
+      "details": {
+        "propertyName": "Nome",
+        "propertyValue": "Valor",
+        "general": {
+          "id": "ID",
+          "placementHost": "Host de posicionamento",
+          "address": "Endereço",
+          "endpoint": "Endpoint",
+          "properties": "Propriedades",
+          "usages": "Usos",
+          "powerState": "Estado de energia",
+          "environment": "Ambiente",
+          "region": "Região",
+          "profile": "Profile"
+        },
+        "customProperties": {
+          "title": "Propriedades Personalizadas"
+        }
+      }
+    },
+    "compute": {
+      "entity": "destino",
+      "list": {
+        "title": "Recurso de Processamento",
+        "titleSearch": "Recurso de Processamento Encontrado",
+        "searchPlaceholder": "Procurar recurso de processamento"
+      },
+      "details": {
+        "type": "Tipo",
+        "zone": "Zona de disponibilidade",
+        "vm_host": "Região",
+        "clustercomputeresource": "Cluster",
+        "computeresource": "Host",
+        "endpoint": "Endpoint",
+        "hostsystem": "Host",
+        "resourcepool": "Pool de recursos"
+      },
+      "edit": {
+        "title": "Editar Recurso de Processamento",
+        "nameLabel": "Nome"
+      },
+      "actions": {
+        "details": "Detalhes"
+      }
+    },
+    "network": {
+      "entity": "Rede"
+    },
+    "securityGroup": {
+      "entity": "Grupo de segurança"
+    },
+    "subnetwork": {
+      "list": {
+        "title": "Sub-redes",
+        "addButton": "Sub-rede",
+        "nameColumn": "Nome",
+        "cidrColumn": "CIDR",
+        "supportPublicIpAddressColumn": "IP Público Suportado",
+        "networkColumn": "Rede"
+      },
+      "edit": {
+        "addNew": "Adicionar Sub-rede",
+        "update": "Editar Sub-rede",
+        "networkLabel": "Rede",
+        "nameLabel": "Nome",
+        "cidrLabel": "CIDR",
+        "supportPublicIpAddressLabel": "IP Público Suportado",
+        "defaultForZoneLabel": "Padrão para Zona",
+        "tagsTitle": "Tags",
+        "tagsHint": "Inserir tags de chave:valor",
+        "tagsPlaceholder": "Exemplo: acesso:restrito"
+      },
+      "entity": "Sub-rede",
+      "create": "Nova Sub-rede",
+      "manage": "Gerenciar Sub-redes",
+      "contextPanelTooltip": "Sub-redes"
+    },
+    "resource": {
+      "list": {
+        "network": {
+          "name": "Rede",
+          "connectedDateLabel": "Conectado",
+          "networkDriverLabel": "Driver de Rede",
+          "ipamDriverLabel": "Driver IPAM",
+          "subnetLabel": "Sub-rede",
+          "gatewayLabel": "Gateway",
+          "ipRangeLabel": "Intervalo de IPs",
+          "connectedContainers": "Contêineres",
+          "parentHosts": "Hosts",
+          "external": "Externo",
+          "create": "Rede",
+          "state": {
+            "UNKNOWN": "DESCONHECIDO",
+            "PROVISIONING": "PROVISIONAMENTO",
+            "CONNECTED": "CONECTADO",
+            "RETIRED": "DESATIVADO",
+            "ERROR": "ERRO"
+          }
+        },
+        "project": {
+          "name": "Projeto",
+          "description": "Descrição",
+          "public": "Público",
+          "private": "Privado",
+          "create": "Projeto",
+          "actions": {
+            "edit": "Editar",
+            "remove": "Remover"
+          }
+        },
+        "container": {
+          "create": "Contêiner"
+        },
+        "application": {
+          "create": "Aplicativo"
+        },
+        "closure": {
+          "create": "Execução rápida"
+        },
+        "kubernetes": {
+          "create": "Definição"
+        },
+        "volume": {
+          "create": "Volume",
+          "connectedDateLabel": "Conectado",
+          "driverLabel": "Driver",
+          "driverOptionsLabel": "Opções de Driver",
+          "scope": "Escopo",
+          "mountpoint": "Host Mountpoint",
+          "connectedContainers": "Contêineres",
+          "parentHosts": "Hosts",
+          "external": "Externo",
+          "state": {
+            "UNKNOWN": "DESCONHECIDO",
+            "PROVISIONING": "PROVISIONAMENTO",
+            "CONNECTED": "CONECTADO",
+            "RETIRED": "DESATIVADO",
+            "ERROR": "ERRO"
+          }
+        },
+        "titleSearch": {
+          "projects": "Projetos",
+          "containers": "Contêineres",
+          "applications": "Aplicativos",
+          "networks": "Redes",
+          "volumes": "Volumes",
+          "closures": "Execuções Rápidas",
+          "kubernetes": "Kubernetes"
+        },
+        "searchPlaceholder": {
+          "projects": "Procurar projetos",
+          "containers": "Procurar contêineres",
+          "applications": "Procurar aplicativos",
+          "networks": "Procurar redes",
+          "closures": "Procurar execuções rápidas",
+          "volumes": "Procurar por volumes",
+          "kubernetes": "Procurar por entidades Kubernetes"
+        },
+        "searchCategory": {
+          "networks": "Redes"
+        },
+        "relations": {
+          "hosts": "Hosts",
+          "containers": "Contêineres",
+          "applications": "Aplicativos",
+          "networks": "Redes",
+          "volumes": "Volumes"
+        }
+      }
+    },
+    "container": {
+      "list": {
+        "titleSearchContainers": "Contêineres Encontrados",
+        "titleSearchApplications": "Aplicativos Encontrados",
+        "searchPlaceholder": "Procurar contêineres",
+        "createContainer": "Criar Contêiner",
+        "hostLabel": "Host",
+        "createdDateLabel": "Criado",
+        "portsLabel": "Portas",
+        "commandLabel": "Comando",
+        "logLabel": "Log",
+        "cluster": {
+          "name": "Cluster",
+          "sizeLabel": "Tamanho do cluster",
+          "scaleLabel": "Dimensionar"
+        },
+        "composite": {
+          "name": "Aplicativo",
+          "servicesCountLabel": "Serviços",
+          "containersCountLabel": "Contêineres",
+          "networksCountLabel": "Redes",
+          "volumesCountLabel": "Volumes",
+          "childContainersLabel": "Contêineres filho"
+        },
+        "searchCategoryFilterTitle": "Exibir:",
+        "searchCategory": {
+          "all": "Tudo",
+          "containers": "Contêineres",
+          "applications": "Aplicativos"
+        },
+        "columnName": "Contêiner",
+        "columnStatus": "Status",
+        "columnRunningSince": "Em execução desde"
+      },
+      "details": {
+        "usages": "Usos",
+        "properties": "Propriedades",
+        "webview": "Exibição da Web",
+        "logs": "Logs",
+        "cpu": "CPU",
+        "memory": "Memória",
+        "network": "Rede",
+        "networkTrafficSent": "Enviado",
+        "networkTrafficReceived": "Recebido",
+        "lines": "linhas",
+        "showingLogs": "Mostrando registros",
+        "logsOptionSince": "Desde",
+        "logsOptionTail": "Cauda",
+        "logsFormat": "Formato dos logs",
+        "logsFormatAnsi": "ANSI",
+        "logsFormatRaw": "Bruto",
+        "networkAddresses": "Endereços de Rede",
+        "attributes": {
+          "name": "Nome",
+          "value": "Valor",
+          "host": "Host",
+          "createdDateLabel": "Criado",
+          "ports": "Portas",
+          "command": "Comando",
+          "ipaddress": "Endereço",
+          "image": "Imagem",
+          "id": "id",
+          "restartCount": "Reiniciar Contagem",
+          "memory": "Memória",
+          "memorySwap": "Permuta de Memória",
+          "cpuShares": "Compartilhamentos de Cpu",
+          "cpusetCpus": "Cpu setCpus"
+        },
+        "operation": {
+          "pending": "Operação em andamento",
+          "failure": "Falha na operação"
+        }
+      },
+      "request": {
+        "title": "Provisionar um Contêiner",
+        "provision": "Provisionar",
+        "saveTemplate": "Salvar como Modelo",
+        "tabs": {
+          "basic": "Básico",
+          "network": "Rede",
+          "storage": "Armazenamento",
+          "policy": "Política",
+          "environment": "Ambiente",
+          "health": "Configuração de Integridade",
+          "logconfig": "Configuração de Log"
+        },
+        "inputs": {
+          "image": "Imagem",
+          "imageTag": {
+            "searchHint": "Procurar tags",
+            "loadingHint": "Carregando tags..."
+          },
+          "name": "Nome",
+          "group": "Projeto",
+          "commands": "Comando",
+          "commandsDescription": "Matriz de comandos para executar na inicialização do contêiner",
+          "commandsInputs": {
+            "command": "Comando",
+            "commandHint": "Exemplo: /startup.sh"
+          },
+          "deploymentPolicy": "Política de Implantação",
+          "links": "Links",
+          "linksDescription": "Uma lista de serviços (em um modelo) dos quais o contêiner depende",
+          "linksInputs": {
+            "alias": "Alias",
+            "aliasHint": "Exemplo: db",
+            "service": "Serviço"
+          },
+          "portBindings": "Associações de Portas",
+          "portBindingsDescription": "Um mapa de portas de contêiner expostas e a porta de host para a qual elas devem ser mapeadas",
+          "portBindingsInputs": {
+            "hostPort": "Porta do Host",
+            "hostPortHint": "Exemplo: 9080",
+            "containerPort": "Porta do Contêiner",
+            "containerPortHint": "Exemplo: 80"
+          },
+          "publishAll": "Publicar Todas as Portas",
+          "publishAllDescription": "Publique todas as portas expostas pela imagem.",
+          "hostname": "Nome do Host",
+          "hostnameDescription": "O nome do host a ser usado para o contêiner",
+          "networkMode": "Modo de Rede",
+          "networkModeDescription": "Define o modo de rede do contêiner.",
+          "networkModeTypes": {
+            "none": "Nenhum",
+            "bridge": "Ponte",
+            "host": "Host"
+          },
+          "networks": "Redes",
+          "networksDescription": "Conecta o contêiner a estas redes (além do modo de rede).",
+          "networksInputs": {
+            "name": "Nome",
+            "nameHint": "Exemplo: mynet",
+            "aliases": "Aliases",
+            "aliasesHint": "Exemplo: my-service, my-other-service",
+            "ipv4": "IPv4",
+            "ipv4Hint": "Exemplo: 172.16.1.8",
+            "ipv6": "IPv6",
+            "ipv6Hint": "Exemplo: fe80::42:31ff:fecf:83e2"
+          },
+          "volumes": "Volumes",
+          "volumesDescription": "Caminhos de pontos de montagem dentro do contêiner. O campo Contêiner é obrigatório e deve ser um caminho absoluto. O campo Host deve ser um nome de volume ou um caminho absoluto.",
+          "volumesInputs": {
+            "host": "Host",
+            "hostHint": "Exemplo: /host/project/path",
+            "container": "Contêiner",
+            "containerHint": "Exemplo: /container/project/path",
+            "readOnly": "Somente Leitura"
+          },
+          "volumesFrom": "Volumes - De",
+          "volumesFromDescription": "Uma lista de volumes para herdar de um outro contêiner.",
+          "volumesFromInputs": {
+            "volume": "Volume",
+            "volumeHint": "Exemplo: datacontainer"
+          },
+          "volumeDriver": "Driver do Volume",
+          "volumeDriverPlaceholder": "Exemplo: local",
+          "volumeDriverDescription": "O driver para ser usado para os volumes",
+          "volumeName": "Nome do Volume",
+          "volumeNamePlaceholder": "Exemplo: volumeName",
+          "volumeNameDescription": "O nome do volume ao usar um driver que não é local",
+          "workingDirectory": "Diretório de Trabalho",
+          "workingDirectoryDescription": "O diretório de trabalho no qual os comandos devem ser executados",
+          "clusterSize": "Tamanho do Cluster",
+          "clusterSizeDescription": "O número de nós a serem provisionados",
+          "restartPolicy": "Política de Reinício",
+          "restartPolicyDescription": "O comportamento a ser aplicado quando o contêiner é encerrado. Defina o valor como \"sempre\" para sempre reiniciar ou como \"em caso de falha\" para reiniciar apenas quando o código de encerramento do contêiner for diferente de zero. Se a opção \"em caso de falha\" for usada, a contagem máxima de reinícios controlará o número de novas tentativas antes de uma desistência. O padrão é não reiniciar.",
+          "restartPolicyType": {
+            "always": "Sempre",
+            "onFailure": "Em caso de falha",
+            "none": "Nenhum"
+          },
+          "maxRestarts": "Máximo de Reinícios",
+          "maxRestartsDescription": "Contagem máxima de reinícios em casos de falha do contêiner",
+          "cpuShares": "Compartilhamentos de CPU",
+          "cpuSharesDescription": "Um valor inteiro que inclui os Compartilhamentos de CPU do contêiner (ou seja, a ponderação relativa em comparação com outros contêineres)",
+          "memoryLimit": "Limite de Memória",
+          "memoryLimitDescription": "Limite de memória em bytes",
+          "memorySwapLimit": "Limite de Permuta de Memória",
+          "memorySwapLimitDescription": "Limite total de memória (memória + permuta); defina como -1 para desabilitar a permuta. Você deve usar isso com memória e fazer com que o valor de permuta seja maior que a memória.",
+          "affinityConstraints": "Restrições de Afinidade",
+          "affinityConstraintsDescription": "Condições de afinidade ou antiafinidade de contêineres implantados ou não implantados no mesmo host. Formato: [!]serviceName[:soft|hard].",
+          "affinityInputs": {
+            "antiaffinity": "Antiafinidade",
+            "servicename": "Nome do serviço",
+            "servicenameHint": "Exemplo: webserver",
+            "constraint": "Restrição"
+          },
+          "autoredeploy": "Reimplantação automática",
+          "autoredeployDescription": "Reimplantação automática de contêineres quando eles estiverem no estado ERROR.",
+          "environmentVariables": "Variáveis de Ambiente",
+          "environmentVariablesDescription": "Uma lista de variáveis de ambiente",
+          "environmentVariablesInputs": {
+            "name": "Nome",
+            "nameHint": "Exemplo: PROJECT_HOME",
+            "value": "Valor",
+            "valueHint": "Exemplo: /var/lib/project"
+          },
+          "customProperties": "Propriedades Personalizadas",
+          "customPropertiesDescription": "Propriedades Personalizadas permitem adicionar atributos aos contêineres que serão provisionados.",
+          "healthIgnoreOnProvision": "Ignorar verificação de integridade no fornecimento",
+          "healthIgnoreOnProvisionDescription": "Se a verificação de integridade estiver configurada, além de quando o serviço estiver em funcionmento, ele também pode ser usado no fornecimento. Desmarque esta opção para forçar a verificação de integridade no fornecimento. Ao forçá-la, um contêiner não será considerado provisionado até que uma verificação de integridade seja realizada com êxito.",
+          "healthMode": "Modo",
+          "healthConfigNone": "Nenhum",
+          "healthConfigTCP": "Conexão TCP",
+          "healthConfigHTTP": "HTTP",
+          "healthConfigCommand": "Comando",
+          "healthPath": "Caminho da URL",
+          "healthPathDescription": "Caminho da URL para a API usada para verificação de integridade",
+          "healthPort": "Porta",
+          "healthPortHint": "Padrão: 80",
+          "healthPortDescription": "Porta do contêiner a ser usada",
+          "healthTimeout": "Tempo Limite (ms)",
+          "healthTimeoutHint": "Padrão: 2000",
+          "healthTimeoutDescription": "Tempo limite em ms para a operação de verificação de integridade",
+          "healthyThreshold": "Limite Íntegro",
+          "healthyThresholdHint": "Padrão: 3",
+          "healthyThresholdDescription": "O limite de operações de êxito na verificação de integridade necessárias para o contêiner ser considerado íntegro",
+          "unhealthyThreshold": "Limite Não Íntegro",
+          "unhealthyThresholdHint": "Padrão: 3",
+          "unhealthyThresholdDescription": "O limite de operações de falha na verificação de integridade necessárias para o contêiner ser considerado não íntegro",
+          "command": "Comando",
+          "commandDescription": "Comando a ser executado no contêiner. O status da saída é usado para determinar a integridade do contêiner.",
+          "logConfigDriver": "Driver",
+          "logConfigDriverDescription": "Driver de registro em log para o contêiner",
+          "logConfigDriverTypes": {
+            "none": "Nenhum",
+            "bridge": "Ponte",
+            "host": "Host"
+          },
+          "logConfigOptions": "Opções",
+          "logConfigOptionsDescription": "Opções com suporte para cada driver de registro em log",
+          "logConfigOptionsInputs": {
+            "name": "Nome",
+            "nameHint": "Exemplo: max-size",
+            "value": "Valor",
+            "valueHint": "Exemplo: 10m"
+          }
+        }
+      },
+      "state": {
+        "RUNNING": "EM EXECUÇÃO",
+        "STOPPED": "INTERROMPIDO",
+        "REBOOTING": "REINICIALIZANDO",
+        "PAUSED": "EM PAUSA",
+        "ERROR": "ERRO",
+        "UNKNOWN": "DESCONHECIDO",
+        "RETIRED": "DESATIVADO",
+        "PROVISIONING": "PROVISIONAMENTO",
+        "continuousStateSince": "{{state}} por {{duration}}",
+        "errorStatus": "{{state}}: {{status}}"
+      },
+      "status": {
+        "unhealthy": "Falha na verificação de integridade"
+      },
+      "actions": {
+        "start": "Iniciar",
+        "reboot": "Reinicializar",
+        "stop": "Parar",
+        "remove": "Remover",
+        "clone": "Clonar",
+        "details": "Detalhes",
+        "terminal": "Terminal",
+        "manage": "Gerenciar",
+        "createTemplate": "Criar Modelo",
+        "openTemplate": "Abrir Modelo"
+      }
+    },
+    "request": {
+      "title": "Solicitações",
+      "contextPanelTooltip": "Solicitações",
+      "tabs": {
+        "all": "Tudo",
+        "running": "Em Execução",
+        "failed": "Falhou"
+      },
+      "actions": {
+        "details": {
+          "show": "Detalhes",
+          "hide": "Ocultar Detalhes"
+        },
+        "open": "Aberto"
+      }
+    },
+    "closure": {
+      "title": "Todas as Execuções Rápidas",
+      "titleSearch": "Execuções Rápidas Encontradas",
+      "searchPlaceholder": "Procurar execuções rápidas",
+      "placementZone": "Pool de Recursos",
+      "resultStatus": "Status do Resultado",
+      "details": {
+        "name": "Nome",
+        "description": "Descrição",
+        "runtime": "Tempo de Execução",
+        "state": "Estado",
+        "id": "ID",
+        "inputs": "Entradas",
+        "outputs": "Saídas",
+        "errorMsg": "Erro",
+        "closureTitle": "Informações de execução da execução rápida",
+        "closureDescriptionTitle": "Informações de descrição da execução rápida",
+        "descriptionId": "ID",
+        "source": "Origem",
+        "sourceURL": "URL de Origem",
+        "resources": "Recursos",
+        "placement": "Colocação"
+      },
+      "state": {
+        "CREATED": "CRIADO",
+        "STARTED": "INICIADO",
+        "FINISHED": "FINALIZADO",
+        "FAILED": "FALHOU",
+        "CANCELLED": "CANCELADO"
+      },
+      "list": {
+        "name": "Execução rápida",
+        "closuresCountLabel": "Execuções rápidas",
+        "closureRunsLabel": "Número de execuções rápidas",
+        "memory": "Memória:",
+        "timeout": "Tempo limite:"
+      },
+      "request": {
+        "title": "Definição da execução rápida",
+        "save": "Salvar",
+        "run": "Executar",
+        "inputs": {
+          "name": "Nome",
+          "description": "Descrição",
+          "runtime": "Tempo de Execução",
+          "source": "Código fonte",
+          "sourceURL": "URL de Origem",
+          "runtimeTypes": {
+            "nodejs": "NodeJs 4",
+            "python": "Python 3",
+            "powershell": "Powershell 6",
+            "java": "Java 8"
+          },
+          "logConfigOptionsInputs": {
+            "name": "Nome",
+            "nameHint": "Exemplo: max-size",
+            "value": "Valor",
+            "valueHint": "Exemplo: 10m"
+          },
+          "closureInputs": {
+            "name": "Nome",
+            "nameHint": "Exemplo: a",
+            "value": "Valor",
+            "valueHint": "Exemplo: 1"
+          },
+          "closureOutputs": {
+            "name": "Nome",
+            "nameHint": "Exemplo: result"
+          },
+          "memoryLimit": "Limite de memória (megabytes)",
+          "timeout": "Tempo limite (segundos)",
+          "entrypoint": "Manipulador de ponto de entrada",
+          "logConfigDriver": "Driver de log",
+          "logConfigOptions": "Opções de log",
+          "sourceMode": "Modo",
+          "sourceProvided": "Código-fonte fornecido",
+          "sourceFromURL": "Código-fonte da URL",
+          "inputs": "Entradas",
+          "outputs": "Saídas",
+          "dependencies": "Dependências",
+          "nameDescription": "Nome da execução rápida. Se o ponto de entrada não estiver definido, o nome será usado como nome da função a ser chamado.",
+          "descriptionDescription": "Descrição da execução rápida",
+          "sourceDescription": "Código-fonte a ser executado",
+          "sourceURLDescription": "Código-fonte acessível pela URL. O conteúdo pode ser o próprio código ou um arquivo zip. Se o URL de origem for usado, o código-fonte do campo não será usado.",
+          "memoryLimitDescription": "Limite de memória em megabytes. O valor máximo permitido é 1536 MB.",
+          "timeoutDescription": "Tempo limite de execução em segundos. Se a execução da tarefa exceder esse tempo limite, ela será cancelada.",
+          "entrypointDescription": "Principal função a ser chamada, no formato: nome_arquivo.nome_função",
+          "logDriverDescription": "Driver de registro em log para a tarefa de execução rápida",
+          "logConfigOptionsDescription": "Opções com suporte para cada driver de registro em log",
+          "dependenciesDescription": "Dependências para instalação antes da execução do código",
+          "inputDescription": "Entrada a ser usada ao executar o código. A entrada deve ser um objeto JSON válido ou primitivo.",
+          "outputDescription": "Nomes de parâmetros de saída a serem usados ao preencher os resultados."
+        },
+        "logs": {
+          "title": "Logs"
+        },
+        "tabs": {
+          "definition": "Definição",
+          "code": "Código",
+          "config": "Configuração"
+        }
+      },
+      "monitoredTask": {
+        "runStatus": "Status da execução",
+        "runId": "ID da Execução:",
+        "runState": "Estado:",
+        "outputs": "Saídas"
+      }
+    },
+    "image": {
+      "entity": "imagem"
+    },
+    "help": {
+      "link": "Ajuda",
+      "description": "O Ensemble permite o acesso a informações relevantes para o contexto da tarefa que você está realizando. Ele é atualizado automaticamente com instruções conforme você continua seu trabalho. Use uma segunda tela ou uma tela dividida para acessar as informações em tempo real. É possível usar um dispositivo móvel, uma TV e qualquer outra tela, conectada ou não ao seu computador. Você pode usar o Ensemble fora da sua rede confiável e continuar recebendo atualizações instantâneas.",
+      "descriptionOpen": "Para abrir o Ensemble, clique em <strong>Abrir em uma nova guia</strong> ou faça a leitura do código QR com seu dispositivo móvel."
+    },
+    "resources": {
+      "selectMultiple": "Selecionar Itens",
+      "message": {
+        "selectShift": "Use Shift para selecionar vários itens"
+      }
+    },
+    "noneLabel": "Nenhum"
+  },
+  "loginPanel": {
+    "login": "Login",
+    "logout": "Logoff",
+    "username": "Nome de Usuário",
+    "password": "Senha",
+    "welcomeTo": "Bem-vindo ao",
+    "success": "Autenticação bem-sucedida",
+    "failure": "Erro de autenticação"
+  },
+  "dropdownSearchMenu": {
+    "title": "Selecionar na lista {{entity}}",
+    "searchPlaceholder": "Procurar {{entity}}",
+    "clear": "Limpar Seleção",
+    "showingCount": "Mostrando {{count}} de {{totalCount}}",
+    "noResults": "Nenhum item encontrado"
+  },
+  "customProperties": {
+    "name": "Nome",
+    "nameHint": "Exemplo: speedchecker",
+    "value": "Valor",
+    "valueHint": "Exemplo: slow"
+  },
+  "yes": "Sim",
+  "no": "Não",
+  "ok": "OK",
+  "cancel": "Cancelar",
+  "error": "Erro",
+  "delete": "Excluir",
+  "enable": "Habilitar",
+  "enabled": "Habilitado",
+  "disable": "Desabilitar",
+  "disabled": "Desabilitado",
+  "close": "Fechar",
+  "edit": "Editar",
+  "remove": "Remover",
+  "add": "Adicionar",
+  "save": "Salvar",
+  "verify": "Verificar",
+  "verified": "Verificado com êxito!",
+  "back": "Voltar",
+  "refresh": "Atualizar",
+  "clear": "Limpar",
+  "deleteAll": "Excluir Tudo",
+  "pendingOperationCancel": "operação em",
+  "openInNewTab": "Abrir em uma nova guia",
+  "unavailable": "N/D",
+  "advanced": "Avançado",
+  "noSelection": "Nenhuma Seleção",
+  "buildNumber": "Número da compilação",
+  "errors": {
+    "hostIp": "O valor deve ser o nome do host ou o endereço IP.",
+    "urlPath": "O caminho da URL é inválido.",
+    "propertyNameRequired": "O nome da propriedade é necessário.",
+    "propertyContainerNameInvalid": "Nome de contêiner inválido, somente os caracteres [a-zA-Z0-9][a-zA-Z0-9_.-] são permitidos.",
+    "propertyNamesNotUnique": "Nomes de propriedades devem ser exclusivos.",
+    "nonNegativeNumber": "O valor deve ser um número inteiro não negativo menor que 2147483648.",
+    "positiveNumber": "O valor deve ser um número inteiro positivo menor que 2147483648.",
+    "nonNegativeNumberAndMinusOne": "O valor deve ser um número inteiro entre -1 e 2147483647.",
+    "portNumber": "Número de porta inválido. Um número de porta válido varia de 0 a 65535.",
+    "containerMemory": "A memória deve ser 0 (sem limite) ou pelo menos 4194304 bytes (4 MB).",
+    "required": "O valor é necessário.",
+    "requiredAll": "Todos os campos são necessários.",
+    "serviceNameRequired": "O nome do serviço é necessário.",
+    "networkRequired": "A rede é necessária.",
+    "itemNotFound": "Item não encontrado.",
+    "networkExists": "A rede já existe no modelo.",
+    "volumeDestinationRequired": "O destino do volume é necessário.",
+    "invalidInputValue": "Valor de entrada inválido",
+    "invalidPath": "O valor deve ser um caminho absoluto.",
+    "invalidPathOrName": "O valor deve ser um caminho absoluto ou um nome de volume válido.",
+    "containersConnected": "Existem contêineres conectados.",
+    "managedByCatalog": "Gerenciado por catálogo",
+    "projectsUnexpectedError": "Ocorreu um erro inesperado"
+  },
+  "infoMessages": {
+    "created": "Criado com Êxito!",
+    "updated": "Atualizado com Êxito!",
+    "notFound": "Não encontrado",
+    "showingCount": "Mostrando {{count}} de {{totalCount}}"
+  },
+  "occurrence": {
+    "all": "Corresponder tudo",
+    "any": "Corresponder qualquer"
+  },
+  "state": {
+    "ON": "ATIVADO",
+    "OFF": "DESATIVADO",
+    "SUSPEND": "DESABILITADO",
+    "UNKNOWN": "DESCONHECIDO",
+    "stateSinceMessage": "desde {{date}}"
+  },
+  "productNames": {
+    "admiral": "Admiral",
+    "vic": "vSphere Integrated Containers"
+  }
+}
