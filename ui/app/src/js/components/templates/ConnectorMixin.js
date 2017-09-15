@@ -197,6 +197,13 @@ var getVolumeConnectionOverlays = function(isEditable, isVolume, volumeContainer
 };
 
 var getContainerResourceLinksFromElements = function(sourceEl, targetEl, resourceType) {
+  var sourceElType = $(sourceEl).attr('data-resourcetype');
+  var targetElType = $(targetEl).attr('data-resourcetype');
+
+  if (sourceElType !== targetElType) {
+    return null;
+  }
+
   var containerDescriptionLink = sourceEl.getAttribute('data-containerDescriptionLink');
   var resourceDescriptionLink = targetEl.getAttribute('data-resourceDescriptionLink');
 
