@@ -37,6 +37,7 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
 
     embeddedMode = FT.isApplicationEmbedded();
     isHbrEnabled = FT.isHbrEnabled();
+    showHostsView = FT.showHostsView();
 
     routeObserve: Subscription;
     errorObserve: Subscription;

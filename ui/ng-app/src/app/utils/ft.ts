@@ -91,4 +91,8 @@ export class FT {
   public static isHostsViewLinksEnabled() {
     return Utils.getConfigurationPropertyBoolean('allow.ft.hosts.view.links');
   }
+
+  public static showHostsView() {
+    return Utils.getConfigurationPropertyBoolean('allow.ft.hosts.view');
+  }
 };
