@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~ Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
   ~
   ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
   ~ You may not use this product except in compliance with the License.
@@ -16,17 +16,22 @@
         <section class="form-block">
           <label class="title"></label>
           <div class="certificate-import-option">
-            <a href="#" class="certificate-import-option-toggle btn btn-sm btn-secondary">{{i18n "app.certificate.edit.importOptionTitle"}}</a>
-            <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="top" title="{{i18n 'app.certificate.edit.importOptionHint'}}"></i>
+            <a href="#" class="certificate-import-option-toggle
+                        btn btn-sm btn-secondary">{{i18n "app.certificate.edit.importOptionTitle"}}</a>
+            <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="bottom"
+               title="{{i18n 'app.certificate.edit.importOptionHint'}}"></i>
           </div>
           <div class="certificate-import-inputs hide">
             <div>
               <input class="uri-input" placeholder="{{i18n 'app.certificate.edit.urlTitle'}}">
             </div>
-            <a class="certificate-import-button btn btn-sm btn-secondary">{{i18n "app.certificate.edit.importButton"}}<i class="fa fa-spinner fa-spin loader-inline"></i></a>
+            <a class="certificate-import-button btn btn-sm
+                      btn-secondary">{{i18n "app.certificate.edit.importButton"}}<i
+                          class="fa fa-spinner fa-spin loader-inline"></i></a>
             <a class="certificate-import-option-cancel btn btn-sm">{{i18n "cancel"}}</a>
           </div>
-          <textarea class="certificate-input" placeholder="{{i18n 'app.certificate.edit.certificateTitle'}}"></textarea>
+          <textarea class="certificate-input"
+                    placeholder="{{i18n 'app.certificate.edit.certificateTitle'}}"></textarea>
         </section>
         <section class="control-btns">
           <button type="submit" class="btn btn-primary inline-edit-save">
