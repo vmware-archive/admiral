@@ -1,0 +1,1440 @@
+{
+  "app": {
+    "header": {
+      "management": "管理",
+      "registry": "注册表"
+    },
+    "homepage": {
+      "welcome": "欢迎使用!",
+      "description": "您可以在此处<b>创建、置备、管理和监控容器化应用程序。</b>",
+      "descriptionCompute": "您可以在此处<b>创建、置备、管理和监控任何云上的任何应用程序</b>。",
+      "start": "立即开始使用!",
+      "addHost": "添加主机",
+      "addEndpoint": "添加端点",
+      "enter": "开始使用",
+      "helpCenter": "帮助",
+      "steps": {
+        "description": "轻松创建应用程序",
+        "addHost": "添加主机",
+        "findImage": "查找映像",
+        "designApplication": "设计应用程序"
+      }
+    },
+    "navbar": {
+      "resources": "资源",
+      "hosts": "主机",
+      "policies": "策略",
+      "placements": "放置",
+      "registries": "注册表",
+      "templates": "模板",
+      "deployment": "部署",
+      "projects": "项目",
+      "containers": "容器",
+      "applications": "应用程序",
+      "networks": "网络",
+      "volumes": "卷",
+      "closures": "闭包服务",
+      "eventlog": "事件日志",
+      "placementZones": "放置区域",
+      "profiles": "配置文件",
+      "endpoints": "端点",
+      "machines": "计算机",
+      "compute": "计算资源",
+      "kubernetesResources": "K8S 资源",
+      "kubernetesDeployments": "部署",
+      "kubernetesPods": "容器",
+      "kubernetesServices": "服务",
+      "kubernetesReplicationControllers": "复制控制器"
+    },
+    "host": {
+      "entity": "主机",
+      "details": {
+        "title": {
+          "add": "添加主机",
+          "create": "创建主机",
+          "edit": "编辑主机"
+        },
+        "address": "地址",
+        "addressPlaceholder": "示例: https://hostname:2376",
+        "addressHint": "请指定适当的方案和端口，例如 https://myhost.com:2376。默认方案:“https”。默认端口: https/443、http/80。",
+        "hostAlias": "名称",
+        "hostAddress": "地址",
+        "hostType": "主机类型",
+        "placementZone": "放置区域",
+        "placementZoneInputPlaceholder": "示例: vic:hostname:2376",
+        "placementZoneInputHint": "将自动创建具有此名称的调度程序放置区域",
+        "credential": "登录凭据",
+        "guestCredential": "客户机凭据",
+        "destination": "目标",
+        "destinationPlaceholder": "搜索目标",
+        "deploymentPolicy": "部署策略",
+        "tags": "标记",
+        "tagsPlaceholder": "示例: location:west",
+        "tagsHint": "输入“键:值”标记",
+        "autoConfigure": "自动配置",
+        "autoConfigureInput": "启用主机自动配置",
+        "autoConfigureHint": "此选项将在提供的具有生成的自签名证书的地址和端口上配置 docker 远程 API。它将通过 SSH 完成一次。支持的操作系统包括: CoreOS、PhotonOS、Ubuntu Server 16.04 或更高版本。",
+        "reservationPolicy": "预留策略",
+        "endpoint": "端点",
+        "connectionType": "连接类型",
+        "connectionTypeShort": "连接",
+        "customProperties": "自定义属性",
+        "verify": "验证",
+        "verified": "已成功验证!",
+        "add": "添加",
+        "update": "更新",
+        "create": "创建",
+        "certificateWarning": "{{address}} 的证书无效。您可能正连接到伪装成 {{address}} 的网站，这可能会使您的机密信息面临风险。您仍然要连接到该网站吗?",
+        "trustedCertificate": "{{address}} 的证书为受信证书。",
+        "showCertificate": "显示证书",
+        "hideCertificate": "隐藏证书",
+        "manageCertificates": "管理证书",
+        "containers": "容器",
+        "nodes": "节点",
+        "cpu": "CPU",
+        "memory": "内存",
+        "storage": "存储",
+        "providerType": "云类型",
+        "regionId": "区域 ID",
+        "name": "名称",
+        "namePlaceholder": "示例: host-name",
+        "instanceType": "实例类型",
+        "imageType": "操作系统",
+        "port": "端口",
+        "clusterSize": "实例计数",
+        "unlimited": "无限制"
+      },
+      "list": {
+        "title": "主机",
+        "titleSearch": "找到的主机",
+        "searchPlaceholder": "搜索主机",
+        "dataCollect": "数据收集",
+        "dataCollectStart": "触发数据收集。可能需要几分钟才能完成。",
+        "dataCollectEnd": "已完成数据收集。",
+        "create": "主机"
+      },
+      "actions": {
+        "start": "启动",
+        "stop": "停止",
+        "edit": "编辑",
+        "enable": "启用",
+        "disable": "禁用",
+        "remove": "移除"
+      }
+    },
+    "placementZone": {
+      "createNew": "新建放置区域",
+      "manage": "管理放置区域",
+      "entity": "放置区域",
+      "list": {
+        "title": "放置区域",
+        "addButton": "放置区域",
+        "nameColumn": "名称",
+        "cpuColumn": "CPU",
+        "memoryColumn": "内存",
+        "storageColumn": "存储",
+        "hostsColumn": "主机"
+      },
+      "edit": {
+        "createNew": "新建放置区域",
+        "update": "编辑放置区域",
+        "nameTitle": "放置区域名称",
+        "endpointTitle": "端点",
+        "placementPolicy": "高级放置策略",
+        "placementPolicyHint": "默认情况下，资源放置在随机主机上。可以应用以下策略之一: <br><br><b>BINPACK</b> - 放置在具有最高内存使用率的主机上。<br><br><b>SPREAD</b> - 放置在资源数量最少的主机上。",
+        "dynamicTitle": "向此区域动态分配资源",
+        "tagsTitle": "标记",
+        "tagsHint": "输入“键:值”标记",
+        "tagsPlaceholder": "示例: compliance:yes",
+        "tagsToMatchTitle": "要匹配的标记",
+        "tagsToMatchHint": "输入要匹配的“键:值”标记",
+        "tagsToMatchPlaceholder": "示例: location:west"
+      },
+      "contextPanelTooltip": "放置区域"
+    },
+    "businessGroup": {
+      "entity": "业务组"
+    },
+    "group": {
+      "createNew": "新建项目",
+      "manage": "管理项目",
+      "entity": "项目",
+      "contextPanelTooltip": "项目",
+      "list": {
+        "title": "项目",
+        "addButton": "项目",
+        "nameColumn": "名称",
+        "details": {
+          "title": "项目详细信息"
+        }
+      },
+      "edit": {
+        "createNew": "新建项目",
+        "update": "编辑项目",
+        "nameTitle": "项目名称"
+      }
+    },
+    "credential": {
+      "createNew": "新建凭据",
+      "manage": "管理凭据",
+      "entity": "凭据",
+      "contextPanelTooltip": "凭据",
+      "list": {
+        "title": "凭据",
+        "addButton": "凭据",
+        "nameColumn": "名称",
+        "typeColumn": "类型",
+        "credentialsColumn": "凭据"
+      },
+      "edit": {
+        "createNew": "新建凭据",
+        "update": "编辑凭据",
+        "nameTitle": "名称",
+        "usernamePasswordTitle": "用户名",
+        "usernameTitle": "用户名",
+        "passwordTitle": "密码",
+        "showPassword": "显示密码",
+        "hidePassword": "隐藏密码",
+        "usePrivateKey": "使用私钥",
+        "usePassword": "使用密码",
+        "certificateTitle": "证书",
+        "publicTitle": "公钥",
+        "publicCertificateTitle": "公用证书",
+        "privateCertificateTitle": "私有证书",
+        "customProperties": "自定义属性"
+      }
+    },
+    "deploymentPolicy": {
+      "createNew": "新建部署策略",
+      "entity": "部署策略",
+      "manage": "管理部署策略",
+      "contextPanelTooltip": "部署策略",
+      "list": {
+        "title": "部署策略",
+        "addButton": "策略",
+        "nameColumn": "名称",
+        "descriptionColumn": "描述",
+        "details": {
+          "title": "部署策略详细信息"
+        }
+      },
+      "edit": {
+        "createNew": "新建部署策略",
+        "update": "编辑部署策略",
+        "nameTitle": "部署策略名称",
+        "descriptionTitle": "部署策略描述"
+      }
+    },
+    "certificate": {
+      "createNew": "新建证书",
+      "manage": "管理证书",
+      "entity": "证书",
+      "contextPanelTooltip": "证书",
+      "list": {
+        "title": "证书",
+        "addButton": "证书",
+        "nameColumn": "名称",
+        "serialColumn": "序列号",
+        "shaColumn": "SHA",
+        "expirationColumn": "过期",
+        "details": {
+          "title": "证书详细信息",
+          "commonName": "公司名称",
+          "issuerName": "颁发机构名称",
+          "serial": "序列号",
+          "fingerprint": "SHA 指纹",
+          "validSince": "有效期自",
+          "validTo": "有效期至"
+        }
+      },
+      "edit": {
+        "createNew": "新建证书",
+        "update": "编辑证书",
+        "urlTitle": "输入 URL",
+        "importOptionTitle": "从 URL 导入",
+        "importOptionHint": "您可以使用“从 URL 导入”输入 URL，而不是手动输入证书。然后，系统将从您输入的 URL 导入证书。",
+        "importButton": "导入",
+        "certificateTitle": "输入证书"
+      }
+    },
+    "template": {
+      "list": {
+        "title": "常用模板",
+        "titleSearch": "找到的模板",
+        "popularRepositories": "常用存储库",
+        "searchImagesTemplatesPlaceholder": "搜索映像、模板",
+        "searchImagesPlaceholder": "搜索映像",
+        "searchRepositoriesPlaceholder": "搜索存储库",
+        "searchTemplatesPlaceholder": "搜索模板",
+        "searchClosuresPlaceholder": "搜索闭包服务",
+        "manageRegistry": "管理注册表",
+        "provision": "置备",
+        "provisionAdditionalInfo": "输入其他信息",
+        "editTemplate": "编辑/查看详细信息",
+        "official": "官方",
+        "trusted": "受信任",
+        "stars": "星级",
+        "linksLabel": "链接",
+        "addLinkLabel": "添加链接",
+        "containers": "选择要依赖的容器",
+        "alias": "输入别名",
+        "true": "是",
+        "false": "否",
+        "searchCategoryFilterTitle": "查看:",
+        "partialResultWarning": "由于一个或多个查询出现错误，您无法查看完整搜索结果。",
+        "continue": "继续",
+        "searchCategory": {
+          "all": "全部",
+          "images": "映像",
+          "templates": "模板",
+          "closures": "闭包服务",
+          "repositories": "存储库"
+        }
+      },
+      "details": {
+        "create": "创建模板",
+        "createNameHint": "模板名称",
+        "createProceed": "继续",
+        "edit": "编辑模板",
+        "newDefinition": {
+          "newLabel": "添加容器",
+          "title": "添加容器定义",
+          "selectImage": "选择映像",
+          "imageListTitle": "常用映像",
+          "imageListTitleSearch": "找到的映像",
+          "containerDefinitionInfo": "容器定义信息"
+        },
+        "editDefinition": {
+          "title": "编辑容器定义"
+        },
+        "editProject": {
+          "createTitle": "创建项目",
+          "updateTitle": "更新项目",
+          "name": "名称",
+          "create": "创建",
+          "update": "更新",
+          "publicCheckboxLabel": "将此项目设为公共项目"
+        },
+        "editNetwork": {
+          "newLabel": "添加网络",
+          "newTitle": "添加网络配置",
+          "newDropdownTitle": "添加网络...",
+          "editTitle": "编辑网络配置",
+          "name": "名称",
+          "existingNetwork": "现有",
+          "showingCount": "显示 {{count}} 项 (共 {{totalCount}} 项)",
+          "showingInstances": "个实例",
+          "noResults": "找不到网络",
+          "hosts": "主机",
+          "hostsSearchPlaceholder": "搜索主机",
+          "create": "创建",
+          "createTitle": "创建网络",
+          "ipamConfig": "IPAM 配置",
+          "ipamConfigSubnet": "子网",
+          "ipamConfigSubnetHint": "示例: 172.16.238.0/24",
+          "ipamConfigIPRange": "IP 范围",
+          "ipamConfigIPRangeHint": "示例: 172.28.5.0/24",
+          "ipamConfigGateway": "网关",
+          "ipamConfigGatewayHint": "示例: 172.16.238.1",
+          "customProperties": "自定义属性"
+        },
+        "editClosures": {
+          "newTitle": "添加闭包服务",
+          "editTitle": "编辑闭包服务",
+          "name": "名称"
+        },
+        "editVolume": {
+          "newLabel": "添加卷",
+          "newTitle": "添加卷",
+          "newDropdownTitle": "添加卷...",
+          "editTitle": "编辑卷",
+          "name": "名称",
+          "driver": "驱动程序",
+          "driverPlaceholder": "示例: local",
+          "driverOptions": {
+            "label": "驱动程序选项",
+            "keyTitle": "选项",
+            "keyHint": "示例: o",
+            "valueTitle": "值",
+            "valueHint": "示例: size=100m"
+          },
+          "existingVolume": "现有",
+          "showingCount": "显示 {{count}} 项 (共 {{totalCount}} 项)",
+          "showingInstances": "个实例",
+          "noResults": "未找到卷",
+          "mountpoint": "主机挂载点",
+          "hosts": "主机",
+          "hostsSearchPlaceholder": "搜索主机",
+          "create": "创建",
+          "createTitle": "创建卷",
+          "customProperties": "自定义属性"
+        },
+        "editKubernetes": {
+          "newTitle": "添加 Kubernetes",
+          "editTitle": "编辑 Kubernetes",
+          "createEntities": {
+            "title": "创建 Kubernetes 实体",
+            "button": "创建",
+            "hint": "通过加载文件或手动输入其内容，从 YAML 定义置备 Kubernetes 实体。支持多个由“---”分隔的定义，例如 Deployment/Service 对。",
+            "placeholder": "输入 YAML Kubernetes 定义…"
+          }
+        },
+        "network": {
+          "drag": "拖动以将容器附加到此网络",
+          "drop": "放置以将容器附加到此网络"
+        },
+        "volume": {
+          "drag": "拖动以将容器附加到此卷",
+          "drop": "放置以将容器附加到此卷",
+          "editContainerPath": "容器路径:"
+        }
+      },
+      "actions": {
+        "edit": "编辑",
+        "provision": "置备",
+        "publish": "推送",
+        "export": "导出",
+        "import": "导入",
+        "remove": "移除"
+      },
+      "publish": {
+        "tooltip": "推送到蓝图",
+        "success": "推送成功",
+        "fail": "将模板推送到蓝图时出错"
+      },
+      "import": {
+        "title": "导入模板",
+        "loadButton": "从文件加载",
+        "importTemplateTooltip": "导入模板或 Docker Compose",
+        "importTemplateHint": "导入模板或 Docker Compose 文件，也可以手动输入其内容。",
+        "contentPlaceholder": "输入模板或 Docker Compose...",
+        "importButton": "导入"
+      },
+      "export": {
+        "formatPromptMessage": "选择导出模板的格式:",
+        "format": {
+          "compositeBlueprint": "YAML 蓝图",
+          "dockerCompose": "Docker Compose"
+        }
+      }
+    },
+    "placement": {
+      "list": {
+        "title": "放置",
+        "addButton": "放置",
+        "nameColumn": "名称",
+        "groupColumn": "项目",
+        "businessGroupColumn": "业务组",
+        "placementZoneColumn": "放置区域",
+        "deploymentPolicyColumn": "部署策略",
+        "priorityColumn": "优先级",
+        "instancesColumn": "实例数",
+        "memoryColumn": "内存限制",
+        "storageColumn": "存储限制",
+        "instancesPerPlacement": "显示每个放置的实例数",
+        "unlimitedInstances": "不受限制",
+        "unlimitedMemoryLimit": "不受限制"
+      },
+      "edit": {
+        "createNew": "新建放置",
+        "update": "编辑放置",
+        "nameLabel": "名称",
+        "groupLabel": "项目",
+        "selectGroup": "选择项目",
+        "businessGroupLabel": "业务组",
+        "selectBusinessGroup": "选择业务组",
+        "placementZoneLabel": "放置区域",
+        "selectPlacementZone": "选择放置区域",
+        "deploymentPolicyLabel": "部署策略",
+        "selectDeploymentPolicy": "选择部署策略",
+        "priorityLabel": "优先级",
+        "priorityPlaceholder": "正数",
+        "priorityHint": "留空则将其置于最低优先级",
+        "instancesLabel": "实例数",
+        "instancesPlaceholder": "实例数",
+        "instancesHint": "限制最大实例数的正整数。留空或为 0 表示无限数量。",
+        "cpuSharesLabel": "CPU 份额",
+        "memoryLimitLabel": "内存限制",
+        "storageLimitLabel": "存储限制"
+      }
+    },
+    "eventlog": {
+      "title": "事件",
+      "tabs": {
+        "all": "全部",
+        "warnings": "警告",
+        "errors": "错误"
+      },
+      "contextPanelTooltip": "事件日志"
+    },
+    "registry": {
+      "list": {
+        "title": "现有注册表",
+        "addButton": "注册表",
+        "addressColumn": "地址",
+        "nameColumn": "名称",
+        "statusColumn": "状态"
+      },
+      "edit": {
+        "createNew": "新建注册表",
+        "update": "编辑注册表",
+        "addressTitle": "地址",
+        "addressHint": "请指定适当的方案和端口，例如 https://myregistry.com:5000。默认方案:“https”。默认端口: https/443、http/80。",
+        "insecureRegistryHint": "检测到纯文本 http 注册表: 请确保您的主机已正确配置，且可以连接到它们。<a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">更多信息</a>",
+        "nameTitle": "名称",
+        "credentialTitle": "登录凭据",
+        "verifyButton": "验证",
+        "verified": "已成功验证!"
+      }
+    },
+    "profile": {
+      "list": {
+        "title": "配置文件",
+        "titleSearch": "已找到配置文件",
+        "searchPlaceholder": "搜索配置文件",
+        "addButton": "配置文件",
+        "addPropertyButton": "添加属性",
+        "nameColumn": "名称",
+        "endpointTypeColumn": "端点类型",
+        "propertiesColumn": "属性",
+        "mappingsColumn": "映射"
+      },
+      "details": {
+        "endpoint": "端点"
+      },
+      "actions": {
+        "edit": "编辑",
+        "remove": "移除"
+      },
+      "edit": {
+        "addTitle": "添加配置文件",
+        "editTitle": "编辑配置文件",
+        "save": "保存",
+        "basicTab": "常规",
+        "computeTab": "计算资源",
+        "networkTab": "网络",
+        "storageTab": "存储",
+        "nameLabel": "名称",
+        "tagsLabel": "标记",
+        "tagsHint": "输入“键:值”标记",
+        "tagsPlaceholder": "示例: compliance:yes",
+        "endpointLabel": "端点",
+        "valueLabel": "值",
+        "instanceTypeMappingLabel": "特定实例",
+        "instanceTypeMappingDisplay": "{{cpuCount}} 个 CPU，{{memoryInMB}} MB RAM，{{bootDiskSizeInMB}} MB 磁盘",
+        "instanceTypeMappingDisplayAWS": "{{cpuCount}} 个 CPU，{{memoryInMB}} MB RAM，{{storageType}} 存储，{{networkType}} 网络",
+        "imageMappingLabel": "映像类型",
+        "diskPropertyMappingLabel": "磁盘属性",
+        "cpuCountLabel": "CPU",
+        "memoryGbLabel": "内存 (GB)",
+        "generalLabel": "常规",
+        "existingLabel": "现有",
+        "subnetworksLabel": "子网",
+        "isolationLabel": "隔离",
+        "isolationTypeLabel": "类型",
+        "isolationNetworkLabel": "网络",
+        "isolationExternalSubnetLabel": "外部子网",
+        "noneIsolationTypeLabel": "无",
+        "subnetIsolationTypeLabel": "子网",
+        "securityGroupIsolationTypeLabel": "安全组",
+        "securityGroups": "安全组",
+        "vpc": "VPC",
+        "cidrLabel": "CIDR",
+        "cidrLabelHint": "0.0.0.0/0",
+        "cidrPrefixLabel": "子网前缀长度",
+        "networkLabel": "网络",
+        "resourceGroupsLabel": "资源组",
+        "supportPublicIpAddressLabel": "支持公共 IP",
+        "defaultForZoneLabel": "区域的默认值",
+        "addStorageItem": "添加存储项",
+        "defaultLabel": "默认",
+        "makeDescriptorDefault": "将此存储项设为默认项",
+        "itemHeader": "存储项",
+        "storage": {
+          "azure": {
+            "selectAccountLabel": "选择帐户",
+            "storageAccountTypeLabel": "存储帐户类型",
+            "osDiskCachingLabel": "OS 磁盘缓存",
+            "dataDiskCachingLabel": "数据磁盘缓存",
+            "contextPanelTooltip": "存储帐户",
+            "typeLabel": "类型",
+            "encryptionLabel": "存储服务加密",
+            "entityLabel": "存储帐户",
+            "list": {
+              "title": "存储帐户",
+              "nameColumn": "名称",
+              "typeColumn": "类型",
+              "encryptionColumn": "存储服务加密",
+              "edit": {
+                "title": "编辑存储帐户",
+                "nameLabel": "帐户名称",
+                "typeLabel": "帐户类型",
+                "encryptionLabel": "存储服务加密"
+              }
+            }
+          },
+          "vsphere": {
+            "storagePolicyLabel": "存储策略",
+            "provisioningTypeLabel": "置备类型",
+            "datastoreLabel": "数据存储",
+            "sharesLevelLabel": "份额级别",
+            "sharesLabel": "份额",
+            "limitLabel": "限制 IOPS",
+            "datastoreContextPanelTooltip": "数据存储",
+            "storagePolicyContextPanelTooltip": "存储策略",
+            "datastoreEntityLabel": "数据存储",
+            "storagePolicyEntityLabel": "存储策略",
+            "snapshotsLabel": "快照",
+            "independentOfSnapshotsLabel": "独立于快照",
+            "persistentLabel": "持久",
+            "nonPersistentLabel": "非持久",
+            "provisioningSelectDefault": "选择置备类型",
+            "sharesLevelDefault": "选择份额级别",
+            "datastore": {
+              "typeLabel": "类型",
+              "capacityLabel": "容量",
+              "capacityUnit": "GB",
+              "list": {
+                "title": "数据存储",
+                "nameColumn": "名称",
+                "typeColumn": "类型",
+                "capacityColumn": "容量 (GB)",
+                "encryptionColumn": "支持加密",
+                "edit": {
+                  "title": "编辑数据存储",
+                  "nameLabel": "数据存储",
+                  "typeLabel": "类型",
+                  "encryptionLabel": "支持加密",
+                  "capacityLabel": "容量 (GB)"
+                }
+              }
+            },
+            "storagePolicy": {
+              "descriptionLabel": "描述",
+              "list": {
+                "title": "存储策略",
+                "nameColumn": "名称",
+                "descColumn": "描述",
+                "encryptionColumn": "支持加密",
+                "edit": {
+                  "title": "编辑存储策略",
+                  "nameLabel": "名称",
+                  "descLabel": "描述",
+                  "customPropertiesLabel": "自定义属性",
+                  "customPropertiesTable": {
+                    "keyColumn": "键",
+                    "valueColumn": "值"
+                  }
+                }
+              }
+            }
+          },
+          "aws": {
+            "volumeTypeLabel": "卷类型",
+            "deviceTypeLabel": "设备类型",
+            "iopsLabel": "最大 IOPS",
+            "iopsHint": "根据磁盘容量，置备的实际 IOPS 可能较小",
+            "fileSystemLabel": "文件系统",
+            "encryptedLabel": "支持加密"
+          }
+        },
+        "validation": {
+          "valueNotMoreThan": "值不能大于 {{max}}",
+          "valueInRange": "值应该处于 {{min}} 到 {{max}} 的范围内"
+        }
+      },
+      "instanceType": {
+        "addTitle": "添加特定实例配置文件",
+        "editTitle": "编辑特定实例配置文件",
+        "aws": {
+          "small": "小型 (1 个 CPU、1 GB 内存)",
+          "medium": "中型 (1 个 CPU、2 GB 内存)",
+          "large": "大型 (2 个 CPU、8 GB 内存)",
+          "xlarge": "超大型 (4 个 CPU、16 GB 内存)"
+        },
+        "azure": {
+          "small": "小型 (1 个 CPU、0.75 GB 内存)",
+          "medium": "中型 (1 个 CPU、1.75 GB 内存)",
+          "large": "大型 (2 个 CPU、3.50 GB 内存)",
+          "xlarge": "超大型 (4 个 CPU、14 GB 内存)"
+        },
+        "vsphere": {
+          "small": "小型 (1 个 CPU、1 GB 内存)",
+          "medium": "中型 (1 个 CPU、2 GB 内存)",
+          "large": "大型 (2 个 CPU、8 GB 内存)",
+          "xlarge": "超大型 (4 个 CPU、16 GB 内存)"
+        },
+        "nimbus": {
+          "small": "小型 (1 个 CPU、1 GB 内存)"
+        }
+      },
+      "imageType": {
+        "coreos": "CoreOS",
+        "photon": "Photon OS",
+        "ubuntu-1604": "Ubuntu"
+      },
+      "azureStorageAccountType": {
+        "standardLRS": "标准 LRS",
+        "standardZRS": "标准 ZRS",
+        "standardGRS": "标准 GRS",
+        "standardRAGRS": "标准 RAGRS",
+        "premiumLRS": "高级 LRS"
+      },
+      "azureDiskCachingType": {
+        "none": "无",
+        "readOnly": "只读",
+        "readWrite": "读写"
+      },
+      "vsphereProvisioningTypes": {
+        "thin": "精简格式",
+        "thick": "厚格式",
+        "eagerZeroedThick": "厚置零"
+      },
+      "vsphereSharesLevel": {
+        "low": "低",
+        "normal": "正常",
+        "high": "高",
+        "custom": "自定义"
+      },
+      "awsVolumeTypes": {
+        "gp2": "通用 SSD (GP2)",
+        "io1": "置备的 IOPS SSD (IO1)",
+        "sc1": "冷 HDD (SC1)",
+        "st1": "吞吐量优化的 HDD (ST1)",
+        "standard": "磁性"
+      },
+      "awsDeviceTypes": {
+        "ebs": "EBS",
+        "instanceStore": "实例存储"
+      }
+    },
+    "endpoint": {
+      "list": {
+        "title": "端点",
+        "addButton": "端点",
+        "nameColumn": "名称",
+        "typeColumn": "类型"
+      },
+      "edit": {
+        "addNew": "新建端点",
+        "update": "编辑端点",
+        "nameLabel": "名称",
+        "typeLabel": "类型",
+        "privateKeyIdLabel": "访问密钥 ID",
+        "privateKeyLabel": "私有访问密钥",
+        "regionIdLabel": "区域 ID",
+        "collectLabel": "数据收集",
+        "collectInventoryLabel": "收集清单",
+        "collectInventoryMessage": "触发清单收集。可能需要几分钟才能完成。",
+        "collectImagesLabel": "收集映像类型",
+        "collectImagesMessage": "触发映像收集。可能需要几分钟才能完成。",
+        "azure": {
+          "userLinkLabel": "订阅 ID",
+          "tenantIdLabel": "租户 ID"
+        },
+        "vsphere": {
+          "hostNameLabel": "主机名或 IP",
+          "privateKeyIdLabel": "用户名",
+          "privateKeyLabel": "密码",
+          "regionIdLabel": "数据中心",
+          "linkedEndpointLabel": "NSX 端点"
+        }
+      },
+      "entity": "端点",
+      "typeEntity": "类型",
+      "datacenterEntity": "数据中心",
+      "createNew": "新建端点",
+      "manage": "管理端点",
+      "contextPanelTooltip": "端点"
+    },
+    "machine": {
+      "list": {
+        "title": "计算机",
+        "titleSearch": "发现的计算机",
+        "searchPlaceholder": "搜索计算机",
+        "addButton": "计算机"
+      },
+      "edit": {
+        "addTitle": "创建计算机",
+        "editTitle": "编辑计算机",
+        "nameLabel": "名称",
+        "save": "保存",
+        "create": "创建",
+        "loadButton": "从文件加载",
+        "importTemplateHint": "包含一个或多个计算机描述的复合描述",
+        "importPlaceholder": ""
+      },
+      "details": {
+        "propertyName": "名称",
+        "propertyValue": "值",
+        "general": {
+          "id": "ID",
+          "placementHost": "放置主机",
+          "address": "地址",
+          "endpoint": "端点",
+          "properties": "属性",
+          "usages": "使用情况",
+          "powerState": "电源状况",
+          "environment": "环境",
+          "region": "区域",
+          "profile": "配置文件"
+        },
+        "customProperties": {
+          "title": "自定义属性"
+        }
+      }
+    },
+    "compute": {
+      "entity": "目标",
+      "list": {
+        "title": "计算资源",
+        "titleSearch": "发现的计算资源",
+        "searchPlaceholder": "搜索计算资源"
+      },
+      "details": {
+        "type": "类型",
+        "zone": "可用性区域",
+        "vm_host": "区域",
+        "clustercomputeresource": "群集",
+        "computeresource": "主机",
+        "endpoint": "端点",
+        "hostsystem": "主机",
+        "resourcepool": "资源池"
+      },
+      "edit": {
+        "title": "编辑计算资源",
+        "nameLabel": "名称"
+      },
+      "actions": {
+        "details": "详细信息"
+      }
+    },
+    "network": {
+      "entity": "网络"
+    },
+    "securityGroup": {
+      "entity": "安全组"
+    },
+    "subnetwork": {
+      "list": {
+        "title": "子网",
+        "addButton": "子网",
+        "nameColumn": "名称",
+        "cidrColumn": "CIDR",
+        "supportPublicIpAddressColumn": "支持公共 IP",
+        "networkColumn": "网络"
+      },
+      "edit": {
+        "addNew": "添加子网",
+        "update": "编辑子网",
+        "networkLabel": "网络",
+        "nameLabel": "名称",
+        "cidrLabel": "CIDR",
+        "supportPublicIpAddressLabel": "支持公共 IP",
+        "defaultForZoneLabel": "区域的默认值",
+        "tagsTitle": "标记",
+        "tagsHint": "输入“键:值”标记",
+        "tagsPlaceholder": "示例: access:restricted"
+      },
+      "entity": "子网",
+      "create": "新建子网",
+      "manage": "管理子网",
+      "contextPanelTooltip": "子网"
+    },
+    "resource": {
+      "list": {
+        "network": {
+          "name": "网络",
+          "connectedDateLabel": "连接开始时间",
+          "networkDriverLabel": "网络驱动程序",
+          "ipamDriverLabel": "IPAM 驱动程序",
+          "subnetLabel": "子网",
+          "gatewayLabel": "网关",
+          "ipRangeLabel": "IP 范围",
+          "connectedContainers": "容器",
+          "parentHosts": "主机",
+          "external": "外部",
+          "create": "网络",
+          "state": {
+            "UNKNOWN": "未知",
+            "PROVISIONING": "正在置备",
+            "CONNECTED": "已连接",
+            "RETIRED": "已注销",
+            "ERROR": "错误"
+          }
+        },
+        "project": {
+          "name": "项目",
+          "description": "描述",
+          "public": "公共",
+          "private": "专用",
+          "create": "项目",
+          "actions": {
+            "edit": "编辑",
+            "remove": "移除"
+          }
+        },
+        "container": {
+          "create": "容器"
+        },
+        "application": {
+          "create": "应用程序"
+        },
+        "closure": {
+          "create": "闭包服务"
+        },
+        "kubernetes": {
+          "create": "定义"
+        },
+        "volume": {
+          "create": "卷",
+          "connectedDateLabel": "已连接",
+          "driverLabel": "驱动程序",
+          "driverOptionsLabel": "驱动程序选项",
+          "scope": "范围",
+          "mountpoint": "主机挂载点",
+          "connectedContainers": "容器",
+          "parentHosts": "主机",
+          "external": "外部",
+          "state": {
+            "UNKNOWN": "未知",
+            "PROVISIONING": "正在置备",
+            "CONNECTED": "已连接",
+            "RETIRED": "已注销",
+            "ERROR": "错误"
+          }
+        },
+        "titleSearch": {
+          "projects": "项目",
+          "containers": "容器",
+          "applications": "应用程序",
+          "networks": "网络",
+          "volumes": "卷",
+          "closures": "闭包服务",
+          "kubernetes": "Kubernetes"
+        },
+        "searchPlaceholder": {
+          "projects": "搜索项目",
+          "containers": "搜索容器",
+          "applications": "搜索应用程序",
+          "networks": "搜索网络",
+          "closures": "搜索闭包服务",
+          "volumes": "搜索卷",
+          "kubernetes": "搜索 Kubernetes 实体"
+        },
+        "searchCategory": {
+          "networks": "网络"
+        },
+        "relations": {
+          "hosts": "主机",
+          "containers": "容器",
+          "applications": "应用程序",
+          "networks": "网络",
+          "volumes": "卷"
+        }
+      }
+    },
+    "container": {
+      "list": {
+        "titleSearchContainers": "找到的容器",
+        "titleSearchApplications": "找到的应用程序",
+        "searchPlaceholder": "搜索容器",
+        "createContainer": "创建容器",
+        "hostLabel": "主机",
+        "createdDateLabel": "创建日期",
+        "portsLabel": "端口",
+        "commandLabel": "命令",
+        "logLabel": "日志",
+        "cluster": {
+          "name": "群集",
+          "sizeLabel": "群集大小",
+          "scaleLabel": "缩放"
+        },
+        "composite": {
+          "name": "应用程序",
+          "servicesCountLabel": "服务",
+          "containersCountLabel": "容器",
+          "networksCountLabel": "网络",
+          "volumesCountLabel": "卷",
+          "childContainersLabel": "子容器"
+        },
+        "searchCategoryFilterTitle": "查看:",
+        "searchCategory": {
+          "all": "全部",
+          "containers": "容器",
+          "applications": "应用程序"
+        },
+        "columnName": "容器",
+        "columnStatus": "状态",
+        "columnRunningSince": "运行开始时间"
+      },
+      "details": {
+        "usages": "使用情况",
+        "properties": "属性",
+        "webview": "Web 视图",
+        "logs": "日志",
+        "cpu": "CPU",
+        "memory": "内存",
+        "network": "网络",
+        "networkTrafficSent": "已发送",
+        "networkTrafficReceived": "已接收",
+        "lines": "行",
+        "showingLogs": "显示日志",
+        "logsOptionSince": "开始",
+        "logsOptionTail": "结束",
+        "logsFormat": "日志格式",
+        "logsFormatAnsi": "ANSI",
+        "logsFormatRaw": "原始格式",
+        "networkAddresses": "网络地址",
+        "attributes": {
+          "name": "名称",
+          "value": "值",
+          "host": "主机",
+          "createdDateLabel": "创建日期",
+          "ports": "端口",
+          "command": "命令",
+          "ipaddress": "地址",
+          "image": "映像",
+          "id": "ID",
+          "restartCount": "重新启动计数",
+          "memory": "内存",
+          "memorySwap": "内存交换",
+          "cpuShares": "CPU 份额",
+          "cpusetCpus": "Cpu setCpus"
+        },
+        "operation": {
+          "pending": "操作正在进行中",
+          "failure": "操作失败"
+        }
+      },
+      "request": {
+        "title": "置备容器",
+        "provision": "置备",
+        "saveTemplate": "另存为模板",
+        "tabs": {
+          "basic": "常规",
+          "network": "网络",
+          "storage": "存储",
+          "policy": "策略",
+          "environment": "环境",
+          "health": "运行状况配置",
+          "logconfig": "日志配置"
+        },
+        "inputs": {
+          "image": "映像",
+          "imageTag": {
+            "searchHint": "搜索标记",
+            "loadingHint": "正在加载标记..."
+          },
+          "name": "名称",
+          "group": "项目",
+          "commands": "命令",
+          "commandsDescription": "启动容器时要执行的一组命令",
+          "commandsInputs": {
+            "command": "命令",
+            "commandHint": "示例: /startup.sh"
+          },
+          "deploymentPolicy": "部署策略",
+          "links": "链接",
+          "linksDescription": "容器依赖的服务列表 (在模板中)",
+          "linksInputs": {
+            "alias": "别名",
+            "aliasHint": "示例: db",
+            "service": "服务"
+          },
+          "portBindings": "端口绑定",
+          "portBindingsDescription": "公开的容器端口及其应映射到的主机端口的映射图",
+          "portBindingsInputs": {
+            "hostPort": "主机端口",
+            "hostPortHint": "示例: 9080",
+            "containerPort": "容器端口",
+            "containerPortHint": "示例: 80"
+          },
+          "publishAll": "发布所有端口",
+          "publishAllDescription": "发布映像公开的所有端口。",
+          "hostname": "主机名",
+          "hostnameDescription": "要用于容器的主机名",
+          "networkMode": "网络模式",
+          "networkModeDescription": "设置容器的网络模式。",
+          "networkModeTypes": {
+            "none": "无",
+            "bridge": "网桥",
+            "host": "主机"
+          },
+          "networks": "网络",
+          "networksDescription": "将容器连接到这些网络 (除网络模式以外)。",
+          "networksInputs": {
+            "name": "名称",
+            "nameHint": "示例: mynet",
+            "aliases": "别名",
+            "aliasesHint": "示例: my-service, my-other-service",
+            "ipv4": "IPv4",
+            "ipv4Hint": "示例: 172.16.1.8",
+            "ipv6": "IPv6",
+            "ipv6Hint": "示例: fe80::42:31ff:fecf:83e2"
+          },
+          "volumes": "卷",
+          "volumesDescription": "容器中的挂载点路径。容器字段为必填字段，必须是绝对路径。主机字段必须是卷名称或绝对路径。",
+          "volumesInputs": {
+            "host": "主机",
+            "hostHint": "示例: /host/project/path",
+            "container": "容器",
+            "containerHint": "示例: /container/project/path",
+            "readOnly": "只读"
+          },
+          "volumesFrom": "卷来源",
+          "volumesFromDescription": "要从其他容器继承的卷列表。",
+          "volumesFromInputs": {
+            "volume": "卷",
+            "volumeHint": "示例: datacontainer"
+          },
+          "volumeDriver": "卷驱动程序",
+          "volumeDriverPlaceholder": "示例: local",
+          "volumeDriverDescription": "用于卷的驱动程序",
+          "volumeName": "卷名",
+          "volumeNamePlaceholder": "示例: volumeName",
+          "volumeNameDescription": "使用非本地驱动程序时的卷名",
+          "workingDirectory": "工作目录",
+          "workingDirectoryDescription": "要在其中运行命令的工作目录",
+          "clusterSize": "群集大小",
+          "clusterSizeDescription": "要置备的节点数",
+          "restartPolicy": "重新启动策略",
+          "restartPolicyDescription": "容器退出时要应用的行为。如果值为“始终”，则表示始终重新启动，如果值为“出现错误时”，则表示仅在容器退出代码非零时重新启动。如果使用“出现错误时”，则最大重新启动计数将控制放弃前重试的次数。默认设置为不重新启动",
+          "restartPolicyType": {
+            "always": "始终",
+            "onFailure": "出现错误时",
+            "none": "无"
+          },
+          "maxRestarts": "最大重新启动次数",
+          "maxRestartsDescription": "容器出现错误时的最大重新启动计数",
+          "cpuShares": "CPU 份额",
+          "cpuSharesDescription": "一个整数值，其中包含容器 CPU 份额 (即与其他容器相比的相对权重)",
+          "memoryLimit": "内存限制",
+          "memoryLimitDescription": "内存限制 (字节)",
+          "memorySwapLimit": "内存交换限制",
+          "memorySwapLimitDescription": "总内存限制 (内存+交换)；设置为 -1 可禁用交换。您必须对内存使用此设置，并使交换值大于内存",
+          "affinityConstraints": "关联性限制",
+          "affinityConstraintsDescription": "部署或未部署在相同主机上的容器的关联性或反关联性情况。格式: [!]serviceName[:soft|hard]。",
+          "affinityInputs": {
+            "antiaffinity": "反关联性",
+            "servicename": "服务名称",
+            "servicenameHint": "示例: webserver",
+            "constraint": "限制"
+          },
+          "autoredeploy": "自动重新部署",
+          "autoredeployDescription": "容器处于错误状态时自动重新部署容器。",
+          "environmentVariables": "环境变量",
+          "environmentVariablesDescription": "环境变量的列表",
+          "environmentVariablesInputs": {
+            "name": "名称",
+            "nameHint": "示例: PROJECT_HOME",
+            "value": "值",
+            "valueHint": "示例: /var/lib/project"
+          },
+          "customProperties": "自定义属性",
+          "customPropertiesDescription": "通过自定义属性可以向将要置备的容器添加属性。",
+          "healthIgnoreOnProvision": "置备时忽略运行状况检查",
+          "healthIgnoreOnProvisionDescription": "如果配置了运行状况检查，则除了在服务启动和运行时执行该检查之外，在置备时也会执行该检查。如果取消选中此选项，则会强制在置备时执行运行状况检查。只有成功通过运行状况检查后，容器才会被视为已置备容器。",
+          "healthMode": "模式",
+          "healthConfigNone": "无",
+          "healthConfigTCP": "TCP 连接",
+          "healthConfigHTTP": "HTTP",
+          "healthConfigCommand": "命令",
+          "healthPath": "URL 路径",
+          "healthPathDescription": "用于运行状况检查的 API 的 URL 路径",
+          "healthPort": "端口",
+          "healthPortHint": "默认: 80",
+          "healthPortDescription": "要使用的容器端口",
+          "healthTimeout": "超时 (毫秒)",
+          "healthTimeoutHint": "默认: 2000",
+          "healthTimeoutDescription": "运行状况检查操作超时 (毫秒)",
+          "healthyThreshold": "正常阈值",
+          "healthyThresholdHint": "默认: 3",
+          "healthyThresholdDescription": "运行状况检查的成功操作阈值，达到此值时视为容器正常",
+          "unhealthyThreshold": "不正常阈值",
+          "unhealthyThresholdHint": "默认: 3",
+          "unhealthyThresholdDescription": "运行状况检查的失败操作阈值，达到此值时视为容器不正常",
+          "command": "命令",
+          "commandDescription": "要对容器执行的命令。退出状态可确定容器运行状况。",
+          "logConfigDriver": "驱动程序",
+          "logConfigDriverDescription": "容器的日志记录驱动程序",
+          "logConfigDriverTypes": {
+            "none": "无",
+            "bridge": "网桥",
+            "host": "主机"
+          },
+          "logConfigOptions": "选项",
+          "logConfigOptionsDescription": "每个日志记录驱动程序支持的选项",
+          "logConfigOptionsInputs": {
+            "name": "名称",
+            "nameHint": "示例: max-size",
+            "value": "值",
+            "valueHint": "示例: 10m"
+          }
+        }
+      },
+      "state": {
+        "RUNNING": "正在运行",
+        "STOPPED": "已停止",
+        "REBOOTING": "正在重新引导",
+        "PAUSED": "已暂停",
+        "ERROR": "错误",
+        "UNKNOWN": "未知",
+        "RETIRED": "已注销",
+        "PROVISIONING": "正在置备",
+        "continuousStateSince": "{{state}} 状态已持续 {{duration}}",
+        "errorStatus": "{{state}}: {{status}}"
+      },
+      "status": {
+        "unhealthy": "运行状况检查失败"
+      },
+      "actions": {
+        "start": "启动",
+        "reboot": "重新引导",
+        "stop": "停止",
+        "remove": "移除",
+        "clone": "克隆",
+        "details": "详细信息",
+        "terminal": "终端",
+        "manage": "管理",
+        "createTemplate": "创建模板",
+        "openTemplate": "打开模板"
+      }
+    },
+    "request": {
+      "title": "请求",
+      "contextPanelTooltip": "请求",
+      "tabs": {
+        "all": "全部",
+        "running": "正在运行",
+        "failed": "失败"
+      },
+      "actions": {
+        "details": {
+          "show": "详细信息",
+          "hide": "隐藏详细信息"
+        },
+        "open": "打开"
+      }
+    },
+    "closure": {
+      "title": "所有闭包服务",
+      "titleSearch": "找到的闭包服务",
+      "searchPlaceholder": "搜索闭包服务",
+      "placementZone": "资源池",
+      "resultStatus": "结果状态",
+      "details": {
+        "name": "名称",
+        "description": "描述",
+        "runtime": "运行时",
+        "state": "状态",
+        "id": "ID",
+        "inputs": "输入",
+        "outputs": "输出",
+        "errorMsg": "错误",
+        "closureTitle": "闭包服务运行信息",
+        "closureDescriptionTitle": "闭包服务描述信息",
+        "descriptionId": "ID",
+        "source": "源",
+        "sourceURL": "源 URL",
+        "resources": "资源",
+        "placement": "放置"
+      },
+      "state": {
+        "CREATED": "已创建",
+        "STARTED": "已启动",
+        "FINISHED": "已完成",
+        "FAILED": "失败",
+        "CANCELLED": "已取消"
+      },
+      "list": {
+        "name": "闭包服务",
+        "closuresCountLabel": "闭包服务数",
+        "closureRunsLabel": "闭包服务运行数",
+        "memory": "内存:",
+        "timeout": "超时:"
+      },
+      "request": {
+        "title": "闭包服务定义",
+        "save": "保存",
+        "run": "运行",
+        "inputs": {
+          "name": "名称",
+          "description": "描述",
+          "runtime": "运行时",
+          "source": "源代码",
+          "sourceURL": "源 URL",
+          "runtimeTypes": {
+            "nodejs": "NodeJs 4",
+            "python": "Python 3",
+            "powershell": "Powershell 6",
+            "java": "Java 8"
+          },
+          "logConfigOptionsInputs": {
+            "name": "名称",
+            "nameHint": "示例: max-size",
+            "value": "值",
+            "valueHint": "示例: 10m"
+          },
+          "closureInputs": {
+            "name": "名称",
+            "nameHint": "示例: a",
+            "value": "值",
+            "valueHint": "示例: 1"
+          },
+          "closureOutputs": {
+            "name": "名称",
+            "nameHint": "示例: result"
+          },
+          "memoryLimit": "内存限制 (MB)",
+          "timeout": "超时 (秒)",
+          "entrypoint": "入口点处理程序",
+          "logConfigDriver": "日志驱动程序",
+          "logConfigOptions": "日志选项",
+          "sourceMode": "模式",
+          "sourceProvided": "提供的源代码",
+          "sourceFromURL": "从 URL 访问的源代码",
+          "inputs": "输入",
+          "outputs": "输出",
+          "dependencies": "依赖包",
+          "nameDescription": "闭包服务名称。如果未设置入口点，则该名称将用作要调用的函数名称。",
+          "descriptionDescription": "闭包服务描述",
+          "sourceDescription": "要执行的源代码",
+          "sourceURLDescription": "可通过 URL 访问的源代码。内容可以是代码本身或 zip 文件。如果使用源 URL，则不会使用字段源代码。",
+          "memoryLimitDescription": "内存限制 (MB)。允许的最大值为 1536 MB。",
+          "timeoutDescription": "执行超时 (秒)。如果执行时间超时，则取消任务执行。",
+          "entrypointDescription": "要调用的主函数形式为: file_name.function_name",
+          "logDriverDescription": "闭包服务任务的日志记录驱动程序",
+          "logConfigOptionsDescription": "每个日志记录驱动程序支持的选项",
+          "dependenciesDescription": "运行代码前要安装的依赖包",
+          "inputDescription": "运行代码时要使用的输入。该输入必须是基本类型或有效的 JSON 对象。",
+          "outputDescription": "填充结果时要使用的输出参数的名称。"
+        },
+        "logs": {
+          "title": "日志"
+        },
+        "tabs": {
+          "definition": "定义",
+          "code": "代码",
+          "config": "配置"
+        }
+      },
+      "monitoredTask": {
+        "runStatus": "运行状态",
+        "runId": "运行 ID:",
+        "runState": "状态:",
+        "outputs": "输出"
+      }
+    },
+    "image": {
+      "entity": "映像"
+    },
+    "help": {
+      "link": "帮助",
+      "description": "使用 Ensemble 可以访问当前所执行任务的相关环境信息。它会随着任务的执行按照指令自动刷新。使用另一个屏幕或拆分屏幕可实时访问这些信息。您可以使用移动设备、电视和任何其他屏幕，而无论这些设备是否已连接到计算机。您可以在受信任网络外部使用 Ensemble，同时还能接收即时更新。",
+      "descriptionOpen": "要打开 Ensemble，请单击<strong>在新选项卡中打开</strong>，或使用移动设备扫描二维码。"
+    },
+    "resources": {
+      "selectMultiple": "选择项目",
+      "message": {
+        "selectShift": "使用 Shift 选择多个项目"
+      }
+    },
+    "noneLabel": "无"
+  },
+  "loginPanel": {
+    "login": "登录",
+    "logout": "注销",
+    "username": "用户名",
+    "password": "密码",
+    "welcomeTo": "欢迎使用",
+    "success": "身份验证成功",
+    "failure": "身份验证错误"
+  },
+  "dropdownSearchMenu": {
+    "title": "从 {{entity}} 列表选择",
+    "searchPlaceholder": "搜索 {{entity}}",
+    "clear": "清除选择",
+    "showingCount": "显示 {{count}} 项 (共 {{totalCount}} 项)",
+    "noResults": "未找到任何项目"
+  },
+  "customProperties": {
+    "name": "名称",
+    "nameHint": "示例: speedchecker",
+    "value": "值",
+    "valueHint": "示例: slow"
+  },
+  "yes": "确定",
+  "no": "否",
+  "ok": "确定",
+  "cancel": "取消",
+  "error": "错误",
+  "delete": "删除",
+  "enable": "启用",
+  "enabled": "已启用",
+  "disable": "禁用",
+  "disabled": "已禁用",
+  "close": "关闭",
+  "edit": "编辑",
+  "remove": "移除",
+  "add": "添加",
+  "save": "保存",
+  "verify": "验证",
+  "verified": "已成功验证!",
+  "back": "后退",
+  "refresh": "刷新",
+  "clear": "清除",
+  "deleteAll": "全部删除",
+  "pendingOperationCancel": "操作",
+  "openInNewTab": "在新选项卡中打开",
+  "unavailable": "不适用",
+  "advanced": "高级",
+  "noSelection": "未选择任何内容",
+  "buildNumber": "内部版本号",
+  "errors": {
+    "hostIp": "值必须是主机名或 IP 地址。",
+    "urlPath": "URL 路径无效。",
+    "propertyNameRequired": "“属性名称”是必填字段。",
+    "propertyContainerNameInvalid": "容器名称无效，仅允许使用 [a-zA-Z0-9][a-zA-Z0-9_.-]。",
+    "propertyNamesNotUnique": "“属性名称”必须唯一。",
+    "nonNegativeNumber": "值必须是小于 2147483648 的非负整数。",
+    "positiveNumber": "值必须是小于 2147483648 的正整数。",
+    "nonNegativeNumberAndMinusOne": "值必须是介于 -1 和 2147483647 之间的整数。",
+    "portNumber": "端口号无效。有效端口号范围为 0 到 65535。",
+    "containerMemory": "内存必须为 0 (无限制)，或至少为 4194304 字节 (4 MB)。",
+    "required": "需要提供值。",
+    "requiredAll": "所有字段均为必填字段。",
+    "serviceNameRequired": "“服务名称”是必填字段。",
+    "networkRequired": "“网络”是必填字段。",
+    "itemNotFound": "未找到项目。",
+    "networkExists": "模板中已存在网络。",
+    "volumeDestinationRequired": "“卷目标”是必填字段。",
+    "invalidInputValue": "输入值无效",
+    "invalidPath": "值必须是绝对路径。",
+    "invalidPathOrName": "值必须是绝对路径或有效卷名称。",
+    "containersConnected": "存在已连接容器。",
+    "managedByCatalog": "由目录管理",
+    "projectsUnexpectedError": "发生意外错误"
+  },
+  "infoMessages": {
+    "created": "已成功创建!",
+    "updated": "已成功更新!",
+    "notFound": "未找到",
+    "showingCount": "显示 {{count}} 项 (共 {{totalCount}} 项)"
+  },
+  "occurrence": {
+    "all": "匹配所有",
+    "any": "匹配任意"
+  },
+  "state": {
+    "ON": "开启",
+    "OFF": "关闭",
+    "SUSPEND": "已禁用",
+    "UNKNOWN": "未知",
+    "stateSinceMessage": "始于 {{date}}"
+  },
+  "productNames": {
+    "admiral": "Admiral",
+    "vic": "vSphere Integrated Containers"
+  }
+}
