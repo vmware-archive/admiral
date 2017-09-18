@@ -25,6 +25,7 @@ import com.vmware.xenon.common.Service.ServiceOption;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.MigrationTaskService;
 
 /**
  * Helper for starting services
@@ -116,6 +117,8 @@ public abstract class HostInitServiceHelper {
     private static void registerServiceForHelathcheck(ServiceHost host, Set<String> services) {
 
         NodeHealthCheckService nodeHealthCheck = new NodeHealthCheckService();
+        // Add migration task service explicitly because it is started from xenon
+        services.add(MigrationTaskService.FACTORY_LINK);
         nodeHealthCheck.services = services;
         nodeHealthCheck.setSelfLink(NodeHealthCheckService.SELF_LINK);
 
