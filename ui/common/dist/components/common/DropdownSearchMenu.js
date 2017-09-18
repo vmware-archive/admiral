@@ -170,7 +170,10 @@ module.exports = (function () {
         this.setSelectedOption(null);
         this.setManageOptions({});
     }
-    /** Provides an async callback to provide options based on filter, iseful for server side search */
+    /*
+     * Provides an async callback to provide options based on filter,
+     * useful for server side search.
+     */
     DropdownSearchMenu.prototype.setFilterCallback = function (callback) {
         this.filterCallback = callback;
     };
@@ -254,7 +257,8 @@ module.exports = (function () {
                     $(optionEl).addClass('active');
                 }
             });
-            // Since this is not a typical input but a custom one, standard focus() and :focus don't work.
+            // Since this is not a typical input but a custom one, standard focus()
+            // and :focus don't work.
             this.$el.addClass('focus');
             setTimeout(function () {
                 _this.$el.removeClass('focus');
@@ -267,7 +271,7 @@ module.exports = (function () {
             this.$el.find('.divider').toggleClass('hide', false);
         }
         else {
-            this.$el.find('.dropdown-title').text(this.componentOptions.title);
+            this.$el.find('.dropdown-title').html(this.componentOptions.title);
             if (!this.$el.find('.dropdown-title').hasClass('placeholder')) {
                 this.$el.find('.dropdown-title').addClass('placeholder');
             }
