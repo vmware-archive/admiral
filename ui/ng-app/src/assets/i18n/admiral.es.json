@@ -24,6 +24,7 @@
     "publicDescription": "Acceso público al registro de proyectos",
     "private": "Privado",
     "clusters": "Clústeres",
+    "clustersVic": "Hosts de contenedor",
     "repositories": "Repositorios",
     "infrastructure": "Infraestructura",
     "registryReplication": "Replicación de registro",
@@ -39,7 +40,8 @@
     },
     "delete": {
       "title": "Quitar proyecto",
-      "confirmation": "Confirme la eliminación del proyecto {{projectName}}. Los miembros y los clústeres no se disociarán del proyecto. La operación no se puede deshacer."
+      "confirmation": "Confirme la eliminación del proyecto {{projectName}}. Los miembros y los clústeres no se disociarán del proyecto. La operación no se puede deshacer.",
+      "confirmationVic": "Confirme la eliminación del proyecto {{projectName}}. Los miembros y los hosts de contenedor se disociarán del proyecto. La operación no se puede deshacer."
     },
     "summary": {
       "title": "Resumen",
@@ -59,6 +61,7 @@
       "resources": {
         "title": "Recursos del proyecto",
         "clusters": "Clústeres:",
+        "clustersVic": "Hosts de contenedor:",
         "templates": "Plantillas de la aplicación:",
         "images": "Imágenes:"
       }
@@ -120,7 +123,8 @@
       "makePublic": "Hacer público",
       "makePrivate": "Hacer privado",
       "addUsersAndGroups": "Agregar usuarios y grupos",
-      "addClusters": "Agregar clústeres"
+      "addClusters": "Agregar clústeres",
+      "addClustersVic": "Agregar hosts de contenedor"
     }
   },
   "registries": {
@@ -131,7 +135,9 @@
   },
   "clusters": {
     "title": "Clústeres",
+    "titleVic": "Hosts de contenedor",
     "cluster": "Clúster",
+    "clusterVic": "Host de contenedor",
     "new": "Nuevo",
     "status": "Estado",
     "state": {
@@ -150,7 +156,9 @@
       "adminPortal": "Portal de administración:",
       "type": "Tipo:",
       "clusterOverview": "Descripción del clúster",
+      "clusterOverviewVic": "Descripción general del host de contenedor",
       "clusterResources": "Recursos del clúster",
+      "clusterResourcesVic": "Recursos del host de contenedor",
       "status": "Estado:",
       "creationDate": "Creación:",
       "containersCount": "Contenedores:",
@@ -173,18 +181,23 @@
     },
     "edit": {
       "titleNew": "Nuevo clúster",
+      "titleNewVic": "Nuevo host de contenedor",
       "titleEdit": "Editar clúster",
+      "titleEditVic": "Editar host de contenedor",
       "name": "Nombre",
       "nameRequired": "El nombre es obligatorio.",
       "description": "Descripción",
       "type": "Tipo",
       "url": "URL",
       "urlRequired": "La dirección URL del clúster es obligatoria.",
+      "urlRequiredVic": "La URL del host de contenedor es obligatoria.",
       "credentials": "Credenciales"
     },
     "delete": {
       "title": "Quitar clúster",
-      "confirmation": "Confirme la eliminación del clúster {{clusterName}}. La operación no se puede deshacer."
+      "titleVic": "Quitar host de contenedor",
+      "confirmation": "Confirme la eliminación del clúster {{clusterName}}. La operación no se puede deshacer.",
+      "confirmationVic": "Confirme la eliminación del host de contenedor {{clusterName}}. La operación no se puede deshacer."
     }
   },
   "hosts": {
@@ -269,9 +282,11 @@
   "remove": "Quitar",
   "delete": "Eliminar",
   "cancel": "Cancelar",
+  "back": "Atrás",
   "unknown": "Desconocido",
-  "assignRoles": "Asignar funciones",
-  "makeAdmin": " Convertir en administrador",
+  "assignRoles": "Asignar funciones de proyecto",
+  "makeAdmin": " Asignar función de administrador",
+  "unmakeAdmin": "Cancelar asignación de la función de administrador",
   "noItems": "No hay elementos",
   "reload": "Volver a cargar",
   "sessionExpired": "La sesión no es válida; vuelva a iniciar sesión.",
@@ -290,6 +305,7 @@
     "publicRepositories": "Repositorios públicos",
     "infrastructure": "Infraestructura",
     "clusters": "Clústeres",
+    "clustersVic": "Hosts de contenedor",
     "hosts": "Hosts",
     "placements": "Ubicaciones",
     "identityManagement": "Administración de identidades",

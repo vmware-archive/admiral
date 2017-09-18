@@ -1352,7 +1352,7 @@
     "failure": "Ошибка проверки подлинности"
   },
   "dropdownSearchMenu": {
-    "title": "Выбор из списка {{entity}}",
+    "title": "Выберите из списка: {{entity}}",
     "searchPlaceholder": "Поиск: {{entity}}",
     "clear": "Очистить выбор",
     "showingCount": "Показано: {{count}} из {{totalCount}}",

@@ -24,6 +24,7 @@
     "publicDescription": "Openbare toegang tot projectregister",
     "private": "Privé",
     "clusters": "Clusters",
+    "clustersVic": "Containerhosts",
     "repositories": "Opslagplaatsen",
     "infrastructure": "Infrastructuur",
     "registryReplication": "Registerreplicatie",
@@ -39,7 +40,8 @@
     },
     "delete": {
       "title": "Project verwijderen",
-      "confirmation": "Bevestig het verwijderen van het project {{projectName}}. Leden en clusters worden losgekoppeld van het project. De bewerking kan niet ongedaan worden gemaakt."
+      "confirmation": "Bevestig het verwijderen van het project {{projectName}}. Leden en clusters worden losgekoppeld van het project. De bewerking kan niet ongedaan worden gemaakt.",
+      "confirmationVic": "Bevestig het verwijderen van het project {{projectName}}. Leden en containerhosts worden losgekoppeld van het project. De bewerking kan niet ongedaan worden gemaakt."
     },
     "summary": {
       "title": "Samenvatting",
@@ -59,6 +61,7 @@
       "resources": {
         "title": "Projectbronnen",
         "clusters": "Clusters:",
+        "clustersVic": "Containerhosts:",
         "templates": "Appsjablonen:",
         "images": "Images:"
       }
@@ -120,7 +123,8 @@
       "makePublic": "Openbaar maken",
       "makePrivate": "Privé maken",
       "addUsersAndGroups": "Gebruikers en groepen toevoegen",
-      "addClusters": "Clusters toevoegen"
+      "addClusters": "Clusters toevoegen",
+      "addClustersVic": "Containerhosts toevoegen"
     }
   },
   "registries": {
@@ -131,7 +135,9 @@
   },
   "clusters": {
     "title": "Clusters",
+    "titleVic": "Containerhosts",
     "cluster": "Cluster",
+    "clusterVic": "Containerhost",
     "new": "Nieuw",
     "status": "Status",
     "state": {
@@ -150,7 +156,9 @@
       "adminPortal": "Beheerdersportal:",
       "type": "Type:",
       "clusterOverview": "Overzicht van cluster",
+      "clusterOverviewVic": "Overzicht van containerhosts",
       "clusterResources": "Clusterbronnen",
+      "clusterResourcesVic": "Containerhostbronnen",
       "status": "Status:",
       "creationDate": "Gemaakt:",
       "containersCount": "Containers:",
@@ -173,18 +181,23 @@
     },
     "edit": {
       "titleNew": "Nieuw cluster",
+      "titleNewVic": "Nieuwe containerhost",
       "titleEdit": "Cluster bewerken",
+      "titleEditVic": "Containerhost bewerken",
       "name": "Naam",
       "nameRequired": "Naam is vereist.",
       "description": "Beschrijving",
       "type": "Type",
       "url": "URL",
       "urlRequired": "Cluster-URL is vereist.",
+      "urlRequiredVic": "Containerhost-URL is vereist.",
       "credentials": "Verificatiegegevens"
     },
     "delete": {
       "title": "Cluster verwijderen",
-      "confirmation": "Bevestig het verwijderen van het cluster {{clusterName}}. De bewerking kan niet ongedaan worden gemaakt."
+      "titleVic": "Containerhost verwijderen",
+      "confirmation": "Bevestig het verwijderen van het cluster {{clusterName}}. De bewerking kan niet ongedaan worden gemaakt.",
+      "confirmationVic": "Bevestig het verwijderen van de containerhost {{clusterName}}. De bewerking kan niet ongedaan worden gemaakt."
     }
   },
   "hosts": {
@@ -269,9 +282,11 @@
   "remove": "Verwijderen",
   "delete": "Verwijderen",
   "cancel": "Annuleren",
+  "back": "Terug",
   "unknown": "Onbekend",
-  "assignRoles": "Rollen toewijzen",
-  "makeAdmin": " Beheerder maken",
+  "assignRoles": "Projectrollen toewijzen",
+  "makeAdmin": " Beheerdersrol toewijzen",
+  "unmakeAdmin": "Toewijzing van beheerdersrol opheffen",
   "noItems": "Geen items",
   "reload": "Herladen",
   "sessionExpired": "Uw sessie is niet meer geldig. U moet zich opnieuw aanmelden.",
@@ -290,6 +305,7 @@
     "publicRepositories": "Openbare opslagplaatsen",
     "infrastructure": "Infrastructuur",
     "clusters": "Clusters",
+    "clustersVic": "Containerhosts",
     "hosts": "Hosts",
     "placements": "Plaatsingen",
     "identityManagement": "Identiteitsbeheer",

@@ -981,7 +981,7 @@
         "lines": "Zeilen",
         "showingLogs": "Protokolle werden angezeigt",
         "logsOptionSince": "Seit",
-        "logsOptionTail": "///Tail",
+        "logsOptionTail": "Ende",
         "logsFormat": "Protokollformat",
         "logsFormatAnsi": "ANSI",
         "logsFormatRaw": "Raw",
@@ -1057,7 +1057,7 @@
           "networkMode": "Netzwerkmodus",
           "networkModeDescription": "Legt den Netzwerkmodus für den Container fest.",
           "networkModeTypes": {
-            "none": "Keine",
+            "none": "Keiner",
             "bridge": "Brücke",
             "host": "Host"
           },

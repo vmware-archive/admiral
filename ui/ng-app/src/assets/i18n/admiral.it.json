@@ -24,6 +24,7 @@
     "publicDescription": "Accesso pubblico al registro di progetto",
     "private": "Privato",
     "clusters": "Cluster",
+    "clustersVic": "Host contenitori",
     "repositories": "Repository",
     "infrastructure": "Infrastruttura",
     "registryReplication": "Replica registro",
@@ -39,7 +40,8 @@
     },
     "delete": {
       "title": "Rimuovi progetto",
-      "confirmation": "Conferma di rimozione del progetto {{projectName}}. I membri e i cluster verranno dissociati dal progetto. L'operazione non potrà essere annullata."
+      "confirmation": "Conferma di rimozione del progetto {{projectName}}. I membri e i cluster verranno dissociati dal progetto. L'operazione non potrà essere annullata.",
+      "confirmationVic": "Conferma di rimozione del progetto {{projectName}}. I membri e gli host dei contenitori verranno dissociati dal progetto. L'operazione non potrà essere annullata."
     },
     "summary": {
       "title": "Riepilogo",
@@ -59,6 +61,7 @@
       "resources": {
         "title": "Risorse di progetto",
         "clusters": "Cluster:",
+        "clustersVic": "Host contenitori:",
         "templates": "Modelli di app:",
         "images": "Immagini:"
       }
@@ -120,7 +123,8 @@
       "makePublic": "Rendi pubblico",
       "makePrivate": "Rendi privato",
       "addUsersAndGroups": "Aggiungi utenti e gruppi",
-      "addClusters": "Aggiungi cluster"
+      "addClusters": "Aggiungi cluster",
+      "addClustersVic": "Aggiungi host contenitori"
     }
   },
   "registries": {
@@ -131,7 +135,9 @@
   },
   "clusters": {
     "title": "Cluster",
+    "titleVic": "Host contenitori",
     "cluster": "Cluster",
+    "clusterVic": "Host contenitore",
     "new": "Nuovo",
     "status": "Stato",
     "state": {
@@ -150,7 +156,9 @@
       "adminPortal": "Portale di amministrazione:",
       "type": "Tipo:",
       "clusterOverview": "Panoramica cluster",
+      "clusterOverviewVic": "Panoramica host contenitore",
       "clusterResources": "Risorse cluster",
+      "clusterResourcesVic": "Risorse host contenitore",
       "status": "Stato:",
       "creationDate": "Data creazione:",
       "containersCount": "Contenitori:",
@@ -173,18 +181,23 @@
     },
     "edit": {
       "titleNew": "Nuovo cluster",
+      "titleNewVic": "Nuovo host contenitore",
       "titleEdit": "Modifica cluster",
+      "titleEditVic": "Modifica host contenitore",
       "name": "Nome",
       "nameRequired": "Il nome è obbligatorio.",
       "description": "Descrizione",
       "type": "Tipo",
       "url": "URL",
       "urlRequired": "L'URL del cluster è obbligatorio.",
+      "urlRequiredVic": "URL host contenitore richiesto.",
       "credentials": "Credenziali"
     },
     "delete": {
       "title": "Rimuovi cluster",
-      "confirmation": "Conferma di rimozione del cluster {{clusterName}}. L'operazione non potrà essere annullata."
+      "titleVic": "Rimuovi host contenitore",
+      "confirmation": "Conferma di rimozione del cluster {{clusterName}}. L'operazione non potrà essere annullata.",
+      "confirmationVic": "Conferma di rimozione dell'host contenitore {{clusterName}}. L'operazione non potrà essere annullata."
     }
   },
   "hosts": {
@@ -269,9 +282,11 @@
   "remove": "Rimuovi",
   "delete": "Elimina",
   "cancel": "Annulla",
+  "back": "Indietro",
   "unknown": "Sconosciuto",
-  "assignRoles": "Assegna ruoli",
-  "makeAdmin": " Imposta come amministratore",
+  "assignRoles": "Assegna ruoli progetto",
+  "makeAdmin": " Assegna ruolo amministratore",
+  "unmakeAdmin": "Annulla assegnazione ruolo amministratore",
   "noItems": "Nessun elemento",
   "reload": "Ricarica",
   "sessionExpired": "La sessione non è più valida. Accedere nuovamente.",
@@ -290,6 +305,7 @@
     "publicRepositories": "Repository pubblici",
     "infrastructure": "Infrastruttura",
     "clusters": "Cluster",
+    "clustersVic": "Host contenitori",
     "hosts": "Host",
     "placements": "Posizionamenti",
     "identityManagement": "Gestione identità",

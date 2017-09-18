@@ -24,6 +24,7 @@
     "publicDescription": "プロジェクト レジストリへのパブリック アクセス",
     "private": "プライベート",
     "clusters": "クラスタ",
+    "clustersVic": "コンテナ ホスト",
     "repositories": "リポジトリ",
     "infrastructure": "インフラストラクチャ",
     "registryReplication": "レジストリのレプリケーション",
@@ -39,7 +40,8 @@
     },
     "delete": {
       "title": "プロジェクトの削除",
-      "confirmation": "プロジェクト {{projectName}} の削除を確認してください。メンバーおよびクラスタはプロジェクトとの関連付けを解除されます。この操作は元に戻せません。"
+      "confirmation": "プロジェクト {{projectName}} の削除を確認してください。メンバーおよびクラスタはプロジェクトとの関連付けを解除されます。この操作は元に戻せません。",
+      "confirmationVic": "プロジェクト {{projectName}} の削除を確認してください。メンバーおよびコンテナ ホストはプロジェクトとの関連付けを解除されます。この操作は元に戻せません。"
     },
     "summary": {
       "title": "概要",
@@ -59,6 +61,7 @@
       "resources": {
         "title": "プロジェクト リソース",
         "clusters": "クラスタ:",
+        "clustersVic": "コンテナ ホスト:",
         "templates": "アプリのテンプレート:",
         "images": "イメージ:"
       }
@@ -120,7 +123,8 @@
       "makePublic": "パブリックに設定",
       "makePrivate": "プライベートに設定",
       "addUsersAndGroups": "ユーザーおよびグループの追加",
-      "addClusters": "クラスタの追加"
+      "addClusters": "クラスタの追加",
+      "addClustersVic": "コンテナ ホストの追加"
     }
   },
   "registries": {
@@ -131,7 +135,9 @@
   },
   "clusters": {
     "title": "クラスタ",
+    "titleVic": "コンテナ ホスト",
     "cluster": "クラスタ",
+    "clusterVic": "コンテナ ホスト",
     "new": "新規",
     "status": "ステータス",
     "state": {
@@ -150,7 +156,9 @@
       "adminPortal": "管理者ポータル:",
       "type": "タイプ：",
       "clusterOverview": "クラスタの概要",
+      "clusterOverviewVic": "コンテナ ホストの概要",
       "clusterResources": "クラスタ リソース",
+      "clusterResourcesVic": "コンテナ ホスト リソース",
       "status": "ステータス:",
       "creationDate": "作成日:",
       "containersCount": "コンテナ:",
@@ -173,18 +181,23 @@
     },
     "edit": {
       "titleNew": "新規クラスタ",
+      "titleNewVic": "新規コンテナ ホスト",
       "titleEdit": "クラスタの編集",
+      "titleEditVic": "コンテナ ホストの編集",
       "name": "名前",
       "nameRequired": "名前は必須です。",
       "description": "説明",
       "type": "タイプ",
       "url": "URL",
       "urlRequired": "クラスタの URL は必須です。",
+      "urlRequiredVic": "コンテナ ホストの URL は必須です。",
       "credentials": "認証情報"
     },
     "delete": {
       "title": "クラスタの削除",
-      "confirmation": "クラスタ {{clusterName}} の削除を確認しください。この操作は元に戻せません。"
+      "titleVic": "コンテナ ホストの削除",
+      "confirmation": "クラスタ {{clusterName}} の削除を確認しください。この操作は元に戻せません。",
+      "confirmationVic": "コンテナ ホスト {{clusterName}} の削除を確認しください。この操作は元に戻せません。"
     }
   },
   "hosts": {
@@ -269,9 +282,11 @@
   "remove": "削除",
   "delete": "削除",
   "cancel": "キャンセル",
+  "back": "戻る",
   "unknown": "不明",
-  "assignRoles": "ロールの割り当て",
-  "makeAdmin": " 管理者に設定",
+  "assignRoles": "プロジェクトのロールの割り当て",
+  "makeAdmin": "管理者ロールの割り当て",
+  "unmakeAdmin": "管理者ロールの割り当て解除",
   "noItems": "アイテムがありません",
   "reload": "再ロード",
   "sessionExpired": "セッションが無効になりました。ログインし直してください。",
@@ -290,6 +305,7 @@
     "publicRepositories": "パブリック リポジトリ",
     "infrastructure": "インフラストラクチャ",
     "clusters": "クラスタ",
+    "clustersVic": "コンテナ ホスト",
     "hosts": "ホスト",
     "placements": "配置",
     "identityManagement": "ID 管理",

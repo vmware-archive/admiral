@@ -24,6 +24,7 @@
     "publicDescription": "Öffentlicher Zugriff auf Projektregistrierung",
     "private": "Privat",
     "clusters": "Cluster",
+    "clustersVic": "Container-Hosts",
     "repositories": "Repositorys",
     "infrastructure": "Infrastruktur",
     "registryReplication": "Registrierungsreplizierung",
@@ -39,7 +40,8 @@
     },
     "delete": {
       "title": "Projekt entfernen",
-      "confirmation": "Bestätigen Sie das Entfernen von Projekt {{projectName}}. Die Zuweisung von Mitgliedern und Clustern zu diesem Projekt wird aufgehoben. Der Vorgang kann nicht rückgängig gemacht werden."
+      "confirmation": "Bestätigen Sie das Entfernen von Projekt {{projectName}}. Die Zuweisung von Mitgliedern und Clustern zu diesem Projekt wird aufgehoben. Der Vorgang kann nicht rückgängig gemacht werden.",
+      "confirmationVic": "Bestätigen Sie das Entfernen von Projekt {{projectName}}. Die Zuweisung von Mitgliedern und Container-Hosts zu diesem Projekt wird aufgehoben. Der Vorgang kann nicht rückgängig gemacht werden."
     },
     "summary": {
       "title": "Übersicht",
@@ -59,6 +61,7 @@
       "resources": {
         "title": "Projektressourcen",
         "clusters": "Cluster:",
+        "clustersVic": "Container-Hosts:",
         "templates": "App-Vorlagen:",
         "images": "Images:"
       }
@@ -120,7 +123,8 @@
       "makePublic": "Als öffentlich",
       "makePrivate": "Als privat",
       "addUsersAndGroups": "Benutzer und Gruppen hinzufügen",
-      "addClusters": "Cluster hinzufügen"
+      "addClusters": "Cluster hinzufügen",
+      "addClustersVic": "Container-Hosts hinzufügen"
     }
   },
   "registries": {
@@ -131,7 +135,9 @@
   },
   "clusters": {
     "title": "Cluster",
+    "titleVic": "Container-Hosts",
     "cluster": "Cluster",
+    "clusterVic": "Container-Host",
     "new": "Neu",
     "status": "Status",
     "state": {
@@ -150,7 +156,9 @@
       "adminPortal": "Admin-Portal:",
       "type": "Typ:",
       "clusterOverview": "Clusterübersicht",
+      "clusterOverviewVic": "Container-Host-Übersicht",
       "clusterResources": "Clusterressourcen",
+      "clusterResourcesVic": "Container-Host-Ressourcen",
       "status": "Status:",
       "creationDate": "Erstellt:",
       "containersCount": "Container:",
@@ -173,18 +181,23 @@
     },
     "edit": {
       "titleNew": "Neuer Cluster",
+      "titleNewVic": "Neuer Container-Host",
       "titleEdit": "Cluster bearbeiten",
+      "titleEditVic": "Container-Host bearbeiten",
       "name": "Name",
       "nameRequired": "Der Name ist erforderlich.",
       "description": "Beschreibung",
       "type": "Typ",
       "url": "URL",
       "urlRequired": "Cluster-URL ist erforderlich.",
+      "urlRequiredVic": "Container-Host-URL ist erforderlich.",
       "credentials": "Anmeldedaten"
     },
     "delete": {
       "title": "Cluster entfernen",
-      "confirmation": "Bestätigen Sie das Entfernen von Cluster {{clusterName}}. Der Vorgang kann nicht rückgängig gemacht werden."
+      "titleVic": "Container-Host entfernen",
+      "confirmation": "Bestätigen Sie das Entfernen von Cluster {{clusterName}}. Der Vorgang kann nicht rückgängig gemacht werden.",
+      "confirmationVic": "Bestätigen Sie das Entfernen von Container-Host {{clusterName}}. Der Vorgang kann nicht rückgängig gemacht werden."
     }
   },
   "hosts": {
@@ -269,9 +282,11 @@
   "remove": "Entfernen",
   "delete": "Löschen",
   "cancel": "Abbrechen",
+  "back": "Zurück",
   "unknown": "Unbekannt",
-  "assignRoles": "Rollen zuweisen",
-  "makeAdmin": " Als Admin",
+  "assignRoles": "Projektrollen zuweisen",
+  "makeAdmin": " Admin-Rolle zuweisen",
+  "unmakeAdmin": "Zuweisung von Admin-Rolle aufheben",
   "noItems": "Keine Elemente",
   "reload": "Neu laden",
   "sessionExpired": "Ihre Sitzung ist nicht mehr gültig, melden Sie sich erneut an.",
@@ -290,6 +305,7 @@
     "publicRepositories": "Öffentliche Repositorys",
     "infrastructure": "Infrastruktur",
     "clusters": "Cluster",
+    "clustersVic": "Container-Hosts",
     "hosts": "Hosts",
     "placements": "Platzierungen",
     "identityManagement": "Identitätsverwaltung",
