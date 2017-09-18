@@ -94,14 +94,14 @@
               v-bind:value="logsOption.SINCE"
               v-bind:checked="logsOption.SINCE == logsSettingsOption"
               v-on:change="onLogsOptionChange($event)">
-            <label for="log-since-radio">{{i18n('app.container.details.logsOptionSince')}}</label>
+            <label for="log-since-radio" title="{{i18n('app.container.details.logsOptionSince')}}">{{i18n('app.container.details.logsOptionSince')}}</label>
           </div>
           <div class="radio-inline">
             <input type="radio" name="log-option-radio" id="log-tail-radio"
               v-bind:value="logsOption.TAIL"
               v-bind:checked="logsOption.TAIL == logsSettingsOption"
               v-on:change="onLogsOptionChange($event)">
-            <label for="log-tail-radio">{{i18n('app.container.details.logsOptionTail')}}</label>
+            <label for="log-tail-radio" title="{{i18n('app.container.details.logsOptionTail')}}">{{i18n('app.container.details.logsOptionTail')}}</label>
           </div>
           <div class="select">
             <select v-on:change="onLogsSinceChange($event)" v-if="(logsOption.SINCE == logsSettingsOption) && !onVchHost">
@@ -123,14 +123,14 @@
               v-bind:value="logsFormat.ANSI"
               v-bind:checked="logsFormat.ANSI == logsSettingsFormat"
               v-on:change="onLogsFormatChange($event)">
-            <label for="log-format-radio-ansi">{{i18n('app.container.details.logsFormatAnsi')}}</label>
+            <label for="log-format-radio-ansi" title="{{i18n('app.container.details.logsFormatAnsi')}}">{{i18n('app.container.details.logsFormatAnsi')}}</label>
           </div>
           <div class="radio-inline">
             <input type="radio" name="log-format-radio" id="log-format-radio-raw"
               v-bind:value="logsFormat.RAW"
               v-bind:checked="logsFormat.RAW == logsSettingsFormat"
               v-on:change="onLogsFormatChange($event)">
-            <label for="log-format-radio-raw">{{i18n('app.container.details.logsFormatRaw')}}</label>
+            <label for="log-format-radio-raw" title="{{i18n('app.container.details.logsFormatRaw')}}">{{i18n('app.container.details.logsFormatRaw')}}</label>
           </div>
         </div>
       </form>

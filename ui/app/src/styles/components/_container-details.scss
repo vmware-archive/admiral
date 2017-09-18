@@ -193,6 +193,19 @@ $elements-side-margin: $elements-margin / 2;
     position: absolute;
     bottom: 0;
     left: 0;
+
+    div.radio-inline, div.select {
+      min-width: 60px;
+      max-width: 25%;
+    }
+
+    div.radio-inline label {
+      width: 100%;
+      white-space: nowrap;
+      vertical-align: bottom;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
   }
 
   > .content > .container-details-logs .container-details-logs-settings .form-group {
