@@ -216,18 +216,18 @@ public abstract class AuthBaseTest extends BaseTestCase {
         projectState.name = name;
         projectState.description = description;
         projectState.isPublic = isPublic;
-        projectState.administratorsUserGroupLinks = new HashSet<>();
-        projectState.membersUserGroupLinks = new HashSet<>();
-        projectState.viewersUserGroupLinks = new HashSet<>();
         projectState.customProperties = customProperties;
 
         if (adminsGroupLink != null) {
+            projectState.administratorsUserGroupLinks = new HashSet<>();
             projectState.administratorsUserGroupLinks.add(adminsGroupLink);
         }
         if (membersGroupLink != null) {
+            projectState.membersUserGroupLinks = new HashSet<>();
             projectState.membersUserGroupLinks.add(membersGroupLink);
         }
         if (viewersGroupLink != null) {
+            projectState.viewersUserGroupLinks = new HashSet<>();
             projectState.viewersUserGroupLinks.add(viewersGroupLink);
         }
 

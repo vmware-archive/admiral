@@ -98,22 +98,29 @@ public class ProjectFactoryService extends FactoryService {
         }
         ServiceDocumentQueryResult body = op.getBody(ServiceDocumentQueryResult.class);
         if (body.documents != null) {
+            try {
+                List<DeferredResult<ExpandedProjectState>> deferredExpands = body.documents.values()
+                        .stream()
+                        .map((jsonProject) -> {
+                            logFine(() -> ("Expanding project : " + Utils.toJson(jsonProject)));
+                            ProjectState projectState = Utils
+                                    .fromJson(jsonProject, ProjectState.class);
 
-            List<DeferredResult<ExpandedProjectState>> deferredExpands = body.documents.values()
-                    .stream()
-                    .map((jsonProject) -> {
-                        ProjectState projectState = Utils.fromJson(jsonProject, ProjectState.class);
+                            return ProjectUtil
+                                    .basicExpandProjectState(this, projectState, getUri());
+                        }).collect(Collectors.toList());
 
-                        return ProjectUtil.basicExpandProjectState(this, projectState, getUri());
-                    }).collect(Collectors.toList());
-
-            DeferredResult.allOf(deferredExpands)
-                    .thenAccept((expandedStates) ->
-                            expandedStates.forEach((expandedState) -> {
-                                body.documents.put(expandedState.documentSelfLink, expandedState);
-                            }))
-                    .thenAccept((ignore) -> op.setBodyNoCloning(body))
-                    .whenCompleteNotify(op);
+                DeferredResult
+                        .allOf(deferredExpands)
+                        .thenAccept((expandedStates) ->
+                                expandedStates.forEach((expState) -> {
+                                    body.documents.put(expState.documentSelfLink, expState);
+                                }))
+                        .thenAccept((ignore) -> op.setBodyNoCloning(body))
+                        .whenCompleteNotify(op);
+            } catch (Throwable t) {
+                op.fail(new IllegalStateException("Invalid project state", t));
+            }
         } else {
             op.complete();
         }

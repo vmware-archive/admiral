@@ -165,18 +165,17 @@ public class ProjectService extends StatefulService {
             destination.isPublic = this.isPublic;
             destination.description = this.description;
 
-            if (this.administratorsUserGroupLinks != null) {
-                destination.administratorsUserGroupLinks =
-                        new HashSet<>(this.administratorsUserGroupLinks);
-            }
+            destination.administratorsUserGroupLinks = new HashSet<>(
+                    this.administratorsUserGroupLinks != null
+                            ? this.administratorsUserGroupLinks : Collections.emptySet());
 
-            if (this.membersUserGroupLinks != null) {
-                destination.membersUserGroupLinks = new HashSet<>(this.membersUserGroupLinks);
-            }
+            destination.membersUserGroupLinks = new HashSet<>(
+                    this.membersUserGroupLinks != null
+                            ? this.membersUserGroupLinks : Collections.emptySet());
 
-            if (this.viewersUserGroupLinks != null) {
-                destination.viewersUserGroupLinks = new HashSet<>(this.viewersUserGroupLinks);
-            }
+            destination.viewersUserGroupLinks = new HashSet<>(
+                    this.viewersUserGroupLinks != null
+                            ? this.viewersUserGroupLinks : Collections.emptySet());
         }
 
         public static ProjectState copyOf(ProjectState source) {
@@ -240,16 +239,15 @@ public class ProjectService extends StatefulService {
 
         public void copyTo(ExpandedProjectState destination) {
             super.copyTo(destination);
-            if (administrators != null) {
-                destination.administrators = new ArrayList<>(administrators);
-            }
-            if (members != null) {
-                destination.members = new ArrayList<>(members);
-            }
 
-            if (viewers != null) {
-                destination.viewers = new ArrayList<>(viewers);
-            }
+            destination.administrators = new ArrayList<>(
+                    administrators != null ? administrators : Collections.emptyList());
+
+            destination.members = new ArrayList<>(
+                    members != null ? members : Collections.emptyList());
+
+            destination.viewers = new ArrayList<>(
+                    viewers != null ? viewers : Collections.emptyList());
         }
     }
 
@@ -312,7 +310,8 @@ public class ProjectService extends StatefulService {
                             return;
                         }
                         String projectIndexStr = ProjectUtil.getProjectIndex(createBody);
-                        int projectIndex = projectIndexStr == null ? -1 : Integer.parseInt(projectIndexStr);
+                        int projectIndex = projectIndexStr == null
+                                ? -1 : Integer.parseInt(projectIndexStr);
                         //Clear already claimed name and project index.
                         freeProjectName(createBody.name)
                                 .thenCompose(ignore -> freeProjectIndex(projectIndex))
@@ -981,12 +980,6 @@ public class ProjectService extends StatefulService {
                     return null;
                 });
 
-    }
-
-    private DeferredResult<Boolean> updateClaimedProjectIndex(int newIndex, int oldIndex) {
-        return UniquePropertiesUtil.updateClaimedProperty(this,
-                UniquePropertiesService.PROJECT_INDEXES_ID, Integer.toString(newIndex),
-                Integer.toString(oldIndex));
     }
 
     private ProjectState handleProjectIndex(long projectIndex, ProjectState state) {
