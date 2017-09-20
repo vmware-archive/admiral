@@ -41,7 +41,6 @@ import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.test.TestContext;
@@ -137,7 +136,7 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
         try {
             createContainerHostSpec(hostSpec);
             fail("Should have thrown an exception since the service is stopped.");
-        } catch (ServiceNotFoundException e) {
+        } catch (LocalizableValidationException e) {
             assertNotNull(e);
         }
     }

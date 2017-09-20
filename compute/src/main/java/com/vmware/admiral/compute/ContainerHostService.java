@@ -27,6 +27,8 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
+import io.netty.channel.ConnectTimeoutException;
+
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerHostOperationType;
 import com.vmware.admiral.common.DeploymentProfileConfig;
@@ -66,6 +68,7 @@ import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
+
 
 /**
  * Help service to add/update a container host and validate container host address.
@@ -805,9 +808,12 @@ public class ContainerHostService extends StatelessService {
         URI adapterManagementReference = getAdapterManagementReferenceForType(
                 ContainerHostUtil.getDeclaredContainerHostType(cs));
 
+        String languageHeader = op.getRequestHeader(Operation.ACCEPT_LANGUAGE_HEADER) != null ?
+                op.getRequestHeader(Operation.ACCEPT_LANGUAGE_HEADER) : "";
         sendRequest(Operation
                 .createPatch(adapterManagementReference)
                 .setBody(request)
+                .addRequestHeader(Operation.ACCEPT_LANGUAGE_HEADER, languageHeader)
                 .setContextId(Service.getId(getSelfLink()))
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
@@ -815,7 +821,7 @@ public class ContainerHostService extends StatelessService {
                         String message = String.format("Error connecting to %s : %s",
                                 cs.address, innerMessage);
                         LocalizableValidationException validationEx =
-                                new LocalizableValidationException(ex,
+                                new LocalizableValidationException(ex.getCause(),
                                         message, "compute.add.host.connection.error", cs.address,
                                         innerMessage);
                         ServiceErrorResponse rsp = Utils.toValidationErrorResponse(validationEx, op);
@@ -825,7 +831,7 @@ public class ContainerHostService extends StatelessService {
                         postEventlogError(cs, rsp.message);
                         op.setStatusCode(o.getStatusCode());
                         op.setContentType(Operation.MEDIA_TYPE_APPLICATION_JSON);
-                        op.fail(ex, rsp);
+                        op.fail(validationEx, rsp);
                         return;
                     }
 
@@ -856,7 +862,6 @@ public class ContainerHostService extends StatelessService {
     }
 
     private String toReadableErrorMessage(Throwable e, Operation op) {
-
         LocalizableValidationException localizedEx = null;
         if (e instanceof io.netty.handler.codec.DecoderException) {
             if (e.getMessage().contains("Received fatal alert: bad_certificate")) {
@@ -868,12 +873,14 @@ public class ContainerHostService extends StatelessService {
                 localizedEx = new LocalizableValidationException("Check login credentials",
                         "compute.check.credentials");
             }
+        } else if (e.getCause() instanceof ConnectTimeoutException) {
+            localizedEx = new LocalizableValidationException(e, "Connection timeout", "compute.connection.timeout");
         }
 
         if (localizedEx != null) {
             return Utils.toValidationErrorResponse(localizedEx, op).message;
         } else {
-            return e.getMessage();
+            return "";
         }
     }
 

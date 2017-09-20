@@ -98,6 +98,35 @@ public class ClusterServiceTest extends ComputeBaseTest {
         verifyCluster(createCluster(hostSpec), ClusterType.DOCKER, placementZoneName, projectLink);
     }
 
+    @Test(expected = LocalizableValidationException.class)
+    public void testCreateDockerClusterWithoutProject() throws Throwable {
+        ContainerHostSpec hostSpec = createContainerHostSpec(Collections.emptyList(),
+                ContainerHostType.DOCKER);
+        createCluster(hostSpec);
+    }
+
+    @Test(expected = LocalizableValidationException.class)
+    public void testCreateDockerClusterWithoutTenant() throws Throwable {
+        final String projectLink = buildProjectLink("test-docker-project");
+
+        ContainerHostSpec hostSpec = createContainerHostSpec(Collections.singletonList(projectLink),
+                ContainerHostType.DOCKER);
+        hostSpec.hostState.tenantLinks = Collections.emptyList();
+        createCluster(hostSpec);
+    }
+
+    @Test(expected = LocalizableValidationException.class)
+    public void testCreateDockerClusterHostFailure() throws Throwable {
+        final String projectLink = buildProjectLink("test-docker-project");
+        final String placementZoneName = PlacementZoneUtil
+                .buildPlacementZoneDefaultName(ContainerHostType.DOCKER, COMPUTE_ADDRESS);
+
+        ContainerHostSpec hostSpec = createContainerHostSpec(Collections.singletonList(projectLink),
+                ContainerHostType.DOCKER);
+        hostSpec.hostState.customProperties = new HashMap<>();
+        verifyCluster(createCluster(hostSpec), ClusterType.DOCKER, placementZoneName, projectLink);
+    }
+
     @Test
     public void testCreateVchCluster() throws Throwable {
         final String projectLink = buildProjectLink("test-vch-project");
