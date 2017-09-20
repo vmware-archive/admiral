@@ -187,11 +187,13 @@ public abstract class BaseTestCase {
         return createHost(null, args);
     }
 
-    protected VerificationHost createHost(ServiceHost.Arguments args, String[] additionalArgs) throws Throwable {
+    protected VerificationHost createHost(ServiceHost.Arguments args, String[] additionalArgs)
+            throws Throwable {
         OperationInterceptorRegistry interceptors = new OperationInterceptorRegistry();
         registerInterceptors(interceptors);
 
-        CustomizationVerificationHost customizationHost = new CustomizationVerificationHost(interceptors);
+        CustomizationVerificationHost customizationHost = new CustomizationVerificationHost(
+                interceptors);
 
         if (args == null) {
             args = getHostArguments();
@@ -219,7 +221,8 @@ public abstract class BaseTestCase {
         OperationInterceptorRegistry interceptors = new OperationInterceptorRegistry();
         registerInterceptors(interceptors);
 
-        VerificationHost h = VerificationHost.initialize(new CustomizationVerificationHost(interceptors),
+        VerificationHost h = VerificationHost.initialize(
+                new CustomizationVerificationHost(interceptors),
                 args);
         h.setMaintenanceIntervalMicros(this.getMaintenanceIntervalMillis() * 1000);
 
@@ -389,7 +392,7 @@ public abstract class BaseTestCase {
             assertTrue(childTemplate.documentDescription != null);
             assertTrue(childTemplate.documentDescription.propertyDescriptions != null
                     && childTemplate.documentDescription.propertyDescriptions
-                    .size() > 0);
+                            .size() > 0);
 
             if (!TaskServiceDocument.class.isAssignableFrom(childTemplate.getClass())) {
                 Field[] allFields = childTemplate.getClass().getDeclaredFields();
@@ -935,8 +938,8 @@ public abstract class BaseTestCase {
         return (T) doOperation(inState, uri, ServiceDocument.class, expectFailure, action);
     }
 
-    protected <T extends ServiceDocument> T doOperation(T inState, URI uri, Class<T> type,
-            boolean expectFailure, Action action) throws Throwable {
+    protected <T> T doOperation(T inState, URI uri, Class<T> type, boolean expectFailure,
+            Action action) throws Throwable {
         host.log("Executing operation %s for resource: %s ...", action.name(), uri);
         final List<T> doc = Arrays.asList((T) null);
         final Throwable[] error = { null };

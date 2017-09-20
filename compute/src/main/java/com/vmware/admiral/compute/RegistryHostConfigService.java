@@ -32,6 +32,7 @@ import com.vmware.admiral.adapter.registry.service.RegistryAdapterService;
 import com.vmware.admiral.adapter.registry.service.RegistryAdapterService.RegistryPingResponse;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.RegistryConfigCertificateDistributionService.RegistryConfigCertificateDistributionState;
@@ -42,14 +43,22 @@ import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCert
 import com.vmware.photon.controller.model.security.util.KeyUtil;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Service;
+import com.vmware.xenon.common.ServiceErrorResponse;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
 
 /**
  * Helper service for adding and validating docker registries
  */
 public class RegistryHostConfigService extends StatelessService {
     public static final String SELF_LINK = ManagementUriParts.REGISTRY_HOSTS;
+
+    /**
+     * name of the feature toggle that allows plain HTTP connections to registries
+     */
+    public static final String ALLOW_REGISTRY_PLAIN_HTTP_CONNECTION_PROP_NAME = "allow.registry.plain.http.connection";
 
     public static class RegistryHostSpec extends HostSpec {
         /** The state for the registry host to be created or validated. */
@@ -216,15 +225,35 @@ public class RegistryHostConfigService extends StatelessService {
         if (hostSpec.acceptHostAddress) {
             storeHost(hostSpec, op);
         } else {
-            validateSslTrust(this, hostSpec, op,
-                    () -> pingHost(hostSpec, op, hostSpec.sslTrust, () -> storeHost(hostSpec, op)));
+            validatePlainHttpConnection(this, hostSpec, op,
+                    () -> validateSslTrust(this, hostSpec, op,
+                            () -> pingHost(hostSpec, op, hostSpec.sslTrust,
+                                    () -> storeHost(hostSpec, op))));
         }
     }
 
     private void validateConnection(RegistryHostSpec hostSpec, Operation op) {
-        validateSslTrust(this, hostSpec, op,
-                () -> pingHost(hostSpec, op, hostSpec.sslTrust,
-                        () -> completeOperationSuccess(op)));
+        validatePlainHttpConnection(this, hostSpec, op,
+                () -> validateSslTrust(this, hostSpec, op,
+                        () -> pingHost(hostSpec, op, hostSpec.sslTrust,
+                                () -> completeOperationSuccess(op))));
+    }
+
+    private void validatePlainHttpConnection(Service sender, HostSpec hostSpec, Operation op,
+            Runnable callbackFunction) {
+        boolean allowRegistryInsecureConnection = Boolean.valueOf(
+                ConfigurationUtil.getProperty(ALLOW_REGISTRY_PLAIN_HTTP_CONNECTION_PROP_NAME));
+        if (!hostSpec.isSecureScheme() && !allowRegistryInsecureConnection) {
+            String message = String.format("Plain HTTP registry connections are not allowed.");
+            LocalizableValidationException ex = new LocalizableValidationException(message,
+                    "compute.registry.plain.http.not.allowed");
+            ServiceErrorResponse rsp = Utils.toValidationErrorResponse(ex, op);
+            logSevere(rsp.message);
+            op.setStatusCode(Operation.STATUS_CODE_BAD_REQUEST);
+            op.fail(ex, rsp);
+        } else {
+            callbackFunction.run();
+        }
     }
 
     private void distributeCertificate(RegistryState registry, Operation parentOp) {
