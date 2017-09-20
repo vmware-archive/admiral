@@ -19,6 +19,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletionException;
 
+import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
+
+import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
@@ -98,7 +102,18 @@ public class ClusterUtils {
 
         if (get != null) {
             Map<String, String> query = UriUtils.parseUriQueryParams(get.getUri());
+
             String hostsFilter = query.getOrDefault(ClusterService.HOSTS_FILTER_QUERY_PARAM, null);
+
+            if (ConfigurationUtil.isEmbedded()) {
+                String rawCustomOptions = query.get(ClusterService.CUSTOM_OPTIONS_QUERY_PARAM);
+
+                if (!Strings.isNullOrEmpty(rawCustomOptions)) {
+                    rawCustomOptions = rawCustomOptions.replaceAll("[{}]", " ").trim();
+                    Map<String, String> properties = Splitter.on(",").withKeyValueSeparator("=").split(rawCustomOptions);
+                    hostsFilter = properties.get(ClusterService.HOSTS_FILTER_QUERY_PARAM);
+                }
+            }
 
             if (hostsFilter != null) {
                 ServiceDocumentDescription desc = Builder.create().buildDescription(

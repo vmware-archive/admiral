@@ -98,6 +98,7 @@ public class ClusterService extends StatelessService {
     public static final String CLUSTER_CREATION_TIME_MICROS_CUSTOM_PROP = "__clusterCreationTimeMicros";
 
     public static final String HOSTS_FILTER_QUERY_PARAM = "$hostsFilter";
+    public static final String CUSTOM_OPTIONS_QUERY_PARAM = "customOptions";
 
     public ClusterService() {
         super(ClusterDto.class);
