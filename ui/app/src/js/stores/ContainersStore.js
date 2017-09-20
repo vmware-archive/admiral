@@ -353,7 +353,7 @@ function redirectToCatalogItem(catalogItemId) {
   let currentURL = window.top.location.href;
   let redirectURL =
       currentURL.substring(0, currentURL
-                           .indexOf('com.vmware.vcac.components.container'));
+                           .indexOf('#') + 1);
   redirectURL += 'csp.catalog.item.details%5BresourceId:=' + catalogItemId;
   window.top.location.href = redirectURL;
 }
