@@ -9,19 +9,20 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
+<delete-confirmation [title]="deleteTitle"
+                     [description]="deleteConfirmationDescription"
+                     [(alert)]="deleteConfirmationAlert"
+                     [visible]="clusterToDelete"
+                     (onDelete)="deleteConfirmed()"
+                     (onCancel)="deleteCanceled()">
+</delete-confirmation>
+
 <grid-view #gridView [serviceEndpoint]="serviceEndpoint" [projectLink]="projectLink">
   <div [hidden]="hideTitle" title>{{ title }}</div>
   <div toolbar>
     <button class="btn btn-link addCluster-btn" allowNavigation [roles]="clustersNewRouteRestrictions"
         [routerLink]="['./cluster/new']"><i class="fa fa-plus"></i>{{ "clusters.new" | i18n | uppercase }}</button>
   </div>
-  <delete-confirmation [title]="deleteTitle"
-                       [description]="deleteConfirmationDescription"
-                       [(alert)]="deleteConfirmationAlert"
-                       [visible]="clusterToDelete"
-                       (onDelete)="deleteConfirmed()"
-                       (onCancel)="deleteCanceled()">
-  </delete-confirmation>
   <ng-template let-item="item">
     <card class="clusterCard" [routerLink]="['./cluster/' + item.documentId]" [ngClass]="{'card-actions-selected': isItemSelected(item)}">
       <div card-header>

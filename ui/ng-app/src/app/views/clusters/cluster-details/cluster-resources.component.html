@@ -9,17 +9,19 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
+<delete-confirmation [title]="'hosts.delete.title' | i18n"
+                     [description]="deleteConfirmationDescription"
+                     [(alert)]="deleteConfirmationAlert"
+                     [visible]="hostToDelete"
+                     (onDelete)="deleteConfirmed()"
+                     (onCancel)="deleteCanceled()">
+</delete-confirmation>
+
 <grid-view #gridView [serviceEndpoint]="serviceEndpoint" [projectLink]="projectLink">
   <div toolbar>
     <button class="btn btn-link" (click)="onAddHost()"><i class="fa fa-plus"></i>{{ "clusters.resources.addHostButton" | i18n }}</button>
   </div>
-  <delete-confirmation [title]="'hosts.delete.title' | i18n"
-                       [description]="deleteConfirmationDescription"
-                       [(alert)]="deleteConfirmationAlert"
-                       [visible]="hostToDelete"
-                       (onDelete)="deleteConfirmed()"
-                       (onCancel)="deleteCanceled()">
-  </delete-confirmation>
+
   <ng-template let-item="item">
     <card class="clusterCard">
       <div card-header>

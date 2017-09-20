@@ -9,6 +9,15 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
+
+<delete-confirmation [title]="'projects.delete.title' | i18n"
+                     [description]="deleteConfirmationDescription"
+                     [(alert)]="deleteConfirmationAlert"
+                     [visible]="projectToDelete"
+                     (onDelete)="deleteConfirmed()"
+                     (onCancel)="deleteCanceled()">
+</delete-confirmation>
+
 <grid-view #gridView [serviceEndpoint]="serviceEndpoint"
   [searchPlaceholder]="'projects.search.placeholder' | i18n"
   [searchSuggestionProperties]="['name']">
@@ -17,14 +26,6 @@
   <div toolbar>
     <button class="btn btn-link" allowNavigation [roles]="projectsNewRouteRestriction" [routerLink]="['./new']"><i class="fa fa-plus"></i>{{"projects.project" | i18n}}</button>
   </div>
-
-  <delete-confirmation [title]="'projects.delete.title' | i18n"
-                       [description]="deleteConfirmationDescription"
-                       [(alert)]="deleteConfirmationAlert"
-                       [visible]="projectToDelete"
-                       (onDelete)="deleteConfirmed()"
-                       (onCancel)="deleteCanceled()">
-  </delete-confirmation>
 
   <ng-template let-item="item">
 

@@ -9,18 +9,20 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
+<delete-confirmation [title]="'compute.flavors.delete.title' | i18n"
+                     [description]="deleteConfirmationDescription"
+                     [(alert)]="deleteConfirmationAlert"
+                     [visible]="instanceTypeToDelete"
+                     (onDelete)="deleteConfirmed()"
+                     (onCancel)="deleteCanceled()">
+</delete-confirmation>
+
 <grid-view #gridView [serviceEndpoint]="serviceEndpoint">
   <div title>{{"compute.flavors.title" | i18n}}</div>
   <div toolbar>
     <button class="btn btn-link" [routerLink]="['./new']"><i class="fa fa-plus"></i>New</button>
   </div>
-  <delete-confirmation [title]="'compute.flavors.delete.title' | i18n"
-                       [description]="deleteConfirmationDescription"
-                       [(alert)]="deleteConfirmationAlert"
-                       [visible]="instanceTypeToDelete"
-                       (onDelete)="deleteConfirmed()"
-                       (onCancel)="deleteCanceled()">
-  </delete-confirmation>
+
   <ng-template let-item="item">
     <!-- TODO: add a details link when the view is ready-->
     <card [routerLink]="['./edit/' + item.documentId]" [ngClass]="{'card-actions-selected': isItemSelected(item)}">
