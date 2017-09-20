@@ -12,7 +12,7 @@
 <grid-view #gridView [serviceEndpoint]="serviceEndpoint" [projectLink]="projectLink">
   <div [hidden]="hideTitle" title>{{ title }}</div>
   <div toolbar>
-    <button class="btn btn-link" allowNavigation [roles]="clustersNewRouteRestrictions"
+    <button class="btn btn-link addCluster-btn" allowNavigation [roles]="clustersNewRouteRestrictions"
         [routerLink]="['./cluster/new']"><i class="fa fa-plus"></i>{{ "clusters.new" | i18n | uppercase }}</button>
   </div>
   <delete-confirmation [title]="deleteTitle"
@@ -38,10 +38,10 @@
               <clr-icon shape="ellipsis-vertical" size="20"></clr-icon>
           </button>
           <div class="dropdown-menu">
-            <a href="..." clrDropdownItem
+            <a href="..." clrDropdownItem class="cluster-details"
                [routerLink]="['./cluster/' + item.documentId]"><clr-icon shape="eye" size="20"
                                                                  class="card-drop-down-actions"></clr-icon>{{ "projects.actions.details" | i18n }}</a>
-            <a href="..." clrDropdownItem
+            <a href="..." clrDropdownItem class="remove-cluster"
                (click)="deleteCluster($event, item)"><clr-icon shape="trash" size="20"
                                                                class="card-drop-down-actions"></clr-icon>{{ "remove" | i18n }}</a>
           </div>

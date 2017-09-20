@@ -43,9 +43,9 @@
     </form>
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-outline" *ngIf="!certificateShown" (click)="showCertificate()">{{ "certificate.show" | i18n }}</button>
-        <button type="button" class="btn btn-outline" *ngIf="certificateShown" (click)="hideCertificate()">{{ "certificate.hide" | i18n }}</button>
+        <button type="button" class="btn btn-outline show-certificate-btn" *ngIf="!certificateShown" (click)="showCertificate()">{{ "certificate.show" | i18n }}</button>
+        <button type="button" class="btn btn-outline hide-certificate-btn" *ngIf="certificateShown" (click)="hideCertificate()">{{ "certificate.hide" | i18n }}</button>
         <button type="button" class="btn btn-outline" (click)="declineCertificate()">{{ "cancel" | i18n }}</button>
-        <button type="button" class="btn btn-primary" (click)="acceptCertificate()">{{ "yes" | i18n }}</button>
+        <button type="button" class="btn btn-primary save-certificate-btn" (click)="acceptCertificate()">{{ "yes" | i18n }}</button>
     </div>
 </clr-modal>

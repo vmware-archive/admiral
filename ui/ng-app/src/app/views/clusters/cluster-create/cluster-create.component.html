@@ -67,6 +67,6 @@
   </div>
   <div class="modal-footer">
     <button type="button" class="btn btn-outline" [disabled]="isSaving" (click)="toggleModal(false)">{{ "cancel" | i18n }}</button>
-    <button [clrLoading]="isSaving" type="button" class="btn btn-primary" [disabled]="saveButtonDisabled()" (click)="saveCluster()">{{ "save" | i18n }}</button>
+    <button [clrLoading]="isSaving" type="button" class="btn btn-primary saveCluster-btn" [disabled]="saveButtonDisabled()" (click)="saveCluster()">{{ "save" | i18n }}</button>
   </div>
 </clr-modal>
