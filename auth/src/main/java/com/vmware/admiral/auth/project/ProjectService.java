@@ -340,6 +340,12 @@ public class ProjectService extends StatefulService {
             return;
         }
 
+        if (put.hasPragmaDirective(Operation.PRAGMA_DIRECTIVE_POST_TO_PUT)) {
+            logInfo("Task has already started. Ignoring converted PUT.");
+            put.complete();
+            return;
+        }
+
         ProjectState currentState = getState(put);
         if (ProjectRolesHandler.isProjectRolesUpdate(put)) {
             ProjectRoles rolesPut = put.getBody(ProjectRoles.class);
