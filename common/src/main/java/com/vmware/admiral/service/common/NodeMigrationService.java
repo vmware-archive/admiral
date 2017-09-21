@@ -151,6 +151,7 @@ public class NodeMigrationService extends StatelessService {
         servicesIterator.forEachRemaining(currentService -> {
             migrationState.destinationFactoryLink = currentService;
             migrationState.sourceFactoryLink = currentService;
+            migrationState.migrateMismatchedOwnerDocuments = true;
 
             Operation operation = Operation.createPost(this, MigrationTaskService.FACTORY_LINK)
                     .setBody(migrationState)

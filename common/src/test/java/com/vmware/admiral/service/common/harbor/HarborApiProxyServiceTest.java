@@ -119,7 +119,6 @@ public class HarborApiProxyServiceTest {
 
         setPrivateField(service, HARBOR_URI_FIELD_NAME, SAMPLE_HARBOR_URI);
 
-
         Operation actualOp = Operation.createGet(UriUtils
                 .buildUri("http://localhost" + HarborApiProxyService.SELF_LINK))
                 .setCompletion((o, e) -> {
@@ -299,6 +298,7 @@ public class HarborApiProxyServiceTest {
         AtomicBoolean certificateImportCalled = new AtomicBoolean();
 
         HarborApiProxyService service = new HarborApiProxyService() {
+            @Override
             public void sendRequest(Operation op) {
                 String path = op.getUri().getPath();
                 if (path.equals(UriUtils.buildUriPath(ManagementUriParts.CONFIG_PROPS,
@@ -382,7 +382,14 @@ public class HarborApiProxyServiceTest {
         }
 
         @Override
-        public ConnectionPoolMetrics getConnectionPoolMetrics(String connectionTag) {
+        public ConnectionPoolMetrics getConnectionPoolMetrics(boolean http2) {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public ConnectionPoolMetrics getConnectionPoolMetricsPerTag(String connectionTag) {
+            // TODO Auto-generated method stub
             return null;
         }
     }
