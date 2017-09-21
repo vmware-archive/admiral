@@ -2,9 +2,27 @@
 
 ## 1.2.2-SNAPSHOT
 
+* Increased the security by default by TLSv1.0. More information [here](https://github.com/vmware/admiral/wiki/Configuration-guide#allow-usage-of-tls-v10).
+
+* Increased the security by default by not allowing access to plain HTTP registries. More information [here](https://github.com/vmware/admiral/wiki/Configuration-guide#allow-access-to-plain-http-registries).
+
+* Various bug fixes and improvements.
+
+Docker hub images & tags: https://hub.docker.com/r/vmware/admiral/
+
+* dev - Standalone
+
+* vic_dev - VIC
+
 ## 1.2.1
 
 * Bug fixes around PSC integration in VIC.
+
+Docker hub images & tags: https://hub.docker.com/r/vmware/admiral/
+
+* v1.2.1 - Standalone
+
+* vic_v1.2.1 - VIC
 
 ## 1.2.0
 
@@ -23,6 +41,12 @@
 * Added new features to the basic authentication service based on local users. 
 
 * Bug fixes around VIC integration.
+
+Docker hub images & tags: https://hub.docker.com/r/vmware/admiral/
+
+* v1.2.0 - Standalone
+
+* vic_v1.2.0 - VIC
 
 ## 1.1.1
 
