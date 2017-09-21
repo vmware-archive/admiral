@@ -81,6 +81,32 @@ public class CompositeDescriptionTransformationServiceTest extends UpgradeBaseTe
     }
 
     @Test
+    public void testSingleTempleteDefaultProjectEmbeddedMode() throws Throwable {
+        toggleEmbeddedMode(true);
+
+        createCompositeDescription("test-description");
+        List<String> descriptionsBeforeTransformation = getDocumentLinksOfType(
+                CompositeDescription.class);
+
+        doOperation(new ServiceDocument(),
+                UriUtils.buildUri(host, CompositeDescriptionTransformationService.SELF_LINK), false,
+                Service.Action.POST);
+        List<String> descriptionsAfterTransformation = getDocumentLinksOfType(
+                CompositeDescription.class);
+
+        Assert.assertTrue(descriptionsBeforeTransformation.size()
+                + 1 == descriptionsAfterTransformation.size());
+        descriptionsAfterTransformation.removeAll(descriptionsBeforeTransformation);
+        CompositeDescription clonedDescription = getDocument(CompositeDescription.class,
+                descriptionsAfterTransformation.get(0));
+
+        // no project link was appended to the states in embedded mode
+        Assert.assertNull(clonedDescription.tenantLinks);
+
+        toggleEmbeddedMode(false);
+    }
+
+    @Test
     public void testMultipleProjectsSingleTemplate() throws Throwable {
         createCompositeDescription("Description1");
         ProjectState project = createProject(PROJECT_NAME_TEST_PROJECT_1);

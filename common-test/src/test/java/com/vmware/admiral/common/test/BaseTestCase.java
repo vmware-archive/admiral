@@ -47,6 +47,7 @@ import org.objenesis.ObjenesisStd;
 import org.objenesis.instantiator.ObjectInstantiator;
 
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
@@ -54,6 +55,7 @@ import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.TestServerX509TrustManager;
 import com.vmware.admiral.host.interceptor.OperationInterceptorRegistry;
+import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.photon.controller.model.security.util.CertificateUtil;
 import com.vmware.xenon.common.CommandLineArgumentParser;
@@ -1188,6 +1190,25 @@ public abstract class BaseTestCase {
                     }
                 }).sendWith(host);
         host.testWait();
+    }
+
+    /**
+     * Uses java reflections to modify the {@link ConfigurationUtil#configProperties} list to
+     * contain the appropriate entry for the <b>embedded</b> property for the
+     * {@link ConfigurationUtil#isEmbedded()} method to return the same value as the provided
+     * <code>isEmbedded</code> flag. For test purposes only.
+     */
+    protected void toggleEmbeddedMode(boolean isEmbedded) throws Throwable {
+        final String key = "embedded";
+        Field field = ConfigurationUtil.class.getDeclaredField("configProperties");
+        field.setAccessible(true);
+
+        ConfigurationState embeddedConfig = new ConfigurationState();
+        embeddedConfig.key = key;
+        embeddedConfig.value = Boolean.toString(isEmbedded);
+
+        field.set(null, new ConfigurationState[] { embeddedConfig });
+        field.setAccessible(false);
     }
 
     @FunctionalInterface

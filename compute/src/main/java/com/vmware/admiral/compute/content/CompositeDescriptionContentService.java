@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentRegistry;
@@ -257,7 +258,9 @@ public class CompositeDescriptionContentService extends StatelessService {
     private void processCompositeTemplate(CompositeTemplate template, Operation op) {
         validateCompositeTemplate(template);
 
-        String projectLink = extractProjectFromHeader(op);
+        // in embedded mode templates are shared among business groups
+        // so the extra tenant link is not needed
+        String projectLink = ConfigurationUtil.isEmbedded() ? null : extractProjectFromHeader(op);
 
         Map<String, NestedState> componentNestedStates = createComponentNestedStates(template);
 

@@ -20,16 +20,21 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
+import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
 
 public class ClonePerProjectUtil {
+
+    private static final String TEMPLATE_DOCUMENT_KIND = Utils.buildKind(CompositeDescription.class);
 
     public static void processDocuments(List<MultiTenantDocument> documents, Operation post,
             Service sender, String factoryLink, URI referer,
@@ -73,8 +78,10 @@ public class ClonePerProjectUtil {
                 } else {
                     document.documentSelfLink = null;
                 }
-                document.tenantLinks = new ArrayList<String>();
-                document.tenantLinks.add(project.documentSelfLink);
+                if (!skipAddProjectTenantLink(document)) {
+                    document.tenantLinks = new ArrayList<String>();
+                    document.tenantLinks.add(project.documentSelfLink);
+                }
                 Operation.createPost(sender, factoryLink)
                         .setBody(document)
                         .setReferer(referer)
@@ -101,6 +108,19 @@ public class ClonePerProjectUtil {
                         }).sendWith(host);
             }
         }
+    }
+
+    /**
+     * Checks whether the document specified is a {@link CompositeDescription} in embedded.
+     * Templates ({@link CompositeDescription} instances) in embedded mode are shared among all
+     * projects so the project tenant link must not be added.
+     *
+     * @return whether addition of the project tenant link should be skipped or not
+     */
+    private static boolean skipAddProjectTenantLink(MultiTenantDocument document) {
+        return ConfigurationUtil.isEmbedded()
+                && document.documentKind != null
+                && document.documentKind.equals(TEMPLATE_DOCUMENT_KIND);
     }
 
     public static <R extends MultiTenantDocument> void getDocuments(Class<R> type,
