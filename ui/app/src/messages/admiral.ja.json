@@ -70,7 +70,7 @@
         "deploymentPolicy": "展開ポリシー",
         "tags": "タグ",
         "tagsPlaceholder": "例: location:west",
-        "tagsHint": "key:value タグを入力します",
+        "tagsHint": "「キー:値」タグを入力します",
         "autoConfigure": "自動構成",
         "autoConfigureInput": "ホストの自動構成の有効化",
         "autoConfigureHint": "このオプションを指定すると、生成された自己署名証明書を使用して、指定されたアドレスおよびポートに Docker Remote API が構成されます。この処理は SSH を介して 1 回実行されます。サポート対象のオペレーティング システムは、CoreOS、PhotonOS、Ubuntu Server 16.04 以降です。",
@@ -144,10 +144,10 @@
         "placementPolicyHint": "デフォルトでは、リソースが配置されるホストは無作為に選ばれます。オプションを使用することで、次のいずれかの方式を適用できます:<br><br><b>BINPACK</b>: メモリ使用量が最大のホストに配置します。<br><br><b>SPREAD</b>: リソース数が最小のホストに配置します。",
         "dynamicTitle": "このゾーンへのリソースの動的割り当て",
         "tagsTitle": "タグ",
-        "tagsHint": "key:value タグを入力します",
+        "tagsHint": "「キー:値」タグを入力します",
         "tagsPlaceholder": "例: compliance:yes",
         "tagsToMatchTitle": "一致するタグ",
-        "tagsToMatchHint": "一致する key:value タグを入力します",
+        "tagsToMatchHint": "一致する「キー:値」タグを入力します",
         "tagsToMatchPlaceholder": "例: location:west"
       },
       "contextPanelTooltip": "配置ゾーン"
@@ -295,7 +295,7 @@
         "create": "テンプレートの作成",
         "createNameHint": "テンプレート名",
         "createProceed": "続行",
-        "edit": "テンプレートの編集",
+        "edit": "次のテンプレートの編集:",
         "newDefinition": {
           "newLabel": "コンテナの追加",
           "title": "コンテナ定義の追加",
@@ -516,7 +516,7 @@
         "storageTab": "ストレージ",
         "nameLabel": "名前",
         "tagsLabel": "タグ",
-        "tagsHint": "key:value タグを入力します",
+        "tagsHint": "「キー:値」タグを入力します",
         "tagsPlaceholder": "例: compliance:yes",
         "endpointLabel": "エンドポイント",
         "valueLabel": "値",
@@ -833,7 +833,7 @@
         "supportPublicIpAddressLabel": "パブリック IP アドレスのサポート",
         "defaultForZoneLabel": "ゾーンのデフォルト",
         "tagsTitle": "タグ",
-        "tagsHint": "key:value タグを入力します",
+        "tagsHint": "「キー:値」タグを入力します",
         "tagsPlaceholder": "例: access:restricted"
       },
       "entity": "サブネットワーク",
@@ -845,7 +845,7 @@
       "list": {
         "network": {
           "name": "ネットワーク",
-          "connectedDateLabel": "接続済み",
+          "connectedDateLabel": "接続時間",
           "networkDriverLabel": "ネットワーク ドライバ",
           "ipamDriverLabel": "IP アドレス管理ドライバ",
           "subnetLabel": "サブネット",
@@ -888,7 +888,7 @@
         },
         "volume": {
           "create": "ボリューム",
-          "connectedDateLabel": "接続済み",
+          "connectedDateLabel": "接続時間",
           "driverLabel": "ドライバ",
           "driverOptionsLabel": "ドライバのオプション",
           "scope": "スコープ",
@@ -980,11 +980,11 @@
         "networkTrafficReceived": "受信済み",
         "lines": "行",
         "showingLogs": "ログの表示",
-        "logsOptionSince": "過去",
-        "logsOptionTail": "最新",
+        "logsOptionSince": "最初",
+        "logsOptionTail": "最後",
         "logsFormat": "ログ形式",
         "logsFormatAnsi": "ANSI",
-        "logsFormatRaw": "Raw",
+        "logsFormatRaw": "未フォーマット",
         "networkAddresses": "ネットワーク アドレス",
         "attributes": {
           "name": "名前",
@@ -1043,7 +1043,7 @@
             "service": "サービス"
           },
           "portBindings": "ポート バインド",
-          "portBindingsDescription": "公開されたコンテナ ポートと、それらがマッピングするホスト ポートのマップ",
+          "portBindingsDescription": "公開されたコンテナ ポートと、それらがマッピングするホスト ポートのマップ情報",
           "portBindingsInputs": {
             "hostPort": "ホスト ポート",
             "hostPortHint": "例: 9080",
@@ -1150,12 +1150,12 @@
           "healthTimeoutDescription": "健全性チェックのタイムアウト (ミリ秒)",
           "healthyThreshold": "良好状態のしきい値",
           "healthyThresholdHint": "デフォルト: 3",
-          "healthyThresholdDescription": "健全性チェックの成功回数のしきい値。これにより、コンテナの健全性が良好と見なされます。",
+          "healthyThresholdDescription": "健全性チェックの成功操作のしきい値。これにより、コンテナの健全性が良好と見なされます。",
           "unhealthyThreshold": "不良状態のしきい値",
           "unhealthyThresholdHint": "デフォルト: 3",
-          "unhealthyThresholdDescription": "健全性チェックの失敗回数のしきい値。これにより、コンテナの健全性が不良と見なされます。",
+          "unhealthyThresholdDescription": "健全性チェックの失敗操作のしきい値。これにより、コンテナの健全性が不良と見なされます。",
           "command": "コマンド",
-          "commandDescription": "コンテナで実行するコマンド。コンテナの健全性が識別には、終了ステータスが使用されます。",
+          "commandDescription": "コンテナで実行するコマンド。コンテナの健全性の識別には終了ステータスが使用されます。",
           "logConfigDriver": "ドライバ",
           "logConfigDriverDescription": "コンテナのログ ドライバ",
           "logConfigDriverTypes": {
@@ -1174,7 +1174,7 @@
         }
       },
       "state": {
-        "RUNNING": "実行時間：",
+        "RUNNING": "実行時間",
         "STOPPED": "停止",
         "REBOOTING": "再起動中",
         "PAUSED": "一時停止中",

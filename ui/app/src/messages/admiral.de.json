@@ -70,7 +70,7 @@
         "deploymentPolicy": "Bereitstellungsrichtlinie",
         "tags": "Tags",
         "tagsPlaceholder": "Beispiel: location:west",
-        "tagsHint": "Schlüssel:Wert-Tags eingeben",
+        "tagsHint": "Tags als \"Schlüssel:Wert\" eingeben",
         "autoConfigure": "Automatisch konfigurieren",
         "autoConfigureInput": "Automatische Hostkonfiguration aktivieren",
         "autoConfigureHint": "Mit dieser Option wird die Docker-Remote-API an der angegebenen Adresse und dem angegebenen Port mit selbstsignierten Zertifikaten erstellt. Dies erfolgt einmalig über SSH. Folgende Betriebssysteme werden unterstützt: CoreOS, PhotonOS, Ubuntu Server 16.04 oder höher.",
@@ -144,10 +144,10 @@
         "placementPolicyHint": "Standardmäßig werden Ressourcen nach dem Zufallsprinzip auf Hosts platziert. Optional kann eine der folgenden Strategien angewendet werden:<br><br><b>BINPACK</b> - auf Host mit höchster Arbeitsspeichernutzung platzieren<br><br><b>SPREAD</b> - auf Host mit geringster Anzahl an Ressourcen platzieren",
         "dynamicTitle": "Ressourcen dieser Zone dynamisch zuordnen",
         "tagsTitle": "Tags",
-        "tagsHint": "Schlüssel:Wert-Tags eingeben",
+        "tagsHint": "Tags als \"Schlüssel:Wert\" eingeben",
         "tagsPlaceholder": "Beispiel: compliance:yes",
         "tagsToMatchTitle": "Abzugleichende Tags",
-        "tagsToMatchHint": "Abzugleichende Schlüssel:Wert-Tags eingeben",
+        "tagsToMatchHint": "Abzugleichende Tags als \"Schlüssel:Wert\" eingeben",
         "tagsToMatchPlaceholder": "Beispiel: location:west"
       },
       "contextPanelTooltip": "Platzierungszonen"
@@ -252,7 +252,7 @@
         "update": "Zertifikat bearbeiten",
         "urlTitle": "URL eingeben",
         "importOptionTitle": "Aus URL importieren",
-        "importOptionHint": "Anstatt das Zertifikat manuell einzugeben, können Sie mit „Aus URL importieren“ eine URL eingeben. Über unser System wird dann das Zertifikat aus der von Ihnen eingegebenen URL importiert.",
+        "importOptionHint": "Anstatt das Zertifikat manuell einzugeben, können Sie mit „Aus URL importieren“ eine URL eingeben. Unser System wird dann das Zertifikat aus der von Ihnen eingegebenen URL importieren.",
         "importButton": "Importieren",
         "certificateTitle": "Zertifikat eingeben"
       }
@@ -276,7 +276,7 @@
         "stars": "Sterne",
         "linksLabel": "Links",
         "addLinkLabel": "Link hinzufügen",
-        "containers": "Container auswählen für Abhängigkeit",
+        "containers": "Container für Abhängigkeit auswählen",
         "alias": "Alias eingeben",
         "true": "Ja",
         "false": "Nein",
@@ -404,7 +404,7 @@
       },
       "import": {
         "title": "Vorlage importieren",
-        "loadButton": "Laden aus Datei",
+        "loadButton": "Aus Datei laden",
         "importTemplateTooltip": "Vorlage oder Docker Compose-Datei importieren",
         "importTemplateHint": "Importieren Sie eine Vorlage oder eine Docker Compose-Datei oder geben Sie den Inhalt manuell ein.",
         "contentPlaceholder": "Vorlage oder Docker Compose-Datei eingeben...",
@@ -516,7 +516,7 @@
         "storageTab": "Speicher",
         "nameLabel": "Name",
         "tagsLabel": "Tags",
-        "tagsHint": "Schlüssel:Wert-Tags eingeben",
+        "tagsHint": "Tags als \"Schlüssel:Wert\" eingeben",
         "tagsPlaceholder": "Beispiel: compliance:yes",
         "endpointLabel": "Endpoint",
         "valueLabel": "Wert",
@@ -760,7 +760,7 @@
         "nameLabel": "Name",
         "save": "Speichern",
         "create": "Erstellen",
-        "loadButton": "Laden aus Datei",
+        "loadButton": "Aus Datei laden",
         "importTemplateHint": "Zusammengesetzte Beschreibung, die eine oder mehrere Maschinenbeschreibungen enthält",
         "importPlaceholder": ""
       },
@@ -773,7 +773,7 @@
           "address": "Adresse",
           "endpoint": "Endpoint",
           "properties": "Eigenschaften",
-          "usages": "Nutzungen",
+          "usages": "Verwendungen",
           "powerState": "Betriebszustand",
           "environment": "Umgebung",
           "region": "Region",
@@ -833,7 +833,7 @@
         "supportPublicIpAddressLabel": "Öffentliche IP unterstützen",
         "defaultForZoneLabel": "Standard für Zone",
         "tagsTitle": "Tags",
-        "tagsHint": "Schlüssel:Wert-Tags eingeben",
+        "tagsHint": "Tags als \"Schlüssel:Wert\" eingeben",
         "tagsPlaceholder": "Beispiel: access:restricted"
       },
       "entity": "Subnetzwerk",
@@ -845,7 +845,7 @@
       "list": {
         "network": {
           "name": "Netzwerk",
-          "connectedDateLabel": "Verbunden",
+          "connectedDateLabel": "Verbunden seit",
           "networkDriverLabel": "Netzwerktreiber",
           "ipamDriverLabel": "IPAM-Treiber",
           "subnetLabel": "Subnetz",
@@ -888,7 +888,7 @@
         },
         "volume": {
           "create": "Volume",
-          "connectedDateLabel": "Verbunden",
+          "connectedDateLabel": "Verbunden seit",
           "driverLabel": "Treiber",
           "driverOptionsLabel": "Treiberoptionen",
           "scope": "Geltungsbereich",
@@ -941,7 +941,7 @@
         "searchPlaceholder": "Container suchen",
         "createContainer": "Container erstellen",
         "hostLabel": "Host",
-        "createdDateLabel": "Erstellt",
+        "createdDateLabel": "Erstellt am",
         "portsLabel": "Ports",
         "commandLabel": "Befehl",
         "logLabel": "Protokoll",
@@ -969,7 +969,7 @@
         "columnRunningSince": "Wird ausgeführt seit"
       },
       "details": {
-        "usages": "Nutzungen",
+        "usages": "Verwendungen",
         "properties": "Eigenschaften",
         "webview": "Webansicht",
         "logs": "Protokolle",
@@ -979,9 +979,9 @@
         "networkTrafficSent": "Gesendet",
         "networkTrafficReceived": "Empfangen",
         "lines": "Zeilen",
-        "showingLogs": "Protokolle werden angezeigt",
+        "showingLogs": "Protokolle anzeigen",
         "logsOptionSince": "Seit",
-        "logsOptionTail": "Ende",
+        "logsOptionTail": "Fragment",
         "logsFormat": "Protokollformat",
         "logsFormatAnsi": "ANSI",
         "logsFormatRaw": "Raw",
@@ -990,7 +990,7 @@
           "name": "Name",
           "value": "Wert",
           "host": "Host",
-          "createdDateLabel": "Erstellt",
+          "createdDateLabel": "Erstellt am",
           "ports": "Ports",
           "command": "Befehl",
           "ipaddress": "Adresse",
@@ -1057,7 +1057,7 @@
           "networkMode": "Netzwerkmodus",
           "networkModeDescription": "Legt den Netzwerkmodus für den Container fest.",
           "networkModeTypes": {
-            "none": "Keiner",
+            "none": "Nein",
             "bridge": "Brücke",
             "host": "Host"
           },
@@ -1103,7 +1103,7 @@
           "restartPolicyType": {
             "always": "Immer",
             "onFailure": "Bei Fehler",
-            "none": "Keine"
+            "none": "Nein"
           },
           "maxRestarts": "Max. Neustarts",
           "maxRestartsDescription": "Anzahl max. Neustarts bei Container-Fehlern",
@@ -1159,7 +1159,7 @@
           "logConfigDriver": "Treiber",
           "logConfigDriverDescription": "Protokollierungstreiber für den Container",
           "logConfigDriverTypes": {
-            "none": "Keine",
+            "none": "Nein",
             "bridge": "Brücke",
             "host": "Host"
           },
@@ -1175,7 +1175,7 @@
       },
       "state": {
         "RUNNING": "WIRD AUSGEFÜHRT",
-        "STOPPED": "GESTOPPT",
+        "STOPPED": "BEENDET",
         "REBOOTING": "WIRD NEU GESTARTET",
         "PAUSED": "ANGEHALTEN",
         "ERROR": "FEHLER",

@@ -52,7 +52,7 @@
         "title": {
           "add": "Ajouter un hôte",
           "create": "Créer un hôte",
-          "edit": "Modifier un hôte"
+          "edit": "Modifier l'hôte"
         },
         "address": "Adresse",
         "addressPlaceholder": "Exemple : https://hostname:2376",
@@ -107,7 +107,7 @@
       "list": {
         "title": "Hôtes",
         "titleSearch": "Hôtes trouvés",
-        "searchPlaceholder": "Chercher des hôtes",
+        "searchPlaceholder": "Rechercher des hôtes",
         "dataCollect": "Collecte de données",
         "dataCollectStart": "Déclenchement de la collecte de données. Celle-ci pourrait prendre quelques minutes.",
         "dataCollectEnd": "La collecte de données est terminée.",
@@ -195,8 +195,8 @@
         "passwordTitle": "Mot de passe",
         "showPassword": "Afficher le mot de passe",
         "hidePassword": "Masquer le mot de passe",
-        "usePrivateKey": "Utiliser la clé privée",
-        "usePassword": "Utiliser le mot de passe",
+        "usePrivateKey": "Utiliser une clé privée",
+        "usePassword": "Utiliser un mot de passe",
         "certificateTitle": "Certificat",
         "publicTitle": "Clé publique",
         "publicCertificateTitle": "Certificat public",
@@ -234,14 +234,14 @@
         "title": "Certificats",
         "addButton": "Certificat",
         "nameColumn": "Nom",
-        "serialColumn": "Série",
+        "serialColumn": "Numéro de série",
         "shaColumn": "SHA",
-        "expirationColumn": "Expiration",
+        "expirationColumn": "Date d'expiration",
         "details": {
           "title": "Détails du certificat",
           "commonName": "Nom de la société",
           "issuerName": "Nom de l'émetteur",
-          "serial": "Série",
+          "serial": "Numéro de série",
           "fingerprint": "Empreinte digitale SHA",
           "validSince": "Date de début de validité",
           "validTo": "Date de fin de validité"
@@ -250,9 +250,9 @@
       "edit": {
         "createNew": "Nouveau certificat",
         "update": "Modifier le certificat",
-        "urlTitle": "Entrer l'URL",
-        "importOptionTitle": "Importer à partir de l'URL",
-        "importOptionHint": "Plutôt qu'entrer le certificat manuellement, l'option Importer à partir de l'URL vous permet d'entrer une URL. Le système importe alors le certificat à partir de l'URL indiquée.",
+        "urlTitle": "Entrer une URL",
+        "importOptionTitle": "Importer à partir d'une URL",
+        "importOptionHint": "Plutôt qu'entrer le certificat manuellement, l'option Importer à partir de l'URL vous permet d'entrer une URL. Le système importera alors le certificat à partir de l'URL indiquée.",
         "importButton": "Importer",
         "certificateTitle": "Entrer le certificat"
       }
@@ -264,7 +264,7 @@
         "popularRepositories": "Référentiels populaires",
         "searchImagesTemplatesPlaceholder": "Rechercher des images, des modèles",
         "searchImagesPlaceholder": "Rechercher des images",
-        "searchRepositoriesPlaceholder": "Recherche de référentiels",
+        "searchRepositoriesPlaceholder": "Rechercher des référentiels",
         "searchTemplatesPlaceholder": "Rechercher des modèles",
         "searchClosuresPlaceholder": "Rechercher des fermetures",
         "manageRegistry": "Gérer les registres",
@@ -300,7 +300,7 @@
           "newLabel": "Ajouter un conteneur",
           "title": "Ajouter une définition de conteneur",
           "selectImage": "Sélectionner une image",
-          "imageListTitle": "Images répandues",
+          "imageListTitle": "Images populaires",
           "imageListTitleSearch": "Images trouvées",
           "containerDefinitionInfo": "Informations de définition du conteneur"
         },
@@ -403,8 +403,8 @@
         "fail": "Erreur de transmission du modèle vers Blueprint"
       },
       "import": {
-        "title": "Importer le modèle",
-        "loadButton": "Charger depuis fichier",
+        "title": "Importer un modèle",
+        "loadButton": "Charger depuis un fichier",
         "importTemplateTooltip": "Importer un modèle ou Docker Compose",
         "importTemplateHint": "Importez un modèle ou un fichier Docker Compose, ou entrez son contenu manuellement.",
         "contentPlaceholder": "Entrer un modèle ou Docker Compose…",
@@ -760,7 +760,7 @@
         "nameLabel": "Nom",
         "save": "Enregistrer",
         "create": "Créer",
-        "loadButton": "Charger depuis le fichier",
+        "loadButton": "Charger depuis un fichier",
         "importTemplateHint": "Description composite contenant une ou plusieurs descriptions de machine",
         "importPlaceholder": ""
       },
@@ -845,7 +845,7 @@
       "list": {
         "network": {
           "name": "Réseau",
-          "connectedDateLabel": "Connecté",
+          "connectedDateLabel": "Connecté depuis",
           "networkDriverLabel": "Pilote réseau",
           "ipamDriverLabel": "Pilote IPAM",
           "subnetLabel": "Sous-réseau",
@@ -888,7 +888,7 @@
         },
         "volume": {
           "create": "Volume",
-          "connectedDateLabel": "Connecté",
+          "connectedDateLabel": "Connecté depuis",
           "driverLabel": "Pilote",
           "driverOptionsLabel": "Options de pilote",
           "scope": "Portée",
@@ -941,7 +941,7 @@
         "searchPlaceholder": "Rechercher des conteneurs",
         "createContainer": "Créer un conteneur",
         "hostLabel": "Hôte",
-        "createdDateLabel": "Créé",
+        "createdDateLabel": "Créé le",
         "portsLabel": "Ports",
         "commandLabel": "Commande",
         "logLabel": "Journal",
@@ -980,8 +980,8 @@
         "networkTrafficReceived": "Reçu",
         "lines": "lignes",
         "showingLogs": "Affichage des journaux",
-        "logsOptionSince": "Depuis",
-        "logsOptionTail": "Tail",
+        "logsOptionSince": "Premières",
+        "logsOptionTail": "Dernières",
         "logsFormat": "Format des journaux",
         "logsFormatAnsi": "ANSI",
         "logsFormatRaw": "Brut",
@@ -990,7 +990,7 @@
           "name": "Nom",
           "value": "Valeur",
           "host": "Hôte",
-          "createdDateLabel": "Créé",
+          "createdDateLabel": "Créé le",
           "ports": "Ports",
           "command": "Commande",
           "ipaddress": "Adresse",
@@ -1108,7 +1108,7 @@
           "maxRestarts": "Nombre maximal de redémarrages",
           "maxRestartsDescription": "Nombre maximal de redémarrages lors d'échecs du conteneur",
           "cpuShares": "Partages de CPU",
-          "cpuSharesDescription": "Valeur entière contenant le nombre de partages de CPU du conteneur (c'est-à-dire le poids relatif par rapport à d'autres conteneurs)",
+          "cpuSharesDescription": "Valeur entière contenant le nombre de partages de CPU du conteneur (par exemple le poids relatif vs les autres conteneurs)",
           "memoryLimit": "Limite de mémoire",
           "memoryLimitDescription": "Limite de mémoire en octets",
           "memorySwapLimit": "Limite d'échange de mémoire",
@@ -1140,8 +1140,8 @@
           "healthConfigTCP": "Connexion TCP",
           "healthConfigHTTP": "HTTP",
           "healthConfigCommand": "Commande",
-          "healthPath": "Chemin URL",
-          "healthPathDescription": "Chemin URL vers l'API utilisée pour le contrôle de santé",
+          "healthPath": "Chemin d'URL",
+          "healthPathDescription": "Chemin d'URL vers l'API utilisée pour le contrôle de santé",
           "healthPort": "Port",
           "healthPortHint": "Valeur par défaut : 80",
           "healthPortDescription": "Port du conteneur à utiliser",
@@ -1241,7 +1241,7 @@
         "placement": "Placement"
       },
       "state": {
-        "CREATED": "CRÉÉ",
+        "CREATED": "CRÉÉ ",
         "STARTED": "DÉMARRÉ",
         "FINISHED": "FINI",
         "FAILED": "ÉCHEC",
@@ -1352,9 +1352,9 @@
     "failure": "Erreur d'authentication"
   },
   "dropdownSearchMenu": {
-    "title": "Sélectionner dans la liste {{entity}}",
+    "title": "Sélectionner depuis la liste de {{entity}}",
     "searchPlaceholder": "Rechercher {{entity}}",
-    "clear": "Annuler la sélection",
+    "clear": "Effacer la sélection",
     "showingCount": "Affichage de {{count}} sur {{totalCount}}",
     "noResults": "Aucun élément trouvé"
   },
@@ -1423,8 +1423,8 @@
     "showingCount": "Affichage de {{count}} sur {{totalCount}}"
   },
   "occurrence": {
-    "all": "Correspondre à tous",
-    "any": "Correspondre à n'importe quel"
+    "all": "Faire correspondre à tous",
+    "any": "Faire correspondre à n'importe quel"
   },
   "state": {
     "ON": "ACTIVÉ",

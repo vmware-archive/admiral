@@ -70,7 +70,7 @@
         "deploymentPolicy": "배포 정책",
         "tags": "태그",
         "tagsPlaceholder": "예: location:west",
-        "tagsHint": "키:값 태그 입력",
+        "tagsHint": "[키:값] 태그 입력",
         "autoConfigure": "자동 구성",
         "autoConfigureInput": "호스트 자동 구성 사용",
         "autoConfigureHint": "이 옵션은 생성된 자체 서명된 인증서를 사용하여, 제공된 주소와 포트에 docker 원격 API를 구성합니다. 이 작업은 SSH를 통해 한 번 수행됩니다. 지원되는 운영 체제는 CoreOS, PhotonOS, Ubuntu Server 16.04 이상입니다.",
@@ -144,10 +144,10 @@
         "placementPolicyHint": "기본적으로 리소스는 임의 호스트에 배치됩니다. 다음 전략 중 하나를 선택적으로 적용할 수 있습니다. <br><br><b>BINPACK</b> - 메모리 사용량이 가장 많은 호스트에 배치합니다.<br><br><b>SPREAD</b> - 리소스 수가 가장 적은 호스트에 배치합니다.",
         "dynamicTitle": "동적으로 이 영역에 리소스 할당",
         "tagsTitle": "태그",
-        "tagsHint": "키:값 태그 입력",
+        "tagsHint": "[키:값] 태그 입력",
         "tagsPlaceholder": "예: compliance:yes",
         "tagsToMatchTitle": "일치시킬 태그",
-        "tagsToMatchHint": "일치시킬 키:값 태그 입력",
+        "tagsToMatchHint": "일치시킬 [키:값] 태그 입력",
         "tagsToMatchPlaceholder": "예: location:west"
       },
       "contextPanelTooltip": "배치 영역"
@@ -243,8 +243,8 @@
           "issuerName": "발급자 이름",
           "serial": "일련 번호",
           "fingerprint": "SHA 지문",
-          "validSince": "유효 기간 시작",
-          "validTo": "유효 기간 종료"
+          "validSince": "유효 기간 시작 시간",
+          "validTo": "유효 기간 종료 시간"
         }
       },
       "edit": {
@@ -295,7 +295,7 @@
         "create": "템플릿 생성",
         "createNameHint": "템플릿 이름",
         "createProceed": "진행",
-        "edit": "템플릿 편집",
+        "edit": "다음 템플릿 편집:",
         "newDefinition": {
           "newLabel": "컨테이너 추가",
           "title": "컨테이너 정의 추가",
@@ -516,7 +516,7 @@
         "storageTab": "스토리지",
         "nameLabel": "이름",
         "tagsLabel": "태그",
-        "tagsHint": "키:값 태그 입력",
+        "tagsHint": "[키:값] 태그 입력",
         "tagsPlaceholder": "예: compliance:yes",
         "endpointLabel": "끝점",
         "valueLabel": "값",
@@ -833,7 +833,7 @@
         "supportPublicIpAddressLabel": "공용 IP 지원",
         "defaultForZoneLabel": "영역에 대한 기본값",
         "tagsTitle": "태그",
-        "tagsHint": "키:값 태그 입력",
+        "tagsHint": "[키:값] 태그 입력",
         "tagsPlaceholder": "예: access:restricted"
       },
       "entity": "하위 네트워크",
@@ -845,7 +845,7 @@
       "list": {
         "network": {
           "name": "네트워크",
-          "connectedDateLabel": "연결됨",
+          "connectedDateLabel": "연결 시간",
           "networkDriverLabel": "네트워크 드라이버",
           "ipamDriverLabel": "IPAM 드라이버",
           "subnetLabel": "서브넷",
@@ -888,7 +888,7 @@
         },
         "volume": {
           "create": "볼륨",
-          "connectedDateLabel": "연결됨",
+          "connectedDateLabel": "연결 시간",
           "driverLabel": "드라이버",
           "driverOptionsLabel": "드라이버 옵션",
           "scope": "범위",
@@ -980,8 +980,8 @@
         "networkTrafficReceived": "수신됨",
         "lines": "줄",
         "showingLogs": "로그 표시",
-        "logsOptionSince": "이후",
-        "logsOptionTail": "테일",
+        "logsOptionSince": "처음",
+        "logsOptionTail": "마지막",
         "logsFormat": "로그 형식",
         "logsFormatAnsi": "ANSI",
         "logsFormatRaw": "원시 형식",
@@ -1108,7 +1108,7 @@
           "maxRestarts": "최대 다시 시작 횟수",
           "maxRestartsDescription": "컨테이너 오류 발생 시 최대 다시 시작 횟수",
           "cpuShares": "CPU 공유",
-          "cpuSharesDescription": "컨테이너 CPU 공유을 포함하는 정수값(즉, 기타 컨테이너에 상대한 가중치)",
+          "cpuSharesDescription": "컨테이너 CPU 공유를 포함하는 정수값(즉, 기타 컨테이너에 상대한 가중치)",
           "memoryLimit": "메모리 제한",
           "memoryLimitDescription": "메모리 제한(바이트)",
           "memorySwapLimit": "메모리 스왑 제한",

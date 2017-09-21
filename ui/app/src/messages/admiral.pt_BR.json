@@ -1082,7 +1082,7 @@
             "containerHint": "Exemplo: /container/project/path",
             "readOnly": "Somente Leitura"
           },
-          "volumesFrom": "Volumes - De",
+          "volumesFrom": "Volumes de",
           "volumesFromDescription": "Uma lista de volumes para herdar de um outro contêiner.",
           "volumesFromInputs": {
             "volume": "Volume",

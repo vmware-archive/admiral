@@ -35,7 +35,7 @@
       "titleNew": "Nouveau projet",
       "titleEdit": "Modifier le projet",
       "name": "Nom",
-      "nameRequired": "Le nom est requis.",
+      "nameRequired": "Un nom est requis.",
       "description": "Description"
     },
     "delete": {
@@ -46,7 +46,7 @@
     "summary": {
       "title": "Résumé",
       "type": "Type :",
-      "creationDate": "Créé :",
+      "creationDate": "Créé le :",
       "team": {
         "title": "Équipe de projet",
         "administrators": "Administrateurs de projet :",
@@ -160,7 +160,7 @@
       "clusterResources": "Ressources du cluster",
       "clusterResourcesVic": "Ressources de l'hôte de conteneur",
       "status": "Statut :",
-      "creationDate": "Créé :",
+      "creationDate": "Créé le :",
       "containersCount": "Conteneurs :",
       "cpu": "vCPU :",
       "memory": "Mémoire :"
@@ -176,7 +176,7 @@
       "addHost": {
         "title": "Ajouter un hôte",
         "address": "Adresse",
-        "addressRequired": "L'adresse est requise."
+        "addressRequired": "Une adresse est requise."
       }
     },
     "edit": {
@@ -185,7 +185,7 @@
       "titleEdit": "Modifier le cluster",
       "titleEditVic": "Modifier l'hôte de conteneur",
       "name": "Nom",
-      "nameRequired": "Le nom est requis.",
+      "nameRequired": "Un nom est requis.",
       "description": "Description",
       "type": "Type",
       "url": "URL",
@@ -266,7 +266,7 @@
     "details": {
       "commonName": "Nom commun",
       "issuerName": "Nom de l'émetteur",
-      "serial": "Série",
+      "serial": "Numéro de série",
       "fingerprint": "Empreinte digitale SHA",
       "validSince": "Date de début de validité",
       "validTo": "Date de fin de validité"

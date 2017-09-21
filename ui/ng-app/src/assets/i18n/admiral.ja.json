@@ -46,7 +46,7 @@
     "summary": {
       "title": "概要",
       "type": "タイプ：",
-      "creationDate": "作成日:",
+      "creationDate": "作成日時:",
       "team": {
         "title": "プロジェクト チーム",
         "administrators": "プロジェクト管理者:",
@@ -160,7 +160,7 @@
       "clusterResources": "クラスタ リソース",
       "clusterResourcesVic": "コンテナ ホスト リソース",
       "status": "ステータス:",
-      "creationDate": "作成日:",
+      "creationDate": "作成日時:",
       "containersCount": "コンテナ:",
       "cpu": "vCPU:",
       "memory": "メモリ:"

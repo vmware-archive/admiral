@@ -46,7 +46,7 @@
     "summary": {
       "title": "요약",
       "type": "유형:",
-      "creationDate": "생성일:",
+      "creationDate": "생성 시간:",
       "team": {
         "title": "프로젝트 팀",
         "administrators": "프로젝트 관리자:",
@@ -160,7 +160,7 @@
       "clusterResources": "클러스터 리소스",
       "clusterResourcesVic": "컨테이너 호스트 리소스",
       "status": "상태:",
-      "creationDate": "생성일:",
+      "creationDate": "생성 시간:",
       "containersCount": "컨테이너:",
       "cpu": "vCPU:",
       "memory": "메모리:"
@@ -268,8 +268,8 @@
       "issuerName": "발급자 이름",
       "serial": "일련 번호",
       "fingerprint": "SHA 지문",
-      "validSince": "유효 기간 시작",
-      "validTo": "유효 기간 종료"
+      "validSince": "유효 기간 시작 시간",
+      "validTo": "유효 기간 종료 시간"
     }
   },
   "tagDetails": {

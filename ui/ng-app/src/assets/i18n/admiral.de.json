@@ -176,7 +176,7 @@
       "addHost": {
         "title": "Host hinzufügen",
         "address": "Adresse",
-        "addressRequired": "Adresse ist erforderlich."
+        "addressRequired": "Die Adresse ist erforderlich."
       }
     },
     "edit": {
@@ -189,7 +189,7 @@
       "description": "Beschreibung",
       "type": "Typ",
       "url": "URL",
-      "urlRequired": "Cluster-URL ist erforderlich.",
+      "urlRequired": "Die Cluster-URL ist erforderlich.",
       "urlRequiredVic": "Container-Host-URL ist erforderlich.",
       "credentials": "Anmeldedaten"
     },

@@ -70,7 +70,7 @@
         "deploymentPolicy": "Política de implementación",
         "tags": "Etiquetas",
         "tagsPlaceholder": "Ejemplo: location:west",
-        "tagsHint": "Introduzca etiquetas clave:valor",
+        "tagsHint": "Introduzca etiquetas como clave:valor ",
         "autoConfigure": "Configuración automática",
         "autoConfigureInput": "Habilitar configuración automática de hosts",
         "autoConfigureHint": "Esta opción configurará la API remota de Docker en la dirección y el puerto proporcionados con certificados autofirmados generados. Se hará una vez mediante SSH. Sistemas operativos admitidos: CoreOS, PhotonOS, Ubuntu Server 16.04 o posterior.",
@@ -144,10 +144,10 @@
         "placementPolicyHint": "De forma predeterminada, los recursos se colocan en hosts aleatorios. Opcionalmente, se puede aplicar una de estas estrategias:<br><br><b>BINPACK</b>: colocación en el host que use más memoria.<br><br><b>SPREAD</b>: colocación en el host que tenga el menor número de recursos.",
         "dynamicTitle": "Asignar dinámicamente recursos a esta zona",
         "tagsTitle": "Etiquetas",
-        "tagsHint": "Introduzca etiquetas clave:valor",
+        "tagsHint": "Introduzca etiquetas como clave:valor ",
         "tagsPlaceholder": "Ejemplo: compliance:yes",
         "tagsToMatchTitle": "Etiquetas que hacer coincidir",
-        "tagsToMatchHint": "Introduzca etiquetas clave:valor que hacer coincidir",
+        "tagsToMatchHint": "Introduzca etiquetas como clave:valor que hacer coincidir",
         "tagsToMatchPlaceholder": "Ejemplo: location:west"
       },
       "contextPanelTooltip": "Zonas de ubicación"
@@ -380,7 +380,7 @@
           }
         },
         "network": {
-          "drag": "Arrastrar para adjuntar un contenedor a esta red",
+          "drag": "Arrastrar para adjuntar contenedor a esta red",
           "drop": "Soltar para adjuntar un contenedor a esta red"
         },
         "volume": {
@@ -516,7 +516,7 @@
         "storageTab": "Almacenamiento",
         "nameLabel": "Nombre",
         "tagsLabel": "Etiquetas",
-        "tagsHint": "Introduzca etiquetas clave:valor",
+        "tagsHint": "Introduzca etiquetas como clave:valor ",
         "tagsPlaceholder": "Ejemplo: compliance:yes",
         "endpointLabel": "Endpoint",
         "valueLabel": "Valor",
@@ -833,7 +833,7 @@
         "supportPublicIpAddressLabel": "IP pública de soporte",
         "defaultForZoneLabel": "Valor predeterminado para zona",
         "tagsTitle": "Etiquetas",
-        "tagsHint": "Introduzca etiquetas clave:valor",
+        "tagsHint": "Introduzca etiquetas como clave:valor ",
         "tagsPlaceholder": "Ejemplo: access:restricted"
       },
       "entity": "Subred",
@@ -948,7 +948,7 @@
         "cluster": {
           "name": "Clúster",
           "sizeLabel": "Tamaño del clúster",
-          "scaleLabel": "Escalar"
+          "scaleLabel": "Escala"
         },
         "composite": {
           "name": "Aplicación",
@@ -1082,7 +1082,7 @@
             "containerHint": "Ejemplo: /container/project/path",
             "readOnly": "Solo lectura"
           },
-          "volumesFrom": "Volúmenes de origen",
+          "volumesFrom": "Volúmenes de ",
           "volumesFromDescription": "Una lista de volúmenes que heredar desde otro contenedor.",
           "volumesFromInputs": {
             "volume": "Volumen",
