@@ -110,8 +110,10 @@ public class ClusterUtils {
 
                 if (!Strings.isNullOrEmpty(rawCustomOptions)) {
                     rawCustomOptions = rawCustomOptions.replaceAll("[{}]", " ").trim();
-                    Map<String, String> properties = Splitter.on(",").withKeyValueSeparator("=").split(rawCustomOptions);
-                    hostsFilter = properties.get(ClusterService.HOSTS_FILTER_QUERY_PARAM);
+                    if (!Strings.isNullOrEmpty(rawCustomOptions)) {
+                        Map<String, String> properties = Splitter.on(",").withKeyValueSeparator("=").split(rawCustomOptions);
+                        hostsFilter = properties.get(ClusterService.HOSTS_FILTER_QUERY_PARAM);
+                    }
                 }
             }
 
