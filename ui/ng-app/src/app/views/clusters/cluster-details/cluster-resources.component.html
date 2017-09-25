@@ -9,7 +9,7 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<delete-confirmation [title]="'hosts.delete.title' | i18n"
+<delete-confirmation [title]="'hosts.actions.delete.title' | i18n"
                      [description]="deleteConfirmationDescription"
                      [(alert)]="deleteConfirmationAlert"
                      [visible]="hostToDelete"
@@ -32,6 +32,12 @@
               <clr-icon shape="ellipsis-vertical" size="20"></clr-icon>
           </button>
           <div class="dropdown-menu">
+            <a href="..." *ngIf="operationSupported('DISABLE', item)" clrDropdownItem (click)="disableHost($event, item)">
+              <clr-icon shape="pause" size="20" class="card-drop-down-actions"></clr-icon>{{ "hosts.actions.disable" | i18n }}
+            </a>
+            <a href="..." *ngIf="operationSupported('ENABLE', item)" clrDropdownItem (click)="enableHost($event, item)">
+              <clr-icon shape="play" size="20" class="card-drop-down-actions"></clr-icon>{{ "hosts.actions.enable" | i18n }}
+            </a>
             <a href="..." clrDropdownItem (click)="deleteHost($event, item)">
               <clr-icon shape="trash" size="20" class="card-drop-down-actions"></clr-icon>{{ "delete" | i18n }}
             </a>

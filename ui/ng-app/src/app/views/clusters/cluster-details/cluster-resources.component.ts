@@ -9,11 +9,12 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, Input, ViewChild, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, ViewChild, Output, OnChanges, EventEmitter, SimpleChanges } from '@angular/core';
 import { DocumentService } from "../../../utils/document.service";
 import * as I18n from 'i18next';
 import { Utils } from "../../../utils/utils";
 import { GridViewComponent } from '../../../components/grid-view/grid-view.component';
+import { constants } from '../../../utils/constants';
 
 @Component({
   selector: 'app-cluster-resources',
@@ -27,6 +28,7 @@ export class ClusterResourcesComponent implements OnChanges {
 
   @Input() cluster: any;
   @Input() projectLink: string;
+  @Output() onChange: EventEmitter<any> = new EventEmitter();
   @ViewChild('gridView') gridView: GridViewComponent;
 
   serviceEndpoint: string;
@@ -43,7 +45,7 @@ export class ClusterResourcesComponent implements OnChanges {
   }
 
   get deleteConfirmationDescription(): string {
-    return this.hostToDelete && I18n.t('hosts.delete.confirmation',
+    return this.hostToDelete && I18n.t('hosts.actions.delete.confirmation',
             { hostName: this.getHostName(this.hostToDelete),
               interpolation: { escapeValue: false } } as I18n.TranslationOptions);
   }
@@ -106,5 +108,47 @@ export class ClusterResourcesComponent implements OnChanges {
 
   getMemoryPercentage(host, shouldRound) {
     return Utils.getMemoryPercentage(host, shouldRound);
+  }
+
+  operationSupported(op, host) {
+    if (op === 'ENABLE') {
+      return host.powerState === constants.hosts.state.SUSPEND
+          || host.powerState === constants.hosts.state.OFF;
+    } else if (op === 'DISABLE') {
+      return host.powerState !== constants.hosts.state.SUSPEND
+          && host.powerState !== constants.hosts.state.OFF;
+    }
+
+    return true;
+  }
+
+  enableHost(event, host) {
+    event.stopPropagation();
+
+    this.service.patch(host.documentSelfLink, { 'powerState': constants.hosts.state.ON })
+        .then(result => {
+          this.gridView.refresh();
+          this.onChange.emit();
+        })
+        .catch(err => {
+          console.log(Utils.getErrorMessage(err)._generic);
+        });
+
+    return false; // prevents navigation
+  }
+
+  disableHost(event, host) {
+    event.stopPropagation();
+
+    this.service.patch(host.documentSelfLink, { 'powerState': constants.hosts.state.SUSPEND })
+        .then(result => {
+          this.gridView.refresh();
+          this.onChange.emit();
+        })
+        .catch(err => {
+          console.log(Utils.getErrorMessage(err)._generic);
+        });
+
+    return false; // prevents navigation
   }
 }

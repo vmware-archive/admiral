@@ -201,9 +201,13 @@
     }
   },
   "hosts": {
-    "delete":{
-      "title": "Remove Host",
-      "confirmation": "Confirm removing of host {{hostName}}. The operation cannot be undone."
+    "actions": {
+      "delete":{
+        "title": "Remove Host",
+        "confirmation": "Confirm removing of host {{hostName}}. The operation cannot be undone."
+      },
+      "enable": "Enable",
+      "disable": "Disable"
     },
     "state": {
       "ON": "ON",

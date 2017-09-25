@@ -52,4 +52,10 @@ export class ClusterDetailsComponent extends BaseDetailsComponent implements OnI
     }
     return false;
   }
+
+  reloadCluster() {
+    this.service.get(this.entity.documentSelfLink, false, this.projectLink).then(cluster => {
+      this.entity = cluster;
+    });
+  }
 }
