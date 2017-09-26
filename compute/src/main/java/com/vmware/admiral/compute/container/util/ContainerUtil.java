@@ -35,6 +35,7 @@ import com.vmware.admiral.compute.container.SystemContainerDescriptions;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -148,8 +149,7 @@ public class ContainerUtil {
      * only difference between this method and the one in SystemContainerDescriptions is that this
      * one will return false if check is against system container.
      *
-     * @param containerState
-     *            - ContainerState which will be checked.
+     * @param containerState - ContainerState which will be checked.
      * @return
      */
     public static boolean isDiscoveredContainer(ContainerState containerState) {
@@ -188,15 +188,28 @@ public class ContainerUtil {
         return null;
     }
 
-    public static String removeTagFromContainerImageName(String name) {
-        int lastIndex = name.lastIndexOf(":");
+    public static String removeTagFromContainerImageName(String name, ServiceHost host) {
+        int firstIndexColon = name.indexOf(":");
+        int firstIndexSlash = name.indexOf("/");
+        int lastIndexColon = name.lastIndexOf(":");
 
-        //No tag specified, return without any modification.
-        if (lastIndex == -1) {
+        if (firstIndexColon == -1) {
             return name;
         }
+        if (firstIndexSlash < firstIndexColon) {
+            return name.substring(0, lastIndexColon);
+        }
+        int port = -1;
+        try {
+            port = Integer.parseInt(name.substring(firstIndexColon + 1, firstIndexSlash));
+        } catch (NumberFormatException e) {
+            host.log(Level.FINE, "There is no port in the uri.");
+        }
 
-        return name.substring(0, lastIndex);
+        if (port > 0 && firstIndexColon != lastIndexColon) {
+            return name.substring(0, lastIndexColon);
+        }
+        return name;
     }
 
     /**

@@ -200,11 +200,15 @@ public class ContainerUtilTest extends ComputeBaseTest {
 
     @Test
     public void testRemoveTagFromContainerImageName() {
-        String[] input = new String[] { "postgres:9.4", "ubuntu" };
-        String[] expectedOutput = new String[] { "postgres", "ubuntu" };
+        String[] input = new String[] { "postgres", "postgres:9.4", "test-repo/postgres",
+                "test-repo/postgres:9.4", "test-repo:5005/postgres",
+                "test-repo:5005/postgres:9.4" };
+        String[] expectedOutput = new String[] { "postgres", "postgres", "test-repo/postgres",
+                "test-repo/postgres", "test-repo:5005/postgres",
+                "test-repo:5005/postgres" };
 
         for (int i = 0; i < input.length; i++) {
-            String actualOutput = removeTagFromContainerImageName(input[i]);
+            String actualOutput = removeTagFromContainerImageName(input[i], host);
             assertEquals("Failed on iteration: " + i, expectedOutput[i], actualOutput);
         }
 

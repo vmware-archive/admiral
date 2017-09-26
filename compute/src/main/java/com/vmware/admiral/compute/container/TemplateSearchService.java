@@ -90,7 +90,7 @@ public class TemplateSearchService extends StatelessService {
         Map<String, String> queryParams = UriUtils.parseUriQueryParams(get.getUri());
         String query = queryParams.get(QUERY_PARAM);
         AssertUtil.assertNotEmpty(query, QUERY_PARAM);
-        query = removeTagFromContainerImageName(query);
+        query = removeTagFromContainerImageName(query, getHost());
 
         // FIXME search doesn't work when the text contain non alpha chars so disable for now
         // searching fields indexed as TEXT, so case insensitive
@@ -384,7 +384,7 @@ public class TemplateSearchService extends StatelessService {
         // remove leading asterisks as the registry will reject them
         String query = queryParams.get(QUERY_PARAM);
         query = query.replaceAll("^\\*+", "");
-        query = removeTagFromContainerImageName(query);
+        query = removeTagFromContainerImageName(query, getHost());
 
         /* If the query is empty after remove of leading asterisks
          * return noResult to avoid invalid request to ContainerImageService */
