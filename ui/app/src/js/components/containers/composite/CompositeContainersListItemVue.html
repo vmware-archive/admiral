@@ -10,20 +10,19 @@
   -->
 
 <div class="composite-container-item">
-  <alert v-bind:alert-type="alert.type"
-      v-bind:show-alert="alert.show"
-      v-bind:alert-message="alert.message"
-      v-bind:alert-timeout="3000"
-      v-on:alert-closed="closeAlert()"></alert>
+  <alert :alert-type="alert.type" :show-alert="alert.show" :alert-message="alert.message"
+         :alert-timeout="3000" @alert-closed="closeAlert()"></alert>
+
   <div class="container-header-holder">
     <div :class="'status ' + model.powerState">
-      <i class="fa fa-lock" title="Managed by catalog"
-         v-show="operationSupported('MANAGE')"></i>
+      <i class="fa fa-lock" :title="i18n('app.container.list.composite.managedByCatalog')"
+                            v-show="operationSupported('MANAGE')"></i>
       <span class="status-state">{{i18n("app.container.list.composite.name")}}</span></div>
+
     <div class="container-header">
-      <div v-bind:class="'icons icons-' + numberOfIcons">
+      <div :class="'icons icons-' + numberOfIcons">
         <template v-for="i in numberOfIcons">
-          <img v-bind:src="model.icons[i]"/>
+          <img :src="model.icons[i]"/>
         </template>
       </div>
       <div class="title-holder">
@@ -31,7 +30,9 @@
       </div>
     </div>
   </div>
+
   <hr/>
+
   <div class="container-content">
     <div class="container-created-holder">
       <span class="container-label">{{i18n("app.container.list.createdDateLabel")}}</span>
@@ -40,27 +41,30 @@
   </div>
   <template v-if="showNumbers">
     <div class="relations-holder">
-      <navigation-link v-bind:show="hostsCount > 0"
-                       v-if="isHostsViewLinksEnabled"
-                       v-bind:label="hostsCount"
+      <navigation-link v-if="isHostsViewLinksEnabled"
+                       :show="hostsCount > 0"
+                       :label="hostsCount"
                        icon-name="image-assets/hosts-nav-link.png"
-                       v-bind:tooltip="i18n('app.resource.list.relations.hosts')"
-                       v-on:click="showHosts($event)"></navigation-link>
-      <navigation-link v-bind:show="(containersCount > 0)"
-                       v-bind:label="containersCount"
+                       :tooltip="i18n('app.resource.list.relations.hosts')"
+                       @click="showHosts($event)"></navigation-link>
+      <navigation-link v-if="(containersCount > 0)" :show="(containersCount > 0)"
+                       :label="containersCount"
                        icon-name="image-assets/containers-nav-link.png"
-                       v-bind:tooltip="i18n('app.resource.list.relations.containers')"
-                       v-on:click="showContainers($event)"></navigation-link>
-      <navigation-link v-bind:show="(networksCount > 0)"
-                       v-bind:label="networksCount"
+                       :tooltip="i18n('app.resource.list.relations.containers')"
+                       :lone="isLoneContainer()"
+                       @click="showContainers($event)"></navigation-link>
+      <navigation-link v-if="(networksCount > 0)" :show="(networksCount > 0)"
+                       :label="networksCount"
                        icon-name="image-assets/networks-nav-link.png"
-                       v-bind:tooltip="i18n('app.resource.list.relations.networks')"
-                       v-on:click="showNetworks($event)"></navigation-link>
-      <navigation-link v-bind:show="(volumesCount > 0)"
-                       v-bind:label="volumesCount"
+                       :tooltip="i18n('app.resource.list.relations.networks')"
+                       :lone="isLoneNetwork()"
+                       @click="showNetworks($event)"></navigation-link>
+      <navigation-link v-if="(volumesCount > 0)" :show="(volumesCount > 0)"
+                       :label="volumesCount"
                        icon-name="image-assets/volumes-nav-link.png"
-                       v-bind:tooltip="i18n('app.resource.list.relations.volumes')"
-                       v-on:click="showVolumes($event)"></navigation-link>
+                       :tooltip="i18n('app.resource.list.relations.volumes')"
+                       :lone="isLoneVolume()"
+                       @click="showVolumes($event)"></navigation-link>
     </div>
   </template>
   <div class="container-actions" v-bind:class="{'hide': showDeleteConfirmation}">

@@ -956,7 +956,8 @@
           "containersCountLabel": "Containers",
           "networksCountLabel": "Networks",
           "volumesCountLabel": "Volumes",
-          "childContainersLabel": "Child containers"
+          "childContainersLabel": "Child containers",
+          "managedByCatalog": "Managed by catalog"
         },
         "searchCategoryFilterTitle": "View:",
         "searchCategory": {

@@ -433,6 +433,46 @@ let getVolumeLinks = function(compositeComponentItems, volumes) {
   return volumeLinks;
 };
 
+let updateApplicationIcons = function(applicationItemsResult, applications) {
+  let applicationItems = applicationItemsResult.documentLinks.map((documentLink) => {
+    return applicationItemsResult.documents[documentLink];
+  });
+
+  if (applicationItems.length < 1) {
+    return;
+  }
+
+  let appLinks = new Set();
+  applicationItems.forEach(appItem => {
+    appItem.compositeComponentLinks.forEach(appLink => {
+      appLinks.add(appLink);
+    });
+  });
+
+  let compositeComponentLinks = [...appLinks];
+  let application = applications.find((item) => {
+    return compositeComponentLinks.find((compositeComponentLink) => {
+      return item.documentSelfLink === compositeComponentLink;
+    });
+  });
+
+  if (application) {
+    if (!application.icons) {
+      application.icons = [];
+    }
+
+    let applicationItemsIcons = new Set();
+    applicationItems.forEach(applicationItem => {
+      let applicationItemIcon = imageUtils.getImageIconLink(applicationItem.name);
+
+      if (applicationItemIcon) {
+        applicationItemsIcons.add(applicationItemIcon);
+      }
+    });
+    application.icons.push([...applicationItemsIcons]);
+  }
+};
+
 let ContainersStore = Reflux.createStore({
   mixins: [ContextPanelStoreMixin, CrudStoreMixin],
   init: function() {
@@ -539,20 +579,25 @@ let ContainersStore = Reflux.createStore({
           this.emitChange();
         }).catch(this.onListError);
       }
-    } else {
+    } else { // Applications
       let compositeComponentsContainersCalls = [];
 
       items.forEach((item) => {
         enhanceCompositeComponent(item);
-        compositeComponentsContainersCalls.push(
-          services.loadContainersForCompositeComponent(item.documentSelfLink));
-      });
-      // Load containers of the current composite components
-      Promise.all(compositeComponentsContainersCalls).then((containersResults) => {
 
-        for (let i = 0; i < containersResults.length; i++) {
-          let containers = containersResults[i].documentLinks.map((documentLink) => {
-            return containersResults[i].documents[documentLink];
+        compositeComponentsContainersCalls.push(this.loadApplication(item.documentSelfLink));
+      });
+
+      // Load containers of the current composite components
+      Promise.all(compositeComponentsContainersCalls).then((result) => {
+        for (let i = 0; i < result.length; i++) {
+
+          let childContainersResult = result[i][0];
+          let childNetworksResult = result[i][1];
+          let childVolumesResult = result[i][2];
+
+          let containers = childContainersResult.documentLinks.map((documentLink) => {
+            return childContainersResult.documents[documentLink];
           });
 
           if (containers.length > 0) {
@@ -572,6 +617,12 @@ let ContainersStore = Reflux.createStore({
               }
             }
           }
+
+          // Networks
+          updateApplicationIcons(childNetworksResult, items);
+
+          // Volumes
+          updateApplicationIcons(childVolumesResult, items);
         }
 
         let previousItems = this.selectFromData(['listView', 'items']).get();
@@ -588,6 +639,15 @@ let ContainersStore = Reflux.createStore({
         this.emitChange();
       }).catch(this.onListError);
     }
+  },
+
+  loadApplication: function(applicationId) {
+
+    return Promise.all([
+      services.loadContainersForCompositeComponent(applicationId),
+      services.loadNetworksForCompositeComponent(applicationId),
+      services.loadVolumesForCompositeComponent(applicationId)
+    ]);
   },
 
   onOpenContainers: function(queryOptions, forceReload, keepContext) {

@@ -51,17 +51,18 @@
     </div>
   </div>
   <div class="relations-holder">
-    <navigation-link v-bind:show="parentHostsCount > 0"
-                     v-if="isHostsViewLinksEnabled"
-                     v-bind:label="parentHostsCount"
+    <navigation-link v-if="isHostsViewLinksEnabled && parentHostsCount > 0"
+                     :show="parentHostsCount > 0"
+                     :label="parentHostsCount"
                      icon-name="image-assets/hosts-nav-link.png"
-                     v-bind:tooltip="i18n('app.resource.list.relations.hosts')"
-                     v-on:click="showHosts($event)"></navigation-link>
-    <navigation-link v-bind:show="applicationsCount > 0"
-                     v-bind:label="applicationsCount"
+                     :tooltip="i18n('app.resource.list.relations.hosts')"
+                     @click="showHosts($event)"></navigation-link>
+    <navigation-link v-if="applicationsCount > 0"
+                     :show="applicationsCount > 0"
+                     :label="applicationsCount"
                      icon-name="image-assets/applications-nav-link.png"
-                     v-bind:tooltip="i18n('app.resource.list.relations.applications')"
-                     v-on:click="showApps($event)"></navigation-link>
+                     :tooltip="i18n('app.resource.list.relations.applications')"
+                     @click="showApps($event)"></navigation-link>
   </div>
   <div class="container-actions"
        v-if="supportsDay2Operations"

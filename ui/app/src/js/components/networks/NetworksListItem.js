@@ -162,6 +162,20 @@ var NetworksListItem = Vue.extend({
       NavigationActions.openContainers(queryOptions, true);
     },
 
+    isLoneContainer: function() {
+      let hasHosts = this.isHostsViewLinksEnabled && this.parentHostsCount > 0;
+      let hasApplications = this.applicationsCount > 0;
+
+      return !hasHosts && !hasApplications;
+    },
+
+    isLoneApplication: function() {
+      let hasHosts = this.isHostsViewLinksEnabled && this.parentHostsCount > 0;
+      let hasContainers = this.connectedContainersCount > 0;
+
+      return !hasHosts && !hasContainers;
+    },
+
     networkStatusDisplay: utils.networkStatusDisplay
   }
 });

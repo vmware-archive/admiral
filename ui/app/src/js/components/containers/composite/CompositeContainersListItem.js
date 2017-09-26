@@ -191,6 +191,30 @@ var CompositeContainersListItem = Vue.extend({
       };
 
       NavigationActions.openVolumes(queryOptions);
+    },
+
+    isLoneContainer: function() {
+      let hasHosts = this.isHostsViewLinksEnabled && this.hostsCount > 0;
+      let hasNetworks = this.networksCount > 0;
+      let hasVolumes = this.volumesCount > 0;
+
+      return !hasHosts && !hasNetworks && !hasVolumes;
+    },
+
+    isLoneNetwork: function() {
+      let hasHosts = this.isHostsViewLinksEnabled && this.hostsCount > 0;
+      let hasContainers = this.containersCount > 0;
+      let hasVolumes = this.volumesCount > 0;
+
+      return !hasHosts && !hasContainers && !hasVolumes;
+    },
+
+    isLoneVolume: function() {
+      let hasHosts = this.isHostsViewLinksEnabled && this.hostsCount > 0;
+      let hasContainers = this.containersCount > 0;
+      let hasNetworks = this.networksCount > 0;
+
+      return !hasHosts && !hasContainers && !hasNetworks;
     }
   }
 });
