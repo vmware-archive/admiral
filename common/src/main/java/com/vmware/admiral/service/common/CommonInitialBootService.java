@@ -12,7 +12,6 @@
 package com.vmware.admiral.service.common;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import com.vmware.admiral.common.ManagementUriParts;
@@ -29,8 +28,15 @@ public class CommonInitialBootService extends AbstractInitialBootService {
 
     @Override
     public void handlePost(Operation post) {
+
+        // Configuration states documents
+
+        initInstances(Operation.createGet(null), false, false,
+                ConfigurationService.getConfigurationProperties());
+
+        // Other documents
+
         List<ServiceDocument> resources = new ArrayList<>();
-        Collections.addAll(resources, ConfigurationService.getConfigurationProperties());
         resources.add(ResourceNamePrefixService.buildDefaultStateInstance());
         resources.add(buildUniqueProjectNamesInstance());
         resources.add(buildUniqueProjectIndexesInstance());

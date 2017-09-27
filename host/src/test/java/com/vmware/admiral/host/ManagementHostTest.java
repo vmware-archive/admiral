@@ -36,8 +36,12 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import com.vmware.admiral.common.test.BaseTestCase;
+import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.host.interceptor.AuthCredentialsInterceptor;
+import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
+import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
+import com.vmware.admiral.service.common.ConfigurationServiceTest;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
@@ -69,11 +73,13 @@ public class ManagementHostTest {
 
     private static class TestManagementHost extends ManagementHost implements AutoCloseable {
 
-        public TestManagementHost(boolean startMockHostAdapterInstance, String... extraArgs) throws Throwable {
+        public TestManagementHost(boolean startMockHostAdapterInstance, String... extraArgs)
+                throws Throwable {
             List<String> args = new ArrayList<>(Arrays.asList(
                     // start mock host adapter instance
-                    ARGUMENT_PREFIX + HostInitDockerAdapterServiceConfig.FIELD_NAME_START_MOCK_HOST_ADAPTER_INSTANCE
-                    + ARGUMENT_ASSIGNMENT + startMockHostAdapterInstance,
+                    ARGUMENT_PREFIX
+                            + HostInitDockerAdapterServiceConfig.FIELD_NAME_START_MOCK_HOST_ADAPTER_INSTANCE
+                            + ARGUMENT_ASSIGNMENT + startMockHostAdapterInstance,
                     // generate a random sandbox
                     ARGUMENT_PREFIX + "sandbox" + ARGUMENT_ASSIGNMENT + SANDBOX.getRoot().toPath(),
                     // ask runtime to pick a random port
@@ -113,8 +119,8 @@ public class ManagementHostTest {
             host.start();
             host.startManagementServices();
             AtomicInteger statusCode = new AtomicInteger(0);
-            Operation op =
-                    Operation.createGet(UriUtils.buildUri(host, MockDockerAdapterService.SELF_LINK))
+            Operation op = Operation
+                    .createGet(UriUtils.buildUri(host, MockDockerAdapterService.SELF_LINK))
                     .setReferer(host.getUri())
                     .setCompletion((o, e) -> {
                         if (e == null) {
@@ -137,8 +143,8 @@ public class ManagementHostTest {
             host.start();
             host.enableDynamicServiceLoading();
             AtomicInteger statusCode = new AtomicInteger(0);
-            Operation op =
-                    Operation.createGet(UriUtils.buildUri(host, LoaderFactoryService.SELF_LINK))
+            Operation op = Operation
+                    .createGet(UriUtils.buildUri(host, LoaderFactoryService.SELF_LINK))
                     .setReferer(host.getUri())
                     .setCompletion((o, e) -> {
                         if (e == null) {
@@ -158,7 +164,8 @@ public class ManagementHostTest {
     public void testManagementHostInitializationNoErrorsWithNodeGroup() throws Throwable {
         try (TestManagementHost host = new TestManagementHost(false,
                 ARGUMENT_PREFIX + "publicUri" + ARGUMENT_ASSIGNMENT + "http://127.0.0.1:8292",
-                ARGUMENT_PREFIX + "nodeGroupPublicUri" + ARGUMENT_ASSIGNMENT + "http://127.0.0.1:8292",
+                ARGUMENT_PREFIX + "nodeGroupPublicUri" + ARGUMENT_ASSIGNMENT
+                        + "http://127.0.0.1:8292",
                 ARGUMENT_PREFIX + "peerList" + ARGUMENT_ASSIGNMENT + "http://127.0.0.1:8292")) {
             // we're just verifying that no exceptions are thrown
         }
@@ -168,13 +175,14 @@ public class ManagementHostTest {
     public void testManagementHostInitializationWithNodeGroup() throws Throwable {
         try (TestManagementHost host = new TestManagementHost(true,
                 ARGUMENT_PREFIX + "publicUri" + ARGUMENT_ASSIGNMENT + "http://127.0.0.1:8292",
-                ARGUMENT_PREFIX + "nodeGroupPublicUri" + ARGUMENT_ASSIGNMENT + "http://127.0.0.1:8292",
+                ARGUMENT_PREFIX + "nodeGroupPublicUri" + ARGUMENT_ASSIGNMENT
+                        + "http://127.0.0.1:8292",
                 ARGUMENT_PREFIX + "peerList" + ARGUMENT_ASSIGNMENT + "http://127.0.0.1:8292")) {
             host.start();
             host.startManagementServices();
             AtomicInteger statusCode = new AtomicInteger(0);
-            Operation op =
-                    Operation.createGet(UriUtils.buildUri(host, MockDockerAdapterService.SELF_LINK))
+            Operation op = Operation
+                    .createGet(UriUtils.buildUri(host, MockDockerAdapterService.SELF_LINK))
                     .setReferer(host.getUri())
                     .setCompletion((o, e) -> {
                         if (e == null) {
@@ -214,7 +222,8 @@ public class ManagementHostTest {
     public void testManagementHostInitializationErrorSamePort() throws Throwable {
         try (TestManagementHost host = new TestManagementHost(true,
                 ARGUMENT_PREFIX + "publicUri" + ARGUMENT_ASSIGNMENT + "http://127.0.0.1:8282",
-                ARGUMENT_PREFIX + "nodeGroupPublicUri" + ARGUMENT_ASSIGNMENT + "http://127.0.0.1:8282",
+                ARGUMENT_PREFIX + "nodeGroupPublicUri" + ARGUMENT_ASSIGNMENT
+                        + "http://127.0.0.1:8282",
                 ARGUMENT_PREFIX + "peerList" + ARGUMENT_ASSIGNMENT + "http://127.0.0.1:8282")) {
             // we're just verifying that exception is thrown
         }
@@ -233,10 +242,10 @@ public class ManagementHostTest {
                     ComputeService.FACTORY_LINK);
             host.getTestContext().await();
 
-            ComputeDescription computeDescription =
-                    doPost(host, new ComputeDescription(), ComputeDescriptionService.FACTORY_LINK);
-            AuthCredentialsServiceState credentials =
-                    doPost(host, new AuthCredentialsServiceState(), AuthCredentialsService.FACTORY_LINK);
+            ComputeDescription computeDescription = doPost(host, new ComputeDescription(),
+                    ComputeDescriptionService.FACTORY_LINK);
+            AuthCredentialsServiceState credentials = doPost(host,
+                    new AuthCredentialsServiceState(), AuthCredentialsService.FACTORY_LINK);
 
             ComputeState compute = new ComputeState();
             compute.customProperties = new HashMap<>();
@@ -271,8 +280,8 @@ public class ManagementHostTest {
                     ResourcePoolService.FACTORY_LINK);
             host.getTestContext().await();
 
-            ComputeDescription computeDescription =
-                    doPost(host, new ComputeDescription(), ComputeDescriptionService.FACTORY_LINK);
+            ComputeDescription computeDescription = doPost(host, new ComputeDescription(),
+                    ComputeDescriptionService.FACTORY_LINK);
 
             ResourcePoolState resourcePool = new ResourcePoolState();
             resourcePool.name = "test-resource-pool";
@@ -301,12 +310,73 @@ public class ManagementHostTest {
         }
     }
 
+    @Test
+    public void testManagementHostUpdateConfigurationOnRestart() throws Throwable {
+        ConfigurationServiceTest.overrideConfigurationPropertiesFile("/configuration-0.properties");
+        try (TestManagementHost host = new TestManagementHost(true)) {
+            host.start();
+            host.registerForServiceAvailability(host.getTestContext().getCompletion(),
+                    ConfigurationFactoryService.SELF_LINK);
+            host.getTestContext().await();
+
+            ConfigurationState config;
+
+            config = doGet(host, ConfigurationState.class, UriUtils.buildUri(host,
+                    UriUtils.buildUriPath(ConfigurationFactoryService.SELF_LINK, "/key1")));
+            assertEquals("key1", config.key);
+            assertEquals("one", config.value);
+            assertEquals("one", ConfigurationUtil.getProperty("key1"));
+
+            config = doGet(host, ConfigurationState.class, UriUtils.buildUri(host,
+                    UriUtils.buildUriPath(ConfigurationFactoryService.SELF_LINK, "/key2")));
+            assertEquals("key2", config.key);
+            assertEquals("2", config.value);
+            assertEquals("2", ConfigurationUtil.getProperty("key2"));
+
+            config = doGet(host, ConfigurationState.class, UriUtils.buildUri(host,
+                    UriUtils.buildUriPath(ConfigurationFactoryService.SELF_LINK, "/key3")));
+            assertEquals("key3", config.key);
+            assertEquals("true", config.value);
+            assertEquals("true", ConfigurationUtil.getProperty("key3"));
+        }
+
+        // --- "restarting..." ---
+
+        ConfigurationServiceTest.overrideConfigurationPropertiesFile("/configuration-1.properties");
+        try (TestManagementHost host = new TestManagementHost(true)) {
+            host.start();
+            host.registerForServiceAvailability(host.getTestContext().getCompletion(),
+                    ConfigurationFactoryService.SELF_LINK);
+            host.getTestContext().await();
+
+            ConfigurationState config;
+
+            config = doGet(host, ConfigurationState.class, UriUtils.buildUri(host,
+                    UriUtils.buildUriPath(ConfigurationFactoryService.SELF_LINK, "/key1")));
+            assertEquals("key1", config.key);
+            assertEquals("one more", config.value);
+            assertEquals("one more", ConfigurationUtil.getProperty("key1"));
+
+            config = doGet(host, ConfigurationState.class, UriUtils.buildUri(host,
+                    UriUtils.buildUriPath(ConfigurationFactoryService.SELF_LINK, "/key2")));
+            assertEquals("key2", config.key);
+            assertEquals("4", config.value);
+            assertEquals("4", ConfigurationUtil.getProperty("key2"));
+
+            config = doGet(host, ConfigurationState.class, UriUtils.buildUri(host,
+                    UriUtils.buildUriPath(ConfigurationFactoryService.SELF_LINK, "/key3")));
+            assertEquals("key3", config.key);
+            assertEquals("false", config.value);
+            assertEquals("false", ConfigurationUtil.getProperty("key3"));
+        }
+    }
+
     @SuppressWarnings("unchecked")
-    private <T> T doPatch(TestManagementHost host, T inState, String serviceUrlPath) throws Throwable {
+    private <T> T doPatch(TestManagementHost host, T inState, String serviceUrlPath)
+            throws Throwable {
         TestContext ctx = BaseTestCase.testCreate(1);
         AtomicReference<T> result = new AtomicReference<>();
-        Operation op =
-                Operation.createPatch(UriUtils.buildUri(host, serviceUrlPath))
+        Operation op = Operation.createPatch(UriUtils.buildUri(host, serviceUrlPath))
                 .setBody(inState)
                 .setReferer(host.getUri())
                 .setCompletion((o, e) -> {
@@ -323,11 +393,11 @@ public class ManagementHostTest {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> T doPost(TestManagementHost host, T inState, String fabricServiceUrlPath) throws Throwable {
+    private <T> T doPost(TestManagementHost host, T inState, String fabricServiceUrlPath)
+            throws Throwable {
         TestContext ctx = BaseTestCase.testCreate(1);
         AtomicReference<T> result = new AtomicReference<>();
-        Operation op =
-                Operation.createPost(UriUtils.buildUri(host, fabricServiceUrlPath))
+        Operation op = Operation.createPost(UriUtils.buildUri(host, fabricServiceUrlPath))
                 .setBody(inState)
                 .setReferer(host.getUri())
                 .setCompletion((o, e) -> {
@@ -345,8 +415,7 @@ public class ManagementHostTest {
 
     private <T> void doDelete(TestManagementHost host, URI uri) throws Throwable {
         TestContext ctx = BaseTestCase.testCreate(1);
-        Operation op =
-                Operation.createDelete(uri)
+        Operation op = Operation.createDelete(uri)
                 .setReferer(host.getUri())
                 .setCompletion((o, e) -> {
                     if (e == null) {
@@ -357,6 +426,24 @@ public class ManagementHostTest {
                 });
         host.sendRequest(op);
         ctx.await();
+    }
+
+    private <T> T doGet(TestManagementHost host, Class<T> clazz, URI uri) throws Throwable {
+        TestContext ctx = BaseTestCase.testCreate(1);
+        AtomicReference<T> result = new AtomicReference<>();
+        Operation op = Operation.createGet(uri)
+                .setReferer(host.getUri())
+                .setCompletion((o, e) -> {
+                    if (e == null) {
+                        result.set(o.getBody(clazz));
+                        ctx.completeIteration();
+                    } else {
+                        ctx.failIteration(e);
+                    }
+                });
+        host.sendRequest(op);
+        ctx.await();
+        return result.get();
     }
 
 }

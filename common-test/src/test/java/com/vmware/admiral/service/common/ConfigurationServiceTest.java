@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.service.common;
 
+import static com.vmware.admiral.service.common.ConfigurationService.CUSTOM_CONFIGURATION_PROPERTIES_FILE_NAMES;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
@@ -22,28 +24,10 @@ import org.junit.Test;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 
 public class ConfigurationServiceTest {
+
     @Test
     public void testGetConfigurationProperties() {
-        System.setProperty("configuration.properties", "/customconfig.properties");
-
-        // Reset the static final value of CUSTOM_CONFIGURATION_PROPERTIES_FILE_NAMES in case other
-        // tests have loaded the ConfigurationService class before the configuration.properties property was set.
-        if (StringUtil
-                .isNullOrEmpty(ConfigurationService.CUSTOM_CONFIGURATION_PROPERTIES_FILE_NAMES) ||
-                !ConfigurationService.CUSTOM_CONFIGURATION_PROPERTIES_FILE_NAMES.equals("/customconfig.properties")) {
-            try {
-                Field customFileNameField = ConfigurationService.class
-                        .getField("CUSTOM_CONFIGURATION_PROPERTIES_FILE_NAMES");
-                Field modifiersField = Field.class.getDeclaredField("modifiers");
-                modifiersField.setAccessible(true);
-                modifiersField.setInt(customFileNameField,
-                        customFileNameField.getModifiers() & ~Modifier.FINAL);
-
-                customFileNameField.set(null, "/customconfig.properties");
-            } catch (Exception ex) {
-                Assert.fail("Could not set CUSTOM_CONFIGURATION_PROPERTIES_FILE_NAMES variable");
-            }
-        }
+        overrideConfigurationPropertiesFile("/customconfig.properties");
 
         ConfigurationState[] props = ConfigurationService.getConfigurationProperties();
 
@@ -64,4 +48,29 @@ public class ConfigurationServiceTest {
 
         Assert.assertTrue(isSshConsoleRead);
     }
+
+    public static void overrideConfigurationPropertiesFile(String value) {
+        System.setProperty("configuration.properties", value);
+
+        // Reset the static final value of CUSTOM_CONFIGURATION_PROPERTIES_FILE_NAMES in case other
+        // tests have loaded the ConfigurationService class before the configuration.properties
+        // property was set.
+        if (StringUtil.isNullOrEmpty(CUSTOM_CONFIGURATION_PROPERTIES_FILE_NAMES) ||
+                !CUSTOM_CONFIGURATION_PROPERTIES_FILE_NAMES.equals(value)) {
+
+            try {
+                Field customFileNameField = ConfigurationService.class
+                        .getField("CUSTOM_CONFIGURATION_PROPERTIES_FILE_NAMES");
+                Field modifiersField = Field.class.getDeclaredField("modifiers");
+                modifiersField.setAccessible(true);
+                modifiersField.setInt(customFileNameField,
+                        customFileNameField.getModifiers() & ~Modifier.FINAL);
+
+                customFileNameField.set(null, value);
+            } catch (Exception ex) {
+                Assert.fail("Could not set CUSTOM_CONFIGURATION_PROPERTIES_FILE_NAMES variable");
+            }
+        }
+    }
+
 }

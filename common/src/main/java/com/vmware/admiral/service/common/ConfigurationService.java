@@ -100,12 +100,6 @@ public class ConfigurationService extends StatefulService {
             return;
         }
 
-        if (put.hasPragmaDirective(Operation.PRAGMA_DIRECTIVE_POST_TO_PUT)) {
-            put.setStatusCode(Operation.STATUS_CODE_NOT_MODIFIED);
-            put.complete();
-            return;
-        }
-
         ConfigurationState body = put.getBody(ConfigurationState.class);
         validate(body);
 

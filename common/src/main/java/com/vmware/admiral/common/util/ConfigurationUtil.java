@@ -13,6 +13,8 @@ package com.vmware.admiral.common.util;
 
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 
+// TODO - Remove/refactor this class since it may introduce some inconsistent behavior.
+// See comments below.
 public class ConfigurationUtil {
 
     public static final String UI_PROXY_FORWARD_HEADER = "x-forwarded-for";
@@ -20,10 +22,24 @@ public class ConfigurationUtil {
 
     private static ConfigurationState[] configProperties;
 
+    /**
+     * Initializes the cache of configuration property values. See {@link #getProperty(String)}.
+     */
+    @Deprecated
     public static void initialize(ConfigurationState... cs) {
         configProperties = cs;
     }
 
+    /**
+     * Retrieves the property value from a cache loaded with, a priori, the same configuration
+     * properties files values.
+     *
+     * The value of the property will be valid as long as:
+     * - It is not updated at runtime (the configuration state will be updated, this cache no).
+     * - (in cluster) All the nodes start with the same configuration properties files and their
+     * corresponding values.
+     */
+    @Deprecated
     public static String getProperty(String propertyName) {
         if (configProperties == null || propertyName == null) {
             return null;
