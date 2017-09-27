@@ -507,11 +507,22 @@ var utils = {
     } else if (resource.type === constants.CONTAINERS.TYPES.COMPOSITE
                 || resource.type === constants.CONTAINERS.TYPES.CLUSTER) {
 
-      let items;
+      let items = [];
       if (resource.containers) {
         items = resource.containers;
+
       } else if (resource.listView) {
-        items = resource.listView.items;
+        items = items.concat(resource.listView.items);
+
+        if (op === 'REMOVE') {
+          if (resource.listView.networks) {
+            items = items.concat(resource.listView.networks);
+          }
+
+          if (resource.listView.volumes) {
+            items = items.concat(resource.listView.volumes);
+          }
+        }
       }
 
       return this.operationSupportedMulti(op, items);

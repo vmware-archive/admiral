@@ -19,13 +19,20 @@ import GridHolderMixin from 'components/common/GridHolderMixin';
 import VueToolbarActionButton from 'components/common/VueToolbarActionButton'; //eslint-disable-line
 import ConnectorMixin from 'components/templates/ConnectorMixin';
 import ResourceConnectionsDataMixin from 'components/templates/ResourceConnectionsDataMixin';
+import ActionConfirmationSupportMixin from 'components/common/ActionConfirmationSupportMixin';
+import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin';
 import constants from 'core/constants'; //eslint-disable-line
 import utils from 'core/utils';
+
 import { ContainerActions, NavigationActions } from 'actions/Actions';
 
 var CompositeContainerDetails = Vue.extend({
   template: CompositeContainerDetailsVue,
-  mixins: [GridHolderMixin, ConnectorMixin, ResourceConnectionsDataMixin],
+  mixins: [
+    GridHolderMixin, ConnectorMixin,
+    ResourceConnectionsDataMixin, DeleteConfirmationSupportMixin,
+    ActionConfirmationSupportMixin
+  ],
   props: {
     model: {
       required: true,
@@ -121,17 +128,19 @@ var CompositeContainerDetails = Vue.extend({
 
       ContainerActions.startCompositeContainer(this.model.documentId);
     },
+
     stopApplication: function($event) {
       $event.stopPropagation();
       $event.preventDefault();
 
       ContainerActions.stopCompositeContainer(this.model.documentId);
     },
-    removeApplication: function($event) {
-      $event.stopPropagation();
-      $event.preventDefault();
 
-      ContainerActions.removeCompositeContainer(this.model.documentId);
+    handleConfirmation: function(actionName) {
+      // remove application
+      if (actionName === 'removeApplication') {
+        ContainerActions.removeCompositeContainer(this.model.documentId);
+      }
     },
 
     layoutComplete: function() {

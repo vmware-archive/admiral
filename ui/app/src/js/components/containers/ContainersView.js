@@ -566,10 +566,18 @@ var ContainersViewVueComponent = Vue.extend({
     },
 
     'go-back': function(fromViewName) {
-      if (fromViewName === 'container-details'
-        || fromViewName === 'application-details') {
+      let isFromAppDetails = fromViewName === 'application-details';
 
-        NavigationActions.openContainers(this.queryOptions, true);
+      if (fromViewName === 'container-details' || isFromAppDetails) {
+        let queryOptions = this.queryOptions;
+
+        if (isFromAppDetails && !queryOptions) {
+          queryOptions = {
+            $category: constants.CONTAINERS.SEARCH_CATEGORY.APPLICATIONS
+          };
+        }
+
+        NavigationActions.openContainers(queryOptions, true);
       }
     }
   },
