@@ -32,6 +32,9 @@
               <clr-icon shape="ellipsis-vertical" size="20"></clr-icon>
           </button>
           <div class="dropdown-menu">
+            <a href="..." clrDropdownItem (click)="editHost($event, item)">
+              <clr-icon shape="pencil" size="20" class="card-drop-down-actions"></clr-icon>{{ "hosts.actions.edit" | i18n }}
+            </a>
             <a href="..." *ngIf="operationSupported('DISABLE', item)" clrDropdownItem (click)="disableHost($event, item)">
               <clr-icon shape="pause" size="20" class="card-drop-down-actions"></clr-icon>{{ "hosts.actions.disable" | i18n }}
             </a>
@@ -87,4 +90,5 @@
   </ng-template>
 </grid-view>
 
-<app-cluster-add-host [cluster]="cluster" [visible]="showAddHost" (onCancel)="onAddHostCanceled()" (onChange)="onHostAdded()" [projectLink]="projectLink"></app-cluster-add-host>
+<app-cluster-add-host [cluster]="cluster" [visible]="showAddHost" [credentials]="credentialsList" (onCancel)="onAddHostCanceled()" (onChange)="onHostAdded()" [projectLink]="projectLink"></app-cluster-add-host>
+<app-cluster-edit-host [host]="hostToEdit" [visible]="showEditHost" [credentials]="credentialsList" (onCancel)="onEditHostCanceled()" (onChange)="onHostEdited()"></app-cluster-edit-host>

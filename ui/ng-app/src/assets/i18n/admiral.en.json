@@ -175,8 +175,12 @@
       "cpu": "CPU",
       "addHost": {
         "title": "Add Host",
-        "address": "Address",
-        "addressRequired": "Address is required."
+        "address": "URL",
+        "addressRequired": "URL is required."
+      },
+      "editHost": {
+        "title": "Edit Host",
+        "name": "Name"
       }
     },
     "edit": {
@@ -207,14 +211,16 @@
         "confirmation": "Confirm removing of host {{hostName}}. The operation cannot be undone."
       },
       "enable": "Enable",
-      "disable": "Disable"
+      "disable": "Disable",
+      "edit": "Edit"
     },
     "state": {
       "ON": "ON",
       "OFF": "OFF",
       "UNKNOWN": "UNKNOWN",
       "SUSPEND": "DISABLED"
-    }
+    },
+    "verified": "Verified successfully!"
   },
   "logs": {
     "title": "Logs",
@@ -285,6 +291,8 @@
   "yes": "Yes",
   "remove": "Remove",
   "delete": "Delete",
+  "verify": "Verify",
+  "update": "Update",
   "cancel": "Cancel",
   "back": "Back",
   "refresh": "Refresh",

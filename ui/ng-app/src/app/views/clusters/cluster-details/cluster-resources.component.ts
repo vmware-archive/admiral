@@ -9,12 +9,13 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, Input, ViewChild, Output, OnChanges, EventEmitter, SimpleChanges } from '@angular/core';
+import { Component, Input, ViewChild, Output, OnChanges, EventEmitter, SimpleChanges, AfterViewInit } from '@angular/core';
 import { DocumentService } from "../../../utils/document.service";
 import * as I18n from 'i18next';
 import { Utils } from "../../../utils/utils";
 import { GridViewComponent } from '../../../components/grid-view/grid-view.component';
 import { constants } from '../../../utils/constants';
+import { Links } from './../../../utils/links';
 
 @Component({
   selector: 'app-cluster-resources',
@@ -24,7 +25,7 @@ import { constants } from '../../../utils/constants';
 /**
  *  A cluster's resources view.
  */
-export class ClusterResourcesComponent implements OnChanges {
+export class ClusterResourcesComponent implements OnChanges, AfterViewInit {
 
   @Input() cluster: any;
   @Input() projectLink: string;
@@ -34,6 +35,9 @@ export class ClusterResourcesComponent implements OnChanges {
   serviceEndpoint: string;
 
   showAddHost: boolean;
+  showEditHost: boolean;
+  hostToEdit: any;
+  credentialsList: any[];
 
   hostToDelete: any;
   deleteConfirmationAlert: string;
@@ -42,6 +46,13 @@ export class ClusterResourcesComponent implements OnChanges {
 
   ngOnChanges(changes: SimpleChanges) {
     this.serviceEndpoint = changes.cluster.currentValue.documentSelfLink + '/hosts';
+  }
+
+  ngAfterViewInit() {
+    this.service.list(Links.CREDENTIALS, {}).then(credentials => {
+      this.credentialsList = credentials.documents
+          .filter(c => !Utils.areSystemScopedCredentials(c));
+    });
   }
 
   get deleteConfirmationDescription(): string {
@@ -78,6 +89,22 @@ export class ClusterResourcesComponent implements OnChanges {
 
   onAddHostCanceled() {
     this.showAddHost = false;
+  }
+
+  onHostEdited() {
+    this.showEditHost = false;
+    this.gridView.refresh();
+  }
+
+  onEditHostCanceled() {
+    this.showEditHost = false;
+  }
+
+  editHost(event, host) {
+    event.stopPropagation();
+    this.hostToEdit = host;
+    this.showEditHost = true;
+    return false; // prevents navigation
   }
 
   onHostAdded() {

@@ -67,9 +67,9 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
 
   get title() {
     if (FT.isVic()) {
-      return this.isEdit ? 'clusters.edit.titleEditVic' : 'clusters.edit.titleNewVic';    
+      return this.isEdit ? 'clusters.edit.titleEditVic' : 'clusters.edit.titleNewVic';
     }
-    return this.isEdit ? 'clusters.edit.titleEdit' : 'clusters.edit.titleNew';  
+    return this.isEdit ? 'clusters.edit.titleEdit' : 'clusters.edit.titleNew';
   }
 
   get urlRequiredTextKey() {
@@ -78,7 +78,7 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
     }
     return 'clusters.edit.urlRequired'
   }
-  
+
   entityInitialized() {
     this.isEdit = true;
     this.clusterForm.get('name').setValue(this.entity.name);

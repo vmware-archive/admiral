@@ -14,6 +14,7 @@ export class Links {
   public static HOME = '/home';
   public static RESOURCES = '/resources';
   public static UTIL = '/util';
+  public static CONTAINER_HOSTS = Links.RESOURCES + '/hosts';
   public static PODS = Links.RESOURCES + '/kubernetes-pods';
   public static DEPLOYMENTS = Links.RESOURCES + '/kubernetes-deployments';
   public static SERVICES = Links.RESOURCES + '/kubernetes-services';

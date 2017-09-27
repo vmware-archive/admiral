@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, AfterViewInit, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { FormGroup, FormControl, Validators } from "@angular/forms";
 import { DocumentService } from './../../../utils/document.service';
 import { ProjectService } from './../../../utils/project.service';
@@ -25,13 +25,13 @@ import * as I18n from 'i18next';
 /**
  * Add Hosts to Cluster dialog.
  */
-export class ClusterAddHostComponent implements AfterViewInit {
+export class ClusterAddHostComponent {
 
     @Input() cluster: any;
     @Input() visible: boolean;
     @Input() projectLink: string;
+    @Input() credentials: any[] = [];
 
-    credentials: any[];
     isAddingHost: boolean;
     showCertificateWarning: boolean;
     certificate: any;
@@ -46,13 +46,6 @@ export class ClusterAddHostComponent implements AfterViewInit {
     });
 
     constructor(private ds: DocumentService) { }
-
-    ngAfterViewInit() {
-        this.ds.list(Links.CREDENTIALS, {}).then(credentials => {
-            this.credentials = credentials.documents
-                .filter(c => !Utils.areSystemScopedCredentials(c));
-        });
-    }
 
     clearView() {
         this.resetAlert();

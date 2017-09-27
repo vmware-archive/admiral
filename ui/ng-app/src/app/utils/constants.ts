@@ -17,5 +17,11 @@ export const constants = {
             UNKNOWN: "UNKNOWN",
             SUSPEND: "SUSPEND"
         }
+    },
+    alert: {
+        type: {
+            DANGER: 'alert-danger',
+            SUCCESS: 'alert-success'
+        }
     }
 };
