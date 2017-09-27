@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~ Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
   ~
   ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
   ~ You may not use this product except in compliance with the License.
@@ -11,23 +11,35 @@
 
 <div class="composite-child-containers-view">
   <div class="list-view containers-list" v-if="model.listView">
-    <a class="close-button" v-on:click="goBack($event)"><i
+    <a class="close-button" @click="goBack($event)"><i
       class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
 
     <div class="grid-container">
-      <div class="title">{{model.name}}<refresh-button v-on:click="refresh()"></refresh-button></div>
+      <div class="title">{{model.name}}<refresh-button @click="refresh()"></refresh-button></div>
       <div class="toolbar-actions" v-if="!model.selectedItem">
-        <toolbar-action-button id="stop" icon-name="stop" v-bind:label="i18n('app.container.actions.stop')"
-                               v-bind:supported="operationSupported('STOP')"
-                               v-on:click="stopApplication($event)"></toolbar-action-button>
+        <template v-if="confirmationOperation">
+          <div class="progress-holder">
+            <action-confirmation :action-name="confirmationOperation"
+                                 :action-title="i18n('app.container.actions.remove')"></action-confirmation>
+          </div>
+        </template>
+        <template v-else>
+          <toolbar-action-button id="stop" icon-name="stop"
+                                 :label="i18n('app.container.actions.stop')"
+                                 :supported="operationSupported('STOP')"
+                                 @click="stopApplication($event)"></toolbar-action-button>
 
-        <toolbar-action-button id="start" icon-name="play" v-bind:label="i18n('app.container.actions.start')"
-                               v-bind:supported="operationSupported('START')"
-                               v-on:click="startApplication($event)"></toolbar-action-button>
+          <toolbar-action-button id="start" icon-name="play"
+                                 :label="i18n('app.container.actions.start')"
+                                 :supported="operationSupported('START')"
+                                 @click="startApplication($event)"></toolbar-action-button>
 
-        <toolbar-action-button id="remove" icon-name="trash" v-bind:label="i18n('app.container.actions.remove')"
-                               v-bind:supported="operationSupported('REMOVE')"
-                               v-on:click="removeApplication($event)"></toolbar-action-button>
+          <toolbar-action-button id="remove" icon-name="trash"
+                                 :label="i18n('app.container.actions.remove')"
+                                 :supported="operationSupported('REMOVE')"
+                                 @click="askConfirmation($event, 'removeApplication')"
+          ></toolbar-action-button>
+        </template>
       </div>
 
       <grid v-bind:context-selected="model.selectedItem"
