@@ -459,6 +459,9 @@ public class RoleRestrictionsTest extends AuthBaseTest {
         ProjectState patchedState = doPatch(state, createdProject.documentSelfLink);
         assertNotNull(patchedState);
         assertEquals(state.name, patchedState.name);
+
+        // DELETE
+        doDeleteWithRestrictionVerification(retrievedState, ProjectFactoryService.SELF_LINK);
     }
 
     @Test

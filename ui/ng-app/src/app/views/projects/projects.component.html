@@ -44,7 +44,8 @@
               <a href="..." clrDropdownItem
                  [routerLink]="['./' + item.documentId]"><clr-icon shape="eye" size="20"
                                                                    class="card-drop-down-actions"></clr-icon>{{"projects.actions.details" | i18n}}</a>
-              <a href="..." clrDropdownItem
+              <a href="..." allowNavigation [projectSelfLink]="item.documentSelfLink"
+                 [roles]="projectsCardViewRemoveAction" clrDropdownItem
                  (click)="deleteProject($event, item)"><clr-icon shape="trash" size="20"
                                                                  class="card-drop-down-actions"></clr-icon>{{"remove" | i18n}}</a>
           </div>

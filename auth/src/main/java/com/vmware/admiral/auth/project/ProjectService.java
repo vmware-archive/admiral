@@ -33,6 +33,7 @@ import com.vmware.admiral.auth.idm.Principal;
 import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles;
 import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.auth.util.ProjectUtil;
+import com.vmware.admiral.auth.util.SecurityContextUtil;
 import com.vmware.admiral.auth.util.UserGroupsUpdater;
 import com.vmware.admiral.common.serialization.ReleaseConstants;
 import com.vmware.admiral.common.util.AssertUtil;
@@ -507,58 +508,70 @@ public class ProjectService extends StatefulService {
             return;
         }
 
-        QueryTask queryTask = ProjectUtil.createQueryTaskForProjectAssociatedWithPlacement(state,
-                null);
-
-        Operation getPlacementsWithProject = Operation
-                .createPost(getHost(), ServiceUriPaths.CORE_QUERY_TASKS)
-                .setBody(queryTask);
-
-        String projectIndexStr = ProjectUtil.getProjectIndex(state);
-        int projectIndex = projectIndexStr == null ? -1 : Integer.parseInt(projectIndexStr);
-
-        validateProjectDelete(this, ProjectUtil.getProjectIndex(state))
-                .thenCompose(hbrResponse -> {
-                    if (hbrResponse.deletable == null) {
-                        return DeferredResult.failed(new IllegalStateException(
-                                "null response from harbor if project is deletable."));
+        SecurityContextUtil.getSecurityContextForCurrentUser(this)
+                .thenCompose(sc -> {
+                    // project admins are not permitted to delete project
+                    if (sc.isProjectAdmin(state.documentSelfLink) && !sc.isCloudAdmin()) {
+                        delete.fail(Operation.STATUS_CODE_FORBIDDEN);
+                        return DeferredResult.failed(new IllegalAccessError("forbidden"));
                     }
 
-                    if (!hbrResponse.deletable) {
-                        return DeferredResult.failed(new IllegalStateException(
-                                "Project is not deletable: " + hbrResponse.message));
-                    }
-
-                    return sendWithDeferredResult(getPlacementsWithProject, QueryTask.class);
+                    return DeferredResult.completed(sc);
                 })
-                .thenApply(result -> new Pair<>(result, (Throwable) null))
-                .exceptionally(ex -> new Pair<>(null, ex))
-                .thenCompose(pair -> {
-                    if (pair.right != null) {
-                        logSevere("Failed to retrieve placements associated with project: %s",
-                                state.documentSelfLink);
-                        return DeferredResult.failed(pair.right);
-                    } else {
-                        Long documentCount = pair.left.results.documentCount;
-                        if (documentCount != null && documentCount != 0) {
-                            return DeferredResult.failed(new LocalizableValidationException(
-                                    ProjectUtil.PROJECT_IN_USE_MESSAGE,
-                                    ProjectUtil.PROJECT_IN_USE_MESSAGE_CODE,
-                                    documentCount, documentCount > 1 ? "s" : ""));
-                        }
-                        String projectId = Service.getId(getState(delete).documentSelfLink);
-                        return deleteDefaultProjectGroups(projectId, delete);
-                    }
-                })
-                .thenCompose(ignore -> deleteDuplicatedRolesAndResourceGroups(state))
-                .thenCompose(ignore -> freeProjectName(state.name))
-                .thenCompose(ignore -> freeProjectIndex(projectIndex))
-                .whenComplete((ignore, ex) -> {
-                    if (ex != null) {
-                        delete.fail(ex);
-                        return;
-                    }
-                    super.handleDelete(delete);
+                .thenAccept(sc -> {
+                    QueryTask queryTask = ProjectUtil.createQueryTaskForProjectAssociatedWithPlacement(state,
+                            null);
+
+                    Operation getPlacementsWithProject = Operation
+                            .createPost(getHost(), ServiceUriPaths.CORE_QUERY_TASKS)
+                            .setBody(queryTask);
+
+                    String projectIndexStr = ProjectUtil.getProjectIndex(state);
+                    int projectIndex = projectIndexStr == null ? -1 : Integer.parseInt(projectIndexStr);
+
+                    validateProjectDelete(this, ProjectUtil.getProjectIndex(state))
+                            .thenCompose(hbrResponse -> {
+                                if (hbrResponse.deletable == null) {
+                                    return DeferredResult.failed(new IllegalStateException(
+                                            "null response from harbor if project is deletable."));
+                                }
+
+                                if (!hbrResponse.deletable) {
+                                    return DeferredResult.failed(new IllegalStateException(
+                                            "Project is not deletable: " + hbrResponse.message));
+                                }
+
+                                return sendWithDeferredResult(getPlacementsWithProject, QueryTask.class);
+                            })
+                            .thenApply(result -> new Pair<>(result, (Throwable) null))
+                            .exceptionally(ex -> new Pair<>(null, ex))
+                            .thenCompose(pair -> {
+                                if (pair.right != null) {
+                                    logSevere("Failed to retrieve placements associated with project: %s",
+                                            state.documentSelfLink);
+                                    return DeferredResult.failed(pair.right);
+                                } else {
+                                    Long documentCount = pair.left.results.documentCount;
+                                    if (documentCount != null && documentCount != 0) {
+                                        return DeferredResult.failed(new LocalizableValidationException(
+                                                ProjectUtil.PROJECT_IN_USE_MESSAGE,
+                                                ProjectUtil.PROJECT_IN_USE_MESSAGE_CODE,
+                                                documentCount, documentCount > 1 ? "s" : ""));
+                                    }
+                                    String projectId = Service.getId(getState(delete).documentSelfLink);
+                                    return deleteDefaultProjectGroups(projectId, delete);
+                                }
+                            })
+                            .thenCompose(ignore -> deleteDuplicatedRolesAndResourceGroups(state))
+                            .thenCompose(ignore -> freeProjectName(state.name))
+                            .thenCompose(ignore -> freeProjectIndex(projectIndex))
+                            .whenComplete((ignore, ex) -> {
+                                if (ex != null) {
+                                    delete.fail(ex);
+                                    return;
+                                }
+                                super.handleDelete(delete);
+                            });
                 });
     }
 

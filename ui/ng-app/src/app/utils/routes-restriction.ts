@@ -31,6 +31,7 @@ export class RoutesRestriction {
   public static LOGS = [Roles.CLOUD_ADMIN];
 
   public static PROJECT_CARD_VIEW_ACTIONS = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN];
+  public static PROJECT_CARD_VIEW_REMOVE_ACTION = [Roles.CLOUD_ADMIN];
 
   public static PROJECT_SUMMARY_EDIT = [Roles.CLOUD_ADMIN];
   public static PROJECT_MEMBERS_ADD = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN];

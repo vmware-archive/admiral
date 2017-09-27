@@ -125,6 +125,10 @@ export class ProjectsComponent {
     return RoutesRestriction.PROJECT_CARD_VIEW_ACTIONS;
   }
 
+  get projectsCardViewRemoveAction() {
+    return RoutesRestriction.PROJECT_CARD_VIEW_REMOVE_ACTION;
+  }
+
   get clustersTitle() {
     if (FT.isVic()) {
       return 'projects.clustersVic';
