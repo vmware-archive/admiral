@@ -62,6 +62,9 @@ var ContainersListItem = Vue.extend({
     },
     isHostsViewLinksEnabled: function() {
       return ft.isHostsViewLinksEnabled();
+    },
+    system: function() {
+      return this.model.system;
     }
   },
   attached: function() {

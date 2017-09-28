@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.service.test;
 
+import java.util.List;
+
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
@@ -29,6 +31,7 @@ public class MockDockerContainerToHostService extends StatefulService {
         public static final String FIELD_NAME_NAME = "name";
         public static final String FIELD_NAME_IMAGE = "image";
         public static final String FIELD_NAME_POWER_STATE = "powerState";
+        public static final String FIELD_NAME_TENANT_LINKS = "tenantLinks";
 
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
@@ -49,6 +52,10 @@ public class MockDockerContainerToHostService extends StatefulService {
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public PowerState powerState;
+
+        @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
+                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
+        public List<String> tenantLinks;
     }
 
     public MockDockerContainerToHostService() {

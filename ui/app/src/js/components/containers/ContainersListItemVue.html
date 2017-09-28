@@ -50,21 +50,21 @@
     </div>
   </div>
   <div class="relations-holder">
-    <navigation-link v-if="model.compositeComponentLink != null"
+    <navigation-link v-if="model.compositeComponentLink != null && !system"
                      :show="model.compositeComponentLink != null"
                      :label="1"
                      icon-name="image-assets/applications-nav-link.png"
                      :tooltip="i18n('app.resource.list.relations.applications')"
                      :lone="networkCount < 1"
                      @click="showApp($event)"></navigation-link>
-    <navigation-link v-if="networkCount > 0"
+    <navigation-link v-if="networkCount > 0 && !system"
                      :show="networkCount > 0"
                      :label="networkCount"
                      icon-name="image-assets/networks-nav-link.png"
                      :tooltip="i18n('app.resource.list.relations.networks')"
                      :lone="!model.compositeComponentLink"
                      @click="showNetworks($event)"></navigation-link>
-    <navigation-link v-if="volumesCount > 0"
+    <navigation-link v-if="volumesCount > 0 && !system"
                      :show="volumesCount > 0"
                      :label="volumesCount"
                      icon-name="image-assets/volumes-nav-link.png"

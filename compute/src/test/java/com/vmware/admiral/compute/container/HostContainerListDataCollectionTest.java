@@ -20,6 +20,7 @@ import static com.vmware.admiral.compute.container.HostContainerListDataCollecti
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -59,6 +60,7 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
             ComputeService.FACTORY_LINK, TEST_HOST_ID);
     private ContainerListCallback containerListBody;
     private String systemContainerLink;
+    private ComputeState computeState;
     private String image;
 
     @Before
@@ -96,8 +98,9 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
         cs.documentSelfLink = TEST_HOST_ID;
         cs.descriptionLink = computeDesc.documentSelfLink;
         cs.customProperties = new HashMap<>();
+        cs.tenantLinks = TENANT_LINKS;
 
-        doPost(cs, ComputeService.FACTORY_LINK);
+        computeState = doPost(cs, ComputeService.FACTORY_LINK);
 
         systemContainerLink = SystemContainerDescriptions.getSystemContainerSelfLink(
                 SystemContainerDescriptions.AGENT_CONTAINER_NAME, TEST_HOST_ID);
@@ -181,7 +184,7 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
     public void testProvisionSystemContainerWhenDoesNotExistsOnHost() throws Throwable {
         // add preexisting container to the adapter service
         addContainerToMockAdapter(COMPUTE_HOST_LINK, TEST_PREEXISTING_CONTAINER_ID,
-                TEST_PREEXISTING_CONTAINER_ID, "TestName");
+                TEST_PREEXISTING_CONTAINER_ID, "TestName", computeState.tenantLinks);
 
         // run data collection on preexisting container
         startAndWaitHostContainerListDataCollection();
@@ -195,6 +198,7 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
         assertEquals(SystemContainerDescriptions.AGENT_CONTAINER_DESCRIPTION_LINK,
                 systemContainer.descriptionLink);
         assertEquals(Boolean.TRUE, systemContainer.system);
+        assertEquals(TENANT_LINKS, systemContainer.tenantLinks);
     }
 
     @Test
@@ -203,7 +207,7 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
 
         // add system container to the adapter service because it already exists on host
         addContainerToMockAdapter(COMPUTE_HOST_LINK, systemContainerId,
-                SystemContainerDescriptions.AGENT_CONTAINER_NAME, image);
+                SystemContainerDescriptions.AGENT_CONTAINER_NAME, image, computeState.tenantLinks);
 
         // run data collection on preexisting system container
         startAndWaitHostContainerListDataCollection();
@@ -218,6 +222,7 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
                 systemContainer.descriptionLink);
         assertEquals(image, systemContainer.image);
         assertEquals(Boolean.TRUE, systemContainer.system);
+        assertEquals(TENANT_LINKS, systemContainer.tenantLinks);
     }
 
     @Test
@@ -239,7 +244,7 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
 
         // add system container to the adapter service because it already exists on host
         addContainerToMockAdapter(COMPUTE_HOST_LINK, systemContainerId,
-                SystemContainerDescriptions.AGENT_CONTAINER_NAME, oldImage);
+                SystemContainerDescriptions.AGENT_CONTAINER_NAME, oldImage, computeState.tenantLinks);
 
         // run data collection on preexisting system container with old version
         startAndWaitHostContainerListDataCollection();
@@ -257,6 +262,7 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
                 systemContainer.descriptionLink);
         assertEquals(image, systemContainer.image);
         assertEquals(Boolean.TRUE, systemContainer.system);
+        assertEquals(TENANT_LINKS, systemContainer.tenantLinks);
     }
 
     // VBV-1023
@@ -268,7 +274,7 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
 
         // add system container to the adapter service because it already exists on host
         addContainerToMockAdapter(COMPUTE_HOST_LINK, systemContainerId,
-                SystemContainerDescriptions.AGENT_CONTAINER_NAME, oldImage);
+                SystemContainerDescriptions.AGENT_CONTAINER_NAME, oldImage, computeState.tenantLinks);
 
         // run data collection on preexisting system container with old version
         startAndWaitHostContainerListDataCollection();
@@ -286,6 +292,7 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
                 systemContainer.descriptionLink);
         assertEquals(image, systemContainer.image);
         assertEquals(Boolean.TRUE, systemContainer.system);
+        assertEquals(TENANT_LINKS, systemContainer.tenantLinks);
     }
 
     @Test
@@ -325,7 +332,7 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
         cs = doPost(cs, ContainerFactoryService.SELF_LINK);
 
         // add system container to the adapter service because it already exists on host
-        addContainerToMockAdapter(COMPUTE_HOST_LINK, cs.id, cs.names.get(0), image, PowerState.STOPPED);
+        addContainerToMockAdapter(COMPUTE_HOST_LINK, cs.id, cs.names.get(0), image, PowerState.STOPPED, computeState.tenantLinks);
 
         // run data collection on preexisting system container with old version
         startAndWaitHostContainerListDataCollection();
@@ -350,7 +357,7 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
         String systemContainerId = extractId(systemContainerLink);
 
         addContainerToMockAdapter(COMPUTE_HOST_LINK, systemContainerId,
-                SystemContainerDescriptions.AGENT_CONTAINER_NAME, image);
+                SystemContainerDescriptions.AGENT_CONTAINER_NAME, image, computeState.tenantLinks);
 
         startAndWaitHostContainerListDataCollection();
         waitForContainer(systemContainerLink, image, PowerState.RUNNING,
@@ -439,13 +446,13 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
     }
 
     private void addContainerToMockAdapter(String hostLink, String containerId,
-            String containerName, String containerImage) throws Throwable {
+            String containerName, String containerImage, List<String> tenantLinks) throws Throwable {
         addContainerToMockAdapter(hostLink, containerId, containerName, containerImage,
-                PowerState.UNKNOWN);
+                PowerState.UNKNOWN, tenantLinks);
     }
 
     private void addContainerToMockAdapter(String hostLink, String containerId,
-            String containerName, String containerImage, PowerState powerState) throws Throwable {
+            String containerName, String containerImage, PowerState powerState, List<String> tenantLinks) throws Throwable {
         MockDockerContainerToHostState mockContainerToHostState = new MockDockerContainerToHostState();
         mockContainerToHostState.documentSelfLink = UriUtils.buildUriPath(
                 MockDockerContainerToHostService.FACTORY_LINK, UUID.randomUUID().toString());
@@ -454,6 +461,8 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
         mockContainerToHostState.name = containerName;
         mockContainerToHostState.image = containerImage;
         mockContainerToHostState.powerState = powerState;
+        mockContainerToHostState.tenantLinks = tenantLinks;
+
         host.sendRequest(Operation.createPost(host, MockDockerContainerToHostService.FACTORY_LINK)
                 .setBody(mockContainerToHostState)
                 .setReferer(host.getUri())

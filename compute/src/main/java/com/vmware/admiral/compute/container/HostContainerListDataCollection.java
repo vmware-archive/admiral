@@ -493,13 +493,14 @@ public class HostContainerListDataCollection extends StatefulService {
                                         .get(containerState.id);
                             }
                         } else {
-                            containerState.tenantLinks = group;
                             containerState.descriptionLink = String.format("%s-%s",
                                     SystemContainerDescriptions.DISCOVERED_DESCRIPTION_LINK,
                                     UUID.randomUUID().toString());
                             containerState.image = callback.containerIdsAndImage
                                     .get(containerState.id);
                         }
+
+                        containerState.tenantLinks = group;
                         containerState.parentLink = callback.containerHostLink;
                         containerState.adapterManagementReference = getContainerAdapterReference(
                                 callback.hostAdapterReference);
@@ -1216,6 +1217,10 @@ public class HostContainerListDataCollection extends StatefulService {
                                 + " installed.");
                         return;
                     }
+
+                    containerDesc.tenantLinks = new ArrayList<>();
+                    containerDesc.tenantLinks.addAll(host.tenantLinks);
+
                     createOrRetrieveSystemContainer(containerHostLink, systemContainerName,
                             containerDesc);
                 });
@@ -1250,6 +1255,7 @@ public class HostContainerListDataCollection extends StatefulService {
                     GroupResourcePlacementService.DEFAULT_RESOURCE_PLACEMENT_LINK;
             containerState.system = Boolean.TRUE;
             containerState.volumes = containerDesc.volumes;
+            containerState.tenantLinks = containerDesc.tenantLinks;
 
             Operation op;
             if (r.hasResult()) {

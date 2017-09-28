@@ -12,6 +12,7 @@
 package com.vmware.admiral.compute.container;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -45,6 +46,7 @@ import com.vmware.xenon.common.test.TestContext;
 public abstract class ComputeBaseTest extends BaseTestCase {
 
     public static final String REGION_ID = "us-east-1";
+    public static final List<String> TENANT_LINKS = Arrays.asList("Dev");
     protected static final Long MIN_MEMORY = 4_194_304L;
 
     private List<Runnable> staticFieldValuesResetRunners = new ArrayList<>();
