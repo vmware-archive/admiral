@@ -100,6 +100,7 @@ export class DocumentService {
         params.set('$filter', filter);
       }
     }
+
     let op;
     // 2000 is th max url length. Here we don't know the hostname, so 50 chars extra
     if (params.toString().length + factoryLink.length > 1950) {
@@ -115,23 +116,31 @@ export class DocumentService {
 
     return op.then(result => {
       let documents = result.documentLinks.map(link => {
-        let document = result.documents[link]
+        let document = result.documents[link];
         document.documentId = Utils.getDocumentId(link);
+
         return document;
       });
+
       return new DocumentListResult(documents, result.nextPageLink, result.totalCount);
+
     }).then(result => slowPromise(result));
   }
 
   public loadNextPage(nextPageLink, projectLink?: string): Promise<DocumentListResult> {
+
     return this.ajax.get(nextPageLink, undefined, undefined, this.buildHeaders(projectLink))
       .then(result => {
+
         let documents = result.documentLinks.map(link => {
           let document = result.documents[link];
           document.documentId = Utils.getDocumentId(link);
+
           return document;
         });
+
         return new DocumentListResult(documents, result.nextPageLink, result.totalCount);
+
       }).then(result => slowPromise(result));
   }
 
@@ -147,7 +156,8 @@ export class DocumentService {
   }
 
    public getById(factoryLink: string, documentId: string, projectLink?: string): Promise<any> {
-    let documentSelfLink = factoryLink + '/' + documentId
+    let documentSelfLink = factoryLink + '/' + documentId;
+
     return this.get(documentSelfLink, true, projectLink);
   }
 
@@ -229,12 +239,13 @@ export class DocumentService {
 
       let headers = new Headers();
       headers.append(HEADER_PROJECT, projectId);
+
       return headers;
-    }
+    };
 
     if (FT.isApplicationEmbedded()) {
       if (!selectedProject) {
-        return undefined
+        return undefined;
       }
       return calculateHeaders(selectedProject.id);
     } else {

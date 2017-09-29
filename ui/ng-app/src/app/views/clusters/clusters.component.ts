@@ -39,8 +39,13 @@ export class ClustersComponent implements OnInit {
   constructor(private service: DocumentService, private projectService: ProjectService) {
 
     projectService.activeProject.subscribe((value) => {
-
-      this.projectLink = value && value.documentSelfLink;
+      if (value && value.documentSelfLink) {
+          this.projectLink = value.documentSelfLink;
+      } else if (value && value.id) {
+          this.projectLink = value.id;
+      } else {
+          this.projectLink = undefined;
+      }
     });
   }
 

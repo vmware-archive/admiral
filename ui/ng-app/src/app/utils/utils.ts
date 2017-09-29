@@ -274,31 +274,37 @@ export class Utils {
       throw new Error("Roles not provided!");
     }
 
-    let allowAccess = false;
+    if (!securityContext) {
+        return false;
+    }
+
     // check for system roles
-    if (securityContext && securityContext.roles) {
+    if (securityContext.roles) {
+
       securityContext.roles.forEach(role => {
-        if (roles.indexOf(role) != -1) {
-          allowAccess = true;
-          return;
+        if (roles.indexOf(role) > -1) {
+          return true;
         }
       });
     }
 
     // check for project roles
-    if (securityContext && securityContext.projects) {
+    if (securityContext.projects) {
+
       securityContext.projects.forEach(project => {
         if (project && project.roles) {
+
           project.roles.forEach(role => {
             if (projectSelfLink) {
-              if (project.documentSelfLink === projectSelfLink && roles.indexOf(role) != -1) {
-                allowAccess = true;
-                return;
+              if ((project.documentSelfLink  && project.documentSelfLink === projectSelfLink
+                      || project.id && project.id === projectSelfLink)
+                  && roles.indexOf(role) > -1) {
+
+                return true;
               }
             } else {
-              if (roles.indexOf(role) != -1) {
-                allowAccess = true;
-                return;
+              if (roles.indexOf(role) > -1) {
+                return true;
               }
             }
           });
@@ -306,7 +312,7 @@ export class Utils {
       });
     }
 
-    return allowAccess;
+    return false;
   }
 }
 

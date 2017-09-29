@@ -34,13 +34,19 @@ export class AllowNavigationDirective implements OnChanges {
   }
 
   private allowAccess() {
+
     if (FT.isApplicationEmbedded()) {
       this.renderer.setElementStyle(this.el.nativeElement, 'display', 'block');
+
       return;
     }
+
     this.authService.getCachedSecurityContext().then((securityContext) => {
       let show = Utils.isAccessAllowed(securityContext, this.projectSelfLink, this.roles);
-      this.renderer.setElementStyle(this.el.nativeElement, 'display', show ? 'block' : 'none');
+
+      this.renderer.setElementStyle(this.el.nativeElement, 'display',
+                                    show ? 'block' : 'none');
+
     }).catch((ex) => {
       // show in case of no authentication
       this.renderer.setElementStyle(this.el.nativeElement, 'display', 'block');

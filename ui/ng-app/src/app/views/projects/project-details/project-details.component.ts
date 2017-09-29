@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, ViewChild, Input, enableProdMode, ContentChild } from '@angular/core';
+import { Component } from '@angular/core';
 import { BaseDetailsComponent } from './../../../components/base/base-details.component';
 import { DocumentService } from './../../../utils/document.service';
 import { ActivatedRoute } from '@angular/router';
@@ -59,7 +59,8 @@ export class ProjectDetailsComponent extends BaseDetailsComponent {
   }
 
   watchTagClickEvent(tag: TagClickEvent) {
-    this.router.navigate(['repositories', tag.repository_name, 'tags', tag.tag_name], {relativeTo: this.route});
+    this.router.navigate(['repositories', tag.repository_name, 'tags', tag.tag_name],
+                         {relativeTo: this.route});
   }
 
   reloadProject(project: any) {
@@ -69,7 +70,8 @@ export class ProjectDetailsComponent extends BaseDetailsComponent {
   }
 
   get hasProjectAdminRole(): boolean {
-    return Utils.isAccessAllowed(this.userSecurityContext, this.admiralProjectSelfLink, [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN]);
+    return Utils.isAccessAllowed(this.userSecurityContext, this.admiralProjectSelfLink,
+                                    [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN]);
   }
 
   get admiralProjectSelfLink() {
@@ -81,7 +83,8 @@ export class ProjectDetailsComponent extends BaseDetailsComponent {
   }
 
   get isRegistryReplicationReadOnly() {
-    let accessAllowed = Utils.isAccessAllowed(this.userSecurityContext, this.admiralProjectSelfLink, RoutesRestriction.PROJECT_REGISTRY_REPLICATION);
+    let accessAllowed = Utils.isAccessAllowed(this.userSecurityContext, this.admiralProjectSelfLink,
+                                                RoutesRestriction.PROJECT_REGISTRY_REPLICATION);
     return !accessAllowed;
   }
 

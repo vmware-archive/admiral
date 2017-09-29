@@ -107,10 +107,13 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
         let localProject = this.projectService.getSelectedProject();
 
         if (localProject) {
-          this.projects.forEach(p => {
-            if ((p.documentSelfLink && p.documentSelfLink === localProject.documentSelfLink) ||
-              (p.id && p.id === localProject.id)) {
-              this.selectedProject = p;
+          this.projects.forEach(project => {
+
+            if ((project.documentSelfLink
+                    && project.documentSelfLink === localProject.documentSelfLink)
+                || (project.id && project.id === localProject.id)) {
+
+              this.selectedProject = project;
             }
           });
         }
@@ -120,6 +123,7 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
         }
 
         this.projectService.setSelectedProject(this.selectedProject);
+
         this.checkShowLibrary();
       });
     }
@@ -152,12 +156,12 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
     }
 
     sortProjects() {
-      this.projects.sort((x1, x2) => {
-        if (x1.name > x2.name) {
+      this.projects.sort((project1, project2) => {
+        if (project1.name > project2.name) {
           return 1;
         }
 
-        if (x1.name < x2.name) {
+        if (project1.name < project2.name) {
           return -1;
         }
 
@@ -172,6 +176,7 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
       }
 
       let selectedProjectLink = this.selectedProject.documentSelfLink;
+      let selectedProjectId = this.selectedProject.id;
       this.authService.getCachedSecurityContext().then(securityContext => {
         if (!securityContext) {
           this.showLibrary = false;
@@ -184,17 +189,14 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
           return;
         }
 
-        let foundProject = securityContext.projects.find(x => {
-          return x.documentSelfLink === selectedProjectLink;
+        let foundProject = securityContext.projects.find(project => {
+          return project.documentSelfLink === selectedProjectLink
+                    || project.id === selectedProjectId;
         });
 
         if (foundProject && foundProject.roles) {
-          if (foundProject.roles.indexOf(Roles.PROJECT_ADMIN) == -1
-            && foundProject.roles.indexOf(Roles.PROJECT_MEMBER) == -1) {
-              this.showLibrary = false;
-            } else {
-              this.showLibrary = true;
-            }
+          this.showLibrary = foundProject.roles.indexOf(Roles.PROJECT_ADMIN) > -1
+                                || foundProject.roles.indexOf(Roles.PROJECT_MEMBER) > -1;
         } else {
           this.showLibrary = false;
         }
@@ -221,9 +223,14 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
     }
 
     get currentProjectLink() {
+        let currentProject;
+
         if (this.selectedProject) {
-          return this.selectedProject.documentSelfLink;
+            currentProject = this.selectedProject.documentSelfLink
+                    || this.selectedProject.id;
         }
+
+        return currentProject;
     }
 
     get navigationClustersTextKey() {
