@@ -3,25 +3,42 @@ FROM vmware/photon:1.0
 MAINTAINER Admiral Team, https://vmware.github.io/admiral/
 
 RUN tdnf distro-sync --refresh -y && \
+    tdnf install -y shadow && \
+    tdnf install -y openjre.x86_64 && \
     tdnf clean all && \
-    tyum install -y openjre.x86_64 && \
-    tyum clean all && \
     mkdir -p /usr/lib/jvm && \
     export JAVA_HOME="/usr/lib/jvm/default-jvm" && \
     ln -s /var/opt/$(ls /var/opt/ | grep OpenJDK) $JAVA_HOME && \
     ln -s $JAVA_HOME/bin/* /usr/bin/
 
 ENV ADMIRAL_PORT=8282 \
-   ADMIRAL_STORAGE_PATH=/var/admiral/ \
-   USER_RESOURCES=/etc/xenon/user-resources/system-images/ \
-   ADMIRAL_ROOT=/admiral \
-   MOCK_MODE=false
+    ADMIRAL_STORAGE_PATH=/var/admiral/ \
+    USER_RESOURCES=/etc/xenon/user-resources/system-images/ \
+    ADMIRAL_ROOT=/admiral \
+    MOCK_MODE=false
 
 ENV DIST_CONFIG_FILE_PATH $ADMIRAL_ROOT/config/dist_configuration.properties
 ENV CONFIG_FILE_PATH $ADMIRAL_ROOT/config/configuration.properties
 ENV LOG_CONFIG_FILE_PATH $ADMIRAL_ROOT/config/logging.properties
 
-EXPOSE $ADMIRAL_PORT
-VOLUME $ADMIRAL_STORAGE_PATH
+RUN mkdir $ADMIRAL_ROOT && \
+    mkdir -p $ADMIRAL_STORAGE_PATH && \
+    mkdir -p $USER_RESOURCES
 
-RUN mkdir $ADMIRAL_ROOT && mkdir -p $USER_RESOURCES
+EXPOSE $ADMIRAL_PORT
+
+# Create an admiral user so the application doesn't run as root.
+RUN groupadd -r admiral && \
+    useradd -r -g admiral -d /admiral -s /sbin/nologin -c "Admiral user" admiral
+
+# Set the home directory to the admiral user home.
+ENV HOME $ADMIRAL_ROOT
+WORKDIR $ADMIRAL_ROOT
+
+# Chown all the files to the admiral user.
+RUN chown -v -R admiral:admiral /admiral && \
+    chown -v -R admiral:admiral /var/admiral && \
+    chown -v -R admiral:admiral /etc/xenon
+
+# Change to the admiral user.
+USER admiral
