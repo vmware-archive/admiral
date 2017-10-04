@@ -49,6 +49,7 @@ public class SslTrustCertificateService extends StatefulService {
         public static final String FIELD_NAME_CERTIFICATE = "certificate";
         public static final String FIELD_NAME_RESOURCE_LINK = "resourceLink";
         public static final String FIELD_NAME_SUBSCRIPTION_LINK = "subscriptionLink";
+        public static final String FIELD_NAME_COMMON_NAME = "commonName";
 
         /** (Required) The SSL trust certificate encoded into .PEM format. */
         @Documentation(description = "The SSL trust certificate encoded into .PEM format.")

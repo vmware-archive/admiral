@@ -51,14 +51,14 @@ public class SslTrustImportServiceIT extends ComputeBaseTest {
     }
 
     @Test
-    public void testImportPublicCertificateShouldReturnNoContent() throws Throwable {
+    public void testImportPublicCertificateShouldReturAccepted() throws Throwable {
         request.hostUri = URI.create(certTrustedUrl);// public trusted certificate
 
         Operation response = putRequest(request);
 
-        // when public certificate and trusted, no body returned and 204 status
-        assertNull(response.getBodyRaw());
-        assertEquals(HttpURLConnection.HTTP_NO_CONTENT, response.getStatusCode());
+        // when public certificate and trusted, the certificate is returned and 202 status
+        assertNotNull(response.getBodyRaw());
+        assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getStatusCode());
     }
 
     @Test

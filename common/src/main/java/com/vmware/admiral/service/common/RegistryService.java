@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.service.common;
 
+import static com.vmware.admiral.common.util.QueryUtil.createKindClause;
+
 import java.net.URI;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
@@ -22,16 +24,26 @@ import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.CertificateUtilExtended;
 import com.vmware.admiral.common.util.ConfigurationUtil;
+import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.SslCertificateResolver;
+import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
+import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
+import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
+import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
+import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
+import com.vmware.xenon.services.common.ServiceUriPaths;
 
 /**
  * Describes the authentication credentials to authenticate with internal/external APIs.
@@ -48,6 +60,9 @@ public class RegistryService extends StatefulService {
             DEFAULT_INSTANCE_ID);
     public static final String API_VERSION_PROP_NAME = "apiVersion";
     public static final String DISABLE_DEFAULT_REGISTRY_PROP_NAME = "disable.default.registry";
+
+
+    public static final String REGISTRY_TRUST_CERTS_PROP_NAME = "__registryTrustCertLink";
 
     public enum ApiVersion {
         V1, V2
@@ -157,6 +172,11 @@ public class RegistryService extends StatefulService {
         /** (Optional) Custom properties */
         @Documentation(description = "Custom properties ")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
+        @PropertyOptions(
+                indexing = {
+                        PropertyIndexingOption.CASE_INSENSITIVE,
+                        PropertyIndexingOption.EXPAND
+                })
         public Map<String, String> customProperties;
     }
 
@@ -250,6 +270,23 @@ public class RegistryService extends StatefulService {
     }
 
     @Override
+    public void handleDelete(Operation delete) {
+
+        sendWithDeferredResult(Operation
+                .createGet(UriUtils.buildUri(getHost(),
+                        getState(delete).documentSelfLink))
+                .setReferer(getHost().getUri()), RegistryState.class)
+                .thenCompose(this::removeTrustCerts)
+                .whenComplete((result, f) -> {
+                    if (f != null) {
+                        logWarning("Failed to remove unused trust "
+                                + "certificate.", f);
+                    }
+                    delete.complete();
+                });
+    }
+
+    @Override
     public ServiceDocument getDocumentTemplate() {
         ServiceDocument template = super.getDocumentTemplate();
         com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
@@ -319,5 +356,81 @@ public class RegistryService extends StatefulService {
         if (newState.documentExpirationTimeMicros != 0) {
             currentState.documentExpirationTimeMicros = newState.documentExpirationTimeMicros;
         }
+    }
+
+    private DeferredResult<QueryTask> removeTrustCerts(RegistryState rs) {
+        QueryTask queryTask = new QueryTask();
+        queryTask.querySpec = new QueryTask.QuerySpecification();
+        queryTask.taskInfo.isDirect = true;
+
+        Query q = Query.Builder.create()
+                .addFieldClause(QuerySpecification
+                                .buildCompositeFieldName(ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
+                                        REGISTRY_TRUST_CERTS_PROP_NAME),
+                        UriUtils.URI_WILDCARD_CHAR, MatchType.WILDCARD,
+                        Occurance.MUST_NOT_OCCUR).build();
+        q.addBooleanClause(createKindClause(RegistryState.class));
+
+        queryTask.querySpec.query.addBooleanClause(q);
+
+        return sendWithDeferredResult(Operation
+                .createPost(UriUtils.buildUri(getHost(),
+                        ServiceUriPaths.CORE_QUERY_TASKS))
+                .setBody(queryTask)
+                .setReferer(getHost().getUri()), QueryTask.class)
+                .thenCompose(qrt -> {
+                    if (qrt.results.documentCount == 0 ||
+                            (qrt.results.documentCount == 1 &&
+                                    DEFAULT_INSTANCE_LINK
+                                            .equals(qrt.results.documentLinks.get(0)))) {
+                        return doRemoveTrustCerts(rs);
+
+                    }
+                    return DeferredResult.completed(null);
+                });
+    }
+
+    private DeferredResult<QueryTask> doRemoveTrustCerts(RegistryState rs) {
+
+        final String registryTrustCertLink = PropertyUtils
+                .getPropertyString(rs.customProperties,
+                        REGISTRY_TRUST_CERTS_PROP_NAME)
+                .orElse(null);
+
+        if (registryTrustCertLink == null) {
+            return DeferredResult.completed(null);
+        }
+
+        QueryTask queryTask = new QueryTask();
+        queryTask.querySpec = new QueryTask.QuerySpecification();
+        queryTask.taskInfo.isDirect = true;
+
+        Query q = Query.Builder.create()
+                .addFieldClause(QuerySpecification
+                                .buildCompositeFieldName(ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
+                                        REGISTRY_TRUST_CERTS_PROP_NAME),
+                        registryTrustCertLink, MatchType.TERM,
+                        Occurance.MUST_OCCUR).build();
+        q.addBooleanClause(createKindClause(RegistryState.class));
+
+        queryTask.querySpec.query.addBooleanClause(q);
+
+        return sendWithDeferredResult(Operation
+                .createPost(UriUtils.buildUri(getHost(),
+                        ServiceUriPaths.CORE_QUERY_TASKS))
+                .setBody(queryTask)
+                .setReferer(getHost().getUri()), QueryTask.class)
+                .thenCompose(qrt -> {
+                    if (qrt.results.documentCount == 1) {
+                        return sendWithDeferredResult(Operation
+                                .createDelete(UriUtils.buildUri(getHost(),
+                                        registryTrustCertLink))
+                                .setReferer(getHost().getUri()), QueryTask.class);
+
+                    }
+                    return DeferredResult.completed(null);
+
+                });
+
     }
 }

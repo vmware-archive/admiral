@@ -39,6 +39,7 @@ import com.vmware.admiral.compute.RegistryConfigCertificateDistributionService.R
 import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
+import com.vmware.admiral.service.common.SslTrustCertificateService;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
 import com.vmware.photon.controller.model.security.util.KeyUtil;
 import com.vmware.xenon.common.LocalizableValidationException;
@@ -107,7 +108,7 @@ public class RegistryHostConfigService extends StatelessService {
                 && op.getUri().getQuery().contains(REQUEST_PARAM_VALIDATE_OPERATION_NAME);
 
         if (validateHostConnection) {
-            validateConnection(hostSpec, op);
+            validateConnection(hostSpec, op, false);
         } else {
             createHost(hostSpec, op);
         }
@@ -225,18 +226,37 @@ public class RegistryHostConfigService extends StatelessService {
         if (hostSpec.acceptHostAddress) {
             storeHost(hostSpec, op);
         } else {
-            validatePlainHttpConnection(this, hostSpec, op,
-                    () -> validateSslTrust(this, hostSpec, op,
-                            () -> pingHost(hostSpec, op, hostSpec.sslTrust,
-                                    () -> storeHost(hostSpec, op))));
+            validateConnection( hostSpec,  op,  true);
         }
     }
 
-    private void validateConnection(RegistryHostSpec hostSpec, Operation op) {
+    private void validateConnection(RegistryHostSpec hostSpec, Operation op, boolean storeHost) {
         validatePlainHttpConnection(this, hostSpec, op,
-                () -> validateSslTrust(this, hostSpec, op,
-                        () -> pingHost(hostSpec, op, hostSpec.sslTrust,
-                                () -> completeOperationSuccess(op))));
+                () ->
+                        validateSslTrust(this, hostSpec, op,
+                                () -> {
+
+                                    if (hostSpec.sslTrust != null && hostSpec.hostState != null) {
+                                        if (hostSpec.hostState.customProperties == null) {
+                                            hostSpec.hostState.customProperties = new HashMap<>();
+                                        }
+                                        hostSpec.hostState.customProperties.put(RegistryService
+                                                .REGISTRY_TRUST_CERTS_PROP_NAME, UriUtils
+                                                .buildUriPath( SslTrustCertificateService
+                                                        .FACTORY_LINK, hostSpec
+                                                .sslTrust.documentSelfLink));
+                                    }
+
+                                    pingHost(hostSpec, op, hostSpec.sslTrust,
+                                            () -> {
+                                                if (storeHost) {
+                                                    storeHost(hostSpec, op);
+                                                } else {
+                                                    completeOperationSuccess(op);
+                                                }
+                                            });
+                                })
+        );
     }
 
     private void validatePlainHttpConnection(Service sender, HostSpec hostSpec, Operation op,

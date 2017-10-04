@@ -19,6 +19,7 @@ import static org.junit.Assert.assertTrue;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.function.Consumer;
 
 import org.junit.Before;
@@ -30,12 +31,15 @@ import com.vmware.admiral.adapter.common.service.mock.MockTaskService.MockTaskSt
 import com.vmware.admiral.adapter.registry.mock.BaseMockRegistryTestCase;
 import com.vmware.admiral.adapter.registry.service.RegistryAdapterService.RegistryPingResponse;
 import com.vmware.admiral.adapter.registry.service.RegistrySearchResponse.Result;
+import com.vmware.admiral.common.test.CommonTestStateFactory;
 import com.vmware.admiral.common.test.HostInitTestDcpServicesConfig;
 import com.vmware.admiral.host.HostInitCommonServiceConfig;
 import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.admiral.service.common.RegistryService.ApiVersion;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
+import com.vmware.admiral.service.common.SslTrustCertificateService;
+import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
 
@@ -80,7 +84,9 @@ public class RegistryAdapterServiceTest extends BaseMockRegistryTestCase {
         registryState.customProperties.put(RegistryService.API_VERSION_PROP_NAME,
                 ApiVersion.V1.toString());
 
-        dockerHubRegistryStateLink = doPost(registryState, RegistryService.FACTORY_LINK).documentSelfLink;
+        dockerHubRegistryStateLink = doPost(registryState,
+                RegistryService.FACTORY_LINK).documentSelfLink;
+        createSslTrustCert(new URI(registryState.address).getHost());
     }
 
     @Before
@@ -90,7 +96,9 @@ public class RegistryAdapterServiceTest extends BaseMockRegistryTestCase {
         RegistryState registryState = new RegistryState();
         registryState.address = getDefaultRegistryUri().toString();
 
-        defaultRegistryStateLink = doPost(registryState, RegistryService.FACTORY_LINK).documentSelfLink;
+        defaultRegistryStateLink = doPost(registryState,
+                RegistryService.FACTORY_LINK).documentSelfLink;
+        createSslTrustCert(new URI(registryState.address).getHost());
     }
 
     @Before
@@ -102,6 +110,7 @@ public class RegistryAdapterServiceTest extends BaseMockRegistryTestCase {
                 ApiVersion.V2.toString());
 
         v2RegistryStateLink = doPost(registryState, RegistryService.FACTORY_LINK).documentSelfLink;
+        createSslTrustCert(new URI(registryState.address).getHost());
     }
 
     @Test
@@ -163,6 +172,36 @@ public class RegistryAdapterServiceTest extends BaseMockRegistryTestCase {
             assertEquals("results[0].name", "library/ubuntu", result.name);
             assertEquals("results[0].is_official", true, result.official);
         });
+
+    }
+
+    @Test
+    public void testTrustCertRemovedAfterRegistryRemoval() throws
+            Throwable {
+        List<String>  trustCertList = getDocumentLinksOfType(SslTrustCertificateState.class);
+        int trustCertInitialSize = trustCertList.size();
+        assertEquals(1, trustCertInitialSize);
+        String trustCertLink = trustCertList.get(0);
+
+        RegistryState registryState = new RegistryState();
+        registryState.customProperties = new HashMap<>();
+        registryState.customProperties.put(RegistryService.REGISTRY_TRUST_CERTS_PROP_NAME,
+                trustCertLink);
+        doPatch(registryState, defaultRegistryStateLink);
+        doPatch(registryState, v2RegistryStateLink);
+        doPatch(registryState, dockerHubRegistryStateLink);
+
+        doDelete(UriUtils.buildUri(host, defaultRegistryStateLink), false);
+        trustCertList = getDocumentLinksOfType(SslTrustCertificateState.class);
+        assertEquals(trustCertInitialSize, trustCertList.size());
+
+        doDelete(UriUtils.buildUri(host, v2RegistryStateLink), false);
+        trustCertList = getDocumentLinksOfType(SslTrustCertificateState.class);
+        assertEquals(trustCertInitialSize, trustCertList.size());
+
+        doDelete(UriUtils.buildUri(host, dockerHubRegistryStateLink), false);
+        trustCertList = getDocumentLinksOfType(SslTrustCertificateState.class);
+        assertEquals(trustCertInitialSize - 1, trustCertList.size());
     }
 
     @Test
@@ -307,5 +346,16 @@ public class RegistryAdapterServiceTest extends BaseMockRegistryTestCase {
         host.testStart(1);
         host.send(adapterOperation);
         host.testWait();
+    }
+
+    private SslTrustCertificateState createSslTrustCert(String commonName) throws Throwable {
+        SslTrustCertificateState sslTrustCert = new SslTrustCertificateState();
+        String sslTrust1 = CommonTestStateFactory.getFileContent("test_ssl_trust.PEM").trim();
+        sslTrustCert.certificate = sslTrust1;
+        sslTrustCert.commonName = commonName;
+
+        sslTrustCert = doPost(sslTrustCert, SslTrustCertificateService.FACTORY_LINK);
+
+        return sslTrustCert;
     }
 }

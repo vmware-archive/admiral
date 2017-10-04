@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.compute;
 
+import java.net.HttpURLConnection;
 import java.util.logging.Logger;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
@@ -77,6 +78,13 @@ public class EndpointCertificateUtil {
                         op.setBody(o.getBody(SslTrustCertificateState.class));
                         op.setStatusCode(Operation.STATUS_CODE_OK);
                         op.complete();
+                        return;
+                    }
+
+                    if (o.getStatusCode() == HttpURLConnection.HTTP_ACCEPTED) {
+                        hostSpec.sslTrust = o.getBody
+                                (SslTrustCertificateState.class);
+                        callbackFunction.run();
                         return;
                     }
 

@@ -113,11 +113,10 @@ public class SslTrustImportService extends StatelessService {
                 return;
             }
 
-
             if (resolver.isCertsTrusted()) {
                 // No need to store the certificate since it is signed by a known CA.
-                op.setStatusCode(HttpURLConnection.HTTP_NO_CONTENT);
-                op.setBody(null);
+                op.setStatusCode(HttpURLConnection.HTTP_ACCEPTED);
+                op.setBody(sslTrustState);
                 op.complete();
             } else if (request.acceptCertificate) {
                 // store the accepted certificated to be used by the trust store.
