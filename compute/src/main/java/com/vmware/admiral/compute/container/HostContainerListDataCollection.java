@@ -1218,8 +1218,10 @@ public class HostContainerListDataCollection extends StatefulService {
                         return;
                     }
 
-                    containerDesc.tenantLinks = new ArrayList<>();
-                    containerDesc.tenantLinks.addAll(host.tenantLinks);
+                    if (host.tenantLinks != null) {
+                        containerDesc.tenantLinks = new ArrayList<>();
+                        containerDesc.tenantLinks.addAll(host.tenantLinks);
+                    }
 
                     createOrRetrieveSystemContainer(containerHostLink, systemContainerName,
                             containerDesc);
