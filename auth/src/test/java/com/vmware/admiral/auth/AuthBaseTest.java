@@ -87,9 +87,9 @@ public abstract class AuthBaseTest extends BaseTestCase {
 
     public static final int DEFAULT_WAIT_SECONDS_FOR_AUTH_SERVICES = 180;
 
-    protected static final String PROJECT_NAME_TEST_PROJECT_1 = "testProject1";
-    protected static final String PROJECT_NAME_TEST_PROJECT_2 = "testProject2";
-    protected static final String PROJECT_NAME_TEST_PROJECT_3 = "testProject3";
+    protected static final String PROJECT_NAME_TEST_PROJECT_1 = "test.project1";
+    protected static final String PROJECT_NAME_TEST_PROJECT_2 = "test.project2";
+    protected static final String PROJECT_NAME_TEST_PROJECT_3 = "test.project3";
 
     protected static final String FILE_AUTH_CONTENT_DEFAULT = "auth-content.json";
     protected static final String FILE_AUTH_CONTENT_PROJECTS_ONLY = "content-projects-only.json";

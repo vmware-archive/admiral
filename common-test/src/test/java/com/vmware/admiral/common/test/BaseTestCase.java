@@ -1045,6 +1045,29 @@ public abstract class BaseTestCase {
         return result;
     }
 
+    public <T extends ServiceDocument> List<T> getDocumentsOfType(Class<T> type)
+            throws Throwable {
+        TestContext ctx = testCreate(1);
+        QueryTask query = QueryUtil.addExpandOption(QueryUtil.buildQuery(type, true));
+
+        List<T> result = new LinkedList<>();
+        new ServiceDocumentQuery<>(
+                host, type)
+                .query(query, (r) -> {
+                    if (r.hasException()) {
+                        ctx.failIteration(r.getException());
+                        return;
+                    } else if (r.hasResult()) {
+                        result.add(r.getResult());
+                    } else {
+                        ctx.completeIteration();
+                    }
+                });
+        ctx.await();
+
+        return result;
+    }
+
     public List<String> getDocumentLinksOfType(Class<? extends ServiceDocument> type)
             throws Throwable {
         TestContext ctx = testCreate(1);
