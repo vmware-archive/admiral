@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -36,6 +36,7 @@ public class QueryUtilTest {
     private static final String GROUP_ID = TENANT_ID + "/" + MultiTenantDocument.GROUP_IDENTIFIER
             + "/groupId";
     private static final String USER_ID = MultiTenantDocument.USERS_PREFIX + "/userId";
+    private static final String PROJECT_ID = MultiTenantDocument.PROJECTS_IDENTIFIER + "/projectId";
 
     private static String T1 = "t1";
     private static String T2 = "t2";
@@ -283,6 +284,37 @@ public class QueryUtilTest {
 
         assertEquals(tenantQuery.occurance, Occurance.MUST_OCCUR);
         assertEquals(userQuery.occurance, Occurance.MUST_OCCUR);
+    }
+
+    // [/projects/projectId]
+    @Test
+    public void testAddProjectLinkClauseWhenOnlyProjectIsSet() {
+        List<String> tenantLinks = Arrays.asList(PROJECT_ID);
+        Query query = QueryUtil.addTenantGroupAndUserClause(tenantLinks);
+
+        assertNotNull(query);
+
+        assertEquals(query.occurance, Occurance.MUST_OCCUR);
+        assertEquals(query.term.matchValue, PROJECT_ID);
+    }
+
+    // [/tenants/tenantId, /projects/projectId]
+    @Test
+    public void testAddTenantAndProjectClauseWhenTenantAndProjectAreSet() {
+        List<String> tenantLinks = Arrays.asList(TENANT_ID, PROJECT_ID);
+
+        Query query = QueryUtil.addTenantAndUserClause(tenantLinks);
+
+        Query tenantQuery = query.booleanClauses.stream()
+                .filter(l -> l.term.matchValue.contains(TENANT_ID)).findFirst().get();
+        Query projectQuery = query.booleanClauses.stream()
+                .filter(l -> l.term.matchValue.contains(PROJECT_ID)).findFirst().get();
+
+        assertNotNull(tenantQuery);
+        assertNotNull(projectQuery);
+
+        assertEquals(tenantQuery.occurance, Occurance.MUST_OCCUR);
+        assertEquals(projectQuery.occurance, Occurance.MUST_OCCUR);
     }
 
     @Test

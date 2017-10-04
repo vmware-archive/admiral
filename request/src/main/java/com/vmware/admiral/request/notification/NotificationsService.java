@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,12 +11,14 @@
 
 package com.vmware.admiral.request.notification;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.log.EventLogService.EventLogState;
@@ -42,10 +44,9 @@ public class NotificationsService extends StatelessService {
     public static final String SELF_LINK = ManagementUriParts.NOTIFICATIONS;
 
     public static final long EVENTS_TIME_INTERVAL_MICROS = TimeUnit.MICROSECONDS
-            .convert(
-                    Long.getLong(
-                            "com.vmware.admiral.log.notificationsaggregator.eventstimeinterval.minutes",
-                            20),
+            .convert(Long.getLong(
+                    "com.vmware.admiral.log.notificationsaggregator.eventstimeinterval.minutes",
+                    20),
                     TimeUnit.MINUTES);
 
     public static class NotificationsAggregatorState {
@@ -53,18 +54,22 @@ public class NotificationsService extends StatelessService {
         public long activeRequestsCount;
     }
 
-    private List<String> tenantLinks = null;
-
     @Override
     public void handleGet(Operation get) {
         Map<String, String> queryParams = UriUtils.parseUriQueryParams(get.getUri());
         String tenantLink = queryParams.get(MultiTenantDocument.FIELD_NAME_TENANT_LINKS);
 
-        if (tenantLink != null) {
-            tenantLinks = Arrays.asList(tenantLink.split("\\s*,\\s*"));
-        }
+        List<String> tenantLinks = tenantLink == null ?
+                new ArrayList<>(1) :
+                new ArrayList<>(Arrays.asList(tenantLink.split("\\s*,\\s*")));
 
         NotificationsAggregatorState state = new NotificationsAggregatorState();
+
+        String projectLink = OperationUtil.extractProjectFromHeader(get);
+        if (projectLink != null && projectLink.length() > 0) {
+            // add project link to filter result
+            tenantLinks.add(projectLink);
+        }
 
         QueryTask requestStatusQuery = buildRequestStatusQuery(tenantLinks);
         new ServiceDocumentQuery<RequestStatus>(getHost(), RequestStatus.class)
@@ -95,7 +100,7 @@ public class NotificationsService extends StatelessService {
     private QueryTask buildEventLogCountQuery(List<String> tenantLinks) {
         QueryTask qt = QueryUtil.buildQuery(EventLogState.class, true);
 
-        if (tenantLinks != null) {
+        if (!tenantLinks.isEmpty()) {
             qt.querySpec.query.addBooleanClause(QueryUtil.addTenantGroupAndUserClause(tenantLinks));
         }
 
@@ -123,7 +128,7 @@ public class NotificationsService extends StatelessService {
         QueryTask requestStatusQuery = QueryUtil.buildQuery(RequestStatus.class, true);
         QueryTask.Query runningTasksClause = new QueryTask.Query();
 
-        if (tenantLinks != null) {
+        if (!tenantLinks.isEmpty()) {
             requestStatusQuery.querySpec.query.addBooleanClause(QueryUtil
                     .addTenantGroupAndUserClause(tenantLinks));
         }
@@ -145,4 +150,5 @@ public class NotificationsService extends StatelessService {
 
         return requestStatusQuery;
     }
+
 }

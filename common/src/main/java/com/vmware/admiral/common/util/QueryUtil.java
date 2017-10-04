@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -39,14 +39,21 @@ public class QueryUtil {
      * prefix for tenants. e.g. /tenants/t1
      */
     public static final String TENANT_IDENTIFIER = "/tenants/";
+
     /**
      * token indicating group entry. e.g. /tenants/t1/groups/groupId
      */
     public static final String GROUP_IDENTIFIER = "/groups/";
+
     /**
      * prefix for users. e.g. /users/john.doe@mydomain.org
      */
     public static final String USER_IDENTIFIER = "/users/";
+
+    /**
+     * prefix for projects. e.g. /projects/id
+     */
+    public static final String PROJECT_IDENTIFIER = "/projects/";
 
     public static QueryTask buildQuery(Class<? extends ServiceDocument> stateClass,
             boolean direct, QueryTask.Query... clauses) {
@@ -121,7 +128,7 @@ public class QueryUtil {
             clause.occurance = Occurance.SHOULD_OCCUR;
 
             if (value.contains(TENANT_IDENTIFIER) || value.contains(GROUP_IDENTIFIER)
-                    || value.contains(USER_IDENTIFIER)) {
+                    || value.contains(USER_IDENTIFIER) || value.contains(PROJECT_IDENTIFIER)) {
                 clause.occurance = Occurance.MUST_OCCUR;
             }
 
@@ -136,7 +143,8 @@ public class QueryUtil {
         return inClause;
     }
 
-    public static void addCaseInsensitiveListValueClause(QueryTask q, String propName, Collection<String> values) {
+    public static void addCaseInsensitiveListValueClause(QueryTask q, String propName,
+            Collection<String> values) {
         addCaseInsensitiveListValueClause(q, propName, values, MatchType.TERM);
     }
 
@@ -150,7 +158,8 @@ public class QueryUtil {
     public static void addCaseInsensitiveListValueClause(QueryTask.Query q, String propName,
             Collection<String> values,
             MatchType termMatchType) {
-        QueryTask.Query inClause = addCaseInsensitiveListValueClause(propName, values, termMatchType);
+        QueryTask.Query inClause = addCaseInsensitiveListValueClause(propName, values,
+                termMatchType);
 
         q.addBooleanClause(inClause);
     }
@@ -170,7 +179,7 @@ public class QueryUtil {
             clause.occurance = Occurance.SHOULD_OCCUR;
 
             if (value.contains(TENANT_IDENTIFIER) || value.contains(GROUP_IDENTIFIER)
-                    || value.contains(USER_IDENTIFIER)) {
+                    || value.contains(USER_IDENTIFIER) || value.contains(PROJECT_IDENTIFIER)) {
                 clause.occurance = Occurance.MUST_OCCUR;
             }
 
@@ -327,7 +336,8 @@ public class QueryUtil {
 
         } else {
             groupClause = addListValueClause(propertyName, tenantLinks.stream()
-                    .filter(tenantLink -> !tenantLink.contains(MultiTenantDocument.GROUP_IDENTIFIER))
+                    .filter(tenantLink -> !tenantLink.contains(
+                            MultiTenantDocument.GROUP_IDENTIFIER))
                     .collect(Collectors.toList()), MatchType.TERM);
         }
 
@@ -352,7 +362,8 @@ public class QueryUtil {
             groupClause = addListValueClause(propertyName, tenantLinks.stream()
                     .filter(tenantLink -> tenantLink.startsWith(MultiTenantDocument.TENANTS_PREFIX)
                             || tenantLink.startsWith(MultiTenantDocument.PROJECTS_IDENTIFIER))
-                    .filter(tenantLink -> !tenantLink.contains(MultiTenantDocument.GROUP_IDENTIFIER))
+                    .filter(tenantLink -> !tenantLink.contains(
+                            MultiTenantDocument.GROUP_IDENTIFIER))
                     .collect(Collectors.toList()), MatchType.TERM);
         }
 
