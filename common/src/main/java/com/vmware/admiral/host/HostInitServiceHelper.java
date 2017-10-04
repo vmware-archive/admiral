@@ -16,7 +16,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
 
-import com.vmware.admiral.service.common.EventTopicDeclarator;
 import com.vmware.admiral.service.common.NodeHealthCheckService;
 import com.vmware.admiral.service.common.NodeMigrationService;
 import com.vmware.xenon.common.Operation;
@@ -152,9 +151,13 @@ public abstract class HostInitServiceHelper {
     }
 
     private static void handleEventTopicDeclarators(Service service, ServiceHost host) {
+        /*
+        // as a result of 1959241 disabling extensibility, to be removed further
+
         if (service instanceof EventTopicDeclarator) {
             ((EventTopicDeclarator) service).registerEventTopics(host);
         }
+        */
     }
 
 }
