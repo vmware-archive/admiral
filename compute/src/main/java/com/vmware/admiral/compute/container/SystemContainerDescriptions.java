@@ -19,7 +19,7 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.xenon.common.UriUtils;
 
 public class SystemContainerDescriptions {
-    /*Instance to link to when existing containers are discovered on a host */
+    /* Instance to link to when existing containers are discovered on a host */
     public static final String DISCOVERED_INSTANCE = "discovered";
     public static final String DISCOVERED_DESCRIPTION_LINK = UriUtils.buildUriPath(
             ContainerDescriptionService.FACTORY_LINK, DISCOVERED_INSTANCE);
@@ -32,7 +32,7 @@ public class SystemContainerDescriptions {
     private static final String AGENT_CONTAINER_ID_SEPARATOR = "__";
     public static final String CORE_AGENT_SHELL_PORT = System.getProperty(
             "dcp.management.host.container.agent.shell.port", "4200");
-    //The image name is referenced in agents/core/Makefile
+    // The image name is referenced in agents/core/Makefile
     public static final String AGENT_IMAGE_NAME = System.getProperty(
             "dcp.management.images.agent.name", "vmware/admiral_agent");
     public static final String AGENT_IMAGE_TAR_FILENAME = "admiral_agent";
@@ -42,7 +42,7 @@ public class SystemContainerDescriptions {
             "/var/run/docker.sock:/var/run/docker.sock",
             "/etc/docker:/etc/docker" };
     public static final String AGENT_IMAGE_VERSION_PROPERTY_NAME = "dcp.management.images.agent.version";
-    private static final String AGENT_IMAGE_VERSION = "1.2.0";
+    private static final String AGENT_IMAGE_VERSION = "1.2.2";
 
     /** Create a container description to be used for installing host agents containers. */
     public static ContainerDescription buildCoreAgentContainerDescription() {
