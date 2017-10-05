@@ -14,8 +14,8 @@
     <h3 class="cluster-details-header-title">{{entity?.name}}</h3>
 
     <clr-tabs>
-        <clr-tab-link  [clrTabLinkId]="'summaryTab'" [clrTabLinkActive]="true">{{"clusters.summary.title" | i18n}}</clr-tab-link>
-        <clr-tab-link [hidden]="!showResources" [clrTabLinkId]="'resourcesTab'">{{"clusters.resources.title" | i18n}}</clr-tab-link>
+        <clr-tab-link class="summaryTab" [clrTabLinkId]="'summaryTab'" [clrTabLinkActive]="true">{{"clusters.summary.title" | i18n}}</clr-tab-link>
+        <clr-tab-link class="resourcesTab" [hidden]="!showResources" [clrTabLinkId]="'resourcesTab'">{{"clusters.resources.title" | i18n}}</clr-tab-link>
 
         <clr-tab-content [clrTabContentId]="'summaryContent'" [clrTabContentActive]="true">
             <app-cluster-summary [cluster]="entity"></app-cluster-summary>
