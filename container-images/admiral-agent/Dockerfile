@@ -11,7 +11,9 @@
 
 FROM vmware/photon:1.0
 
-RUN tyum install gawk procps-ng -y && tyum clean all
+RUN tdnf distro-sync --refresh -y && \
+    tdnf install gawk procps-ng -y && \
+    tdnf clean all
 
 # Used by ShellInABox
 EXPOSE 4200

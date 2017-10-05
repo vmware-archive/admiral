@@ -20,7 +20,6 @@ FOLDER_HASH	:= $(shell pwd | sha1sum | head -c 7)
 GIT_HASH	:= $(shell git log  --pretty=format:%h -n 1 .)
 TAG         := $(FOLDER_HASH)-$(GIT_HASH)
 
-
 buildall: build_nodejsbase build_pythonbase build_javabase build_powershellbase
 
 build_nodejsbase: $(ADMIRAL_CLOSURE_NODEJS_IMAGE_TAR_FILENAME)-export-$(TAG)
@@ -46,7 +45,6 @@ build_powershellbase: $(ADMIRAL_CLOSURE_POWERSHELL_IMAGE_TAR_FILENAME)-export-$(
 	mkdir -p ../../host/images-bin || true
 	cp $(ADMIRAL_CLOSURE_POWERSHELL_IMAGE_TAR_FILENAME)-export-$(TAG) \
 	  ../../host/images-bin/$(ADMIRAL_CLOSURE_POWERSHELL_IMAGE_TAR_FILENAME).tar.xz
-
 
 $(ADMIRAL_CLOSURE_NODEJS_IMAGE_TAR_FILENAME)-export-$(TAG):
 	docker ${DOCKER_ARGS} build \
@@ -76,12 +74,9 @@ $(ADMIRAL_CLOSURE_POWERSHELL_IMAGE_TAR_FILENAME)-export-$(TAG):
 	docker ${DOCKER_ARGS} build \
 	    -t $(ADMIRAL_CLOSURE_POWERSHELL_IMAGE_NAME):$(ADMIRAL_CLOSURE_POWERSHELL_IMAGE_VERSION) \
 	    photon-closure-runner_powershell_base
-
 	docker ${DOCKER_ARGS} save \
 	    $(ADMIRAL_CLOSURE_POWERSHELL_IMAGE_NAME):$(ADMIRAL_CLOSURE_POWERSHELL_IMAGE_VERSION) \
 	    | xz -z -f -c > $(ADMIRAL_CLOSURE_POWERSHELL_IMAGE_TAR_FILENAME)-export-$(TAG)
-
-
 
 clean:
 	docker rmi \

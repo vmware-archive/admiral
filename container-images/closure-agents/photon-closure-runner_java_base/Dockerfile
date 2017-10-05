@@ -15,13 +15,14 @@ MAINTAINER Admiral Team, https://vmware.github.io/admiral/
 
 WORKDIR /app
 
-RUN tyum install wget curl tar gzip -y &&\
-    tdnf install openjdk.x86_64 -y &&\
-    wget https://repo1.maven.org/maven2/com/google/code/gson/gson/2.6.2/gson-2.6.2.jar &&\
-    wget http://central.maven.org/maven2/org/apache/httpcomponents/httpclient/4.5/httpclient-4.5.jar &&\
-    wget http://central.maven.org/maven2/org/apache/httpcomponents/httpcore/4.4.1/httpcore-4.4.1.jar &&\
-    wget http://central.maven.org/maven2/commons-logging/commons-logging/1.2/commons-logging-1.2.jar &&\
-    rm -fr jdk-8u121-linux-x64.tar.gz &&\
-    tyum remove wget tar vim -y  &&\
-    tyum clean all && \
+RUN tdnf distro-sync --refresh -y && \
+    tdnf install wget curl tar gzip -y && \
+    tdnf install openjdk.x86_64 -y && \
+    wget https://repo1.maven.org/maven2/com/google/code/gson/gson/2.6.2/gson-2.6.2.jar && \
+    wget http://central.maven.org/maven2/org/apache/httpcomponents/httpclient/4.5/httpclient-4.5.jar && \
+    wget http://central.maven.org/maven2/org/apache/httpcomponents/httpcore/4.4.1/httpcore-4.4.1.jar && \
+    wget http://central.maven.org/maven2/commons-logging/commons-logging/1.2/commons-logging-1.2.jar && \
+    rm -fr jdk-8u121-linux-x64.tar.gz && \
+    tdnf remove wget tar vim -y  && \
+    tdnf clean all && \
     rm -fr /var/cache/tdnf/*

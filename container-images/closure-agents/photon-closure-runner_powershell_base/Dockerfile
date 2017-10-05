@@ -13,11 +13,10 @@ FROM vmware/powerclicore
 
 MAINTAINER Admiral Team, https://vmware.github.io/admiral/
 
-RUN tyum install gzip python3-devel python3 -y &&\
-    pip3 install --upgrade pip &&\
-    pip3 install requests &&\
+RUN tyum install gzip python3-devel python3 -y && \
+    pip3 install --upgrade pip && \
+    pip3 install requests && \
     tyum clean all && \
     rm -fr /var/cache/tdnf/*
 
 WORKDIR /app
-

@@ -17,15 +17,14 @@ WORKDIR /app
 
 COPY app/closure_module/package.json /app/closure_module/package.json
 
-RUN tyum install wget curl npm tar gzip -y &&\
-    wget http://nodejs.org/dist/v4.8.1/node-v4.8.1-linux-x64.tar.gz &&\
-    tar --strip-components 1 -xzvf node-v4.8.1-linux-x64.tar.gz -C /usr/local &&\
-    mkdir -p /app/closure_module &&\
-    npm install /app/closure_module --production &&\
-    rm -fr ~/.npm &&\
-    rm -fr node-v4.8.1-linux-x64.tar.gz &&\
-    tyum remove wget tar vim findutils -y  &&\
-    tyum clean all && \
+RUN tdnf distro-sync --refresh -y && \
+    tdnf install wget curl npm tar gzip -y && \
+    wget http://nodejs.org/dist/v4.8.1/node-v4.8.1-linux-x64.tar.gz && \
+    tar --strip-components 1 -xzvf node-v4.8.1-linux-x64.tar.gz -C /usr/local && \
+    mkdir -p /app/closure_module && \
+    npm install /app/closure_module --production && \
+    rm -fr ~/.npm && \
+    rm -fr node-v4.8.1-linux-x64.tar.gz && \
+    tdnf remove wget tar vim findutils -y  && \
+    tdnf clean all && \
     rm -fr /var/cache/tdnf/*
-
-

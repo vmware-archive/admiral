@@ -13,14 +13,14 @@ FROM vmware/photon:1.0
 
 MAINTAINER Admiral Team, https://vmware.github.io/admiral/
 
-RUN tyum install gzip python3-devel openssl-devel libffi dbus-glib python3-3.5.3-5.ph1.x86_64 \
-    gcc make binutils glibc-devel linux-api-headers -y &&\
-    mkdir -p /app &&\
-    pip3 install --upgrade pip &&\
-    pip3 install requests &&\
-    tyum remove vim findutils -y  &&\
-    tyum clean all && \
+RUN tdnf distro-sync --refresh -y && \
+    tdnf install gzip python3-devel openssl-devel libffi dbus-glib python3-3.5.3-6.ph1.x86_64 \
+    gcc make binutils glibc-devel linux-api-headers -y && \
+    mkdir -p /app && \
+    pip3 install --upgrade pip && \
+    pip3 install requests && \
+    tdnf remove vim findutils -y  && \
+    tdnf clean all && \
     rm -fr /var/cache/tdnf/*
-
 
 WORKDIR /app
