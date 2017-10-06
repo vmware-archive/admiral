@@ -14,7 +14,9 @@ import { FormGroup, FormControl, Validators } from "@angular/forms";
 import { DocumentService } from './../../../utils/document.service';
 import { ProjectService } from './../../../utils/project.service';
 import { Links } from './../../../utils/links';
+import { constants } from './../../../utils/constants';
 import { Utils } from "../../../utils/utils";
+import { FT } from './../../../utils/ft';
 import * as I18n from 'i18next';
 
 @Component({
@@ -42,10 +44,15 @@ export class ClusterAddHostComponent {
 
     addHostToClusterForm = new FormGroup({
         address: new FormControl('', Validators.required),
-        credentials: new FormControl('')
+        credentials: new FormControl(''),
+        publicAddress: new FormControl('')
     });
 
     constructor(private ds: DocumentService) { }
+
+    get showPublicAddressField(): boolean {
+        return FT.isHostPublicUriEnabled();
+      }
 
     clearView() {
         this.resetAlert();
@@ -93,6 +100,10 @@ export class ClusterAddHostComponent {
 
             if (formInput.credentials) {
                 hostState.customProperties['__authCredentialsLink'] = formInput.credentials;
+            }
+
+            if (formInput.publicAddress) {
+                hostState.customProperties[constants.hosts.customProperties.publicAddress] = formInput.publicAddress;
             }
 
             let hostSpec = {

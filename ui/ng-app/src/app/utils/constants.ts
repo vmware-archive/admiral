@@ -16,6 +16,12 @@ export const constants = {
             OFF: "OFF",
             UNKNOWN: "UNKNOWN",
             SUSPEND: "SUSPEND"
+        },
+        type:{
+            VCH: 'VCH'
+        },
+        customProperties: {
+            publicAddress: '__publicAddress'
         }
     },
     alert: {

@@ -1,4 +1,3 @@
-import { SimpleChanges } from '@angular/core';
 /*
  * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
  *
@@ -10,12 +9,13 @@ import { SimpleChanges } from '@angular/core';
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, AfterViewInit, Input, Output, EventEmitter, OnChanges } from '@angular/core';
+import { Component, AfterViewInit, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
 import { FormGroup, FormControl, Validators } from "@angular/forms";
 import { DocumentService } from './../../../utils/document.service';
 import { ProjectService } from './../../../utils/project.service';
 import { Links } from './../../../utils/links';
 import { Utils } from "../../../utils/utils";
+import { FT } from './../../../utils/ft';
 import { constants } from '../../../utils/constants';
 import * as I18n from 'i18next';
 
@@ -45,7 +45,8 @@ export class ClusterEditHostComponent implements OnChanges {
 
     editHostForm = new FormGroup({
         name: new FormControl(''),
-        credentials: new FormControl('')
+        credentials: new FormControl(''),
+        publicAddress: new FormControl('')
     });
 
     constructor(private ds: DocumentService) { }
@@ -57,8 +58,15 @@ export class ClusterEditHostComponent implements OnChanges {
             if (authCredentialsLink) {
                 this.editHostForm.get('credentials').setValue(authCredentialsLink);
             }
+            var publicAddress = Utils.getCustomPropertyValue(this.host.customProperties,
+                constants.hosts.customProperties.publicAddress) || "";
+            this.editHostForm.get('publicAddress').setValue(publicAddress);
         }
     }
+
+    get showPublicAddressField(): boolean {
+        return FT.isHostPublicUriEnabled();
+      }
 
     getCredentialsName(credentials) {
         let name = Utils.getCustomPropertyValue(credentials.customProperties, '__authCredentialsName');
@@ -99,6 +107,9 @@ export class ClusterEditHostComponent implements OnChanges {
         if (formInput.credentials) {
             hostCopy.customProperties['__authCredentialsLink'] = formInput.credentials;
         }
+
+        // allow ovewriting with empty value
+        hostCopy.customProperties[constants.hosts.customProperties.publicAddress] = formInput.publicAddress || "";
 
         return hostCopy;
     }

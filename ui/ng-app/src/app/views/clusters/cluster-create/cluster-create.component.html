@@ -48,6 +48,16 @@
             <span class="tooltip-content">{{ urlRequiredTextKey | i18n }}</span>
           </label>
         </div>
+        <div class="form-group" *ngIf="showPublicAddressField">
+          <label for="publicAddress">{{ "clusters.edit.publicAddress" | i18n }}</label>
+          <input id="publicAddress" type="text"
+                  placeholder="{{ 'clusters.edit.publicAddressPlaceholder' | i18n }}"
+                  formControlName="publicAddress">
+          <a aria-haspopup="true" role="tooltip" class="tooltip tooltip-bottom-left">
+            <clr-icon shape="info-circle"></clr-icon>
+            <span class="tooltip-content">{{ "clusters.edit.publicAddressDescription" | i18n }}</span>
+          </a>
+        </div>
         <div class="form-group" *ngIf="!isEdit">
           <label for="credentials">{{ "clusters.edit.credentials" | i18n }}</label>
           <dropdown formControlName="credentials" [options]="credentials"

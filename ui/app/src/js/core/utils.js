@@ -858,20 +858,6 @@ var utils = {
     return utils.mergeURLParts(urlParts);
   },
 
-  getPortsDisplayTexts: function(hostAddress, ports) {
-    let portsDisplayTexts = [];
-
-    if (ports) {
-      hostAddress = this.formatHostAddress(hostAddress);
-
-      for (let i = 0; i < ports.length; i++) {
-        portsDisplayTexts[i] = this.getPortLinkDisplayText(hostAddress, ports[i]);
-      }
-    }
-
-    return portsDisplayTexts;
-  },
-
   getPortLinks: function(hostAddress, ports) {
     var portLinks = [];
 

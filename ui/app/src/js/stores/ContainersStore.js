@@ -87,6 +87,8 @@ function decorateContainerHostName(container, hosts) {
   if (host) {
     container.hostName = utils.getHostName(host);
     container.hostAddress = host.address;
+    container.hostPublicAddress = utils.getCustomPropertyValue(host.customProperties,
+                                      constants.HOST.CUSTOM_PROPS.PUBLIC_ADDRESS) || host.address;
     container.hostDocumentId = utils.getDocumentId(host.documentSelfLink);
     container.isOnVchHost = host.customProperties.__containerHostType === constants.HOST.TYPE.VCH;
   }

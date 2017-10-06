@@ -40,8 +40,8 @@
     </div>
     <div class="container-ports-holder">
       <span class="container-label">{{i18n("app.container.list.portsLabel")}}</span>
-      <span><template v-for="portText in portsDisplayTexts">
-        <span>{{portText}}</span><br/>
+      <span><template v-for="portLink in portLinks">
+        <span>{{portLink.name}}</span><br/>
       </template></span>
     </div>
     <div class="container-command-holder">

@@ -71,6 +71,10 @@ var ft = {
     return utils.isApplicationEmbedded() && !utils.isApplicationCompute();
   },
 
+  isHostPublicUriEnabled: function() {
+    return utils.getConfigurationPropertyBoolean('allow.ft.hosts.public-address');
+  },
+
   isHostsViewLinksEnabled: function() {
     return utils.getConfigurationPropertyBoolean('allow.ft.hosts.view.links');
   }

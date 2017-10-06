@@ -30,8 +30,8 @@ var ContainersListItem = Vue.extend({
     }
   },
   computed: {
-    portsDisplayTexts: function() {
-      return utils.getPortsDisplayTexts(this.model.hostAddress, this.model.ports);
+    portLinks: function() {
+      return utils.getPortLinks(this.model.hostPublicAddress, this.model.ports);
     },
     networkCount: function() {
       return this.model.networks && Object.keys(this.model.networks).length || 0;

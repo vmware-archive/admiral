@@ -10,6 +10,7 @@
  */
 
 import * as I18n from 'i18next';
+import { constants } from './constants';
 import { FT } from './ft';
 
 const LOGIN_PATH="/login/"
@@ -94,6 +95,10 @@ export class Utils {
 
   public static existsConfigurationProperty(property) {
     return this.configurationProperties.hasOwnProperty(property);
+  }
+
+  public static isSingleHostCluster(clusterEntity) {
+    return clusterEntity && clusterEntity.type === constants.hosts.type.VCH;
   }
 
   public static isCompute() {

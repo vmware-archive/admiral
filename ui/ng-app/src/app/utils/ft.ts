@@ -88,6 +88,10 @@ export class FT {
     return Utils.getConfigurationPropertyBoolean('allow.ft.profiles.split');
   }
 
+  public static isHostPublicUriEnabled() {
+    return Utils.getConfigurationPropertyBoolean('allow.ft.hosts.public-address');
+  }
+
   public static isHostsViewLinksEnabled() {
     return Utils.getConfigurationPropertyBoolean('allow.ft.hosts.view.links');
   }

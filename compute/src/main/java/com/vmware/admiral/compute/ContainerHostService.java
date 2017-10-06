@@ -99,6 +99,7 @@ public class ContainerHostService extends StatelessService {
 
     public static final String CONTAINER_HOST_TYPE_PROP_NAME = "__containerHostType";
     public static final String HOST_DOCKER_ADAPTER_TYPE_PROP_NAME = "__adapterDockerType";
+    public static final String HOST_PUBLIC_ADDRESS_PROP_NAME = "__publicAddress";
     public static final String NUMBER_OF_CONTAINERS_PER_HOST_PROP_NAME = "__Containers";
     public static final String NUMBER_OF_SYSTEM_CONTAINERS_PROP_NAME = "__systemContainers";
     public static final String RETRIES_COUNT_PROP_NAME = "__retriesCount";

@@ -195,6 +195,9 @@
       "url": "URL",
       "urlRequired": "Cluster URL is required.",
       "urlRequiredVic": "Container host URL is required.",
+      "publicAddress": "Public address",
+      "publicAddressPlaceholder": "IP address or hostname",
+      "publicAddressDescription": "The address where published container ports can be reached. Defaults to the address from the URL field.",
       "credentials": "Credentials"
     },
     "delete": {

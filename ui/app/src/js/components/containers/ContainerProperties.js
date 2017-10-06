@@ -25,7 +25,7 @@ var ContainerProperties = Vue.extend({
       return this.model.hostName && this.model.hostDocumentId && ft.isHostsViewLinksEnabled();
     },
     portLinks: function() {
-      return utils.getPortLinks(this.model.hostAddress, this.model.ports);
+      return utils.getPortLinks(this.model.hostPublicAddress, this.model.ports);
     },
     applicationId: function() {
       return this.model.compositeComponentLink

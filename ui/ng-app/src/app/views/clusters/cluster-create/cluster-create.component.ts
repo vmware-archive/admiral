@@ -18,7 +18,7 @@ import { FT } from "../../../utils/ft";
 import { DocumentService } from '../../../utils/document.service';
 import { ProjectService } from '../../../utils/project.service';
 import * as I18n from 'i18next';
-
+import { constants } from './../../../utils/constants';
 import { BaseDetailsComponent } from '../../../components/base/base-details.component';
 
 @Component({
@@ -42,12 +42,14 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
   alertMessage: string;
 
   private sub: any;
+  private isSingleHostCluster: boolean = false;
 
   clusterForm = new FormGroup({
     name: new FormControl('', Validators.required),
     description: new FormControl(''),
     type: new FormControl('VCH'),
     url: new FormControl('', Validators.required),
+    publicAddress: new FormControl(''),
     credentials: new FormControl('')
   });
 
@@ -79,8 +81,14 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
     return 'clusters.edit.urlRequired'
   }
 
+  get showPublicAddressField(): boolean {
+    return FT.isHostPublicUriEnabled() && (!this.isEdit || this.isSingleHostCluster);
+  }
+
   entityInitialized() {
     this.isEdit = true;
+    this.isSingleHostCluster = Utils.isSingleHostCluster(this.entity);
+
     this.clusterForm.get('name').setValue(this.entity.name);
     if (this.entity.details) {
       this.clusterForm.get('description').setValue(this.entity.details);
@@ -88,6 +96,14 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
     this.clusterForm.get('type').setValue(this.entity.type);
     if (this.entity.address) {
       this.clusterForm.get('url').setValue(this.entity.address);
+    }
+
+    if (this.isSingleHostCluster) {
+      let publicAddress = Utils.getCustomPropertyValue(this.entity.customProperties,
+        constants.hosts.customProperties.publicAddress) || this.entity.address;
+      if (publicAddress) {
+        this.clusterForm.get('publicAddress').setValue(this.entity.address);
+      }
     }
   }
 
@@ -150,8 +166,17 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
       let description = this.clusterForm.value.description;
       let clusterDtoPatch = {
         'name': name,
-        'details':  description
+        'details':  description,
+        'customProperties': {}
       };
+
+      // TODO check if the backend will handle this
+      if (this.isSingleHostCluster) {
+      // allow overwriting with empty value
+      let publicAddress = this.clusterForm.value.publicAddress || "";
+      clusterDtoPatch.customProperties[constants.hosts.customProperties.publicAddress] = publicAddress;
+      }
+
       this.isSaving = true;
       this.service.patch(this.entity.documentSelfLink, clusterDtoPatch, this.projectLink).then(() => {
         this.toggleModal(false);
@@ -182,6 +207,10 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
 
       if (formInput.description) {
         hostState.customProperties['__clusterDetails'] = formInput.description;
+      }
+
+      if (formInput.publicAddress) {
+        hostState.customProperties[constants.hosts.customProperties.publicAddress] = formInput.publicAddress;
       }
 
       let hostSpec = {

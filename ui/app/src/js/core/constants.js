@@ -126,6 +126,9 @@ var constants = Immutable({
       DOCKER: 'DOCKER',
       VCH: 'VCH',
       KUBERNETES: 'KUBERNETES'
+    },
+    CUSTOM_PROPS: {
+      PUBLIC_ADDRESS: '__publicAddress'
     }
   },
   CREDENTIALS_TYPE: {
