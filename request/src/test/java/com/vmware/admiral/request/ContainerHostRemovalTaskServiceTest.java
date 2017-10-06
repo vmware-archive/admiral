@@ -106,6 +106,9 @@ public class ContainerHostRemovalTaskServiceTest extends RequestBaseTest {
     public void testTrustCertRemovedAfterContainerHostRemoval() throws
             Throwable {
 
+        // create a host without trustCertLink
+        createDockerHost(dockerHostDesc, resourcePool, Integer.MAX_VALUE - 100L, null, true, false);
+
         //get trust certificates initial size
         List<String> trustCertList = getDocumentLinksOfType(SslTrustCertificateState.class);
         int trustCertInitialSize = trustCertList.size();
@@ -138,9 +141,13 @@ public class ContainerHostRemovalTaskServiceTest extends RequestBaseTest {
     public void testTrustCertRemovedAfterContainerHostRemovalComputeWithoutSpecialProperty() throws
             Throwable {
 
+        // create a host without trustCertLink
+        ComputeState dockerHost = createDockerHost(dockerHostDesc, resourcePool,
+                Integer.MAX_VALUE - 100L, null, true, false);
+
         ContainerHostRemovalTaskState computeEndpointRemovaleStare = new ContainerHostRemovalTaskState();
         computeEndpointRemovaleStare.resourceLinks = new HashSet<>(Collections.singletonList(
-                endpoint.computeLink));
+                dockerHost.documentSelfLink));
         computeEndpointRemovaleStare = doPost(computeEndpointRemovaleStare,
                 ContainerHostRemovalTaskFactoryService.SELF_LINK);
 
@@ -149,7 +156,7 @@ public class ContainerHostRemovalTaskServiceTest extends RequestBaseTest {
                 ContainerHostRemovalTaskState.class);
 
         Collection<String> computeSelfLinks = findResourceLinks(ComputeState.class,
-                Collections.singletonList(endpoint.computeLink));
+                Collections.singletonList(dockerHost.documentSelfLink));
         assertTrue("Endpoint ComputeState was not deleted: " + computeSelfLinks,
                 computeSelfLinks.isEmpty());
 

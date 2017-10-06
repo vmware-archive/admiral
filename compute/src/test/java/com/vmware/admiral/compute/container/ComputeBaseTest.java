@@ -13,8 +13,6 @@ package com.vmware.admiral.compute.container;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.List;
 
 import org.junit.After;
@@ -31,15 +29,9 @@ import com.vmware.admiral.host.HostInitLoadBalancerServiceConfig;
 import com.vmware.admiral.host.HostInitPhotonModelServiceConfig;
 import com.vmware.admiral.host.interceptor.OperationInterceptorRegistry;
 import com.vmware.admiral.service.common.AbstractInitialBootService;
-import com.vmware.photon.controller.model.adapterapi.EndpointConfigRequest;
-import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
-import com.vmware.photon.controller.model.resources.EndpointService;
-import com.vmware.photon.controller.model.tasks.EndpointAllocationTaskService;
-import com.vmware.photon.controller.model.tasks.TaskOption;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
-import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.TestContext;
 
@@ -95,36 +87,5 @@ public abstract class ComputeBaseTest extends BaseTestCase {
                 .setBody(new ServiceDocument())
                 .setCompletion(ctx.getCompletion()));
         ctx.await();
-    }
-
-    protected EndpointAllocationTaskService.EndpointAllocationTaskState allocateEndpoint(
-            EndpointService.EndpointState endpoint)
-            throws Throwable {
-        EndpointAllocationTaskService.EndpointAllocationTaskState state =
-                new EndpointAllocationTaskService.EndpointAllocationTaskState();
-        state.endpointState = endpoint;
-        state.options = EnumSet.of(TaskOption.IS_MOCK);
-        state.taskInfo = new TaskState();
-        state.taskInfo.isDirect = true;
-
-        EndpointAllocationTaskService.EndpointAllocationTaskState result = doPost(state,
-                EndpointAllocationTaskService.FACTORY_LINK);
-        return result;
-    }
-
-    protected EndpointService.EndpointState createEndpoint(String name) {
-
-        EndpointService.EndpointState endpoint = new EndpointService.EndpointState();
-
-        endpoint.endpointType = EndpointType.aws.name();
-        endpoint.name = name;
-        endpoint.endpointProperties = new HashMap<>();
-        endpoint.endpointProperties.put(EndpointConfigRequest.PRIVATE_KEY_KEY, "aws.access.key");
-        endpoint.endpointProperties.put(EndpointConfigRequest.PRIVATE_KEYID_KEY, "aws.secret.key");
-        endpoint.endpointProperties.put(EndpointConfigRequest.REGION_KEY, REGION_ID);
-        endpoint.endpointProperties.put(
-                EndpointConfigRequest.SUPPORT_PUBLIC_IMAGES, Boolean.TRUE.toString());
-
-        return endpoint;
     }
 }

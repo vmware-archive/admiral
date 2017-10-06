@@ -25,12 +25,6 @@ public interface ManagementUriParts {
     String SSL_TRUST_CERTS = CONFIG + "/trust-certs";
     String SSL_TRUST_CERTS_IMPORT = CONFIG + "/trust-certs-import";
     String USER_INITIALIZATION_SERVICE = CONFIG + "/user-init-service";
-    String PROFILES = CONFIG + "/profiles";
-    String PROFILE_MAPPINGS = CONFIG + "/profile-mappings";
-    String COMPUTE_PROFILES = CONFIG + "/compute-profiles";
-    String STORAGE_PROFILES = CONFIG + "/storage-profiles";
-    String NETWORK_PROFILES = CONFIG + "/network-profiles";
-    String IMAGE_PROFILES = CONFIG + "/image-profiles";
     String INSTANCE_TYPE_PROFILES = CONFIG + "/instance-types";
     String MIGRATION = CONFIG + "/migration";
     String UNIQUE_PROPERTIES = CONFIG + "/unique-properties";
@@ -50,7 +44,6 @@ public interface ManagementUriParts {
 
     String CERT_DISTRIBUTION_ADD_REGISTRY = CONFIG + "/cert-dist-add-reg";
     String CERT_DISTRIBUTION_ADD_HOST = CONFIG + "/certs-dist-add-host";
-    String ENDPOINTS = CONFIG + "/endpoints";
 
     String EXTENSIBILITY = "/extensibility";
     String EXTENSIBILITY_SUBSCRIPTION = EXTENSIBILITY + "-subscriptions";
@@ -71,14 +64,9 @@ public interface ManagementUriParts {
     String HOST_PORT_PROFILES = RESOURCES + "/host-port-profiles";
     String ELASTIC_PLACEMENT_ZONES = RESOURCES + "/elastic-placement-zones";
     String ELASTIC_PLACEMENT_ZONE_CONFIGURATION = ELASTIC_PLACEMENT_ZONES + "-config";
-    String PLACEMENT_CAPACITY_UPDATE = RESOURCES + "/placement-capacity-update";
     String PLACEMENT_UPDATE_TASKS = RESOURCES + "/placement-update-tasks";
     String TAG_ASSIGNMENT = RESOURCES + "/tag-assignment";
-    String COMPUTE_SEARCH = RESOURCES + "/compute-search";
-    String IMAGE_SEARCH = RESOURCES + "/image-search";
     String CLUSTERS = RESOURCES + "/clusters";
-
-    String COMPUTE_NETWORK_CIDR_ALLOCATIONS = RESOURCES + "/compute-network-cidr-allocations";
 
     // Projects
     String PROJECTS = "/projects";
@@ -97,7 +85,6 @@ public interface ManagementUriParts {
     String EPZ_COMPUTE_ENUMERATION_TASKS = RESOURCES + "/epz-compute-enumeration-tasks";
     String EPZ_PERIODIC_ENUMERATION = RESOURCES + "/epz-periodic-enumeration";
     String PLACEMENT_PERIODIC_UPDATE = RESOURCES + "/placement-periodic-update";
-    String COMPUTE_REMOVAL_WATCH = RESOURCES + "/compute-removal-watch";
 
     String CONTAINERS = RESOURCES + "/containers";
     String CONTAINER_STATS = RESOURCES + "/container-stats";
@@ -141,9 +128,6 @@ public interface ManagementUriParts {
     String CONTAINER_VOLUMES_DESC = RESOURCES + "/container-volume" + DESCRIPTION_SUFFIX;
     String MOCK_CONTAINER_VOLUMES = CONTAINER_VOLUMES + "-mock";
 
-    String COMPUTE_NETWORKS = RESOURCES + "/compute-networks";
-    String COMPUTE_NETWORK_DESC = RESOURCES + "/compute-network" + DESCRIPTION_SUFFIX;
-
     String KUBERNETES = RESOURCES + "/kubernetes";
     String KUBERNETES_DESC = RESOURCES + "/kubernetes" + DESCRIPTION_SUFFIX;
     String KUBERNETES_DESC_CONTENT = RESOURCES + "/kubernetes-templates";
@@ -163,18 +147,6 @@ public interface ManagementUriParts {
     String REQUEST_REMOVAL_OPERATIONS = REQUEST + "/resource-removal-operations";
     String REQUEST_ALLOCATION_TASKS = REQUEST + "/allocation-tasks";
     String REQUEST_CONTAINER_REDEPLOYMENT_TASKS = REQUEST + "/container-redeployment-tasks";
-    String REQUEST_COMPUTE_ALLOCATION_TASKS = REQUEST + "/compute-allocation-tasks";
-
-    String REQUEST_COMPUTE_NETWORK_ALLOCATION_TASKS = REQUEST + "/compute-network-allocation-tasks";
-    String REQUEST_PROVISION_COMPUTE_NETWORK_TASKS = REQUEST + "/provision-compute-network-tasks";
-    String REQUEST_PROVISION_ISOLATED_SUBNET_TASKS = REQUEST + "/provision-isolated-subnet-tasks";
-    String REQUEST_PROVISION_ISOLATED_SECURITY_GROUP_TASKS = REQUEST + "/provision-isolated-security-group-tasks";
-    String REQUEST_COMPUTE_NETWORK_REMOVAL_TASKS = REQUEST + "/compute-network-removal-tasks";
-
-    String REQUEST_LOAD_BALANCER_ALLOCATION_TASKS = REQUEST + "/load-balancer-allocation-tasks";
-    String REQUEST_LOAD_BALANCER_PROVISION_TASKS = REQUEST + "/load-balancer-provision-tasks";
-    String REQUEST_LOAD_BALANCER_OPERATION_TASKS = REQUEST + "/load-balancer-resource-operations";
-    String REQUEST_LOAD_BALANCER_REMOVAL_TASKS = REQUEST + "/load-balancer-removal-tasks";
 
     String REQUEST_CONTAINER_LOAD_BALANCER_ALLOCATION_TASKS = REQUEST +
             "/container-load-balancer-allocation-tasks";
@@ -197,36 +169,25 @@ public interface ManagementUriParts {
     String REQUEST_CLOSURE_RUN = REQUEST + "/closures-run";
     String REQUEST_RESERVATION_TASKS = REQUEST + "/reservation-tasks";
     String REQUEST_RESERVATION_ALLOCATION_TASKS = REQUEST + "/reservation-allocation-tasks";
-    String REQUEST_COMPUTE_RESERVATION_TASKS = REQUEST + "/compute-reservation-tasks";
     String REQUEST_RESERVATION_REMOVAL_TASKS = REQUEST + "/reservation-removal-tasks";
     String REQUEST_HOST_REMOVAL_OPERATIONS = REQUEST + "/host-removal-operations";
     String REQUEST_COMPUTE_REMOVAL_OPEARTIONS = REQUEST + "/compute-removal-operations";
-    String REQUEST_COMPUTE_RESOURCE_OPERATIONS = REQUEST + "/compute-resource-operations";
     String REQUEST_COMPOSITION_TASK = REQUEST + "/composition-tasks";
     String REQUEST_COMPOSITION_REMOVAL_TASK = REQUEST + "/composition-removal-tasks";
     String REQUEST_COMPOSITION_REMOVAL_KUBERNETES_TASK = REQUEST +
             "/composition-removal-kubernetes-tasks";
     String REQUEST_COMPOSITION_SUB_TASK = REQUEST + "/composition-sub-tasks";
     String REQUEST_RESOURCE_CLUSTERING_TASK = REQUEST + "/clustering-task";
-    String REQUEST_PROVISION_CONTAINER_HOSTS = REQUEST + "/provision-container-hosts-tasks";
-    String REQUEST_PROVISION_COMPUTE_CONTAINER_HOSTS = REQUEST
-            + "/provision-compute-container-hosts-tasks";
     String REQUEST_PROVISION_CONTAINER_NETWORK_TASKS = REQUEST
             + "/provision-container-network-tasks";
     String REQUEST_PROVISION_CONTAINER_VOLUME_TASKS = REQUEST
             + "/provision-container-volume-tasks";
-    String REQUEST_COMPUTE_PROVISION_TASKS = REQUEST + "/compute-provision-tasks";
     String REQUEST_PROVISION_COMPOSITE_KUBERNETES_TASKS = REQUEST
             + "/provision-composite-kubernetes-tasks";
     String REQUEST_PROVISION_PLACEMENT_TASKS = REQUEST + "/placement-tasks";
-    String REQUEST_PROVISION_COMPUTE_PLACEMENT_TASKS = REQUEST + "/compute-placement-tasks";
     String REQUEST_PROVISION_NAME_PREFIXES_TASKS = REQUEST + "/resource-prefix-tasks";
-    String REQUEST_PROVISION_SERVICE_LINKS_TASKS = REQUEST + "/service-link-processing-tasks";
-    String REQUEST_PROVISION_EXPOSE_SERVICE_TASKS = REQUEST + "/expose-service-processing-tasks";
     String REQUEST_CALLBACK_HANDLER_TASKS = REQUEST + "/callback-handler/";
     String REQUEST_CONTAINER_PORTS_ALLOCATION_TASKS = REQUEST + "/container-ports-allocation-tasks";
-    String REQUEST_ENDPOINT_HEALTHCHECK_TASKS = REQUEST + "/endpoint-healthcheck-tasks";
-    String ENDPOINT_PERIODIC_HEALTHCHECK = REQUEST + "/endpoint-periodic-healthcheck";
 
     String CONFIGURE_HOST = REQUEST + "/configure-host/";
 
@@ -279,9 +240,6 @@ public interface ManagementUriParts {
     String HBR_REVERSE_PROXY = "/hbr-api";
 
     String REQUEST_PARAM_VALIDATE_OPERATION_NAME = "validate";
-    String REQUEST_PARAM_ENUMERATE_OPERATION_NAME = "enumerate";
-
-    String REQUEST_PARAM_TARGET_RESOURCE_POOL_LINK = "targetRpLink";
 
     String EXEC = "/exec";
     String AUTH_CREDENTIALS_CA_LINK = UriUtils.buildUriPath(

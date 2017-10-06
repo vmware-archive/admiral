@@ -14,8 +14,6 @@ package com.vmware.admiral.service.test;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.amazonaws.services.elasticloadbalancing.model.InvalidConfigurationRequestException;
-
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.cluster.ClusterService.ContainerHostRemovalTaskState;
 import com.vmware.xenon.common.DeferredResult;
@@ -45,7 +43,7 @@ public class MockRequestBrokerService extends BaseMockAdapterService {
                 return;
             }
         }
-        op.fail(new InvalidConfigurationRequestException(
+        op.fail(new RuntimeException(
                 "Operation not supported in MockRequestBrokerService"));
     }
 }

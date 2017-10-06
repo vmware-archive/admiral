@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -87,27 +87,6 @@ public class EpzComputeEnumerationTaskServiceTest extends ComputeBaseTest {
     }
 
     @Test
-    public void testComputeTagChanges() throws Throwable {
-        enumerateAllEpzs();
-
-        this.cs1.tagLinks.remove("tag1");
-        this.cs4.tagLinks.remove("tag1");
-        this.cs5.tagLinks.add("tag1");
-        this.cs6.tagLinks.addAll(Arrays.asList("tag2", "tag1"));
-
-        doPut(this.cs1);
-        doPut(this.cs4);
-        doPut(this.cs5);
-        doPut(this.cs6);
-        enumerateAllEpzs();
-
-        validateCompute(this.cs1);
-        validateCompute(this.cs4, this.epz2);
-        validateCompute(this.cs5, this.epz1);
-        validateCompute(this.cs6, this.epz1, this.epz2, this.epz3);
-    }
-
-    @Test
     public void testEpzChanges() throws Throwable {
         enumerateAllEpzs();
 
@@ -128,17 +107,6 @@ public class EpzComputeEnumerationTaskServiceTest extends ComputeBaseTest {
         validateCompute(this.cs4, this.epz3, this.epz1);
         validateCompute(this.cs5);
         validateCompute(this.cs6, this.epz3);
-    }
-
-    @Test
-    public void testComputeRpLinkChanges() throws Throwable {
-        enumerateAllEpzs();
-
-        this.cs6.resourcePoolLink = null;
-        doPut(this.cs6);
-        enumerateAllEpzs();
-
-        validateCompute(this.cs6);
     }
 
     private void validateCompute(ComputeState compute,

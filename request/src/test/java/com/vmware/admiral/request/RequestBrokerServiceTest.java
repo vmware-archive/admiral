@@ -31,7 +31,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Function;
 
 import org.junit.Test;
 
@@ -68,19 +67,6 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionSer
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.admiral.compute.container.volume.VolumeUtil;
-import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
-import com.vmware.admiral.compute.network.ComputeNetworkService;
-import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
-import com.vmware.admiral.compute.profile.ComputeImageDescription;
-import com.vmware.admiral.compute.profile.ComputeProfileService;
-import com.vmware.admiral.compute.profile.ComputeProfileService.ComputeProfile;
-import com.vmware.admiral.compute.profile.InstanceTypeDescription;
-import com.vmware.admiral.compute.profile.NetworkProfileService;
-import com.vmware.admiral.compute.profile.NetworkProfileService.NetworkProfile;
-import com.vmware.admiral.compute.profile.ProfileService;
-import com.vmware.admiral.compute.profile.ProfileService.ProfileState;
-import com.vmware.admiral.compute.profile.StorageProfileService;
-import com.vmware.admiral.compute.profile.StorageProfileService.StorageProfile;
 import com.vmware.admiral.log.EventLogService.EventLogState;
 import com.vmware.admiral.log.EventLogService.EventLogState.EventLogType;
 import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState;
@@ -101,14 +87,8 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService.Co
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
-import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService;
-import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService.LoadBalancerDescription;
-import com.vmware.photon.controller.model.resources.LoadBalancerService;
-import com.vmware.photon.controller.model.resources.LoadBalancerService.LoadBalancerState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
-import com.vmware.photon.controller.model.resources.SubnetService;
-import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.Service.Action;
@@ -745,123 +725,6 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         ServiceDocumentQueryResult networkStates = getDocument(ServiceDocumentQueryResult.class,
                 ContainerNetworkService.FACTORY_LINK);
         assertEquals(0L, networkStates.documentCount.longValue());
-    }
-
-    @Test
-    public void testLoadBalancerRequestLifeCycle() throws Throwable {
-        host.log("########  Start of testLoadBalancerRequestLifeCycle ######## ");
-
-        String endpointLink = createEndpoint().documentSelfLink;
-
-        // create prerequisites
-
-        String loadBalancerName = "mylb";
-        String networkName = "test-network";
-        String contextId = UUID.randomUUID().toString();
-
-        createVmHostCompute(true);
-        createComputeGroupResourcePlacement(createComputeResourcePool(), 0);
-
-        SubnetState subnet;
-        { // Sub-network to which the load balancer is attached
-            subnet = TestRequestStateFactory.createSubnetState("subnet");
-            subnet.endpointLink = endpointLink;
-            subnet = doPost(subnet, SubnetService.FACTORY_LINK);
-
-            addForDeletion(subnet);
-        }
-
-        ProfileState profile;
-        { // Profile to find the sub-network
-            ComputeProfile computeProfile = TestRequestStateFactory.createComputeProfile("net");
-            computeProfile.instanceTypeMapping = new HashMap<>();
-            InstanceTypeDescription itd = new InstanceTypeDescription();
-            itd.instanceType = "t2.micro";
-            computeProfile.instanceTypeMapping.put("small", itd);
-
-            ComputeImageDescription cid = new ComputeImageDescription();
-            cid.image = "image-ami";
-            computeProfile.imageMapping = new HashMap<>();
-            computeProfile.imageMapping.put("coreos", cid);
-
-            computeProfile = doPost(computeProfile, ComputeProfileService.FACTORY_LINK);
-            addForDeletion(computeProfile);
-            StorageProfile storageProfile = TestRequestStateFactory.createStorageProfile("net");
-            storageProfile = doPost(storageProfile, StorageProfileService.FACTORY_LINK);
-            addForDeletion(storageProfile);
-            NetworkProfile networkProfile = TestRequestStateFactory.createNetworkProfile("net");
-            networkProfile.subnetLinks = Collections.singletonList(subnet.documentSelfLink);
-            networkProfile = doPost(networkProfile, NetworkProfileService.FACTORY_LINK);
-            addForDeletion(networkProfile);
-            profile = TestRequestStateFactory
-                    .createProfile("profile", networkProfile.documentSelfLink,
-                            storageProfile.documentSelfLink, computeProfile.documentSelfLink);
-            profile.endpointLink = endpointLink;
-            profile.endpointType = null;
-
-            profile = doPost(profile, ProfileService.FACTORY_LINK);
-            addForDeletion(profile);
-        }
-
-        ComputeNetworkDescription computeNetworkDescription = TestRequestStateFactory
-                .createComputeNetworkDescription(networkName);
-        ComputeDescription computeDesc = TestRequestStateFactory.createDockerHostDescription();
-
-        LoadBalancerDescription lbDesc;
-        { // The load balancer to be provisioned/removed
-            lbDesc = TestRequestStateFactory.createLoadBalancerDescription(loadBalancerName);
-            lbDesc.computeDescriptionLink = UriUtils.buildUriPath(
-                    ComputeDescriptionService.FACTORY_LINK, computeDesc.documentSelfLink);
-        }
-
-        CompositeDescription compositeDesc = createCompositeDesc(false, false, lbDesc, computeDesc,
-                computeNetworkDescription);
-        assertNotNull(compositeDesc);
-
-        // 1. Request a composite component with LB, computes, and a network
-        RequestBrokerState request = TestRequestStateFactory
-                .createRequestState(ResourceType.COMPOSITE_COMPONENT_TYPE.getName(),
-                        compositeDesc.documentSelfLink);
-        request.addCustomProperty(FIELD_NAME_CONTEXT_ID_KEY, contextId);
-        host.log("########  Start of provisioning request ######## ");
-        request = startRequest(request);
-
-        request = waitForRequestToComplete(request);
-
-        CompositeComponent cc = getDocument(CompositeComponent.class,
-                request.resourceLinks.iterator().next());
-
-        Function<String, String> findResourceByType = t -> cc.componentLinks.stream()
-                .filter(r -> r.startsWith(t)).findFirst().get();
-        String loadBalancerLink = findResourceByType.apply(LoadBalancerService.FACTORY_LINK);
-        String computeLink = findResourceByType.apply(ComputeService.FACTORY_LINK);
-        String computeNetworkLink = findResourceByType.apply(ComputeNetworkService.FACTORY_LINK);
-
-        assertNotNull(loadBalancerLink);
-        LoadBalancerState lbState = getDocument(LoadBalancerState.class, loadBalancerLink);
-        assertEquals(UriUtils.buildUriPath(LoadBalancerDescriptionService.FACTORY_LINK,
-                lbDesc.documentSelfLink), lbState.descriptionLink);
-        assertEquals(subnet.documentSelfLink,
-                lbState.subnetLinks.stream().findFirst().orElse(null));
-
-        assertNotNull(computeLink);
-        assertNotNull(computeNetworkLink);
-
-        // 2. Request a removal of the composite component and its sub-components
-        RequestBrokerState removalRequest = TestRequestStateFactory
-                .createRequestState(ResourceType.COMPOSITE_COMPONENT_TYPE.getName(),
-                        compositeDesc.documentSelfLink, RequestBrokerState.REMOVE_RESOURCE_OPERATION,
-                        new HashMap<>());
-        removalRequest.resourceLinks = request.resourceLinks;
-        host.log("########  Start of removal request ######## ");
-        removalRequest = startRequest(removalRequest);
-
-        removalRequest = waitForRequestToComplete(removalRequest);
-
-        assertNull(getDocumentNoWait(LoadBalancerState.class, loadBalancerLink));
-        assertNull(getDocumentNoWait(ComputeState.class, computeLink));
-        assertNull(getDocumentNoWait(ComputeNetwork.class, computeNetworkLink));
-        assertNull(getDocumentNoWait(CompositeComponent.class, cc.documentSelfLink));
     }
 
     @Test

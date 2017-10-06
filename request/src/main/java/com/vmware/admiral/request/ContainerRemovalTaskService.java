@@ -11,7 +11,6 @@
 
 package com.vmware.admiral.request;
 
-import static com.vmware.admiral.common.ManagementUriParts.CLOSURES_CONTAINER_DESC;
 import static com.vmware.admiral.common.ManagementUriParts.CONTAINER_DESC;
 import static com.vmware.admiral.compute.container.SystemContainerDescriptions.isDiscoveredContainer;
 import static com.vmware.admiral.compute.container.SystemContainerDescriptions.isSystemContainer;
@@ -397,8 +396,8 @@ public class ContainerRemovalTaskService
                 ContainerState.FIELD_NAME_DESCRIPTION_LINK,
                 Arrays.asList(containerDescriptionLink));
 
-        final List<String> resourcesSharingDesc = new ArrayList<String>();
-        new ServiceDocumentQuery<ContainerState>(getHost(), ContainerState.class)
+        final List<String> resourcesSharingDesc = new ArrayList<>();
+        new ServiceDocumentQuery<>(getHost(), ContainerState.class)
                 .query(compositeQueryTask, (r) -> {
                     if (r.hasException()) {
                         logSevere("Failed to retrieve containers, sharing the same"
@@ -563,11 +562,6 @@ public class ContainerRemovalTaskService
                         return;
                     }
                 });
-    }
-
-    private boolean isClosureContainer(ContainerState cs) {
-        return cs.descriptionLink != null && cs.descriptionLink
-                .startsWith(CLOSURES_CONTAINER_DESC);
     }
 
     private Operation releasePorts(ContainerState cs, AtomicLong skipOperationException) {

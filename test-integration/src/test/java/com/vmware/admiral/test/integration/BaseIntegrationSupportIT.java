@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -70,8 +70,6 @@ import com.vmware.admiral.service.common.DefaultSubStage;
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpMethod;
 import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpResponse;
-import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
-import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeStateWithDescription;
@@ -121,9 +119,6 @@ public abstract class BaseIntegrationSupportIT {
         CompositeComponentRegistry.registerComponent(ResourceType.NETWORK_TYPE.getName(),
                 ContainerNetworkDescriptionService.FACTORY_LINK, ContainerNetworkDescription.class,
                 ContainerNetworkService.FACTORY_LINK, ContainerNetworkState.class);
-        CompositeComponentRegistry.registerComponent(ResourceType.COMPUTE_TYPE.getName(),
-                ComputeDescriptionService.FACTORY_LINK,
-                ComputeDescription.class, ComputeService.FACTORY_LINK, ComputeState.class);
     }
 
     @AfterClass

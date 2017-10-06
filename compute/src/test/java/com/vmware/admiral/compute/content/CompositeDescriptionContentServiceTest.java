@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -14,7 +14,6 @@ package com.vmware.admiral.compute.content;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -28,7 +27,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -42,7 +40,6 @@ import com.vmware.admiral.common.test.CommonTestStateFactory;
 import com.vmware.admiral.common.util.FileUtil;
 import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.ComponentDescription;
-import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescriptionExpanded;
@@ -50,18 +47,11 @@ import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.loadbalancer.ContainerLoadBalancerDescriptionService.ContainerLoadBalancerDescription;
 import com.vmware.admiral.compute.content.Binding.ComponentBinding;
-import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
-import com.vmware.photon.controller.model.Constraint;
-import com.vmware.photon.controller.model.Constraint.Condition.Enforcement;
-import com.vmware.photon.controller.model.Constraint.Condition.Type;
-import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
-import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService.LoadBalancerDescription;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceErrorResponse;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
-import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 
 /**
  * Test the CompositeDescriptionContentService
@@ -74,9 +64,7 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][] {
                 { "WordPress_with_MySQL_containers.yaml", verifyContainerTemplate },
-                { "WordPress_with_MySQL_compute.yaml", verifyComputeTemplate },
                 { "WordPress_with_MySQL_bindings.yaml", verifyBindingsTemplate },
-                { "WordPress_with_MySQL_with_load_balancer.yaml", verifyLoadBalancerTemplate },
                 { "WordPress_with_MySQL_with_container_load_balancer.yaml",
                         verifyContainerLoadBalancerTemplate },
                 { "WordPress_with_MySQL_kubernetes.yaml", verifyKubernetesTemplate }
@@ -102,61 +90,6 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
             assertNotNull(containerDescription.imageReference);
         }
     };
-    private static BiConsumer<Operation, List<String>> verifyComputeTemplate = (o, descLinks) -> {
-        CompositeDescriptionExpanded cd = o.getBody(CompositeDescriptionExpanded.class);
-        assertEquals("name", "wordPressWithMySqlCompute", cd.name);
-        assertEquals("descriptionLinks.size", 3, cd.descriptionLinks.size());
-        assertNotNull("customProperties", cd.customProperties);
-        assertEquals("customProperties.size", 1, cd.customProperties.size());
-        assertEquals("customProperties[_leaseDays]", "3",
-                cd.customProperties.get("_leaseDays"));
-
-        // assert network was persisted
-        Optional<ComponentDescription> networkComponentOpt = cd.componentDescriptions.stream()
-                .filter(c -> c.type.equals(
-                        ResourceType.COMPUTE_NETWORK_TYPE.getName()))
-                .findFirst();
-
-        assertTrue(networkComponentOpt.isPresent());
-
-        ComponentDescription networkComponent = networkComponentOpt.get();
-
-        ComputeNetworkDescription networkDescription = Utils
-                .fromJson(networkComponent.componentJson, ComputeNetworkDescription.class);
-
-        ComponentDescription wordpress = cd.componentDescriptions.stream()
-                .filter(c -> c.name.equals("wordpress")).findFirst().get();
-
-        ComputeDescription wordpressComputeDescription = (ComputeDescription) wordpress
-                .getServiceDocument();
-
-        assertEquals(1, wordpressComputeDescription.networkInterfaceDescLinks.size());
-        assertEquals(1, wordpressComputeDescription.tagLinks.size());
-
-        Constraint placementConstraint = wordpressComputeDescription.constraints.get(
-                ComputeConstants.COMPUTE_PLACEMENT_CONSTRAINT_KEY);
-        assertEquals(3, placementConstraint.conditions.size());
-
-        assertEquals(Type.TAG, placementConstraint.conditions.get(0).type);
-        assertEquals(Enforcement.HARD, placementConstraint.conditions.get(0).enforcement);
-        assertEquals(Occurance.MUST_NOT_OCCUR, placementConstraint.conditions.get(0).occurrence);
-        assertEquals("location:eu", placementConstraint.conditions.get(0).expression.propertyName);
-
-        assertEquals(Type.TAG, placementConstraint.conditions.get(1).type);
-        assertEquals(Enforcement.SOFT, placementConstraint.conditions.get(1).enforcement);
-        assertEquals(Occurance.MUST_OCCUR, placementConstraint.conditions.get(1).occurrence);
-        assertEquals("location:us", placementConstraint.conditions.get(1).expression.propertyName);
-
-        assertEquals(Type.TAG, placementConstraint.conditions.get(2).type);
-        assertEquals(Enforcement.HARD, placementConstraint.conditions.get(2).enforcement);
-        assertEquals(Occurance.MUST_NOT_OCCUR, placementConstraint.conditions.get(2).occurrence);
-        assertEquals("windows", placementConstraint.conditions.get(2).expression.propertyName);
-
-        assertEquals("public-wpnet", networkDescription.name);
-        assertNull(networkDescription.assignment);
-
-        descLinks.addAll(cd.descriptionLinks);
-    };
     private static BiConsumer<Operation, List<String>> verifyBindingsTemplate = (o,
             descLinks) -> {
         CompositeDescription cd = o.getBody(CompositeDescription.class);
@@ -172,29 +105,6 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
                 "${mysql~restart_policy}"));
         assertTrue(hasBindingExpression(componentBinding.bindings,
                 "${_resource~mysql~address}:3306"));
-
-        descLinks.addAll(cd.descriptionLinks);
-    };
-    private static BiConsumer<Operation, List<String>> verifyLoadBalancerTemplate = (o, descLinks) -> {
-        CompositeDescriptionExpanded cd = o.getBody(CompositeDescriptionExpanded.class);
-        assertEquals("name", "wordPressWithMySqlLoadBalancer", cd.name);
-        assertEquals("descriptionLinks.size", 5, cd.descriptionLinks.size());
-
-        LoadBalancerDescription loadBalancerDescription =
-                (LoadBalancerDescription) cd.componentDescriptions.stream()
-                        .filter(c -> c.type.equals(ResourceType.LOAD_BALANCER_TYPE.getName()))
-                        .findFirst().get()
-                        .getServiceDocument();
-        ComputeDescription wordpressComputeDescription =
-                (ComputeDescription) cd.componentDescriptions.stream()
-                        .filter(c -> c.name.equals("wordpress"))
-                        .findFirst().get()
-                        .getServiceDocument();
-
-        // validate the correct instance document self link is referenced in the load balancer desc
-        assertEquals(wordpressComputeDescription.documentSelfLink,
-                loadBalancerDescription.computeDescriptionLink);
-        assertEquals("public-wpnet", loadBalancerDescription.networkName);
 
         descLinks.addAll(cd.descriptionLinks);
     };

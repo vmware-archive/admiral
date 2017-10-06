@@ -35,11 +35,6 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.vmware.photon.controller</groupId>
-            <artifactId>photon-model</artifactId>
-            <version>${photon.model.version}</version>
-        </dependency>
-        <dependency>
             <groupId>com.vmware.xenon</groupId>
             <artifactId>xenon-common</artifactId>
             <version>${xenon.version}</version>

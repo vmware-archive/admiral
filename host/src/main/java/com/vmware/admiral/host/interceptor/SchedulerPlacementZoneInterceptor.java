@@ -19,9 +19,7 @@ import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostUtil;
-import com.vmware.admiral.compute.PlacementZoneConstants;
 import com.vmware.admiral.compute.PlacementZoneUtil;
-import com.vmware.admiral.compute.ResourceType;
 import com.vmware.photon.controller.model.query.QueryUtils;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
@@ -62,18 +60,8 @@ public class SchedulerPlacementZoneInterceptor {
                 ResourcePoolService.class, Action.PATCH, SchedulerPlacementZoneInterceptor::handlePatch);
     }
 
-    private static boolean isComputeZone(ResourcePoolState currentState) {
-        return currentState.customProperties != null && ResourceType.COMPUTE_TYPE.getName()
-                .equalsIgnoreCase(currentState.customProperties
-                        .get(PlacementZoneConstants.RESOURCE_TYPE_CUSTOM_PROP_NAME));
-    }
-
     public static DeferredResult<Void> handlePostOrPut(Service service, Operation op) {
         ResourcePoolState placementZone = op.getBody(ResourcePoolState.class);
-        if (isComputeZone(placementZone)) {
-            return DeferredResult.completed(null);
-        }
-
         if (PlacementZoneUtil.isSchedulerPlacementZone(placementZone)) {
             try {
                 AssertUtil.assertEmpty(placementZone.tagLinks, "tagLinks");
@@ -93,10 +81,6 @@ public class SchedulerPlacementZoneInterceptor {
         return service.getHost().sendWithDeferredResult(getOp, ResourcePoolState.class)
                 .thenCompose(currentState -> {
                     AssertUtil.assertNotNull(currentState, "currentState");
-
-                    if (isComputeZone(currentState)) {
-                        return DeferredResult.completed(null);
-                    }
 
                     ResourcePoolState rp = new ResourcePoolState();
                     rp.customProperties = PropertyUtils.mergeCustomProperties(

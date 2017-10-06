@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -27,8 +27,6 @@ public enum ResourceType {
     VOLUME_TYPE("CONTAINER_VOLUME", "App.Volume"),
     CLOSURE_TYPE("CLOSURE", "App.Closure"),
     CONFIGURE_HOST_TYPE("CONFIGURE_HOST", ""),
-    COMPUTE_NETWORK_TYPE("COMPUTE_NETWORK", "Compute.Network"),
-    LOAD_BALANCER_TYPE("LOAD_BALANCER", "Compute.LoadBalancer"),
     CONTAINER_LOAD_BALANCER_TYPE("CONTAINER_LOAD_BALANCER", "App.LoadBalancer"),
     KUBERNETES_POD_TYPE("KUBERNETES_POD", "Kubernetes.Pod"),
     KUBERNETES_DEPLOYMENT_TYPE("KUBERNETES_DEPLOYMENT", "Kubernetes.Deployment"),

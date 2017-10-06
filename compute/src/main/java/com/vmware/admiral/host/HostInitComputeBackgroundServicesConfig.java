@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -13,7 +13,6 @@ package com.vmware.admiral.host;
 
 import com.vmware.admiral.compute.EpzComputeEnumerationPeriodicService;
 import com.vmware.admiral.compute.PlacementCapacityUpdatePeriodicService;
-import com.vmware.admiral.compute.endpoint.EndpointHealthCheckPeriodicService;
 import com.vmware.xenon.common.ServiceHost;
 
 /**
@@ -28,7 +27,6 @@ public class HostInitComputeBackgroundServicesConfig extends HostInitServiceHelp
     public static void startServices(ServiceHost host) {
         startServices(host,
                 EpzComputeEnumerationPeriodicService.class,
-                PlacementCapacityUpdatePeriodicService.class,
-                EndpointHealthCheckPeriodicService.class);
+                PlacementCapacityUpdatePeriodicService.class);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -13,8 +13,10 @@ package com.vmware.admiral.test.integration;
 
 import static com.vmware.admiral.test.integration.TestPropertiesUtil.getSystemOrTestProp;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -23,7 +25,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import com.amazonaws.util.StringInputStream;
 import net.schmizz.sshj.SSHClient;
 
 import org.junit.Assert;
@@ -45,6 +46,27 @@ public class SshUtilIT extends BaseTestCase {
     public static final String SSH_PASS = getSystemOrTestProp("ssh.host.password");
     public static final String SSH_PKEY_FILE = getSystemOrTestProp("ssh.host.pkey");
     public static final String FILE_PROTOCOL = "file://";
+
+    class StringInputStream extends ByteArrayInputStream {
+
+        private final String string;
+
+        public StringInputStream(String s) throws UnsupportedEncodingException {
+            super(s.getBytes("UTF-8"));
+            this.string = s;
+        }
+
+        /**
+         * Returns the original string specified when this input stream was
+         * constructed.
+         *
+         * @return The original string specified when this input stream was
+         *         constructed.
+         */
+        public String getString() {
+            return string;
+        }
+    }
 
     @Test
     public void testPasswordAuth() throws IOException {

@@ -49,7 +49,6 @@ import com.vmware.admiral.common.serialization.ReleaseConstants;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
-import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ConfigureHostOverSshTaskService;
 import com.vmware.admiral.compute.ConfigureHostOverSshTaskService.ConfigureHostOverSshTaskServiceState;
 import com.vmware.admiral.compute.ResourceType;
@@ -84,42 +83,15 @@ import com.vmware.admiral.request.composition.CompositeComponentRemovalTaskServi
 import com.vmware.admiral.request.composition.CompositeComponentRemovalTaskService.CompositeComponentRemovalTaskState;
 import com.vmware.admiral.request.composition.CompositionTaskFactoryService;
 import com.vmware.admiral.request.composition.CompositionTaskService.CompositionTaskState;
-import com.vmware.admiral.request.compute.ComputeAllocationTaskService;
-import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAllocationTaskState;
-import com.vmware.admiral.request.compute.ComputeNetworkAllocationTaskService;
-import com.vmware.admiral.request.compute.ComputeNetworkAllocationTaskService.ComputeNetworkAllocationTaskState;
-import com.vmware.admiral.request.compute.ComputeNetworkProvisionTaskService;
-import com.vmware.admiral.request.compute.ComputeNetworkProvisionTaskService.ComputeNetworkProvisionTaskState;
-import com.vmware.admiral.request.compute.ComputeNetworkRemovalTaskService;
-import com.vmware.admiral.request.compute.ComputeNetworkRemovalTaskService.ComputeNetworkRemovalTaskState;
-import com.vmware.admiral.request.compute.ComputeOperationTaskService;
-import com.vmware.admiral.request.compute.ComputeOperationTaskService.ComputeOperationTaskState;
 import com.vmware.admiral.request.compute.ComputeOperationType;
-import com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService;
-import com.vmware.admiral.request.compute.ComputeProvisionTaskService;
-import com.vmware.admiral.request.compute.ComputeProvisionTaskService.ComputeProvisionTaskState;
 import com.vmware.admiral.request.compute.ComputeRemovalTaskService;
 import com.vmware.admiral.request.compute.ComputeRemovalTaskService.ComputeRemovalTaskState;
-import com.vmware.admiral.request.compute.ComputeReservationTaskService;
-import com.vmware.admiral.request.compute.ComputeReservationTaskService.ComputeReservationTaskState;
-import com.vmware.admiral.request.compute.LoadBalancerAllocationTaskService;
-import com.vmware.admiral.request.compute.LoadBalancerAllocationTaskService.LoadBalancerAllocationTaskState;
-import com.vmware.admiral.request.compute.LoadBalancerOperationTaskService;
-import com.vmware.admiral.request.compute.LoadBalancerOperationTaskService.LoadBalancerOperationTaskState;
-import com.vmware.admiral.request.compute.LoadBalancerOperationType;
-import com.vmware.admiral.request.compute.LoadBalancerProvisionTaskService;
-import com.vmware.admiral.request.compute.LoadBalancerProvisionTaskService.LoadBalancerProvisionTaskState;
-import com.vmware.admiral.request.compute.LoadBalancerRemovalTaskService;
-import com.vmware.admiral.request.compute.LoadBalancerRemovalTaskService.LoadBalancerRemovalTaskState;
-import com.vmware.admiral.request.compute.ProvisionContainerHostsTaskService;
-import com.vmware.admiral.request.compute.ProvisionContainerHostsTaskService.ProvisionContainerHostsTaskState;
 import com.vmware.admiral.request.kubernetes.CompositeKubernetesProvisioningTaskService;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.admiral.service.common.TaskServiceDocument;
-import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
@@ -212,8 +184,7 @@ public class RequestBrokerService extends
             state.operation = RequestBrokerState.PROVISION_RESOURCE_OPERATION;
         }
 
-        if (isProvisionOperation(state) || isClusteringOperation(state)
-                || isProvisioningContainerHostsOperation(state)) {
+        if (isProvisionOperation(state) || isClusteringOperation(state)) {
             assertNotEmpty(state.resourceDescriptionLink, "resourceDescriptionLink");
         } else if (!isConfigureHostOperation(state)) {
             assertNotEmpty(state.resourceLinks, "resourceLinks");
@@ -221,10 +192,9 @@ public class RequestBrokerService extends
 
         if (!(isContainerType(state) || isContainerHostType(state) || isContainerNetworkType(state)
                 || isContainerVolumeType(state)
-                || isComputeType(state) || isComputeNetworkType(state)
+                || isComputeType(state)
                 || isCompositeComponentType(state) || isClosureType(state)
-                || isConfigureHostType(state) || isLoadBalancerType(state) ||
-                isContainerLoadBalancerType(state))) {
+                || isConfigureHostType(state) || isContainerLoadBalancerType(state))) {
             throw new LocalizableValidationException(
                     String.format("Only [ %s ] resource types are supported.",
                             ResourceType.getAllTypesAsString()),
@@ -298,10 +268,6 @@ public class RequestBrokerService extends
             } else if (isPostAllocationOperation(state)) {
                 if (isComputeType(state)) {
                     createComputeRemovalTask(state);
-                } else if (isComputeNetworkType(state)) {
-                    createComputeNetworkRemovalTask(state);
-                } else if (isLoadBalancerType(state)) {
-                    createLoadBalancerRemovalTask(state);
                 } else if (isContainerLoadBalancerType(state)) {
                     createContainerLoadBalancerRemovalTask(state);
                 } else if (isContainerNetworkType(state)) {
@@ -311,8 +277,6 @@ public class RequestBrokerService extends
                 } else {
                     createContainerRemovalTasks(state, false);
                 }
-            } else if (isProvisioningContainerHostsOperation(state)) {
-                createComputeRemovalTask(state, true);
             } else {
                 proceedTo(SubStage.ERROR);
             }
@@ -323,9 +287,7 @@ public class RequestBrokerService extends
         case RESERVATION_CLEANUP:
             break;
         case RESERVATION_CLEANED_UP:
-            if (isComputeType(state)) {
-                createComputeRemovalTask(state,true);
-            } else if (isContainerNetworkType(state)) {
+            if (isContainerNetworkType(state)) {
                 createContainerNetworkRemovalTask(state, true);
             } else if (isContainerVolumeType(state)) {
                 createContainerVolumeRemovalTask(state, true);
@@ -345,12 +307,7 @@ public class RequestBrokerService extends
 
     private void calculateActualRequestedResources(RequestBrokerState state, SubStage next) {
         if (isProvisionOperation(state)) {
-            if (isComputeType(state)) {
-                getComputeDescription(state, (cd) -> {
-                    proceedTo(next, s -> s.actualResourceCount =
-                            getRequestedComputeResourceCount(state, cd));
-                });
-            } else if (isContainerType(state)) {
+            if (isContainerType(state)) {
                 getContainerDescription(state, (cd) -> {
                     proceedTo(next, s -> s.actualResourceCount =
                             getRequestContainerResourceCount(state, cd));
@@ -492,8 +449,6 @@ public class RequestBrokerService extends
         } else if (isContainerHostType(state)) {
             if (isRemoveOperation(state)) {
                 createComputeRemovalTask(state, true);
-            } else if (isProvisioningContainerHostsOperation(state)) {
-                createProvisioningContainerHostsTask(state);
             } else {
                 failTask(null, new LocalizableValidationException("Not supported operation: "
                         + state.operation, "request.operation.not.supported", state.operation));
@@ -501,23 +456,9 @@ public class RequestBrokerService extends
         } else if (isComputeType(state)) {
             if (isRemoveOperation(state)) {
                 createComputeRemovalTask(state);
-            } else if (isClusteringOperation(state)) {
-                createComputeClusteringTasks(state);
             } else {
-                createComputeOperationTasks(state);
-            }
-        } else if (isComputeNetworkType(state)) {
-            if (isRemoveOperation(state)) {
-                createComputeNetworkRemovalTask(state);
-            } else {
-                failTask(null, new IllegalArgumentException("Not supported operation: "
-                        + state.operation));
-            }
-        } else if (isLoadBalancerType(state)) {
-            if (isRemoveOperation(state)) {
-                createLoadBalancerRemovalTask(state);
-            } else {
-                createLoadBalancerOperationTask(state);
+                failTask(null, new LocalizableValidationException("Not supported operation: "
+                        + state.operation, "request.operation.not.supported", state.operation));
             }
         } else if (isContainerLoadBalancerType(state)) {
             if (isRemoveOperation(state)) {
@@ -619,32 +560,6 @@ public class RequestBrokerService extends
         sendRequest(post);
     }
 
-    private void createProvisioningContainerHostsTask(RequestBrokerState state) {
-        ProvisionContainerHostsTaskState provisionContainerHostTask =
-                new ProvisionContainerHostsTaskState();
-        provisionContainerHostTask.documentSelfLink = getSelfId();
-        provisionContainerHostTask.computeDescriptionLink = state.resourceDescriptionLink;
-        provisionContainerHostTask.resourceCount = state.actualResourceCount;
-        provisionContainerHostTask.customProperties = state.customProperties;
-        provisionContainerHostTask.requestTrackerLink = state.requestTrackerLink;
-        provisionContainerHostTask.tenantLinks = state.tenantLinks;
-        provisionContainerHostTask.serviceTaskCallback = ServiceTaskCallback.create(
-                getSelfLink(),
-                TaskStage.STARTED, SubStage.ALLOCATED,
-                TaskStage.STARTED, SubStage.REQUEST_FAILED);
-
-        sendRequest(Operation.createPost(this, ProvisionContainerHostsTaskService.FACTORY_LINK)
-                .setBodyNoCloning(provisionContainerHostTask)
-                .setContextId(getSelfId())
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        failTask("Failed to create provisioning container hosts task", ex);
-                        return;
-                    }
-                    proceedTo(SubStage.ALLOCATING);
-                }));
-    }
-
     private void createComputeRemovalTask(RequestBrokerState state) {
         createComputeRemovalTask(state, false);
     }
@@ -676,41 +591,6 @@ public class RequestBrokerService extends
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         failRequest(state, "Failed to create compute removal operation task", ex);
-                        return;
-                    }
-                    proceedTo(SubStage.ALLOCATING);
-                }));
-    }
-
-    private void createComputeNetworkRemovalTask(RequestBrokerState state) {
-
-        boolean errorState = state.taskSubStage == SubStage.REQUEST_FAILED
-                || state.taskSubStage == SubStage.RESERVATION_CLEANED_UP;
-
-        if (state.resourceLinks == null || state.resourceLinks.isEmpty()) {
-            proceedTo(errorState ? SubStage.ERROR : SubStage.ALLOCATED);
-            return;
-        }
-        ComputeNetworkRemovalTaskState removalState = new ComputeNetworkRemovalTaskState();
-        removalState.resourceLinks = state.resourceLinks;
-        removalState.serviceTaskCallback = ServiceTaskCallback.create(
-                getSelfLink(),
-                TaskStage.STARTED, errorState ? SubStage.ERROR : SubStage.ALLOCATED,
-                TaskStage.FAILED, SubStage.ERROR);
-        removalState.documentSelfLink = getSelfId();
-        removalState.tenantLinks = state.tenantLinks;
-        removalState.customProperties = state.customProperties;
-        if (!errorState) {
-            removalState.requestTrackerLink = state.requestTrackerLink;
-        }
-
-        sendRequest(Operation.createPost(this, ComputeNetworkRemovalTaskService.FACTORY_LINK)
-                .setBodyNoCloning(removalState)
-                .setContextId(getSelfId())
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        failRequest(state,
-                                "Failed to create compute network removal operation task", ex);
                         return;
                     }
                     proceedTo(SubStage.ALLOCATING);
@@ -901,38 +781,8 @@ public class RequestBrokerService extends
                 }));
     }
 
-    private void createComputeOperationTasks(RequestBrokerState state) {
-        ComputeOperationTaskState operationState = new ComputeOperationTaskState();
-        operationState.resourceLinks = state.resourceLinks;
-        operationState.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
-                TaskStage.STARTED, SubStage.ALLOCATED, TaskStage.FAILED, SubStage.ERROR);
-        operationState.operation = state.operation;
-        operationState.documentSelfLink = getSelfId();
-        operationState.customProperties = state.customProperties;
-        operationState.requestTrackerLink = state.requestTrackerLink;
-        operationState.tenantLinks = state.tenantLinks;
-
-        sendRequest(Operation.createPost(this, ComputeOperationTaskService.FACTORY_LINK)
-                .setBodyNoCloning(operationState)
-                .setContextId(getSelfId())
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        failTask("Failed to create container operation task", ex);
-                    }
-                    proceedTo(SubStage.ALLOCATING);
-                }));
-    }
-
     private void createReservationTasks(RequestBrokerState state) {
-        if (isComputeType(state)) {
-            getComputeDescription(state, (cd) -> createComputeReservationTasks(state, cd));
-        } else if (isComputeNetworkType(state)) {
-            // No reservation for now, moving on...
-            proceedTo(SubStage.RESERVED);
-        } else if (isLoadBalancerType(state)) {
-            // No reservation for now, moving on...
-            proceedTo(SubStage.RESERVED);
-        } else if (isContainerLoadBalancerType(state)) {
+        if (isContainerLoadBalancerType(state)) {
             // No reservation for now, moving on...
             proceedTo(SubStage.RESERVED);
         } else if (isContainerNetworkType(state) || isContainerVolumeType(state)) {
@@ -983,56 +833,6 @@ public class RequestBrokerService extends
                     }
                     proceedTo(SubStage.RESERVING);
                 }));
-    }
-
-    private void createComputeReservationTasks(RequestBrokerState state,
-            ComputeDescription computeDescription) {
-
-        if (computeDescription == null) {
-            getComputeDescription(state, (cd) -> createComputeReservationTasks(state, cd));
-            return;
-        }
-
-        ComputeReservationTaskState rsrvTask = new ComputeReservationTaskState();
-        rsrvTask.documentSelfLink = getSelfId();
-        rsrvTask.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
-                TaskStage.STARTED, SubStage.RESERVED, TaskStage.STARTED, SubStage.ERROR);
-
-        rsrvTask.resourceCount = state.actualResourceCount;
-        rsrvTask.tenantLinks = state.tenantLinks;
-        rsrvTask.resourceDescriptionLink = state.resourceDescriptionLink;
-        rsrvTask.customProperties = mergeCustomProperties(
-                state.customProperties, computeDescription.customProperties);
-        rsrvTask.requestTrackerLink = state.requestTrackerLink;
-
-        if (state.groupResourcePlacementLink != null) {
-            rsrvTask.groupResourcePlacementLink = state.groupResourcePlacementLink;
-            rsrvTask.taskSubStage = ComputeReservationTaskState.SubStage.RESERVATION_SELECTED;
-            rsrvTask.resourcePoolsPerGroupPlacementLinks = new LinkedHashMap<>(0);
-        }
-
-        sendRequest(Operation.createPost(this, ComputeReservationTaskService.FACTORY_LINK)
-                .setBodyNoCloning(rsrvTask)
-                .setContextId(getSelfId())
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        failTask("Failure creating reservation task", e);
-                        return;
-                    }
-                    proceedTo(SubStage.RESERVING);
-                }));
-    }
-
-    private long getRequestedComputeResourceCount(RequestBrokerState state,
-            ComputeDescription computeDescription) {
-        long clusterSize = getComputeClusterSize(computeDescription);
-        long resourceCount;
-        if (clusterSize > 0 && !isClusteringOperation(state)) {
-            resourceCount = state.resourceCount * clusterSize;
-        } else {
-            resourceCount = state.resourceCount;
-        }
-        return resourceCount;
     }
 
     private long getRequestContainerResourceCount(RequestBrokerState state,
@@ -1141,167 +941,6 @@ public class RequestBrokerService extends
                 }));
     }
 
-    private void createComputeNetworkAllocationTask(RequestBrokerState state) {
-        // 1. allocate the network
-        ComputeNetworkAllocationTaskState allocationTask = new ComputeNetworkAllocationTaskState();
-        allocationTask.documentSelfLink = getSelfId();
-        allocationTask.serviceTaskCallback = ServiceTaskCallback.create(
-                getSelfLink(), TaskStage.STARTED, SubStage.ALLOCATED,
-                TaskStage.STARTED, SubStage.ERROR);
-        allocationTask.customProperties = state.customProperties;
-        allocationTask.resourceDescriptionLink = state.resourceDescriptionLink;
-
-        allocationTask.tenantLinks = state.tenantLinks;
-        allocationTask.requestTrackerLink = state.requestTrackerLink;
-        allocationTask.resourceCount = state.actualResourceCount;
-
-        sendRequest(Operation
-                .createPost(this, ComputeNetworkAllocationTaskService.FACTORY_LINK)
-                .setBodyNoCloning(allocationTask)
-                .setContextId(getSelfId())
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        failTask("Failure creating compute network allocation task", e);
-                        return;
-                    }
-                    proceedTo(SubStage.ALLOCATING);
-                }));
-    }
-
-    private void createComputeNetworkProvisioningTask(RequestBrokerState state) {
-        // 2. provision the network
-        ComputeNetworkProvisionTaskState provisionTask = new ComputeNetworkProvisionTaskState();
-        provisionTask.documentSelfLink = getSelfId();
-        provisionTask.serviceTaskCallback = ServiceTaskCallback.create(
-                getSelfLink(), TaskStage.STARTED, SubStage.COMPLETED,
-                TaskStage.STARTED, SubStage.REQUEST_FAILED);
-        provisionTask.customProperties = state.customProperties;
-
-        provisionTask.tenantLinks = state.tenantLinks;
-        provisionTask.requestTrackerLink = state.requestTrackerLink;
-        provisionTask.resourceLinks = state.resourceLinks;
-        provisionTask.resourceDescriptionLink = state.resourceDescriptionLink;
-
-        sendRequest(Operation
-                .createPost(this, ComputeNetworkProvisionTaskService.FACTORY_LINK)
-                .setBodyNoCloning(provisionTask)
-                .setContextId(getSelfId())
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        failTask("Failure creating compute network provision task", e);
-                    }
-                }));
-    }
-
-    private void createLoadBalancerAllocationTask(RequestBrokerState state) {
-        LoadBalancerAllocationTaskState allocationTask = new LoadBalancerAllocationTaskState();
-        allocationTask.documentSelfLink = getSelfId();
-        allocationTask.serviceTaskCallback = ServiceTaskCallback.create(
-                getSelfLink(), TaskStage.STARTED, SubStage.ALLOCATED,
-                TaskStage.STARTED, SubStage.ERROR);
-        allocationTask.customProperties = state.customProperties;
-
-        allocationTask.resourceDescriptionLink = state.resourceDescriptionLink;
-        allocationTask.tenantLinks = state.tenantLinks;
-        allocationTask.requestTrackerLink = state.requestTrackerLink;
-
-        sendRequest(Operation
-                .createPost(this, LoadBalancerAllocationTaskService.FACTORY_LINK)
-                .setBody(allocationTask)
-                .setContextId(getSelfId())
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        failTask("Failure creating load balancer allocation task", e);
-                        return;
-                    }
-                    proceedTo(SubStage.ALLOCATING);
-                }));
-    }
-
-    private void createLoadBalancerProvisioningTask(RequestBrokerState state) {
-        LoadBalancerProvisionTaskState provisionTask = new LoadBalancerProvisionTaskState();
-        provisionTask.documentSelfLink = getSelfId();
-        provisionTask.serviceTaskCallback = ServiceTaskCallback.create(
-                getSelfLink(), TaskStage.STARTED, SubStage.COMPLETED,
-                TaskStage.STARTED, SubStage.REQUEST_FAILED);
-        provisionTask.customProperties = state.customProperties;
-
-        provisionTask.tenantLinks = state.tenantLinks;
-        provisionTask.requestTrackerLink = state.requestTrackerLink;
-        provisionTask.resourceLinks = state.resourceLinks;
-
-        sendRequest(Operation
-                .createPost(this, LoadBalancerProvisionTaskService.FACTORY_LINK)
-                .setBody(provisionTask)
-                .setContextId(getSelfId())
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        failTask("Failure creating load balancer provision task", e);
-                    }
-                }));
-    }
-
-    private void createLoadBalancerOperationTask(RequestBrokerState state) {
-        LoadBalancerOperationTaskState operationTaskState = new LoadBalancerOperationTaskState();
-        operationTaskState.resourceLinks = state.resourceLinks;
-        operationTaskState.operation = state.operation;
-        operationTaskState.documentSelfLink = getSelfId();
-        operationTaskState.serviceTaskCallback = ServiceTaskCallback.create(
-                getSelfLink(),
-                TaskStage.STARTED, SubStage.ALLOCATED,
-                TaskStage.FAILED, SubStage.ERROR);
-        operationTaskState.customProperties = state.customProperties;
-        operationTaskState.tenantLinks = state.tenantLinks;
-        operationTaskState.requestTrackerLink = state.requestTrackerLink;
-
-        sendRequest(Operation.createPost(this, LoadBalancerOperationTaskService.FACTORY_LINK)
-                .setBody(operationTaskState)
-                .setContextId(getSelfId())
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        failRequest(state,
-                                "Failed to create load balancer operation task", ex);
-                        return;
-                    }
-                    proceedTo(SubStage.ALLOCATING);
-                }));
-
-    }
-
-    private void createLoadBalancerRemovalTask(RequestBrokerState state) {
-        boolean errorState = state.taskSubStage == SubStage.REQUEST_FAILED
-                || state.taskSubStage == SubStage.RESERVATION_CLEANED_UP;
-
-        if (state.resourceLinks == null || state.resourceLinks.isEmpty()) {
-            proceedTo(errorState ? SubStage.ERROR : SubStage.ALLOCATED);
-            return;
-        }
-        LoadBalancerRemovalTaskState removalState = new LoadBalancerRemovalTaskState();
-        removalState.resourceLinks = state.resourceLinks;
-        removalState.documentSelfLink = getSelfId();
-        removalState.serviceTaskCallback = ServiceTaskCallback.create(
-                getSelfLink(),
-                TaskStage.STARTED, errorState ? SubStage.ERROR : SubStage.ALLOCATED,
-                TaskStage.FAILED, SubStage.ERROR);
-        removalState.customProperties = state.customProperties;
-        removalState.tenantLinks = state.tenantLinks;
-        if (!errorState) {
-            removalState.requestTrackerLink = state.requestTrackerLink;
-        }
-
-        sendRequest(Operation.createPost(this, LoadBalancerRemovalTaskService.FACTORY_LINK)
-                .setBody(removalState)
-                .setContextId(getSelfId())
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        failRequest(state,
-                                "Failed to create load balancer removal operation task", ex);
-                        return;
-                    }
-                    proceedTo(SubStage.ALLOCATING);
-                }));
-    }
-
     private void createContainerLoadBalancerAllocationTask(RequestBrokerState state) {
         ContainerLoadBalancerAllocationTaskState allocationTask = new
                 ContainerLoadBalancerAllocationTaskState();
@@ -1389,75 +1028,6 @@ public class RequestBrokerService extends
                 }));
     }
 
-    private void createComputeAllocationTask(RequestBrokerState state) {
-        getComputeDescription(state, (computeDesc) -> {
-            ComputeAllocationTaskState allocationTask = new ComputeAllocationTaskState();
-            allocationTask.documentSelfLink = getSelfId();
-            allocationTask.serviceTaskCallback = ServiceTaskCallback.create(
-                    getSelfLink(), TaskStage.STARTED, SubStage.ALLOCATED,
-                    TaskStage.STARTED, SubStage.REQUEST_FAILED);
-            allocationTask.customProperties = state.customProperties;
-            allocationTask.resourceDescriptionLink = state.resourceDescriptionLink;
-
-            allocationTask.resourceCount = state.actualResourceCount;
-            allocationTask.resourceType = state.resourceType;
-            allocationTask.tenantLinks = state.tenantLinks;
-            allocationTask.groupResourcePlacementLink = state.groupResourcePlacementLink;
-            allocationTask.requestTrackerLink = state.requestTrackerLink;
-            allocationTask.resourceLinks = state.resourceLinks;
-
-            sendRequest(Operation
-                    .createPost(this, ComputeAllocationTaskService.FACTORY_LINK)
-                    .setBodyNoCloning(allocationTask)
-                    .setContextId(getSelfId())
-                    .setCompletion((o, e) -> {
-                        if (e != null) {
-                            failTask("Failure creating resource allocation task", e);
-                            return;
-                        }
-                        proceedTo(SubStage.ALLOCATING);
-                    }));
-        });
-    }
-
-    private int getComputeClusterSize(ComputeDescription computeDesc) {
-        int clusterSize = 0;
-        if (computeDesc.customProperties != null) {
-            String sizeAsString = computeDesc.customProperties
-                    .get(ComputeConstants.CUSTOM_PROP_CLUSTER_SIZE_KEY);
-            if (sizeAsString != null) {
-                try {
-                    clusterSize = Integer.parseInt(sizeAsString);
-                } catch (NumberFormatException e) {
-                    logWarning("Requested compute cluster size is not a number: %s", sizeAsString);
-                }
-            }
-        }
-        return clusterSize;
-    }
-
-    private void createComputeProvisioningTask(RequestBrokerState state) {
-        ComputeProvisionTaskState ps = new ComputeProvisionTaskState();
-        ps.documentSelfLink = getSelfId();
-        ps.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
-                TaskStage.STARTED, SubStage.COMPLETED, TaskStage.STARTED, SubStage.REQUEST_FAILED);
-        ps.customProperties = state.customProperties;
-        ps.tenantLinks = state.tenantLinks;
-        ps.requestTrackerLink = state.requestTrackerLink;
-        ps.resourceLinks = state.resourceLinks;
-
-        sendRequest(Operation
-                .createPost(this, ComputeProvisionTaskService.FACTORY_LINK)
-                .setBodyNoCloning(ps)
-                .setContextId(getSelfId())
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        failTask("Failure creating resource provision task", e);
-                        return;
-                    }
-                }));
-    }
-
     private void createContainerVolumeAllocationTask(RequestBrokerState state,
             ContainerVolumeDescription volumeDescription) {
 
@@ -1531,24 +1101,6 @@ public class RequestBrokerService extends
                 createContainerNetworkAllocationTask(state);
             } else {
                 createContainerNetworkProvisioningTask(state);
-            }
-        } else if (isComputeType(state)) {
-            if (!isPostAllocationOperation(state)) {
-                createComputeAllocationTask(state);
-            } else {
-                createComputeProvisioningTask(state);
-            }
-        } else if (isComputeNetworkType(state)) {
-            if (!isPostAllocationOperation(state)) {
-                createComputeNetworkAllocationTask(state);
-            } else {
-                createComputeNetworkProvisioningTask(state);
-            }
-        } else if (isLoadBalancerType(state)) {
-            if (!isPostAllocationOperation(state)) {
-                createLoadBalancerAllocationTask(state);
-            } else {
-                createLoadBalancerProvisioningTask(state);
             }
         } else if (isContainerLoadBalancerType(state)) {
             if (!isPostAllocationOperation(state)) {
@@ -1717,41 +1269,6 @@ public class RequestBrokerService extends
         sendRequest(post);
     }
 
-    private void createComputeClusteringTasks(RequestBrokerState state) {
-        ClusteringTaskState clusteringState = new ClusteringTaskState();
-        clusteringState.resourceCount = state.actualResourceCount;
-        clusteringState.postAllocation = isPostAllocationOperation(state);
-        clusteringState.customProperties = state.customProperties;
-        clusteringState.tenantLinks = state.tenantLinks;
-        clusteringState.resourceDescriptionLink = state.resourceDescriptionLink;
-        clusteringState.requestTrackerLink = state.requestTrackerLink;
-        clusteringState.resourceType = state.resourceType;
-        clusteringState.documentDescription = state.documentDescription;
-        clusteringState.contextId = state.getCustomProperty(FIELD_NAME_CONTEXT_ID_KEY);
-
-        boolean errorState = state.taskSubStage == SubStage.REQUEST_FAILED;
-        clusteringState.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
-                TaskStage.STARTED, errorState ? SubStage.ERROR : SubStage.ALLOCATED,
-                TaskStage.FAILED, SubStage.ERROR);
-
-        clusteringState.documentSelfLink = getSelfId();
-        clusteringState.requestTrackerLink = state.requestTrackerLink;
-        Operation post = Operation
-                .createPost(this, ClusteringTaskService.FACTORY_LINK)
-                .setBodyNoCloning(clusteringState)
-                .setContextId(getSelfId())
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        failTask("Failed to create container clustering task.", ex);
-                        return;
-                    }
-                    if (!errorState) {
-                        proceedTo(SubStage.ALLOCATING);
-                    }
-                });
-        sendRequest(post);
-    }
-
     private void createConfigureHostTask(RequestBrokerState state) {
         ConfigureHostOverSshTaskServiceState configureState =
                 new ConfigureHostOverSshTaskServiceState();
@@ -1817,14 +1334,12 @@ public class RequestBrokerService extends
 
     private boolean isPostAllocationOperation(RequestBrokerState state) {
         return (isContainerType(state) || isContainerNetworkType(state) || isComputeType(state)
-                || isContainerVolumeType(state) || isComputeNetworkType(state) || isClosureType(
-                        state) || isLoadBalancerType(state) || isContainerLoadBalancerType(state))
+                || isContainerVolumeType(state) || isClosureType(state)
+                || isContainerLoadBalancerType(state))
                 && (ContainerOperationType.CREATE.id.equals(state.operation)
                         || NetworkOperationType.CREATE.id.equals(state.operation)
-                        || ComputeOperationType.CREATE.id.equals(state.operation)
                         || VolumeOperationType.CREATE.id.equals(state.operation)
                         || ClosureOperationType.CREATE.id.equals(state.operation)
-                        || LoadBalancerOperationType.CREATE.id.equals(state.operation)
                         || ContainerLoadBalancerOperationType.CREATE.id.equals(state.operation));
     }
 
@@ -1845,12 +1360,8 @@ public class RequestBrokerService extends
 
         if (isContainerNetworkType(state)) {
             return NetworkOperationType.CREATE.id;
-        } else if (isComputeType(state)) {
-            return ComputeOperationType.CREATE.id;
         } else if (isContainerVolumeType(state)) {
             return VolumeOperationType.CREATE.id;
-        } else if (isLoadBalancerType(state)) {
-            return LoadBalancerOperationType.CREATE.id;
         } else if (isContainerLoadBalancerType(state)) {
             return ContainerLoadBalancerOperationType.CREATE.id;
         } else {
@@ -1920,14 +1431,6 @@ public class RequestBrokerService extends
         return ResourceType.COMPUTE_TYPE.getName().equals(state.resourceType);
     }
 
-    private boolean isComputeNetworkType(RequestBrokerState state) {
-        return ResourceType.COMPUTE_NETWORK_TYPE.getName().equals(state.resourceType);
-    }
-
-    private boolean isLoadBalancerType(RequestBrokerState state) {
-        return ResourceType.LOAD_BALANCER_TYPE.getName().equals(state.resourceType);
-    }
-
     private boolean isContainerLoadBalancerType(RequestBrokerState state) {
         return ResourceType.CONTAINER_LOAD_BALANCER_TYPE.getName().equals(state.resourceType);
     }
@@ -1941,11 +1444,6 @@ public class RequestBrokerService extends
         return ResourceType.CLOSURE_TYPE.getName().equals(state.resourceType);
     }
 
-    private boolean isProvisioningContainerHostsOperation(RequestBrokerState state) {
-        return ProvisionContainerHostsTaskService.PROVISION_CONTAINER_HOSTS_OPERATION
-                .equals(state.operation);
-    }
-
     private boolean isConfigureHostType(RequestBrokerState state) {
         return ResourceType.CONFIGURE_HOST_TYPE.getName().equals(state.resourceType);
     }
@@ -1956,14 +1454,6 @@ public class RequestBrokerService extends
         SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE = new HashMap<>();
         SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE.put(ResourceType.CONTAINER_TYPE, new ArrayList<>(
                 Arrays.asList(ContainerAllocationTaskService.DISPLAY_NAME)));
-        SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE.put(ResourceType.COMPUTE_TYPE, new ArrayList<>(
-                Arrays.asList(ComputeProvisionTaskService.DISPLAY_NAME)));
-        SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE.put(ResourceType.COMPUTE_NETWORK_TYPE,
-                new ArrayList<>(
-                        Arrays.asList(ComputeNetworkProvisionTaskService.DISPLAY_NAME)));
-        SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE.put(ResourceType.LOAD_BALANCER_TYPE,
-                new ArrayList<>(
-                        Arrays.asList(LoadBalancerProvisionTaskService.DISPLAY_NAME)));
         SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE.put(ResourceType.CONTAINER_LOAD_BALANCER_TYPE,
                 new ArrayList<>(
                         Arrays.asList(ContainerLoadBalancerProvisionTaskService.DISPLAY_NAME)));
@@ -1994,19 +1484,6 @@ public class RequestBrokerService extends
                                 PlacementHostSelectionTaskService.DISPLAY_NAME,
                                 ResourceNamePrefixTaskService.DISPLAY_NAME,
                                 ContainerPortsAllocationTaskService.DISPLAY_NAME)));
-        SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.put(ResourceType.COMPUTE_TYPE, new ArrayList<>(
-                Arrays.asList(ComputeAllocationTaskService.DISPLAY_NAME,
-                        ReservationTaskService.DISPLAY_NAME,
-                        ComputePlacementSelectionTaskService.DISPLAY_NAME,
-                        ResourceNamePrefixTaskService.DISPLAY_NAME)));
-        SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.put(ResourceType.COMPUTE_NETWORK_TYPE,
-                new ArrayList<>(
-                        Arrays.asList(ComputeNetworkAllocationTaskService.DISPLAY_NAME,
-                                ResourceNamePrefixTaskService.DISPLAY_NAME)));
-        SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.put(ResourceType.LOAD_BALANCER_TYPE,
-                new ArrayList<>(
-                        Arrays.asList(LoadBalancerAllocationTaskService.DISPLAY_NAME,
-                                ResourceNamePrefixTaskService.DISPLAY_NAME)));
         SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.put(ResourceType.CONTAINER_LOAD_BALANCER_TYPE,
                 new ArrayList<>(
                         Arrays.asList(ContainerLoadBalancerAllocationTaskService.DISPLAY_NAME,
@@ -2022,11 +1499,6 @@ public class RequestBrokerService extends
         SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.put(ResourceType.CLOSURE_TYPE, new ArrayList<>(
                 Arrays.asList(ClosureAllocationTaskService.DISPLAY_NAME,
                         ClosureProvisionTaskService.DISPLAY_NAME)));
-        SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.put(ResourceType.CONTAINER_HOST_TYPE,
-                new ArrayList<>(
-                        Arrays.asList(ProvisionContainerHostsTaskService.DISPLAY_NAME,
-                                ComputeAllocationTaskService.DISPLAY_NAME,
-                                ComputeProvisionTaskService.DISPLAY_NAME)));
     }
 
     private boolean createRequestTrackerIfNoneProvided(RequestBrokerState state, Operation op) {
@@ -2083,20 +1555,6 @@ public class RequestBrokerService extends
                     trackedTasks.addAll(SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE
                             .get(ResourceType.CLOSURE_TYPE));
                 }
-            } else if (isComputeNetworkType(state)) {
-                trackedTasks.addAll(SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE
-                        .get(ResourceType.COMPUTE_NETWORK_TYPE));
-                if (!allocationOnly) {
-                    trackedTasks.addAll(SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE
-                            .get(ResourceType.COMPUTE_NETWORK_TYPE));
-                }
-            } else if (isLoadBalancerType(state)) {
-                trackedTasks.addAll(SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE
-                        .get(ResourceType.LOAD_BALANCER_TYPE));
-                if (!allocationOnly) {
-                    trackedTasks.addAll(SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE
-                            .get(ResourceType.LOAD_BALANCER_TYPE));
-                }
             } else {
                 for (List<String> vals : SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.values()) {
                     trackedTasks.addAll(vals);
@@ -2112,22 +1570,13 @@ public class RequestBrokerService extends
         } else if (isPostAllocationOperation(state)) {
             if (isContainerType(state)) {
                 requestStatus.addTrackedTasks(ContainerAllocationTaskService.DISPLAY_NAME);
-            } else if (isComputeType(state)) {
-                requestStatus.addTrackedTasks(ComputeProvisionTaskService.DISPLAY_NAME);
             } else if (isContainerNetworkType(state)) {
                 requestStatus.addTrackedTasks(ContainerNetworkProvisionTaskService.DISPLAY_NAME);
-            } else if (isComputeNetworkType(state)) {
-                requestStatus.addTrackedTasks(ComputeNetworkProvisionTaskService.DISPLAY_NAME);
-            } else if (isLoadBalancerType(state)) {
-                requestStatus.addTrackedTasks(LoadBalancerProvisionTaskService.DISPLAY_NAME);
             } else if (isContainerVolumeType(state)) {
                 requestStatus.addTrackedTasks(ContainerVolumeProvisionTaskService.DISPLAY_NAME);
             }
         } else if (isConfigureHostOperation(state)) {
             requestStatus.addTrackedTasks(ConfigureHostOverSshTaskService.DISPLAY_NAME);
-        } else if (isProvisioningContainerHostsOperation(state)) {
-            requestStatus.addTrackedTasks(SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE
-                    .get(ResourceType.CONTAINER_HOST_TYPE).toArray(new String[0]));
         } else {
             if (isRemoveOperation(state)) {
                 if (isContainerHostType(state)) {
@@ -2141,23 +1590,13 @@ public class RequestBrokerService extends
                     requestStatus.addTrackedTasks(ClosureRemovalTaskService.DISPLAY_NAME);
                 } else if (isComputeType(state)) {
                     requestStatus.addTrackedTasks(ComputeRemovalTaskService.DISPLAY_NAME);
-                } else if (isComputeNetworkType(state)) {
-                    requestStatus.addTrackedTasks(ComputeNetworkRemovalTaskService.DISPLAY_NAME);
-                } else if (isLoadBalancerType(state)) {
-                    requestStatus.addTrackedTasks(LoadBalancerRemovalTaskService.DISPLAY_NAME);
                 } else {
                     requestStatus.addTrackedTasks(ContainerRemovalTaskService.DISPLAY_NAME);
                 }
             } else if (isClusteringOperation(state)) {
                 requestStatus.addTrackedTasks(ClusteringTaskService.DISPLAY_NAME);
             } else {
-                if (isComputeType(state)) {
-                    requestStatus.addTrackedTasks(ComputeOperationTaskService.DISPLAY_NAME);
-                } else if (isLoadBalancerType(state)) {
-                    requestStatus.addTrackedTasks(LoadBalancerOperationTaskService.DISPLAY_NAME);
-                } else {
-                    requestStatus.addTrackedTasks(ContainerOperationTaskService.DISPLAY_NAME);
-                }
+                requestStatus.addTrackedTasks(ContainerOperationTaskService.DISPLAY_NAME);
             }
         }
 
@@ -2209,24 +1648,6 @@ public class RequestBrokerService extends
                     }
 
                     ContainerVolumeDescription desc = o.getBody(ContainerVolumeDescription.class);
-                    callbackFunction.accept(desc);
-                }));
-    }
-
-    private void getComputeDescription(RequestBrokerState state,
-            Consumer<ComputeDescription> callbackFunction) {
-
-        sendRequest(Operation.createGet(this, state.resourceDescriptionLink)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        String errMsg = String.format(
-                                "Failure retrieving compute description state: %s ",
-                                state.resourceDescriptionLink);
-                        failTask(errMsg, e);
-                        return;
-                    }
-
-                    ComputeDescription desc = o.getBody(ComputeDescription.class);
                     callbackFunction.accept(desc);
                 }));
     }

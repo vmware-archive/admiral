@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -23,7 +23,6 @@ import com.vmware.admiral.compute.container.HostNetworkListDataCollection;
 import com.vmware.admiral.compute.container.HostVolumeListDataCollection;
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
 import com.vmware.admiral.compute.kubernetes.KubernetesEntityDataCollection;
-import com.vmware.admiral.compute.profile.ProfileService;
 import com.vmware.admiral.service.common.AbstractInitialBootService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
@@ -40,7 +39,6 @@ public class ComputeInitialBootService extends AbstractInitialBootService {
                 SystemContainerDescriptions.buildCoreAgentContainerDescription());
 
         ArrayList<ServiceDocument> states = new ArrayList<>();
-        states.addAll(ProfileService.getAllDefaultDocuments());
         states.add(ContainerHostDataCollectionService.buildDefaultStateInstance());
         states.add(KubernetesEntityDataCollection.buildDefaultStateInstance());
         states.add(HostContainerListDataCollection.buildDefaultStateInstance());

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -17,19 +17,15 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 
-import org.junit.Before;
 import org.junit.Test;
 
-import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ResourceType;
-import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
@@ -39,33 +35,11 @@ import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupR
 import com.vmware.admiral.request.RequestBaseTest;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
-import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
-import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
-import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
-import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
-import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService.LoadBalancerDescription;
-import com.vmware.photon.controller.model.resources.StorageDescriptionService.StorageDescription;
-import com.vmware.photon.controller.model.resources.SubnetService;
-import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
-import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.TestContext;
 import com.vmware.xenon.services.common.QueryTask;
 
 public class CompositionTaskServiceTest extends RequestBaseTest {
-
-    private static final String COMPUTE_STATE_PACKAGE = "com:vmware:photon:controller:model:resources:ComputeService:ComputeState";
-
-    @Override
-    @Before
-    public void setUp() throws Throwable {
-        super.setUp();
-
-        // create a single powered-on compute available for placement
-        StorageDescription datastore = createDatastore(5000);
-        createVmHostCompute(true, null,
-                Collections.singleton(datastore.documentSelfLink));
-    }
 
     @Test
     public void testWithNoDescs() throws Throwable {
@@ -88,84 +62,6 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
     }
 
     @Test
-    public void testWithSingleCompute() throws Throwable {
-        createComputeGroupResourcePlacement(createComputeResourcePool(), 0);
-
-        SubnetState subnet = TestRequestStateFactory.createSubnetState("my-subnet");
-        subnet = doPost(subnet, SubnetService.FACTORY_LINK);
-
-        ComputeDescription compute = TestRequestStateFactory.createDockerHostDescription();
-        compute.customProperties.put("subnetworkLink", subnet.documentSelfLink);
-        compute.instanceAdapterReference = UriUtils.buildUri(host,
-                ManagementUriParts.ADAPTER_DOCKER);
-        CompositeDescription compositeDesc = createCompositeDesc(compute);
-        RequestBrokerState request = startComputeRequest(compositeDesc);
-        request = waitForTaskSuccess(request.documentSelfLink, RequestBrokerState.class);
-
-        CompositeComponent cc = getDocument(CompositeComponent.class,
-                request.resourceLinks.iterator().next());
-        assertNotNull(cc);
-
-        List<ComputeState> computes = queryComputeByCompositeComponentLink(cc.documentSelfLink);
-        assertEquals(1, computes.size());
-
-        ComputeState computeState = computes.get(0);
-        assertNotNull(computeState);
-        assertEquals(COMPUTE_STATE_PACKAGE, computeState.documentKind);
-        assertTrue(computeState.descriptionLink.contains(compute.documentSelfLink));
-
-        String compositeComponentId = computeState.customProperties
-                .get(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY);
-        assertNotNull(compositeComponentId);
-
-        String compositeComponentLink = UriUtils.buildUriPath(
-                CompositeComponentFactoryService.SELF_LINK, compositeComponentId);
-
-        assertEquals(cc.documentSelfLink, compositeComponentLink);
-
-        // TODO: fix for CompositeComponent.componentLinks
-        // assertEquals(Collections.singleton(computeState.documentSelfLink), cc.componentLinks);
-    }
-
-    @Test
-    public void testWithMultipleComputes() throws Throwable {
-        createComputeGroupResourcePlacement(createComputeResourcePool(), 0);
-
-        SubnetState subnet = TestRequestStateFactory.createSubnetState("my-subnet");
-        subnet = doPost(subnet, SubnetService.FACTORY_LINK);
-
-        ComputeDescription compute1 = TestRequestStateFactory.createDockerHostDescription();
-        compute1.instanceAdapterReference = UriUtils.buildUri(host,
-                ManagementUriParts.ADAPTER_DOCKER);
-        compute1.customProperties.put("subnetworkLink", subnet.documentSelfLink);
-
-        ComputeDescription compute2 = TestRequestStateFactory.createDockerHostDescription();
-        compute2.instanceAdapterReference = UriUtils.buildUri(host,
-                ManagementUriParts.ADAPTER_DOCKER);
-        compute2.customProperties.put("subnetworkLink", subnet.documentSelfLink);
-
-        CompositeDescription compositeDesc = createCompositeDesc(compute1, compute2);
-        RequestBrokerState request = startComputeRequest(compositeDesc);
-        request = waitForTaskSuccess(request.documentSelfLink, RequestBrokerState.class);
-
-        CompositeComponent cc = getDocument(CompositeComponent.class,
-                request.resourceLinks.iterator().next());
-        assertNotNull(cc);
-
-        List<ComputeState> computes = queryComputeByCompositeComponentLink(cc.documentSelfLink);
-        assertEquals(2, computes.size());
-
-        for (ComputeState compute : computes) {
-            assertNotNull(compute);
-            assertEquals(COMPUTE_STATE_PACKAGE, compute.documentKind);
-            addForDeletion(compute);
-        }
-
-        // TODO: fix for CompositeComponent.componentLinks
-        // assertEquals(request.resourceLinks, cc.componentLinks);
-    }
-
-    @Test
     public void testWithDependentDesc() throws Throwable {
         ContainerDescription desc1 = TestRequestStateFactory.createContainerDescription("name1");
         ContainerDescription desc2 = TestRequestStateFactory.createContainerDescription("name2", false, false);
@@ -176,29 +72,6 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
         request = waitForTaskSuccess(request.documentSelfLink, RequestBrokerState.class);
 
         assertValidRequest(request, compositeDesc);
-    }
-
-    @Test
-    public void testWithLoadBalancer() throws Throwable {
-        createComputeGroupResourcePlacement(createComputeResourcePool(), 0);
-
-        SubnetState subnet = TestRequestStateFactory.createSubnetState("my-subnet");
-        subnet = doPost(subnet, SubnetService.FACTORY_LINK);
-
-        ComputeDescription compute = TestRequestStateFactory.createDockerHostDescription();
-        compute.documentSelfLink = ComputeDescriptionService.FACTORY_LINK + "/compute-1";
-        compute.instanceAdapterReference = UriUtils.buildUri(host,
-                ManagementUriParts.ADAPTER_DOCKER);
-        compute.customProperties.put("subnetworkLink", subnet.documentSelfLink);
-
-        LoadBalancerDescription lb = TestRequestStateFactory.createLoadBalancerDescription("lb");
-        lb.computeDescriptionLink = compute.documentSelfLink;
-        lb.networkName = null;
-        lb.subnetLinks = Collections.singleton(subnet.documentSelfLink);
-
-        CompositeDescription compositeDesc = createCompositeDesc(false, false, compute, lb);
-        RequestBrokerState request = startComputeRequest(compositeDesc);
-        request = waitForTaskSuccess(request.documentSelfLink, RequestBrokerState.class);
     }
 
     @Test
@@ -372,16 +245,6 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
                 ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), desc.documentSelfLink);
         request.tenantLinks = groupPlacementState.tenantLinks;
-
-        request = super.startRequest(request);
-        return request;
-    }
-
-    private RequestBrokerState startComputeRequest(CompositeDescription desc) throws Throwable {
-        RequestBrokerState request = TestRequestStateFactory.createRequestState(
-                ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), desc.documentSelfLink);
-        request.tenantLinks = groupPlacementState.tenantLinks;
-        request.resourceDescriptionLink = desc.documentSelfLink;
 
         request = super.startRequest(request);
         return request;

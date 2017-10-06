@@ -41,7 +41,6 @@ import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
-@SuppressWarnings("deprecation")
 public class CaSigningCertService extends StatefulService {
 
     public static final String FACTORY_LINK = ManagementUriParts.CONFIG_CA_CREDENTIALS;

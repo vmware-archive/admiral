@@ -15,11 +15,6 @@
             <version>${xenon.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.vmware.photon.controller</groupId>
-            <artifactId>photon-model</artifactId>
-            <version>${photon.model.version}</version>
-        </dependency>
-        <dependency>
             <groupId>com.vmware.admiral</groupId>
             <artifactId>admiral-common</artifactId>
             <version>${project.version}</version>

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -12,7 +12,6 @@
 package com.vmware.admiral.compute;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -24,7 +23,6 @@ import java.util.function.Consumer;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.service.common.MultiTenantDocument;
-import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
@@ -258,40 +256,13 @@ public class ElasticPlacementZoneService extends StatefulService {
                 .addFieldClause(ComputeState.FIELD_NAME_RESOURCE_POOL_LINK, epz.resourcePoolLink,
                         Occurance.SHOULD_OCCUR)
                 .build();
-        Query rpSpecificClause = isComputeRp(rp) ? generateComputeRpQuery(rp)
-                : generateContainerRpQuery();
+        Query rpSpecificClause = generateContainerRpQuery();
         Query tenantClause = QueryUtil.addTenantClause(rp.tenantLinks);
 
         Query epzQuery = Query.Builder.create()
                 .addClauses(kindClause, assignmentClause, rpSpecificClause, tenantClause)
                 .build();
         return epzQuery;
-    }
-
-    /**
-     * Checks if the given resource pool is compute or not.
-     */
-    private static boolean isComputeRp(ResourcePoolState rp) {
-        return rp.customProperties != null && ResourceType.COMPUTE_TYPE.getName().equalsIgnoreCase(
-                rp.customProperties.get(PlacementZoneConstants.RESOURCE_TYPE_CUSTOM_PROP_NAME));
-    }
-
-    /**
-     * Generates a query clause for computes in a compute RP.
-     */
-    private static Query generateComputeRpQuery(ResourcePoolState rp) {
-        final Collection<String> computeTypes = Arrays.asList(ComputeType.VM_HOST.name(),
-                ComputeType.ZONE.name());
-        Query.Builder queryBuilder = Query.Builder.create()
-                .addInClause(ComputeState.FIELD_NAME_TYPE, computeTypes);
-
-        String rpEndpointLink = rp.customProperties != null
-                ? rp.customProperties.get(ComputeProperties.ENDPOINT_LINK_PROP_NAME) : null;
-        if (rpEndpointLink != null) {
-            queryBuilder.addFieldClause(ComputeState.FIELD_NAME_ENDPOINT_LINK, rpEndpointLink);
-        }
-
-        return queryBuilder.build();
     }
 
     /**

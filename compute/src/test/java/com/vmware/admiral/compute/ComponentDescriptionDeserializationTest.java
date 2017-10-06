@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -23,7 +23,6 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService.Containe
 import com.vmware.admiral.compute.container.ServiceNetwork;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.network.Ipam;
-import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.xenon.common.Utils;
 
 
@@ -58,31 +57,6 @@ public class ComponentDescriptionDeserializationTest extends ComputeBaseTest {
         assertEquals(container.env[0], serializedContainer.env[0]);
         assertEquals(container.image, serializedContainer.image);
         assertEquals(container.networks, serializedContainer.networks);
-    }
-
-    @Test
-    public void testToComputeDescription() {
-        ComponentDescription cd = new ComponentDescription();
-        cd.name = "toCompute";
-
-        ComputeDescription compute = new ComputeDescription();
-        compute.name = "name1";
-        compute.cpuMhzPerCore = 2400;
-
-        cd.type = ResourceType.COMPUTE_TYPE.getName();
-        cd.updateServiceDocument(compute);
-
-        ComponentDescription serializedCd = Utils.fromJson(Utils.toJson(cd),
-                ComponentDescription.class);
-
-        assertEquals(cd.name, serializedCd.name);
-        assertTrue(serializedCd.getServiceDocument() instanceof ComputeDescription);
-
-        ComputeDescription serializedCompute = (ComputeDescription) serializedCd
-                .getServiceDocument();
-
-        assertEquals(compute.name, serializedCompute.name);
-        assertEquals(compute.cpuMhzPerCore, serializedCompute.cpuMhzPerCore);
     }
 
     @Test

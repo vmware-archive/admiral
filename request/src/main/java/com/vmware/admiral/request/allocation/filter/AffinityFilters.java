@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -19,7 +19,6 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Function;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescription;
@@ -30,17 +29,6 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService.Containe
 import com.vmware.admiral.compute.container.loadbalancer.ContainerLoadBalancerDescriptionService.ContainerLoadBalancerDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
-import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
-import com.vmware.admiral.request.compute.allocation.filter.ComputeBinpackAffinityHostFilter;
-import com.vmware.admiral.request.compute.allocation.filter.ComputeClusterAntiAffinityHostFilter;
-import com.vmware.admiral.request.compute.allocation.filter.ComputeServiceAffinityHostFilter;
-import com.vmware.admiral.request.compute.allocation.filter.ComputeServiceAntiAffinityHostFilter;
-import com.vmware.admiral.request.compute.allocation.filter.ComputeSpreadAffinityHostFilter;
-import com.vmware.admiral.request.compute.allocation.filter.ComputeToNetworkAffinityHostFilter;
-import com.vmware.admiral.request.compute.allocation.filter.LoadBalancerToComputeAffinityHostFilter;
-import com.vmware.admiral.request.compute.allocation.filter.LoadBalancerToNetworkAffinityHostFilter;
-import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
-import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService.LoadBalancerDescription;
 import com.vmware.xenon.common.ServiceHost;
 
 /**
@@ -63,12 +51,6 @@ public final class AffinityFilters {
     private void initialize(ServiceHost host, Object desc) {
         if (ContainerDescription.class.isInstance(desc)) {
             initialize(host, (ContainerDescription) desc);
-        } else if (ComputeDescription.class.isInstance(desc)) {
-            initialize(host, (ComputeDescription) desc);
-        } else if (ComputeNetworkDescription.class.isInstance(desc)) {
-            // TODO initialize(host, (ComputeNetworkDescription) desc)
-        } else if (LoadBalancerDescription.class.isInstance(desc)) {
-            initialize(host, (LoadBalancerDescription) desc);
         } else if (ContainerLoadBalancerDescription.class.isInstance(desc)) {
             //TODO initialize(host, (ContainerLoadBalancerDescription) desc);
         } else if (ContainerNetworkDescription.class.isInstance(desc)) {
@@ -88,25 +70,6 @@ public final class AffinityFilters {
 
     private void initialize(ServiceHost host, ContainerNetworkDescription desc) {
 
-    }
-
-    private void initialize(ServiceHost host, ComputeDescription desc) {
-        filters.add(new ComputeServiceAffinityHostFilter(host, desc));
-
-        filters.add(new ComputeServiceAntiAffinityHostFilter(host, desc));
-        filters.add(new ComputeClusterAntiAffinityHostFilter(host, desc));
-
-        filters.add(new ComputeToNetworkAffinityHostFilter(host, desc));
-        host.log(Level.WARNING, "Temporary disable ComputeToStorageAffinityFilter");
-//        filters.add(new ComputeToStorageAffinityFilter(host, desc));
-
-        filters.add(new ComputeBinpackAffinityHostFilter(host, desc));
-        filters.add(new ComputeSpreadAffinityHostFilter(host, desc));
-    }
-
-    private void initialize(ServiceHost host, LoadBalancerDescription desc) {
-        filters.add(new LoadBalancerToComputeAffinityHostFilter(host, desc));
-        filters.add(new LoadBalancerToNetworkAffinityHostFilter(host, desc));
     }
 
     private void initialize(ServiceHost host, ComponentDescription desc) {

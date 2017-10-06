@@ -173,24 +173,19 @@
                 <artifactId>photon-model-security</artifactId>
                 <version>${photon.model.version}</version>
             </dependency>
+           <dependency>
+                <groupId>com.vmware.photon.controller</groupId>
+                <artifactId>photon-model-tasks</artifactId>
+                <version>${photon.model.version}</version>
+            </dependency>
             <dependency>
                 <groupId>com.vmware.photon.controller</groupId>
-                <artifactId>photon-aws-adapter</artifactId>
+                <artifactId>photon-adapter-util</artifactId>
                 <version>${photon.model.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.vmware.photon.controller</groupId>
                 <artifactId>photon-model-adapters-registry</artifactId>
-                <version>${photon.model.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.vmware.photon.controller</groupId>
-                <artifactId>photon-azure-adapter</artifactId>
-                <version>${photon.model.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.vmware.photon.controller</groupId>
-                <artifactId>photon-vsphere-adapter</artifactId>
                 <version>${photon.model.version}</version>
             </dependency>
 

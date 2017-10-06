@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -45,22 +45,7 @@ import com.vmware.admiral.request.ServiceDocumentDeleteTaskService;
 import com.vmware.admiral.request.composition.CompositeComponentRemovalTaskService;
 import com.vmware.admiral.request.composition.CompositionSubTaskFactoryService;
 import com.vmware.admiral.request.composition.CompositionTaskFactoryService;
-import com.vmware.admiral.request.compute.ComputeAllocationTaskService;
-import com.vmware.admiral.request.compute.ComputeNetworkAllocationTaskService;
-import com.vmware.admiral.request.compute.ComputeNetworkProvisionTaskService;
-import com.vmware.admiral.request.compute.ComputeNetworkRemovalTaskService;
-import com.vmware.admiral.request.compute.ComputeOperationTaskService;
-import com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService;
-import com.vmware.admiral.request.compute.ComputeProvisionTaskService;
 import com.vmware.admiral.request.compute.ComputeRemovalTaskService;
-import com.vmware.admiral.request.compute.ComputeReservationTaskService;
-import com.vmware.admiral.request.compute.IsolatedSecurityGroupProvisionTaskService;
-import com.vmware.admiral.request.compute.IsolatedSubnetProvisionTaskService;
-import com.vmware.admiral.request.compute.LoadBalancerAllocationTaskService;
-import com.vmware.admiral.request.compute.LoadBalancerOperationTaskService;
-import com.vmware.admiral.request.compute.LoadBalancerProvisionTaskService;
-import com.vmware.admiral.request.compute.LoadBalancerRemovalTaskService;
-import com.vmware.admiral.request.compute.ProvisionContainerHostsTaskService;
 import com.vmware.admiral.request.kubernetes.CompositeKubernetesProvisioningTaskService;
 import com.vmware.admiral.request.kubernetes.CompositeKubernetesRemovalTaskService;
 import com.vmware.admiral.request.notification.NotificationsService;
@@ -91,20 +76,11 @@ public class HostInitRequestServicesConfig extends HostInitServiceHelper {
                 RequestBrokerGraphService.class);
 
         startServiceFactories(host,
-                ProvisionContainerHostsTaskService.class,
                 ClosureAllocationTaskService.class,
                 ClosureProvisionTaskService.class,
                 ContainerRedeploymentTaskService.class,
                 ContainerNetworkAllocationTaskService.class,
                 ContainerNetworkProvisionTaskService.class,
-                ComputeNetworkAllocationTaskService.class,
-                ComputeNetworkProvisionTaskService.class,
-                IsolatedSubnetProvisionTaskService.class,
-                IsolatedSecurityGroupProvisionTaskService.class,
-                ComputeNetworkRemovalTaskService.class,
-                LoadBalancerAllocationTaskService.class,
-                LoadBalancerProvisionTaskService.class,
-                LoadBalancerRemovalTaskService.class,
                 ContainerLoadBalancerAllocationTaskService.class,
                 ContainerLoadBalancerProvisionTaskService.class,
                 ContainerLoadBalancerRemovalTaskService.class,
@@ -115,14 +91,8 @@ public class HostInitRequestServicesConfig extends HostInitServiceHelper {
                 ContainerVolumeProvisionTaskService.class,
                 ContainerVolumeRemovalTaskService.class,
                 ClusteringTaskService.class,
-                ComputeAllocationTaskService.class,
-                ComputeProvisionTaskService.class,
-                ComputeReservationTaskService.class,
                 ComputeRemovalTaskService.class,
-                ComputeOperationTaskService.class,
-                LoadBalancerOperationTaskService.class,
                 PlacementHostSelectionTaskService.class,
-                ComputePlacementSelectionTaskService.class,
                 ResourceNamePrefixTaskService.class,
                 ReservationAllocationTaskService.class,
                 CompositeComponentRemovalTaskService.class,

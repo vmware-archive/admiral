@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -35,7 +35,6 @@ import org.junit.Test;
 import com.vmware.admiral.compute.ElasticPlacementZoneService.ElasticPlacementZoneState;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.admiral.service.common.MultiTenantDocument;
-import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.query.QueryUtils.QueryByPages;
 import com.vmware.photon.controller.model.query.QueryUtils.QueryTemplate;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
@@ -229,14 +228,11 @@ public class ElasticPlacementZoneServiceTest extends ComputeBaseTest {
     @SuppressWarnings("unused")
     @Test
     public void testElasticQuery() throws Throwable {
-        ResourcePoolState containerRp = createRp(false, null, Arrays.asList("A", "B"));
-        ResourcePoolState computeRp = createRp(true, "ep1", Arrays.asList("X", "Y", "Z"));
+        ResourcePoolState containerRp = createRp(null, Arrays.asList("A", "B"));
 
         createEpz(containerRp.documentSelfLink, "tag1", "tag2");
-        createEpz(computeRp.documentSelfLink, "tag3", "tag4");
 
         containerRp = getDocument(ResourcePoolState.class, containerRp.documentSelfLink);
-        computeRp = getDocument(ResourcePoolState.class, computeRp.documentSelfLink);
 
         List<ComputeState> matchingContainerHosts = Arrays.asList(
                 createCompute(ComputeType.VM_GUEST, null, null, Arrays.asList("tag1", "tag2"),
@@ -251,29 +247,7 @@ public class ElasticPlacementZoneServiceTest extends ComputeBaseTest {
                 createCompute(ComputeType.VM_GUEST, null, null, Arrays.asList("tag1", "tag2"),
                         Arrays.asList("X", "Y", "Z")));
 
-        List<ComputeState> matchingComputes = Arrays.asList(
-                createCompute(ComputeType.VM_HOST, "ep1", null, Arrays.asList("tag3", "tag4"),
-                        Arrays.asList("X", "Y", "Z")),
-                createCompute(ComputeType.VM_HOST, "ep1", computeRp.documentSelfLink, null,
-                        Arrays.asList("X", "Y", "Z")),
-                createCompute(ComputeType.VM_HOST, "ep1", null, Arrays.asList("tag3", "tag4", "5"),
-                        Arrays.asList("X", "Y", "Z")),
-                createCompute(ComputeType.ZONE, "ep1", null, Arrays.asList("tag3", "tag4"),
-                        Arrays.asList("X", "Y", "Z")));
-        List<ComputeState> notMatchingComputes = Arrays.asList(
-                createCompute(ComputeType.VM_HOST, "ep1", null, Arrays.asList("tag3"),
-                        Arrays.asList("X", "Y", "Z")),
-                createCompute(ComputeType.VM_GUEST, "ep1", null, Arrays.asList("tag3", "tag4"),
-                        Arrays.asList("X", "Y", "Z")),
-                createCompute(ComputeType.VM_HOST, "ep1", null, Arrays.asList("tag3", "tag4"),
-                        Arrays.asList("X", "Y")),
-                createCompute(ComputeType.VM_HOST, "wrong-ep", null, Arrays.asList("tag3", "tag4"),
-                        Arrays.asList("X", "Y", "Z")),
-                createCompute(ComputeType.VM_HOST, null, null, Arrays.asList("tag3", "tag4"),
-                        Arrays.asList("X", "Y", "Z")));
-
         assertEqualComputes(executeRpQuery(containerRp), matchingContainerHosts);
-        assertEqualComputes(executeRpQuery(computeRp), matchingComputes);
     }
 
     private ElasticPlacementZoneState createEpz(String rpLink, String... tagLinks)
@@ -292,23 +266,12 @@ public class ElasticPlacementZoneServiceTest extends ComputeBaseTest {
     }
 
     private ResourcePoolState createRp() throws Throwable {
-        return createRp(false, null, null);
+        return createRp(null, null);
     }
 
-    private ResourcePoolState createRp(boolean isCompute, String endpointLink,
-            List<String> tenantLinks) throws Throwable {
+    private ResourcePoolState createRp(String endpointLink,List<String> tenantLinks) throws Throwable {
         ResourcePoolState initialState = new ResourcePoolState();
         initialState.name = "rp-1";
-        if (isCompute) {
-            initialState.customProperties = new HashMap<>();
-            initialState.customProperties.put(PlacementZoneConstants.RESOURCE_TYPE_CUSTOM_PROP_NAME,
-                    ResourceType.COMPUTE_TYPE.getName());
-
-            if (endpointLink != null) {
-                initialState.customProperties.put(ComputeProperties.ENDPOINT_LINK_PROP_NAME,
-                        endpointLink);
-            }
-        }
         initialState.tenantLinks = correctTenantPrefixes(tenantLinks);
         return doPost(initialState, ResourcePoolService.FACTORY_LINK);
     }

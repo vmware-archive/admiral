@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -80,9 +80,8 @@ public class CompositeComponentRemovalTaskService
 
     // Order of batch remove of resources, grouped by resource type.
     private static final List<ResourceType> PREFERED_ORDER_OF_REMOVAL_PER_TYPE = Arrays.asList(
-            ResourceType.CONTAINER_TYPE, ResourceType.LOAD_BALANCER_TYPE, ResourceType.COMPUTE_TYPE,
-            ResourceType.NETWORK_TYPE, ResourceType.COMPUTE_NETWORK_TYPE,
-            ResourceType.VOLUME_TYPE, ResourceType.CLOSURE_TYPE);
+            ResourceType.CONTAINER_TYPE, ResourceType.NETWORK_TYPE, ResourceType.VOLUME_TYPE,
+            ResourceType.CLOSURE_TYPE);
 
     @SuppressWarnings("unused")
     private static final List<ResourceType> TYPES_SUPPORTING_PARALLEL_REMOVAL = Arrays.asList(
@@ -126,10 +125,10 @@ public class CompositeComponentRemovalTaskService
         QueryUtil.addListValueClause(compositeQueryTask, CompositeComponent.FIELD_NAME_SELF_LINK,
                 state.resourceLinks);
 
-        List<String> resourceLinks = new ArrayList<String>();
+        List<String> resourceLinks = new ArrayList<>();
         Map<String, String> externalSchedulerTaskPerResourceLink = new HashMap<>();
 
-        new ServiceDocumentQuery<CompositeComponent>(getHost(), CompositeComponent.class)
+        new ServiceDocumentQuery<>(getHost(), CompositeComponent.class)
                 .query(compositeQueryTask,
                         (r) -> {
                             if (r.hasException()) {

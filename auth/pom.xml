@@ -43,10 +43,6 @@
             <groupId>${xenon.group}</groupId>
             <artifactId>xenon-common</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.vmware.photon.controller</groupId>
-            <artifactId>photon-model</artifactId>
-        </dependency>
 
         <!-- TEST -->
         <dependency>

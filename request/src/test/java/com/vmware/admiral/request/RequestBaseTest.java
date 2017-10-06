@@ -14,14 +14,10 @@ package com.vmware.admiral.request;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import static com.vmware.admiral.common.test.CommonTestStateFactory.ENDPOINT_REGION_ID;
 import static com.vmware.admiral.request.compute.ResourceGroupUtils.COMPUTE_DEPLOYMENT_TYPE_VALUE;
-import static com.vmware.admiral.request.compute.allocation.filter.ComputeToNetworkAffinityHostFilter.PREFIX_NETWORK;
-import static com.vmware.admiral.request.compute.allocation.filter.ComputeToStorageAffinityFilter.PREFIX_DATASTORE;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -42,11 +38,8 @@ import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ResourceType;
-import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.CompositeDescriptionFactoryService;
 import com.vmware.admiral.compute.container.CompositeDescriptionService;
-import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
-import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerFactoryService;
@@ -65,8 +58,6 @@ import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionS
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
-import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
-import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService;
 import com.vmware.admiral.host.CaSigningCertService;
 import com.vmware.admiral.host.CompositeComponentInterceptor;
 import com.vmware.admiral.host.ComputeInitialBootService;
@@ -86,7 +77,6 @@ import com.vmware.admiral.request.RequestStatusService.RequestStatus;
 import com.vmware.admiral.request.composition.CompositionSubTaskFactoryService;
 import com.vmware.admiral.request.composition.CompositionTaskFactoryService;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
-import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.admiral.service.common.CounterSubTaskService;
@@ -97,45 +87,22 @@ import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCert
 import com.vmware.admiral.service.test.MockComputeHostInstanceAdapter;
 import com.vmware.admiral.service.test.MockDockerContainerToHostService.MockDockerContainerToHostState;
 import com.vmware.photon.controller.model.ComputeProperties;
-import com.vmware.photon.controller.model.adapters.awsadapter.AWSLoadBalancerService;
-import com.vmware.photon.controller.model.adapters.awsadapter.AWSNetworkService;
-import com.vmware.photon.controller.model.adapters.awsadapter.AWSSecurityGroupService;
-import com.vmware.photon.controller.model.adapters.awsadapter.AWSSubnetService;
-import com.vmware.photon.controller.model.adapters.vsphere.CustomProperties;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
-import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
-import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService;
-import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService.LoadBalancerDescription.HealthCheckConfiguration;
-import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService.LoadBalancerDescription.Protocol;
-import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService.LoadBalancerDescription.RouteConfiguration;
-import com.vmware.photon.controller.model.resources.LoadBalancerService;
-import com.vmware.photon.controller.model.resources.LoadBalancerService.LoadBalancerState;
-import com.vmware.photon.controller.model.resources.NetworkService;
-import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;
 import com.vmware.photon.controller.model.resources.ResourceGroupService;
 import com.vmware.photon.controller.model.resources.ResourceGroupService.ResourceGroupState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
-import com.vmware.photon.controller.model.resources.SecurityGroupService;
-import com.vmware.photon.controller.model.resources.SecurityGroupService.SecurityGroupState;
-import com.vmware.photon.controller.model.resources.StorageDescriptionService;
-import com.vmware.photon.controller.model.resources.StorageDescriptionService.StorageDescription;
-import com.vmware.photon.controller.model.resources.SubnetService;
-import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
-import com.vmware.xenon.common.test.TestContext;
 import com.vmware.xenon.common.test.VerificationHost;
 import com.vmware.xenon.services.common.AuthCredentialsService;
 import com.vmware.xenon.services.common.QueryTask;
-import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
-import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
 
 public abstract class RequestBaseTest extends BaseTestCase {
 
@@ -154,19 +121,11 @@ public abstract class RequestBaseTest extends BaseTestCase {
 
     protected ResourcePoolState resourcePool;
 
-    protected ResourcePoolState computeResourcePool;
-
-    protected EndpointState endpoint;
-
     protected ComputeDescription hostDesc;
 
     protected  ComputeDescription dockerHostDesc;
 
     protected ComputeState computeHost;
-
-    protected ComputeDescription vmGuestComputeDescription;
-
-    protected ComputeState vmGuestComputeState;
 
     protected ContainerDescription containerDesc;
 
@@ -178,11 +137,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
 
     protected ContainerVolumeDescription containerVolumeDesc;
 
-    protected CompositeDescription compositeDescription;
-
     protected GroupResourcePlacementState groupPlacementState;
-
-    protected GroupResourcePlacementState computeGroupPlacementState;
 
     protected  SslTrustCertificateState sslTrustCert;
 
@@ -191,7 +146,6 @@ public abstract class RequestBaseTest extends BaseTestCase {
         startServices(host);
         setUpDockerHostAuthentication();
 
-        createEndpoint();
         // setup Docker Host:
         createResourcePool();
         // setup Group Placement:
@@ -322,25 +276,6 @@ public abstract class RequestBaseTest extends BaseTestCase {
         }
     }
 
-    protected GroupResourcePlacementState createComputeGroupResourcePlacement(
-            ResourcePoolState resourcePool,
-            int numberOfInstances) throws Throwable {
-        synchronized (initializationLock) {
-            if (computeGroupPlacementState == null) {
-                computeGroupPlacementState = TestRequestStateFactory
-                        .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE);
-                computeGroupPlacementState.maxNumberInstances = numberOfInstances;
-                computeGroupPlacementState.name = "compute-placement";
-                computeGroupPlacementState.resourcePoolLink = resourcePool.documentSelfLink;
-                computeGroupPlacementState = getOrCreateDocument(computeGroupPlacementState,
-                        GroupResourcePlacementService.FACTORY_LINK);
-                assertNotNull(computeGroupPlacementState);
-            }
-
-            return computeGroupPlacementState;
-        }
-    }
-
     protected ResourceType placementResourceType() {
         return ResourceType.CONTAINER_TYPE;
     }
@@ -402,56 +337,12 @@ public abstract class RequestBaseTest extends BaseTestCase {
                 hostDesc = TestRequestStateFactory.createDockerHostDescription();
                 hostDesc.instanceAdapterReference = UriUtils.buildUri(host,
                         MockComputeHostInstanceAdapter.SELF_LINK);
-                hostDesc.endpointLink = endpoint != null ? endpoint.documentSelfLink : null;
                 hostDesc = doPost(hostDesc,
                         ComputeDescriptionService.FACTORY_LINK);
                 assertNotNull(hostDesc);
             }
             return hostDesc;
         }
-    }
-
-    protected ContainerState createContainerState(String descriptionLink) throws Throwable {
-        synchronized (initializationLock) {
-            if (containerState == null) {
-                ContainerState cs = TestRequestStateFactory.createContainer();
-                if (descriptionLink != null) {
-                    cs.descriptionLink = descriptionLink;
-                }
-
-                containerState = doPost(cs, ContainerFactoryService.SELF_LINK);
-                assertNotNull(containerState);
-            }
-
-            return containerState;
-        }
-    }
-
-    protected ComputeDescription createComputeDescriptionForVmGuestChildren() throws Throwable {
-        synchronized (initializationLock) {
-            if (vmGuestComputeDescription == null) {
-                vmGuestComputeDescription = TestRequestStateFactory
-                        .createComputeDescriptionForVmGuestChildren();
-                vmGuestComputeDescription.authCredentialsLink = endpoint.authCredentialsLink;
-                vmGuestComputeDescription.endpointLink = endpoint.documentSelfLink;
-                vmGuestComputeDescription = getOrCreateDocument(vmGuestComputeDescription,
-                        ComputeDescriptionService.FACTORY_LINK);
-                assertNotNull(vmGuestComputeDescription);
-            }
-            return vmGuestComputeDescription;
-        }
-    }
-
-    protected ComputeDescription createVmGuestComputeDescriptionWithRandomSelfLink()
-            throws Throwable {
-
-        ComputeDescription computeDescription = TestRequestStateFactory
-                .createVmGuestComputeDescription(true);
-        computeDescription.authCredentialsLink = endpoint.authCredentialsLink;
-        computeDescription = getOrCreateDocument(computeDescription,
-                ComputeDescriptionService.FACTORY_LINK);
-        assertNotNull(computeDescription);
-        return computeDescription;
     }
 
     protected ComputeState createDockerHost(ComputeDescription computeDesc,
@@ -467,15 +358,14 @@ public abstract class RequestBaseTest extends BaseTestCase {
     protected ComputeState createDockerHost(ComputeDescription computeDesc,
             ResourcePoolState resourcePool, Long availableMemory, boolean generateId)
             throws Throwable {
-        return createDockerHost(computeDesc, resourcePool, computeGroupPlacementState,
+        return createDockerHost(computeDesc, resourcePool,
                 availableMemory,
-                null, generateId);
+                null, generateId, true);
     }
 
     protected ComputeState createDockerHost(ComputeDescription computeDesc,
-            ResourcePoolState resourcePool, GroupResourcePlacementState computePlacement,
-            Long availableMemory, Set<String> volumeDrivers, boolean generateId)
-            throws Throwable {
+            ResourcePoolState resourcePool, Long availableMemory, Set<String> volumeDrivers,
+            boolean generateId, boolean generateTrustCert) throws Throwable {
         ComputeState containerHost = TestRequestStateFactory.createDockerComputeHost();
         if (generateId) {
             containerHost.id = UUID.randomUUID().toString();
@@ -498,11 +388,6 @@ public abstract class RequestBaseTest extends BaseTestCase {
                 ContainerHostService.DOCKER_HOST_AVAILABLE_MEMORY_PROP_NAME,
                 availableMemory.toString());
 
-        if (computePlacement != null) {
-            containerHost.customProperties.put(ComputeConstants.GROUP_RESOURCE_PLACEMENT_LINK_NAME,
-                    computePlacement.documentSelfLink);
-        }
-
         if (computeDesc.customProperties != null && computeDesc.customProperties
                 .containsKey(ContainerHostService.DOCKER_HOST_CLUSTER_STORE_PROP_NAME)) {
             containerHost.customProperties.put(
@@ -517,8 +402,10 @@ public abstract class RequestBaseTest extends BaseTestCase {
         containerHost.customProperties.put(ContainerHostService.DOCKER_HOST_PLUGINS_PROP_NAME,
                 createSupportedPluginsInfoString(volumeDrivers));
 
-        containerHost.customProperties.put(ComputeConstants.HOST_TRUST_CERTS_PROP_NAME,
-                createSslTrustCert().documentSelfLink);
+        if (generateTrustCert) {
+            containerHost.customProperties.put(ComputeConstants.HOST_TRUST_CERTS_PROP_NAME,
+                    createSslTrustCert().documentSelfLink);
+        }
 
         containerHost = getOrCreateDocument(containerHost, ComputeService.FACTORY_LINK);
         assertNotNull(containerHost);
@@ -545,82 +432,6 @@ public abstract class RequestBaseTest extends BaseTestCase {
         return createDockerHost(computeDesc, resourcePool, Integer.MAX_VALUE - 100L, generateId);
     }
 
-    protected ComputeState createVmHostCompute(boolean generateId) throws Throwable {
-        return createVmHostCompute(generateId, null, ENDPOINT_REGION_ID,
-                TestRequestStateFactory.ZONE_ID);
-    }
-
-    protected ComputeState createVmHostCompute(boolean generateId, Set<String> networkLinks,
-            String region, String zone) throws Throwable {
-        return createVmHostCompute(generateId, networkLinks, null, region, zone);
-    }
-
-    protected ComputeState createVmHostCompute(boolean generateId, Set<String> networkLinks,
-            Set<String> storageLinks) throws Throwable {
-        return createVmHostCompute(generateId, networkLinks, storageLinks, ENDPOINT_REGION_ID,
-                TestRequestStateFactory.ZONE_ID);
-    }
-
-    protected ComputeState createVmHostCompute(boolean generateId, Set<String> networkLinks,
-            Set<String> storageLinks, String region, String zone) throws Throwable {
-
-        ComputeState vmHostComputeState = TestRequestStateFactory.createVmHostComputeState();
-        if (generateId) {
-            vmHostComputeState.id = UUID.randomUUID().toString();
-        }
-        vmHostComputeState.documentSelfLink = vmHostComputeState.id;
-        vmHostComputeState.resourcePoolLink = createComputeResourcePool().documentSelfLink;
-        vmHostComputeState.descriptionLink = createComputeDescriptionForVmGuestChildren().documentSelfLink;
-        vmHostComputeState.type = ComputeType.VM_HOST;
-        vmHostComputeState.name = UUID.randomUUID().toString();
-        vmHostComputeState.endpointLink = endpoint.documentSelfLink;
-        vmHostComputeState.regionId = region;
-        vmHostComputeState.zoneId = zone;
-
-        Set<String> resourceGroupLinks = new HashSet<>();
-        if (networkLinks != null) {
-            for (String networkLink : networkLinks) {
-                ResourceGroupState state = createResourceGroupWithTargetLink(
-                        PREFIX_NETWORK + UUID.randomUUID().toString(),
-                        networkLink);
-                resourceGroupLinks.add(state.documentSelfLink);
-            }
-        }
-
-        if (storageLinks != null) {
-            for (String storageLink : storageLinks) {
-                ResourceGroupState state = createResourceGroupWithTargetLink(
-                        PREFIX_DATASTORE + UUID.randomUUID().toString(),
-                        storageLink);
-                resourceGroupLinks.add(state.documentSelfLink);
-            }
-        }
-
-        vmHostComputeState.groupLinks = resourceGroupLinks;
-        assertNotNull(vmHostComputeState);
-
-        vmHostComputeState = getOrCreateDocument(vmHostComputeState, ComputeService.FACTORY_LINK);
-
-        if (generateId) {
-            documentsForDeletion.add(vmHostComputeState);
-        }
-        return vmHostComputeState;
-    }
-
-    protected ResourceGroupState createResourceGroupWithTargetLink(String documentSelfLink,
-            String targetLink) throws Throwable {
-        ResourceGroupState resourceGroupStateRequest = new ResourceGroupState();
-        resourceGroupStateRequest.name = UriUtils.getLastPathSegment(targetLink);
-        resourceGroupStateRequest.customProperties = new HashMap<>();
-        resourceGroupStateRequest.documentSelfLink = documentSelfLink;
-        resourceGroupStateRequest.customProperties
-                .put(CustomProperties.TARGET_LINK, targetLink);
-
-        ResourceGroupState state = doPost(resourceGroupStateRequest,
-                ResourceGroupService.FACTORY_LINK);
-        return state;
-    }
-
     protected void createHostPortProfile() throws Throwable {
         if (hostPortProfileState != null) {
             return;
@@ -635,25 +446,6 @@ public abstract class RequestBaseTest extends BaseTestCase {
         documentsForDeletion.add(hostPortProfileState);
     }
 
-    protected ComputeState createVmComputeWithRandomComputeDescription(boolean generateId,
-            ComputeType type) throws Throwable {
-        ComputeState vmGuestComputeState = TestRequestStateFactory.createVmHostComputeState();
-        if (generateId) {
-            vmGuestComputeState.id = UUID.randomUUID().toString();
-        }
-        vmGuestComputeState.endpointLink = endpoint.documentSelfLink;
-        vmGuestComputeState.documentSelfLink = vmGuestComputeState.id;
-        vmGuestComputeState.resourcePoolLink = createComputeResourcePool().documentSelfLink;
-        vmGuestComputeState.descriptionLink = createVmGuestComputeDescriptionWithRandomSelfLink().documentSelfLink;
-        vmGuestComputeState.type = type;
-        vmGuestComputeState = getOrCreateDocument(vmGuestComputeState, ComputeService.FACTORY_LINK);
-        assertNotNull(vmGuestComputeState);
-        if (generateId) {
-            documentsForDeletion.add(vmGuestComputeState);
-        }
-        return vmGuestComputeState;
-    }
-
     protected synchronized ResourcePoolState createResourcePool() throws Throwable {
         synchronized (initializationLock) {
             if (resourcePool == null) {
@@ -663,99 +455,6 @@ public abstract class RequestBaseTest extends BaseTestCase {
             }
             return resourcePool;
         }
-    }
-
-    protected synchronized ResourcePoolState createComputeResourcePool() throws Throwable {
-        synchronized (initializationLock) {
-            if (computeResourcePool == null) {
-                computeResourcePool = getOrCreateDocument(
-                        TestRequestStateFactory.createResourcePool(),
-                        ResourcePoolService.FACTORY_LINK);
-                assertNotNull(computeResourcePool);
-            }
-            return computeResourcePool;
-        }
-    }
-
-    protected synchronized EndpointState createEndpoint() throws Throwable {
-        synchronized (initializationLock) {
-            if (endpoint == null) {
-                endpoint = getOrCreateDocument(TestRequestStateFactory.createEndpoint(),
-                        EndpointAdapterService.SELF_LINK);
-                assertNotNull(endpoint);
-            }
-            return endpoint;
-        }
-    }
-
-    protected NetworkState createNetworkState() throws Throwable {
-        NetworkState network = new NetworkState();
-        network.regionId = ComputeBaseTest.REGION_ID;
-        network.resourcePoolLink = UUID.randomUUID().toString();
-        network.subnetCIDR = "0.0.0.0/24";
-        network.endpointLink = createEndpoint().documentSelfLink;
-        network.instanceAdapterReference = UriUtils.buildUri(this.host,
-                AWSNetworkService.SELF_LINK);
-        network = getOrCreateDocument(network, NetworkService.FACTORY_LINK);
-        assertNotNull(network);
-        return network;
-    }
-
-    protected SubnetState createSubnetState(Set<String> groupLinks) throws Throwable {
-        SubnetState subnet = new SubnetState();
-        subnet.id = UUID.randomUUID().toString();
-        subnet.networkLink = createNetworkState().documentSelfLink;
-        subnet.endpointLink = createEndpoint().documentSelfLink;
-        subnet.subnetCIDR = "0.0.0.0/28";
-        subnet.instanceAdapterReference = UriUtils.buildUri(this.host,
-                AWSSubnetService.SELF_LINK);
-        subnet.groupLinks = groupLinks;
-        subnet.tenantLinks = TestRequestStateFactory.getTenantLinks();
-        subnet = doPost(subnet, SubnetService.FACTORY_LINK);
-        assertNotNull(subnet);
-        return subnet;
-    }
-
-    protected LoadBalancerState createLoadBalancerState() throws Throwable {
-        LoadBalancerState state = new LoadBalancerState();
-        state.name = UUID.randomUUID().toString();
-        state.endpointLink = createEndpoint().documentSelfLink;
-        state.regionId = ComputeBaseTest.REGION_ID;
-        state.computeLinks = Collections.singleton(createVmHostCompute(true).documentSelfLink);
-        state.subnetLinks = new HashSet<>();
-        state.subnetLinks.add(createSubnetState(null).documentSelfLink);
-        state.tenantLinks = TestRequestStateFactory.getTenantLinks();
-
-        RouteConfiguration route1 = new RouteConfiguration();
-        route1.protocol = Protocol.HTTP.name();
-        route1.port = "80";
-        route1.instanceProtocol = Protocol.HTTP.name();
-        route1.instancePort = "80";
-        route1.healthCheckConfiguration = new HealthCheckConfiguration();
-        route1.healthCheckConfiguration.protocol = Protocol.HTTP.name();
-        route1.healthCheckConfiguration.port = "80";
-        route1.healthCheckConfiguration.urlPath = "/test.html";
-        route1.healthCheckConfiguration.intervalSeconds = 60;
-        route1.healthCheckConfiguration.healthyThreshold = 2;
-        route1.healthCheckConfiguration.unhealthyThreshold = 5;
-        route1.healthCheckConfiguration.timeoutSeconds = 5;
-
-        RouteConfiguration route2 = new RouteConfiguration();
-        route2.protocol = Protocol.HTTPS.name();
-        route2.port = "443";
-        route2.instanceProtocol = Protocol.HTTPS.name();
-        route2.instancePort = "443";
-
-        state.routes = Arrays.asList(route1, route2);
-        state.internetFacing = Boolean.TRUE;
-        state.instanceAdapterReference = UriUtils
-                .buildUri(this.host, AWSLoadBalancerService.SELF_LINK);
-
-        state = doPost(state, LoadBalancerService.FACTORY_LINK);
-        assertNotNull(state);
-
-        addForDeletion(state);
-        return state;
     }
 
     protected void waitForContainerPowerState(final PowerState expectedPowerState,
@@ -897,8 +596,6 @@ public abstract class RequestBaseTest extends BaseTestCase {
                 desc = doPost(desc, LoadBalancerDescriptionService.FACTORY_LINK);
             } else if (desc instanceof ContainerLoadBalancerDescription) {
                 desc = doPost(desc, ContainerLoadBalancerDescriptionService.FACTORY_LINK);
-            } else if (desc instanceof ComputeNetworkDescriptionService.ComputeNetworkDescription) {
-                desc = doPost(desc, ComputeNetworkDescriptionService.FACTORY_LINK);
             } else {
                 throw new IllegalArgumentException(
                         "Unknown description type: " + desc.getClass().getSimpleName());
@@ -923,42 +620,6 @@ public abstract class RequestBaseTest extends BaseTestCase {
         healthConfig.timeoutMillis = 2000;
 
         return healthConfig;
-    }
-
-    protected List<ComputeState> queryComputeByCompositeComponentLink(
-            String compositeComponentLink) {
-        String contextId = compositeComponentLink
-                .replaceAll(CompositeComponentFactoryService.SELF_LINK + "/", "");
-
-        QueryTask q = QueryUtil.buildQuery(ComputeState.class, false);
-        QueryTask.Query containerHost = new QueryTask.Query().setTermPropertyName(QuerySpecification
-                .buildCompositeFieldName(ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
-                        RequestUtils.FIELD_NAME_CONTEXT_ID_KEY))
-                .setTermMatchValue(contextId);
-        containerHost.occurance = Occurance.MUST_OCCUR;
-
-        q.querySpec.query.addBooleanClause(containerHost);
-
-        QueryUtil.addExpandOption(q);
-        ServiceDocumentQuery<ComputeState> query = new ServiceDocumentQuery<>(host,
-                ComputeState.class);
-
-        List<ComputeState> result = new ArrayList<>();
-        TestContext ctx = testCreate(1);
-
-        query.query(q, (r) -> {
-            if (r.hasException()) {
-                ctx.failIteration(r.getException());
-            } else if (r.hasResult()) {
-                result.add(r.getResult());
-            } else {
-                ctx.completeIteration();
-            }
-        });
-
-        ctx.await();
-
-        return result;
     }
 
     protected String createSupportedPluginsInfoString(Set<String> drivers) {
@@ -1031,38 +692,6 @@ public abstract class RequestBaseTest extends BaseTestCase {
         resGroup.customProperties.put(ComputeProperties.RESOURCE_TYPE_KEY,
                 COMPUTE_DEPLOYMENT_TYPE_VALUE);
         return getOrCreateDocument(resGroup, ResourceGroupService.FACTORY_LINK);
-    }
-
-    protected SecurityGroupState createSecurityGroup(String name, List<String> tenantLinks,
-            Set<String> groupLinks, String contextId) throws Throwable {
-        SecurityGroupState securityGroup = new SecurityGroupState();
-        securityGroup.name = name;
-        securityGroup.tenantLinks = tenantLinks;
-        securityGroup.instanceAdapterReference = UriUtils.buildUri(this.host,
-                AWSSecurityGroupService.SELF_LINK);
-        securityGroup.authCredentialsLink = endpoint.authCredentialsLink;
-        securityGroup.regionId = "us-east-1";
-        securityGroup.resourcePoolLink = "resource-pool";
-        securityGroup.egress = new ArrayList<>();
-        securityGroup.ingress = new ArrayList<>();
-        securityGroup.groupLinks = groupLinks;
-        securityGroup.customProperties = new HashMap<>();
-        securityGroup.customProperties.put(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY, contextId);
-        return doPost(securityGroup, SecurityGroupService.FACTORY_LINK);
-    }
-
-    protected StorageDescription createDatastore(long capacityMB) throws Throwable {
-
-        StorageDescription datastore = new StorageDescription();
-
-        datastore.name = UUID.randomUUID().toString();
-        datastore.capacityBytes = capacityMB * 1024;
-        datastore.endpointLink = endpoint.documentSelfLink;
-        datastore.resourcePoolLink = endpoint.resourcePoolLink;
-        datastore.regionId = ENDPOINT_REGION_ID;
-        datastore.tenantLinks = endpoint.tenantLinks;
-
-        return doPost(datastore, StorageDescriptionService.FACTORY_LINK);
     }
 
     protected Set<ContainerState> getExistingContainersInAdapter() {

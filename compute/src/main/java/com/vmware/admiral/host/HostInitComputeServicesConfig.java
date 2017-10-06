@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -16,14 +16,12 @@ import com.vmware.admiral.closures.services.closure.Closure;
 import com.vmware.admiral.closures.services.closure.ClosureFactoryService;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescription;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptionFactoryService;
-import com.vmware.admiral.compute.ComputeSearchService;
 import com.vmware.admiral.compute.ConfigureHostOverSshTaskService;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
 import com.vmware.admiral.compute.ElasticPlacementZoneService;
 import com.vmware.admiral.compute.EpzComputeEnumerationTaskService;
 import com.vmware.admiral.compute.HostConfigCertificateDistributionService;
-import com.vmware.admiral.compute.ImageSearchService;
 import com.vmware.admiral.compute.PlacementCapacityUpdateTaskService;
 import com.vmware.admiral.compute.RegistryConfigCertificateDistributionService;
 import com.vmware.admiral.compute.RegistryHostConfigService;
@@ -68,9 +66,6 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
 import com.vmware.admiral.compute.content.TemplateComputeDescription;
-import com.vmware.admiral.compute.content.TemplateLoadBalancerDescription;
-import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
-import com.vmware.admiral.compute.endpoint.EndpointHealthCheckTaskService;
 import com.vmware.admiral.compute.kubernetes.KubernetesEntityDataCollection;
 import com.vmware.admiral.compute.kubernetes.service.DeploymentService;
 import com.vmware.admiral.compute.kubernetes.service.DeploymentService.DeploymentState;
@@ -86,18 +81,6 @@ import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerServic
 import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerService.ReplicationControllerState;
 import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler;
 import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler.ServiceState;
-import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService;
-import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService;
-import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
-import com.vmware.admiral.compute.network.ComputeNetworkService;
-import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
-import com.vmware.admiral.compute.profile.ComputeProfileService;
-import com.vmware.admiral.compute.profile.ImageProfileService;
-import com.vmware.admiral.compute.profile.InstanceTypeService.InstanceTypeFactoryService;
-import com.vmware.admiral.compute.profile.NetworkProfileService;
-import com.vmware.admiral.compute.profile.ProfileMappingService;
-import com.vmware.admiral.compute.profile.ProfileService;
-import com.vmware.admiral.compute.profile.StorageProfileService;
 import com.vmware.admiral.service.common.UrlEncodedReverseProxyService;
 import com.vmware.admiral.service.test.MockConfigureHostOverSshTaskServiceWithoutValidate;
 import com.vmware.admiral.service.test.MockContainerHostService;
@@ -105,9 +88,6 @@ import com.vmware.iaas.consumer.api.service.MachineService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
-import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService;
-import com.vmware.photon.controller.model.resources.LoadBalancerService;
-import com.vmware.photon.controller.model.resources.LoadBalancerService.LoadBalancerState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
@@ -125,7 +105,6 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 ContainerVolumeFactoryService.class,
                 ContainerNetworkFactoryService.class,
                 ContainerStatsService.class,
-                EndpointAdapterService.class,
                 RegistryHostConfigService.class,
                 CompositeDescriptionFactoryService.class,
                 CompositeDescriptionCloneService.class,
@@ -135,16 +114,12 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 HostConfigCertificateDistributionService.class,
                 RegistryConfigCertificateDistributionService.class,
                 ComputeInitialBootService.class,
-                ComputeSearchService.class,
-                ImageSearchService.class,
                 ElasticPlacementZoneConfigurationService.class,
-                ProfileMappingService.class,
                 KubernetesDescriptionContentService.class,
                 PodLogService.class,
                 UrlEncodedReverseProxyService.class,
                 FetchDataGatewayService.class,
                 ClusterService.class,
-                InstanceTypeFactoryService.class,
                 MachineService.class);
 
         startServiceFactories(host, CaSigningCertService.class,
@@ -154,21 +129,12 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 HostNetworkListDataCollection.class,
                 HostVolumeListDataCollection.class,
                 ContainerHostDataCollectionService.class,
-                ProfileService.class,
-                ComputeProfileService.class,
-                StorageProfileService.class,
-                NetworkProfileService.class,
-                ImageProfileService.class,
                 DeploymentPolicyService.class,
                 HostPortProfileService.class,
-                ComputeNetworkDescriptionService.class,
-                ComputeNetworkService.class,
-                ComputeNetworkCIDRAllocationService.class,
                 ElasticPlacementZoneService.class,
                 EpzComputeEnumerationTaskService.class,
                 PlacementCapacityUpdateTaskService.class,
                 KubernetesDescriptionService.class,
-                EndpointHealthCheckTaskService.class,
                 PodService.class,
                 DeploymentService.class,
                 ReplicationControllerService.class,
@@ -216,14 +182,6 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
         CompositeComponentRegistry.registerComponent(ResourceType.CLOSURE_TYPE.getName(),
                 ClosureDescriptionFactoryService.FACTORY_LINK, ClosureDescription.class,
                 ClosureFactoryService.FACTORY_LINK, Closure.class);
-
-        CompositeComponentRegistry.registerComponent(ResourceType.COMPUTE_NETWORK_TYPE.getName(),
-                ComputeNetworkDescriptionService.FACTORY_LINK, ComputeNetworkDescription.class,
-                ComputeNetworkService.FACTORY_LINK, ComputeNetwork.class);
-
-        CompositeComponentRegistry.registerComponent(ResourceType.LOAD_BALANCER_TYPE.getName(),
-                LoadBalancerDescriptionService.FACTORY_LINK, TemplateLoadBalancerDescription.class,
-                LoadBalancerService.FACTORY_LINK, LoadBalancerState.class);
 
         CompositeComponentRegistry
                 .registerComponent(ResourceType.CONTAINER_LOAD_BALANCER_TYPE.getName(),

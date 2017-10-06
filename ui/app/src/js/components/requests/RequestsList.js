@@ -130,8 +130,6 @@ var RequestsListVueComponent = Vue.extend({
 
           if (this.isRequestFinished(this.model)) {
 
-            let isMachineRequest = false;
-            let machineQuery;
             let isHostsRequest = false;
             let hostsQuery;
             let closureId;
@@ -143,13 +141,6 @@ var RequestsListVueComponent = Vue.extend({
                   documentId: utils.getDocumentId(link)
                 };
               }
-              if (link.indexOf(links.COMPOSITE_COMPONENTS) !== -1) {
-                let computeProvision = this.model.requestProgressByComponent['Compute Provision'];
-                isMachineRequest = Object.values(computeProvision).length !== 0;
-                machineQuery = {
-                  compositeContextId: utils.getDocumentId(link)
-                };
-              }
               if (link.indexOf(links.CLOSURES) !== -1) {
                 closureId = utils.getDocumentId(link);
               }
@@ -157,9 +148,7 @@ var RequestsListVueComponent = Vue.extend({
               isHostsRequest = true;
             }
 
-            if (isMachineRequest) {
-              NavigationActions.openMachines(machineQuery);
-            } else if (isHostsRequest) {
+            if (isHostsRequest) {
               NavigationActions.openHosts(hostsQuery);
             } else if (closureId) {
               NavigationActions.openClosureDetails(closureId);

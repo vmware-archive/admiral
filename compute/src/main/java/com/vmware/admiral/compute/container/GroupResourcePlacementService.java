@@ -12,8 +12,6 @@
 package com.vmware.admiral.compute.container;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
-import static com.vmware.admiral.compute.ComputeConstants.GROUP_RESOURCE_PLACEMENT_LINK_NAME;
-import static com.vmware.photon.controller.model.resources.ResourceState.FIELD_NAME_CUSTOM_PROPERTIES;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -30,9 +28,6 @@ import com.vmware.admiral.common.util.ServiceDocumentQuery.ServiceDocumentQueryE
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.service.common.MultiTenantDocument;
-import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
-import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
-import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.LocalizableValidationException;
@@ -43,7 +38,6 @@ import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.QueryTask;
-import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
 
 /**
  * Group resource placement service - reserving resources for a given group.
@@ -442,16 +436,9 @@ public class GroupResourcePlacementService extends StatefulService {
                                 return;
                             }
 
-                            Long memoryBytes = null;
-                            ResourceType resourceType = ResourceType.fromName(state.resourceType);
-                            if (resourceType == ResourceType.COMPUTE_TYPE) {
-                                ComputeDescription desc = o.getBody(ComputeDescription.class);
-                                memoryBytes = desc.totalMemoryBytes;
-                            } else {
-                                ContainerDescriptionService.ContainerDescription desc = o.getBody(
-                                        ContainerDescriptionService.ContainerDescription.class);
-                                memoryBytes = desc.memoryLimit;
-                            }
+                            ContainerDescriptionService.ContainerDescription desc = o.getBody(
+                                    ContainerDescriptionService.ContainerDescription.class);
+                            Long memoryBytes = desc.memoryLimit;
 
                             if (reserveMemory(patch, request, state, memoryBytes)) {
                                 /*
@@ -664,7 +651,7 @@ public class GroupResourcePlacementService extends StatefulService {
         GroupResourcePlacementState template =
                 (GroupResourcePlacementState) super.getDocumentTemplate();
         com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
-        template.customProperties = new HashMap<String, String>(1);
+        template.customProperties = new HashMap<>(1);
         template.customProperties.put("propKey string", "customPropertyValue string");
         // Having multiple resource descriptions hit the default limit. 1MB should be enough for
         // ~13 760 containers
@@ -683,9 +670,7 @@ public class GroupResourcePlacementService extends StatefulService {
                 && (request.referer
                         .startsWith(ManagementUriParts.REQUEST_RESERVATION_TASKS)
                         || request.referer
-                                .startsWith(ManagementUriParts.REQUEST_RESERVATION_REMOVAL_TASKS)
-                        || request.referer
-                                .startsWith(ManagementUriParts.REQUEST_COMPUTE_RESERVATION_TASKS));
+                                .startsWith(ManagementUriParts.REQUEST_RESERVATION_REMOVAL_TASKS));
 
     }
 
@@ -701,13 +686,6 @@ public class GroupResourcePlacementService extends StatefulService {
             queryTask = QueryUtil.buildPropertyQuery(resourceClass,
                     ContainerState.FIELD_NAME_GROUP_RESOURCE_PLACEMENT_LINK,
                     state.documentSelfLink);
-        } else if (ResourceType.COMPUTE_TYPE.getName().equals(state.resourceType)) {
-            resourceClass = (Class<T>) ComputeState.class;
-            queryTask = QueryUtil.buildPropertyQuery(resourceClass,
-                    QuerySpecification.buildCompositeFieldName(FIELD_NAME_CUSTOM_PROPERTIES,
-                            GROUP_RESOURCE_PLACEMENT_LINK_NAME),
-                    state.documentSelfLink, ComputeState.FIELD_NAME_TYPE,
-                    ComputeType.VM_GUEST.name());
         } else {
             throw new LocalizableValidationException("Unsupported placement resourceType "
                     + state.resourceType,

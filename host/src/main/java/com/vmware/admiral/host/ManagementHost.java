@@ -35,14 +35,9 @@ import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.host.interceptor.AuthCredentialsInterceptor;
-import com.vmware.admiral.host.interceptor.ComputePlacementZoneInterceptor;
-import com.vmware.admiral.host.interceptor.EndpointInterceptor;
 import com.vmware.admiral.host.interceptor.InUsePlacementZoneInterceptor;
 import com.vmware.admiral.host.interceptor.OperationInterceptorRegistry;
-import com.vmware.admiral.host.interceptor.PhotonModelMockRequestInterceptor;
-import com.vmware.admiral.host.interceptor.ProfileInterceptor;
 import com.vmware.admiral.host.interceptor.ProjectInterceptor;
-import com.vmware.admiral.host.interceptor.ResourceGroupInterceptor;
 import com.vmware.admiral.host.interceptor.SchedulerPlacementZoneInterceptor;
 import com.vmware.admiral.request.ContainerLoadBalancerBootstrapService;
 import com.vmware.admiral.service.common.AuthBootstrapService;
@@ -152,15 +147,7 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
         SchedulerPlacementZoneInterceptor.register(interceptors);
         CompositeComponentInterceptor.register(interceptors);
         AuthCredentialsInterceptor.register(interceptors);
-        ResourceGroupInterceptor.register(interceptors);
-        EndpointInterceptor.register(interceptors);
-        ProfileInterceptor.register(interceptors);
-        ComputePlacementZoneInterceptor.register(interceptors);
         ProjectInterceptor.register(interceptors);
-
-        if (this.startMockHostAdapterInstance) {
-            PhotonModelMockRequestInterceptor.register(interceptors);
-        }
     }
 
     protected ManagementHost initializeHostAndServices(String[] args) throws Throwable {

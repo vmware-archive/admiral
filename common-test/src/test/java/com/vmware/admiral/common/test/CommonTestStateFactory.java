@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -29,8 +29,6 @@ public class CommonTestStateFactory {
     public static final String SSL_TRUST_CERT_ID = "test-ssl-trust-cert-id";
     public static final String DOCKER_HOST_REGISTRATION_NAME = "docker-host";
     public static final String DOCKER_COMPUTE_ID = "test-docker-host-compute-id";
-    public static final String ENDPOINT_ID = "test-endpoint-id";
-    public static final String ENDPOINT_REGION_ID = "eu-west-1"; // used for zoneId too
     public static final String ZONE_ID = "zone";
 
     public static AuthCredentialsServiceState createAuthCredentials(boolean uniqueSelfLink) {

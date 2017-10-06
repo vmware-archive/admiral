@@ -33,7 +33,7 @@ public class MockClosureService extends ClosureService {
         super(driverRegistry, maintenanceTimeout);
     }
 
-    @SuppressWarnings("unchecked")
+    @Override
     protected Closure updateState(Operation patch, Closure requestedState) {
         Closure currentState = this.getState(patch);
 

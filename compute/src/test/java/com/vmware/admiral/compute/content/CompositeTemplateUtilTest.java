@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -30,7 +30,6 @@ import static com.vmware.admiral.compute.content.CompositeTemplateUtil.serialize
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.Before;
@@ -45,7 +44,6 @@ import com.vmware.admiral.compute.container.HealthChecker.HealthConfig;
 import com.vmware.admiral.compute.container.LogConfig;
 import com.vmware.admiral.compute.content.CompositeTemplateUtil.YamlType;
 import com.vmware.admiral.compute.content.compose.DockerCompose;
-import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.admiral.host.HostInitComputeServicesConfig;
 import com.vmware.xenon.common.LocalizableValidationException;
 
@@ -792,22 +790,6 @@ public class CompositeTemplateUtilTest {
         Map<String, Object> serializedMap = YamlMapper.objectMapper().readValue(
                 expectedContentSerialized.trim(), Map.class);
         assertEquals(originalMap.get("components"), serializedMap.get("components"));
-    }
-
-    @Test
-    public void testDeserializeCompositeTemplateWithNetworkCompute() throws IOException {
-        String expectedContent = getContent("composite.compute.network.yaml");
-        CompositeTemplate compositeTemplate = deserializeCompositeTemplate(expectedContent);
-
-        Set<ComponentTemplate<?>> networkComponentTemplates = compositeTemplate.components.values()
-                .stream()
-                .filter(c -> c.type.equals(ResourceType.COMPUTE_NETWORK_TYPE.getContentType()))
-                .collect(Collectors.toSet());
-
-        assertEquals(2, networkComponentTemplates.size());
-
-        assertTrue(networkComponentTemplates.stream()
-                .allMatch(c -> c.data instanceof ComputeNetworkDescription));
     }
 
     @Test

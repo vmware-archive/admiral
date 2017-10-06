@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -58,12 +58,6 @@ import com.vmware.admiral.request.ContainerVolumeRemovalTaskService;
 import com.vmware.admiral.request.RequestBrokerFactoryService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.composition.CompositionSubTaskService.CompositionSubTaskState.SubStage;
-import com.vmware.admiral.request.compute.ComputeNetworkProvisionTaskService;
-import com.vmware.admiral.request.compute.ComputeNetworkProvisionTaskService.ComputeNetworkProvisionTaskState;
-import com.vmware.admiral.request.compute.ComputeProvisionTaskService;
-import com.vmware.admiral.request.compute.ComputeProvisionTaskService.ComputeProvisionTaskState;
-import com.vmware.admiral.request.compute.LoadBalancerProvisionTaskService;
-import com.vmware.admiral.request.compute.LoadBalancerProvisionTaskService.LoadBalancerProvisionTaskState;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
@@ -406,29 +400,18 @@ public class CompositionSubTaskService
         } else if (ResourceType.VOLUME_TYPE.getName()
                 .equalsIgnoreCase(state.resourceType)) {
             createContainerVolumeProvisionTaskState(state);
-        } else if (ResourceType.COMPUTE_TYPE.getName().equalsIgnoreCase(state.resourceType)) {
-            createComputeProvisionTaskState(state);
-        } else if (ResourceType.COMPUTE_NETWORK_TYPE.getName()
-                .equalsIgnoreCase(state.resourceType)) {
-            createComputeNetworkProvisionTaskState(state);
-        } else if (ResourceType.LOAD_BALANCER_TYPE.getName()
-                .equalsIgnoreCase(state.resourceType)) {
-            createLoadBalancerProvisionTaskState(state);
         } else if (ResourceType.CONTAINER_LOAD_BALANCER_TYPE.getName()
                 .equalsIgnoreCase(state.resourceType)) {
             createContainerLoadBalancerProvisionTaskState(state);
         } else if (ResourceType.CLOSURE_TYPE.getName().equalsIgnoreCase(state.resourceType)) {
             createClosureProvisionTask(state);
         } else {
-            String exMsg = String.format("Unsupported type. Must be: %s, %s, %s, %s or %s",
-                    ResourceType.CONTAINER_TYPE, ResourceType.COMPUTE_TYPE,
-                    ResourceType.NETWORK_TYPE, ResourceType.COMPUTE_NETWORK_TYPE,
+            String exMsg = String.format("Unsupported type. Must be: %s, %s or %s",
+                    ResourceType.CONTAINER_TYPE, ResourceType.NETWORK_TYPE,
                     ResourceType.CLOSURE_TYPE);
-            throw new LocalizableValidationException(exMsg,
-                    "request.composition.unsupported.type",
-                    ResourceType.CONTAINER_TYPE, ResourceType.COMPUTE_TYPE,
-                    ResourceType.NETWORK_TYPE,
-                    ResourceType.COMPUTE_NETWORK_TYPE, ResourceType.CLOSURE_TYPE);
+            throw new LocalizableValidationException(exMsg, "request.composition.unsupported.type",
+                    ResourceType.CONTAINER_TYPE, ResourceType.NETWORK_TYPE,
+                    ResourceType.CLOSURE_TYPE);
         }
     }
 
@@ -529,78 +512,6 @@ public class CompositionSubTaskService
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         failTask("Failure creating container volume provision task", e);
-                        return;
-                    }
-                }));
-
-        proceedTo(SubStage.EXECUTING);
-    }
-
-    private void createComputeProvisionTaskState(CompositionSubTaskState state) {
-        ComputeProvisionTaskState ps = new ComputeProvisionTaskState();
-        ps.documentSelfLink = getSelfId();
-        ps.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
-                TaskStage.STARTED, SubStage.COMPLETED, TaskStage.STARTED, SubStage.ERROR);
-        ps.customProperties = state.customProperties;
-        ps.tenantLinks = state.tenantLinks;
-        ps.requestTrackerLink = state.requestTrackerLink;
-        ps.resourceLinks = state.resourceLinks;
-
-        sendRequest(Operation
-                .createPost(this, ComputeProvisionTaskService.FACTORY_LINK)
-                .setBody(ps)
-                .setContextId(state.requestId)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        failTask("Failure creating compute provision task", e);
-                        return;
-                    }
-                }));
-
-        proceedTo(SubStage.EXECUTING);
-    }
-
-    private void createComputeNetworkProvisionTaskState(CompositionSubTaskState state) {
-        ComputeNetworkProvisionTaskState task = new ComputeNetworkProvisionTaskState();
-        task.documentSelfLink = getSelfId();
-        task.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
-                TaskStage.STARTED, SubStage.COMPLETED, TaskStage.STARTED, SubStage.ERROR);
-        task.customProperties = state.customProperties;
-        task.resourceCount = Long.valueOf(state.resourceLinks.size());
-        task.tenantLinks = state.tenantLinks;
-        task.requestTrackerLink = state.requestTrackerLink;
-        task.resourceLinks = state.resourceLinks;
-        task.resourceDescriptionLink = state.resourceDescriptionLink;
-
-        sendRequest(Operation.createPost(this, ComputeNetworkProvisionTaskService.FACTORY_LINK)
-                .setBody(task)
-                .setContextId(state.requestId)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        failTask("Failure creating compute network provision task", e);
-                        return;
-                    }
-                }));
-
-        proceedTo(SubStage.EXECUTING);
-    }
-
-    private void createLoadBalancerProvisionTaskState(CompositionSubTaskState state) {
-        LoadBalancerProvisionTaskState task = new LoadBalancerProvisionTaskState();
-        task.documentSelfLink = getSelfId();
-        task.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
-                TaskStage.STARTED, SubStage.COMPLETED, TaskStage.STARTED, SubStage.ERROR);
-        task.tenantLinks = state.tenantLinks;
-        task.requestTrackerLink = state.requestTrackerLink;
-        task.resourceLinks = state.resourceLinks;
-//        task.resourceDescriptionLink = state.resourceDescriptionLink;
-
-        sendRequest(Operation.createPost(this, LoadBalancerProvisionTaskService.FACTORY_LINK)
-                .setBody(task)
-                .setContextId(state.requestId)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        failTask("Failure creating load balancer provision task", e);
                         return;
                     }
                 }));

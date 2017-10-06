@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -12,12 +12,9 @@
 package com.vmware.admiral.request.util;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -43,41 +40,21 @@ import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionS
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
-import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
-import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
-import com.vmware.admiral.compute.profile.ComputeProfileService.ComputeProfile;
-import com.vmware.admiral.compute.profile.NetworkProfileService.NetworkProfile;
-import com.vmware.admiral.compute.profile.ProfileService.ProfileState;
-import com.vmware.admiral.compute.profile.StorageProfileService.StorageProfile;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.photon.controller.model.ComputeProperties;
-import com.vmware.photon.controller.model.Constraint.Condition;
-import com.vmware.photon.controller.model.Constraint.Condition.Enforcement;
-import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
-import com.vmware.photon.controller.model.resources.EndpointService;
-import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
-import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService.LoadBalancerDescription;
-import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService.LoadBalancerDescription.Protocol;
-import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService.LoadBalancerDescription.RouteConfiguration;
-import com.vmware.photon.controller.model.resources.LoadBalancerService.LoadBalancerState;
-import com.vmware.photon.controller.model.resources.NetworkService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
-import com.vmware.photon.controller.model.resources.SubnetService;
-import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.AuthCredentialsService;
-import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 
 public class TestRequestStateFactory extends CommonTestStateFactory {
     public static final String COMPUTE_DESC_ID = "test-compute-desc-id";
-    public static final String VM_GUEST_COMPUTE_DESC_ID = "test-vm-guest-compute-desc-id";
     public static final String COMPUTE_ADDRESS = "somehost";
     public static final String COMPOSITE_DESC_PARENT_LINK = "test-parent-desc-link";
     public static final String CONTAINER_DESC_LINK_NAME = "dcp-test-docker-desc";
@@ -197,54 +174,6 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         return desc;
     }
 
-    public static ComputeNetworkDescription createComputeNetworkDescription(String name) {
-        ComputeNetworkDescription desc = new ComputeNetworkDescription();
-        desc.documentSelfLink = "test-network-" + name;
-        desc.name = name;
-        desc.tenantLinks = getTenantLinks();
-        desc.customProperties = new HashMap<>();
-        return desc;
-    }
-
-    public static LoadBalancerDescription createLoadBalancerDescription(String name) {
-        LoadBalancerDescription desc = new LoadBalancerDescription();
-        desc.documentSelfLink = "test-lb-" + name;
-        desc.name = name;
-        desc.tenantLinks = getTenantLinks();
-        desc.customProperties = new HashMap<>();
-        desc.networkName = "test-network";
-        RouteConfiguration route = new RouteConfiguration();
-        route.protocol = Protocol.HTTP.name();
-        route.port = "80";
-        route.instanceProtocol = Protocol.HTTP.name();
-        route.instancePort = "80";
-        desc.routes = Arrays.asList(route);
-        return desc;
-    }
-
-    public static LoadBalancerState createLoadBalancerState(String name) {
-        LoadBalancerState state = new LoadBalancerState();
-        state.name = name;
-        state.descriptionLink = "lb-desc";
-        state.tenantLinks = getTenantLinks();
-        state.customProperties = new HashMap<>();
-        RouteConfiguration route = new RouteConfiguration();
-        route.protocol = Protocol.HTTP.name();
-        route.port = "80";
-        route.instanceProtocol = Protocol.HTTP.name();
-        route.instancePort = "80";
-        state.routes = Arrays.asList(route);
-        state.endpointLink = "my-endpoint";
-        state.regionId = "my-region";
-        state.subnetLinks = Collections.singleton(SubnetService.FACTORY_LINK + "/lb-subnet");
-        state.computeLinks = Collections.singleton("compute-link-1");
-        try {
-            state.instanceAdapterReference = new URI("http://instanceAdapterReference");
-        } catch (URISyntaxException e) {
-        }
-        return state;
-    }
-
     public static ContainerLoadBalancerDescription createContainerLoadBalancerDescription(String
             name) {
         ContainerLoadBalancerDescription desc = new ContainerLoadBalancerDescription();
@@ -298,76 +227,6 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         return createTenantLinks(TENANT_NAME);
     }
 
-    public static ComputeProfile createComputeProfile(String name) {
-        ComputeProfile computeProfile = new ComputeProfile();
-        computeProfile.documentSelfLink = "test-compute-profile-" + name;
-        computeProfile.name = name;
-        computeProfile.tenantLinks = getTenantLinks();
-        return computeProfile;
-    }
-
-    public static StorageProfile createStorageProfile(String name) {
-        StorageProfile storageProfile = new StorageProfile();
-        storageProfile.documentSelfLink = "test-storage-profile-" + name;
-        storageProfile.name = name;
-        storageProfile.tenantLinks = getTenantLinks();
-        return storageProfile;
-    }
-
-    public static NetworkProfile createNetworkProfile(String name) {
-        NetworkProfile networkProfile = new NetworkProfile();
-        networkProfile.documentSelfLink = "test-network-profile-" + name;
-        networkProfile.name = name;
-        networkProfile.tenantLinks = getTenantLinks();
-        return networkProfile;
-    }
-
-    public static ProfileState createProfile(String name, String networkProfileLink,
-            String storageProfileLink, String computeProfileLink) {
-        ProfileState profileState = new ProfileState();
-        profileState.documentSelfLink = "test-profile-" + name;
-        profileState.name = name;
-        profileState.tenantLinks = getTenantLinks();
-        profileState.networkProfileLink = networkProfileLink;
-        profileState.computeProfileLink = computeProfileLink;
-        profileState.storageProfileLink = storageProfileLink;
-        profileState.endpointType = EndpointType.aws.name();
-        return profileState;
-    }
-
-    public static SubnetState createSubnetState(String name) {
-        return createSubnetState(name,
-                getTenantLinks());
-    }
-
-    public static SubnetState createSubnetState(String name, List<String> tenantLinks) {
-        SubnetState subnetState = new SubnetState();
-        subnetState.documentSelfLink = "test-subnet-" + name;
-        subnetState.subnetCIDR = "10.10.10.10/24";
-        subnetState.networkLink = UriUtils.buildUriPath(NetworkService.FACTORY_LINK, name);
-        subnetState.tenantLinks = tenantLinks;
-        subnetState.tagLinks = new HashSet<>();
-        subnetState.zoneId = CommonTestStateFactory.ZONE_ID;
-        subnetState.regionId = CommonTestStateFactory.ENDPOINT_REGION_ID;
-        return subnetState;
-    }
-
-    public static ComputeNetwork createComputeNetworkState(String name, String descLink) {
-        ComputeNetwork state = new ComputeNetwork();
-        state.documentSelfLink = "test-network-state" + name;
-        state.descriptionLink = descLink;
-        state.name = name;
-        state.tenantLinks = getTenantLinks();
-        state.customProperties = new HashMap<>();
-        return state;
-    }
-
-    public static Condition createCondition(String tagKey, String tagValue, boolean isHard,
-            boolean isAnti) {
-        return Condition.forTag(tagKey, tagValue, isHard ? Enforcement.HARD : Enforcement.SOFT,
-                isAnti ? Occurance.MUST_NOT_OCCUR : Occurance.MUST_OCCUR);
-    }
-
     public static ContainerVolumeDescription createContainerVolumeDescription(String name) {
         ContainerVolumeDescription desc = new ContainerVolumeDescription();
         desc.documentSelfLink = "test-volume-" + name;
@@ -380,8 +239,7 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
     }
 
     public static ResourcePoolState createResourcePool() {
-        return createResourcePool(RESOURCE_POOL_ID,
-                UriUtils.buildUriPath(EndpointService.FACTORY_LINK, ENDPOINT_ID));
+        return createResourcePool(RESOURCE_POOL_ID, null);
     }
 
     public static ResourcePoolState createResourcePool(String poolId, String endpointLink) {
@@ -509,56 +367,6 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         return cs;
     }
 
-    public static ComputeDescription createComputeDescriptionForVmGuestChildren() {
-        ComputeDescription computeDescription = new ComputeDescription();
-
-        // create compute host descriptions first, then link them in the compute host state
-        computeDescription.name = "test-vm-guest-compute-description";
-        computeDescription.environmentName = ComputeDescription.ENVIRONMENT_NAME_ON_PREMISE;
-        computeDescription.id = UUID.randomUUID().toString();
-        try {
-            computeDescription.instanceAdapterReference = new URI(
-                    "http://instanceAdapterReference");
-        } catch (URISyntaxException e) {
-        }
-        computeDescription.supportedChildren = new ArrayList<>(
-                Arrays.asList(ComputeType.VM_GUEST.toString()));
-        computeDescription.documentSelfLink = VM_GUEST_COMPUTE_DESC_ID;
-        computeDescription.authCredentialsLink = UriUtils.buildUriPath(
-                AuthCredentialsService.FACTORY_LINK,
-                CommonTestStateFactory.AUTH_CREDENTIALS_ID);
-        computeDescription.regionId = ENDPOINT_REGION_ID;
-        computeDescription.tenantLinks = createTenantLinks(TENANT_NAME);
-        computeDescription.customProperties = new HashMap<>();
-
-        return computeDescription;
-    }
-
-
-    public static ComputeDescription createVmGuestComputeDescription(boolean generateDocSelfLink) {
-        ComputeDescription computeDescription = createComputeDescriptionForVmGuestChildren();
-        if (generateDocSelfLink) {
-            computeDescription.documentSelfLink = UUID.randomUUID().toString();
-        }
-        return computeDescription;
-    }
-
-    public static ComputeState createVmHostComputeState() {
-        ComputeState cs = new ComputeState();
-        cs.id = UUID.randomUUID().toString();
-        cs.primaryMAC = UUID.randomUUID().toString();
-        cs.address = COMPUTE_ADDRESS; // this will be used for ssh to access the host
-        cs.powerState = PowerState.ON;
-        cs.descriptionLink = UriUtils.buildUriPath(ComputeDescriptionService.FACTORY_LINK,
-                VM_GUEST_COMPUTE_DESC_ID);
-        cs.resourcePoolLink = UriUtils.buildUriPath(ResourcePoolService.FACTORY_LINK,
-                RESOURCE_POOL_ID);
-        cs.tenantLinks = createTenantLinks(TENANT_NAME);
-        cs.adapterManagementReference = URI.create("http://localhost:8081");
-        cs.customProperties = new HashMap<>();
-        return cs;
-    }
-
     public static ContainerState createContainer() {
         ContainerState cont = new ContainerState();
         cont.parentLink = UriUtils.buildUriPath(ComputeService.FACTORY_LINK, DOCKER_COMPUTE_ID);
@@ -587,29 +395,6 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         volume.parentLinks = new ArrayList<>(Arrays.asList(parentLink));
 
         return volume;
-    }
-
-    public static EndpointState createEndpoint() {
-        EndpointState endpoint = createEndpoint(ENDPOINT_ID, EndpointType.aws);
-        return endpoint;
-    }
-
-    public static EndpointState createEndpoint(String endpointId, EndpointType type) {
-        EndpointState endpoint = new EndpointState();
-        endpoint.documentSelfLink = UriUtils.buildUriPath(EndpointService.FACTORY_LINK,
-                endpointId);
-        endpoint.endpointType = type.name();
-        endpoint.name = endpointId;
-        endpoint.tenantLinks = createTenantLinks(TENANT_NAME);
-        endpoint.endpointProperties = new HashMap<>();
-        endpoint.endpointProperties.put("privateKeyId", "testId");
-        endpoint.endpointProperties.put("privateKey",
-                getFileContent("docker-host-private-key.PEM"));
-        endpoint.endpointProperties.put("regionId", ENDPOINT_REGION_ID);
-        endpoint.endpointProperties.put("hostName", "127.0.0.1");
-
-
-        return endpoint;
     }
 
     public static List<String> createTenantLinks(String tenant) {
