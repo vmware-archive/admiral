@@ -1,0 +1,25 @@
+{
+  "deployments": {
+    "singular": "Déploiement",
+    "plural": "Déploiements"
+  },
+  "services": {
+    "singular": "Service",
+    "plural": "Services"
+  },
+  "pods": {
+    "singular": "Espace",
+    "plural": "Espaces"
+  },
+  "containers": {
+    "name": "Nom",
+    "image": "Image",
+    "env": "Environnement"
+  },
+  "creation": "Heure de création",
+  "namespace": "Espace de noms",
+  "strategy": "Stratégie",
+  "containers": "Conteneurs",
+  "restartPolicy": "Stratégie de redémarrage",
+  "replicas": "Réplicas"
+}

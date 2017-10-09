@@ -201,9 +201,13 @@
     }
   },
   "hosts": {
-    "delete":{
-      "title": "Host verwijderen",
-      "confirmation": "Bevestig het verwijderen van de host {{hostName}}. De bewerking kan niet ongedaan worden gemaakt."
+    "actions": {
+      "delete":{
+        "title": "Host verwijderen",
+        "confirmation": "Bevestig het verwijderen van de host {{hostName}}. De bewerking kan niet ongedaan worden gemaakt."
+      },
+      "enable": "Inschakelen",
+      "disable": "Uitschakelen"
     },
     "state": {
       "ON": "AAN",
@@ -283,6 +287,7 @@
   "delete": "Verwijderen",
   "cancel": "Annuleren",
   "back": "Terug",
+  "refresh": "Vernieuwen",
   "unknown": "Onbekend",
   "assignRoles": "Projectrollen toewijzen",
   "makeAdmin": " Beheerdersrol toewijzen",

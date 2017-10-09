@@ -252,7 +252,7 @@
         "update": "Modifier le certificat",
         "urlTitle": "Entrer une URL",
         "importOptionTitle": "Importer à partir d'une URL",
-        "importOptionHint": "Plutôt qu'entrer le certificat manuellement, l'option Importer à partir de l'URL vous permet d'entrer une URL. Le système importera alors le certificat à partir de l'URL indiquée.",
+        "importOptionHint": "Plutôt qu'entrer le certificat manuellement, l'option « Importer à partir d'une URL » vous permet d'entrer une URL. Le système importera alors le certificat à partir de l'URL indiquée.",
         "importButton": "Importer",
         "certificateTitle": "Entrer le certificat"
       }
@@ -480,7 +480,7 @@
         "update": "Modifier le registre",
         "addressTitle": "Adresse",
         "addressHint": "Spécifiez le schéma et le port appropriés, par exemple https://myregistry.com:5000. Schéma par défaut : « https ». Ports par défaut : https/443, http/80.",
-        "insecureRegistryHint": "Registre http ordinaire détecté : assurez-vous que vos hôtes sont correctement configurés et que vous pouvez vous y connecter. <a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">Plus d'informations</a>",
+        "insecureRegistryHint": "Registre HTTP ordinaire détecté. La connexion au registre n'est pas sécurisée. Vérifiez que les hôtes sont correctement configurés et que vous pouvez vous y connecter. <a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">Plus d'informations</a>",
         "nameTitle": "Nom",
         "credentialTitle": "Informations d'identification de connexion",
         "verifyButton": "Vérifier",
@@ -956,7 +956,8 @@
           "containersCountLabel": "Conteneurs",
           "networksCountLabel": "Réseaux",
           "volumesCountLabel": "Volumes",
-          "childContainersLabel": "Conteneurs enfants"
+          "childContainersLabel": "Conteneurs enfants",
+          "managedByCatalog": "Géré par catalogue"
         },
         "searchCategoryFilterTitle": "Afficher :",
         "searchCategory": {

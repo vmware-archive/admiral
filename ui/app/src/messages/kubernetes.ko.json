@@ -1,0 +1,25 @@
+{
+  "deployments": {
+    "singular": "배포",
+    "plural": "배포"
+  },
+  "services": {
+    "singular": "서비스",
+    "plural": "서비스"
+  },
+  "pods": {
+    "singular": "포드",
+    "plural": "포드"
+  },
+  "containers": {
+    "name": "이름",
+    "image": "이미지",
+    "env": "환경"
+  },
+  "creation": "생성 시간",
+  "namespace": "네임스페이스",
+  "strategy": "전략",
+  "containers": "컨테이너",
+  "restartPolicy": "다시 시작 정책",
+  "replicas": "복제본"
+}

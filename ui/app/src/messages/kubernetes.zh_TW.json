@@ -1,0 +1,25 @@
+{
+  "deployments": {
+    "singular": "部署",
+    "plural": "部署"
+  },
+  "services": {
+    "singular": "服務",
+    "plural": "服務"
+  },
+  "pods": {
+    "singular": "網繭",
+    "plural": "網繭"
+  },
+  "containers": {
+    "name": "名稱",
+    "image": "映像",
+    "env": "環境"
+  },
+  "creation": "建立時間",
+  "namespace": "命名空間",
+  "strategy": "策略",
+  "containers": "容器",
+  "restartPolicy": "重新啟動原則",
+  "replicas": "複本"
+}

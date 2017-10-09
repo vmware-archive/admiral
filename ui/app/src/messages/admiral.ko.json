@@ -480,7 +480,7 @@
         "update": "레지스트리 편집",
         "addressTitle": "주소",
         "addressHint": "적절한 체계와 포트를 지정하십시오(예: https://myregistry.com:5000). 기본 체계: 'https'. 기본 포트: https/443, http/80.",
-        "insecureRegistryHint": "일반 http 레지스트리가 감지되었습니다. 호스트가 올바로 구성 및 연결되었는지 확인하십시오.<a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">자세한 정보</a>",
+        "insecureRegistryHint": "일반 HTTP 레지스트리가 감지되었습니다. 이 레지스트리에 대한 연결이 안전하지 않습니다. 호스트가 올바르게 구성되어 있고 연결 가능한지 확인하십시오. <a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">추가 정보</a>",
         "nameTitle": "이름",
         "credentialTitle": "로그인 자격 증명",
         "verifyButton": "확인",
@@ -956,7 +956,8 @@
           "containersCountLabel": "컨테이너",
           "networksCountLabel": "네트워크",
           "volumesCountLabel": "볼륨",
-          "childContainersLabel": "하위 항목"
+          "childContainersLabel": "하위 항목",
+          "managedByCatalog": "카탈로그별 관리"
         },
         "searchCategoryFilterTitle": "보기:",
         "searchCategory": {

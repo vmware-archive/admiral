@@ -201,9 +201,13 @@
     }
   },
   "hosts": {
-    "delete":{
-      "title": "Host entfernen",
-      "confirmation": "Bestätigen Sie das Entfernen von Host {{hostName}}. Der Vorgang kann nicht rückgängig gemacht werden."
+    "actions": {
+      "delete":{
+        "title": "Host entfernen",
+        "confirmation": "Bestätigen Sie das Entfernen von Host {{hostName}}. Der Vorgang kann nicht rückgängig gemacht werden."
+      },
+      "enable": "Aktivieren",
+      "disable": "Deaktivieren"
     },
     "state": {
       "ON": "EIN",
@@ -283,6 +287,7 @@
   "delete": "Löschen",
   "cancel": "Abbrechen",
   "back": "Zurück",
+  "refresh": "Aktualisieren",
   "unknown": "Unbekannt",
   "assignRoles": "Projektrollen zuweisen",
   "makeAdmin": " Admin-Rolle zuweisen",

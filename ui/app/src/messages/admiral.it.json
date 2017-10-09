@@ -252,7 +252,7 @@
         "update": "Modifica certificato",
         "urlTitle": "Immetti URL",
         "importOptionTitle": "Importa da URL",
-        "importOptionHint": "Anziché immettere il certificato manualmente, \"Importa da URL\" consente di immettere un URL. Il sistema importerà quindi il certificato dall'URL immesso.",
+        "importOptionHint": "Anziché immettere il certificato manualmente, utilizzare \"Importa da URL\" per immettere un URL. Il sistema importerà quindi il certificato dall'URL immesso.",
         "importButton": "Importa",
         "certificateTitle": "Immettere il certificato"
       }
@@ -480,7 +480,7 @@
         "update": "Modifica registro",
         "addressTitle": "Indirizzo",
         "addressHint": "Specificare lo schema e la porta appropriati, ad esempio https://myregistry.com:5000. Schema predefinito: 'https'. Porte predefinite: https/443, http/80.",
-        "insecureRegistryHint": "Rilevato registro http normale: assicurarsi che sia possibile connettersi agli host e che la loro configurazione sia corretta. <a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">Ulteriori informazioni</a>",
+        "insecureRegistryHint": "Rilevato registro HTTP normale. La connessione a questo registro non è sicura. Assicurarsi che gli host siano configurati correttamente e che possano connettersi al registro. <a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">Ulteriori informazioni</a>",
         "nameTitle": "Nome",
         "credentialTitle": "Credenziali di login",
         "verifyButton": "Verifica",
@@ -956,7 +956,8 @@
           "containersCountLabel": "Contenitori",
           "networksCountLabel": "Reti",
           "volumesCountLabel": "Volumi",
-          "childContainersLabel": "Contenitori figlio"
+          "childContainersLabel": "Contenitori figlio",
+          "managedByCatalog": "Gestito dal catalogo"
         },
         "searchCategoryFilterTitle": "Visualizza:",
         "searchCategory": {
@@ -1023,7 +1024,7 @@
         "inputs": {
           "image": "Immagine",
           "imageTag": {
-            "searchHint": "Consente di cercare tag",
+            "searchHint": "Cerca tag ",
             "loadingHint": "Caricamento dei tag in corso..."
           },
           "name": "Nome",

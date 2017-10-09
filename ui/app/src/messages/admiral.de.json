@@ -480,7 +480,7 @@
         "update": "Registrierung bearbeiten",
         "addressTitle": "Adresse",
         "addressHint": "Geben Sie das geeignete Schema und den geeigneten Port an, z. B. https://myregistry.com:5000. Standardschema: 'https'. Standardports: https/443, http/80.",
-        "insecureRegistryHint": "Einfache HTTP-Registrierung erkannt. Stellen Sie sicher, dass die Hosts ordnungsgemäß konfiguriert sind und eine Verbindung zu ihnen hergestellt werden kann. <a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">Weitere Informationen</a>",
+        "insecureRegistryHint": "Einfache HTTP-Registrierung erkannt. Ihre Verbindung mit dieser Registrierung ist nicht sicher. Stellen Sie sicher, dass die Hosts ordnungsgemäß konfiguriert sind und eine Verbindung zu ihr hergestellt werden kann. <a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">Weitere Informationen</a>",
         "nameTitle": "Name",
         "credentialTitle": "Anmeldedaten",
         "verifyButton": "Überprüfen",
@@ -956,7 +956,8 @@
           "containersCountLabel": "Container",
           "networksCountLabel": "Netzwerke",
           "volumesCountLabel": "Volumes",
-          "childContainersLabel": "Untergeordnete Container"
+          "childContainersLabel": "Untergeordnete Container",
+          "managedByCatalog": "Von Katalog verwaltet"
         },
         "searchCategoryFilterTitle": "Anzeigen:",
         "searchCategory": {

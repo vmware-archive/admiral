@@ -480,7 +480,7 @@
         "update": "レジストリの編集",
         "addressTitle": "アドレス",
         "addressHint": "適切なスキームおよびポートを指定してください (例: https://myregistry.com:5000)。デフォルト スキーム: 'https'。デフォルト ポート: https/443、http/80。",
-        "insecureRegistryHint": "プレーンな http レジストリが検出されました。ホストが適切に構成されており、接続可能であることを確認してください。<a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">詳細情報</a>",
+        "insecureRegistryHint": "単純な HTTP レジストリが検出されました。このレジストリへの接続は安全ではありません。ホストを適切に設定し、レジストリに接続できるようにしてください。<a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">詳細情報</a>",
         "nameTitle": "名前",
         "credentialTitle": "ログイン認証情報",
         "verifyButton": "検証",
@@ -956,7 +956,8 @@
           "containersCountLabel": "コンテナ",
           "networksCountLabel": "ネットワーク",
           "volumesCountLabel": "ボリューム",
-          "childContainersLabel": "子コンテナ"
+          "childContainersLabel": "子コンテナ",
+          "managedByCatalog": "カタログで管理されています"
         },
         "searchCategoryFilterTitle": "表示:",
         "searchCategory": {

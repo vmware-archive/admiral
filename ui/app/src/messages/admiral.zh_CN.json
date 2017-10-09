@@ -480,7 +480,7 @@
         "update": "编辑注册表",
         "addressTitle": "地址",
         "addressHint": "请指定适当的方案和端口，例如 https://myregistry.com:5000。默认方案:“https”。默认端口: https/443、http/80。",
-        "insecureRegistryHint": "检测到纯文本 http 注册表: 请确保您的主机已正确配置，且可以连接到它们。<a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">更多信息</a>",
+        "insecureRegistryHint": "检测到普通 HTTP 注册表! 您与此注册表的连接不安全。请确保您的主机已正确配置，且可以连接到它。<a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">更多信息</a>",
         "nameTitle": "名称",
         "credentialTitle": "登录凭据",
         "verifyButton": "验证",
@@ -956,7 +956,8 @@
           "containersCountLabel": "容器",
           "networksCountLabel": "网络",
           "volumesCountLabel": "卷",
-          "childContainersLabel": "子容器"
+          "childContainersLabel": "子容器",
+          "managedByCatalog": "由目录管理"
         },
         "searchCategoryFilterTitle": "查看:",
         "searchCategory": {

@@ -1,0 +1,25 @@
+{
+  "deployments": {
+    "singular": "Implementatie",
+    "plural": "Implementaties"
+  },
+  "services": {
+    "singular": "Service",
+    "plural": "Services"
+  },
+  "pods": {
+    "singular": "Pod",
+    "plural": "Pods"
+  },
+  "containers": {
+    "name": "Naam",
+    "image": "Image",
+    "env": "Omgeving"
+  },
+  "creation": "Tijd gemaakt",
+  "namespace": "Naamruimte",
+  "strategy": "Strategie",
+  "containers": "Containers",
+  "restartPolicy": "Beleid opnieuw starten",
+  "replicas": "Replica's"
+}

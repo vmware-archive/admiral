@@ -1,0 +1,25 @@
+{
+  "deployments": {
+    "singular": "Развертывание",
+    "plural": "Развертывания"
+  },
+  "services": {
+    "singular": "Служба",
+    "plural": "Службы"
+  },
+  "pods": {
+    "singular": "Pod",
+    "plural": "Элементы Pod"
+  },
+  "containers": {
+    "name": "Имя",
+    "image": "Образ",
+    "env": "Среда"
+  },
+  "creation": "Время создания",
+  "namespace": "Пространство имен",
+  "strategy": "Стратегия",
+  "containers": "Контейнеры",
+  "restartPolicy": "Политика перезапуска",
+  "replicas": "Реплики"
+}

@@ -201,9 +201,13 @@
     }
   },
   "hosts": {
-    "delete":{
-      "title": "호스트 제거",
-      "confirmation": "{{hostName}} 호스트 제거 확인. 이 작업은 실행 취소할 수 없습니다."
+    "actions": {
+      "delete":{
+        "title": "호스트 제거",
+        "confirmation": "{{hostName}} 호스트 제거 확인. 이 작업은 실행 취소할 수 없습니다."
+      },
+      "enable": "사용",
+      "disable": "사용 안 함"
     },
     "state": {
       "ON": "켜짐",
@@ -283,6 +287,7 @@
   "delete": "삭제",
   "cancel": "취소",
   "back": "뒤로",
+  "refresh": "새로 고침",
   "unknown": "알 수 없음",
   "assignRoles": "프로젝트 역할 할당",
   "makeAdmin": " 관리자 역할 할당",

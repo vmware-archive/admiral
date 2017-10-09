@@ -201,9 +201,13 @@
     }
   },
   "hosts": {
-    "delete":{
-      "title": "Supprimer l'hôte",
-      "confirmation": "Confirmez la suppression de l'hôte {{hostName}}. Cette opération ne peut pas être annulée."
+    "actions": {
+      "delete":{
+        "title": "Supprimer l'hôte",
+        "confirmation": "Confirmez la suppression de l'hôte {{hostName}}. Cette opération ne peut pas être annulée."
+      },
+      "enable": "Activer",
+      "disable": "Désactiver"
     },
     "state": {
       "ON": "ACTIVÉ",
@@ -283,6 +287,7 @@
   "delete": "Supprimer",
   "cancel": "Annuler",
   "back": "Retour",
+  "refresh": "Actualiser",
   "unknown": "Inconnu",
   "assignRoles": "Attribuer des rôles de projet",
   "makeAdmin": " Attribuer le rôle d'administrateur",

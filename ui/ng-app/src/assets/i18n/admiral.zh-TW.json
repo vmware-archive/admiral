@@ -201,9 +201,13 @@
     }
   },
   "hosts": {
-    "delete":{
-      "title": "移除主機",
-      "confirmation": "確認移除主機 {{hostName}}。此作業無法復原。"
+    "actions": {
+      "delete":{
+        "title": "移除主機",
+        "confirmation": "確認移除主機 {{hostName}}。此作業無法復原。"
+      },
+      "enable": "啟用",
+      "disable": "停用"
     },
     "state": {
       "ON": "開啟",
@@ -283,6 +287,7 @@
   "delete": "刪除",
   "cancel": "取消",
   "back": "上一步",
+  "refresh": "重新整理",
   "unknown": "不明",
   "assignRoles": "指派專案角色",
   "makeAdmin": " 指派管理員角色",

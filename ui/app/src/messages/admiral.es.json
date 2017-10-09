@@ -252,7 +252,7 @@
         "update": "Editar certificado",
         "urlTitle": "Introducir URL",
         "importOptionTitle": "Importar desde URL",
-        "importOptionHint": "En lugar de introducir el certificado manualmente, \"Importar desde URL\" le permitirá introducir una URL. A continuación, nuestro sistema importará el certificado desde la URL que ha escrito.",
+        "importOptionHint": "En lugar de introducir el certificado manualmente, \"Importar desde URL\" le permitirá introducir una URL. A continuación, nuestro sistema importará el certificado desde la URL que ha introducido.",
         "importButton": "Importar",
         "certificateTitle": "Introducir certificado"
       }
@@ -480,7 +480,7 @@
         "update": "Editar registro",
         "addressTitle": "Dirección",
         "addressHint": "Especifique el esquema y el puerto adecuados, por ejemplo, https://myregistry.com:5000 Esquema predeterminado: 'https'. Puertos predeterminados: https/443, http/80.",
-        "insecureRegistryHint": "Se ha detectado un registro de http normal: asegúrese de que los hosts estén configurados correctamente y que pueda conectarse a ellos. <a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">Más información</a>",
+        "insecureRegistryHint": "Se ha detectado un registro de HTTP normal. La conexión con este registro no es segura. Asegúrese de que los hosts se han configurado correctamente y que pueden conectarse con él. <a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">Más información</a>",
         "nameTitle": "Nombre",
         "credentialTitle": "Credencial de inicio de sesión",
         "verifyButton": "Verificar",
@@ -956,7 +956,8 @@
           "containersCountLabel": "Contenedores",
           "networksCountLabel": "Redes",
           "volumesCountLabel": "Volúmenes",
-          "childContainersLabel": "Contenedores secundarios"
+          "childContainersLabel": "Contenedores secundarios",
+          "managedByCatalog": "Administrado por catálogo"
         },
         "searchCategoryFilterTitle": "Ver:",
         "searchCategory": {

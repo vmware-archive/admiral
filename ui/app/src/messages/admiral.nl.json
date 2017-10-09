@@ -70,7 +70,7 @@
         "deploymentPolicy": "Implementatiebeleid",
         "tags": "Tags",
         "tagsPlaceholder": "Voorbeeld: location:west",
-        "tagsHint": "Invoersleutel: waardetags",
+        "tagsHint": "Voer tags in met de notatie 'sleutel:waarde'",
         "autoConfigure": "Automatische configuratie",
         "autoConfigureInput": "Automatische configuratie host inschakelen",
         "autoConfigureHint": "Met deze optie configureert u de Docker Remote API op het opgegeven adres en de opgegeven poort met gegenereerde, zelf ondertekende certificaten. Dit gebeurt eenmaal en verloopt via SSH. Ondersteunde besturingssystemen zijn: CoreOS, PhotonOS, Ubuntu Server 16.04 of hoger.",
@@ -125,7 +125,7 @@
     "placementZone": {
       "createNew": "Nieuwe plaatsingszone",
       "manage": "Plaatsingszones beheren",
-      "entity": "Plaatsingszones",
+      "entity": "Plaatsingszone",
       "list": {
         "title": "Plaatsingszones",
         "addButton": "Plaatsingszone",
@@ -144,10 +144,10 @@
         "placementPolicyHint": "Bronnen worden standaard op willekeurige hosts geplaatst. U kunt optioneel een van de volgende strategieën toepassen:<br><br><b>BINPACK</b> - plaatsen op host met het hoogste geheugengebruik.<br><br><b>SPREAD</b> - plaatsen op host met minste aantal bronnen.",
         "dynamicTitle": "Dynamisch bronnen aan deze zone toewijzen",
         "tagsTitle": "Tags",
-        "tagsHint": "Invoersleutel: waardetags",
+        "tagsHint": "Voer tags in met de notatie 'sleutel:waarde'",
         "tagsPlaceholder": "Voorbeeld: compliance:yes",
         "tagsToMatchTitle": "Tags voor overeenkomst",
-        "tagsToMatchHint": "Invoersleutel: waardetags voor overeenkomst",
+        "tagsToMatchHint": "Voer tags voor overeenkomst in met de notatie 'sleutel:waarde'",
         "tagsToMatchPlaceholder": "Voorbeeld: location:west"
       },
       "contextPanelTooltip": "Plaatsingszones"
@@ -206,7 +206,7 @@
     },
     "deploymentPolicy": {
       "createNew": "Nieuw implementatiebeleid",
-      "entity": "implementatiebeleid",
+      "entity": "Implementatiebeleid",
       "manage": "Implementatiebeleid beheren",
       "contextPanelTooltip": "Impl.beleid",
       "list": {
@@ -252,7 +252,7 @@
         "update": "Certificaat bewerken",
         "urlTitle": "URL invoeren",
         "importOptionTitle": "Importeren vanaf URL",
-        "importOptionHint": "In plaats van het certificaat handmatig in te voeren, kunt u met 'Importeren vanaf URL' een URL invoeren. Ons systeem importeert het certificaat vervolgens vanaf de URL die u hebt ingevoerd.",
+        "importOptionHint": "In plaats van handmatig invoeren van het certificaat, kunt u met \"Importeren vanaf URL\" een URL invoeren. Ons systeem zal dan het certificaat importeren vanuit de URL die u hebt ingevoerd.",
         "importButton": "Importeren",
         "certificateTitle": "Certificaat invoeren"
       }
@@ -268,7 +268,7 @@
         "searchTemplatesPlaceholder": "Zoeken naar sjablonen",
         "searchClosuresPlaceholder": "Zoeken naar sluitingen",
         "manageRegistry": "Registers beheren",
-        "provision": "Inrichting",
+        "provision": "Inrichten",
         "provisionAdditionalInfo": "Extra informatie invoeren",
         "editTemplate": "Details bewerken/bekijken",
         "official": "Officieel",
@@ -391,7 +391,7 @@
       },
       "actions": {
         "edit": "Bewerken",
-        "provision": "Inrichting",
+        "provision": "Inrichten",
         "publish": "Pushen",
         "export": "Exporteren",
         "import": "Importeren",
@@ -480,7 +480,7 @@
         "update": "Register bewerken",
         "addressTitle": "Adres",
         "addressHint": "Specificeer het gepaste schema en de poort, bijv. https://myregistry.com:5000. Standaardschema: 'https'. Standaardpoorten: https/443, http/80.",
-        "insecureRegistryHint": "Gewoon http-register gedetecteerd: zorg dat uw hosts goed zijn geconfigureerd en ermee kunnen verbinden. <a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">Meer informatie</a>",
+        "insecureRegistryHint": "Register met eenvoudig HTTP gedetecteerd! Uw verbinding met dit register is niet veilig. Zorg dat uw hosts juist zijn geconfigureerd en er verbinding mee kunnen maken. <a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">Meer info</a>",
         "nameTitle": "Naam",
         "credentialTitle": "Verificatiegegevens",
         "verifyButton": "Verifiëren",
@@ -516,7 +516,7 @@
         "storageTab": "Opslag",
         "nameLabel": "Naam",
         "tagsLabel": "Tags",
-        "tagsHint": "Invoersleutel: waardetags",
+        "tagsHint": "Voer tags in met de notatie 'sleutel:waarde'",
         "tagsPlaceholder": "Voorbeeld: compliance:yes",
         "endpointLabel": "Endpoint",
         "valueLabel": "Waarde",
@@ -833,7 +833,7 @@
         "supportPublicIpAddressLabel": "Ondersteuning voor openbaar IP",
         "defaultForZoneLabel": "Standaard voor zone",
         "tagsTitle": "Tags",
-        "tagsHint": "Invoersleutel: waardetags",
+        "tagsHint": "Voer tags in met de notatie 'sleutel:waarde'",
         "tagsPlaceholder": "Voorbeeld: access:restricted"
       },
       "entity": "Subnetwerk",
@@ -956,7 +956,8 @@
           "containersCountLabel": "Containers",
           "networksCountLabel": "Netwerken",
           "volumesCountLabel": "Volumes",
-          "childContainersLabel": "Onderliggende containers"
+          "childContainersLabel": "Onderliggende containers",
+          "managedByCatalog": "Beheerd per catalogus"
         },
         "searchCategoryFilterTitle": "Weergave:",
         "searchCategory": {
@@ -1009,7 +1010,7 @@
       },
       "request": {
         "title": "Een container inrichten",
-        "provision": "Inrichting",
+        "provision": "Inrichten",
         "saveTemplate": "Opslaan als sjabloon",
         "tabs": {
           "basic": "Basis",

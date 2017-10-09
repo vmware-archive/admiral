@@ -252,7 +252,7 @@
         "update": "Editar Certificado",
         "urlTitle": "Inserir URL",
         "importOptionTitle": "Importar da URL",
-        "importOptionHint": "Em vez de inserir o certificado manualmente, a opção \"Importar da URL\" permitirá que você insira uma URL. Nosso sistema então importará o certificado da URL que você inseriu.",
+        "importOptionHint": "Em vez de inserir o certificado manualmente, a opção \"Importar da URL\" permitirá que você insira uma URL. Nosso sistema então importará o certificado da URL inserida.",
         "importButton": "Importar",
         "certificateTitle": "Inserir certificado"
       }
@@ -480,7 +480,7 @@
         "update": "Editar Registro",
         "addressTitle": "Endereço",
         "addressHint": "Especifique o esquema e a porta apropriados, por exemplo: https://myregistry.com:5000. Esquema padrão: 'https'. Portas padrão: https/443, http/80.",
-        "insecureRegistryHint": "Registro http simples detectado: verifique se os seus hosts estão corretamente configurados e podem se conectar a eles. <a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">Mais informações</a>",
+        "insecureRegistryHint": "Registro HTTP simples detectado. Sua conexão com o registro não está segura. Verifique se os hosts estão configurados corretamente e se podem se conectar a ele. <a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">Mais informações</a>",
         "nameTitle": "Nome",
         "credentialTitle": "Credenciais de login",
         "verifyButton": "Verificar",
@@ -956,7 +956,8 @@
           "containersCountLabel": "Contêineres",
           "networksCountLabel": "Redes",
           "volumesCountLabel": "Volumes",
-          "childContainersLabel": "Contêineres filho"
+          "childContainersLabel": "Contêineres filho",
+          "managedByCatalog": "Gerenciado por catálogo"
         },
         "searchCategoryFilterTitle": "Exibir:",
         "searchCategory": {

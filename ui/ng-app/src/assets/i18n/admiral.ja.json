@@ -201,9 +201,13 @@
     }
   },
   "hosts": {
-    "delete":{
-      "title": "ホストの削除",
-      "confirmation": "ホスト {{hostName}} の削除を確認しください。この操作は元に戻せません。"
+    "actions": {
+      "delete":{
+        "title": "ホストの削除",
+        "confirmation": "ホスト {{hostName}} の削除を確認しください。この操作は元に戻せません。"
+      },
+      "enable": "有効化",
+      "disable": "無効化"
     },
     "state": {
       "ON": "有効",
@@ -283,6 +287,7 @@
   "delete": "削除",
   "cancel": "キャンセル",
   "back": "戻る",
+  "refresh": "更新",
   "unknown": "不明",
   "assignRoles": "プロジェクトのロールの割り当て",
   "makeAdmin": "管理者ロールの割り当て",

@@ -480,7 +480,7 @@
         "update": "編輯登錄",
         "addressTitle": "位址",
         "addressHint": "請指定適當的配置和連接埠，例如 https://myregistry.com:5000。預設配置: 'https'。預設連接埠: https/443、http/80。",
-        "insecureRegistryHint": "偵測到普通 http 登錄: 請確保您的主機已正確設定並且可以連線。<a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">更多資訊</a>",
+        "insecureRegistryHint": "偵測到普通 HTTP 登錄! 與此登錄的連線不安全。請確保您的主機已正確設定並且可以連線到此登錄。<a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">更多資訊</a>",
         "nameTitle": "名稱",
         "credentialTitle": "登入認證",
         "verifyButton": "驗證",
@@ -956,7 +956,8 @@
           "containersCountLabel": "容器",
           "networksCountLabel": "網路",
           "volumesCountLabel": "磁碟區",
-          "childContainersLabel": "子容器"
+          "childContainersLabel": "子容器",
+          "managedByCatalog": "由目錄管理"
         },
         "searchCategoryFilterTitle": "檢視:",
         "searchCategory": {

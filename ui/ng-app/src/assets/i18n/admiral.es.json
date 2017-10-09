@@ -201,9 +201,13 @@
     }
   },
   "hosts": {
-    "delete":{
-      "title": "Quitar host",
-      "confirmation": "Confirme la eliminación del host {{hostName}}. La operación no se puede deshacer."
+    "actions": {
+      "delete":{
+        "title": "Quitar host",
+        "confirmation": "Confirme que desea quitar el host {{hostName}}. La operación no se puede deshacer."
+      },
+      "enable": "Habilitar",
+      "disable": "Deshabilitar"
     },
     "state": {
       "ON": "CONECTADO",
@@ -283,6 +287,7 @@
   "delete": "Eliminar",
   "cancel": "Cancelar",
   "back": "Atrás",
+  "refresh": "Actualizar",
   "unknown": "Desconocido",
   "assignRoles": "Asignar funciones de proyecto",
   "makeAdmin": " Asignar función de administrador",

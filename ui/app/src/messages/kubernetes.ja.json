@@ -1,0 +1,25 @@
+{
+  "deployments": {
+    "singular": "展開",
+    "plural": "展開"
+  },
+  "services": {
+    "singular": "サービス",
+    "plural": "サービス"
+  },
+  "pods": {
+    "singular": "ポッド",
+    "plural": "ポッド"
+  },
+  "containers": {
+    "name": "名前",
+    "image": "イメージ",
+    "env": "環境"
+  },
+  "creation": "作成時間",
+  "namespace": "名前空間",
+  "strategy": "戦略",
+  "containers": "コンテナ",
+  "restartPolicy": "再起動ポリシー",
+  "replicas": "レプリカ"
+}
