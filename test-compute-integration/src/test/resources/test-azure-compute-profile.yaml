@@ -1,7 +1,0 @@
----
-instanceTypeMapping:
-  small:
-    instanceType: "Basic_A0"
-imageMapping:
-  ubuntu-1604:
-    image: "canonical:ubuntuserver:16.04.0-LTS:latest"

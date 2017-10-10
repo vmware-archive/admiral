@@ -1,7 +1,0 @@
----
-instanceTypeMapping:
-  small:
-    instanceType: "t2.micro"
-imageMapping:
-  ubuntu-1604:
-    image: "ami-a8d2d7ce"
