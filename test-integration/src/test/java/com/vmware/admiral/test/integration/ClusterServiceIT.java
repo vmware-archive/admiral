@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -66,25 +66,48 @@ public class ClusterServiceIT extends BaseProvisioningOnCoreOsIT {
     private AuthCredentialsServiceState dockerHostAuthCredentials;
     private SslTrustCertificateState dockerHostSslTrust;
 
+    private String projectLink;
+    private String placementZoneName;
+    private ContainerHostSpec hostSpec;
+
     @Before
-    public void setUp() throws Exception {
+    public void setUp() throws Throwable {
         setupEnvironmentForCluster();
     }
 
     @Test
     public void testCreatingCluster() throws Throwable {
-        final String projectLink = buildProjectLink(ProjectService.DEFAULT_PROJECT_ID);
-
-        final String placementZoneName = PlacementZoneUtil
-                .buildPlacementZoneDefaultName(ContainerHostType.DOCKER,
-                        getDockerHostAddressWithPort);
-
-        ContainerHostSpec hostSpec = createContainerHostSpec(Collections.singletonList(projectLink),
-                ContainerHostType.DOCKER, true);
 
         ClusterDto dtoCreated = createCluster(hostSpec);
 
         verifyCluster(dtoCreated, ClusterType.DOCKER, placementZoneName, projectLink);
+
+    }
+
+    @Test
+    public void testGettingCluster() throws Throwable {
+
+        ClusterDto dtoCreated = createCluster(hostSpec);
+
+        ClusterDto dtoGet = getCluster(dtoCreated.documentSelfLink);
+        verifyCluster(dtoGet, ClusterType.DOCKER, placementZoneName, projectLink);
+    }
+
+    @Test
+    public void testDeletingCluster() throws Throwable {
+
+        ClusterDto dtoCreated = createCluster(hostSpec);
+
+        String placementZoneLink = ResourcePoolService.FACTORY_LINK + "/" + Service.getId
+                (dtoCreated.documentSelfLink);
+        String groupPlacementLink = getPlacementsForZone(placementZoneLink).get(0);
+
+        deleteCluster(dtoCreated.documentSelfLink);
+
+        assertServiceDeleted(dtoCreated.documentSelfLink);
+        assertServiceDeleted(dtoCreated.nodeLinks.get(0));
+        assertServiceDeleted(placementZoneLink);
+        assertServiceDeleted(groupPlacementLink);
 
     }
 
@@ -95,14 +118,35 @@ public class ClusterServiceIT extends BaseProvisioningOnCoreOsIT {
     }
 
     private ClusterDto createCluster(ContainerHostSpec hostSpec) throws Exception {
-        ArrayList<ClusterDto> result = new ArrayList<>(1);
-
         String dtoRaw = sendRequest(HttpMethod.POST, ClusterService.SELF_LINK, Utils.toJson
                 (hostSpec));
         ClusterDto dto = Utils.fromJson(dtoRaw, ClusterDto.class);
         cleanUpAfter(dto);
         return dto;
 
+    }
+
+    private ClusterDto getCluster(String clusterDocumentSelfLink) throws Exception {
+        String dtoRaw = sendRequest(HttpMethod.GET, clusterDocumentSelfLink, null);
+        ClusterDto dto = Utils.fromJson(dtoRaw, ClusterDto.class);
+        return dto;
+    }
+
+    private void deleteCluster(String clusterDocumentSelfLink) throws Exception {
+        sendRequest(HttpMethod.DELETE, clusterDocumentSelfLink, null);
+    }
+
+    private void assertServiceDeleted(String documentSelfLink) {
+        boolean serviceFoundExceptionDetected = false;
+        try {
+            String result = sendRequest(HttpMethod.GET, documentSelfLink, null);
+            serviceFoundExceptionDetected = (result == null);
+        } catch (Exception e) {
+            serviceFoundExceptionDetected = (e instanceof IllegalArgumentException) && e
+                    .getMessage().contains
+                            ("Service not found:");
+        }
+        assertTrue(serviceFoundExceptionDetected);
     }
 
     private String buildProjectLink(String projectId) {
@@ -139,7 +183,7 @@ public class ClusterServiceIT extends BaseProvisioningOnCoreOsIT {
     }
 
     protected void setupEnvironmentForCluster()
-            throws Exception {
+            throws Throwable {
         dockerHostAddress = getTestRequiredProp("docker.host.address");
         hostPort = getTestRequiredProp("docker.host.port." + DockerAdapterType.API.name());
         getDockerHostAddressWithPort = "https://" + dockerHostAddress + ":" + hostPort;
@@ -162,6 +206,13 @@ public class ClusterServiceIT extends BaseProvisioningOnCoreOsIT {
                 CommonTestStateFactory.REGISTRATION_DOCKER_ID);
 
         postDocument(SslTrustCertificateService.FACTORY_LINK, dockerHostSslTrust);
+
+        projectLink = buildProjectLink(ProjectService.DEFAULT_PROJECT_ID);
+        placementZoneName = PlacementZoneUtil
+                .buildPlacementZoneDefaultName(ContainerHostType.DOCKER,
+                        getDockerHostAddressWithPort);
+        hostSpec = createContainerHostSpec(Collections.singletonList(projectLink),
+                ContainerHostType.DOCKER, true);
     }
 
     private void verifyCluster(ClusterDto clusterDto, ClusterType clusterType, String expectedName,
