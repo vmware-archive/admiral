@@ -284,27 +284,26 @@ export class Utils {
     }
 
     // check for system roles
-    if (securityContext.roles) {
-
-      securityContext.roles.forEach(role => {
+    let securityContextRoles = securityContext.roles;
+    if (securityContextRoles) {
+      for (let role of securityContextRoles) {
         if (roles.indexOf(role) > -1) {
           return true;
         }
-      });
+      };
     }
 
     // check for project roles
-    if (securityContext.projects) {
-
-      securityContext.projects.forEach(project => {
-        if (project && project.roles) {
-
-          project.roles.forEach(role => {
+    let securityContextProjects = securityContext.projects;
+    if (securityContextProjects) {
+      for (let project of securityContextProjects) {
+        let projectRoles = project.roles;
+        if (project && projectRoles) {
+          for (let role of projectRoles) {
             if (projectSelfLink) {
               if ((project.documentSelfLink  && project.documentSelfLink === projectSelfLink
                       || project.id && project.id === projectSelfLink)
                   && roles.indexOf(role) > -1) {
-
                 return true;
               }
             } else {
@@ -312,9 +311,9 @@ export class Utils {
                 return true;
               }
             }
-          });
+          };
         }
-      });
+      };
     }
 
     return false;
