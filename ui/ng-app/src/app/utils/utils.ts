@@ -286,7 +286,8 @@ export class Utils {
     // check for system roles
     let securityContextRoles = securityContext.roles;
     if (securityContextRoles) {
-      for (let role of securityContextRoles) {
+      for (var i = 0; i < securityContextRoles.length; i += 1) {
+        let role = securityContextRoles[i];
         if (roles.indexOf(role) > -1) {
           return true;
         }
@@ -296,10 +297,12 @@ export class Utils {
     // check for project roles
     let securityContextProjects = securityContext.projects;
     if (securityContextProjects) {
-      for (let project of securityContextProjects) {
+      for (var i = 0; i < securityContextProjects.length; i += 1) {
+        let project = securityContextProjects[i];
         let projectRoles = project.roles;
         if (project && projectRoles) {
-          for (let role of projectRoles) {
+          for (var j = 0; j < projectRoles.length; j += 1) {
+            let role = projectRoles[j];
             if (projectSelfLink) {
               if ((project.documentSelfLink  && project.documentSelfLink === projectSelfLink
                       || project.id && project.id === projectSelfLink)
