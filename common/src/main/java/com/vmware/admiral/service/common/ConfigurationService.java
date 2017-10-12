@@ -25,7 +25,6 @@ import java.util.logging.Level;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.FileUtil;
-import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
@@ -60,7 +59,7 @@ public class ConfigurationService extends StatefulService {
         public String value;
     }
 
-    public static class ConfigurationFactoryService extends FactoryService {
+    public static class ConfigurationFactoryService extends AbstractSecuredFactoryService {
         public static final String SELF_LINK = ManagementUriParts.CONFIG_PROPS;
 
         public ConfigurationFactoryService() {

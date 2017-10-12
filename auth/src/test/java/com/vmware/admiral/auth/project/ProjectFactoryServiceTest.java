@@ -15,6 +15,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.net.URI;
 import java.util.Arrays;
@@ -188,4 +189,13 @@ public class ProjectFactoryServiceTest extends AuthBaseTest {
         }
     }
 
+    @Test
+    public void testDeleteFactoryShouldFail() throws Throwable {
+        try {
+            doDelete(UriUtils.buildUri(host, ProjectFactoryService.SELF_LINK), false);
+            fail(EXPECTED_ILLEGAL_ACCESS_ERROR_MESSAGE);
+        } catch (IllegalAccessError e) {
+            assertTrue(e.getMessage().toLowerCase().startsWith(FORBIDDEN));
+        }
+    }
 }

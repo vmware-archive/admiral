@@ -14,11 +14,11 @@ package com.vmware.admiral.log;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.log.EventLogService.EventLogState;
-import com.vmware.xenon.common.FactoryService;
+import com.vmware.admiral.service.common.AbstractSecuredFactoryService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 
-public class EventLogFactoryService extends FactoryService {
+public class EventLogFactoryService extends AbstractSecuredFactoryService {
     public static final String SELF_LINK = ManagementUriParts.EVENT_LOG;
 
     public EventLogFactoryService() {

@@ -15,19 +15,19 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.request.ContainerRemovalTaskService.ContainerRemovalTaskState;
 import com.vmware.admiral.request.ContainerRemovalTaskService.ContainerRemovalTaskState.SubStage;
 import com.vmware.admiral.request.utils.EventTopicUtils;
+import com.vmware.admiral.service.common.AbstractSecuredFactoryService;
 import com.vmware.admiral.service.common.EventTopicDeclarator;
 import com.vmware.admiral.service.common.EventTopicService;
 import com.vmware.photon.controller.model.data.SchemaBuilder;
-import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.TaskState.TaskStage;
 
 /**
- * Factory service implementing {@link FactoryService} used to create instances of
+ * Factory service implementing {@link AbstractSecuredFactoryService} used to create instances of
  * {@link ContainerRemovalTaskState}.
  */
-public class ContainerRemovalTaskFactoryService extends FactoryService implements
+public class ContainerRemovalTaskFactoryService extends AbstractSecuredFactoryService implements
         EventTopicDeclarator {
     public static final String SELF_LINK = ManagementUriParts.REQUEST_REMOVAL_OPERATIONS;
 

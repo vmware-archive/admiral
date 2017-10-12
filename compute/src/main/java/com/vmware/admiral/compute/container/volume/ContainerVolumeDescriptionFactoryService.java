@@ -14,11 +14,11 @@ package com.vmware.admiral.compute.container.volume;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
-import com.vmware.xenon.common.FactoryService;
+import com.vmware.admiral.service.common.AbstractSecuredFactoryService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 
-public class ContainerVolumeDescriptionFactoryService extends FactoryService {
+public class ContainerVolumeDescriptionFactoryService extends AbstractSecuredFactoryService {
     public static final String SELF_LINK = ManagementUriParts.CONTAINER_VOLUMES_DESC;
 
     public ContainerVolumeDescriptionFactoryService() {

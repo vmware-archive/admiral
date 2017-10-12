@@ -12,10 +12,10 @@
 package com.vmware.admiral.closures.services.adapter;
 
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.xenon.common.FactoryService;
+import com.vmware.admiral.service.common.AbstractSecuredFactoryService;
 import com.vmware.xenon.common.Service;
 
-public class AdmiralAdapterFactoryService extends FactoryService {
+public class AdmiralAdapterFactoryService extends AbstractSecuredFactoryService {
 
     public static final String FACTORY_LINK = ManagementUriParts.REQUEST_CLOSURE_RUN;
 

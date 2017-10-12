@@ -16,11 +16,11 @@ import static com.vmware.admiral.auth.util.PrincipalUtil.encode;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalState;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalType;
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.xenon.common.FactoryService;
+import com.vmware.admiral.service.common.AbstractSecuredFactoryService;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 
-public class LocalPrincipalFactoryService extends FactoryService {
+public class LocalPrincipalFactoryService extends AbstractSecuredFactoryService {
     public static final String SELF_LINK = ManagementUriParts.LOCAL_PRINCIPALS;
 
     public LocalPrincipalFactoryService() {

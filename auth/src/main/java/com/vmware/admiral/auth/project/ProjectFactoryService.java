@@ -22,8 +22,8 @@ import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.admiral.auth.util.ProjectUtil;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.container.ContainerService;
+import com.vmware.admiral.service.common.AbstractSecuredFactoryService;
 import com.vmware.xenon.common.DeferredResult;
-import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
@@ -31,10 +31,10 @@ import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
 /**
- * Factory service implementing {@link FactoryService} used to create instances of
+ * Factory service implementing {@link AbstractSecuredFactoryService} used to create instances of
  * {@link ContainerService}.
  */
-public class ProjectFactoryService extends FactoryService {
+public class ProjectFactoryService extends AbstractSecuredFactoryService {
     public static final String SELF_LINK = ManagementUriParts.PROJECTS;
 
     public static final String QUERY_PARAM_PUBLIC = "public";

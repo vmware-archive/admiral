@@ -14,11 +14,11 @@ package com.vmware.admiral.compute.container.network;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
-import com.vmware.xenon.common.FactoryService;
+import com.vmware.admiral.service.common.AbstractSecuredFactoryService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 
-public class ContainerNetworkDescriptionFactoryService extends FactoryService {
+public class ContainerNetworkDescriptionFactoryService extends AbstractSecuredFactoryService {
 
     public static final String SELF_LINK = ManagementUriParts.CONTAINER_NETWORK_DESC;
 

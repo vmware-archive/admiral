@@ -14,15 +14,15 @@ package com.vmware.admiral.request;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.request.RequestStatusService.RequestStatus;
-import com.vmware.xenon.common.FactoryService;
+import com.vmware.admiral.service.common.AbstractSecuredFactoryService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 
 /**
- * Factory service implementing {@link FactoryService} used to create instances of
+ * Factory service implementing {@link AbstractSecuredFactoryService} used to create instances of
  * {@link RequestStatusService}.
  */
-public class RequestStatusFactoryService extends FactoryService {
+public class RequestStatusFactoryService extends AbstractSecuredFactoryService {
     public static final String SELF_LINK = ManagementUriParts.REQUEST_STATUS;
 
     public RequestStatusFactoryService() {

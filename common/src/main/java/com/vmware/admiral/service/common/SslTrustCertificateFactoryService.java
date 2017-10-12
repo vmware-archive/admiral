@@ -14,11 +14,10 @@ package com.vmware.admiral.service.common;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
 import com.vmware.photon.controller.model.security.util.CertificateUtil;
-import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 
-public class SslTrustCertificateFactoryService extends FactoryService {
+public class SslTrustCertificateFactoryService extends AbstractSecuredFactoryService {
 
     public static final String SELF_LINK = SslTrustCertificateService.FACTORY_LINK;
 

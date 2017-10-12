@@ -13,11 +13,11 @@ package com.vmware.admiral.closures.services.closuredescription;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.OperationUtil;
-import com.vmware.xenon.common.FactoryService;
+import com.vmware.admiral.service.common.AbstractSecuredFactoryService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 
-public class ClosureDescriptionFactoryService extends FactoryService {
+public class ClosureDescriptionFactoryService extends AbstractSecuredFactoryService {
 
     public static final String FACTORY_LINK = ManagementUriParts.CLOSURES_DESC;
 

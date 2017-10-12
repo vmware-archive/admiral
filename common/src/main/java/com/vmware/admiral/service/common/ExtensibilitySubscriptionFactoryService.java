@@ -13,11 +13,10 @@ package com.vmware.admiral.service.common;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.service.common.ExtensibilitySubscriptionService.ExtensibilitySubscription;
-import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 
-public class ExtensibilitySubscriptionFactoryService extends FactoryService {
+public class ExtensibilitySubscriptionFactoryService extends AbstractSecuredFactoryService {
 
     public static final String SELF_LINK = ManagementUriParts.EXTENSIBILITY_SUBSCRIPTION;
 

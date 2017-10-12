@@ -96,6 +96,9 @@ public abstract class AuthBaseTest extends BaseTestCase {
 
     private static final String FILE_LOCAL_USERS = "/local-users.json";
 
+    protected static final String EXPECTED_ILLEGAL_ACCESS_ERROR_MESSAGE = "Should've thrown IllegalAccessError!";
+    protected static final String FORBIDDEN = "forbidden";
+
     protected List<String> loadedUsers;
     protected List<String> loadedGroups;
 
@@ -271,6 +274,7 @@ public abstract class AuthBaseTest extends BaseTestCase {
         }
     }
 
+    @Override
     protected void doPatch(Object state, String documentSelfLink) {
         TestContext ctx = testCreate(1);
         Operation patch = Operation.createPatch(host, documentSelfLink)
