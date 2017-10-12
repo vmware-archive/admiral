@@ -51,10 +51,15 @@ public class SslCertificateResolver {
 
     private static final Logger logger = Logger.getLogger(SslCertificateResolver.class.getName());
 
-    private static X509TrustManager trustManager;
     private static final int DEFAULT_SECURE_CONNECTION_PORT = 443;
     private static final long DEFAULT_CONNECTION_TIMEOUT_MILLIS = Long.getLong(
             "ssl.resolver.import.timeout.millis", TimeUnit.SECONDS.toMillis(30));
+
+    private static final String MESSAGE_INVALID_HOSTNAME = "hostname can't be null";
+    private static final String MESSAGE_CODE_INVALID_HOSTNAME =
+            "common.certificate.host.connection.error";
+
+    private static X509TrustManager trustManager;
     private final String uri;
     private final String hostAddress;
     private final int port;
@@ -98,6 +103,12 @@ public class SslCertificateResolver {
                     String msg = String.format("Error connecting to %s : %s",
                             uri.toString(), e.getMessage());
                     logger.warning(msg);
+
+                    if (e.getMessage().equals(MESSAGE_INVALID_HOSTNAME)) {
+                        e = new LocalizableValidationException(MESSAGE_INVALID_HOSTNAME,
+                                MESSAGE_CODE_INVALID_HOSTNAME);
+                    }
+
                     t = e;
                 }
                 if (t != null) {
