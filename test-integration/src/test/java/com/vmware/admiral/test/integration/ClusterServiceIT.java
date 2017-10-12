@@ -13,6 +13,7 @@ package com.vmware.admiral.test.integration;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import static com.vmware.admiral.test.integration.TestPropertiesUtil.getTestRequiredProp;
@@ -78,16 +79,74 @@ public class ClusterServiceIT extends BaseProvisioningOnCoreOsIT {
     @Test
     public void testCreatingCluster() throws Throwable {
 
-        ClusterDto dtoCreated = createCluster(hostSpec);
+        ClusterDto dtoCreated = createCluster();
 
         verifyCluster(dtoCreated, ClusterType.DOCKER, placementZoneName, projectLink);
 
     }
 
     @Test
+    public void testPatchingCluster() throws Throwable {
+
+        final String name1 = "name_1";
+        final String details1 = "details_1";
+        final String name2 = "name_2";
+        final String details2 = "details_2";
+
+        ClusterDto dtoCreated = createCluster();
+
+        ClusterDto patchClusterDto = new ClusterDto();
+        patchClusterDto.name = name1;
+        patchClusterDto.details = details1;
+        patchClusterDto = patchCluster(dtoCreated.documentSelfLink, patchClusterDto);
+        assertEquals(name1, patchClusterDto.name);
+        assertEquals(details1, patchClusterDto.details);
+
+        patchClusterDto = new ClusterDto();
+        patchClusterDto.name = name2;
+        patchClusterDto.details = details2;
+        patchClusterDto = patchCluster(dtoCreated.documentSelfLink, patchClusterDto);
+        assertEquals(name2, patchClusterDto.name);
+        assertEquals(details2, patchClusterDto.details);
+
+    }
+
+    @Test
+    public void testGettingAllClusters() throws Throwable {
+
+        ServiceDocumentQueryResult allClustersResult = getAllClusters(false);
+
+        assertEquals(0, allClustersResult.documentCount.longValue());
+        assertEquals(0, allClustersResult.documentLinks.size());
+        assertNull(allClustersResult.documents);
+
+        ClusterDto dtoCreated = createCluster();
+
+        allClustersResult = getAllClusters(false);
+
+        assertEquals(1, allClustersResult.documentCount.longValue());
+        assertEquals(1, allClustersResult.documentLinks.size());
+        assertEquals(dtoCreated.documentSelfLink, allClustersResult.documentLinks.get(0));
+        assertNull(allClustersResult.documents);
+
+        allClustersResult = getAllClusters(true);
+
+        assertEquals(1, allClustersResult.documentCount.longValue());
+        assertEquals(1, allClustersResult.documentLinks.size());
+        assertEquals(dtoCreated.documentSelfLink, allClustersResult.documentLinks.get(0));
+        assertEquals(1, allClustersResult.documents.size());
+
+        String dtoCollectedRaw = allClustersResult.documents.get(dtoCreated.documentSelfLink)
+                .toString();
+        ClusterDto dtoCollected = Utils.fromJson(dtoCollectedRaw, ClusterDto.class);
+        verifyCluster(dtoCollected, ClusterType.DOCKER, placementZoneName, projectLink);
+
+    }
+
+    @Test
     public void testGettingCluster() throws Throwable {
 
-        ClusterDto dtoCreated = createCluster(hostSpec);
+        ClusterDto dtoCreated = createCluster();
 
         ClusterDto dtoGet = getCluster(dtoCreated.documentSelfLink);
         verifyCluster(dtoGet, ClusterType.DOCKER, placementZoneName, projectLink);
@@ -96,7 +155,7 @@ public class ClusterServiceIT extends BaseProvisioningOnCoreOsIT {
     @Test
     public void testDeletingCluster() throws Throwable {
 
-        ClusterDto dtoCreated = createCluster(hostSpec);
+        ClusterDto dtoCreated = createCluster();
 
         String placementZoneLink = ResourcePoolService.FACTORY_LINK + "/" + Service.getId
                 (dtoCreated.documentSelfLink);
@@ -117,19 +176,34 @@ public class ClusterServiceIT extends BaseProvisioningOnCoreOsIT {
         return null;
     }
 
-    private ClusterDto createCluster(ContainerHostSpec hostSpec) throws Exception {
+    private ClusterDto createCluster() throws Exception {
         String dtoRaw = sendRequest(HttpMethod.POST, ClusterService.SELF_LINK, Utils.toJson
                 (hostSpec));
         ClusterDto dto = Utils.fromJson(dtoRaw, ClusterDto.class);
         cleanUpAfter(dto);
         return dto;
+    }
 
+    private ClusterDto patchCluster(String clusterLink, ClusterDto clusterBody) throws Exception {
+        String dtoRaw = sendRequest(HttpMethod.PATCH, clusterLink, Utils.toJson
+                (clusterBody));
+        return Utils.fromJson(dtoRaw, ClusterDto.class);
     }
 
     private ClusterDto getCluster(String clusterDocumentSelfLink) throws Exception {
         String dtoRaw = sendRequest(HttpMethod.GET, clusterDocumentSelfLink, null);
         ClusterDto dto = Utils.fromJson(dtoRaw, ClusterDto.class);
         return dto;
+    }
+
+    private ServiceDocumentQueryResult getAllClusters(boolean expand) throws Exception {
+        String queryStr = ClusterService.SELF_LINK;
+
+        if (expand) {
+            queryStr += "?expand";
+        }
+
+        return getDocument(queryStr, ServiceDocumentQueryResult.class);
     }
 
     private void deleteCluster(String clusterDocumentSelfLink) throws Exception {
