@@ -114,18 +114,16 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
         assertEquals("name", "wordPressWithMySqlContainerLoadBalancer", cd.name);
         assertEquals("descriptionLinks.size", 4, cd.descriptionLinks.size());
 
-        ContainerLoadBalancerDescription containerLoadBalancerDescription =
-                (ContainerLoadBalancerDescription) cd.componentDescriptions.stream()
-                        .filter(c -> c.type
-                                .equals(ResourceType.CONTAINER_LOAD_BALANCER_TYPE.getName()))
-                        .findFirst().get()
-                        .getServiceDocument();
+        ContainerLoadBalancerDescription containerLoadBalancerDescription = (ContainerLoadBalancerDescription) cd.componentDescriptions
+                .stream()
+                .filter(c -> c.type.equals(ResourceType.CONTAINER_LOAD_BALANCER_TYPE.getName()))
+                .findFirst().get()
+                .getServiceDocument();
 
         assertNotNull(containerLoadBalancerDescription.dependsOn);
         assertNotNull(containerLoadBalancerDescription.portBindings);
-        assertNotNull(containerLoadBalancerDescription.frontends.stream().filter
-                (health ->
-                        health.healthConfig != null).findAny().get());
+        assertNotNull(containerLoadBalancerDescription.frontends.stream()
+                .filter(health -> health.healthConfig != null).findAny().get());
         assertFalse(containerLoadBalancerDescription.networks.isEmpty());
         assertFalse(containerLoadBalancerDescription.frontends.isEmpty());
         assertFalse(containerLoadBalancerDescription.frontends.get(0).backends.isEmpty());
@@ -215,7 +213,7 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
 
         this.host.testStart(1);
         this.host.send(validateBadRequestOnImportOperation("abc",
-                "Error processing YAML content: Can not construct instance of com.vmware.admiral.compute.content.compose.CommonDescriptionEntity: no String-argument constructor/factory method to deserialize from String value ('abc')"));
+                "Error processing YAML content: Cannot construct instance of `com.vmware.admiral.compute.content.compose.CommonDescriptionEntity` (although at least one Creator exists): no String-argument constructor/factory method to deserialize from String value ('abc')"));
         this.host.testWait();
 
         this.host.testStart(1);
@@ -225,7 +223,7 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
 
         this.host.testStart(1);
         this.host.send(validateBadRequestOnImportOperation(getContent("composite.bad.yaml"),
-                "Can not deserialize instance of java.lang.String out of START_OBJECT token\n at [Source: N/A; line: -1, column: -1] (through reference chain: com.vmware.admiral.compute.container.ContainerDescriptionService$CompositeTemplateContainerDescription[\"logConfig\"])"));
+                "Cannot deserialize instance of java.lang.String out of START_OBJECT token\n at [Source: UNKNOWN; line: -1, column: -1] (through reference chain: com.vmware.admiral.compute.container.ContainerDescriptionService$CompositeTemplateContainerDescription[\"logConfig\"])"));
         this.host.testWait();
 
         this.host.testStart(1);
