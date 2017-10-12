@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-export const constants = {
+export const Constants = {
     hosts: {
         state: {
             ON: "ON",

@@ -10,10 +10,10 @@
  */
 
 import * as I18n from 'i18next';
-import { constants } from './constants';
+import { Constants } from './constants';
 import { FT } from './ft';
 
-const LOGIN_PATH="/login/"
+const LOGIN_PATH="/login/";
 
 const REGISTRY_SCHEME_REG_EXP = /^(https?):\/\//;
 
@@ -98,7 +98,7 @@ export class Utils {
   }
 
   public static isSingleHostCluster(clusterEntity) {
-    return clusterEntity && clusterEntity.type === constants.hosts.type.VCH;
+    return clusterEntity && clusterEntity.type === Constants.hosts.type.VCH;
   }
 
   public static isCompute() {

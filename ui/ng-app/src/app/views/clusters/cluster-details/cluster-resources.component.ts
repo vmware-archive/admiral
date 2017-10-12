@@ -14,7 +14,7 @@ import { DocumentService } from "../../../utils/document.service";
 import * as I18n from 'i18next';
 import { Utils } from "../../../utils/utils";
 import { GridViewComponent } from '../../../components/grid-view/grid-view.component';
-import { constants } from '../../../utils/constants';
+import { Constants } from '../../../utils/constants';
 import { Links } from './../../../utils/links';
 
 @Component({
@@ -69,13 +69,15 @@ export class ClusterResourcesComponent implements OnChanges, AfterViewInit {
   }
 
   deleteConfirmed() {
-    this.service.delete(this.serviceEndpoint + '/' + Utils.getDocumentId(this.hostToDelete.documentSelfLink), this.projectLink)
-        .then(result => {
+      let documentSelfLinkToDelete =
+            this.serviceEndpoint + '/' + Utils.getDocumentId(this.hostToDelete.documentSelfLink);
+
+      this.service.delete(documentSelfLinkToDelete, this.projectLink).then(result => {
           this.hostToDelete = null;
           this.gridView.refresh();
-        })
-        .catch(err => {
-          this.deleteConfirmationAlert = Utils.getErrorMessage(err)._generic;
+
+        }).catch(err => {
+            this.deleteConfirmationAlert = Utils.getErrorMessage(err)._generic;
         });
   }
 
@@ -139,11 +141,11 @@ export class ClusterResourcesComponent implements OnChanges, AfterViewInit {
 
   operationSupported(op, host) {
     if (op === 'ENABLE') {
-      return host.powerState === constants.hosts.state.SUSPEND
-          || host.powerState === constants.hosts.state.OFF;
+      return host.powerState === Constants.hosts.state.SUSPEND
+          || host.powerState === Constants.hosts.state.OFF;
     } else if (op === 'DISABLE') {
-      return host.powerState !== constants.hosts.state.SUSPEND
-          && host.powerState !== constants.hosts.state.OFF;
+      return host.powerState !== Constants.hosts.state.SUSPEND
+          && host.powerState !== Constants.hosts.state.OFF;
     }
 
     return true;
@@ -152,7 +154,7 @@ export class ClusterResourcesComponent implements OnChanges, AfterViewInit {
   enableHost(event, host) {
     event.stopPropagation();
 
-    this.service.patch(host.documentSelfLink, { 'powerState': constants.hosts.state.ON })
+    this.service.patch(host.documentSelfLink, { 'powerState': Constants.hosts.state.ON })
         .then(result => {
           this.gridView.refresh();
           this.onChange.emit();
@@ -167,7 +169,7 @@ export class ClusterResourcesComponent implements OnChanges, AfterViewInit {
   disableHost(event, host) {
     event.stopPropagation();
 
-    this.service.patch(host.documentSelfLink, { 'powerState': constants.hosts.state.SUSPEND })
+    this.service.patch(host.documentSelfLink, { 'powerState': Constants.hosts.state.SUSPEND })
         .then(result => {
           this.gridView.refresh();
           this.onChange.emit();

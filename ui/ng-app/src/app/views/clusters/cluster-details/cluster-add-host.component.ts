@@ -9,14 +9,13 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, AfterViewInit } from '@angular/core';
 import { FormGroup, FormControl, Validators } from "@angular/forms";
-import { DocumentService } from './../../../utils/document.service';
-import { ProjectService } from './../../../utils/project.service';
-import { Links } from './../../../utils/links';
-import { constants } from './../../../utils/constants';
+import { DocumentService } from '../../../utils/document.service';
+import { Constants } from '../../../utils/constants';
+import { FT } from '../../../utils/ft';
+import { Links } from '../../../utils/links';
 import { Utils } from "../../../utils/utils";
-import { FT } from './../../../utils/ft';
 import * as I18n from 'i18next';
 
 @Component({
@@ -27,14 +26,13 @@ import * as I18n from 'i18next';
 /**
  * Add Hosts to Cluster dialog.
  */
-export class ClusterAddHostComponent {
-
+export class ClusterAddHostComponent implements AfterViewInit {
     @Input() cluster: any;
     @Input() visible: boolean;
     @Input() projectLink: string;
-    @Input() credentials: any[] = [];
 
     isAddingHost: boolean;
+    credentials: any[] = [];
     showCertificateWarning: boolean;
     certificate: any;
     alertMessage: string;
@@ -48,7 +46,29 @@ export class ClusterAddHostComponent {
         publicAddress: new FormControl('')
     });
 
-    constructor(private ds: DocumentService) { }
+    credentialsTitle = I18n.t('dropdownSearchMenu.title', {
+        ns: 'base',
+        entity: I18n.t('app.credential.entity', {ns: 'base'})
+    } as I18n.TranslationOptions );
+
+    credentialsSearchPlaceholder = I18n.t('dropdownSearchMenu.searchPlaceholder', {
+        ns: 'base',
+        entity: I18n.t('app.credential.entity', {ns: 'base'})
+    } as I18n.TranslationOptions );
+
+    constructor(private documentService: DocumentService) { }
+
+    ngAfterViewInit() {
+        setTimeout(() => {
+            this.showCertificateWarning = false;
+        });
+
+        this.documentService.list(Links.CREDENTIALS, {}).then(credentials => {
+            this.credentials = credentials.documents
+                                    .filter(c => !Utils.areSystemScopedCredentials(c))
+                                    .map(this.toCredentialViewModel);
+        });
+    }
 
     get showPublicAddressField(): boolean {
         return FT.isHostPublicUriEnabled();
@@ -65,9 +85,17 @@ export class ClusterAddHostComponent {
         this.alertMessage = null;
     }
 
-    getCredentialsName(credentials) {
-        let name = Utils.getCustomPropertyValue(credentials.customProperties, '__authCredentialsName');
-        return name ? name : credentials.documentId;
+    toCredentialViewModel(credential) {
+        let credentialViewModel:any = {};
+
+        credentialViewModel.documentSelfLink = credential.documentSelfLink;
+        credentialViewModel.name = credential.customProperties
+                                        ? credential.customProperties.__authCredentialsName : '';
+        if (!credentialViewModel.name) {
+            credentialViewModel.name = credential.documentId;
+        }
+
+        return credentialViewModel;
     }
 
     declineCertificate() {
@@ -99,26 +127,34 @@ export class ClusterAddHostComponent {
             };
 
             if (formInput.credentials) {
-                hostState.customProperties['__authCredentialsLink'] = formInput.credentials;
+                hostState.customProperties['__authCredentialsLink'] =
+                                                            formInput.credentials.documentSelfLink;
             }
 
             if (formInput.publicAddress) {
-                hostState.customProperties[constants.hosts.customProperties.publicAddress] = formInput.publicAddress;
+                hostState.customProperties[Constants.hosts.customProperties.publicAddress] =
+                                                                            formInput.publicAddress;
             }
 
             let hostSpec = {
                 'hostState': hostState,
                 'acceptCertificate': certificateAccepted
             };
-            this.ds.post(this.cluster.documentSelfLink + '/hosts', hostSpec, this.projectLink).then((response) => {
+            let clusterHostsLink = this.cluster.documentSelfLink + '/hosts';
+
+            this.documentService.post(clusterHostsLink, hostSpec, this.projectLink)
+                                    .then((response) => {
                 if (response && response.certificate) {
+
                     this.certificate = response;
                     this.showCertificateWarning = true;
                 } else {
+
                     this.clearView();
                     this.onChange.emit(null);
                 }
             }).catch(error => {
+
                 this.isAddingHost = false;
                 this.alertMessage = Utils.getErrorMessage(error)._generic;
             });

@@ -12,28 +12,30 @@
 <clr-modal [clrModalOpen]="visible" (clrModalOpenChange)="addHostCanceled()">
     <h3 class="modal-title">{{ "clusters.resources.addHost.title" | i18n }}</h3>
     <div class="modal-body">
-        <clr-alert [clrAlertType]="'alert-danger'" [(clrAlertClosed)]="!alertMessage"  (clrAlertClosedChange)="resetAlert()">
+        <clr-alert [clrAlertType]="'alert-danger'" [(clrAlertClosed)]="!alertMessage"
+                   (clrAlertClosedChange)="resetAlert()">
             <div class="alert-item">
                 <span class="alert-text">{{ alertMessage }}</span>
             </div>
         </clr-alert>
         <form class="form" [formGroup]="addHostToClusterForm">
             <section class="form-block">
-                <div class="form-group">
+                <div class="form-group host-address">
                     <label for="address" class="required">{{ "clusters.resources.addHost.address" | i18n }}</label>
-                    <label for="address" aria-haspopup="true" role="tooltip" class="tooltip tooltip-validation tooltip-sm tooltip-bottom-left"
-                            [class.invalid]="addHostToClusterForm.get('address').invalid && (addHostToClusterForm.get('address').dirty || addHostToClusterForm.get('address').touched)">
+                    <label for="address" aria-haspopup="true" role="tooltip"
+                           class="tooltip tooltip-validation tooltip-sm tooltip-bottom-left"
+                           [class.invalid]="addHostToClusterForm.get('address').invalid && (addHostToClusterForm.get('address').dirty || addHostToClusterForm.get('address').touched)">
                         <input type="text" placeholder="https://hostname:2376" formControlName="address">
                         <span class="tooltip-content">{{ "clusters.resources.addHost.addressRequired" | i18n }}</span>
                     </label>
                 </div>
-                <div class="form-group">
+                <div class="form-group host-credentials">
                     <label for="credentials">{{ "clusters.edit.credentials" | i18n }}</label>
-                    <div class="select">
-                        <select formControlName="credentials">
-                            <option *ngFor="let c of credentials" [ngValue]="c.documentSelfLink">{{ getCredentialsName(c) }}</option>
-                        </select>
-                    </div>
+                    <dropdown id="credentials" formControlName="credentials" [options]="credentials"
+                              [title]="credentialsTitle"
+                              [searchPlaceholder]="credentialsSearchPlaceholder"
+                              ddClass="top-left">
+                    </dropdown>
                 </div>
                 <div class="form-group" *ngIf="showPublicAddressField">
                     <label for="publicAddress">{{ "clusters.edit.publicAddress" | i18n }}</label>
@@ -55,7 +57,10 @@
                             (onDecline)="declineCertificate()"></verify-certificate>
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-outline cancelAddHost" [disabled]="isAddingHost" (click)="addHostCanceled()">{{"cancel" | i18n}}</button>
-        <button [clrLoading]="isAddingHost" type="button" class="btn btn-primary doAddHost" [disabled]="addHostToClusterForm.invalid || isAddingHost" (click)="addHost(false)">{{ "add" | i18n }}</button>
+        <button type="button" class="btn btn-outline cancelAddHost" [disabled]="isAddingHost"
+                (click)="addHostCanceled()">{{"cancel" | i18n}}</button>
+        <button [clrLoading]="isAddingHost" type="button" class="btn btn-primary doAddHost"
+                [disabled]="addHostToClusterForm.invalid || isAddingHost"
+                (click)="addHost(false)">{{ "add" | i18n }}</button>
     </div>
 </clr-modal>

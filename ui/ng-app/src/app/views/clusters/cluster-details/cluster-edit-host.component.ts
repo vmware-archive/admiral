@@ -16,7 +16,7 @@ import { ProjectService } from './../../../utils/project.service';
 import { Links } from './../../../utils/links';
 import { Utils } from "../../../utils/utils";
 import { FT } from './../../../utils/ft';
-import { constants } from '../../../utils/constants';
+import { Constants } from '../../../utils/constants';
 import * as I18n from 'i18next';
 
 @Component({
@@ -59,7 +59,7 @@ export class ClusterEditHostComponent implements OnChanges {
                 this.editHostForm.get('credentials').setValue(authCredentialsLink);
             }
             var publicAddress = Utils.getCustomPropertyValue(this.host.customProperties,
-                constants.hosts.customProperties.publicAddress) || "";
+                Constants.hosts.customProperties.publicAddress) || "";
             this.editHostForm.get('publicAddress').setValue(publicAddress);
         }
     }
@@ -109,7 +109,7 @@ export class ClusterEditHostComponent implements OnChanges {
         }
 
         // allow ovewriting with empty value
-        hostCopy.customProperties[constants.hosts.customProperties.publicAddress] = formInput.publicAddress || "";
+        hostCopy.customProperties[Constants.hosts.customProperties.publicAddress] = formInput.publicAddress || "";
 
         return hostCopy;
     }
@@ -127,11 +127,11 @@ export class ClusterEditHostComponent implements OnChanges {
             this.ds.put(Links.CONTAINER_HOSTS + '?validate=true', hostSpec).then((response) => {
                 this.isVerifyingHost = false;
                 this.isHostVerified = true;
-                this.alertType = constants.alert.type.SUCCESS;
+                this.alertType = Constants.alert.type.SUCCESS;
                 this.alertMessage = I18n.t('hosts.verified');
             }).catch(error => {
                 this.isVerifyingHost = false;
-                this.alertType = constants.alert.type.DANGER;
+                this.alertType = Constants.alert.type.DANGER;
                 this.alertMessage = Utils.getErrorMessage(error)._generic;
             });
         }
@@ -153,7 +153,7 @@ export class ClusterEditHostComponent implements OnChanges {
                 this.onChange.emit(null);
             }).catch(error => {
                 this.isSavingHost = false;
-                this.alertType = constants.alert.type.DANGER;
+                this.alertType = Constants.alert.type.DANGER;
                 this.alertMessage = Utils.getErrorMessage(error)._generic;
             });
         }

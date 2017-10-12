@@ -286,3 +286,31 @@ navigation-container > :not(.with-back-button) > back-button {
 router-outlet {
   display: none;
 }
+
+clr-modal .form-group select {
+  margin-top: 6px;
+}
+
+clr-modal .form-group dropdown {
+  width: 100%;
+}
+
+clr-modal .form-group .dropdown {
+
+  .dropdown-menu {
+    padding: 4px 0;
+    max-height: 170px;
+
+    .dropdown-search {
+      max-height: 34px;
+    }
+
+    .divider {
+      margin: 4px 0;
+    }
+  }
+
+  .dropdown-options {
+    max-height: 76px;
+  }
+}

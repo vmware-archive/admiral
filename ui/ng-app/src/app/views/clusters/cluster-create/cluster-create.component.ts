@@ -18,7 +18,7 @@ import { FT } from "../../../utils/ft";
 import { DocumentService } from '../../../utils/document.service';
 import { ProjectService } from '../../../utils/project.service';
 import * as I18n from 'i18next';
-import { constants } from './../../../utils/constants';
+import { Constants } from './../../../utils/constants';
 import { BaseDetailsComponent } from '../../../components/base/base-details.component';
 
 @Component({
@@ -100,7 +100,7 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
 
     if (this.isSingleHostCluster) {
       let publicAddress = Utils.getCustomPropertyValue(this.entity.customProperties,
-        constants.hosts.customProperties.publicAddress) || this.entity.address;
+        Constants.hosts.customProperties.publicAddress) || this.entity.address;
       if (publicAddress) {
         this.clusterForm.get('publicAddress').setValue(this.entity.address);
       }
@@ -126,6 +126,7 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
       this.opened = true;
       this.showCertificateWarning = false;
     });
+
     this.service.list(Links.CREDENTIALS, {}).then(credentials => {
       this.credentials = credentials.documents
           .filter(c => !Utils.areSystemScopedCredentials(c))
@@ -174,7 +175,7 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
       if (this.isSingleHostCluster) {
       // allow overwriting with empty value
       let publicAddress = this.clusterForm.value.publicAddress || "";
-      clusterDtoPatch.customProperties[constants.hosts.customProperties.publicAddress] = publicAddress;
+      clusterDtoPatch.customProperties[Constants.hosts.customProperties.publicAddress] = publicAddress;
       }
 
       this.isSaving = true;
@@ -210,7 +211,7 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
       }
 
       if (formInput.publicAddress) {
-        hostState.customProperties[constants.hosts.customProperties.publicAddress] = formInput.publicAddress;
+        hostState.customProperties[Constants.hosts.customProperties.publicAddress] = formInput.publicAddress;
       }
 
       let hostSpec = {
