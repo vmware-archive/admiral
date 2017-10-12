@@ -133,8 +133,8 @@ public class ClusterServiceIT extends BaseProvisioningOnCoreOsIT {
 
         assertEquals(1, allClustersResult.documentCount.longValue());
         assertEquals(1, allClustersResult.documentLinks.size());
-        assertEquals(dtoCreated.documentSelfLink, allClustersResult.documentLinks.get(0));
         assertEquals(1, allClustersResult.documents.size());
+        assertEquals(dtoCreated.documentSelfLink, allClustersResult.documentLinks.get(0));
 
         String dtoCollectedRaw = allClustersResult.documents.get(dtoCreated.documentSelfLink)
                 .toString();
@@ -150,6 +150,44 @@ public class ClusterServiceIT extends BaseProvisioningOnCoreOsIT {
 
         ClusterDto dtoGet = getCluster(dtoCreated.documentSelfLink);
         verifyCluster(dtoGet, ClusterType.DOCKER, placementZoneName, projectLink);
+    }
+
+    @Test
+    public void testGettingAllHostsInCluster() throws Throwable {
+
+        ClusterDto dtoCreated = createCluster();
+
+        String pathHostsInCluster = UriUtils
+                .buildUriPath(ClusterService.SELF_LINK, Service.getId(dtoCreated.documentSelfLink),
+                        ClusterService.HOSTS_URI_PATH_SEGMENT);
+        ServiceDocumentQueryResult allHostsResult =
+                getDocument(pathHostsInCluster, ServiceDocumentQueryResult.class);
+
+        assertEquals(1, allHostsResult.documentCount.longValue());
+        assertEquals(1, allHostsResult.documentLinks.size());
+        assertEquals(dtoCreated.nodeLinks.get(0), allHostsResult.documentLinks.get(0));
+        assertEquals(1, allHostsResult.documents.size());
+        assertEquals(dtoCreated.nodeLinks.get(0), allHostsResult.documentLinks.get(0));
+    }
+
+    @Test
+    public void testGettingSingleHostInCluster() throws Throwable {
+
+        ClusterDto dtoCreated = createCluster();
+
+        String pathHostsInCluster = UriUtils
+                .buildUriPath(ClusterService.SELF_LINK, Service.getId(dtoCreated.documentSelfLink),
+                        ClusterService.HOSTS_URI_PATH_SEGMENT,
+                        Service.getId(dtoCreated.nodeLinks.get(0)));
+        String computeStateRaw = sendRequest(HttpMethod.GET, pathHostsInCluster, null);
+        ComputeState computeState = Utils.fromJson(computeStateRaw, ComputeState.class);
+
+        assertNotNull(computeState);
+        assertNotNull(computeState.tenantLinks);
+        assertTrue(computeState.tenantLinks.contains(projectLink));
+        assertEquals(ContainerHostType.DOCKER,
+                ContainerHostUtil.getDeclaredContainerHostType(computeState));
+        assertEquals(ComputeService.PowerState.ON, computeState.powerState);
     }
 
     @Test
