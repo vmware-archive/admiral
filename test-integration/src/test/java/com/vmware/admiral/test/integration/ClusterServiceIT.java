@@ -61,9 +61,11 @@ import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsSe
 
 public class ClusterServiceIT extends BaseProvisioningOnCoreOsIT {
 
-    private String dockerHostAddress;
+    private String dockerHostAddress1;
+    private String dockerHostAddress2;
     private String hostPort;
-    private String getDockerHostAddressWithPort;
+    private String getDockerHostAddressWithPort1;
+    private String getDockerHostAddressWithPort2;
     private AuthCredentialsServiceState dockerHostAuthCredentials;
     private SslTrustCertificateState dockerHostSslTrust;
 
@@ -175,11 +177,11 @@ public class ClusterServiceIT extends BaseProvisioningOnCoreOsIT {
 
         ClusterDto dtoCreated = createCluster();
 
-        String pathHostsInCluster = UriUtils
+        String pathHostInCluster = UriUtils
                 .buildUriPath(ClusterService.SELF_LINK, Service.getId(dtoCreated.documentSelfLink),
                         ClusterService.HOSTS_URI_PATH_SEGMENT,
                         Service.getId(dtoCreated.nodeLinks.get(0)));
-        String computeStateRaw = sendRequest(HttpMethod.GET, pathHostsInCluster, null);
+        String computeStateRaw = sendRequest(HttpMethod.GET, pathHostInCluster, null);
         ComputeState computeState = Utils.fromJson(computeStateRaw, ComputeState.class);
 
         assertNotNull(computeState);
@@ -205,6 +207,61 @@ public class ClusterServiceIT extends BaseProvisioningOnCoreOsIT {
         assertServiceDeleted(dtoCreated.nodeLinks.get(0));
         assertServiceDeleted(placementZoneLink);
         assertServiceDeleted(groupPlacementLink);
+
+    }
+
+    @Test
+    public void testAddRemoveDockerHostInCluster() throws Throwable {
+
+        ClusterDto dtoCreated = createCluster();
+
+        ClusterDto dtoGet = getCluster(dtoCreated.documentSelfLink);
+
+        assertEquals(1, dtoGet.nodeLinks.size());
+        assertTrue(dtoGet.nodeLinks.contains(dtoCreated.nodeLinks.get(0)));
+        assertEquals(getDockerHostAddressWithPort1, dtoGet.nodes.get(dtoCreated.nodeLinks.get(0))
+                .address);
+
+        ContainerHostSpec hostSpecDocker = createContainerHostSpec(
+                Collections.singletonList(projectLink),
+                ContainerHostType.DOCKER, true);
+        hostSpecDocker.hostState.address = getDockerHostAddressWithPort2;
+        String pathHostsInCluster = UriUtils.buildUriPath(ClusterService.SELF_LINK, Service
+                .getId(dtoCreated.documentSelfLink), "hosts");
+
+        sendRequest(HttpMethod.POST, pathHostsInCluster, Utils.toJson
+                (hostSpecDocker));
+
+        dtoGet = getCluster(dtoCreated.documentSelfLink);
+
+        assertEquals(2, dtoGet.nodeLinks.size());
+        assertTrue(dtoGet.nodeLinks.contains(dtoCreated.nodeLinks.get(0)));
+
+        String secondComputeLink;
+        if (dtoGet.nodeLinks.get(0).equals(dtoCreated.nodeLinks.get(0))) {
+            secondComputeLink = dtoGet.nodeLinks.get(1);
+        } else {
+            secondComputeLink = dtoGet.nodeLinks.get(0);
+        }
+
+        assertEquals(2, dtoGet.nodeLinks.size());
+        assertEquals(getDockerHostAddressWithPort1, dtoGet.nodes.get(dtoCreated.nodeLinks.get(0))
+                .address);
+        assertEquals(getDockerHostAddressWithPort2, dtoGet.nodes.get(secondComputeLink)
+                .address);
+
+        String pathSecondHostInCluster = UriUtils
+                .buildUriPath(ClusterService.SELF_LINK, Service.getId(dtoCreated.documentSelfLink),
+                        ClusterService.HOSTS_URI_PATH_SEGMENT,
+                        Service.getId(secondComputeLink));
+        sendRequest(HttpMethod.DELETE, pathSecondHostInCluster, Utils.toJson
+                (hostSpecDocker));
+
+        dtoGet = getCluster(dtoCreated.documentSelfLink);
+        assertEquals(1, dtoGet.nodeLinks.size());
+        assertTrue(dtoGet.nodeLinks.contains(dtoCreated.nodeLinks.get(0)));
+        assertEquals(getDockerHostAddressWithPort1, dtoGet.nodes.get(dtoCreated.nodeLinks.get(0))
+                .address);
 
     }
 
@@ -278,7 +335,7 @@ public class ClusterServiceIT extends BaseProvisioningOnCoreOsIT {
             List<String> tenantLinks) throws Throwable {
         ComputeState cs = new ComputeState();
         cs.id = UUID.randomUUID().toString();
-        cs.address = getDockerHostAddressWithPort;
+        cs.address = getDockerHostAddressWithPort1;
         // cs.powerState = hostState;
         cs.customProperties = new HashMap<>();
         cs.customProperties.put(ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME,
@@ -296,9 +353,11 @@ public class ClusterServiceIT extends BaseProvisioningOnCoreOsIT {
 
     protected void setupEnvironmentForCluster()
             throws Throwable {
-        dockerHostAddress = getTestRequiredProp("docker.host.address");
+        dockerHostAddress1 = getTestRequiredProp("docker.host.cluster.node1.address");
+        dockerHostAddress2 = getTestRequiredProp("docker.host.cluster.node2.address");
         hostPort = getTestRequiredProp("docker.host.port." + DockerAdapterType.API.name());
-        getDockerHostAddressWithPort = "https://" + dockerHostAddress + ":" + hostPort;
+        getDockerHostAddressWithPort1 = "https://" + dockerHostAddress1 + ":" + hostPort;
+        getDockerHostAddressWithPort2 = "https://" + dockerHostAddress2 + ":" + hostPort;
 
         dockerHostAuthCredentials = IntegratonTestStateFactory.createAuthCredentials(true);
         dockerHostAuthCredentials.type = AuthCredentialsType.PublicKey.name();
@@ -322,7 +381,7 @@ public class ClusterServiceIT extends BaseProvisioningOnCoreOsIT {
         projectLink = buildProjectLink(ProjectService.DEFAULT_PROJECT_ID);
         placementZoneName = PlacementZoneUtil
                 .buildPlacementZoneDefaultName(ContainerHostType.DOCKER,
-                        getDockerHostAddressWithPort);
+                        getDockerHostAddressWithPort1);
         hostSpec = createContainerHostSpec(Collections.singletonList(projectLink),
                 ContainerHostType.DOCKER, true);
     }
