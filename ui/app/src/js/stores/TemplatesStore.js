@@ -21,6 +21,7 @@ import PlacementsStore from 'stores/PlacementsStore';
 import ResourceGroupsStore from 'stores/ResourceGroupsStore';
 import NotificationsStore from 'stores/NotificationsStore';
 import EventLogStore from 'stores/EventLogStore';
+import DeploymentPolicyStore from 'stores/DeploymentPolicyStore';
 import ContextPanelStoreMixin from 'stores/mixins/ContextPanelStoreMixin';
 import CrudStoreMixin from 'stores/mixins/CrudStoreMixin';
 import recommendedImages from 'core/recommendedImages';
@@ -756,6 +757,13 @@ let TemplatesStore = Reflux.createStore({
       }
     });
 
+    DeploymentPolicyStore.listen((policiesData) => {
+      if (this.isContextPanelActive(constants.CONTEXT_PANEL.DEPLOYMENT_POLICIES)) {
+        this.setActiveItemData(policiesData);
+        this.emitChange();
+      }
+    });
+
     PlacementsStore.listen((placementsData) => {
       if (this.data.selectedItemDetails) {
         this.setInData(['selectedItemDetails', 'placements'], placementsData.items);
@@ -768,6 +776,7 @@ let TemplatesStore = Reflux.createStore({
     actions.TemplateActions,
     actions.RegistryActions,
     actions.TemplatesContextToolbarActions,
+    actions.HostContextToolbarActions,
     actions.NavigationActions,
     actions.PlacementActions
   ],
@@ -821,6 +830,12 @@ let TemplatesStore = Reflux.createStore({
   onOpenToolbarEventLogs: function(highlightedItemLink) {
     actions.EventLogActions.openEventLog(highlightedItemLink);
     this.openToolbarItem(constants.CONTEXT_PANEL.EVENTLOGS, EventLogStore.getData());
+  },
+
+  onOpenToolbarDeploymentPolicies: function() {
+    actions.DeploymentPolicyActions.retrieveDeploymentPolicies();
+    this.openToolbarItem(constants.CONTEXT_PANEL.DEPLOYMENT_POLICIES,
+                         DeploymentPolicyStore.getData());
   },
 
   onOpenToolbarClosureResults: function() {

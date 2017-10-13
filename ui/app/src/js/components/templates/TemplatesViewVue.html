@@ -134,6 +134,13 @@
         v-bind:notifications="eventLogsCount"
         v-on:open="openToolbarEventLogs()" v-on:close="closeToolbar()">
       </context-sidepanel-toolbar-item>
+
+      <context-sidepanel-toolbar-item
+        v-if="isApplicationEmbedded()"
+        v-bind:active="activeContextItem === 'deploymentPolicies'"
+        v-bind:label="i18n('app.deploymentPolicy.contextPanelTooltip')"
+        v-on:open="openToolbarDeploymentPolicies()" v-on:close="closeToolbar()">
+      </context-sidepanel-toolbar-item>
     </div>
 
     <div slot="content" class="content">
@@ -141,6 +148,8 @@
                      v-bind:model="model.contextView.activeItem.data"></requests-list>
       <eventlog-list v-if="activeContextItem === 'eventlogs'"
                      v-bind:model="model.contextView.activeItem.data"></eventlog-list>
+      <deployment-policies-list v-if="activeContextItem === 'deploymentPolicies'"
+                     v-bind:model="model.contextView.activeItem.data"></deployment-policies-list>
     </div>
   </context-sidepanel>
 

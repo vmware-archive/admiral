@@ -32,7 +32,8 @@ import {
   RequestsActions,
   NotificationsActions,
   TemplateActions,
-  TemplatesContextToolbarActions
+  TemplatesContextToolbarActions,
+  HostContextToolbarActions
 } from 'actions/Actions';
 
 var TemplatesViewVueComponent = Vue.extend({
@@ -357,6 +358,10 @@ var TemplatesViewVueComponent = Vue.extend({
     }
   },
   methods: {
+    isApplicationEmbedded: function() {
+      return utils.isApplicationEmbedded();
+    },
+
     goBack: function() {
       let detailsView = this.$refs.templateDetails;
       if (!detailsView || !detailsView.handleBackButton || !detailsView.handleBackButton()) {
@@ -402,6 +407,7 @@ var TemplatesViewVueComponent = Vue.extend({
 
     openToolbarRequests: TemplatesContextToolbarActions.openToolbarRequests,
     openToolbarEventLogs: TemplatesContextToolbarActions.openToolbarEventLogs,
+    openToolbarDeploymentPolicies: HostContextToolbarActions.openToolbarDeploymentPolicies,
     closeToolbar: TemplatesContextToolbarActions.closeToolbar,
     openToolbarClosureResults: TemplatesContextToolbarActions.openToolbarClosureResults,
 
