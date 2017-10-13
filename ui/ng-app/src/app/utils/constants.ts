@@ -24,6 +24,11 @@ export const Constants = {
             publicAddress: '__publicAddress'
         }
     },
+    clusters: {
+        properties: {
+            publicAddress: "publicAddress"
+        }
+    },
     alert: {
         type: {
             DANGER: 'alert-danger',

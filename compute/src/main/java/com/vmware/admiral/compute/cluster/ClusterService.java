@@ -145,6 +145,12 @@ public class ClusterService extends StatelessService {
         /** (Optional) the address of the VCH cluster. */
         public String address;
 
+        /**
+         * (Optional) the public address of a single-host capacity cluster (e.g. VCH cluster). This
+         * is the address where published ports are reacheable.
+         */
+        public String publicAddress;
+
         /** The moment of creation of a given cluster. */
         public Long clusterCreationTimeMicros;
 
@@ -213,36 +219,112 @@ public class ClusterService extends StatelessService {
                 CLUSTER_PATH_SEGMENT_TEMPLATE).get(CLUSTER_ID_PATH_SEGMENT);
 
         String projectLink = OperationUtil.extractProjectFromHeader(patch);
+        ClusterDto patchDto = patch.getBody(ClusterDto.class);
 
+        patchUnderlyingPlacementZone(clusterId, patchDto)
+                .thenCompose(epzConfigState -> getInfoFromHostsWihtinOnePlacementZone(projectLink,
+                        epzConfigState))
+                .thenAccept(clusterDtom -> propagatePublicAddressIfNeeded(patchDto, clusterDtom))
+                .thenAccept(clusterDto -> {
+                    if (clusterDto != null) {
+                        patch.setBody(clusterDto);
+                    }
+                })
+                .whenCompleteNotify(patch);
+    }
+
+    /**
+     * Propagates the {@link ClusterDto#publicAddress} to the host of this cluster if and only if
+     * the cluster is a single-host cluster and there is a host in the cluster.
+     *
+     * @param patchDto
+     *            the original PATCH body
+     * @param wipDto
+     *            WIP {@link ClusterDto} instance that already contains the basic changes to the
+     *            cluster
+     * @return returns
+     *         <code>wipDto</wip> either immediately or after updating a single host with the public address form the <code>patchDto</code>
+     */
+    private DeferredResult<ClusterDto> propagatePublicAddressIfNeeded(ClusterDto patchDto,
+            ClusterDto wipDto) {
+        if (patchDto.publicAddress == null || !ClusterUtils.isSingleHostSupportedCluster(wipDto)) {
+            return DeferredResult.completed(wipDto);
+        }
+
+        String hostLink = null;
+        if (wipDto.nodeLinks != null && wipDto.nodeLinks.size() == 1) {
+            hostLink = wipDto.nodeLinks.iterator().next();
+        } else if (wipDto.nodes != null && wipDto.nodes.size() == 1) {
+            hostLink = wipDto.nodes.keySet().iterator().next();
+        }
+
+        if (hostLink == null) {
+            return DeferredResult.completed(wipDto);
+        }
+
+        ComputeState patchState = new ComputeState();
+        patchState.customProperties = new HashMap<>();
+        patchState.customProperties.put(ContainerHostService.HOST_PUBLIC_ADDRESS_PROP_NAME,
+                patchDto.publicAddress);
+
+        Operation patchOp = Operation.createPatch(getHost(), hostLink)
+                .setReferer(getSelfLink())
+                .setBody(patchState);
+
+        return getHost().sendWithDeferredResult(patchOp, ComputeState.class)
+                .thenApply((cs) -> {
+                    wipDto.publicAddress = patchDto.publicAddress;
+                    return wipDto;
+                });
+    }
+
+    private DeferredResult<ElasticPlacementZoneConfigurationState> patchUnderlyingPlacementZone(
+            String clusterId, ClusterDto patchDto) {
         String pathPZId = UriUtils.buildUriPath(
                 ElasticPlacementZoneConfigurationService.SELF_LINK,
                 ResourcePoolService.FACTORY_LINK, clusterId);
+
         ResourcePoolState resourcePool = new ResourcePoolState();
         resourcePool.documentSelfLink = UriUtils.buildUriPath(ResourcePoolService.FACTORY_LINK,
                 clusterId);
-        ClusterDto clusterDto = patch.getBody(ClusterDto.class);
-        resourcePool.name = clusterDto.name;
+        resourcePool.name = patchDto.name;
         resourcePool.customProperties = new HashMap<>();
         resourcePool.customProperties.put(
                 ClusterService.CLUSTER_DETAILS_CUSTOM_PROP,
-                clusterDto.details);
+                patchDto.details);
 
         ElasticPlacementZoneConfigurationState placementZone = new ElasticPlacementZoneConfigurationState();
         placementZone.resourcePoolState = resourcePool;
-        sendWithDeferredResult(
+        return sendWithDeferredResult(
                 Operation
                         .createPatch(UriUtils.buildUri(getHost(), pathPZId))
                         .setReferer(getHost().getUri())
                         .setBody(placementZone),
                 ElasticPlacementZoneConfigurationState.class)
-                        .thenCompose(epzConfigState -> getInfoFromHostsWihtinOnePlacementZone(
-                                projectLink, epzConfigState))
-                        .thenAccept(clusterDtoList -> {
-                            if (!clusterDtoList.isEmpty()) {
-                                patch.setBody(clusterDtoList.get(0));
+                        // If the placement zone is not changed after the patch, the epz state will
+                        // have a null resourcePoolState. However, the placement zone is needed for
+                        // further computation, e.g. for patching VCH public address. We need to
+                        // retrieve the placement zone for these cases
+                        .thenCompose((epz) -> {
+                            if (epz.resourcePoolState != null) {
+                                return DeferredResult.completed(epz);
                             }
-                        })
-                        .whenCompleteNotify(patch);
+
+                            String epzPath = UriUtils.buildUriPath(
+                                    ElasticPlacementZoneConfigurationService.SELF_LINK,
+                                    ResourcePoolService.FACTORY_LINK, clusterId);
+                            Operation getOp = Operation.createGet(getHost(), epzPath)
+                                    .setReferer(getSelfLink());
+                            return getHost().sendWithDeferredResult(getOp,
+                                    ElasticPlacementZoneConfigurationState.class)
+                                    .exceptionally((ex) -> {
+                                        logWarning(
+                                                "Could not retrieve placement zone %s. "
+                                                + "Further updates in this transaction might fail.",
+                                                epzPath);
+                                        return null;
+                                    });
+                        });
     }
 
     @Override
@@ -353,9 +435,9 @@ public class ClusterService extends StatelessService {
                 ElasticPlacementZoneConfigurationState.class)
                         .thenCompose(epzConfigState -> getInfoFromHostsWihtinOnePlacementZone(
                                 projectLink, epzConfigState))
-                        .thenAccept(clusterDtoList -> {
-                            if (!clusterDtoList.isEmpty()) {
-                                get.setBody(clusterDtoList.get(0));
+                        .thenAccept(clusterDto -> {
+                            if (clusterDto != null) {
+                                get.setBody(clusterDto);
                             }
                         })
                         .whenCompleteNotify(get);
@@ -408,20 +490,22 @@ public class ClusterService extends StatelessService {
         return DeferredResult.allOf(clusterDtoList);
     }
 
-    private DeferredResult<List<ClusterDto>> getInfoFromHostsWihtinOnePlacementZone(
+    private DeferredResult<ClusterDto> getInfoFromHostsWihtinOnePlacementZone(
             String projectLink, ElasticPlacementZoneConfigurationState queryResult) {
-        Map<String, ElasticPlacementZoneConfigurationState> ePZstates = new HashMap<>();
-        ePZstates.put(queryResult.documentSelfLink, queryResult);
-        List<DeferredResult<ClusterDto>> clusterDtoList = ePZstates.keySet().stream()
-                .map(key -> ClusterUtils.getHostsWithinPlacementZone(
-                        ePZstates.get(key).resourcePoolState.documentSelfLink, projectLink,
-                        getHost())
-                        .thenApply(computeStates -> {
-                            return ClusterUtils.placementZoneAndItsHostsToClusterDto(
-                                    ePZstates.get(key).resourcePoolState, computeStates);
-                        }))
-                .collect(Collectors.toList());
-        return DeferredResult.allOf(clusterDtoList);
+
+        // if nothing was updated, the resource pool will be null
+        if (queryResult.resourcePoolState == null
+                || queryResult.resourcePoolState.documentSelfLink == null) {
+            return DeferredResult.completed(null);
+        }
+
+        return ClusterUtils
+                .getHostsWithinPlacementZone(queryResult.resourcePoolState.documentSelfLink,
+                        projectLink, getHost())
+                .thenApply(computeStates -> {
+                    return ClusterUtils.placementZoneAndItsHostsToClusterDto(
+                            queryResult.resourcePoolState, computeStates);
+                });
     }
 
     private DeferredResult<Operation> deleteHostsWihtinOnePlacementZone(ServiceHost host,

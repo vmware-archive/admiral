@@ -31,6 +31,11 @@
             <div class="right-column"><a target="_blank" href="{{ adminPortal }}">{{ adminPortal }}</a></div>
             <div class="clear"></div>
         </div>
+        <div *ngIf="publicAddress" class="summary-subsection-content-row">
+            <div class="left-column">{{ "clusters.edit.publicAddress" | i18n }}</div>
+            <div class="right-column">{{ publicAddress }}</div>
+            <div class="clear"></div>
+        </div>
         <div class="summary-subsection-content-row">
             <div class="left-column">{{ "clusters.summary.status" | i18n }}</div>
             <div class="right-column"><span class="status {{ cluster?.status }}">{{ clusterState }}</span></div>

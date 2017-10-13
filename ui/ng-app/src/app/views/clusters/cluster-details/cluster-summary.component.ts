@@ -39,6 +39,10 @@ export class ClusterSummaryComponent implements OnInit {
     return '';
   }
 
+  get publicAddress() {
+    return this.cluster && this.cluster.publicAddress;
+  }
+
   get clusterOverviewTextKey() {
     if (FT.isVic()) {
       return 'clusters.summary.clusterOverviewVic';

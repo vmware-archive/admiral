@@ -131,6 +131,11 @@ export class ClusterResourcesComponent implements OnChanges, AfterViewInit {
     return Utils.getHostName(host);
   }
 
+  getPublicAddress(host) {
+    return Utils.getCustomPropertyValue(host.customProperties,
+      Constants.hosts.customProperties.publicAddress);
+  }
+
   getCpuPercentage(host, shouldRound) {
     return Utils.getCpuPercentage(host, shouldRound);
   }

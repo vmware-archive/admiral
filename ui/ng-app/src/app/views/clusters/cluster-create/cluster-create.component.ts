@@ -99,11 +99,8 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
     }
 
     if (this.isSingleHostCluster) {
-      let publicAddress = Utils.getCustomPropertyValue(this.entity.customProperties,
-        Constants.hosts.customProperties.publicAddress) || this.entity.address;
-      if (publicAddress) {
-        this.clusterForm.get('publicAddress').setValue(this.entity.address);
-      }
+      let publicAddress = this.entity.publicAddress || "";
+      this.clusterForm.get('publicAddress').setValue(publicAddress);
     }
   }
 
@@ -167,15 +164,14 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
       let description = this.clusterForm.value.description;
       let clusterDtoPatch = {
         'name': name,
-        'details':  description,
-        'customProperties': {}
+        'details':  description
       };
 
       // TODO check if the backend will handle this
       if (this.isSingleHostCluster) {
-      // allow overwriting with empty value
-      let publicAddress = this.clusterForm.value.publicAddress || "";
-      clusterDtoPatch.customProperties[Constants.hosts.customProperties.publicAddress] = publicAddress;
+        // allow overwriting with empty value
+        let publicAddress = this.clusterForm.value.publicAddress || "";
+        clusterDtoPatch[Constants.clusters.properties.publicAddress] = publicAddress;
       }
 
       this.isSaving = true;

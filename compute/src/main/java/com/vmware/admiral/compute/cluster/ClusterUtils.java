@@ -307,6 +307,13 @@ public class ClusterUtils {
                 //not available for now
                 ePZClusterDto.totalCpu = 0.0;
             }
+
+            if (isSingleHostSupportedCluster(ePZClusterDto) && computeStates.size() == 1) {
+                Map<String, String> customProperties = computeStates.get(0).customProperties;
+                ePZClusterDto.publicAddress = customProperties
+                        .get(ContainerHostService.HOST_PUBLIC_ADDRESS_PROP_NAME);
+            }
+
             int containerCounter = 0;
             ePZClusterDto.nodes = new HashMap<>();
             for (ComputeState computeState : computeStates) {
@@ -358,5 +365,21 @@ public class ClusterUtils {
         outState.powerState = state.powerState;
         outState.name = state.name;
         return outState;
+    }
+
+    /**
+     * Checks whether the specified cluster supports only a single host (e.g. is a VCH cluster).
+     * Note that this is different from supporting multiple hosts but having only a single one added
+     * to the cluster. This method will return <code>true</code> if and only if the cluster has
+     * capacity for exactly one host regardless of the current state of the cluster (empty or has a
+     * single host).
+     *
+     * @param cluster
+     *            a {@link ClusterDto} with its type set
+     * @return whether this cluster supports only a single host
+     * @see ClusterType
+     */
+    public static boolean isSingleHostSupportedCluster(ClusterDto cluster) {
+        return cluster != null && cluster.type == ClusterType.VCH;
     }
 }
