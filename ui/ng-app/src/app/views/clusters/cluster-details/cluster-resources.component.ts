@@ -16,6 +16,7 @@ import { Utils } from "../../../utils/utils";
 import { GridViewComponent } from '../../../components/grid-view/grid-view.component';
 import { Constants } from '../../../utils/constants';
 import { Links } from './../../../utils/links';
+import { FT } from './../../../utils/ft';
 
 @Component({
   selector: 'app-cluster-resources',
@@ -38,6 +39,7 @@ export class ClusterResourcesComponent implements OnChanges, AfterViewInit {
   showEditHost: boolean;
   hostToEdit: any;
   credentialsList: any[];
+  deploymentPolicies: any[];
 
   hostToDelete: any;
   deleteConfirmationAlert: string;
@@ -53,6 +55,11 @@ export class ClusterResourcesComponent implements OnChanges, AfterViewInit {
       this.credentialsList = credentials.documents
           .filter(c => !Utils.areSystemScopedCredentials(c));
     });
+    if (FT.isApplicationEmbedded()) {
+      this.service.list(Links.DEPLOYMENT_POLICIES, {}).then(policies => {
+        this.deploymentPolicies = policies.documents;
+      });
+    }
   }
 
   get deleteConfirmationDescription(): string {

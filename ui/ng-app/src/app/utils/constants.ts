@@ -21,7 +21,8 @@ export const Constants = {
             VCH: 'VCH'
         },
         customProperties: {
-            publicAddress: '__publicAddress'
+            publicAddress: '__publicAddress',
+            deploymentPolicyLink: '__deploymentPolicyLink'
         }
     },
     clusters: {

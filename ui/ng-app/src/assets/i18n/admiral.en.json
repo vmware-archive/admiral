@@ -176,7 +176,8 @@
       "addHost": {
         "title": "Add Host",
         "address": "URL",
-        "addressRequired": "URL is required."
+        "addressRequired": "URL is required.",
+        "deploymentPolicy": "Deployment policy"
       },
       "editHost": {
         "title": "Edit Host",

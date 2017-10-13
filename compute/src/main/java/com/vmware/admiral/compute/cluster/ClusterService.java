@@ -608,6 +608,10 @@ public class ClusterService extends StatelessService {
                 PropertyUtils.getPropertyString(hostSpec.hostState.customProperties,
                         ContainerHostService.HOST_PUBLIC_ADDRESS_PROP_NAME)
                         .orElse(null));
+        hs.hostState.customProperties.put(ContainerHostService.CUSTOM_PROPERTY_DEPLOYMENT_POLICY,
+                PropertyUtils.getPropertyString(hostSpec.hostState.customProperties,
+                        ContainerHostService.CUSTOM_PROPERTY_DEPLOYMENT_POLICY)
+                        .orElse(null));
 
         sendWithDeferredResult(Operation
                 .createPut(UriUtils.buildUri(getHost(),

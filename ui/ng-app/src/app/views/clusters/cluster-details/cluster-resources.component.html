@@ -94,8 +94,14 @@
   </ng-template>
 </grid-view>
 
-<app-cluster-add-host [cluster]="cluster" [visible]="showAddHost"
-                      (onCancel)="onAddHostCanceled()" (onChange)="onHostAdded()"
-                      [projectLink]="projectLink"></app-cluster-add-host>
-<app-cluster-edit-host [host]="hostToEdit" [visible]="showEditHost" [credentials]="credentialsList"
-                       (onCancel)="onEditHostCanceled()" (onChange)="onHostEdited()"></app-cluster-edit-host>
+<app-cluster-add-host [cluster]="cluster"
+                      [visible]="showAddHost"
+                      (onCancel)="onAddHostCanceled()"
+                      (onChange)="onHostAdded()"
+                      [projectLink]="projectLink"
+                      [deploymentPolicies]="deploymentPolicies"></app-cluster-add-host>
+<app-cluster-edit-host [host]="hostToEdit"
+                       [visible]="showEditHost"
+                       [credentials]="credentialsList"
+                       (onCancel)="onEditHostCanceled()"
+                       (onChange)="onHostEdited()"></app-cluster-edit-host>

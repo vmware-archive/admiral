@@ -30,6 +30,7 @@ export class ClusterAddHostComponent implements AfterViewInit {
     @Input() cluster: any;
     @Input() visible: boolean;
     @Input() projectLink: string;
+    @Input() deploymentPolicies: any[] = [];
 
     isAddingHost: boolean;
     credentials: any[] = [];
@@ -43,7 +44,8 @@ export class ClusterAddHostComponent implements AfterViewInit {
     addHostToClusterForm = new FormGroup({
         address: new FormControl('', Validators.required),
         credentials: new FormControl(''),
-        publicAddress: new FormControl('')
+        publicAddress: new FormControl(''),
+        deploymentPolicy: new FormControl('')
     });
 
     credentialsTitle = I18n.t('dropdownSearchMenu.title', {
@@ -54,6 +56,16 @@ export class ClusterAddHostComponent implements AfterViewInit {
     credentialsSearchPlaceholder = I18n.t('dropdownSearchMenu.searchPlaceholder', {
         ns: 'base',
         entity: I18n.t('app.credential.entity', {ns: 'base'})
+    } as I18n.TranslationOptions );
+
+    deploymentPoliciesTitle = I18n.t('dropdownSearchMenu.title', {
+        ns: 'base',
+        entity: I18n.t('app.deploymentPolicy.entity', {ns: 'base'})
+    } as I18n.TranslationOptions );
+
+    deploymentPoliciesSearchPlaceholder = I18n.t('dropdownSearchMenu.searchPlaceholder', {
+        ns: 'base',
+        entity: I18n.t('app.deploymentPolicy.entity', {ns: 'base'})
     } as I18n.TranslationOptions );
 
     constructor(private documentService: DocumentService) { }
@@ -70,9 +82,13 @@ export class ClusterAddHostComponent implements AfterViewInit {
         });
     }
 
+    get isApplicationEmbedded(): boolean {
+        return FT.isApplicationEmbedded();
+    }
+
     get showPublicAddressField(): boolean {
         return FT.isHostPublicUriEnabled();
-      }
+    }
 
     clearView() {
         this.resetAlert();
@@ -134,6 +150,11 @@ export class ClusterAddHostComponent implements AfterViewInit {
             if (formInput.publicAddress) {
                 hostState.customProperties[Constants.hosts.customProperties.publicAddress] =
                                                                             formInput.publicAddress;
+            }
+
+            if (formInput.deploymentPolicy) {
+                hostState.customProperties[Constants.hosts.customProperties.deploymentPolicyLink] =
+                        formInput.deploymentPolicy.documentSelfLink;
             }
 
             let hostSpec = {
