@@ -84,7 +84,6 @@ import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler.Servic
 import com.vmware.admiral.service.common.UrlEncodedReverseProxyService;
 import com.vmware.admiral.service.test.MockConfigureHostOverSshTaskServiceWithoutValidate;
 import com.vmware.admiral.service.test.MockContainerHostService;
-import com.vmware.iaas.consumer.api.service.MachineService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -119,8 +118,7 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 PodLogService.class,
                 UrlEncodedReverseProxyService.class,
                 FetchDataGatewayService.class,
-                ClusterService.class,
-                MachineService.class);
+                ClusterService.class);
 
         startServiceFactories(host, CaSigningCertService.class,
                 GroupResourcePlacementService.class,

@@ -45,12 +45,16 @@
             <artifactId>admiral-adapter-extensibility</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.vmware.admiral.closures</groupId>
+            <artifactId>admiral-closure-services</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>com.vmware.photon.controller</groupId>
             <artifactId>photon-model</artifactId>
         </dependency>
-
         <dependency>
             <groupId>com.vmware.photon.controller</groupId>
             <artifactId>photon-adapter-util</artifactId>
@@ -62,15 +66,8 @@
         </dependency>
 
         <dependency>
-            <groupId>com.vmware.admiral.closures</groupId>
-            <artifactId>admiral-closure-services</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>consumer-iaas-api</artifactId>
-            <version>${project.version}</version>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
         </dependency>
 
         <!-- TEST -->
