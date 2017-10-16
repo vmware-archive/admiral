@@ -456,6 +456,13 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
             if ((authServices != null && !authServices.isEmpty())) {
                 startCoreServicesSynchronously(authServices.toArray(new Service[] {}));
             }
+
+            Collection<Class<? extends Service>> privilegeServices =
+                    authProvider.getPrivilegedServices();
+            if (privilegeServices != null && !privilegeServices.isEmpty()) {
+                // Register privileged services.
+                privilegeServices.stream().forEach(service -> this.addPrivilegedService(service));
+            }
         }
 
         startPeerListener();

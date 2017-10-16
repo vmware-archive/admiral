@@ -56,6 +56,11 @@ public interface AuthConfigProvider {
 
     Collection<Service> createServices();
 
+    /**
+     * @return a list of services that should be registered as privileged services.
+     */
+    Collection<Class<? extends Service>> getPrivilegedServices();
+
     Class<? extends UserState> getUserStateClass();
 
 }

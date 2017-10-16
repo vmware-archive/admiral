@@ -317,6 +317,11 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
     }
 
     @Override
+    public Collection<Class<? extends Service>> getPrivilegedServices() {
+        return Collections.emptyList();
+    }
+
+    @Override
     public Class<? extends UserState> getUserStateClass() {
         return UserState.class;
     }
