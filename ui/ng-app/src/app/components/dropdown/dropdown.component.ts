@@ -103,9 +103,22 @@ export class DropdownComponent implements OnInit, ControlValueAccessor {
   }
 
   writeValue(value: any) {
-    this._value = value;
-    if (this.credentialInput) {
-      this.credentialInput.setSelectedOption(value);
+    if (typeof value === 'string') { // assume it's documentSelfLink
+      if (!this._options) {
+        return;
+      }
+      var option = this._options.filter(option => {
+        return value === option.documentSelfLink;
+      })[0];
+      if (this.credentialInput && option) {
+        this._value = option;
+        this.credentialInput.setSelectedOption(option);
+      }
+    } else {
+      this._value = value;
+      if (this.credentialInput) {
+        this.credentialInput.setSelectedOption(value);
+      }
     }
   }
   registerOnChange(fn: any){

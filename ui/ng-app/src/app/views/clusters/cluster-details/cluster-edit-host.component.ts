@@ -32,6 +32,7 @@ export class ClusterEditHostComponent implements OnChanges {
     @Input() visible: boolean;
     @Input() host: any;
     @Input() credentials: any[] = [];
+    @Input() deploymentPolicies: any[] = [];
 
     isSavingHost: boolean;
     isVerifyingHost: boolean;
@@ -46,21 +47,39 @@ export class ClusterEditHostComponent implements OnChanges {
     editHostForm = new FormGroup({
         name: new FormControl(''),
         credentials: new FormControl(''),
-        publicAddress: new FormControl('')
+        publicAddress: new FormControl(''),
+        deploymentPolicy: new FormControl('')
     });
+
+    deploymentPoliciesTitle = I18n.t('dropdownSearchMenu.title', {
+        ns: 'base',
+        entity: I18n.t('app.deploymentPolicy.entity', {ns: 'base'})
+    } as I18n.TranslationOptions );
+
+    deploymentPoliciesSearchPlaceholder = I18n.t('dropdownSearchMenu.searchPlaceholder', {
+        ns: 'base',
+        entity: I18n.t('app.deploymentPolicy.entity', {ns: 'base'})
+    } as I18n.TranslationOptions );
 
     constructor(private ds: DocumentService) { }
 
     ngOnChanges(changes: SimpleChanges) {
         if (this.host) {
+
             this.editHostForm.get('name').setValue(Utils.getHostName(this.host));
+
             var authCredentialsLink = Utils.getCustomPropertyValue(this.host.customProperties, '__authCredentialsLink');
             if (authCredentialsLink) {
                 this.editHostForm.get('credentials').setValue(authCredentialsLink);
             }
+
             var publicAddress = Utils.getCustomPropertyValue(this.host.customProperties,
                 Constants.hosts.customProperties.publicAddress) || "";
             this.editHostForm.get('publicAddress').setValue(publicAddress);
+
+            var deploymentPolicyLink = Utils.getCustomPropertyValue(this.host.customProperties,
+                    Constants.hosts.customProperties.deploymentPolicyLink);
+            this.editHostForm.get('deploymentPolicy').setValue(deploymentPolicyLink);
         }
     }
 
@@ -110,6 +129,13 @@ export class ClusterEditHostComponent implements OnChanges {
 
         // allow ovewriting with empty value
         hostCopy.customProperties[Constants.hosts.customProperties.publicAddress] = formInput.publicAddress || "";
+
+        if (formInput.deploymentPolicy) {
+            hostCopy.customProperties[Constants.hosts.customProperties.deploymentPolicyLink] =
+                    formInput.deploymentPolicy.documentSelfLink;
+        } else {
+            delete hostCopy.customProperties[Constants.hosts.customProperties.deploymentPolicyLink];
+        }
 
         return hostCopy;
     }

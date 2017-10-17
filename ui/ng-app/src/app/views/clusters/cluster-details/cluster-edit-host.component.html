@@ -45,6 +45,14 @@
                         <span class="tooltip-content">{{ "clusters.edit.publicAddressDescription" | i18n }}</span>
                     </a>
                 </div>
+                <div class="form-group">
+                    <label for="deploymentPolicy">{{ "clusters.resources.addHost.deploymentPolicy" | i18n }}</label>
+                    <dropdown id="deploymentPolicy" formControlName="deploymentPolicy" [options]="deploymentPolicies"
+                              [title]="deploymentPoliciesTitle"
+                              [searchPlaceholder]="deploymentPoliciesSearchPlaceholder"
+                              ddClass="top-left">
+                    </dropdown>
+                </div>
             </section>
         </form>
     </div>
