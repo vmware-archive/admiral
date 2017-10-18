@@ -84,9 +84,11 @@ const PAGE_LIMIT : string = '50';
 @Injectable()
 export class DocumentService {
 
-  constructor(public ajax: Ajax, private ps: ProjectService) { }
+  constructor(public ajax: Ajax, private projectService: ProjectService) {
+  }
 
-  public list(factoryLink: string, queryOptions: any, projectLink?: string): Promise<DocumentListResult> {
+  public list(factoryLink: string, queryOptions: any,
+              projectLink?: string): Promise<DocumentListResult> {
     let params = new URLSearchParams();
     // params.set('$limit', serviceUtils.calculateLimit().toString());
     params.set('$limit', PAGE_LIMIT);
@@ -226,11 +228,11 @@ export class DocumentService {
     }
 
   private buildHeaders(projectLink?: string): Headers {
-    if (!this.ps && !projectLink) {
+    if (!this.projectService && !projectLink) {
       return undefined;
     }
 
-    let selectedProject = this.ps.getSelectedProject();
+    let selectedProject = this.projectService.getSelectedProject();
 
     let calculateHeaders = function(projectId) {
       if (!projectId || /^\s*$/.test(projectId)) {

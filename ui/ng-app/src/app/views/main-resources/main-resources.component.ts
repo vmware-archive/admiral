@@ -9,20 +9,17 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { FT } from './../../utils/ft';
-import { Roles } from './../../utils/roles';
-import { Ajax } from './../../utils/ajax.service';
-import { DocumentService } from './../../utils/document.service';
 import { Component, OnInit, ViewEncapsulation, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { Router, NavigationEnd } from '@angular/router';
-
 import { RoutesRestriction } from './../../utils/routes-restriction';
 import { FormerViewPathBridge, RouteUtils } from './../../utils/route-utils';
-
 import { AuthService } from './../../utils/auth.service';
+import { DocumentService } from './../../utils/document.service';
 import { ErrorService } from '../../utils/error.service';
 import { ProjectService } from './../../utils/project.service';
+import { Roles } from './../../utils/roles';
+import { FT } from './../../utils/ft';
 
 @Component({
   selector: 'app-main-resources',
@@ -66,7 +63,7 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
 
     alertMessage: string;
 
-    constructor(private router: Router, private ds: DocumentService, private ajax: Ajax,
+    constructor(private router: Router, private documentService: DocumentService,
                 private projectService: ProjectService, private errorService: ErrorService,
                 private authService: AuthService) {
 
@@ -94,7 +91,7 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-      this.ds.listProjects().then((result) => {
+      this.documentService.listProjects().then((result) => {
         this.projects = result.documents;
 
         if (!this.projects || this.projects.length === 0) {
@@ -131,6 +128,20 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
       this.routeObserve.unsubscribe();
       this.errorObserve.unsubscribe();
+    }
+
+    updateProjects() {
+        this.documentService.listProjects().then((result) => {
+            this.projects = result.documents;
+
+            if (!this.projects || this.projects.length === 0) {
+                return;
+            }
+
+            this.sortProjects();
+        }).catch((e) => {
+            console.error('Failed to update projects', e);
+        })
     }
 
     selectProject(project) {
@@ -223,14 +234,8 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
     }
 
     get currentProjectLink() {
-        let currentProject;
-
-        if (this.selectedProject) {
-            currentProject = this.selectedProject.documentSelfLink
-                    || this.selectedProject.id;
-        }
-
-        return currentProject;
+        return (this.selectedProject)
+                    && (this.selectedProject.documentSelfLink || this.selectedProject.id);
     }
 
     get navigationClustersTextKey() {

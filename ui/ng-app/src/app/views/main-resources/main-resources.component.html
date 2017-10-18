@@ -12,7 +12,7 @@
 <nav class="sidenav">
   <section class="sidenav-content">
       <clr-dropdown clrMenuPosition="bottom-left" class="project-selector">
-        <button class="btn btn-link" clrDropdownToggle>
+        <button class="btn btn-link" clrDropdownToggle (click)="updateProjects()">
           <div *ngIf="embeddedMode" class="project-caret">{{ "projects.globalSelectLabelEmbedded" | i18n }} <clr-icon shape="caret down"></clr-icon></div>
           <div *ngIf="!embeddedMode" class="project-caret">{{ "projects.globalSelectLabel" | i18n }} <clr-icon shape="caret down"></clr-icon></div>
           <div class="project-label">{{selectedProject | projectName}}</div>

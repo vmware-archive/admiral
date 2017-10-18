@@ -43,7 +43,6 @@ import { ServiceListComponent } from './kubernetes/services/list/service-list.co
 import { ServiceDetailsComponent } from './kubernetes/services/details/service-details.component';
 
 import { NavigationContainerType } from './components/navigation-container/navigation-container.component';
-import { LoginComponent } from './components/login/login.component';
 
 import { AdminAuthGuard } from 'app/services/admin-auth-guard.service';
 import { HomeAuthGuard } from 'app/services/home-auth-guard.service';
@@ -61,22 +60,28 @@ export const ROUTES: Routes = [
         path: 'home', component: MainResourcesComponent,
         children: [
             {
-                path: '', canActivate: [HomeAuthGuard], data: { roles: RoutesRestriction.HOME }, pathMatch: 'full', redirectTo: 'applications' 
+                path: '', canActivate: [HomeAuthGuard],
+                    data: { roles: RoutesRestriction.HOME }, pathMatch: 'full',
+                    redirectTo: 'applications'
             },
             {
                 path: 'dashboard', component: DashboardComponent,
             },
             {
-                path: 'applications', component: DummyComponent, canActivate: [HomeAuthGuard], data: { roles: RoutesRestriction.DEPLOYMENTS }
+                path: 'applications', component: DummyComponent, canActivate: [HomeAuthGuard],
+                    data: { roles: RoutesRestriction.DEPLOYMENTS }
             },
             {
-                path: 'containers', component: DummyComponent, canActivate: [HomeAuthGuard], data: { roles: RoutesRestriction.DEPLOYMENTS }
+                path: 'containers', component: DummyComponent, canActivate: [HomeAuthGuard],
+                    data: { roles: RoutesRestriction.DEPLOYMENTS }
             },
             {
-                path: 'networks', component: DummyComponent, canActivate: [HomeAuthGuard], data: { roles: RoutesRestriction.DEPLOYMENTS }
+                path: 'networks', component: DummyComponent, canActivate: [HomeAuthGuard],
+                    data: { roles: RoutesRestriction.DEPLOYMENTS }
             },
             {
-                path: 'volumes', component: DummyComponent, canActivate: [HomeAuthGuard], data: { roles: RoutesRestriction.DEPLOYMENTS }
+                path: 'volumes', component: DummyComponent, canActivate: [HomeAuthGuard],
+                    data: { roles: RoutesRestriction.DEPLOYMENTS }
             },
             {
                 path: 'project-repositories', component: RepositoryComponent,
