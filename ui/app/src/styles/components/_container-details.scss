@@ -193,6 +193,7 @@ $elements-side-margin: $elements-margin / 2;
     position: absolute;
     bottom: 0;
     left: 0;
+    width: 100%;
 
     div.radio-inline, div.select {
       min-width: 60px;
