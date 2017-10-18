@@ -30,17 +30,10 @@ public class ReverseProxyService extends StatelessService {
 
     public static final String SELF_LINK = ManagementUriParts.REVERSE_PROXY;
 
+    protected volatile Boolean isEmbedded;
+
     public ReverseProxyService() {
         super.toggleOption(ServiceOption.URI_NAMESPACE_OWNER, true);
-    }
-
-    @Override
-    public void authorizeRequest(Operation op) {
-        if (ConfigurationUtil.isEmbedded()) {
-            op.complete();
-            return;
-        }
-        super.authorizeRequest(op);
     }
 
     @Override
@@ -74,6 +67,21 @@ public class ReverseProxyService extends StatelessService {
     }
 
     private void forwardRequest(final Operation op, final Function<URI, Operation> createOp) {
+
+        if (isEmbedded == null) {
+            ConfigurationUtil.getConfigProperty(this, ConfigurationUtil.EMBEDDED_MODE_PROPERTY,
+                    (embedded) -> {
+                        isEmbedded = Boolean.valueOf(embedded);
+                        forwardRequest(op, createOp);
+                    });
+            return;
+        }
+
+        if (isEmbedded) {
+            logInfo("Reverse proxy access temporarily disabled in embedded mode!");
+            op.fail(Operation.STATUS_CODE_FORBIDDEN);
+            return;
+        }
 
         URI targetUri = getTargetUri(op);
         if (targetUri == null) {
@@ -114,9 +122,15 @@ public class ReverseProxyService extends StatelessService {
         // try to get it directly from the request URI
         // the request URI should look like ../rp/{http://target-host/target-path}
         URI uri = op.getUri();
-        URI targetUri = getReverseProxyTargetUri(uri);
+        URI targetUri;
+        try {
+            targetUri = getReverseProxyTargetUri(uri);
+        } catch (Exception e) {
+            getHost().log(Level.WARNING, "Exception getting target uri: %s", e.getMessage());
+            targetUri = null;
+        }
         if (targetUri == null) {
-            getHost().log(Level.WARNING, "Unable to get target uri");
+            getHost().log(Level.WARNING, "Unable to get target uri!");
             return null;
         }
         return targetUri;

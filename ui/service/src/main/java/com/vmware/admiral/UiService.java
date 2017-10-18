@@ -12,6 +12,7 @@
 package com.vmware.admiral;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
 
@@ -19,6 +20,8 @@ public class UiService extends BaseUiService {
     public static final String SELF_LINK = ManagementUriParts.UI_SERVICE;
 
     private static final String OLD_COMPUTE_UI_QUERY = "compute";
+
+    protected volatile Boolean isEmbedded;
 
     @Override
     public void handleStart(Operation startPost) {
@@ -50,6 +53,25 @@ public class UiService extends BaseUiService {
 
     @Override
     public void handleGet(Operation get) {
+
+        if (isEmbedded == null) {
+            // ConfigurationUtil.getConfigProperty(this, ConfigurationUtil.EMBEDDED_MODE_PROPERTY,
+            // (embedded) -> {
+            // isEmbedded = Boolean.valueOf(embedded);
+            // handleGet(get);
+            // });
+            // return;
+
+            // TODO - the code above should be used instead but for some reason the UI components
+            // may get initialized before the configuration service is fully initialized.
+            isEmbedded = ConfigurationUtil.isEmbedded();
+        }
+
+        if (!isEmbedded) {
+            // Avoid clickjacking attacks, by ensuring that content is not embedded.
+            get.addResponseHeader(ConfigurationUtil.UI_FRAME_OPTIONS_HEADER, "DENY");
+        }
+
         if (redirectToLoginOrIndex(getHost(), get)) {
             return;
         }
@@ -73,4 +95,5 @@ public class UiService extends BaseUiService {
 
         return false;
     }
+
 }

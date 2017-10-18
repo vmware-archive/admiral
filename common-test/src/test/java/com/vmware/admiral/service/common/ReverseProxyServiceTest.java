@@ -12,6 +12,7 @@
 package com.vmware.admiral.service.common;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.net.URI;
 import java.util.function.Function;
@@ -19,7 +20,10 @@ import java.util.function.Function;
 import org.junit.Test;
 
 import com.vmware.admiral.common.test.BaseTestCase;
+import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.UriUtilsExtended;
+import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
+import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.TestContext;
@@ -29,6 +33,9 @@ public class ReverseProxyServiceTest extends BaseTestCase {
     @Override
     public void before() throws Throwable {
         super.before();
+
+        host.startServiceAndWait(ConfigurationFactoryService.class,
+                ConfigurationFactoryService.SELF_LINK);
 
         host.startService(ReverseProxyService.class.newInstance());
         host.startService(MockPingService.class.newInstance());
@@ -65,6 +72,23 @@ public class ReverseProxyServiceTest extends BaseTestCase {
     @Test
     public void testOptions() throws Throwable {
         testOperation(Operation::createOptions, null);
+    }
+
+    @Test
+    public void testOperationForbiddenWhenEmbedded() throws Throwable {
+
+        ConfigurationState config = new ConfigurationState();
+        config.key = ConfigurationUtil.EMBEDDED_MODE_PROPERTY;
+        config.value = "true";
+        config.documentSelfLink = config.key;
+        doPost(config, ConfigurationFactoryService.SELF_LINK);
+
+        try {
+            testOperation(Operation::createGet, null);
+            fail("It should have been forbidden!");
+        } catch (IllegalAccessError e) {
+            assertEquals("forbidden", e.getMessage());
+        }
     }
 
     private void testOperation(final Function<URI, Operation> createOp, String inBody)

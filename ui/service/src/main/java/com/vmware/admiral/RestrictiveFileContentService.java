@@ -20,13 +20,35 @@ import com.vmware.xenon.services.common.FileContentService;
 
 public class RestrictiveFileContentService extends FileContentService {
 
+    protected volatile Boolean isEmbedded;
+
     public RestrictiveFileContentService(File file) {
         super(file);
     }
 
     @Override
     public void handleGet(Operation op) {
-        if (op != null && ConfigurationUtil.isEmbedded() && op.getRequestHeader(ConfigurationUtil.UI_PROXY_FORWARD_HEADER) == null) {
+
+        if (isEmbedded == null) {
+            // ConfigurationUtil.getConfigProperty(this, ConfigurationUtil.EMBEDDED_MODE_PROPERTY,
+            // (embedded) -> {
+            // isEmbedded = Boolean.valueOf(embedded);
+            // handleGet(op);
+            // });
+            // return;
+
+            // TODO - the code above should be used instead but for some reason the UI components
+            // may get initialized before the configuration service is fully initialized.
+            isEmbedded = ConfigurationUtil.isEmbedded();
+        }
+
+        if (!isEmbedded) {
+            // Avoid clickjacking attacks, by ensuring that content is not always embedded.
+            op.addResponseHeader(ConfigurationUtil.UI_FRAME_OPTIONS_HEADER, "SAMEORIGIN");
+        }
+
+        if (op != null && isEmbedded
+                && op.getRequestHeader(ConfigurationUtil.UI_PROXY_FORWARD_HEADER) == null) {
             Exception notFound = new ServiceHost.ServiceNotFoundException(op.getUri().toString());
             notFound.setStackTrace(new StackTraceElement[] {});
             op.setContentType(Operation.MEDIA_TYPE_APPLICATION_JSON).fail(
@@ -36,4 +58,5 @@ public class RestrictiveFileContentService extends FileContentService {
 
         super.handleGet(op);
     }
+
 }

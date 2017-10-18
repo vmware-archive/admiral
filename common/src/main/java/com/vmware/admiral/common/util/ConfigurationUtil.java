@@ -11,14 +11,24 @@
 
 package com.vmware.admiral.common.util;
 
+import static com.vmware.admiral.common.ManagementUriParts.CONFIG_PROPS;
+
+import java.util.function.Consumer;
+
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
+import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Service;
+import com.vmware.xenon.common.UriUtils;
 
 // TODO - Remove/refactor this class since it may introduce some inconsistent behavior.
 // See comments below.
 public class ConfigurationUtil {
 
     public static final String UI_PROXY_FORWARD_HEADER = "x-forwarded-for";
-    private static final String EMBEDDED_MODE_PROPERTY = "embedded";
+    public static final String UI_FRAME_OPTIONS_HEADER = "x-frame-options";
+
+    public static final String EMBEDDED_MODE_PROPERTY = "embedded";
+    public static final String VIC_MODE_PROPERTY = "vic";
 
     private static ConfigurationState[] configProperties;
 
@@ -59,6 +69,23 @@ public class ConfigurationUtil {
      */
     public static boolean isEmbedded() {
         return Boolean.valueOf(ConfigurationUtil.getProperty(EMBEDDED_MODE_PROPERTY));
+    }
+
+    /**
+     * Retrieves the property value from the configuration properties service.
+     */
+    public static void getConfigProperty(Service service, String propName,
+            Consumer<String> callback) {
+        service.sendRequest(Operation
+                .createGet(service, UriUtils.buildUriPath(CONFIG_PROPS, propName))
+                .setCompletion((res, ex) -> {
+                    if (ex != null) {
+                        callback.accept(null);
+                        return;
+                    }
+                    ConfigurationState body = res.getBody(ConfigurationState.class);
+                    callback.accept(body.value);
+                }));
     }
 
 }

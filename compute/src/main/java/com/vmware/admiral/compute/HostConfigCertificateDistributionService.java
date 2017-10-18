@@ -11,7 +11,6 @@
 
 package com.vmware.admiral.compute;
 
-import static com.vmware.admiral.common.ManagementUriParts.CONFIG_PROPS;
 import static com.vmware.admiral.common.util.CertificateUtilExtended.isSelfSignedCertificate;
 
 import java.io.File;
@@ -23,13 +22,12 @@ import java.util.function.Consumer;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.CertificateUtilExtended;
-import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
+import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
 import com.vmware.admiral.service.common.harbor.Harbor;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
-import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
 /**
@@ -38,8 +36,6 @@ import com.vmware.xenon.common.Utils;
 public class HostConfigCertificateDistributionService extends
         AbstractCertificateDistributionService {
     public static final String SELF_LINK = ManagementUriParts.CERT_DISTRIBUTION_ADD_HOST;
-
-    public static final String VIC_PROP_NAME = "vic";
 
     protected volatile String vicCertificateChain;
     protected volatile String harborUrl;
@@ -53,8 +49,8 @@ public class HostConfigCertificateDistributionService extends
     @Override
     public void handlePost(Operation op) {
         try {
-            HostConfigCertificateDistributionState distState =
-                    op.getBody(HostConfigCertificateDistributionState.class);
+            HostConfigCertificateDistributionState distState = op
+                    .getBody(HostConfigCertificateDistributionState.class);
 
             AssertUtil.assertNotNull(distState.hostLink, "hostLink");
 
@@ -85,7 +81,7 @@ public class HostConfigCertificateDistributionService extends
                             RegistryService.fetchRegistryCertificate(registry, (cert) -> {
                                 if (!isSelfSignedCertificate(cert)) {
                                     logInfo("Skip certificate distribution for registry [%s]: "
-                                                    + "certificate not self-signed.",
+                                            + "certificate not self-signed.",
                                             registryLink);
                                     return;
                                 }
@@ -116,10 +112,11 @@ public class HostConfigCertificateDistributionService extends
      */
     protected void handleVicCertificate(String hostLink) {
         if (isVic == null) {
-            getConfigProperty(VIC_PROP_NAME, (vic) -> {
-                isVic =  Boolean.valueOf(vic);
-                handleVicCertificate(hostLink);
-            });
+            ConfigurationUtil.getConfigProperty(this, ConfigurationUtil.VIC_MODE_PROPERTY,
+                    (vic) -> {
+                        isVic = Boolean.valueOf(vic);
+                        handleVicCertificate(hostLink);
+                    });
             return;
         }
 
@@ -128,14 +125,15 @@ public class HostConfigCertificateDistributionService extends
         }
 
         if (harborUrl == null) {
-            getConfigProperty(Harbor.CONFIGURATION_URL_PROPERTY_NAME, (harborTabUrl) -> {
-                if (harborTabUrl == null) {
-                    return;
-                }
+            ConfigurationUtil.getConfigProperty(this, Harbor.CONFIGURATION_URL_PROPERTY_NAME,
+                    (harborTabUrl) -> {
+                        if (harborTabUrl == null) {
+                            return;
+                        }
 
-                this.harborUrl = harborTabUrl;
-                handleVicCertificate(hostLink);
-            });
+                        this.harborUrl = harborTabUrl;
+                        handleVicCertificate(hostLink);
+                    });
             return;
         }
 
@@ -156,16 +154,4 @@ public class HostConfigCertificateDistributionService extends
         }
     }
 
-    private void getConfigProperty(String propName, Consumer<String> callback) {
-        sendRequest(Operation
-                .createGet(getHost(), UriUtils.buildUriPath(CONFIG_PROPS, propName))
-                .setCompletion((res, ex) -> {
-                    if (ex != null) {
-                        callback.accept(null);
-                        return;
-                    }
-                    ConfigurationState body = res.getBody(ConfigurationState.class);
-                    callback.accept(body.value);
-                }));
-    }
 }
