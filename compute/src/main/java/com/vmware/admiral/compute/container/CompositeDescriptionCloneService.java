@@ -44,6 +44,7 @@ import com.vmware.xenon.common.Utils;
 public class CompositeDescriptionCloneService extends StatelessService {
     public static final String SELF_LINK = ManagementUriParts.COMPOSITE_DESC_CLONE;
     public static final String REVERSE_PARENT_LINKS_PARAM = "reverseParentLinks";
+    public static final String CUSTOM_PROPERTIES_CLONED_DESCRIPTION = "__cloned_description";
 
     @Override
     public void handlePost(Operation post) {
@@ -91,8 +92,11 @@ public class CompositeDescriptionCloneService extends StatelessService {
 
         for (ComponentDescription desc : cdExpanded.componentDescriptions) {
             if (desc.getServiceDocument() instanceof CloneableResource) {
-                cloneOperations.add(
-                        ((CloneableResource) desc.getServiceDocument()).createCloneOperation(this));
+                Operation clonedOperation = ((CloneableResource) desc.getServiceDocument()).createCloneOperation
+                        (this);
+                clonedOperation.addRequestHeader(CUSTOM_PROPERTIES_CLONED_DESCRIPTION, Boolean
+                        .toString(true));
+                cloneOperations.add(clonedOperation);
             } else {
                 cloneOperations.add(createCloneOperation(desc.type, desc.getServiceDocument(),
                         projectLink));
@@ -113,6 +117,8 @@ public class CompositeDescriptionCloneService extends StatelessService {
             cloneCompositeDescOp.addRequestHeader(OperationUtil.PROJECT_ADMIRAL_HEADER,
                     projectLink);
         }
+        cloneCompositeDescOp.addRequestHeader(CUSTOM_PROPERTIES_CLONED_DESCRIPTION, Boolean
+                .toString(true));
 
         if (!cloneOperations.isEmpty()) {
             OperationJoin cloneComponentsJoin = OperationJoin.create(cloneOperations);

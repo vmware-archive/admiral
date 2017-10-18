@@ -492,9 +492,25 @@ public class ContainerDescriptionService extends StatefulService {
         if (!checkForBody(startPost)) {
             return;
         }
+
         try {
             ContainerDescription state = startPost.getBody(ContainerDescription.class);
             logFine("Initial name is %s", state.name);
+
+            /** In embedded mode we allow templates to be seen across groups.
+             * To make possible the provisioning in different groups we need
+             * to omit the groups from tenant links when we store the template.
+             */
+            if (ConfigurationUtil.isEmbedded() &&
+                    startPost.getRequestHeader(CompositeDescriptionCloneService
+                            .CUSTOM_PROPERTIES_CLONED_DESCRIPTION) == null &&
+                    (state.customProperties == null ||
+                                    !state.customProperties.containsKey("__blueprint_id"))) {
+                if (state.tenantLinks != null) {
+                    state.tenantLinks = QueryUtil.removeGroups(state.tenantLinks);
+                }
+            }
+
             validateState(state);
             startPost.complete();
         } catch (Throwable e) {

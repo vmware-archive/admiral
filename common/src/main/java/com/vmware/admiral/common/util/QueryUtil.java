@@ -17,6 +17,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.vmware.admiral.service.common.MultiTenantDocument;
@@ -54,6 +55,12 @@ public class QueryUtil {
      * prefix for projects. e.g. /projects/id
      */
     public static final String PROJECT_IDENTIFIER = "/projects/";
+
+    /**
+     * matches groups in  {@code tenantLink}
+     */
+    public static final Pattern PATTERN_EMBEDDED_GROUPS = Pattern
+                       .compile(String.format("%s.*%s.*", TENANT_IDENTIFIER, GROUP_IDENTIFIER));
 
     public static QueryTask buildQuery(Class<? extends ServiceDocument> stateClass,
             boolean direct, QueryTask.Query... clauses) {
@@ -424,6 +431,22 @@ public class QueryUtil {
                         && tl.contains(GROUP_IDENTIFIER))
                 .map(tl -> tl.substring(TENANT_IDENTIFIER.length()))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Remove groups from the given {@code tenantLink}.
+     *
+     * @param tenantLinks
+     * @return
+     */
+    public static List<String> removeGroups(List<String> tenantLinks) {
+        if (tenantLinks == null || tenantLinks.isEmpty()) {
+            return tenantLinks;
+        }
+
+        return tenantLinks.stream().filter(tenantLink ->
+                !PATTERN_EMBEDDED_GROUPS.matcher(tenantLink).matches()
+        ).collect(Collectors.toList());
     }
 
     /**

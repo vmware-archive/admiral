@@ -31,6 +31,7 @@ import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptio
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptionFactoryService;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ComponentDescription;
@@ -56,7 +57,7 @@ import com.vmware.xenon.services.common.QueryTask;
  */
 public class CompositeDescriptionService extends StatefulService {
     public static final String SELF_LINK = ManagementUriParts.COMPOSITE_DESC;
-    private static final String URI_PARAM_IMAGE_LINKS = "descriptionImages";
+    public static final String URI_PARAM_IMAGE_LINKS = "descriptionImages";
 
     public static class CompositeDescription extends
             com.vmware.admiral.service.common.MultiTenantDocument {
@@ -155,8 +156,24 @@ public class CompositeDescriptionService extends StatefulService {
         if (!checkForBody(startPost)) {
             return;
         }
+
         try {
             CompositeDescription state = startPost.getBody(CompositeDescription.class);
+
+            /** In embedded mode we allow templates to be seen across groups.
+             * To make possible the provisioning in different groups we need
+             * to omit the groups from tenant links when we store the template.
+             */
+            if (ConfigurationUtil.isEmbedded() &&
+                    startPost.getRequestHeader(CompositeDescriptionCloneService
+                            .CUSTOM_PROPERTIES_CLONED_DESCRIPTION) == null &&
+                    (state.customProperties == null ||
+                                    !state.customProperties.containsKey("__blueprint_id"))) {
+                if (state.tenantLinks != null) {
+                    state.tenantLinks = QueryUtil.removeGroups(state.tenantLinks);
+                }
+            }
+
             logFine("Initial name is %s", state.name);
             validateStateOnStart(state);
             startPost.complete();

@@ -351,6 +351,25 @@ public class QueryUtilTest {
     }
 
     @Test
+    public void testRemoveGroups() throws Exception {
+        List<String> tenants = QueryUtil.removeGroups(getTenantLinks());
+        Assert.assertNotNull(tenants);
+        Assert.assertEquals(new HashSet<>( Arrays.asList(
+                TLINK_T1,
+                TLINK_T2,
+                TLINK_U1,
+                TLINK_U2 )),
+                new HashSet<>(tenants)
+        );
+    }
+
+    @Test
+    public void testRemoveGroupsNull() throws Exception {
+        List<String> tenants = QueryUtil.removeGroups(null);
+        Assert.assertNull(tenants);
+    }
+
+    @Test
     public void testGetUsers() throws Exception {
         List<String> tenants = QueryUtil.getUsers(getTenantLinks());
         Assert.assertNotNull(tenants);

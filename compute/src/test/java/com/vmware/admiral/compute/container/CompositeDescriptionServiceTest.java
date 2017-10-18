@@ -18,17 +18,21 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.compute.ComponentDescription;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescriptionExpanded;
+import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescriptionImages;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
+import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.UriUtils;
@@ -157,6 +161,46 @@ public class CompositeDescriptionServiceTest extends ComputeBaseTest {
     }
 
     @Test
+    public void testGetCompositeDescriptionWithDescriptionLinks() throws Throwable {
+        CompositeDescriptionImages[] result = new CompositeDescriptionImages[] { null };
+        StringBuilder sb = new StringBuilder();
+        sb.append(createdComposite.documentSelfLink);
+        sb.append("?");
+        sb.append(CompositeDescriptionService.URI_PARAM_IMAGE_LINKS);
+        sb.append("=");
+        sb.append("true");
+
+        Operation getCompositeDesc = Operation.createGet(
+                UriUtils.buildUri(host, sb.toString()))
+                .setCompletion(
+                        (o, e) -> {
+                            if (e != null) {
+                                host.log("Can't get composite description.", Utils.toString(e));
+                                host.failIteration(e);
+                                return;
+                            } else {
+                                CompositeDescriptionImages cdi = o.getBody
+                                        (CompositeDescriptionImages.class);
+                                result[0] = cdi;
+                                host.completeIteration();
+                            }
+                        });
+        host.testStart(1);
+        host.send(getCompositeDesc);
+        host.testWait();
+
+        CompositeDescriptionImages retrievedCompositeDescriptionImages = result[0];
+        assertNotNull(retrievedCompositeDescriptionImages);
+        assertNotNull(retrievedCompositeDescriptionImages.descriptionImages);
+        assertEquals(2, retrievedCompositeDescriptionImages.descriptionImages.size());
+        assertEquals(createdFirstContainer.image, retrievedCompositeDescriptionImages
+                .descriptionImages.get(createdFirstContainer.documentSelfLink));
+        assertEquals(createdSecondContainer.image, retrievedCompositeDescriptionImages
+                .descriptionImages.get(createdSecondContainer.documentSelfLink));
+
+    }
+
+    @Test
     public void testPutExpanded() throws Throwable {
         ContainerDescription container = new ContainerDescription();
         container.name = "container";
@@ -173,7 +217,7 @@ public class CompositeDescriptionServiceTest extends ComputeBaseTest {
         cd.name = "testComposite";
         cd = doPost(cd, CompositeDescriptionFactoryService.SELF_LINK);
 
-       // Make PUT but as expanded state, so that components are also updated
+        // Make PUT but as expanded state, so that components are also updated
         CompositeDescriptionExpanded cdUpdate = new CompositeDescriptionExpanded();
         cdUpdate.documentSelfLink = cd.documentSelfLink;
         cdUpdate.name = cd.name;
@@ -188,6 +232,156 @@ public class CompositeDescriptionServiceTest extends ComputeBaseTest {
 
         container = getDocument(ContainerDescription.class, container.documentSelfLink);
         assertEquals("updated", container.name);
+    }
+
+    @Test
+    public void testTenantsLinksInCompositeDescriptionEmbedded() throws Throwable {
+
+        testTenantsLinksInCompositeDescription(true);
+    }
+
+    @Test
+    public void testTenantsLinksInCompositeDescriptionNotEmbedded() throws Throwable {
+
+        testTenantsLinksInCompositeDescription(false);
+    }
+
+    @Test
+    public void testTenantsLinksInContainerDescriptionEmbedded() throws Throwable {
+
+        testTenantsLinksInContainerDescription(true);
+    }
+
+    @Test
+    public void testTenantsLinksInContainerDescriptionNotEmbedded() throws Throwable {
+
+        testTenantsLinksInContainerDescription(false);
+    }
+
+    private void testTenantsLinksInCompositeDescription(boolean embedded) throws Throwable {
+        if (embedded) {
+            ConfigurationState config = new ConfigurationState();
+            config.key = "embedded";
+            config.value = Boolean.toString(true);
+            ConfigurationUtil.initialize(config);
+        }
+        CompositeDescription composite = new CompositeDescription();
+        composite.name = "testComposite";
+        composite.customProperties = new HashMap<String, String>();
+        composite.customProperties.put("key1", "value1");
+        composite.customProperties.put("key2", "value2");
+        composite.descriptionLinks = new ArrayList<String>();
+        composite.descriptionLinks.add(createdFirstContainer.documentSelfLink);
+        composite.descriptionLinks.add(createdSecondContainer.documentSelfLink);
+        composite.tenantLinks = new LinkedList<>();
+        composite.tenantLinks.add("/tenants/qe");
+        composite.tenantLinks.add("/user/fritz@sdfdsf.dsf");
+        composite.tenantLinks.add("/tenants/qe/groups/dftyguhijokpl");
+
+        CompositeDescription createdCompositeDescriptionTenants = doPost(composite,
+                CompositeDescriptionService
+                        .SELF_LINK);
+
+        if (embedded) {
+            ConfigurationState config = new ConfigurationState();
+            config.key = "embedded";
+            config.value = Boolean.toString(false);
+            ConfigurationUtil.initialize(config);
+        }
+
+        CompositeDescription[] result = new CompositeDescription[] { null };
+
+        Operation getCompositeDesc = Operation.createGet(
+                UriUtils.buildUri(host, createdCompositeDescriptionTenants.documentSelfLink))
+                .setCompletion(
+                        (o, e) -> {
+                            if (e != null) {
+                                host.log("Can't get composite description.", Utils.toString(e));
+                                host.failIteration(e);
+                                return;
+                            } else {
+                                CompositeDescription cd = o.getBody(CompositeDescription.class);
+                                result[0] = cd;
+                                host.completeIteration();
+                            }
+                        });
+        host.testStart(1);
+        host.send(getCompositeDesc);
+        host.testWait();
+
+        CompositeDescription retrievedComposite = result[0];
+
+        assertNotNull(retrievedComposite);
+        assertNotNull(retrievedComposite.tenantLinks);
+        if (embedded) {
+            assertEquals(2, retrievedComposite.tenantLinks.size());
+        } else {
+            assertEquals(3, retrievedComposite.tenantLinks.size());
+        }
+    }
+
+    private void testTenantsLinksInContainerDescription(boolean embedded) throws Throwable {
+        if (embedded) {
+            ConfigurationState config = new ConfigurationState();
+            config.key = "embedded";
+            config.value = Boolean.toString(true);
+            ConfigurationUtil.initialize(config);
+        }
+        ContainerDescription containerDescription = new ContainerDescription();
+        containerDescription.name = "testContainer";
+        containerDescription.image = "registry.hub.docker.com/nginx";
+        containerDescription._cluster = 1;
+        containerDescription.maximumRetryCount = 1;
+        containerDescription.privileged = true;
+        containerDescription.affinity = new String[] { "cond1", "cond2" };
+        containerDescription.customProperties = new HashMap<String, String>();
+        containerDescription.customProperties.put("key1", "value1");
+        containerDescription.customProperties.put("key2", "value2");
+
+        containerDescription.tenantLinks = new LinkedList<>();
+        containerDescription.tenantLinks.add("/tenants/qe");
+        containerDescription.tenantLinks.add("/user/fritz@sdfdsf.dsf");
+        containerDescription.tenantLinks.add("/tenants/qe/groups/dftyguhijokpl");
+
+        ContainerDescription createdContainerDescriptionTenants = doPost(containerDescription,
+                ContainerDescriptionService.FACTORY_LINK);
+
+        if (embedded) {
+            ConfigurationState config = new ConfigurationState();
+            config.key = "embedded";
+            config.value = Boolean.toString(false);
+            ConfigurationUtil.initialize(config);
+        }
+
+        CompositeDescription[] result = new CompositeDescription[] { null };
+
+        Operation getContainerDesc = Operation.createGet(
+                UriUtils.buildUri(host, createdContainerDescriptionTenants.documentSelfLink))
+                .setCompletion(
+                        (o, e) -> {
+                            if (e != null) {
+                                host.log("Can't get composite description.", Utils.toString(e));
+                                host.failIteration(e);
+                                return;
+                            } else {
+                                CompositeDescription cd = o.getBody(CompositeDescription.class);
+                                result[0] = cd;
+                                host.completeIteration();
+                            }
+                        });
+        host.testStart(1);
+        host.send(getContainerDesc);
+        host.testWait();
+
+        CompositeDescription retrievedContainerDesc = result[0];
+
+        assertNotNull(retrievedContainerDesc);
+        assertNotNull(retrievedContainerDesc.tenantLinks);
+        if (embedded) {
+            assertEquals(2, retrievedContainerDesc.tenantLinks.size());
+        } else {
+            assertEquals(3, retrievedContainerDesc.tenantLinks.size());
+        }
     }
 
     private void checkRetrievedContainers(List<ComponentDescription> retrievedContainers,

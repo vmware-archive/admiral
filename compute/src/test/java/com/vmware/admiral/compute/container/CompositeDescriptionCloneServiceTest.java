@@ -21,13 +21,16 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
 
+import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
+import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -62,6 +65,49 @@ public class CompositeDescriptionCloneServiceTest extends ComputeBaseTest {
         ContainerDescription clonedSecondContainer = getDocument(ContainerDescription.class,
                 containerDescriptions.get(1));
         checkContainersForЕquality(createdSecondContainer, clonedSecondContainer, false);
+    }
+
+    @Test
+    public void testCloneCompositeDescriptionWithTwoContainersEmbeded() throws Throwable {
+
+        initObjectsWithTwoContainers();
+
+        ConfigurationState config = new ConfigurationState();
+        config.key = "embedded";
+        config.value = Boolean.toString(true);
+        ConfigurationUtil.initialize(config);
+
+        //when cloning in embedded mode the group tenant link should not be deleted
+        CompositeDescription clonedCompositeDesc = cloneCompositeDesc(
+                createdCompositeWithTwoContainers, false);
+
+        assertNotNull(clonedCompositeDesc);
+        assertNotNull(clonedCompositeDesc.tenantLinks);
+        assertEquals(createdCompositeWithTwoContainers.tenantLinks.size(),
+                clonedCompositeDesc.tenantLinks.size());
+
+        List<String> containerDescriptions = clonedCompositeDesc.descriptionLinks;
+
+        ContainerDescription clonedFirstContainer = getDocument(ContainerDescription.class,
+                containerDescriptions.get(0));
+
+        assertNotNull(clonedFirstContainer);
+        assertNotNull(clonedFirstContainer.tenantLinks);
+        assertEquals(createdFirstContainer.tenantLinks.size(),
+                clonedFirstContainer.tenantLinks.size());
+
+        ContainerDescription clonedSecondContainer = getDocument(ContainerDescription.class,
+                containerDescriptions.get(1));
+
+        assertNotNull(clonedSecondContainer);
+        assertNotNull(clonedSecondContainer.tenantLinks);
+        assertEquals(clonedSecondContainer.tenantLinks.size(),
+                clonedSecondContainer.tenantLinks.size());
+
+        config = new ConfigurationState();
+        config.key = "embedded";
+        config.value = Boolean.toString(false);
+        ConfigurationUtil.initialize(config);
     }
 
     @Test
@@ -122,6 +168,10 @@ public class CompositeDescriptionCloneServiceTest extends ComputeBaseTest {
         firstContainer.customProperties = new HashMap<String, String>();
         firstContainer.customProperties.put("key1", "value1");
         firstContainer.customProperties.put("key2", "value2");
+        firstContainer.tenantLinks = new LinkedList<>();
+        firstContainer.tenantLinks.add("/tenants/qe");
+        firstContainer.tenantLinks.add("/user/fritz@sdfdsf.dsf");
+        firstContainer.tenantLinks.add("/tenants/qe/groups/dftyguhijokpl");
 
         ContainerDescription secondContainer = new ContainerDescription();
         secondContainer.name = "testContainer2";
@@ -138,6 +188,10 @@ public class CompositeDescriptionCloneServiceTest extends ComputeBaseTest {
         secondComposite.descriptionLinks = new ArrayList<String>();
         secondComposite.descriptionLinks.add(createdFirstContainer.documentSelfLink);
         secondComposite.descriptionLinks.add(createdSecondContainer.documentSelfLink);
+        secondComposite.tenantLinks = new LinkedList<>();
+        secondComposite.tenantLinks.add("/tenants/qe");
+        secondComposite.tenantLinks.add("/user/fritz@sdfdsf.dsf");
+        secondComposite.tenantLinks.add("/tenants/qe/groups/dftyguhijokpl");
 
         createdCompositeWithTwoContainers = doPost(secondComposite,
                 CompositeDescriptionService.SELF_LINK);
@@ -178,6 +232,7 @@ public class CompositeDescriptionCloneServiceTest extends ComputeBaseTest {
                             result[0] = cd;
                             host.completeIteration();
                         });
+
         host.testStart(1);
         host.send(cloneCompositeDesc);
         host.testWait();
