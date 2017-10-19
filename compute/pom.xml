@@ -41,11 +41,6 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>admiral-adapter-extensibility</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
             <groupId>com.vmware.admiral.closures</groupId>
             <artifactId>admiral-closure-services</artifactId>
             <version>${project.version}</version>
