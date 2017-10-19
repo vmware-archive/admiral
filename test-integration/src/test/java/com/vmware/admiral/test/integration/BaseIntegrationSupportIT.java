@@ -93,8 +93,11 @@ public abstract class BaseIntegrationSupportIT {
     protected static final int STATE_CHANGE_WAIT_POLLING_PERIOD_MILLIS = Integer.getInteger(
             "test.state.change.wait.period.millis", 1000);
 
-    protected static final Queue<ServiceDocument> documentsForDeletionAfterClass = new LinkedBlockingQueue<>();
-    protected static final Queue<ServiceDocument> documentsForDeletion = new LinkedBlockingQueue<>();
+    protected static final Queue<ServiceDocument> documentsForDeletionAfterClass =
+            new LinkedBlockingQueue<>();
+    protected static final Queue<ServiceDocument> documentsForDeletion =
+            new LinkedBlockingQueue<>();
+
     protected final TestLogger logger;
     private static String baseURI;
 
@@ -162,8 +165,7 @@ public abstract class BaseIntegrationSupportIT {
 
         if (port != null) {
             String host = getSystemOrTestProp(TEST_DCP_HOST_PROP_NAME, "127.0.0.1");
-            String baseUrl = String.format("http://%s:%s", host, port);
-            return baseUrl;
+            return String.format("http://%s:%s", host, port);
         }
 
         return getSystemOrTestProp(TEST_DCP_URL_PROP_NAME);
@@ -205,9 +207,19 @@ public abstract class BaseIntegrationSupportIT {
         return postDocument(fabricLink, document, TestDocumentLifeCycle.FOR_DELETE);
     }
 
-    @SuppressWarnings("unchecked")
+    protected static <T extends ServiceDocument> T postDocument(String fabricLink, T document,
+            Map<String, String> headers) throws Exception {
+        return postDocument(fabricLink, document, TestDocumentLifeCycle.FOR_DELETE, headers);
+    }
+
     protected static <T extends ServiceDocument> T postDocument(String fabricLink, T document,
             TestDocumentLifeCycle documentLifeCycle) throws Exception {
+        return postDocument(fabricLink, document, documentLifeCycle, Collections.emptyMap());
+    }
+
+    @SuppressWarnings("unchecked")
+    protected static <T extends ServiceDocument> T postDocument(String fabricLink, T document,
+            TestDocumentLifeCycle documentLifeCycle, Map<String, String> headers) throws Exception {
         if (document.documentSelfLink != null && !document.documentSelfLink.isEmpty()) {
             String servicePathUrl = buildServiceUri(fabricLink,
                     extractId(document.documentSelfLink));
@@ -216,7 +228,7 @@ public abstract class BaseIntegrationSupportIT {
                 delete(servicePathUrl);
             }
         }
-        String body = sendRequest(HttpMethod.POST, fabricLink, Utils.toJson(document));
+        String body = sendRequest(HttpMethod.POST, fabricLink, Utils.toJson(document), headers);
         if (body == null || body.isEmpty()) {
             return null;
         }
@@ -254,8 +266,8 @@ public abstract class BaseIntegrationSupportIT {
         body.unlockDataCollectionForHost = true;
         // TODO remove when the issue with the locked data collection is fixed
         SimpleHttpsClient.execute(HttpMethod.PATCH,
-                getBaseUrl()
-                        + HostContainerListDataCollection.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK,
+                getBaseUrl() + HostContainerListDataCollection
+                        .DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK,
                 Utils.toJson(body));
         HttpResponse httpResponse = SimpleHttpsClient.execute(HttpMethod.PUT,
                 getBaseUrl() + buildServiceUri(ContainerHostService.SELF_LINK),
@@ -274,7 +286,7 @@ public abstract class BaseIntegrationSupportIT {
                 t -> {
                     ComputeStateWithDescription host = Utils.fromJson(t,
                             ComputeStateWithDescription.class);
-                    return host.powerState.equals(PowerState.ON);
+                    return PowerState.ON == host.powerState;
                 });
 
         return getDocument(computeStateLink, ComputeState.class);
@@ -304,8 +316,13 @@ public abstract class BaseIntegrationSupportIT {
 
     protected static String sendRequest(HttpMethod method, String link, String body)
             throws Exception {
+        return sendRequest(method, link, body, Collections.emptyMap());
+    }
+
+    protected static String sendRequest(HttpMethod method, String link, String body,
+            Map<String, String> headers) throws Exception {
         HttpResponse httpResponse = SimpleHttpsClient.execute(method,
-                getBaseUrl() + buildServiceUri(link), body);
+                getBaseUrl() + buildServiceUri(link), body, headers, null);
         if (httpResponse.responseBody == null && HttpMethod.GET == method) {
             Utils.logWarning("Body for method %s and link: %s is null. Status code: %s", method,
                     link, httpResponse.statusCode);
@@ -333,8 +350,8 @@ public abstract class BaseIntegrationSupportIT {
                             extractId(documentSelfLink)),
                     RequestStatus.class);
             if (requestStatus != null) {
-                logger.info(
-                        "~~~~~~~~~ Request %s status progress: %s. Progress by component: %s   ~~~~~~~",
+                logger.info("~~~~~~~~~ Request %s status progress: %s."
+                                + " Progress by component: %s   ~~~~~~~",
                         documentSelfLink, requestStatus.progress,
                         requestStatus.requestProgressByComponent);
             }
@@ -378,8 +395,7 @@ public abstract class BaseIntegrationSupportIT {
             }
         }
 
-        throw new RuntimeException(String.format(
-                "Failed waiting for state change"));
+        throw new RuntimeException("Failed waiting for state change");
     }
 
     protected static void waitFor(Predicate<Void> predicate) throws Exception {
@@ -390,7 +406,7 @@ public abstract class BaseIntegrationSupportIT {
             }
         }
 
-        throw new RuntimeException(String.format("Failed waiting"));
+        throw new RuntimeException("Failed waiting");
     }
 
     protected static void waitForStatusCode(URI uri, int expectedStatusCode) throws Exception {
