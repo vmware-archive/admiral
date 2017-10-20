@@ -1198,6 +1198,10 @@ function healthConfigModeChanged($el, mode) {
       $el.find('.health-ignore-on-provision-input').show();
       $el.find('.container-autoredeployment-input').show();
     }
+
+    if (utils.isApplicationEmbedded()) {
+      $el.find('.container-autoredeployment-input').hide();
+    }
 }
 
 var normalizeToKB = function(size) {
