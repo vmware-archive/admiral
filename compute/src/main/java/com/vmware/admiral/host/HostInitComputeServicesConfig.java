@@ -80,7 +80,6 @@ import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerServic
 import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerService.ReplicationControllerState;
 import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler;
 import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler.ServiceState;
-import com.vmware.admiral.service.common.UrlEncodedReverseProxyService;
 import com.vmware.admiral.service.test.MockConfigureHostOverSshTaskServiceWithoutValidate;
 import com.vmware.admiral.service.test.MockContainerHostService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
@@ -115,7 +114,6 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 ElasticPlacementZoneConfigurationService.class,
                 KubernetesDescriptionContentService.class,
                 PodLogService.class,
-                UrlEncodedReverseProxyService.class,
                 ClusterService.class);
 
         startServiceFactories(host, CaSigningCertService.class,
