@@ -34,12 +34,21 @@ import com.vmware.xenon.common.StatelessService;
 public class NodeHealthCheckService extends StatelessService {
 
     public static final String SELF_LINK = ManagementUriParts.CONFIG + "/healthcheck";
+    public static final String UPGRADE_HEALTH_CHECK = "upgrade.health.check";
+
+    public static class HealthCheckRequestRequest {
+        public boolean isUpgrade;
+    }
 
     public Set<String> services = ConcurrentHashMap.newKeySet();
 
     @Override
     public void handleGet(Operation get) {
-
+        boolean upgradeHealthCheck = Boolean.getBoolean(UPGRADE_HEALTH_CHECK);
+        if (upgradeHealthCheck) {
+            get.fail(new Throwable(String.format("Xenon node is started for migration")));
+            return;
+        }
         if (services == null || services.isEmpty()) {
             getHost().log(Level.INFO, "No registered services for healthcheck found!");
             get.complete();
@@ -47,6 +56,18 @@ public class NodeHealthCheckService extends StatelessService {
         }
 
         doHealthCheck(get);
+    }
+
+    @Override
+    public void handlePost(Operation post) {
+
+        if (services == null || services.isEmpty()) {
+            getHost().log(Level.INFO, "No registered services for healthcheck found!");
+            post.complete();
+            return;
+        }
+
+        doHealthCheck(post);
     }
 
     @Override
@@ -59,7 +80,6 @@ public class NodeHealthCheckService extends StatelessService {
     }
 
     private void doHealthCheck(Operation get) {
-
         AtomicInteger numberOfServicesToCheck = new AtomicInteger(services.size());
         Set<String> unavailableServices = ConcurrentHashMap.newKeySet();
 

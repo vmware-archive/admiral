@@ -47,6 +47,52 @@ public class NodeHealthCheckServiceTest extends BaseTestCase {
     }
 
     @Test
+    public void testHealthDisabledForUpgrade() {
+        System.setProperty("upgrade.health.check", "true");
+
+        registerServicesForMonitoring(unavailableServicesPaths);
+
+        this.host.testStart(1);
+
+        Operation get = Operation.createGet(UriUtils.buildUri(host.getUri(),
+                NodeHealthCheckService.SELF_LINK));
+
+        get.setCompletion((o, e) -> {
+            if (e != null) {
+                unavailableServicesPaths.forEach(service -> {
+                    try {
+                        Assert.assertTrue(
+                                e.getMessage().contains("Xenon node is started for migration"));
+                    } catch (Throwable t) {
+                        this.host.failIteration(t);
+                    }
+                });
+                this.host.completeIteration();
+                return;
+            }
+            this.host.failIteration(e);
+        });
+
+        this.host.send(get);
+        this.host.testWait();
+        System.setProperty("upgrade.health.check", "false");
+    }
+
+    @Test
+    public void testHealthForUpgrade() {
+        registerServicesForMonitoring(availableServicesPaths);
+
+        this.host.testStart(1);
+
+        Operation post = Operation.createPost(UriUtils.buildUri(host.getUri(),
+                NodeHealthCheckService.SELF_LINK));
+
+        retryHealthCheck(RETRIES_COUNT, post);
+
+        this.host.testWait();
+    }
+
+    @Test
     public void testHealthCheckPositiveScenario() {
 
         registerServicesForMonitoring(availableServicesPaths);
