@@ -35,12 +35,8 @@
             <clr-icon shape="vm-bug"></clr-icon>
             <span class="title">{{"header.title.vic" | i18n}}</span>
         </a>
-        <a class="nav-link" routerLink="/compute" *ngIf="compute">
-            <clr-icon shape="vm-bug"></clr-icon>
-            <span class="title">{{"header.title.compute" | i18n}}</span>
-        </a>
     </div>
-    <div class="header-nav" *ngIf="!compute">
+    <div class="header-nav">
         <a class="nav-link nav-text" routerLink="/home" routerLinkActive="active">{{ "navigation.home" | i18n }}</a>
         <a class="nav-link nav-text" allowNavigation [roles]="administrationRouteRestriction" routerLink="/administration" routerLinkActive="active">{{ "navigation.administration" | i18n }}</a>
     </div>

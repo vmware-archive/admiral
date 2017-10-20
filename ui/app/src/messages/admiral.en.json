@@ -38,7 +38,6 @@
       "placementZones": "Placement Zones",
       "profiles": "Profiles",
       "endpoints": "Endpoints",
-      "machines": "Machines",
       "compute": "Compute",
       "kubernetesResources": "K8S Resources",
       "kubernetesDeployments": "Deployments",

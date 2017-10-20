@@ -10,7 +10,6 @@
  */
 
 const CONFIG = '/config';
-const PROVISIONING = '/provisioning';
 const RESOURCES = '/resources';
 const UTIL = '/util';
 
@@ -19,16 +18,9 @@ var links = Immutable({
   RESOURCES: '/resources',
   REGISTRIES: CONFIG + '/registries',
   REGISTRY_HOSTS: CONFIG + '/registry-spec',
-  PROFILES: CONFIG + '/profiles',
-  ENDPOINTS: CONFIG + '/endpoints',
-  COMPUTE_PROFILES: CONFIG + '/compute-profiles',
-  NETWORK_PROFILES: CONFIG + '/network-profiles',
-  STORAGE_PROFILES: CONFIG + '/storage-profiles',
-  INSTANCE_TYPES: CONFIG + '/instance-types',
 
   COMPUTE_DESCRIPTIONS: RESOURCES + '/compute-descriptions',
   COMPUTE_RESOURCES: RESOURCES + '/compute',
-  COMPUTE_RESOURCES_SEARCH: RESOURCES + '/compute-search',
   CONTAINER_SHELL: RESOURCES + '/container-shell',
   CREDENTIALS: '/core/auth/credentials',
   PLACEMENT_ZONES: RESOURCES + '/pools',
@@ -39,12 +31,9 @@ var links = Immutable({
   TAGS: RESOURCES + '/tags',
   TAG_ASSIGNMENT: RESOURCES + '/tag-assignment',
   EPZ_CONFIG: RESOURCES + '/elastic-placement-zones-config',
-  SECURITY_GROUPS: RESOURCES + '/security-groups',
   NETWORKS: RESOURCES + '/networks',
-  SUBNETWORKS: RESOURCES + '/sub-networks',
   IMAGE_RESOURCES: RESOURCES + '/images',
   IMAGE_RESOURCES_SEARCH: RESOURCES + '/image-search',
-  STORAGE_DESCRIPTIONS: RESOURCES + '/storage-descriptions',
 
   CONTAINER_HOSTS: RESOURCES + '/hosts',
   CONTAINER_CLUSTERS: RESOURCES + '/clusters',
@@ -64,13 +53,11 @@ var links = Immutable({
   KUBERNETES_DESC: RESOURCES + '/kubernetes-descriptions',
   KUBERNETES_DESC_CONTENT: RESOURCES + '/kubernetes-templates',
 
-
   MANAGE_CONTAINERS_ENDPOINT: '/manage',
   DATA_COLLECTION: '/data-collection/types/App.Container',
 
   SSL_TRUST_CERTS: CONFIG + '/trust-certs',
   SSL_TRUST_CERTS_IMPORT: CONFIG + '/trust-certs-import',
-  SSL_TRUSTED_CERTIFICATES: CONFIG + '/trusted-certificates',
   REQUESTS: '/requests',
   REQUEST_GRAPH: '/request-graph',
   REQUEST_STATUS: '/request-status',
@@ -99,12 +86,6 @@ var links = Immutable({
 
   // Artificial internal only link
   SYSTEM_NETWORK_LINK: '/system-networks-link',
-
-  ADAPTERS: CONFIG + '/photon-model-adapters-registry',
-
-  IMAGE_ENUMERATION: PROVISIONING + '/image-enumeration-tasks',
-  RESOURCE_ENUMERATION: PROVISIONING + '/resource-enumeration-tasks',
-  AWS_VOLUME_TYPE_ENUMERATION: PROVISIONING + '/aws/volume-type-enumeration-adapter',
 
   LONG_URI_GET: UTIL + '/long-uri-get'
 });

@@ -21,12 +21,7 @@ var constants = Immutable({
     RESOURCE_GROUPS: 'resourceGroups',
     DEPLOYMENT_POLICIES: 'deploymentPolicies',
     REQUESTS: 'requests',
-    EVENTLOGS: 'eventlogs',
-    ENDPOINTS: 'endpoints',
-    SUBNETWORKS: 'subnetworks',
-    STORAGE_AZURE: 'storage_azure',
-    VSPHERE_DATASTORES: 'vsphere_datastores',
-    VSPHERE_STORAGE_POLICIES: 'vsphere_storage_policies'
+    EVENTLOGS: 'eventlogs'
   },
   VIEWS: {
     HOME: {name: 'home'},
@@ -281,10 +276,6 @@ var constants = Immutable({
       CREATE_VOLUME: 'CREATE_VOLUME'
     }
   },
-  COMPUTE: {
-    SEARCH_SUGGESTIONS: ['endpoint', 'name', 'tag'],
-    DOCKER_HOST_PORT: 443
-  },
   CLOSURES: {
     SEARCH_SUGGESTIONS: ['name', 'documentId'],
     OPERATION: {
@@ -319,12 +310,6 @@ var constants = Immutable({
       COMPOSITE_BLUEPRINT: 'COMPOSITE_BLUEPRINT',
       DOCKER_COMPOSE: 'DOCKER_COMPOSE'
     }
-  },
-  MACHINES: {
-    SEARCH_SUGGESTIONS: ['address', 'endpoint', 'name', 'tag']
-  },
-  PROFILES: {
-    SEARCH_SUGGESTIONS: ['name']
   },
   REQUESTS: {
     STAGES: {

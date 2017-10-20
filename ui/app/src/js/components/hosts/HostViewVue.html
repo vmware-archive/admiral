@@ -37,20 +37,12 @@
     </div>
 
     <host-add-view v-bind:model="model" v-if="showTabAddHost"></host-add-view>
-    <host-create-view v-bind:model="model" v-if="showTabCreateHost"></host-create-view>
 
     <div class="mask" v-bind:class="{'hide': !contextExpanded}"></div>
   </div>
 
   <context-sidepanel class="right-context-panel" v-on:close="closeToolbar()">
     <div slot="toolbar" class="toolbar">
-      <context-sidepanel-toolbar-item
-        v-if="showTabCreateHost"
-        v-bind:active="activeContextItem === 'endpoints'"
-        v-bind:label="i18n('app.endpoint.contextPanelTooltip')"
-        v-on:open="openToolbarEndpoints()" v-on:close="closeToolbar()">
-      </context-sidepanel-toolbar-item>
-
       <context-sidepanel-toolbar-item
         v-if="showTabAddHost"
         v-bind:active="activeContextItem === 'placementZones'"
@@ -59,7 +51,7 @@
       </context-sidepanel-toolbar-item>
 
       <context-sidepanel-toolbar-item
-        v-if="showTabAddHost || showTabCreateHost"
+        v-if="showTabAddHost"
         v-bind:active="activeContextItem === 'credentials'"
         v-bind:label="i18n('app.credential.contextPanelTooltip')"
         v-on:open="openToolbarCredentials()" v-on:close="closeToolbar()">
@@ -89,8 +81,6 @@
         v-bind:model="model.contextView.activeItem.data"></certificates-list>
       <deployment-policies-list v-if="activeContextItem === 'deploymentPolicies'"
         v-bind:model="model.contextView.activeItem.data"></deployment-policies-list>
-      <endpoints-list v-if="activeContextItem === 'endpoints'"
-        v-bind:model="model.contextView.activeItem.data"></endpoints-list>
     </div>
 
   </context-sidepanel>

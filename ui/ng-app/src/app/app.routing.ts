@@ -15,7 +15,6 @@ import { RoutesRestriction } from './utils/routes-restriction';
 
 import { AdministrationComponent } from './views/administration/administration.component';
 import { MainResourcesComponent } from './views/main-resources/main-resources.component';
-import { MainResourcesComputeComponent } from './views/main-resources-compute/main-resources-compute.component';
 
 import { IdentityManagementComponent } from './views/identity-management/identity-management.component';
 import { ProjectsComponent } from './views/projects/projects.component';
@@ -47,10 +46,6 @@ import { NavigationContainerType } from './components/navigation-container/navig
 import { AdminAuthGuard } from 'app/services/admin-auth-guard.service';
 import { HomeAuthGuard } from 'app/services/home-auth-guard.service';
 import { TagDetailsComponent } from './views/tag-details/tag-details.component';
-
-
-// compute views
-import { InstanceTypesComponent } from './views/profiles/instance-types/instance-types.component';
 
 export const ROUTES: Routes = [
     {
@@ -236,47 +231,6 @@ export const ROUTES: Routes = [
                 path: 'logs', component: LogsComponent,
                 canActivate: [AdminAuthGuard],
                 data: { roles: RoutesRestriction.LOGS }
-            }
-        ]
-    },
-
-    // Compute paths
-    {
-        path: 'compute', component: MainResourcesComputeComponent,
-        children: [
-            {
-                path: '', redirectTo: 'endpoints', pathMatch: 'full'
-            },
-            {
-                path: 'endpoints', component: FormerPlaceholderViewComponent
-            },
-            {
-                path: 'compute', component: FormerPlaceholderViewComponent
-            },
-            {
-                path: 'profiles', component: FormerPlaceholderViewComponent
-            },
-            {
-                path: 'instance-types', component: InstanceTypesComponent,
-                children: [{
-                  path: 'new',
-                  component: FormerPlaceholderViewComponent
-                }, {
-                  path: ':id',
-                  component: FormerPlaceholderViewComponent
-                }]
-            },
-            {
-                path: 'placements', component: FormerPlaceholderViewComponent
-            },
-            {
-                path: 'machines', component: FormerPlaceholderViewComponent
-            },
-            {
-                path: 'networks', component: FormerPlaceholderViewComponent
-            },
-            {
-                 path: '**', component: FormerPlaceholderViewComponent
             }
         ]
     }

@@ -14,7 +14,6 @@ import VueTags from 'components/common/VueTags'; //eslint-disable-line
 import PlacementZoneEditorVue from 'components/placementzones/PlacementZoneEditorVue.html';
 import { PlacementZonesActions } from 'actions/Actions';
 import constants from 'core/constants';
-import services from 'core/services';
 import utils from 'core/utils';
 
 var PlacementZoneEditor = Vue.extend({
@@ -26,9 +25,6 @@ var PlacementZoneEditor = Vue.extend({
     }
   },
   computed: {
-    showEndpoint: () => {
-      return utils.isApplicationCompute();
-    },
     isDockerPlacementZone: function() {
       return !this.model.item.placementZoneType
         || this.model.item.placementZoneType === constants.PLACEMENT_ZONE.TYPE.DOCKER;
@@ -80,16 +76,7 @@ var PlacementZoneEditor = Vue.extend({
       }
 
       item.resourcePoolState.customProperties.__resourceType =
-        utils.isApplicationCompute()
-          // Prelude UI
-          ? constants.RESOURCE_TYPES.COMPUTE
-          // Admiral UI
-          : constants.RESOURCE_TYPES.CONTAINER;
-
-      if (this.endpoint) {
-        item.resourcePoolState.customProperties.__endpointLink =
-            this.endpoint.documentSelfLink;
-      }
+        constants.RESOURCE_TYPES.CONTAINER;
 
       if (this.tagsToMatch && this.tagsToMatch.length) {
         item.epzState = item.epzState || {};
@@ -110,26 +97,13 @@ var PlacementZoneEditor = Vue.extend({
             this.isDynamic() ? this.tagsToMatch : []);
       }
     },
-    searchEndpoints(...args) {
-      return new Promise((resolve, reject) => {
-        services.searchEndpoints.apply(null, args).then((result) => {
-          result.items.forEach((item) =>
-            item.iconSrc = utils.getAdapter(item.endpointType).iconSrc);
-          resolve(result);
-        }).catch(reject);
-      });
-    },
     isDynamic() {
       return this.isDockerPlacementZone
         && this.dynamicInput.is(':checked');
     },
-    onEndpointChange(endpoint) {
-      this.endpoint = endpoint;
-      this.saveDisabled = !this.name || (this.showEndpoint && !this.endpoint);
-    },
     onNameChange() {
       this.name = (this.nameInput.val() || '').trim();
-      this.saveDisabled = !this.name || (this.showEndpoint && !this.endpoint);
+      this.saveDisabled = !this.name;
     },
     onPlacementPolicyChange(value) {
       this.placementPolicy = value && value.name;

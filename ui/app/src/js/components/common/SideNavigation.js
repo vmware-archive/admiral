@@ -12,7 +12,6 @@
 import SideNavigationVue from 'components/common/SideNavigationVue.html';
 
 import constants from 'core/constants';
-import computeConstants from 'core/computeConstants';
 import ft from 'core/ft';
 
 export default Vue.component('sidenav', {
@@ -37,8 +36,7 @@ export default Vue.component('sidenav', {
 
   data: function() {
     return {
-      constants: constants,
-      computeConstants: computeConstants
+      constants: constants
     };
   },
 

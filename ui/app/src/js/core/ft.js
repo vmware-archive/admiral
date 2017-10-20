@@ -35,10 +35,6 @@ var ft = {
     return utils.getConfigurationPropertyBoolean('allow.nimbus');
   },
 
-  isExternalPhotonAdaptersEnabled: function() {
-    return utils.getConfigurationPropertyBoolean('allow.external.photon.adapters');
-  },
-
   isVchHostOptionEnabled: function() {
     return utils.getConfigurationPropertyBoolean('allow.ft.host-option.vch');
   },
@@ -68,7 +64,7 @@ var ft = {
   },
 
   isDeploymentPoliciesEnabled: function() {
-    return utils.isApplicationEmbedded() && !utils.isApplicationCompute();
+    return utils.isApplicationEmbedded();
   },
 
   isHostPublicUriEnabled: function() {

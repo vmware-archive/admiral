@@ -115,9 +115,7 @@ let onPlacementUpdated = function(placement) {
 
 let _createDto = function(placement) {
   var dto = $.extend({}, placement);
-  dto.resourceType = utils.isApplicationCompute()
-      ? constants.RESOURCE_TYPES.COMPUTE
-      : constants.RESOURCE_TYPES.CONTAINER;
+  dto.resourceType = constants.RESOURCE_TYPES.CONTAINER;
   dto.resourcePoolLink = dto.placementZone ? dto.placementZone.documentSelfLink : null;
   dto.deploymentPolicyLink = dto.deploymentPolicy ? dto.deploymentPolicy.documentSelfLink : null;
 

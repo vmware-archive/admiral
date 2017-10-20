@@ -7,7 +7,6 @@
         <li><a class="nav-link" data-cmd="navigation-{{constants.VIEWS.HOSTS.name}}"
                :class="{'active': currentView === constants.VIEWS.HOSTS.name}"
                href="#/hosts">{{i18n("app.navbar.hosts")}}</a></li>
-        <!--li><a class="nav-link" data-cmd="navigation-endpoints">Endpoints</a></li>
         <li><a class="nav-link" data-cmd="navigation-credentials">Credentials</a></li>
         <li><a class="nav-link" data-cmd="navigation-certificates">Certificates</a></li-->
       </ul>
@@ -80,46 +79,6 @@
         <li><a class="nav-link" data-cmd="navigation-{{constants.VIEWS.KUBERNETES_RESOURCES.VIEWS.PODS.name}}"
                :class="{'active': currentView === constants.VIEWS.KUBERNETES_RESOURCES.VIEWS.PODS.name}"
                href="#/kubernetes/pods">{{i18n("app.navbar.kubernetesPods")}}</a></li>
-      </ul>
-    </section>
-  </section>
-
-  <section v-if="application === 'compute'" class="sidenav-content">
-    <section class="nav-group collapsible">
-      <input id="nav-category-compute-resources" type="checkbox">
-      <label for="nav-category-compute-resources">{{i18n("app.navbar.resources")}}</label>
-      <ul class="nav-list">
-        <li><a class="nav-link" data-cmd="navigation-{{computeConstants.VIEWS.ENDPOINTS.name}}"
-               :class="{'active': currentView === computeConstants.VIEWS.ENDPOINTS.name}"
-               href="#/endpoints">{{i18n("app.navbar.endpoints")}}</a></li>
-        <li><a class="nav-link" data-cmd="navigation-{{computeConstants.VIEWS.COMPUTE.name}}"
-               :class="{'active': currentView === computeConstants.VIEWS.COMPUTE.name}"
-               href="#/compute">{{i18n("app.navbar.compute")}}</a></li>
-      </ul>
-    </section>
-    <section class="nav-group collapsible">
-      <input id="nav-category-compute-policies" type="checkbox">
-      <label for="nav-category-compute-policies">{{i18n("app.navbar.policies")}}</label>
-      <ul class="nav-list">
-        <li><a class="nav-link" data-cmd="navigation-{{computeConstants.VIEWS.PROFILES.name}}"
-               :class="{'active': currentView === computeConstants.VIEWS.PROFILES.name}"
-               href="#/profiles">{{i18n("app.navbar.profiles")}}</a></li>
-        <li><a class="nav-link" data-cmd="navigation-{{computeConstants.VIEWS.PLACEMENTS.name}}"
-               :class="{'active': currentView === computeConstants.VIEWS.PLACEMENTS.name}"
-               href="#/placements">{{i18n("app.navbar.placements")}}</a></li>
-      </ul>
-    </section>
-
-    <section class="nav-group collapsible">
-      <input id="nav-category-compute-deployment" type="checkbox">
-      <label for="nav-category-compute-deployment">{{i18n("app.navbar.deployment")}}</label>
-      <ul class="nav-list">
-        <li><a class="nav-link" data-cmd="navigation-{{computeConstants.VIEWS.RESOURCES.VIEWS.MACHINES.name}}"
-               :class="{'active': currentView === computeConstants.VIEWS.RESOURCES.VIEWS.MACHINES.name}"
-               href="#/machines">{{i18n("app.navbar.machines")}}</a></li>
-        <li><a class="nav-link" data-cmd="navigation-{{computeConstants.VIEWS.RESOURCES.VIEWS.NETWORKS.name}}"
-               :class="{'active': currentView === computeConstants.VIEWS.RESOURCES.VIEWS.NETWORKS.name}"
-               href="#/networks">{{i18n("app.navbar.networks")}}</a></li>
       </ul>
     </section>
   </section>

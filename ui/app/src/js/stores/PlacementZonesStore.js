@@ -38,8 +38,6 @@ function enhanceConfig(config) {
   var maxCapacity = config.resourcePoolState.maxDiskCapacityBytes;
   config.storagePercentage = utils.calculatePercentageOfTotal(minCapacity,
       maxCapacity, minCapacity + (maxCapacity - minCapacity) * Math.random());
-  config.endpointLink = utils.getCustomPropertyValue(
-      config.resourcePoolState.customProperties, '__endpointLink');
   config.name = config.resourcePoolState.name;
   config.placementZoneType = utils.getCustomPropertyValue(
       config.resourcePoolState.customProperties, '__placementZoneType');
@@ -101,8 +99,8 @@ let PlacementZonesStore = Reflux.createStore({
         });
 
         Promise.all([...tagsPromises, ...tagsToMatchPromises]).then(() => {
-          var countContainerHosts = !utils.isApplicationCompute();
-          var countOnlyComputes = utils.isApplicationCompute() ? true : undefined;
+          var countContainerHosts = true;
+          var countOnlyComputes = false;
           // Retrieve hosts counts for the resource pools
           var countedHostsResPoolsPromises = Object.values(configs).map(function(config) {
             return services.countHostsPerPlacementZone(config.resourcePoolState.documentSelfLink,
@@ -122,17 +120,8 @@ let PlacementZonesStore = Reflux.createStore({
   },
 
   onEditPlacementZone: function(config) {
-    if (config.endpointLink) {
-      services.loadEndpoint(config.endpointLink).then((endpoint) => {
-        this.setInData(['editingItemData', 'item'], Immutable($.extend({
-          endpoint
-        }, config)));
-        this.emitChange();
-      });
-    } else {
-      this.setInData(['editingItemData', 'item'], config);
-      this.emitChange();
-    }
+    this.setInData(['editingItemData', 'item'], config);
+    this.emitChange();
   },
 
   onCancelEditPlacementZone: function() {

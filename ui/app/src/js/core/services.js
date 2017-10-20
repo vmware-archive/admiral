@@ -336,34 +336,6 @@ var list = function(url, expandQuery, paramsData) {
   }
 };
 
-var getComputeParams = function(queryOptions) {
-  var params = {};
-  var queryOptionsOccurrence = queryOptions && queryOptions[constants.SEARCH_OCCURRENCE.PARAM];
-  var operator = queryOptionsOccurrence === constants.SEARCH_OCCURRENCE.ANY ? 'or' : 'and';
-  var endpointOps = {};
-  var endpointArray = toArrayIfDefined(queryOptions && queryOptions.endpoint);
-  if (endpointArray) {
-    endpointOps[FILTER_VALUE_ALL_FIELDS] = endpointArray.map((endpoint) => {
-      return {
-        val: '*' + serviceUtils.encodeQuotes(endpoint.toLowerCase()) + '*',
-        op: 'eq'
-      };
-    });
-    endpointOps[constants.SEARCH_OCCURRENCE.PARAM] = queryOptionsOccurrence;
-    params.endpoint = serviceUtils.buildOdataQuery(endpointOps);
-    params.operator = operator;
-  }
-
-  var tagArray = toArrayIfDefined(queryOptions && queryOptions.tag);
-  if (tagArray) {
-    params.tag = tagArray
-        .map((q) => '(' + buildTagsQuery(q) + ')')
-        .join(' ' + operator + ' ');
-    params.operator = operator;
-  }
-  return params;
-};
-
 var services = {};
 
 services.createDocument = function(factoryLink, document) {
@@ -535,15 +507,6 @@ services.loadPlacementZones = function(documentSelfLinks) {
       }),
       [constants.SEARCH_OCCURRENCE.PARAM]: constants.SEARCH_OCCURRENCE.ANY
     });
-  } else if (utils.isApplicationCompute()) {
-      // In Prelude filter COMPUTE only
-      params[ODATA_FILTER_PROP_NAME] = serviceUtils.buildOdataQuery({
-        'customProperties/__resourceType': [{
-          val: constants.RESOURCE_TYPES.COMPUTE,
-          op: 'eq'
-        }],
-        [constants.SEARCH_OCCURRENCE.PARAM]: constants.SEARCH_OCCURRENCE.ANY
-      });
   } else {
     // In Admiral filter non-COMPUTE only
     params[ODATA_FILTER_PROP_NAME] = serviceUtils.buildOdataQuery({
@@ -589,25 +552,8 @@ services.countHostsPerPlacementZone = function(resourcePoolLink, onlyContainerHo
   });
 };
 
-services.countNetworksPerHost = function(hostLink) {
-  var queryOptions = {
-    parentLink: hostLink
-  };
-
-  let params = {
-    [DOCUMENT_TYPE_PROP_NAME]: true,
-    [ODATA_COUNT_PROP_NAME]: true,
-    [ODATA_FILTER_PROP_NAME]: buildResourcesSearchQuery(queryOptions)
-  };
-
-  return get(mergeUrl(links.CONTAINER_NETWORKS, params)).then((result) => {
-    return result.totalCount;
-  });
-};
-
 services.loadCertificates = function() {
-  return list(
-      utils.isApplicationCompute() ? links.SSL_TRUSTED_CERTIFICATES : links.SSL_TRUST_CERTS, true);
+  return list(links.SSL_TRUST_CERTS, true);
 };
 
 services.loadCertificate = function(selfLink) {
@@ -646,9 +592,7 @@ services.importCertificate = function(hostUri, acceptCertificate) {
 };
 
 services.createCertificate = function(certificate) {
-  return post(
-      utils.isApplicationCompute() ? links.SSL_TRUSTED_CERTIFICATES : links.SSL_TRUST_CERTS,
-      certificate);
+  return post(links.SSL_TRUST_CERTS, certificate);
 };
 
 services.updateCertificate = function(certificate) {
@@ -657,22 +601,6 @@ services.updateCertificate = function(certificate) {
 
 services.deleteCertificate = function(certificate) {
   return deleteEntity(certificate.documentSelfLink);
-};
-
-services.loadHostDescriptions = function(documentSelfLinks) {
-  var params = {};
-  if (documentSelfLinks && documentSelfLinks.length) {
-    params[ODATA_FILTER_PROP_NAME] = serviceUtils.buildOdataQuery({
-      documentSelfLink: documentSelfLinks.map((link) => {
-        return {
-          val: link,
-          op: 'eq'
-        };
-      }),
-      [constants.SEARCH_OCCURRENCE.PARAM]: constants.SEARCH_OCCURRENCE.ANY
-    });
-  }
-  return list(links.COMPUTE_DESCRIPTIONS, true, params);
 };
 
 services.addHost = function(host) {
@@ -709,10 +637,6 @@ services.validateHost = function(host) {
               host);
 };
 
-services.loadHostDescriptionByLink = function(hostDescriptionLink) {
-  return get(hostDescriptionLink);
-};
-
 services.loadHost = function(hostId) {
   let selfLink = links.COMPUTE_RESOURCES + '/' + hostId;
   return this.loadHostsByLinks([selfLink]).then((result) => {
@@ -722,10 +646,6 @@ services.loadHost = function(hostId) {
 
 services.loadHostByLink = function(hostLink) {
   return get(hostLink);
-};
-
-services.updateCompute = function(hostId, hostData) {
-  return patch(links.COMPUTE_RESOURCES + '/' + hostId, hostData);
 };
 
 services.updateContainerHost = function(hostSpec) {
@@ -804,31 +724,6 @@ services.searchHosts = function(query, limit) {
   });
 };
 
-services.searchCompute = function(resourcePoolLink, query, limit) {
-  var qOps = {
-    any: query.toLowerCase(),
-    powerState: 'ON',
-    resourcePoolLink
-  };
-
-  let filter = buildHostsQuery(qOps, false, true);
-  let url = buildPaginationUrl(links.COMPUTE_RESOURCES, filter, true,
-                               'creationTimeMicros asc', limit);
-  return get(url).then(function(data) {
-    var documentLinks = data.documentLinks || [];
-
-    var result = {
-      totalCount: data.totalCount
-    };
-
-    result.items = documentLinks.map((link) => {
-      return data.documents[link];
-    });
-
-    return result;
-  });
-};
-
 services.loadClusters = function(query, limit) {
   var qOps = {
     any: query.toLowerCase(),
@@ -869,266 +764,8 @@ services.loadNetwork = function(documentSelfLink) {
   return get(documentSelfLink);
 };
 
-services.loadNetworks = function(endpointLink, documentSelfLinks) {
-  var params = {};
-  if (documentSelfLinks && documentSelfLinks.length) {
-    params[ODATA_FILTER_PROP_NAME] = serviceUtils.buildOdataQuery({
-      documentSelfLink: documentSelfLinks.map((link) => {
-        return {
-          val: link,
-          op: 'eq'
-        };
-      }),
-      [constants.SEARCH_OCCURRENCE.PARAM]: constants.SEARCH_OCCURRENCE.ANY
-    });
-  } else if (endpointLink) {
-    params[ODATA_FILTER_PROP_NAME] = serviceUtils.buildOdataQuery({
-      endpointLink: [{
-        val: endpointLink,
-        op: 'eq'
-      }]
-    });
-    params[ODATA_ORDERBY_PROP_NAME] = 'documentUpdateTimeMicros desc';
-  }
-  return list(links.NETWORKS, true, params);
-};
-
-services.searchNetworks = function(endpointLink, query, limit) {
-  var qOps = {
-    any: query.toLowerCase(),
-    endpoint: endpointLink
-  };
-
-  let filter = buildSearchQuery(qOps);
-  let url = buildPaginationUrl(links.NETWORKS, filter, true,
-                               'documentUpdateTimeMicros desc', limit);
-  return get(url).then(function(data) {
-    var documentLinks = data.documentLinks || [];
-
-    var result = {
-      totalCount: data.totalCount
-    };
-
-    result.items = documentLinks.map((link) => {
-      return data.documents[link];
-    });
-
-    return result;
-  });
-};
-
-services.loadVpcs = function(vpcIds) {
-  if (vpcIds == null || vpcIds.length === 0) {
-    return Promise.resolve([]);
-  }
-
-  var params = {};
-
-  params[ODATA_FILTER_PROP_NAME] = serviceUtils.buildOdataQuery({
-    id: vpcIds.map((id) => {
-      return {
-        val: id,
-        op: 'eq'
-      };
-    }),
-    [constants.SEARCH_OCCURRENCE.PARAM]: constants.SEARCH_OCCURRENCE.ANY
-  });
-  params[ODATA_ORDERBY_PROP_NAME] = 'documentUpdateTimeMicros desc';
-
-  return list(links.NETWORKS, true, params);
-};
-
-services.searchSecurityGroups = function(endpointLink, query, limit) {
-  var qOps = {
-    any: query.toLowerCase(),
-    endpoint: endpointLink
-  };
-
-  let filter = buildSearchQuery(qOps);
-  let url = buildPaginationUrl(links.SECURITY_GROUPS, filter, true,
-                               'documentUpdateTimeMicros desc', limit);
-  return get(url).then(function(data) {
-    var documentLinks = data.documentLinks || [];
-
-    var result = {
-      totalCount: data.totalCount
-    };
-
-    result.items = documentLinks.map((link) => {
-      return data.documents[link];
-    });
-
-    return result;
-  });
-};
-
-services.loadSubnet = function(documentSelfLink) {
-  return get(documentSelfLink);
-};
-
-services.loadSubnetworks = function(endpointLink, documentSelfLinks) {
-  var params = {};
-  if (documentSelfLinks && documentSelfLinks.length) {
-    params[ODATA_FILTER_PROP_NAME] = serviceUtils.buildOdataQuery({
-      documentSelfLink: documentSelfLinks.map((link) => {
-        return {
-          val: link,
-          op: 'eq'
-        };
-      }),
-      [constants.SEARCH_OCCURRENCE.PARAM]: constants.SEARCH_OCCURRENCE.ANY
-    });
-  } else if (endpointLink) {
-    params[ODATA_FILTER_PROP_NAME] = serviceUtils.buildOdataQuery({
-      endpointLink: [{
-        val: endpointLink,
-        op: 'eq'
-      }]
-    });
-    params[ODATA_ORDERBY_PROP_NAME] = 'documentUpdateTimeMicros desc';
-  }
-  return list(links.SUBNETWORKS, true, params);
-};
-
-services.searchSubnetworks = function(endpointLink, query, limit) {
-  var qOps = {
-    any: query.toLowerCase(),
-    endpoint: endpointLink
-  };
-
-  let filter = buildSearchQuery(qOps);
-  let url = buildPaginationUrl(links.SUBNETWORKS, filter, true,
-                               'documentUpdateTimeMicros desc', limit);
-  return get(url).then(function(data) {
-    var documentLinks = data.documentLinks || [];
-
-    var result = {
-      totalCount: data.totalCount
-    };
-
-    result.items = documentLinks.map((link) => {
-      return data.documents[link];
-    });
-
-    return result;
-  });
-};
-
-services.searchSubnetsByNetwork = function(networkLink, query, limit) {
-  var qOps = {
-    any: query.toLowerCase(),
-    network: networkLink
-  };
-
-  let filter = buildSearchQuery(qOps);
-  let url = buildPaginationUrl(links.SUBNETWORKS, filter, true,
-                               'documentUpdateTimeMicros desc', limit);
-  return get(url).then(function(data) {
-    var documentLinks = data.documentLinks || [];
-
-    var result = {
-      totalCount: data.totalCount
-    };
-
-    result.items = documentLinks.map((link) => {
-      return data.documents[link];
-    });
-
-    return result;
-  });
-};
-
-services.createSubnetwork = function(subnetwork) {
-  return post(links.SUBNETWORKS, subnetwork);
-};
-
-services.updateSubnetwork = function(subnetwork) {
-  return patch(subnetwork.documentSelfLink, subnetwork);
-};
-
-services.searchImageResources = function(endpointLink, query, limit) {
-  let qOps = {
-    any: query.toLowerCase()
-  };
-  let filter = buildSearchQuery(qOps);
-  let params = {
-    endpoint: serviceUtils.buildOdataQuery({
-      documentSelfLink: [{
-        op: 'eq',
-        val: endpointLink
-      }]
-    })
-  };
-  let url = buildPaginationUrl(links.IMAGE_RESOURCES_SEARCH, filter, true,
-      'documentUpdateTimeMicros desc', limit, params);
-  return get(url).then(function(data) {
-    let documentLinks = data.documentLinks || [];
-    let result = {
-      totalCount: data.totalCount
-    };
-    result.items = documentLinks.map((link) => {
-      return data.documents[link];
-    });
-    return result;
-  });
-};
-
-services.loadImageResources = function(endpointLink, names) {
-  if (names == null || names.length === 0) {
-    return Promise.resolve([]);
-  }
-
-  let params = {
-    endpoint: serviceUtils.buildOdataQuery({
-      documentSelfLink: [{
-        op: 'eq',
-        val: endpointLink
-      }]
-    })
-  };
-
-  let nameQuery = serviceUtils.buildOdataQuery({
-    name: names.map((name) => {
-      return {
-        val: name.toLowerCase(),
-        op: 'eq'
-      };
-    }),
-    [constants.SEARCH_OCCURRENCE.PARAM]: constants.SEARCH_OCCURRENCE.ANY
-  });
-
-  let url = buildPaginationUrl(links.IMAGE_RESOURCES_SEARCH, nameQuery, true,
-      'documentUpdateTimeMicros desc', DEFAULT_LIMIT, params);
-
-  return get(url).then(function(data) {
-    let documentLinks = data.documentLinks || [];
-    let result = documentLinks.map((link) => {
-      return data.documents[link];
-    });
-    return result;
-  });
-};
-
 services.loadImage = function(documentSelfLink) {
   return get(documentSelfLink);
-};
-
-services.loadMachines = function(queryOptions) {
-  let filter = buildHostsQuery(queryOptions, false, false);
-  let url = buildPaginationUrl(links.COMPUTE_RESOURCES_SEARCH, filter, true,
-      'creationTimeMicros asc', null, getComputeParams(queryOptions));
-  return get(url);
-};
-
-services.updateMachine = function(id, data) {
-  return patch(links.COMPUTE_RESOURCES + '/' + id, data);
-};
-
-services.loadCompute = function(queryOptions) {
-  let filter = buildHostsQuery(queryOptions, false, true);
-  let url = buildPaginationUrl(links.COMPUTE_RESOURCES_SEARCH, filter, true,
-      'creationTimeMicros asc', null, getComputeParams(queryOptions));
-  return get(url);
 };
 
 services.loadNextPage = function(nextPageLink) {
@@ -1382,9 +1019,7 @@ services.loadNotifications = function() {
 };
 
 services.loadPlacements = function() {
-  var resourceType = utils.isApplicationCompute()
-      ? constants.RESOURCE_TYPES.COMPUTE
-      : constants.RESOURCE_TYPES.CONTAINER;
+  var resourceType = constants.RESOURCE_TYPES.CONTAINER;
 
   var params = {
     [ODATA_FILTER_PROP_NAME]: serviceUtils.buildOdataQuery({
@@ -1413,153 +1048,6 @@ services.updatePlacement = function(placement) {
 
 services.deletePlacement = function(placement) {
   return deleteEntity(placement.documentSelfLink);
-};
-
-services.loadProfiles = function(queryOptions) {
-  let filter = buildSearchQuery($.extend({
-    endpoint: '*'
-  }, queryOptions));
-  let url = buildPaginationUrl(links.PROFILES, filter, true,
-      'documentExpirationTimeMicros desc');
-  return get(url).then(function(result) {
-    return result;
-  });
-};
-
-services.loadProfile = function(profileId) {
-  return get(links.PROFILES + '/' + profileId + '?' + EXPAND_QUERY_PROP_NAME);
-};
-
-services.loadInstanceType = function(instanceTypeId) {
-  return get(links.INSTANCE_TYPES + '/' + instanceTypeId + '?' + EXPAND_QUERY_PROP_NAME);
-};
-
-services.createProfile = function(profile) {
-  return post(links.PROFILES, profile);
-};
-
-services.updateProfile = function(profile) {
-  return patch(profile.documentSelfLink, profile);
-};
-
-services.deleteProfile = function(profile) {
-  return deleteEntity(profile.documentSelfLink);
-};
-
-services.createComputeProfile = function(profile) {
-  return post(links.COMPUTE_PROFILES, profile);
-};
-
-services.createInstanceType = function(instanceType) {
-  return post(links.INSTANCE_TYPES, instanceType);
-};
-
-services.updateInstanceType = function(instanceType) {
-  return put(instanceType.documentSelfLink, instanceType);
-};
-
-services.updateComputeProfile = function(profile) {
-  return put(profile.documentSelfLink, profile);
-};
-
-services.createNetworkProfile = function(profile) {
-  return post(links.NETWORK_PROFILES, profile);
-};
-
-services.updateNetworkProfile = function(profile) {
-  return put(profile.documentSelfLink, profile);
-};
-
-services.createStorageProfile = function(profile) {
-  return post(links.STORAGE_PROFILES, profile);
-};
-
-services.updateStorageProfile = function(profile) {
-  return put(profile.documentSelfLink, profile);
-};
-
-services.updateStorageTags = function(storageItems) {
-  let promiseArray = [], tagAssignmentRequest;
-  for (let storageItem of storageItems) {
-    if (storageItem.tags && storageItem.tags.length) {
-      tagAssignmentRequest = {
-        tagsToAssign: storageItem.tags
-      };
-    } else {
-      tagAssignmentRequest = {
-        tagsToAssign: []
-      };
-    }
-    promiseArray.push(this.updateTagAssignment(tagAssignmentRequest));
-  }
-  return promiseArray;
-};
-
-services.searchEndpoints = function(query, limit, types) {
-  let endpointOps = {};
-  if (types && types.length) {
-      endpointOps.endpointType = types.map((t) => {
-          return {
-              val: t.toLowerCase(),
-              op: 'eq'
-          };
-      });
-      endpointOps[constants.SEARCH_OCCURRENCE.PARAM] = constants.SEARCH_OCCURRENCE.ANY;
-  }
-
-  let filter = serviceUtils.buildOdataQuery(endpointOps);
-
-  let url = buildPaginationUrl(links.ENDPOINTS, filter, true,
-                               'documentExpirationTimeMicros desc', limit);
-  return get(url).then(function(data) {
-    var documentLinks = data.documentLinks || [];
-
-    var result = {
-      totalCount: data.totalCount
-    };
-
-    result.items = documentLinks.map((link) => {
-      return data.documents[link];
-    });
-
-    return result;
-  });
-};
-
-services.loadEndpoints = function(documentSelfLinks) {
-  var params = {};
-  if (documentSelfLinks && documentSelfLinks.length) {
-    params[ODATA_FILTER_PROP_NAME] = serviceUtils.buildOdataQuery({
-      documentSelfLink: documentSelfLinks.map((link) => {
-        return {
-          val: link,
-          op: 'eq'
-        };
-      }),
-      [constants.SEARCH_OCCURRENCE.PARAM]: constants.SEARCH_OCCURRENCE.ANY
-    });
-  }
-  return list(links.ENDPOINTS, true, params);
-};
-
-services.loadEndpoint = function(documentSelfLink) {
-  return get(documentSelfLink);
-};
-
-services.verifyEndpoint = function(endpoint) {
-  return put(links.ENDPOINTS + '?validate', endpoint);
-};
-
-services.createEndpoint = function(endpoint) {
-  return post(links.ENDPOINTS + '?enumerate', endpoint);
-};
-
-services.updateEndpoint = function(endpoint) {
-  return put(links.ENDPOINTS + endpoint.documentSelfLink, endpoint);
-};
-
-services.deleteEndpoint = function(endpoint) {
-  return deleteEntity(links.ENDPOINTS + endpoint.documentSelfLink);
 };
 
 services.loadContainer = function(containerId) {
@@ -1663,14 +1151,6 @@ services.loadKubernetesEntities = function(queryOptions) {
   var filter = buildResourcesSearchQuery(queryOptions);
   var url = buildPaginationUrl(links.KUBERNETES_ENTITIES, filter, true);
   return get(url);
-};
-
-services.loadExposedService = function(link) {
-  return get(link);
-};
-
-services.loadExposedServices = function() {
-  return list(links.EXPOSED_SERVICES, true);
 };
 
 services.loadContainerLogs = function(containerId, logsSettings) {
@@ -2076,16 +1556,6 @@ services.createRequest = function(resourceDescriptionLink, tenantLinks, group, r
   });
 };
 
-services.createMachine = function(resourceDescription) {
-  var resourceDescriptionLink = resourceDescription.documentSelfLink;
-  var tenantLinks = resourceDescription.tenantLinks;
-  var customProperties = {
-    __allocation_request: true
-  };
-  return services.createRequest(resourceDescriptionLink, tenantLinks, null,
-      COMPOSITE_COMPONENT_TYPE, customProperties);
-};
-
 services.loadContainerTemplates = function() {
   return list(links.COMPOSITE_DESCRIPTIONS, true);
 };
@@ -2393,136 +1863,10 @@ services.loadPopularImages = function() {
   return list(links.POPULAR_IMAGES);
 };
 
-services.loadAdapters = function() {
-  return list(links.ADAPTERS, true);
-};
-
-services.loadAzureStorageAccounts = function(nameFilter) {
-  let storageQuery = {};
-  if (nameFilter) {
-    storageQuery.name = [{
-      val: `${nameFilter}*`,
-      op: 'eq'
-    }];
-  }
-  storageQuery['customProperties/storageType'] = [{
-    val: 'Microsoft.Storage/storageAccounts',
-    op: 'eq'
-  }];
-  return get(mergeUrl(links.STORAGE_DESCRIPTIONS, {
-    [ODATA_FILTER_PROP_NAME]: serviceUtils.buildOdataQuery(storageQuery),
-    documentType: true
-  }));
-};
-
-services.updateStorageAccount = function(storageAccount) {
-  return patch(storageAccount.documentSelfLink, {
-    supportsEncryption: storageAccount.supportsEncryption
-  });
-};
-
-services.loadVsphereDatastores = function(endpointLink, nameFilter, storagePolicyLink) {
-  let datastoreQuery = {
-    endpointLink: [{
-      val: endpointLink,
-      op: 'eq'
-    }]
-  };
-  if (nameFilter) {
-    datastoreQuery.name = [{
-      val: `${nameFilter}*`,
-      op: 'eq'
-    }];
-  }
-  if (storagePolicyLink) {
-    datastoreQuery['groupLinks/item'] = [{
-      val: storagePolicyLink,
-      op: 'eq'
-    }];
-  }
-  return get(mergeUrl(links.STORAGE_DESCRIPTIONS, {
-    [ODATA_FILTER_PROP_NAME]: serviceUtils.buildOdataQuery(datastoreQuery),
-    documentType: true
-  }));
-};
-
-services.loadAwsVolumeTypes = function(deviceType) {
-  return get(mergeUrl(links.AWS_VOLUME_TYPE_ENUMERATION, {
-    deviceType: deviceType,
-    documentType: true
-  }));
-};
-
-services.updateVsphereDatastore = function(datastore) {
-  return patch(datastore.documentSelfLink, {
-    supportsEncryption: datastore.supportsEncryption
-  });
-};
-
-services.loadVsphereStoragePolicies = function(endpointLink, nameFilter) {
-  let storagePoliciesQuery = {};
-  storagePoliciesQuery['customProperties/__type'] = [{
-    val: 'STORAGE',
-    op: 'eq'
-  }];
-  storagePoliciesQuery['customProperties/__endpointLink'] = [{
-    val: endpointLink,
-    op: 'eq'
-  }];
-  if (nameFilter) {
-    storagePoliciesQuery.name = [{
-      val: `${nameFilter}*`,
-      op: 'eq'
-    }];
-  }
-  return get(mergeUrl(links.RESOURCE_GROUPS, {
-    [ODATA_FILTER_PROP_NAME]: serviceUtils.buildOdataQuery(storagePoliciesQuery),
-    documentType: true
-  }));
-};
-
-services.updateVsphereStoragePolicy = function(storagePolicy) {
-  return patch(storagePolicy.documentSelfLink, {
-    customProperties: {
-      __supportsEncryption: storagePolicy.customProperties.__supportsEncryption
-    }
-  });
-};
-
 services.loadScript = function(src) {
   return new Promise((resolve, reject) => {
     $.getScript(src).done(resolve).fail(reject);
   });
-};
-
-services.collectInventory = function(endpoint) {
-  return get(endpoint.computeLink).then((compute) => {
-    let request = {
-      adapterManagementReference: compute.adapterManagementReference,
-      endpointLink: endpoint.documentSelfLink,
-      enumerationAction: 'START',
-      parentComputeLink: endpoint.computeLink,
-      options: ['PRESERVE_MISSING_RESOUCES'],
-      resourcePoolLink: endpoint.resourcePoolLink
-    };
-    return ajax('POST', links.RESOURCE_ENUMERATION, JSON.stringify(request));
-  });
-};
-
-services.collectImages = function(endpoint) {
-  let promises = [];
-  promises.push(ajax('POST', links.IMAGE_ENUMERATION, JSON.stringify({
-    endpointLink: endpoint.documentSelfLink,
-    enumerationAction: 'START'
-  })));
-  if (endpoint.endpointProperties && endpoint.endpointProperties.supportPublicImages) {
-    promises.push(ajax('POST', links.IMAGE_ENUMERATION, JSON.stringify({
-      endpointType: endpoint.endpointType,
-      enumerationAction: 'START',
-      regionId: endpoint.endpointProperties && endpoint.endpointProperties.regionId
-    })));
-  }
-  return Promise.all(promises);
 };
 
 //this method encodes scheme, hostname and port parts of the given uri
@@ -2948,16 +2292,6 @@ var buildSearchQuery = function(queryOptions) {
     userQueryOps.type = typeArray.map((type) => {
       return {
         val: '*' + type + '*',
-        op: 'eq'
-      };
-    });
-  }
-
-  var endpointArray = toArrayIfDefined(queryOptions.endpoint);
-  if (endpointArray) {
-    userQueryOps.endpointLink = endpointArray.map((endpoint) => {
-      return {
-        val: endpoint,
         op: 'eq'
       };
     });

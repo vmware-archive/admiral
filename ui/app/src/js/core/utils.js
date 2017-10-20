@@ -29,7 +29,6 @@ const OFFICIAL_REGISTRY_LIST = ['registry.hub.docker.com', 'docker.io'];
 var isSingleView = window.isSingleView;
 var isNavigationLess = window.isNavigationLess;
 
-var configurationAdapters = null;
 var configurationProperties = null;
 
 var isInteger = function(integer, min, max) {
@@ -58,21 +57,6 @@ var isNgViewFromViews = function(views, viewName, hasNgParent) {
 };
 
 var utils = {
-  initializeAdapters: function(adapters) {
-    if (configurationAdapters) {
-      throw new Error('Adapters already set');
-    }
-    configurationAdapters = adapters;
-  },
-
-  getAdapters: function() {
-    return configurationAdapters;
-  },
-
-  getAdapter: function(id) {
-    return configurationAdapters.find((adapter) => adapter.id === id);
-  },
-
   initializeConfigurationProperties: function(props) {
     if (configurationProperties) {
       throw new Error('Properties already set');
@@ -672,12 +656,6 @@ var utils = {
 
   isNavigationLess: function() {
     return isNavigationLess;
-  },
-
-  isApplicationCompute: function() {
-    var locationSearch = window.location.search || '';
-    var locationPath = window.location.pathname || '';
-    return locationSearch.indexOf('compute') !== -1 || locationPath.indexOf('/iaas/') !== -1;
   },
 
   /**

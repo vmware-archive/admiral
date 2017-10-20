@@ -14,13 +14,11 @@
 
 @import "radialProgress.css";
 
-@import "components/machine-details";
 @import "components/inline-editable-list";
 @import "components/list-views";
 @import "components/container-details";
 @import "components/container-request";
 @import "components/closures-request";
-@import "components/profile";
 @import "node_modules/admiral-ui-common/css/query-search";
 @import "node_modules/admiral-ui-common/css/dropdown";
 @import "components/networks";
@@ -151,10 +149,6 @@ textarea {
   background-color: #EFEFEF;
   min-height: 240px;
   padding: 50px 0 0px 75px;
-}
-
-.homepage .addEndpoint-btn {
-  max-width: 480px;
 }
 
 .docs-help .description {
@@ -339,28 +333,11 @@ textarea {
 }
 
 .closable-view > .content.host-view,
-.closable-view > .content.compute-edit-view,
-.closable-view > .content.machine-edit-view {
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-}
 
 .host-view .control-btns,
-.compute-view .control-btns,
-.endpoints-view .control-btns,
 .placement-zones-view .control-btns,
-.groups-view .control-btns,
-.subnetworks-view .control-btns,
-.vsphere-storage-policies-view .control-btns,
-.azure-storage-accounts-view .control-btns,
-.vsphere-datastores-view .control-btns {
+.groups-view .control-btns {
   padding-top: 10px;
-}
-
-.endpoints-view .form-group .btn-sm {
-  margin: 6px 0;
 }
 
 .helpcenter-link {
@@ -422,7 +399,7 @@ textarea {
   overflow: hidden;
 }
 
-.hosts-view, .images-view, .containers-view, .machines-view, .compute-view, .profiles-view {
+.hosts-view, .images-view, .containers-view {
   @extend .position-expand;
   overflow: hidden;
 }
@@ -445,16 +422,6 @@ $main-list-view-right: 10px;
   right: 50px;
   bottom: 50px;
 
-  margin-top: 10px;
-}
-
-.compute-view .main-panel .compute-form,
-.machines-view .main-panel .machine-form {
-  position: absolute;
-  top: 100px;
-  left: 50px;
-  right: 100px;
-  bottom: 50px;
   margin-top: 10px;
 }
 
@@ -729,10 +696,6 @@ $main-list-view-right: 10px;
 }
 
 .host-view,
-.compute-edit-view,
-.profile-edit-view,
-.machine-edit-view,
-.instance-type-edit-view,
 .registry-view {
   > .main-panel {
     @extend .position-expand;
@@ -747,11 +710,6 @@ $main-list-view-right: 10px;
 }
 
 .host-view.right-context-expanded,
-.endpoints-view.right-context-expanded,
-.compute-edit-view.right-context-expanded,
-.profile-edit-view.right-context-expanded,
-.instance-type-edit-view.right-context-expanded,
-.machine-edit-view.right-context-expanded,
 .registry-view.right-context-expanded {
   > .main-panel {
     > .mask {
@@ -761,55 +719,6 @@ $main-list-view-right: 10px;
   > .right-context-panel {
     left: 55%;
     z-index: 101;
-  }
-}
-
-.machine-edit-view {
-  .template-input {
-    margin-top: 10px;
-  }
-
-  textarea {
-    @extend .font-mono;
-    resize: vertical;
-    min-height: 300px;
-    line-height: 16px;
-    font-size: 13px;
-  }
-
-  .template-import-option {
-    .fileUpload {
-      float: left;
-    }
-
-    input.upload {
-      display: none;
-    }
-
-    > .fa-question-circle {
-      @extend .hint;
-      margin-left: 5px;
-      margin-top: 7px;
-      float: left;
-    }
-  }
-}
-
-.profile-edit-view,
-.instance-type-edit-view {
-  > .main-panel {
-    @extend .position-expand;
-    background-color: $context-view-background-color;
-    > .mask {
-      display: none;
-    }
-    .title {
-      font-size: 26px;
-    }
-  }
-  .multicolumn-inputs-list-body-wrapper {
-    max-height: none;
-    overflow: visible;
   }
 }
 
@@ -838,7 +747,7 @@ $main-list-view-right: 10px;
   }
 }
 
-.registry-view, .placements-view, .profiles-view, .center-view > .endpoints-view {
+.registry-view {
   @extend .inline-editable-list-and-context-view;
 }
 
@@ -854,20 +763,6 @@ $main-list-view-right: 10px;
 .inline-edit-holder.registryEditHolder {
   .form-block {
     margin-bottom: 20px;
-  }
-}
-
-.endpoint-icon,
-.dropdown-holder .dropdown-options {
-  img {
-    display: block;
-    float: left;
-    width: 16px;
-    height: 16px;
-    margin-right: 10px;
-  }
-  .spinner {
-    margin-right: 8px;
   }
 }
 
@@ -1177,20 +1072,12 @@ form.placement-inline-edit-properties {
   bottom: 0;
 }
 
-.profiles-view .closable-view > .content {
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-}
-
 .closable-view > .close-button {
   position: absolute;
   top: 5px;
   left: 15px;
 }
 
-.closable-view .profile-form,
 .closable-view.registry-view .list-holder {
   margin-top: 20px;
 }

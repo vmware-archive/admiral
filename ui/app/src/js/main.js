@@ -73,13 +73,8 @@ var updateHeader = function() {
 };
 
 initializer.init(true, () => {
-  if (utils.isApplicationCompute()) {
-    appInitializer(require('components/AppCompute').default,
-                   require('stores/AppComputeStore').default);
-  } else {
-    appInitializer(require('components/App').default,
-                     require('stores/AppStore').default);
-  }
+  appInitializer(require('components/App').default,
+                   require('stores/AppStore').default);
 
   updateHeader();
 });

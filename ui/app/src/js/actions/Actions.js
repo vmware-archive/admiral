@@ -21,16 +21,6 @@ export var HostActions = Reflux.createActions([
   'closeHosts', 'triggerDataCollection'
 ]);
 
-export var MachineActions = Reflux.createActions([
-  'openMachines', 'openMachinesNext', 'openAddMachine', 'openMachineDetails',
-  'createMachine', 'editMachine', 'updateMachine', 'operationCompleted',
-  'refreshMachineDetails'
-]);
-
-export var ComputeActions = Reflux.createActions([
-  'openCompute', 'openComputeNext', 'editCompute', 'updateCompute'
-]);
-
 export var PlacementActions = Reflux.createActions([
   'openPlacements', 'editPlacement', 'cancelEditPlacement', 'createPlacement', 'updatePlacement',
   'deletePlacement'
@@ -108,21 +98,10 @@ export var RegistryActions = Reflux.createActions([
 
 export var HostContextToolbarActions = Reflux.createActions([
   'openToolbarPlacementZones', 'openToolbarCredentials', 'openToolbarCertificates',
-  'openToolbarDeploymentPolicies', 'openToolbarEndpoints', 'closeToolbar',
+  'openToolbarDeploymentPolicies', 'closeToolbar',
   'createPlacementZone', 'managePlacementZones',
   'createCredential', 'manageCredentials', 'manageCertificates',
-  'createDeploymentPolicy', 'manageDeploymentPolicies',
-  'createEndpoint', 'manageEndpoints'
-]);
-
-export var MachinesContextToolbarActions = Reflux.createActions([
-  'openToolbarRequests', 'openToolbarEventLogs', 'openToolbarPlacementZones', 'closeToolbar',
-  'createPlacementZone', 'managePlacementZones'
-]);
-
-export var ComputeContextToolbarActions = Reflux.createActions([
-  'openToolbarPlacementZones', 'closeToolbar',
-  'createPlacementZone', 'managePlacementZones'
+  'createDeploymentPolicy', 'manageDeploymentPolicies'
 ]);
 
 export var RegistryContextToolbarActions = Reflux.createActions([
@@ -175,30 +154,6 @@ export var CertificatesActions = Reflux.createActions([
   'updateCertificate', 'deleteCertificate', 'importCertificate'
 ]);
 
-export var ProfileActions = Reflux.createActions([
-  'openProfiles', 'openProfilesNext', 'openAddProfile', 'editProfile', 'openAddInstanceType',
-  'cancelEditProfile', 'createProfile', 'updateProfile', 'deleteProfile',
-  'createEndpoint', 'manageEndpoints', 'createSubnetwork', 'manageSubnetworks',
-  'closeToolbar', 'selectView', 'manageAzureStorageAccounts', 'manageVsphereDatastores',
-  'manageVsphereStoragePolicies', 'createInstanceType', 'updateInstanceType', 'editInstanceType',
-  'clearProfile'
-]);
-
-export var EndpointsActions = Reflux.createActions([
-  'retrieveEndpoints', 'editEndpoint', 'cancelEditEndpoint', 'createEndpoint',
-  'updateEndpoint', 'deleteEndpoint', 'verifyEndpoint', 'acceptVerifyEndpoint',
-  'cancelVerifyEndpoint'
-]);
-
-export var EndpointContextToolbarActions = Reflux.createActions([
-  'openToolbarCertificates', 'closeToolbar', 'manageCertificates'
-]);
-
-export var SubnetworksActions = Reflux.createActions([
-  'retrieveSubnetworks', 'editSubnetwork', 'cancelEditSubnetwork', 'createSubnetwork',
-  'updateSubnetwork', 'deleteSubnetwork'
-]);
-
 export var RequestsActions = Reflux.createActions([
   'openRequests', 'openRequestsNext', 'selectRequests', 'refreshRequests',
   'requestCreated', 'removeRequest', 'closeRequests', 'clearRequests'
@@ -212,22 +167,6 @@ export var NotificationsActions = Reflux.createActions([
   'retrieveNotifications'
 ]);
 
-export var StorageDescriptionsActions = Reflux.createActions([
-  'retrieveStorageDescriptions'
-]);
-
-export var AzureStorageAccountsActions = Reflux.createActions([
-  'editAccount', 'cancelEditAccount', 'updateAccount', 'retrieveAccounts'
-]);
-
-export var VsphereDatastoreActions = Reflux.createActions([
-  'editDatastore', 'cancelEditDatastore', 'updateDatastore', 'retrieveDatastores'
-]);
-
-export var VsphereStoragePolicyActions = Reflux.createActions([
-  'editStoragePolicy', 'cancelEditStoragePolicy', 'updateStoragePolicy', 'retrieveStoragePolicies'
-]);
-
 /*
   Used to trigger a navigation change.
   The one listening for these will eventually call the corresponding action on a App/component level
@@ -237,9 +176,6 @@ export var NavigationActions = Reflux.createActions([
   'openTemplates', 'openEventLog', 'openRegistries', 'openContainerRequest', 'openContainers',
   'openNetworks', 'openContainerDetails', 'openClusterDetails', 'openCompositeContainerDetails',
   'openTemplateDetails', 'showContainersPerPlacement', 'showMachinesPerPlacement', 'openPlacements',
-  'openProfiles', 'openAddProfile', 'openAddInstanceType', 'editProfile', 'openMachines',
-  'openAddMachine', 'editMachine', 'openCompute', 'editCompute', 'openMachineDetails',
   'openClosures', 'openClosuresSilently', 'openAddClosure', 'openClosureDetails',
-  'openCompositeClosureDetails', 'openEndpoints', 'openEndpointsSilently', 'openAddEndpoint',
-  'openVolumes', 'openInstanceTypes', 'editInstanceType', 'openCreateNewApplication'
+  'openCompositeClosureDetails', 'openVolumes', 'openCreateNewApplication'
 ]);

@@ -13,12 +13,6 @@ import templateHelpers from 'core/templateHelpers';
 
 window.i18n = i18next;
 
-// the current UI is expected to be served under '/ogui' and/or '/iaas', therefore to get
-// the adapter url, we need to go one path up relatively '../'
-var fixupAdapterStaticResourcePath = function(path) {
-  return path.replace(/^\//, '../');
-};
-
 var initializer = {};
 
 initializer.init = function(initProperties, callback) {
@@ -81,34 +75,6 @@ initializer.init = function(initProperties, callback) {
     });
   };
 
-  const DEFAULT_ADAPTERS = {
-    'aws': {
-      icon: 'image-assets/endpoints/aws.png',
-      instanceTypeEditor: 'aws-instance-type-search',
-      endpointEditor: 'aws-endpoint-editor',
-      computeProfileEditor: 'aws-compute-profile-editor',
-      networkProfileEditor: 'aws-network-profile-editor',
-      storageProfileEditor: 'aws-storage-profile-editor'
-    },
-    'azure': {
-      icon: 'image-assets/endpoints/azure.png',
-      instanceTypeEditor: 'azure-instance-type-search',
-      endpointEditor: 'azure-endpoint-editor',
-      computeProfileEditor: 'azure-compute-profile-editor',
-      networkProfileEditor: 'azure-network-profile-editor',
-      storageProfileEditor: 'azure-storage-profile-editor'
-    },
-    'vsphere': {
-      icon: 'image-assets/endpoints/vsphere.png',
-      instanceTypeEditor: 'vsphere-instance-type',
-      endpointEditor: 'vsphere-endpoint-editor',
-      computeProfileEditor: 'vsphere-compute-profile-editor',
-      networkProfileEditor: 'vsphere-network-profile-editor',
-      storageProfileEditor: 'vsphere-storage-profile-editor'
-    }
-  };
-
-  var ft = require('core/ft').default;
   var services = require('core/services').default;
   var utils = require('core/utils').default;
 
@@ -131,42 +97,13 @@ initializer.init = function(initProperties, callback) {
 
     utils.initializeConfigurationProperties(configurationProperties);
 
-    console.log('Loading adapters and i18n');
-
-    var shouldLoadAdapters = utils.isApplicationCompute() &&
-        ft.isExternalPhotonAdaptersEnabled();
+    console.log('Loading i18n');
 
     return Promise.all([
-      shouldLoadAdapters ? services.loadAdapters() : Promise.resolve([]),
+      Promise.resolve([]),
 
       initI18N()
     ]);
-
-  }).then(([adapters]) => {
-    console.log('Loaded adapters and i18n');
-
-    utils.initializeAdapters(Object.values(adapters).sort(utils.templateSortFn).map((adapter) => {
-      const customProperties = adapter.customProperties || DEFAULT_ADAPTERS[adapter.id];
-      return {
-        id: adapter.id,
-        name: adapter.name,
-        iconSrc: fixupAdapterStaticResourcePath(customProperties.icon),
-        endpointEditor: customProperties.endpointEditor,
-        computeProfileEditorType: customProperties.computeProfileEditorType,
-        instanceTypeEditor: customProperties.instanceTypeEditor,
-        computeProfileEditor: customProperties.computeProfileEditor,
-        networkProfileEditorType: customProperties.networkProfileEditorType,
-        networkProfileEditor: customProperties.networkProfileEditor,
-        storageProfileEditorType: customProperties.storageProfileEditorType,
-        storageProfileEditor: customProperties.storageProfileEditor,
-        endpointEditorType: customProperties.endpointEditorType
-      };
-    }));
-
-    return Promise.all(Object.values(adapters)
-        .filter((adapter) => adapter.customProperties && adapter.customProperties.uiLink)
-        .map((adapter) => services.loadScript(
-          fixupAdapterStaticResourcePath(adapter.customProperties.uiLink))));
 
   }).then(callback).catch((err) => {
     console.warn('Error when loading configuration! Error: ' + JSON.stringify(err));

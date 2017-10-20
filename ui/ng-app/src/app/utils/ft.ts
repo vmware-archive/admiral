@@ -80,10 +80,6 @@ export class FT {
     return Utils.getConfigurationPropertyBoolean('vic');
   }
 
-  public static isCompute() {
-    return Utils.isCompute();
-  }
-
   public static isProfilesSplitEnabled() {
     return Utils.getConfigurationPropertyBoolean('allow.ft.profiles.split');
   }

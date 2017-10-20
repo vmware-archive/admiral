@@ -11,14 +11,12 @@
 
 import HostViewVue from 'components/hosts/HostViewVue.html';
 import HostAddView from 'components/hosts/HostAddView'; //eslint-disable-line
-import HostCreateView from 'components/hosts/HostCreateView'; //eslint-disable-line
 import { HostContextToolbarActions, NavigationActions } from 'actions/Actions';
 import utils from 'core/utils';
 import ft from 'core/ft';
 
 // Constants
 const TAB_ID_ADD_HOST = 'AddHost';
-const TAB_ID_CREATE_HOST = 'CreateHost';
 
 // The Host View component
 var HostView = Vue.extend({
@@ -50,9 +48,6 @@ var HostView = Vue.extend({
   computed: {
     showTabAddHost: function() {
       return this.selectedTab === TAB_ID_ADD_HOST;
-    },
-    showTabCreateHost: function() {
-      return !this.model.isUpdate && (this.selectedTab === TAB_ID_CREATE_HOST);
     },
     createHostEnabled: function() {
       return ft.isCreateHostOptionEnabled();
@@ -88,20 +83,12 @@ var HostView = Vue.extend({
       $event.stopPropagation();
 
       let leftTab = $(this.$el).find('.view-title .left');
-      let rightTab = $(this.$el).find('.view-title .right');
+
 
       if (tabId === 'leftTab') {
         // Left tab is selected
         leftTab.addClass('selected');
-        rightTab.removeClass('selected');
         this.selectedTab = TAB_ID_ADD_HOST;
-
-      } else if (tabId === 'rightTab') {
-        // Right tab is selected
-        rightTab.addClass('selected');
-        leftTab.removeClass('selected');
-
-        this.selectedTab = TAB_ID_CREATE_HOST;
       }
     },
 
@@ -109,7 +96,6 @@ var HostView = Vue.extend({
     openToolbarCredentials: HostContextToolbarActions.openToolbarCredentials,
     openToolbarCertificates: HostContextToolbarActions.openToolbarCertificates,
     openToolbarDeploymentPolicies: HostContextToolbarActions.openToolbarDeploymentPolicies,
-    openToolbarEndpoints: HostContextToolbarActions.openToolbarEndpoints,
     closeToolbar: HostContextToolbarActions.closeToolbar
   }
 });

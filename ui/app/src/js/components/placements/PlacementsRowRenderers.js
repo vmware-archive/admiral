@@ -22,11 +22,7 @@ var renderers = {
 
     rowRendererEl.find('.placementInstances').on('click', function(e) {
       e.preventDefault();
-      if (utils.isApplicationCompute()) {
-        return NavigationActions.showMachinesPerPlacement(placement.documentSelfLink);
-      } else {
-        return NavigationActions.showContainersPerPlacement(placement.documentSelfLink);
-      }
+      return NavigationActions.showContainersPerPlacement(placement.documentSelfLink);
     });
 
     if (!ft.isDeploymentPoliciesEnabled()) {

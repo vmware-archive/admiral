@@ -17,8 +17,6 @@ import utils from 'core/utils';
 import PlacementZonesStore from 'stores/PlacementZonesStore';
 import CredentialsStore from 'stores/CredentialsStore';
 import CertificatesStore from 'stores/CertificatesStore';
-import EndpointsStore from 'stores/EndpointsStore';
-import ProfilesStore from 'stores/ProfilesStore';
 import DeploymentPolicyStore from 'stores/DeploymentPolicyStore';
 import RequestsStore from 'stores/RequestsStore';
 import EventLogStore from 'stores/EventLogStore';
@@ -279,16 +277,6 @@ let updateEditableProperties = function(hostModel) {
     this.setInData(['hostAddView', 'deploymentPolicy'], null);
     hostModel.customProperties.__deploymentPolicyLink = null;
   }
-
-  var endpoints = utils.getIn(this.getData(), ['hostAddView', 'endpoints']);
-  if (endpoints && hostModel.endpoint) {
-    var endpoint = endpoints.find((endpoint) => {
-      return endpoint.documentSelfLink === hostModel.parentLink;
-    });
-    this.setInData(['hostAddView', 'endpoint'], endpoint);
-  } else {
-    this.setInData(['hostAddView', 'endpoint'], null);
-  }
 };
 
 let HostsStore = Reflux.createStore({
@@ -426,40 +414,6 @@ let HostsStore = Reflux.createStore({
 
       this.emitChange();
     });
-
-    EndpointsStore.listen((endpointsData) => {
-      if (!this.data.hostAddView) {
-        return;
-      }
-
-      this.setInData(['hostAddView', 'endpoints'], endpointsData.items);
-
-      if (isContextPanelActive.call(this, constants.CONTEXT_PANEL.ENDPOINTS)) {
-        this.setInData(['hostAddView', 'contextView', 'activeItem', 'data'],
-          endpointsData);
-
-        var itemToSelect = endpointsData.newItem || endpointsData.updatedItem;
-        if (itemToSelect && this.data.hostAddView.contextView.shouldSelectAndComplete) {
-          clearTimeout(this.itemSelectTimeout);
-          this.itemSelectTimeout = setTimeout(() => {
-            this.setInData(['hostAddView', 'endpoint'], itemToSelect);
-            this.onCloseToolbar();
-          }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
-        }
-      }
-
-      this.emitChange();
-    });
-
-
-    ProfilesStore.listen((profilesData) => {
-      if (!this.data.hostAddView) {
-        return;
-      }
-
-      this.setInData(['hostAddView', 'profiles'], profilesData.listView.items);
-      this.emitChange();
-    });
   },
 
   listenables: [actions.HostActions,
@@ -582,8 +536,6 @@ let HostsStore = Reflux.createStore({
     actions.CredentialsActions.retrieveCredentials();
     actions.CertificatesActions.retrieveCertificates();
     actions.DeploymentPolicyActions.retrieveDeploymentPolicies();
-    actions.EndpointsActions.retrieveEndpoints();
-    actions.ProfileActions.openProfiles();
   },
 
   onCloseHosts: function() {
@@ -981,11 +933,6 @@ let HostsStore = Reflux.createStore({
       false);
   },
 
-  onOpenToolbarEndpoints: function() {
-    onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.ENDPOINTS,
-      EndpointsStore.getData(), false);
-  },
-
   onOpenToolbarDeploymentPolicies: function() {
     onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.DEPLOYMENT_POLICIES,
       DeploymentPolicyStore.getData(), false);
@@ -1053,17 +1000,6 @@ let HostsStore = Reflux.createStore({
   onManageDeploymentPolicies: function() {
     onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.DEPLOYMENT_POLICIES,
       DeploymentPolicyStore.getData(), true);
-  },
-
-  onCreateEndpoint: function() {
-    onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.ENDPOINTS,
-      EndpointsStore.getData(), true);
-    actions.EndpointsActions.editEndpoint({});
-  },
-
-  onManageEndpoints: function() {
-    onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.ENDPOINTS,
-      EndpointsStore.getData(), true);
   },
 
   onTriggerDataCollection: function() {

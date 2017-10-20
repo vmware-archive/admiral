@@ -22,18 +22,6 @@
             :value="model.item.name" @input="onNameChange()"
             :placeholder="i18n('app.placementZone.edit.nameTitle')">
       </div>
-      <div class="form-group row" v-if="showEndpoint">
-        <label class="subtitle required" style="position: static">
-          {{i18n('app.placementZone.edit.endpointTitle')}}
-        </label>
-        <dropdown-search
-            :disabled="!!model.item.documentSelfLink"
-            :entity="i18n('app.endpoint.entity')"
-            :filter="searchEndpoints"
-            :value="model.item.endpoint"
-            @change="onEndpointChange">
-        </dropdown-search>
-      </div>
       <div v-if="isDockerPlacementZone" class="form-group row">
         <div class="subtitle">{{i18n('app.placementZone.edit.placementPolicy')}}
           <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="top"

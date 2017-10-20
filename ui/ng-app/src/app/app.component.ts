@@ -64,16 +64,12 @@ export class AppComponent implements OnInit {
         return Utils.isLogin();
     }
 
-    get compute(): boolean {
-        return FT.isCompute();
-    }
-
     get vic(): boolean {
         return FT.isVic();
     }
 
     get admiral(): boolean {
-        return !this.compute && !this.vic;
+        return !this.vic;
     }
 
     get userName(): String {

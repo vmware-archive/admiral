@@ -12,7 +12,6 @@
 import * as actions from 'actions/Actions';
 import modal from 'core/modal';
 import constants from 'core/constants';
-import computeConstants from 'core/computeConstants';
 import utils from 'core/utils';
 import docs from 'core/docs';
 
@@ -66,11 +65,6 @@ crossroads.addRoute('/hosts/{hostId*}', function(hostId) {
 crossroads.addRoute('/placements', function() {
   actions.AppActions.openView(constants.VIEWS.PLACEMENTS.name);
   actions.PlacementActions.openPlacements();
-});
-
-crossroads.addRoute('/placementZones', function() {
-  actions.AppActions.openView(computeConstants.VIEWS.PLACEMENT_ZONES.name);
-  actions.PlacementZonesActions.retrievePlacementZones();
 });
 
 crossroads.addRoute('/projects:?query:', function(query) {
@@ -270,76 +264,6 @@ crossroads.addRoute('/closure/{closureId*}', function(closureId) {
   actions.ContainerActions.openClosureDetails(closureId);
 });
 
-crossroads.addRoute('/profiles:?query:', function(query) {
-  actions.AppActions.openView(computeConstants.VIEWS.PROFILES.name);
-  actions.ProfileActions.openProfiles(query);
-});
-
-crossroads.addRoute('/profiles/new', function() {
-  actions.AppActions.openView(computeConstants.VIEWS.PROFILES.name);
-  actions.ProfileActions.openAddProfile();
-});
-
-crossroads.addRoute('/instance-types/new', function() {
-  actions.AppActions.openView(computeConstants.VIEWS.INSTANCETYPE.name);
-  actions.ProfileActions.openAddInstanceType();
-  actions.EndpointsActions.retrieveEndpoints();
-});
-
-crossroads.addRoute('/profiles/{id*}', function(id) {
-  actions.AppActions.openView(computeConstants.VIEWS.PROFILES.name);
-  actions.ProfileActions.editProfile(id);
-});
-
-crossroads.addRoute('/instance-types/edit/{id*}', function(id) {
-  actions.AppActions.openView(computeConstants.VIEWS.INSTANCETYPE.name);
-  actions.ProfileActions.editInstanceType(id);
-  actions.EndpointsActions.retrieveEndpoints();
-});
-
-crossroads.addRoute('/endpoints', function() {
-  if (silenced) {
-    return;
-  }
-  actions.AppActions.openView(computeConstants.VIEWS.ENDPOINTS.name);
-  actions.EndpointsActions.retrieveEndpoints();
-});
-
-crossroads.addRoute('/endpoints/new', function() {
-  actions.AppActions.openView(computeConstants.VIEWS.ENDPOINTS.name);
-  actions.EndpointsActions.editEndpoint({});
-});
-
-crossroads.addRoute('/machines:?query:', function(query) {
-  actions.AppActions.openView(computeConstants.VIEWS.RESOURCES.VIEWS.MACHINES.name);
-  actions.MachineActions.openMachines(query, true);
-});
-
-crossroads.addRoute('/machines/new', function() {
-  actions.AppActions.openView(computeConstants.VIEWS.RESOURCES.VIEWS.MACHINES.name);
-  actions.MachineActions.openAddMachine();
-});
-
-crossroads.addRoute('/machines/{machineId*}/details', function(machineId) {
-  actions.AppActions.openView(computeConstants.VIEWS.RESOURCES.VIEWS.MACHINES.name);
-  actions.MachineActions.openMachineDetails(machineId);
-});
-
-crossroads.addRoute('/machines/{machineId*}', function(machineId) {
-  actions.AppActions.openView(computeConstants.VIEWS.RESOURCES.VIEWS.MACHINES.name);
-  actions.MachineActions.editMachine(machineId);
-});
-
-crossroads.addRoute('/compute:?query:', function(query) {
-  actions.AppActions.openView(computeConstants.VIEWS.COMPUTE.name);
-  actions.ComputeActions.openCompute(query, true);
-});
-
-crossroads.addRoute('/compute/{computeId*}', function(computeId) {
-  actions.AppActions.openView(computeConstants.VIEWS.COMPUTE.name);
-  actions.ComputeActions.editCompute(computeId);
-});
-
 function addNgRoute(route, view) {
   crossroads.addRoute(route, () => {
     actions.AppActions.openView(view.name, routes.getHash());
@@ -373,12 +297,6 @@ actions.NavigationActions.openHosts.listen(function(queryOptions) {
 actions.NavigationActions.openHostsSilently.listen(function() {
   silenced = true;
   hasher.setHash('hosts');
-  silenced = false;
-});
-
-actions.NavigationActions.openEndpointsSilently.listen(function() {
-  silenced = true;
-  hasher.setHash('endpoints');
   silenced = false;
 });
 
@@ -496,76 +414,8 @@ actions.NavigationActions.showContainersPerPlacement.listen(function(placementId
   hasher.setHash(getHashWithQuery('containers', queryOptions));
 });
 
-actions.NavigationActions.showMachinesPerPlacement.listen(function(placementId) {
-  let queryOptions = {
-    'placement': placementId
-  };
-
-  hasher.setHash(getHashWithQuery('machines', queryOptions));
-});
-
 actions.NavigationActions.openPlacements.listen(function() {
   hasher.setHash('placements');
-});
-
-actions.NavigationActions.openEndpoints.listen(function() {
-  hasher.setHash('endpoints');
-});
-
-actions.NavigationActions.openAddEndpoint.listen(function() {
-  hasher.setHash('endpoints/new');
-});
-
-actions.NavigationActions.openProfiles.listen(function(queryOptions) {
-  hasher.setHash(getHashWithQuery('profiles', queryOptions));
-});
-
-actions.NavigationActions.openInstanceTypes.listen(function() {
-  // TODO: find a better way
-  // Navigate to home so the view is hidden from the stage
-  actions.AppActions.openView(null);
-  actions.ProfileActions.clearProfile();
-  window.top.location.href = window.origin + '/#compute/instance-types';
-});
-
-actions.NavigationActions.openAddInstanceType.listen(function() {
-  hasher.setHash('instance-types/new');
-});
-
-actions.NavigationActions.editInstanceType.listen(function(id) {
-  hasher.setHash('instance-types/edit/' + id);
-});
-
-actions.NavigationActions.openAddProfile.listen(function() {
-  hasher.setHash('profiles/new');
-});
-
-actions.NavigationActions.editProfile.listen(function(id) {
-  hasher.setHash('profiles/' + id);
-});
-
-actions.NavigationActions.openMachines.listen(function(queryOptions) {
-  hasher.setHash(getHashWithQuery('machines', queryOptions));
-});
-
-actions.NavigationActions.openAddMachine.listen(function() {
-  hasher.setHash('machines/new');
-});
-
-actions.NavigationActions.editMachine.listen(function(machineId) {
-  hasher.setHash('machines/' + machineId);
-});
-
-actions.NavigationActions.openMachineDetails.listen(function(machineId) {
-  hasher.setHash('machines/' + machineId + '/details');
-});
-
-actions.NavigationActions.openCompute.listen(function(queryOptions) {
-  hasher.setHash(getHashWithQuery('compute', queryOptions));
-});
-
-actions.NavigationActions.editCompute.listen(function(computeId) {
-  hasher.setHash('compute/' + computeId);
 });
 
 actions.NavigationActions.openClosuresSilently.listen(function() {

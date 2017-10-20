@@ -55,11 +55,7 @@ var PlacementZonesView = Vue.extend({
       return utils.getDocumentId(item.resourcePoolState.documentSelfLink);
     },
     getHostsPath: function() {
-      if (utils.isApplicationCompute()) {
-        return 'compute';
-      } else {
-        return 'hosts';
-      }
+      return 'hosts';
     },
     getPercentageLevel: function(percentage) {
       if (percentage < 50) {
