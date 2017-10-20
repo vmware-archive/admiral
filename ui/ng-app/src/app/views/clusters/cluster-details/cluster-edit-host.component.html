@@ -45,7 +45,7 @@
                         <span class="tooltip-content">{{ "clusters.edit.publicAddressDescription" | i18n }}</span>
                     </a>
                 </div>
-                <div class="form-group">
+                <div class="form-group" *ngIf="isApplicationEmbedded">
                     <label for="deploymentPolicy">{{ "clusters.resources.addHost.deploymentPolicy" | i18n }}</label>
                     <dropdown id="deploymentPolicy" formControlName="deploymentPolicy" [options]="deploymentPolicies"
                               [title]="deploymentPoliciesTitle"

@@ -85,7 +85,11 @@ export class ClusterEditHostComponent implements OnChanges {
 
     get showPublicAddressField(): boolean {
         return FT.isHostPublicUriEnabled();
-      }
+    }
+
+    get isApplicationEmbedded(): boolean {
+        return FT.isApplicationEmbedded();
+    }
 
     getCredentialsName(credentials) {
         let name = Utils.getCustomPropertyValue(credentials.customProperties, '__authCredentialsName');

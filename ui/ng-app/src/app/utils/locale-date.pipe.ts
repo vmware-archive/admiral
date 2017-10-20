@@ -17,6 +17,9 @@ import * as I18n from 'i18next';
 export class LocaleDatePipe implements PipeTransform {
 
   public transform(timestampMicros: number): any {
+    if (!timestampMicros) {
+      return '';
+    }
     moment.locale(I18n.language);
     return moment(timestampMicros).format('LLL');
   }

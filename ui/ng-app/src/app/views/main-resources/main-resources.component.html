@@ -63,10 +63,8 @@
           <label for="infrastructureCollapse">{{ "navigation.infrastructure" | i18n }}</label>
           <ul class="nav-list">
               <li><a class="nav-link" routerLink="clusters" routerLinkActive="active">{{ navigationClustersTextKey | i18n }}</a></li>
-              <li *ngIf="showHostsView"><a class="nav-link" routerLink="hosts" routerLinkActive="active">{{ "navigation.hosts" | i18n }}</a></li>
           </ul>
       </section>
-      <a *ngIf="showHostsView" class="nav-link" routerLink="placements" routerLinkActive="active">{{ "navigation.placements" | i18n }}</a>
       <a *ngIf="embeddedMode" class="nav-link" routerLink="identity-management" routerLinkActive="active">{{ "navigation.identityManagement" | i18n }}</a>
   </section>
 </nav>
