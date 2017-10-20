@@ -41,16 +41,17 @@
         </div>
         <div class="grid-container">
           <div class="content">
-            <grid v-bind:preferred-width="preferredGridWidth">
+            <grid :preferred-width="preferredGridWidth">
               <grid-item v-for="item in model.listView.items" track-by="documentId"
-                         v-bind:class="{'highlight-item': item.alert, 'success': alertType(item.alert) === 'success', 'fail': alertType(item.alert) === 'danger'}">
+                         :class="{'highlight-item': item.alert, 'success': alertType(item.alert) === 'success', 'fail': alertType(item.alert) === 'danger'}">
                 <container-image-item v-if="item.type === constants.TEMPLATES.TYPES.IMAGE"
-                                      v-bind:model="item" v-bind:groups="model.groups">
+                                      :model="item" :groups="model.groups">
                 </container-image-item>
                 <container-template-item v-if="item.type === constants.TEMPLATES.TYPES.TEMPLATE"
-                                         v-bind:model="item" v-bind:groups="model.groups">
+                                         :model="item" :groups="model.groups">
                 </container-template-item>
-                <closure-template-item v-if="item.type === constants.TEMPLATES.TYPES.CLOSURE && areClosuresAllowed" v-bind:model="item" v-bind:groups="model.groups">
+                <closure-template-item v-if="item.type === constants.TEMPLATES.TYPES.CLOSURE && areClosuresAllowed"
+                                       :model="item" :groups="model.groups">
                 </closure-template-item>
               </grid-item>
             </grid>
@@ -83,7 +84,7 @@
 
   <div v-if="model.selectedItemDetails" transition="slide-and-fade" class="closable-view"
        :class="{'expanded': model.selectedItemDetails.expanded}">
-    <a class="close-button" v-on:click="goBack($event)"><i
+    <a class="close-button" @click="goBack($event)"><i
       class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
 
     <div class="content">
@@ -99,7 +100,7 @@
                            :placeholder="i18n('app.template.details.createNameHint')"
                            v-model="createTemplateName"/>
                     <a class="btn btn-primary create-template-btn"
-                       v-on:click="createNewTemplate($event)">{{i18n("app.template.details.createProceed")}}</a>
+                       @click="createNewTemplate($event)">{{i18n("app.template.details.createProceed")}}</a>
                   </div>
               </div>
             </div>

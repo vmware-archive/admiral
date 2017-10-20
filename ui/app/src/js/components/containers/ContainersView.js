@@ -300,6 +300,13 @@ var ContainersViewVueComponent = Vue.extend({
       NavigationActions.openCompositeClosureDetails(documentId);
     },
 
+    openCreateApplication: function($event) {
+      $event.stopPropagation();
+      $event.preventDefault();
+
+      return NavigationActions.openCreateNewApplication();
+    },
+
     refresh: function() {
       ContainerActions.openContainers(this.queryOptions, true);
     },

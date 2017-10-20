@@ -363,10 +363,23 @@ var TemplatesViewVueComponent = Vue.extend({
     },
 
     goBack: function() {
+
+      if (this.model.selectedItemDetails.selectedForCreate) {
+        return NavigationActions.openContainers({
+          $category: constants.CONTAINERS.SEARCH_CATEGORY.APPLICATIONS
+        }, true);
+      }
+
+      if (this.model.selectedItemDetails.selectedForEdit) {
+        return NavigationActions.openTemplates({
+          $category: constants.TEMPLATES.SEARCH_CATEGORY.TEMPLATES
+        }, true);
+      }
+
       let detailsView = this.$refs.templateDetails;
       if (!detailsView || !detailsView.handleBackButton || !detailsView.handleBackButton()) {
         // Current view cannot handle back button, we will make the navigation
-        NavigationActions.openTemplates(this.queryOptions, true);
+        return NavigationActions.openTemplates(this.queryOptions, true);
       }
     },
 

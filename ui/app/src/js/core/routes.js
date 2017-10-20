@@ -484,6 +484,10 @@ actions.NavigationActions.openCompositeClosureDetails.listen(function(closureDes
   hasher.setHash('closures/' + closureDescriptionId);
 });
 
+actions.NavigationActions.openCreateNewApplication.listen(function() {
+  hasher.setHash('applications/new');
+});
+
 actions.NavigationActions.showContainersPerPlacement.listen(function(placementId) {
   let queryOptions = {
     'placement': placementId

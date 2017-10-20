@@ -241,5 +241,5 @@ export var NavigationActions = Reflux.createActions([
   'openAddMachine', 'editMachine', 'openCompute', 'editCompute', 'openMachineDetails',
   'openClosures', 'openClosuresSilently', 'openAddClosure', 'openClosureDetails',
   'openCompositeClosureDetails', 'openEndpoints', 'openEndpointsSilently', 'openAddEndpoint',
-  'openVolumes', 'openInstanceTypes', 'editInstanceType'
+  'openVolumes', 'openInstanceTypes', 'editInstanceType', 'openCreateNewApplication'
 ]);

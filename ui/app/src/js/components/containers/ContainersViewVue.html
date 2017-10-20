@@ -56,8 +56,9 @@
                  v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.CONTAINERS">
                 <i class="fa fa-plus"></i>{{i18n("app.resource.list.container.create")}}
               </a>
-              <a href="#/applications/new" class="btn btn-link create-resource-btn"
-                 v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.APPLICATIONS">
+              <a class="btn btn-link create-resource-btn"
+                 v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.APPLICATIONS"
+                 @click="openCreateApplication($event)">
                 <i class="fa fa-plus"></i>{{i18n("app.resource.list.application.create")}}
               </a>
               <a href="#/networks/new" class="btn btn-link create-resource-btn"
