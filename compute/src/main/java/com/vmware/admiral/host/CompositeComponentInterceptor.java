@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.host;
 
+import java.util.logging.Level;
+
 import com.vmware.admiral.closures.services.closure.ClosureService;
 import com.vmware.admiral.compute.Composable;
 import com.vmware.admiral.compute.container.CompositeComponentRegistry;
@@ -32,6 +34,7 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.StatefulService;
+import com.vmware.xenon.common.Utils;
 
 /**
  * Handles notifications to {@link CompositeComponent} on changes to registered resources.
@@ -159,6 +162,11 @@ public class CompositeComponentInterceptor {
     private static ResourceState extractState(Operation o) {
         String path = o.getUri().getPath();
         ComponentMeta meta = CompositeComponentRegistry.metaByStateLink(path);
+        if (meta.stateClass == null) {
+            Utils.log(CompositeComponentInterceptor.class,
+                    CompositeComponentInterceptor.class.getSimpleName(),
+                    Level.WARNING, "Cannot find meta for path = %s", path);
+        }
         ResourceState state = o.getBody(meta.stateClass);
         return state;
     }
