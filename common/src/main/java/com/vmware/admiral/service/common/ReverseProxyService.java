@@ -31,6 +31,8 @@ public class ReverseProxyService extends StatelessService {
     public static final String SELF_LINK = ManagementUriParts.REVERSE_PROXY;
 
     protected volatile Boolean isEmbedded;
+    protected volatile Boolean isVic;
+    protected volatile Boolean allowSshConsole;
 
     public ReverseProxyService() {
         super.toggleOption(ServiceOption.URI_NAMESPACE_OWNER, true);
@@ -77,8 +79,26 @@ public class ReverseProxyService extends StatelessService {
             return;
         }
 
-        if (isEmbedded) {
-            logInfo("Reverse proxy access temporarily disabled in embedded mode!");
+        if (isVic == null) {
+            ConfigurationUtil.getConfigProperty(this, ConfigurationUtil.VIC_MODE_PROPERTY,
+                    (vic) -> {
+                        isVic = Boolean.valueOf(vic);
+                        handleGet(op);
+                    });
+            return;
+        }
+
+        if (allowSshConsole == null) {
+            ConfigurationUtil.getConfigProperty(this, ConfigurationUtil.ALLOW_SSH_CONSOLE_PROPERTY,
+                    (sshConsole) -> {
+                        allowSshConsole = Boolean.valueOf(sshConsole);
+                        handleGet(op);
+                    });
+            return;
+        }
+
+        if (isEmbedded || isVic || !allowSshConsole) {
+            logInfo("Reverse proxy access temporarily disabled!");
             op.fail(Operation.STATUS_CODE_FORBIDDEN);
             return;
         }

@@ -36,6 +36,12 @@ public class ContainerShellServiceTest extends ComputeBaseTest {
     @Before
     public void setUp() throws Throwable {
         waitForServiceAvailability(ConfigurationFactoryService.SELF_LINK);
+
+        ConfigurationState config = new ConfigurationState();
+        config.key = ConfigurationUtil.ALLOW_SSH_CONSOLE_PROPERTY;
+        config.value = "true";
+        config.documentSelfLink = config.key;
+        doPost(config, ConfigurationFactoryService.SELF_LINK);
     }
 
     @Test
@@ -61,6 +67,23 @@ public class ContainerShellServiceTest extends ComputeBaseTest {
         ConfigurationState config = new ConfigurationState();
         config.key = ConfigurationUtil.VIC_MODE_PROPERTY;
         config.value = "true";
+        config.documentSelfLink = config.key;
+        doPost(config, ConfigurationFactoryService.SELF_LINK);
+
+        try {
+            getDocument(String.class, ContainerShellService.SELF_LINK);
+            fail("It should have been forbidden!");
+        } catch (IllegalAccessError e) {
+            assertEquals("forbidden", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testGetShellWhenWhenShellDisabledShouldFail() throws Throwable {
+
+        ConfigurationState config = new ConfigurationState();
+        config.key = ConfigurationUtil.ALLOW_SSH_CONSOLE_PROPERTY;
+        config.value = "false";
         config.documentSelfLink = config.key;
         doPost(config, ConfigurationFactoryService.SELF_LINK);
 

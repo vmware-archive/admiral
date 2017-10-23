@@ -428,7 +428,8 @@ public class ProjectUtil {
 
                     String stringBody = body instanceof String ? (String) body : Utils.toJson(body);
 
-                    if (op.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
+                    if (op.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND ||
+                            op.getStatusCode() >= Operation.STATUS_CODE_INTERNAL_ERROR) {
                         throw new IllegalStateException(stringBody.trim());
                     }
 

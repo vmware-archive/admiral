@@ -35,6 +35,7 @@ public class ContainerShellService extends AbstractShellContainerService {
 
     protected volatile Boolean isEmbedded;
     protected volatile Boolean isVic;
+    protected volatile Boolean allowSshConsole;
 
     @Override
     public void handleGet(Operation get) {
@@ -57,8 +58,17 @@ public class ContainerShellService extends AbstractShellContainerService {
             return;
         }
 
-        if (isEmbedded || isVic) {
-            logInfo("Container shell access temporarily disabled when embedded or in VIC!");
+        if (allowSshConsole == null) {
+            ConfigurationUtil.getConfigProperty(this, ConfigurationUtil.ALLOW_SSH_CONSOLE_PROPERTY,
+                    (sshConsole) -> {
+                        allowSshConsole = Boolean.valueOf(sshConsole);
+                        handleGet(get);
+                    });
+            return;
+        }
+
+        if (isEmbedded || isVic || !allowSshConsole) {
+            logInfo("Container shell access temporarily disabled!");
             get.fail(Operation.STATUS_CODE_FORBIDDEN);
             return;
         }

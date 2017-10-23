@@ -42,6 +42,12 @@ public class ReverseProxyServiceTest extends BaseTestCase {
 
         host.waitForServiceAvailable(ReverseProxyService.SELF_LINK);
         host.waitForServiceAvailable(MockPingService.SELF_LINK);
+
+        ConfigurationState config = new ConfigurationState();
+        config.key = ConfigurationUtil.ALLOW_SSH_CONSOLE_PROPERTY;
+        config.value = "true";
+        config.documentSelfLink = config.key;
+        doPost(config, ConfigurationFactoryService.SELF_LINK);
     }
 
     @Test
@@ -80,6 +86,40 @@ public class ReverseProxyServiceTest extends BaseTestCase {
         ConfigurationState config = new ConfigurationState();
         config.key = ConfigurationUtil.EMBEDDED_MODE_PROPERTY;
         config.value = "true";
+        config.documentSelfLink = config.key;
+        doPost(config, ConfigurationFactoryService.SELF_LINK);
+
+        try {
+            testOperation(Operation::createGet, null);
+            fail("It should have been forbidden!");
+        } catch (IllegalAccessError e) {
+            assertEquals("forbidden", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testOperationForbiddenWhenVic() throws Throwable {
+
+        ConfigurationState config = new ConfigurationState();
+        config.key = ConfigurationUtil.VIC_MODE_PROPERTY;
+        config.value = "true";
+        config.documentSelfLink = config.key;
+        doPost(config, ConfigurationFactoryService.SELF_LINK);
+
+        try {
+            testOperation(Operation::createGet, null);
+            fail("It should have been forbidden!");
+        } catch (IllegalAccessError e) {
+            assertEquals("forbidden", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testOperationForbiddenWhenShellDisabled() throws Throwable {
+
+        ConfigurationState config = new ConfigurationState();
+        config.key = ConfigurationUtil.ALLOW_SSH_CONSOLE_PROPERTY;
+        config.value = "false";
         config.documentSelfLink = config.key;
         doPost(config, ConfigurationFactoryService.SELF_LINK);
 

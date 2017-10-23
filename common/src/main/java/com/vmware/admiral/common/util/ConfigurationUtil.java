@@ -29,6 +29,7 @@ public class ConfigurationUtil {
 
     public static final String EMBEDDED_MODE_PROPERTY = "embedded";
     public static final String VIC_MODE_PROPERTY = "vic";
+    public static final String ALLOW_SSH_CONSOLE_PROPERTY = "allow.browser.ssh.console";
 
     private static ConfigurationState[] configProperties;
 
