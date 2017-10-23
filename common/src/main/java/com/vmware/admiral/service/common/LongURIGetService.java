@@ -35,12 +35,21 @@ public class LongURIGetService extends StatelessService {
 
     @Override
     public void handlePost(Operation post) {
-        LongURIRequest body = post.getBody(LongURIRequest.class);
+        LongURIRequest body;
+        try {
+            body = post.getBody(LongURIRequest.class);
+        } catch (Exception e) {
+            logFine("Exception getting long URI '%s': %s", post.getBody(String.class),
+                    e.getMessage());
+            post.fail(Operation.STATUS_CODE_BAD_REQUEST, e, "");
+            return;
+        }
         sendRequest(Operation.createGet(this, body.uri).setCompletion((o, e) -> {
             post.setBodyNoCloning(o.getBodyRaw());
             post.setStatusCode(o.getStatusCode());
             post.transferResponseHeadersFrom(o);
             if (e != null) {
+                post.setContentType(Operation.MEDIA_TYPE_APPLICATION_JSON);
                 post.fail(e);
             } else {
                 post.complete();
