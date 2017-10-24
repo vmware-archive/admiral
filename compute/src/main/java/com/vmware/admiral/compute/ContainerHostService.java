@@ -15,6 +15,7 @@ import static com.vmware.admiral.common.util.ServiceUtils.addServiceRequestRoute
 import static com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription.getDockerHostUri;
 
 import java.net.HttpURLConnection;
+import java.net.ProtocolException;
 import java.net.URI;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -876,6 +877,8 @@ public class ContainerHostService extends StatelessService {
             }
         } else if (e.getCause() instanceof ConnectTimeoutException) {
             localizedEx = new LocalizableValidationException(e, "Connection timeout", "compute.connection.timeout");
+        } else if (e.getCause() instanceof ProtocolException) {
+            localizedEx = new LocalizableValidationException(e, "Protocol exception", "compute.protocol.exception");
         }
 
         if (localizedEx != null) {

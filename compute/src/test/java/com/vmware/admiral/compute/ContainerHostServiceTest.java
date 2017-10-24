@@ -115,6 +115,67 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
     }
 
     @Test
+    public void testPutAcceptCertificates() throws Throwable {
+        List<String> tenantLinks = Arrays.asList(
+                FIRST_TENANT_ID);
+
+        ComputeState cs = createComputeHost(tenantLinks, FIRST_COMPUTE_DESC_ID);
+        doPost(cs, ComputeService.FACTORY_LINK);
+
+        List<String> tenantLinksWithDifferentTenant = Arrays.asList(
+                SECOND_TENANT_ID);
+        ContainerHostSpec hostSpec = createContainerHostSpec(tenantLinksWithDifferentTenant,
+                SECOND_COMPUTE_DESC_ID);
+        hostSpec.acceptHostAddress = true;
+        hostSpec.acceptCertificate = true;
+
+        createContainerHostSpec(hostSpec);
+
+        assertComputeStateExists(hostSpec);
+    }
+
+    @Test
+    public void testPutEmptyHostType() throws Throwable {
+        List<String> tenantLinks = Arrays.asList(
+                FIRST_TENANT_ID);
+
+        ContainerHostSpec hostSpec = createContainerHostSpec(tenantLinks, SECOND_COMPUTE_DESC_ID);
+        hostSpec.hostState.customProperties.put(ContainerHostService.CONTAINER_HOST_TYPE_PROP_NAME, "invalid");
+        String errorMessage = String.format(
+                ContainerHostUtil.CONTAINER_HOST_TYPE_NOT_SUPPORTED_MESSAGE_FORMAT, "invalid");
+        try {
+            createContainerHostSpec(hostSpec);
+            fail("Should've thrown LocalizableValidationException - " + errorMessage);
+        } catch (LocalizableValidationException e) {
+            assertEquals(errorMessage, e.getMessage());
+        }
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testPutWithEmptyBody() throws Throwable {
+        createContainerHostSpec(null);
+    }
+
+    @Test
+    public void testUpdateFromSameTenant() throws Throwable {
+        List<String> tenantLinks = Arrays.asList(
+                FIRST_TENANT_ID);
+
+        ComputeState cs = createComputeHost(tenantLinks, FIRST_COMPUTE_DESC_ID);
+        cs = doPost(cs, ComputeService.FACTORY_LINK);
+
+        ContainerHostSpec hostSpec = createContainerHostSpec(tenantLinks, FIRST_COMPUTE_DESC_ID);
+        hostSpec.hostState.documentSelfLink = cs.documentSelfLink;
+        String updatedHostName = "updated name";
+        hostSpec.hostState.name = updatedHostName;
+        hostSpec.isUpdateOperation = true;
+
+        createContainerHostSpec(hostSpec);
+        ComputeState updatedHost = assertComputeStateExists(hostSpec);
+        assertEquals(updatedHost.name, updatedHostName);
+    }
+
+    @Test
     public void testExerciseExceptionOnSendAdapterRequest() throws Throwable {
         // 1. Shutdown host-docker-service
         TestContext ctx = testCreate(1);
@@ -384,10 +445,11 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
         host.testWait();
     }
 
-    private void assertComputeStateExists(ContainerHostSpec hostSpec) {
+    private ComputeState assertComputeStateExists(ContainerHostSpec hostSpec) {
         QueryTask queryTask = QueryUtil.buildPropertyQuery(ComputeState.class,
                 ComputeState.FIELD_NAME_DESCRIPTION_LINK, hostSpec.hostState.descriptionLink);
-        List<String> computeStates = new ArrayList<>();
+        QueryUtil.addExpandOption(queryTask);
+        List<ComputeState> computeStates = new ArrayList<>();
         host.testStart(1);
         new ServiceDocumentQuery<>(host, ComputeState.class)
                 .query(queryTask,
@@ -396,7 +458,7 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
                                 host.log("Exception while getting the compute state.");
                                 host.failIteration(r.getException());
                             } else if (r.hasResult()) {
-                                computeStates.add(r.getDocumentSelfLink());
+                                computeStates.add(r.getResult());
                             } else {
                                 if (computeStates.isEmpty()) {
                                     host.log("No compute state with description link %s",
@@ -408,7 +470,8 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
                             }
                         });
         host.testWait();
-        assertHostPortProfileStateExists(computeStates.get(0));
+        assertHostPortProfileStateExists(computeStates.get(0).documentSelfLink);
+        return computeStates.get(0);
     }
 
     private void assertHostPortProfileStateExists(String computeStateLink) {
