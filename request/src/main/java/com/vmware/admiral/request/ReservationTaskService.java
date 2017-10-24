@@ -21,6 +21,7 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOp
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -128,7 +129,7 @@ public class ReservationTaskService
             break;
         case SELECTED:
         case SELECTED_GLOBAL:
-            selectPlacementComputeHosts(state, new HashSet<String>(
+            selectPlacementComputeHosts(state, new HashSet<>(
                     state.resourcePoolsPerGroupPlacementLinks.values()));
             break;
         case PLACEMENT:
@@ -368,7 +369,7 @@ public class ReservationTaskService
     private LinkedHashMap<String, String> buildResourcePoolsMap(
             ReservationComponentDescription description,
             List<GroupResourcePlacementState> placements) {
-        LinkedHashMap<String, String> resPools = new LinkedHashMap<String, String>();
+        LinkedHashMap<String, String> resPools = new LinkedHashMap<>();
         List<GroupResourcePlacementState> filteredPlacements = null;
 
         String deploymentPolicyId = description.getCommonDescription().deploymentPolicyId;
@@ -388,8 +389,17 @@ public class ReservationTaskService
             filteredPlacements = placements;
         }
 
-        /* for now sort the placements by priority in memory. */
+        // for now sort the placements by priority in memory
         filteredPlacements.sort((g1, g2) -> g1.priority - g2.priority);
+
+        // shuffle the elements with max priority to pick up a random placement with max priority
+        int priority = filteredPlacements.get(0).priority;
+        int idx = 1;
+        while (idx < filteredPlacements.size()
+                && priority == filteredPlacements.get(idx).priority) {
+            idx++;
+        }
+        Collections.shuffle(filteredPlacements.subList(0, idx));
 
         for (GroupResourcePlacementState placement : filteredPlacements) {
             logInfo("Placements found: [%s] with available instances: [%s] and available memory:"
