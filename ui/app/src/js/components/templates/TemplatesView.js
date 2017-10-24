@@ -363,14 +363,21 @@ var TemplatesViewVueComponent = Vue.extend({
     },
 
     goBack: function() {
+      // create template
+      if (this.model.selectedItemDetails && this.model.selectedItemDetails.selectedForCreate) {
 
-      if (this.model.selectedItemDetails.selectedForCreate) {
-        return NavigationActions.openContainers({
-          $category: constants.CONTAINERS.SEARCH_CATEGORY.APPLICATIONS
-        }, true);
+        if (this.model.selectedItemDetails.origin === 'templates') {
+          return NavigationActions.openTemplates({
+            $category: constants.TEMPLATES.SEARCH_CATEGORY.TEMPLATES
+          }, true);
+        } else if (this.model.selectedItemDetails.origin === 'applications') {
+          return NavigationActions.openContainers({
+            $category: constants.CONTAINERS.SEARCH_CATEGORY.APPLICATIONS
+          }, true);
+        }
       }
 
-      if (this.model.selectedItemDetails.selectedForEdit) {
+      if (this.model.selectedItemDetails && this.model.selectedItemDetails.selectedForEdit) {
         return NavigationActions.openTemplates({
           $category: constants.TEMPLATES.SEARCH_CATEGORY.TEMPLATES
         }, true);
@@ -401,6 +408,15 @@ var TemplatesViewVueComponent = Vue.extend({
 
     refresh: function() {
       TemplateActions.openTemplates(this.queryOptions, true);
+    },
+
+    openCreateTemplate: function($event) {
+      $event.stopPropagation();
+      $event.preventDefault();
+
+      this.createTemplateName = null;
+
+      TemplateActions.openCreateNewTemplate('templates');
     },
 
     createNewTemplate: function($event) {

@@ -289,7 +289,8 @@
           "templates": "Templates",
           "closures": "Closures",
           "repositories": "Repositories"
-        }
+        },
+        "createTemplate": "Template"
       },
       "details": {
         "create": "Create Template",

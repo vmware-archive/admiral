@@ -190,7 +190,7 @@ crossroads.addRoute('/containers/new', function() {
 crossroads.addRoute('/applications/new', function() {
   actions.AppActions.openView(constants.VIEWS.TEMPLATES.name);
   actions.TemplateActions.openTemplates({}, true);
-  actions.TemplateActions.openCreateNewTemplate();
+  actions.TemplateActions.openCreateNewTemplate('applications');
 });
 
 crossroads.addRoute('/projects/new', function() {

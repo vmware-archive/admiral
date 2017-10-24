@@ -978,7 +978,11 @@ let TemplatesStore = Reflux.createStore({
 
           this.setInData(['selectedItemDetails'], detailsObject);
           this.emitChange();
+        }).catch((e) => {
+          console.error('Failed retrieving template items', e);
         });
+      }).catch((e) => {
+        console.error('Failed retrieving template/groups', e);
       });
     }
 
@@ -2145,12 +2149,13 @@ let TemplatesStore = Reflux.createStore({
     }).catch(this.onGenericCreateError);
   },
 
-  onOpenCreateNewTemplate: function() {
+  onOpenCreateNewTemplate: function(origin) {
     var detailsObject = {
       type: constants.TEMPLATES.TYPES.TEMPLATE,
       selectedForCreate: true,
       selectedForEdit: false,
-      selectedForRequest: false
+      selectedForRequest: false,
+      origin: origin
     };
 
     detailsObject.templateDetails = {};

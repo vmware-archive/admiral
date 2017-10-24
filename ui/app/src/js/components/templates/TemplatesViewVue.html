@@ -24,10 +24,15 @@
         <div class="toolbar">
           <div class="row">
             <div class="col-sm-6 toolbar-primary">
-              <span v-if="selectedCategory === constants.TEMPLATES.SEARCH_CATEGORY.TEMPLATES" class="import-template">
-                <a href="#/import-template" class="btn btn-link">
-                  <i class="fa fa-upload" v-tooltip="i18n('app.template.import.importTemplateTooltip')"></i>{{i18n("app.template.import.title")}}
+              <span v-if="selectedCategory === constants.TEMPLATES.SEARCH_CATEGORY.TEMPLATES">
+                <a class="btn btn-link create-resource-btn" @click="openCreateTemplate($event)">
+                  <i class="fa fa-plus"></i>{{i18n("app.template.list.createTemplate")}}
                 </a>
+                <span class="import-template">
+                  <a href="#/import-template" class="btn btn-link">
+                    <i class="fa fa-upload" v-tooltip="i18n('app.template.import.importTemplateTooltip')"></i>{{i18n("app.template.import.title")}}
+                  </a>
+                </span>
               </span>
             </div>
             <div class="col-sm-6 toolbar-secondary">
