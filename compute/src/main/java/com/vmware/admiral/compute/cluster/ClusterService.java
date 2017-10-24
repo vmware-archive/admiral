@@ -194,6 +194,8 @@ public class ClusterService extends StatelessService {
 
     @Override
     public void handlePost(Operation post) {
+        logFine("Operation headers: [%s]", post.getRequestHeaders());
+
         if (isOperationOverAllClustes(post)) {
             createCluster(post);
             return;
