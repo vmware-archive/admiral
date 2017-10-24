@@ -29,7 +29,7 @@ EXPOSE $ADMIRAL_PORT
 
 # Create an admiral user so the application doesn't run as root.
 RUN groupadd -r admiral && \
-    useradd -r -g admiral -d /admiral -s /sbin/nologin -c "Admiral user" admiral
+    useradd -r -u 999 -g admiral -d /admiral -s /sbin/nologin -c "Admiral user" admiral
 
 # Set the home directory to the admiral user home.
 ENV HOME $ADMIRAL_ROOT
