@@ -30,7 +30,6 @@ let constraints = {
 
 const VOLUME_RESULT_LIMIT = 10;
 const INITIAL_FILTER = '';
-var initialQueryPromise;
 
 function createTypeaheadSource($typeaheadHolder) {
   var timeout;
@@ -81,12 +80,15 @@ function createTypeaheadSource($typeaheadHolder) {
       }
     };
 
+    var searchContainerVolumes =
+        services.searchContainerVolumes(q || INITIAL_FILTER, VOLUME_RESULT_LIMIT);
+
     $typeaheadHolder.addClass('loading');
     if (!q) {
-      initialQueryPromise.then(promiseCallback);
+      searchContainerVolumes.then(promiseCallback);
     } else {
       timeout = setTimeout(() => {
-        services.searchContainerVolumeDescriptions(q, VOLUME_RESULT_LIMIT).then(promiseCallback);
+        searchContainerVolumes.then(promiseCallback);
       }, 300);
     }
   };
@@ -171,8 +173,6 @@ var VolumeDefinitionForm = Vue.extend({
     $(this.$el).find('.volume-name').on('change input', function() {
       toggleButtonsState.call(_this);
     });
-
-    initialQueryPromise = services.searchContainerVolumes(INITIAL_FILTER, VOLUME_RESULT_LIMIT);
 
     var typeaheadSource = createTypeaheadSource(
       $(this.$el).find('.volume-name-search .search-input'));

@@ -1620,21 +1620,21 @@ services.createVolumeDescription = function(volumeDescription) {
 };
 
 services.searchContainerNetworks = function(query, limit) {
-  return services.searchEntities(links.CONTAINER_NETWORKS, query, limit);
-};
-
-services.searchContainerVolumeDescriptions = function(query, limit) {
-  return services.searchEntities(links.CONTAINER_VOLUMES_DESCRIPTIONS, query, limit);
+  return services.searchExternalEntities(links.CONTAINER_NETWORKS, query, limit);
 };
 
 services.searchContainerVolumes = function(query, limit) {
-  return services.searchEntities(links.CONTAINER_VOLUMES, query, limit);
+  return services.searchExternalEntities(links.CONTAINER_VOLUMES, query, limit);
 };
 
-services.searchEntities = function(entityTypeLink, query, limit) {
+services.searchExternalEntities = function(entityTypeLink, query, limit) {
   var filter = serviceUtils.buildOdataQuery({
     name: [{
       val: '*' + serviceUtils.encodeQuotes(query.toLowerCase()) + '*',
+      op: 'eq'
+    }],
+    external: [{
+      val: 'true',
       op: 'eq'
     }]
   });
