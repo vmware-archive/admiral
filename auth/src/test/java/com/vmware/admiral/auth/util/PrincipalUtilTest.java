@@ -13,12 +13,16 @@ package com.vmware.admiral.auth.util;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import static com.vmware.admiral.auth.util.PrincipalUtil.decode;
 import static com.vmware.admiral.auth.util.PrincipalUtil.encode;
 import static com.vmware.admiral.auth.util.PrincipalUtil.fromLocalPrincipalToPrincipal;
 import static com.vmware.admiral.auth.util.PrincipalUtil.fromPrincipalToLocalPrincipal;
 import static com.vmware.admiral.auth.util.PrincipalUtil.fromQueryResultToPrincipalList;
+import static com.vmware.admiral.auth.util.PrincipalUtil.toNameAndDomain;
+import static com.vmware.admiral.auth.util.PrincipalUtil.toPrincipalName;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,6 +36,7 @@ import com.vmware.admiral.auth.idm.Principal.PrincipalType;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalFactoryService;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalState;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalType;
+import com.vmware.photon.controller.model.adapters.util.Pair;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.UriUtils;
 
@@ -124,31 +129,31 @@ public class PrincipalUtilTest {
 
     @Test
     public void testGetPrincipalName() {
-        String name = PrincipalUtil.toPrincipalName("First", "Last", "firstlast@test.local");
+        String name = toPrincipalName("First", "Last", "firstlast@test.local");
         assertEquals("First Last", name);
 
-        name = PrincipalUtil.toPrincipalName("First", "", "firstlast@test.local");
+        name = toPrincipalName("First", "", "firstlast@test.local");
         assertEquals("First", name);
 
-        name = PrincipalUtil.toPrincipalName("First", null, "firstlast@test.local");
+        name = toPrincipalName("First", null, "firstlast@test.local");
         assertEquals("First", name);
 
-        name = PrincipalUtil.toPrincipalName("", "Last", "firstlast@test.local");
+        name = toPrincipalName("", "Last", "firstlast@test.local");
         assertEquals("Last", name);
 
-        name = PrincipalUtil.toPrincipalName(null, "Last", "firstlast@test.local");
+        name = toPrincipalName(null, "Last", "firstlast@test.local");
         assertEquals("Last", name);
 
-        name = PrincipalUtil.toPrincipalName("", "", "firstlast@test.local");
+        name = toPrincipalName("", "", "firstlast@test.local");
         assertEquals("firstlast@test.local", name);
 
-        name = PrincipalUtil.toPrincipalName(null, null, "firstlast@test.local");
+        name = toPrincipalName(null, null, "firstlast@test.local");
         assertEquals("firstlast@test.local", name);
 
-        name = PrincipalUtil.toPrincipalName(null, null, "");
+        name = toPrincipalName(null, null, "");
         assertEquals("", name);
 
-        name = PrincipalUtil.toPrincipalName(null, null, null);
+        name = toPrincipalName(null, null, null);
         assertEquals(null, name);
     }
 
@@ -159,4 +164,72 @@ public class PrincipalUtilTest {
         String decodedEmail = decode(encodedEmail);
         assertEquals(fritzEmail, decodedEmail);
     }
+
+    @Test
+    public void testToNameAndDomain() {
+        Pair<String, String> pair = toNameAndDomain("username@domain");
+        assertEquals("username", pair.left);
+        assertEquals("domain", pair.right);
+
+        pair = toNameAndDomain("user@name@domain");
+        assertEquals("user@name", pair.left);
+        assertEquals("domain", pair.right);
+
+        pair = toNameAndDomain("super.user@domain.com");
+        assertEquals("super.user", pair.left);
+        assertEquals("domain.com", pair.right);
+
+        pair = toNameAndDomain("super@user@domain.com");
+        assertEquals("super@user", pair.left);
+        assertEquals("domain.com", pair.right);
+
+        pair = toNameAndDomain("domain\\username");
+        assertEquals("username", pair.left);
+        assertEquals("domain", pair.right);
+
+        pair = toNameAndDomain("domain.com\\super.user");
+        assertEquals("super.user", pair.left);
+        assertEquals("domain.com", pair.right);
+
+        // it could be a valid NETBIOS name and domain
+        pair = toNameAndDomain("user\\name@domain\\com");
+        assertEquals("name@domain\\com", pair.left); // name
+        assertEquals("user", pair.right); // domain
+
+        // it could be a valid UPN name and domain
+        pair = toNameAndDomain("domain@com\\user@name");
+        assertEquals("domain@com\\user", pair.left); // name
+        assertEquals("name", pair.right); // domain
+
+        // it could be a valid UPN and NETBIOS name and domain...
+        // but UPC takes preference, sorry
+        pair = toNameAndDomain("domain.com\\super@user");
+        assertEquals("domain.com\\super", pair.left); // name
+        assertEquals("user", pair.right); // domain
+    }
+
+    @Test
+    public void testInvalidToNameAndDomain() {
+        try {
+            toNameAndDomain("usernamedomain");
+            fail("It should have failed!");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().startsWith("Invalid principalId format:"));
+        }
+
+        try {
+            toNameAndDomain("username@domain\\com");
+            fail("It should have failed!");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().startsWith("Invalid principalId format:"));
+        }
+
+        try {
+            toNameAndDomain("domain@com\\username");
+            fail("It should have failed!");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().startsWith("Invalid principalId format:"));
+        }
+    }
+
 }

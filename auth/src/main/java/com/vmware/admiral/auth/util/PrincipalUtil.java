@@ -18,6 +18,8 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.vmware.admiral.auth.idm.Principal;
 import com.vmware.admiral.auth.idm.Principal.PrincipalSource;
@@ -41,7 +43,14 @@ import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
 import com.vmware.xenon.services.common.UserService.UserState;
 
 public class PrincipalUtil {
+
     public static final String ENCODE_MARKER = "@";
+
+    // UPN format: NAME@DOMAIN
+    private static final Pattern PRINCIPAL_UPN_PATTERN = Pattern.compile("^(.*)@([^\\x5c]*)$");
+    // NETBIOS format: DOMAIN\NAME
+    private static final Pattern PRINCIPAL_NETBIOS_PATTERN = Pattern.compile("^([^@]*)\\x5c(.*)$");
+    // FYI: x5c = \
 
     public static Principal fromLocalPrincipalToPrincipal(LocalPrincipalState state) {
 
@@ -72,7 +81,6 @@ public class PrincipalUtil {
         }
 
         return principals;
-
     }
 
     public static LocalPrincipalState fromPrincipalToLocalPrincipal(Principal principal) {
@@ -119,16 +127,15 @@ public class PrincipalUtil {
 
     public static Pair<String, String> toNameAndDomain(String principalId) {
         String decodedPrincipalId = decode(principalId);
-        // UPN format: NAME@DOMAIN
-        String[] parts = decodedPrincipalId.split("@");
-        if (parts.length == 2) {
-            return new Pair<>(parts[0], parts[1]);
+
+        Matcher upnMatcher = PRINCIPAL_UPN_PATTERN.matcher(decodedPrincipalId);
+        if (upnMatcher.matches()) {
+            return new Pair<>(upnMatcher.group(1), upnMatcher.group(2));
         }
 
-        // NETBIOS format: DOMAIN\NAME
-        parts = decodedPrincipalId.split("\\\\");
-        if (parts.length == 2) {
-            return new Pair<>(parts[1], parts[0]);
+        Matcher netbiosMatcher = PRINCIPAL_NETBIOS_PATTERN.matcher(decodedPrincipalId);
+        if (netbiosMatcher.matches()) {
+            return new Pair<>(netbiosMatcher.group(2), netbiosMatcher.group(1));
         }
 
         throw new IllegalArgumentException(
@@ -166,7 +173,7 @@ public class PrincipalUtil {
         if ((state.name != null) && (!state.name.trim().isEmpty())) {
             return state.name;
         }
-        return state.id.split("@")[0];
+        return toNameAndDomain(state.id).left;
     }
 
     public static DeferredResult<Principal> getPrincipal(Service service, String principalId) {
