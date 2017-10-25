@@ -88,6 +88,7 @@ public class ContainerControlLoopServiceTest extends RequestBaseTest {
 
     @Test(expected = LocalizableValidationException.class)
     public void testPostAnotherStateWithoutSelfLinkShouldFail() throws Throwable {
+
         ContainerControlLoopState controlLoopState = getDocument(
                 ContainerControlLoopState.class,
                 ContainerControlLoopService.CONTROL_LOOP_INFO_LINK);

@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.adapter.docker.service;
 
+import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.CompletionHandler;
 
@@ -229,6 +230,10 @@ public interface DockerAdapterCommandExecutor {
     void hostVersion(CommandInput input, CompletionHandler completionHandler);
 
     void listContainers(CommandInput input, CompletionHandler completionHandler);
+
+    void hostSubscribeForEvents(CommandInput input, ComputeState computeState);
+
+    void hostUnsubscribeForEvents(CommandInput input, ComputeState computeState);
 
     // Network operations:
     void createNetwork(CommandInput input, CompletionHandler completionHandler);

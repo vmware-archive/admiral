@@ -14,43 +14,72 @@ package com.vmware.admiral.adapter.docker.service;
 import static com.vmware.admiral.compute.ContainerHostService.SSL_TRUST_ALIAS_PROP_NAME;
 import static com.vmware.admiral.compute.ContainerHostService.SSL_TRUST_CERT_PROP_NAME;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
 import java.net.URI;
+import java.net.URL;
+import java.net.URLConnection;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509ExtendedKeyManager;
 import javax.net.ssl.X509TrustManager;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.yaml.snakeyaml.util.UriEncoder;
 
 import com.vmware.admiral.adapter.docker.util.DockerStreamUtil;
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.DelegatingX509KeyManager;
+import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.common.util.ServiceClientFactory;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.ServiceUtils;
+import com.vmware.admiral.compute.container.ContainerService.ContainerState;
+import com.vmware.photon.controller.model.resources.ComputeService;
+import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.security.util.CertificateUtil;
 import com.vmware.photon.controller.model.security.util.EncryptionUtils;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.CompletionHandler;
+import com.vmware.xenon.common.OperationContext;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
+import com.vmware.xenon.services.common.QueryTask;
 
 /**
  * Docker command executor implementation based on DCP and the docker remote API
  */
 public class RemoteApiDockerAdapterCommandExecutorImpl implements
-        DockerAdapterCommandExecutor {
+        DockerAdapterCommandExecutor, DockerAdapterStreamCommandExecutor {
 
     private static final Logger logger = Logger
             .getLogger(RemoteApiDockerAdapterCommandExecutorImpl.class.getName());
@@ -59,18 +88,35 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
             "com.vmware.admiral.adapter.ssltrust.delegate.retries", 5);
     private static final long SSL_TRUST_RETRIES_WAIT = Long.getLong(
             "com.vmware.admiral.adapter.ssltrust.delegate.retries.wait.millis", 500);
+    private static final int URL_CONNECTION_READ_TIMEOUT = Integer.getInteger(
+            "com.vmware.admiral.adapter.url.connection.read.timeout", 20000);
+    private static final int THREAD_POOL_QUEUE_SIZE = Integer.getInteger(
+            "com.vmware.admiral.adapter.thread.pool.queue.size", 1000);
+    private static final int THREAD_POOL_KEEPALIVE_SECONDS = Integer.getInteger(
+            "com.vmware.admiral.adapter.thread.pool.keepalive.seconds", 30);
 
     public static final String MEDIA_TYPE_APPLICATION_TAR = "application/tar";
 
     private static volatile RemoteApiDockerAdapterCommandExecutorImpl INSTANCE;
 
     private static final Pattern ERROR_PATTERN = Pattern.compile("\"error\":\"(.*)\"");
+
+    private static ExecutorService executor = new ThreadPoolExecutor(
+            THREAD_POOL_QUEUE_SIZE,
+            THREAD_POOL_QUEUE_SIZE,
+            THREAD_POOL_KEEPALIVE_SECONDS,
+            TimeUnit.SECONDS, new LinkedBlockingQueue<>(THREAD_POOL_QUEUE_SIZE),
+            new ThreadPoolExecutor.AbortPolicy());
+
     private final ServiceHost host;
     private final ServiceClient serviceClient;
     // Used for commands like exec start
     private final ServiceClient attachServiceClient;
     // Used for commands like load image from tar
     private final ServiceClient largeDataClient;
+    // Used for storing the runnning threads which handles opened connections to hosts
+    private volatile Map<String, Thread> runningThreads = new HashMap<>();
+
     private final DelegatingX509KeyManager keyManager = new DelegatingX509KeyManager();
     private ServerX509TrustManager trustManager;
 
@@ -468,6 +514,57 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
         sendGet(uri, null, completionHandler);
     }
 
+    @Override
+    public void hostSubscribeForEvents(CommandInput input, ComputeState computeState) {
+        URI baseUri = UriUtils.extendUri(input.getDockerUri(), "/events");
+        logger.info("Subscribing for events: " + baseUri);
+
+        if (runningThreads.get(baseUri.getHost()) != null) {
+            logger.info("Connection is already opened: " + baseUri.getHost());
+            return;
+        }
+
+        // add filter for containers type
+        input.withProperty("filters", "{\"type\":[\"container\"]}");
+
+        // append all the query parameters which are sent as input.
+        URI extendedUri = extendUriWithQuery(baseUri, input);
+
+        if (isSecure(input.getDockerUri())) {
+            // Make sure that the trusted certificate is loaded before proceeding to avoid
+            // SSLHandshakeException and getting hosts in DISABLED state
+            ensureTrustDelegateExists(input, SSL_TRUST_RETRIES_COUNT, () -> {
+                makeSubscription(input, computeState, extendedUri);
+            });
+        } else {
+            logger.info("Host is not secured: " + baseUri.toString());
+            makeSubscription(input, computeState, extendedUri);
+        }
+    }
+
+    @Override
+    public void hostUnsubscribeForEvents(CommandInput input, ComputeState computeState) {
+        URI baseUri = UriUtils.extendUri(input.getDockerUri(), "/events");
+        logger.info("Unsubscribing for events: " + baseUri);
+
+        Thread runningThread = runningThreads.get(input.getDockerUri().getHost());
+
+        if (runningThread == null) {
+            logger.info("Connection already closed!");
+            return;
+        }
+
+        boolean maxAllowedNumberOfThreadsExceeded = maxAllowedNumberOfThreadsExceeded();
+
+        if (maxAllowedNumberOfThreadsExceeded) {
+            return;
+        }
+
+        executor.execute(() -> {
+            runningThread.interrupt();
+        });
+    }
+
     // network operations
 
     /**
@@ -609,7 +706,64 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
         sendGet(uri, input.getProperties(), completionHandler);
     }
 
-    // ---------------------------------------------------------------------------------------------
+    @Override
+    public void closeConnection(URLConnection con) {
+        if (con == null) {
+            logger.warning("No connection provided!");
+            return;
+        }
+
+        logger.info(String.format("Closing connection to host [%s]", con.getURL().getHost()));
+
+        if (con instanceof HttpsURLConnection) {
+            ((HttpsURLConnection) con).disconnect();
+            return;
+        }
+
+        ((HttpURLConnection) con).disconnect();
+    }
+
+    @Override
+    public URLConnection openConnection(CommandInput input, URL url) throws NoSuchAlgorithmException, KeyManagementException, IOException {
+        if (isSecure(URI.create(url.toString()))) {
+            String clientKey = EncryptionUtils.decrypt(input.getCredentials().privateKey);
+            String clientCert = input.getCredentials().publicKey;
+
+            // TODO use an LRU cache to limit the number of stored
+            // KeyManagers while minimizing time wasted repeatedly
+            // recreating them
+            KeyManager[] keytManagers = null;
+            if (clientKey != null && !clientKey.isEmpty()) {
+                X509ExtendedKeyManager delegateKeyManager;
+                delegateKeyManager = (X509ExtendedKeyManager) CertificateUtil
+                        .getKeyManagers("default", clientKey, clientCert)[0];
+                keytManagers = new KeyManager[]{delegateKeyManager};
+            }
+
+            TrustManager[] trustManagers = new TrustManager[]{ServerX509TrustManager.init(null)};
+
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(keytManagers, trustManagers, new SecureRandom());
+
+            HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
+            conn.setHostnameVerifier((s, sslSession) -> true);
+            conn.setDoInput(true);
+            conn.setDoOutput(true);
+            conn.setUseCaches(false);
+            conn.setReadTimeout(0);
+            conn.setSSLSocketFactory(sslContext.getSocketFactory());
+
+            return conn;
+        }
+
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setDoInput(true);
+        conn.setDoOutput(false);
+        conn.setUseCaches(false);
+        conn.setReadTimeout(0);
+
+        return conn;
+    }
 
     /**
      * Common settings on all outgoing requests to the docker server
@@ -832,7 +986,7 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
     }
 
     private void sendPostAttach(URI uri, Object body, CompletionHandler completionHandler) {
-        String msg = String.format( "Sending POST for attach to %s with body (possibly truncated):"
+        String msg = String.format("Sending POST for attach to %s with body (possibly truncated):"
                 + "%n---%n%1.1024s%n---%n", uri, Utils.toJsonHtml(body));
         logger.finest(msg);
         sendRequest(Service.Action.POST, uri, body, completionHandler, ClientMode.ATTACH);
@@ -855,7 +1009,7 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
             largeDataClient.send(op);
         } else if (ClientMode.ATTACH == mode) {
             op.setBody(body);
-            prepareRequest(op,false);
+            prepareRequest(op, false);
             attachServiceClient.send(op);
         } else {
             op.setBody(body);
@@ -872,4 +1026,228 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
         }
     }
 
+    /**
+     * Used for creation of a new thread for each host event subscription.
+     */
+    private class EventsMonitor implements Runnable {
+
+        public OperationContext parentContext;
+        public URI hostUri;
+        public CommandInput input;
+        public ComputeState computeState;
+
+        public EventsMonitor(OperationContext parentContext,
+                URI hostUri,
+                CommandInput input,
+                ComputeState computeState) {
+            this.parentContext = parentContext;
+            this.hostUri = hostUri;
+            this.input = input;
+            this.computeState = computeState;
+        }
+
+        @Override public void run() {
+            OperationContext childContext = OperationContext.getOperationContext();
+            try {
+                // set the operation context of the parent thread in the current thread
+                OperationContext.restoreOperationContext(parentContext);
+
+                URL url = new URL(hostUri.toString());
+                URLConnection con = openConnection(input, url);
+
+                // setting "read timeout" to reset the blocking stream (reader.readLine()).
+                // Otherwise there is no way to close the connection.
+                con.setReadTimeout(URL_CONNECTION_READ_TIMEOUT);
+
+                final String hostName = url.getHost();
+                runningThreads.put(hostName, Thread.currentThread());
+
+                try (BufferedReader in = new BufferedReader(new InputStreamReader(
+                        con.getInputStream()))) {
+                    readData(in);
+                } catch (InterruptedException e) {
+                    logger.fine(String.format("[%s] is thrown.", e.getClass().getName()));
+                    runningThreads.remove(hostName);
+                    closeConnection(con);
+                } catch (IOException e) {
+                    logger.fine(String.format("[%s] is thrown.", e.getClass().getName()));
+                    runningThreads.remove(hostName);
+                    closeConnection(con);
+
+                    // TODO: check for exceptions
+                    requestComputeState(computeState.documentSelfLink)
+                            .thenCompose((cs) -> {
+                                cs.powerState = ComputeService.PowerState.UNKNOWN;
+                                return patchComputeState(cs);
+                            }).thenAccept((cs) -> {
+                                // changing the power state of containers to UNKNOWN
+                                queryExistingContainerStates(cs);
+                            });
+                } catch (Exception e) {
+                    logger.warning(Utils.toString(e));
+                }
+            } catch (MalformedURLException ex) {
+                logger.warning(Utils.toString(ex));
+            } catch (NoSuchAlgorithmException ex) {
+                logger.warning(Utils.toString(ex));
+            } catch (KeyManagementException ex) {
+                logger.warning(Utils.toString(ex));
+            } catch (IOException ex) {
+                logger.warning(Utils.toString(ex));
+            } finally {
+                OperationContext.restoreOperationContext(childContext);
+            }
+        }
+    }
+
+    private void makeSubscription(CommandInput input, ComputeState computeState, URI uri) {
+        final OperationContext parentContext = OperationContext.getOperationContext();
+
+        boolean maxAllowedNumberOfThreadsExceeded = maxAllowedNumberOfThreadsExceeded();
+
+        if (maxAllowedNumberOfThreadsExceeded) {
+            return;
+        }
+
+        EventsMonitor eventsMonitor = new EventsMonitor(
+                parentContext,
+                uri,
+                input,
+                computeState);
+
+        executor.submit(eventsMonitor);
+    }
+
+    private DeferredResult<ComputeState> requestComputeState(String selfLink) {
+        URI uri = UriUtils.buildUri(host, selfLink);
+
+        Operation op = Operation.createGet(uri)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        logger.warning(String.format("Failed to retrieve compute state: [%s]", Utils.toString(e)));
+                        return;
+                    }
+                });
+
+        prepareRequest(op, true);
+
+        return serviceClient.sendWithDeferredResult(op, ComputeState.class);
+    }
+
+    private DeferredResult<ComputeState> patchComputeState(ComputeState computeState) {
+        URI uri = UriUtils.buildUri(host, computeState.documentSelfLink);
+
+        Operation op = Operation.createPut(uri)
+                .setBody(computeState)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        logger.warning(String.format("Failed to patch compute state: [%s]", Utils.toString(e)));
+                    }
+                });
+
+        prepareRequest(op, true);
+
+        return serviceClient.sendWithDeferredResult(op, ComputeState.class);
+    }
+
+    private void readData(BufferedReader in) throws IOException, InterruptedException {
+        try {
+            if (Thread.currentThread().isInterrupted()) {
+                throw new InterruptedException();
+            }
+
+            String inputLine;
+
+            while ((inputLine = in.readLine()) != null) {
+                ObjectMapper mapper = new ObjectMapper();
+                Events event = mapper.readValue(inputLine, Events.class);
+                System.out.println(inputLine);
+                if (EVENT_TYPE_CONTAINER.equals(event.getType())) {
+                    ContainerState cs = new ContainerState();
+                    if (EVENT_TYPE_CONTAINER_DIE.equals(event.getAction())) {
+                        cs.powerState = ContainerState.PowerState.STOPPED;
+                    } else if (EVENT_TYPE_CONTAINER_START.equals(event.getAction())) {
+                        cs.powerState = ContainerState.PowerState.RUNNING;
+                        cs.started = event.getTimeNano();
+                    } else {
+                        continue;
+                    }
+
+                    String containerId = event.getId();
+
+                    QueryTask queryTask = QueryUtil
+                            .buildPropertyQuery(ContainerState.class,
+                                    ContainerState.FIELD_NAME_ID,
+                                    containerId);
+
+                    new ServiceDocumentQuery<ContainerState>(host, ContainerState.class)
+                            .query(queryTask, (r) -> {
+                                if (r.hasException()) {
+                                    logger.warning(String.format(
+                                            "Failed to query resource container state with id [%s]",
+                                            containerId));
+                                } else if (r.hasResult()) {
+                                    cs.documentSelfLink = r.getDocumentSelfLink();
+                                    patchContainerState(cs);
+                                }
+                            });
+                }
+            }
+        } catch (SocketTimeoutException e) {
+            logger.fine(String.format("No events have been received for %s ms. Unblocking the reader.",
+                    String.valueOf(URL_CONNECTION_READ_TIMEOUT)));
+            readData(in);
+        }
+    }
+
+    private boolean maxAllowedNumberOfThreadsExceeded() {
+        ThreadPoolExecutor tpe = (ThreadPoolExecutor) executor;
+        if (tpe.getActiveCount() >= tpe.getMaximumPoolSize()) {
+            logger.warning(String.format("Maximum allowed number of threads exceeded! Use [\"%s\"] property to increase it.",
+                    ConfigurationUtil.MAX_CONTAINER_HOSTS_COUNT_PROP));
+            return true;
+        }
+
+        return false;
+    }
+
+    private void queryExistingContainerStates(ComputeState compute) {
+        String containerHostLink = compute.documentSelfLink;
+        QueryTask queryTask = QueryUtil.buildPropertyQuery(ContainerState.class,
+                ContainerState.FIELD_NAME_PARENT_LINK, containerHostLink);
+        QueryUtil.addExpandOption(queryTask);
+        QueryUtil.addBroadcastOption(queryTask);
+
+        new ServiceDocumentQuery<ContainerState>(host, ContainerState.class)
+                .query(queryTask, processContainerStatesQueryResults());
+    }
+
+    private Consumer<ServiceDocumentQuery.ServiceDocumentQueryElementResult<ContainerState>> processContainerStatesQueryResults() {
+        List<ContainerState> existingContainerStates = new ArrayList<>();
+
+        return (r) -> {
+            if (r.hasException()) {
+                logger.warning(
+                        String.format("Failed to query resource container state [%s]", r.getDocumentSelfLink()));
+            } else if (r.hasResult()) {
+                existingContainerStates.add(r.getResult());
+            } else {
+                for (ContainerState cs : existingContainerStates) {
+                    cs.powerState = ContainerState.PowerState.UNKNOWN;
+                    patchContainerState(cs);
+                }
+            }
+        };
+    }
+
+    private void patchContainerState(ContainerState cs) {
+        Operation.createPatch(host, UriUtils.buildUriPath(cs.documentSelfLink))
+                .setBody(cs)
+                .setReferer(host.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        logger.warning(String.format("Container state does not exist: [%s]", cs.documentSelfLink));
+                    }
+                }).sendWith(host);
+    }
 }

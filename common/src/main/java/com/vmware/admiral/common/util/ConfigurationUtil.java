@@ -30,6 +30,8 @@ public class ConfigurationUtil {
     public static final String EMBEDDED_MODE_PROPERTY = "embedded";
     public static final String VIC_MODE_PROPERTY = "vic";
     public static final String ALLOW_SSH_CONSOLE_PROPERTY = "allow.browser.ssh.console";
+    public static final String MAX_CONTAINER_HOSTS_COUNT_PROP = "max.container.hosts.count";
+    public static final String ALLOW_HOST_EVENTS_SUBSCRIPTIONS = "allow.host.events.subscription";
 
     private static ConfigurationState[] configProperties;
 

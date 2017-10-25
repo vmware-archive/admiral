@@ -22,7 +22,9 @@ public enum ContainerHostOperationType {
     LIST_CONTAINERS("Host.Container.ListContainers"),
     LIST_NETWORKS("Host.Network.ListNetworks"),
     LIST_VOLUMES("Host.Volume.ListVolumes"),
-    STATS("Host.Container.Stats");
+    STATS("Host.Container.Stats"),
+    EVENTS_SUBSCRIBE("Host.Events.Subscribe"),
+    EVENTS_UNSUBSCRIBE("Host.Events.Unsubscribe");
 
     ContainerHostOperationType(String id) {
         this.id = id;

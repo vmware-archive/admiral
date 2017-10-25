@@ -43,6 +43,7 @@ import com.vmware.admiral.adapter.common.ContainerHostOperationType;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.serialization.ReleaseConstants;
+import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
@@ -241,6 +242,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
                     if (LifecycleState.SUSPEND == computeState.lifecycleState) {
                         logInfo("Skipping data collection for host %s as it is marked for removal",
                                 computeState.documentSelfLink);
+
                         continue;
                     }
 
@@ -270,6 +272,17 @@ public class ContainerHostDataCollectionService extends StatefulService {
                                     updateContainerHostVolumes(computeState.documentSelfLink);
                                 }
                                 updateHostStats(computeState);
+
+                                ConfigurationUtil
+                                        .getConfigProperty(this, ConfigurationUtil.ALLOW_HOST_EVENTS_SUBSCRIPTIONS, (allow) -> {
+                                            if (Boolean.valueOf(allow)) {
+                                                subscribeHostForEvents(computeState);
+                                                return;
+                                            }
+
+                                            logInfo("Skipped host events subscriptions. Set [\"%s\"] property to true in order to enable them.",
+                                                    ConfigurationUtil.ALLOW_HOST_EVENTS_SUBSCRIPTIONS);
+                                        });
                             }
                         }, null);
                     } else {
@@ -1065,4 +1078,20 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 });
     }
 
+    private void subscribeHostForEvents(ComputeState cs) {
+        AdapterRequest request = new AdapterRequest();
+        request.operationTypeId = ContainerHostOperationType.EVENTS_SUBSCRIBE.id;
+        request.serviceTaskCallback = ServiceTaskCallback.createEmpty();
+        request.resourceReference = UriUtils.buildUri(getHost(), cs.documentSelfLink);
+        URI adapterManagementReference = cs.endpointLink == null
+                ? cs.adapterManagementReference : getDefaultHostAdapter(getHost());
+        sendRequest(Operation.createPatch(adapterManagementReference)
+                .setBodyNoCloning(request)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        logWarning("Failed to subscribe for host events: %s", Utils.toString(ex));
+                        return;
+                    }
+                }));
+    }
 }

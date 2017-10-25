@@ -1,0 +1,13 @@
+---
+name: "alpine"
+components:
+  alpine:
+    type: "App.Container"
+    data:
+      name: "alpine"
+      image: "registry.hub.docker.com/library/alpine"
+      command:
+      - "sleep 5"
+      _cluster: 1
+      publish_all: true
+      restart_policy: "no"

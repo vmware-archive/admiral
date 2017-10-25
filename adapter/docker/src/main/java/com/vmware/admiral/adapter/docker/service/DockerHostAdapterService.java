@@ -137,6 +137,12 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
         case STATS:
             doStats(request, computeState);
             break;
+        case EVENTS_SUBSCRIBE:
+            doEventsSubscription(request, computeState, commandInput);
+            break;
+        case EVENTS_UNSUBSCRIBE:
+            doEventsUnsubscription(request, computeState, commandInput);
+            break;
         default:
         }
     }
@@ -149,6 +155,16 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
     private void doInfo(ContainerHostRequest request, ComputeState computeState,
             CommandInput commandInput) {
         getCommandExecutor().hostInfo(commandInput, getHostPatchCompletionHandler(request));
+    }
+
+    private void doEventsSubscription(ContainerHostRequest request, ComputeState computeState,
+            CommandInput commandInput) {
+        getCommandExecutor().hostSubscribeForEvents(commandInput, computeState);
+    }
+
+    private void doEventsUnsubscription(ContainerHostRequest request, ComputeState computeState,
+            CommandInput commandInput) {
+        getCommandExecutor().hostUnsubscribeForEvents(commandInput, computeState);
     }
 
     private void directHostInfo(ContainerHostRequest request, Operation op,

@@ -30,7 +30,11 @@ import java.util.stream.Collectors;
 
 import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
 
+import com.vmware.admiral.adapter.common.AdapterRequest;
+import com.vmware.admiral.adapter.common.ContainerHostOperationType;
+import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.serialization.ReleaseConstants;
+import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
@@ -178,7 +182,17 @@ public class ContainerHostRemovalTaskService extends
         case REMOVING_CERTIFICATES:
             break;
         case REMOVED_CERTIFICATES:
-            removeHosts(state, null);
+            ConfigurationUtil
+                    .getConfigProperty(this, ConfigurationUtil.ALLOW_HOST_EVENTS_SUBSCRIPTIONS, (String allow) -> {
+                        if (Boolean.valueOf(allow)) {
+                            unsubscribeHostForEvents(state).thenAccept((ignore) -> {
+                                removeHosts(state, null);
+                            });
+                        } else {
+                            logInfo("Skipped host events unsubscription.");
+                            removeHosts(state, null);
+                        }
+                    });
             break;
         case REMOVING_HOSTS:
             break;
@@ -667,5 +681,30 @@ public class ContainerHostRemovalTaskService extends
                             });
                 });
 
+    }
+
+    private DeferredResult<List<Operation>> unsubscribeHostForEvents(ContainerHostRemovalTaskState state) {
+
+        List<DeferredResult<Operation>> deferredResults = new ArrayList<>(state.resourceLinks.size());
+        for (String resourceLink : state.resourceLinks) {
+            AdapterRequest request = new AdapterRequest();
+            request.operationTypeId = ContainerHostOperationType.EVENTS_UNSUBSCRIBE.id;
+            request.serviceTaskCallback = ServiceTaskCallback.createEmpty();
+            request.resourceReference = UriUtils.buildUri(getHost(), resourceLink);
+            URI adapterManagementReference = UriUtils.buildUri(getHost(), ManagementUriParts.ADAPTER_DOCKER_HOST);
+
+            deferredResults.add(getHost()
+                    .sendWithDeferredResult(Operation
+                            .createPatch(adapterManagementReference)
+                            .setReferer(this.getUri())
+                            .setBodyNoCloning(request))
+                    .whenComplete((o, e) -> {
+                        if (e != null) {
+                            logWarning("Failed to unsubscribe for host events.");
+                        }
+                    }));
+        }
+
+        return DeferredResult.allOf(deferredResults);
     }
 }
