@@ -231,6 +231,7 @@ public class PrincipalRolesHandler {
                             userGroup.documentSelfLink);
                     Operation createRoleOp = Operation
                             .createPost(service, RoleService.FACTORY_LINK)
+                            .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
                             .setBody(roleState);
                     addReplicationFactor(createRoleOp);
                     return service.sendWithDeferredResult(createRoleOp, RoleState.class);

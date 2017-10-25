@@ -82,6 +82,42 @@ public class PrincipalRolesHandlerTest extends AuthBaseTest {
     }
 
     @Test
+    public void testAssignRoleToUserTwice() throws Throwable {
+        PrincipalRoleAssignment roleAssignment = new PrincipalRoleAssignment();
+        roleAssignment.add = new ArrayList<>();
+        roleAssignment.add.add(AuthRole.CLOUD_ADMIN.name());
+
+        // Assign.
+        doRoleAssignment(roleAssignment, USER_EMAIL_BASIC_USER);
+
+        UserState state = getDocument(UserState.class, buildUserServicePath(USER_EMAIL_BASIC_USER));
+        assertNotNull(state);
+        assertTrue(state.userGroupLinks.contains(CLOUD_ADMINS_USER_GROUP_LINK));
+
+        // Unassign.
+        roleAssignment = new PrincipalRoleAssignment();
+        roleAssignment.remove = new ArrayList<>();
+        roleAssignment.remove.add(AuthRole.CLOUD_ADMIN.name());
+
+        doRoleAssignment(roleAssignment, USER_EMAIL_BASIC_USER);
+
+        state = getDocument(UserState.class, buildUserServicePath(USER_EMAIL_BASIC_USER));
+        assertNotNull(state);
+        assertTrue(!state.userGroupLinks.contains(CLOUD_ADMINS_USER_GROUP_LINK));
+
+        // Assign again.
+        roleAssignment = new PrincipalRoleAssignment();
+        roleAssignment.add = new ArrayList<>();
+        roleAssignment.add.add(AuthRole.CLOUD_ADMIN.name());
+
+        doRoleAssignment(roleAssignment, USER_EMAIL_BASIC_USER);
+
+        state = getDocument(UserState.class, buildUserServicePath(USER_EMAIL_BASIC_USER));
+        assertNotNull(state);
+        assertTrue(state.userGroupLinks.contains(CLOUD_ADMINS_USER_GROUP_LINK));
+    }
+
+    @Test
     public void testAssignRoleToUserGroup() throws Throwable {
         PrincipalRoleAssignment roleAssignment = new PrincipalRoleAssignment();
         roleAssignment.add = new ArrayList<>();
@@ -113,7 +149,7 @@ public class PrincipalRolesHandlerTest extends AuthBaseTest {
         assertEquals(UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
                 encode(USER_GROUP_DEVELOPERS)), roleState.userGroupLink);
 
-        // Unassign
+        // Unassign.
         roleAssignment = new PrincipalRoleAssignment();
         roleAssignment.remove = new ArrayList<>();
         roleAssignment.remove.add(AuthRole.CLOUD_ADMIN.name());
@@ -140,6 +176,64 @@ public class PrincipalRolesHandlerTest extends AuthBaseTest {
                 });
         host.send(getSuperusersRole);
         ctx2.await();
+    }
+
+    @Test
+    public void testAssignRoleToUserGroupTwice() throws Throwable {
+        PrincipalRoleAssignment roleAssignment = new PrincipalRoleAssignment();
+        roleAssignment.add = new ArrayList<>();
+        roleAssignment.add.add(AuthRole.CLOUD_ADMIN.name());
+
+        // Assign.
+        doRoleAssignment(roleAssignment, USER_GROUP_DEVELOPERS);
+
+        RoleState roleState = getDocument(RoleState.class,
+                UriUtils.buildUriPath(RoleService.FACTORY_LINK, AuthRole.CLOUD_ADMIN
+                        .buildRoleWithSuffix(encode(USER_GROUP_DEVELOPERS))));
+        assertNotNull(roleState);
+        assertEquals(UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                encode(USER_GROUP_DEVELOPERS)), roleState.userGroupLink);
+
+        // Unassign.
+        roleAssignment = new PrincipalRoleAssignment();
+        roleAssignment.remove = new ArrayList<>();
+        roleAssignment.remove.add(AuthRole.CLOUD_ADMIN.name());
+
+        doRoleAssignment(roleAssignment, USER_GROUP_DEVELOPERS);
+
+        String developersRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
+                AuthRole.CLOUD_ADMIN.buildRoleWithSuffix(encode(USER_GROUP_DEVELOPERS)));
+        TestContext ctx2 = testCreate(1);
+        Operation getSuperusersRole = Operation.createGet(host, developersRoleLink)
+                .setReferer(host.getUri())
+                .setCompletion((op, ex) -> {
+                    if (ex != null) {
+                        if (ex instanceof ServiceNotFoundException) {
+                            ctx2.completeIteration();
+                            return;
+                        }
+                        ctx2.failIteration(ex);
+                        return;
+                    }
+                    ctx2.failIteration(new RuntimeException("After unassign user group, role "
+                            + "should be deleted."));
+                });
+        host.send(getSuperusersRole);
+        ctx2.await();
+
+        // Assign again.
+        roleAssignment = new PrincipalRoleAssignment();
+        roleAssignment.add = new ArrayList<>();
+        roleAssignment.add.add(AuthRole.CLOUD_ADMIN.name());
+
+        doRoleAssignment(roleAssignment, USER_GROUP_DEVELOPERS);
+
+        roleState = getDocument(RoleState.class,
+                UriUtils.buildUriPath(RoleService.FACTORY_LINK, AuthRole.CLOUD_ADMIN
+                        .buildRoleWithSuffix(encode(USER_GROUP_DEVELOPERS))));
+        assertNotNull(roleState);
+        assertEquals(UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                encode(USER_GROUP_DEVELOPERS)), roleState.userGroupLink);
     }
 
     private void doRoleAssignment(PrincipalRoleAssignment roleAssignment, String principalId) {
