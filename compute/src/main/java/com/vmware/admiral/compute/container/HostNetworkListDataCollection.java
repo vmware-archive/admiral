@@ -34,6 +34,7 @@ import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.admiral.compute.ContainerHostUtil;
 import com.vmware.admiral.compute.container.maintenance.ContainerNetworkMaintenance;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
@@ -67,8 +68,7 @@ public class HostNetworkListDataCollection extends StatefulService {
 
     public static final String FACTORY_LINK = ManagementUriParts.HOST_NETWORK_LIST_DATA_COLLECTION;
 
-    public static final String DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_ID =
-            "__default-list-data-collection";
+    public static final String DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_ID = "__default-list-data-collection";
     public static final String DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK = UriUtils
             .buildUriPath(FACTORY_LINK, DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_ID);
 
@@ -164,8 +164,8 @@ public class HostNetworkListDataCollection extends StatefulService {
     public void handlePatch(Operation op) {
         NetworkListCallback body = op.getBody(NetworkListCallback.class);
         if (body.hostAdapterReference == null) {
-            body.hostAdapterReference =
-                    ContainerHostDataCollectionService.getDefaultHostAdapter(getHost());
+            body.hostAdapterReference = ContainerHostDataCollectionService
+                    .getDefaultHostAdapter(getHost());
         }
         if (body.containerHostLink == null) {
             logFine("'containerHostLink' is required");
@@ -350,8 +350,7 @@ public class HostNetworkListDataCollection extends StatefulService {
         }
     }
 
-    private void processDiscoveredNetworks(
-            NetworkListCallback callback) {
+    private void processDiscoveredNetworks(NetworkListCallback callback) {
         // finished removing existing ContainerNetworkState, now deal with remaining IDs
         List<ContainerNetworkState> networksLeft = new ArrayList<>();
 
@@ -370,8 +369,8 @@ public class HostNetworkListDataCollection extends StatefulService {
 
                             for (Entry<String, String> entry : callback.networkIdsAndNames
                                     .entrySet()) {
-                                ContainerNetworkState networkState =
-                                        buildDiscoveredNetworkState(callback, group, entry);
+                                ContainerNetworkState networkState = buildDiscoveredNetworkState(
+                                        callback, group, ContainerHostUtil.isVicHost(host), entry);
 
                                 networksLeft.add(networkState);
                             }
@@ -388,7 +387,7 @@ public class HostNetworkListDataCollection extends StatefulService {
     }
 
     private ContainerNetworkState buildDiscoveredNetworkState(NetworkListCallback nlc,
-            List<String> group, Entry<String, String> entry) {
+            List<String> group, boolean isVch, Entry<String, String> entry) {
         ContainerNetworkState state = new ContainerNetworkState();
         state.id = entry.getKey();
         state.name = entry.getValue();
@@ -405,6 +404,15 @@ public class HostNetworkListDataCollection extends StatefulService {
         state.parentLinks = new ArrayList<>(Arrays.asList(nlc.containerHostLink));
 
         state.adapterManagementReference = getNetworkAdapterReference(nlc.hostAdapterReference);
+
+        if (isVch) {
+            // VIC supports IPv4 range notation when configured during the VCH creation,
+            // and Admiral discovers it during the data collection.
+            state.customProperties = new HashMap<>();
+            state.customProperties.put(
+                    ContainerNetworkDescription.CUSTOM_PROPERTY_NETWORK_RANGE_FORMAT_ALLOWED,
+                    Boolean.TRUE.toString());
+        }
 
         return state;
     }
@@ -490,7 +498,7 @@ public class HostNetworkListDataCollection extends StatefulService {
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         logSevere("Failed to create ContainerNetworkState for discovered network"
-                                        + " (id=%s): %s", networkState.id, ex.getMessage());
+                                + " (id=%s): %s", networkState.id, ex.getMessage());
                         callback.accept(ex);
                         return;
                     } else {
@@ -501,8 +509,8 @@ public class HostNetworkListDataCollection extends StatefulService {
                     ContainerNetworkState body = o.getBody(ContainerNetworkState.class);
                     createDiscoveredContainerNetworkDescription(body);
 
-                    ContainerNetworkMaintenance networkMaintenance =
-                            new ContainerNetworkMaintenance(getHost());
+                    ContainerNetworkMaintenance networkMaintenance = new ContainerNetworkMaintenance(
+                            getHost());
                     networkMaintenance.requestNetworkInspection(body);
 
                     if (counter.decrementAndGet() == 0) {
@@ -523,7 +531,7 @@ public class HostNetworkListDataCollection extends StatefulService {
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         logSevere("Failed to create ContainerNetworkDescription for discovered"
-                                        + " network (id=%s): %s", networkState.id, ex.getMessage());
+                                + " network (id=%s): %s", networkState.id, ex.getMessage());
                     } else {
                         logInfo("Created ContainerNetworkDescription for discovered network: %s",
                                 networkState.id);

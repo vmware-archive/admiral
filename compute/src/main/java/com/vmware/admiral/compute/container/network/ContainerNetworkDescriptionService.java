@@ -64,6 +64,7 @@ public class ContainerNetworkDescriptionService extends StatefulService {
 
         public static final String CUSTOM_PROPERTY_NETWORK_DRIVER = "containers.network.driver";
         public static final String CUSTOM_PROPERTY_IPAM_DRIVER = "containers.ipam.driver";
+        public static final String CUSTOM_PROPERTY_NETWORK_RANGE_FORMAT_ALLOWED = "network.range.format.allowed";
 
         /** An IPAM configuration for a given network. */
         @Documentation(description = "An IPAM configuration for a given network.")
@@ -153,7 +154,7 @@ public class ContainerNetworkDescriptionService extends StatefulService {
     @Override
     public void handleCreate(Operation startPost) {
         try {
-            ContainerNetworkDescription state = getValidInputFrom(startPost, false);
+            ContainerNetworkDescription state = getValidInputFrom(startPost, null);
             logFine("Initial name is %s", state.name);
             startPost.complete();
         } catch (Throwable e) {
@@ -165,7 +166,7 @@ public class ContainerNetworkDescriptionService extends StatefulService {
     @Override
     public void handlePut(Operation put) {
         try {
-            ContainerNetworkDescription putState = getValidInputFrom(put, false);
+            ContainerNetworkDescription putState = getValidInputFrom(put, null);
             setState(put, putState);
             put.setBody(putState).complete();
         } catch (Throwable e) {
@@ -177,7 +178,7 @@ public class ContainerNetworkDescriptionService extends StatefulService {
     @Override
     public void handlePatch(Operation patch) {
         ContainerNetworkDescription currentState = getState(patch);
-        ContainerNetworkDescription patchBody = getValidInputFrom(patch, true);
+        ContainerNetworkDescription patchBody = getValidInputFrom(patch, currentState);
 
         ServiceDocumentDescription docDesc = getDocumentTemplate().documentDescription;
         String currentSignature = Utils.computeSignature(currentState, docDesc);
@@ -204,17 +205,26 @@ public class ContainerNetworkDescriptionService extends StatefulService {
      * Validates the specified {@link ContainerNetworkDescription}. If the validation fails, an
      * Exception will be thrown.
      *
-     * @param isUpdate
+     * @param currentState
      *            on updates the check for non <code>null</code> required fields is skipped.
      *            <code>null</code> values in that case represent no change. PATCH method is
      *            considered an update. PUT is not an update.
      */
-    public void validateState(ContainerNetworkDescription state, boolean isUpdate) {
-        if (!isUpdate) {
+    private void validateState(ContainerNetworkDescription state,
+            ContainerNetworkDescription currentState) {
+
+        // VIC supports IPv4 range notation when configured during the VCH creation,
+        // and Admiral discovers it during the data collection.
+        boolean rangeFormatAllowed;
+
+        if (currentState == null) {
             // check that all required fields are not null.
             // Skip this step on updates (null = no update)
             Utils.validateState(getStateDescription(), state);
             NetworkUtils.validateNetworkName(state.name);
+            rangeFormatAllowed = NetworkUtils.isRangeFormatAllowed(state.customProperties);
+        } else {
+            rangeFormatAllowed = NetworkUtils.isRangeFormatAllowed(currentState.customProperties);
         }
 
         if (state.instanceAdapterReference == null) {
@@ -227,7 +237,8 @@ public class ContainerNetworkDescriptionService extends StatefulService {
                 for (IpamConfig ipamConfig : state.ipam.config) {
                     if (ipamConfig != null) {
                         NetworkUtils.validateIpCidrNotation(ipamConfig.subnet);
-                        NetworkUtils.validateIpCidrNotation(ipamConfig.ipRange);
+                        NetworkUtils.validateIpRangeNotation(ipamConfig.ipRange,
+                                rangeFormatAllowed);
                         NetworkUtils.validateIpAddress(ipamConfig.gateway);
                         if (ipamConfig.auxAddresses != null) {
                             ipamConfig.auxAddresses.values().stream().forEach((address) -> {
@@ -277,10 +288,11 @@ public class ContainerNetworkDescriptionService extends StatefulService {
      * Returns valid {@link ContainerNetworkDescription} instance for the specified operation or
      * throws an Exception if validation fails.
      */
-    private ContainerNetworkDescription getValidInputFrom(Operation op, boolean isUpdate) {
+    private ContainerNetworkDescription getValidInputFrom(Operation op,
+            ContainerNetworkDescription currentState) {
         checkForBody(op);
         ContainerNetworkDescription incomingState = op.getBody(ContainerNetworkDescription.class);
-        validateState(incomingState, isUpdate);
+        validateState(incomingState, currentState);
         return incomingState;
     }
 
