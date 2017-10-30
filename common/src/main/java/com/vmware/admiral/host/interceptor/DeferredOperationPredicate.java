@@ -33,10 +33,10 @@ public class DeferredOperationPredicate implements Predicate<Operation> {
     /**
      * Constructs a new instance.
      *
-     * @param service the service that is intercepted
-     * @param action the action that is intercepted
+     * @param service   the service that is intercepted
+     * @param action    the action that is intercepted
      * @param predicate the predicate code which should return {@code null} if not applicable, or
-     *          a DeferredResult; a failed DeferredResult cancels the operation
+     *                  a DeferredResult; a failed DeferredResult cancels the operation
      */
     public DeferredOperationPredicate(Service service, Action action,
             BiFunction<Service, Operation, DeferredResult<Void>> predicate) {
@@ -47,7 +47,12 @@ public class DeferredOperationPredicate implements Predicate<Operation> {
 
     @Override
     public boolean test(Operation operation) {
-        if (action != null && !action.equals(operation.getAction())) {
+        if (operation.isSynchronize() || operation.isFromReplication()) {
+            // do not process synchronization or replication operations
+            return true;
+        }
+
+        if (action != null && action != operation.getAction()) {
             return true;
         }
 
@@ -68,7 +73,8 @@ public class DeferredOperationPredicate implements Predicate<Operation> {
                         this.service.getClass().getCanonicalName(), this.action,
                         e.toString());
 
-                if (e instanceof CompletionException && e.getCause().getMessage().contains("forbidden")
+                if (e instanceof CompletionException
+                        && e.getCause().getMessage().contains("forbidden")
                         || e.getMessage().contains("forbidden")) {
                     operation.fail(Operation.STATUS_CODE_FORBIDDEN, e, e);
                     return;
