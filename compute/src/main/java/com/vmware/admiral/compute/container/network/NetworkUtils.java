@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.compute.container.network;
 
+import static com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription.CUSTOM_PROPERTY_NETWORK_RANGE_FORMAT_ALLOWED;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -117,6 +119,12 @@ public class NetworkUtils {
             + ")\\/(12[0-8]|1[0-1]\\d|\\d{1,2})";
 
     /**
+     * Matches an IPv4 network address range
+     */
+    public static final String REGEXP_IPV4_RANGE_NOTATION = "(" + REGEXP_IPV4_ADDRESS
+            + ")-(" + REGEXP_IPV4_ADDRESS + ")";
+
+    /**
      * Matches an IPv4 or IPv6 address
      */
     public static final String REGEXP_IP_ADDRESS = "("
@@ -133,12 +141,21 @@ public class NetworkUtils {
     public static final String REGEXP_NAME = "^[\\w]+[\\w. -]*[\\w]+$";
     public static final String BAD_NETWORK_NAME = "Network name should not contain any special characters other than underscores, hyphens and spaces";
 
+    public static void validateIpRangeNotation(String subnet, boolean rangeFormatAllowed) {
+        if (rangeFormatAllowed && !StringUtil.isNullOrEmpty(subnet)
+                && subnet.matches(REGEXP_IPV4_RANGE_NOTATION)) {
+            // VIC supports IPv4 range notation when configured during the VCH creation,
+            // and Admiral discovers it during the data collection.
+            return;
+        }
+        validateIpCidrNotation(subnet);
+    }
+
     public static void validateIpCidrNotation(String subnet) {
         if (!StringUtil.isNullOrEmpty(subnet) && !subnet.matches(REGEXP_CIDR_NOTATION)) {
-            String error = String.format(
-                    FORMAT_CIDR_NOTATION_VALIDATION_ERROR,
+            String error = String.format(FORMAT_CIDR_NOTATION_VALIDATION_ERROR, subnet);
+            throw new LocalizableValidationException(error, "compute.network.validate.cidr",
                     subnet);
-            throw new LocalizableValidationException(error, "compute.network.validate.cidr", subnet);
         }
     }
 
@@ -152,10 +169,11 @@ public class NetworkUtils {
 
     public static void validateNetworkName(String name) {
         if (name == null || name.trim().isEmpty()) {
-            throw new LocalizableValidationException(ERROR_NETWORK_NAME_IS_REQUIRED, "compute.network.validate.name");
+            throw new LocalizableValidationException(ERROR_NETWORK_NAME_IS_REQUIRED,
+                    "compute.network.validate.name");
         }
 
-        //Docker now validates the network name based on the REGEXP_NAME regex
+        // Docker now validates the network name based on the REGEXP_NAME regex
         if (!name.matches(REGEXP_NAME)) {
             throw new LocalizableValidationException(BAD_NETWORK_NAME,
                     "compute.network.validate.bad.name");
@@ -229,12 +247,12 @@ public class NetworkUtils {
 
                     // retry by name...
 
-                    List<ContainerNetworkState> networkStates = new ArrayList<ContainerNetworkState>();
+                    List<ContainerNetworkState> networkStates = new ArrayList<>();
 
                     QueryTask queryTask = NetworkUtils.getNetworkByHostAndNameQueryTask(
                             container.parentLink, networkName);
 
-                    new ServiceDocumentQuery<ContainerNetworkState>(host,
+                    new ServiceDocumentQuery<>(host,
                             ContainerNetworkState.class).query(queryTask, (r) -> {
                                 if (r.hasException()) {
                                     host.log(Level.WARNING,
@@ -296,4 +314,10 @@ public class NetworkUtils {
 
         return queryTask;
     }
+
+    public static boolean isRangeFormatAllowed(Map<String, String> customProperties) {
+        return (customProperties != null) && Boolean.parseBoolean(customProperties
+                .get(CUSTOM_PROPERTY_NETWORK_RANGE_FORMAT_ALLOWED));
+    }
+
 }

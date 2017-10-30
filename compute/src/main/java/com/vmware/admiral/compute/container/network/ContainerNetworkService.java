@@ -43,10 +43,8 @@ public class ContainerNetworkService extends StatefulService {
         public static final String FIELD_NAME_IPAM = "ipam";
         public static final String FIELD_NAME_DRIVER = "driver";
         public static final String FIELD_NAME_OPTIONS = "options";
-        public static final String FIELD_NAME_ORIGINATING_HOST_REFERENCE =
-                "originatingHostReference";
-        public static final String FIELD_NAME_ADAPTER_MANAGEMENT_REFERENCE =
-                "adapterManagementReference";
+        public static final String FIELD_NAME_ORIGINATING_HOST_REFERENCE = "originatingHostReference";
+        public static final String FIELD_NAME_ADAPTER_MANAGEMENT_REFERENCE = "adapterManagementReference";
         public static final String FIELD_NAME_COMPOSITE_COMPONENT_LINKS = "compositeComponentLinks";
 
         public enum PowerState {
@@ -138,11 +136,9 @@ public class ContainerNetworkService extends StatefulService {
          */
         @Documentation(description = "A map of field-value pairs for a given network. These are"
                 + " used to specify network options that are used by the network drivers.")
-        @PropertyOptions(
-                indexing =
-                        { PropertyIndexingOption.CASE_INSENSITIVE, PropertyIndexingOption.EXPAND },
-                usage =
-                        {PropertyUsageOption.OPTIONAL, PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
+        @PropertyOptions(indexing = { PropertyIndexingOption.CASE_INSENSITIVE,
+                PropertyIndexingOption.EXPAND }, usage = { PropertyUsageOption.OPTIONAL,
+                        PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public Map<String, String> options;
 
     }
@@ -164,7 +160,7 @@ public class ContainerNetworkService extends StatefulService {
 
     @Override
     public void handleCreate(Operation create) {
-        ContainerNetworkState body = getValidInputFrom(create, false);
+        ContainerNetworkState body = getValidInputFrom(create, null);
 
         if (body.powerState == null) {
             body.powerState = ContainerNetworkState.PowerState.UNKNOWN;
@@ -185,7 +181,7 @@ public class ContainerNetworkService extends StatefulService {
             // instead of overwriting it: if data collection service discovers a particular overlay
             // network on multiple hosts at the same time and tries to create multiple network
             // states, update its parent links only
-            ContainerNetworkState putState = getValidInputFrom(put, false);
+            ContainerNetworkState putState = getValidInputFrom(put, null);
             ContainerNetworkState currentState = getState(put);
             currentState.parentLinks = PropertyUtils.mergeLists(currentState.parentLinks,
                     putState.parentLinks);
@@ -209,7 +205,7 @@ public class ContainerNetworkService extends StatefulService {
             return;
         }
 
-        ContainerNetworkState patchBody = getValidInputFrom(patch, true);
+        ContainerNetworkState patchBody = getValidInputFrom(patch, currentState);
 
         ServiceDocumentDescription docDesc = getDocumentTemplate().documentDescription;
         String currentSignature = Utils.computeSignature(currentState, docDesc);
@@ -245,17 +241,25 @@ public class ContainerNetworkService extends StatefulService {
      * Validates the specified {@link ContainerNetworkState}. If the validation fails, an Exception
      * will be thrown.
      *
-     * @param isUpdate
+     * @param currentState
      *            on updates the check for non <code>null</code> required fields is skipped.
      *            <code>null</code> values in that case represent no change. PATCH method is
      *            considered an update. PUT is not an update.
      */
-    public void validateState(ContainerNetworkState state, boolean isUpdate) {
-        if (!isUpdate) {
+    private void validateState(ContainerNetworkState state, ContainerNetworkState currentState) {
+
+        // VIC supports IPv4 range notation when configured during the VCH creation,
+        // and Admiral discovers it during the data collection.
+        boolean rangeFormatAllowed;
+
+        if (currentState == null) {
             // check that all required fields are not null.
             // Skip this step on updates (null = no update)
             Utils.validateState(getStateDescription(), state);
             NetworkUtils.validateNetworkName(state.name);
+            rangeFormatAllowed = NetworkUtils.isRangeFormatAllowed(state.customProperties);
+        } else {
+            rangeFormatAllowed = NetworkUtils.isRangeFormatAllowed(currentState.customProperties);
         }
 
         if (state.ipam != null) {
@@ -263,7 +267,8 @@ public class ContainerNetworkService extends StatefulService {
                 for (IpamConfig ipamConfig : state.ipam.config) {
                     if (ipamConfig != null) {
                         NetworkUtils.validateIpCidrNotation(ipamConfig.subnet);
-                        NetworkUtils.validateIpCidrNotation(ipamConfig.ipRange);
+                        NetworkUtils.validateIpRangeNotation(ipamConfig.ipRange,
+                                rangeFormatAllowed);
                         NetworkUtils.validateIpAddress(ipamConfig.gateway);
                         if (ipamConfig.auxAddresses != null) {
                             ipamConfig.auxAddresses.values().stream().forEach((address) -> {
@@ -323,10 +328,11 @@ public class ContainerNetworkService extends StatefulService {
      * Returns valid {@link ContainerNetworkState} instance for the specified operation or throws an
      * Exception if validation fails.
      */
-    private ContainerNetworkState getValidInputFrom(Operation op, boolean isUpdate) {
+    private ContainerNetworkState getValidInputFrom(Operation op,
+            ContainerNetworkState currentState) {
         checkForBody(op);
         ContainerNetworkState incomingState = op.getBody(ContainerNetworkState.class);
-        validateState(incomingState, isUpdate);
+        validateState(incomingState, currentState);
         return incomingState;
     }
 

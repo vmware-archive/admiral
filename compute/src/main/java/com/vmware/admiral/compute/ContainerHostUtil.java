@@ -37,9 +37,9 @@ public class ContainerHostUtil {
             + "host type '%s' is not supported";
     public static final String CONTAINER_HOST_TYPE_NOT_SUPPORTED_MESSAGE_CODE = "compute.host.type.not.supported";
 
-    private static final String PROPERTY_NAME_DRIVER = "__Driver";
-    private static final String VMWARE_VIC_DRIVER1 = "vmware";
-    private static final String VMWARE_VIC_DRIVER2 = "vsphere";
+    public static final String PROPERTY_NAME_DRIVER = "__Driver";
+    public static final String VMWARE_VIC_DRIVER1 = "vmware";
+    public static final String VMWARE_VIC_DRIVER2 = "vsphere";
 
     /**
      * Check if this host is a scheduler host (e.g. VIC, Kubernetes)
@@ -105,7 +105,8 @@ public class ContainerHostUtil {
     /**
      * Check if docker is running on VMware Integrated Container host.
      *
-     * @param computeState host to check
+     * @param computeState
+     *            host to check
      * @return boolean value
      */
     public static boolean isVicHost(ComputeState computeState) {
@@ -123,7 +124,8 @@ public class ContainerHostUtil {
     /**
      * Check if host is running Kubernetes.
      *
-     * @param computeState host to check
+     * @param computeState
+     *            host to check
      * @return boolean value
      */
     public static boolean isKubernetesHost(ComputeState computeState) {

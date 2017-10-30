@@ -11,9 +11,12 @@
 
 package com.vmware.admiral.compute.container.network;
 
+import java.util.HashMap;
+
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.xenon.common.LocalizableValidationException;
 
 public class NetworkUtilsTest {
@@ -104,6 +107,7 @@ public class NetworkUtilsTest {
             new TestEntry("127.0.0.1/32", false),
 
             // invalid IPv4 ranges in CIDR notation
+            new TestEntry("127.0.0.1", true),
             new TestEntry("127.0.0.1/-1", true),
             new TestEntry("127.0.0.1/33", true),
             new TestEntry("127.0.0.1/100", true),
@@ -114,6 +118,7 @@ public class NetworkUtilsTest {
             new TestEntry("127.0.0.256/16", true),
             new TestEntry("127.0.0.1.1/16", true),
             new TestEntry("127.0.1/16", true),
+            new TestEntry("127.0.0.1-127.0.0.255", true),
 
             // valid IPv6 ranges in CIDR notation
             new TestEntry("::1/128", false),
@@ -133,6 +138,22 @@ public class NetworkUtilsTest {
             new TestEntry("1:2:3:4:5:6:7::1/32", true),
             new TestEntry("1:2:3:4:5:6:7:8:9/32", true),
             new TestEntry("g::1/32", true)
+    };
+
+    private TestEntry[] testIpRangeData = new TestEntry[] {
+            new TestEntry(null, false),
+            new TestEntry("", false),
+
+            // valid IPv4 ranges in range format
+            new TestEntry("127.0.0.1-127.0.0.255", false),
+
+            // invalid IPv4 ranges in range format
+            new TestEntry("127.0.0.1", true),
+            new TestEntry("127.0.0.1-127.0.0.256", true),
+            new TestEntry("127.0.256.0-127.1.0.0", true),
+            new TestEntry("127.0.0.1-127.0.0", true),
+            new TestEntry("127.0.0-127.0.0.255", true),
+            new TestEntry("abc-xyz", true)
     };
 
     private TestEntry[] testNetworkNames = new TestEntry[] {
@@ -205,6 +226,64 @@ public class NetworkUtilsTest {
     }
 
     @Test
+    public void testValidateIpRange() {
+        // if ranges are not allowed...
+        for (TestEntry entry : testIpCidrNotationData) {
+            try {
+                NetworkUtils.validateIpRangeNotation(entry.testValue, false);
+                if (entry.shouldFail) {
+                    String message = String.format(
+                            "Test should have failed, '%s' is not a valid CIDR notation",
+                            entry.testValue);
+                    Assert.fail(message);
+                }
+            } catch (LocalizableValidationException e) {
+                String errorMessage = e.getMessage();
+                String expectedError = String.format(
+                        NetworkUtils.FORMAT_CIDR_NOTATION_VALIDATION_ERROR,
+                        entry.testValue);
+                if (!errorMessage.equals(expectedError)) {
+                    throw e;
+                } else {
+                    if (!entry.shouldFail) {
+                        String message = String.format(
+                                "Test should have passed, '%s' is a valid CIDR notation",
+                                entry.testValue);
+                        Assert.fail(message);
+                    }
+                }
+            }
+        }
+        // if ranges are allowed...
+        for (TestEntry entry : testIpRangeData) {
+            try {
+                NetworkUtils.validateIpRangeNotation(entry.testValue, true);
+                if (entry.shouldFail) {
+                    String message = String.format(
+                            "Test should have failed, '%s' is not a valid CIDR notation",
+                            entry.testValue);
+                    Assert.fail(message);
+                }
+            } catch (LocalizableValidationException e) {
+                String errorMessage = e.getMessage();
+                String expectedError = String.format(
+                        NetworkUtils.FORMAT_CIDR_NOTATION_VALIDATION_ERROR,
+                        entry.testValue);
+                if (!errorMessage.equals(expectedError)) {
+                    throw e;
+                } else {
+                    if (!entry.shouldFail) {
+                        String message = String.format(
+                                "Test should have passed, '%s' is a valid CIDR notation",
+                                entry.testValue);
+                        Assert.fail(message);
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
     public void testValidateNetworkName() {
         for (TestEntry entry : testNetworkNames) {
             try {
@@ -233,4 +312,23 @@ public class NetworkUtilsTest {
             }
         }
     }
+
+    @Test
+    public void testIsRangeFormatAllowed() {
+        Assert.assertFalse(NetworkUtils.isRangeFormatAllowed(null));
+
+        HashMap<String, String> customProperties = new HashMap<>();
+        Assert.assertFalse(NetworkUtils.isRangeFormatAllowed(customProperties));
+
+        customProperties.put(
+                ContainerNetworkDescription.CUSTOM_PROPERTY_NETWORK_RANGE_FORMAT_ALLOWED,
+                Boolean.FALSE.toString());
+        Assert.assertFalse(NetworkUtils.isRangeFormatAllowed(customProperties));
+
+        customProperties.put(
+                ContainerNetworkDescription.CUSTOM_PROPERTY_NETWORK_RANGE_FORMAT_ALLOWED,
+                Boolean.TRUE.toString());
+        Assert.assertTrue(NetworkUtils.isRangeFormatAllowed(customProperties));
+    }
+
 }
