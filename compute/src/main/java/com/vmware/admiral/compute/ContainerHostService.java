@@ -810,9 +810,12 @@ public class ContainerHostService extends StatelessService {
         URI adapterManagementReference = getAdapterManagementReferenceForType(
                 ContainerHostUtil.getDeclaredContainerHostType(cs));
 
-        Operation patchOp = Operation
+        String languageHeader = op.getRequestHeader(Operation.ACCEPT_LANGUAGE_HEADER) != null ?
+                op.getRequestHeader(Operation.ACCEPT_LANGUAGE_HEADER) : "";
+        sendRequest(Operation
                 .createPatch(adapterManagementReference)
                 .setBody(request)
+                .addRequestHeader(Operation.ACCEPT_LANGUAGE_HEADER, languageHeader)
                 .setContextId(Service.getId(getSelfLink()))
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
@@ -841,12 +844,7 @@ public class ContainerHostService extends StatelessService {
                             callbackFunction.accept(null);
                         }
                     }
-                });
-        String languageHeader = op.getRequestHeader(Operation.ACCEPT_LANGUAGE_HEADER);
-        if (languageHeader != null) {
-            patchOp.addRequestHeader(Operation.ACCEPT_LANGUAGE_HEADER, languageHeader);
-        }
-        sendRequest(patchOp);
+                }));
     }
 
     private void pingHost(ContainerHostSpec hostSpec, Operation op,

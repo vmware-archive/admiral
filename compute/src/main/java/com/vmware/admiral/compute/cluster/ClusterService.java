@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CompletionException;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -557,7 +556,7 @@ public class ClusterService extends StatelessService {
                             .thenApply((hostState) -> new Pair<>(zoneAndPlacement.left, hostState));
                 })
                 .thenAccept((zoneAndHost) -> {
-                    LinkedList<ComputeState> a = new LinkedList<>();
+                    LinkedList<ComputeState> a = new LinkedList<ComputeState>();
                     a.add(zoneAndHost.right);
                     post.setBody(
                             ClusterUtils.placementZoneAndItsHostsToClusterDto(zoneAndHost.left, a));
@@ -657,14 +656,13 @@ public class ClusterService extends StatelessService {
     }
 
     private DeferredResult<ComputeState> addContainerHost(Operation o, ContainerHostSpec hostSpec) {
-        Operation putOp = Operation.createPut(getHost(), ContainerHostService.SELF_LINK)
-                .setReferer(getUri())
-                .setBody(hostSpec);
-        String languageHeader = o.getRequestHeader(Operation.ACCEPT_LANGUAGE_HEADER);
-        if (languageHeader != null) {
-            putOp.addRequestHeader(Operation.ACCEPT_LANGUAGE_HEADER, languageHeader);
-        }
-        return getHost().sendWithDeferredResult(putOp)
+        String languageHeader = o.getRequestHeader(Operation.ACCEPT_LANGUAGE_HEADER) != null ?
+                o.getRequestHeader(Operation.ACCEPT_LANGUAGE_HEADER) : "";
+        return getHost().sendWithDeferredResult(
+                Operation.createPut(getHost(), ContainerHostService.SELF_LINK)
+                        .addRequestHeader(Operation.ACCEPT_LANGUAGE_HEADER, languageHeader)
+                        .setReferer(getUri())
+                        .setBody(hostSpec))
                 .thenCompose((op) -> {
 
                     if (op.getStatusCode() == HttpURLConnection.HTTP_NO_CONTENT) {
@@ -678,9 +676,6 @@ public class ClusterService extends StatelessService {
                         return DeferredResult.failed(new CertificateNotTrustedException(
                                 op.getBody(SslTrustCertificateState.class)));
                     }
-                }).exceptionally(e -> {
-                    o.fail(e.getCause());
-                    throw new CompletionException(e.getCause());
                 });
     }
 
