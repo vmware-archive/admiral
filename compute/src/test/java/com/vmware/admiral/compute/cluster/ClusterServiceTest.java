@@ -15,6 +15,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -115,16 +116,22 @@ public class ClusterServiceTest extends ComputeBaseTest {
         createCluster(hostSpec);
     }
 
-    @Test(expected = LocalizableValidationException.class)
+    @Test
     public void testCreateDockerClusterHostFailure() throws Throwable {
         final String projectLink = buildProjectLink("test-docker-project");
-        final String placementZoneName = PlacementZoneUtil
-                .buildPlacementZoneDefaultName(ContainerHostType.DOCKER, COMPUTE_ADDRESS);
 
         ContainerHostSpec hostSpec = createContainerHostSpec(Collections.singletonList(projectLink),
                 ContainerHostType.DOCKER);
         hostSpec.hostState.customProperties = new HashMap<>();
-        verifyCluster(createCluster(hostSpec), ClusterType.DOCKER, placementZoneName, projectLink);
+        try {
+            createCluster(hostSpec);
+            fail();
+        } catch (Exception e) {
+            assertTrue(e instanceof LocalizableValidationException);
+            LocalizableValidationException ex = (LocalizableValidationException) e;
+            // check there isn't a different cause (like IllegalArgumentException)
+            assertNull(ex.getCause());
+        }
     }
 
     @Test

@@ -73,6 +73,10 @@ public class ClusterServiceIT extends BaseProvisioningOnCoreOsIT {
     private String placementZoneName;
     private ContainerHostSpec hostSpec;
 
+    static class ClusterDtoWithCertificate extends ClusterDto {
+        String certificate;
+    }
+
     @Before
     public void setUp() throws Throwable {
         setupEnvironmentForCluster();
@@ -80,16 +84,31 @@ public class ClusterServiceIT extends BaseProvisioningOnCoreOsIT {
 
     @Test
     public void testCreatingCluster() throws Throwable {
-
         ClusterDto dtoCreated = createCluster();
 
         verifyCluster(dtoCreated, ClusterType.DOCKER, placementZoneName, projectLink);
+    }
 
+    @Test
+    public void testCreatingClusterNotAcceptCert() throws Throwable {
+        // make sure the certificate was not imported before
+        ServiceDocumentQueryResult certificatesResult = getAllCertificates();
+        for (String documentSelfLink : certificatesResult.documentLinks) {
+            delete(documentSelfLink);
+        }
+
+        ClusterDtoWithCertificate dto = createClusterNotAcceptCert();
+
+        // cluster is not created, certificate is returned to accept / cancel it
+        assertNotNull(dto);
+        assertNotNull(dto.documentSelfLink);
+        assertNotNull(dto.certificate);
+        assertNull(dto.name);
+        assertNull(dto.status);
     }
 
     @Test
     public void testPatchingCluster() throws Throwable {
-
         final String name1 = "name_1";
         final String details1 = "details_1";
         final String name2 = "name_2";
@@ -110,12 +129,10 @@ public class ClusterServiceIT extends BaseProvisioningOnCoreOsIT {
         patchClusterDto = patchCluster(dtoCreated.documentSelfLink, patchClusterDto);
         assertEquals(name2, patchClusterDto.name);
         assertEquals(details2, patchClusterDto.details);
-
     }
 
     @Test
     public void testGettingAllClusters() throws Throwable {
-
         ServiceDocumentQueryResult allClustersResult = getAllClusters(false);
 
         assertEquals(0, allClustersResult.documentCount.longValue());
@@ -142,12 +159,10 @@ public class ClusterServiceIT extends BaseProvisioningOnCoreOsIT {
                 .toString();
         ClusterDto dtoCollected = Utils.fromJson(dtoCollectedRaw, ClusterDto.class);
         verifyCluster(dtoCollected, ClusterType.DOCKER, placementZoneName, projectLink);
-
     }
 
     @Test
     public void testGettingCluster() throws Throwable {
-
         ClusterDto dtoCreated = createCluster();
 
         ClusterDto dtoGet = getCluster(dtoCreated.documentSelfLink);
@@ -156,7 +171,6 @@ public class ClusterServiceIT extends BaseProvisioningOnCoreOsIT {
 
     @Test
     public void testGettingAllHostsInCluster() throws Throwable {
-
         ClusterDto dtoCreated = createCluster();
 
         String pathHostsInCluster = UriUtils
@@ -174,7 +188,6 @@ public class ClusterServiceIT extends BaseProvisioningOnCoreOsIT {
 
     @Test
     public void testGettingSingleHostInCluster() throws Throwable {
-
         ClusterDto dtoCreated = createCluster();
 
         String pathHostInCluster = UriUtils
@@ -194,7 +207,6 @@ public class ClusterServiceIT extends BaseProvisioningOnCoreOsIT {
 
     @Test
     public void testDeletingCluster() throws Throwable {
-
         ClusterDto dtoCreated = createCluster();
 
         String placementZoneLink = ResourcePoolService.FACTORY_LINK + "/" + Service.getId
@@ -207,7 +219,6 @@ public class ClusterServiceIT extends BaseProvisioningOnCoreOsIT {
         assertServiceDeleted(dtoCreated.nodeLinks.get(0));
         assertServiceDeleted(placementZoneLink);
         assertServiceDeleted(groupPlacementLink);
-
     }
 
     @Test
@@ -276,6 +287,14 @@ public class ClusterServiceIT extends BaseProvisioningOnCoreOsIT {
                 (hostSpec));
         ClusterDto dto = Utils.fromJson(dtoRaw, ClusterDto.class);
         cleanUpAfter(dto);
+        return dto;
+    }
+
+    private ClusterDtoWithCertificate createClusterNotAcceptCert() throws Exception {
+        hostSpec.acceptCertificate = false;
+        String dtoRaw = sendRequest(HttpMethod.POST, ClusterService.SELF_LINK, Utils.toJson
+                (hostSpec));
+        ClusterDtoWithCertificate dto = Utils.fromJson(dtoRaw, ClusterDtoWithCertificate.class);
         return dto;
     }
 
@@ -376,7 +395,7 @@ public class ClusterServiceIT extends BaseProvisioningOnCoreOsIT {
                 getTestRequiredProp("docker.host.ssl.trust.file"),
                 CommonTestStateFactory.REGISTRATION_DOCKER_ID);
 
-        postDocument(SslTrustCertificateService.FACTORY_LINK, dockerHostSslTrust);
+        dockerHostSslTrust = postDocument(SslTrustCertificateService.FACTORY_LINK, dockerHostSslTrust);
 
         projectLink = buildProjectLink(ProjectService.DEFAULT_PROJECT_ID);
         placementZoneName = PlacementZoneUtil
@@ -445,4 +464,8 @@ public class ClusterServiceIT extends BaseProvisioningOnCoreOsIT {
         return result.documentLinks;
     }
 
+    private ServiceDocumentQueryResult getAllCertificates() throws Exception {
+        String queryStr = SslTrustCertificateService.FACTORY_LINK;
+        return getDocument(queryStr, ServiceDocumentQueryResult.class);
+    }
 }
