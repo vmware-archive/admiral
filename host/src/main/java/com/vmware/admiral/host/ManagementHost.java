@@ -14,7 +14,6 @@ package com.vmware.admiral.host;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.security.Security;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.logging.Level;
@@ -33,6 +32,7 @@ import com.vmware.admiral.auth.project.ProjectFactoryService;
 import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.common.util.ConfigurationUtil;
+import com.vmware.admiral.common.util.SecurityUtils;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.host.interceptor.AuthCredentialsInterceptor;
 import com.vmware.admiral.host.interceptor.InUsePlacementZoneInterceptor;
@@ -77,14 +77,8 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
             System.setProperty("service.document.version.retention.floor", "2");
         }
 
-        // Unless explicitly enabled, disable TLS v1.0 by default due to the BEAST vulnerability.
-        // (see https://en.wikipedia.org/wiki/Transport_Layer_Security#BEAST_attack)
-        boolean enableTLSv1 = Boolean.getBoolean("com.vmware.admiral.enable.tlsv1");
-        if (!enableTLSv1) {
-            String disabledAlgorithms = Security.getProperty("jdk.tls.disabledAlgorithms");
-            disabledAlgorithms = "TLSv1, " + disabledAlgorithms;
-            Security.setProperty("jdk.tls.disabledAlgorithms", disabledAlgorithms);
-        }
+        SecurityUtils.ensureTlsDisabledAlgorithms();
+        SecurityUtils.ensureTrustStoreSettings();
     }
 
     /**
@@ -457,8 +451,8 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
                 startCoreServicesSynchronously(authServices.toArray(new Service[] {}));
             }
 
-            Collection<Class<? extends Service>> privilegeServices =
-                    authProvider.getPrivilegedServices();
+            Collection<Class<? extends Service>> privilegeServices = authProvider
+                    .getPrivilegedServices();
             if (privilegeServices != null && !privilegeServices.isEmpty()) {
                 // Register privileged services.
                 privilegeServices.stream().forEach(service -> this.addPrivilegedService(service));
