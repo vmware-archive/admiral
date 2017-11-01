@@ -47,6 +47,9 @@ export class Links {
 
   public static CREDENTIALS = '/core/auth/credentials';
 
+  public static HOST_DATA_COLLECTION =
+                            Links.RESOURCES + '/hosts-data-collections/host-info-data-collection';
+
   public static LONG_URI_GET = Links.UTIL + '/long-uri-get';
 
 }

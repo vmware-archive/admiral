@@ -146,6 +146,9 @@
       "DISABLED": "DISABLED",
       "WARNING": "WARNING"
     },
+    "actions": {
+      "rescan": "Rescan"
+    },
     "type": "Type",
     "containers": "Containers",
     "cpu": "CPU",

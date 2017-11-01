@@ -24,7 +24,8 @@
         [routerLink]="['./cluster/new']"><i class="fa fa-plus"></i>{{ "clusters.new" | i18n | uppercase }}</button>
   </div>
   <ng-template let-item="item">
-    <card class="clusterCard" [routerLink]="['./cluster/' + item.documentId]" [ngClass]="{'card-actions-selected': isItemSelected(item)}">
+    <card class="clusterCard" [routerLink]="['./cluster/' + item.documentId]"
+          [ngClass]="{'card-actions-selected': isItemSelected(item)}">
       <div card-header>
         <div class="clusterIcon">
           <clr-icon shape="rack-server" size="48"></clr-icon>
@@ -34,17 +35,21 @@
           <div *ngIf="item.address" class="clusterAddress truncate">{{ item.address }}</div>
         </div>
 
-        <clr-dropdown class="card-actions" allowNavigation [roles]="clustersCardViewActions" [clrMenuPosition]="'left-top'" (click)="selectItem($event, item)">
+        <clr-dropdown class="card-actions" allowNavigation [roles]="clustersCardViewActions"
+                      [clrMenuPosition]="'left-top'" (click)="selectItem($event, item)">
           <button class="btn btn-sm btn-link" clrDropdownToggle>
               <clr-icon shape="ellipsis-vertical" size="20"></clr-icon>
           </button>
           <div class="dropdown-menu">
             <a href="..." clrDropdownItem class="cluster-details"
                [routerLink]="['./cluster/' + item.documentId]"><clr-icon shape="eye" size="20"
-                                                                 class="card-drop-down-actions"></clr-icon>{{ "projects.actions.details" | i18n }}</a>
+                 class="card-drop-down-actions"></clr-icon>{{ "projects.actions.details" | i18n }}</a>
             <a href="..." clrDropdownItem class="remove-cluster"
                (click)="deleteCluster($event, item)"><clr-icon shape="trash" size="20"
-                                                               class="card-drop-down-actions"></clr-icon>{{ "remove" | i18n }}</a>
+                  class="card-drop-down-actions"></clr-icon>{{ "remove" | i18n }}</a>
+            <a *ngIf="isSupportedRescan" href="..." clrDropdownItem class="rescan-cluster"
+               (click)="rescanCluster($event, item)"><clr-icon shape="eye" size="20"
+                 class="card-drop-down-actions"></clr-icon>{{ "clusters.actions.rescan" | i18n }}</a>
           </div>
         </clr-dropdown>
       </div>

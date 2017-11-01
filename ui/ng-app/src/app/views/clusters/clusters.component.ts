@@ -34,6 +34,9 @@ export class ClustersComponent implements OnInit {
 
   selectedItem: any;
 
+  RESCAN_REFRESH_MAX_NUMBER_RETRIES = 3;
+  RESCAN_REFRESH_INTERVAL = 30000; // 30 seconds
+
   @ViewChild('gridView') gridView:GridViewComponent;
 
   constructor(private service: DocumentService, private projectService: ProjectService) {
@@ -101,6 +104,56 @@ export class ClustersComponent implements OnInit {
 
   deleteCanceled() {
     this.clusterToDelete = null;
+  }
+
+  get isSupportedRescan() {
+    return !FT.isApplicationEmbedded();
+  }
+
+  rescanCluster(event, cluster) {
+    event.stopPropagation();
+    // clear selection
+    this.selectedItem = null;
+
+    let clusterStatesToUpdate = {
+      computeContainerHostLinks: [ cluster.documentSelfLink ]
+    };
+
+    this.service.patch(Links.HOST_DATA_COLLECTION, clusterStatesToUpdate, this.projectLink)
+                    .then((response) => {
+      this.refreshCluster(cluster, this.RESCAN_REFRESH_MAX_NUMBER_RETRIES, null);
+
+    }).catch(error => {
+        console.error('Failed to update the cluster state', Utils.getErrorMessage(error)._generic);
+        // TODO should we show message to user?
+    });
+
+    return false; // prevents navigation
+  }
+
+  refreshCluster(cluster, retries, timeoutId) {
+
+    this.service.get(cluster.documentSelfLink).then((updatedCluster) => {
+      // update cluster information
+      cluster.status = updatedCluster.status;
+      cluster.containerCount = updatedCluster.containerCount;
+      cluster.totalMemory = updatedCluster.totalMemory;
+      cluster.memoryUsage = updatedCluster.memoryUsage;
+      cluster.nodeLinks = updatedCluster.nodeLinks;
+      cluster.nodes = updatedCluster.nodes;
+      cluster.totalCpu = updatedCluster.totalCpu;
+      cluster.cpuUsage = updatedCluster.cpuUsage;
+      // TODO more fields?
+    });
+
+    if (retries > 1) {
+      clearTimeout(timeoutId);
+
+      var __this = this;
+      let timeoutIdNew = setTimeout(function() {
+          __this.refreshCluster(cluster, retries - 1, timeoutIdNew);
+      }, this.RESCAN_REFRESH_INTERVAL); // check after 30 seconds
+    }
   }
 
   cpuPercentageLevel(cluster) {
