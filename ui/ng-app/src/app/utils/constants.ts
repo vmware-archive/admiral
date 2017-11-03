@@ -28,7 +28,9 @@ export const Constants = {
     clusters: {
         properties: {
             publicAddress: "publicAddress"
-        }
+        },
+        DEFAULT_RESCAN_INTERVAL: 30000,
+        DEFAULT_RESCAN_RETRIES_NUMBER: 3,
     },
     alert: {
         type: {

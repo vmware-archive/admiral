@@ -316,6 +316,26 @@ export class Utils {
 
     return false;
   }
+
+  public static getClusterRescanInterval() {
+    if (this.existsConfigurationProperty('eventual.cluster.rescan.interval.ms')) {
+
+      return parseInt(this.getConfigurationProperty('eventual.cluster.rescan.interval.ms'), 10)
+               || Constants.clusters.DEFAULT_RESCAN_INTERVAL;
+    }
+
+    return Constants.clusters.DEFAULT_RESCAN_INTERVAL;
+  }
+
+  public static getClusterRescanRetriesNumber() {
+    if (this.existsConfigurationProperty('eventual.cluster.rescan.retries.number')) {
+
+      return parseInt(this.getConfigurationProperty('eventual.cluster.rescan.retries.number'), 10)
+               || Constants.clusters.DEFAULT_RESCAN_RETRIES_NUMBER;
+      }
+
+    return Constants.clusters.DEFAULT_RESCAN_RETRIES_NUMBER;
+  }
 }
 
 export class CancelablePromise<T> {

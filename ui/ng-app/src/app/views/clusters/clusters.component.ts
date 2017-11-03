@@ -34,9 +34,6 @@ export class ClustersComponent implements OnInit {
 
   selectedItem: any;
 
-  RESCAN_REFRESH_MAX_NUMBER_RETRIES = 3;
-  RESCAN_REFRESH_INTERVAL = 30000; // 30 seconds
-
   @ViewChild('gridView') gridView:GridViewComponent;
 
   constructor(private service: DocumentService, private projectService: ProjectService) {
@@ -121,11 +118,11 @@ export class ClustersComponent implements OnInit {
 
     this.service.patch(Links.HOST_DATA_COLLECTION, clusterStatesToUpdate, this.projectLink)
                     .then((response) => {
-      this.refreshCluster(cluster, this.RESCAN_REFRESH_MAX_NUMBER_RETRIES, null);
+      this.refreshCluster(cluster, Utils.getClusterRescanRetriesNumber(), null);
 
     }).catch(error => {
-        console.error('Failed to update the cluster state', Utils.getErrorMessage(error)._generic);
-        // TODO should we show message to user?
+        console.error('Rescan of cluster failed', Utils.getErrorMessage(error)._generic);
+        // TODO Show error message?
     });
 
     return false; // prevents navigation
@@ -152,7 +149,7 @@ export class ClustersComponent implements OnInit {
       var __this = this;
       let timeoutIdNew = setTimeout(function() {
           __this.refreshCluster(cluster, retries - 1, timeoutIdNew);
-      }, this.RESCAN_REFRESH_INTERVAL); // check after 30 seconds
+      }, Utils.getClusterRescanInterval());
     }
   }
 
