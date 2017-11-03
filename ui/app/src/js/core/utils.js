@@ -1406,6 +1406,16 @@ var utils = {
       return state;
     }
     return cs.powerState;
+  },
+
+  getContainersRefreshInterval() {
+    if (this.existsConfigurationProperty('eventual.containers.refresh.interval.ms')) {
+
+      return parseInt(this.getConfigurationProperty('eventual.containers.refresh.interval.ms'), 10)
+              || constants.CONTAINERS.DEFAULT_REFRESH_INTERVAL;
+    }
+
+    return constants.CONTAINERS.DEFAULT_REFRESH_INTERVAL;
   }
 };
 

@@ -746,8 +746,44 @@ let ContainersStore = Reflux.createStore({
         .then((result) => {
 
           return this.decorateContainers(result, queryOptions.$category, true);
+        }).catch((e) => {
+          console.log('Cannot load containers next page', e);
+          this.setInData(['listView', 'itemsLoading'], false);
         });
     }
+
+    this.emitChange();
+  },
+
+  onRescanContainers: function(queryOptions) {
+    let alreadyLoadedItems = this.selectFromData(['listView', 'items']).get();
+    let numberOfContainers = alreadyLoadedItems && alreadyLoadedItems.length;
+
+    var operation =
+      this.requestCancellableOperation(constants.CONTAINERS.OPERATION.LIST, queryOptions);
+
+    operation.forPromise(services.rescanContainers(queryOptions, numberOfContainers))
+                                    .then((result) => {
+      let updatedContainers = result.documentLinks.map((documentLink) => {
+        return result.documents[documentLink];
+      });
+
+      alreadyLoadedItems.forEach((item) => {
+        let updatedItem = updatedContainers.find((updatedContainer) => {
+          return updatedContainer.documentSelfLink === item.documentSelfLink;
+        });
+
+        if (updatedItem && (updatedItem.powerState !== item.powerState)) {
+          item = item.asMutable();
+          item.powerState = updatedItem.powerState;
+          this.insertOrUpdateItem(item.documentSelfLink, item, 'documentSelfLink');
+        }
+      });
+
+      this.emitChange();
+    }).catch((e) => {
+      console.log('Containers rescan failed', e);
+    });
 
     this.emitChange();
   },

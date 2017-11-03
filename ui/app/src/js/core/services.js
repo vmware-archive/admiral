@@ -1084,6 +1084,13 @@ services.loadContainers = function(queryOptions) {
   return get(url);
 };
 
+services.rescanContainers = function(queryOptions, numberOfContainers) {
+  var filter = buildResourcesSearchQuery(queryOptions);
+  var url = buildPaginationUrl(links.CONTAINERS, filter, true, 'created asc', numberOfContainers);
+
+  return get(url);
+};
+
 services.loadContainersForCompositeComponent = function(compositeComponentId) {
   let urlPrefix = links.COMPOSITE_COMPONENTS + '/';
   var compositeComponentLink = (compositeComponentId.indexOf(urlPrefix) > -1)

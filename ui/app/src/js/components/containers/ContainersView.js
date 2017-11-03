@@ -210,6 +210,15 @@ var ContainersViewVueComponent = Vue.extend({
       });
     });
 
+    this.refreshContainersInterval = setInterval(() => {
+      ContainerActions.rescanContainers(this.queryOptions);
+    }, utils.getContainersRefreshInterval());
+
+    if (!this.startRefreshPollingTimeout) {
+      this.startRefreshPollingTimeout = setTimeout(
+        () => this.refreshContainersInterval, constants.CONTAINERS.START_REFRESH_POLLING_DELAY);
+    }
+
     this.refreshRequestsInterval = setInterval(() => {
       if (this.activeContextItem === constants.CONTEXT_PANEL.REQUESTS) {
         RequestsActions.refreshRequests();
@@ -235,6 +244,9 @@ var ContainersViewVueComponent = Vue.extend({
 
     var $mainPanel = $(this.$el).children('.list-holder').children('.main-panel');
     $mainPanel.off('transitionend MSTransitionEnd webkitTransitionEnd oTransitionEnd');
+
+    clearTimeout(this.startRefreshPollingTimeout);
+    clearInterval(this.refreshContainersInterval);
 
     ContainerActions.closeContainers();
 
@@ -314,7 +326,7 @@ var ContainersViewVueComponent = Vue.extend({
     loadMore: function() {
       if (this.model.listView.nextPageLink) {
         ContainerActions.openContainersNext(this.queryOptions,
-          this.model.listView.nextPageLink);
+                                            this.model.listView.nextPageLink);
       }
     },
 
