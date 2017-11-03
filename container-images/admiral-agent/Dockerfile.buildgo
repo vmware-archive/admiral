@@ -11,7 +11,10 @@
 
 FROM vmware/photon:1.0
 
-RUN tyum install git wget tar gzip -y
+RUN tdnf distro-sync --refresh -y && \ 
+    tdnf install git wget tar gzip -y && \
+    tdnf clean all
+
 RUN wget https://storage.googleapis.com/golang/go1.6.linux-amd64.tar.gz
 RUN tar -C /usr/local -xzf go1.6.linux-amd64.tar.gz
 ENV PATH=$PATH:/usr/local/go/bin
