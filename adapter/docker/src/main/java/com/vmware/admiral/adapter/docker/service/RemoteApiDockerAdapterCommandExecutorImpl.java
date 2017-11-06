@@ -418,14 +418,20 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
         setConnectionTag(input.getCredentials(), op);
         logger.info("Ping host: " + op.getUri());
 
+
+        DelegatingX509KeyManager keyM = new DelegatingX509KeyManager();
+        ServerX509TrustManager trustM = ServerX509TrustManager.create(host);
+        createOrUpdateTargetSsl(input, keyM, trustM);
+        ServiceClient serviceClientPing = ServiceClientFactory.createServiceClient(trustM, keyM);
+
         if (isSecure(input.getDockerUri())) {
             // Make sure that the trusted certificate is loaded before proceeding to avoid
             // SSLHandshakeException and getting hosts in DISABLED state
             ensureTrustDelegateExists(input, SSL_TRUST_RETRIES_COUNT, () -> {
-                serviceClient.send(op);
+                serviceClientPing.send(op);
             });
         } else {
-            serviceClient.send(op);
+            serviceClientPing.send(op);
         }
     }
 
@@ -732,7 +738,14 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
      * Update the dynamic KeyManager and TrustManager with the client and server certs for the
      * current request
      */
+
     private void createOrUpdateTargetSsl(CommandInput input) {
+        createOrUpdateTargetSsl(input,  keyManager, trustManager);
+
+    }
+
+    private void createOrUpdateTargetSsl(CommandInput input, DelegatingX509KeyManager keyM,
+            ServerX509TrustManager trustM) {
         if (input.getCredentials() == null) {
             return;
         }
@@ -748,8 +761,8 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
             return;
         }
 
-        if (sslTrust != null && trustManager != null) {
-            trustManager.putDelegate(trustAlias, sslTrust);
+        if (sslTrust != null && trustM != null) {
+            trustM.putDelegate(trustAlias, sslTrust);
         }
 
         String clientKey = EncryptionUtils.decrypt(input.getCredentials().privateKey);
@@ -761,7 +774,7 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
         if (clientKey != null && !clientKey.isEmpty()) {
             X509ExtendedKeyManager delegateKeyManager = (X509ExtendedKeyManager) CertificateUtil
                     .getKeyManagers(trustAlias, clientKey, clientCert)[0];
-            keyManager.putDelegate(trustAlias, delegateKeyManager);
+            keyM.putDelegate(trustAlias, delegateKeyManager);
         }
     }
 

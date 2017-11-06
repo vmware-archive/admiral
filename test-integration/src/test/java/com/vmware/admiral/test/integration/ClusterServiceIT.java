@@ -89,6 +89,37 @@ public class ClusterServiceIT extends BaseProvisioningOnCoreOsIT {
         verifyCluster(dtoCreated, ClusterType.DOCKER, placementZoneName, projectLink);
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testCreateDeleteCreateNoCredentialsCluster() throws Throwable {
+
+        ClusterDto dtoCreated = createCluster();
+
+        deleteCluster(dtoCreated.documentSelfLink);
+
+        hostSpec.hostState.customProperties.remove(ComputeConstants
+                .HOST_AUTH_CREDENTIALS_PROP_NAME);
+        sendRequest(HttpMethod.POST, ClusterService.SELF_LINK, Utils.toJson
+                (hostSpec));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testAddSecondHostNoCredentials() throws Throwable {
+
+        ClusterDto dtoCreated = createCluster();
+
+        ContainerHostSpec hostSpecDocker = createContainerHostSpec(
+                Collections.singletonList(projectLink),
+                ContainerHostType.DOCKER, true);
+        hostSpecDocker.hostState.address = getDockerHostAddressWithPort2;
+        hostSpecDocker.hostState.customProperties.remove(ComputeConstants
+                .HOST_AUTH_CREDENTIALS_PROP_NAME);
+        String pathHostsInCluster = UriUtils.buildUriPath(ClusterService.SELF_LINK, Service
+                .getId(dtoCreated.documentSelfLink), "hosts");
+
+        sendRequest(HttpMethod.POST, pathHostsInCluster, Utils.toJson
+                (hostSpecDocker));
+    }
+
     @Test
     public void testCreatingClusterNotAcceptCert() throws Throwable {
         // make sure the certificate was not imported before
