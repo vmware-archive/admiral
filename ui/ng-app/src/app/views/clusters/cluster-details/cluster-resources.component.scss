@@ -1,8 +1,10 @@
 :host /deep/ .grid-content {
-    position: static;
+  position: relative;
+  top: 0;
+  min-height: 300px;
 }
 
 .progress-details {
-    margin-top: 0px;
-    line-height: 25px;
+  margin-top: 0px;
+  line-height: 25px;
 }
