@@ -112,18 +112,24 @@ export class ClustersComponent implements OnInit {
     // clear selection
     this.selectedItem = null;
 
-    let clusterStatesToUpdate = {
-      computeContainerHostLinks: [ cluster.documentSelfLink ]
-    };
+    this.service.get(cluster.documentSelfLink + '/hosts')
+                    .then((result) => {
+      let clusterStatesToUpdate = {
+        computeContainerHostLinks: result.documentLinks
+      };
 
-    this.service.patch(Links.HOST_DATA_COLLECTION, clusterStatesToUpdate, this.projectLink)
-                    .then((response) => {
-      this.refreshCluster(cluster, Utils.getClusterRescanRetriesNumber(), null);
+      this.service.patch(Links.HOST_DATA_COLLECTION, clusterStatesToUpdate, this.projectLink)
+        .then((response) => {
+
+        this.refreshCluster(cluster, Utils.getClusterRescanRetriesNumber(), null);
+
+      }).catch(error => {
+        console.error('Rescan of cluster failed', Utils.getErrorMessage(error)._generic);
+      });
 
     }).catch(error => {
-        console.error('Rescan of cluster failed', Utils.getErrorMessage(error)._generic);
-        // TODO Show error message?
-    });
+      console.error('Cannot retrieve cluster resources', Utils.getErrorMessage(error)._generic);
+   });
 
     return false; // prevents navigation
   }

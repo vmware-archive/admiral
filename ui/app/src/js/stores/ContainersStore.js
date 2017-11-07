@@ -773,10 +773,23 @@ let ContainersStore = Reflux.createStore({
           return updatedContainer.documentSelfLink === item.documentSelfLink;
         });
 
-        if (updatedItem && (updatedItem.powerState !== item.powerState)) {
+        if (updatedItem) {
           item = item.asMutable();
-          item.powerState = updatedItem.powerState;
-          this.insertOrUpdateItem(item.documentSelfLink, item, 'documentSelfLink');
+          let modified = false;
+
+          if (updatedItem.powerState !== item.powerState) {
+            item.powerState = updatedItem.powerState;
+            modified = true;
+          }
+
+          if (updatedItem.started !== item.started) {
+            item.started = updatedItem.started;
+            modified = true;
+          }
+
+          if (modified) {
+            this.insertOrUpdateItem(item.documentSelfLink, item, 'documentSelfLink');
+          }
         }
       });
 
