@@ -104,7 +104,7 @@ export class ClustersComponent implements OnInit {
   }
 
   get isSupportedRescan() {
-    return !FT.isApplicationEmbedded();
+    return FT.allowHostEventsSubscription();
   }
 
   rescanCluster(event, cluster) {

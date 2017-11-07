@@ -210,7 +210,7 @@ var ContainersViewVueComponent = Vue.extend({
       });
     });
 
-    if (!utils.isApplicationEmbedded()) {
+    if (ft.allowHostEventsSubscription()) {
       this.refreshContainersInterval = setInterval(() => {
         ContainerActions.rescanContainers(this.queryOptions);
       }, utils.getContainersRefreshInterval());
@@ -247,7 +247,7 @@ var ContainersViewVueComponent = Vue.extend({
     var $mainPanel = $(this.$el).children('.list-holder').children('.main-panel');
     $mainPanel.off('transitionend MSTransitionEnd webkitTransitionEnd oTransitionEnd');
 
-    if (!utils.isApplicationEmbedded()) {
+    if (ft.allowHostEventsSubscription()) {
       clearTimeout(this.startRefreshPollingTimeout);
       clearInterval(this.refreshContainersInterval);
     }

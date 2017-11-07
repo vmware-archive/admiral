@@ -95,4 +95,8 @@ export class FT {
   public static showHostsView() {
     return Utils.getConfigurationPropertyBoolean('allow.ft.hosts.view');
   }
+
+  public static allowHostEventsSubscription() {
+    return Utils.getConfigurationPropertyBoolean('allow.host.events.subscription');
+  }
 };

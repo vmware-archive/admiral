@@ -73,6 +73,10 @@ var ft = {
 
   isHostsViewLinksEnabled: function() {
     return utils.getConfigurationPropertyBoolean('allow.ft.hosts.view.links');
+  },
+
+  allowHostEventsSubscription: function() {
+    return utils.getConfigurationPropertyBoolean('allow.host.events.subscription');
   }
 };
 
