@@ -373,6 +373,7 @@ public class ContainerAllocationTaskService extends
         if (state.hostSelections != null) {
             try {
                 ContainerHostDataCollectionState body = new ContainerHostDataCollectionState();
+                body.noHostOperation = true;
                 body.computeContainerHostLinks = new HashSet<String>(
                         state.resourceNameToHostSelection.values()
                                 .stream().map((r) -> r.hostLink)

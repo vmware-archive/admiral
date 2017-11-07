@@ -61,6 +61,8 @@ public final class ReleaseConstants {
      * The 1.2.2 release and REST API version.
      */
     public static final int RELEASE_VERSION_1_2_2 = 122;
+    public static final String API_VERSION_1_2_2 = "1.2.2";
+    public static final String VERSION_HEADER_1_2_2 = VERSION_PREFIX + API_VERSION_1_2_2;
 
     // Other examples:
     // public static final int RELEASE_VERSION_0_9_6 = 96;

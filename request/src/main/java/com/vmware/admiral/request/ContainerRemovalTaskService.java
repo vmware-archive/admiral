@@ -157,6 +157,7 @@ public class ContainerRemovalTaskService
 
         ContainerHostDataCollectionState body = new ContainerHostDataCollectionState();
         body.computeContainerHostLinks = state.containersParentLinks;
+        body.noHostOperation = true;
 
         sendRequest(Operation.createPatch(this,
                 ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK)

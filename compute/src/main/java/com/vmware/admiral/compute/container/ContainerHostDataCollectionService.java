@@ -152,6 +152,11 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 PropertyIndexingOption.STORE_ONLY,
                 PropertyIndexingOption.EXCLUDE_FROM_SIGNATURE })
         public boolean createOrUpdateHost;
+        @Since(ReleaseConstants.RELEASE_VERSION_1_2_2)
+        @PropertyOptions(indexing = {
+                PropertyIndexingOption.STORE_ONLY,
+                PropertyIndexingOption.EXCLUDE_FROM_SIGNATURE })
+        public boolean noHostOperation;
     }
 
     public ContainerHostDataCollectionService() {
@@ -254,7 +259,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
                                 // needs to be reworked
                                 updateResourcePool(computeState,
                                         qr.rpLinksByComputeLink.get(computeState.documentSelfLink),
-                                        body.remove);
+                                        body.remove, body.noHostOperation);
                                 if (ContainerHostUtil.isKubernetesHost(computeState)) {
                                     updateKubernetesEntities(computeState.documentSelfLink);
                                 } else {
@@ -272,7 +277,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
                         // needs to be reworked
                         updateResourcePool(computeState,
                                 qr.rpLinksByComputeLink.get(computeState.documentSelfLink),
-                                body.remove);
+                                body.remove, body.noHostOperation);
                     }
                 }
             });
@@ -426,7 +431,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
     }
 
     private void updateResourcePool(ComputeState computeState, Collection<String> rpLinks,
-            boolean remove) {
+            boolean remove, boolean noHostOperation) {
         Long totalMemory = PropertyUtils.getPropertyLong(computeState.customProperties,
                 ContainerHostService.DOCKER_HOST_TOTAL_MEMORY_PROP_NAME).orElse(Long.MAX_VALUE);
 
@@ -441,40 +446,44 @@ public class ContainerHostDataCollectionService extends StatefulService {
             }
             ResourcePoolService.ResourcePoolState resourcePoolState = o1
                     .getBody(ResourcePoolService.ResourcePoolState.class);
+            if (!noHostOperation) {
+                int coef = remove ? -1 : 1;
 
-            int coef = remove ? -1 : 1;
+                resourcePoolState.minMemoryBytes = 0L;
+                if (resourcePoolState.maxMemoryBytes == Long.MAX_VALUE
+                        || totalMemory.equals(Long.MAX_VALUE)) {
+                    resourcePoolState.maxMemoryBytes = Long.MAX_VALUE;
+                } else {
+                    resourcePoolState.maxMemoryBytes += totalMemory * coef;
+                }
 
-            resourcePoolState.minMemoryBytes = 0L;
-            if (resourcePoolState.maxMemoryBytes == Long.MAX_VALUE
-                    || totalMemory.equals(Long.MAX_VALUE)) {
-                resourcePoolState.maxMemoryBytes = Long.MAX_VALUE;
+                Long resourcePoolAvailableMemory = resourcePoolState.customProperties != null
+                        ? PropertyUtils
+                                .getPropertyLong(resourcePoolState.customProperties,
+                                        RESOURCE_POOL_AVAILABLE_MEMORY_CUSTOM_PROP)
+                                .orElse(null)
+                        : null;
+                if (hostAvailableMemory != Long.MAX_VALUE
+                        && resourcePoolAvailableMemory != null
+                        && resourcePoolAvailableMemory != Long.MAX_VALUE) {
+                    resourcePoolAvailableMemory += hostAvailableMemory * coef;
+                    resourcePoolState.customProperties
+                            .put(RESOURCE_POOL_AVAILABLE_MEMORY_CUSTOM_PROP,
+                                    Long.toString(resourcePoolAvailableMemory));
+                }
+
+                sendRequest(Operation.createPut(this, resourcePoolState.documentSelfLink)
+                        .setBody(resourcePoolState).setCompletion((op, e) -> {
+                            if (e != null) {
+                                logSevere("Unable to update the resource pool with link %s : %s",
+                                        resourcePoolState.documentSelfLink, Utils.toString(e));
+                            }
+                            updatePlacements(resourcePoolState);
+                        }));
             } else {
-                resourcePoolState.maxMemoryBytes += totalMemory * coef;
+                updatePlacements(resourcePoolState);
             }
 
-            Long resourcePoolAvailableMemory = resourcePoolState.customProperties != null
-                    ? PropertyUtils
-                            .getPropertyLong(resourcePoolState.customProperties,
-                                    RESOURCE_POOL_AVAILABLE_MEMORY_CUSTOM_PROP)
-                            .orElse(null)
-                    : null;
-            if (hostAvailableMemory != Long.MAX_VALUE
-                    && resourcePoolAvailableMemory != null
-                    && resourcePoolAvailableMemory != Long.MAX_VALUE) {
-                resourcePoolAvailableMemory += hostAvailableMemory * coef;
-                resourcePoolState.customProperties
-                        .put(RESOURCE_POOL_AVAILABLE_MEMORY_CUSTOM_PROP,
-                                Long.toString(resourcePoolAvailableMemory));
-            }
-
-            sendRequest(Operation.createPut(this, resourcePoolState.documentSelfLink)
-                    .setBody(resourcePoolState).setCompletion((op, e) -> {
-                        if (e != null) {
-                            logSevere("Unable to update the resource pool with link %s : %s",
-                                    resourcePoolState.documentSelfLink, Utils.toString(e));
-                        }
-                        updatePlacements(resourcePoolState);
-                    }));
         };
 
         // update all resource pools this compute is part of
