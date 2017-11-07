@@ -210,13 +210,15 @@ var ContainersViewVueComponent = Vue.extend({
       });
     });
 
-    this.refreshContainersInterval = setInterval(() => {
-      ContainerActions.rescanContainers(this.queryOptions);
-    }, utils.getContainersRefreshInterval());
+    if (!utils.isApplicationEmbedded()) {
+      this.refreshContainersInterval = setInterval(() => {
+        ContainerActions.rescanContainers(this.queryOptions);
+      }, utils.getContainersRefreshInterval());
 
-    if (!this.startRefreshPollingTimeout) {
-      this.startRefreshPollingTimeout = setTimeout(
-        () => this.refreshContainersInterval, constants.CONTAINERS.START_REFRESH_POLLING_DELAY);
+      if (!this.startRefreshPollingTimeout) {
+        this.startRefreshPollingTimeout = setTimeout(
+          () => this.refreshContainersInterval, constants.CONTAINERS.START_REFRESH_POLLING_DELAY);
+      }
     }
 
     this.refreshRequestsInterval = setInterval(() => {
@@ -245,8 +247,10 @@ var ContainersViewVueComponent = Vue.extend({
     var $mainPanel = $(this.$el).children('.list-holder').children('.main-panel');
     $mainPanel.off('transitionend MSTransitionEnd webkitTransitionEnd oTransitionEnd');
 
-    clearTimeout(this.startRefreshPollingTimeout);
-    clearInterval(this.refreshContainersInterval);
+    if (!utils.isApplicationEmbedded()) {
+      clearTimeout(this.startRefreshPollingTimeout);
+      clearInterval(this.refreshContainersInterval);
+    }
 
     ContainerActions.closeContainers();
 
