@@ -94,6 +94,9 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
 
     public static void startServices(ServiceHost host, boolean startMockContainerHostService) {
 
+        // initialize composite component registry before the services
+        initCompositeComponentRegistry();
+
         startServices(host,
                 ContainerFactoryService.class,
                 ContainerDescriptionFactoryService.class,
@@ -142,8 +145,6 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
             startServices(host, ContainerHostService.class);
             startServiceFactories(host, ConfigureHostOverSshTaskService.class);
         }
-
-        initCompositeComponentRegistry();
 
         // start initialization of system documents
         host.sendRequest(Operation.createPost(
