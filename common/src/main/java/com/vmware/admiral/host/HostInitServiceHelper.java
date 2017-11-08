@@ -77,12 +77,18 @@ public abstract class HostInitServiceHelper {
     public static void startService(ServiceHost host, Class<? extends Service> serviceClass,
             Service serviceInstance) {
 
+        long startTime = System.currentTimeMillis();
         host.startService(
                 Operation.createPost(UriUtils.buildUri(host, serviceClass))
                         .setCompletion((o, ex) -> {
+                            long endTime = System.currentTimeMillis();
+                            // temporary log to trace down service startup time
+                            host.log(Level.INFO, "Start service %s took %d millis to complete",
+                                    o.getUri(), endTime - startTime);
                             if (ex != null) {
                                 // shutdown the server when encountering an error
-                                host.log(Level.SEVERE, "Failed to start service %s: %s",
+                                host.log(Level.SEVERE,
+                                        "Stopping the host because service %s failed to start: %s",
                                         o.getUri(), Utils.toString(ex));
 
                                 host.stop();

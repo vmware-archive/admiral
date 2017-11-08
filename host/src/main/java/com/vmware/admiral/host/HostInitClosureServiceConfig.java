@@ -81,11 +81,13 @@ public class HostInitClosureServiceConfig extends HostInitServiceHelper {
                             .setCompletion((o, ex) -> {
                                 if (ex != null) {
                                     // shutdown the server when encountering an error
-                                    host.log(Level.SEVERE, "Failed to start service %s: %s",
+                                    host.log(Level.SEVERE,
+                                            "Stopping the host because service %s failed to start: %s",
                                             o.getUri(), Utils.toString(ex));
                                     host.stop();
                                 }
-                            }), factoryService);
+                            }),
+                    factoryService);
         }
     }
 }
