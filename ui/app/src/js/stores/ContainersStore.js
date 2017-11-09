@@ -756,6 +756,10 @@ let ContainersStore = Reflux.createStore({
   },
 
   onRescanContainers: function(queryOptions) {
+    if (queryOptions.$category !== constants.RESOURCES.SEARCH_CATEGORY.CONTAINERS) {
+      return;
+    }
+
     let alreadyLoadedItems = this.selectFromData(['listView', 'items']).get();
     let numberOfContainers = alreadyLoadedItems && alreadyLoadedItems.length;
 
