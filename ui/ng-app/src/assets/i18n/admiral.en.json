@@ -40,8 +40,8 @@
     },
     "delete": {
       "title": "Remove Project",
-      "confirmation": "Confirm removing of project {{projectName}}. Members and clusters will be unasociated from project. The operation cannot be undone.",
-      "confirmationVic": "Confirm removing of project {{projectName}}. Members and container hosts will be unasociated from project. The operation cannot be undone."
+      "confirmation": "Confirm removing of project {{projectName}}. The operation cannot be undone.",
+      "confirmationVic": "Confirm removing of project {{projectName}}. The operation cannot be undone."
     },
     "summary": {
       "title": "Summary",

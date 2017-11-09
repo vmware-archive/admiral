@@ -108,8 +108,7 @@ public class ProjectService extends StatefulService {
     public static class ProjectState extends ResourceState {
         public static final String FIELD_NAME_PUBLIC = "isPublic";
         public static final String FIELD_NAME_DESCRIPTION = "description";
-        public static final String FIELD_NAME_ADMINISTRATORS_USER_GROUP_LINKS =
-                "administratorsUserGroupLinks";
+        public static final String FIELD_NAME_ADMINISTRATORS_USER_GROUP_LINKS = "administratorsUserGroupLinks";
         public static final String FIELD_NAME_MEMBERS_USER_GROUP_LINKS = "membersUserGroupLinks";
         public static final String FIELD_NAME_VIEWERS_USER_GROUP_LINKS = "viewersUserGroupLinks";
 
@@ -168,15 +167,18 @@ public class ProjectService extends StatefulService {
 
             destination.administratorsUserGroupLinks = new HashSet<>(
                     this.administratorsUserGroupLinks != null
-                            ? this.administratorsUserGroupLinks : Collections.emptySet());
+                            ? this.administratorsUserGroupLinks
+                            : Collections.emptySet());
 
             destination.membersUserGroupLinks = new HashSet<>(
                     this.membersUserGroupLinks != null
-                            ? this.membersUserGroupLinks : Collections.emptySet());
+                            ? this.membersUserGroupLinks
+                            : Collections.emptySet());
 
             destination.viewersUserGroupLinks = new HashSet<>(
                     this.viewersUserGroupLinks != null
-                            ? this.viewersUserGroupLinks : Collections.emptySet());
+                            ? this.viewersUserGroupLinks
+                            : Collections.emptySet());
         }
 
         public static ProjectState copyOf(ProjectState source) {
@@ -305,15 +307,16 @@ public class ProjectService extends StatefulService {
                     if (ex != null) {
                         // Have error as final.
                         Throwable error = (ex instanceof CompletionException) ? ex.getCause() : ex;
-                        //TODO: fail with 409 when there is name conflict, same for patch and put.
+                        // TODO: fail with 409 when there is name conflict, same for patch and put.
                         if (error.getMessage().equalsIgnoreCase(message)) {
                             post.fail(error);
                             return;
                         }
                         String projectIndexStr = ProjectUtil.getProjectIndex(createBody);
                         int projectIndex = projectIndexStr == null
-                                ? -1 : Integer.parseInt(projectIndexStr);
-                        //Clear already claimed name and project index.
+                                ? -1
+                                : Integer.parseInt(projectIndexStr);
+                        // Clear already claimed name and project index.
                         freeProjectName(createBody.name)
                                 .thenCompose(ignore -> freeProjectIndex(projectIndex))
                                 .whenComplete((ignore, err) -> post.fail(error));
@@ -519,15 +522,17 @@ public class ProjectService extends StatefulService {
                     return DeferredResult.completed(sc);
                 })
                 .thenAccept(sc -> {
-                    QueryTask queryTask = ProjectUtil.createQueryTaskForProjectAssociatedWithPlacement(state,
-                            null);
+                    QueryTask queryTask = ProjectUtil
+                            .createQueryTaskForProjectAssociatedWithPlacement(state,
+                                    null);
 
                     Operation getPlacementsWithProject = Operation
                             .createPost(getHost(), ServiceUriPaths.CORE_QUERY_TASKS)
                             .setBody(queryTask);
 
                     String projectIndexStr = ProjectUtil.getProjectIndex(state);
-                    int projectIndex = projectIndexStr == null ? -1 : Integer.parseInt(projectIndexStr);
+                    int projectIndex = projectIndexStr == null ? -1
+                            : Integer.parseInt(projectIndexStr);
 
                     validateProjectDelete(this, ProjectUtil.getProjectIndex(state))
                             .thenCompose(hbrResponse -> {
@@ -541,24 +546,27 @@ public class ProjectService extends StatefulService {
                                             "Project is not deletable: " + hbrResponse.message));
                                 }
 
-                                return sendWithDeferredResult(getPlacementsWithProject, QueryTask.class);
+                                return sendWithDeferredResult(getPlacementsWithProject,
+                                        QueryTask.class);
                             })
                             .thenApply(result -> new Pair<>(result, (Throwable) null))
                             .exceptionally(ex -> new Pair<>(null, ex))
                             .thenCompose(pair -> {
                                 if (pair.right != null) {
-                                    logSevere("Failed to retrieve placements associated with project: %s",
+                                    logSevere(
+                                            "Failed to retrieve placements associated with project: %s",
                                             state.documentSelfLink);
                                     return DeferredResult.failed(pair.right);
                                 } else {
                                     Long documentCount = pair.left.results.documentCount;
                                     if (documentCount != null && documentCount != 0) {
-                                        return DeferredResult.failed(new LocalizableValidationException(
-                                                ProjectUtil.PROJECT_IN_USE_MESSAGE,
-                                                ProjectUtil.PROJECT_IN_USE_MESSAGE_CODE,
-                                                documentCount, documentCount > 1 ? "s" : ""));
+                                        return DeferredResult
+                                                .failed(new LocalizableValidationException(
+                                                        ProjectUtil.PROJECT_IN_USE_MESSAGE,
+                                                        ProjectUtil.PROJECT_IN_USE_MESSAGE_CODE));
                                     }
-                                    String projectId = Service.getId(getState(delete).documentSelfLink);
+                                    String projectId = Service
+                                            .getId(getState(delete).documentSelfLink);
                                     return deleteDefaultProjectGroups(projectId, delete);
                                 }
                             })
@@ -820,20 +828,23 @@ public class ProjectService extends StatefulService {
                 createProjectUserGroup(projectState.viewersUserGroupLinks, viewersGroupState),
 
                 createProjectResourceGroup(projectState, AuthRole.PROJECT_ADMIN)
-                    .thenCompose(resourceGroup -> createProjectAdminRole(projectState,
-                            resourceGroup.documentSelfLink, adminsGroupState.documentSelfLink)),
+                        .thenCompose(resourceGroup -> createProjectAdminRole(projectState,
+                                resourceGroup.documentSelfLink, adminsGroupState.documentSelfLink)),
 
                 createProjectResourceGroup(projectState, AuthRole.PROJECT_MEMBER)
-                    .thenCompose(resourceGroup -> createProjectMemberRole(projectState,
-                            resourceGroup.documentSelfLink, membersGroupState.documentSelfLink)),
+                        .thenCompose(resourceGroup -> createProjectMemberRole(projectState,
+                                resourceGroup.documentSelfLink,
+                                membersGroupState.documentSelfLink)),
 
                 createProjectResourceGroup(projectState, AuthRole.PROJECT_MEMBER_EXTENDED)
-                    .thenCompose(resourceGroup -> createProjectExtendedMemberRole(projectState,
-                            resourceGroup.documentSelfLink, membersGroupState.documentSelfLink)),
+                        .thenCompose(resourceGroup -> createProjectExtendedMemberRole(projectState,
+                                resourceGroup.documentSelfLink,
+                                membersGroupState.documentSelfLink)),
 
                 createProjectResourceGroup(projectState, AuthRole.PROJECT_VIEWER)
-                    .thenCompose(resourceGroup -> createProjectViewerRole(projectState,
-                            resourceGroup.documentSelfLink, viewersGroupState.documentSelfLink)))
+                        .thenCompose(resourceGroup -> createProjectViewerRole(projectState,
+                                resourceGroup.documentSelfLink,
+                                viewersGroupState.documentSelfLink)))
 
                 .thenApply(ignore -> projectState);
     }

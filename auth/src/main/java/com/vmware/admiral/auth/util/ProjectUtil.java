@@ -65,7 +65,7 @@ import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
 import com.vmware.xenon.services.common.UserService.UserState;
 
 public class ProjectUtil {
-    public static final String PROJECT_IN_USE_MESSAGE = "Project is associated with %s placement%s";
+    public static final String PROJECT_IN_USE_MESSAGE = "Project has infrastructure resources associated";
     public static final String PROJECT_IN_USE_MESSAGE_CODE = "host.resource-group.in.use";
 
     private static class HbrRepositoriesResponse {
@@ -125,17 +125,17 @@ public class ProjectUtil {
 
         String projectId = Service.getId(simpleState.documentSelfLink);
 
-        String adminsGroupLink = isNullOrEmpty(simpleState.administratorsUserGroupLinks) ? null :
-                UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
-                AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(projectId));
+        String adminsGroupLink = isNullOrEmpty(simpleState.administratorsUserGroupLinks) ? null
+                : UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                        AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(projectId));
 
-        String membersGroupLink = isNullOrEmpty(simpleState.membersUserGroupLinks) ? null :
-                UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
-                AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(projectId));
+        String membersGroupLink = isNullOrEmpty(simpleState.membersUserGroupLinks) ? null
+                : UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                        AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(projectId));
 
-        String viewersGroupLink = isNullOrEmpty(simpleState.viewersUserGroupLinks) ? null :
-                UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
-                AuthRole.PROJECT_VIEWER.buildRoleWithSuffix(projectId));
+        String viewersGroupLink = isNullOrEmpty(simpleState.viewersUserGroupLinks) ? null
+                : UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                        AuthRole.PROJECT_VIEWER.buildRoleWithSuffix(projectId));
 
         Map<String, UserState> userStates = new ConcurrentHashMap<>();
         Map<String, Principal> userLinkToPrincipal = new ConcurrentHashMap<>();
@@ -185,8 +185,8 @@ public class ProjectUtil {
                     List<String> members = roleToUsersLinks.get(AuthRole.PROJECT_MEMBER);
                     List<String> viewers = roleToUsersLinks.get(AuthRole.PROJECT_VIEWER);
 
-                    admins.forEach(a ->
-                            expandedState.administrators.add(userLinkToPrincipal.get(a)));
+                    admins.forEach(
+                            a -> expandedState.administrators.add(userLinkToPrincipal.get(a)));
 
                     members.forEach(m -> expandedState.members.add(userLinkToPrincipal.get(m)));
 
@@ -248,16 +248,16 @@ public class ProjectUtil {
 
         String projectId = Service.getId(simpleState.documentSelfLink);
 
-        String adminsGroupLink = isNullOrEmpty(simpleState.administratorsUserGroupLinks) ? null :
-                UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+        String adminsGroupLink = isNullOrEmpty(simpleState.administratorsUserGroupLinks) ? null
+                : UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
                         AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(projectId));
 
-        String membersGroupLink = isNullOrEmpty(simpleState.membersUserGroupLinks) ? null :
-                UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+        String membersGroupLink = isNullOrEmpty(simpleState.membersUserGroupLinks) ? null
+                : UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
                         AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(projectId));
 
-        String viewersGroupLink = isNullOrEmpty(simpleState.viewersUserGroupLinks) ? null :
-                UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+        String viewersGroupLink = isNullOrEmpty(simpleState.viewersUserGroupLinks) ? null
+                : UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
                         AuthRole.PROJECT_VIEWER.buildRoleWithSuffix(projectId));
 
         expandedState.administrators.addAll(transformGroupLinksToBasicPrincipals(
@@ -271,26 +271,26 @@ public class ProjectUtil {
 
         DeferredResult<Void> retrieveAdmins = retrieveUserGroupMembers(service,
                 adminsGroupLink, referer)
-                .thenAccept((admins) -> admins.forEach(a ->
-                        expandedState.administrators.add(transformUserStateToBasicPrincipal(a))));
+                        .thenAccept((admins) -> admins.forEach(a -> expandedState.administrators
+                                .add(transformUserStateToBasicPrincipal(a))));
 
         DeferredResult<Void> retrieveMembers = retrieveUserGroupMembers(service,
                 membersGroupLink, referer)
-                .thenAccept((members) -> members.forEach(m ->
-                        expandedState.members.add(transformUserStateToBasicPrincipal(m))));
+                        .thenAccept((members) -> members.forEach(m -> expandedState.members
+                                .add(transformUserStateToBasicPrincipal(m))));
 
         DeferredResult<Void> retrieveViewers = retrieveUserGroupMembers(service,
                 viewersGroupLink, referer)
-                .thenAccept((viewers) -> viewers.forEach(v ->
-                        expandedState.viewers.add(transformUserStateToBasicPrincipal(v))));
+                        .thenAccept((viewers) -> viewers.forEach(v -> expandedState.viewers
+                                .add(transformUserStateToBasicPrincipal(v))));
 
         DeferredResult<Void> retrieveClusterLinks = retrieveClusterLinks(service,
                 simpleState.documentSelfLink)
-                .thenAccept((clusterLinks) -> expandedState.clusterLinks = clusterLinks);
+                        .thenAccept((clusterLinks) -> expandedState.clusterLinks = clusterLinks);
 
         DeferredResult<Void> retrieveTemplateLinks = retrieveTemplateLinks(service,
                 simpleState.documentSelfLink)
-                .thenAccept((templateLinks) -> expandedState.templateLinks = templateLinks);
+                        .thenAccept((templateLinks) -> expandedState.templateLinks = templateLinks);
 
         DeferredResult<Void> retrieveRepositoriesAndImagesCount = retrieveRepositoriesAndTagsCount(
                 service,
