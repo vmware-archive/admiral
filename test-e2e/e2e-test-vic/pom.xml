@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
   ~
   ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
   ~ You may not use this product except in compliance with the License.
@@ -10,23 +10,25 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+    xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>com.vmware.admiral</groupId>
-        <artifactId>admiral</artifactId>
+        <artifactId>test-e2e</artifactId>
         <version>1.2.2-SNAPSHOT</version>
     </parent>
 
-    <artifactId>admiral-closures-parent</artifactId>
-    <groupId>com.vmware.admiral.closures</groupId>
-    <packaging>pom</packaging>
+    <artifactId>e2e-test-vic</artifactId>
+    <packaging>jar</packaging>
 
-    <modules>
-        <module>closure-services</module>
-        <module>closure-adapter</module>
-        <module>closure-drivers</module>
-    </modules>
+    <dependencies>
+        <dependency>
+            <groupId>com.vmware.admiral</groupId>
+            <artifactId>e2e-test-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
 </project>

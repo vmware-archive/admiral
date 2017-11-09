@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
   ~
   ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
   ~ You may not use this product except in compliance with the License.
@@ -16,17 +16,17 @@
 
     <parent>
         <groupId>com.vmware.admiral</groupId>
-        <artifactId>admiral</artifactId>
+        <artifactId>pom-e2e</artifactId>
         <version>1.2.2-SNAPSHOT</version>
+        <relativePath>../pom-e2e.xml</relativePath>
     </parent>
 
-    <artifactId>admiral-closures-parent</artifactId>
-    <groupId>com.vmware.admiral.closures</groupId>
+    <artifactId>test-e2e</artifactId>
     <packaging>pom</packaging>
 
     <modules>
-        <module>closure-services</module>
-        <module>closure-adapter</module>
-        <module>closure-drivers</module>
+        <module>e2e-test-common</module>
+        <module>e2e-test-vic</module>
     </modules>
+
 </project>
