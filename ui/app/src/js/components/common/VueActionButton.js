@@ -12,7 +12,7 @@
 var VueActionButton = Vue.extend({
   template: `
     <div class="action" v-show="supported">
-      <a href="#" :disabled="disabled" v-tooltip="tooltip"
+      <a href="#" :disabled="disabled" v-tooltip="tooltip" @click="hideTooltip()"
         :class="'btn btn-circle-outline container-action-' + name">
         <i :class="'fa fa-' + iconName"></i>
       </a>
@@ -45,6 +45,12 @@ var VueActionButton = Vue.extend({
       required: false,
       type: String,
       default: null
+    }
+  },
+  methods: {
+    hideTooltip: function() {
+      var doc = this.$el.ownerDocument.getElementsByClassName('tooltip')[0];
+      doc.parentNode.removeChild(doc);
     }
   }
 });
