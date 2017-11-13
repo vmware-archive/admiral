@@ -37,6 +37,7 @@ import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
@@ -453,9 +454,25 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
     public void hostPing(CommandInput input, CompletionHandler completionHandler) {
         createOrUpdateTargetSsl(input);
 
+        DelegatingX509KeyManager keyM = new DelegatingX509KeyManager();
+        ServerX509TrustManager trustM = ServerX509TrustManager.create(host);
+        createOrUpdateTargetSsl(input, keyM, trustM);
+        ServiceClient serviceClientPing = ServiceClientFactory.createServiceClient(trustM, keyM);
+
         Operation op = Operation
                 .createGet(UriUtils.extendUri(input.getDockerUri(), "/_ping"))
-                .setCompletion(completionHandler);
+                .setCompletion((o, e) -> {
+                    try {
+                        completionHandler.handle(o, e);
+                    } finally {
+                        try {
+                            serviceClientPing.stop();
+                        } catch (Exception ee) {
+                            logger.warning(" Exception while closing ping ServiceClient. " + ee
+                                    .getMessage());
+                        }
+                    }
+                });
 
         prepareRequest(op, false);
         op.setExpiration(ServiceUtils.getExpirationTimeFromNowInMicros(
@@ -463,12 +480,6 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
 
         setConnectionTag(input.getCredentials(), op);
         logger.info("Ping host: " + op.getUri());
-
-
-        DelegatingX509KeyManager keyM = new DelegatingX509KeyManager();
-        ServerX509TrustManager trustM = ServerX509TrustManager.create(host);
-        createOrUpdateTargetSsl(input, keyM, trustM);
-        ServiceClient serviceClientPing = ServiceClientFactory.createServiceClient(trustM, keyM);
 
         if (isSecure(input.getDockerUri())) {
             // Make sure that the trusted certificate is loaded before proceeding to avoid
