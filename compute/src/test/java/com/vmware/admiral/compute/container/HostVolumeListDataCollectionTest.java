@@ -259,6 +259,37 @@ public class HostVolumeListDataCollectionTest extends ComputeBaseTest {
         assertEquals(PowerState.CONNECTED, volumeStates.get(0).powerState);
     }
 
+     /** This test simulate a situation when a host is added in two different projects and in one of
+     * them a volume is created. The volume should not be discovered in the second project.
+     */
+    @Test
+    public void testProvisionedVolumeIsNotDiscoveredInOtherProject() throws Throwable {
+        String secondDockerHostId = "test-host-2:2376";
+        String secondDockerHostSelfLink = UriUtils.buildUriPath(
+                ComputeService.FACTORY_LINK, secondDockerHostId);
+
+        ComputeDescription computeDesc2 = new ComputeDescription();
+        computeDesc2 = doPost(computeDesc2, ComputeDescriptionService.FACTORY_LINK);
+
+        ComputeState cs2 = new ComputeState();
+        cs2.id = secondDockerHostId;
+        cs2.documentSelfLink = secondDockerHostSelfLink;
+        cs2.descriptionLink = computeDesc2.documentSelfLink;
+
+
+        cs2 = doPost(cs2, ComputeService.FACTORY_LINK);
+        ContainerVolumeState containerVolumeCreated2 = createVolume(null, cs2.documentSelfLink);
+
+
+        addVolumeToMockAdapter(COMPUTE_HOST_LINK, containerVolumeCreated2.name, LOCAL_DRIVER,
+                LOCAL_SCOPE);
+
+        startAndWaitHostVolumeListDataCollection();
+
+        List<ContainerVolumeState> volumeStates = getVolumeStates();
+        assertEquals(1, volumeStates.size());
+    }
+
     @Test
     public void testRemoveVolumesInRetiredState() throws Throwable {
         // create a volume state but don't add it to the mock adapter
@@ -402,7 +433,9 @@ public class HostVolumeListDataCollectionTest extends ComputeBaseTest {
         } else {
             volumeState.name = name;
         }
+
         volumeState.driver = LOCAL_DRIVER;
+        volumeState.documentSelfLink = volumeState.name;
         volumeState.originatingHostLink = hostLink;
         volumeState.parentLinks = Arrays.asList(hostLink);
         volumeState = doPost(volumeState, ContainerVolumeService.FACTORY_LINK);

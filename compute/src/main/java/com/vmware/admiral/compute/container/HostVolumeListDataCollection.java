@@ -48,6 +48,7 @@ import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
+import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
@@ -411,7 +412,39 @@ public class HostVolumeListDataCollection extends StatefulService {
         } else {
             AtomicInteger counter = new AtomicInteger(volumeStates.size());
             for (ContainerVolumeState volumeState : volumeStates) {
-                createDiscoveredContainerVolume(callback, counter, volumeState);
+
+                if (volumeState.name == null) {
+                    logInfo("Name not set for volume: %s", volumeState.documentSelfLink);
+                    if (counter.decrementAndGet() == 0) {
+                        callback.accept(null);
+                    }
+                    continue;
+                }
+
+                // check again if the volume state already exists by id. This is because
+                // the docker host could be added in a different project. This will result
+                // in discovering the volumes created in the other project.
+                String possibleVolumeSelfLink = UriUtils.buildUriPath(ContainerVolumeService
+                                .FACTORY_LINK, volumeState.name);
+                Operation operation = Operation
+                        .createGet(this, possibleVolumeSelfLink)
+                        .setCompletion(
+                                (o, ex) -> {
+                                    if (ex != null ) {
+                                        if (ex instanceof ServiceNotFoundException) {
+                                            createDiscoveredContainerVolume(callback, counter,
+                                                    volumeState);
+                                        } else {
+                                            logSevere("Failed to get volume %s : %s",
+                                                    volumeState.name, ex.getMessage());
+                                            counter.getAndDecrement();
+                                        }
+                                    } else if (counter.decrementAndGet() == 0) {
+                                        callback.accept(null);
+                                    }
+                                });
+
+                sendRequest(operation);
             }
         }
     }
