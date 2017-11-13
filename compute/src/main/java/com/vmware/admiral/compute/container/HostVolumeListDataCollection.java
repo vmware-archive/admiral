@@ -215,7 +215,7 @@ public class HostVolumeListDataCollection extends StatefulService {
         QueryUtil.addExpandOption(queryTask);
         QueryUtil.addBroadcastOption(queryTask);
 
-        new ServiceDocumentQuery<ContainerVolumeState>(getHost(), ContainerVolumeState.class)
+        new ServiceDocumentQuery<>(getHost(), ContainerVolumeState.class)
                 .query(queryTask,
                         (r) -> {
                             if (r.hasException()) {
@@ -288,6 +288,15 @@ public class HostVolumeListDataCollection extends StatefulService {
         for (ContainerVolumeState volumeState : volumeStates) {
 
             boolean isGlobal = "global".equals(volumeState.scope);
+
+            // if volume inspect hasn't finished, skip current volume processing until next
+            // data collection
+            if (volumeState.driver == null) {
+                logFine("ContainerVolumeState %s not discovered, skip handling volume",
+                        volumeState.name);
+                callback.volumesByName.remove(volumeState.name);
+                continue;
+            }
 
             // note: since volume scope is updated after the first volume inspection, including the
             // long VMDK volume name (@datastore) and power state (PROVISIONING to CONNECTED),

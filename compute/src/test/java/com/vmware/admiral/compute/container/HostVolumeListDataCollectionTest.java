@@ -283,6 +283,7 @@ public class HostVolumeListDataCollectionTest extends ComputeBaseTest {
         } else {
             volumeState.name = name;
         }
+        volumeState.driver = LOCAL_DRIVER;
         volumeState.originatingHostLink = hostLink;
         volumeState.parentLinks = Arrays.asList(hostLink);
         volumeState = doPost(volumeState, ContainerVolumeService.FACTORY_LINK);
