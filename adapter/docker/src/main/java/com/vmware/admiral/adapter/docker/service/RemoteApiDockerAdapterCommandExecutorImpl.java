@@ -18,7 +18,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URL;
@@ -90,8 +89,9 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
             "com.vmware.admiral.adapter.ssltrust.delegate.retries.wait.millis", 500);
     private static final int URL_CONNECTION_READ_TIMEOUT = Integer.getInteger(
             "com.vmware.admiral.adapter.url.connection.read.timeout", 20000);
+    private static final String THREAD_POOL_QUEUE_SIZE_PROP_NAME = "com.vmware.admiral.adapter.thread.pool.queue.size";
     private static final int THREAD_POOL_QUEUE_SIZE = Integer.getInteger(
-            "com.vmware.admiral.adapter.thread.pool.queue.size", 1000);
+            THREAD_POOL_QUEUE_SIZE_PROP_NAME, 1000);
     private static final int THREAD_POOL_KEEPALIVE_SECONDS = Integer.getInteger(
             "com.vmware.admiral.adapter.thread.pool.keepalive.seconds", 30);
 
@@ -519,8 +519,8 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
         URI baseUri = UriUtils.extendUri(input.getDockerUri(), "/events");
         logger.info("Subscribing for events: " + baseUri);
 
-        if (runningThreads.get(baseUri.getHost()) != null) {
-            logger.info("Connection is already opened: " + baseUri.getHost());
+        if (runningThreads.get(baseUri.getAuthority()) != null) {
+            logger.info("Connection is already opened: " + baseUri.getAuthority());
             return;
         }
 
@@ -547,22 +547,14 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
         URI baseUri = UriUtils.extendUri(input.getDockerUri(), "/events");
         logger.info("Unsubscribing for events: " + baseUri);
 
-        Thread runningThread = runningThreads.get(input.getDockerUri().getHost());
+        Thread runningThread = runningThreads.get(input.getDockerUri().getAuthority());
 
         if (runningThread == null) {
             logger.info("Connection already closed!");
             return;
         }
 
-        boolean maxAllowedNumberOfThreadsExceeded = maxAllowedNumberOfThreadsExceeded();
-
-        if (maxAllowedNumberOfThreadsExceeded) {
-            return;
-        }
-
-        executor.execute(() -> {
-            runningThread.interrupt();
-        });
+        runningThread.interrupt();
     }
 
     // network operations
@@ -713,12 +705,7 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
             return;
         }
 
-        logger.info(String.format("Closing connection to host [%s]", con.getURL().getHost()));
-
-        if (con instanceof HttpsURLConnection) {
-            ((HttpsURLConnection) con).disconnect();
-            return;
-        }
+        logger.info(String.format("Closing connection to host [%s]", con.getURL().getAuthority()));
 
         ((HttpURLConnection) con).disconnect();
     }
@@ -1048,55 +1035,49 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
 
         @Override public void run() {
             OperationContext childContext = OperationContext.getOperationContext();
-            try {
-                // set the operation context of the parent thread in the current thread
-                OperationContext.restoreOperationContext(parentContext);
 
-                URL url = new URL(hostUri.toString());
-                URLConnection con = openConnection(input, url);
+            ConfigurationUtil.getConfigProperty(host, ConfigurationUtil.THROW_IO_EXCEPTION, (prop) -> {
+                boolean simulatedIOException = Boolean.valueOf(prop);
+                logger.info(String.format("Simulation of IOException enabled: [%s]", simulatedIOException));
+                try {
+                    // set the operation context of the parent thread in the current thread
+                    OperationContext.restoreOperationContext(parentContext);
 
-                // setting "read timeout" to reset the blocking stream (reader.readLine()).
-                // Otherwise there is no way to close the connection.
-                con.setReadTimeout(URL_CONNECTION_READ_TIMEOUT);
+                    URL url = new URL(hostUri.toString());
+                    URLConnection con = openConnection(input, url);
 
-                final String hostName = url.getHost();
-                runningThreads.put(hostName, Thread.currentThread());
+                    // setting "read timeout" to reset the blocking stream (reader.readLine()).
+                    // Otherwise there is no way to close the connection.
+                    con.setReadTimeout(URL_CONNECTION_READ_TIMEOUT);
 
-                try (BufferedReader in = new BufferedReader(new InputStreamReader(
-                        con.getInputStream()))) {
-                    readData(in);
-                } catch (InterruptedException e) {
-                    logger.fine(String.format("[%s] is thrown.", e.getClass().getName()));
-                    runningThreads.remove(hostName);
-                    closeConnection(con);
-                } catch (IOException e) {
-                    logger.fine(String.format("[%s] is thrown.", e.getClass().getName()));
-                    runningThreads.remove(hostName);
-                    closeConnection(con);
+                    final String hostName = url.getAuthority();
+                    runningThreads.put(hostName, Thread.currentThread());
 
-                    // TODO: check for exceptions
-                    requestComputeState(computeState.documentSelfLink)
-                            .thenCompose((cs) -> {
-                                cs.powerState = ComputeService.PowerState.UNKNOWN;
-                                return patchComputeState(cs);
-                            }).thenAccept((cs) -> {
-                                // changing the power state of containers to UNKNOWN
-                                queryExistingContainerStates(cs);
-                            });
-                } catch (Exception e) {
-                    logger.warning(Utils.toString(e));
+                    try (BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()))) {
+                        readData(in, simulatedIOException);
+                    } catch (InterruptedException e) {
+                        logger.fine(String.format("[%s] is thrown.", e.getClass().getName()));
+                    } catch (IOException e) {
+                        logger.info(String.format("IOException when listening [%s]. Error: [%s]", hostName, e.getMessage()));
+                        requestComputeState(computeState.documentSelfLink).thenCompose((cs) -> {
+                            cs.powerState = ComputeService.PowerState.UNKNOWN;
+                            return patchComputeState(cs);
+                        }).thenAccept((cs) -> {
+                            // changing the power state of containers to UNKNOWN
+                            queryExistingContainerStates(cs);
+                        });
+                    } catch (Exception e) {
+                        logger.warning(String.format("Exception in subscription to [%s]. Error: [%s]", hostName, e.getMessage()));
+                    } finally {
+                        runningThreads.remove(hostName);
+                        closeConnection(con);
+                    }
+                } catch (Throwable t) {
+                    logger.warning(Utils.toString(t));
+                } finally {
+                    OperationContext.restoreOperationContext(childContext);
                 }
-            } catch (MalformedURLException ex) {
-                logger.warning(Utils.toString(ex));
-            } catch (NoSuchAlgorithmException ex) {
-                logger.warning(Utils.toString(ex));
-            } catch (KeyManagementException ex) {
-                logger.warning(Utils.toString(ex));
-            } catch (IOException ex) {
-                logger.warning(Utils.toString(ex));
-            } finally {
-                OperationContext.restoreOperationContext(childContext);
-            }
+            });
         }
     }
 
@@ -1129,7 +1110,7 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
                     }
                 });
 
-        prepareRequest(op, true);
+        prepareRequest(op, false);
 
         return serviceClient.sendWithDeferredResult(op, ComputeState.class);
     }
@@ -1145,58 +1126,61 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
                     }
                 });
 
-        prepareRequest(op, true);
+        prepareRequest(op, false);
 
         return serviceClient.sendWithDeferredResult(op, ComputeState.class);
     }
 
-    private void readData(BufferedReader in) throws IOException, InterruptedException {
-        try {
+    private void readData(BufferedReader in, boolean simulatedIOException) throws IOException, InterruptedException {
+
+        while (true) {
             if (Thread.currentThread().isInterrupted()) {
                 throw new InterruptedException();
             }
 
-            String inputLine;
+            try {
+                String inputLine;
 
-            while ((inputLine = in.readLine()) != null) {
-                ObjectMapper mapper = new ObjectMapper();
-                Events event = mapper.readValue(inputLine, Events.class);
-                System.out.println(inputLine);
-                if (EVENT_TYPE_CONTAINER.equals(event.getType())) {
-                    ContainerState cs = new ContainerState();
-                    if (EVENT_TYPE_CONTAINER_DIE.equals(event.getAction())) {
-                        cs.powerState = ContainerState.PowerState.STOPPED;
-                    } else if (EVENT_TYPE_CONTAINER_START.equals(event.getAction())) {
-                        cs.powerState = ContainerState.PowerState.RUNNING;
-                        cs.started = event.getTimeNano();
-                    } else {
-                        continue;
+                while ((inputLine = in.readLine()) != null) {
+                    ObjectMapper mapper = new ObjectMapper();
+                    Events event = mapper.readValue(inputLine, Events.class);
+                    if (EVENT_TYPE_CONTAINER.equals(event.getType())) {
+                        ContainerState cs = new ContainerState();
+                        if (EVENT_TYPE_CONTAINER_DIE.equals(event.getAction())) {
+                            logger.fine(inputLine);
+
+                            cs.powerState = ContainerState.PowerState.STOPPED;
+                        } else if (EVENT_TYPE_CONTAINER_START.equals(event.getAction())) {
+                            logger.fine(inputLine);
+
+                            cs.powerState = ContainerState.PowerState.RUNNING;
+                            cs.started = TimeUnit.NANOSECONDS.toMillis(event.getTimeNano());
+                        } else {
+                            continue;
+                        }
+
+                        String containerId = event.getId();
+
+                        QueryTask queryTask = QueryUtil
+                                .buildPropertyQuery(ContainerState.class, ContainerState.FIELD_NAME_ID, containerId);
+
+                        new ServiceDocumentQuery<ContainerState>(host, ContainerState.class).query(queryTask, (r) -> {
+                            if (r.hasException()) {
+                                logger.warning(String.format("Failed to query resource container state with id [%s]",
+                                        containerId));
+                            } else if (r.hasResult()) {
+                                cs.documentSelfLink = r.getDocumentSelfLink();
+                                patchContainerState(cs);
+                            }
+                        });
                     }
-
-                    String containerId = event.getId();
-
-                    QueryTask queryTask = QueryUtil
-                            .buildPropertyQuery(ContainerState.class,
-                                    ContainerState.FIELD_NAME_ID,
-                                    containerId);
-
-                    new ServiceDocumentQuery<ContainerState>(host, ContainerState.class)
-                            .query(queryTask, (r) -> {
-                                if (r.hasException()) {
-                                    logger.warning(String.format(
-                                            "Failed to query resource container state with id [%s]",
-                                            containerId));
-                                } else if (r.hasResult()) {
-                                    cs.documentSelfLink = r.getDocumentSelfLink();
-                                    patchContainerState(cs);
-                                }
-                            });
+                }
+            } catch (SocketTimeoutException e) {
+                logger.fine(String.format("No events have been received for %s ms. Unblocking the reader.", String.valueOf(URL_CONNECTION_READ_TIMEOUT)));
+                if (simulatedIOException) {
+                    throw new IOException("Simulated IOException from an IT test.");
                 }
             }
-        } catch (SocketTimeoutException e) {
-            logger.fine(String.format("No events have been received for %s ms. Unblocking the reader.",
-                    String.valueOf(URL_CONNECTION_READ_TIMEOUT)));
-            readData(in);
         }
     }
 
@@ -1204,7 +1188,7 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
         ThreadPoolExecutor tpe = (ThreadPoolExecutor) executor;
         if (tpe.getActiveCount() >= tpe.getMaximumPoolSize()) {
             logger.warning(String.format("Maximum allowed number of threads exceeded! Use [\"%s\"] property to increase it.",
-                    ConfigurationUtil.MAX_CONTAINER_HOSTS_COUNT_PROP));
+                    THREAD_POOL_QUEUE_SIZE_PROP_NAME));
             return true;
         }
 
@@ -1215,25 +1199,26 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
         String containerHostLink = compute.documentSelfLink;
         QueryTask queryTask = QueryUtil.buildPropertyQuery(ContainerState.class,
                 ContainerState.FIELD_NAME_PARENT_LINK, containerHostLink);
-        QueryUtil.addExpandOption(queryTask);
-        QueryUtil.addBroadcastOption(queryTask);
 
         new ServiceDocumentQuery<ContainerState>(host, ContainerState.class)
                 .query(queryTask, processContainerStatesQueryResults());
     }
 
     private Consumer<ServiceDocumentQuery.ServiceDocumentQueryElementResult<ContainerState>> processContainerStatesQueryResults() {
-        List<ContainerState> existingContainerStates = new ArrayList<>();
+        List<String> existingContainerStateLinks = new ArrayList<>();
 
         return (r) -> {
             if (r.hasException()) {
                 logger.warning(
                         String.format("Failed to query resource container state [%s]", r.getDocumentSelfLink()));
             } else if (r.hasResult()) {
-                existingContainerStates.add(r.getResult());
+                existingContainerStateLinks.add(r.getDocumentSelfLink());
             } else {
-                for (ContainerState cs : existingContainerStates) {
+                for (String csSelfLink : existingContainerStateLinks) {
+                    ContainerState cs = new ContainerState();
+                    cs.documentSelfLink = csSelfLink;
                     cs.powerState = ContainerState.PowerState.UNKNOWN;
+
                     patchContainerState(cs);
                 }
             }
@@ -1246,7 +1231,7 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
                 .setReferer(host.getUri())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        logger.warning(String.format("Container state does not exist: [%s]", cs.documentSelfLink));
+                        logger.warning(String.format("Error patching container state [%s]. Error: [%s]", cs.documentSelfLink, ex.getMessage()));
                     }
                 }).sendWith(host);
     }

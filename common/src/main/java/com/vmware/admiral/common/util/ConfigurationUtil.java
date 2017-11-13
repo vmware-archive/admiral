@@ -18,6 +18,7 @@ import java.util.function.Consumer;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
+import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 
 // TODO - Remove/refactor this class since it may introduce some inconsistent behavior.
@@ -30,8 +31,10 @@ public class ConfigurationUtil {
     public static final String EMBEDDED_MODE_PROPERTY = "embedded";
     public static final String VIC_MODE_PROPERTY = "vic";
     public static final String ALLOW_SSH_CONSOLE_PROPERTY = "allow.browser.ssh.console";
-    public static final String MAX_CONTAINER_HOSTS_COUNT_PROP = "max.container.hosts.count";
     public static final String ALLOW_HOST_EVENTS_SUBSCRIPTIONS = "allow.host.events.subscription";
+
+    // used for IT test in order to simulate this kind of exception
+    public static final String THROW_IO_EXCEPTION = "throw.io.exception";
 
     private static ConfigurationState[] configProperties;
 
@@ -81,6 +84,24 @@ public class ConfigurationUtil {
             Consumer<String> callback) {
         service.sendRequest(Operation
                 .createGet(service, UriUtils.buildUriPath(CONFIG_PROPS, propName))
+                .setCompletion((res, ex) -> {
+                    if (ex != null) {
+                        callback.accept(null);
+                        return;
+                    }
+                    ConfigurationState body = res.getBody(ConfigurationState.class);
+                    callback.accept(body.value);
+                }));
+    }
+
+    /**
+     * Retrieves the property value from the configuration properties service.
+     */
+    public static void getConfigProperty(ServiceHost host, String propName,
+            Consumer<String> callback) {
+        host.sendRequest(Operation
+                .createGet(host, UriUtils.buildUriPath(CONFIG_PROPS, propName))
+                .setReferer(host.getUri())
                 .setCompletion((res, ex) -> {
                     if (ex != null) {
                         callback.accept(null);
