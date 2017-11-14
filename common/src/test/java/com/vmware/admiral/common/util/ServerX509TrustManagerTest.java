@@ -55,7 +55,7 @@ public class ServerX509TrustManagerTest {
         // Validate a public certificate chain, e.g. the Docker registry one.
         // Is should work because the default cacerts from the JRE is always included and trusted
 
-        trustManager.checkServerTrusted(getCertificates("/certs/docker.com.chain.crt"), "RSA");
+        trustManager.checkServerTrusted(getCertificates("/certs/vmware.com.chain.crt"), "RSA");
 
         // Validate a custom certificate.
         // It should work because a truststore which contains the cert is passed as argument.
