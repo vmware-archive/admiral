@@ -22,6 +22,7 @@ import ResourceConnectionsDataMixin from 'components/templates/ResourceConnectio
 import ActionConfirmationSupportMixin from 'components/common/ActionConfirmationSupportMixin';
 import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin';
 import constants from 'core/constants'; //eslint-disable-line
+import ft from 'core/ft';
 import utils from 'core/utils';
 
 import { ContainerActions, NavigationActions } from 'actions/Actions';
@@ -90,13 +91,37 @@ var CompositeContainerDetails = Vue.extend({
     });
 
     this.setResourcesReadOnly(true);
+
+    if (ft.allowHostEventsSubscription()) {
+      this.refreshContainersInterval = setInterval(() => {
+        if (!this.$parent.model.rescanningContainer) {
+          ContainerActions.rescanApplicationContainers(this.model.documentId);
+        }
+      }, utils.getContainersRefreshInterval());
+
+      if (!this.startRefreshPollingTimeout) {
+        this.startRefreshPollingTimeout = setTimeout(
+          () => this.refreshContainersInterval, constants.CONTAINERS.START_REFRESH_POLLING_DELAY);
+      }
+    }
   },
   detached: function() {
     this.unwatchExpanded();
     this.unwatchNetworks();
     this.unwatchNetworkLinks();
+
     var $detailsContent = $(this.$el);
     $detailsContent.off('transitionend MSTransitionEnd webkitTransitionEnd oTransitionEnd');
+
+    if (ft.allowHostEventsSubscription()) {
+      clearTimeout(this.startRefreshPollingTimeout);
+      this.startRefreshPollingTimeout = null;
+
+      clearInterval(this.refreshContainersInterval);
+      this.refreshContainersInterval = null;
+
+      ContainerActions.stopRescanApplicationContainers();
+    }
   },
   methods: {
     goBack: function() {

@@ -257,6 +257,30 @@ var utils = {
     }
   },
 
+  /**
+   * Update the provided data items array with the specified item.
+   * In case it is found in the items array by the id key and its respective value - the item will
+   * be updated, otherwise it will appended to the array.
+   *
+   * @returns the updated items array.
+   */
+  updateItems: function(items, item, itemIdKey, id) {
+    if (Array.isArray(items)) {
+      let matchedItemIndex = items.findIndex((item) => {
+        return item[itemIdKey] === id;
+      });
+
+      items = items.asMutable();
+      if (matchedItemIndex > -1) {
+        items[matchedItemIndex] = item;
+      } else {
+        items.push(item);
+      }
+    }
+
+    return items;
+  },
+
   slideToLeft: function($el, bySelfWidth, callback) {
     var parentWidth = $el.parent().width();
 

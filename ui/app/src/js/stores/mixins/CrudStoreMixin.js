@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -10,33 +10,11 @@
  */
 
 import utils from 'core/utils';
-import constants from 'core/constants';
 
 var CrudStoreMixin = {
   init: function() {
     this.pendingOperations = {};
     this.data = Immutable({});
-  },
-
-  insertOrUpdateItem: function(id, item, itemIdKey) {
-    var currentItems = this.data.listView && this.data.listView.items;
-    if (currentItems && currentItems !== constants.LOADING) {
-      var found = false;
-      currentItems = currentItems.asMutable();
-      for (var i = 0; i < currentItems.length; i++) {
-        if (currentItems[i][itemIdKey] === id) {
-          currentItems[i] = item;
-          found = true;
-          break;
-        }
-      }
-
-      if (!found) {
-        currentItems.push(item);
-      }
-
-      this.setInData(['listView', 'items'], currentItems);
-    }
   },
 
   setInData(path, value) {

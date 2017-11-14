@@ -69,7 +69,8 @@ export var ContainerActions = Reflux.createActions([
   'openCreateContainer', 'openCreateNetwork', 'createContainer', 'createNetwork',
   'removeClosureRun', 'openCreateClosure', 'saveClosure', 'runClosure', 'openClosureDetails',
   'openCompositeClosureDetails', 'resetMonitoredClosure',
-  'rescanContainers'
+  'rescanContainers', 'rescanApplicationContainers', 'rescanContainer',
+  'stopRescanApplicationContainers', 'stopRescanContainer'
 ]);
 
 export var NetworkActions = Reflux.createActions([

@@ -212,7 +212,9 @@ var ContainersViewVueComponent = Vue.extend({
 
     if (ft.allowHostEventsSubscription()) {
       this.refreshContainersInterval = setInterval(() => {
-        ContainerActions.rescanContainers(this.queryOptions);
+        if (!this.model.rescanningContainer && !this.model.rescanningApplicationContainers) {
+          ContainerActions.rescanContainers(this.queryOptions);
+        }
       }, utils.getContainersRefreshInterval());
 
       if (!this.startRefreshPollingTimeout) {
@@ -249,7 +251,9 @@ var ContainersViewVueComponent = Vue.extend({
 
     if (ft.allowHostEventsSubscription()) {
       clearTimeout(this.startRefreshPollingTimeout);
+      this.startRefreshPollingTimeout = null;
       clearInterval(this.refreshContainersInterval);
+      this.refreshContainersInterval = null;
     }
 
     ContainerActions.closeContainers();

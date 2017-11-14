@@ -21,6 +21,7 @@ import ActionConfirmationSupportMixin from 'components/common/ActionConfirmation
 import { ContainerActions, NavigationActions } from 'actions/Actions';
 
 import constants from 'core/constants';
+import ft from 'core/ft';
 import utils from 'core/utils';
 import ansi from 'ansi_up';
 
@@ -77,12 +78,34 @@ var ContainerDetailsVueComponent = Vue.extend({
 
   attached: function() {
     this.modelUnwatch = this.$watch('model', this.updateData, {immediate: true});
+
+    if (ft.allowHostEventsSubscription()) {
+      this.refreshContainerInterval = setInterval(() => {
+        ContainerActions.rescanContainer();
+      }, utils.getContainersRefreshInterval());
+
+      if (!this.startRefreshPollingTimeout) {
+        this.startRefreshPollingTimeout = setTimeout(
+          () => this.refreshContainersInterval, constants.CONTAINERS.START_REFRESH_POLLING_DELAY);
+      }
+    }
   },
 
   detached: function() {
     stopRefreshPolling.call(this);
     clearTimeout(this.initialLogsAndStatsTimeout);
+
     this.modelUnwatch();
+
+    if (ft.allowHostEventsSubscription()) {
+      clearTimeout(this.startRefreshPollingTimeout);
+      this.startRefreshPollingTimeout = null;
+
+      clearInterval(this.refreshContainerInterval);
+      this.refreshContainerInterval = null;
+
+      ContainerActions.stopRescanContainer();
+    }
   },
 
   methods: {

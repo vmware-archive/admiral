@@ -475,6 +475,26 @@ let updateApplicationIcons = function(applicationItemsResult, applications) {
   }
 };
 
+let updateContainerItem = function(item, updatedItem) {
+  let updated = false;
+
+  if (updatedItem) {
+    item = item.asMutable();
+
+    if (updatedItem.powerState !== item.powerState) {
+      item.powerState = updatedItem.powerState;
+      updated = true;
+    }
+
+    if (updatedItem.started !== item.started) {
+      item.started = updatedItem.started;
+      updated = true;
+    }
+  }
+
+  return updated ? item : undefined;
+};
+
 let ContainersStore = Reflux.createStore({
   mixins: [ContextPanelStoreMixin, CrudStoreMixin],
   init: function() {
@@ -756,7 +776,7 @@ let ContainersStore = Reflux.createStore({
   },
 
   onRescanContainers: function(queryOptions) {
-    if (queryOptions.$category !== constants.RESOURCES.SEARCH_CATEGORY.CONTAINERS) {
+    if (queryOptions && queryOptions.$category !== constants.RESOURCES.SEARCH_CATEGORY.CONTAINERS) {
       return;
     }
 
@@ -768,32 +788,21 @@ let ContainersStore = Reflux.createStore({
 
     operation.forPromise(services.rescanContainers(queryOptions, numberOfContainers))
                                     .then((result) => {
-      let updatedContainers = result.documentLinks.map((documentLink) => {
+      let containers = result.documentLinks.map((documentLink) => {
         return result.documents[documentLink];
       });
 
+      let updatedItems = this.data.listView ? this.data.listView.items : [];
       alreadyLoadedItems.forEach((item) => {
-        let updatedItem = updatedContainers.find((updatedContainer) => {
+        let container = containers.find((updatedContainer) => {
           return updatedContainer.documentSelfLink === item.documentSelfLink;
         });
 
+        let updatedItem = updateContainerItem(item, container);
         if (updatedItem) {
-          item = item.asMutable();
-          let modified = false;
-
-          if (updatedItem.powerState !== item.powerState) {
-            item.powerState = updatedItem.powerState;
-            modified = true;
-          }
-
-          if (updatedItem.started !== item.started) {
-            item.started = updatedItem.started;
-            modified = true;
-          }
-
-          if (modified) {
-            this.insertOrUpdateItem(item.documentSelfLink, item, 'documentSelfLink');
-          }
+          updatedItems = utils.updateItems(updatedItems, updatedItem,
+                                            'documentSelfLink', updatedItem.documentSelfLink);
+          this.setInData(['listView', 'items'], updatedItems);
         }
       });
 
@@ -871,6 +880,39 @@ let ContainersStore = Reflux.createStore({
     }
 
     this.loadContainer(containerId, clusterId, compositeComponentId, operation);
+  },
+
+  onRescanContainer: function() {
+    let cursor = getSelectedContainerDetailsCursor.call(this);
+    let selectedContainerDetails = cursor && cursor.get();
+
+    if (!selectedContainerDetails || !selectedContainerDetails.documentId) {
+      return;
+    }
+
+    this.setInData(['rescanningContainer'], true);
+    this.emitChange();
+
+    let item = selectedContainerDetails.instance;
+    services.loadContainer(selectedContainerDetails.documentId).then((container) => {
+      let updatedItem = updateContainerItem(item, container);
+
+      if (updatedItem) {
+        updateSelectedContainerDetails.call(this, ['instance'], updatedItem);
+      }
+
+      this.emitChange();
+
+    }).catch((e) => {
+      console.log('Container rescan failed', e);
+      this.setInData(['rescanningContainer'], false);
+      this.emitChange();
+    });
+  },
+
+  onStopRescanContainer: function() {
+    this.setInData(['rescanningContainer'], false);
+    this.emitChange();
   },
 
   onOpenClosureDetails: function(closureId, closureDescriptionId) {
@@ -1710,6 +1752,55 @@ let ContainersStore = Reflux.createStore({
       });
 
     }).catch(this.onGenericDetailsError);
+  },
+
+  onRescanApplicationContainers: function(compositeComponentId) {
+    let parentCursor = this.selectComponent(null, null, null);
+
+    let currentCompositeComponent = parentCursor.select(['selectedItemDetails']).get();
+    if (!currentCompositeComponent
+            || currentCompositeComponent.documentId !== compositeComponentId) {
+      return;
+    }
+
+    this.setInData(['rescanningApplicationContainers'], true);
+    this.emitChange();
+
+    let items = currentCompositeComponent.listView && currentCompositeComponent.listView.items;
+
+    services.loadContainersForCompositeComponent(compositeComponentId)
+                .then((childContainersResult) => {
+      let containers = utils.resultToArray(childContainersResult.documents ?
+                                      childContainersResult.documents : childContainersResult);
+
+      let updatedItems = currentCompositeComponent.listView
+                            ? currentCompositeComponent.listView.items : [];
+      items.forEach((item) => {
+        let container = containers.find((updatedContainer) => {
+          return updatedContainer.documentSelfLink === item.documentSelfLink;
+        });
+
+        let updatedItem = updateContainerItem(item, container);
+        if (updatedItem) {
+          updatedItems = utils.updateItems(updatedItems, updatedItem,
+                                            'documentSelfLink', updatedItem.documentSelfLink);
+          parentCursor.select(['selectedItemDetails']).setIn(['listView', 'items'], updatedItems);
+        }
+      });
+
+      this.emitChange();
+    }).catch((e) => {
+      console.log('Application containers rescan failed', e);
+      this.setInData(['rescanningApplicationContainers'], false);
+      this.emitChange();
+    });
+
+    this.emitChange();
+  },
+
+  onStopRescanApplicationContainers: function() {
+    this.setInData(['rescanningApplicationContainers'], false);
+    this.emitChange();
   },
 
   loadCluster: function(clusterId, compositeComponentId, operation, force) {
