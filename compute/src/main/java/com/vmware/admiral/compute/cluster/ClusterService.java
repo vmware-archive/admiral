@@ -593,6 +593,7 @@ public class ClusterService extends StatelessService {
 
         ContainerHostSpec hs = new ContainerHostSpec();
         hs.hostState = new ComputeState();
+        hs.hostState.id = hostSpec.hostState.id;
         hs.hostState.address = hostSpec.hostState.address;
         hs.hostState.tenantLinks = hostSpec.getHostTenantLinks();
         //        hs.hostState.id = hostSpec.hostState.address;

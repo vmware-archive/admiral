@@ -12,6 +12,7 @@
 package com.vmware.admiral.compute.cluster;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -96,7 +97,14 @@ public class ClusterServiceTest extends ComputeBaseTest {
 
         ContainerHostSpec hostSpec = createContainerHostSpec(Collections.singletonList(projectLink),
                 ContainerHostType.DOCKER);
-        verifyCluster(createCluster(hostSpec), ClusterType.DOCKER, placementZoneName, projectLink);
+        ClusterDto clusterDto = createCluster(hostSpec);
+        verifyCluster(clusterDto, ClusterType.DOCKER, placementZoneName, projectLink);
+
+        // create the host with the specified id
+        assertNotNull(hostSpec.hostState.id);
+        assertNotEquals("", hostSpec.hostState.id);
+        ComputeState host = getDocument(ComputeState.class, clusterDto.nodeLinks.get(0));
+        assertEquals(hostSpec.hostState.id, host.id);
     }
 
     @Test(expected = LocalizableValidationException.class)
@@ -538,6 +546,14 @@ public class ClusterServiceTest extends ComputeBaseTest {
         assertEquals(2, clusterDocker.nodeLinks.size());
         assertEquals(1, clusterVCH.nodeLinks.size());
 
+        //check host spec id is taken into account when adding host to existing cluster
+        String hostSpecId = hostSpecDocker1.hostState.id;
+        assertNotNull(hostSpecId);
+        assertNotEquals("", hostSpecId);
+        ComputeState host1 = getDocument(ComputeState.class, clusterDocker.nodeLinks.get(0));
+        ComputeState host2 = getDocument(ComputeState.class, clusterDocker.nodeLinks.get(1));
+        assertTrue(hostSpecId.equals(host1.id) || hostSpecId.equals(host2.id));
+
         deleteHostInCluster(Service.getId(clusterDocker.documentSelfLink),
                 Service.getId(clusterDocker.nodeLinks.get(0)));
 
@@ -614,6 +630,7 @@ public class ClusterServiceTest extends ComputeBaseTest {
     private ContainerHostSpec createContainerHostSpec(final String projectLinkDocker) {
         ContainerHostSpec hostSpecDocker1 = new ContainerHostSpec();
         hostSpecDocker1.hostState = new ComputeState();
+        hostSpecDocker1.hostState.id = UUID.randomUUID().toString();
         hostSpecDocker1.hostState.address = "test-address";
         hostSpecDocker1.hostState.tenantLinks = Collections.singletonList(projectLinkDocker);
         hostSpecDocker1.acceptCertificate = true;
