@@ -1,0 +1,28 @@
+---
+version: "2"
+services:
+  cnv1:
+    image: "registry.hub.docker.com/library/alpine"
+    command:
+    - "ping -w 240 cnv2"
+    volumes:
+    - "vol1:/container/project/path"
+    links:
+    - "cnv2"
+    restart: "no"
+    networks:
+    - "n1"
+    depends_on:
+    - "cnv2"
+  cnv2:
+    image: "registry.hub.docker.com/library/alpine"
+    restart: "no"
+    networks:
+    - "n1"
+networks:
+  n1:
+    external: false
+volumes:
+  vol1:
+    driver: "local"
+    external: false
