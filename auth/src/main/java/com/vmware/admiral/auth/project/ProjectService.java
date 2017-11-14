@@ -68,10 +68,13 @@ import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
  */
 public class ProjectService extends StatefulService {
 
-    public static final String PROJECT_NAME_ALREADY_USED_MESSAGE = "Project name '%s' "
-            + "is already used.";
+    public static final String PROJECT_NAME_ALREADY_USED_MESSAGE = "Project name '%s' is already used.";
+    public static final String PROJECT_NOT_DELETABLE_MESSAGE = "Project is not removable: %s";
+    public static final String PROJECT_NOT_DELETABLE_CHECK_FAILED_MESSAGE = "Error connecting to the default registry for project removal confirmation: %s";
 
     public static final String PROJECT_NAME_ALREADY_USED_CODE = "auth.projects.name.used";
+    public static final String PROJECT_NOT_DELETABLE_CODE = "auth.projects.not.deletable";
+    public static final String PROJECT_NOT_DELETABLE_CHECK_FAILED_CODE = "auth.projects.not.deletable.check.failed";
 
     public static final String FIELD_NAME_CUSTOM_PROPERTIES = "customProperties";
 
@@ -537,13 +540,20 @@ public class ProjectService extends StatefulService {
                     validateProjectDelete(this, ProjectUtil.getProjectIndex(state))
                             .thenCompose(hbrResponse -> {
                                 if (hbrResponse.deletable == null) {
-                                    return DeferredResult.failed(new IllegalStateException(
-                                            "null response from harbor if project is deletable."));
+                                    String systemMsg = String.format(
+                                            PROJECT_NOT_DELETABLE_CHECK_FAILED_MESSAGE,
+                                            hbrResponse.message);
+                                    return DeferredResult.failed(new LocalizableValidationException(
+                                            systemMsg, PROJECT_NOT_DELETABLE_CHECK_FAILED_CODE,
+                                            hbrResponse.message));
                                 }
 
                                 if (!hbrResponse.deletable) {
-                                    return DeferredResult.failed(new IllegalStateException(
-                                            "Project is not deletable: " + hbrResponse.message));
+                                    String systemMsg = String.format(PROJECT_NOT_DELETABLE_MESSAGE,
+                                            hbrResponse.message);
+                                    return DeferredResult.failed(new LocalizableValidationException(
+                                            systemMsg, PROJECT_NOT_DELETABLE_CODE,
+                                            hbrResponse.message));
                                 }
 
                                 return sendWithDeferredResult(getPlacementsWithProject,

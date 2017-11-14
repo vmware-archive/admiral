@@ -230,10 +230,12 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertTrue(testProject.membersUserGroupLinks.size() == 2);
 
         String superusersRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
-                AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(projectId, encode(USER_GROUP_SUPERUSERS)));
+                AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(projectId,
+                        encode(USER_GROUP_SUPERUSERS)));
 
         String developersRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
-                AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(projectId, encode(USER_GROUP_DEVELOPERS)));
+                AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(projectId,
+                        encode(USER_GROUP_DEVELOPERS)));
 
         String developerExtendedRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
                 AuthRole.PROJECT_MEMBER_EXTENDED
@@ -341,7 +343,7 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertEquals(patchedIsPublic, updatedProject.isPublic);
     }
 
-    //TODO: Remove waitFor() once patch is stable.
+    // TODO: Remove waitFor() once patch is stable.
     @Test
     public void testProjectRolesPatch() throws Throwable {
         // verify initial state
@@ -467,7 +469,7 @@ public class ProjectServiceTest extends AuthBaseTest {
     /**
      * Test with a PATCH request that updates both the project state and the user roles.
      */
-    //TODO: remove waitFor() once Patch is stable.
+    // TODO: remove waitFor() once Patch is stable.
     @Test
     public void testMixedPatch() throws Throwable {
         // verify initial state
@@ -1204,7 +1206,8 @@ public class ProjectServiceTest extends AuthBaseTest {
     @Test
     public void testAssignProjectRoleToPrincipalWithoutUserState() throws Throwable {
         deleteUser(encode(USER_EMAIL_CONNIE));
-        assertDocumentNotExists(AuthUtil.buildUserServicePathFromPrincipalId(encode(USER_EMAIL_CONNIE)));
+        assertDocumentNotExists(
+                AuthUtil.buildUserServicePathFromPrincipalId(encode(USER_EMAIL_CONNIE)));
 
         ProjectState projectState = createProject("test-test");
 
@@ -1222,7 +1225,8 @@ public class ProjectServiceTest extends AuthBaseTest {
         Principal principal = expandedProjectState.administrators.get(0);
         assertEquals(USER_EMAIL_CONNIE, principal.id);
 
-        assertDocumentExists(AuthUtil.buildUserServicePathFromPrincipalId(encode(USER_EMAIL_CONNIE)));
+        assertDocumentExists(
+                AuthUtil.buildUserServicePathFromPrincipalId(encode(USER_EMAIL_CONNIE)));
 
         SecurityContext connieContext = getSecurityContext(USER_EMAIL_CONNIE);
 
@@ -1251,8 +1255,8 @@ public class ProjectServiceTest extends AuthBaseTest {
         roles1.members.add = Collections.singletonList(USER_EMAIL_CONNIE);
         doPatch(roles1, project.documentSelfLink);
 
-        ExpandedProjectState expandedProjectState = getExpandedProjectState(project
-                .documentSelfLink);
+        ExpandedProjectState expandedProjectState = getExpandedProjectState(
+                project.documentSelfLink);
 
         assertTrue(expandedProjectState.administrators.size() == 1);
         assertTrue(expandedProjectState.administrators.get(0).id.equals(USER_EMAIL_BASIC_USER));
@@ -1290,8 +1294,8 @@ public class ProjectServiceTest extends AuthBaseTest {
     @Test
     public void testProjectIndexClaim() throws Throwable {
         ProjectState project = createProject("test-name");
-        String projectIndex = project.customProperties.get(ProjectService
-                .CUSTOM_PROPERTY_PROJECT_INDEX);
+        String projectIndex = project.customProperties
+                .get(ProjectService.CUSTOM_PROPERTY_PROJECT_INDEX);
 
         String projectIndexesUri = ProjectService.UNIQUE_PROJECT_INDEXES_SERVICE_LINK;
         List<String> claimedIndexes = getDocumentNoWait(UniquePropertiesState.class,
@@ -1359,9 +1363,9 @@ public class ProjectServiceTest extends AuthBaseTest {
         try {
             deleteProject(test);
         } catch (Throwable ex) {
-            assertTrue(ex.getCause() instanceof IllegalStateException);
-            assertTrue(ex.getCause().getMessage().contains("Project is not deletable: mocked "
-                    + "message"));
+            assertTrue(ex.getCause() instanceof LocalizableValidationException);
+            assertTrue(ex.getCause().getMessage()
+                    .contains("Project is not removable: mocked message"));
         }
 
     }
