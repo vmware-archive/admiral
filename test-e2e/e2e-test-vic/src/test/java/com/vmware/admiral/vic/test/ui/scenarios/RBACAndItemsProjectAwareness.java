@@ -16,8 +16,8 @@ import java.util.List;
 
 import org.junit.Test;
 
-import com.vmware.admiral.test.ui.pages.SelenideClassRunner.Browser;
-import com.vmware.admiral.test.ui.pages.SelenideClassRunner.SupportedBrowsers;
+import com.vmware.admiral.test.ui.SelenideClassRunner.Browser;
+import com.vmware.admiral.test.ui.SelenideClassRunner.SupportedBrowsers;
 import com.vmware.admiral.test.ui.pages.containers.ContainersPage;
 import com.vmware.admiral.test.ui.pages.hosts.AddHostModalDialogue.HostType;
 import com.vmware.admiral.test.ui.pages.hosts.ContainerHostsPage;
@@ -107,8 +107,6 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
             PROJECT_NAME_FINANCE,
             PROJECT_NAME_QE,
     });
-
-    private final String DOCKERHOST_URL = getDockerhostUrl();
 
     @Test
     @SupportedBrowsers({ Browser.CHROME })
@@ -203,14 +201,14 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
                 .setImage(IMAGE_NAME)
                 .submit()
                 .expectSuccess();
-        containers.requests().waitForLastRequestToSucceed(30);
+        containers.requests().waitForLastRequestToSucceed(60);
         containers.refresh()
-                .validate(v -> v
-                        .validateContainerExistsWithName(resourcePrefix + CONTAINER_SUFFIX))
-                .deleteContainer(resourcePrefix + CONTAINER_SUFFIX).requests()
-                .waitForLastRequestToSucceed(30);
+                .validate(v -> v.validateContainerExistsWithName(resourcePrefix + CONTAINER_SUFFIX))
+                .deleteContainer(resourcePrefix + CONTAINER_SUFFIX)
+                .requests()
+                .waitForLastRequestToSucceed(60);
         containers.validate()
-                .validateContainerDoesNotExistWithName(resourcePrefix + NETWORK_SUFFIX);
+                .validateContainerDoesNotExistWithName(resourcePrefix + CONTAINER_SUFFIX);
         NetworksPage networks = getClient()
                 .navigateToHomeTab()
                 .navigateToNetworksPage();
@@ -220,21 +218,24 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
                 .submit()
                 .expectSuccess();
         networks.requests().waitForLastRequestToSucceed(20);
-        networks.refresh().validate()
-                .validateNetworkExistsWithName(resourcePrefix + NETWORK_SUFFIX);
-        networks.deleteNetwork(resourcePrefix + NETWORK_SUFFIX)
-                .requests().waitForLastRequestToSucceed(20);
-        VolumesPage volumes = getClient().navigateToHomeTab().navigateToVolumesPage();
-        volumes.createVolume()
-                .setName(resourcePrefix + VOLUME_SUFFIX)
-                .selectHostByName(PROJECT_NAME_ADMIRAL + HOST_SUFFIX)
-                .submit()
-                .expectSuccess();
-        volumes.requests().waitForLastRequestToSucceed(20);
-        volumes.refresh().validate()
-                .validateVolumeExistsWithName(resourcePrefix + VOLUME_SUFFIX);
-        volumes.deleteVolume(resourcePrefix + VOLUME_SUFFIX)
-                .requests().waitForLastRequestToSucceed(20);
+        networks.refresh()
+                .validate(v -> v.validateNetworkExistsWithName(resourcePrefix + NETWORK_SUFFIX))
+                .deleteNetwork(resourcePrefix + NETWORK_SUFFIX)
+                .requests()
+                .waitForLastRequestToSucceed(20);
+        networks.refresh()
+                .validate()
+                .validateNetworkDoesNotExist(resourcePrefix + NETWORK_SUFFIX);
+        // Volumes cannot be created on current VCH deployment
+        /*
+         * VolumesPage volumes = getClient().navigateToHomeTab().navigateToVolumesPage();
+         * volumes.createVolume() .setName(resourcePrefix + VOLUME_SUFFIX)
+         * .selectHostByName(PROJECT_NAME_ADMIRAL + HOST_SUFFIX) .submit() .expectSuccess();
+         * volumes.requests().waitForLastRequestToSucceed(20); volumes.refresh() .validate(v ->
+         * v.validateVolumeExistsWithName(resourcePrefix + VOLUME_SUFFIX))
+         * .deleteVolume(resourcePrefix + VOLUME_SUFFIX)
+         * .requests().waitForLastRequestToSucceed(20);
+         */
     }
 
     private void validateWithProjectMember() {
@@ -291,50 +292,48 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
 
     private void addContentToProjects() {
         VICHomeTab homeTab = getClient().navigateToHomeTab();
-        // VBV-1734 sometimes after creating/deleting an item or navigating through the home tabs
-        // the blue spinner appears and does not disappear
         for (String projectName : ALL_PROJECTS) {
             homeTab.switchToProject(projectName);
-            addDockerHostToProject(projectName);
+            addVchHostToProject(projectName);
             provisionContainerInProject(projectName);
             addNetworkToProject(projectName);
-            addVolumeToProject(projectName);
+            // addVolumeToProject(projectName);
         }
     }
 
     private void removeContentFromProjects() {
         VICHomeTab homeTab = getClient().navigateToHomeTab();
-        // VBV-1734 sometimes after creating/deleting an item or navigating through the home tabs
-        // the blue spinner appears and does not disappear
         for (String projectName : ALL_PROJECTS) {
             homeTab.switchToProject(projectName);
             homeTab.navigateToContainersPage()
                     .deleteContainer(projectName + CONTAINER_SUFFIX)
                     .requests()
-                    .waitForLastRequestToSucceed(20);
+                    .waitForLastRequestToSucceed(60);
             homeTab.navigateToNetworksPage()
                     .deleteNetwork(projectName + NETWORK_SUFFIX)
                     .requests()
                     .waitForLastRequestToSucceed(20);
-            homeTab.navigateToVolumesPage()
-                    .deleteVolume(projectName + VOLUME_SUFFIX)
-                    .requests()
-                    .waitForLastRequestToSucceed(20);
+            // Volumes cannot be created on current VCH deployment
+            /*
+             * homeTab.navigateToVolumesPage() .deleteVolume(projectName + VOLUME_SUFFIX)
+             * .requests() .waitForLastRequestToSucceed(20);
+             */
             homeTab.navigateToContainerHostsPage()
                     .deleteContainerHost(projectName + HOST_SUFFIX);
         }
     }
 
-    private void addDockerHostToProject(String hostName) {
+    private void addVchHostToProject(String hostName) {
         ContainerHostsPage hostsPage = getClient().navigateToHomeTab()
                 .navigateToContainerHostsPage();
         hostsPage.addContainerHost()
                 .setName(hostName + HOST_SUFFIX)
-                .setHostType(HostType.DOCKER)
-                .setUrl(DOCKERHOST_URL)
+                .setHostType(HostType.VCH)
+                .setUrl(getVchUrl())
                 .submit()
-                .expectSuccess();
-        hostsPage.refresh().validate()
+                .acceptCertificateIfShownAndExpectSuccess();
+        hostsPage.refresh()
+                .validate()
                 .validateHostExistsWithName(hostName + HOST_SUFFIX)
                 .validateHostsCount(1);
     }
@@ -348,11 +347,11 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
                 .setImage(IMAGE_NAME)
                 .submit()
                 .expectSuccess();
-        containersPage.requests().waitForLastRequestToSucceed(20);
+        containersPage.requests().waitForLastRequestToSucceed(60);
         containersPage.refresh()
                 .validate()
                 .validateContainerExistsWithName(containerName + CONTAINER_SUFFIX)
-                .validateContainersCount(2);
+                .validateContainersCount(1);
     }
 
     private void addNetworkToProject(String networkName) {
@@ -369,6 +368,8 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
                 .validateNetworksCount(1);
     }
 
+    // Volumes cannot be created on current VCH deployment
+    @SuppressWarnings("unused")
     private void addVolumeToProject(String volumeName) {
         VolumesPage volumesPage = getClient().navigateToHomeTab().navigateToVolumesPage();
         volumesPage.createVolume()
@@ -376,7 +377,7 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
                 .selectHostByName(volumeName + HOST_SUFFIX)
                 .submit()
                 .expectSuccess();
-        volumesPage.requests().waitForLastRequestToSucceed(10);
+        volumesPage.requests().waitForLastRequestToSucceed(20);
         volumesPage.refresh()
                 .validate()
                 .validateVolumeExistsWithName(volumeName + VOLUME_SUFFIX);

@@ -1,3 +1,14 @@
+/*
+ * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ *
+ * This product is licensed to you under the Apache License, Version 2.0 (the "License").
+ * You may not use this product except in compliance with the License.
+ *
+ * This product may include a number of subcomponents with separate copyright notices
+ * and license terms. Your use of these subcomponents is subject to the terms and
+ * conditions of the subcomponent's license, as noted in the LICENSE file.
+ */
+
 package com.vmware.admiral.vic.test.ui.pages;
 
 import static com.codeborne.selenide.Selenide.$;
@@ -49,16 +60,18 @@ public class VICWebClient extends AdmiralWebClient<VICWebClient, VICWebClientVal
 
     private void validateLogIn() {
         Wait().withTimeout(AdmiralWebClientConfiguration.LOGIN_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                .until(ExpectedConditions.or(d -> {
-                    return $(GlobalSelectors.LOGGED_USER_DISPLAY).isDisplayed()
-                            && $(CONTENT_CONTAINER).isDisplayed();
-                }, d -> {
-                    SelenideElement response = $(ERROR_RESPONSE);
-                    if (response.isDisplayed()) {
-                        throw new AssertionError(response.getText());
-                    }
-                    return false;
-                }));
+                .until(ExpectedConditions.or(
+                        d -> {
+                            return $(GlobalSelectors.LOGGED_USER_DISPLAY).isDisplayed()
+                                    && $(CONTENT_CONTAINER).isDisplayed();
+                        },
+                        d -> {
+                            SelenideElement response = $(ERROR_RESPONSE);
+                            if (response.isDisplayed()) {
+                                throw new AssertionError(response.getText());
+                            }
+                            return false;
+                        }));
     }
 
     @Override

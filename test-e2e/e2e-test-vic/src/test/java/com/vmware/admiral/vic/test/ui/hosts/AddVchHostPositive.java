@@ -21,27 +21,26 @@ import com.vmware.admiral.vic.test.ui.BaseTest;
  * This test validates that a container host is added successfully with valid input parameters
  *
  */
-public class AddDockerhostPositive extends BaseTest {
+public class AddVchHostPositive extends BaseTest {
 
-    private final String DOCKERHOST_NAME = "Dockerhost";
+    private final String VCH_HOST_NAME = "vch_host";
 
     @Test
     public void testAddHostSucceeds() {
         loginAsAdmin();
         ContainerHostsPage hostsPage = getClient().navigateToHomeTab()
                 .navigateToContainerHostsPage();
-        hostsPage.validate().validateHostDoesNotExistWithName(DOCKERHOST_NAME);
-        hostsPage.addContainerHost()
-                .setName(DOCKERHOST_NAME)
-                .setDescription("docker host")
-                .setHostType(HostType.DOCKER)
-                .setUrl(getDockerhostUrl())
+        hostsPage.validate(v -> v.validateHostDoesNotExistWithName(VCH_HOST_NAME))
+                .addContainerHost()
+                .setName(VCH_HOST_NAME)
+                .setDescription(VCH_HOST_NAME)
+                .setHostType(HostType.VCH)
+                .setUrl(getVchUrl())
                 .submit()
-                // .acceptCertificateAndExpectSuccess();
-                .expectSuccess();
-        hostsPage.validate().validateHostExistsWithName(DOCKERHOST_NAME);
-        hostsPage.deleteContainerHost(DOCKERHOST_NAME)
-                .validate().validateHostDoesNotExistWithName(DOCKERHOST_NAME);
+                .acceptCertificateIfShownAndExpectSuccess();
+        hostsPage.validate(v -> v.validateHostExistsWithName(VCH_HOST_NAME))
+                .deleteContainerHost(VCH_HOST_NAME)
+                .validate().validateHostDoesNotExistWithName(VCH_HOST_NAME);
         logOut();
     }
 }

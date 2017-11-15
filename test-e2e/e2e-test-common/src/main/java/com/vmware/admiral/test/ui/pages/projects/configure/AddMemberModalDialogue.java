@@ -45,19 +45,21 @@ public class AddMemberModalDialogue
     public AddMemberModalDialogue addMember(String idOrEmail) {
         $(EMAIL_ID_FIELD).sendKeys(idOrEmail);
         $(RESULTS).should(Condition.appear);
-        Wait().until(ExpectedConditions.or((d) -> {
-            if ($(NOT_FOUND_RESULT).is(Condition.visible)) {
-                throw new IllegalArgumentException(
-                        "Searching for: " + idOrEmail + " did not return any results.");
-            }
-            return false;
-        }, (d) -> {
-            if ($(FIRST_RESULT).is(Condition.visible)) {
-                actions().moveToElement($(FIRST_RESULT)).sendKeys("\n").build().perform();
-                return true;
-            }
-            return false;
-        }));
+        Wait().until(ExpectedConditions.or(
+                d -> {
+                    if ($(NOT_FOUND_RESULT).is(Condition.visible)) {
+                        throw new IllegalArgumentException(
+                                "Searching for: " + idOrEmail + " did not return any results.");
+                    }
+                    return false;
+                },
+                d -> {
+                    if ($(FIRST_RESULT).is(Condition.visible)) {
+                        actions().moveToElement($(FIRST_RESULT)).click().build().perform();
+                        return true;
+                    }
+                    return false;
+                }));
         return this;
     }
 

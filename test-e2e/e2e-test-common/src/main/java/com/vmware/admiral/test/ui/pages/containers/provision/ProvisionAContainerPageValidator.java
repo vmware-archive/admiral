@@ -19,7 +19,7 @@ import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.common.PageValidator;
 
-public abstract class ProvisionAContainerPageValidator extends PageValidator {
+public class ProvisionAContainerPageValidator extends PageValidator {
 
     private final By PAGE_TITLE = By
             .cssSelector(".create-container.closable-view.slide-and-fade-transition .title");

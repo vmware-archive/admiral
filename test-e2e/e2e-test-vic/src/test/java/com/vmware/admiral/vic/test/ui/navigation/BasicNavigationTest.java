@@ -13,17 +13,12 @@ package com.vmware.admiral.vic.test.ui.navigation;
 
 import org.junit.Test;
 
-import com.vmware.admiral.test.ui.pages.SelenideClassRunner.Browser;
-import com.vmware.admiral.test.ui.pages.SelenideClassRunner.RunWithBrowsers;
+import com.vmware.admiral.test.ui.SelenideClassRunner.Browser;
+import com.vmware.admiral.test.ui.SelenideClassRunner.RunWithBrowsers;
 import com.vmware.admiral.test.ui.pages.applications.ApplicationsPage;
 import com.vmware.admiral.test.ui.pages.containers.ContainersPage;
-import com.vmware.admiral.test.ui.pages.containers.provision.ProvisionAContainerPage;
-import com.vmware.admiral.test.ui.pages.networks.CreateNetworkPage;
 import com.vmware.admiral.test.ui.pages.networks.NetworksPage;
-import com.vmware.admiral.test.ui.pages.templates.CreateTemplatePage;
-import com.vmware.admiral.test.ui.pages.templates.ImportTemplatePage;
 import com.vmware.admiral.test.ui.pages.templates.TemplatesPage;
-import com.vmware.admiral.test.ui.pages.volumes.CreateVolumePage;
 import com.vmware.admiral.test.ui.pages.volumes.VolumesPage;
 import com.vmware.admiral.vic.test.ui.BaseTest;
 import com.vmware.admiral.vic.test.ui.pages.main.VICAdministrationTab;
@@ -42,42 +37,42 @@ public class BasicNavigationTest extends BaseTest {
         VICHomeTab homeTab = getClient().navigateToHomeTab();
 
         ApplicationsPage applicationsPage = homeTab.navigateToApplicationsPage();
-        applicationsPage.validate().validateIsCurrentPage();
-        CreateTemplatePage createTemplatePage = applicationsPage.createTemplate();
-        createTemplatePage.validate().validateIsCurrentPage();
-        createTemplatePage.navigateBack();
+        applicationsPage.validate(v -> v.validateIsCurrentPage())
+                .createTemplate()
+                .validate(v -> v.validateIsCurrentPage())
+                .navigateBack();
         applicationsPage.validate().validateIsCurrentPage();
 
         ContainersPage containersPage = homeTab.navigateToContainersPage();
-        containersPage.validate().validateIsCurrentPage();
-        ProvisionAContainerPage provisionPage = containersPage.provisionAContainer();
-        provisionPage.validate().validateIsCurrentPage();
-        provisionPage.cancel();
+        containersPage.validate(v -> v.validateIsCurrentPage())
+                .provisionAContainer()
+                .validate(v -> v.validateIsCurrentPage())
+                .cancel();
         containersPage.validate().validateIsCurrentPage();
 
         NetworksPage networksPage = homeTab.navigateToNetworksPage();
-        networksPage.validate().validateIsCurrentPage();
-        CreateNetworkPage createNetworkPage = networksPage.createNetwork();
-        createNetworkPage.validate().validateIsCurrentPage();
-        createNetworkPage.cancel();
+        networksPage.validate(v -> v.validateIsCurrentPage())
+                .createNetwork()
+                .validate(v -> v.validateIsCurrentPage())
+                .cancel();
         networksPage.validate().validateIsCurrentPage();
 
         VolumesPage volumesPage = homeTab.navigateToVolumesPage();
-        volumesPage.validate().validateIsCurrentPage();
-        CreateVolumePage createVolumePage = volumesPage.createVolume();
-        createVolumePage.validate().validateIsCurrentPage();
-        createVolumePage.cancel();
+        volumesPage.validate(v -> v.validateIsCurrentPage())
+                .createVolume()
+                .validate(v -> v.validateIsCurrentPage())
+                .cancel();
         volumesPage.validate().validateIsCurrentPage();
 
         TemplatesPage templatesPage = homeTab.navigateToTemplatesPage();
         templatesPage.validate().validateIsCurrentPage();
-        ImportTemplatePage importTemplatePage = templatesPage.importTemplate();
-        importTemplatePage.validate().validateIsCurrentPage();
-        importTemplatePage.cancel();
+        templatesPage.importTemplate()
+                .validate(v -> v.validateIsCurrentPage())
+                .cancel();
         templatesPage.validate().validateIsCurrentPage();
-        createTemplatePage = templatesPage.createTemplate();
-        createTemplatePage.validate().validateIsCurrentPage();
-        createTemplatePage.navigateBack();
+        templatesPage.createTemplate()
+                .validate(v -> v.validateIsCurrentPage())
+                .navigateBack();
         templatesPage.validate().validateIsCurrentPage();
 
         homeTab.navigateToProjectRepositoriesPage()

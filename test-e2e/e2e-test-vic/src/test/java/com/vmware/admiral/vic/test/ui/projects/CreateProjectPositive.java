@@ -11,8 +11,6 @@
 
 package com.vmware.admiral.vic.test.ui.projects;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.test.ui.pages.projects.ProjectsPage;
@@ -26,13 +24,9 @@ public class CreateProjectPositive extends BaseTest {
 
     private final String PROJECT_NAME = "test_project";
 
-    @Before
-    public void setUp() {
-        loginAsAdmin();
-    }
-
     @Test
     public void testCreateProjectSucceeds() {
+        loginAsAdmin();
         ProjectsPage projectsPage = getClient().navigateToAdministrationTab()
                 .navigateToProjectsPage();
         projectsPage.addProject()
@@ -44,13 +38,10 @@ public class CreateProjectPositive extends BaseTest {
         getClient().navigateToHomeTab().validate()
                 .validateProjectIsAvailable(PROJECT_NAME);
         getClient().navigateToAdministrationTab().navigateToProjectsPage();
-        projectsPage.validate().validateProjectIsVisible(PROJECT_NAME);
-        projectsPage.deleteProject(PROJECT_NAME)
+        projectsPage.validate(v -> v.validateProjectIsVisible(PROJECT_NAME))
+                .deleteProject(PROJECT_NAME)
                 .expectSuccess();
-    }
-
-    @After
-    public void tearDown() {
         logOut();
     }
+
 }

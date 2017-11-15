@@ -15,9 +15,7 @@ import static com.codeborne.selenide.Selenide.$;
 
 import com.codeborne.selenide.Condition;
 
-import com.vmware.admiral.test.ui.pages.AdmiralWebClient.AdmiralWebClientValidator;
 import com.vmware.admiral.test.ui.pages.common.BasicPage;
-import com.vmware.admiral.test.ui.pages.common.ExtendablePageValidator;
 import com.vmware.admiral.test.ui.pages.main.AdministrationTab;
 import com.vmware.admiral.test.ui.pages.main.AdministrationTabValidator;
 import com.vmware.admiral.test.ui.pages.main.GlobalSelectors;
@@ -45,26 +43,6 @@ public abstract class AdmiralWebClient<P extends AdmiralWebClient<P, V>, V exten
         if (!$(GlobalSelectors.ADMINISTRATION_BUTTON).has(Condition.cssClass("active"))) {
             $(GlobalSelectors.ADMINISTRATION_BUTTON).click();
         }
-    }
-
-    public static abstract class AdmiralWebClientValidator<V extends AdmiralWebClientValidator<V>>
-            extends ExtendablePageValidator<V> {
-
-        @Override
-        public V validateIsCurrentPage() {
-            return getThis();
-        }
-
-        public V validateAdministrationTabIsNotVisible() {
-            $(GlobalSelectors.ADMINISTRATION_BUTTON).shouldNotBe(Condition.visible);
-            return getThis();
-        }
-
-        public V validateAdministrationTabIsVisible() {
-            $(GlobalSelectors.ADMINISTRATION_BUTTON).shouldBe(Condition.visible);
-            return getThis();
-        }
-
     }
 
 }

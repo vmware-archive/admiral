@@ -139,11 +139,13 @@ public abstract class HomeTab<P extends HomeTab<P, V>, V extends HomeTabValidato
 
     public ContainerHostsPage navigateToContainerHostsPage() {
         if (clickIfNotActive(HomeTabSelectors.CONTAINER_HOSTS_BUTTON)) {
-            Wait().until(ExpectedConditions.or(d -> {
-                return $(By.cssSelector(".card-item")).exists();
-            }, d -> {
-                return $(By.cssSelector(".content-empty")).exists();
-            }));
+            Wait().until(ExpectedConditions.or(
+                    d -> {
+                        return $(By.cssSelector(".card-item")).exists();
+                    },
+                    d -> {
+                        return $(By.cssSelector(".content-empty")).exists();
+                    }));
         }
         if (Objects.isNull(containerHostsPage)) {
             containerHostsPage = new ContainerHostsPage();

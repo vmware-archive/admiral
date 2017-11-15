@@ -11,8 +11,6 @@
 
 package com.vmware.admiral.vic.test.ui.containers;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.test.ui.pages.containers.ContainersPage;
@@ -29,23 +27,19 @@ public class ProvisionContainer extends BaseTest {
 
     private final String CONTAINER_NAME = "alpine_container";
     private final String CONTAINER_IMAGE = "alpine";
-    private final String HOST_NAME = "Dockerhost";
+    private final String HOST_NAME = "vch_host";
 
-    @Before
-    public void setUp() {
+    @Test
+    public void testAddHostAndProvisionContainer() {
         loginAsAdmin();
         getClient().navigateToHomeTab()
                 .navigateToContainerHostsPage()
                 .addContainerHost()
                 .setName(HOST_NAME)
-                .setHostType(HostType.DOCKER)
-                .setUrl(getDockerhostUrl())
+                .setHostType(HostType.VCH)
+                .setUrl(getVchUrl())
                 .submit()
-                .expectSuccess();
-    }
-
-    @Test
-    public void testAddHostAndProvisionContainer() {
+                .acceptCertificateIfShownAndExpectSuccess();
         ContainersPage containers = getClient()
                 .navigateToHomeTab()
                 .navigateToContainersPage();
@@ -58,18 +52,13 @@ public class ProvisionContainer extends BaseTest {
         containers.requests()
                 .waitForLastRequestToSucceed(30);
         containers.refresh()
-                .validate()
-                .validateContainerExistsWithName(CONTAINER_NAME);
-        containers.deleteContainer(CONTAINER_NAME);
-        containers.requests()
+                .validate(v -> v.validateContainerExistsWithName(CONTAINER_NAME))
+                .deleteContainer(CONTAINER_NAME)
+                .requests()
                 .waitForLastRequestToSucceed(20);
         containers.refresh()
                 .validate()
                 .validateContainerDoesNotExistWithName(CONTAINER_NAME);
-    }
-
-    @After
-    public void tearDown() {
         getClient().navigateToHomeTab()
                 .navigateToContainerHostsPage()
                 .deleteContainerHost(HOST_NAME);

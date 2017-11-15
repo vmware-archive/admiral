@@ -31,18 +31,18 @@ public class AddHostNegative extends BaseTest {
                 .setDescription("bad host url")
                 .setHostType(HostType.VCH)
                 .setUrl("123123.123123")
-                .submit(expect -> expect.errorMessage("URI syntax error"))
+                .submit(expect -> expect.expectErrorMessage("URI syntax error"))
                 .setUrl("Invalid url")
-                .submit(expect -> expect.errorMessage("Invalid host address"))
+                .submit(expect -> expect.expectErrorMessage("Invalid host address"))
                 .setUrl("1")
-                .submit(expect -> expect.errorMessage("Connection refused"))
+                .submit(expect -> expect.expectErrorMessage("Connection refused"))
                 .setUrl("http://asd.asd.asd.asd:asd")
                 .submit(expect -> expect.expectFailure())
                 .setUrl(" ")
                 .submit(expect -> expect.expectFailure())
-                .submit(expect -> expect.errorMessage("Invalid host address"))
+                .submit(expect -> expect.expectErrorMessage("Invalid host address"))
                 .setUrl("@@@@@@@@@@@@@")
-                .submit(expect -> expect.errorMessage("URI syntax error"))
+                .submit(expect -> expect.expectErrorMessage("URI syntax error"))
                 .cancel();
         logOut();
     }

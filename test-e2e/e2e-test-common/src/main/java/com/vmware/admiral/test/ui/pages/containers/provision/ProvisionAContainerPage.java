@@ -29,6 +29,7 @@ public class ProvisionAContainerPage
     private final By BACK_BUTTON = By
             .cssSelector(
                     ".create-container.closable-view.slide-and-fade-transition .fa.fa-chevron-circle-left");
+    private ProvisionAContainerPageValidator validator;
 
     private ProvisionValidator provisionValidator;
     private BasicTab basicTab;
@@ -62,8 +63,10 @@ public class ProvisionAContainerPage
 
     @Override
     public ProvisionAContainerPageValidator validate() {
-        // TODO Auto-generated method stub
-        return null;
+        if (Objects.isNull(validator)) {
+            validator = new ProvisionAContainerPageValidator();
+        }
+        return validator;
     }
 
     @Override
