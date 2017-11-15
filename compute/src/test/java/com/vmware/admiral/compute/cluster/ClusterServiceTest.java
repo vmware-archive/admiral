@@ -535,6 +535,7 @@ public class ClusterServiceTest extends ComputeBaseTest {
 
         assertEquals(1, clusterDocker.nodeLinks.size());
         assertEquals(1, clusterVCH.nodeLinks.size());
+        assertEquals(0L, clusterDocker.totalMemory);
 
         ContainerHostSpec hostSpecDocker1 = createContainerHostSpec(projectLinkDocker);
 

@@ -446,7 +446,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
     private void updateResourcePool(ComputeState computeState, Collection<String> rpLinks,
             boolean remove, boolean noHostOperation) {
         Long totalMemory = PropertyUtils.getPropertyLong(computeState.customProperties,
-                ContainerHostService.DOCKER_HOST_TOTAL_MEMORY_PROP_NAME).orElse(Long.MAX_VALUE);
+                ContainerHostService.DOCKER_HOST_TOTAL_MEMORY_PROP_NAME).orElse(0L);
 
         Long hostAvailableMemory = PropertyUtils.getPropertyLong(computeState.customProperties,
                 ContainerHostService.DOCKER_HOST_AVAILABLE_MEMORY_PROP_NAME)
