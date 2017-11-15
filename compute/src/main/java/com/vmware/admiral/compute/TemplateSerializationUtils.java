@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.compute;
 
+import static com.vmware.admiral.compute.content.CompositeTemplateUtil.isNullOrEmpty;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -60,10 +62,12 @@ public class TemplateSerializationUtils {
 
         Map<String, Object> components = (Map<String, Object>) initialMap
                 .remove(BindingUtils.COMPONENTS);
-        for (Map.Entry<String, Object> ce : components.entrySet()) {
-            ComponentTemplate<?> componentTemplate = deserializeComponent(
-                    (Map<String, Object>) ce.getValue(), objectMapper);
-            compositeTemplateComponents.put(ce.getKey(), componentTemplate);
+        if (!isNullOrEmpty(components)) {
+            for (Map.Entry<String, Object> ce : components.entrySet()) {
+                ComponentTemplate<?> componentTemplate = deserializeComponent(
+                        (Map<String, Object>) ce.getValue(), objectMapper);
+                compositeTemplateComponents.put(ce.getKey(), componentTemplate);
+            }
         }
 
         CompositeTemplate compositeTemplate = objectMapper
@@ -83,20 +87,22 @@ public class TemplateSerializationUtils {
             ObjectMapper objectMapper, ObjectWriter objectWriter)
             throws IOException {
 
-        //TODO figure out why directly deserializing to Map doesn't work
+        // TODO figure out why directly deserializing to Map doesn't work
         Map result = objectMapper.readValue(objectWriter.writeValueAsString(template), Map.class);
 
-        Map<String, Object> components = new HashMap<>();
-        result.put("components", components);
+        if (!isNullOrEmpty(template.components)) {
+            Map<String, Object> components = new HashMap<>();
+            result.put("components", components);
 
-        for (Map.Entry<String, ComponentTemplate<?>> entry : template.components.entrySet()) {
-            String componentKey = entry.getKey();
-            ComponentTemplate<?> componentTemplate = entry.getValue();
+            for (Map.Entry<String, ComponentTemplate<?>> entry : template.components.entrySet()) {
+                String componentKey = entry.getKey();
+                ComponentTemplate<?> componentTemplate = entry.getValue();
 
-            Map serializedComponentTemplate = serializeComponentTemplate(componentTemplate,
-                    objectMapper, objectWriter);
+                Map serializedComponentTemplate = serializeComponentTemplate(componentTemplate,
+                        objectMapper, objectWriter);
 
-            components.put(componentKey, serializedComponentTemplate);
+                components.put(componentKey, serializedComponentTemplate);
+            }
         }
 
         return result;
@@ -108,13 +114,13 @@ public class TemplateSerializationUtils {
             ObjectMapper objectMapper,
             ObjectWriter objectWriter)
             throws IOException {
-        //We have a special deserializer for the ComponentTemplate
+        // We have a special deserializer for the ComponentTemplate
         @SuppressWarnings("rawtypes")
         Map serializedComponentTemplate = objectMapper
                 .readValue(objectWriter.writeValueAsString(componentTemplate), Map.class);
         serializedComponentTemplate.remove("children");
 
-        if (componentTemplate.children == null || componentTemplate.children.isEmpty()) {
+        if (isNullOrEmpty(componentTemplate.children)) {
             return serializedComponentTemplate;
         }
 
@@ -141,7 +147,7 @@ public class TemplateSerializationUtils {
         Map<String, NestedState> children = nestedState.children;
 
         // if there are no children we can serialize right away
-        if (children == null || children.isEmpty()) {
+        if (isNullOrEmpty(children)) {
             return objectMapper
                     .readValue(objectWriter.writeValueAsString(nestedState.object), Map.class);
         }
@@ -173,7 +179,6 @@ public class TemplateSerializationUtils {
             }
 
             if (fieldValue instanceof List) {
-
                 ListIterator listIterator = ((List) converted.get(fieldName)).listIterator();
                 while (listIterator.hasNext()) {
                     String link = (String) listIterator.next();
@@ -191,7 +196,6 @@ public class TemplateSerializationUtils {
         return serializeNestedState(nestedState, YamlMapper.objectMapper(),
                 YamlMapper.objectWriter());
     }
-
 
     @SuppressWarnings("unchecked")
     public static ComponentTemplate<?> deserializeComponent(Map<String, Object> obj,

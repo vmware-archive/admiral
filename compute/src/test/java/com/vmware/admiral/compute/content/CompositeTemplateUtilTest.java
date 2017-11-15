@@ -24,6 +24,7 @@ import static com.vmware.admiral.compute.content.CompositeTemplateUtil.deseriali
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.fromCompositeTemplateToDockerCompose;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.fromDockerComposeToCompositeTemplate;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.getYamlType;
+import static com.vmware.admiral.compute.content.CompositeTemplateUtil.isNullOrEmpty;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.serializeCompositeTemplate;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.serializeDockerCompose;
 
@@ -386,6 +387,21 @@ public class CompositeTemplateUtilTest {
             assertTrue(
                     e.getMessage().startsWith("Error processing Docker Compose v2 YAML content:"));
         }
+    }
+
+    @Test
+    public void testSerializeDeserializeEmptyTemplate() throws IOException {
+        CompositeTemplate template = new CompositeTemplate();
+        template.name = "empty";
+        String templateSerialized = serializeCompositeTemplate(template);
+        assertNotNull(templateSerialized);
+        assertTrue(templateSerialized.contains("empty"));
+
+        CompositeTemplate templateDeserialized = deserializeCompositeTemplate(templateSerialized);
+        assertNotNull(templateDeserialized);
+        assertEquals(template.name, templateDeserialized.name);
+        assertTrue(isNullOrEmpty(template.components));
+        assertTrue(isNullOrEmpty(templateDeserialized.components));
     }
 
     @Test
