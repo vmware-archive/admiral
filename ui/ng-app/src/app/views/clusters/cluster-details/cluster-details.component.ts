@@ -24,6 +24,7 @@ import 'rxjs/add/operator/switchMap';
 export class ClusterDetailsComponent extends BaseDetailsComponent implements OnInit, OnDestroy {
 
   private sub: any;
+  private resourceTabSelected:boolean = false;
 
   constructor(route: ActivatedRoute, service: DocumentService) {
     super(route, service, Links.CLUSTERS);
@@ -58,4 +59,11 @@ export class ClusterDetailsComponent extends BaseDetailsComponent implements OnI
       this.entity = cluster;
     });
   }
+    clickedSummaryTab() {
+        this.resourceTabSelected = false;
+    }
+
+    clickedResourcesTab() {
+        this.resourceTabSelected = true;
+    }
 }

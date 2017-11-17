@@ -317,6 +317,16 @@ export class Utils {
     return false;
   }
 
+  public static getClustersViewRefreshInterval() {
+    if (this.existsConfigurationProperty('eventual.clusters.refresh.interval.ms')) {
+
+        return parseInt(this.getConfigurationProperty('eventual.clusters.refresh.interval.ms'), 10)
+            || Constants.clusters.DEFAULT_VIEW_REFRESH_INTERVAL;
+    }
+
+    return Constants.clusters.DEFAULT_VIEW_REFRESH_INTERVAL;
+  }
+
   public static getClusterRescanInterval() {
     if (this.existsConfigurationProperty('eventual.cluster.rescan.interval.ms')) {
 
@@ -335,6 +345,18 @@ export class Utils {
       }
 
     return Constants.clusters.DEFAULT_RESCAN_RETRIES_NUMBER;
+  }
+
+  public static repeat(callScope, callback, callbackArgs, numRetries, retryInterval) {
+      let currentRetry = 0;
+      let intervalID = setInterval(() => {
+          callback.apply(callScope, callbackArgs);
+
+          currentRetry++;
+          if (currentRetry === numRetries) {
+              clearInterval(intervalID);
+          }
+      }, retryInterval);
   }
 }
 

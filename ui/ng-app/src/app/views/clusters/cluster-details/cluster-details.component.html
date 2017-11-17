@@ -14,14 +14,18 @@
     <h3 class="cluster-details-header-title">{{entity?.name}}</h3>
 
     <clr-tabs>
-        <clr-tab-link class="summaryTab" [clrTabLinkId]="'summaryTab'" [clrTabLinkActive]="true">{{"clusters.summary.title" | i18n}}</clr-tab-link>
-        <clr-tab-link class="resourcesTab" [hidden]="!showResources" [clrTabLinkId]="'resourcesTab'">{{"clusters.resources.title" | i18n}}</clr-tab-link>
+        <clr-tab-link class="summaryTab" [clrTabLinkId]="'summaryTab'" [clrTabLinkActive]="true"
+                      (click)="clickedSummaryTab()">{{"clusters.summary.title" | i18n}}</clr-tab-link>
+        <clr-tab-link class="resourcesTab" [hidden]="!showResources" [clrTabLinkId]="'resourcesTab'"
+                      (click)="clickedResourcesTab()">{{"clusters.resources.title" | i18n}}</clr-tab-link>
 
         <clr-tab-content [clrTabContentId]="'summaryContent'" [clrTabContentActive]="true">
             <app-cluster-summary [cluster]="entity"></app-cluster-summary>
         </clr-tab-content>
         <clr-tab-content [clrTabContentId]="'resourcesContent'">
-            <app-cluster-resources *ngIf="showResources" [cluster]="entity" (onChange)="reloadCluster()" [projectLink]="projectLink"></app-cluster-resources>
+            <app-cluster-resources *ngIf="showResources"
+                [cluster]="entity" [projectLink]="projectLink" [tabShown]="resourceTabSelected"
+                (onChange)="reloadCluster()"></app-cluster-resources>
         </clr-tab-content>
     </clr-tabs>
 </div>

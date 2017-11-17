@@ -9,12 +9,13 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, Input, QueryList, OnInit, OnChanges, SimpleChanges, ContentChild,ContentChildren, ViewChild, ViewChildren, TemplateRef, HostListener, ViewEncapsulation } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges, ContentChild, ViewChild, ViewChildren,
+         TemplateRef, HostListener, ViewEncapsulation } from '@angular/core';
 import { searchConstants } from 'admiral-ui-common';
 import * as I18n from 'i18next';
 import { DocumentService, DocumentListResult } from '../../utils/document.service';
-import { Utils, CancelablePromise } from '../../utils/utils';
-import { Router, ActivatedRoute, Route, RoutesRecognized, NavigationEnd, NavigationCancel } from '@angular/router';
+import { CancelablePromise } from '../../utils/utils';
+import { Router, ActivatedRoute, NavigationEnd } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 
 @Component({
@@ -23,9 +24,10 @@ import { Subscription } from 'rxjs/Subscription';
   styleUrls: ['./grid-view.component.scss'],
   encapsulation: ViewEncapsulation.None
 })
+/**
+ * Grid view general component.
+ */
 export class GridViewComponent implements OnInit, OnChanges {
-  loading: boolean;
-  _items: any[] = [];
   @Input() serviceEndpoint: string;
   @Input() searchPlaceholder: string;
   @Input() searchSuggestionProperties: Array<string>;
@@ -35,18 +37,23 @@ export class GridViewComponent implements OnInit, OnChanges {
   @ViewChildren('cardItem') cards;
   @ViewChild('itemsHolder') itemsHolder;
   @ContentChild(TemplateRef) gridItemTmpl;
+
+  loading: boolean;
+  _items: any[] = [];
+
   showCardView: boolean = true;
-  itemTmplCard: any;
-  itemTmplList: any;
+
   cardStyles = [];
   itemsHolderStyle: any = {};
   layoutTimeout;
+
   querySub: Subscription;
   routerSub: Subscription;
+
+  loadingPromise: CancelablePromise<DocumentListResult>;
   totalItemsCount: number;
   loadedPages: number = 0;
   nextPageLink: string;
-  loadingPromise: CancelablePromise<DocumentListResult>;
   hidePartialRows: boolean = false;
   loadPagesTimeout;
 
@@ -58,7 +65,8 @@ export class GridViewComponent implements OnInit, OnChanges {
     label: I18n.t('occurrence.any', {ns: 'base'})
   }];
 
-  constructor(protected service: DocumentService, private router: Router, private route: ActivatedRoute) { }
+  constructor(protected service: DocumentService, private router: Router,
+              private route: ActivatedRoute) { }
 
   ngOnInit() {
     const urlTree = this.router.createUrlTree(['.'], { relativeTo: this.route });
@@ -291,7 +299,9 @@ export class GridViewComponent implements OnInit, OnChanges {
 
     this.loading = true;
     this.loadedPages = 0;
-    this.loadingPromise = new CancelablePromise(this.service.list(this.serviceEndpoint, this.searchQueryOptions, this.projectLink));
+    this.loadingPromise = new CancelablePromise(this.service.list(
+                                this.serviceEndpoint, this.searchQueryOptions, this.projectLink));
+
     return this.loadingPromise.getPromise()
     .then(result => {
       this.loading = false;
@@ -299,6 +309,7 @@ export class GridViewComponent implements OnInit, OnChanges {
       this.items = result.documents;
       this.nextPageLink = result.nextPageLink;
       this.loadedPages++;
+
     }).catch(e => {
       if (e) {
         if (e.isCanceled) {

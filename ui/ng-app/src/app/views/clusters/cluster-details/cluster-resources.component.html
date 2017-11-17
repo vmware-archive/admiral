@@ -19,7 +19,8 @@
 
 <grid-view #gridView [serviceEndpoint]="serviceEndpoint" [projectLink]="projectLink">
   <div toolbar>
-    <button class="btn btn-link addHost" (click)="onAddHost()"><i class="fa fa-plus"></i>{{ "clusters.resources.addHostButton" | i18n }}</button>
+    <button class="btn btn-link addHost" (click)="onAddHost()"><i
+        class="fa fa-plus"></i>{{ "clusters.resources.addHostButton" | i18n }}</button>
   </div>
 
   <ng-template let-item="item">
