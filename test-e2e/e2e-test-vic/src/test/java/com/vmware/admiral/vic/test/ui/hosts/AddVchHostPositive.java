@@ -28,8 +28,7 @@ public class AddVchHostPositive extends BaseTest {
     @Test
     public void testAddHostSucceeds() {
         loginAsAdmin();
-        ContainerHostsPage hostsPage = getClient().navigateToHomeTab()
-                .navigateToContainerHostsPage();
+        ContainerHostsPage hostsPage = navigateToHomeTab().navigateToContainerHostsPage();
         hostsPage.validate(v -> v.validateHostDoesNotExistWithName(VCH_HOST_NAME))
                 .addContainerHost()
                 .setName(VCH_HOST_NAME)

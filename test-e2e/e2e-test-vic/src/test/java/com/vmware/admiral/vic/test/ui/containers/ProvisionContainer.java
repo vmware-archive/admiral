@@ -32,7 +32,7 @@ public class ProvisionContainer extends BaseTest {
     @Test
     public void testAddHostAndProvisionContainer() {
         loginAsAdmin();
-        getClient().navigateToHomeTab()
+        navigateToHomeTab()
                 .navigateToContainerHostsPage()
                 .addContainerHost()
                 .setName(HOST_NAME)
@@ -40,9 +40,7 @@ public class ProvisionContainer extends BaseTest {
                 .setUrl(getVchUrl())
                 .submit()
                 .acceptCertificateIfShownAndExpectSuccess();
-        ContainersPage containers = getClient()
-                .navigateToHomeTab()
-                .navigateToContainersPage();
+        ContainersPage containers = navigateToHomeTab().navigateToContainersPage();
         containers.provisionAContainer()
                 .navigateToBasicTab()
                 .setName(CONTAINER_NAME)
@@ -59,7 +57,7 @@ public class ProvisionContainer extends BaseTest {
         containers.refresh()
                 .validate()
                 .validateContainerDoesNotExistWithName(CONTAINER_NAME);
-        getClient().navigateToHomeTab()
+        navigateToHomeTab()
                 .navigateToContainerHostsPage()
                 .deleteContainerHost(HOST_NAME);
         logOut();

@@ -22,20 +22,19 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
-import com.vmware.admiral.test.ui.FileUtil;
+import com.vmware.admiral.common.util.FileUtil;
 import com.vmware.admiral.vic.test.ui.BaseSuite;
 import com.vmware.admiral.vic.test.ui.PropertiesNames;
 import com.vmware.admiral.vic.test.ui.util.IdentitySourceConfigurator;
 
 @RunWith(Suite.class)
 @SuiteClasses({
-        RBACAndItemsProjectAwareness.class
-})
+        RBACAndItemsProjectAwareness.class })
 public class ScenariosSuite extends BaseSuite {
 
     @BeforeClass
     public static void configureActiveDirectories() throws IOException {
-        Properties props = FileUtil.loadProperties(PropertiesNames.PROPERTIES_FILE_NAME);
+        Properties props = FileUtil.getProperties("/" + PropertiesNames.PROPERTIES_FILE_NAME, true);
         String vcenterAddress = props.getProperty(PropertiesNames.VCENTER_IP_PROPERTY);
         Objects.requireNonNull(vcenterAddress);
         String adminUsername = props.getProperty(PropertiesNames.DEFAULT_ADMIN_USERNAME_PROPERTY);
@@ -48,7 +47,7 @@ public class ScenariosSuite extends BaseSuite {
                         .getProperty(PropertiesNames.ACTIVE_DIRECTORIES_SPEC_FILES_CSV_PROPERTY)
                         .split(","));
         for (String fileName : adSpecFilenames) {
-            String body = FileUtil.getFileContents(fileName.trim());
+            String body = FileUtil.getResourceAsString("/" + fileName.trim(), true);
             identityConfigurator.addIdentitySource(body);
         }
     }

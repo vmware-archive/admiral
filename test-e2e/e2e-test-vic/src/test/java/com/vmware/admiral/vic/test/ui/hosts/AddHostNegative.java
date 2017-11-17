@@ -25,7 +25,7 @@ public class AddHostNegative extends BaseTest {
     @Test
     public void testAddHostFailsWithInvalidUrlValues() {
         loginAsAdmin();
-        getClient().navigateToHomeTab().navigateToContainerHostsPage()
+        navigateToHomeTab().navigateToContainerHostsPage()
                 .addContainerHost()
                 .setName("InvalidHost")
                 .setDescription("bad host url")

@@ -19,7 +19,7 @@ import com.codeborne.selenide.junit.ScreenShooter;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
 
-import com.vmware.admiral.test.ui.FileUtil;
+import com.vmware.admiral.common.util.FileUtil;
 import com.vmware.admiral.test.ui.SelenideClassRunner;
 import com.vmware.admiral.vic.test.ui.pages.VICWebClient;
 import com.vmware.admiral.vic.test.ui.pages.main.VICAdministrationTab;
@@ -32,7 +32,9 @@ public class BaseTest {
     private final String HTTPS_PROTOCOL = "https://";
 
     protected final Properties PROPERTIES = FileUtil
-            .loadProperties(PropertiesNames.PROPERTIES_FILE_NAME);
+            .getProperties("/" + PropertiesNames.PROPERTIES_FILE_NAME, true);
+    private String vicUrl;
+    private String vchUrl;
 
     @Rule
     public ScreenShooter makeScreenshotOnFailure = ScreenShooter.failedTests();
@@ -47,25 +49,31 @@ public class BaseTest {
     }
 
     protected String getVicUrl() {
-        String vicIp = PROPERTIES.getProperty(PropertiesNames.VIC_IP_PROPERTY);
-        Objects.requireNonNull(vicIp);
-        if (!vicIp.startsWith(HTTPS_PROTOCOL)) {
-            vicIp = HTTPS_PROTOCOL + vicIp;
+        if (Objects.isNull(vicUrl)) {
+            vicUrl = PROPERTIES.getProperty(PropertiesNames.VIC_IP_PROPERTY);
+            Objects.requireNonNull(vicUrl);
+            if (!vicUrl.startsWith(HTTPS_PROTOCOL)) {
+                vicUrl = HTTPS_PROTOCOL + vicUrl;
+            }
+            if (!vicUrl.endsWith(MANAGEMENT_PORTAL_PORT)) {
+                vicUrl = vicUrl + MANAGEMENT_PORTAL_PORT;
+            }
         }
-        if (!vicIp.endsWith(MANAGEMENT_PORTAL_PORT)) {
-            vicIp = vicIp + MANAGEMENT_PORTAL_PORT;
-        }
-        return vicIp;
+        return vicUrl;
     }
 
     protected String getVchUrl() {
-        String vchIp = PROPERTIES.getProperty(PropertiesNames.VCH_IP_PROPERTY);
-        String vchPort = PROPERTIES.getProperty(PropertiesNames.VCH_PORT_PROPERTY);
-        Objects.requireNonNull(vchIp);
-        if (!vchIp.startsWith(HTTPS_PROTOCOL)) {
-            vchIp = HTTPS_PROTOCOL + vchIp;
+        if (Objects.isNull(vchUrl)) {
+            vchUrl = PROPERTIES.getProperty(PropertiesNames.VCH_IP_PROPERTY);
+            Objects.requireNonNull(vchUrl);
+            String vchPort = PROPERTIES.getProperty(PropertiesNames.VCH_PORT_PROPERTY);
+            Objects.requireNonNull(vchPort);
+            if (!vchUrl.startsWith(HTTPS_PROTOCOL)) {
+                vchUrl = HTTPS_PROTOCOL + vchUrl;
+            }
+            vchUrl = vchUrl + ":" + vchPort;
         }
-        return vchIp + ":" + vchPort;
+        return vchUrl;
     }
 
     protected VICWebClient loginAsAdmin() {

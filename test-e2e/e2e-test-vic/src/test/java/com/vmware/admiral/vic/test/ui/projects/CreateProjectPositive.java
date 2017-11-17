@@ -27,7 +27,7 @@ public class CreateProjectPositive extends BaseTest {
     @Test
     public void testCreateProjectSucceeds() {
         loginAsAdmin();
-        ProjectsPage projectsPage = getClient().navigateToAdministrationTab()
+        ProjectsPage projectsPage = navigateToAdministrationTab()
                 .navigateToProjectsPage();
         projectsPage.addProject()
                 .setName(PROJECT_NAME)
@@ -35,9 +35,9 @@ public class CreateProjectPositive extends BaseTest {
                 .submit()
                 .expectSuccess();
         projectsPage.validate().validateProjectIsVisible(PROJECT_NAME);
-        getClient().navigateToHomeTab().validate()
+        navigateToHomeTab().validate()
                 .validateProjectIsAvailable(PROJECT_NAME);
-        getClient().navigateToAdministrationTab().navigateToProjectsPage();
+        navigateToAdministrationTab().navigateToProjectsPage();
         projectsPage.validate(v -> v.validateProjectIsVisible(PROJECT_NAME))
                 .deleteProject(PROJECT_NAME)
                 .expectSuccess();

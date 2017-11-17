@@ -59,7 +59,7 @@ public class VICWebClient extends AdmiralWebClient<VICWebClient, VICWebClientVal
     }
 
     private void validateLogIn() {
-        Wait().withTimeout(AdmiralWebClientConfiguration.LOGIN_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        Wait().withTimeout(AdmiralWebClientConfiguration.getLoginTimeoutSeconds(), TimeUnit.SECONDS)
                 .until(ExpectedConditions.or(
                         d -> {
                             return $(GlobalSelectors.LOGGED_USER_DISPLAY).isDisplayed()

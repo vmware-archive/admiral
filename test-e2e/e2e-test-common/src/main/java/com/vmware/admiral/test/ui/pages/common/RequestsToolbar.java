@@ -66,7 +66,7 @@ public class RequestsToolbar extends BasicClass {
     }
 
     private void waitToSucceed(int timeout) {
-        Wait().pollingEvery(AdmiralWebClientConfiguration.REQUEST_POLLING_INTERVAL_MILISECONDS,
+        Wait().pollingEvery(AdmiralWebClientConfiguration.getRequestPollingIntervalMiliseconds(),
                 TimeUnit.MILLISECONDS)
                 .withTimeout(timeout, TimeUnit.SECONDS).until(f -> {
                     expandRequestsIfNotExpanded();

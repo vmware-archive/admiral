@@ -16,23 +16,55 @@ public class AdmiralWebClientConfiguration {
     /**
      * Determines how long to wait in seconds for the landing page after login, default: 30 seconds
      */
-    public static int LOGIN_TIMEOUT_SECONDS = 30;
+    private static int loginTimeoutSeconds = 30;
 
     /**
      * Determines the polling interval when polling requests(e.g. provision a container request),
      * default: 500 miliseconds
      */
-    public static int REQUEST_POLLING_INTERVAL_MILISECONDS = 500;
+    private static int requestPollingIntervalMiliseconds = 500;
 
     /**
      * Determines how long to wait in seconds for a successful host addition, default: 10 seconds
      */
-    public static int ADD_HOST_TIMEOUT_SECONDS = 20;
+    private static int addHostTimeoutSeconds = 20;
 
     /**
      * Determines how long to wait in seconds for a successful deletion of a container host,
      * default: 10 seconds
      */
-    public static int DELETE_HOST_TIMEOUT_SECONDS = 20;
+    private static int deleteHostTimeoutSeconds = 20;
+
+    public static int getLoginTimeoutSeconds() {
+        return loginTimeoutSeconds;
+    }
+
+    public static void setLoginTimeoutSeconds(int loginTimeoutSeconds) {
+        AdmiralWebClientConfiguration.loginTimeoutSeconds = loginTimeoutSeconds;
+    }
+
+    public static int getRequestPollingIntervalMiliseconds() {
+        return requestPollingIntervalMiliseconds;
+    }
+
+    public static void setRequestPollingIntervalMiliseconds(int requestPollingIntervalMiliseconds) {
+        AdmiralWebClientConfiguration.requestPollingIntervalMiliseconds = requestPollingIntervalMiliseconds;
+    }
+
+    public static int getAddHostTimeoutSeconds() {
+        return addHostTimeoutSeconds;
+    }
+
+    public static void setAddHostTimeoutSeconds(int addHostTimeoutSeconds) {
+        AdmiralWebClientConfiguration.addHostTimeoutSeconds = addHostTimeoutSeconds;
+    }
+
+    public static int getDeleteHostTimeoutSeconds() {
+        return deleteHostTimeoutSeconds;
+    }
+
+    public static void setDeleteHostTimeoutSeconds(int deleteHostTimeoutSeconds) {
+        AdmiralWebClientConfiguration.deleteHostTimeoutSeconds = deleteHostTimeoutSeconds;
+    }
 
 }

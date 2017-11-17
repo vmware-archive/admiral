@@ -147,11 +147,11 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
     }
 
     private void validateWithCloudAdminRoleView() {
-        getClient().navigateToHomeTab().validate()
+        navigateToHomeTab().validate()
                 .validateAllHomeTabsAreAvailable()
                 .validateProjectsAreAvailable(ALL_PROJECTS)
                 .validateProjectIsAvailable(PROJECT_NAME_DEFAULT);
-        getClient().navigateToAdministrationTab()
+        navigateToAdministrationTab()
                 .validate(v -> v.validateAllAdministrationTabsAreAvailable())
                 .navigateToProjectsPage()
                 .validate()
@@ -166,7 +166,7 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
     }
 
     private void validateWithProjectAdminRole() {
-        getClient().navigateToHomeTab()
+        navigateToHomeTab()
                 .validate(v -> v
                         .validateAllHomeTabsAreAvailable()
                         .validateProjectsAreAvailable(ALL_PROJECTS)
@@ -174,7 +174,7 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
                 .switchToProject(PROJECT_NAME_ADMIRAL);
         String resourcePrefix = USER_SHAUNA.split("@")[0];
         createAndDeleteResourcesInAdmiralProject(resourcePrefix);
-        getClient().navigateToAdministrationTab()
+        navigateToAdministrationTab()
                 .validate(v -> v
                         .validateProjectsAvailable()
                         .validateIdentityManagementNotAvailable()
@@ -194,7 +194,7 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
     }
 
     private void createAndDeleteResourcesInAdmiralProject(String resourcePrefix) {
-        ContainersPage containers = getClient().navigateToHomeTab().navigateToContainersPage();
+        ContainersPage containers = navigateToHomeTab().navigateToContainersPage();
         containers.provisionAContainer()
                 .navigateToBasicTab()
                 .setName(resourcePrefix + CONTAINER_SUFFIX)
@@ -207,11 +207,9 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
                 .deleteContainer(resourcePrefix + CONTAINER_SUFFIX)
                 .requests()
                 .waitForLastRequestToSucceed(60);
-        containers.validate()
+        containers.refresh().validate()
                 .validateContainerDoesNotExistWithName(resourcePrefix + CONTAINER_SUFFIX);
-        NetworksPage networks = getClient()
-                .navigateToHomeTab()
-                .navigateToNetworksPage();
+        NetworksPage networks = navigateToHomeTab().navigateToNetworksPage();
         networks.createNetwork()
                 .setName(resourcePrefix + NETWORK_SUFFIX)
                 .addHostByName(PROJECT_NAME_ADMIRAL + HOST_SUFFIX)
@@ -228,9 +226,9 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
                 .validateNetworkDoesNotExist(resourcePrefix + NETWORK_SUFFIX);
         // Volumes cannot be created on current VCH deployment
         /*
-         * VolumesPage volumes = getClient().navigateToHomeTab().navigateToVolumesPage();
-         * volumes.createVolume() .setName(resourcePrefix + VOLUME_SUFFIX)
-         * .selectHostByName(PROJECT_NAME_ADMIRAL + HOST_SUFFIX) .submit() .expectSuccess();
+         * VolumesPage volumes = navigateToHomeTab().navigateToVolumesPage(); volumes.createVolume()
+         * .setName(resourcePrefix + VOLUME_SUFFIX) .selectHostByName(PROJECT_NAME_ADMIRAL +
+         * HOST_SUFFIX) .submit() .expectSuccess();
          * volumes.requests().waitForLastRequestToSucceed(20); volumes.refresh() .validate(v ->
          * v.validateVolumeExistsWithName(resourcePrefix + VOLUME_SUFFIX))
          * .deleteVolume(resourcePrefix + VOLUME_SUFFIX)
@@ -239,7 +237,7 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
     }
 
     private void validateWithProjectMember() {
-        getClient().navigateToHomeTab()
+        navigateToHomeTab()
                 .validate()
                 .validateAllHomeTabsAreAvailable()
                 .validateProjectsAreAvailable(ALL_PROJECTS)
@@ -273,7 +271,7 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
     }
 
     private void configureCloudAdminRoles() {
-        getClient().navigateToAdministrationTab()
+        navigateToAdministrationTab()
                 .navigateToIdentityManagementPage()
                 .navigateToUsersAndGroupsTab()
                 .assignCloudAdminRole(CLOUD_ADMIN_JASON)
@@ -282,7 +280,7 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
     }
 
     private void unconfigureCloudAdminRoles() {
-        getClient().navigateToAdministrationTab()
+        navigateToAdministrationTab()
                 .navigateToIdentityManagementPage()
                 .navigateToUsersAndGroupsTab()
                 .unassignCloudAdminRole(CLOUD_ADMIN_JASON)
@@ -291,7 +289,7 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
     }
 
     private void addContentToProjects() {
-        VICHomeTab homeTab = getClient().navigateToHomeTab();
+        VICHomeTab homeTab = navigateToHomeTab();
         for (String projectName : ALL_PROJECTS) {
             homeTab.switchToProject(projectName);
             addVchHostToProject(projectName);
@@ -302,7 +300,7 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
     }
 
     private void removeContentFromProjects() {
-        VICHomeTab homeTab = getClient().navigateToHomeTab();
+        VICHomeTab homeTab = navigateToHomeTab();
         for (String projectName : ALL_PROJECTS) {
             homeTab.switchToProject(projectName);
             homeTab.navigateToContainersPage()
@@ -324,7 +322,7 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
     }
 
     private void addVchHostToProject(String hostName) {
-        ContainerHostsPage hostsPage = getClient().navigateToHomeTab()
+        ContainerHostsPage hostsPage = navigateToHomeTab()
                 .navigateToContainerHostsPage();
         hostsPage.addContainerHost()
                 .setName(hostName + HOST_SUFFIX)
@@ -339,7 +337,7 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
     }
 
     private void provisionContainerInProject(String containerName) {
-        ContainersPage containersPage = getClient().navigateToHomeTab()
+        ContainersPage containersPage = navigateToHomeTab()
                 .navigateToContainersPage();
         containersPage.provisionAContainer()
                 .navigateToBasicTab()
@@ -355,7 +353,7 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
     }
 
     private void addNetworkToProject(String networkName) {
-        NetworksPage networksPage = getClient().navigateToHomeTab().navigateToNetworksPage();
+        NetworksPage networksPage = navigateToHomeTab().navigateToNetworksPage();
         networksPage.createNetwork()
                 .setName(networkName + NETWORK_SUFFIX)
                 .addHostByName(networkName + HOST_SUFFIX)
@@ -371,7 +369,7 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
     // Volumes cannot be created on current VCH deployment
     @SuppressWarnings("unused")
     private void addVolumeToProject(String volumeName) {
-        VolumesPage volumesPage = getClient().navigateToHomeTab().navigateToVolumesPage();
+        VolumesPage volumesPage = navigateToHomeTab().navigateToVolumesPage();
         volumesPage.createVolume()
                 .setName(volumeName + VOLUME_SUFFIX)
                 .selectHostByName(volumeName + HOST_SUFFIX)
@@ -387,7 +385,7 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
     }
 
     private void configureProjects() {
-        ProjectsPage projectsPage = getClient().navigateToAdministrationTab()
+        ProjectsPage projectsPage = navigateToAdministrationTab()
                 .navigateToProjectsPage();
         ConfigureProjectPage configureProjectPage = projectsPage
                 .configureProject(PROJECT_NAME_ADMIRAL);

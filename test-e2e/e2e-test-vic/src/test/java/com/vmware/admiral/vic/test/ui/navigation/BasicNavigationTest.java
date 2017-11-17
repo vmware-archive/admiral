@@ -34,7 +34,7 @@ public class BasicNavigationTest extends BaseTest {
     @RunWithBrowsers({ Browser.FIREFOX, Browser.CHROME })
     public void basicNavigationTest() {
         loginAsAdmin();
-        VICHomeTab homeTab = getClient().navigateToHomeTab();
+        VICHomeTab homeTab = navigateToHomeTab();
 
         ApplicationsPage applicationsPage = homeTab.navigateToApplicationsPage();
         applicationsPage.validate(v -> v.validateIsCurrentPage())
@@ -85,7 +85,7 @@ public class BasicNavigationTest extends BaseTest {
                 .validate()
                 .validateIsCurrentPage();
 
-        VICAdministrationTab adminTab = getClient().navigateToAdministrationTab();
+        VICAdministrationTab adminTab = navigateToAdministrationTab();
 
         adminTab.navigateToIdentityManagementPage()
                 .validate()

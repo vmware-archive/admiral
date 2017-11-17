@@ -43,7 +43,7 @@ public class SelenideClassRunner extends BlockJUnit4ClassRunner {
     private final boolean USE_RUN_WITH_BROWSER_ANNOTATIONS;
     private final boolean USE_RUN_WITH_BROWSER_ANNOTATIONS_DEFAULT = true;
 
-    private String lastBrowser = null;
+    private static String lastBrowser = null;
 
     public SelenideClassRunner(Class<?> klass) throws InitializationError {
         super(klass);
@@ -156,6 +156,10 @@ public class SelenideClassRunner extends BlockJUnit4ClassRunner {
             notifier.fireTestIgnored(description);
             return;
         }
+        if (!Objects.isNull(lastBrowser) && !lastBrowser.equalsIgnoreCase(Configuration.browser)) {
+            close();
+        }
+        lastBrowser = Configuration.browser;
         super.runChild(method, notifier);
     }
 

@@ -35,11 +35,12 @@ public class AddHostModalDialogueValidator extends BasicClass implements Failabl
     private final By CERTIFICATE_CONFIRMATION_DIALOGUE = By
             .cssSelector(MODAL_BASE + " " + MODAL_BASE);
     private final By CERTIFICATE_CONFIRMATION_BUTTON = By
-            .cssSelector(MODAL_BASE + " " + MODAL_BASE + " .btn.btn-primary[_ngcontent-c14]");
+            .cssSelector(".btn.btn-primary.save-certificate-btn");
 
     @Override
     public void expectSuccess() {
-        Wait().withTimeout(AdmiralWebClientConfiguration.ADD_HOST_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        Wait().withTimeout(AdmiralWebClientConfiguration.getAddHostTimeoutSeconds(),
+                TimeUnit.SECONDS)
                 .until(f -> {
                     return $(GlobalSelectors.MODAL_BACKDROP).is(Condition.hidden)
                             && $(GlobalSelectors.SPINNER).is(Condition.hidden);
@@ -58,7 +59,8 @@ public class AddHostModalDialogueValidator extends BasicClass implements Failabl
     }
 
     public void acceptCertificateIfShownAndExpectSuccess() {
-        Wait().withTimeout(AdmiralWebClientConfiguration.ADD_HOST_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        Wait().withTimeout(AdmiralWebClientConfiguration.getAddHostTimeoutSeconds(),
+                TimeUnit.SECONDS)
                 .until(ExpectedConditions.or(
                         d -> {
                             return $(GlobalSelectors.MODAL_BACKDROP).is(Condition.hidden)

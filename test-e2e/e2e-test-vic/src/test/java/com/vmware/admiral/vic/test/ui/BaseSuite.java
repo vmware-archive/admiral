@@ -11,13 +11,14 @@
 
 package com.vmware.admiral.vic.test.ui;
 
+import java.util.Objects;
 import java.util.Properties;
 
 import com.codeborne.selenide.Configuration;
 
 import org.junit.BeforeClass;
 
-import com.vmware.admiral.test.ui.FileUtil;
+import com.vmware.admiral.common.util.FileUtil;
 import com.vmware.admiral.test.ui.pages.AdmiralWebClientConfiguration;
 
 public class BaseSuite {
@@ -26,7 +27,7 @@ public class BaseSuite {
 
     @BeforeClass
     public static void initProperties() {
-        properties = FileUtil.loadProperties(PropertiesNames.PROPERTIES_FILE_NAME);
+        properties = FileUtil.getProperties("/" + PropertiesNames.PROPERTIES_FILE_NAME, true);
 
         String timeout = properties.getProperty(PropertiesNames.WAIT_FOR_ELEMENT_TIMEOUT, "10000");
         Configuration.timeout = Integer.parseInt(timeout);
@@ -41,22 +42,30 @@ public class BaseSuite {
         Configuration.reportsFolder = properties.getProperty(PropertiesNames.SCREENSHOTS_FOLDER,
                 "target/screenshots");
 
-        String loginTimeout = properties.getProperty(PropertiesNames.LOGIN_TIMEOUT_SECONDS, "30");
-        AdmiralWebClientConfiguration.LOGIN_TIMEOUT_SECONDS = Integer.parseInt(loginTimeout);
+        String loginTimeout = properties.getProperty(PropertiesNames.LOGIN_TIMEOUT_SECONDS);
+        if (!Objects.isNull(loginTimeout) && !loginTimeout.isEmpty()) {
+            AdmiralWebClientConfiguration.setLoginTimeoutSeconds(Integer.parseInt(loginTimeout));
+        }
 
         String requestPollingInterval = properties
-                .getProperty(PropertiesNames.REQUEST_POLLING_INTERVAL_MILISECONDS, "500");
-        AdmiralWebClientConfiguration.REQUEST_POLLING_INTERVAL_MILISECONDS = Integer
-                .parseInt(requestPollingInterval);
+                .getProperty(PropertiesNames.REQUEST_POLLING_INTERVAL_MILISECONDS);
+        if (!Objects.isNull(requestPollingInterval) && !requestPollingInterval.isEmpty()) {
+            AdmiralWebClientConfiguration.setRequestPollingIntervalMiliseconds(Integer
+                    .parseInt(requestPollingInterval));
+        }
 
-        String addHostTimeout = properties.getProperty(PropertiesNames.ADD_HOST_TIMEOUT_SECONDS,
-                "20");
-        AdmiralWebClientConfiguration.ADD_HOST_TIMEOUT_SECONDS = Integer.parseInt(addHostTimeout);
+        String addHostTimeout = properties.getProperty(PropertiesNames.ADD_HOST_TIMEOUT_SECONDS);
+        if (!Objects.isNull(addHostTimeout) && !addHostTimeout.isEmpty()) {
+            AdmiralWebClientConfiguration
+                    .setAddHostTimeoutSeconds(Integer.parseInt(addHostTimeout));
+        }
 
         String deleteHostTimeout = properties
-                .getProperty(PropertiesNames.DELETE_HOST_TIMEOUT_SECONDS, "20");
-        AdmiralWebClientConfiguration.DELETE_HOST_TIMEOUT_SECONDS = Integer
-                .parseInt(deleteHostTimeout);
+                .getProperty(PropertiesNames.DELETE_HOST_TIMEOUT_SECONDS);
+        if (!Objects.isNull(deleteHostTimeout) && !deleteHostTimeout.isEmpty()) {
+            AdmiralWebClientConfiguration.setDeleteHostTimeoutSeconds(Integer
+                    .parseInt(deleteHostTimeout));
+        }
     }
 
 }

@@ -24,7 +24,7 @@ public class CreateProjectNegative extends BaseTest {
     @Test
     public void testCreateProjectFailsWithInvalidName() {
         loginAsAdmin();
-        getClient().navigateToAdministrationTab().navigateToProjectsPage()
+        navigateToAdministrationTab().navigateToProjectsPage()
                 .addProject()
                 .setName("invalid project name")
                 .submit(expect -> expect.expectInvalidNameErrorMessage())

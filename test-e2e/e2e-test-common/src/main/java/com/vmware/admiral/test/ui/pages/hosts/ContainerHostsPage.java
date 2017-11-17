@@ -59,7 +59,7 @@ public class ContainerHostsPage
         host.$(CARD_RELATIVE_DROPDOWN_MENU).click();
         host.$(CARD_RELATIVE_DELETE_BUTTON).click();
         waitForElementToStopMoving($(DELETE_HOST_CONFIRMATION_BUTTON)).click();
-        Wait().withTimeout(AdmiralWebClientConfiguration.DELETE_HOST_TIMEOUT_SECONDS,
+        Wait().withTimeout(AdmiralWebClientConfiguration.getDeleteHostTimeoutSeconds(),
                 TimeUnit.SECONDS)
                 .until(d -> {
                     return $(DELETE_CONTAINER_MODAL_BACKDROP).is(Condition.hidden);
