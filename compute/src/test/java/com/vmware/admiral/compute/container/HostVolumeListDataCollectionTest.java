@@ -140,6 +140,36 @@ public class HostVolumeListDataCollectionTest extends ComputeBaseTest {
         assertEquals(containerVolumeCreated.documentSelfLink , containerVolumeGet.documentSelfLink);
     }
 
+    /**
+     * This test checks if the power state of a volume state is changed properly.
+     */
+    @Test
+    public void testUpdateVolumePowerState() throws Throwable {
+
+        addVolumeToMockAdapter(COMPUTE_HOST_LINK, TEST_PREEXISTING_VOLUME_NAME, LOCAL_DRIVER,
+                LOCAL_SCOPE);
+
+        startAndWaitHostVolumeListDataCollection();
+
+        List<ContainerVolumeState> volumeStates = getVolumeStates();
+        assertEquals(1, volumeStates.size());
+        assertEquals(PowerState.CONNECTED, volumeStates.get(0).powerState);
+        ContainerVolumeState containerVolumeState = new ContainerVolumeState();
+        containerVolumeState.powerState = PowerState.PROVISIONING;
+        containerVolumeState.driver = LOCAL_DRIVER;
+        doPatch(containerVolumeState, volumeStates.get(0).documentSelfLink);
+
+        volumeStates = getVolumeStates();
+        assertEquals(1, volumeStates.size());
+        assertEquals(PowerState.PROVISIONING, volumeStates.get(0).powerState);
+
+        startAndWaitHostVolumeListDataCollection();
+
+        volumeStates = getVolumeStates();
+        assertEquals(1, volumeStates.size());
+        assertEquals(PowerState.CONNECTED, volumeStates.get(0).powerState);
+    }
+
     @Test
     public void testRemoveVolumesInRetiredState() throws Throwable {
         // create a volume state but don't add it to the mock adapter
