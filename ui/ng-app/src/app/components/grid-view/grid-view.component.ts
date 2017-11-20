@@ -215,6 +215,7 @@ export class GridViewComponent implements OnInit, OnChanges {
           transition: null,
           overflow: 'hidden'
         };
+        this.throttleLayout();
       }
 
       if (!item.classList.contains('context-selected')) {
