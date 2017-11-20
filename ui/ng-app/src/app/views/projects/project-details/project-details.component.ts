@@ -82,10 +82,14 @@ export class ProjectDetailsComponent extends BaseDetailsComponent {
     return RoutesRestriction.PROJECTS_ID;
   }
 
-  get isRegistryReplicationReadOnly() {
-    let accessAllowed = Utils.isAccessAllowed(this.userSecurityContext, this.admiralProjectSelfLink,
+  get hasAccessToRegistryReplication() {
+    return Utils.isAccessAllowed(this.userSecurityContext, this.admiralProjectSelfLink,
                                                 RoutesRestriction.PROJECT_REGISTRY_REPLICATION);
-    return !accessAllowed;
+  }
+
+  get isRegistryReplicationReadOnly() {
+    let accessAllowed = this.hasAccessToRegistryReplication;
+    return !accessAllowed
   }
 
   get embedded(): boolean {

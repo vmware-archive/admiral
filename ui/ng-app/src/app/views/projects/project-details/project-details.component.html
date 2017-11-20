@@ -16,7 +16,7 @@
     <clr-tab-link [clrTabLinkId]="'membersTab'">{{"projects.members.title" | i18n}}</clr-tab-link>
     <clr-tab-link *ngIf="isHbrEnabled" [clrTabLinkId]="'repositoriesTab'">{{"projects.repositories" | i18n}}</clr-tab-link>
     <clr-tab-link [clrTabLinkId]="'infrastructureTab'">{{"projects.infrastructure" | i18n}}</clr-tab-link>
-    <clr-tab-link *ngIf="isHbrEnabled" [clrTabLinkId]="'registryReplicationTab'">{{"projects.registryReplication" | i18n}}</clr-tab-link>
+    <clr-tab-link *ngIf="isHbrEnabled && hasAccessToRegistryReplication" [clrTabLinkId]="'registryReplicationTab'">{{"projects.registryReplication" | i18n}}</clr-tab-link>
     <clr-tab-link [clrTabLinkId]="'configurationTab'">{{"projects.config.title" | i18n}}</clr-tab-link>
 
     <clr-tab-content [clrTabContentId]="'summaryContent'" [clrTabContentActive]="true">
@@ -31,7 +31,7 @@
     <clr-tab-content [clrTabContentId]="'infrastructureContent'">
         <app-clusters [hideTitle]="true" [projectLink]="entity?.documentSelfLink"></app-clusters>
     </clr-tab-content>
-    <clr-tab-content *ngIf="isHbrEnabled" [clrTabContentId]="'registryReplicationContent'">
+    <clr-tab-content *ngIf="isHbrEnabled && hasAccessToRegistryReplication" [clrTabContentId]="'registryReplicationContent'">
         <hbr-replication [projectId]="hbrProjectId" [withReplicationJob]="true" [readonly]="isRegistryReplicationReadOnly"></hbr-replication>
     </clr-tab-content>
     <clr-tab-content [clrTabContentId]="'configurationContent'">
