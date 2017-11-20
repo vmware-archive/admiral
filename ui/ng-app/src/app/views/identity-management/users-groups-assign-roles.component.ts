@@ -135,6 +135,11 @@ export class UsersGroupsAssignRolesComponent implements OnInit, OnChanges {
         });
 
         this.assignments.removeAt(index);
+
+        if (this.assignments.length === 0) {
+            // all assignments have been removed - add an empty one
+            this.addAssignment('', '', false);
+        }
     }
 
     assignmentsConfirmed() {
