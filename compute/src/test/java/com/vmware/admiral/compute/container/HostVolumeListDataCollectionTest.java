@@ -17,6 +17,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,6 +47,7 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService.Co
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -101,6 +103,93 @@ public class HostVolumeListDataCollectionTest extends ComputeBaseTest {
         cs.customProperties = new HashMap<>();
 
         doPost(cs, ComputeService.FACTORY_LINK);
+    }
+
+    @Test
+    public void testPutState() throws Throwable {
+        HostVolumeListDataCollectionState hostVolumeListDataCollection =
+                getDocument(HostVolumeListDataCollectionState.class ,HostVolumeListDataCollection
+                        .DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_LINK);
+        assertEquals(0, hostVolumeListDataCollection.containerHostLinks.size());
+
+        HostVolumeListDataCollectionState hostVolumeListDataCollectionNew = new
+                HostVolumeListDataCollectionState();
+        hostVolumeListDataCollectionNew.documentSelfLink = hostVolumeListDataCollection
+                .documentSelfLink;
+        hostVolumeListDataCollectionNew.containerHostLinks = new HashMap<>();
+        hostVolumeListDataCollectionNew.containerHostLinks.put(COMPUTE_HOST_LINK, 1L);
+        doPut(hostVolumeListDataCollectionNew);
+        hostVolumeListDataCollection =
+                getDocument(HostVolumeListDataCollectionState.class ,HostVolumeListDataCollection
+                        .DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_LINK);
+        assertEquals(1, hostVolumeListDataCollection.containerHostLinks.size());
+        assertEquals(new Long(1), hostVolumeListDataCollection.containerHostLinks.get
+                (COMPUTE_HOST_LINK));
+    }
+
+    @Test
+    public void testPostStateToPut() throws Throwable {
+        HostVolumeListDataCollectionState hostVolumeListDataCollection =
+                getDocument(HostVolumeListDataCollectionState.class ,HostVolumeListDataCollection
+                        .DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_LINK);
+        assertEquals(0, hostVolumeListDataCollection.containerHostLinks.size());
+
+        HostVolumeListDataCollectionState hostVolumeListDataCollectionNew = new
+                HostVolumeListDataCollectionState();
+        hostVolumeListDataCollectionNew.documentSelfLink = hostVolumeListDataCollection
+                .documentSelfLink;
+        hostVolumeListDataCollectionNew.containerHostLinks = new HashMap<>();
+        hostVolumeListDataCollectionNew.containerHostLinks.put(COMPUTE_HOST_LINK, 1L);
+
+        //converted to put which should be ignored
+        doPost(hostVolumeListDataCollectionNew, HostVolumeListDataCollection.FACTORY_LINK);
+        hostVolumeListDataCollection =
+                getDocument(HostVolumeListDataCollectionState.class ,HostVolumeListDataCollection
+                        .DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_LINK);
+        assertEquals(0, hostVolumeListDataCollection.containerHostLinks.size());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testPostStateWithoutBody() throws Throwable {
+        doPost(null, HostVolumeListDataCollection.DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_LINK);
+    }
+
+    @Test(expected = LocalizableValidationException.class)
+    public void testPostStateNotDefaultSelfLink() throws Throwable {
+        HostVolumeListDataCollectionState hostVolumeListDataCollection =
+                getDocument(HostVolumeListDataCollectionState.class, HostVolumeListDataCollection
+                        .DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_LINK);
+        assertEquals(0, hostVolumeListDataCollection.containerHostLinks.size());
+
+        HostVolumeListDataCollectionState hostVolumeListDataCollectionNew = new
+                HostVolumeListDataCollectionState();
+        hostVolumeListDataCollectionNew.documentSelfLink = "test";
+        hostVolumeListDataCollectionNew.containerHostLinks = new HashMap<>();
+        hostVolumeListDataCollectionNew.containerHostLinks.put(COMPUTE_HOST_LINK, 1L);
+
+        //converted to put which should be ignored
+        try {
+            doPost(hostVolumeListDataCollectionNew,
+                    HostVolumeListDataCollection.DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_LINK);
+        } catch (LocalizableValidationException e) {
+            if (e.getMessage().contains("Only one instance of list containers data collection can"
+                    + " be started")) {
+                throw e;
+            }
+        }
+        fail("Should fail with: Only one instance of list containers data collection can be started");
+    }
+
+    @Test
+    public void testPostStateShouldCompleteWithNoExceptions() throws Throwable {
+        HostVolumeListDataCollectionState hostVolumeListDataCollectionNew = new
+                HostVolumeListDataCollectionState();
+        hostVolumeListDataCollectionNew.documentSelfLink = HostVolumeListDataCollection
+                .DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_LINK;
+        hostVolumeListDataCollectionNew.containerHostLinks = new HashMap<>();
+        hostVolumeListDataCollectionNew.containerHostLinks.put(COMPUTE_HOST_LINK, 1L);
+        doPost(hostVolumeListDataCollectionNew,
+                HostVolumeListDataCollection.DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_LINK);
     }
 
     @Test
