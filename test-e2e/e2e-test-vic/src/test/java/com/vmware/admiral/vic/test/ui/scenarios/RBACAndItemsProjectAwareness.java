@@ -46,10 +46,10 @@ import com.vmware.admiral.vic.test.ui.pages.main.VICHomeTab;
  * the created content is project-aware and is visible only in the project it belongs to
  *
  * 3. Login with project administrator and validate user sees all Home tabs and only the Projects
- * tab under Administration. Validate user can create and remove resources
+ * tab under Administration. Validate user can create and remove items
  *
  * 4. Login with project member, validate Administration tab is not accessible, validate user can
- * create and remove resources
+ * create and remove items
  *
  * 5. Login with project viewer and validate role restrictions
  *
@@ -215,12 +215,12 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
                 .addHostByName(PROJECT_NAME_ADMIRAL + HOST_SUFFIX)
                 .submit()
                 .expectSuccess();
-        networks.requests().waitForLastRequestToSucceed(20);
+        networks.requests().waitForLastRequestToSucceed(60);
         networks.refresh()
                 .validate(v -> v.validateNetworkExistsWithName(resourcePrefix + NETWORK_SUFFIX))
                 .deleteNetwork(resourcePrefix + NETWORK_SUFFIX)
                 .requests()
-                .waitForLastRequestToSucceed(20);
+                .waitForLastRequestToSucceed(60);
         networks.refresh()
                 .validate()
                 .validateNetworkDoesNotExist(resourcePrefix + NETWORK_SUFFIX);
@@ -229,10 +229,10 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
          * VolumesPage volumes = navigateToHomeTab().navigateToVolumesPage(); volumes.createVolume()
          * .setName(resourcePrefix + VOLUME_SUFFIX) .selectHostByName(PROJECT_NAME_ADMIRAL +
          * HOST_SUFFIX) .submit() .expectSuccess();
-         * volumes.requests().waitForLastRequestToSucceed(20); volumes.refresh() .validate(v ->
+         * volumes.requests().waitForLastRequestToSucceed(60); volumes.refresh() .validate(v ->
          * v.validateVolumeExistsWithName(resourcePrefix + VOLUME_SUFFIX))
          * .deleteVolume(resourcePrefix + VOLUME_SUFFIX)
-         * .requests().waitForLastRequestToSucceed(20);
+         * .requests().waitForLastRequestToSucceed(60);
          */
     }
 
@@ -310,11 +310,11 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
             homeTab.navigateToNetworksPage()
                     .deleteNetwork(projectName + NETWORK_SUFFIX)
                     .requests()
-                    .waitForLastRequestToSucceed(20);
+                    .waitForLastRequestToSucceed(60);
             // Volumes cannot be created on current VCH deployment
             /*
              * homeTab.navigateToVolumesPage() .deleteVolume(projectName + VOLUME_SUFFIX)
-             * .requests() .waitForLastRequestToSucceed(20);
+             * .requests() .waitForLastRequestToSucceed(60);
              */
             homeTab.navigateToContainerHostsPage()
                     .deleteContainerHost(projectName + HOST_SUFFIX);
@@ -359,7 +359,7 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
                 .addHostByName(networkName + HOST_SUFFIX)
                 .submit()
                 .expectSuccess();
-        networksPage.requests().waitForLastRequestToSucceed(10);
+        networksPage.requests().waitForLastRequestToSucceed(60);
         networksPage.refresh()
                 .validate()
                 .validateNetworkExistsWithName(networkName + NETWORK_SUFFIX)
@@ -375,7 +375,7 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
                 .selectHostByName(volumeName + HOST_SUFFIX)
                 .submit()
                 .expectSuccess();
-        volumesPage.requests().waitForLastRequestToSucceed(20);
+        volumesPage.requests().waitForLastRequestToSucceed(60);
         volumesPage.refresh()
                 .validate()
                 .validateVolumeExistsWithName(volumeName + VOLUME_SUFFIX);

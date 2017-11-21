@@ -45,6 +45,7 @@ public class ContainerHostsPage
     private AddHostModalDialogue addHostModalDialogue;
 
     public AddHostModalDialogue addContainerHost() {
+        LOG.info("Adding a container host");
         $(ADD_CONTAINER_HOST_BUTTON).click();
         waitForElementToStopMoving($(GlobalSelectors.MODAL_CONTENT));
         if (Objects.isNull(addHostModalDialogue)) {
@@ -54,6 +55,7 @@ public class ContainerHostsPage
     }
 
     public ContainerHostsPage deleteContainerHost(String name) {
+        LOG.info(String.format("Deleting host/cluster with name: [%s]", name));
         SelenideElement host = getHostCard(name);
         waitForElementToStopMoving(host);
         host.$(CARD_RELATIVE_DROPDOWN_MENU).click();

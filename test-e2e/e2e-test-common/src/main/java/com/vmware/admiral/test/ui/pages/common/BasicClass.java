@@ -17,6 +17,7 @@ import static com.codeborne.selenide.Selenide.switchTo;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 
 import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.SelenideElement;
@@ -27,6 +28,8 @@ import org.openqa.selenium.Point;
 import org.openqa.selenium.StaleElementReferenceException;
 
 public class BasicClass {
+
+    protected Logger LOG = Logger.getLogger(getClass().getName());
 
     private final int WAIT_FOR_MOVING_ELEMENT_CHECK_INTERVAL_MILISECONDS = 30;
     private final int WAIT_FOR_FLASHING_ELEMENT_MILISECONDS = 1;

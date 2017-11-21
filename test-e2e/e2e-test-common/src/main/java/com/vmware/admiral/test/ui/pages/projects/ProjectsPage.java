@@ -45,6 +45,7 @@ public class ProjectsPage extends BasicPage<ProjectsPage, ProjectsPageValidator>
     private AddProjectModalDialogue addProjectModalDialogue;
 
     public AddProjectModalDialogue addProject() {
+        LOG.info("Adding project");
         $(ADD_PROJECT_BUTTON).click();
         waitForElementToStopMoving($(GlobalSelectors.MODAL_CONTENT));
         if (Objects.isNull(addProjectModalDialogue)) {
@@ -54,6 +55,7 @@ public class ProjectsPage extends BasicPage<ProjectsPage, ProjectsPageValidator>
     }
 
     public ConfigureProjectPage configureProject(String name) {
+        LOG.info(String.format("Configuring project with name: [%s]", name));
         waitForElementToStopMoving(getProjectCard(name)).click();
         waitForElementToStopMoving($(EDIT_PROJECT_TITLE));
         $(EDIT_PROJECT_TITLE).should(Condition.appear);
@@ -64,7 +66,7 @@ public class ProjectsPage extends BasicPage<ProjectsPage, ProjectsPageValidator>
     }
 
     public DeleteProjectValidator deleteProject(String name) {
-        // TODO check for error (project has hosts or repos)
+        LOG.info(String.format("Deleting project with name: [%s]", name));
         SelenideElement card = waitForElementToStopMoving(getProjectCard(name));
         card.$(CARD_CONTEXT_MENU_BUTTON).click();
         card.$(CARD_DELETE_BUTTON).click();

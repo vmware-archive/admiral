@@ -23,6 +23,8 @@ import com.vmware.admiral.test.ui.pages.common.CreateResourcePage;
 public class ProvisionAContainerPage
         extends CreateResourcePage<ProvisionAContainerPage, ProvisionAContainerPageValidator> {
 
+    protected static final StringBuilder LOG_MESSAGE_BUILDER = new StringBuilder();
+
     private final By BASIC_TAB_BUTTON = By
             .cssSelector(".nav .nav-item:nth-child(1) .nav-link");
     private final By PROVISION_BUTTON = By.cssSelector(".btn.btn-primary");
@@ -49,11 +51,13 @@ public class ProvisionAContainerPage
 
     @Override
     public void cancel() {
+        LOG.info("Cancelling...");
         executeInFrame(0, () -> $(BACK_BUTTON).click());
     }
 
     @Override
     public ProvisionValidator submit() {
+        LOG.info("Provisioning...");
         executeInFrame(0, () -> $(PROVISION_BUTTON).click());
         if (Objects.isNull(provisionValidator)) {
             provisionValidator = new ProvisionValidator();

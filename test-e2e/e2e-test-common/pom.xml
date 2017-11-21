@@ -24,11 +24,4 @@
     <artifactId>e2e-test-common</artifactId>
     <packaging>jar</packaging>
 
-    <dependencies>
-        <dependency>
-            <groupId>com.codeborne</groupId>
-            <artifactId>selenide</artifactId>
-            <version>4.8</version>
-        </dependency>
-    </dependencies>
 </project>

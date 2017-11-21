@@ -43,6 +43,7 @@ public class AddMemberModalDialogue
     }
 
     public AddMemberModalDialogue addMember(String idOrEmail) {
+        LOG.info(String.format("Adding project member: [%s]", idOrEmail));
         $(EMAIL_ID_FIELD).sendKeys(idOrEmail);
         $(RESULTS).should(Condition.appear);
         Wait().until(ExpectedConditions.or(
@@ -64,6 +65,7 @@ public class AddMemberModalDialogue
     }
 
     public AddMemberModalDialogue setRole(ProjectMemberRole role) {
+        LOG.info(String.format("Setting member role: [%s]", role.toString()));
         Select select = new Select($(ROLE_DROPDOWN));
         select.selectByValue(role.toString());
         return this;
@@ -71,11 +73,13 @@ public class AddMemberModalDialogue
 
     @Override
     public void cancel() {
+        LOG.info("CAncelling...");
         $(CANCEL_BUTTON).click();
     }
 
     @Override
     protected void confirmDialogue() {
+        LOG.info("Submitting...");
         $(OK_BUTTON).click();
     }
 

@@ -13,7 +13,8 @@ package com.vmware.admiral.test.ui.pages.common;
 
 import java.util.function.Consumer;
 
-public abstract class ModalDialogue<P extends ModalDialogue<P, V>, V extends FailableActionValidator> {
+public abstract class ModalDialogue<P extends ModalDialogue<P, V>, V extends FailableActionValidator>
+        extends BasicClass {
 
     protected abstract void confirmDialogue();
 

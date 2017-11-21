@@ -35,6 +35,7 @@ public class VolumesPage extends HomeTabAdvancedPage<VolumesPage, VolumesPageVal
     private CreateVolumePage createVolumePage;
 
     public CreateVolumePage createVolume() {
+        LOG.info("Creating volume");
         executeInFrame(0, () -> {
             $(CREATE_VOLUME_BUTTON).click();
             waitForElementToStopMoving($(HomeTabSelectors.CHILD_PAGE_SLIDE));
@@ -46,6 +47,7 @@ public class VolumesPage extends HomeTabAdvancedPage<VolumesPage, VolumesPageVal
     }
 
     public VolumesPage deleteVolume(String namePrefix) {
+        LOG.info(String.format("Deleting volume with name prefix: [%s]", namePrefix));
         executeInFrame(0, () -> {
             SelenideElement card = getVolumeCard(namePrefix);
             waitForElementToStopMoving(card);
@@ -71,6 +73,7 @@ public class VolumesPage extends HomeTabAdvancedPage<VolumesPage, VolumesPageVal
 
     @Override
     public VolumesPage refresh() {
+        LOG.info("Refreshing...");
         executeInFrame(0, () -> $(REFRESH_BUTTON).click());
         return this;
     }

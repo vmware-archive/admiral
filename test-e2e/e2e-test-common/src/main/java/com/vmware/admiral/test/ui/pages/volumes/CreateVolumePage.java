@@ -36,16 +36,19 @@ public class CreateVolumePage
     private CreateVolumeValidator createValidator;
 
     public CreateVolumePage setName(String name) {
+        LOG.info(String.format("Setting name: [%s]", name));
         executeInFrame(0, () -> $(NAME_INPUT).sendKeys(name));
         return this;
     }
 
     public CreateVolumePage setDriver(String driver) {
+        LOG.info(String.format("Setting driver: [%s]", driver));
         executeInFrame(0, () -> $(DRIVER_INPUT).sendKeys(driver));
         return this;
     }
 
     public CreateVolumePage selectHostByName(String hostName) {
+        LOG.info(String.format("Setting host by name: [%s]", hostName));
         executeInFrame(0, () -> {
             $(SELECT_HOST_DROPDOWN_BUTTON).click();
             $(By.cssSelector(String.format(".host-picker-item-primary[title$=\"(%s)\"]", hostName)))
@@ -64,11 +67,13 @@ public class CreateVolumePage
 
     @Override
     public void cancel() {
+        LOG.info("Cancelling...");
         executeInFrame(0, () -> $(BACK_BUTTON).click());
     }
 
     @Override
     public CreateVolumeValidator submit() {
+        LOG.info("Submitting...");
         executeInFrame(0, () -> $(CREATE_VOLUME_BUTTON).click());
         if (Objects.isNull(createValidator)) {
             createValidator = new CreateVolumeValidator();

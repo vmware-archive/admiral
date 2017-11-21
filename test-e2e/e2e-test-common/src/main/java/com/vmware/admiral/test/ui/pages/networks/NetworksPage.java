@@ -36,6 +36,7 @@ public class NetworksPage extends HomeTabAdvancedPage<NetworksPage, NetworksPage
     private CreateNetworkPage createNetworkPage;
 
     public CreateNetworkPage createNetwork() {
+        LOG.info("Creating network");
         executeInFrame(0, () -> {
             $(CREATE_NETWORK_BUTTON).click();
             waitForElementToStopMoving($(HomeTabSelectors.CHILD_PAGE_SLIDE));
@@ -47,6 +48,7 @@ public class NetworksPage extends HomeTabAdvancedPage<NetworksPage, NetworksPage
     }
 
     public NetworksPage deleteNetwork(String namePrefix) {
+        LOG.info(String.format("Deleting network with name prefix: [%s]", namePrefix));
         executeInFrame(0, () -> {
             SelenideElement card = getNetworkCard(namePrefix);
             waitForElementToStopMoving(card);
@@ -72,6 +74,7 @@ public class NetworksPage extends HomeTabAdvancedPage<NetworksPage, NetworksPage
 
     @Override
     public NetworksPage refresh() {
+        LOG.info("Refreshing...");
         executeInFrame(0, () -> $(REFRESH_BUTTON).click());
         return this;
     }

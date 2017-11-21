@@ -48,8 +48,10 @@ public abstract class HomeTab<P extends HomeTab<P, V>, V extends HomeTabValidato
     private PublicRepositoriesPage publicRepositoriesPage;
     private ContainerHostsPage containerHostsPage;
 
-    public void switchToProject(String projectName) {
+    public P switchToProject(String projectName) {
+        LOG.info(String.format("Switching to project: [%s]", projectName));
         getProjectWithName(projectName).click();
+        return getThis();
     }
 
     private SelenideElement getProjectWithName(String name) {

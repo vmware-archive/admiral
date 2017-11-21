@@ -40,6 +40,7 @@ public class ContainersPage extends HomeTabAdvancedPage<ContainersPage, Containe
     private ContainersPageValidator validator;
 
     public ProvisionAContainerPage provisionAContainer() {
+        LOG.info("Creating a container");
         executeInFrame(0, () -> {
             $(NEW_CONTAINER_BUTTON).click();
             waitForElementToStopMoving($(HomeTabSelectors.CHILD_PAGE_SLIDE));
@@ -51,6 +52,7 @@ public class ContainersPage extends HomeTabAdvancedPage<ContainersPage, Containe
     }
 
     public ContainersPage stopContainer(String namePrefix) {
+        LOG.info(String.format("Stopping container with name prefix: [%s]", namePrefix));
         executeInFrame(0, () -> {
             SelenideElement container = getContainerCard(namePrefix);
             waitForElementToStopMoving(container);
@@ -61,6 +63,7 @@ public class ContainersPage extends HomeTabAdvancedPage<ContainersPage, Containe
     }
 
     public ContainersPage deleteContainer(String namePrefix) {
+        LOG.info(String.format("Deleting container with name prefix: [%s]", namePrefix));
         executeInFrame(0, () -> {
             SelenideElement container = getContainerCard(namePrefix);
             waitForElementToStopMoving(container);
@@ -74,6 +77,7 @@ public class ContainersPage extends HomeTabAdvancedPage<ContainersPage, Containe
     }
 
     public ContainersPage scaleContainer(String namePrefix) {
+        LOG.info(String.format("Scaling container with name prefix: [%s]", namePrefix));
         executeInFrame(0, () -> {
             SelenideElement container = getContainerCard(namePrefix);
             waitForElementToStopMoving(container);
@@ -92,6 +96,7 @@ public class ContainersPage extends HomeTabAdvancedPage<ContainersPage, Containe
 
     @Override
     public ContainersPage refresh() {
+        LOG.info("Refreshing...");
         executeInFrame(0, () -> $(REFRESH_BUTTON).click());
         return getThis();
     }

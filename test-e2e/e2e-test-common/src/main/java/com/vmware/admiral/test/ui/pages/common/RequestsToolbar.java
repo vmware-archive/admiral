@@ -49,6 +49,8 @@ public class RequestsToolbar extends BasicClass {
     }
 
     public void waitForLastRequestToSucceed(int timeout) {
+        LOG.info(
+                String.format("Waiting for [%d] seconds for the last request to succeed", timeout));
         executeInFrame(0, () -> {
             waitForElementToStopMoving($(REQUESTS_BUTTON));
             try {

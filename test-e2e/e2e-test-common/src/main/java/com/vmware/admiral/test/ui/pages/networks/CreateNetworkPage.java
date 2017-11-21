@@ -26,9 +26,8 @@ import com.vmware.admiral.test.ui.pages.common.CreateResourcePage;
 public class CreateNetworkPage
         extends CreateResourcePage<CreateNetworkPage, CreateNetworkPageValidator> {
 
-    private final By BACK_BUTTON = By
-            .cssSelector(
-                    ".create-network.closable-view.slide-and-fade-transition .fa.fa-chevron-circle-left");
+    private final By BACK_BUTTON = By.cssSelector(
+            ".create-network.closable-view.slide-and-fade-transition .fa.fa-chevron-circle-left");
     private final By NAME_INPUT = By.cssSelector(".form-group.network-name .form-control");
     private final By ADD_HOST_BUTTON = By
             .cssSelector(".multicolumn-input-add:not([style]):not([href])");
@@ -40,11 +39,13 @@ public class CreateNetworkPage
     private CreateNetworkValidator createValidator;
 
     public CreateNetworkPage setName(String name) {
+        LOG.info(String.format("Setting name: [%s]", name));
         executeInFrame(0, () -> $(NAME_INPUT).sendKeys(name));
         return this;
     }
 
     public CreateNetworkPage addHostByName(String hostName) {
+        LOG.info(String.format("Adding host by name: [%s]", hostName));
         executeInFrame(0, () -> {
             SelenideElement emptyRow = findEmptyRowOrCreate();
             emptyRow.click();
@@ -69,6 +70,7 @@ public class CreateNetworkPage
 
     @Override
     public void cancel() {
+        LOG.info("Cancelling...");
         executeInFrame(0, () -> $(BACK_BUTTON).click());
     }
 
@@ -83,6 +85,7 @@ public class CreateNetworkPage
 
     @Override
     public CreateNetworkValidator submit() {
+        LOG.info("Submitting...");
         executeInFrame(0, () -> $(CREATE_NETWORK_BUTTON).click());
         if (Objects.isNull(createValidator)) {
             createValidator = new CreateNetworkValidator();

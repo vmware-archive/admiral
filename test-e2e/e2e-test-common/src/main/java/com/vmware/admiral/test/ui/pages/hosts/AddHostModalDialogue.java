@@ -42,18 +42,21 @@ public class AddHostModalDialogue
     }
 
     public AddHostModalDialogue setName(String name) {
+        LOG.info(String.format("Setting host name: [%s]", name));
         $(URL_INPUT).clear();
         $(NAME_INPUT).sendKeys(name);
         return this;
     }
 
     public AddHostModalDialogue setDescription(String description) {
+        LOG.info(String.format("Setting description: [%s]", description));
         $(DESCRIPTION_INPUT).clear();
         $(DESCRIPTION_INPUT).sendKeys(description);
         return this;
     }
 
     public AddHostModalDialogue setHostType(HostType hostType) {
+        LOG.info(String.format("Setting host type: [%s]", hostType.toString()));
         if (hostType == HostType.DOCKER) {
             $(HOST_TYPE_OPTIONS).selectOptionByValue(HostType.DOCKER.toString());
         } else {
@@ -63,6 +66,7 @@ public class AddHostModalDialogue
     }
 
     public AddHostModalDialogue setUrl(String url) {
+        LOG.info(String.format("Setting host url: [%s]", url));
         $(URL_INPUT).clear();
         $(URL_INPUT).sendKeys(url);
         return this;
@@ -70,11 +74,13 @@ public class AddHostModalDialogue
 
     @Override
     protected void confirmDialogue() {
+        LOG.info("Submitting...");
         $(NEW_CONTAINER_HOST_SAVE_BUTTON).click();
     }
 
     @Override
     public void cancel() {
+        LOG.info("Cancelling...");
         $(NEW_CONTAINER_HOST_CANCEL_BUTTON).click();
         $(MODAL_BACKDROP).should(disappear);
     }

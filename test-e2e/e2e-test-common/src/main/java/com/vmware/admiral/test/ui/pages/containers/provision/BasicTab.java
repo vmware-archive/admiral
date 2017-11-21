@@ -33,16 +33,19 @@ public class BasicTab extends ProvisionAContainerPage {
             .cssSelector(".inline-input.form-control[name*=\"command\"]");
 
     public BasicTab setImage(String image) {
+        LOG.info(String.format("Setting image: [%s]", image));
         executeInFrame(0, () -> $(IMAGE_FIELD).sendKeys(image));
         return this;
     }
 
     public BasicTab setTag(String tag) {
+        LOG.info(String.format("Setting tag: [%s]", tag));
         executeInFrame(0, () -> $(TAG_FIELD).sendKeys(tag));
         return this;
     }
 
     public BasicTab setName(String name) {
+        LOG.info(String.format("Setting container name: [%s]", name));
         executeInFrame(0, () -> {
             $(NAME_FIELD).clear();
             $(NAME_FIELD).sendKeys(name);
@@ -51,6 +54,7 @@ public class BasicTab extends ProvisionAContainerPage {
     }
 
     public BasicTab addCommand(String command) {
+        LOG.info(String.format("Adding command: [%s]", command));
         executeInFrame(0, () -> findOrCreateEmptyRow().sendKeys(command));
         return this;
     }
@@ -63,16 +67,4 @@ public class BasicTab extends ProvisionAContainerPage {
         $(ADD_COMMAND_BUTTON).click();
         return $$(ALL_INPUT_ROWS).last();
     }
-
-    @Override
-    public ProvisionAContainerPageValidator validate() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public ProvisionAContainerPage getThis() {
-        return this;
-    }
-
 }

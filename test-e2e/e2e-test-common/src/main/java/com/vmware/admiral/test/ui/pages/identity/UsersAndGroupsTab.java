@@ -26,6 +26,7 @@ public class UsersAndGroupsTab extends IdentityManagementPage {
             .cssSelector(".btn.btn-sm.btn-secondary:nth-child(2)");
 
     public UsersAndGroupsTab assignCloudAdminRole(String userId) {
+        LOG.info(String.format("Assigning cloud administrator role to: [%s]", userId));
         $(DEARCH_FIELD).clear();
         $(DEARCH_FIELD).sendKeys(userId + "\n");
         waitForElementToAppearAndDisappear(GlobalSelectors.SPINNER);
@@ -40,6 +41,7 @@ public class UsersAndGroupsTab extends IdentityManagementPage {
     }
 
     public UsersAndGroupsTab unassignCloudAdminRole(String userId) {
+        LOG.info(String.format("Unassigning cloud administrator role to: [%s]", userId));
         $(DEARCH_FIELD).clear();
         $(DEARCH_FIELD).sendKeys(userId + "\n");
         waitForElementToAppearAndDisappear(GlobalSelectors.SPINNER);

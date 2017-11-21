@@ -49,6 +49,7 @@ public class VICWebClient extends AdmiralWebClient<VICWebClient, VICWebClientVal
         Objects.requireNonNull(username, "username parameter cannot be null");
         open(url);
         try {
+            LOG.info(String.format("Logging in with user: [%s]", username));
             $(USERNAME_INPUT).sendKeys(username);
             $(PASSWORD_INPUT).sendKeys(password);
             $(SUBMIT_BUTTON).click();
@@ -76,6 +77,7 @@ public class VICWebClient extends AdmiralWebClient<VICWebClient, VICWebClientVal
 
     @Override
     public void logOut() {
+        LOG.info("Logging out...");
         $(GlobalSelectors.LOGGED_USER_DISPLAY).click();
         $(GlobalSelectors.LOGOUT_BUTTON).should(Condition.appear).click();
         $(By.id("username")).shouldBe(Condition.visible);

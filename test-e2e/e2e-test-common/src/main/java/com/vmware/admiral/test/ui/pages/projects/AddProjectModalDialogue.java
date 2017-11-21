@@ -36,29 +36,34 @@ public class AddProjectModalDialogue
     private AddProjectModalDialogueValidator validator;
 
     public AddProjectModalDialogue setName(String name) {
+        LOG.info(String.format("Setting name: [%s]", name));
         $(NAME_INPUT_FIELD).clear();
         $(NAME_INPUT_FIELD).sendKeys(name);
         return this;
     }
 
     public AddProjectModalDialogue setDescription(String description) {
+        LOG.info(String.format("Setting description: [%s]", description));
         $(DESCRIPTION_INPUT_FIELD).clear();
         $(DESCRIPTION_INPUT_FIELD).sendKeys(description);
         return this;
     }
 
     public AddProjectModalDialogue setIsPublic(boolean isPublic) {
+        LOG.info(String.format("Setting public: [%s]", isPublic));
         $(PUBLIC_CHECKBOX).setSelected(isPublic);
         return this;
     }
 
     @Override
     public void cancel() {
+        LOG.info("Cancelling...");
         $(CANCEL_BUTTON).shouldBe(Condition.enabled).click();
     }
 
     @Override
     protected void confirmDialogue() {
+        LOG.info("Submitting...");
         $(SAVE_BUTTON).click();
     }
 
