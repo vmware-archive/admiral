@@ -52,6 +52,9 @@
 
     .dropdown-title.placeholder {
       color: #999 !important;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      width: 100%;
     }
 
     .caret {
