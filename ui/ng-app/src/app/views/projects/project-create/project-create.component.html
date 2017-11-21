@@ -21,7 +21,7 @@
           <label for="name" class="required">{{"projects.edit.name" | i18n}}</label>
           <label for="name" aria-haspopup="true" role="tooltip" class="tooltip tooltip-validation tooltip-sm tooltip-right"
             [class.invalid]="projectForm.get('name').invalid && (projectForm.get('name').dirty || projectForm.get('name').touched)">
-            <input id="name" type="text" formControlName="name">
+            <input id="name" [attr.disabled]="isNameInputDisabled" type="text" formControlName="name">
             <span class="tooltip-content">{{"projects.edit.nameRequired" | i18n}}</span>
           </label>
         </div>

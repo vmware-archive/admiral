@@ -37,6 +37,7 @@ import com.vmware.admiral.auth.util.SecurityContextUtil;
 import com.vmware.admiral.auth.util.UserGroupsUpdater;
 import com.vmware.admiral.common.serialization.ReleaseConstants;
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.UniquePropertiesUtil;
 import com.vmware.admiral.service.common.UniquePropertiesService;
@@ -92,6 +93,8 @@ public class ProjectService extends StatefulService {
     public static final String UNIQUE_PROJECT_INDEXES_SERVICE_LINK = UriUtils
             .buildUriPath(UniquePropertiesService.FACTORY_LINK,
                     UniquePropertiesService.PROJECT_INDEXES_ID);
+
+    protected volatile Boolean isVic;
 
     public static ProjectState buildDefaultProjectInstance() {
         ProjectState project = new ProjectState();
@@ -414,8 +417,23 @@ public class ProjectService extends StatefulService {
             return;
         }
 
+        if (isVic == null) {
+            ConfigurationUtil.getConfigProperty(this, ConfigurationUtil.VIC_MODE_PROPERTY,
+                    (vic) -> {
+                        isVic = Boolean.valueOf(vic);
+                        handlePatch(patch);
+                    });
+            return;
+        }
+
         ProjectState projectPatch = patch.getBody(ProjectState.class);
         ProjectState currentState = getState(patch);
+
+        if (isVic && projectPatch.name != null && !projectPatch.name.equals(currentState.name)) {
+            patch.fail(new LocalizableValidationException("Cannot change project name!",
+                    "auth.project.update.name.vic"));
+            return;
+        }
 
         DeferredResult<Boolean> deferredResult;
 

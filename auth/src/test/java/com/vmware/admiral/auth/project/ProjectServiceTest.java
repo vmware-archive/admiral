@@ -42,6 +42,7 @@ import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.auth.util.ProjectUtil;
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
@@ -1115,6 +1116,25 @@ public class ProjectServiceTest extends AuthBaseTest {
             assertTrue(ex.getMessage().contains("test-name"));
         }
 
+    }
+
+    @Test
+    public void testPatchProjectNameInVicMode() throws Throwable {
+        ConfigurationState vicConfigProperty = new ConfigurationState();
+        vicConfigProperty.documentSelfLink = ConfigurationUtil.VIC_MODE_PROPERTY;
+        vicConfigProperty.key = ConfigurationUtil.VIC_MODE_PROPERTY;
+        vicConfigProperty.value = Boolean.TRUE.toString();
+        vicConfigProperty = doPost(vicConfigProperty, ConfigurationFactoryService.SELF_LINK);
+
+        ProjectState testProject = createProject("test-name");
+        testProject.name = "another-name";
+
+        try {
+            doPatch(testProject, testProject.documentSelfLink);
+            fail("Project patch with different name should've failed");
+        } catch (Exception ex) {
+            assertTrue(ex instanceof LocalizableValidationException);
+        }
     }
 
     @Test

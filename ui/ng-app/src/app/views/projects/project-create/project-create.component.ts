@@ -15,6 +15,7 @@ import { DocumentService } from '../../../utils/document.service';
 import { Component, AfterViewInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormGroup, FormControl, Validators } from "@angular/forms";
+import { FT } from "../../../utils/ft";
 
 import { BaseDetailsComponent } from '../../../components/base/base-details.component';
 
@@ -45,6 +46,10 @@ export class ProjectCreateComponent extends BaseDetailsComponent implements Afte
 
   get title() {
     return this.isEdit ? "projects.edit.titleEdit" : "projects.edit.titleNew";
+  }
+
+  get isNameInputDisabled() {
+    return this.isEdit && FT.isVic() ? '' : null;
   }
 
   entityInitialized() {
