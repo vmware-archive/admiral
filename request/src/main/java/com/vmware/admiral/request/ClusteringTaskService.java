@@ -265,6 +265,7 @@ public class ClusteringTaskService extends
         requestBrokerState.operation = RequestBrokerState.PROVISION_RESOURCE_OPERATION;
         requestBrokerState.groupResourcePlacementLink = groupResourcePlacementLink;
         requestBrokerState.tenantLinks = state.tenantLinks;
+        requestBrokerState.requestTrackerLink = state.requestTrackerLink;
         requestBrokerState.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskState.TaskStage.STARTED, SubStage.COMPLETED, TaskState.TaskStage.FAILED,
                 SubStage.ERROR);
