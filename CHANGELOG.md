@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 1.2.2-SNAPSHOT
+## 1.2.2
 
 * Increased the security by default by TLSv1.0. More information [here](https://github.com/vmware/admiral/wiki/Configuration-guide#allow-usage-of-tls-v10).
 
