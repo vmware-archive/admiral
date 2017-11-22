@@ -20,7 +20,9 @@ import com.codeborne.selenide.Condition;
 import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.common.BasicPage;
+import com.vmware.admiral.test.ui.pages.common.PageProxy;
 import com.vmware.admiral.test.ui.pages.common.PageValidator;
+import com.vmware.admiral.test.ui.pages.main.HomeTabSelectors;
 import com.vmware.admiral.test.ui.pages.templates.EditTemplatePage.EditTemplatePageValidator;
 
 public class EditTemplatePage extends BasicPage<EditTemplatePage, EditTemplatePageValidator> {
@@ -28,6 +30,11 @@ public class EditTemplatePage extends BasicPage<EditTemplatePage, EditTemplatePa
     private static final By BACK_BUTTON = By.cssSelector(".fa.fa-chevron-circle-left");
 
     private EditTemplatePageValidator validator;
+    private PageProxy parentProxy;
+
+    public EditTemplatePage(PageProxy parentProxy) {
+        this.parentProxy = parentProxy;
+    }
 
     @Override
     public EditTemplatePageValidator validate() {
@@ -38,7 +45,18 @@ public class EditTemplatePage extends BasicPage<EditTemplatePage, EditTemplatePa
     }
 
     public void navigateBack() {
-        executeInFrame(0, () -> waitForElementToStopMoving($(BACK_BUTTON)).click());
+        LOG.info("Navigating back...");
+        executeInFrame(0, () -> {
+            waitForElementToStopMoving(BACK_BUTTON).click();
+        });
+        parentProxy.waitToLoad();
+    }
+
+    @Override
+    public void waitToLoad() {
+        validate().validateIsCurrentPage();
+        executeInFrame(0, () -> waitForElementToStopMoving(HomeTabSelectors.CHILD_PAGE_SLIDE));
+        waitForSpinner();
     }
 
     @Override
@@ -52,7 +70,8 @@ public class EditTemplatePage extends BasicPage<EditTemplatePage, EditTemplatePa
 
         @Override
         public PageValidator validateIsCurrentPage() {
-            $(PAGE_TITLE).shouldHave(Condition.text("Edit Template"));
+            executeInFrame(0, () -> $(HomeTabSelectors.CHILD_PAGE_SLIDE).$(PAGE_TITLE)
+                    .shouldHave(Condition.text("Edit Template")));
             return this;
         }
 

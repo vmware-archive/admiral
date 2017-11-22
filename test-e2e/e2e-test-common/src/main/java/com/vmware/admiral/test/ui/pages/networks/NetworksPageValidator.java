@@ -12,8 +12,10 @@
 package com.vmware.admiral.test.ui.pages.networks;
 
 import static com.codeborne.selenide.Selenide.$;
+import static com.codeborne.selenide.Selenide.actions;
 
 import com.codeborne.selenide.Condition;
+import com.codeborne.selenide.SelenideElement;
 
 import org.openqa.selenium.By;
 
@@ -24,6 +26,8 @@ public class NetworksPageValidator extends PageValidator {
 
     private final By PAGE_TITLE = By.cssSelector(".list-holder .title>span:nth-child(1)");
     private final By ITEMS_COUNT = By.cssSelector(".title .total-items");
+    private final By DELETE_NETWORK_ERROR_MESSAGE = By
+            .cssSelector(".alert.alert-warning.alert-dismissible");
 
     private NetworksPage page;
 
@@ -42,12 +46,29 @@ public class NetworksPageValidator extends PageValidator {
     }
 
     public NetworksPageValidator validateNetworkExistsWithName(String namePrefix) {
-        executeInFrame(0, () -> page.getNetworkCard(namePrefix).should(Condition.exist));
+        executeInFrame(0, () -> $(page.getNetworkCardSelector(namePrefix)).should(Condition.exist));
         return this;
     }
 
     public NetworksPageValidator validateNetworkDoesNotExist(String namePrefix) {
-        executeInFrame(0, () -> page.getNetworkCard(namePrefix).shouldNot(Condition.exist));
+        executeInFrame(0,
+                () -> $(page.getNetworkCardSelector(namePrefix)).shouldNot(Condition.exist));
+        return this;
+    }
+
+    public NetworksPageValidator validateNetworkCannotBeDeleted(String namePrefix) {
+        executeInFrame(0, () -> {
+            SelenideElement card = waitForElementToStopMoving(
+                    page.getNetworkCardSelector(namePrefix));
+            actions().moveToElement(card)
+                    .click(card.$(page.CARD_RELATIVE_DELETE_BUTTON))
+                    .build()
+                    .perform();
+            card.$(DELETE_NETWORK_ERROR_MESSAGE)
+                    .should(Condition.appear)
+                    .shouldHave(Condition.text("There are connected containers."))
+                    .should(Condition.disappear);
+        });
         return this;
     }
 

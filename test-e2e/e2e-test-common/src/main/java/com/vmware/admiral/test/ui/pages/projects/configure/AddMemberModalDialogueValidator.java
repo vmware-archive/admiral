@@ -15,14 +15,16 @@ import static com.codeborne.selenide.Selenide.$;
 
 import com.codeborne.selenide.Condition;
 
+import com.vmware.admiral.test.ui.pages.common.BasicClass;
 import com.vmware.admiral.test.ui.pages.common.FailableActionValidator;
 import com.vmware.admiral.test.ui.pages.main.GlobalSelectors;
 
-public class AddMemberModalDialogueValidator implements FailableActionValidator {
+public class AddMemberModalDialogueValidator extends BasicClass implements FailableActionValidator {
 
     @Override
     public void expectSuccess() {
         $(GlobalSelectors.MODAL_BACKDROP).should(Condition.disappear);
+        waitForSpinner();
     }
 
     @Override

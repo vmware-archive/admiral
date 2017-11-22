@@ -25,6 +25,13 @@ public class TemplatesPageValidator extends PageValidator {
     private final By PAGE_TITLE = By.cssSelector(".title>span:nth-child(1)");
     private final By CREATE_TEMPLATE_SLIDE = By
             .cssSelector(".closable-view.slide-and-fade-transition");
+    private final By ITEMS_COUNT = By.cssSelector(".title .total-items");
+
+    private final TemplatesPage page;
+
+    public TemplatesPageValidator(TemplatesPage page) {
+        this.page = page;
+    }
 
     @Override
     public TemplatesPageValidator validateIsCurrentPage() {
@@ -33,6 +40,28 @@ public class TemplatesPageValidator extends PageValidator {
             $(PAGE_TITLE).shouldHave(Condition.exactText("Templates"));
             $(CREATE_TEMPLATE_SLIDE).shouldNot(Condition.exist);
         });
+        return this;
+    }
+
+    public TemplatesPageValidator validateTemplateExistsWithName(String name) {
+        executeInFrame(0, () -> $(page.getTemplateCardSelector(name)).should(Condition.exist));
+        return this;
+    }
+
+    public TemplatesPageValidator validateTemplateDoesNotWithName(String name) {
+        executeInFrame(0, () -> $(page.getTemplateCardSelector(name)).shouldNot(Condition.exist));
+        return this;
+    }
+
+    public TemplatesPageValidator validateTemplatesCount(int count) {
+        String countText = executeInFrame(0, () -> {
+            return $(ITEMS_COUNT).getText();
+        });
+        int actualCount = Integer.parseInt(countText.substring(1, countText.length() - 1));
+        if (actualCount != count) {
+            throw new AssertionError(String.format(
+                    "Templates count mismatch, expected: [%d], actual: [%d]", count, actualCount));
+        }
         return this;
     }
 

@@ -25,4 +25,6 @@ public abstract class BasicPage<P extends BasicPage<P, V>, V extends PageValidat
 
     public abstract P getThis();
 
+    public abstract void waitToLoad();
+
 }

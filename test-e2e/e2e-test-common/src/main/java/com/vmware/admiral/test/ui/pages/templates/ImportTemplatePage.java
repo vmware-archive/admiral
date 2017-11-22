@@ -20,7 +20,9 @@ import com.codeborne.selenide.Condition;
 import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.common.CreateResourcePage;
+import com.vmware.admiral.test.ui.pages.common.PageProxy;
 import com.vmware.admiral.test.ui.pages.common.PageValidator;
+import com.vmware.admiral.test.ui.pages.main.HomeTabSelectors;
 import com.vmware.admiral.test.ui.pages.templates.ImportTemplatePage.ImportTemplatePageValidator;
 
 public class ImportTemplatePage
@@ -32,6 +34,12 @@ public class ImportTemplatePage
     private ImportTemplatePageValidator validator;
     private ImportTemplateValidator importValidator;
 
+    private PageProxy parentProxy;
+
+    public ImportTemplatePage(PageProxy parentProxy) {
+        this.parentProxy = parentProxy;
+    }
+
     @Override
     public ImportTemplatePageValidator validate() {
         if (Objects.isNull(validator)) {
@@ -42,16 +50,25 @@ public class ImportTemplatePage
 
     @Override
     public void cancel() {
+        LOG.info("Cancelling...");
         executeInFrame(0, () -> $(BACK_BUTTON).click());
+        parentProxy.waitToLoad();
     }
 
     @Override
     public ImportTemplateValidator submit() {
+        LOG.info("Submitting...");
         executeInFrame(0, () -> $(SUBMIT_BUTTON).click());
         if (Objects.isNull(importValidator)) {
             importValidator = new ImportTemplateValidator();
         }
         return importValidator;
+    }
+
+    @Override
+    public void waitToLoad() {
+        validate().validateIsCurrentPage();
+        executeInFrame(0, () -> waitForElementToStopMoving(HomeTabSelectors.CHILD_PAGE_SLIDE));
     }
 
     @Override

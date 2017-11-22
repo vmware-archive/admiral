@@ -15,14 +15,15 @@ import static com.codeborne.selenide.Selenide.$;
 
 import com.codeborne.selenide.Condition;
 
+import com.vmware.admiral.test.ui.pages.common.BasicClass;
 import com.vmware.admiral.test.ui.pages.common.FailableActionValidator;
 import com.vmware.admiral.test.ui.pages.main.HomeTabSelectors;
 
-public class CreateNetworkValidator implements FailableActionValidator {
+public class CreateNetworkValidator extends BasicClass implements FailableActionValidator {
 
     @Override
     public void expectSuccess() {
-        $(HomeTabSelectors.CHILD_PAGE_SLIDE).should(Condition.disappear);
+        executeInFrame(0, () -> $(HomeTabSelectors.CHILD_PAGE_SLIDE).should(Condition.disappear));
     }
 
     @Override

@@ -28,6 +28,11 @@ public class LogsPage extends BasicPage<LogsPage, LogsPageValidator> {
     }
 
     @Override
+    public void waitToLoad() {
+        validate().validateIsCurrentPage();
+    }
+
+    @Override
     public LogsPage getThis() {
         return this;
     }

@@ -19,7 +19,13 @@ import com.codeborne.selenide.ElementsCollection;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
+import com.vmware.admiral.test.ui.pages.common.PageProxy;
+
 public class BasicTab extends ProvisionAContainerPage {
+
+    public BasicTab(PageProxy parentProxy) {
+        super(parentProxy);
+    }
 
     private final By IMAGE_FIELD = By
             .cssSelector(".image-name-input.search-input .form-control.tt-input");

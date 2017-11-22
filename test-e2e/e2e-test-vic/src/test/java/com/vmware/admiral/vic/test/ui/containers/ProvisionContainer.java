@@ -48,12 +48,12 @@ public class ProvisionContainer extends BaseTest {
                 .submit()
                 .expectSuccess();
         containers.requests()
-                .waitForLastRequestToSucceed(30);
+                .waitForLastRequestToSucceed(60);
         containers.refresh()
                 .validate(v -> v.validateContainerExistsWithName(CONTAINER_NAME))
                 .deleteContainer(CONTAINER_NAME)
                 .requests()
-                .waitForLastRequestToSucceed(20);
+                .waitForLastRequestToSucceed(60);
         containers.refresh()
                 .validate()
                 .validateContainerDoesNotExistWithName(CONTAINER_NAME);

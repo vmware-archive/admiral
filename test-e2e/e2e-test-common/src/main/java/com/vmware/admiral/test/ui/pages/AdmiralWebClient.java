@@ -33,16 +33,20 @@ public abstract class AdmiralWebClient<P extends AdmiralWebClient<P, V>, V exten
 
     public abstract AdministrationTab<? extends AdministrationTab<?, ?>, ? extends AdministrationTabValidator<?>> navigateToAdministrationTab();
 
-    protected void clickHomeIfNotActive() {
+    protected boolean clickHomeIfNotActive() {
         if (!$(GlobalSelectors.HOME_BUTTON).has(Condition.cssClass("active"))) {
             $(GlobalSelectors.HOME_BUTTON).click();
+            return true;
         }
+        return false;
     }
 
-    protected void clickAdministrationIfNotActive() {
+    protected boolean clickAdministrationIfNotActive() {
         if (!$(GlobalSelectors.ADMINISTRATION_BUTTON).has(Condition.cssClass("active"))) {
             $(GlobalSelectors.ADMINISTRATION_BUTTON).click();
+            return true;
         }
+        return false;
     }
 
 }

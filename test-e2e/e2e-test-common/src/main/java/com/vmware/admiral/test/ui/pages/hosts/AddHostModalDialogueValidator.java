@@ -42,9 +42,9 @@ public class AddHostModalDialogueValidator extends BasicClass implements Failabl
         Wait().withTimeout(AdmiralWebClientConfiguration.getAddHostTimeoutSeconds(),
                 TimeUnit.SECONDS)
                 .until(f -> {
-                    return $(GlobalSelectors.MODAL_BACKDROP).is(Condition.hidden)
-                            && $(GlobalSelectors.SPINNER).is(Condition.hidden);
+                    return $(GlobalSelectors.MODAL_BACKDROP).is(Condition.hidden);
                 });
+        waitForSpinner();
     }
 
     @Override
@@ -63,18 +63,18 @@ public class AddHostModalDialogueValidator extends BasicClass implements Failabl
                 TimeUnit.SECONDS)
                 .until(ExpectedConditions.or(
                         d -> {
-                            return $(GlobalSelectors.MODAL_BACKDROP).is(Condition.hidden)
-                                    && $(GlobalSelectors.SPINNER).is(Condition.hidden);
+                            return $(GlobalSelectors.MODAL_BACKDROP).is(Condition.hidden);
                         },
                         d -> {
                             if ($(CERTIFICATE_CONFIRMATION_DIALOGUE).is(Condition.visible)) {
-                                waitForElementToStopMoving($(CERTIFICATE_CONFIRMATION_BUTTON))
-                                        .click();
-                                expectSuccess();
+                                waitForElementToStopMoving(CERTIFICATE_CONFIRMATION_BUTTON).click();
+                                Wait().until(dr -> $(GlobalSelectors.MODAL_BACKDROP)
+                                        .is(Condition.hidden));
                                 return true;
                             }
                             return false;
                         }));
+        waitForSpinner();
     }
 
     private void closeErrorMessage() {

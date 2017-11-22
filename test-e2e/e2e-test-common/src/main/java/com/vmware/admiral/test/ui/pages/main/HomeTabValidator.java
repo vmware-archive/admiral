@@ -106,13 +106,11 @@ public abstract class HomeTabValidator<V extends HomeTabValidator<V>>
     }
 
     public V validateCurrentProjectIs(String projectName) {
-        $(HomeTabSelectors.CURRENT_PROJECT_INDICATOR).shouldBe(Condition.visible)
-                .shouldNotHave(Condition.exactTextCaseSensitive("--"));
-        String actualProjectname = $(HomeTabSelectors.CURRENT_PROJECT_INDICATOR).getText();
-        if (!actualProjectname.equals(projectName)) {
+        String currentProjectName = page.getCurrentProject();
+        if (!currentProjectName.equals(projectName)) {
             throw new AssertionError(
                     String.format("Project name mismatch: expected[%s], actual[%s]", projectName,
-                            actualProjectname));
+                            currentProjectName));
         }
         return getThis();
     }

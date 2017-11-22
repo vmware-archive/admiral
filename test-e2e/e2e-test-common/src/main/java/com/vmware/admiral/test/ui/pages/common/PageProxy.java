@@ -11,21 +11,15 @@
 
 package com.vmware.admiral.test.ui.pages.common;
 
-import java.util.Objects;
+public class PageProxy {
 
-public abstract class HomeTabAdvancedPage<P extends HomeTabAdvancedPage<P, V>, V extends PageValidator>
-        extends HomeTabPage<P, V> {
+    private BasicPage<?, ?> page;
 
-    private RequestsToolbar requestsToolbar;
-
-    private EventLogToolbar eventLogToolbar;
-
-    public RequestsToolbar requests() {
-        return Objects.isNull(requestsToolbar) ? new RequestsToolbar() : requestsToolbar;
+    public PageProxy(BasicPage<?, ?> page) {
+        this.page = page;
     }
 
-    public EventLogToolbar eventLogs() {
-        return Objects.isNull(eventLogToolbar) ? new EventLogToolbar() : eventLogToolbar;
+    public void waitToLoad() {
+        page.waitToLoad();
     }
-
 }

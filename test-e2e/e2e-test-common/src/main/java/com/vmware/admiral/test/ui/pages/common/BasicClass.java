@@ -24,31 +24,37 @@ import com.codeborne.selenide.SelenideElement;
 import com.google.common.base.Supplier;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.Dimension;
 import org.openqa.selenium.Point;
 import org.openqa.selenium.StaleElementReferenceException;
+import org.openqa.selenium.TimeoutException;
+
+import com.vmware.admiral.test.ui.pages.main.GlobalSelectors;
 
 public class BasicClass {
 
     protected Logger LOG = Logger.getLogger(getClass().getName());
 
-    private final int WAIT_FOR_MOVING_ELEMENT_CHECK_INTERVAL_MILISECONDS = 30;
-    private final int WAIT_FOR_FLASHING_ELEMENT_MILISECONDS = 1;
+    private final int WAIT_FOR_MOVING_ELEMENT_CHECK_INTERVAL_MILISECONDS = 150;
 
-    protected SelenideElement waitForElementToStopMoving(SelenideElement element) {
+    protected SelenideElement waitForElementToStopMoving(By selector) {
         final int TOTAL_COUNT = 2;
         AtomicInteger count = new AtomicInteger(TOTAL_COUNT);
         Wait().pollingEvery(1, TimeUnit.MILLISECONDS)
                 .withTimeout(10, TimeUnit.SECONDS)
                 .ignoring(StaleElementReferenceException.class)
                 .until((f) -> {
+                    SelenideElement element = $(selector);
                     Point initialPos = element.getCoordinates().inViewPort();
+                    Dimension initialSize = element.getSize();
                     try {
                         Thread.sleep(WAIT_FOR_MOVING_ELEMENT_CHECK_INTERVAL_MILISECONDS);
                     } catch (InterruptedException e) {
                         throw new RuntimeException(
                                 "Waiting for element to stop moving was interrupted: ", e);
                     }
-                    if (element.getCoordinates().inViewPort().equals(initialPos)) {
+                    if (element.getCoordinates().inViewPort().equals(initialPos)
+                            && element.getSize().equals(initialSize)) {
                         if (count.get() == 0) {
                             return true;
                         }
@@ -60,18 +66,25 @@ public class BasicClass {
                     }
                     return false;
                 });
-        return element;
+        return $(selector);
     }
 
-    protected void waitForElementToAppearAndDisappear(By element) {
-        Wait().pollingEvery(WAIT_FOR_FLASHING_ELEMENT_MILISECONDS,
-                TimeUnit.MILLISECONDS).until(d -> {
-                    return $(element).is(Condition.visible);
-                });
-        Wait().pollingEvery(WAIT_FOR_FLASHING_ELEMENT_MILISECONDS,
-                TimeUnit.MILLISECONDS).until(d -> {
-                    return $(element).is(Condition.hidden);
-                });
+    private void waitForElementToAppearAndDisappear(By element) {
+        try {
+            Wait().withTimeout(3, TimeUnit.SECONDS)
+                    .until(d -> {
+                        return $(element).is(Condition.visible);
+                    });
+        } catch (TimeoutException e) {
+            // element is not going to appear
+        }
+        Wait().until(d -> {
+            return $(element).is(Condition.hidden);
+        });
+    }
+
+    protected void waitForSpinner() {
+        waitForElementToAppearAndDisappear(GlobalSelectors.SPINNER);
     }
 
     protected void executeInFrame(int frame, Runnable action) {

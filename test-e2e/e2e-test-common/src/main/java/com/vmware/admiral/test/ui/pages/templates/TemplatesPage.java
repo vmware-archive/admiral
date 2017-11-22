@@ -16,11 +16,13 @@ import static com.codeborne.selenide.Selenide.actions;
 
 import java.util.Objects;
 
+import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.SelenideElement;
 
 import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.common.HomeTabAdvancedPage;
+import com.vmware.admiral.test.ui.pages.common.PageProxy;
 import com.vmware.admiral.test.ui.pages.main.HomeTabSelectors;
 
 public class TemplatesPage extends HomeTabAdvancedPage<TemplatesPage, TemplatesPageValidator> {
@@ -33,7 +35,7 @@ public class TemplatesPage extends HomeTabAdvancedPage<TemplatesPage, TemplatesP
     private final By CARD_RELATIVE_DELETE_BUTTON = By.cssSelector(".fa.fa-trash");
     private final By CARD_RELATIVE_DELETE_CONFIRMATION_BUTTON = By
             .cssSelector(".delete-inline-item-confirmation-confirm>div>a");
-    private final String TEMPLATE_NAME_CSS_SELECTOR = ".grid-item .title.truncateText";
+    private final String TEMPLATE_CARD_SELECTOR_BY_NAME = "html/body/div/div/div[2]/div[2]/div[1]/div[2]/div/div/div[3]/div/div/div/div/div[1]/div[2]/div[1][text()='%s']/../../../..";
 
     private TemplatesPageValidator validator;
     private ImportTemplatePage importTemplatePage;
@@ -42,55 +44,71 @@ public class TemplatesPage extends HomeTabAdvancedPage<TemplatesPage, TemplatesP
     @Override
     public TemplatesPageValidator validate() {
         if (Objects.isNull(validator)) {
-            validator = new TemplatesPageValidator();
+            validator = new TemplatesPageValidator(this);
         }
         return validator;
     }
 
     public ImportTemplatePage importTemplate() {
+        LOG.info("Importing template");
         executeInFrame(0, () -> {
             $(IMPORT_TEMPLATE_BUTTON).click();
-            waitForElementToStopMoving($(HomeTabSelectors.CHILD_PAGE_SLIDE));
+            waitForElementToStopMoving(HomeTabSelectors.CHILD_PAGE_SLIDE);
         });
         if (Objects.isNull(importTemplatePage)) {
-            importTemplatePage = new ImportTemplatePage();
+            importTemplatePage = new ImportTemplatePage(new PageProxy(this));
         }
+        importTemplatePage.waitToLoad();
         return importTemplatePage;
     }
 
     public CreateTemplatePage createTemplate() {
+        LOG.info("Creating template");
         executeInFrame(0, () -> {
             $(CREATE_TEMPLATE_BUTTON).click();
-            waitForElementToStopMoving($(HomeTabSelectors.CHILD_PAGE_SLIDE));
+            waitForElementToStopMoving(HomeTabSelectors.CHILD_PAGE_SLIDE);
         });
         if (Objects.isNull(createTemplatePage)) {
-            createTemplatePage = new CreateTemplatePage();
+            createTemplatePage = new CreateTemplatePage(new PageProxy(this));
         }
+        createTemplatePage.waitToLoad();
         return createTemplatePage;
     }
 
     public TemplatesPage deleteTemplate(String name) {
+        LOG.info(String.format("Deleting template with name: [%s]", name));
         executeInFrame(0, () -> {
-            SelenideElement card = getTemplateCard(name);
+            SelenideElement card = waitForElementToStopMoving(getTemplateCardSelector(name));
             actions().moveToElement(card)
                     .moveToElement(card.$(CARD_RELATIVE_DELETE_BUTTON))
                     .click()
                     .moveToElement(card.$(CARD_RELATIVE_DELETE_CONFIRMATION_BUTTON))
                     .click()
                     .build().perform();
+            waitForSpinner();
+            card.shouldNot(Condition.exist);
         });
         return this;
     }
 
-    SelenideElement getTemplateCard(String name) {
-        return $(By.cssSelector(TEMPLATE_NAME_CSS_SELECTOR + "[title=\"" + name + "\"]")).parent()
-                .parent().parent();
+    By getTemplateCardSelector(String name) {
+        return By.xpath(String.format(TEMPLATE_CARD_SELECTOR_BY_NAME, name));
     }
 
     @Override
     public TemplatesPage refresh() {
-        executeInFrame(0, () -> $(REFRESH_BUTTON).click());
+        LOG.info("Refreshing...");
+        executeInFrame(0, () -> {
+            $(REFRESH_BUTTON).click();
+            waitForSpinner();
+        });
         return this;
+    }
+
+    @Override
+    public void waitToLoad() {
+        validate().validateIsCurrentPage();
+        executeInFrame(0, () -> waitForSpinner());
     }
 
     @Override

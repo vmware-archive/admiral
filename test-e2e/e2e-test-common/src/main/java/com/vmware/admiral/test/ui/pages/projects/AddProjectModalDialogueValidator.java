@@ -19,7 +19,6 @@ import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.common.BasicClass;
 import com.vmware.admiral.test.ui.pages.common.FailableActionValidator;
-import com.vmware.admiral.test.ui.pages.main.GlobalSelectors;
 
 public class AddProjectModalDialogueValidator extends BasicClass
         implements FailableActionValidator {
@@ -33,7 +32,7 @@ public class AddProjectModalDialogueValidator extends BasicClass
     @Override
     public void expectSuccess() {
         $(MODAL_BACKDROP).should(Condition.disappear);
-        waitForElementToAppearAndDisappear(GlobalSelectors.SPINNER);
+        waitForSpinner();
     }
 
     @Override

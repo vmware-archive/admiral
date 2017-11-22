@@ -36,7 +36,8 @@ import org.junit.runners.model.Statement;
 public class SelenideClassRunner extends BlockJUnit4ClassRunner {
 
     private final String UNSUPPORTED_BROWSER_PREFIX = "[UNSUPPORTED BROWSER]";
-    private final String BROWSER_PROPERTY = "browser";
+    private final String BROWSER_PROPERTY_ONE = "selenide.browser";
+    private final String BROWSER_PROPERTY_TWO = "browser";
     private final String DEFAULT_BROWSER = "chrome";
     private final String SYSTEM_DEFINED_BROWSER;
     private final String USE_RUN_WITH_BROWSER_ANNOTATIONS_PROPERTY = "use.run.with.browser.annotations";
@@ -47,12 +48,8 @@ public class SelenideClassRunner extends BlockJUnit4ClassRunner {
 
     public SelenideClassRunner(Class<?> klass) throws InitializationError {
         super(klass);
-        String browser = System.getProperty(BROWSER_PROPERTY);
-        if (!Objects.isNull(browser)) {
-            SYSTEM_DEFINED_BROWSER = browser;
-        } else {
-            SYSTEM_DEFINED_BROWSER = DEFAULT_BROWSER;
-        }
+        SYSTEM_DEFINED_BROWSER = System.getProperty(BROWSER_PROPERTY_ONE,
+                System.getProperty(BROWSER_PROPERTY_TWO, DEFAULT_BROWSER));
         Configuration.browser = SYSTEM_DEFINED_BROWSER;
         String runWithBrowserValue = System.getProperty(USE_RUN_WITH_BROWSER_ANNOTATIONS_PROPERTY);
         if (!Objects.isNull(runWithBrowserValue)) {

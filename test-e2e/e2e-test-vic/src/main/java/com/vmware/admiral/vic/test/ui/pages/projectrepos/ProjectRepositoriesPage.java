@@ -36,13 +36,21 @@ public class ProjectRepositoriesPage
 
     @Override
     public ProjectRepositoriesPage refresh() {
+        LOG.info("Refreshing...");
         $(REFRESH_BUTTON).click();
+        waitForSpinner();
         return this;
     }
 
     @Override
     public ProjectRepositoriesPage getThis() {
         return this;
+    }
+
+    @Override
+    public void waitToLoad() {
+        validate().validateIsCurrentPage();
+        waitForSpinner();
     }
 
 }

@@ -85,7 +85,30 @@ public class VICWebClient extends AdmiralWebClient<VICWebClient, VICWebClientVal
 
     @Override
     public VICAdministrationTab navigateToAdministrationTab() {
-        clickAdministrationIfNotActive();
+        if (clickAdministrationIfNotActive()) {
+            LOG.info("Navigating to Administration tab");
+        }
+        getAdministrationTab().waitToLoad();
+        return getAdministrationTab();
+    }
+
+    @Override
+    public VICHomeTab navigateToHomeTab() {
+        if (clickHomeIfNotActive()) {
+            LOG.info("Navigating to Home tab");
+        }
+        getHomeTab().waitToLoad();
+        return getHomeTab();
+    }
+
+    protected VICHomeTab getHomeTab() {
+        if (Objects.isNull(vicHomeTab)) {
+            vicHomeTab = new VICHomeTab();
+        }
+        return vicHomeTab;
+    }
+
+    protected VICAdministrationTab getAdministrationTab() {
         if (Objects.isNull(vicAdministrationTab)) {
             vicAdministrationTab = new VICAdministrationTab();
         }
@@ -101,17 +124,13 @@ public class VICWebClient extends AdmiralWebClient<VICWebClient, VICWebClientVal
     }
 
     @Override
-    public VICHomeTab navigateToHomeTab() {
-        clickHomeIfNotActive();
-        if (Objects.isNull(vicHomeTab)) {
-            vicHomeTab = new VICHomeTab();
-        }
-        return vicHomeTab;
+    public VICWebClient getThis() {
+        return this;
     }
 
     @Override
-    public VICWebClient getThis() {
-        return this;
+    public void waitToLoad() {
+        getHomeTab().waitToLoad();
     }
 
 }

@@ -21,8 +21,8 @@ import com.codeborne.selenide.SelenideElement;
 import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.common.HomeTabAdvancedPage;
+import com.vmware.admiral.test.ui.pages.common.PageProxy;
 import com.vmware.admiral.test.ui.pages.containers.provision.ProvisionAContainerPage;
-import com.vmware.admiral.test.ui.pages.main.HomeTabSelectors;
 
 public class ContainersPage extends HomeTabAdvancedPage<ContainersPage, ContainersPageValidator> {
 
@@ -34,28 +34,28 @@ public class ContainersPage extends HomeTabAdvancedPage<ContainersPage, Containe
     private final By CARD_RELATIVE_SCALE_BUTTON = By
             .cssSelector(".btn.btn-circle-outline.container-action-scale");
     private final By REFRESH_BUTTON = By.cssSelector(".fa.fa-refresh");
-    private final String CONTAINER_CARD_SELECTOR_BY_NAME = ".container-item .container-header .title[title^=\"%s\"]";
+    private final String CONTAINER_CARD_SELECTOR_BY_NAME = "html/body/div/div/div[2]/div[2]/div[1]/div[1]/div/div/div[3]/div/div/div/div/div[3]/div/div[1][starts-with(@title, '%s')]/../../..";
 
     private ProvisionAContainerPage provisionAContainerPage;
     private ContainersPageValidator validator;
 
     public ProvisionAContainerPage provisionAContainer() {
-        LOG.info("Creating a container");
+        LOG.info("Provisioning a container");
+        if (Objects.isNull(provisionAContainerPage)) {
+            provisionAContainerPage = new ProvisionAContainerPage(new PageProxy(this));
+        }
         executeInFrame(0, () -> {
             $(NEW_CONTAINER_BUTTON).click();
-            waitForElementToStopMoving($(HomeTabSelectors.CHILD_PAGE_SLIDE));
         });
-        if (Objects.isNull(provisionAContainerPage)) {
-            provisionAContainerPage = new ProvisionAContainerPage();
-        }
+        provisionAContainerPage.waitToLoad();
         return provisionAContainerPage;
     }
 
     public ContainersPage stopContainer(String namePrefix) {
         LOG.info(String.format("Stopping container with name prefix: [%s]", namePrefix));
         executeInFrame(0, () -> {
-            SelenideElement container = getContainerCard(namePrefix);
-            waitForElementToStopMoving(container);
+            SelenideElement container = waitForElementToStopMoving(
+                    getContainerCardSelector(namePrefix));
             actions().moveToElement(container).moveToElement(container.$(CARD_RELATIVE_STOP_BUTTON))
                     .click().build().perform();
         });
@@ -65,8 +65,8 @@ public class ContainersPage extends HomeTabAdvancedPage<ContainersPage, Containe
     public ContainersPage deleteContainer(String namePrefix) {
         LOG.info(String.format("Deleting container with name prefix: [%s]", namePrefix));
         executeInFrame(0, () -> {
-            SelenideElement container = getContainerCard(namePrefix);
-            waitForElementToStopMoving(container);
+            SelenideElement container = waitForElementToStopMoving(
+                    getContainerCardSelector(namePrefix));
             actions().moveToElement(container)
                     .moveToElement(container.$(CARD_RELATIVE_DELETE_BUTTON))
                     .click().build()
@@ -79,8 +79,8 @@ public class ContainersPage extends HomeTabAdvancedPage<ContainersPage, Containe
     public ContainersPage scaleContainer(String namePrefix) {
         LOG.info(String.format("Scaling container with name prefix: [%s]", namePrefix));
         executeInFrame(0, () -> {
-            SelenideElement container = getContainerCard(namePrefix);
-            waitForElementToStopMoving(container);
+            SelenideElement container = waitForElementToStopMoving(
+                    getContainerCardSelector(namePrefix));
             actions().moveToElement(container)
                     .moveToElement(container.$(CARD_RELATIVE_SCALE_BUTTON))
                     .click().build()
@@ -89,15 +89,17 @@ public class ContainersPage extends HomeTabAdvancedPage<ContainersPage, Containe
         return getThis();
     }
 
-    SelenideElement getContainerCard(String name) {
-        return $(By.cssSelector(String.format(CONTAINER_CARD_SELECTOR_BY_NAME, name))).parent()
-                .parent().parent();
+    By getContainerCardSelector(String name) {
+        return By.xpath(String.format(CONTAINER_CARD_SELECTOR_BY_NAME, name));
     }
 
     @Override
     public ContainersPage refresh() {
         LOG.info("Refreshing...");
-        executeInFrame(0, () -> $(REFRESH_BUTTON).click());
+        executeInFrame(0, () -> {
+            $(REFRESH_BUTTON).click();
+            waitForSpinner();
+        });
         return getThis();
     }
 
@@ -107,6 +109,12 @@ public class ContainersPage extends HomeTabAdvancedPage<ContainersPage, Containe
             validator = new ContainersPageValidator(this);
         }
         return validator;
+    }
+
+    @Override
+    public void waitToLoad() {
+        validate().validateIsCurrentPage();
+        executeInFrame(0, () -> waitForSpinner());
     }
 
     @Override

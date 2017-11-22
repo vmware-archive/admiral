@@ -43,12 +43,13 @@ public class ApplicationsPageValidator extends PageValidator {
     }
 
     public ApplicationsPageValidator validateApplicationExistsWithName(String name) {
-        executeInFrame(0, () -> page.getApplicationCard(name).should(Condition.exist));
+        executeInFrame(0, () -> $(page.getApplicationCardSelector(name)).should(Condition.exist));
         return this;
     }
 
     public ApplicationsPageValidator validateApplicationDoesNotExistWithName(String name) {
-        executeInFrame(0, () -> page.getApplicationCard(name).shouldNot(Condition.exist));
+        executeInFrame(0,
+                () -> $(page.getApplicationCardSelector(name)).shouldNot(Condition.exist));
         return this;
     }
 

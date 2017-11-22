@@ -20,7 +20,9 @@ import com.codeborne.selenide.Condition;
 import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.common.BasicPage;
+import com.vmware.admiral.test.ui.pages.common.PageProxy;
 import com.vmware.admiral.test.ui.pages.common.PageValidator;
+import com.vmware.admiral.test.ui.pages.main.HomeTabSelectors;
 import com.vmware.admiral.test.ui.pages.templates.CreateTemplatePage.CreateTemplatePageValidator;
 
 public class CreateTemplatePage extends BasicPage<CreateTemplatePage, CreateTemplatePageValidator> {
@@ -31,9 +33,18 @@ public class CreateTemplatePage extends BasicPage<CreateTemplatePage, CreateTemp
 
     private CreateTemplatePageValidator validator;
     private EditTemplatePage editTemplatePage;
+    private PageProxy parentProxy;
+
+    public CreateTemplatePage(PageProxy parentProxy) {
+        this.parentProxy = parentProxy;
+    }
 
     public void navigateBack() {
-        executeInFrame(0, () -> $(BACK_BUTTON).click());
+        LOG.info("Navigating back...");
+        executeInFrame(0, () -> {
+            $(BACK_BUTTON).click();
+        });
+        parentProxy.waitToLoad();
     }
 
     @Override
@@ -45,6 +56,7 @@ public class CreateTemplatePage extends BasicPage<CreateTemplatePage, CreateTemp
     }
 
     public CreateTemplatePage setName(String name) {
+        LOG.info(String.format("Setting name: [%s]", name));
         executeInFrame(0, () -> {
             $(TEMPLATE_NAME_INPUT).clear();
             $(TEMPLATE_NAME_INPUT).sendKeys(name);
@@ -53,9 +65,15 @@ public class CreateTemplatePage extends BasicPage<CreateTemplatePage, CreateTemp
     }
 
     public EditTemplatePage proceed() {
+        LOG.info("Submitting...");
         executeInFrame(0, () -> $(PROCEED_BUTTON).click());
+        getEditTemplatePage().waitToLoad();
+        return getEditTemplatePage();
+    }
+
+    protected EditTemplatePage getEditTemplatePage() {
         if (Objects.isNull(editTemplatePage)) {
-            editTemplatePage = new EditTemplatePage();
+            editTemplatePage = new EditTemplatePage(parentProxy);
         }
         return editTemplatePage;
     }
@@ -76,6 +94,12 @@ public class CreateTemplatePage extends BasicPage<CreateTemplatePage, CreateTemp
             return this;
         }
 
+    }
+
+    @Override
+    public void waitToLoad() {
+        validate().validateIsCurrentPage();
+        executeInFrame(0, () -> waitForElementToStopMoving(HomeTabSelectors.CHILD_PAGE_SLIDE));
     }
 
 }

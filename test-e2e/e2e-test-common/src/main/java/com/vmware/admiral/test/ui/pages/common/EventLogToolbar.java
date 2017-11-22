@@ -11,20 +11,6 @@
 
 package com.vmware.admiral.test.ui.pages.common;
 
-import java.util.Objects;
-
 public class EventLogToolbar {
-
-    private static EventLogToolbar instance;
-
-    private EventLogToolbar() {
-
-    }
-
-    static EventLogToolbar getInstance() {
-        if (Objects.isNull(instance)) {
-            instance = new EventLogToolbar();
-        }
-        return instance;
-    }
+    // TODO
 }

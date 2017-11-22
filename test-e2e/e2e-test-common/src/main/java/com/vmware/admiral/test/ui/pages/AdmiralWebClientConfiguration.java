@@ -14,9 +14,9 @@ package com.vmware.admiral.test.ui.pages;
 public class AdmiralWebClientConfiguration {
 
     /**
-     * Determines how long to wait in seconds for the landing page after login, default: 30 seconds
+     * Determines how long to wait in seconds for the landing page after login, default: 60 seconds
      */
-    private static int loginTimeoutSeconds = 30;
+    private static int loginTimeoutSeconds = 60;
 
     /**
      * Determines the polling interval when polling requests(e.g. provision a container request),
@@ -25,15 +25,15 @@ public class AdmiralWebClientConfiguration {
     private static int requestPollingIntervalMiliseconds = 500;
 
     /**
-     * Determines how long to wait in seconds for a successful host addition, default: 10 seconds
+     * Determines how long to wait in seconds for a successful host addition, default: 60 seconds
      */
-    private static int addHostTimeoutSeconds = 20;
+    private static int addHostTimeoutSeconds = 60;
 
     /**
      * Determines how long to wait in seconds for a successful deletion of a container host,
-     * default: 10 seconds
+     * default: 60 seconds
      */
-    private static int deleteHostTimeoutSeconds = 20;
+    private static int deleteHostTimeoutSeconds = 60;
 
     public static int getLoginTimeoutSeconds() {
         return loginTimeoutSeconds;

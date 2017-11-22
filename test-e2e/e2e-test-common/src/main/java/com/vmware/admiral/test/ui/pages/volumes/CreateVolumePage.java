@@ -18,6 +18,8 @@ import java.util.Objects;
 import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.common.CreateResourcePage;
+import com.vmware.admiral.test.ui.pages.common.PageProxy;
+import com.vmware.admiral.test.ui.pages.main.HomeTabSelectors;
 
 public class CreateVolumePage
         extends CreateResourcePage<CreateVolumePage, CreateVolumePageValidator> {
@@ -32,8 +34,14 @@ public class CreateVolumePage
             .cssSelector(
                     ".create-volume.closable-view.slide-and-fade-transition .fa.fa-chevron-circle-left");
 
+    private PageProxy parentProxy;
+
     private CreateVolumePageValidator validator;
     private CreateVolumeValidator createValidator;
+
+    public CreateVolumePage(PageProxy parentProxy) {
+        this.parentProxy = parentProxy;
+    }
 
     public CreateVolumePage setName(String name) {
         LOG.info(String.format("Setting name: [%s]", name));
@@ -69,6 +77,7 @@ public class CreateVolumePage
     public void cancel() {
         LOG.info("Cancelling...");
         executeInFrame(0, () -> $(BACK_BUTTON).click());
+        parentProxy.waitToLoad();
     }
 
     @Override
@@ -79,6 +88,12 @@ public class CreateVolumePage
             createValidator = new CreateVolumeValidator();
         }
         return createValidator;
+    }
+
+    @Override
+    public void waitToLoad() {
+        validate().validateIsCurrentPage();
+        executeInFrame(0, () -> waitForElementToStopMoving(HomeTabSelectors.CHILD_PAGE_SLIDE));
     }
 
     @Override

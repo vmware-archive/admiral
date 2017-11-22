@@ -36,8 +36,14 @@ public class PublicRepositoriesPage
 
     @Override
     public PublicRepositoriesPage refresh() {
+        LOG.info("Refreshing...");
         executeInFrame(0, () -> $(REFRESH_BUTTON).click());
         return this;
+    }
+
+    @Override
+    public void waitToLoad() {
+        validate().validateIsCurrentPage();
     }
 
     @Override

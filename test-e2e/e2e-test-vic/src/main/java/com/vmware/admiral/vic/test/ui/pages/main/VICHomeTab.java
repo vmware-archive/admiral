@@ -36,9 +36,13 @@ public class VICHomeTab extends HomeTab<VICHomeTab, VICHomeTabValidator> {
 
     public ProjectRepositoriesPage navigateToProjectRepositoriesPage() {
         if (clickIfNotActive(PROJECT_REPOSITORIES_BUTTON)) {
-            $(By.cssSelector(".datagrid-spinner")).should(Condition.appear)
-                    .should(Condition.disappear);
+            LOG.info("Navigating to Project Repositories page");
+            getProjectRepositoriesPage().waitToLoad();
         }
+        return getProjectRepositoriesPage();
+    }
+
+    private ProjectRepositoriesPage getProjectRepositoriesPage() {
         if (Objects.isNull(projectRepositoriesPage)) {
             projectRepositoriesPage = new ProjectRepositoriesPage();
         }
@@ -51,6 +55,11 @@ public class VICHomeTab extends HomeTab<VICHomeTab, VICHomeTabValidator> {
             validator = new VICHomeTabValidator(this);
         }
         return validator;
+    }
+
+    @Override
+    public VICHomeTab getThis() {
+        return this;
     }
 
     public static class VICHomeTabValidator extends HomeTabValidator<VICHomeTabValidator> {
@@ -88,8 +97,4 @@ public class VICHomeTab extends HomeTab<VICHomeTab, VICHomeTabValidator> {
 
     }
 
-    @Override
-    public VICHomeTab getThis() {
-        return this;
-    }
 }

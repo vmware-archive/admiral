@@ -37,7 +37,7 @@ public class ProjectsPageValidator extends PageValidator {
     }
 
     public ProjectsPageValidator validateProjectIsVisible(String name) {
-        $(page.getProjectCard(name)).should(Condition.exist);
+        $(page.getProjectCardSelector(name)).should(Condition.exist);
         return this;
     }
 
@@ -49,7 +49,7 @@ public class ProjectsPageValidator extends PageValidator {
     }
 
     public ProjectsPageValidator validateProjectIsNotVisible(String name) {
-        $(page.getProjectCard(name)).shouldNot(Condition.exist);
+        $(page.getProjectCardSelector(name)).shouldNot(Condition.exist);
         return this;
     }
 

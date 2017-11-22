@@ -26,6 +26,7 @@ import com.vmware.admiral.test.ui.pages.projects.ProjectsPage;
 import com.vmware.admiral.test.ui.pages.projects.configure.AddMemberModalDialogue.ProjectMemberRole;
 import com.vmware.admiral.test.ui.pages.projects.configure.ConfigureProjectPage;
 import com.vmware.admiral.test.ui.pages.projects.configure.MembersTab;
+import com.vmware.admiral.test.ui.pages.templates.TemplatesPage;
 import com.vmware.admiral.test.ui.pages.volumes.VolumesPage;
 import com.vmware.admiral.vic.test.ui.BaseTest;
 import com.vmware.admiral.vic.test.ui.pages.main.VICHomeTab;
@@ -70,6 +71,7 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
 
     private final String HOST_SUFFIX = "_host";
     private final String NETWORK_SUFFIX = "_network";
+    private final String TEMPLATE_SUFFIX = "_template";
     private final String VOLUME_SUFFIX = "_volume";
     private final String CONTAINER_SUFFIX = "_container";
 
@@ -167,11 +169,10 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
 
     private void validateWithProjectAdminRole() {
         navigateToHomeTab()
-                .validate(v -> v
-                        .validateAllHomeTabsAreAvailable()
-                        .validateProjectsAreAvailable(ALL_PROJECTS)
-                        .validateProjectIsNotAvailable(PROJECT_NAME_DEFAULT))
-                .switchToProject(PROJECT_NAME_ADMIRAL);
+                .validate()
+                .validateAllHomeTabsAreAvailable()
+                .validateProjectsAreAvailable(ALL_PROJECTS)
+                .validateProjectIsNotAvailable(PROJECT_NAME_DEFAULT);
         String resourcePrefix = USER_SHAUNA.split("@")[0];
         createAndDeleteResourcesInAdmiralProject(resourcePrefix);
         navigateToAdministrationTab()
@@ -182,19 +183,24 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
                         .validateLogsNotAvailable()
                         .validateConfigurationNotAvailable())
                 .navigateToProjectsPage()
-                .validate(v -> v
-                        .validateProjectsAreVisible(
-                                PROJECT_NAME_ADMIRAL,
-                                PROJECT_NAME_HARBOR,
-                                PROJECT_NAME_VIC,
-                                PROJECT_NAME_DEVELOPMENT,
-                                PROJECT_NAME_FINANCE,
-                                PROJECT_NAME_QE)
-                        .validateProjectIsNotVisible(PROJECT_NAME_DEFAULT));
+                .validate()
+                .validateProjectsAreVisible(
+                        PROJECT_NAME_ADMIRAL,
+                        PROJECT_NAME_HARBOR,
+                        PROJECT_NAME_VIC,
+                        PROJECT_NAME_DEVELOPMENT,
+                        PROJECT_NAME_FINANCE,
+                        PROJECT_NAME_QE)
+                .validateProjectIsNotVisible(PROJECT_NAME_DEFAULT);
     }
 
     private void createAndDeleteResourcesInAdmiralProject(String resourcePrefix) {
-        ContainersPage containers = navigateToHomeTab().navigateToContainersPage();
+        // VBV-1734 sometimes after navigating to/ refreshing the containers tab
+        // the blue spinner appears and does not disappear which breaks the flow
+
+        ContainersPage containers = navigateToHomeTab()
+                .switchToProject(PROJECT_NAME_ADMIRAL)
+                .navigateToContainersPage();
         containers.provisionAContainer()
                 .navigateToBasicTab()
                 .setName(resourcePrefix + CONTAINER_SUFFIX)
@@ -205,10 +211,10 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
         containers.refresh()
                 .validate(v -> v.validateContainerExistsWithName(resourcePrefix + CONTAINER_SUFFIX))
                 .deleteContainer(resourcePrefix + CONTAINER_SUFFIX)
-                .requests()
-                .waitForLastRequestToSucceed(60);
+                .requests().waitForLastRequestToSucceed(60);
         containers.refresh().validate()
                 .validateContainerDoesNotExistWithName(resourcePrefix + CONTAINER_SUFFIX);
+
         NetworksPage networks = navigateToHomeTab().navigateToNetworksPage();
         networks.createNetwork()
                 .setName(resourcePrefix + NETWORK_SUFFIX)
@@ -224,16 +230,27 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
         networks.refresh()
                 .validate()
                 .validateNetworkDoesNotExist(resourcePrefix + NETWORK_SUFFIX);
+
         // Volumes cannot be created on current VCH deployment
         /*
          * VolumesPage volumes = navigateToHomeTab().navigateToVolumesPage(); volumes.createVolume()
-         * .setName(resourcePrefix + VOLUME_SUFFIX) .selectHostByName(PROJECT_NAME_ADMIRAL +
-         * HOST_SUFFIX) .submit() .expectSuccess();
+         * .setName(resourcePrefix + VOLUME_SUFFIX).selectHostByName(PROJECT_NAME_ADMIRAL +
+         * HOST_SUFFIX) .submit().expectSuccess();
          * volumes.requests().waitForLastRequestToSucceed(60); volumes.refresh() .validate(v ->
          * v.validateVolumeExistsWithName(resourcePrefix + VOLUME_SUFFIX))
          * .deleteVolume(resourcePrefix + VOLUME_SUFFIX)
          * .requests().waitForLastRequestToSucceed(60);
          */
+        TemplatesPage templates = navigateToHomeTab().navigateToTemplatesPage();
+        templates.createTemplate()
+                .setName(resourcePrefix + TEMPLATE_SUFFIX)
+                .proceed()
+                .navigateBack();
+        templates.refresh()
+                .validate(v -> v.validateTemplateExistsWithName(resourcePrefix + TEMPLATE_SUFFIX))
+                .deleteTemplate(resourcePrefix + TEMPLATE_SUFFIX)
+                .refresh().validate()
+                .validateTemplateDoesNotWithName(resourcePrefix + TEMPLATE_SUFFIX);
     }
 
     private void validateWithProjectMember() {
@@ -293,9 +310,12 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
         for (String projectName : ALL_PROJECTS) {
             homeTab.switchToProject(projectName);
             addVchHostToProject(projectName);
+            // VBV-1734 sometimes after navigating to/ refreshing the containers tab
+            // the blue spinner appears and does not disappear which breaks the flow
             provisionContainerInProject(projectName);
             addNetworkToProject(projectName);
             // addVolumeToProject(projectName);
+            addTemplateToProject(projectName);
         }
     }
 
@@ -303,19 +323,22 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
         VICHomeTab homeTab = navigateToHomeTab();
         for (String projectName : ALL_PROJECTS) {
             homeTab.switchToProject(projectName);
+            // VBV-1734 sometimes after navigating to/ refreshing the containers tab
+            // the blue spinner appears and does not disappear which breaks the flow
             homeTab.navigateToContainersPage()
                     .deleteContainer(projectName + CONTAINER_SUFFIX)
-                    .requests()
-                    .waitForLastRequestToSucceed(60);
+                    .requests().waitForLastRequestToSucceed(60);
             homeTab.navigateToNetworksPage()
                     .deleteNetwork(projectName + NETWORK_SUFFIX)
                     .requests()
                     .waitForLastRequestToSucceed(60);
             // Volumes cannot be created on current VCH deployment
             /*
-             * homeTab.navigateToVolumesPage() .deleteVolume(projectName + VOLUME_SUFFIX)
-             * .requests() .waitForLastRequestToSucceed(60);
+             * homeTab.navigateToVolumesPage().deleteVolume(projectName + VOLUME_SUFFIX)
+             * .requests().waitForLastRequestToSucceed(60);
              */
+            homeTab.navigateToTemplatesPage()
+                    .deleteTemplate(projectName + TEMPLATE_SUFFIX);
             homeTab.navigateToContainerHostsPage()
                     .deleteContainerHost(projectName + HOST_SUFFIX);
         }
@@ -330,8 +353,7 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
                 .setUrl(getVchUrl())
                 .submit()
                 .acceptCertificateIfShownAndExpectSuccess();
-        hostsPage.refresh()
-                .validate()
+        hostsPage.refresh().validate()
                 .validateHostExistsWithName(hostName + HOST_SUFFIX)
                 .validateHostsCount(1);
     }
@@ -346,10 +368,20 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
                 .submit()
                 .expectSuccess();
         containersPage.requests().waitForLastRequestToSucceed(60);
-        containersPage.refresh()
-                .validate()
+        containersPage.refresh().validate()
                 .validateContainerExistsWithName(containerName + CONTAINER_SUFFIX)
                 .validateContainersCount(1);
+    }
+
+    private void addTemplateToProject(String namePrefix) {
+        TemplatesPage templates = navigateToHomeTab().navigateToTemplatesPage();
+        templates.createTemplate()
+                .setName(namePrefix + TEMPLATE_SUFFIX)
+                .proceed()
+                .navigateBack();
+        templates.refresh().validate()
+                .validateTemplateExistsWithName(namePrefix + TEMPLATE_SUFFIX)
+                .validateTemplatesCount(1);
     }
 
     private void addNetworkToProject(String networkName) {
@@ -360,8 +392,7 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
                 .submit()
                 .expectSuccess();
         networksPage.requests().waitForLastRequestToSucceed(60);
-        networksPage.refresh()
-                .validate()
+        networksPage.refresh().validate()
                 .validateNetworkExistsWithName(networkName + NETWORK_SUFFIX)
                 .validateNetworksCount(1);
     }
@@ -376,8 +407,7 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
                 .submit()
                 .expectSuccess();
         volumesPage.requests().waitForLastRequestToSucceed(60);
-        volumesPage.refresh()
-                .validate()
+        volumesPage.refresh().validate()
                 .validateVolumeExistsWithName(volumeName + VOLUME_SUFFIX);
         // VBV-1735 If there is a host with volumes added in a project and if thaat host is added to
         // another project, the volumes are visible in the second project.

@@ -40,12 +40,12 @@ public class ContainerHostsPageValidator extends PageValidator {
     }
 
     public ContainerHostsPageValidator validateHostExistsWithName(String name) {
-        page.getHostCard(name).should(Condition.exist);
+        $(page.getHostCardSelector(name)).should(Condition.exist);
         return this;
     }
 
     public ContainerHostsPageValidator validateHostDoesNotExistWithName(String name) {
-        page.getHostCard(name).shouldNot(Condition.exist);
+        $(page.getHostCardSelector(name)).shouldNot(Condition.exist);
         return this;
     }
 

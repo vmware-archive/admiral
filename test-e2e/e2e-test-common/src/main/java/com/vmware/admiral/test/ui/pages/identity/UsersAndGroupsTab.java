@@ -15,8 +15,6 @@ import static com.codeborne.selenide.Selenide.$;
 
 import org.openqa.selenium.By;
 
-import com.vmware.admiral.test.ui.pages.main.GlobalSelectors;
-
 public class UsersAndGroupsTab extends IdentityManagementPage {
 
     private final By DEARCH_FIELD = By.id("searchField");
@@ -29,7 +27,7 @@ public class UsersAndGroupsTab extends IdentityManagementPage {
         LOG.info(String.format("Assigning cloud administrator role to: [%s]", userId));
         $(DEARCH_FIELD).clear();
         $(DEARCH_FIELD).sendKeys(userId + "\n");
-        waitForElementToAppearAndDisappear(GlobalSelectors.SPINNER);
+        waitForSpinner();
         $(FIRST_RESULT_CHECKBOX).click();
         if ($(ASSIGN_ADMIN_ROLE_BUTTON).$(By.cssSelector("span")).text()
                 .equalsIgnoreCase("UNASSIGN ADMIN ROLE")) {
@@ -44,7 +42,7 @@ public class UsersAndGroupsTab extends IdentityManagementPage {
         LOG.info(String.format("Unassigning cloud administrator role to: [%s]", userId));
         $(DEARCH_FIELD).clear();
         $(DEARCH_FIELD).sendKeys(userId + "\n");
-        waitForElementToAppearAndDisappear(GlobalSelectors.SPINNER);
+        waitForSpinner();
         $(FIRST_RESULT_CHECKBOX).click();
         if ($(ASSIGN_ADMIN_ROLE_BUTTON).$(By.cssSelector("span")).text()
                 .equalsIgnoreCase("ASSIGN ADMIN ROLE")) {

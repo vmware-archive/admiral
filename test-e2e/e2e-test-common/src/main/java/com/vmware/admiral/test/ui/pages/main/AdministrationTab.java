@@ -36,42 +36,77 @@ public abstract class AdministrationTab<P extends AdministrationTab<P, V>, V ext
     private LogsPage logsPage;
 
     public ProjectsPage navigateToProjectsPage() {
-        clickIfNotActive(AdministrationTabSelectors.PROJECTS_BUTTON);
-        if (Objects.isNull(projectsPage)) {
-            projectsPage = new ProjectsPage();
+        if (clickIfNotActive(AdministrationTabSelectors.PROJECTS_BUTTON)) {
+            LOG.info("Navigating to Projects page");
+            getProjectsPage().waitToLoad();
         }
-        return projectsPage;
+        return getProjectsPage();
     }
 
     public IdentityManagementPage navigateToIdentityManagementPage() {
-        clickIfNotActive(AdministrationTabSelectors.IDENTITY_MANAGEMENT_BUTTON);
-        if (Objects.isNull(identityManagementPage)) {
-            identityManagementPage = new IdentityManagementPage();
+        if (clickIfNotActive(AdministrationTabSelectors.IDENTITY_MANAGEMENT_BUTTON)) {
+            LOG.info("Navigating to Identity Management page");
+            getIdentityManagementPage().waitToLoad();
         }
-        return identityManagementPage;
+        return getIdentityManagementPage();
     }
 
     public RegistriesPage navigateToRegistriesPage() {
-        clickIfNotActive(AdministrationTabSelectors.REGISTRIES_BUTTON);
-        if (Objects.isNull(registriesPage)) {
-            registriesPage = new RegistriesPage();
+        if (clickIfNotActive(AdministrationTabSelectors.REGISTRIES_BUTTON)) {
+            LOG.info("Navigating to Registries page");
+            getRegistriesPage().waitToLoad();
         }
-        return registriesPage;
+        return getRegistriesPage();
     }
 
     public LogsPage navigateToLogsPage() {
-        clickIfNotActive(AdministrationTabSelectors.LOGS_BUTTON);
+        if (clickIfNotActive(AdministrationTabSelectors.LOGS_BUTTON)) {
+            LOG.info("Navigating to Logs page");
+            getLogsPage().waitToLoad();
+        }
+        return getLogsPage();
+    }
+
+    protected LogsPage getLogsPage() {
         if (Objects.isNull(logsPage)) {
             logsPage = new LogsPage();
         }
         return logsPage;
     }
 
-    protected void clickIfNotActive(By selector) {
+    @Override
+    public void waitToLoad() {
+        getProjectsPage().waitToLoad();
+    }
+
+    protected ProjectsPage getProjectsPage() {
+        if (Objects.isNull(projectsPage)) {
+            projectsPage = new ProjectsPage();
+        }
+        return projectsPage;
+    }
+
+    protected IdentityManagementPage getIdentityManagementPage() {
+        if (Objects.isNull(identityManagementPage)) {
+            identityManagementPage = new IdentityManagementPage();
+        }
+        return identityManagementPage;
+    }
+
+    protected RegistriesPage getRegistriesPage() {
+        if (Objects.isNull(registriesPage)) {
+            registriesPage = new RegistriesPage();
+        }
+        return registriesPage;
+    }
+
+    protected boolean clickIfNotActive(By selector) {
         SelenideElement element = $(selector);
         if (!element.getAttribute("class").contains("active")) {
             element.click();
+            return true;
         }
+        return false;
     }
 
 }

@@ -34,7 +34,14 @@ public class VICAdministrationTab
     private VICAdministrationTabValidator validator;
 
     public ConfigurationPage navigateToConfigurationPage() {
-        clickIfNotActive(CONFIGURATION_BUTTON);
+        if (clickIfNotActive(CONFIGURATION_BUTTON)) {
+            LOG.info("Navigating to Configuration page");
+            getConfigurationPage().waitToLoad();
+        }
+        return getConfigurationPage();
+    }
+
+    protected ConfigurationPage getConfigurationPage() {
         if (Objects.isNull(configurationPage)) {
             configurationPage = new ConfigurationPage();
         }

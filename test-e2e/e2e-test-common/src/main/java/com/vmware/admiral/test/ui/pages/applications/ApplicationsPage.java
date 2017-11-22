@@ -15,13 +15,10 @@ import static com.codeborne.selenide.Selenide.$;
 
 import java.util.Objects;
 
-import com.codeborne.selenide.SelenideElement;
-
 import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.common.HomeTabAdvancedPage;
-import com.vmware.admiral.test.ui.pages.main.HomeTabSelectors;
-import com.vmware.admiral.test.ui.pages.templates.CreateTemplatePage;
+import com.vmware.admiral.test.ui.pages.common.PageProxy;
 
 public class ApplicationsPage
         extends HomeTabAdvancedPage<ApplicationsPage, ApplicationsPageValidator> {
@@ -29,31 +26,35 @@ public class ApplicationsPage
     private final By CREATE_APPLICATION_BUTTON = By
             .cssSelector(".btn.btn-link.create-resource-btn");
     private final By REFRESH_BUTTON = By.cssSelector(".fa.fa-refresh");
-    private final String APPLICATION_NAME_SELECTOR = ".grid-item .title.truncateText[title^=\"%s\"]";
+    private final String APPLICATION_CARD_SELECTOR_BY_NAME = "html/body/div/div/div[2]/div[2]/div[1]/div[1]/div/div/div[3]/div/div/div/div/div[2]/div[2]/div[2]/div[starts-with(@title, '%s')]";
 
-    private CreateTemplatePage createTemplatePage;
+    private CreateApplicationPage createApplicationPage;
     private ApplicationsPageValidator validator;
 
-    public CreateTemplatePage createTemplate() {
+    public CreateApplicationPage createTemplate() {
+        LOG.info("Creating template");
+        if (Objects.isNull(createApplicationPage)) {
+            createApplicationPage = new CreateApplicationPage(new PageProxy(this));
+        }
         executeInFrame(0, () -> {
             $(CREATE_APPLICATION_BUTTON).click();
-            waitForElementToStopMoving($(HomeTabSelectors.CHILD_PAGE_SLIDE));
         });
-        if (Objects.isNull(createTemplatePage)) {
-            createTemplatePage = new CreateTemplatePage();
-        }
-        return createTemplatePage;
+        createApplicationPage.waitToLoad();
+        return createApplicationPage;
     }
 
     @Override
     public ApplicationsPage refresh() {
-        executeInFrame(0, () -> $(REFRESH_BUTTON).click());
+        LOG.info("Refreshing...");
+        executeInFrame(0, () -> {
+            $(REFRESH_BUTTON).click();
+            waitForSpinner();
+        });
         return getThis();
     }
 
-    SelenideElement getApplicationCard(String name) {
-        return $(By.cssSelector(String.format(APPLICATION_NAME_SELECTOR, name))).parent().parent()
-                .parent();
+    By getApplicationCardSelector(String name) {
+        return By.xpath(String.format(APPLICATION_CARD_SELECTOR_BY_NAME, name));
     }
 
     @Override
@@ -62,6 +63,12 @@ public class ApplicationsPage
             validator = new ApplicationsPageValidator(this);
         }
         return validator;
+    }
+
+    @Override
+    public void waitToLoad() {
+        validate().validateIsCurrentPage();
+        executeInFrame(0, () -> waitForSpinner());
     }
 
     @Override

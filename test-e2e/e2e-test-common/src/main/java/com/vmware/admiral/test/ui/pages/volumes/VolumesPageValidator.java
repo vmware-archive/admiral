@@ -56,12 +56,12 @@ public class VolumesPageValidator extends PageValidator {
     }
 
     public VolumesPageValidator validateVolumeExistsWithName(String name) {
-        executeInFrame(0, () -> page.getVolumeCard(name).should(Condition.exist));
+        executeInFrame(0, () -> $(page.getVolumeCardSelector(name)).should(Condition.exist));
         return this;
     }
 
     public VolumesPageValidator validateVolumeDoesNotExistWithName(String name) {
-        executeInFrame(0, () -> page.getVolumeCard(name).shouldNot(Condition.exist));
+        executeInFrame(0, () -> $(page.getVolumeCardSelector(name)).shouldNot(Condition.exist));
         return this;
     }
 

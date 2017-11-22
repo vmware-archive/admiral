@@ -23,6 +23,7 @@ import org.openqa.selenium.By;
 import com.vmware.admiral.test.ui.pages.common.BasicClass;
 import com.vmware.admiral.test.ui.pages.common.BasicPage;
 import com.vmware.admiral.test.ui.pages.common.FailableActionValidator;
+import com.vmware.admiral.test.ui.pages.common.PageProxy;
 import com.vmware.admiral.test.ui.pages.main.GlobalSelectors;
 import com.vmware.admiral.test.ui.pages.projects.configure.ConfigureProjectPage;
 
@@ -36,7 +37,6 @@ public class ProjectsPage extends BasicPage<ProjectsPage, ProjectsPageValidator>
             .cssSelector(".card-actions.dropdown .dropdown-item:nth-child(2)");
     private final By DELETE_PROJECT_CONFIRMATION_BUTTON = By
             .cssSelector(".modal-dialog .btn.btn-danger");
-    private final By EDIT_PROJECT_TITLE = By.cssSelector(".projects-details-header-title");
     private final String PROJECT_CARD_BY_NAME_SELECTOR = "html/body/my-app/clr-main-container/div/app-administration/div/app-projects/grid-view/div[3]/div/span/card/div/div[1]/div/text()[normalize-space() = \"%s\"]/../../..";
 
     private ProjectsPageValidator validator;
@@ -47,7 +47,7 @@ public class ProjectsPage extends BasicPage<ProjectsPage, ProjectsPageValidator>
     public AddProjectModalDialogue addProject() {
         LOG.info("Adding project");
         $(ADD_PROJECT_BUTTON).click();
-        waitForElementToStopMoving($(GlobalSelectors.MODAL_CONTENT));
+        waitForElementToStopMoving(GlobalSelectors.MODAL_CONTENT);
         if (Objects.isNull(addProjectModalDialogue)) {
             addProjectModalDialogue = new AddProjectModalDialogue();
         }
@@ -56,29 +56,28 @@ public class ProjectsPage extends BasicPage<ProjectsPage, ProjectsPageValidator>
 
     public ConfigureProjectPage configureProject(String name) {
         LOG.info(String.format("Configuring project with name: [%s]", name));
-        waitForElementToStopMoving(getProjectCard(name)).click();
-        waitForElementToStopMoving($(EDIT_PROJECT_TITLE));
-        $(EDIT_PROJECT_TITLE).should(Condition.appear);
+        waitForElementToStopMoving(getProjectCardSelector(name)).click();
         if (Objects.isNull(editProjectPage)) {
-            editProjectPage = new ConfigureProjectPage();
+            editProjectPage = new ConfigureProjectPage(new PageProxy(this));
         }
+        editProjectPage.waitToLoad();
         return editProjectPage;
     }
 
     public DeleteProjectValidator deleteProject(String name) {
         LOG.info(String.format("Deleting project with name: [%s]", name));
-        SelenideElement card = waitForElementToStopMoving(getProjectCard(name));
+        SelenideElement card = waitForElementToStopMoving(getProjectCardSelector(name));
         card.$(CARD_CONTEXT_MENU_BUTTON).click();
         card.$(CARD_DELETE_BUTTON).click();
-        waitForElementToStopMoving($(DELETE_PROJECT_CONFIRMATION_BUTTON)).click();
+        waitForElementToStopMoving(DELETE_PROJECT_CONFIRMATION_BUTTON).click();
         if (Objects.isNull(deleteProjectValidator)) {
             deleteProjectValidator = new DeleteProjectValidator();
         }
         return deleteProjectValidator;
     }
 
-    SelenideElement getProjectCard(String name) {
-        return $(By.xpath(String.format(PROJECT_CARD_BY_NAME_SELECTOR, name)));
+    By getProjectCardSelector(String name) {
+        return By.xpath(String.format(PROJECT_CARD_BY_NAME_SELECTOR, name));
     }
 
     @Override
@@ -98,7 +97,7 @@ public class ProjectsPage extends BasicPage<ProjectsPage, ProjectsPageValidator>
         @Override
         public void expectSuccess() {
             $(GlobalSelectors.MODAL_BACKDROP).should(Condition.disappear);
-            waitForElementToAppearAndDisappear(GlobalSelectors.SPINNER);
+            waitForSpinner();
         }
 
         @Override
@@ -108,6 +107,12 @@ public class ProjectsPage extends BasicPage<ProjectsPage, ProjectsPageValidator>
             $(GlobalSelectors.MODAL_BACKDROP).should(Condition.disappear);
         }
 
+    }
+
+    @Override
+    public void waitToLoad() {
+        validate().validateIsCurrentPage();
+        waitForSpinner();
     }
 
     @Override

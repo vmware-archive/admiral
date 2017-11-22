@@ -28,6 +28,11 @@ public class RegistriesPage extends BasicPage<RegistriesPage, RegistriesPageVali
     }
 
     @Override
+    public void waitToLoad() {
+        validate().validateIsCurrentPage();
+    }
+
+    @Override
     public RegistriesPage getThis() {
         return this;
     }

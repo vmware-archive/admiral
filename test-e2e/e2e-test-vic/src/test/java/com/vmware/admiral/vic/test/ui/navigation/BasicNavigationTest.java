@@ -15,11 +15,7 @@ import org.junit.Test;
 
 import com.vmware.admiral.test.ui.SelenideClassRunner.Browser;
 import com.vmware.admiral.test.ui.SelenideClassRunner.RunWithBrowsers;
-import com.vmware.admiral.test.ui.pages.applications.ApplicationsPage;
-import com.vmware.admiral.test.ui.pages.containers.ContainersPage;
-import com.vmware.admiral.test.ui.pages.networks.NetworksPage;
 import com.vmware.admiral.test.ui.pages.templates.TemplatesPage;
-import com.vmware.admiral.test.ui.pages.volumes.VolumesPage;
 import com.vmware.admiral.vic.test.ui.BaseTest;
 import com.vmware.admiral.vic.test.ui.pages.main.VICAdministrationTab;
 import com.vmware.admiral.vic.test.ui.pages.main.VICHomeTab;
@@ -36,74 +32,34 @@ public class BasicNavigationTest extends BaseTest {
         loginAsAdmin();
         VICHomeTab homeTab = navigateToHomeTab();
 
-        ApplicationsPage applicationsPage = homeTab.navigateToApplicationsPage();
-        applicationsPage.validate(v -> v.validateIsCurrentPage())
+        homeTab.navigateToApplicationsPage()
                 .createTemplate()
-                .validate(v -> v.validateIsCurrentPage())
                 .navigateBack();
-        applicationsPage.validate().validateIsCurrentPage();
-
-        ContainersPage containersPage = homeTab.navigateToContainersPage();
-        containersPage.validate(v -> v.validateIsCurrentPage())
+        homeTab.navigateToContainersPage()
                 .provisionAContainer()
-                .validate(v -> v.validateIsCurrentPage())
                 .cancel();
-        containersPage.validate().validateIsCurrentPage();
-
-        NetworksPage networksPage = homeTab.navigateToNetworksPage();
-        networksPage.validate(v -> v.validateIsCurrentPage())
+        homeTab.navigateToNetworksPage()
                 .createNetwork()
-                .validate(v -> v.validateIsCurrentPage())
                 .cancel();
-        networksPage.validate().validateIsCurrentPage();
-
-        VolumesPage volumesPage = homeTab.navigateToVolumesPage();
-        volumesPage.validate(v -> v.validateIsCurrentPage())
+        homeTab.navigateToVolumesPage()
                 .createVolume()
-                .validate(v -> v.validateIsCurrentPage())
                 .cancel();
-        volumesPage.validate().validateIsCurrentPage();
-
         TemplatesPage templatesPage = homeTab.navigateToTemplatesPage();
-        templatesPage.validate().validateIsCurrentPage();
         templatesPage.importTemplate()
-                .validate(v -> v.validateIsCurrentPage())
                 .cancel();
-        templatesPage.validate().validateIsCurrentPage();
         templatesPage.createTemplate()
-                .validate(v -> v.validateIsCurrentPage())
                 .navigateBack();
-        templatesPage.validate().validateIsCurrentPage();
-
-        homeTab.navigateToProjectRepositoriesPage()
-                .validate()
-                .validateIsCurrentPage();
-        homeTab.navigateToPublicRepositoriesPage()
-                .validate()
-                .validateIsCurrentPage();
-        homeTab.navigateToContainerHostsPage()
-                .validate()
-                .validateIsCurrentPage();
+        homeTab.navigateToProjectRepositoriesPage();
+        homeTab.navigateToPublicRepositoriesPage();
+        homeTab.navigateToContainerHostsPage();
 
         VICAdministrationTab adminTab = navigateToAdministrationTab();
 
-        adminTab.navigateToIdentityManagementPage()
-                .validate()
-                .validateIsCurrentPage();
-        adminTab.navigateToProjectsPage()
-                .validate()
-                .validateIsCurrentPage();
-        adminTab.navigateToRegistriesPage()
-                .validate()
-                .validateIsCurrentPage();
-        // VBV-1724 after navigating to the Configuration tab logout is not possible the normal way
-        // adminTab.navigateToConfigurationPage()
-        // .validate()
-        // .isCurrentPage();
-        adminTab.navigateToLogsPage()
-                .validate()
-                .validateIsCurrentPage();
-        logOut();
+        adminTab.navigateToIdentityManagementPage();
+        adminTab.navigateToProjectsPage();
+        adminTab.navigateToRegistriesPage();
+        adminTab.navigateToConfigurationPage();
+        adminTab.navigateToLogsPage();
     }
 
 }

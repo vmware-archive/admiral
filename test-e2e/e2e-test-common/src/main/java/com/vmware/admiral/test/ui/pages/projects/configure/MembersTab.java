@@ -28,9 +28,9 @@ public class MembersTab extends BasicClass {
     private AddMemberModalDialogue addMemberModalDialogue;
 
     public AddMemberModalDialogue addMemebers() {
-        LOG.info("Adding project member");
+        LOG.info("Adding project members");
         $(ADD_MEMBER_BUTTON).click();
-        waitForElementToStopMoving($(GlobalSelectors.MODAL_CONTENT));
+        waitForElementToStopMoving(GlobalSelectors.MODAL_CONTENT);
         if (Objects.isNull(addMemberModalDialogue)) {
             addMemberModalDialogue = new AddMemberModalDialogue();
         }

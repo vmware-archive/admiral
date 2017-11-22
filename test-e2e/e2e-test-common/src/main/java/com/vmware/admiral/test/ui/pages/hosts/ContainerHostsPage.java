@@ -21,6 +21,7 @@ import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.SelenideElement;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 
 import com.vmware.admiral.test.ui.pages.AdmiralWebClientConfiguration;
 import com.vmware.admiral.test.ui.pages.common.HomeTabPage;
@@ -29,7 +30,7 @@ import com.vmware.admiral.test.ui.pages.main.GlobalSelectors;
 public class ContainerHostsPage
         extends HomeTabPage<ContainerHostsPage, ContainerHostsPageValidator> {
 
-    private final String ALL_CONTAINER_HOST_NAMES_XPATH = "html/body/my-app/clr-main-container/div/app-main-resources/div[1]/app-clusters/grid-view/div[3]/div/span/card/div/div[1]/div/div[2]/div";
+    private final String CONTAINER_HOST_CARD_SELECTOR_BY_NAME = "html/body/my-app/clr-main-container/div/app-main-resources/div[1]/app-clusters/grid-view/div[3]/div/span/card/div/div[1]/div/div[2]/div[1][text()='%s']/../../../..";
     private final By ADD_CONTAINER_HOST_BUTTON = By
             .cssSelector(".col-sm-6.toolbar-primary>div .btn.btn-link");
     private final By CARD_RELATIVE_DROPDOWN_MENU = By
@@ -47,7 +48,7 @@ public class ContainerHostsPage
     public AddHostModalDialogue addContainerHost() {
         LOG.info("Adding a container host");
         $(ADD_CONTAINER_HOST_BUTTON).click();
-        waitForElementToStopMoving($(GlobalSelectors.MODAL_CONTENT));
+        waitForElementToStopMoving(GlobalSelectors.MODAL_CONTENT);
         if (Objects.isNull(addHostModalDialogue)) {
             addHostModalDialogue = new AddHostModalDialogue();
         }
@@ -56,11 +57,10 @@ public class ContainerHostsPage
 
     public ContainerHostsPage deleteContainerHost(String name) {
         LOG.info(String.format("Deleting host/cluster with name: [%s]", name));
-        SelenideElement host = getHostCard(name);
-        waitForElementToStopMoving(host);
+        SelenideElement host = waitForElementToStopMoving(getHostCardSelector(name));
         host.$(CARD_RELATIVE_DROPDOWN_MENU).click();
         host.$(CARD_RELATIVE_DELETE_BUTTON).click();
-        waitForElementToStopMoving($(DELETE_HOST_CONFIRMATION_BUTTON)).click();
+        waitForElementToStopMoving(DELETE_HOST_CONFIRMATION_BUTTON).click();
         Wait().withTimeout(AdmiralWebClientConfiguration.getDeleteHostTimeoutSeconds(),
                 TimeUnit.SECONDS)
                 .until(d -> {
@@ -69,9 +69,8 @@ public class ContainerHostsPage
         return this;
     }
 
-    SelenideElement getHostCard(String name) {
-        return $(By.xpath(ALL_CONTAINER_HOST_NAMES_XPATH + "[text() = \"" + name + "\"]")).parent()
-                .parent().parent().parent().parent();
+    By getHostCardSelector(String name) {
+        return By.xpath(String.format(CONTAINER_HOST_CARD_SELECTOR_BY_NAME, name));
     }
 
     @Override
@@ -84,8 +83,22 @@ public class ContainerHostsPage
 
     @Override
     public ContainerHostsPage refresh() {
+        LOG.info("Refreshing...");
         $(REFRESH_BUTTON).click();
+        waitForSpinner();
         return this;
+    }
+
+    @Override
+    public void waitToLoad() {
+        validate().validateIsCurrentPage();
+        Wait().until(ExpectedConditions.or(
+                d -> {
+                    return $(By.cssSelector(".card-item")).exists();
+                },
+                d -> {
+                    return $(By.cssSelector(".content-empty")).exists();
+                }));
     }
 
     @Override

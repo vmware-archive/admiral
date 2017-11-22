@@ -46,8 +46,20 @@ public class ScenariosSuite extends BaseSuite {
                 .asList(properties
                         .getProperty(PropertiesNames.ACTIVE_DIRECTORIES_SPEC_FILES_CSV_PROPERTY)
                         .split(","));
+
         for (String fileName : adSpecFilenames) {
-            String body = FileUtil.getResourceAsString("/" + fileName.trim(), true);
+            String body = null;
+            try {
+                body = FileUtil.getResourceAsString("/" + fileName.trim(), true);
+            } catch (Exception e) {
+                throw new RuntimeException(
+                        "Could not read AD spec body from file with filename: " + fileName, e);
+            }
+            if (Objects.isNull(body) || body.trim().isEmpty()) {
+                throw new RuntimeException(String.format(
+                        "Could not read AD spec body from file with filename: [%s], file is empty.",
+                        fileName));
+            }
             identityConfigurator.addIdentitySource(body);
         }
     }

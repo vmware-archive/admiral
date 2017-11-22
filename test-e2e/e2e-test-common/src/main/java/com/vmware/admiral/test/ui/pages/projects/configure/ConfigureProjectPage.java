@@ -12,25 +12,34 @@
 package com.vmware.admiral.test.ui.pages.projects.configure;
 
 import static com.codeborne.selenide.Selenide.$;
+import static com.codeborne.selenide.Selenide.Wait;
 
 import java.util.Objects;
+
+import com.codeborne.selenide.SelenideElement;
 
 import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.common.BasicPage;
-import com.vmware.admiral.test.ui.pages.main.GlobalSelectors;
+import com.vmware.admiral.test.ui.pages.common.PageProxy;
 
 public class ConfigureProjectPage
         extends BasicPage<ConfigureProjectPage, ConfigureProjectPageValidator> {
 
     private final By BACK_BUTTON = By.xpath(
             "html/body/my-app/clr-main-container/div/app-administration/div/app-projects/navigation-container/div/back-button/a/span");
+    private final By EDIT_PROJECT_TITLE = By.cssSelector(".projects-details-header-title");
     private final By SUMMARY_BUTTON = By.cssSelector("#summaryTab .btn");
     private final By MEMBERS_BUTTON = By.cssSelector("#membersTab .btn");
 
     private ConfigureProjectPageValidator validator;
     private SummaryTab summaryTab;
     private MembersTab membersTab;
+    private PageProxy parentProxy;
+
+    public ConfigureProjectPage(PageProxy parentProxy) {
+        this.parentProxy = parentProxy;
+    }
 
     public SummaryTab navigateToSummaryTab() {
         $(SUMMARY_BUTTON).click();
@@ -49,8 +58,9 @@ public class ConfigureProjectPage
     }
 
     public void navigateBack() {
+        LOG.info("Navigating back...");
         $(BACK_BUTTON).click();
-        waitForElementToAppearAndDisappear(GlobalSelectors.SPINNER);
+        parentProxy.waitToLoad();
     }
 
     @Override
@@ -59,6 +69,13 @@ public class ConfigureProjectPage
             validator = new ConfigureProjectPageValidator();
         }
         return validator;
+    }
+
+    @Override
+    public void waitToLoad() {
+        validate().validateIsCurrentPage();
+        SelenideElement title = waitForElementToStopMoving(EDIT_PROJECT_TITLE);
+        Wait().until(d -> !title.text().trim().isEmpty());
     }
 
     @Override

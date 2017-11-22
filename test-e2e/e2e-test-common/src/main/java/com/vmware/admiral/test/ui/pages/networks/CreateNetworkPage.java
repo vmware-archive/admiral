@@ -13,6 +13,7 @@ package com.vmware.admiral.test.ui.pages.networks;
 
 import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.$$;
+import static com.codeborne.selenide.Selenide.actions;
 
 import java.util.List;
 import java.util.Objects;
@@ -22,6 +23,8 @@ import com.codeborne.selenide.SelenideElement;
 import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.common.CreateResourcePage;
+import com.vmware.admiral.test.ui.pages.common.PageProxy;
+import com.vmware.admiral.test.ui.pages.main.HomeTabSelectors;
 
 public class CreateNetworkPage
         extends CreateResourcePage<CreateNetworkPage, CreateNetworkPageValidator> {
@@ -34,9 +37,15 @@ public class CreateNetworkPage
     private final By HOST_DROPDOWNS_AND_BUTTONS_PARENTS = By.cssSelector(
             ".form-group:not(.ipam-config):not(.custom-properties):not(.network-name):not([style]) .multicolumn-input .dropdown-select.dropdown-search-menu");
     private final By CREATE_NETWORK_BUTTON = By.cssSelector(".create-network .btn-primary");
+    private final String ROW_RELATIVE_HOST_SELECTOR_BY_NAME = "[role*=\"menuitem\"][data-name$=\"(%s)\"]";
 
     private CreateNetworkPageValidator validator;
     private CreateNetworkValidator createValidator;
+    private PageProxy parentProxy;
+
+    public CreateNetworkPage(PageProxy parentProxy) {
+        this.parentProxy = parentProxy;
+    }
 
     public CreateNetworkPage setName(String name) {
         LOG.info(String.format("Setting name: [%s]", name));
@@ -49,9 +58,9 @@ public class CreateNetworkPage
         executeInFrame(0, () -> {
             SelenideElement emptyRow = findEmptyRowOrCreate();
             emptyRow.click();
-            emptyRow.$(By.cssSelector(
-                    ".dropdown-menu [role*=\"menuitem\"][data-name$=\"(" + hostName + ")\"]"))
-                    .click();
+            SelenideElement host = emptyRow
+                    .$(By.cssSelector(String.format(ROW_RELATIVE_HOST_SELECTOR_BY_NAME, hostName)));
+            actions().moveToElement(host).click().build().perform();
         });
         return this;
     }
@@ -72,11 +81,11 @@ public class CreateNetworkPage
     public void cancel() {
         LOG.info("Cancelling...");
         executeInFrame(0, () -> $(BACK_BUTTON).click());
+        parentProxy.waitToLoad();
     }
 
     @Override
     public CreateNetworkPageValidator validate() {
-        executeInFrame(0, () -> $(CREATE_NETWORK_BUTTON).click());
         if (Objects.isNull(validator)) {
             validator = new CreateNetworkPageValidator();
         }
@@ -91,6 +100,12 @@ public class CreateNetworkPage
             createValidator = new CreateNetworkValidator();
         }
         return createValidator;
+    }
+
+    @Override
+    public void waitToLoad() {
+        validate().validateIsCurrentPage();
+        executeInFrame(0, () -> waitForElementToStopMoving(HomeTabSelectors.CHILD_PAGE_SLIDE));
     }
 
     @Override

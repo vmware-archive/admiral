@@ -45,6 +45,12 @@ public class IdentityManagementPage
     }
 
     @Override
+    public void waitToLoad() {
+        validate().validateIsCurrentPage();
+        // TODO wait to load
+    }
+
+    @Override
     public IdentityManagementPage getThis() {
         return this;
     }

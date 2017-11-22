@@ -14,7 +14,6 @@ package com.vmware.admiral.test.ui.pages.common;
 import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.Wait;
 
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import com.codeborne.selenide.Condition;
@@ -36,23 +35,11 @@ public class RequestsToolbar extends BasicClass {
             .cssSelector(".requests-list #all .request-item-holder:first-child");
     private final By REFRESH_BUTTON = By.cssSelector(".right-context-panel .fa.fa-refresh");
 
-    private static RequestsToolbar instance;
-
-    private RequestsToolbar() {
-    }
-
-    public static RequestsToolbar getInstance() {
-        if (Objects.isNull(instance)) {
-            instance = new RequestsToolbar();
-        }
-        return instance;
-    }
-
     public void waitForLastRequestToSucceed(int timeout) {
         LOG.info(
                 String.format("Waiting for [%d] seconds for the last request to succeed", timeout));
         executeInFrame(0, () -> {
-            waitForElementToStopMoving($(REQUESTS_BUTTON));
+            waitForElementToStopMoving(REQUESTS_BUTTON);
             try {
                 waitToSucceed(timeout);
             } catch (TimeoutException e) {
@@ -81,7 +68,7 @@ public class RequestsToolbar extends BasicClass {
     private void expandRequestsIfNotExpanded() {
         if (!$(RIGHT_PANEL).isDisplayed()) {
             $(REQUESTS_BUTTON).click();
-            waitForElementToStopMoving($(REQUESTS_BUTTON));
+            waitForElementToStopMoving(REQUESTS_BUTTON);
         }
     }
 

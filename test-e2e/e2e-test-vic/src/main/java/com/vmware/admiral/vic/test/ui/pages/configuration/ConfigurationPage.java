@@ -31,4 +31,9 @@ public class ConfigurationPage extends BasicPage<ConfigurationPage, Configuratio
     public ConfigurationPage getThis() {
         return this;
     }
+
+    @Override
+    public void waitToLoad() {
+        validate().validateIsCurrentPage();
+    }
 }

@@ -13,7 +13,6 @@ package com.vmware.admiral.test.ui.pages.main;
 
 import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.$$;
-import static com.codeborne.selenide.Selenide.Wait;
 
 import java.util.List;
 import java.util.Objects;
@@ -23,7 +22,6 @@ import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.SelenideElement;
 
 import org.openqa.selenium.By;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 
 import com.vmware.admiral.test.ui.pages.applications.ApplicationsPage;
 import com.vmware.admiral.test.ui.pages.common.BasicPage;
@@ -49,8 +47,13 @@ public abstract class HomeTab<P extends HomeTab<P, V>, V extends HomeTabValidato
     private ContainerHostsPage containerHostsPage;
 
     public P switchToProject(String projectName) {
-        LOG.info(String.format("Switching to project: [%s]", projectName));
-        getProjectWithName(projectName).click();
+        String currentProject = getCurrentProject();
+        if (projectName.equals(currentProject)) {
+            LOG.info(String.format("Current project already is: [%s]", currentProject));
+        } else {
+            LOG.info(String.format("Switching to project: [%s]", projectName));
+            getProjectWithName(projectName).click();
+        }
         return getThis();
     }
 
@@ -83,72 +86,103 @@ public abstract class HomeTab<P extends HomeTab<P, V>, V extends HomeTabValidato
 
     public ApplicationsPage navigateToApplicationsPage() {
         if (clickIfNotActive(HomeTabSelectors.APPLICATIONS_BUTTON)) {
-            // waitForItemsToLoad(); }
+            LOG.info("Navigating to Applications page");
+            getApplicationsPage().waitToLoad();
         }
+        return getApplicationsPage();
+    }
+
+    public ContainersPage navigateToContainersPage() {
+        if (clickIfNotActive(HomeTabSelectors.CONTAINERS_BUTTON)) {
+            LOG.info("Navigating to Containers page");
+            getContainersPage().waitToLoad();
+        }
+        return getContainersPage();
+    }
+
+    public NetworksPage navigateToNetworksPage() {
+        if (clickIfNotActive(HomeTabSelectors.NETWORKS_BUTTON)) {
+            LOG.info("Navigating to Networks page");
+            getNetworksPage().waitToLoad();
+        }
+        return getNetworksPage();
+    }
+
+    public VolumesPage navigateToVolumesPage() {
+        if (clickIfNotActive(HomeTabSelectors.VOLUMES_BUTTON)) {
+            LOG.info("Navigating to Volumes page");
+            getVolumesPage().waitToLoad();
+        }
+        return getVolumesPage();
+    }
+
+    public TemplatesPage navigateToTemplatesPage() {
+        if (clickIfNotActive(HomeTabSelectors.TEMPLATES_BUTTON)) {
+            LOG.info("Navigating to Templates page");
+            getTemplatesPage().waitToLoad();
+        }
+        return getTemplatesPage();
+    }
+
+    public PublicRepositoriesPage navigateToPublicRepositoriesPage() {
+        if (clickIfNotActive(HomeTabSelectors.PUBLIC_REPOSITORIES_BUTTON)) {
+            LOG.info("Navigating to Public Repositories page");
+            getPublicRepositoriesPage().waitToLoad();
+        }
+        return getPublicRepositoriesPage();
+    }
+
+    public ContainerHostsPage navigateToContainerHostsPage() {
+        if (clickIfNotActive(HomeTabSelectors.CONTAINER_HOSTS_BUTTON)) {
+            LOG.info("Navigating to Container Hosts page");
+            getContainerHostsPage().waitToLoad();
+        }
+        return getContainerHostsPage();
+    }
+
+    protected ApplicationsPage getApplicationsPage() {
         if (Objects.isNull(applicationsPage)) {
             applicationsPage = new ApplicationsPage();
         }
         return applicationsPage;
     }
 
-    public ContainersPage navigateToContainersPage() {
-        if (clickIfNotActive(HomeTabSelectors.CONTAINERS_BUTTON)) {
-            // waitForItemsToLoad();
-        }
+    protected ContainersPage getContainersPage() {
         if (Objects.isNull(containersPage)) {
             containersPage = new ContainersPage();
         }
         return containersPage;
     }
 
-    public NetworksPage navigateToNetworksPage() {
-        if (clickIfNotActive(HomeTabSelectors.NETWORKS_BUTTON)) {
-            // waitForItemsToLoad();
-        }
+    protected NetworksPage getNetworksPage() {
         if (Objects.isNull(networksPage)) {
             networksPage = new NetworksPage();
         }
         return networksPage;
     }
 
-    public VolumesPage navigateToVolumesPage() {
-        if (clickIfNotActive(HomeTabSelectors.VOLUMES_BUTTON)) {
-            // waitForItemsToLoad();
-        }
+    protected VolumesPage getVolumesPage() {
         if (Objects.isNull(volumesPage)) {
             volumesPage = new VolumesPage();
         }
         return volumesPage;
     }
 
-    public TemplatesPage navigateToTemplatesPage() {
-        if (clickIfNotActive(HomeTabSelectors.TEMPLATES_BUTTON)) {
-            // waitForItemsToLoad();
-        }
+    protected TemplatesPage getTemplatesPage() {
         if (Objects.isNull(templatesPage)) {
             templatesPage = new TemplatesPage();
         }
         return templatesPage;
     }
 
-    public PublicRepositoriesPage navigateToPublicRepositoriesPage() {
-        clickIfNotActive(HomeTabSelectors.PUBLIC_REPOSITORIES_BUTTON);
+    protected PublicRepositoriesPage getPublicRepositoriesPage() {
         if (Objects.isNull(publicRepositoriesPage)) {
             publicRepositoriesPage = new PublicRepositoriesPage();
         }
         return publicRepositoriesPage;
     }
 
-    public ContainerHostsPage navigateToContainerHostsPage() {
-        if (clickIfNotActive(HomeTabSelectors.CONTAINER_HOSTS_BUTTON)) {
-            Wait().until(ExpectedConditions.or(
-                    d -> {
-                        return $(By.cssSelector(".card-item")).exists();
-                    },
-                    d -> {
-                        return $(By.cssSelector(".content-empty")).exists();
-                    }));
-        }
+    protected ContainerHostsPage getContainerHostsPage() {
         if (Objects.isNull(containerHostsPage)) {
             containerHostsPage = new ContainerHostsPage();
         }
@@ -164,9 +198,14 @@ public abstract class HomeTab<P extends HomeTab<P, V>, V extends HomeTabValidato
         return false;
     }
 
-    /*
-     * private void waitForItemsToLoad() { executeInFrame(0, () -> {
-     * waitForElementToAppearAndDisappear(GlobalSelectors.SPINNER); }); }
-     */
+    String getCurrentProject() {
+        waitForProjectsReady();
+        return $(HomeTabSelectors.CURRENT_PROJECT_INDICATOR).getText();
+    }
+
+    @Override
+    public void waitToLoad() {
+        validate().validateIsCurrentPage();
+    }
 
 }

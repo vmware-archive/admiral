@@ -44,12 +44,12 @@ public class ContainersPageValidator extends PageValidator {
     }
 
     public ContainersPageValidator validateContainerExistsWithName(String name) {
-        executeInFrame(0, () -> page.getContainerCard(name).should(Condition.exist));
+        executeInFrame(0, () -> $(page.getContainerCardSelector(name)).should(Condition.exist));
         return this;
     }
 
     public ContainersPageValidator validateContainerDoesNotExistWithName(String name) {
-        executeInFrame(0, () -> page.getContainerCard(name).shouldNot(Condition.exist));
+        executeInFrame(0, () -> $(page.getContainerCardSelector(name)).shouldNot(Condition.exist));
         return this;
     }
 
@@ -64,7 +64,6 @@ public class ContainersPageValidator extends PageValidator {
                     actualCount));
         }
         return this;
-
     }
 
 }
