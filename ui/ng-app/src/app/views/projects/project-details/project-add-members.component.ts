@@ -1,4 +1,3 @@
-import { AuthService } from './../../../utils/auth.service';
 /*
  * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
  *
@@ -12,6 +11,7 @@ import { AuthService } from './../../../utils/auth.service';
 
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormGroup, FormControl, Validators } from "@angular/forms";
+import { AuthService } from '../../../utils/auth.service';
 import { DocumentService } from "../../../utils/document.service";
 import { Utils } from "../../../utils/utils";
 import * as I18n from 'i18next';
@@ -74,11 +74,11 @@ export class ProjectAddMembersComponent {
         if (this.searchTimeout) {
             clearTimeout(this.searchTimeout);
         }
-        
+
         // Schedule the search to begin after 1 second.
         this.searching = true;
         this.searchTimeout = setTimeout(() => this.getAndPropagatePrincipals(), SEARCH_TIMEOUT_MILLIS);
-        
+
     }
 
     getAndPropagatePrincipals() {
@@ -120,10 +120,11 @@ export class ProjectAddMembersComponent {
     }
 
     addConfirmed() {
-        if (this.addMembersToProjectForm.valid) {
-            let selectedPrincipalIds = this.selectedMembers.map((principal) => principal.id);
+        let selectedPrincipalIds = this.getSelectedMembersToAdd();
 
+        if (selectedPrincipalIds.length > 0) {
             let patchValue;
+
             let fieldRoleValue = this.memberRoleSelection;
             if (fieldRoleValue === 'ADMIN') {
                 patchValue = {
@@ -179,5 +180,19 @@ export class ProjectAddMembersComponent {
 
     resetAlert() {
         this.alertMessage = null;
+    }
+
+    getSelectedMembersToAdd() {
+        if (this.addMembersToProjectForm.valid) {
+            return this.selectedMembers.map((principal) => principal.id);
+        }
+
+        return [];
+    }
+
+    disableSave() {
+        return this.addMembersToProjectForm.invalid
+            || this.saving
+            || this.getSelectedMembersToAdd().length == 0;
     }
 }

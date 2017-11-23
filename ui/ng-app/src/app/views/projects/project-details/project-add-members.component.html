@@ -54,7 +54,7 @@
         <button type="button" class="btn btn-outline" [disabled]="saving"
                 (click)="addCanceled()">{{ "cancel" | i18n }}</button>
         <button type="button" class="btn btn-primary"
-                [disabled]="addMembersToProjectForm.invalid || saving"
+                [disabled]="disableSave()"
                 (click)="addConfirmed()">{{ "ok" | i18n }}<div
             *ngIf="saving" class="saving"><i class="fa fa-lg fa-spinner fa-spin"></i></div></button>
     </div>
