@@ -149,8 +149,6 @@ public class ProjectRolesHandler {
                             AuthRole.PROJECT_ADMIN));
                     results.add(handleUserAssignment(membersUsersToAdd, membersUsersToRemove,
                             AuthRole.PROJECT_MEMBER));
-                    results.add(handleUserAssignment(membersUsersToAdd, membersUsersToRemove,
-                            AuthRole.PROJECT_MEMBER_EXTENDED));
                     results.add(handleUserAssignment(viewersUsersToAdd, viewersUsersToRemove,
                             AuthRole.PROJECT_VIEWER));
                     results.add(handleGroupsAssignment(
@@ -216,7 +214,6 @@ public class ProjectRolesHandler {
         switch (role) {
         case PROJECT_ADMIN:
         case PROJECT_MEMBER:
-        case PROJECT_MEMBER_EXTENDED:
         case PROJECT_VIEWER:
             groupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
                     role.buildRoleWithSuffix(projectId));
