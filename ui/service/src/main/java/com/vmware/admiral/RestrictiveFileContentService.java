@@ -19,6 +19,8 @@ import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.services.common.FileContentService;
 
 public class RestrictiveFileContentService extends FileContentService {
+    private static final int CACHE_EXPIRATION_TIME_SEC = Integer.getInteger(
+            "com.vmware.admiral.ui.cache.expiration.time", 3600);
 
     protected volatile Boolean isEmbedded;
 
@@ -28,7 +30,6 @@ public class RestrictiveFileContentService extends FileContentService {
 
     @Override
     public void handleGet(Operation op) {
-
         if (isEmbedded == null) {
             // ConfigurationUtil.getConfigProperty(this, ConfigurationUtil.EMBEDDED_MODE_PROPERTY,
             // (embedded) -> {
@@ -54,6 +55,12 @@ public class RestrictiveFileContentService extends FileContentService {
             op.setContentType(Operation.MEDIA_TYPE_APPLICATION_JSON).fail(
                     Operation.STATUS_CODE_NOT_FOUND, notFound, null);
             return;
+        }
+
+        if (op != null) {
+            // cache static files
+            String cacheValue = String.format("max-age=%s, must-revalidate", CACHE_EXPIRATION_TIME_SEC);
+            op.addResponseHeader(ConfigurationUtil.CACHE_CONTROL_HEADER, cacheValue);
         }
 
         super.handleGet(op);

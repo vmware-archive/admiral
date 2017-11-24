@@ -27,6 +27,7 @@ public class ConfigurationUtil {
 
     public static final String UI_PROXY_FORWARD_HEADER = "x-forwarded-for";
     public static final String UI_FRAME_OPTIONS_HEADER = "x-frame-options";
+    public static final String CACHE_CONTROL_HEADER = "Cache-Control";
 
     public static final String EMBEDDED_MODE_PROPERTY = "embedded";
     public static final String VIC_MODE_PROPERTY = "vic";
