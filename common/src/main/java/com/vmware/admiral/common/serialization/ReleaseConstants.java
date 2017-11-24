@@ -74,7 +74,7 @@ public final class ReleaseConstants {
     /**
      * The current REST API version.
      */
-    public static final String CURRENT_API_VERSION = API_VERSION_1_2_0;
+    public static final String CURRENT_API_VERSION = API_VERSION_1_2_2;
     public static final String CURRENT_VERSION_HEADER = VERSION_PREFIX + CURRENT_API_VERSION;
 
 }

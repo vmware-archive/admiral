@@ -308,7 +308,7 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
 
         // Provide API metainfo
         Info apiInfo = new Info();
-        apiInfo.setVersion("1.2.2");
+        apiInfo.setVersion("1.3.0");
         apiInfo.setTitle("Admiral");
 
         apiInfo.setLicense(new License().name("Apache 2.0")

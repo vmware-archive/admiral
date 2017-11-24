@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 1.3.0-SNAPSHOT
+
+Docker hub images & tags: https://hub.docker.com/r/vmware/admiral/
+
+* dev - Standalone
+
+* vic_dev - VIC
+
 ## 1.2.2
 
 * Increased the security by default by TLSv1.0. More information [here](https://github.com/vmware/admiral/wiki/Configuration-guide#allow-usage-of-tls-v10).
@@ -11,8 +19,6 @@
 Docker hub images & tags: https://hub.docker.com/r/vmware/admiral/
 
 * dev - Standalone
-
-* vic_dev - VIC
 
 ## 1.2.1
 
