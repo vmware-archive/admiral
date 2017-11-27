@@ -53,6 +53,7 @@ public class ContainerImageService extends StatelessService {
     public static final String SELF_LINK = ManagementUriParts.IMAGES;
 
     public static final String TENANT_LINKS_PARAM_NAME = "tenantLinks";
+    public static final String REGISTRY_FILTER_QUERY_PARAM_NAME = "registry";
 
     @Override
     public void handleRequest(Operation op) {
@@ -94,6 +95,7 @@ public class ContainerImageService extends StatelessService {
         String searchTerm = queryParams.get(SEARCH_QUERY_PROP_NAME);
         AssertUtil.assertNotNullOrEmpty(searchTerm, SEARCH_QUERY_PROP_NAME);
 
+        String registryFilter = queryParams.get(REGISTRY_FILTER_QUERY_PARAM_NAME);
         String group = queryParams.remove(TENANT_LINKS_PARAM_NAME);
 
         logFine("Search in group: " + group);
@@ -117,8 +119,8 @@ public class ContainerImageService extends StatelessService {
 
                 if (links.isEmpty()) {
                     // failed to find a matching registry, create adapter request for each one
-                    RegistryUtil.forEachRegistry(getHost(), group, registryLinksConsumer,
-                            failureConsumer);
+                    RegistryUtil.forEachRegistry(getHost(), group, registryFilter,
+                            registryLinksConsumer, failureConsumer);
                     return;
                 }
 
@@ -126,7 +128,7 @@ public class ContainerImageService extends StatelessService {
                 registryLinksConsumer.accept(links);
             });
         } else {
-            RegistryUtil.forEachRegistry(getHost(), group, registryLinksConsumer,
+            RegistryUtil.forEachRegistry(getHost(), group, registryFilter, registryLinksConsumer,
                     failureConsumer);
         }
     }

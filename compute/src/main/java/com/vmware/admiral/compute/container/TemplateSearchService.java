@@ -20,6 +20,7 @@ import static com.vmware.admiral.common.util.ServiceUtils.addServiceRequestRoute
 import static com.vmware.admiral.common.util.UriUtilsExtended.flattenQueryParams;
 import static com.vmware.admiral.common.util.UriUtilsExtended.parseBooleanParam;
 import static com.vmware.admiral.compute.container.util.ContainerUtil.removeTagFromContainerImageName;
+import static com.vmware.admiral.image.service.ContainerImageService.REGISTRY_FILTER_QUERY_PARAM_NAME;
 import static com.vmware.xenon.common.UriUtils.URI_WILDCARD_CHAR;
 
 import java.net.URI;
@@ -99,6 +100,7 @@ public class TemplateSearchService extends StatelessService {
         boolean templatesOnly = parseBooleanParam(queryParams.remove(TEMPLATES_ONLY_PARAM));
         boolean imagesOnly = parseBooleanParam(queryParams.remove(IMAGES_ONLY_PARAM));
         boolean closuresOnly = parseBooleanParam(queryParams.remove(CLOSURES_ONLY_PARAM));
+        String registryFilter = queryParams.remove(REGISTRY_FILTER_QUERY_PARAM_NAME);
 
         if (closuresOnly) {
             queryClosures(get, queryParams, query);
@@ -143,7 +145,7 @@ public class TemplateSearchService extends StatelessService {
                 executeTemplateQuery(get, query, queryParams, resultConsumer);
             }
             if (!templatesOnly) {
-                executeImageQuery(queryParams, resultConsumer);
+                executeImageQuery(queryParams, registryFilter, resultConsumer);
             }
         }
     }
@@ -376,7 +378,7 @@ public class TemplateSearchService extends StatelessService {
                 }));
     }
 
-    private void executeImageQuery(Map<String, String> queryParams,
+    private void executeImageQuery(Map<String, String> queryParams, String registryFilter,
             BiConsumer<ServiceDocumentQueryElementResult<TemplateSpec>, Boolean> resultConsumer) {
 
         URI imageSearchUri = UriUtils.buildUri(getHost(), ContainerImageService.SELF_LINK);
@@ -394,6 +396,10 @@ public class TemplateSearchService extends StatelessService {
         }
 
         queryParams.put(QUERY_PARAM, query);
+
+        if (registryFilter != null) {
+            queryParams.put(REGISTRY_FILTER_QUERY_PARAM_NAME, registryFilter);
+        }
 
         // pass on the query parameters to the image search service
         imageSearchUri = UriUtils.extendUriWithQuery(imageSearchUri, flattenQueryParams(

@@ -44,7 +44,7 @@ public class RegistryUtil {
      * @param failureConsumer
      */
     public static void forEachRegistry(ServiceHost serviceHost, String tenantLink,
-            Consumer<Collection<String>> registryLinksConsumer,
+            String registryFilter, Consumer<Collection<String>> registryLinksConsumer,
             Consumer<Collection<Throwable>> failureConsumer) {
 
         BiConsumer<Collection<String>, Collection<Throwable>> consumer = (links, failures) -> {
@@ -57,7 +57,10 @@ public class RegistryUtil {
 
         List<QueryTask> queryTasks = new ArrayList<QueryTask>();
 
-        if (tenantLink != null) {
+        if (registryFilter != null && !registryFilter.isEmpty()) {
+            // add query for a registry with a specific name and group
+            queryTasks.add(buildRegistryQueryByNameAndGroup(registryFilter, tenantLink));
+        } else if (tenantLink != null) {
             // add query for global groups
             queryTasks.add(buildRegistryQueryByGroup(null));
             // add query for registries of a specific tenant
@@ -168,6 +171,14 @@ public class RegistryUtil {
     private static QueryTask buildRegistryQueryByGroup(String tenantLink) {
         Query groupClause = QueryUtil.addTenantGroupAndUserClause(tenantLink);
         return buildRegistryQuery(groupClause);
+    }
+
+    private static QueryTask buildRegistryQueryByNameAndGroup(String name, String tenantLink) {
+        Query nameClause = new Query()
+                .setTermPropertyName(RegistryState.FIELD_NAME_NAME)
+                .setTermMatchValue(name);
+        Query groupClause = QueryUtil.addTenantGroupAndUserClause(tenantLink);
+        return buildRegistryQuery(nameClause, groupClause);
     }
 
     private static QueryTask buildRegistryQuery(Query... additionalClauses) {

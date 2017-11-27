@@ -18,6 +18,8 @@ import { serviceUtils } from 'admiral-ui-common';
 const IMAGES_SEARCH_QUERY_PROP_NAME = 'q';
 const IMAGES_SEARCH_LIMIT_PROP_NAME = 'limit';
 const IMAGES_SEARCH_QUERY_WILDCARD = '*';
+const REGISTRY_FILTER_QUERY_TAG_NAME = 'registry:';
+const REGISTRY_FILTER_QUERY_PROP_NAME = 'registry';
 const TEMPLATES_SEARCH_QUERY_TEMPLATES_ONLY_PARAM = 'templatesOnly';
 const TEMPLATES_SEARCH_QUERY_TEMPLATES_PARENTS_ONLY_PARAM = 'templatesParentOnly';
 const TEMPLATES_SEARCH_QUERY_IMAGES_ONLY_PARAM = 'imagesOnly';
@@ -833,6 +835,28 @@ services.loadTemplates = function(queryOptions) {
 
   var params = {};
   if (anys) {
+    // search only the registries specified by name
+    var registryNames = [];
+    anys = anys.filter(any => {
+      if (any.startsWith(REGISTRY_FILTER_QUERY_TAG_NAME)) {
+        registryNames.push(any.substr(REGISTRY_FILTER_QUERY_TAG_NAME.length, any.length));
+        return false;
+      }
+      return true;
+    });
+
+    if (registryNames.length > 0) {
+      // search in a single registry and ignore others
+      params[REGISTRY_FILTER_QUERY_PROP_NAME] = registryNames[0];
+    }
+
+    if (anys.length === 0) {
+      return {
+        results: [],
+        isPartialResult: false
+      };
+    }
+
     // TODO: there can be multiple query requests but we take only the first one, as the backend
     // does not handle multiple
     params[IMAGES_SEARCH_QUERY_PROP_NAME] = anys[0];

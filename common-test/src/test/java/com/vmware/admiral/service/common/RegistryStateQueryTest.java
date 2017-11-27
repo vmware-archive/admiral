@@ -102,7 +102,7 @@ public class RegistryStateQueryTest extends BaseRegistryStateQueryTest {
     }
 
     private void verifyIncludedRegistries(String tenantLink, boolean shouldIncludeGrouped) {
-        RegistryUtil.forEachRegistry(host, tenantLink,
+        RegistryUtil.forEachRegistry(host, tenantLink, null,
                 (registryLinks) -> {
                     if (!registryLinks.contains(globalRegistryState.documentSelfLink)) {
                         host.log(Level.SEVERE, "Global registry %s missing",

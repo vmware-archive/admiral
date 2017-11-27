@@ -47,7 +47,7 @@ public class DisabledRegistryStateQueryTest extends BaseRegistryStateQueryTest {
     public void testDisabledRegistriesExcluded() throws Throwable {
         // initially the registry is enabled so should be included in results
         waitFor("time out waiting for initially included registry.", () -> {
-            RegistryUtil.forEachRegistry(host, TEST_GROUP_TENANT_LINK,
+            RegistryUtil.forEachRegistry(host, TEST_GROUP_TENANT_LINK, null,
                     (registryLinks) -> {
                         System.out.println("REGISTRY LINKS ======> " + registryLinks);
                         if (!registryLinks.contains(registryState.documentSelfLink)) {
@@ -67,7 +67,7 @@ public class DisabledRegistryStateQueryTest extends BaseRegistryStateQueryTest {
 
         // this time expect the grouped registry to be excluded
         waitFor("time out waiting to remove a disabled registry from index..", () -> {
-            RegistryUtil.forEachRegistry(host, TEST_GROUP_TENANT_LINK,
+            RegistryUtil.forEachRegistry(host, TEST_GROUP_TENANT_LINK, null,
                     (registryLinks) -> {
                         if (registryLinks.contains(registryState.documentSelfLink)) {
                             host.log(Level.SEVERE, "Disabled registry %s included in results",
