@@ -769,6 +769,7 @@ let ContainersStore = Reflux.createStore({
         }).catch((e) => {
           console.log('Cannot load containers next page', e);
           this.setInData(['listView', 'itemsLoading'], false);
+          this.emitChange();
         });
     }
 
@@ -786,32 +787,34 @@ let ContainersStore = Reflux.createStore({
     var operation =
       this.requestCancellableOperation(constants.CONTAINERS.OPERATION.LIST, queryOptions);
 
-    operation.forPromise(services.rescanContainers(queryOptions, numberOfContainers))
-                                    .then((result) => {
-      let containers = result.documentLinks.map((documentLink) => {
-        return result.documents[documentLink];
-      });
+    if (operation) {
+      operation.forPromise(services.rescanContainers(queryOptions, numberOfContainers))
+        .then((result) => {
+          let containers = result.documentLinks.map((documentLink) => {
+            return result.documents[documentLink];
+          });
 
-      let updatedItems = this.data.listView ? this.data.listView.items : [];
-      alreadyLoadedItems.forEach((item) => {
-        let container = containers.find((updatedContainer) => {
-          return updatedContainer.documentSelfLink === item.documentSelfLink;
+          let updatedItems = this.data.listView ? this.data.listView.items : [];
+          alreadyLoadedItems.forEach((item) => {
+            let container = containers.find((updatedContainer) => {
+              return updatedContainer.documentSelfLink === item.documentSelfLink;
+            });
+
+            let updatedItem = updateContainerItem(item, container);
+            if (updatedItem) {
+              updatedItems = utils.updateItems(updatedItems, updatedItem,
+                'documentSelfLink', updatedItem.documentSelfLink);
+              this.setInData(['listView', 'items'], updatedItems);
+            }
+          });
+
+          this.emitChange();
+        }).catch((e) => {
+          console.log('Containers rescan failed', e);
         });
 
-        let updatedItem = updateContainerItem(item, container);
-        if (updatedItem) {
-          updatedItems = utils.updateItems(updatedItems, updatedItem,
-                                            'documentSelfLink', updatedItem.documentSelfLink);
-          this.setInData(['listView', 'items'], updatedItems);
-        }
-      });
-
       this.emitChange();
-    }).catch((e) => {
-      console.log('Containers rescan failed', e);
-    });
-
-    this.emitChange();
+    }
   },
 
   onCloseContainers: function() {
