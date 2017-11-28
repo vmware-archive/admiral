@@ -161,6 +161,9 @@ public class ClusterService extends StatelessService {
         /** The number of containers in the cluster. */
         public int containerCount;
 
+        /** The number of system containers in the cluster. */
+        public int systemContainersCount;
+
         public long totalMemory;
 
         public long memoryUsage;

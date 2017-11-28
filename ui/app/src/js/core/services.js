@@ -1079,6 +1079,11 @@ services.loadClosureDescriptionById = function(closureDescriptionId) {
 };
 
 services.loadContainers = function(queryOptions) {
+  if (utils.isApplicationEmbedded()) {
+    // this will build filter 'system ne true'
+    queryOptions.system = 'true';
+  }
+
   var filter = buildResourcesSearchQuery(queryOptions);
   var url = buildPaginationUrl(links.CONTAINERS, filter, true, 'created asc');
   return get(url);
@@ -2259,6 +2264,17 @@ var buildResourcesSearchQuery = function(queryOptions) {
         newQueryOptions.networks.push({
           val: '*' + networkArray[i] + '*',
           op: 'eq'
+        });
+      }
+    }
+
+    var systemArray = toArrayIfDefined(queryOptions.system);
+    if (systemArray) {
+      newQueryOptions.system = [];
+      for (let i = 0; i < systemArray.length; i++) {
+        newQueryOptions.system.push({
+          val: systemArray[i],
+          op: 'ne'
         });
       }
     }

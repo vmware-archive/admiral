@@ -293,6 +293,7 @@ public class ClusterUtils {
                             : ClusterType.DOCKER;
             ePZClusterDto.status = ClusterStatus.DISABLED;
             ePZClusterDto.containerCount = 0;
+            ePZClusterDto.systemContainersCount = 0;
             ePZClusterDto.totalCpu = 0.0;
         } else {
             if (PlacementZoneUtil.isSchedulerPlacementZone(resourcePoolState)) {
@@ -315,6 +316,7 @@ public class ClusterUtils {
             }
 
             int containerCounter = 0;
+            int systemContainerCounter = 0;
             ePZClusterDto.nodes = new HashMap<>();
             for (ComputeState computeState : computeStates) {
                 if (!computeState.powerState.equals(computeStates.get(0).powerState)) {
@@ -327,11 +329,17 @@ public class ClusterUtils {
                         computeState.customProperties,
                         ContainerHostService.NUMBER_OF_CONTAINERS_PER_HOST_PROP_NAME)
                         .orElse(0);
+                systemContainerCounter += PropertyUtils.getPropertyInteger(
+                        computeState.customProperties,
+                        ContainerHostService.NUMBER_OF_SYSTEM_CONTAINERS_PROP_NAME)
+                        .orElse(0);
             }
             if (ePZClusterDto.status == null) {
                 ePZClusterDto.status = ClusterUtils.computeToClusterStatus(computeStates.get(0));
             }
+
             ePZClusterDto.containerCount = containerCounter;
+            ePZClusterDto.systemContainersCount = systemContainerCounter;
         }
         return ePZClusterDto;
     }
