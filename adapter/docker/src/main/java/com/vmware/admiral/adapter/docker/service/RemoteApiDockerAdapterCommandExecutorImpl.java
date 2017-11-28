@@ -724,8 +724,14 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
     @Override
     public URLConnection openConnection(CommandInput input, URL url) throws NoSuchAlgorithmException, KeyManagementException, IOException {
         if (isSecure(URI.create(url.toString()))) {
-            String clientKey = EncryptionUtils.decrypt(input.getCredentials().privateKey);
-            String clientCert = input.getCredentials().publicKey;
+
+            String clientKey = null;
+            String clientCert = null;
+
+            if (input != null && input.getCredentials() != null) {
+                clientKey = EncryptionUtils.decrypt(input.getCredentials().privateKey);
+                clientCert = input.getCredentials().publicKey;
+            }
 
             // TODO use an LRU cache to limit the number of stored
             // KeyManagers while minimizing time wasted repeatedly
