@@ -17,6 +17,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import static com.vmware.admiral.common.util.UriUtilsExtended.MEDIA_TYPE_APPLICATION_YAML;
+import static com.vmware.admiral.test.integration.TestPropertiesUtil.getSystemOrTestProp;
 import static com.vmware.admiral.test.integration.TestPropertiesUtil.getTestRequiredProp;
 import static com.vmware.admiral.test.integration.data.IntegratonTestStateFactory.CONTAINER_ADMIRAL_IMAGE;
 
@@ -32,6 +33,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -45,15 +47,21 @@ import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.adapter.common.NetworkOperationType;
 import com.vmware.admiral.adapter.registry.service.RegistryAdapterService;
 import com.vmware.admiral.adapter.registry.service.RegistrySearchResponse;
+import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.test.CommonTestStateFactory;
 import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
+import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
+import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
+import com.vmware.admiral.compute.PlacementZoneUtil;
 import com.vmware.admiral.compute.RegistryHostConfigService;
 import com.vmware.admiral.compute.RegistryHostConfigService.RegistryHostSpec;
 import com.vmware.admiral.compute.ResourceType;
+import com.vmware.admiral.compute.cluster.ClusterService;
+import com.vmware.admiral.compute.cluster.ClusterService.ClusterDto;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.CompositeComponentRegistry;
 import com.vmware.admiral.compute.container.CompositeComponentRegistry.ComponentMeta;
@@ -72,6 +80,7 @@ import com.vmware.admiral.service.common.RegistryService.RegistryState;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.SslTrustCertificateService;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
+import com.vmware.admiral.service.test.MockDockerHostAdapterService;
 import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpMethod;
 import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpResponse;
 import com.vmware.admiral.test.integration.data.IntegratonTestStateFactory;
@@ -103,6 +112,15 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
     private static final int DOCKER_MAX_BRIDGE_NETWORKS_COUNT = 29;
     private static final String BRIDGE_NETWORK_TYPE_QUERY = "?$filter=driver eq 'bridge'";
     private static final String DEFAULT_REGISTRY_ADDRESS = "https://registry.hub.docker.com";
+
+    protected String dockerHostAddress1;
+    protected String dockerHostAddress2;
+    protected String hostPort;
+    protected String getDockerHostAddressWithPort1;
+    protected String getDockerHostAddressWithPort2;
+    protected String projectLink;
+    protected String placementZoneName;
+    protected ContainerHostSpec hostSpec;
 
     protected ComputeState dockerHostCompute;
     protected List<ComputeState> dockerHostsInCluster;
@@ -265,6 +283,84 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
                 CommonTestStateFactory.REGISTRATION_DOCKER_ID);
 
         postDocument(SslTrustCertificateService.FACTORY_LINK, dockerHostSslTrust);
+    }
+
+    protected void setupEnvironmentForCluster()
+            throws Throwable {
+        dockerHostAddress1 = getTestRequiredProp("docker.host.cluster.node1.address");
+        dockerHostAddress2 = getSystemOrTestProp("docker.host.cluster.node2.address");
+        hostPort = getTestRequiredProp("docker.host.port." + DockerAdapterType.API.name());
+        getDockerHostAddressWithPort1 = "https://" + dockerHostAddress1 + ":" + hostPort;
+        if (dockerHostAddress2 != null) {
+            getDockerHostAddressWithPort2 = "https://" + dockerHostAddress2 + ":" + hostPort;
+        }
+
+        dockerHostAuthCredentials = IntegratonTestStateFactory.createAuthCredentials(true);
+        dockerHostAuthCredentials.type = AuthCredentialsType.PublicKey.name();
+
+        dockerHostAuthCredentials.privateKey = IntegratonTestStateFactory
+                .getFileContent(getTestRequiredProp("docker.client.key.file"));
+        dockerHostAuthCredentials.publicKey = IntegratonTestStateFactory
+                .getFileContent(getTestRequiredProp("docker.client.cert.file"));
+
+        dockerHostAuthCredentials = postDocument(AuthCredentialsService.FACTORY_LINK,
+                dockerHostAuthCredentials);
+
+        assertNotNull("Failed to create host credentials", dockerHostAuthCredentials);
+
+        dockerHostSslTrust = IntegratonTestStateFactory.createSslTrustCertificateState(
+                getTestRequiredProp("docker.host.ssl.trust.file"),
+                CommonTestStateFactory.REGISTRATION_DOCKER_ID);
+
+        dockerHostSslTrust = postDocument(SslTrustCertificateService.FACTORY_LINK, dockerHostSslTrust);
+
+        projectLink = buildProjectLink(ProjectService.DEFAULT_PROJECT_ID);
+        placementZoneName = PlacementZoneUtil
+                .buildPlacementZoneDefaultName(ContainerHostType.DOCKER,
+                        getDockerHostAddressWithPort1);
+        hostSpec = createContainerHostSpec(Collections.singletonList(projectLink),
+                ContainerHostType.DOCKER, true);
+    }
+
+    protected ContainerHostSpec createContainerHostSpec(List<String> tenantLinks,
+            ContainerHostType hostType, boolean acceptCertificate)
+            throws Throwable {
+        ContainerHostSpec ch = new ContainerHostSpec();
+        ch.acceptCertificate = acceptCertificate;
+        ch.hostState = createComputeState(hostType, tenantLinks);
+        return ch;
+    }
+
+    private ComputeState createComputeState(ContainerHostType hostType,
+            List<String> tenantLinks) throws Throwable {
+        ComputeState cs = new ComputeState();
+        cs.id = UUID.randomUUID().toString();
+        cs.address = getDockerHostAddressWithPort1;
+        // cs.powerState = hostState;
+        cs.customProperties = new HashMap<>();
+        cs.customProperties.put(ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME,
+                DockerAdapterType.API.name());
+        cs.customProperties.put(ContainerHostService.CONTAINER_HOST_TYPE_PROP_NAME,
+                hostType.toString());
+        cs.customProperties.put(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME,
+                dockerHostAuthCredentials.documentSelfLink);
+        cs.customProperties.put(MockDockerHostAdapterService.CONTAINER_HOST_TYPE_PROP_NAME,
+                hostType.toString());
+        cs.tenantLinks = new ArrayList<>(tenantLinks);
+
+        return cs;
+    }
+
+    protected ClusterDto createCluster() throws Exception {
+        String dtoRaw = sendRequest(HttpMethod.POST, ClusterService.SELF_LINK, Utils.toJson
+                (hostSpec));
+        ClusterDto dto = Utils.fromJson(dtoRaw, ClusterDto.class);
+        cleanUpAfter(dto);
+        return dto;
+    }
+
+    private String buildProjectLink(String projectId) {
+        return UriUtils.buildUriPath(ManagementUriParts.PROJECTS, projectId);
     }
 
     protected ComputeState getDockerHost() {

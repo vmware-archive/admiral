@@ -16,26 +16,28 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.compute.ContainerHostService;
+import com.vmware.admiral.compute.cluster.ClusterService.ClusterDto;
 import com.vmware.photon.controller.model.resources.ComputeService;
 
 public class HostStatsIT extends BaseProvisioningOnCoreOsIT {
 
+    private ClusterDto cluster;
+
     @Before
-    public void setUp() throws Exception {
-        setupCoreOsHost(ContainerHostService.DockerAdapterType.API);
+    public void setUp() throws Throwable {
+        setupEnvironmentForCluster();
+        cluster = createCluster();
     }
 
     @Test
-    @Ignore("https://jira-hzn.eng.vmware.com/browse/VBV-1364")
-    public void testShellCommandExecution() throws Exception {
+    public void testHostStats() throws Exception {
         // The total memory, available memory, cpu usage should be populated in
         // the host's custom properties. We don't know what the exact values will be,
         // so just check if the properties exist
-        waitForStateChange(dockerHostCompute.documentSelfLink, (body) -> {
+        waitForStateChange(cluster.nodeLinks.get(0), (body) -> {
             JsonObject object = new JsonParser().parse(body).getAsJsonObject();
             JsonObject customProperties = object
                     .get(ComputeService.ComputeState.FIELD_NAME_CUSTOM_PROPERTIES)

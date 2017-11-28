@@ -19,10 +19,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
-import com.vmware.admiral.compute.ContainerHostService;
+import com.vmware.admiral.compute.cluster.ClusterService.ClusterDto;
 import com.vmware.admiral.compute.container.ShellContainerExecutorService;
 import com.vmware.admiral.compute.container.ShellContainerExecutorService.ShellContainerExecutorResult;
 import com.vmware.xenon.common.UriUtils;
@@ -30,13 +29,15 @@ import com.vmware.xenon.common.Utils;
 
 public class ShellContainerExecutorServiceIT extends BaseProvisioningOnCoreOsIT {
 
+    private ClusterDto cluster;
+
     @Before
-    public void setUp() throws Exception {
-        setupCoreOsHost(ContainerHostService.DockerAdapterType.API);
+    public void setUp() throws Throwable {
+        setupEnvironmentForCluster();
+        cluster = createCluster();
     }
 
     @Test
-    @Ignore("https://jira-hzn.eng.vmware.com/browse/VBV-1364")
     public void testShellCommandExecution() throws Exception {
         logger.info("testShellCommandExecution");
         URI uri = URI.create(getBaseUrl() + buildServiceUri(
@@ -44,7 +45,7 @@ public class ShellContainerExecutorServiceIT extends BaseProvisioningOnCoreOsIT 
 
         String url = UriUtils
                 .appendQueryParam(uri, ShellContainerExecutorService.HOST_LINK_URI_PARAM,
-                        dockerHostCompute.documentSelfLink)
+                        cluster.nodeLinks.get(0))
                 .toString();
 
         Map<String, Object> command = new HashMap<>();
