@@ -173,8 +173,7 @@ let searchImages = function(queryOptions, searchOnlyImages, forContainerDefiniti
     this.setInData(listViewPath.concat(['items']), []);
     this.setInData(listViewPath.concat(['itemsLoading']), false);
     this.setInData(listViewPath.concat(['searchedItems']), true);
-    this.setInData(listViewPath.concat(['error']),
-      e.responseJSON.message || e.statusText);
+    this.setInData(listViewPath.concat(['error']), utils.getErrorMessage(e));
     this.emitChange();
   });
 };
@@ -801,6 +800,8 @@ let TemplatesStore = Reflux.createStore({
       services.loadGroups().then((groupsResult) => {
         this.setInData(['groups'], Object.values(groupsResult));
         this.emitChange();
+      }).catch((e) => {
+        console.log('Could not load business groups', e);
       });
     } else {
       actions.ResourceGroupsActions.retrieveGroups();

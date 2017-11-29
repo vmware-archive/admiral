@@ -179,5 +179,7 @@ export var NavigationActions = Reflux.createActions([
   'openNetworks', 'openContainerDetails', 'openClusterDetails', 'openCompositeContainerDetails',
   'openTemplateDetails', 'showContainersPerPlacement', 'showMachinesPerPlacement', 'openPlacements',
   'openClosures', 'openClosuresSilently', 'openAddClosure', 'openClosureDetails',
-  'openCompositeClosureDetails', 'openVolumes', 'openCreateNewApplication'
+  'openCompositeClosureDetails', 'openVolumes', 'openCreateNewContainer',
+  'openCreateNewApplication', 'openCreateNewNetwork', 'openCreateNewVolume', 'openCreateNewClosure',
+  'openCreateNewProject', 'openCreateNewKubernetes'
 ]);

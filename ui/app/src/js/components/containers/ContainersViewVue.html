@@ -48,12 +48,14 @@
         <div class="toolbar">
           <div class="row">
             <div class="col-sm-6 toolbar-primary">
-              <a href="#/projects/new" class="btn btn-link create-resource-btn"
-                 v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.PROJECTS">
+              <a class="btn btn-link create-resource-btn"
+                 v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.PROJECTS"
+                 @click="openCreateProject($event)">
                 <i class="fa fa-plus"></i>{{i18n("app.resource.list.project.create")}}
               </a>
-              <a href="#/containers/new" class="btn btn-link create-resource-btn"
-                 v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.CONTAINERS">
+              <a class="btn btn-link create-resource-btn"
+                 v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.CONTAINERS"
+                 @click="openCreateContainer($event)">
                 <i class="fa fa-plus"></i>{{i18n("app.resource.list.container.create")}}
               </a>
               <a class="btn btn-link create-resource-btn"
@@ -61,20 +63,24 @@
                  @click="openCreateApplication($event)">
                 <i class="fa fa-plus"></i>{{i18n("app.resource.list.application.create")}}
               </a>
-              <a href="#/networks/new" class="btn btn-link create-resource-btn"
-                 v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.NETWORKS">
+              <a class="btn btn-link create-resource-btn"
+                 v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.NETWORKS"
+                 @click="openCreateNetwork($event)">
                 <i class="fa fa-plus"></i>{{i18n("app.resource.list.network.create")}}
               </a>
-              <a href="#/volumes/new" class="btn btn-link create-resource-btn"
-                 v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.VOLUMES">
+              <a class="btn btn-link create-resource-btn"
+                 v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.VOLUMES"
+                 @click="openCreateVolume($event)">
                 <i class="fa fa-plus"></i>{{i18n("app.resource.list.volume.create")}}
               </a>
-              <a href="#/closures/new" class="btn btn-link create-resource-btn"
-                 v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.CLOSURES && areClosuresAllowed">
+              <a class="btn btn-link create-resource-btn"
+                 v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.CLOSURES && areClosuresAllowed"
+                 @click="openCreateClosure($event)">
                 <i class="fa fa-plus"></i>{{i18n("app.resource.list.closure.create")}}
               </a>
-              <a href="#/kubernetes/new" class="btn btn-link create-resource-btn"
-                 v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.KUBERNETES">
+              <a class="btn btn-link create-resource-btn"
+                 v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.KUBERNETES"
+                 @click="openCreateKubernetes($event)">
                 <i class="fa fa-plus"></i>{{i18n("app.resource.list.kubernetes.create")}}
               </a>
             </div>

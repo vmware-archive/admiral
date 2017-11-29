@@ -402,8 +402,32 @@ actions.NavigationActions.openCompositeClosureDetails.listen(function(closureDes
   hasher.setHash('closures/' + closureDescriptionId);
 });
 
+actions.NavigationActions.openCreateNewContainer.listen(function() {
+  hasher.setHash('containers/new');
+});
+
 actions.NavigationActions.openCreateNewApplication.listen(function() {
   hasher.setHash('applications/new');
+});
+
+actions.NavigationActions.openCreateNewNetwork.listen(function() {
+  hasher.setHash('networks/new');
+});
+
+actions.NavigationActions.openCreateNewVolume.listen(function() {
+  hasher.setHash('volumes/new');
+});
+
+actions.NavigationActions.openCreateNewProject.listen(function() {
+  hasher.setHash('projects/new');
+});
+
+actions.NavigationActions.openCreateNewClosure.listen(function() {
+  hasher.setHash('closures/new');
+});
+
+actions.NavigationActions.openCreateNewKubernetes.listen(function() {
+  hasher.setHash('kubernetes/new');
 });
 
 actions.NavigationActions.showContainersPerPlacement.listen(function(placementId) {

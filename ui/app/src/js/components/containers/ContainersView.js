@@ -320,11 +320,53 @@ var ContainersViewVueComponent = Vue.extend({
       NavigationActions.openCompositeClosureDetails(documentId);
     },
 
+    openCreateContainer: function($event) {
+      $event.stopPropagation();
+      $event.preventDefault();
+
+      return NavigationActions.openCreateNewContainer();
+    },
+
     openCreateApplication: function($event) {
       $event.stopPropagation();
       $event.preventDefault();
 
       return NavigationActions.openCreateNewApplication();
+    },
+
+    openCreateNetwork: function($event) {
+      $event.stopPropagation();
+      $event.preventDefault();
+
+      return NavigationActions.openCreateNewNetwork();
+    },
+
+    openCreateVolume: function($event) {
+      $event.stopPropagation();
+      $event.preventDefault();
+
+      return NavigationActions.openCreateNewVolume();
+    },
+
+    openCreateProject: function($event) {
+      $event.stopPropagation();
+      $event.preventDefault();
+
+      return NavigationActions.openCreateNewProject();
+    },
+
+    openCreateClosure: function($event) {
+      $event.stopPropagation();
+      $event.preventDefault();
+
+      return NavigationActions.openCreateNewClosure();
+    },
+
+    openCreateKubernetes: function($event) {
+      $event.stopPropagation();
+      $event.preventDefault();
+
+      return NavigationActions.openCreateNewKubernetes();
     },
 
     refresh: function() {
