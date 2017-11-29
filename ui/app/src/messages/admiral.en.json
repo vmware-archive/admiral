@@ -1391,6 +1391,7 @@
   "unavailable": "N/A",
   "advanced": "Advanced",
   "noSelection": "No Selection",
+  "noItems": "No items",
   "buildNumber": "Build number",
   "errors": {
     "hostIp": "Value must be hostname or IP address.",

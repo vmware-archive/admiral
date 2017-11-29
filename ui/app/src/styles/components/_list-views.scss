@@ -14,8 +14,15 @@
   overflow: hidden;
   z-index: 0;
 
-  .loading,  {
+  .loading {
     z-index: 1;
+  }
+
+  .content-empty {
+    @extend .position-expand;
+    text-align: center;
+    display: block;
+    margin-top: 100px;
   }
 }
 
@@ -33,7 +40,7 @@
   height: 100%;
 }
 
-.scroll-view .grid-container .content + .loading,  {
+.scroll-view .grid-container .content + .loading {
   height: 100%;
 }
 
@@ -47,7 +54,7 @@
   top: 120px;
 }
 
-.list-view > .title, .list-view > .title-search,  {
+.list-view > .title, .list-view > .title-search {
   @include view-title();
 }
 

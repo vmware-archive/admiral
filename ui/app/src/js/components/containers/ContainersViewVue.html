@@ -14,35 +14,35 @@
     <div class="main-panel">
       <div class="list-view containers-list scroll-view" v-if="model.listView">
         <a class="close-button" @click="goBack($event)"><i
-                class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
-        <list-title v-on:refresh-list="refresh()"
-                    v-bind:has-search-query="isShowingSearchResults" v-bind:count="itemsCount"
-                    v-bind:title="i18n('app.container.list.title')"
-                    v-bind:title-search="titleSearch">
-          <title-action-button v-bind:name="'multiSelect'" v-bind:icon-name="'hand-pointer-o'"
-                               v-bind:confirmable="false" v-bind:button-type="'TOGGLE'"
-                               v-bind:tooltip="i18n('app.resources.selectMultiple')"
-                               v-bind:show="multiSelectionSupported()"
-                               v-bind:toggle-off="!selectionMode"
-                                ></title-action-button>
-          <timeout-alert v-bind:show="selectionMode"
-                         v-bind:text="i18n('app.resources.message.selectShift')"></timeout-alert>
+          class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
+        <list-title @refresh-list="refresh()"
+                    :has-search-query="isShowingSearchResults" :count="itemsCount"
+                    :title="i18n('app.container.list.title')"
+                    :title-search="titleSearch">
+          <title-action-button :name="'multiSelect'" :icon-name="'hand-pointer-o'"
+                               :confirmable="false" :button-type="'TOGGLE'"
+                               :tooltip="i18n('app.resources.selectMultiple')"
+                               :show="multiSelectionSupported()"
+                               :toggle-off="!selectionMode"
+          ></title-action-button>
+          <timeout-alert :show="selectionMode"
+                         :text="i18n('app.resources.message.selectShift')"></timeout-alert>
           <div class="title-second-day-operations hide" transition="fade-in">
             <title-action-button v-if="multiSelectionOperationSupported('STOP')"
-                                 v-bind:name="'multiStop'" v-bind:icon-name="'stop'"
-                                 v-bind:confirmable="false" v-bind:button-type="'SPIN_TIMEOUT'"
-                                 v-bind:tooltip="i18n('app.container.actions.stop')"
-                                 v-bind:show="selectionMode"></title-action-button>
+                                 :name="'multiStop'" :icon-name="'stop'"
+                                 :confirmable="false" :button-type="'SPIN_TIMEOUT'"
+                                 :tooltip="i18n('app.container.actions.stop')"
+                                 :show="selectionMode"></title-action-button>
             <title-action-button v-if="multiSelectionOperationSupported('START')"
-                                 v-bind:name="'multiStart'" v-bind:icon-name="'play'"
-                                 v-bind:confirmable="false" v-bind:button-type="'SPIN_TIMEOUT'"
-                                 v-bind:tooltip="i18n('app.container.actions.start')"
-                                 v-bind:show="selectionMode"></title-action-button>
+                                 :name="'multiStart'" :icon-name="'play'"
+                                 :confirmable="false" :button-type="'SPIN_TIMEOUT'"
+                                 :tooltip="i18n('app.container.actions.start')"
+                                 :show="selectionMode"></title-action-button>
             <title-action-button v-if="multiSelectionOperationSupported('REMOVE')"
-                                 v-bind:name="'multiRemove'" v-bind:icon-name="'trash'"
-                                 v-bind:confirmable="true" v-bind:button-type="'SPIN_TIMEOUT'"
-                                 v-bind:tooltip="i18n('delete')"
-                                 v-bind:show="selectionMode"></title-action-button>
+                                 :name="'multiRemove'" :icon-name="'trash'"
+                                 :confirmable="true" :button-type="'SPIN_TIMEOUT'"
+                                 :tooltip="i18n('delete')"
+                                 :show="selectionMode"></title-action-button>
           </div>
         </list-title>
         <div class="toolbar">
@@ -85,10 +85,10 @@
               </a>
             </div>
             <div class="col-sm-6 toolbar-secondary">
-              <search v-bind:suggestion-properties-by-category="searchSuggestionsByCategoryMap"
-                      v-bind:placeholder-by-category="placeholderByCategoryMap"
-                      v-bind:query-options="model.listView.queryOptions"
-                      v-bind:occurrence-properties="
+              <search :suggestion-properties-by-category="searchSuggestionsByCategoryMap"
+                      :placeholder-by-category="placeholderByCategoryMap"
+                      :query-options="model.listView.queryOptions"
+                      :occurrence-properties="
                         [{
                           name: constants.SEARCH_OCCURRENCE.ALL,
                           label: i18n('occurrence.all')
@@ -96,139 +96,143 @@
                           name: constants.SEARCH_OCCURRENCE.ANY,
                           label: i18n('occurrence.any')
                         }]"
-                      v-on:search-change="search"
-                      ></search>
+                      @search-change="search"></search>
             </div>
           </div>
         </div>
 
         <div class="grid-container">
           <div class="content">
-            <grid v-bind:context-selected="model.selectedItem"
-                  v-bind:preferred-width="preferredGridWidth"
-                  v-bind:count="itemsCount"
+            <grid :context-selected="model.selectedItem"
+                  :preferred-width="preferredGridWidth"
+                  :count="itemsCount"
                   v-infinite-scroll="loadMore()">
               <grid-item v-for="item in model.listView.items" track-by="documentId"
-                         v-bind:select-mode-on="selectionMode"
-                         v-bind:is-marked="isMarked(item)">
+                         :select-mode-on="selectionMode"
+                         :is-marked="isMarked(item)">
                 <project-grid-item v-if="item.type === constants.RESOURCES.TYPES.PROJECT"
-                                     v-bind:model="item"
-                                     v-bind:error="getItemError(item.documentId)"
-                                     v-on:click="handleItemClick($event, item)">
+                                   :model="item"
+                                   :error="getItemError(item.documentId)"
+                                   @click="handleItemClick($event, item)">
                 </project-grid-item>
                 <container-grid-item v-if="item.type === constants.CONTAINERS.TYPES.SINGLE"
-                                     v-bind:model="item"
-                                     v-bind:show-alert-managed-by-catalog="hasManagedByCatalogAlert(item.documentId)"
-                                     v-on:click="handleItemClick($event, item, openContainerDetails)">
+                                     :model="item"
+                                     :show-alert-managed-by-catalog="hasManagedByCatalogAlert(item.documentId)"
+                                     @click="handleItemClick($event, item, openContainerDetails)">
                 </container-grid-item>
                 <cluster-grid-item v-if="item.type === constants.CONTAINERS.TYPES.CLUSTER"
-                                   v-bind:model="item"
-                                   v-on:click="openClusterDetails(item.documentId)">
+                                   :model="item"
+                                   @click="openClusterDetails(item.documentId)">
                 </cluster-grid-item>
                 <composite-container-grid-item v-if="item.type === constants.CONTAINERS.TYPES.COMPOSITE"
-                           v-bind:model="item"
-                           v-bind:show-alert-managed-by-catalog="hasManagedByCatalogAlert(item.documentId)"
-                           v-on:click="handleItemClick($event, item, openCompositeContainerDetails)">
+                                               :model="item"
+                                               :show-alert-managed-by-catalog="hasManagedByCatalogAlert(item.documentId)"
+                                               @click="handleItemClick($event, item, openCompositeContainerDetails)">
                 </composite-container-grid-item>
                 <network-grid-item v-if="item.type === constants.RESOURCES.TYPES.NETWORK"
-                           v-bind:model="item"
-                           v-bind:show-alert-containers-connected="hasContainersConnectedAlert(item.documentId)"
-                           v-bind:show-alert-managed-by-catalog="hasManagedByCatalogAlert(item.documentId)"
-                           v-on:click="handleItemClick($event, item)">
+                                   :model="item"
+                                   :show-alert-containers-connected="hasContainersConnectedAlert(item.documentId)"
+                                   :show-alert-managed-by-catalog="hasManagedByCatalogAlert(item.documentId)"
+                                   @click="handleItemClick($event, item)">
                 </network-grid-item>
                 <volume-grid-item v-if="item.type === constants.RESOURCES.TYPES.VOLUME"
-                                   v-bind:model="item"
-                                   v-bind:show-alert-containers-connected="hasContainersConnectedAlert(item.documentId)"
-                                   v-bind:show-alert-managed-by-catalog="hasManagedByCatalogAlert(item.documentId)"
-                                   v-on:click="handleItemClick($event, item)">
+                                  :model="item"
+                                  :show-alert-containers-connected="hasContainersConnectedAlert(item.documentId)"
+                                  :show-alert-managed-by-catalog="hasManagedByCatalogAlert(item.documentId)"
+                                  @click="handleItemClick($event, item)">
                 </volume-grid-item>
                 <composite-closure-grid-item v-if="item.type === constants.RESOURCES.TYPES.CLOSURE_DESC"
-                                             v-bind:model="item"
-                                             v-on:click="handleItemClick($event, item, openClosureDescriptionDetails)">
+                                             :model="item"
+                                             @click="handleItemClick($event, item, openClosureDescriptionDetails)">
                 </composite-closure-grid-item>
                 <closure-grid-item v-if="item.type === constants.RESOURCES.TYPES.CLOSURE && areClosuresAllowed"
-                                 v-bind:model="item"
-                                 v-on:click="handleItemClick($event, item, openClosureDetails)">
+                                   :model="item"
+                                   @click="handleItemClick($event, item, openClosureDetails)">
                 </closure-grid-item>
               </grid-item>
             </grid>
           </div>
 
+          <!-- loading indicator -->
           <div v-if="model.listView.itemsLoading" class="loading">
             <span class="vertical-helper"></span>
             <div class="spinner"></div>
+          </div>
+          <!-- No Items -->
+          <div v-if="!hasItems && !model.listView.itemsLoading" class="content-empty">
+            {{i18n("noItems")}}
           </div>
         </div>
       </div>
     </div>
   </div>
   <div v-if="model.selectedItemDetails" transition="fade-out" class="closable-view"
-          :class="{'expanded': model.selectedItemDetails.expanded}">
+       :class="{'expanded': model.selectedItemDetails.expanded}">
 
-    <alert alert-type="danger" v-bind:show-alert="hasContainerDetailsError"
-                               v-bind:alert-message="containerDetailsError"></alert>
+    <alert alert-type="danger" :show-alert="hasContainerDetailsError"
+           :alert-message="containerDetailsError"></alert>
 
     <container-details v-if="model.selectedItemDetails.type === constants.CONTAINERS.TYPES.SINGLE"
                        class="content"
-                       v-bind:model="model.selectedItemDetails"
+                       :model="model.selectedItemDetails"
                        transition="fade">
     </container-details>
     <composite-container-details v-if="model.selectedItemDetails.type === constants.CONTAINERS.TYPES.COMPOSITE"
                                  class="content"
-                                 v-bind:model="model.selectedItemDetails"
+                                 :model="model.selectedItemDetails"
                                  transition="fade">
     </composite-container-details>
     <cluster-container-details v-if="model.selectedItem.type === constants.CONTAINERS.TYPES.CLUSTER"
                                class="content"
-                               v-bind:model="model.selectedItemDetails"
+                               :model="model.selectedItemDetails"
                                transition="fade">
     </cluster-container-details>
     <composite-closure-details v-if="model.selectedItemDetails.type === constants.RESOURCES.TYPES.CLOSURE_DESC"
-                                 class="content"
-                                 v-bind:model="model.selectedItemDetails"
-                                 transition="fade">
+                               class="content"
+                               :model="model.selectedItemDetails"
+                               transition="fade">
     </composite-closure-details>
     <closure-details v-if="model.selectedItemDetails.type === constants.RESOURCES.TYPES.CLOSURE"
-                       class="content"
-                       v-bind:model="model.selectedItemDetails"
-                       transition="fade">
+                     class="content"
+                     :model="model.selectedItemDetails"
+                     transition="fade">
     </closure-details>
   </div>
 
-  <context-sidepanel class="right-context-panel" v-if="showContextPanel" v-on:close="closeToolbar()">
+  <context-sidepanel class="right-context-panel" v-if="showContextPanel" @close="closeToolbar()">
     <div slot="toolbar" class="toolbar">
       <context-sidepanel-toolbar-item
-        v-bind:active="activeContextItem === 'requests'"
-        v-bind:label="i18n('app.request.contextPanelTooltip')"
-        v-bind:notifications="requestsCount"
-        v-on:open="openToolbarRequests()" v-on:close="closeToolbar()">
+        :active="activeContextItem === 'requests'"
+        :label="i18n('app.request.contextPanelTooltip')"
+        :notifications="requestsCount"
+        @open="openToolbarRequests()" @close="closeToolbar()">
       </context-sidepanel-toolbar-item>
 
       <context-sidepanel-toolbar-item
-        v-bind:active="activeContextItem === 'eventlogs'"
-        v-bind:label="i18n('app.eventlog.contextPanelTooltip')"
-        v-bind:notifications="eventLogsCount"
-        v-on:open="openToolbarEventLogs()" v-on:close="closeToolbar()">
+        :active="activeContextItem === 'eventlogs'"
+        :label="i18n('app.eventlog.contextPanelTooltip')"
+        :notifications="eventLogsCount"
+        @open="openToolbarEventLogs()" @close="closeToolbar()">
       </context-sidepanel-toolbar-item>
     </div>
 
     <div slot="content" class="content">
       <requests-list v-if="activeContextItem === 'requests'"
-        v-bind:model="model.contextView.activeItem.data"></requests-list>
+                     :model="model.contextView.activeItem.data"></requests-list>
       <eventlog-list v-if="activeContextItem === 'eventlogs'"
-        v-bind:model="model.contextView.activeItem.data"></eventlog-list>
+                     :model="model.contextView.activeItem.data"></eventlog-list>
     </div>
 
   </context-sidepanel>
 
   <div class="create-container closable-view" v-if="creatingContainer" transition="slide-and-fade">
-    <a class="close-button" v-on:click="goBack($event)">
+    <a class="close-button" @click="goBack($event)">
       <i class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span>
     </a>
 
     <div class="content">
-      <container-request-form v-bind:model="model.creatingResource"
-                              v-bind:use-resource-action="true"></container-request-form>
+      <container-request-form :model="model.creatingResource"
+                              :use-resource-action="true"></container-request-form>
     </div>
   </div>
 
@@ -240,27 +244,27 @@
 
   <div class="mask" v-if="creatingNetwork"></div>
   <div class="create-network closable-view" v-if="creatingNetwork" transition="slide-and-fade">
-    <alert alert-type="danger" v-bind:show-alert="hasResourceCreateError"
-                             v-bind:alert-message="resourceCreateError"></alert>
-    <a class="close-button" v-on:click="goBack($event)">
+    <alert alert-type="danger" :show-alert="hasResourceCreateError"
+           :alert-message="resourceCreateError"></alert>
+    <a class="close-button" @click="goBack($event)">
       <i class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span>
     </a>
 
     <div class="content">
-      <network-request-form v-bind:model="model.creatingResource"></network-request-form>
+      <network-request-form :model="model.creatingResource"></network-request-form>
     </div>
   </div>
 
   <div class="mask" v-if="creatingVolume"></div>
   <div class="create-volume closable-view" v-if="creatingVolume" transition="slide-and-fade">
-    <alert alert-type="danger" v-bind:show-alert="hasResourceCreateError"
-                               v-bind:alert-message="resourceCreateError"></alert>
-    <a class="close-button" v-on:click="goBack($event)">
+    <alert alert-type="danger" :show-alert="hasResourceCreateError"
+           :alert-message="resourceCreateError"></alert>
+    <a class="close-button" @click="goBack($event)">
       <i class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span>
     </a>
 
     <div class="content">
-      <volume-request-form v-bind:model="model.creatingResource"></volume-request-form>
+      <volume-request-form :model="model.creatingResource"></volume-request-form>
     </div>
   </div>
 
@@ -270,32 +274,32 @@
     </a>
 
     <div class="content">
-      <closure-request-form v-bind:model="model.creatingResource"
-                            v-bind:use-resource-action="true"></closure-request-form>
+      <closure-request-form :model="model.creatingResource"
+                            :use-resource-action="true"></closure-request-form>
     </div>
   </div>
 
   <div class="mask" v-if="creatingKubernetes"></div>
   <div class="create-kubernetes closable-view" v-if="creatingKubernetes" transition="slide-and-fade">
-    <alert alert-type="danger" v-bind:show-alert="hasResourceCreateError"
-                               v-bind:alert-message="resourceCreateError"></alert>
-    <a class="close-button" v-on:click="goBack($event)">
+    <alert alert-type="danger" :show-alert="hasResourceCreateError"
+           :alert-message="resourceCreateError"></alert>
+    <a class="close-button" @click="goBack($event)">
       <i class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span>
     </a>
 
     <div class="content">
-      <kubernetes-request-form v-bind:model="model.creatingResource"></kubernetes-request-form>
+      <kubernetes-request-form :model="model.creatingResource"></kubernetes-request-form>
     </div>
   </div>
 
   <context-sidepanel class="right-context-panel right-closure-panel"
                      v-if="areClosuresAllowed && creatingClosure"
-                     v-bind:class="{'right-context-expanded': innerContextExpanded}">
+                     :class="{'right-context-expanded': innerContextExpanded}">
     <div slot="toolbar" class="toolbar">
       <context-sidepanel-toolbar-item
-        v-bind:active="activeContextItem === 'closures'"
-        v-bind:label="i18n('app.closure.resultStatus')"
-        v-on:open="openToolbarClosureResults()" v-on:close="closeToolbar()">
+        :active="activeContextItem === 'closures'"
+        :label="i18n('app.closure.resultStatus')"
+        @open="openToolbarClosureResults()" @close="closeToolbar()">
       </context-sidepanel-toolbar-item>
     </div>
 
@@ -305,7 +309,7 @@
           <label>{{i18n('app.closure.monitoredTask.runStatus')}}</label>
         </div>
         <table style="width: 100%">
-           <tr>
+          <tr>
             <td colspan="2">
               <table style="width: 100%">
                 <tr>
@@ -323,14 +327,14 @@
           <tr>
             <td style="vertical-align:top; width: 20%;">{{i18n('app.closure.request.logs.title')}}</td>
             <td style="width: 80%">
-                <textarea class="form-control closure-logs-content" rows="30" readonly>{{model.tasks.monitoredTask.taskLogs}}</textarea>
+              <textarea class="form-control closure-logs-content" rows="30" readonly>{{model.tasks.monitoredTask.taskLogs}}</textarea>
               <span class="help-block"></span>
             </td>
           </tr>
           <tr>
             <td style="vertical-align:top; width: 20%;">{{i18n('app.closure.monitoredTask.outputs')}}</td>
             <td style="width: 80%">
-             <table style="width: 100%">
+              <table style="width: 100%">
                 <tr class="item" v-for="output in model.tasks.monitoredTask.outputs">
                   <td> {{ $key }} = {{ output }}</td>
                 </tr>
