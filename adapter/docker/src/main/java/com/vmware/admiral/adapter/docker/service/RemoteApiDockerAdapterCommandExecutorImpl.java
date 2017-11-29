@@ -31,8 +31,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -102,11 +104,16 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
 
     private static final Pattern ERROR_PATTERN = Pattern.compile("\"error\":\"(.*)\"");
 
+    private static final AtomicInteger threadCount = new AtomicInteger(0);
+    private static final ThreadFactory threadFactory =
+            (r) -> new Thread(r, "EventsReader-" + threadCount.incrementAndGet());
+
     private static ExecutorService executor = new ThreadPoolExecutor(
             THREAD_POOL_QUEUE_SIZE,
             THREAD_POOL_QUEUE_SIZE,
             THREAD_POOL_KEEPALIVE_SECONDS,
             TimeUnit.SECONDS, new LinkedBlockingQueue<>(THREAD_POOL_QUEUE_SIZE),
+            threadFactory,
             new ThreadPoolExecutor.AbortPolicy());
 
     private final ServiceHost host;
@@ -545,11 +552,11 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
             // Make sure that the trusted certificate is loaded before proceeding to avoid
             // SSLHandshakeException and getting hosts in DISABLED state
             ensureTrustDelegateExists(input, SSL_TRUST_RETRIES_COUNT, () -> {
-                makeSubscription(input, computeState, extendedUri);
+                makeSubscription(input, computeState, extendedUri, null);
             });
         } else {
             logger.info("Host is not secured: " + baseUri.toString());
-            makeSubscription(input, computeState, extendedUri);
+            makeSubscription(input, computeState, extendedUri, null);
         }
     }
 
@@ -1039,66 +1046,72 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
         public URI hostUri;
         public CommandInput input;
         public ComputeState computeState;
+        public boolean simulatedIOException;
 
         public EventsMonitor(OperationContext parentContext,
                 URI hostUri,
                 CommandInput input,
-                ComputeState computeState) {
+                ComputeState computeState,
+                boolean simulatedIOException) {
             this.parentContext = parentContext;
             this.hostUri = hostUri;
             this.input = input;
             this.computeState = computeState;
+            this.simulatedIOException = simulatedIOException;
         }
 
-        @Override public void run() {
+        @Override
+        public void run() {
             OperationContext childContext = OperationContext.getOperationContext();
 
-            // set the operation context of the parent thread in the current thread
-            OperationContext.restoreOperationContext(parentContext);
+            logger.fine(String.format("Simulation of IOException enabled: [%s]",
+                    simulatedIOException));
+            try {
+                // set the operation context of the parent thread in the current thread
+                OperationContext.restoreOperationContext(parentContext);
 
-            ConfigurationUtil.getConfigProperty(host, ConfigurationUtil.THROW_IO_EXCEPTION, (prop) -> {
-                boolean simulatedIOException = Boolean.valueOf(prop);
-                logger.fine(String.format("Simulation of IOException enabled: [%s]", simulatedIOException));
-                try {
-                    URL url = new URL(hostUri.toString());
-                    URLConnection con = openConnection(input, url);
+                URL url = new URL(hostUri.toString());
+                URLConnection con = openConnection(input, url);
 
-                    // setting "read timeout" to reset the blocking stream (reader.readLine()).
-                    // Otherwise there is no way to close the connection.
-                    con.setReadTimeout(URL_CONNECTION_READ_TIMEOUT);
+                // setting "read timeout" to reset the blocking stream (reader.readLine()).
+                // Otherwise there is no way to close the connection.
+                con.setReadTimeout(URL_CONNECTION_READ_TIMEOUT);
 
-                    final String hostName = url.getAuthority();
-                    runningThreads.put(hostName, Thread.currentThread());
+                final String hostName = url.getAuthority();
+                runningThreads.put(hostName, Thread.currentThread());
 
-                    try (BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()))) {
-                        readData(in, simulatedIOException);
-                    } catch (InterruptedException e) {
-                        logger.fine(String.format("[%s] is thrown.", e.getClass().getName()));
-                    } catch (IOException e) {
-                        logger.info(String.format("IOException when listening [%s]. Error: [%s]", hostName, e.getMessage()));
-                        requestComputeState(computeState.documentSelfLink).thenCompose((cs) -> {
-                            cs.powerState = ComputeService.PowerState.UNKNOWN;
-                            return patchComputeState(cs);
-                        }).thenAccept((cs) -> {
-                            // changing the power state of containers to UNKNOWN
-                            queryExistingContainerStates(cs);
-                        });
-                    } catch (Exception e) {
-                        logger.warning(String.format("Exception in subscription to [%s]. Error: [%s]", hostName, e.getMessage()));
-                    } finally {
-                        runningThreads.remove(hostName);
-                        closeConnection(con);
-                    }
-                } catch (Throwable t) {
-                    logger.warning(Utils.toString(t));
+                try (BufferedReader in = new BufferedReader(new InputStreamReader(
+                        con.getInputStream()))) {
+                    readData(in, simulatedIOException);
+                } catch (InterruptedException e) {
+                    logger.fine(String.format("[%s] is thrown.", e.getClass().getName()));
+                } catch (IOException e) {
+                    logger.info(String.format("IOException when listening [%s]. Error: [%s]",
+                            hostName, e.getMessage()));
+                    requestComputeState(computeState.documentSelfLink).thenCompose((cs) -> {
+                        cs.powerState = ComputeService.PowerState.UNKNOWN;
+                        return patchComputeState(cs);
+                    }).thenAccept((cs) -> {
+                        // changing the power state of containers to UNKNOWN
+                        queryExistingContainerStates(cs);
+                    });
+                } catch (Exception e) {
+                    logger.warning(String.format("Exception in subscription to [%s]. Error: [%s]",
+                            hostName, e.getMessage()));
                 } finally {
-                    OperationContext.restoreOperationContext(childContext);
+                    runningThreads.remove(hostName);
+                    closeConnection(con);
                 }
-            });
+            } catch (Throwable t) {
+                logger.warning(Utils.toString(t));
+            } finally {
+                OperationContext.restoreOperationContext(childContext);
+            }
         }
     }
 
-    private void makeSubscription(CommandInput input, ComputeState computeState, URI uri) {
+    private void makeSubscription(CommandInput input, ComputeState computeState, URI uri,
+            Boolean simulateIOExceptionPropertyValue) {
         final OperationContext parentContext = OperationContext.getOperationContext();
 
         boolean maxAllowedNumberOfThreadsExceeded = maxAllowedNumberOfThreadsExceeded();
@@ -1107,11 +1120,21 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
             return;
         }
 
+        if (simulateIOExceptionPropertyValue == null) {
+            ConfigurationUtil.getConfigProperty(host, ConfigurationUtil.THROW_IO_EXCEPTION,
+                    (prop) -> {
+                        Boolean b = Boolean.valueOf(prop);
+                        makeSubscription(input, computeState, uri, b);
+                    });
+            return;
+        }
+
         EventsMonitor eventsMonitor = new EventsMonitor(
                 parentContext,
                 uri,
                 input,
-                computeState);
+                computeState,
+                simulateIOExceptionPropertyValue);
 
         executor.submit(eventsMonitor);
     }
