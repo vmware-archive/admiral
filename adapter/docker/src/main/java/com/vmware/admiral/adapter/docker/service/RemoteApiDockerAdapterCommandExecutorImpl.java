@@ -1053,13 +1053,13 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
         @Override public void run() {
             OperationContext childContext = OperationContext.getOperationContext();
 
+            // set the operation context of the parent thread in the current thread
+            OperationContext.restoreOperationContext(parentContext);
+
             ConfigurationUtil.getConfigProperty(host, ConfigurationUtil.THROW_IO_EXCEPTION, (prop) -> {
                 boolean simulatedIOException = Boolean.valueOf(prop);
-                logger.info(String.format("Simulation of IOException enabled: [%s]", simulatedIOException));
+                logger.fine(String.format("Simulation of IOException enabled: [%s]", simulatedIOException));
                 try {
-                    // set the operation context of the parent thread in the current thread
-                    OperationContext.restoreOperationContext(parentContext);
-
                     URL url = new URL(hostUri.toString());
                     URLConnection con = openConnection(input, url);
 
