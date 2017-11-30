@@ -50,7 +50,9 @@ var VueActionButton = Vue.extend({
   methods: {
     hideTooltip: function() {
       var doc = this.$el.ownerDocument.getElementsByClassName('tooltip')[0];
-      doc.parentNode.removeChild(doc);
+      if (doc && doc.parentNode) {
+        doc.parentNode.removeChild(doc);
+      }
     }
   }
 });
