@@ -26,7 +26,7 @@ import com.vmware.admiral.test.ui.pages.common.PageProxy;
 public class NetworksPage extends HomeTabAdvancedPage<NetworksPage, NetworksPageValidator> {
 
     private final By CREATE_NETWORK_BUTTON = By
-            .cssSelector(".btn.btn-link.create-resource-btn[href*=\"networks/new\"]");
+            .cssSelector(".btn.btn-link.create-resource-btn");
     final By CARD_RELATIVE_DELETE_BUTTON = By.cssSelector(".fa.fa-trash");
     private final By CARD_RELATIVE_DELETE_CONFIRMATION = By
             .cssSelector(".delete-inline-item-confirmation-confirm>div>a");
