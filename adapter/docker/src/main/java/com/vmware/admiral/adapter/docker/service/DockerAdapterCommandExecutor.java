@@ -231,7 +231,7 @@ public interface DockerAdapterCommandExecutor {
 
     void listContainers(CommandInput input, CompletionHandler completionHandler);
 
-    void hostSubscribeForEvents(CommandInput input, ComputeState computeState);
+    void hostSubscribeForEvents(CommandInput input, Operation op, ComputeState computeState);
 
     void hostUnsubscribeForEvents(CommandInput input, ComputeState computeState);
 

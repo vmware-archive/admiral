@@ -107,13 +107,13 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
                             commandInput));
         } else {
             getContainerHost(request, op, request.resourceReference,
-                    (computeState, commandInput) -> processOperation(request, computeState,
+                    (computeState, commandInput) -> processOperation(request, op, computeState,
                             commandInput));
             op.complete();
         }
     }
 
-    private void processOperation(ContainerHostRequest request, ComputeState computeState,
+    private void processOperation(ContainerHostRequest request, Operation op, ComputeState computeState,
             CommandInput commandInput) {
         switch (request.getOperationType()) {
         case VERSION:
@@ -138,7 +138,8 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
             doStats(request, computeState);
             break;
         case EVENTS_SUBSCRIBE:
-            doEventsSubscription(request, computeState, commandInput);
+            setAuthorizationContext(op, getSystemAuthorizationContext());
+            doEventsSubscription(request, op, computeState, commandInput);
             break;
         case EVENTS_UNSUBSCRIBE:
             doEventsUnsubscription(request, computeState, commandInput);
@@ -157,9 +158,9 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
         getCommandExecutor().hostInfo(commandInput, getHostPatchCompletionHandler(request));
     }
 
-    private void doEventsSubscription(ContainerHostRequest request, ComputeState computeState,
+    private void doEventsSubscription(ContainerHostRequest request, Operation op, ComputeState computeState,
             CommandInput commandInput) {
-        getCommandExecutor().hostSubscribeForEvents(commandInput, computeState);
+        getCommandExecutor().hostSubscribeForEvents(commandInput, op, computeState);
     }
 
     private void doEventsUnsubscription(ContainerHostRequest request, ComputeState computeState,

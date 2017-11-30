@@ -24,6 +24,7 @@ import io.swagger.models.Contact;
 import io.swagger.models.Info;
 import io.swagger.models.License;
 
+import com.vmware.admiral.adapter.docker.service.DockerHostAdapterService;
 import com.vmware.admiral.adapter.registry.service.RegistryAdapterService;
 import com.vmware.admiral.auth.idm.AuthConfigProvider;
 import com.vmware.admiral.auth.idm.PrincipalService;
@@ -418,6 +419,7 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
         addPrivilegedService(PrincipalService.class);
         addPrivilegedService(ProjectService.class);
         addPrivilegedService(ProjectFactoryService.class);
+        addPrivilegedService(DockerHostAdapterService.class);
 
         // NodeMigrationService needs to be privileged in order to not get forbidden during the
         // migration process.

@@ -533,7 +533,7 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
     }
 
     @Override
-    public void hostSubscribeForEvents(CommandInput input, ComputeState computeState) {
+    public void hostSubscribeForEvents(CommandInput input, Operation op, ComputeState computeState) {
         URI baseUri = UriUtils.extendUri(input.getDockerUri(), "/events");
         logger.info("Subscribing for events: " + baseUri);
 
@@ -552,11 +552,11 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
             // Make sure that the trusted certificate is loaded before proceeding to avoid
             // SSLHandshakeException and getting hosts in DISABLED state
             ensureTrustDelegateExists(input, SSL_TRUST_RETRIES_COUNT, () -> {
-                makeSubscription(input, computeState, extendedUri, null);
+                makeSubscription(input, op, computeState, extendedUri, null);
             });
         } else {
             logger.info("Host is not secured: " + baseUri.toString());
-            makeSubscription(input, computeState, extendedUri, null);
+            makeSubscription(input, op, computeState, extendedUri, null);
         }
     }
 
@@ -1042,18 +1042,18 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
      */
     private class EventsMonitor implements Runnable {
 
-        public OperationContext parentContext;
+        public Operation op;
         public URI hostUri;
         public CommandInput input;
         public ComputeState computeState;
         public boolean simulatedIOException;
 
-        public EventsMonitor(OperationContext parentContext,
+        public EventsMonitor(Operation op,
                 URI hostUri,
                 CommandInput input,
                 ComputeState computeState,
                 boolean simulatedIOException) {
-            this.parentContext = parentContext;
+            this.op = op;
             this.hostUri = hostUri;
             this.input = input;
             this.computeState = computeState;
@@ -1062,13 +1062,13 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
 
         @Override
         public void run() {
-            OperationContext childContext = OperationContext.getOperationContext();
-
             logger.fine(String.format("Simulation of IOException enabled: [%s]",
                     simulatedIOException));
+            OperationContext childContext = OperationContext.getOperationContext();
+
             try {
-                // set the operation context of the parent thread in the current thread
-                OperationContext.restoreOperationContext(parentContext);
+                // set system user context
+                OperationContext.setFrom(op);
 
                 URL url = new URL(hostUri.toString());
                 URLConnection con = openConnection(input, url);
@@ -1088,6 +1088,7 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
                 } catch (IOException e) {
                     logger.info(String.format("IOException when listening [%s]. Error: [%s]",
                             hostName, e.getMessage()));
+
                     requestComputeState(computeState.documentSelfLink).thenCompose((cs) -> {
                         cs.powerState = ComputeService.PowerState.UNKNOWN;
                         return patchComputeState(cs);
@@ -1110,9 +1111,8 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
         }
     }
 
-    private void makeSubscription(CommandInput input, ComputeState computeState, URI uri,
+    private void makeSubscription(CommandInput input, Operation op, ComputeState computeState, URI uri,
             Boolean simulateIOExceptionPropertyValue) {
-        final OperationContext parentContext = OperationContext.getOperationContext();
 
         boolean maxAllowedNumberOfThreadsExceeded = maxAllowedNumberOfThreadsExceeded();
 
@@ -1124,13 +1124,13 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
             ConfigurationUtil.getConfigProperty(host, ConfigurationUtil.THROW_IO_EXCEPTION,
                     (prop) -> {
                         Boolean b = Boolean.valueOf(prop);
-                        makeSubscription(input, computeState, uri, b);
+                        makeSubscription(input, op, computeState, uri, b);
                     });
             return;
         }
 
         EventsMonitor eventsMonitor = new EventsMonitor(
-                parentContext,
+                op,
                 uri,
                 input,
                 computeState,
@@ -1152,7 +1152,7 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
 
         prepareRequest(op, false);
 
-        return serviceClient.sendWithDeferredResult(op, ComputeState.class);
+        return host.sendWithDeferredResult(op, ComputeState.class);
     }
 
     private DeferredResult<ComputeState> patchComputeState(ComputeState computeState) {
@@ -1168,7 +1168,7 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
 
         prepareRequest(op, false);
 
-        return serviceClient.sendWithDeferredResult(op, ComputeState.class);
+        return host.sendWithDeferredResult(op, ComputeState.class);
     }
 
     private void readData(BufferedReader in, boolean simulatedIOException) throws IOException, InterruptedException {
