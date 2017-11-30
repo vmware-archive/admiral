@@ -695,6 +695,7 @@ let ContainersStore = Reflux.createStore({
     if (operation) {
       this.cancelOperations(constants.CONTAINERS.OPERATION.DETAILS,
         constants.CONTAINERS.OPERATION.STATS, constants.CONTAINERS.OPERATION.LOGS);
+
       this.setInData(['listView', 'itemsLoading'], true);
       this.setInData(['listView', 'error'], null);
 
@@ -704,6 +705,7 @@ let ContainersStore = Reflux.createStore({
       if (!queryOptions.$category) {
         queryOptions = $.extend({}, queryOptions);
         queryOptions.$category = constants.CONTAINERS.SEARCH_CATEGORY.CONTAINERS;
+
         this.setInData(['listView', 'queryOptions'], queryOptions);
         this.emitChange();
       }
@@ -742,6 +744,12 @@ let ContainersStore = Reflux.createStore({
       }
       operation.forPromise(loadResourceFunction(queryOptions)).then((result) => {
         return this.decorateContainers(result, queryOptions.$category, false);
+
+      }).catch((e) => {
+        console.log('Cannot load ' + queryOptions.$category, e);
+
+        this.setInData(['listView', 'itemsLoading'], false);
+        this.emitChange();
       });
     }
 
@@ -788,6 +796,8 @@ let ContainersStore = Reflux.createStore({
       this.requestCancellableOperation(constants.CONTAINERS.OPERATION.LIST, queryOptions);
 
     if (operation) {
+      this.setInData(['listView', 'itemsLoading'], true);
+
       operation.forPromise(services.rescanContainers(queryOptions, numberOfContainers))
         .then((result) => {
           let containers = result.documentLinks.map((documentLink) => {
@@ -808,12 +818,14 @@ let ContainersStore = Reflux.createStore({
             }
           });
 
+          this.setInData(['listView', 'itemsLoading'], false);
           this.emitChange();
         }).catch((e) => {
           console.log('Containers rescan failed', e);
-        });
 
-      this.emitChange();
+          this.setInData(['listView', 'itemsLoading'], false);
+          this.emitChange();
+      });
     }
   },
 
