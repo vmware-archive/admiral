@@ -4,12 +4,17 @@ services:
   c1:
     image: "registry.hub.docker.com/library/alpine"
     command:
-    - "ping c2"
+    - "ping -w 600 c2"
     links:
     - "c2"
     restart: "no"
     depends_on:
     - "c2"
+    log_config:
+      type: "json-file"
+      config:
+        max-size: "50k"
+        max-file: "5"
   c2:
     image: "registry.hub.docker.com/library/alpine"
     restart: "no"
