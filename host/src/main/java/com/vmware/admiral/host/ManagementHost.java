@@ -31,6 +31,7 @@ import com.vmware.admiral.auth.idm.SessionService;
 import com.vmware.admiral.auth.project.ProjectFactoryService;
 import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.auth.util.AuthUtil;
+import com.vmware.admiral.common.util.AuthUtils;
 import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.SecurityUtils;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
@@ -527,6 +528,16 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
     @Override
     public ExtensibilitySubscriptionManager getExtensibilityRegistry() {
         return extensibilityRegistry;
+    }
+
+    @Override
+    public boolean handleRequest(Service service, Operation inboundOp) {
+
+        if (AuthUtil.useAuthConfig(this)) {
+            AuthUtils.validateSessionData(inboundOp, getGuestAuthorizationContext());
+        }
+
+        return super.handleRequest(service, inboundOp);
     }
 
 }

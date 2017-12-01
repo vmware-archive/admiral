@@ -11,16 +11,41 @@
 
 package com.vmware.admiral.common.util;
 
+import java.lang.reflect.Field;
 import java.util.Base64;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 
 import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
 import com.vmware.photon.controller.model.security.util.EncryptionUtils;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Operation.AuthorizationContext;
+import com.vmware.xenon.common.ReflectionUtils;
+import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 import com.vmware.xenon.services.common.authn.AuthenticationConstants;
 import com.vmware.xenon.services.common.authn.BasicAuthenticationUtils;
 
 public class AuthUtils {
+
+    /*
+     * Cache of cleaned up sessions (i.e. sessions whose user has been logged out).
+     * This approach works just fine in the VIC context since it's (still) a single node,
+     * and in case of restart the first attempt to use a cleaned up session won't find the
+     * session state itself and the authorization process will fail in the same way.
+     * In cluster scenarios this approach should be revisited, or Xenon should provide an
+     * out of the box solution.
+     */
+    private static final Cache<String, String> cleanedupSessionsCache = CacheBuilder
+            .newBuilder()
+            .expireAfterWrite(90L, TimeUnit.MINUTES)
+            .build();
+
+    private static final Field AUTH_CTX_FIELD = ReflectionUtils.getField(Operation.class,
+            "authorizationCtx");
 
     public static String createAuthorizationHeader(AuthCredentialsServiceState authState) {
         if (authState == null) {
@@ -42,9 +67,60 @@ public class AuthUtils {
         return null;
     }
 
+    /**
+     * Validates whether the provided operation relies on some session data which has been
+     * marked as cleaned up. In that case, operation's authorization context is replaced
+     * with the guest user authentication.
+     *
+     * @param op
+     *            Operation
+     * @param guestCtx
+     *            AuthorizationContext for the guest user
+     */
+    public static void validateSessionData(Operation op, AuthorizationContext guestCtx) {
+        if (op == null) {
+            return;
+        }
+
+        AuthorizationContext authCtx = op.getAuthorizationContext();
+        if (authCtx == null || authCtx.isSystemUser()) {
+            return;
+        }
+
+        if (cleanedupSessionsCache.getIfPresent(authCtx.getToken()) != null) {
+
+            Utils.log(AuthUtils.class, AuthUtils.class.getSimpleName(), Level.FINE,
+                    "Invalid session '%s'!", authCtx.getToken());
+
+            try {
+                AUTH_CTX_FIELD.set(op, guestCtx);
+            } catch (Exception e) {
+                Utils.log(AuthUtils.class, AuthUtils.class.getSimpleName(), Level.WARNING,
+                        "Error handling invalid session '%s': %s",
+                        authCtx.getToken(), e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Adds the proper headers to the operation response to clean up the session data in
+     * the client side. Also, marks the session as cleaned up thus further attempts to use
+     * it will default to unauthenticated or guest user authentication.
+     *
+     * @param op
+     *            Operation
+     */
     public static void cleanupSessionData(Operation op) {
+
         String sessionId = BasicAuthenticationUtils.getAuthToken(op);
+
         if (sessionId != null && !sessionId.isEmpty()) {
+
+            Utils.log(AuthUtils.class, AuthUtils.class.getSimpleName(), Level.FINE,
+                    "Cleaning up session '%s'...", sessionId);
+
+            cleanedupSessionsCache.put(sessionId, sessionId);
+
             op.addResponseHeader(Operation.REQUEST_AUTH_TOKEN_HEADER, "");
 
             StringBuilder buf = new StringBuilder()
