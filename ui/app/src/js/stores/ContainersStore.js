@@ -796,8 +796,6 @@ let ContainersStore = Reflux.createStore({
       this.requestCancellableOperation(constants.CONTAINERS.OPERATION.LIST, queryOptions);
 
     if (operation) {
-      this.setInData(['listView', 'itemsLoading'], true);
-
       operation.forPromise(services.rescanContainers(queryOptions, numberOfContainers))
         .then((result) => {
           let containers = result.documentLinks.map((documentLink) => {
