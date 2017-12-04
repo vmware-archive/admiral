@@ -1208,6 +1208,12 @@ public class HostContainerListDataCollection extends StatefulService {
 
         OperationUtil.getDocumentState(this, containerHostLink, ComputeState.class,
                 (ComputeState host) -> {
+                    if (ContainerHostUtil.getDriver(host) == null) {
+                        logInfo("Skipping the installation of the system container."
+                                + "The driver is not initialized.");
+                        return;
+                    }
+
                     if (ContainerHostUtil.isVicHost(host)) {
                         logInfo("VIC host detected, system containers will not be installed.");
                         return;
@@ -1243,20 +1249,13 @@ public class HostContainerListDataCollection extends StatefulService {
                                 : Utils.toString(r.getException()));
                 return;
             }
-            final ContainerState containerState = new ContainerState();
-            containerState.documentSelfLink = containerStateLink;
+
+            ContainerState cs = new ContainerState();
+            cs.documentSelfLink = containerStateLink;
+
+            final ContainerState containerState = createSystemContainerState(cs, containerDesc, containerHostLink);
             containerState.names = new ArrayList<>();
             containerState.names.add(systemContainerName);
-            containerState.descriptionLink = containerDesc.documentSelfLink;
-            containerState.parentLink = containerHostLink;
-            containerState.powerState = ContainerState.PowerState.PROVISIONING;
-            containerState.adapterManagementReference = containerDesc.instanceAdapterReference;
-            containerState.image = containerDesc.image;
-            containerState.command = containerDesc.command;
-            containerState.groupResourcePlacementLink =
-                    GroupResourcePlacementService.DEFAULT_RESOURCE_PLACEMENT_LINK;
-            containerState.system = Boolean.TRUE;
-            containerState.volumes = containerDesc.volumes;
             containerState.tenantLinks = containerDesc.tenantLinks;
 
             Operation op;

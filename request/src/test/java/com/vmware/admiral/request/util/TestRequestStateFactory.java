@@ -23,6 +23,7 @@ import com.vmware.admiral.adapter.docker.util.DockerPortMapping;
 import com.vmware.admiral.common.test.CommonTestStateFactory;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ConfigureHostOverSshTaskService;
+import com.vmware.admiral.compute.ContainerHostUtil;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
@@ -364,6 +365,10 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         cs.customProperties.put(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME,
                 UriUtils.buildUriPath(
                         AuthCredentialsService.FACTORY_LINK, AUTH_CREDENTIALS_ID));
+        // This property is used for checking if the host is VCH.
+        // Forcing the __Driver prop with some value, in order to install the system container.
+        cs.customProperties.put(ContainerHostUtil.PROPERTY_NAME_DRIVER,
+                "overlay");
         return cs;
     }
 

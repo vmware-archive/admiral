@@ -56,6 +56,7 @@ import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
+import com.vmware.admiral.compute.ContainerHostUtil;
 import com.vmware.admiral.compute.PlacementZoneUtil;
 import com.vmware.admiral.compute.RegistryHostConfigService;
 import com.vmware.admiral.compute.RegistryHostConfigService.RegistryHostSpec;
@@ -340,6 +341,10 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
         cs.customProperties = new HashMap<>();
         cs.customProperties.put(ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME,
                 DockerAdapterType.API.name());
+        // This property is used for checking if the host is VCH.
+        // Forcing the __Driver prop with some value, in order to install the system container.
+        cs.customProperties.put(ContainerHostUtil.PROPERTY_NAME_DRIVER,
+                "overlay");
         cs.customProperties.put(ContainerHostService.CONTAINER_HOST_TYPE_PROP_NAME,
                 hostType.toString());
         cs.customProperties.put(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME,

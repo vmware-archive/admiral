@@ -128,6 +128,7 @@ public class ContainerHostService extends StatelessService {
     public static final String DOCKER_HOST_CLUSTER_STORE_PROP_NAME = "__ClusterStore";
 
     public static final String DOCKER_HOST_PLUGINS_PROP_NAME = "__Plugins";
+
     public static final String DOCKER_HOST_PLUGINS_VOLUME_PROP_NAME = "Volume";
     public static final String DOCKER_HOST_PLUGINS_NETWORK_PROP_NAME = "Network";
 

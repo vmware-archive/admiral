@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.vmware.admiral.common.test.CommonTestStateFactory;
 import com.vmware.admiral.compute.ContainerHostService;
+import com.vmware.admiral.compute.ContainerHostUtil;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
@@ -105,6 +106,8 @@ public class IntegratonTestStateFactory extends CommonTestStateFactory {
         cs.customProperties = new HashMap<>();
         cs.customProperties.put(ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME,
                 ContainerHostService.DockerAdapterType.API.name());
+        cs.customProperties.put(ContainerHostUtil.PROPERTY_NAME_DRIVER,
+                "overlay");
 
         addDefaultDocumentTimeout(cs);
         return cs;

@@ -116,11 +116,9 @@ public class ContainerHostUtil {
     public static boolean isVicHost(ComputeState computeState) {
         boolean vic = false;
 
-        if (computeState != null && computeState.customProperties != null) {
-            String driver = computeState.customProperties.get(PROPERTY_NAME_DRIVER);
-            driver = driver != null ? driver.toLowerCase().trim() : "";
-            vic = driver.startsWith(VMWARE_VIC_DRIVER1) || driver.startsWith(VMWARE_VIC_DRIVER2);
-        }
+        String driver = getDriver(computeState);
+        driver = driver != null ? driver.toLowerCase().trim() : "";
+        vic = driver.startsWith(VMWARE_VIC_DRIVER1) || driver.startsWith(VMWARE_VIC_DRIVER2);
 
         return vic;
     }
@@ -139,6 +137,17 @@ public class ContainerHostUtil {
         String hostType = computeState.customProperties.get(
                 ContainerHostService.CONTAINER_HOST_TYPE_PROP_NAME);
         return (hostType != null && hostType.equals(ContainerHostType.KUBERNETES.name()));
+    }
+
+    /**
+     * Gets driver property value from host custom properties.
+     */
+    public static String getDriver(ComputeState computeState) {
+        if (computeState != null && computeState.customProperties != null) {
+            return computeState.customProperties
+                    .get(PROPERTY_NAME_DRIVER);
+        }
+        return null;
     }
 
     /**

@@ -37,6 +37,7 @@ import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
+import com.vmware.admiral.compute.ContainerHostUtil;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeDescriptionFactoryService;
 import com.vmware.admiral.compute.container.CompositeDescriptionService;
@@ -384,6 +385,10 @@ public abstract class RequestBaseTest extends BaseTestCase {
 
         containerHost.customProperties.put(ComputeConstants.COMPUTE_CONTAINER_HOST_PROP_NAME,
                 "true");
+        // This property is used for checking if the host is VCH.
+        // Forcing the __Driver prop with some value, in order to install the system container.
+        containerHost.customProperties.put(ContainerHostUtil.PROPERTY_NAME_DRIVER,
+                "overlay");
         containerHost.customProperties.put(
                 ContainerHostService.DOCKER_HOST_AVAILABLE_MEMORY_PROP_NAME,
                 availableMemory.toString());

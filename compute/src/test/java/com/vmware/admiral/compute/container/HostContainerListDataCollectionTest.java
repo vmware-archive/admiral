@@ -98,6 +98,7 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
         cs.documentSelfLink = TEST_HOST_ID;
         cs.descriptionLink = computeDesc.documentSelfLink;
         cs.customProperties = new HashMap<>();
+        cs.customProperties.put(MockDockerHostAdapterService.DOCKER_INFO_STORAGE_DRIVER_PROP_NAME, "overlay");
         cs.tenantLinks = TENANT_LINKS;
 
         computeState = doPost(cs, ComputeService.FACTORY_LINK);

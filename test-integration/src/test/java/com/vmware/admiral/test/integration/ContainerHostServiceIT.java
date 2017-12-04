@@ -42,6 +42,7 @@ import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
+import com.vmware.admiral.compute.ContainerHostUtil;
 import com.vmware.admiral.compute.PlacementZoneConstants;
 import com.vmware.admiral.compute.PlacementZoneConstants.PlacementZoneType;
 import com.vmware.admiral.compute.ResourceType;
@@ -950,6 +951,8 @@ public class ContainerHostServiceIT extends RequestBaseTest {
                 "authCredentialsLink");
         computeState.customProperties.put(ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME,
                 DockerAdapterType.API.name());
+        computeState.customProperties.put(ContainerHostUtil.PROPERTY_NAME_DRIVER,
+                "overlay");
 
         return computeState;
     }
