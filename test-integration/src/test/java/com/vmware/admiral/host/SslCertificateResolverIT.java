@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.common.util;
+package com.vmware.admiral.host;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -21,19 +21,19 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
+import com.vmware.admiral.common.util.ServerX509TrustManager;
+import com.vmware.admiral.common.util.SslCertificateResolver;
 import com.vmware.xenon.common.ServiceHost;
 
-public class SslCertificateResolverTest {
+public class SslCertificateResolverIT {
 
     @Before
     public void before() {
         ServerX509TrustManager.init(new ServiceHost() { });
     }
 
-    @Ignore("Test is working but ignored because of external/vpn network requirements.")
     @Test
     public void testResolveCertificates() throws Exception {
         final CountDownLatch latch1 = new CountDownLatch(1);
