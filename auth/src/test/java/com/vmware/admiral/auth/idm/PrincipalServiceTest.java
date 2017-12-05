@@ -12,6 +12,8 @@
 package com.vmware.admiral.auth.idm;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -215,7 +217,8 @@ public class PrincipalServiceTest extends AuthBaseTest {
         roleAssignment.add = new ArrayList<>();
         roleAssignment.add.add(AuthRole.CLOUD_ADMIN.name());
 
-        String uri = UriUtils.buildUriPath(PrincipalService.SELF_LINK, USER_GROUP_SUPERUSERS, "roles");
+        String uri = UriUtils.buildUriPath(PrincipalService.SELF_LINK, USER_GROUP_SUPERUSERS,
+                "roles");
         // Assingn superusers to cloud admins
         doPatch(roleAssignment, uri);
 
@@ -583,7 +586,8 @@ public class PrincipalServiceTest extends AuthBaseTest {
         doPatch(roleAssignment, UriUtils.buildUriPath(PrincipalService.SELF_LINK,
                 USER_EMAIL_CONNIE, PrincipalService.ROLES_SUFFIX));
 
-        assertDocumentExists(AuthUtil.buildUserServicePathFromPrincipalId(encode(USER_EMAIL_CONNIE)));
+        assertDocumentExists(
+                AuthUtil.buildUserServicePathFromPrincipalId(encode(USER_EMAIL_CONNIE)));
 
         SecurityContext connieContext = getSecurityContext(USER_EMAIL_CONNIE);
 
@@ -612,6 +616,50 @@ public class PrincipalServiceTest extends AuthBaseTest {
         assertTrue(developersContext.roles.contains(AuthRole.CLOUD_ADMIN));
         assertTrue(developersContext.roles.contains(AuthRole.BASIC_USER));
         assertTrue(developersContext.roles.contains(AuthRole.BASIC_USER_EXTENDED));
+    }
+
+    @SuppressWarnings("unlikely-arg-type")
+    @Test
+    public void testPrincipalHashCodeEquals() {
+        Principal p1 = new Principal();
+        Principal p2 = new Principal();
+        assertEquals(31, p1.hashCode());
+
+        assertFalse(p1.equals(null));
+        assertFalse(p1.equals(this));
+        assertTrue(p1.equals(p2));
+
+        p1.id = "name@domain";
+        assertNotEquals(31, p1.hashCode());
+        assertFalse(p1.equals(p2));
+
+        p2.id = "name2@domain";
+        assertFalse(p1.equals(p2));
+
+        p2.id = "name@domain";
+        assertTrue(p1.equals(p2));
+    }
+
+    @SuppressWarnings("unlikely-arg-type")
+    @Test
+    public void testPrincipalRoleHashCodeEquals() {
+        PrincipalRoles pr1 = new PrincipalRoles();
+        PrincipalRoles pr2 = new PrincipalRoles();
+        assertEquals(31, pr1.hashCode());
+
+        assertFalse(pr1.equals(null));
+        assertFalse(pr1.equals(this));
+        assertTrue(pr1.equals(pr2));
+
+        pr1.id = "name@domain";
+        assertNotEquals(31, pr1.hashCode());
+        assertFalse(pr1.equals(pr2));
+
+        pr2.id = "name2@domain";
+        assertFalse(pr1.equals(pr2));
+
+        pr2.id = "name@domain";
+        assertTrue(pr1.equals(pr2));
     }
 
 }

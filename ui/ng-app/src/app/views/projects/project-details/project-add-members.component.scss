@@ -10,12 +10,17 @@ a.clickable {
 }
 
 .searching {
-    display: inline;
-    margin-top: 15px;
-    margin-left: 5px;
+    position: absolute;
+    right: 0px;
+    top: 10px;
 }
 
 .saving {
     display: inline;
     margin-left: 5px;
+}
+
+simple-search {
+    width: 100%;
+    margin-right: 30px;
 }

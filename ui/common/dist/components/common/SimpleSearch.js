@@ -10,7 +10,7 @@
  */
 var $ = require('jquery');
 require('wamda-typeahead');
-var SEARCH_RESULT_LIMIT = 20;
+var SEARCH_RESULT_LIMIT = 50;
 /**
  * Component providing simple search typeahead functionality.
  */
@@ -33,11 +33,14 @@ module.exports = (function () {
                     var root = '';
                     if (start > 0) {
                         prefix = name.substring(0, start);
+                        prefix = escapeHtml(prefix);
                     }
                     if (end < name.length) {
                         suffix = name.substring(end, name.length);
+                        suffix = escapeHtml(suffix);
                     }
                     root = name.substring(start, end);
+                    root = escapeHtml(root);
                     return "\n              <div>\n                <div class=\"search-item\">\n                  " + prefix + "<strong>" + root + "</strong>" + suffix + "\n                </div>\n              </div>";
                 },
                 // footer: function(q) {
@@ -68,4 +71,7 @@ module.exports = (function () {
     };
     return SimpleSearch;
 }());
+function escapeHtml(htmlString) {
+    return $('<div>').text(htmlString).html();
+}
 //# sourceMappingURL=SimpleSearch.js.map
