@@ -48,7 +48,6 @@ import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
-import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
@@ -430,15 +429,15 @@ public class HostVolumeListDataCollection extends StatefulService {
                         .createGet(this, possibleVolumeSelfLink)
                         .setCompletion(
                                 (o, ex) -> {
-                                    if (ex != null ) {
-                                        if (ex instanceof ServiceNotFoundException) {
-                                            createDiscoveredContainerVolume(callback, counter,
-                                                    volumeState);
-                                        } else {
-                                            logSevere("Failed to get volume %s : %s",
-                                                    volumeState.name, ex.getMessage());
-                                            counter.getAndDecrement();
-                                        }
+                                    if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
+                                        createDiscoveredContainerVolume(callback, counter,
+                                                volumeState);
+                                        return;
+                                    }
+                                    if (ex != null) {
+                                        logSevere("Failed to get volume %s : %s", volumeState.name,
+                                                ex.getMessage());
+                                        counter.getAndDecrement();
                                     } else if (counter.decrementAndGet() == 0) {
                                         callback.accept(null);
                                     }
