@@ -32,6 +32,13 @@ module.exports = class SimpleSearch {
         suggestion: function(context) {
           var name = context.name || '';
           var query = context._query || '';
+
+          var queryAtIndex = query.lastIndexOf('@');
+          if (queryAtIndex > 0) {
+            // ignore everything after the last '@' in case of query@domain searches
+            query = query.substring(0, queryAtIndex);
+          }
+
           var start = name.indexOf(query);
           var end = start + query.length;
           var prefix = '';
