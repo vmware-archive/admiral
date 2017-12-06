@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the 'License').
  * You may not use this product except in compliance with the License.
@@ -9,11 +9,11 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-
 import services from 'core/services';
 import links from 'core/links';
 import utils from 'core/utils';
 import { ContainerActions, NavigationActions } from 'actions/Actions';
+import ContainersStore from 'stores/ContainersStore'; //eslint-disable-line
 
 describe('Containers integration test', function() {
 
@@ -77,12 +77,12 @@ describe('Containers integration test', function() {
         expect(createdDescription.parentDescriptionLink).not.toBeUndefined();
         return services.loadDocument(description.parentDescriptionLink);
       }).then((description) => {
-        clonedDescription = description; 
+        clonedDescription = description;
         // The cloned description parent link is empty...
         expect(clonedDescription.parentDescriptionLink).toBeUndefined();
         // ...and the created one points to it
         expect(createdDescription.parentDescriptionLink).toEqual(
-    	    clonedDescription.documentSelfLink);
+                                                                clonedDescription.documentSelfLink);
         return services.loadDocument(templateLink);
       }).then((template) => {
         expect(template.descriptionLinks).toEqual([clonedDescription.documentSelfLink]);
