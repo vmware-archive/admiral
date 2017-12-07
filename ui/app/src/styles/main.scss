@@ -572,6 +572,7 @@ $main-list-view-right: 10px;
   position: absolute;
   top: 0px;
   bottom: 0px;
+  pointer-events: none;
   left: -47px;
   width: 47px;
   z-index: 20;
@@ -594,6 +595,7 @@ $main-list-view-right: 10px;
 .right-context-panel > .toolbar .toolbar-item {
   display: inline-block;
   white-space: nowrap;
+  pointer-events: all;
 
   transform: translate(0,100%) rotate(-90deg);
   transform-origin: 0 0;
