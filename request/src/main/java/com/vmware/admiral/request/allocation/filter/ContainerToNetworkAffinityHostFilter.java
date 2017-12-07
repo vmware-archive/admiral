@@ -142,19 +142,19 @@ public class ContainerToNetworkAffinityHostFilter
         host.sendRequest(Operation.createGet(UriUtils.buildUri(host, compositeComponentLink))
                 .setReferer(host.getUri())
                 .setCompletion((o, ex) -> {
+                    if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
+                        // no composite componet found, just continue without fail
+                        host.log(Level.FINE,
+                                "Exception while getting CompositeComponent. Error: [%s]",
+                                ex.getMessage());
+                        callback.complete(hostSelectionMap, null);
+                        return;
+                    }
                     if (ex != null) {
-                        if (ex instanceof ServiceHost.ServiceNotFoundException) {
-                            // no composite componet found, just continue without fail
-                            host.log(Level.FINE,
-                                    "Exception while getting CompositeComponent. Error: [%s]",
-                                    ex.getMessage());
-                            callback.complete(hostSelectionMap, null);
-                        } else {
-                            host.log(Level.WARNING,
-                                    "Exception while getting CompositeComponent. Error: [%s]",
-                                    ex.getMessage());
-                            callback.complete(null, ex);
-                        }
+                        host.log(Level.WARNING,
+                                "Exception while getting CompositeComponent. Error: [%s]",
+                                ex.getMessage());
+                        callback.complete(null, ex);
                         return;
                     }
                     CompositeComponent body = o.getBody(CompositeComponent.class);
@@ -205,7 +205,7 @@ public class ContainerToNetworkAffinityHostFilter
         QueryUtil.addListValueClause(q,
                 ContainerNetworkState.FIELD_NAME_DESCRIPTION_LINK, descLinksWithNames.keySet());
 
-        new ServiceDocumentQuery<ContainerNetworkState>(host, ContainerNetworkState.class)
+        new ServiceDocumentQuery<>(host, ContainerNetworkState.class)
                 .query(q,
                         (r) -> {
                             if (r.hasException()) {
@@ -270,7 +270,7 @@ public class ContainerToNetworkAffinityHostFilter
 
         QueryUtil.addExpandOption(networkStateQuery);
 
-        new ServiceDocumentQuery<ContainerNetworkState>(host, ContainerNetworkState.class).query(
+        new ServiceDocumentQuery<>(host, ContainerNetworkState.class).query(
                 networkStateQuery, (res) -> {
                     if (res.hasException()) {
                         host.log(Level.WARNING,
