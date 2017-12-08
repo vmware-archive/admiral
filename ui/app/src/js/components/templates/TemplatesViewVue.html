@@ -9,17 +9,17 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<div class="images-view" v-bind:class="{'right-context-expanded':  contextExpanded}">
+<div class="images-view" :class="{'right-context-expanded':  contextExpanded}">
   <alert :alert-type="alert.type" :show-alert="alert.show" :alert-message="alert.message"
          @alert-closed="alertClosed()"></alert>
 
   <div class="list-holder">
     <div class="main-panel">
       <div class="list-view scroll-view" v-if="model.listView">
-        <list-title v-on:refresh-list="refresh()"
-                    v-bind:has-search-query="isShowingSearchResults" v-bind:count="itemsCount"
-                    v-bind:title="title"
-                    v-bind:title-search="titleSearch">
+        <list-title @refresh-list="refresh()"
+                    :has-search-query="isShowingSearchResults" :count="itemsCount"
+                    :title="title"
+                    :title-search="titleSearch">
         </list-title>
         <div class="toolbar">
           <div class="row">
@@ -30,16 +30,17 @@
                 </a>
                 <span class="import-template">
                   <a href="#/import-template" class="btn btn-link">
-                    <i class="fa fa-upload" v-tooltip="i18n('app.template.import.importTemplateTooltip')"></i>{{i18n("app.template.import.title")}}
+                    <i class="fa fa-upload" v-tooltip="i18n('app.template.import.importTemplateTooltip')"
+                        ></i>{{i18n("app.template.import.title")}}
                   </a>
                 </span>
               </span>
             </div>
             <div class="col-sm-6 toolbar-secondary">
-              <search v-bind:placeholder="i18n('app.template.list.searchImagesTemplatesPlaceholder')"
-                      v-bind:placeholder-by-category="placeholderByCategory"
-                      v-bind:query-options="queryOptions"
-                      v-on:search-change="search"
+              <search :placeholder="i18n('app.template.list.searchImagesTemplatesPlaceholder')"
+                      :placeholder-by-category="placeholderByCategory"
+                      :query-options="queryOptions"
+                      @search-change="search"
                       ></search>
             </div>
           </div>
@@ -61,11 +62,14 @@
               </grid-item>
             </grid>
           </div>
-          
-          
+          <!-- Loading indication -->
           <div v-if="model.listView.itemsLoading" class="loading">
             <span class="vertical-helper"></span>
             <div class="spinner"></div>
+          </div>
+          <!-- No Items -->
+          <div v-if="!hasItems && !model.listView.itemsLoading" class="content-empty">
+            {{i18n("noItems")}}
           </div>
         </div>
       </div>
@@ -73,18 +77,18 @@
   </div>
 
   <div v-if="model.registries" transition="slide-and-fade" class="registry-view closable-view">
-    <a class="close-button" v-on:click="goBack($event)"
-       v-bind:class="{'hide': model.registries.contextView.expanded}"><i
+    <a class="close-button" @click="goBack($event)"
+       :class="{'hide': model.registries.contextView.expanded}"><i
       class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
 
-    <registry-view v-bind:model="model.registries" class="content"></registry-view>
+    <registry-view :model="model.registries" class="content"></registry-view>
   </div>
 
   <div v-if="model.importTemplate" transition="slide-and-fade" class="closable-view">
-    <a class="close-button" v-on:click="goBack($event)"><i
+    <a class="close-button" @click="goBack($event)"><i
       class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
 
-    <template-importer-view v-bind:model="model.importTemplate" class="content"></template-importer-view>
+    <template-importer-view :model="model.importTemplate" class="content"></template-importer-view>
   </div>
 
   <div v-if="model.selectedItemDetails" transition="slide-and-fade" class="closable-view"
@@ -114,59 +118,59 @@
       </template>
 
       <template-details-view v-ref:template-details v-if="model.selectedItemDetails.selectedForEdit"
-                             v-bind:model="model.selectedItemDetails"></template-details-view>
+                             :model="model.selectedItemDetails"></template-details-view>
       <container-request-form v-if="model.selectedItemDetails.selectedForRequest"
-                             v-bind:model="model.selectedItemDetails"></container-request-form>
+                             :model="model.selectedItemDetails"></container-request-form>
       <closure-request-form class="template-details"
                             v-if="!!model.selectedItemDetails.addClosureView && areClosuresAllowed"
-                            v-bind:shown-in-templates="true"
-                            v-bind:model="model.selectedItemDetails"></closure-request-form>
+                            :shown-in-templates="true"
+                            :model="model.selectedItemDetails"></closure-request-form>
 
     </div>
   </div>
 
-  <context-sidepanel v-if="showContextPanel" class="right-context-panel" v-on:close="closeToolbar()">
+  <context-sidepanel v-if="showContextPanel" class="right-context-panel" @close="closeToolbar()">
     <div slot="toolbar" class="toolbar">
       <context-sidepanel-toolbar-item
-        v-bind:active="activeContextItem === 'requests'"
-        v-bind:label="i18n('app.request.contextPanelTooltip')"
-        v-bind:notifications="requestsCount"
-        v-on:open="openToolbarRequests()" v-on:close="closeToolbar()">
+        :active="activeContextItem === 'requests'"
+        :label="i18n('app.request.contextPanelTooltip')"
+        :notifications="requestsCount"
+        @open="openToolbarRequests()" @close="closeToolbar()">
       </context-sidepanel-toolbar-item>
 
       <context-sidepanel-toolbar-item
-        v-bind:active="activeContextItem === 'eventlogs'"
-        v-bind:label="i18n('app.eventlog.contextPanelTooltip')"
-        v-bind:notifications="eventLogsCount"
-        v-on:open="openToolbarEventLogs()" v-on:close="closeToolbar()">
+        :active="activeContextItem === 'eventlogs'"
+        :label="i18n('app.eventlog.contextPanelTooltip')"
+        :notifications="eventLogsCount"
+        @open="openToolbarEventLogs()" @close="closeToolbar()">
       </context-sidepanel-toolbar-item>
 
       <context-sidepanel-toolbar-item
         v-if="isApplicationEmbedded()"
-        v-bind:active="activeContextItem === 'deploymentPolicies'"
-        v-bind:label="i18n('app.deploymentPolicy.contextPanelTooltip')"
-        v-on:open="openToolbarDeploymentPolicies()" v-on:close="closeToolbar()">
+        :active="activeContextItem === 'deploymentPolicies'"
+        :label="i18n('app.deploymentPolicy.contextPanelTooltip')"
+        @open="openToolbarDeploymentPolicies()" @close="closeToolbar()">
       </context-sidepanel-toolbar-item>
     </div>
 
     <div slot="content" class="content">
       <requests-list v-if="activeContextItem === 'requests'"
-                     v-bind:model="model.contextView.activeItem.data"></requests-list>
+                     :model="model.contextView.activeItem.data"></requests-list>
       <eventlog-list v-if="activeContextItem === 'eventlogs'"
-                     v-bind:model="model.contextView.activeItem.data"></eventlog-list>
+                     :model="model.contextView.activeItem.data"></eventlog-list>
       <deployment-policies-list v-if="activeContextItem === 'deploymentPolicies'"
-                     v-bind:model="model.contextView.activeItem.data"></deployment-policies-list>
+                     :model="model.contextView.activeItem.data"></deployment-policies-list>
     </div>
   </context-sidepanel>
 
   <context-sidepanel v-if="showClosureContextPanel"
                      class="right-context-panel right-closure-panel"
-                     v-bind:class="{'right-context-expanded': innerContextExpanded}">
+                     :class="{'right-context-expanded': innerContextExpanded}">
     <div slot="toolbar" class="toolbar">
       <context-sidepanel-toolbar-item
-        v-bind:active="activeContextItem === 'closures'"
-        v-bind:label="i18n('app.closure.resultStatus')"
-        v-on:open="openToolbarClosureResults()" v-on:close="closeToolbar()">
+        :active="activeContextItem === 'closures'"
+        :label="i18n('app.closure.resultStatus')"
+        @open="openToolbarClosureResults()" @close="closeToolbar()">
       </context-sidepanel-toolbar-item>
     </div>
 

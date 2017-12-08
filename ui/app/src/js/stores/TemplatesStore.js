@@ -60,10 +60,9 @@ let _enhanceContainerTemplate = function(containerTemplate, listViewPath) {
   containerTemplate.icons = images.map(image => imageUtils.getImageIconLink(image));
   containerTemplate.type = constants.TEMPLATES.TYPES.TEMPLATE;
 
-  services.loadTemplateDescriptionImages(containerTemplate.documentSelfLink)
-    .then((result) => {
+  services.loadTemplateDescriptionImages(containerTemplate.documentSelfLink).then((result) => {
       let icons = new Set();
-      for (var key in result.descriptionImages) {
+      for (let key in result.descriptionImages) {
         if (result.descriptionImages.hasOwnProperty(key)) {
           if (key.indexOf(links.CLOSURE_DESCRIPTIONS) === 0) {
             icons.add(utils.getClosureIcon(result.descriptionImages[key]));
@@ -72,6 +71,7 @@ let _enhanceContainerTemplate = function(containerTemplate, listViewPath) {
           }
         }
       }
+
       var selector = this.selectFromData(listViewPath);
       let items = selector.getIn('items');
       if (items) {
@@ -85,6 +85,8 @@ let _enhanceContainerTemplate = function(containerTemplate, listViewPath) {
         selector.setIn('items', items);
         this.emitChange();
       }
+    }).catch((e) => {
+      console.warn('Cannot load template description images', e);
     });
 };
 
@@ -134,7 +136,6 @@ let searchImages = function(queryOptions, searchOnlyImages, forContainerDefiniti
   }
 
   this.setInData(listViewPath.concat(['itemsLoading']), true);
-
   this.emitChange();
 
   if (searchOnlyImages) {
@@ -789,6 +790,7 @@ let TemplatesStore = Reflux.createStore({
 
     this.setInData(['listView', 'queryOptions'], queryOptions);
     this.setInData(['listView', 'error'], null);
+    this.setInData(['listView', 'itemsLoading'], false);
     this.setInData(['registries'], null);
     this.setInData(['importTemplate'], null);
     this.setInData(['selectedItem'], null);

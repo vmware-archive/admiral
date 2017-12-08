@@ -85,6 +85,9 @@ var TemplatesViewVueComponent = Vue.extend({
     contextExpanded: function() {
       return this.model.contextView && this.model.contextView.expanded;
     },
+    hasItems: function() {
+      return this.model.listView.items && this.model.listView.items.length > 0;
+    },
     queryOptions: function() {
       return this.model.listView && this.model.listView.queryOptions;
     },

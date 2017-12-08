@@ -301,6 +301,7 @@ public class CompositeDescriptionService extends StatefulService {
 
     private void retrieveDescriptionImages(List<String> descriptionLinks, Operation op) {
         if (descriptionLinks == null || descriptionLinks.isEmpty()) {
+            op.complete();
             return;
         }
 
