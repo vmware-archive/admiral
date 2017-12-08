@@ -71,7 +71,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.ProtocolException;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -682,7 +681,8 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         hostConfig.put(EXTRA_HOSTS_PROP_NAME, context.containerState.extraHosts);
 
         // the volumes are added as binds property
-        hostConfig.put(BINDS_PROP_NAME, filterVolumeBindings(context.containerState.volumes));
+        hostConfig.put(BINDS_PROP_NAME,
+                DockerAdapterUtils.filterVolumeBindings(context.containerState.volumes));
         hostConfig.put(VOLUME_DRIVER, context.containerDescription.volumeDriver);
         hostConfig.put(CAP_ADD_PROP_NAME, context.containerDescription.capAdd);
         hostConfig.put(CAP_DROP_PROP_NAME, context.containerDescription.capDrop);
@@ -818,7 +818,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         Map<String, Object> endpointConfig = getOrAddMap(input,
                 DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG.ENDPOINT_CONFIG_PROP_NAME);
 
-        mapContainerNetworkToNetworkConfig(network, endpointConfig);
+        DockerAdapterUtils.mapContainerNetworkToNetworkConfig(network, endpointConfig);
 
         input.withProperty(DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG.CONTAINER_PROP_NAME,
                 containerId);
@@ -827,7 +827,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
 
     private void createNetworkConfig(CommandInput input, Entry<String, ServiceNetwork> network) {
         Map<String, Object> endpointConfig = new HashMap<>();
-        mapContainerNetworkToNetworkConfig(network.getValue(), endpointConfig);
+        DockerAdapterUtils.mapContainerNetworkToNetworkConfig(network.getValue(), endpointConfig);
 
         Map<String, Object> endpointsConfig = new HashMap<>();
         endpointsConfig.put(network.getKey(), endpointConfig);
@@ -837,40 +837,6 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         networkConfig.put(DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG.ENDPOINTS_CONFIG_PROP_NAME,
                 endpointsConfig);
 
-    }
-
-    private void mapContainerNetworkToNetworkConfig(ServiceNetwork network,
-            Map<String, Object> endpointConfig) {
-        Map<String, Object> ipamConfig = new HashMap<>();
-        if (network.ipv4_address != null) {
-            ipamConfig.put(
-                    DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG.ENDPOINT_CONFIG.IPAM_CONFIG.IPV4_CONFIG,
-                    network.ipv4_address);
-        }
-
-        if (network.ipv6_address != null) {
-            ipamConfig.put(
-                    DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG.ENDPOINT_CONFIG.IPAM_CONFIG.IPV6_CONFIG,
-                    network.ipv6_address);
-        }
-
-        if (!ipamConfig.isEmpty()) {
-            endpointConfig.put(
-                    DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG.ENDPOINT_CONFIG.IPAM_CONFIG_PROP_NAME,
-                    ipamConfig);
-        }
-
-        if (network.aliases != null) {
-            endpointConfig.put(
-                    DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG.ENDPOINT_CONFIG.ALIASES,
-                    network.aliases);
-        }
-
-        if (network.links != null) {
-            endpointConfig.put(
-                    DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG.ENDPOINT_CONFIG.LINKS,
-                    network.links);
-        }
     }
 
     private boolean shouldTryCreateFromLocalImage(ContainerDescription containerDescription) {
@@ -1209,6 +1175,9 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         newContainerState.powerState = containerState.powerState;
         newContainerState.status = containerState.status;
 
+        // workaround for VCH (see Github issue #228)
+        DockerAdapterUtils.filterHostConfigEmptyPortBindings(properties);
+
         // copy properties into the ContainerState's attributes
         newContainerState.attributes = properties.entrySet()
                 .stream()
@@ -1356,8 +1325,10 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                                     o.getBody(ConfigurationState.class).value);
                             callback.accept(pullRetriesCount);
                         } else {
-                            /* in case of exception the default retry count will be set to the
-                             PROVISION_CONTAINER_RETRIES_COUNT_PARAM_NAME */
+                            /*
+                             * in case of exception the default retry count will be set to the
+                             * PROVISION_CONTAINER_RETRIES_COUNT_PARAM_NAME
+                             */
                             ensurePropertyExists(retriesCount -> {
                                 pullRetriesCount = retriesCount;
                                 callback.accept(pullRetriesCount);
@@ -1365,24 +1336,6 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                         }
                     }));
         }
-    }
-
-    /**
-     * Filter out volume bindings without host-src or volume name. Each volume binding is a
-     * string in the following form: [volume-name|host-src:]container-dest[:ro] Both host-src,
-     * and container-dest must be an absolute path.
-     */
-    private List<String> filterVolumeBindings(String[] volumes) {
-        List<String> volumeBindings = new ArrayList<>();
-        if (volumes != null) {
-            for (String volume : volumes) {
-                VolumeBinding binding = VolumeBinding.fromString(volume);
-                if (binding.getHostPart() != null) {
-                    volumeBindings.add(volume);
-                }
-            }
-        }
-        return volumeBindings;
     }
 
 }

@@ -19,6 +19,8 @@ import static org.junit.Assert.fail;
 
 import static com.vmware.admiral.adapter.docker.mock.MockDockerCreateImageService.REGISTRY_PASSWORD;
 import static com.vmware.admiral.adapter.docker.mock.MockDockerCreateImageService.REGISTRY_USER;
+import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_EXEC_ATTACH_STDERR_PROP_NAME;
+import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_EXEC_ATTACH_STDOUT_PROP_NAME;
 
 import java.io.File;
 import java.net.URI;
@@ -172,7 +174,7 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
         containerState.descriptionLink = containerDescriptionLink;
         containerState.names = new ArrayList<>(1);
         containerState.names.add(TEST_CONTAINER_NAME);
-        List<String> tenantLinks = new ArrayList<String>();
+        List<String> tenantLinks = new ArrayList<>();
         tenantLinks.add(TEST_CONTAINER_GROUP);
         containerState.tenantLinks = tenantLinks;
         containerState.env = TEST_ENV;
@@ -190,7 +192,7 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
         waitForServiceAvailability(ComputeService.FACTORY_LINK);
 
         ComputeDescription computeDescription = new ComputeDescription();
-        computeDescription.customProperties = new HashMap<String, String>();
+        computeDescription.customProperties = new HashMap<>();
         computeDescription.id = UUID.randomUUID().toString();
 
         String computeDescriptionLink = doPost(computeDescription,
@@ -199,7 +201,7 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
         ComputeState computeState = new ComputeState();
         computeState.id = "testParentComputeState";
         computeState.descriptionLink = computeDescriptionLink;
-        computeState.customProperties = new HashMap<String, String>();
+        computeState.customProperties = new HashMap<>();
         computeState.customProperties.put(
                 ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME,
                 testDockerCredentialsLink);
@@ -495,6 +497,68 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
             fail();
         } catch (Exception ignored) {
         }
+    }
+
+    @Test
+    public void testExecCommandFail() throws Throwable {
+
+        // create a fresh provisioning task for each request
+        createProvisioningTask();
+
+        ContainerInstanceRequest request = new ContainerInstanceRequest();
+        request.resourceReference = containerStateReference;
+        request.operationTypeId = ContainerOperationType.EXEC.id;
+        request.customProperties = new HashMap<>(); // no command
+        request.serviceTaskCallback = ServiceTaskCallback.create(provisioningTaskLink);
+
+        Operation containerRequest = Operation
+                .createPatch(dockerAdapterServiceUri)
+                .setReferer(URI.create("/"))
+                .setBodyNoCloning(request);
+
+        host.sendAndWaitExpectFailure(containerRequest, Operation.STATUS_CODE_BAD_REQUEST);
+    }
+
+    @Test
+    public void testExecCommandWithStdFail() throws Throwable {
+
+        // create a fresh provisioning task for each request
+        createProvisioningTask();
+
+        ContainerInstanceRequest request = new ContainerInstanceRequest();
+        request.resourceReference = containerStateReference;
+        request.operationTypeId = ContainerOperationType.EXEC.id;
+        request.customProperties = new HashMap<>();
+        request.customProperties.put("command", "/foo/bar.sh");
+        request.customProperties.put(DOCKER_EXEC_ATTACH_STDERR_PROP_NAME, "true");
+        request.customProperties.put(DOCKER_EXEC_ATTACH_STDOUT_PROP_NAME, "true");
+        request.serviceTaskCallback = ServiceTaskCallback.create(provisioningTaskLink);
+
+        Operation containerRequest = Operation
+                .createPatch(dockerAdapterServiceUri)
+                .setReferer(URI.create("/"))
+                .setBodyNoCloning(request);
+
+        host.sendAndWaitExpectFailure(containerRequest, Operation.STATUS_CODE_INTERNAL_ERROR);
+    }
+
+    @Test
+    public void testInvalidOperationFail() throws Throwable {
+
+        // create a fresh provisioning task for each request
+        createProvisioningTask();
+
+        ContainerInstanceRequest request = new ContainerInstanceRequest();
+        request.resourceReference = containerStateReference;
+        request.operationTypeId = "foo";
+        request.serviceTaskCallback = ServiceTaskCallback.create(provisioningTaskLink);
+
+        Operation containerRequest = Operation
+                .createPatch(dockerAdapterServiceUri)
+                .setReferer(URI.create("/"))
+                .setBodyNoCloning(request);
+
+        host.sendAndWaitExpectFailure(containerRequest, Operation.STATUS_CODE_BAD_REQUEST);
     }
 
     /**
