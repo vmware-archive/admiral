@@ -1474,34 +1474,7 @@ let ContainersStore = Reflux.createStore({
       return;
     }
 
-    if (operationType === constants.CONTAINERS.OPERATION.START) {
-      // Container Started
-      this.backFromContainerAction(operationType, resourceIds);
-
-    } else if (operationType === constants.CONTAINERS.OPERATION.STOP) {
-      // Container Stopped
-      this.backFromContainerAction(operationType, resourceIds);
-
-    } else if (operationType === constants.CONTAINERS.OPERATION.CREATE) {
-      // Container created
-    } else if (operationType === constants.CONTAINERS.OPERATION.REMOVE) {
-      // Container Removed
-      this.backFromContainerAction(operationType, resourceIds);
-
-    } else if (operationType === constants.CONTAINERS.OPERATION.CLUSTERING) {
-      //  Clustering day2 op
-      this.backFromContainerAction(operationType, resourceIds);
-
-    } else if (operationType === constants.CONTAINERS.OPERATION.DEFAULT) {
-      // default - refresh current view on operation finished
-      this.backFromContainerAction(operationType, resourceIds);
-    } else if (operationType === constants.CONTAINERS.OPERATION.NETWORKCREATE) {
-      // Network created
-      this.backFromContainerAction(operationType, resourceIds);
-    } else if (operationType === constants.CONTAINERS.OPERATION.CREATE_VOLUME) {
-      // Volume created
-      this.backFromContainerAction(operationType, resourceIds);
-    }
+    this.backFromContainerAction(operationType, resourceIds);
   },
 
   onOperationFailed: function(operationType, resourceIds) {
@@ -1541,27 +1514,19 @@ let ContainersStore = Reflux.createStore({
   },
 
   onNetworkOperationCompleted: function(operationType) {
-    if (operationType === constants.RESOURCES.NETWORKS.OPERATION.REMOVE) {
-      this.navigateToContainersListView(false);
-    }
+    return this.onOperationCompleted(operationType);
   },
 
   onNetworkOperationFailed: function(operationType) {
-    if (operationType === constants.RESOURCES.NETWORKS.OPERATION.REMOVE) {
-      this.navigateToContainersListView(false);
-    }
+    return this.onOperationCompleted(operationType);
   },
 
   onVolumeOperationCompleted: function(operationType) {
-    if (operationType === constants.RESOURCES.VOLUMES.OPERATION.REMOVE) {
-      this.navigateToContainersListView(false);
-    }
+    return this.onOperationCompleted(operationType);
   },
 
   onVolumeOperationFailed: function(operationType) {
-    if (operationType === constants.RESOURCES.VOLUMES.OPERATION.REMOVE) {
-      this.navigateToContainersListView(false);
-    }
+    return this.onOperationCompleted(operationType);
   },
 
   clearOperationFailure: function() {
