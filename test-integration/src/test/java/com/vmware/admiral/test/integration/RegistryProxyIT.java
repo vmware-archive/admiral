@@ -14,7 +14,12 @@ package com.vmware.admiral.test.integration;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
 import java.net.URI;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -42,10 +47,11 @@ import com.vmware.xenon.common.Utils;
 @Ignore("VBV-1429")
 public class RegistryProxyIT extends BaseProvisioningOnCoreOsIT {
     private String compositeDescriptionLink;
-    private String[] commands;
-    Map<String, Object> command;
     String testPrivateDir;
     String url;
+    ShellContainerExecutorResult commandResult;
+
+    private static final int RETRY_COUNT = 3;
 
     @BeforeClass
     public static void beforeClass() {
@@ -66,18 +72,33 @@ public class RegistryProxyIT extends BaseProvisioningOnCoreOsIT {
 
     @Test
     public void testRegistryProxyNoExceptions() throws Exception {
-        registryProxyHelper(false);
+        logger.info("Add docker host.");
+        setupCoreOsHost(DockerAdapterType.API, false);
+        registryProxyHelper(false, RETRY_COUNT);
     }
 
     @Test
     public void testRegistryProxyWithExceptions() throws Exception {
-        registryProxyHelper(true);
+        logger.info("Add docker host.");
+        setupCoreOsHost(DockerAdapterType.API, false);
+        registryProxyHelper(true, RETRY_COUNT);
+    }
+
+    public void registryProxyHelper(boolean withExceptionList, int retryCount) throws Exception {
+        try {
+            registryProxyHelper(withExceptionList);
+        } catch (Throwable ex) {
+            logger.error("Error using registry proxy: "
+                    + Utils.toString(ex));
+            if (retryCount < 0) {
+                throw ex;
+            } else {
+                registryProxyHelper(withExceptionList, retryCount - 1);
+            }
+        }
     }
 
     public void registryProxyHelper(boolean withExceptionList) throws Exception {
-        logger.info("Add docker host.");
-        setupCoreOsHost(DockerAdapterType.API, false);
-
         logger.info("Start squid proxy container.");
         testPrivateDir = "/etc/docker/admiral/test/" + UUID.randomUUID().toString();
         ContainerDescription containerDescSquid = new ContainerDescription();
@@ -105,28 +126,23 @@ public class RegistryProxyIT extends BaseProvisioningOnCoreOsIT {
                 .appendQueryParam(uri, ShellContainerExecutorService.HOST_LINK_URI_PARAM,
                         dockerHostCompute.documentSelfLink)
                 .toString();
-        commands = new String[4];
-        commands[0] = String.format("mkdir -p %s/properties", testPrivateDir);
-        commands[1] = String.format("rm -f %s/properties/test.properties", testPrivateDir);
 
-        commands[2] = String.format(
-                "echo 'registry.proxy=http://%s:%s' >> %s/properties/test.properties",
-                dockerHostCompute.address, squidState.ports.get(0).hostPort, testPrivateDir);
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format("mkdir -p %s/properties", testPrivateDir));
+        sb.append(" && ");
+        sb.append(String.format("rm -f %s/properties/test.properties", testPrivateDir));
+        sb.append(" && ");
+        sb.append(String.format("echo 'registry.proxy=http://%s:%s' >> "
+                + "%s/properties/test.properties", dockerHostCompute.address, squidState.ports
+                .get(0).hostPort, testPrivateDir));
+
         if (withExceptionList) {
-            commands[3] = String.format(
-                    "echo 'registry.no.proxy.list=registry.hub.docker.com' >> %s/properties/test.properties",
-                    testPrivateDir);
+            sb.append(" && ");
+            sb.append(String.format("echo 'registry.no.proxy.list=registry.hub.docker.com' >> "
+                    + "%s/properties/test.properties", testPrivateDir));
         }
-        command = new HashMap<>();
-        command.put(ShellContainerExecutorService.COMMAND_KEY,
-                ShellContainerExecutorService.buildComplexCommand(commands));
-        SimpleHttpsClient.HttpResponse response = SimpleHttpsClient
-                .execute(SimpleHttpsClient.HttpMethod.POST, url,
-                        Utils.toJson(command));
-        ShellContainerExecutorResult result = Utils.fromJson(response.responseBody,
-                ShellContainerExecutorResult.class);
 
-        logger.info("Exit code : %s, Exec output : %s", result.exitCode, result.output);
+        executeCommand(sb.toString());
 
         logger.info("Start admiral container.");
         ContainerDescription containerDescAdmiral = new ContainerDescription();
@@ -151,19 +167,11 @@ public class RegistryProxyIT extends BaseProvisioningOnCoreOsIT {
                 ContainerState.class);
 
         logger.info("Verify proxy logs.");
-        commands = new String[1];
-        commands[0] = String.format("awk '/./{line=$0} END{print line}' %s/squid3/access.log",
-                testPrivateDir);
-        command = new HashMap<>();
-        command.put(ShellContainerExecutorService.COMMAND_KEY,
-                ShellContainerExecutorService.buildComplexCommand(commands));
-        response = SimpleHttpsClient
-                .execute(SimpleHttpsClient.HttpMethod.POST, url,
-                        Utils.toJson(command));
-        result = Utils.fromJson(response.responseBody,
-                ShellContainerExecutorResult.class);
-        assertTrue(result.output.isEmpty());
-        assertEquals(Integer.valueOf(0), result.exitCode);
+        commandResult = executeCommand(String.format("cat %s/squid3/access.log",
+                testPrivateDir));
+
+        assertTrue(commandResult.output.length() < 10);
+        assertEquals(Integer.valueOf(0), commandResult.exitCode);
         logger.info("Make admiral container search request.");
 
         waitFor(t -> {
@@ -187,37 +195,40 @@ public class RegistryProxyIT extends BaseProvisioningOnCoreOsIT {
                     null);
             Thread.sleep(1000);
         }
-        commands = new String[1];
-        commands[0] = String.format("awk '/./{line=$0} END{print line}' %s/squid3/access.log",
-                testPrivateDir);
-        command = new HashMap<>();
-        command.put(ShellContainerExecutorService.COMMAND_KEY,
-                ShellContainerExecutorService.buildComplexCommand(commands));
-
-        response = SimpleHttpsClient
-                .execute(SimpleHttpsClient.HttpMethod.POST, url,
-                        Utils.toJson(command));
-        result = Utils.fromJson(response.responseBody,
-                ShellContainerExecutorResult.class);
-
+        commandResult = executeCommand(String.format("cat %s/squid3/access.log",
+                testPrivateDir));
         if (withExceptionList) {
-            assertTrue(result.output.isEmpty());
+            assertTrue(commandResult.output.length() < 10);
         } else {
-            assertTrue(result.output.contains("https://registry.hub.docker.com/v1/search?"));
+            assertTrue(commandResult.output.contains("https://registry.hub.docker.com/v1/search?"));
         }
     }
 
     @After
     public void removeTestDir() throws Exception {
         if (!(testPrivateDir == null || testPrivateDir.isEmpty() || url == null || url.isEmpty())) {
-            commands = new String[1];
-            commands[0] = String.format("rm -r %s", testPrivateDir);
-            command = new HashMap<>();
-            command.put(ShellContainerExecutorService.COMMAND_KEY,
-                    ShellContainerExecutorService.buildComplexCommand(commands));
-            SimpleHttpsClient
-                    .execute(SimpleHttpsClient.HttpMethod.POST, url,
-                            Utils.toJson(command));
+            executeCommand(String.format("rm -r %s", testPrivateDir));
         }
+    }
+
+    private ShellContainerExecutorResult executeCommand(String command)
+            throws CertificateException, NoSuchAlgorithmException, KeyStoreException,
+            KeyManagementException, IOException {
+        String[] commands = new String[3];
+        commands[0] = "sh";
+        commands[1] = "-c";
+        commands[2] = String.format(" sh -c \"%s\"", command);
+
+        Map<String, Object> commandMap = new HashMap<>();
+        commandMap.put(ShellContainerExecutorService.COMMAND_KEY,
+                commands);
+        SimpleHttpsClient.HttpResponse response = SimpleHttpsClient
+                .execute(SimpleHttpsClient.HttpMethod.POST, url,
+                        Utils.toJson(commandMap));
+        ShellContainerExecutorResult result = Utils.fromJson(response.responseBody,
+                ShellContainerExecutorResult.class);
+        logger.info("Command: %s \n Exit code : %s \n Exec output : %s",
+                command, result.exitCode, result.output);
+        return result;
     }
 }
