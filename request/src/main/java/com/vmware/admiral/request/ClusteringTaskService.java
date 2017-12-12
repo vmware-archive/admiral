@@ -108,9 +108,6 @@ public class ClusteringTaskService extends
         super.transientSubStages = SubStage.TRANSIENT_SUB_STAGES;
     }
 
-    protected static class ExtensibilityCallbackResponse extends BaseExtensibilityCallbackResponse {
-    }
-
     @Override
     protected Collection<String> getRelatedResourcesLinks(ClusteringTaskState state) {
         return state.resourceLinks;
@@ -123,7 +120,7 @@ public class ClusteringTaskService extends
 
     @Override
     protected BaseExtensibilityCallbackResponse notificationPayload(ClusteringTaskState state) {
-        return new ExtensibilityCallbackResponse();
+        return new BaseExtensibilityCallbackResponse();
     }
 
     @Override

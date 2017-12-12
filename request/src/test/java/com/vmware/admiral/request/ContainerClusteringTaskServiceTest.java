@@ -16,6 +16,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -44,6 +45,7 @@ import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.UriUtils;
 
@@ -537,6 +539,33 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
 
         assertEquals(8, placementState.availableInstancesCount);
         assertEquals(2, placementState.allocatedInstancesCount);
+    }
+
+    @Test(expected = LocalizableValidationException.class)
+    public void testClusteringTaskServiceValidateStateOnStartNegative() throws Throwable {
+        long containersNumberBeforeProvisioning = getExistingContainersInAdapter().size();
+        assertEquals(0, containersNumberBeforeProvisioning);
+
+        request = startRequest(request);
+        RequestBrokerState initialState = waitForRequestToComplete(request);
+
+        long containersNumberBeforeClustering = getExistingContainersInAdapter().size();
+
+        // Number of containers before provisioning.
+        assertEquals(3, containersNumberBeforeClustering);
+
+        ClusteringTaskState clusteringState = new ClusteringTaskState();
+        clusteringState.resourceCount = -2;
+        clusteringState.resourceDescriptionLink = initialState.resourceDescriptionLink;
+        clusteringState.resourceType = ResourceType.CONTAINER_TYPE.getName();
+        try {
+            doPost(clusteringState, ClusteringTaskService.FACTORY_LINK);
+        } catch (LocalizableValidationException e) {
+            if (e.getMessage().contains("'resourceCount' must be greater than 0.")) {
+                throw e;
+            }
+        }
+        fail("Should fail with: 'resourceCount' must be greater than 0.");
     }
 
     @Test
