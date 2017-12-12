@@ -505,6 +505,7 @@
 
   .delete-inline-item-confirmation-holder {
     @extend .item-delete-confirmation;
+    cursor: pointer;
   }
 
   .container-secondary-actions {

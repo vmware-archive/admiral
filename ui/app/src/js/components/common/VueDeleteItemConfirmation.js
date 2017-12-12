@@ -14,13 +14,15 @@ import utils from 'core/utils';
 var VueDeleteItemConfirmation = Vue.extend({
   template: `<div class="delete-inline-item-confirmation-holder hide">
               <div class="delete-inline-item-confirmation">
-                <div class="delete-inline-item-confirmation-cancel">
-                  <div><a data-cmd="inline-delete-cancel"
-                          href="#" @click="cancelDelete($event)">{{i18n('cancel')}}</a></div>
+                <div class="delete-inline-item-confirmation-cancel"
+                     data-cmd="inline-delete-cancel"
+                     @click="cancelDelete($event)"
+                     ><div>{{i18n('cancel')}}</div>
                 </div>
-                <div class="delete-inline-item-confirmation-confirm">
-                  <div><a data-cmd="inline-delete-confirm"
-                          href="#" @click="confirmDelete($event)">{{i18n('delete')}}</a><i
+                <div class="delete-inline-item-confirmation-confirm"
+                     data-cmd="inline-delete-confirm"
+                     @click="confirmDelete($event)"
+                     ><div>{{i18n('delete')}}<i
                         class="fa fa-spinner fa-spin loader-inline not-underlined"></i></div>
                 </div>
               </div>
