@@ -494,6 +494,34 @@ public class CompositeTemplateUtilTest {
     }
 
     @Test
+    public void testSeriaizeDeserializeCompositeTemplateWithHealthCheck() throws IOException {
+
+        // Assert that healthConfig.ignoreOnProvision is serialized when false
+        String expectedContent = getContent("composite.simple.health.yaml");
+
+        CompositeTemplate template = deserializeCompositeTemplate(expectedContent);
+
+        ContainerDescription data = (ContainerDescription) template.components.get("hello").data;
+        assertNotNull(data.healthConfig);
+        assertEquals(false, data.healthConfig.ignoreOnProvision);
+
+        // Assert that healthConfig.ignoreOnProvision is serialized when true
+        data.healthConfig.ignoreOnProvision = true;
+        String content = serializeCompositeTemplate(template);
+
+        template = deserializeCompositeTemplate(content);
+
+        data = (ContainerDescription) template.components.get("hello").data;
+        assertNotNull(data.healthConfig);
+        assertEquals(true, data.healthConfig.ignoreOnProvision);
+
+        // Assert that healthConfig.ignoreOnProvision is not serialized when null
+        data.healthConfig = null;
+        content = serializeCompositeTemplate(template);
+        assertFalse(content.contains("health_config"));
+    }
+
+    @Test
     public void testDeserializeSerializeComplexCompositeTemplateWithNetwork() throws IOException {
 
         String expectedContent = getContent("composite.complex.network.yaml");

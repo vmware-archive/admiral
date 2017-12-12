@@ -1,0 +1,17 @@
+---
+id: "hello"
+status: "PUBLISHED"
+name: "hello"
+components:
+  hello:
+    type: "App.Container"
+    data:
+      name: "hello"
+      image: "registry.hub.docker.com/kitematic/hello-world-nginx"
+      publish_all: false
+      restart_policy: "always"
+      network_mode: "bridge"
+      health_config:
+        protocol: "COMMAND"
+        command: "foobar"
+        ignore_on_provision: false

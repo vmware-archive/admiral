@@ -21,6 +21,8 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 
 import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.netty.bootstrap.Bootstrap;
@@ -110,6 +112,7 @@ public class HealthChecker {
         @Documentation(description = "Ignore health check on provision. Default is true.")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         @JsonProperty("ignore_on_provision")
+        @JsonInclude(Include.NON_NULL)
         public Boolean ignoreOnProvision;
 
         /** If set to true the unhealthy containers from a description will be redeployed. */
