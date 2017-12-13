@@ -33,6 +33,7 @@ public class RequestsToolbar extends BasicClass {
             .cssSelector(".toolbar .toolbar-item:nth-child(1) .btn");
     private final By LAST_REQUEST = By
             .cssSelector(".requests-list #all .request-item-holder:first-child");
+    private final By REQUEST_RELATIVE_ITEM_NAME = By.cssSelector(".title .name.truncateText");
     private final By REFRESH_BUTTON = By.cssSelector(".right-context-panel .fa.fa-refresh");
 
     public void waitForLastRequestToSucceed(int timeout) {
@@ -52,6 +53,10 @@ public class RequestsToolbar extends BasicClass {
                 }
             }
         });
+    }
+
+    public String getLastRequestTitle() {
+        return executeInFrame(0, () -> $(LAST_REQUEST).$(REQUEST_RELATIVE_ITEM_NAME).attr("title"));
     }
 
     private void waitToSucceed(int timeout) {

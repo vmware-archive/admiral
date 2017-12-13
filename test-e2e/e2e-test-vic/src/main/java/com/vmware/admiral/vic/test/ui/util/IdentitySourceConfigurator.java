@@ -58,12 +58,6 @@ public class IdentitySourceConfigurator {
     private final HttpClient httpClient;
 
     public IdentitySourceConfigurator(String vcTarget, String username, String password) {
-        if (vcTarget.endsWith("/")) {
-            vcTarget = vcTarget.substring(0, vcTarget.length() - 1);
-        }
-        if (!vcTarget.startsWith("https://")) {
-            vcTarget = "https://" + vcTarget;
-        }
         this.target = vcTarget;
         authHeaders = getAuthHeaders(target, username, password);
         CookieStore cookies = new BasicCookieStore();

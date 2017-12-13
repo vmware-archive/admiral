@@ -11,18 +11,35 @@
 
 package com.vmware.admiral.test.ui.pages.templates;
 
-import com.vmware.admiral.test.ui.pages.common.FailableActionValidator;
+import static com.codeborne.selenide.Selenide.$;
 
-public class ImportTemplateValidator implements FailableActionValidator {
+import com.codeborne.selenide.Condition;
+
+import org.openqa.selenium.By;
+
+import com.vmware.admiral.test.ui.pages.common.BasicClass;
+import com.vmware.admiral.test.ui.pages.common.FailableActionValidator;
+import com.vmware.admiral.test.ui.pages.common.PageProxy;
+
+public class ImportTemplateValidator extends BasicClass implements FailableActionValidator {
+
+    private final By ALERT_MESSAGE_HOLDER = By.cssSelector(".alert.alert-danger.alert-dismissible");
+    private final By CLOSE_ALERT_BUTTON = By.cssSelector(".fa.fa-close");
 
     @Override
     public void expectSuccess() {
-        throw new UnsupportedOperationException("Not implemented");
+        EditTemplatePage editTemplatePage = new EditTemplatePage(
+                new PageProxy(new TemplatesPage()));
+        editTemplatePage.waitToLoad();
+        editTemplatePage.navigateBack();
     }
 
     @Override
     public void expectFailure() {
-        throw new UnsupportedOperationException("Not implemented");
+        executeInFrame(0, () -> {
+            $(ALERT_MESSAGE_HOLDER).should(Condition.appear);
+            $(ALERT_MESSAGE_HOLDER).$(CLOSE_ALERT_BUTTON).click();
+        });
     }
 
 }

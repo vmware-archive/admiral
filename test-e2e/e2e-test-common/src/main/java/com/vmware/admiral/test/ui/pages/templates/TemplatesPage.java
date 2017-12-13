@@ -35,6 +35,7 @@ public class TemplatesPage extends HomeTabAdvancedPage<TemplatesPage, TemplatesP
     private final By CARD_RELATIVE_DELETE_BUTTON = By.cssSelector(".fa.fa-trash");
     private final By CARD_RELATIVE_DELETE_CONFIRMATION_BUTTON = By
             .cssSelector(".delete-inline-item-confirmation-confirm>div>a");
+    private final By CARD_RELATIVE_PROVISION_BUTTON = By.cssSelector(".btn.create-container-btn");
     private final String TEMPLATE_CARD_SELECTOR_BY_NAME = "html/body/div/div/div[2]/div[2]/div[1]/div[2]/div/div/div[3]/div/div/div/div/div[1]/div[2]/div[1][text()='%s']/../../../..";
 
     private TemplatesPageValidator validator;
@@ -47,6 +48,16 @@ public class TemplatesPage extends HomeTabAdvancedPage<TemplatesPage, TemplatesP
             validator = new TemplatesPageValidator(this);
         }
         return validator;
+    }
+
+    public TemplatesPage provisionTemplate(String name) {
+        LOG.info("Provisioning template");
+        executeInFrame(0, () -> {
+            waitForElementToStopMoving(getTemplateCardSelector(name))
+                    .$(CARD_RELATIVE_PROVISION_BUTTON).click();
+            $(CARD_RELATIVE_PROVISION_BUTTON).click();
+        });
+        return this;
     }
 
     public ImportTemplatePage importTemplate() {

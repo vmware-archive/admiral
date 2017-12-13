@@ -94,7 +94,7 @@ public class BaseTest {
     }
 
     protected void logOut() {
-        client.logOut();
+        getClient().logOut();
     }
 
 }

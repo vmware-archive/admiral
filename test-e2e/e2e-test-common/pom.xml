@@ -21,6 +21,14 @@
         <version>1.3.0-SNAPSHOT</version>
     </parent>
 
+    <dependencies>
+        <dependency>
+            <groupId>com.vmware.admiral</groupId>
+            <artifactId>admiral-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
     <artifactId>e2e-test-common</artifactId>
     <packaging>jar</packaging>
 

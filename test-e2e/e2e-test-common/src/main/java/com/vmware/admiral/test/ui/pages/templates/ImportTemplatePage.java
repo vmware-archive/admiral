@@ -13,6 +13,7 @@ package com.vmware.admiral.test.ui.pages.templates;
 
 import static com.codeborne.selenide.Selenide.$;
 
+import java.io.File;
 import java.util.Objects;
 
 import com.codeborne.selenide.Condition;
@@ -30,6 +31,8 @@ public class ImportTemplatePage
 
     private final By BACK_BUTTON = By.cssSelector(".fa.fa-chevron-circle-left");
     private final By SUBMIT_BUTTON = By.cssSelector(".templateImport.content .btn.btn-primary");
+    private final By TEMPLATE_TEXT_INPUT = By.cssSelector(".template-input");
+    private final By IMPORT_FROM_FILE_BUTTON = By.cssSelector(".template-import-option .upload");
 
     private ImportTemplatePageValidator validator;
     private ImportTemplateValidator importValidator;
@@ -38,6 +41,29 @@ public class ImportTemplatePage
 
     public ImportTemplatePage(PageProxy parentProxy) {
         this.parentProxy = parentProxy;
+    }
+
+    public ImportTemplatePage importFromFile(String file) {
+        LOG.info("Loading template content from file: " + file);
+        File f = new File(file);
+        if (!f.exists()) {
+            throw new IllegalArgumentException("Specified file does not exist");
+        }
+        if (f.isDirectory()) {
+            throw new IllegalArgumentException("Specified file is a directory");
+        }
+        executeInFrame(0, () -> {
+            $(IMPORT_FROM_FILE_BUTTON).uploadFile(f);
+        });
+        return this;
+    }
+
+    public ImportTemplatePage setText(String yamlOrDockerCompose) {
+        executeInFrame(0, () -> {
+            $(TEMPLATE_TEXT_INPUT).clear();
+            $(TEMPLATE_TEXT_INPUT).sendKeys(yamlOrDockerCompose);
+        });
+        return this;
     }
 
     @Override

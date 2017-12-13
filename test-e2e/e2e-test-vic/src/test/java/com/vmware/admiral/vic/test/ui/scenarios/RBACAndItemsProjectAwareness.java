@@ -230,17 +230,18 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
         networks.refresh()
                 .validate()
                 .validateNetworkDoesNotExist(resourcePrefix + NETWORK_SUFFIX);
-
-        // Volumes cannot be created on current VCH deployment
-        /*
-         * VolumesPage volumes = navigateToHomeTab().navigateToVolumesPage(); volumes.createVolume()
-         * .setName(resourcePrefix + VOLUME_SUFFIX).selectHostByName(PROJECT_NAME_ADMIRAL +
-         * HOST_SUFFIX) .submit().expectSuccess();
-         * volumes.requests().waitForLastRequestToSucceed(60); volumes.refresh() .validate(v ->
-         * v.validateVolumeExistsWithName(resourcePrefix + VOLUME_SUFFIX))
-         * .deleteVolume(resourcePrefix + VOLUME_SUFFIX)
-         * .requests().waitForLastRequestToSucceed(60);
-         */
+        VolumesPage volumes = navigateToHomeTab().navigateToVolumesPage();
+        volumes.createVolume()
+                .setName(resourcePrefix + VOLUME_SUFFIX)
+                .selectHostByName(PROJECT_NAME_ADMIRAL + HOST_SUFFIX)
+                .submit()
+                .expectSuccess();
+        volumes.requests().waitForLastRequestToSucceed(60);
+        volumes.refresh()
+                .validate(v -> v.validateVolumeExistsWithName(resourcePrefix + VOLUME_SUFFIX))
+                .deleteVolume(resourcePrefix + VOLUME_SUFFIX)
+                .requests()
+                .waitForLastRequestToSucceed(60);
         TemplatesPage templates = navigateToHomeTab().navigateToTemplatesPage();
         templates.createTemplate()
                 .setName(resourcePrefix + TEMPLATE_SUFFIX)
@@ -314,7 +315,7 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
             // the blue spinner appears and does not disappear which breaks the flow
             provisionContainerInProject(projectName);
             addNetworkToProject(projectName);
-            // addVolumeToProject(projectName);
+            addVolumeToProject(projectName);
             addTemplateToProject(projectName);
         }
     }
@@ -332,11 +333,9 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
                     .deleteNetwork(projectName + NETWORK_SUFFIX)
                     .requests()
                     .waitForLastRequestToSucceed(60);
-            // Volumes cannot be created on current VCH deployment
-            /*
-             * homeTab.navigateToVolumesPage().deleteVolume(projectName + VOLUME_SUFFIX)
-             * .requests().waitForLastRequestToSucceed(60);
-             */
+            homeTab.navigateToVolumesPage()
+                    .deleteVolume(projectName + VOLUME_SUFFIX)
+                    .requests().waitForLastRequestToSucceed(60);
             homeTab.navigateToTemplatesPage()
                     .deleteTemplate(projectName + TEMPLATE_SUFFIX);
             homeTab.navigateToContainerHostsPage()
@@ -397,8 +396,6 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
                 .validateNetworksCount(1);
     }
 
-    // Volumes cannot be created on current VCH deployment
-    @SuppressWarnings("unused")
     private void addVolumeToProject(String volumeName) {
         VolumesPage volumesPage = navigateToHomeTab().navigateToVolumesPage();
         volumesPage.createVolume()
@@ -408,10 +405,8 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
                 .expectSuccess();
         volumesPage.requests().waitForLastRequestToSucceed(60);
         volumesPage.refresh().validate()
-                .validateVolumeExistsWithName(volumeName + VOLUME_SUFFIX);
-        // VBV-1735 If there is a host with volumes added in a project and if thaat host is added to
-        // another project, the volumes are visible in the second project.
-        // .validateVolumesCount(1);
+                .validateVolumeExistsWithName(volumeName + VOLUME_SUFFIX)
+                .validateVolumesCount(1);
     }
 
     private void configureProjects() {

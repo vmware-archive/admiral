@@ -13,13 +13,15 @@ package com.vmware.admiral.test.ui.pages.identity;
 
 import static com.codeborne.selenide.Selenide.$;
 
+import com.codeborne.selenide.Condition;
+
 import org.openqa.selenium.By;
 
 public class UsersAndGroupsTab extends IdentityManagementPage {
 
     private final By DEARCH_FIELD = By.id("searchField");
-    private final By FIRST_RESULT_CHECKBOX = By
-            .cssSelector(".datagrid-row .datagrid-row-flex clr-checkbox");
+    private final By FIRST_ROW = By.cssSelector(".datagrid-row");
+    private final By ROW_RELATIVE_CHECKBOX = By.cssSelector(".datagrid-row-flex clr-checkbox");
     private final By ASSIGN_ADMIN_ROLE_BUTTON = By
             .cssSelector(".btn.btn-sm.btn-secondary:nth-child(2)");
 
@@ -28,13 +30,14 @@ public class UsersAndGroupsTab extends IdentityManagementPage {
         $(DEARCH_FIELD).clear();
         $(DEARCH_FIELD).sendKeys(userId + "\n");
         waitForSpinner();
-        $(FIRST_RESULT_CHECKBOX).click();
+        $(FIRST_ROW).$(ROW_RELATIVE_CHECKBOX).click();
         if ($(ASSIGN_ADMIN_ROLE_BUTTON).$(By.cssSelector("span")).text()
                 .equalsIgnoreCase("UNASSIGN ADMIN ROLE")) {
             throw new IllegalArgumentException(
                     "User " + userId + " has admin role already assigned.");
         }
         $(ASSIGN_ADMIN_ROLE_BUTTON).click();
+        $(ASSIGN_ADMIN_ROLE_BUTTON).shouldHave(Condition.exactText("UNASSIGN ADMIN ROLE"));
         return this;
     }
 
@@ -43,13 +46,14 @@ public class UsersAndGroupsTab extends IdentityManagementPage {
         $(DEARCH_FIELD).clear();
         $(DEARCH_FIELD).sendKeys(userId + "\n");
         waitForSpinner();
-        $(FIRST_RESULT_CHECKBOX).click();
+        $(FIRST_ROW).$(ROW_RELATIVE_CHECKBOX).click();
         if ($(ASSIGN_ADMIN_ROLE_BUTTON).$(By.cssSelector("span")).text()
                 .equalsIgnoreCase("ASSIGN ADMIN ROLE")) {
             throw new IllegalArgumentException(
                     "User " + userId + " is not assigned an admin role.");
         }
         $(ASSIGN_ADMIN_ROLE_BUTTON).click();
+        $(ASSIGN_ADMIN_ROLE_BUTTON).shouldHave(Condition.exactText("ASSIGN ADMIN ROLE"));
         return this;
     }
 

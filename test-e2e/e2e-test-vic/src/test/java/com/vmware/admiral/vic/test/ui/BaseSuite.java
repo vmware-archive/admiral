@@ -11,24 +11,34 @@
 
 package com.vmware.admiral.vic.test.ui;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.logging.Logger;
 
 import com.codeborne.selenide.Configuration;
 
 import org.junit.BeforeClass;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
 
 import com.vmware.admiral.common.util.FileUtil;
 import com.vmware.admiral.test.ui.pages.AdmiralWebClientConfiguration;
+import com.vmware.admiral.vic.test.ui.util.IdentitySourceConfigurator;
 
+@RunWith(Suite.class)
 public class BaseSuite {
 
-    protected static Properties properties;
+    private static Logger LOG = Logger.getLogger(BaseSuite.class.getName());
+
+    private static Properties properties = FileUtil
+            .getProperties("/" + PropertiesNames.PROPERTIES_FILE_NAME, true);
 
     @BeforeClass
-    public static void initProperties() {
-        properties = FileUtil.getProperties("/" + PropertiesNames.PROPERTIES_FILE_NAME, true);
-
+    public static void applyConfiguration() {
+        LOG.info("Applying the configuration from the properties file");
         String timeout = properties.getProperty(PropertiesNames.WAIT_FOR_ELEMENT_TIMEOUT, "10000");
         Configuration.timeout = Integer.parseInt(timeout);
 
@@ -65,6 +75,49 @@ public class BaseSuite {
         if (!Objects.isNull(deleteHostTimeout) && !deleteHostTimeout.isEmpty()) {
             AdmiralWebClientConfiguration.setDeleteHostTimeoutSeconds(Integer
                     .parseInt(deleteHostTimeout));
+        }
+    }
+
+    @BeforeClass
+    public static void configureActiveDirectories() throws IOException {
+        LOG.info("Configuring active directories");
+        String adCsv = properties
+                .getProperty(PropertiesNames.ACTIVE_DIRECTORIES_SPEC_FILES_CSV_PROPERTY).trim();
+        if (adCsv.isEmpty()) {
+            LOG.warning(
+                    "No active direcories spec files were specified in the properties file, no active directories will be configured");
+            return;
+        }
+        List<String> adSpecFilenames = Arrays.asList(adCsv.split(","));
+        Properties props = FileUtil.getProperties("/" + PropertiesNames.PROPERTIES_FILE_NAME, true);
+        String vcenterAddress = props.getProperty(PropertiesNames.VCENTER_IP_PROPERTY);
+        if (vcenterAddress.endsWith("/")) {
+            vcenterAddress = vcenterAddress.substring(0, vcenterAddress.length() - 1);
+        }
+        if (!vcenterAddress.startsWith("https://")) {
+            vcenterAddress = "https://" + vcenterAddress;
+        }
+        Objects.requireNonNull(vcenterAddress);
+        String adminUsername = props.getProperty(PropertiesNames.DEFAULT_ADMIN_USERNAME_PROPERTY);
+        Objects.requireNonNull(adminUsername);
+        String adminPassword = props.getProperty(PropertiesNames.DEFAULT_ADMIN_PASSWORD_PROPERTY);
+        IdentitySourceConfigurator identityConfigurator = new IdentitySourceConfigurator(
+                vcenterAddress, adminUsername, adminPassword);
+
+        for (String fileName : adSpecFilenames) {
+            String body = null;
+            try {
+                body = FileUtil.getResourceAsString("/" + fileName.trim(), true);
+            } catch (Exception e) {
+                LOG.warning(
+                        "Could not read resource file with filename: " + fileName);
+            }
+            if (Objects.isNull(body) || body.trim().isEmpty()) {
+                LOG.warning(String.format(
+                        "Could not read AD spec body from file with filename: [%s], file is empty.",
+                        fileName));
+            }
+            identityConfigurator.addIdentitySource(body);
         }
     }
 

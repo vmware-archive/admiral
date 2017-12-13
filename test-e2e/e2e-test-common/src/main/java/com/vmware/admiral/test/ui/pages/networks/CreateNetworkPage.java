@@ -18,6 +18,7 @@ import static com.codeborne.selenide.Selenide.actions;
 import java.util.List;
 import java.util.Objects;
 
+import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.SelenideElement;
 
 import org.openqa.selenium.By;
@@ -61,6 +62,7 @@ public class CreateNetworkPage
             SelenideElement host = emptyRow
                     .$(By.cssSelector(String.format(ROW_RELATIVE_HOST_SELECTOR_BY_NAME, hostName)));
             actions().moveToElement(host).click().build().perform();
+            host.should(Condition.disappear);
         });
         return this;
     }

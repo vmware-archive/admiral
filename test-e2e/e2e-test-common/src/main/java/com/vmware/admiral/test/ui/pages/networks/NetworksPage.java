@@ -52,7 +52,10 @@ public class NetworksPage extends HomeTabAdvancedPage<NetworksPage, NetworksPage
         LOG.info(String.format("Deleting network with name prefix: [%s]", namePrefix));
         executeInFrame(0, () -> {
             SelenideElement card = waitForElementToStopMoving(getNetworkCardSelector(namePrefix));
-            actions().moveToElement(card).click(card.$(CARD_RELATIVE_DELETE_BUTTON)).build()
+            actions().moveToElement(card)
+                    .moveToElement(card.$(CARD_RELATIVE_DELETE_BUTTON))
+                    .click()
+                    .build()
                     .perform();
             card.$(CARD_RELATIVE_DELETE_CONFIRMATION).click();
         });
