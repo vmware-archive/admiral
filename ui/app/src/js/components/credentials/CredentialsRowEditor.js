@@ -87,7 +87,12 @@ CredentialsRowEditor.prototype.setData = function(data) {
         this.$el.find('.private-key-input-holder').addClass('hide');
 
         this.$el.find('.usePrivateKey').addClass('hide');
-        this.$el.find('.showPassword').removeClass('hide');
+
+        let password = this.credentialsObject.password;
+        if (!password.startsWith(constants.CREDENTIALS_PASSWORD_ENCRYPTED)) {
+          this.$el.find('.showPassword').removeClass('hide');
+        }
+
         this.$el.find('.password-input').val(this.credentialsObject.password);
         this.$el.find('.password-input-holder').removeClass('hide');
       } else {
@@ -232,8 +237,12 @@ var addEventListeners = function() {
     var password = $(e.target).val();
     if (password) {
       _this.$el.find('.usePrivateKey').addClass('hide');
-      _this.$el.find('.showPassword').removeClass('hide');
       _this.$el.find('.hidePassword').removeClass('hide');
+      if (password.indexOf(constants.CREDENTIALS_PASSWORD_ENCRYPTED) === -1) {
+        _this.$el.find('.showPassword').removeClass('hide');
+      } else {
+        _this.$el.find('.showPassword').addClass('hide');
+      }
     } else {
       _this.$el.find('.usePrivateKey').removeClass('hide');
       _this.$el.find('.showPassword').addClass('hide');

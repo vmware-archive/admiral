@@ -1271,7 +1271,7 @@ var utils = {
   },
 
   maskValueIfEncrypted: function(value) {
-    if (value && value.indexOf('s2enc~') === 0) {
+    if (value && value.indexOf(constants.CREDENTIALS_PASSWORD_ENCRYPTED) === 0) {
       return '****************';
     }
 
