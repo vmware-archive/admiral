@@ -42,4 +42,6 @@ export class RoutesRestriction {
   public static CLUSTERS_NEW = [Roles.CLOUD_ADMIN];
   public static CLUSTERS_ID = [Roles.CLOUD_ADMIN];
   public static CLUSTERS_EDIT = [Roles.CLOUD_ADMIN];
+
+  public static REQUESTS_DELETE = [Roles.CLOUD_ADMIN];
 }

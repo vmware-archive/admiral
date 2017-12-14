@@ -1440,6 +1440,11 @@ var utils = {
     }
 
     return constants.CONTAINERS.DEFAULT_REFRESH_INTERVAL;
+  },
+
+  actionAllowed() {
+    return window.isAccessAllowed(window.authSession, null,
+        window.routesRestrictions.REQUESTS_DELETE);
   }
 };
 

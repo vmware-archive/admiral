@@ -273,6 +273,10 @@ var RequestsListVueComponent = Vue.extend({
       $event.preventDefault();
 
       this.$dispatch('close');
+    },
+
+    actionAllowed: function() {
+      return utils.actionAllowed();
     }
   },
   events: {

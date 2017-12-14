@@ -17,6 +17,7 @@
                        v-bind:icon-name="'trash'"
                        v-bind:label="i18n('clear')"
                        v-bind:confirmable="true"
+                       v-if="actionAllowed()"
       ></big-action-button>
   </list-title-big>
 

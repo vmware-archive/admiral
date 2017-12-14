@@ -10,6 +10,9 @@
  */
 
 import { SessionTimedOutSubject } from './../../utils/ajax.service';
+import { AuthService } from './../../utils/auth.service';
+import { RoutesRestriction } from './../../utils/routes-restriction';
+import { Roles } from './../../utils/roles';
 import { Utils } from './../../utils/utils';
 import { Component, ViewChild, ViewEncapsulation, Input, Output, EventEmitter } from '@angular/core';
 
@@ -32,7 +35,7 @@ export class FormerViewComponent {
   @Output()
   onRouteChange: EventEmitter<string> = new EventEmitter();
 
-  constructor(private sessionTimedOutSubject: SessionTimedOutSubject) {}
+  constructor(private sessionTimedOutSubject: SessionTimedOutSubject, private authService: AuthService) {}
 
   @Input()
   set path(val: string) {
@@ -58,6 +61,13 @@ export class FormerViewComponent {
       this.frameLoading = true;
 
       iframeEl.onload = () => {
+        this.authService.getCachedSecurityContext().then((securityContext) => {
+          iframeEl.contentWindow.authSession = securityContext;
+        });
+
+        iframeEl.contentWindow.isAccessAllowed = Utils.isAccessAllowed;
+        iframeEl.contentWindow.routesRestrictions = RoutesRestriction;
+
         this.frameLoading = false;
         iframeEl.src = this.url;
 
