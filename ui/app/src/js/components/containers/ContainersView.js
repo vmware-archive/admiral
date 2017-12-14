@@ -377,6 +377,10 @@ var ContainersViewVueComponent = Vue.extend({
       if (this.model.listView.nextPageLink) {
         ContainerActions.openContainersNext(this.queryOptions,
                                             this.model.listView.nextPageLink);
+      } else if (this.hasItems && (this.itemsCount > this.model.listView.items.length)) {
+        console.warn('No next page link available, cannot load next items.',
+                      ' Loaded items count', this.model.listView.items.length,
+                      ' Total count ', this.itemsCount);
       }
     },
 
