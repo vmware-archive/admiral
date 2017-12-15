@@ -51,45 +51,38 @@ public class ContainerHostEventsIT extends BaseProvisioningOnCoreOsIT {
     @BeforeClass
     public static void beforeClass() throws Throwable {
         serviceClient = ServiceClientFactory.createServiceClient(null);
-
-        // enable host events subscription
-        ConfigurationService.ConfigurationState config = new ConfigurationService.ConfigurationState();
-        config.key = ConfigurationUtil.ALLOW_HOST_EVENTS_SUBSCRIPTIONS;
-        config.value = "true";
-        config.documentSelfLink = config.key;
-
-        postDocument(ConfigurationService.ConfigurationFactoryService.SELF_LINK, config);
     }
 
     @AfterClass
     public static void afterClass() throws Exception {
         serviceClient = ServiceClientFactory.createServiceClient(null);
-
-        // disable host events subscription
-        ConfigurationService.ConfigurationState config = new ConfigurationService.ConfigurationState();
-        config.key = ConfigurationUtil.ALLOW_HOST_EVENTS_SUBSCRIPTIONS;
-        config.value = "false";
-        config.documentSelfLink = config.key;
-
-        postDocument(ConfigurationService.ConfigurationFactoryService.SELF_LINK, config);
     }
 
     @Before
     public void setUp() throws Exception {
         DeploymentProfileConfig.getInstance().setTest(true);
+
+        // enable host events subscription
+        ConfigurationService.ConfigurationState config = new ConfigurationService.ConfigurationState();
+        config.key = ConfigurationUtil.ALLOW_HOST_EVENTS_SUBSCRIPTIONS;
+        config.value = Boolean.TRUE.toString();
+        config.documentSelfLink = config.key;
+
+        config = postDocument(ConfigurationService.ConfigurationFactoryService.SELF_LINK, config);
+        assertEquals(Boolean.TRUE.toString(), config.value);
+
+        // set throw IO exception in order to simulate this kind of exception
+        ConfigurationService.ConfigurationState configState = new ConfigurationService.ConfigurationState();
+        configState.key = ConfigurationUtil.THROW_IO_EXCEPTION;
+        configState.value = Boolean.TRUE.toString();
+        configState.documentSelfLink = configState.key;
+        configState = postDocument(ConfigurationService.ConfigurationFactoryService.SELF_LINK, configState);
+        assertEquals(Boolean.TRUE.toString(), configState.value);
     }
 
     @After
     public void cleanUp() throws Exception {
         DeploymentProfileConfig.getInstance().setTest(false);
-
-        // disable the simulation of the IOException
-        ConfigurationService.ConfigurationState config = new ConfigurationService.ConfigurationState();
-        config.key = ConfigurationUtil.THROW_IO_EXCEPTION;
-        config.value = "false";
-        config.documentSelfLink = config.key;
-        ConfigurationService.ConfigurationState configState = postDocument(ConfigurationService.ConfigurationFactoryService.SELF_LINK, config);
-        assertEquals(Boolean.FALSE.toString(), configState.value);
 
         final long timoutInMillis = 20000; // 20sec
         long startTime = System.currentTimeMillis();
@@ -102,6 +95,23 @@ public class ContainerHostEventsIT extends BaseProvisioningOnCoreOsIT {
                     TimeUnit.MILLISECONDS.toSeconds(timoutInMillis - (System.currentTimeMillis() - startTime)));
             return System.currentTimeMillis() - startTime > timoutInMillis;
         });
+
+        // disable host events subscription
+        ConfigurationService.ConfigurationState config = new ConfigurationService.ConfigurationState();
+        config.key = ConfigurationUtil.ALLOW_HOST_EVENTS_SUBSCRIPTIONS;
+        config.value = Boolean.FALSE.toString();
+        config.documentSelfLink = config.key;
+
+        config = postDocument(ConfigurationService.ConfigurationFactoryService.SELF_LINK, config);
+        assertEquals(Boolean.FALSE.toString(), config.value);
+
+        // disable the simulation of the IOException
+        ConfigurationService.ConfigurationState configState = new ConfigurationService.ConfigurationState();
+        configState.key = ConfigurationUtil.THROW_IO_EXCEPTION;
+        configState.value = Boolean.FALSE.toString();
+        configState.documentSelfLink = configState.key;
+        configState = postDocument(ConfigurationService.ConfigurationFactoryService.SELF_LINK, configState);
+        assertEquals(Boolean.FALSE.toString(), configState.value);
     }
 
     @Override
@@ -151,13 +161,6 @@ public class ContainerHostEventsIT extends BaseProvisioningOnCoreOsIT {
     @Test
     public void testHostDies() throws Exception {
         compositeDescriptionLink = importTemplate(serviceClient, TEMPLATE_FILE);
-
-        // set throw IO exception in order to simulate this kind of exception
-        ConfigurationService.ConfigurationState config = new ConfigurationService.ConfigurationState();
-        config.key = ConfigurationUtil.THROW_IO_EXCEPTION;
-        config.value = "true";
-        config.documentSelfLink = config.key;
-        postDocument(ConfigurationService.ConfigurationFactoryService.SELF_LINK, config);
 
         setupCoreOsHost(ContainerHostService.DockerAdapterType.API, false);
 
