@@ -207,15 +207,15 @@
     "delete": {
       "title": "Remove Cluster",
       "titleVic": "Remove Container Host",
-      "confirmation": "Confirm removing of cluster {{clusterName}}. The operation cannot be undone.",
-      "confirmationVic": "Confirm removing of container host {{clusterName}}. The operation cannot be undone."
+      "confirmation": "Confirm removing of cluster {{clusterName}}. The deployed entities associated to this cluster will be removed as well. The operation cannot be undone.",
+      "confirmationVic": "Confirm removing of container host {{clusterName}}. The deployed entities associated to this container host will be removed as well. The operation cannot be undone."
     }
   },
   "hosts": {
     "actions": {
       "delete":{
         "title": "Remove Host",
-        "confirmation": "Confirm removing of host {{hostName}}. The operation cannot be undone."
+        "confirmation": "Confirm removing of host {{hostName}}. The deployed entities associated to this host will be removed as well. The operation cannot be undone."
       },
       "enable": "Enable",
       "disable": "Disable",
