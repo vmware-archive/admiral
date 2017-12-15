@@ -21,6 +21,7 @@ import static com.vmware.admiral.adapter.docker.mock.MockDockerCreateImageServic
 import static com.vmware.admiral.adapter.docker.mock.MockDockerCreateImageService.REGISTRY_USER;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_EXEC_ATTACH_STDERR_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_EXEC_ATTACH_STDOUT_PROP_NAME;
+import static com.vmware.admiral.adapter.docker.service.DockerAdapterService.RETRIED_AFTER_FAILURE;
 
 import java.io.File;
 import java.net.URI;
@@ -356,6 +357,23 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
         assertEquals("Protocol", Protocol.TCP.toString(), portBinding.protocol);
     }
 
+    @Test
+    public void createContainerWithRetry() throws Throwable {
+        // simulate Docker host down
+        tearDownMockDockerHost();
+
+        sendCreateContainerRequest();
+
+        // wait for provisioning task stage to change to failed
+        waitForPropertyValue(provisioningTaskLink, MockTaskState.class, "taskInfo.stage",
+                TaskState.TaskStage.FAILED);
+
+        MockTaskState task = getDocument(MockTaskState.class, provisioningTaskLink);
+        assertNotNull(task);
+        assertNotNull(task.customProperties);
+        assertEquals(Boolean.TRUE.toString(), task.customProperties.get(RETRIED_AFTER_FAILURE));
+    }
+
     /**
      * Test stop and start container requests to the DockerAdapterService
      */
@@ -392,6 +410,62 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
     }
 
     @Test
+    public void testStopWithRetry() throws Throwable {
+        // verify container is running
+        verifyContainerIsRunning(true);
+        assertEquals("Unexpected PowerState in ContainerState",
+                PowerState.RUNNING, containerState.powerState);
+
+        // simulate Docker host down
+        tearDownMockDockerHost();
+
+        sendStopContainerRequest();
+
+        // wait for provisioning task stage to change to failed
+        waitForPropertyValue(provisioningTaskLink, MockTaskState.class, "taskInfo.stage",
+                TaskState.TaskStage.FAILED);
+
+        MockTaskState task = getDocument(MockTaskState.class, provisioningTaskLink);
+        assertNotNull(task);
+        assertNotNull(task.customProperties);
+        assertEquals(Boolean.TRUE.toString(), task.customProperties.get(RETRIED_AFTER_FAILURE));
+    }
+
+    @Test
+    public void testStartWithRetry() throws Throwable {
+        // verify container is running
+        verifyContainerIsRunning(true);
+        assertEquals("Unexpected PowerState in ContainerState",
+                PowerState.RUNNING, containerState.powerState);
+
+        sendStopContainerRequest();
+
+        // wait for provisioning task stage to change to finish
+        waitForPropertyValue(provisioningTaskLink, MockTaskState.class, "taskInfo.stage",
+                TaskState.TaskStage.FINISHED);
+
+        // verify container is stopped
+        verifyContainerIsRunning(false);
+        sendGetContainerStateRequest();
+        assertEquals("Unexpected PowerState in ContainerState",
+                PowerState.STOPPED, containerState.powerState);
+
+        // simulate Docker host down
+        tearDownMockDockerHost();
+
+        sendStartContainerRequest();
+
+        // wait for provisioning task stage to change to failed
+        waitForPropertyValue(provisioningTaskLink, MockTaskState.class, "taskInfo.stage",
+                TaskState.TaskStage.FAILED);
+
+        MockTaskState task = getDocument(MockTaskState.class, provisioningTaskLink);
+        assertNotNull(task);
+        assertNotNull(task.customProperties);
+        assertEquals(Boolean.TRUE.toString(), task.customProperties.get(RETRIED_AFTER_FAILURE));
+    }
+
+    @Test
     public void testFetchContainerStats() throws Throwable {
         sendFetchContainerStatsRequest();
 
@@ -401,6 +475,15 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
 
         sendGetContainerStatsStateRequest();
         assertNotNull("cpu_stats is missing", containerStats.cpuUsage > 0);
+    }
+
+    @Test
+    public void testInspectContainers() throws Throwable {
+        sendInspectContainerRequest();
+
+        // wait for request task stage to change to finish
+        waitForPropertyValue(provisioningTaskLink, MockTaskState.class, "taskInfo.stage",
+                TaskState.TaskStage.FINISHED);
     }
 
     @Test
@@ -648,6 +731,10 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
 
     private void sendFetchContainerStatsRequest() throws Throwable {
         sendContainerRequest(ContainerOperationType.STATS);
+    }
+
+    private void sendInspectContainerRequest() throws Throwable {
+        sendContainerRequest(ContainerOperationType.INSPECT);
     }
 
     private void sendContainerRequest(ContainerOperationType type)

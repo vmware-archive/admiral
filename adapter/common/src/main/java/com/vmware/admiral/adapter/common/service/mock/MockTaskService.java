@@ -11,6 +11,9 @@
 
 package com.vmware.admiral.adapter.common.service.mock;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.StatefulService;
@@ -19,6 +22,7 @@ import com.vmware.xenon.common.TaskState;
 public class MockTaskService extends StatefulService {
 
     public static class MockTaskState extends ServiceDocument {
+        public Map<String, String> customProperties = new HashMap<>();
         public TaskState taskInfo = new TaskState();
     }
 

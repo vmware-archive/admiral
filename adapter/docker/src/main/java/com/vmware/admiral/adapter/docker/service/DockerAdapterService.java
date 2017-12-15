@@ -154,6 +154,8 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
     public static final String PROVISION_CONTAINER_PULL_RETRIES_COUNT_PARAM_NAME =
             "provision.container.pull-image.retries.count";
 
+    public static final String RETRIED_AFTER_FAILURE = "failedAfterRetry";
+
     private SystemImageRetrievalManager imageRetrievalManager;
 
     /**
@@ -627,6 +629,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                 logWarning("Pulling image %s failed with %s. Retries left %d",
                         fullImageName, Utils.toString(ex),
                         maxRetryCount - retryCount.get());
+                markRequestAsRetriedAfterFailure(context.request);
                 processPullImageFromRegistryWithRetry(context, createImageCommandInput,
                         imageCompletionHandler, retryCount.get(), maxRetryCount);
             } else {
@@ -885,21 +888,44 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
     }
 
     private void connectCreatedContainerToNetworks(RequestContext context) {
-        AtomicInteger count = new AtomicInteger(context.containerState.networks.size());
-        AtomicBoolean error = new AtomicBoolean();
+        ensurePropertyExists((retryCountProperty) -> {
+            AtomicInteger count = new AtomicInteger(context.containerState.networks.size());
+            AtomicBoolean error = new AtomicBoolean();
 
-        for (Entry<String, ServiceNetwork> entry : context.containerState.networks.entrySet()) {
+            for (Entry<String, ServiceNetwork> entry : context.containerState.networks.entrySet()) {
+                connectCreatedContainerToNetworksWithRetry(context, 0, retryCountProperty,
+                        entry, count, error);
+            }
+        });
+    }
 
-            CommandInput connectCommandInput = new CommandInput(context.commandInput);
+    private void connectCreatedContainerToNetworksWithRetry(RequestContext context,
+            int retriesCount, Integer maxRetryCount, Entry<String, ServiceNetwork> entry,
+            AtomicInteger count, AtomicBoolean error) {
+        AtomicInteger retryCount = new AtomicInteger(retriesCount);
 
-            String containerId = context.containerState.id;
-            String networkId = entry.getKey();
+        CommandInput connectCommandInput = new CommandInput(context.commandInput);
 
-            addNetworkConfig(connectCommandInput, context.containerState.id, entry.getKey(),
-                    entry.getValue());
+        String containerId = context.containerState.id;
+        String networkId = entry.getKey();
 
-            context.executor.connectContainerToNetwork(connectCommandInput, (o, ex) -> {
-                if (ex != null) {
+        addNetworkConfig(connectCommandInput, context.containerState.id, entry.getKey(),
+                entry.getValue());
+
+        logFine("Connecting created container [%s] to network [%s]", containerId, networkId);
+
+        context.executor.connectContainerToNetwork(connectCommandInput, (o, ex) -> {
+            if (ex != null) {
+                if (RETRIABLE_HTTP_STATUSES.contains(o.getStatusCode())
+                        && retryCount.getAndIncrement() < maxRetryCount) {
+                    logWarning(
+                            "Connecting container [%s] to network [%s] failed, retries left %d. code=%s, error=%s",
+                            containerId, networkId, maxRetryCount - retryCount.get(),
+                            o.getStatusCode(), ex.getMessage());
+                    markRequestAsRetriedAfterFailure(context.request);
+                    connectCreatedContainerToNetworksWithRetry(context, retryCount.get(),
+                            maxRetryCount, entry, count, error);
+                } else {
                     logWarning("Exception while connecting container [%s] to network [%s]",
                             containerId, networkId);
                     if (error.compareAndSet(false, true)) {
@@ -913,16 +939,26 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
 
                         fail(context.request, o, ex);
                     }
-                } else if (count.decrementAndGet() == 0) {
-                    startCreatedContainer(context);
                 }
-            });
-        }
+            } else if (count.decrementAndGet() == 0) {
+                startCreatedContainerWithRetry(context, 0, maxRetryCount);
+            }
+        });
     }
 
     private void startCreatedContainer(RequestContext context) {
+        ensurePropertyExists((retryCountProperty) -> {
+            startCreatedContainerWithRetry(context, 0, retryCountProperty);
+        });
+    }
+
+    private void startCreatedContainerWithRetry(RequestContext context, int retriesCount,
+            Integer maxRetryCount) {
+        AtomicInteger retryCount = new AtomicInteger(retriesCount);
         CommandInput startCommandInput = new CommandInput(context.commandInput)
                 .withProperty(DOCKER_CONTAINER_ID_PROP_NAME, context.containerState.id);
+
+        logFine("Starting created container [%s]", context.containerState.id);
 
         // add port bindings
         if (context.containerState.ports != null) {
@@ -931,7 +967,21 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
 
         context.executor.startContainer(startCommandInput, (o, ex) -> {
             if (ex != null) {
-                fail(context.request, o, ex);
+                if (RETRIABLE_HTTP_STATUSES.contains(o.getStatusCode())
+                        && retryCount.getAndIncrement() < maxRetryCount) {
+                    logWarning(
+                            "Starting created container %s failed, retries left %d. code=%s, error=%s",
+                            context.containerState.names.get(0),
+                            maxRetryCount - retryCount.get(), o.getStatusCode(), ex.getMessage());
+                    markRequestAsRetriedAfterFailure(context.request);
+                    startCreatedContainerWithRetry(context, retryCount.get(), maxRetryCount);
+                } else {
+                    logSevere(
+                            "Failure starting created container [%s] of host [%s] (status code: %s)",
+                            context.containerState.documentSelfLink,
+                            context.computeState.documentSelfLink, o.getStatusCode());
+                    fail(context.request, o, ex);
+                }
             } else {
                 handleExceptions(context.request, context.operation, () -> {
                     NetworkUtils.updateConnectedNetworks(getHost(), context.containerState, 1);
@@ -1241,6 +1291,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                     logWarning("Starting container %s failed, retries left %d. code=%s, error=%s",
                             context.containerState.names.get(0),
                             maxRetryCount - retryCount.get(), o.getStatusCode(), ex.getMessage());
+                    markRequestAsRetriedAfterFailure(context.request);
                     processStartContainerWithRetry(context, retryCount.get(), maxRetryCount);
                 } else {
                     logSevere("Failure starting container [%s] of host [%s] (status code: %s)",
@@ -1275,6 +1326,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                     logWarning("Stopping container %s failed, retries left %d. code=%s, error=%s",
                             context.containerState.names.get(0),
                             maxRetryCount - retryCount.get(), o.getStatusCode(), ex.getMessage());
+                    markRequestAsRetriedAfterFailure(context.request);
                     processStopContainerWithRetry(context, retryCount.get(), maxRetryCount);
                 } else {
                     logSevere("Failure stopping container [%s] of host [%s] (status code: %s)",
@@ -1289,6 +1341,13 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                 });
             }
         });
+    }
+
+    private void markRequestAsRetriedAfterFailure(AdapterRequest request) {
+        if (request.customProperties == null) {
+            request.customProperties = new HashMap<>();
+        }
+        request.customProperties.put(RETRIED_AFTER_FAILURE, Boolean.TRUE.toString());
     }
 
     private void ensurePropertyExists(Consumer<Integer> callback) {
