@@ -324,7 +324,7 @@ public class CompositeTemplateUtilTest {
         } catch (IllegalArgumentException e) {
             assertTrue(
                     e.getMessage().startsWith(
-                            "Cannot deserialize instance of java.lang.String out of START_OBJECT token"));
+                            "Cannot deserialize instance of `java.lang.String` out of START_OBJECT token"));
         }
 
         try {

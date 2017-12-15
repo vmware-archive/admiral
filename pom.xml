@@ -83,7 +83,7 @@
 
         <!-- other -->
         <bouncycastle.version>1.57</bouncycastle.version>
-        <jackson.version>2.9.0</jackson.version>
+        <jackson.version>2.9.3</jackson.version>
         <httpclient.version>4.5.2</httpclient.version>
         <guava.version>20.0</guava.version>
         <joda-time.version>2.8.1</joda-time.version>

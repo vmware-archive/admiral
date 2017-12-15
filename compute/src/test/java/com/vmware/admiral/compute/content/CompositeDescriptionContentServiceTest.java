@@ -223,7 +223,7 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
 
         this.host.testStart(1);
         this.host.send(validateBadRequestOnImportOperation(getContent("composite.bad.yaml"),
-                "Cannot deserialize instance of java.lang.String out of START_OBJECT token\n at [Source: UNKNOWN; line: -1, column: -1] (through reference chain: com.vmware.admiral.compute.container.ContainerDescriptionService$CompositeTemplateContainerDescription[\"logConfig\"])"));
+                "Cannot deserialize instance of `java.lang.String` out of START_OBJECT token\n at [Source: UNKNOWN; line: -1, column: -1] (through reference chain: com.vmware.admiral.compute.container.ContainerDescriptionService$CompositeTemplateContainerDescription[\"logConfig\"])"));
         this.host.testWait();
 
         this.host.testStart(1);
