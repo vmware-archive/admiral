@@ -34,8 +34,8 @@ public class HostInitRegistryAdapterServiceConfig {
 
         } else {
             registryAdapterReference = UriUtils.buildUri(host, RegistryAdapterService.class);
-            ensurePropertyExists(host, RegistryAdapterService.REGITRY_PROXY_PARAM_NAME, () -> {
-                ensurePropertyExists(host, RegistryAdapterService.REGITRY_NO_PROXY_LIST_PARAM_NAME,
+            ensurePropertyExists(host, RegistryAdapterService.REGISTRY_PROXY_PARAM_NAME, () -> {
+                ensurePropertyExists(host, RegistryAdapterService.REGISTRY_NO_PROXY_LIST_PARAM_NAME,
                         () -> {
                             host.startService(Operation.createPost(registryAdapterReference),
                                     new RegistryAdapterService());

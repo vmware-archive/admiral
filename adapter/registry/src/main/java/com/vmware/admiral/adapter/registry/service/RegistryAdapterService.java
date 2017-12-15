@@ -80,8 +80,8 @@ public class RegistryAdapterService extends StatelessService {
     // like JFrog Artifactory (cse-artifactory.eng.vmware.com) does not support it.
     private static final String V2_PING_ENDPOINT = "/v2/_catalog?n=1";
 
-    public static final String REGITRY_PROXY_PARAM_NAME = "registry.proxy";
-    public static final String REGITRY_NO_PROXY_LIST_PARAM_NAME = "registry.no.proxy.list";
+    public static final String REGISTRY_PROXY_PARAM_NAME = "registry.proxy";
+    public static final String REGISTRY_NO_PROXY_LIST_PARAM_NAME = "registry.no.proxy.list";
     public static final String REGISTRY_PROXY_NULL_VALUE = "__null";
 
     private ServiceClient serviceClientProxy;
@@ -117,16 +117,16 @@ public class RegistryAdapterService extends StatelessService {
         trustManager = ServerX509TrustManager.create(getHost());
         serviceClientNoProxyList = new HashSet<>();
 
-        DeferredResult.allOf(Arrays.asList(getProperty(REGITRY_PROXY_PARAM_NAME),
-                getProperty(REGITRY_NO_PROXY_LIST_PARAM_NAME)))
+        DeferredResult.allOf(Arrays.asList(getProperty(REGISTRY_PROXY_PARAM_NAME),
+                getProperty(REGISTRY_NO_PROXY_LIST_PARAM_NAME)))
                 .whenComplete((p, ex) -> {
                     if (ex != null) {
-                        logSevere("Registry proxy properties not loaded properly", ex);
+                        logSevere("Registry proxy properties not provided", ex);
+                        initProxyClient(null);
                         initNoProxyClient(null);
                     } else {
                         Map<String, String> props = p.stream()
                                 .collect(Collectors.toMap(s -> s.key, s -> s.value));
-
                         initProxyClient(props);
                         initNoProxyClient(props);
                     }
@@ -137,7 +137,7 @@ public class RegistryAdapterService extends StatelessService {
     private void initProxyClient(Map<String, String> props) {
         String registryProxyAddress = null;
         if (props != null) {
-            registryProxyAddress = props.get(REGITRY_PROXY_PARAM_NAME);
+            registryProxyAddress = props.get(REGISTRY_PROXY_PARAM_NAME);
         }
 
         if (registryProxyAddress != null
@@ -148,6 +148,7 @@ public class RegistryAdapterService extends StatelessService {
 
                 if (serviceClientProxy instanceof NettyHttpServiceClient) {
                     ((NettyHttpServiceClient) serviceClientProxy).setHttpProxy(registryProxyURI);
+                    logInfo("Setting registry hosts proxy to: %s", registryProxyAddress);
                 } else {
                     logSevere("Cannot set proxy for accessing registries. Expecting "
                             + "NettyHttpServiceClient, actual: %s",
@@ -167,14 +168,14 @@ public class RegistryAdapterService extends StatelessService {
         serviceClientNoProxy = ServiceClientFactory.createServiceClient(trustManager, null);
 
         if (props != null) {
-            String registryProxyAddress = props.get(REGITRY_PROXY_PARAM_NAME);
-            String registryNoProxiedHosts = props.get(REGITRY_NO_PROXY_LIST_PARAM_NAME);
+            String registryProxyAddress = props.get(REGISTRY_PROXY_PARAM_NAME);
+            String registryNoProxiedHosts = props.get(REGISTRY_NO_PROXY_LIST_PARAM_NAME);
 
             if (registryNoProxiedHosts != null
                     && !registryNoProxiedHosts.equals(REGISTRY_PROXY_NULL_VALUE)
                     && registryProxyAddress != null
                     && !registryProxyAddress.equals(REGISTRY_PROXY_NULL_VALUE)) {
-                logFine("Setting non-proxied registry hosts: %s", registryNoProxiedHosts);
+                logInfo("Setting non-proxied registry hosts: %s", registryNoProxiedHosts);
                 serviceClientNoProxyList.addAll(
                         Arrays.asList(registryNoProxiedHosts.split("\\s*,\\s*")));
             }
@@ -206,16 +207,16 @@ public class RegistryAdapterService extends StatelessService {
             return;
         }
 
-        if (!op.hasBody()) {
-            op.fail(new IllegalArgumentException("body is required"));
-            return;
-        }
-
         handlePatch(op);
     }
 
     @Override
     public void handlePatch(Operation op) {
+        if (!op.hasBody()) {
+            op.fail(new IllegalArgumentException("body is required"));
+            return;
+        }
+
         RequestContext context = new RequestContext();
         context.operation = op;
 
@@ -244,7 +245,6 @@ public class RegistryAdapterService extends StatelessService {
         default:
             context.operation.fail(new IllegalArgumentException(
                     "Unexpected request type: " + context.request.getOperationType()));
-
             break;
         }
 

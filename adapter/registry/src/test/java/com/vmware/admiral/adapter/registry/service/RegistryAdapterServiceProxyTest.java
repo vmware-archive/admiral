@@ -55,8 +55,8 @@ public class RegistryAdapterServiceProxyTest extends BaseMockRegistryTestCase {
 
     @Test
     public void testNoProxyNoList() throws Throwable {
-        setProperty(RegistryAdapterService.REGITRY_PROXY_PARAM_NAME, RegistryAdapterService.REGISTRY_PROXY_NULL_VALUE);
-        setProperty(RegistryAdapterService.REGITRY_NO_PROXY_LIST_PARAM_NAME, RegistryAdapterService.REGISTRY_PROXY_NULL_VALUE);
+        setProperty(RegistryAdapterService.REGISTRY_PROXY_PARAM_NAME, RegistryAdapterService.REGISTRY_PROXY_NULL_VALUE);
+        setProperty(RegistryAdapterService.REGISTRY_NO_PROXY_LIST_PARAM_NAME, RegistryAdapterService.REGISTRY_PROXY_NULL_VALUE);
         RegistryAdapterService registryAdapterService = (RegistryAdapterService) host
                 .startServiceAndWait(RegistryAdapterService.class,
                         RegistryAdapterService.SELF_LINK);
@@ -65,8 +65,8 @@ public class RegistryAdapterServiceProxyTest extends BaseMockRegistryTestCase {
 
     @Test
     public void testWithProxyNoList() throws Throwable {
-        setProperty(RegistryAdapterService.REGITRY_PROXY_PARAM_NAME, proxyAddress);
-        setProperty(RegistryAdapterService.REGITRY_NO_PROXY_LIST_PARAM_NAME, RegistryAdapterService.REGISTRY_PROXY_NULL_VALUE);
+        setProperty(RegistryAdapterService.REGISTRY_PROXY_PARAM_NAME, proxyAddress);
+        setProperty(RegistryAdapterService.REGISTRY_NO_PROXY_LIST_PARAM_NAME, RegistryAdapterService.REGISTRY_PROXY_NULL_VALUE);
         RegistryAdapterService registryAdapterService = (RegistryAdapterService) host
                 .startServiceAndWait(RegistryAdapterService.class,
                         RegistryAdapterService.SELF_LINK);
@@ -75,9 +75,25 @@ public class RegistryAdapterServiceProxyTest extends BaseMockRegistryTestCase {
     }
 
     @Test
+    public void testWithBadProxyNoList() throws Throwable {
+        setProperty(RegistryAdapterService.REGISTRY_PROXY_PARAM_NAME, "/foo bar");
+        setProperty(RegistryAdapterService.REGISTRY_NO_PROXY_LIST_PARAM_NAME, RegistryAdapterService.REGISTRY_PROXY_NULL_VALUE);
+        RegistryAdapterService registryAdapterService = (RegistryAdapterService) host
+                .startServiceAndWait(RegistryAdapterService.class,
+                        RegistryAdapterService.SELF_LINK);
+
+        Field field = RegistryAdapterService.class.getDeclaredField("serviceClientProxy");
+        field.setAccessible(true);
+        NettyHttpServiceClient serviceClientProxy = (NettyHttpServiceClient) field
+                .get(registryAdapterService);
+        assertNull("When bad proxy is set the serviceClientProxy should be null.",
+                serviceClientProxy);
+    }
+
+    @Test
     public void testNoProxyWithList() throws Throwable {
-        setProperty(RegistryAdapterService.REGITRY_PROXY_PARAM_NAME, RegistryAdapterService.REGISTRY_PROXY_NULL_VALUE);
-        setProperty(RegistryAdapterService.REGITRY_NO_PROXY_LIST_PARAM_NAME, noProxyList);
+        setProperty(RegistryAdapterService.REGISTRY_PROXY_PARAM_NAME, RegistryAdapterService.REGISTRY_PROXY_NULL_VALUE);
+        setProperty(RegistryAdapterService.REGISTRY_NO_PROXY_LIST_PARAM_NAME, noProxyList);
         RegistryAdapterService registryAdapterService = (RegistryAdapterService) host
                 .startServiceAndWait(RegistryAdapterService.class,
                         RegistryAdapterService.SELF_LINK);
@@ -86,8 +102,8 @@ public class RegistryAdapterServiceProxyTest extends BaseMockRegistryTestCase {
 
     @Test
     public void testWithProxyWithList() throws Throwable {
-        setProperty(RegistryAdapterService.REGITRY_PROXY_PARAM_NAME, proxyAddress);
-        setProperty(RegistryAdapterService.REGITRY_NO_PROXY_LIST_PARAM_NAME, noProxyList);
+        setProperty(RegistryAdapterService.REGISTRY_PROXY_PARAM_NAME, proxyAddress);
+        setProperty(RegistryAdapterService.REGISTRY_NO_PROXY_LIST_PARAM_NAME, noProxyList);
         RegistryAdapterService registryAdapterService = (RegistryAdapterService) host
                 .startServiceAndWait(RegistryAdapterService.class,
                         RegistryAdapterService.SELF_LINK);
@@ -98,41 +114,41 @@ public class RegistryAdapterServiceProxyTest extends BaseMockRegistryTestCase {
     @Test
     public void testInitNoProxyNoList() throws Throwable {
         HostInitRegistryAdapterServiceConfig.startServices(host);
-        ConfigurationState configurationState = getDocument(ConfigurationState.class, UriUtils.buildUriPath(ConfigurationFactoryService.SELF_LINK, RegistryAdapterService.REGITRY_PROXY_PARAM_NAME));
-        assertEquals(RegistryAdapterService.REGITRY_PROXY_PARAM_NAME + " should be " + RegistryAdapterService.REGISTRY_PROXY_NULL_VALUE, RegistryAdapterService.REGISTRY_PROXY_NULL_VALUE, configurationState.value);
-        configurationState = getDocument(ConfigurationState.class, UriUtils.buildUriPath(ConfigurationFactoryService.SELF_LINK, RegistryAdapterService.REGITRY_NO_PROXY_LIST_PARAM_NAME));
-        assertEquals(RegistryAdapterService.REGITRY_NO_PROXY_LIST_PARAM_NAME + " should be " + RegistryAdapterService.REGISTRY_PROXY_NULL_VALUE, RegistryAdapterService.REGISTRY_PROXY_NULL_VALUE, configurationState.value);
+        ConfigurationState configurationState = getDocument(ConfigurationState.class, UriUtils.buildUriPath(ConfigurationFactoryService.SELF_LINK, RegistryAdapterService.REGISTRY_PROXY_PARAM_NAME));
+        assertEquals(RegistryAdapterService.REGISTRY_PROXY_PARAM_NAME + " should be " + RegistryAdapterService.REGISTRY_PROXY_NULL_VALUE, RegistryAdapterService.REGISTRY_PROXY_NULL_VALUE, configurationState.value);
+        configurationState = getDocument(ConfigurationState.class, UriUtils.buildUriPath(ConfigurationFactoryService.SELF_LINK, RegistryAdapterService.REGISTRY_NO_PROXY_LIST_PARAM_NAME));
+        assertEquals(RegistryAdapterService.REGISTRY_NO_PROXY_LIST_PARAM_NAME + " should be " + RegistryAdapterService.REGISTRY_PROXY_NULL_VALUE, RegistryAdapterService.REGISTRY_PROXY_NULL_VALUE, configurationState.value);
     }
 
     @Test
     public void testInitWithProxyNoList() throws Throwable {
-        setProperty(RegistryAdapterService.REGITRY_PROXY_PARAM_NAME, proxyAddress);
+        setProperty(RegistryAdapterService.REGISTRY_PROXY_PARAM_NAME, proxyAddress);
         HostInitRegistryAdapterServiceConfig.startServices(host);
-        ConfigurationState configurationState = getDocument(ConfigurationState.class, UriUtils.buildUriPath(ConfigurationFactoryService.SELF_LINK, RegistryAdapterService.REGITRY_PROXY_PARAM_NAME));
-        assertEquals(RegistryAdapterService.REGITRY_PROXY_PARAM_NAME + " should be " + proxyAddress, proxyAddress, configurationState.value);
-        configurationState = getDocument(ConfigurationState.class, UriUtils.buildUriPath(ConfigurationFactoryService.SELF_LINK, RegistryAdapterService.REGITRY_NO_PROXY_LIST_PARAM_NAME));
-        assertEquals(RegistryAdapterService.REGITRY_NO_PROXY_LIST_PARAM_NAME + " should be " + RegistryAdapterService.REGISTRY_PROXY_NULL_VALUE, RegistryAdapterService.REGISTRY_PROXY_NULL_VALUE, configurationState.value);
+        ConfigurationState configurationState = getDocument(ConfigurationState.class, UriUtils.buildUriPath(ConfigurationFactoryService.SELF_LINK, RegistryAdapterService.REGISTRY_PROXY_PARAM_NAME));
+        assertEquals(RegistryAdapterService.REGISTRY_PROXY_PARAM_NAME + " should be " + proxyAddress, proxyAddress, configurationState.value);
+        configurationState = getDocument(ConfigurationState.class, UriUtils.buildUriPath(ConfigurationFactoryService.SELF_LINK, RegistryAdapterService.REGISTRY_NO_PROXY_LIST_PARAM_NAME));
+        assertEquals(RegistryAdapterService.REGISTRY_NO_PROXY_LIST_PARAM_NAME + " should be " + RegistryAdapterService.REGISTRY_PROXY_NULL_VALUE, RegistryAdapterService.REGISTRY_PROXY_NULL_VALUE, configurationState.value);
     }
 
     @Test
     public void testInitNoProxyWithList() throws Throwable {
-        setProperty(RegistryAdapterService.REGITRY_NO_PROXY_LIST_PARAM_NAME, noProxyList);
+        setProperty(RegistryAdapterService.REGISTRY_NO_PROXY_LIST_PARAM_NAME, noProxyList);
         HostInitRegistryAdapterServiceConfig.startServices(host);
-        ConfigurationState configurationState = getDocument(ConfigurationState.class, UriUtils.buildUriPath(ConfigurationFactoryService.SELF_LINK, RegistryAdapterService.REGITRY_PROXY_PARAM_NAME));
-        assertEquals(RegistryAdapterService.REGITRY_PROXY_PARAM_NAME + " should be " + RegistryAdapterService.REGISTRY_PROXY_NULL_VALUE, RegistryAdapterService.REGISTRY_PROXY_NULL_VALUE, configurationState.value);
-        configurationState = getDocument(ConfigurationState.class, UriUtils.buildUriPath(ConfigurationFactoryService.SELF_LINK, RegistryAdapterService.REGITRY_NO_PROXY_LIST_PARAM_NAME));
-        assertEquals(RegistryAdapterService.REGITRY_NO_PROXY_LIST_PARAM_NAME + " should be " + noProxyList, noProxyList, configurationState.value);
+        ConfigurationState configurationState = getDocument(ConfigurationState.class, UriUtils.buildUriPath(ConfigurationFactoryService.SELF_LINK, RegistryAdapterService.REGISTRY_PROXY_PARAM_NAME));
+        assertEquals(RegistryAdapterService.REGISTRY_PROXY_PARAM_NAME + " should be " + RegistryAdapterService.REGISTRY_PROXY_NULL_VALUE, RegistryAdapterService.REGISTRY_PROXY_NULL_VALUE, configurationState.value);
+        configurationState = getDocument(ConfigurationState.class, UriUtils.buildUriPath(ConfigurationFactoryService.SELF_LINK, RegistryAdapterService.REGISTRY_NO_PROXY_LIST_PARAM_NAME));
+        assertEquals(RegistryAdapterService.REGISTRY_NO_PROXY_LIST_PARAM_NAME + " should be " + noProxyList, noProxyList, configurationState.value);
     }
 
     @Test
     public void testInitWithProxyWithList() throws Throwable {
-        setProperty(RegistryAdapterService.REGITRY_PROXY_PARAM_NAME, proxyAddress);
-        setProperty(RegistryAdapterService.REGITRY_NO_PROXY_LIST_PARAM_NAME, noProxyList);
+        setProperty(RegistryAdapterService.REGISTRY_PROXY_PARAM_NAME, proxyAddress);
+        setProperty(RegistryAdapterService.REGISTRY_NO_PROXY_LIST_PARAM_NAME, noProxyList);
         HostInitRegistryAdapterServiceConfig.startServices(host);
-        ConfigurationState configurationState = getDocument(ConfigurationState.class, UriUtils.buildUriPath(ConfigurationFactoryService.SELF_LINK, RegistryAdapterService.REGITRY_PROXY_PARAM_NAME));
-        assertEquals(RegistryAdapterService.REGITRY_PROXY_PARAM_NAME + " should be " + proxyAddress, proxyAddress, configurationState.value);
-        configurationState = getDocument(ConfigurationState.class, UriUtils.buildUriPath(ConfigurationFactoryService.SELF_LINK, RegistryAdapterService.REGITRY_NO_PROXY_LIST_PARAM_NAME));
-        assertEquals(RegistryAdapterService.REGITRY_NO_PROXY_LIST_PARAM_NAME + " should be " + noProxyList, noProxyList, configurationState.value);
+        ConfigurationState configurationState = getDocument(ConfigurationState.class, UriUtils.buildUriPath(ConfigurationFactoryService.SELF_LINK, RegistryAdapterService.REGISTRY_PROXY_PARAM_NAME));
+        assertEquals(RegistryAdapterService.REGISTRY_PROXY_PARAM_NAME + " should be " + proxyAddress, proxyAddress, configurationState.value);
+        configurationState = getDocument(ConfigurationState.class, UriUtils.buildUriPath(ConfigurationFactoryService.SELF_LINK, RegistryAdapterService.REGISTRY_NO_PROXY_LIST_PARAM_NAME));
+        assertEquals(RegistryAdapterService.REGISTRY_NO_PROXY_LIST_PARAM_NAME + " should be " + noProxyList, noProxyList, configurationState.value);
     }
 
     private void setProperty(String key, String value) throws Throwable {
