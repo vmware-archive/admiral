@@ -37,7 +37,7 @@ public class ProjectsPage extends BasicPage<ProjectsPage, ProjectsPageValidator>
             .cssSelector(".card-actions.dropdown .dropdown-item:nth-child(2)");
     private final By DELETE_PROJECT_CONFIRMATION_BUTTON = By
             .cssSelector(".modal-dialog .btn.btn-danger");
-    private final String PROJECT_CARD_BY_NAME_SELECTOR = "html/body/my-app/clr-main-container/div/app-administration/div/app-projects/grid-view/div[3]/div/span/card/div/div[1]/div/text()[normalize-space() = \"%s\"]/../../..";
+    private final String PROJECT_CARD_BY_NAME_SELECTOR = "//span[contains(concat(' ', @class, ' '), ' card-item ')]//div[contains(concat(' ', @class, ' '), ' card-header')]/div/text()[normalize-space()='%s']/../../../../..";
 
     private ProjectsPageValidator validator;
     private DeleteProjectValidator deleteProjectValidator;

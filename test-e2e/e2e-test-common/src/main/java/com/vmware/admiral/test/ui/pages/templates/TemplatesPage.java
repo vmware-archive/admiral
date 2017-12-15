@@ -27,16 +27,9 @@ import com.vmware.admiral.test.ui.pages.main.HomeTabSelectors;
 
 public class TemplatesPage extends HomeTabAdvancedPage<TemplatesPage, TemplatesPageValidator> {
 
-    private final By CREATE_TEMPLATE_BUTTON = By
-            .cssSelector(".btn.btn-link.create-resource-btn");
     private final By IMPORT_TEMPLATE_BUTTON = By
             .cssSelector(".btn.btn-link[href*=\"import-template\"]");
-    private final By REFRESH_BUTTON = By.cssSelector(".fa.fa-refresh");
-    private final By CARD_RELATIVE_DELETE_BUTTON = By.cssSelector(".fa.fa-trash");
-    private final By CARD_RELATIVE_DELETE_CONFIRMATION_BUTTON = By
-            .cssSelector(".delete-inline-item-confirmation-confirm>div>a");
     private final By CARD_RELATIVE_PROVISION_BUTTON = By.cssSelector(".btn.create-container-btn");
-    private final String TEMPLATE_CARD_SELECTOR_BY_NAME = "html/body/div/div/div[2]/div[2]/div[1]/div[2]/div/div/div[3]/div/div/div/div/div[1]/div[2]/div[1][text()='%s']/../../../..";
 
     private TemplatesPageValidator validator;
     private ImportTemplatePage importTemplatePage;
@@ -76,7 +69,7 @@ public class TemplatesPage extends HomeTabAdvancedPage<TemplatesPage, TemplatesP
     public CreateTemplatePage createTemplate() {
         LOG.info("Creating template");
         executeInFrame(0, () -> {
-            $(CREATE_TEMPLATE_BUTTON).click();
+            $(CREATE_RESOURCE_BUTTON).click();
             waitForElementToStopMoving(HomeTabSelectors.CHILD_PAGE_SLIDE);
         });
         if (Objects.isNull(createTemplatePage)) {
@@ -103,17 +96,7 @@ public class TemplatesPage extends HomeTabAdvancedPage<TemplatesPage, TemplatesP
     }
 
     By getTemplateCardSelector(String name) {
-        return By.xpath(String.format(TEMPLATE_CARD_SELECTOR_BY_NAME, name));
-    }
-
-    @Override
-    public TemplatesPage refresh() {
-        LOG.info("Refreshing...");
-        executeInFrame(0, () -> {
-            $(REFRESH_BUTTON).click();
-            waitForSpinner();
-        });
-        return this;
+        return By.xpath(String.format(CARD_SELECTOR_BY_NAME_PREFIX_XPATH, name));
     }
 
     @Override

@@ -16,19 +16,23 @@ import static com.codeborne.selenide.Selenide.Wait;
 
 import java.util.Objects;
 
+import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.SelenideElement;
 
 import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.common.BasicPage;
 import com.vmware.admiral.test.ui.pages.common.PageProxy;
+import com.vmware.admiral.test.ui.pages.common.PageValidator;
+import com.vmware.admiral.test.ui.pages.projects.configure.ConfigureProjectPage.ConfigureProjectPageValidator;
 
 public class ConfigureProjectPage
         extends BasicPage<ConfigureProjectPage, ConfigureProjectPageValidator> {
 
+    private static final By EDIT_PROJECT_TITLE = By.cssSelector(".projects-details-header-title");
+
     private final By BACK_BUTTON = By.xpath(
             "html/body/my-app/clr-main-container/div/app-administration/div/app-projects/navigation-container/div/back-button/a/span");
-    private final By EDIT_PROJECT_TITLE = By.cssSelector(".projects-details-header-title");
     private final By SUMMARY_BUTTON = By.cssSelector("#summaryTab .btn");
     private final By MEMBERS_BUTTON = By.cssSelector("#membersTab .btn");
 
@@ -81,6 +85,16 @@ public class ConfigureProjectPage
     @Override
     public ConfigureProjectPage getThis() {
         return this;
+    }
+
+    public static class ConfigureProjectPageValidator extends PageValidator {
+
+        @Override
+        public ConfigureProjectPageValidator validateIsCurrentPage() {
+            $(EDIT_PROJECT_TITLE).shouldBe(Condition.visible);
+            return this;
+        }
+
     }
 
 }

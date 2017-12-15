@@ -25,14 +25,6 @@ import com.vmware.admiral.test.ui.pages.common.PageProxy;
 
 public class NetworksPage extends HomeTabAdvancedPage<NetworksPage, NetworksPageValidator> {
 
-    private final By CREATE_NETWORK_BUTTON = By
-            .cssSelector(".btn.btn-link.create-resource-btn");
-    final By CARD_RELATIVE_DELETE_BUTTON = By.cssSelector(".fa.fa-trash");
-    private final By CARD_RELATIVE_DELETE_CONFIRMATION = By
-            .cssSelector(".delete-inline-item-confirmation-confirm>div>a");
-    private final By REFRESH_BUTTON = By.cssSelector(".fa.fa-refresh");
-    private final String NETWORK_CARD_SELECTOR_BY_NAME = "html/body/div/div/div[2]/div[2]/div[1]/div[1]/div/div/div[3]/div/div/div/div/div[3]/div/div[1][starts-with(text(), '%s')]/../../..";
-
     private NetworksPageValidator validator;
     private CreateNetworkPage createNetworkPage;
 
@@ -41,9 +33,7 @@ public class NetworksPage extends HomeTabAdvancedPage<NetworksPage, NetworksPage
         if (Objects.isNull(createNetworkPage)) {
             createNetworkPage = new CreateNetworkPage(new PageProxy(this));
         }
-        executeInFrame(0, () -> {
-            $(CREATE_NETWORK_BUTTON).click();
-        });
+        executeInFrame(0, () -> $(CREATE_RESOURCE_BUTTON).click());
         createNetworkPage.waitToLoad();
         return createNetworkPage;
     }
@@ -57,13 +47,13 @@ public class NetworksPage extends HomeTabAdvancedPage<NetworksPage, NetworksPage
                     .click()
                     .build()
                     .perform();
-            card.$(CARD_RELATIVE_DELETE_CONFIRMATION).click();
+            card.$(CARD_RELATIVE_DELETE_CONFIRMATION_BUTTON).click();
         });
         return this;
     }
 
     By getNetworkCardSelector(String namePrefix) {
-        return By.xpath(String.format(NETWORK_CARD_SELECTOR_BY_NAME, namePrefix));
+        return By.xpath(String.format(CARD_SELECTOR_BY_NAME_PREFIX_XPATH, namePrefix));
     }
 
     @Override
@@ -72,16 +62,6 @@ public class NetworksPage extends HomeTabAdvancedPage<NetworksPage, NetworksPage
             validator = new NetworksPageValidator(this);
         }
         return validator;
-    }
-
-    @Override
-    public NetworksPage refresh() {
-        LOG.info("Refreshing...");
-        executeInFrame(0, () -> {
-            $(REFRESH_BUTTON).click();
-            waitForSpinner();
-        });
-        return this;
     }
 
     @Override

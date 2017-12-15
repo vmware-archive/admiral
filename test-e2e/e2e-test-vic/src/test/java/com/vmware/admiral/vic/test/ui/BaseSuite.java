@@ -111,6 +111,7 @@ public class BaseSuite {
             } catch (Exception e) {
                 LOG.warning(
                         "Could not read resource file with filename: " + fileName);
+                continue;
             }
             if (Objects.isNull(body) || body.trim().isEmpty()) {
                 LOG.warning(String.format(

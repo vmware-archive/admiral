@@ -15,14 +15,10 @@ import static com.codeborne.selenide.Selenide.$;
 
 import java.util.Objects;
 
-import org.openqa.selenium.By;
-
 import com.vmware.admiral.test.ui.pages.common.HomeTabAdvancedPage;
 
 public class PublicRepositoriesPage
         extends HomeTabAdvancedPage<PublicRepositoriesPage, PublicRepositoriesPageValidator> {
-
-    private final By REFRESH_BUTTON = By.cssSelector(".fa.fa-refresh");
 
     private PublicRepositoriesPageValidator validator;
 

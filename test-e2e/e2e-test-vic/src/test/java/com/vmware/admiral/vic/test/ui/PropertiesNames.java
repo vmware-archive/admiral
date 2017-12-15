@@ -17,6 +17,8 @@ public class PropertiesNames {
 
     public static final String VCENTER_IP_PROPERTY = "vcenter.ip";
     public static final String VIC_IP_PROPERTY = "vic.ip";
+    public static final String VIC_VM_USERNAME_PROPERTY = "vic.vm.username";
+    public static final String VIC_VM_PASSWORD_PROPERTY = "vic.vm.password";
     public static final String DOCKERHOST_IP_PROPERTY = "dockerhost.ip";
     public static final String VCH_IP_PROPERTY = "vch.ip";
     public static final String VCH_PORT_PROPERTY = "vch.port";

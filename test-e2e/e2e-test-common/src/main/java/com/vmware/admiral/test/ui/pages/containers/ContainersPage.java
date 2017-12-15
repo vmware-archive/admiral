@@ -26,15 +26,9 @@ import com.vmware.admiral.test.ui.pages.containers.provision.ProvisionAContainer
 
 public class ContainersPage extends HomeTabAdvancedPage<ContainersPage, ContainersPageValidator> {
 
-    private final By NEW_CONTAINER_BUTTON = By.cssSelector(".btn.btn-link.create-resource-btn");
     private final By CARD_RELATIVE_STOP_BUTTON = By.cssSelector(".fa.fa-stop");
-    private final By CARD_RELATIVE_DELETE_BUTTON = By.cssSelector(".fa.fa-trash");
-    private final By CARD_RELATIVE_DELETE_CONFIRMATION_BUTTON = By
-            .cssSelector(".delete-inline-item-confirmation-confirm>div>a");
     private final By CARD_RELATIVE_SCALE_BUTTON = By
             .cssSelector(".btn.btn-circle-outline.container-action-scale");
-    private final By REFRESH_BUTTON = By.cssSelector(".fa.fa-refresh");
-    private final String CONTAINER_CARD_SELECTOR_BY_NAME = "html/body/div/div/div[2]/div[2]/div[1]/div[1]/div/div/div[3]/div/div/div/div/div[3]/div/div[1][starts-with(@title, '%s')]/../../..";
 
     private ProvisionAContainerPage provisionAContainerPage;
     private ContainersPageValidator validator;
@@ -44,9 +38,7 @@ public class ContainersPage extends HomeTabAdvancedPage<ContainersPage, Containe
         if (Objects.isNull(provisionAContainerPage)) {
             provisionAContainerPage = new ProvisionAContainerPage(new PageProxy(this));
         }
-        executeInFrame(0, () -> {
-            $(NEW_CONTAINER_BUTTON).click();
-        });
+        executeInFrame(0, () -> $(CREATE_RESOURCE_BUTTON).click());
         provisionAContainerPage.waitToLoad();
         return provisionAContainerPage;
     }
@@ -90,17 +82,7 @@ public class ContainersPage extends HomeTabAdvancedPage<ContainersPage, Containe
     }
 
     By getContainerCardSelector(String name) {
-        return By.xpath(String.format(CONTAINER_CARD_SELECTOR_BY_NAME, name));
-    }
-
-    @Override
-    public ContainersPage refresh() {
-        LOG.info("Refreshing...");
-        executeInFrame(0, () -> {
-            $(REFRESH_BUTTON).click();
-            waitForSpinner();
-        });
-        return getThis();
+        return By.xpath(String.format(CARD_SELECTOR_BY_NAME_PREFIX_XPATH, name));
     }
 
     @Override

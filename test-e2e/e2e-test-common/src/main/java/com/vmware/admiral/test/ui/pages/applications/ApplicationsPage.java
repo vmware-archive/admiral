@@ -23,11 +23,6 @@ import com.vmware.admiral.test.ui.pages.common.PageProxy;
 public class ApplicationsPage
         extends HomeTabAdvancedPage<ApplicationsPage, ApplicationsPageValidator> {
 
-    private final By CREATE_APPLICATION_BUTTON = By
-            .cssSelector(".btn.btn-link.create-resource-btn");
-    private final By REFRESH_BUTTON = By.cssSelector(".fa.fa-refresh");
-    private final String APPLICATION_CARD_SELECTOR_BY_NAME = "html/body/div/div/div[2]/div[2]/div[1]/div[1]/div/div/div[3]/div/div/div/div/div[2]/div[2]/div[2]/div[starts-with(@title, '%s')]";
-
     private CreateApplicationPage createApplicationPage;
     private ApplicationsPageValidator validator;
 
@@ -36,25 +31,13 @@ public class ApplicationsPage
         if (Objects.isNull(createApplicationPage)) {
             createApplicationPage = new CreateApplicationPage(new PageProxy(this));
         }
-        executeInFrame(0, () -> {
-            $(CREATE_APPLICATION_BUTTON).click();
-        });
+        executeInFrame(0, () -> $(CREATE_RESOURCE_BUTTON).click());
         createApplicationPage.waitToLoad();
         return createApplicationPage;
     }
 
-    @Override
-    public ApplicationsPage refresh() {
-        LOG.info("Refreshing...");
-        executeInFrame(0, () -> {
-            $(REFRESH_BUTTON).click();
-            waitForSpinner();
-        });
-        return getThis();
-    }
-
     By getApplicationCardSelector(String name) {
-        return By.xpath(String.format(APPLICATION_CARD_SELECTOR_BY_NAME, name));
+        return By.xpath(String.format(CARD_SELECTOR_BY_NAME_PREFIX_XPATH, name));
     }
 
     @Override

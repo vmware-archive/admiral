@@ -30,7 +30,7 @@ import com.vmware.admiral.test.ui.pages.main.GlobalSelectors;
 public class ContainerHostsPage
         extends HomeTabPage<ContainerHostsPage, ContainerHostsPageValidator> {
 
-    private final String CONTAINER_HOST_CARD_SELECTOR_BY_NAME = "html/body/my-app/clr-main-container/div/app-main-resources/div[1]/app-clusters/grid-view/div[3]/div/span/card/div/div[1]/div/div[2]/div[1][text()='%s']/../../../..";
+    private final String CONTAINER_HOST_CARD_SELECTOR_BY_NAME = "//span[contains(concat(' ', @class, ' '), ' card-item ')]//div[contains(concat(' ', @class, ' '), ' titleHolder ')]/div[1][text()='%s']/../../../../../..";
     private final By ADD_CONTAINER_HOST_BUTTON = By
             .cssSelector(".col-sm-6.toolbar-primary>div .btn.btn-link");
     private final By CARD_RELATIVE_DROPDOWN_MENU = By

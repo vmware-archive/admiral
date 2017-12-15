@@ -76,6 +76,14 @@ public class BaseTest {
         return vchUrl;
     }
 
+    protected String getDefaultAdminUsername() {
+        return PROPERTIES.getProperty(PropertiesNames.DEFAULT_ADMIN_USERNAME_PROPERTY);
+    }
+
+    protected String getDefaultAdminPassword() {
+        return PROPERTIES.getProperty(PropertiesNames.DEFAULT_ADMIN_PASSWORD_PROPERTY);
+    }
+
     protected VICWebClient loginAsAdmin() {
         String target = getVicUrl();
         String username = PROPERTIES.getProperty(PropertiesNames.DEFAULT_ADMIN_USERNAME_PROPERTY);
