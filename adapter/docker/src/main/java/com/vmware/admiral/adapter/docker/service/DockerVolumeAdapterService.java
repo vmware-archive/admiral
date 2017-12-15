@@ -18,6 +18,7 @@ import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExec
 import static com.vmware.admiral.compute.ContainerHostService.DEFAULT_VMDK_DATASTORE_PROP_NAME;
 import static com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.VMDK_VOLUME_DRIVER;
 
+import java.net.ProtocolException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -37,6 +38,8 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
     public static final String DOCKER_VOLUME_DRIVER_TYPE_DEFAULT = "local";
 
     private static final String VMDK_DATASTORE_DISCOVERY_VOLUME_NAME = "__vmdkDatastoreDiscovery";
+
+    private static final String DELETE_VOLUME_MISSING_ERROR = "error 404 for DELETE";
 
     private static class RequestContext {
         public ContainerVolumeRequest request;
@@ -194,9 +197,15 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
 
         context.executor.removeVolume(deleteCommandInput, (op, ex) -> {
             if (ex != null) {
-                logWarning("Failure while removing volume [%s]",
-                        context.volumeState.documentSelfLink);
-                fail(context.request, op, ex);
+                if (ex instanceof ProtocolException
+                        && ex.getMessage().contains(DELETE_VOLUME_MISSING_ERROR)) {
+                    logWarning("Container volume %s not found", context.volumeState.id);
+                    patchTaskStage(context.request, TaskStage.FINISHED, null);
+                } else {
+                    logWarning("Failure while removing volume [%s]",
+                            context.volumeState.documentSelfLink);
+                    fail(context.request, op, ex);
+                }
             } else {
                 patchTaskStage(context.request, TaskStage.FINISHED, null);
             }
