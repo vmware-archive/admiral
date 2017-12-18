@@ -23,12 +23,15 @@ import java.security.cert.CertificateException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
@@ -51,7 +54,10 @@ public class RegistryProxyIT extends BaseProvisioningOnCoreOsIT {
     String url;
     ShellContainerExecutorResult commandResult;
 
+    @Rule
+    public Timeout globalTimeout = Timeout.seconds(TimeUnit.MINUTES.toSeconds(20));
     private static final int RETRY_COUNT = 3;
+
 
     @BeforeClass
     public static void beforeClass() {
