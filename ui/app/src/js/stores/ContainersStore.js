@@ -495,6 +495,19 @@ let updateContainerItem = function(item, updatedItem) {
   return updated ? item : undefined;
 };
 
+let adjustQueryOptions = function(queryOptions) {
+  queryOptions = queryOptions || {
+    $category: constants.CONTAINERS.SEARCH_CATEGORY.CONTAINERS
+  };
+
+  if (!queryOptions.$category) {
+    queryOptions = $.extend({}, queryOptions);
+    queryOptions.$category = constants.CONTAINERS.SEARCH_CATEGORY.CONTAINERS;
+  }
+
+  return queryOptions;
+};
+
 let ContainersStore = Reflux.createStore({
   mixins: [ContextPanelStoreMixin, CrudStoreMixin],
   init: function() {
@@ -683,6 +696,9 @@ let ContainersStore = Reflux.createStore({
       return;
     }
 
+    // query options
+    queryOptions = adjustQueryOptions(queryOptions);
+
     this.setInData(['listView', 'queryOptions'], queryOptions);
 
     if (!keepContext) {
@@ -698,17 +714,6 @@ let ContainersStore = Reflux.createStore({
 
       this.setInData(['listView', 'itemsLoading'], true);
       this.setInData(['listView', 'error'], null);
-
-      queryOptions = queryOptions || {
-        $category: constants.CONTAINERS.SEARCH_CATEGORY.CONTAINERS
-      };
-      if (!queryOptions.$category) {
-        queryOptions = $.extend({}, queryOptions);
-        queryOptions.$category = constants.CONTAINERS.SEARCH_CATEGORY.CONTAINERS;
-
-        this.setInData(['listView', 'queryOptions'], queryOptions);
-        this.emitChange();
-      }
 
       let loadResourceFunction;
 
@@ -757,6 +762,9 @@ let ContainersStore = Reflux.createStore({
   },
 
   onOpenContainersNext: function(queryOptions, nextPageLink) {
+    // query options
+    queryOptions = adjustQueryOptions(queryOptions);
+
     this.setInData(['listView', 'queryOptions'], queryOptions);
 
     var operation =

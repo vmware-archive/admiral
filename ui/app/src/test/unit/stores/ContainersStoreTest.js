@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -36,7 +36,7 @@ describe("ContainerStore test", function() {
     routes.initialize();
 
     services.loadDocument = function(documentSelfLink) {
-      return new Promise(function(resolve, reject){
+      return new Promise(function(resolve, reject) {
         setTimeout(function() {
           resolve({
             documentSelfLink: documentSelfLink
@@ -46,7 +46,7 @@ describe("ContainerStore test", function() {
     };
 
     spyOn(services, 'loadContainers').and.callFake(function() {
-      return new Promise(function(resolve, reject){
+      return new Promise(function(resolve, reject) {
         setTimeout(function() {
           var documents = JSON.parse(JSON.stringify(ContainersMockData.containers));
           var resultToReturn = {
@@ -58,7 +58,7 @@ describe("ContainerStore test", function() {
       });
     });
     spyOn(services, 'loadContainerNetworks').and.callFake(function() {
-      return new Promise(function(resolve, reject){
+      return new Promise(function(resolve, reject) {
         setTimeout(function() {
           var documents = {};
           var resultToReturn = {
@@ -70,7 +70,7 @@ describe("ContainerStore test", function() {
       });
     });
     spyOn(services, 'loadContainerVolumes').and.callFake(function() {
-      return new Promise(function(resolve, reject){
+      return new Promise(function(resolve, reject) {
         setTimeout(function() {
           var documents = {};
           var resultToReturn = {
@@ -82,17 +82,17 @@ describe("ContainerStore test", function() {
       });
     });
     spyOn(services, 'loadContainer').and.callFake(function(containerId) {
-      return new Promise(function(resolve, reject){
+      return new Promise(function(resolve, reject) {
         setTimeout(function() {
-          console.log("containerId " + containerId);
-          var container = ContainersMockData.containers["/resources/containers/" + containerId];
+          console.log('containerId ' + containerId);
+          var container = ContainersMockData.containers['/resources/containers/' + containerId];
 
           resolve(JSON.parse(JSON.stringify(container)));
         }, 0);
       });
     });
     spyOn(services, 'loadCompositeComponents').and.callFake(function() {
-      return new Promise(function(resolve, reject){
+      return new Promise(function(resolve, reject) {
         setTimeout(function() {
           var documents = JSON.parse(JSON.stringify(ContainersMockData.compositeComponents));
           var resultToReturn = {
@@ -104,18 +104,18 @@ describe("ContainerStore test", function() {
       });
     });
     spyOn(services, 'loadCompositeComponent').and.callFake(function(compositeComponentId) {
-      return new Promise(function(resolve, reject){
+      return new Promise(function(resolve, reject) {
         setTimeout(function() {
-          var compositeComponent =
-            ContainersMockData.compositeComponents["/resources/composite-components/" + compositeComponentId];
+          var compositeComponent = ContainersMockData
+                    .compositeComponents['/resources/composite-components/' + compositeComponentId];
           resolve(JSON.parse(JSON.stringify(compositeComponent)));
         }, 0);
       });
     });
     spyOn(services, 'loadContainerLogs').and.callFake(function(containerId) {
-      return new Promise(function(resolve, reject){
+      return new Promise(function(resolve, reject) {
         setTimeout(function() {
-          resolve("Logs for " + containerId);
+          resolve('Logs for ' + containerId);
         }, 0);
       });
     });
@@ -170,7 +170,7 @@ describe("ContainerStore test", function() {
 
     beforeEach(function() {
       spyOn(services, 'loadContainerStats').and.callFake(function(containerId) {
-        return new Promise(function(resolve, reject){
+        return new Promise(function(resolve, reject) {
           setTimeout(function() {
             resolve(JSON.parse(JSON.stringify(containerStats)));
           }, 0);
@@ -313,7 +313,7 @@ describe("ContainerStore test", function() {
     describe("shell", function() {
       beforeEach(function() {
         spyOn(services, 'getContainerShellUri').and.callFake(function(containerId) {
-          return new Promise(function(resolve, reject){
+          return new Promise(function(resolve, reject) {
             setTimeout(function() {
               resolve('/uic/rp/remote-service-' + containerId);
             }, 0);
@@ -353,7 +353,7 @@ describe("ContainerStore test", function() {
   describe("composite container details", function() {
     beforeEach(function() {
       spyOn(services, 'loadContainersForCompositeComponent').and.callFake(function(compositeContainerId) {
-        return new Promise(function(resolve, reject){
+        return new Promise(function(resolve, reject) {
           setTimeout(function() {
             var groupContainers = {};
 
