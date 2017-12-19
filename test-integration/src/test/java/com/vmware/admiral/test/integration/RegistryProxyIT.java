@@ -28,7 +28,6 @@ import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
@@ -47,7 +46,10 @@ import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpResponse;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
-@Ignore("VBV-1429")
+/**
+ * This test is ignored in the Bellevue-gerrit.
+ * It runs in Bellevue-VIC-E2E-Tests.
+ */
 public class RegistryProxyIT extends BaseProvisioningOnCoreOsIT {
     private String compositeDescriptionLink;
     String testPrivateDir;
@@ -57,7 +59,6 @@ public class RegistryProxyIT extends BaseProvisioningOnCoreOsIT {
     @Rule
     public Timeout globalTimeout = Timeout.seconds(TimeUnit.MINUTES.toSeconds(20));
     private static final int RETRY_COUNT = 3;
-
 
     @BeforeClass
     public static void beforeClass() {
