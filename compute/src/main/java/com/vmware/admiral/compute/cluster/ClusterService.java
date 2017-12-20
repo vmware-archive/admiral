@@ -200,7 +200,7 @@ public class ClusterService extends StatelessService {
     public void handlePost(Operation post) {
         logFine("Operation headers: [%s]", post.getRequestHeaders());
 
-        if (isOperationOverAllClustes(post)) {
+        if (isOperationOverAllClusters(post)) {
             createCluster(post);
             return;
         }
@@ -349,7 +349,7 @@ public class ClusterService extends StatelessService {
 
     @Override
     public void handleGet(Operation get) {
-        if (isOperationOverAllClustes(get)) {
+        if (isOperationOverAllClusters(get)) {
             getAllClusters(get);
             return;
         }
@@ -368,7 +368,7 @@ public class ClusterService extends StatelessService {
         get.fail(Operation.STATUS_CODE_NOT_FOUND);
     }
 
-    private boolean isOperationOverAllClustes(Operation op) {
+    private boolean isOperationOverAllClusters(Operation op) {
         return PATTERN_CLUSTER_LINK.matcher(op.getUri().getPath()).matches();
     }
 
