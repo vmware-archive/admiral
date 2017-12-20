@@ -33,12 +33,12 @@ public interface AuthConfigProvider {
     /**
      * Initialization method to be executed as a first-boot script.
      */
-    void initBootConfig(ServiceHost host, Operation post);
+    void initBootConfig(ServiceHost host, Operation post, Consumer<Operation> authContext);
 
     /**
      * Initialization method to be executed as an every-boot script.
      */
-    void initConfig(ServiceHost host, Operation post);
+    void initConfig(ServiceHost host, Operation post, Consumer<Operation> authContext);
 
     /**
      * Waits for the first-boot initialization to be completed (for testing purposes).

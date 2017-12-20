@@ -72,7 +72,7 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
     }
 
     @Override
-    public void initBootConfig(ServiceHost host, Operation post) {
+    public void initBootConfig(ServiceHost host, Operation post, Consumer<Operation> authContext) {
 
         String localUsers = AuthUtil.getLocalUsersFile(host);
 
@@ -117,7 +117,7 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
     }
 
     @Override
-    public void initConfig(ServiceHost host, Operation post) {
+    public void initConfig(ServiceHost host, Operation post, Consumer<Operation> authContext) {
         // Nothing to do here...
     }
 

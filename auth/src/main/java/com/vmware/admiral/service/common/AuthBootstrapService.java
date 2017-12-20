@@ -78,13 +78,13 @@ public class AuthBootstrapService extends StatefulService {
         if (!ServiceHost.isServiceCreate(post)) {
             // do not perform bootstrap logic when the post is NOT from direct client, eg: node
             // restart
-            provider.initConfig(getHost(), post);
+            provider.initConfig(getHost(), post, null);
             post.complete();
             return;
         }
 
-        provider.initBootConfig(getHost(), post);
-        provider.initConfig(getHost(), post);
+        provider.initBootConfig(getHost(), post, null);
+        provider.initConfig(getHost(), post, null);
         post.complete();
     }
 
