@@ -110,6 +110,8 @@ public class ContainerHostService extends StatelessService {
     public static final String DOCKER_HOST_SCHEME_PROP_NAME = "__dockerHostScheme";
     public static final String DOCKER_HOST_ADDRESS_PROP_NAME = "__dockerHostAddress";
 
+    public static final String CUSTOM_PROPERTY_HOST_ALIAS = "__hostAlias";
+
     public static final String SSL_TRUST_CERT_PROP_NAME = "__sslTrustCertificate";
     public static final String SSL_TRUST_ALIAS_PROP_NAME = "__sslTrustAlias";
 

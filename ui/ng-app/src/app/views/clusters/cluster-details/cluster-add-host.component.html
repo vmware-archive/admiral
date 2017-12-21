@@ -29,6 +29,10 @@
                         <span class="tooltip-content">{{ "clusters.resources.addHost.addressRequired" | i18n }}</span>
                     </label>
                 </div>
+                <div class="form-group">
+                    <label for="name">{{ "clusters.resources.editHost.name" | i18n }}</label>
+                    <input type="text" formControlName="name">
+                </div>
                 <div class="form-group host-credentials">
                     <label for="credentials">{{ "clusters.edit.credentials" | i18n }}</label>
                     <dropdown id="credentials" formControlName="credentials" [options]="credentials"

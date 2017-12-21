@@ -43,6 +43,7 @@ export class ClusterAddHostComponent implements AfterViewInit {
 
     addHostToClusterForm = new FormGroup({
         address: new FormControl('', Validators.required),
+        name: new FormControl(''),
         credentials: new FormControl(''),
         publicAddress: new FormControl(''),
         deploymentPolicy: new FormControl('')
@@ -142,6 +143,10 @@ export class ClusterAddHostComponent implements AfterViewInit {
                 }
             };
 
+            if (formInput.name) {
+                hostState.customProperties['__hostAlias'] = formInput.name;
+            }
+
             if (formInput.credentials) {
                 hostState.customProperties['__authCredentialsLink'] =
                                                             formInput.credentials.documentSelfLink;
@@ -161,6 +166,7 @@ export class ClusterAddHostComponent implements AfterViewInit {
                 'hostState': hostState,
                 'acceptCertificate': certificateAccepted
             };
+
             let clusterHostsLink = this.cluster.documentSelfLink + '/hosts';
 
             this.documentService.post(clusterHostsLink, hostSpec, this.projectLink)
