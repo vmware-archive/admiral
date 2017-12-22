@@ -2,6 +2,8 @@
 
 ## 1.3.1-SNAPSHOT
 
+* The option to [overwrite the public address](https://github.com/vmware/admiral/wiki/Configuration-guide#enable-or-disable-the-option-to-overwrite-the-public-address-for-a-host) for a host is now enabled by default in the standalone version of Admiral.
+
 Docker hub images & tags: https://hub.docker.com/r/vmware/admiral/
 
 * dev - Standalone
@@ -9,6 +11,8 @@ Docker hub images & tags: https://hub.docker.com/r/vmware/admiral/
 * vic_dev - VIC
 
 ## 1.3.0
+
+* Introduced the option to [overwrite the public address](https://github.com/vmware/admiral/wiki/Configuration-guide#enable-or-disable-the-option-to-overwrite-the-public-address-for-a-host) for a host (the address on which published ports can be reached). The feature is disabled by default.
 
 Docker hub images & tags: https://hub.docker.com/r/vmware/admiral/
 
@@ -48,11 +52,11 @@ Docker hub images & tags: https://hub.docker.com/r/vmware/admiral/
 
 * Deprecated usage of Placements and Placement Zones in favor of Clusters.
 
-* Promoted the Project entities as a central resources and roles management entity. 
+* Promoted the Project entities as a central resources and roles management entity.
 
 * Extended adoption and integration with [Clarity](https://vmware.github.io/clarity/).
 
-* Added new features to the basic authentication service based on local users. 
+* Added new features to the basic authentication service based on local users.
 
 * Bug fixes around VIC integration.
 

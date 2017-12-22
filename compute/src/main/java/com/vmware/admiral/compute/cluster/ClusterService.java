@@ -148,7 +148,7 @@ public class ClusterService extends StatelessService {
 
         /**
          * (Optional) the public address of a single-host capacity cluster (e.g. VCH cluster). This
-         * is the address where published ports are reacheable.
+         * is the address where published ports are reachable.
          */
         public String publicAddress;
 
@@ -249,7 +249,7 @@ public class ClusterService extends StatelessService {
      *            WIP {@link ClusterDto} instance that already contains the basic changes to the
      *            cluster
      * @return returns
-     *         <code>wipDto</wip> either immediately or after updating a single host with the public address form the <code>patchDto</code>
+     *         <code>wipDto</code> either immediately or after updating a single host with the public address form the <code>patchDto</code>
      */
     private DeferredResult<ClusterDto> propagatePublicAddressIfNeeded(ClusterDto patchDto,
             ClusterDto wipDto) {
