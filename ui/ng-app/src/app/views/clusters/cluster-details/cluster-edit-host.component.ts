@@ -10,13 +10,12 @@
  */
 
 import { Component, AfterViewInit, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
-import { FormGroup, FormControl, Validators } from "@angular/forms";
-import { DocumentService } from './../../../utils/document.service';
-import { ProjectService } from './../../../utils/project.service';
-import { Links } from './../../../utils/links';
-import { Utils } from "../../../utils/utils";
-import { FT } from './../../../utils/ft';
+import { FormGroup, FormControl } from "@angular/forms";
+import { DocumentService } from '../../../utils/document.service';
 import { Constants } from '../../../utils/constants';
+import { FT } from '../../../utils/ft';
+import { Links } from '../../../utils/links';
+import { Utils } from "../../../utils/utils";
 import * as I18n from 'i18next';
 
 @Component({
@@ -27,13 +26,13 @@ import * as I18n from 'i18next';
 /**
  * Edit Cluster Hosts dialog.
  */
-export class ClusterEditHostComponent implements OnChanges {
+export class ClusterEditHostComponent implements AfterViewInit, OnChanges {
 
     @Input() visible: boolean;
     @Input() host: any;
-    @Input() credentials: any[] = [];
     @Input() deploymentPolicies: any[] = [];
 
+    credentials: any[] = [];
     isSavingHost: boolean;
     isVerifyingHost: boolean;
     isHostVerified: boolean = true;
@@ -51,6 +50,16 @@ export class ClusterEditHostComponent implements OnChanges {
         deploymentPolicy: new FormControl('')
     });
 
+    credentialsTitle = I18n.t('dropdownSearchMenu.title', {
+        ns: 'base',
+        entity: I18n.t('app.credential.entity', {ns: 'base'})
+    } as I18n.TranslationOptions );
+
+    credentialsSearchPlaceholder = I18n.t('dropdownSearchMenu.searchPlaceholder', {
+        ns: 'base',
+        entity: I18n.t('app.credential.entity', {ns: 'base'})
+    } as I18n.TranslationOptions );
+
     deploymentPoliciesTitle = I18n.t('dropdownSearchMenu.title', {
         ns: 'base',
         entity: I18n.t('app.deploymentPolicy.entity', {ns: 'base'})
@@ -61,23 +70,32 @@ export class ClusterEditHostComponent implements OnChanges {
         entity: I18n.t('app.deploymentPolicy.entity', {ns: 'base'})
     } as I18n.TranslationOptions );
 
-    constructor(private ds: DocumentService) { }
+    constructor(private documentService: DocumentService) { }
+
+    ngAfterViewInit() {
+        // init credentials list
+        this.documentService.list(Links.CREDENTIALS, {}).then(credentials => {
+            this.credentials = credentials.documents
+            .filter(c => !Utils.areSystemScopedCredentials(c))
+            .map(Utils.toCredentialViewModel);
+        });
+    }
 
     ngOnChanges(changes: SimpleChanges) {
         if (this.host) {
-
             this.editHostForm.get('name').setValue(Utils.getHostName(this.host));
 
-            var authCredentialsLink = Utils.getCustomPropertyValue(this.host.customProperties, '__authCredentialsLink');
+            let authCredentialsLink =
+                    Utils.getCustomPropertyValue(this.host.customProperties, '__authCredentialsLink');
             if (authCredentialsLink) {
                 this.editHostForm.get('credentials').setValue(authCredentialsLink);
             }
 
-            var publicAddress = Utils.getCustomPropertyValue(this.host.customProperties,
+            let publicAddress = Utils.getCustomPropertyValue(this.host.customProperties,
                 Constants.hosts.customProperties.publicAddress) || "";
             this.editHostForm.get('publicAddress').setValue(publicAddress);
 
-            var deploymentPolicyLink = Utils.getCustomPropertyValue(this.host.customProperties,
+            let deploymentPolicyLink = Utils.getCustomPropertyValue(this.host.customProperties,
                     Constants.hosts.customProperties.deploymentPolicyLink);
             this.editHostForm.get('deploymentPolicy').setValue(deploymentPolicyLink);
         }
@@ -91,11 +109,6 @@ export class ClusterEditHostComponent implements OnChanges {
         return FT.isApplicationEmbedded();
     }
 
-    getCredentialsName(credentials) {
-        let name = Utils.getCustomPropertyValue(credentials.customProperties, '__authCredentialsName');
-        return name ? name : credentials.documentId;
-    }
-
     editHostCanceled() {
         this.clearView();
         this.onCancel.emit(null);
@@ -107,20 +120,26 @@ export class ClusterEditHostComponent implements OnChanges {
 
     clearView() {
         this.resetAlert();
+
         this.isSavingHost = false;
         this.isVerifyingHost = false;
+        this.isHostVerified = true;
+
         this.editHostForm.reset();
         this.editHostForm.markAsPristine();
     }
 
-    onCredentialsChange() {
-        var authCredentialsLink = Utils.getCustomPropertyValue(this.host.customProperties, '__authCredentialsLink');
+    onCredentialsChange(creds: any) {
+        let authCredentialsLink =
+            Utils.getCustomPropertyValue(this.host.customProperties, '__authCredentialsLink');
+
         this.isHostVerified = this.editHostForm.value.credentials === authCredentialsLink;
     }
 
     getInputHost() {
         var hostCopy = Object.assign({}, this.host);
         hostCopy.customProperties = Object.assign({}, this.host.customProperties);
+
         let formInput = this.editHostForm.value;
 
         if (formInput.name) {
@@ -128,11 +147,13 @@ export class ClusterEditHostComponent implements OnChanges {
         }
 
         if (formInput.credentials) {
-            hostCopy.customProperties['__authCredentialsLink'] = formInput.credentials;
+            hostCopy.customProperties['__authCredentialsLink'] =
+                                                            formInput.credentials.documentSelfLink;
         }
 
-        // allow ovewriting with empty value
-        hostCopy.customProperties[Constants.hosts.customProperties.publicAddress] = formInput.publicAddress || "";
+        // allow overwriting with empty value
+        hostCopy.customProperties[Constants.hosts.customProperties.publicAddress] =
+            formInput.publicAddress || "";
 
         if (formInput.deploymentPolicy) {
             hostCopy.customProperties[Constants.hosts.customProperties.deploymentPolicyLink] =
@@ -144,23 +165,26 @@ export class ClusterEditHostComponent implements OnChanges {
         return hostCopy;
     }
 
-    verifyHost(){
+    verifyHost() {
         if (this.editHostForm.valid) {
             this.isVerifyingHost = true;
+            this.isHostVerified = false;
 
-            var host = this.getInputHost();
-
+            let host = this.getInputHost();
             let hostSpec = {
                 'hostState': host
             };
 
-            this.ds.put(Links.CONTAINER_HOSTS + '?validate=true', hostSpec).then((response) => {
+            this.documentService.put(Links.CONTAINER_HOSTS + '?validate=true', hostSpec)
+            .then((response) => {
                 this.isVerifyingHost = false;
                 this.isHostVerified = true;
+
                 this.alertType = Constants.alert.type.SUCCESS;
                 this.alertMessage = I18n.t('hosts.verified');
             }).catch(error => {
                 this.isVerifyingHost = false;
+
                 this.alertType = Constants.alert.type.DANGER;
                 this.alertMessage = Utils.getErrorMessage(error)._generic;
             });
@@ -171,18 +195,20 @@ export class ClusterEditHostComponent implements OnChanges {
         if (this.editHostForm.valid) {
             this.isSavingHost = true;
 
-            var host = this.getInputHost();
-
+            var hostState = this.getInputHost();
             let hostSpec = {
-                'hostState': host,
+                'hostState': hostState,
                 'isUpdateOperation': true
             };
 
-            this.ds.put(Links.CONTAINER_HOSTS, hostSpec).then((response) => {
+            this.documentService.put(Links.CONTAINER_HOSTS, hostSpec)
+            .then((response) => {
                 this.clearView();
+
                 this.onChange.emit(null);
             }).catch(error => {
                 this.isSavingHost = false;
+
                 this.alertType = Constants.alert.type.DANGER;
                 this.alertMessage = Utils.getErrorMessage(error)._generic;
             });

@@ -79,7 +79,7 @@ export class ClusterAddHostComponent implements AfterViewInit {
         this.documentService.list(Links.CREDENTIALS, {}).then(credentials => {
             this.credentials = credentials.documents
                                     .filter(c => !Utils.areSystemScopedCredentials(c))
-                                    .map(this.toCredentialViewModel);
+                                    .map(Utils.toCredentialViewModel);
         });
     }
 
@@ -100,19 +100,6 @@ export class ClusterAddHostComponent implements AfterViewInit {
 
     resetAlert() {
         this.alertMessage = null;
-    }
-
-    toCredentialViewModel(credential) {
-        let credentialViewModel:any = {};
-
-        credentialViewModel.documentSelfLink = credential.documentSelfLink;
-        credentialViewModel.name = credential.customProperties
-                                        ? credential.customProperties.__authCredentialsName : '';
-        if (!credentialViewModel.name) {
-            credentialViewModel.name = credential.documentId;
-        }
-
-        return credentialViewModel;
     }
 
     declineCertificate() {
@@ -181,7 +168,6 @@ export class ClusterAddHostComponent implements AfterViewInit {
                     this.onChange.emit(null);
                 }
             }).catch(error => {
-
                 this.isAddingHost = false;
                 this.alertMessage = Utils.getErrorMessage(error)._generic;
             });

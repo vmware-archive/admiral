@@ -14,10 +14,9 @@
     <div class="modal-body">
         <clr-alert [clrAlertType]="'alert-danger'" [(clrAlertClosed)]="!alertMessage"
                    (clrAlertClosedChange)="resetAlert()">
-            <div class="alert-item">
-                <span class="alert-text">{{ alertMessage }}</span>
-            </div>
+            <div class="alert-item"><span class="alert-text">{{ alertMessage }}</span></div>
         </clr-alert>
+
         <form class="form" [formGroup]="addHostToClusterForm">
             <section class="form-block">
                 <div class="form-group host-address">

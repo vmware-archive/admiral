@@ -42,7 +42,6 @@ export class ClusterResourcesComponent extends AutoRefreshComponent
     showAddHost: boolean;
     showEditHost: boolean;
     hostToEdit: any;
-    credentialsList: any[];
     deploymentPolicies: any[];
 
     hostToDelete: any;
@@ -72,10 +71,6 @@ export class ClusterResourcesComponent extends AutoRefreshComponent
     }
 
     ngAfterViewInit() {
-        this.service.list(Links.CREDENTIALS, {}).then(credentials => {
-            this.credentialsList = credentials.documents
-            .filter(c => !Utils.areSystemScopedCredentials(c));
-        });
         if (FT.isApplicationEmbedded()) {
             this.service.list(Links.DEPLOYMENT_POLICIES, {}).then(policies => {
                 this.deploymentPolicies = policies.documents;

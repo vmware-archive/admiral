@@ -12,11 +12,11 @@
   <clr-modal [clrModalOpen]="visible" (clrModalOpenChange)="editHostCanceled()">
     <h3 class="modal-title">{{ "clusters.resources.editHost.title" | i18n }}</h3>
     <div class="modal-body">
-        <clr-alert [clrAlertType]="alertType" [(clrAlertClosed)]="!alertMessage"  (clrAlertClosedChange)="resetAlert()">
-            <div class="alert-item">
-                <span class="alert-text">{{ alertMessage }}</span>
-            </div>
+        <clr-alert [clrAlertType]="alertType" [(clrAlertClosed)]="!alertMessage"
+                   (clrAlertClosedChange)="resetAlert()">
+            <div class="alert-item"><span class="alert-text">{{ alertMessage }}</span></div>
         </clr-alert>
+
         <form class="form" [formGroup]="editHostForm">
             <section class="form-block">
                 <div class="form-group">
@@ -29,11 +29,12 @@
                 </div>
                 <div class="form-group">
                     <label for="credentials">{{ "clusters.edit.credentials" | i18n }}</label>
-                    <div class="select">
-                        <select formControlName="credentials" (change)="onCredentialsChange()">
-                            <option *ngFor="let c of credentials" [ngValue]="c.documentSelfLink">{{ getCredentialsName(c) }}</option>
-                        </select>
-                    </div>
+                    <dropdown id="credentials" formControlName="credentials" [options]="credentials"
+                              [title]="credentialsTitle"
+                              [searchPlaceholder]="credentialsSearchPlaceholder"
+                              (ngModelChange)="onCredentialsChange($event)"
+                              ddClass="top-left">
+                    </dropdown>
                 </div>
                 <div class="form-group" *ngIf="showPublicAddressField">
                     <label for="publicAddress">{{ "clusters.edit.publicAddress" | i18n }}</label>
@@ -57,8 +58,14 @@
         </form>
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-outline" [disabled]="isSavingHost || isVerifyingHost" (click)="editHostCanceled()">{{"cancel" | i18n}}</button>
-        <button [clrLoading]="isSavingHost" type="button" class="btn btn-primary" [disabled]="isSavingHost || isVerifyingHost || !isHostVerified" (click)="saveHost()">{{ "update" | i18n }}</button>
-        <button [clrLoading]="isVerifyingHost" type="button" class="btn btn-outline" [disabled]="isSavingHost || isVerifyingHost" (click)="verifyHost()">{{"verify" | i18n}}</button>
+        <button type="button" class="btn btn-outline"
+                [disabled]="isSavingHost || isVerifyingHost"
+                (click)="editHostCanceled()">{{"cancel" | i18n}}</button>
+        <button [clrLoading]="isSavingHost" type="button" class="btn btn-primary"
+                [disabled]="isSavingHost || isVerifyingHost || !isHostVerified"
+                (click)="saveHost()">{{ "update" | i18n }}</button>
+        <button [clrLoading]="isVerifyingHost" type="button" class="btn btn-outline"
+                [disabled]="isSavingHost || isVerifyingHost"
+                (click)="verifyHost()">{{"verify" | i18n}}</button>
     </div>
 </clr-modal>

@@ -254,6 +254,19 @@ export class Utils {
     return 0;
   }
 
+  public static toCredentialViewModel(credential) {
+    let credentialViewModel:any = {};
+
+    credentialViewModel.documentSelfLink = credential.documentSelfLink;
+    credentialViewModel.name = credential.customProperties
+                                    ? credential.customProperties.__authCredentialsName : '';
+    if (!credentialViewModel.name) {
+        credentialViewModel.name = credential.documentId;
+    }
+
+    return credentialViewModel;
+    }
+
   public static isLogin(): boolean {
     return location.pathname.indexOf(LOGIN_PATH) > -1;
   }
