@@ -98,7 +98,7 @@ var CrudStoreMixin = {
    requestCancellableOperation: function(operationId, operationOptions) {
     var pendingOperation = this.pendingOperations[operationId];
     if (pendingOperation) {
-      if (utils.equals(pendingOperation.operationOptions, operationOptions)) {
+      if (utils.equals(pendingOperation.options, operationOptions)) {
         // No need
         return;
       } else {
