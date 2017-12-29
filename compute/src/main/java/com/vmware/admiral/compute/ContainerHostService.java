@@ -39,7 +39,6 @@ import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.SslCertificateResolver;
-import com.vmware.admiral.compute.ConfigureHostOverSshTaskService.ConfigureHostOverSshTaskServiceState;
 import com.vmware.admiral.compute.PlacementZoneConstants.PlacementZoneType;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService.ContainerHostDataCollectionState;
@@ -157,9 +156,6 @@ public class ContainerHostService extends StatelessService {
         /** The given container host exists and has to be updated. */
         public Boolean isUpdateOperation;
 
-        /** Configure the docker daemon of the host over ssh. **/
-        public Boolean isConfigureOverSsh = Boolean.valueOf(false);
-
         /**
          * {@inheritDoc}
          */
@@ -207,9 +203,7 @@ public class ContainerHostService extends StatelessService {
         boolean validateHostTypeAndConnection = query != null
                 && query.contains(ManagementUriParts.REQUEST_PARAM_VALIDATE_OPERATION_NAME);
 
-        if (hostSpec.isConfigureOverSsh) {
-            configureOverSsh(op, hostSpec, validateHostTypeAndConnection);
-        } else if (validateHostTypeAndConnection) {
+        if (validateHostTypeAndConnection) {
             validateHostTypeAndConnection(hostSpec, op);
         } else if (hostSpec.isUpdateOperation != null
                 && hostSpec.isUpdateOperation.booleanValue()) {
@@ -242,37 +236,6 @@ public class ContainerHostService extends StatelessService {
                                     createHost(hostSpec, op);
                                 }
                             });
-        }
-    }
-
-    private void configureOverSsh(Operation op, ContainerHostSpec hostSpec,
-            boolean validateHostConnection) {
-        ConfigureHostOverSshTaskServiceState state = new ConfigureHostOverSshTaskServiceState();
-        state.address = hostSpec.uri.getHost();
-        state.port = hostSpec.uri.getPort();
-        state.authCredentialsLink = hostSpec.hostState.customProperties
-                .get(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME);
-        state.placementZoneLink = hostSpec.hostState.resourcePoolLink;
-        state.tagLinks = hostSpec.hostState.tagLinks;
-
-        if (validateHostConnection) {
-            validateConfigureOverSsh(state, op);
-        } else {
-            Operation
-                    .createPost(UriUtils.buildUri(getHost(),
-                            ConfigureHostOverSshTaskService.FACTORY_LINK))
-                    .setBody(state)
-                    .setCompletion((completedOp, failure) -> {
-                        if (failure != null) {
-                            op.fail(failure);
-                            return;
-                        }
-
-                        // Return the state to the requester for further tracking
-                        op.setBody(completedOp
-                                .getBody(ConfigureHostOverSshTaskServiceState.class));
-                        op.complete();
-                    }).sendWith(this);
         }
     }
 
@@ -376,18 +339,6 @@ public class ContainerHostService extends StatelessService {
                     ContainerHostUtil.CONTAINER_HOST_TYPE_NOT_SUPPORTED_MESSAGE_FORMAT, type),
                     ContainerHostUtil.CONTAINER_HOST_TYPE_NOT_SUPPORTED_MESSAGE_CODE, type);
         }
-    }
-
-    protected void validateConfigureOverSsh(ConfigureHostOverSshTaskServiceState state,
-            Operation op) {
-        ConfigureHostOverSshTaskService.validate(getHost(), state, (t) -> {
-            if (t != null) {
-                op.fail(t);
-                return;
-            }
-
-            completeOperationSuccess(op);
-        });
     }
 
     private void validateHostTypeAndConnection(ContainerHostSpec hostSpec, Operation op) {

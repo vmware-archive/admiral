@@ -2218,21 +2218,6 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
     }
 
     @Test
-    public void testConfigureHost() throws Throwable {
-        getOrCreateDocument(CommonTestStateFactory.createAuthCredentials(false),
-                AuthCredentialsService.FACTORY_LINK);
-        createResourcePool();
-
-        // 1. Request to configure host:
-        RequestBrokerState request = TestRequestStateFactory.createConfigureHostState();
-        host.log("########  Start of request ######## ");
-        request = startRequest(request);
-
-        // wait for request completed state:
-        request = waitForRequestToComplete(request);
-    }
-
-    @Test
     public void testRemoveHostRemoveItsContainers() throws Throwable {
         host.log("########  Start of testRemoveHostRemoveItsContainers ######## ");
 

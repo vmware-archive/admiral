@@ -49,8 +49,6 @@ import com.vmware.admiral.common.serialization.ReleaseConstants;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
-import com.vmware.admiral.compute.ConfigureHostOverSshTaskService;
-import com.vmware.admiral.compute.ConfigureHostOverSshTaskService.ConfigureHostOverSshTaskServiceState;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
@@ -186,7 +184,7 @@ public class RequestBrokerService extends
 
         if (isProvisionOperation(state) || isClusteringOperation(state)) {
             assertNotEmpty(state.resourceDescriptionLink, "resourceDescriptionLink");
-        } else if (!isConfigureHostOperation(state)) {
+        } else {
             assertNotEmpty(state.resourceLinks, "resourceLinks");
         }
 
@@ -194,7 +192,7 @@ public class RequestBrokerService extends
                 || isContainerVolumeType(state)
                 || isComputeType(state)
                 || isCompositeComponentType(state) || isClosureType(state)
-                || isConfigureHostType(state) || isContainerLoadBalancerType(state))) {
+                || isContainerLoadBalancerType(state))) {
             throw new LocalizableValidationException(
                     String.format("Only [ %s ] resource types are supported.",
                             ResourceType.getAllTypesAsString()),
@@ -240,8 +238,6 @@ public class RequestBrokerService extends
                 }
             } else if (isPostAllocationOperation(state)) {
                 createAllocationTasks(state);
-            } else if (isConfigureHostOperation(state)) {
-                createConfigureHostTask(state);
             } else {
                 createResourceOperation(state);
             }
@@ -1269,60 +1265,6 @@ public class RequestBrokerService extends
         sendRequest(post);
     }
 
-    private void createConfigureHostTask(RequestBrokerState state) {
-        ConfigureHostOverSshTaskServiceState configureState =
-                new ConfigureHostOverSshTaskServiceState();
-        // Full docker address formatted as http(s)://1.2.3.4:2376
-        String url = state.getCustomProperty(
-                ConfigureHostOverSshTaskService.CONFIGURE_HOST_ADDRESS_CUSTOM_PROP);
-        String[] splitted = url.split(":");
-
-        configureState.address = splitted[1].substring(2);
-        configureState.port = Integer.parseInt(splitted[2]);
-        configureState.authCredentialsLink = state
-                .getCustomProperty(
-                        ConfigureHostOverSshTaskService
-                                .CONFIGURE_HOST_AUTH_CREDENTIALS_LINK_CUSTOM_PROP);
-        configureState.placementZoneLink = state
-                .getCustomProperty(
-                        ConfigureHostOverSshTaskService
-                                .CONFIGURE_HOST_PLACEMENT_ZONE_LINK_CUSTOM_PROP);
-
-        boolean errorState = state.taskSubStage == SubStage.REQUEST_FAILED;
-        configureState.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
-                TaskStage.STARTED, errorState ? SubStage.ERROR : SubStage.ALLOCATED,
-                TaskStage.FAILED, SubStage.ERROR);
-
-        if (state.getCustomProperty(
-                ConfigureHostOverSshTaskService.CONFIGURE_HOST_TAG_LINKS_CUSTOM_PROP) != null) {
-            configureState.tagLinks = new HashSet<>(
-                    Arrays.asList(state
-                            .getCustomProperty(
-                                    ConfigureHostOverSshTaskService
-                                            .CONFIGURE_HOST_TAG_LINKS_CUSTOM_PROP)
-                            .split(" ")));
-        }
-
-        if (state.customProperties != null) {
-            configureState.customProperties = new HashMap<>(state.customProperties);
-        }
-
-        configureState.documentSelfLink = getSelfId();
-        configureState.requestTrackerLink = state.requestTrackerLink;
-        Operation post = Operation
-                .createPost(this, ConfigureHostOverSshTaskService.FACTORY_LINK)
-                .setBodyNoCloning(configureState)
-                .setContextId(getSelfId())
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        failTask("Failed to create host configuration task.", ex);
-                    }
-
-                    proceedTo(SubStage.ALLOCATING);
-                });
-        sendRequest(post);
-    }
-
     private boolean isProvisionOperation(RequestBrokerState state) {
         return RequestBrokerState.PROVISION_RESOURCE_OPERATION.equals(state.operation);
     }
@@ -1403,10 +1345,6 @@ public class RequestBrokerService extends
         return false;
     }
 
-    private boolean isConfigureHostOperation(RequestBrokerState state) {
-        return isConfigureHostType(state);
-    }
-
     private boolean isContainerType(RequestBrokerState state) {
         return ResourceType.CONTAINER_TYPE.getName().equals(state.resourceType);
     }
@@ -1442,10 +1380,6 @@ public class RequestBrokerService extends
 
     private boolean isClosureType(RequestBrokerState state) {
         return ResourceType.CLOSURE_TYPE.getName().equals(state.resourceType);
-    }
-
-    private boolean isConfigureHostType(RequestBrokerState state) {
-        return ResourceType.CONFIGURE_HOST_TYPE.getName().equals(state.resourceType);
     }
 
     private static final Map<ResourceType, List<String>> SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE;
@@ -1575,8 +1509,6 @@ public class RequestBrokerService extends
             } else if (isContainerVolumeType(state)) {
                 requestStatus.addTrackedTasks(ContainerVolumeProvisionTaskService.DISPLAY_NAME);
             }
-        } else if (isConfigureHostOperation(state)) {
-            requestStatus.addTrackedTasks(ConfigureHostOverSshTaskService.DISPLAY_NAME);
         } else {
             if (isRemoveOperation(state)) {
                 if (isContainerHostType(state)) {

@@ -13,9 +13,7 @@ package com.vmware.admiral.closures.drivers;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.logging.Logger;
 
 /**
  * Implementation of execution driver registry.
@@ -23,8 +21,8 @@ import org.slf4j.LoggerFactory;
  * <DriverRegistry, ExecutionDriver>
  */
 public final class DriverRegistryImpl implements DriverRegistry {
-
-    private static final Logger logger = LoggerFactory.getLogger(DriverRegistryImpl.class);
+    private static final Logger logger = Logger
+            .getLogger(DriverRegistryImpl.class.getName());
 
     private final String NODEJS_IMAGE_VERSION = "1.0";
     private final String NODEJS_BASE_IMAGE_VERSION = "1.0";

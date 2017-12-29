@@ -15,7 +15,6 @@ import com.vmware.admiral.closures.services.closure.Closure;
 import com.vmware.admiral.closures.services.closure.ClosureFactoryService;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescription;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptionFactoryService;
-import com.vmware.admiral.compute.ConfigureHostOverSshTaskService;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
 import com.vmware.admiral.compute.ElasticPlacementZoneService;
@@ -80,8 +79,6 @@ import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerServic
 import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerService.ReplicationControllerState;
 import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler;
 import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler.ServiceState;
-import com.vmware.admiral.service.test.MockConfigureHostOverSshTaskServiceWithoutValidate;
-import com.vmware.admiral.service.test.MockContainerHostService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -138,13 +135,7 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 ServiceEntityHandler.class,
                 ReplicaSetService.class);
 
-        if (startMockContainerHostService) {
-            startServices(host, MockContainerHostService.class);
-            startServiceFactories(host, MockConfigureHostOverSshTaskServiceWithoutValidate.class);
-        } else {
-            startServices(host, ContainerHostService.class);
-            startServiceFactories(host, ConfigureHostOverSshTaskService.class);
-        }
+        startServices(host, ContainerHostService.class);
 
         // start initialization of system documents
         host.sendRequest(Operation.createPost(

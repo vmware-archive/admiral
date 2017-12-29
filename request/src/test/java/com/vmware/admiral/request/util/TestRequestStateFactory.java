@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
 import com.vmware.admiral.adapter.docker.util.DockerPortMapping;
 import com.vmware.admiral.common.test.CommonTestStateFactory;
 import com.vmware.admiral.compute.ComputeConstants;
-import com.vmware.admiral.compute.ConfigureHostOverSshTaskService;
 import com.vmware.admiral.compute.ContainerHostUtil;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
@@ -270,21 +269,6 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
 
     public static RequestBrokerState createComputeRequestState() {
         return createRequestState(ResourceType.COMPUTE_TYPE.getName(), COMPUTE_DESC_ID);
-    }
-
-    public static RequestBrokerState createConfigureHostState() {
-        HashMap<String, String> customProperties = new HashMap<>();
-        customProperties.put(ConfigureHostOverSshTaskService.CONFIGURE_HOST_ADDRESS_CUSTOM_PROP,
-                "https://127.0.0.1:2376");
-        customProperties.put(
-                ConfigureHostOverSshTaskService.CONFIGURE_HOST_AUTH_CREDENTIALS_LINK_CUSTOM_PROP,
-                AuthCredentialsService.FACTORY_LINK + "/"
-                        + CommonTestStateFactory.AUTH_CREDENTIALS_ID);
-        customProperties.put(
-                ConfigureHostOverSshTaskService.CONFIGURE_HOST_PLACEMENT_ZONE_LINK_CUSTOM_PROP,
-                ResourcePoolService.FACTORY_LINK + "/" + RESOURCE_POOL_ID);
-        return createRequestState(ResourceType.CONFIGURE_HOST_TYPE.getName(), null,
-                RequestBrokerState.CONFIGURE_HOST_OPERATION, customProperties);
     }
 
     public static RequestBrokerState createRequestState(String resourceType,
