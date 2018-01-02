@@ -643,14 +643,19 @@ var ContainersViewVueComponent = Vue.extend({
 
       if (fromViewName === 'container-details' || isFromAppDetails) {
         let queryOptions = this.queryOptions;
+        if (this.model.selectedItemDetails.templateLink) {
+          var compositeLink = this.model.selectedItemDetails.instance.compositeComponentLink;
+          var compositeId = compositeLink.substring(compositeLink.lastIndexOf('/') + 1);
+          NavigationActions.openCompositeContainerDetails(compositeId);
+        } else {
+          if (isFromAppDetails && !queryOptions) {
+            queryOptions = {
+              $category: constants.CONTAINERS.SEARCH_CATEGORY.APPLICATIONS
+            };
+          }
 
-        if (isFromAppDetails && !queryOptions) {
-          queryOptions = {
-            $category: constants.CONTAINERS.SEARCH_CATEGORY.APPLICATIONS
-          };
+          NavigationActions.openContainers(queryOptions, true);
         }
-
-        NavigationActions.openContainers(queryOptions, true);
       }
     }
   },
