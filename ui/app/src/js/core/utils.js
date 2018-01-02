@@ -1445,7 +1445,17 @@ var utils = {
   actionAllowed() {
     return window.isAccessAllowed(window.authSession, null,
         window.routesRestrictions.REQUESTS_DELETE);
+  },
+
+  isContainersTabOpened() {
+    if (!this.isApplicationEmbedded()) {
+      return true;
+    }
+
+    return window.frameElement.topLocation &&
+        window.frameElement.topLocation.startsWith('#/home/');
   }
+
 };
 
 var defaultServiceUrl = function(path) {

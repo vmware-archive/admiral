@@ -27,7 +27,7 @@ export class FormerViewComponent {
   private url: string;
   private frameLoading = false;
 
-  @ViewChild('theFrame') theFrame;
+  @ViewChild('admiralContentFrame') admiralContentFrame;
 
   @Input()
   forCompute: boolean;
@@ -56,7 +56,7 @@ export class FormerViewComponent {
       return;
     }
 
-    let iframeEl = this.theFrame.nativeElement;
+    let iframeEl = this.admiralContentFrame.nativeElement;
     if (!iframeEl.src) {
       this.frameLoading = true;
 

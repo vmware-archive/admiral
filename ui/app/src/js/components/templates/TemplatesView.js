@@ -182,7 +182,7 @@ var TemplatesViewVueComponent = Vue.extend({
     }, constants.REQUESTS.REFRESH_INTERVAL);
 
     this.notificationsInterval = setInterval(() => {
-      if (!this.contextExpanded && !this.model.registries) {
+      if (!this.contextExpanded && !this.model.registries && utils.isContainersTabOpened()) {
         NotificationsActions.retrieveNotifications();
       }
     }, constants.NOTIFICATIONS.REFRESH_INTERVAL);

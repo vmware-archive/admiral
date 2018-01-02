@@ -107,7 +107,7 @@ var HostsViewVueComponent = Vue.extend({
     }, constants.REQUESTS.REFRESH_INTERVAL);
 
     this.notificationsInterval = setInterval(() => {
-      if (!this.contextExpanded) {
+      if (!this.contextExpanded && utils.isContainersTabOpened()) {
         NotificationsActions.retrieveNotifications();
       }
     }, constants.NOTIFICATIONS.REFRESH_INTERVAL);
