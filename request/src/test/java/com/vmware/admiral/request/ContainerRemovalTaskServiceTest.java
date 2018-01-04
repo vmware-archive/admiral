@@ -22,6 +22,7 @@ import static com.vmware.admiral.common.ManagementUriParts.CLOSURES_CONTAINER_DE
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -47,8 +48,11 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState.Powe
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.container.HostPortProfileService;
+import com.vmware.admiral.compute.container.SystemContainerDescriptions;
+import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState;
 import com.vmware.admiral.request.ContainerRemovalTaskService.ContainerRemovalTaskState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
+import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSelection;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
@@ -88,6 +92,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
                 request.resourceLinks);
 
         assertEquals(request.resourceCount, containerStateLinks.size());
+
         // verify the placements has been reserved:
         GroupResourcePlacementState groupResourcePlacement = getDocument(
                 GroupResourcePlacementState.class,
@@ -100,7 +105,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
                     computeHost.documentSelfLink);
             String containers = computeState.customProperties == null ? null
                     : computeState.customProperties
-                    .get(ContainerHostService.NUMBER_OF_CONTAINERS_PER_HOST_PROP_NAME);
+                            .get(ContainerHostService.NUMBER_OF_CONTAINERS_PER_HOST_PROP_NAME);
             return "2".equals(containers);
         });
 
@@ -122,6 +127,8 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         // verify the resources have been removed:
         containerStateLinks = findResourceLinks(ContainerState.class, request.resourceLinks);
         assertTrue(containerStateLinks.isEmpty());
+
+        assertDescriptionGetsDeleted(request.resourceDescriptionLink);
 
         // verified the placements have been released:
         groupResourcePlacement = getDocument(GroupResourcePlacementState.class,
@@ -145,7 +152,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
                     computeHost.documentSelfLink);
             String containers = computeState.customProperties == null ? null
                     : computeState.customProperties
-                    .get(ContainerHostService.NUMBER_OF_CONTAINERS_PER_HOST_PROP_NAME);
+                            .get(ContainerHostService.NUMBER_OF_CONTAINERS_PER_HOST_PROP_NAME);
             host.log("Container count waiting for 0 is currently: %s", containers);
             return "0".equals(containers);
         });
@@ -200,6 +207,8 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         // verify the resources have been removed:
         containerStateLinks = findResourceLinks(ContainerState.class, request.resourceLinks);
         assertTrue(containerStateLinks.isEmpty());
+
+        assertDescriptionGetsDeleted(request.resourceDescriptionLink);
 
         // verified the placements have been released:
         groupResourcePlacement = getDocument(GroupResourcePlacementState.class,
@@ -269,6 +278,10 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         containerStateLinks = findResourceLinks(ContainerState.class, containerStateLinks);
         assertTrue(containerStateLinks.isEmpty());
 
+        assertDescriptionGetsDeleted(container1.descriptionLink);
+        assertDescriptionGetsDeleted(container2.descriptionLink);
+        assertDescriptionGetsDeleted(container3.descriptionLink);
+
         // verify the CompositeComponent has been removed since all containers part of the
         // composition are removed.
         List<String> compositionComponentLinks = new ArrayList<>(1);
@@ -305,7 +318,82 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         // verify the system container have not been removed:
         containerStateLinks = findResourceLinks(ContainerState.class, containerStateLinks);
         assertTrue("System container should not be removed.", !containerStateLinks.isEmpty());
+    }
 
+    @Test
+    public void testAgentContainerRemoveOperation() throws Throwable {
+
+        // verify the agent container description
+        ContainerDescription agentContainerDesc = getDocument(ContainerDescription.class,
+                SystemContainerDescriptions.AGENT_CONTAINER_DESCRIPTION_LINK);
+        assertNotNull(agentContainerDesc);
+
+        // setup host & provision the agent container
+        ComputeState dockerHost = createDockerHost(createDockerHostDescription(),
+                createResourcePool(), true);
+
+        ContainerAllocationTaskState allocationTask = new ContainerAllocationTaskState();
+        allocationTask.resourceDescriptionLink = agentContainerDesc.documentSelfLink;
+        allocationTask.groupResourcePlacementLink = groupPlacementState.documentSelfLink;
+        allocationTask.resourceType = ResourceType.CONTAINER_TYPE.getName();
+        allocationTask.resourceCount = 1L;
+        allocationTask.serviceTaskCallback = ServiceTaskCallback.createEmpty();
+        allocationTask.customProperties = new HashMap<>();
+        allocationTask.resourceNames = new HashSet<>(
+                Arrays.asList(SystemContainerDescriptions.AGENT_CONTAINER_NAME));
+
+        HostSelection hostSelection = new HostSelection();
+        hostSelection.resourceCount = 1;
+        hostSelection.hostLink = dockerHost.documentSelfLink;
+        hostSelection.resourcePoolLinks = new ArrayList<>(
+                Arrays.asList(dockerHost.resourcePoolLink));
+
+        allocationTask.hostSelections = new ArrayList<>(Arrays.asList(hostSelection));
+
+        allocationTask = doPost(allocationTask, ContainerAllocationTaskFactoryService.SELF_LINK);
+        assertNotNull(allocationTask);
+
+        allocationTask = waitForTaskSuccess(allocationTask.documentSelfLink,
+                ContainerAllocationTaskState.class);
+        assertNotNull(allocationTask.resourceLinks);
+        assertEquals(1, allocationTask.resourceLinks.size());
+
+        // verify the agent container state
+        ContainerState containerState = getDocument(ContainerState.class,
+                allocationTask.resourceLinks.iterator().next());
+        assertEquals(SystemContainerDescriptions.AGENT_CONTAINER_NAME,
+                containerState.names.get(0));
+        assertTrue(containerState.documentSelfLink
+                .contains(SystemContainerDescriptions.AGENT_CONTAINER_NAME));
+
+        assertEquals(agentContainerDesc.image, containerState.image);
+        assertEquals(agentContainerDesc.documentSelfLink, containerState.descriptionLink);
+        assertEquals(agentContainerDesc.instanceAdapterReference.getPath(),
+                containerState.adapterManagementReference.getPath());
+
+        waitForContainerPowerState(PowerState.RUNNING, containerState.documentSelfLink);
+
+        // delete the agent container
+        List<String> containerStateLinks = new ArrayList<>(1);
+        containerStateLinks.add(containerState.documentSelfLink);
+
+        RequestBrokerState removalRequest = new RequestBrokerState();
+        removalRequest.documentSelfLink = extractId(containerState.documentSelfLink) + "-removal";
+        removalRequest.resourceType = request.resourceType;
+        removalRequest.resourceLinks = new HashSet<>(containerStateLinks);
+        removalRequest.operation = ContainerOperationType.DELETE.id;
+
+        removalRequest = startRequest(removalRequest);
+        waitForRequestToComplete(removalRequest);
+
+        // verify the agent container state has been removed
+        containerStateLinks = findResourceLinks(ContainerState.class, containerStateLinks);
+        assertTrue("Agent container should be removed.", containerStateLinks.isEmpty());
+
+        // verify the agent container description has NOT been removed
+        agentContainerDesc = getDocument(ContainerDescription.class,
+                SystemContainerDescriptions.AGENT_CONTAINER_DESCRIPTION_LINK);
+        assertNotNull(agentContainerDesc);
     }
 
     @Test
@@ -329,6 +417,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         container.groupResourcePlacementLink = groupPlacementState.documentSelfLink;
         container.system = Boolean.FALSE;
         container = doPost(container, ContainerFactoryService.SELF_LINK);
+        assertNotNull(container);
 
         Set<String> containerStateLinks = new HashSet<>(1);
         containerStateLinks.add(container.documentSelfLink);
@@ -336,12 +425,18 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         // the container is removed.
         delete(container.documentSelfLink);
 
+        container = searchForDocument(ContainerState.class, container.documentSelfLink);
+        assertNull(container);
+
+        assertDescriptionGetsDeleted(containerDesc.documentSelfLink);
+
         // try to remove the container from ContainerRemovalTaskState
         ContainerRemovalTaskState containerRemovalTask = new ContainerRemovalTaskState();
         containerRemovalTask.taskSubStage = ContainerRemovalTaskState.SubStage.INSTANCES_REMOVED;
         containerRemovalTask.resourceLinks = containerStateLinks;
         containerRemovalTask.removeOnly = true;
-        containerRemovalTask.serviceTaskCallback = ServiceTaskCallback.create(serviceTaskCallbackLink,
+        containerRemovalTask.serviceTaskCallback = ServiceTaskCallback.create(
+                serviceTaskCallbackLink,
                 TaskState.TaskStage.STARTED,
                 ContainerHostRemovalTaskService.ContainerHostRemovalTaskState.SubStage.REMOVED_CONTAINERS,
                 TaskState.TaskStage.STARTED,
@@ -362,8 +457,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         assertNotNull(ulimitedPlacementState);
 
         ContainerState container = TestRequestStateFactory.createContainer();
-        container.descriptionLink =
-                CLOSURES_CONTAINER_DESC + "-" + UUID.randomUUID().toString();
+        container.descriptionLink = CLOSURES_CONTAINER_DESC + "-" + UUID.randomUUID().toString();
         container.adapterManagementReference = containerDesc.instanceAdapterReference;
         container.groupResourcePlacementLink = ulimitedPlacementState.documentSelfLink;
         container.system = Boolean.FALSE;
@@ -380,6 +474,8 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
 
         containerRemovalTask = startRequest(containerRemovalTask);
         waitForRequestToComplete(containerRemovalTask);
+
+        assertDescriptionGetsDeleted(container.descriptionLink);
     }
 
     @Test
@@ -404,6 +500,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
 
         List<String> containerLinks = cc.componentLinks;
         ContainerState container1 = getDocument(ContainerState.class, containerLinks.get(0));
+        ContainerState container2 = getDocument(ContainerState.class, containerLinks.get(1));
         CompositeComponent compositeComp = getDocument(CompositeComponent.class,
                 container1.compositeComponentLink);
         assertNotNull(compositeComp);
@@ -420,10 +517,13 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
 
         waitForRequestToComplete(request);
 
+        assertDescriptionGetsDeleted(container1.descriptionLink);
+        assertDescriptionGetsDeleted(container2.descriptionLink);
+
         container1 = searchForDocument(ContainerState.class, containerLinks.get(0));
         assertNull(container1);
 
-        ContainerState container2 = searchForDocument(ContainerState.class, containerLinks.get(1));
+        container2 = searchForDocument(ContainerState.class, containerLinks.get(1));
         assertNull(container2);
 
         compositeComp = searchForDocument(CompositeComponent.class, compositeComp.documentSelfLink);
@@ -470,13 +570,8 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
 
         waitForRequestToComplete(request);
 
-        ContainerDescription createdDesc1 = searchForDocument(ContainerDescription.class,
-                container1.descriptionLink);
-        assertNotNull(createdDesc1);
-
-        ContainerDescription createdDesc2 = searchForDocument(ContainerDescription.class,
-                container2.descriptionLink);
-        assertNotNull(createdDesc2);
+        assertDescriptionGetsDeleted(container1.descriptionLink);
+        assertDescriptionGetsDeleted(container2.descriptionLink);
 
         container1 = searchForDocument(ContainerState.class, containerLinks.get(0));
         assertNull(container1);
@@ -535,13 +630,8 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
 
         waitForRequestToComplete(request);
 
-        ContainerDescription createdDesc1 = searchForDocument(ContainerDescription.class,
-                container1.descriptionLink);
-        assertNull(createdDesc1);
-
-        ContainerDescription createdDesc2 = searchForDocument(ContainerDescription.class,
-                container2.descriptionLink);
-        assertNull(createdDesc2);
+        assertDescriptionGetsDeleted(container1.descriptionLink);
+        assertDescriptionGetsDeleted(container2.descriptionLink);
 
         container1 = searchForDocument(ContainerState.class, containerLinks.get(0));
         assertNull(container1);
@@ -557,7 +647,8 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
     }
 
     /**
-     * When multiple containers share the same container description, removing one of them should not delete the description.
+     * When multiple containers share the same container description, removing one of them should
+     * not delete the description.
      * The description should be deleted only when all containers, deployed from it get deleted.
      */
     @Test
@@ -605,13 +696,13 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         request = startRequest(request);
         waitForRequestToComplete(request);
 
-        createdDesc = searchForDocument(ContainerDescription.class, container1.descriptionLink);
-        assertNull(createdDesc);
+        assertDescriptionGetsDeleted(container1.descriptionLink);
     }
 
     /**
-     * When multiple containers share the same container description, removing one of them should not delete the description.
-     * The description should be deleted only when all containers, deployed from it get deleted.
+     * When multiple containers share the same container description, removing one of them should
+     * not delete the description.
+     * The description should be deleted only when all containers, deployed from it, get deleted.
      */
     @Test
     public void testRemoveContainerSharingContainerDescription() throws Throwable {
@@ -657,8 +748,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
 
         waitForRequestToComplete(request);
 
-        createdDesc = searchForDocument(ContainerDescription.class, desc.documentSelfLink);
-        assertNotNull(createdDesc);
+        assertDescriptionGetsDeleted(desc.documentSelfLink);
     }
 
     /**
@@ -710,13 +800,9 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
 
         waitForRequestToComplete(request);
 
-        ContainerDescription createdDesc1 = searchForDocument(ContainerDescription.class,
-                container1.descriptionLink);
-        assertNull(createdDesc1);
-
-        ContainerDescription createdDesc2 = searchForDocument(ContainerDescription.class,
-                container2.descriptionLink);
-        assertNull(createdDesc2);
+        assertDescriptionGetsDeleted(container1.descriptionLink);
+        assertDescriptionGetsDeleted(container2.descriptionLink);
+        assertDescriptionGetsDeleted(container3.descriptionLink);
 
         container1 = searchForDocument(ContainerState.class, containerLinks.get(0));
         assertNull(container1);
@@ -782,4 +868,21 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         container = doPost(container, ContainerFactoryService.SELF_LINK);
         return container;
     }
+
+    private void assertDescriptionGetsDeleted(String descriptionLink) throws Throwable {
+        boolean isNull = false;
+        int retries = 5;
+
+        while (!isNull && retries-- > 0) {
+            ContainerDescription description = getDocumentNoWait(ContainerDescription.class,
+                    descriptionLink);
+            isNull = (description == null);
+            if (!isNull) {
+                Thread.sleep(1000);
+            }
+        }
+
+        assertTrue("Provided description should be null!", isNull);
+    }
+
 }

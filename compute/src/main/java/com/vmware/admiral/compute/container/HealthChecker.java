@@ -208,6 +208,13 @@ public class HealthChecker {
     private void processContainerHealth(ServiceHost host,
             ContainerDescription containerDescription) {
 
+        if (containerDescription.healthConfig == null
+                || containerDescription.healthConfig.protocol == null) {
+            host.log(Level.FINE, "Container's health config not set for: %s",
+                    containerDescription.documentSelfLink);
+            return;
+        }
+
         QueryTask compositeQueryTask = QueryUtil.buildQuery(ContainerState.class, true);
 
         QueryUtil.addExpandOption(compositeQueryTask);
@@ -219,12 +226,12 @@ public class HealthChecker {
                 ContainerState.FIELD_NAME_DESCRIPTION_LINK,
                 Arrays.asList(containerDescriptionLink));
 
-        new ServiceDocumentQuery<ContainerState>(host, ContainerState.class)
+        new ServiceDocumentQuery<>(host, ContainerState.class)
                 .query(compositeQueryTask, (r) -> {
                     if (r.hasException()) {
                         host.log(Level.SEVERE,
-                                "Failed to retrieve container's health config: %s - %s",
-                                r.getDocumentSelfLink(), r.getException());
+                                "Failed to retrieve child containers for: %s - %s",
+                                containerDescriptionLink, r.getException());
                     } else if (r.hasResult()) {
                         doHealthCheckRequest(host, r.getResult(), containerDescription.healthConfig,
                                 null);

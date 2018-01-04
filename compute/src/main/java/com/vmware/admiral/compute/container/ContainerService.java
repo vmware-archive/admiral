@@ -13,6 +13,7 @@ package com.vmware.admiral.compute.container;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -23,9 +24,13 @@ import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
+import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.serialization.ReleaseConstants;
 import com.vmware.admiral.common.util.PropertyUtils;
+import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.Composable;
+import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.compute.container.maintenance.ContainerHealthEvaluator;
 import com.vmware.admiral.compute.container.maintenance.ContainerStats;
@@ -34,6 +39,7 @@ import com.vmware.admiral.compute.content.EnvDeserializer;
 import com.vmware.admiral.compute.content.EnvSerializer;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
@@ -41,6 +47,7 @@ import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.QueryTask;
 
 /**
  * Describes a container instance. The same description service instance can be re-used across many
@@ -238,9 +245,11 @@ public class ContainerService extends StatefulService {
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public Boolean system;
 
-        /** Mark a container service that the container it represents
+        /**
+         * Mark a container service that the container it represents
          * is deleted intentionally from admiral. This eliminates some
-         * race condition bugs.*/
+         * race condition bugs.
+         */
         @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
         @Documentation(description = "Is the docker container deleted by Admiral.")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
@@ -347,7 +356,69 @@ public class ContainerService extends StatefulService {
 
     @Override
     public void handleDelete(Operation delete) {
+        ContainerState currentState = getState(delete);
         super.handleDelete(delete);
+
+        // do no delete THE agent container description
+        if ((currentState.descriptionLink == null)
+                || (SystemContainerDescriptions.AGENT_CONTAINER_DESCRIPTION_LINK
+                        .equals(currentState.descriptionLink))) {
+            return;
+        }
+
+        QueryTask queryTask = QueryUtil.buildQuery(ContainerState.class, true);
+
+        QueryUtil.addCountOption(queryTask);
+
+        // any child state of the same parent description
+        String containerDescriptionLink = UriUtils.buildUriPath(
+                ManagementUriParts.CONTAINER_DESC,
+                Service.getId(currentState.descriptionLink));
+        QueryUtil.addListValueClause(queryTask,
+                ContainerState.FIELD_NAME_DESCRIPTION_LINK,
+                Arrays.asList(containerDescriptionLink));
+
+        // excluding myself (in case the query gets completed before the deletion)
+        QueryUtil.addListValueExcludeClause(queryTask,
+                ContainerState.FIELD_NAME_SELF_LINK,
+                Arrays.asList(currentState.documentSelfLink));
+
+        new ServiceDocumentQuery<>(getHost(), ContainerState.class)
+                .query(queryTask, (r) -> {
+                    if (r.hasException()) {
+                        logSevere("Failed to retrieve child containers for: %s - %s",
+                                containerDescriptionLink, r.getException());
+                    } else if (r.hasResult() && r.getCount() != 0) {
+                        logFine("Child containers for: %s = %s",
+                                containerDescriptionLink, r.getCount());
+                    } else {
+                        logInfo("No other child containers found for: %s",
+                                containerDescriptionLink);
+                        handleNoOtherContainerStatesFound(containerDescriptionLink);
+                    }
+                });
+    }
+
+    private void handleNoOtherContainerStatesFound(String containerDescriptionLink) {
+        sendRequest(Operation.createGet(this, containerDescriptionLink)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        logSevere("Failed to retrieve parent container description for: %s - %s",
+                                containerDescriptionLink, e);
+                        return;
+                    }
+
+                    ContainerDescription cd = o.getBody(ContainerDescription.class);
+
+                    // do no delete the description if it has autoredeploy
+                    if ((cd != null) && (cd.healthConfig != null)
+                            && Boolean.TRUE.equals(cd.healthConfig.autoredeploy)) {
+                        return;
+                    }
+
+                    // delete the no longer used description
+                    sendRequest(Operation.createDelete(this, containerDescriptionLink));
+                }));
     }
 
     private void patchContainerStats(Operation patch, ContainerState currentState) {
