@@ -389,6 +389,8 @@ var TemplatesViewVueComponent = Vue.extend({
     },
 
     goBack: function() {
+      this.alertClosed();
+
       if (this.model.selectedItemDetails
           && this.model.selectedItemDetails.origin === 'applications') {
         return this.backToApplications();
