@@ -436,6 +436,11 @@ var TemplatesViewVueComponent = Vue.extend({
       $event.preventDefault();
       $event.stopPropagation();
 
+      if (!this.createTemplateName || this.createTemplateName.length === 0) {
+        this.showErrorAlert(i18n.t('app.template.details.errorEmptyName'));
+        return;
+      }
+
       TemplateActions.createNewTemplate(this.createTemplateName);
     },
 
@@ -456,6 +461,13 @@ var TemplatesViewVueComponent = Vue.extend({
     alertType: function(alert) {
       return alert && alert.type;
     },
+
+    showErrorAlert: function(alertMessage) {
+      this.alert.show = true;
+      this.alert.message = alertMessage;
+      this.alert.type = constants.ALERTS.TYPE.FAIL;
+    },
+
     alertClosed: function() {
       this.alert.show = false;
       this.alert.message = '';

@@ -2170,12 +2170,25 @@ let TemplatesStore = Reflux.createStore({
   },
 
   onCreateNewTemplate: function(templateName) {
+    this.setInData(['isCreatingNewTemplate'], true);
+
     services.createNewContainerTemplate(templateName).then((template) => {
       var documentId = utils.getDocumentId(template.documentSelfLink);
 
+      this.setInData(['isCreatingNewTemplate'], false);
+      this.emitChange();
+
       actions.NavigationActions.openTemplateDetails(constants.TEMPLATES.TYPES.TEMPLATE,
-        documentId);
-    }).catch(this.onGenericCreateError);
+                                                    documentId);
+    }).catch((e) => {
+      this.setInData(['isCreatingNewTemplate'], false);
+      this.emitChange();
+
+      this.onGenericCreateError(e);
+    });
+
+
+    this.emitChange();
   },
 
   onRemoveTemplate: function(templateId) {

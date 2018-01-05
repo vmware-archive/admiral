@@ -1045,11 +1045,21 @@ let ContainersStore = Reflux.createStore({
   onCreateNetwork: function(networkDescription, hostIds) {
     // clear error
     this.setInData(['creatingResource', 'error', '_generic'], null);
-    this.emitChange();
+    this.setInData(['creatingResource', 'isCreateNewNetwork'], true);
 
     services.createNetwork(networkDescription, hostIds).then((request) => {
+      this.setInData(['creatingResource', 'isCreateNewNetwork'], false);
+      this.emitChange();
+
       this.navigateContainersListViewAndOpenRequests(request);
-    }).catch(this.onGenericCreateError);
+    }).catch((e) => {
+      this.setInData(['creatingResource', 'isCreateNewNetwork'], false);
+      this.emitChange();
+
+      this.onGenericCreateError(e);
+    });
+
+    this.emitChange();
   },
 
   onCreateClosure: function(closureDescription) {
@@ -1059,11 +1069,23 @@ let ContainersStore = Reflux.createStore({
   },
 
   onCreateVolume: function(volumeDescription, hostIds) {
+    this.setInData(['creatingResource', 'isCreateNewVolume'], true);
+
     services.createVolume(volumeDescription, hostIds).then((request) => {
+      this.setInData(['creatingResource', 'isCreateNewVolume'], false);
+      this.emitChange();
+
       // show volumes view and open requests panel
       this.navigateContainersListViewAndOpenRequests(request);
 
-    }).catch(this.onGenericCreateError);
+    }).catch((e) => {
+      this.setInData(['creatingResource', 'isCreateNewVolume'], false);
+      this.emitChange();
+
+      this.onGenericCreateError(e);
+    });
+
+    this.emitChange();
   },
 
   onCreateKubernetesEntities: function(entitiesContent) {

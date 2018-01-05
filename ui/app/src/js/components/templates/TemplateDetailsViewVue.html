@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+  ~ Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
   ~
   ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
   ~ You may not use this product except in compliance with the License.
@@ -16,88 +16,93 @@
         <div class="title truncateText">{{i18n('app.template.details.edit')}}
           <div class="template-name-content">
             <template v-if="!editingTemplateName">
-              <span class="template-name" v-on:click="editTemplateName($event)">{{model.templateDetails.name}}</span>
+              <span class="template-name" @click="editTemplateName($event)">{{model.templateDetails.name}}</span>
             </template>
             <template v-else>
               <input id="templateNameInput" class="form-control template-name-input"
                      name="templateNameInput" type="text" :value="model.templateDetails.name"
-                     v-on:keyup.enter="saveTemplateName($event)"
-                     v-on:keyup.esc="cancelEditTemplateName($event)"/>
+                     @keyup.enter="saveTemplateName($event)"
+                     @keyup.esc="cancelEditTemplateName($event)"/>
               <a href="#" class="btn btn-circle"
-                 v-on:click="saveTemplateName($event)"><i class="fa fa-check"></i></a>
+                 @click="saveTemplateName($event)"><i class="fa fa-check"></i></a>
               <a href="#" class="btn btn-circle"
-                 v-on:click="cancelEditTemplateName($event)"><i class="fa fa-times"></i></a>
+                 @click="cancelEditTemplateName($event)"><i class="fa fa-times"></i></a>
             </template>
           </div>
         </div>
         <div class="editBtnHolder" v-if="!editingTemplateName">
-          <a href="#" class="btn btn-link editBtn" v-on:click="editTemplateName($event)"><i class="fa fa-pencil"></i></a>
+          <a href="#" class="btn btn-link editBtn" @click="editTemplateName($event)"><i class="fa fa-pencil"></i></a>
         </div>
         <div class="toolbar-actions">
           <template v-if="confirmationOperation">
             <div class="progress-holder">
-              <action-confirmation v-bind:action-name="confirmationOperation"
-                                   v-bind:action-title="i18n('app.template.actions.remove')"></action-confirmation>
+              <action-confirmation :action-name="confirmationOperation"
+                                   :action-title="i18n('app.template.actions.remove')"></action-confirmation>
             </div>
           </template>
           <template v-else>
             <toolbar-action-button id="provision" icon-name="send"
-                                   v-bind:label="i18n('app.template.actions.provision')"
-                                   v-bind:supported="operationSupported('PROVISION')"
-                                   v-on:click="provision($event)"></toolbar-action-button>
+                                   :label="i18n('app.template.actions.provision')"
+                                   :supported="operationSupported('PROVISION')"
+                                   @click="provision($event)"></toolbar-action-button>
             <toolbar-action-button id="publish" icon-name="book"
-                                   v-bind:label="i18n('app.template.actions.publish')"
-                                   v-bind:supported="operationSupported('PUBLISH')"
-                                   v-on:click="publishTemplate($event)"></toolbar-action-button>
+                                   :label="i18n('app.template.actions.publish')"
+                                   :supported="operationSupported('PUBLISH')"
+                                   @click="publishTemplate($event)"></toolbar-action-button>
             <toolbar-action-button id="export" icon-name="download"
-                                   v-bind:label="i18n('app.template.actions.export')"
-                                   v-bind:supported="operationSupported('EXPORT')"
-                                   v-on:click="exportTemplate($event)"></toolbar-action-button>
+                                   :label="i18n('app.template.actions.export')"
+                                   :supported="operationSupported('EXPORT')"
+                                   @click="exportTemplate($event)"></toolbar-action-button>
             <toolbar-action-button id="remove" icon-name="trash"
-                                   v-bind:label="i18n('app.template.actions.remove')"
-                                   v-on:click="askConfirmation($event, 'removeTemplate')"
+                                   :label="i18n('app.template.actions.remove')"
+                                   @click="askConfirmation($event, 'removeTemplate')"
                                     ></toolbar-action-button>
           </template>
         </div>
       </div>
       <div class="grid-container">
-        <grid sort-by-dom-index="true" v-bind:preferred-width="preferredGridWidth"
-              v-on:layout-complete="layoutComplete" v-ref:container-grid
-              v-bind:hide-partial-rows="false">
+        <grid sort-by-dom-index="true" :preferred-width="preferredGridWidth"
+              @layout-complete="layoutComplete" v-ref:container-grid
+              :hide-partial-rows="false">
           <grid-item v-for="item in items" track-by="documentId">
-            <container-template-item v-bind:model="item"
-                                     v-bind:template-id="model.documentId"
-                                     v-on:attached="containerAttached"
-                                     v-bind:number-of-networks="networks.length">
+            <container-template-item :model="item"
+                                     :template-id="model.documentId"
+                                     @attached="containerAttached"
+                                     :number-of-networks="networks.length">
             </container-template-item>
           </grid-item>
           <grid-item v-for="item in model.templateDetails.listView.closures" track-by="documentSelfLink">
-            <closure-template-item v-bind:model="item" v-bind:template-id="model.documentId">
+            <closure-template-item :model="item" :template-id="model.documentId">
             </closure-template-item>
           </grid-item>
           <grid-item v-for="item in kubernetes" track-by="documentSelfLink">
-            <kubernetes-template-item v-bind:model="item" v-bind:template-id="model.documentId">
+            <kubernetes-template-item :model="item" :template-id="model.documentId">
             </kubernetes-template-item>
           </grid-item>
           <grid-item class="new-item">
             <template-new-item-menu>
-              <div class="new-definition template-new-item" :disabled="templateHasKubernetesEntities ? 'disabled' : false" v-on:click="openAddNewContainerDefinition">
+              <div class="new-definition template-new-item" :disabled="templateHasKubernetesEntities ? 'disabled' : false"
+                   @click="openAddNewContainerDefinition">
                 <img src="image-assets/resource-icons/container.png"/>
                 <span class="label">{{i18n("app.template.details.newDefinition.newLabel")}}</span>
               </div>
-              <div class="template-new-item" :disabled="templateHasKubernetesEntities ? 'disabled' : false" v-on:click="openAddNewNetwork">
+              <div class="template-new-item" :disabled="templateHasKubernetesEntities ? 'disabled' : false"
+                   @click="openAddNewNetwork">
                 <img src="image-assets/resource-icons/network.png"/>
                 <span class="label">{{i18n("app.template.details.editNetwork.newLabel")}}</span>
               </div>
-              <div v-if="areClosuresAllowed" :disabled="templateHasKubernetesEntities ? 'disabled' : false" class="template-new-item" v-on:click="openAddNewClosure">
+              <div v-if="areClosuresAllowed" :disabled="templateHasKubernetesEntities ? 'disabled' : false" class="template-new-item"
+                   @click="openAddNewClosure">
                 <img src="image-assets/resource-icons/task.png"/>
                 <span class='label'>{{i18n('app.template.details.editClosures.newTitle')}}</span>
               </div>
-              <div class="template-new-item" v-on:click="openAddNewVolume" :disabled="templateHasKubernetesEntities ? 'disabled' : false">
+              <div class="template-new-item" :disabled="templateHasKubernetesEntities ? 'disabled' : false"
+                   @click="openAddNewVolume">
                 <img src="image-assets/resource-icons/volume.png"/>
                 <span class="label">{{i18n("app.template.details.editVolume.newLabel")}}</span>
               </div>
-              <div v-if="isKubernetesEnabled" class="template-new-item" :disabled="templateHasGenericEntities ? 'disabled' : false" v-on:click="openAddNewKubernetes">
+              <div v-if="isKubernetesEnabled" class="template-new-item" :disabled="templateHasGenericEntities ? 'disabled' : false"
+                   @click="openAddNewKubernetes">
                 <img src="image-assets/resource-icons/kubernetes.png"/>
                 <span class='label'>{{i18n('app.template.details.editKubernetes.newTitle')}}</span>
               </div>
@@ -113,18 +118,18 @@
         <network-box v-for="network in networks | networksOrderBy" track-by="documentSelfLink"
                      :model="network"
                      mode="create"
-                     v-on:attached="networkAttached"
-                     v-on:detached="networkDetached"
-                     v-on:edit="editNetwork"
-                     v-on:remove="removeNetwork"></network-box>
+                     @attached="networkAttached"
+                     @detached="networkDetached"
+                     @edit="editNetwork"
+                     @remove="removeNetwork"></network-box>
 
         <volume-box v-for="volume in volumes | volumesOrderBy" track-by="documentSelfLink"
                     :model="volume"
                     mode="create"
-                    v-on:attached="volumeAttached"
-                    v-on:detached="volumeDetached"
-                    v-on:edit="editVolume"
-                    v-on:remove="removeVolume"></volume-box>
+                    @attached="volumeAttached"
+                    @detached="volumeDetached"
+                    @edit="editVolume"
+                    @remove="removeVolume"></volume-box>
       </div>
     </div>
   </div>
@@ -134,10 +139,10 @@
       <div class="sub-title">{{i18n('app.template.details.newDefinition.selectImage')}}</div>
       <div class="list-view">
         <div class="toolbar">
-          <search v-bind:suggestion-properties="searchSuggestions"
-                  v-bind:placeholder="i18n('app.template.list.searchImagesPlaceholder')"
-                  v-bind:query-options="model.newContainerDefinition.listView.queryOptions"
-                  v-on:search-change="searchForImage"
+          <search :suggestion-properties="searchSuggestions"
+                  :placeholder="i18n('app.template.list.searchImagesPlaceholder')"
+                  :query-options="model.newContainerDefinition.listView.queryOptions"
+                  @search-change="searchForImage"
                   ></search>
         </div>
         <div class="grid-container">
@@ -146,7 +151,7 @@
           <grid>
             <grid-item v-for="item in model.newContainerDefinition.listView.items"
                  track-by="documentId">
-              <container-image-item v-bind:model="item">
+              <container-image-item :model="item">
               </container-image-item>
             </grid-item>
           </grid>
@@ -159,26 +164,26 @@
     </div>
     <div class="edit-container-definition-view closable-view" v-if="!!model.newContainerDefinition.definitionInstance" transition="slide-and-fade">
       <div class="sub-title">{{i18n('app.template.details.newDefinition.containerDefinitionInfo')}}</div>
-      <container-definition-form v-ref:new-form v-bind:model="model.newContainerDefinition.definitionInstance">
+      <container-definition-form v-ref:new-form :model="model.newContainerDefinition.definitionInstance">
       </container-definition-form>
       <div class="control-btns">
         <button class="btn btn-primary add-container-definition"
-                v-bind:class="{'loading': addingContainer}"
-                v-bind:disabled="buttonsDisabled"
-                v-on:click="addContainerDefinition($event)">{{i18n('add')}}<i class="fa fa-spinner fa-spin loader-inline"></i></button>
+                :class="{'loading': addingContainer}"
+                :disabled="buttonsDisabled"
+                @click="addContainerDefinition($event)">{{i18n('add')}}<i class="fa fa-spinner fa-spin loader-inline"></i></button>
       </div>
     </div>
   </div>
   <div class="edit-existing-container-definition-view closable-view" v-if="!!model.editContainerDefinition" transition="slide-and-fade">
     <div class="title">{{i18n('app.template.details.editDefinition.title')}}</div>
     <div class="sub-title">{{i18n('app.template.details.newDefinition.containerDefinitionInfo')}}</div>
-    <container-definition-form v-ref:edit-form v-bind:model="model.editContainerDefinition.definitionInstance">
+    <container-definition-form v-ref:edit-form :model="model.editContainerDefinition.definitionInstance">
     </container-definition-form>
     <div class="control-btns">
       <button class="btn btn-primary save-container-definition"
-              v-bind:class="{'loading': savingContainer}"
-              v-bind:disabled="buttonsDisabled"
-              v-on:click="saveContainerDefinition($event)">{{i18n('save')}}<i class="fa fa-spinner fa-spin loader-inline"></i></button>
+              :class="{'loading': savingContainer}"
+              :disabled="buttonsDisabled"
+              @click="saveContainerDefinition($event)">{{i18n('save')}}<i class="fa fa-spinner fa-spin loader-inline"></i></button>
     </div>
   </div>
   <div class="edit-network closable-view " v-if="!!model.editNetwork" transition="slide-and-fade">
@@ -186,14 +191,14 @@
       <div class="title" v-if="model.editNetwork.definitionInstance.documentSelfLink">{{i18n('app.template.details.editNetwork.editTitle')}}</div>
       <div class="title" v-else>{{i18n('app.template.details.editNetwork.newTitle')}}</div>
       <network-definition-form v-ref:network-edit-form
-                               v-bind:model="model.editNetwork.definitionInstance"
-                               v-bind:allow-existing="true"
+                               :model="model.editNetwork.definitionInstance"
+                               :allow-existing="true"
                                ></network-definition-form>
       <div class="control-btns">
         <button class="btn btn-primary save-container-definition"
-                v-bind:class="{'loading': savingNetwork}"
-                v-bind:disabled="disableSavingNetworkButton"
-                v-on:click="saveNetwork($event)">{{i18n('save')}}<i class="fa fa-spinner fa-spin loader-inline"></i></button>
+                :class="{'loading': savingNetwork}"
+                :disabled="disableSavingNetworkButton"
+                @click="saveNetwork($event)">{{i18n('save')}}<i class="fa fa-spinner fa-spin loader-inline"></i></button>
       </div>
     </div>
   </div>
@@ -202,13 +207,14 @@
       <div class="title" v-if="model.editVolume.definitionInstance.documentSelfLink">{{i18n('app.template.details.editVolume.editTitle')}}</div>
       <div class="title" v-else>{{i18n('app.template.details.editVolume.newTitle')}}</div>
       <volume-definition-form v-ref:volume-edit-form
-                              v-bind:model="model.editVolume.definitionInstance"
-                              v-bind:allow-existing="true"
+                              :model="model.editVolume.definitionInstance"
+                              :allow-existing="true"
         ></volume-definition-form>
       <div class="control-btns">
-        <button class="btn btn-primary save-container-definition" v-bind:class="{'loading': savingVolume}"
-                v-bind:disabled="disableSavingVolumeButton"
-                v-on:click="saveVolume($event)">{{i18n('save')}}<i class="fa fa-spinner fa-spin loader-inline"></i></button>
+        <button class="btn btn-primary save-container-definition"
+                :class="{'loading': savingVolume}"
+                :disabled="disableSavingVolumeButton"
+                @click="saveVolume($event)">{{i18n('save')}}<i class="fa fa-spinner fa-spin loader-inline"></i></button>
       </div>
     </div>
   </div>
@@ -221,9 +227,9 @@
                                   :model="model.editKubernetes.definitionInstance"></kubernetes-definition-form>
       <div class="control-btns">
         <button class="btn btn-primary"
-                v-bind:class="{'loading': savingKubernetes}"
-                v-bind:disabled="disableSavingKubernetesButton"
-                v-on:click="saveKubernetes($event)">{{i18n('save')}}<i class="fa fa-spinner fa-spin loader-inline"></i></button>
+                :class="{'loading': savingKubernetes}"
+                :disabled="disableSavingKubernetesButton"
+                @click="saveKubernetes($event)">{{i18n('save')}}<i class="fa fa-spinner fa-spin loader-inline"></i></button>
       </div>
     </div>
   </div>

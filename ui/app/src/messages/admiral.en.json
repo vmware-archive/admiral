@@ -295,6 +295,7 @@
         "create": "Create Template",
         "createNameHint": "Template Name",
         "createProceed": "Proceed",
+        "errorEmptyName": "Please, specify template name",
         "edit": "Edit Template",
         "newDefinition": {
           "newLabel": "Add Container",

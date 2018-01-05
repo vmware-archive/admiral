@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -26,12 +26,33 @@ var VolumeRequestForm = Vue.extend({
       type: Boolean
     }
   },
+
+  components: {
+    hostPicker: HostPicker
+  },
+
   data: function() {
     return {
-      creatingVolume: false,
       disableCreatingVolumeButton: true
     };
   },
+
+  attached: function() {
+    var _this = this;
+
+    $(this.$el).on('change input', function() {
+      toggleButtonsState.call(_this);
+    });
+
+    this.unwatchModel = this.$watch('model.definitionInstance', () => {
+      this.disableCreatingVolumeButton = true;
+    }, {immediate: true});
+  },
+
+  detached: function() {
+    this.unwatchModel();
+  },
+
   methods: {
     createVolume: function() {
       var volumeForm = this.$refs.volumeEditForm;
@@ -51,23 +72,7 @@ var VolumeRequestForm = Vue.extend({
       }
     }
   },
-  attached: function() {
-    var _this = this;
-    $(this.$el).on('change input', function() {
-      toggleButtonsState.call(_this);
-    });
 
-    this.unwatchModel = this.$watch('model.definitionInstance', () => {
-      this.creatingVolume = false;
-      this.disableCreatingVolumeButton = true;
-    }, {immediate: true});
-  },
-  detached: function() {
-    this.unwatchModel();
-  },
-  components: {
-    hostPicker: HostPicker
-  },
   events: {
     'change': function() {
       toggleButtonsState.call(this);
@@ -76,15 +81,13 @@ var VolumeRequestForm = Vue.extend({
 });
 
 var toggleButtonsState = function() {
-  var volumeName = this.$refs.volumeEditForm.getVolumeDefinition().name;
+  let volumeName = this.$refs.volumeEditForm.getVolumeDefinition().name;
+  let host = this.$refs.hostPicker.getHosts();
+  let hostSelected = host && (host.length > 0);
 
-  var host = this.$refs.hostPicker.getHosts();
-  if (volumeName && (host && host.length > 0)) {
-    this.disableCreatingVolumeButton = false;
-  } else {
-    this.disableCreatingVolumeButton = true;
-  }
+  this.disableCreatingVolumeButton = !volumeName || !hostSelected;
 };
+
 Vue.component('volume-request-form', VolumeRequestForm);
 
 export default VolumeRequestForm;

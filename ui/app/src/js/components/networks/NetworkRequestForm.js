@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -10,7 +10,6 @@
  */
 
 import NetworkRequestFormVue from 'components/networks/NetworkRequestFormVue.html';
-import NetworkDefinitionForm from 'components/networks/NetworkDefinitionForm'; // eslint-disable-line
 import HostPicker from 'components/networks/HostPicker';
 import { ContainerActions } from 'actions/Actions';
 import utils from 'core/utils';
@@ -31,7 +30,6 @@ var NetworkRequestForm = Vue.extend({
   },
   data: function() {
     return {
-      creatingNetwork: false,
       disableCreatingNetworkButton: true
     };
   },
@@ -43,13 +41,11 @@ var NetworkRequestForm = Vue.extend({
 
     this.unwatchModelErr = this.$watch('model.error', (err) => {
       if (err._generic) {
-        this.creatingNetwork = false;
         this.disableCreatingNetworkButton = false;
       }
     });
 
     this.unwatchModel = this.$watch('model.definitionInstance', () => {
-      this.creatingNetwork = false;
       this.disableCreatingNetworkButton = true;
     }, {immediate: true});
   },
@@ -67,7 +63,6 @@ var NetworkRequestForm = Vue.extend({
         var hosts = this.$refs.hostPicker.getHosts();
         var hostIds = hosts.map(h => utils.getDocumentId(h.documentSelfLink));
 
-        this.creatingNetwork = true;
         ContainerActions.createNetwork(network, hostIds);
       }
     },
