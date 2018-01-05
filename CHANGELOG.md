@@ -1,12 +1,20 @@
 # CHANGELOG
 
-## 1.3.0-SNAPSHOT
+## 1.3.1-SNAPSHOT
 
 Docker hub images & tags: https://hub.docker.com/r/vmware/admiral/
 
 * dev - Standalone
 
 * vic_dev - VIC
+
+## 1.3.0
+
+Docker hub images & tags: https://hub.docker.com/r/vmware/admiral/
+
+* v1.3.0 - Standalone
+
+* vic_v1.3.0 - VIC
 
 ## 1.2.2
 
