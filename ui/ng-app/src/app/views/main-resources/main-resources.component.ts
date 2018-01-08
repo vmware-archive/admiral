@@ -147,6 +147,7 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
     selectProject(project) {
       this.selectedProject = project;
       this.projectService.setSelectedProject(this.selectedProject);
+
       this.checkShowLibrary();
     }
 

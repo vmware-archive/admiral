@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -9,12 +9,13 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { SessionTimedOutSubject } from './../../utils/ajax.service';
-import { AuthService } from './../../utils/auth.service';
-import { RoutesRestriction } from './../../utils/routes-restriction';
-import { Roles } from './../../utils/roles';
-import { Utils } from './../../utils/utils';
 import { Component, ViewChild, ViewEncapsulation, Input, Output, EventEmitter } from '@angular/core';
+
+import { AuthService } from '../../utils/auth.service';
+import { ProjectService } from "../../utils/project.service";
+import { SessionTimedOutSubject } from '../../utils/ajax.service';
+import { RoutesRestriction } from '../../utils/routes-restriction';
+import { Utils } from '../../utils/utils';
 
 @Component({
   selector: 'former-view',
@@ -22,8 +23,10 @@ import { Component, ViewChild, ViewEncapsulation, Input, Output, EventEmitter } 
   styleUrls: ['./former-view.component.scss'],
   encapsulation: ViewEncapsulation.None
 })
+/**
+ * Wrapper component for the non-angular views.
+ */
 export class FormerViewComponent {
-
   private url: string;
   private frameLoading = false;
 
@@ -35,7 +38,13 @@ export class FormerViewComponent {
   @Output()
   onRouteChange: EventEmitter<string> = new EventEmitter();
 
-  constructor(private sessionTimedOutSubject: SessionTimedOutSubject, private authService: AuthService) {}
+  constructor(private sessionTimedOutSubject: SessionTimedOutSubject,
+              private authService: AuthService, private projectService: ProjectService) {
+
+    projectService.activeProject.subscribe((value) => {
+      this.adaptSubViewAccess();
+    });
+  }
 
   @Input()
   set path(val: string) {
@@ -85,6 +94,15 @@ export class FormerViewComponent {
     } else if (!this.frameLoading) {
 
       iframeEl.src = this.url;
+    }
+  }
+
+  adaptSubViewAccess() {
+    const ROUTE_EDIT_TEMPLATE = 'templates/template/';
+    const ROUTE_TEMPLATES = 'templates?$category=templates';
+
+    if (this.url && this.url.indexOf(ROUTE_EDIT_TEMPLATE) > -1) {
+      this.path = ROUTE_TEMPLATES;
     }
   }
 }

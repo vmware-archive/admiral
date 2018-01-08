@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,17 +11,22 @@
 
 import { Roles } from './roles';
 
+/**
+ * Restrictions on routing based on user roles.
+ */
 export class RoutesRestriction {
 
-  public static HOME = [Roles.CLOUD_ADMIN, Roles.BASIC_USER, Roles.PROJECT_ADMIN, Roles.PROJECT_MEMBER, Roles.PROJECT_VIEWER]
+  public static HOME = [Roles.CLOUD_ADMIN, Roles.BASIC_USER, Roles.PROJECT_ADMIN,
+                        Roles.PROJECT_MEMBER, Roles.PROJECT_VIEWER];
   public static ADMINISTRATION = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN];
   public static IDENTITY_MANAGEMENT = [Roles.CLOUD_ADMIN];
   public static PROJECTS = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN];
   public static PROJECTS_NEW = [Roles.CLOUD_ADMIN];
 
-  public static DEPLOYMENTS = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN, Roles.PROJECT_MEMBER]
-  public static TEMPLATES = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN, Roles.PROJECT_MEMBER]
-  public static PUBLIC_REPOSITORIES = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN, Roles.PROJECT_MEMBER]
+  public static DEPLOYMENTS = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN, Roles.PROJECT_MEMBER];
+  public static TEMPLATES = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN, Roles.PROJECT_MEMBER];
+  public static PUBLIC_REPOSITORIES = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN,
+                                       Roles.PROJECT_MEMBER];
 
   public static PROJECTS_ID = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN];
   public static PROJECTS_ID_EDIT = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN];
