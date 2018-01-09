@@ -105,7 +105,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
                     computeHost.documentSelfLink);
             String containers = computeState.customProperties == null ? null
                     : computeState.customProperties
-                            .get(ContainerHostService.NUMBER_OF_CONTAINERS_PER_HOST_PROP_NAME);
+                    .get(ContainerHostService.NUMBER_OF_CONTAINERS_PER_HOST_PROP_NAME);
             return "2".equals(containers);
         });
 
@@ -152,7 +152,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
                     computeHost.documentSelfLink);
             String containers = computeState.customProperties == null ? null
                     : computeState.customProperties
-                            .get(ContainerHostService.NUMBER_OF_CONTAINERS_PER_HOST_PROP_NAME);
+                    .get(ContainerHostService.NUMBER_OF_CONTAINERS_PER_HOST_PROP_NAME);
             host.log("Container count waiting for 0 is currently: %s", containers);
             return "0".equals(containers);
         });

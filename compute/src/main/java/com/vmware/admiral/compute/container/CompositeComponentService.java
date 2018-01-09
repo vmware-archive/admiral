@@ -13,12 +13,10 @@ package com.vmware.admiral.compute.container;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.logging.Level;
@@ -31,9 +29,9 @@ import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.ServiceUtils;
-import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
+import com.vmware.admiral.compute.container.util.ResourceDescriptionUtil;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.xenon.common.Operation;
@@ -177,7 +175,7 @@ public class CompositeComponentService extends StatefulService {
 
         if (componentLinksToCheck != null) {
             deleteDocumentIfNeeded(componentLinksToCheck, () -> {
-                deleteCompositeDescription(currentState.compositeDescriptionLink);
+                ResourceDescriptionUtil.deleteClonedCompositeDescription(getHost(), currentState.compositeDescriptionLink);
                 ServiceUtils.sendSelfDelete(this);
             });
         }
@@ -402,43 +400,4 @@ public class CompositeComponentService extends StatefulService {
 
         return template;
     }
-
-    private void deleteCompositeDescription(String compositeDescriptionLink) {
-        if (compositeDescriptionLink == null || compositeDescriptionLink.isEmpty()) {
-            return;
-        }
-
-        sendRequest(Operation.createGet(this, compositeDescriptionLink)
-                .setCompletion((o, e) -> {
-                    if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
-                        logFine("CompositeDescription not found %s", compositeDescriptionLink);
-                        return;
-                    }
-                    if (e != null) {
-                        logWarning("Can't find composite description.Error: %s", Utils.toString(e));
-                        return;
-                    }
-
-                    CompositeDescription cd = o.getBody(CompositeDescription.class);
-
-                    if (cd.parentDescriptionLink == null) {
-                        return;
-                    }
-
-                    URI uri = UriUtils.buildUri(getHost(), cd.documentSelfLink);
-                    sendRequest(Operation
-                            .createDelete(uri)
-                            .setBody(new ServiceDocument())
-                            .setCompletion((op, ex) -> {
-                                if (ex != null) {
-                                    logWarning("Error deleting CompositeDescription: %s."
-                                                    + " Exception: %s",
-                                            cd.documentSelfLink, ex instanceof CancellationException
-                                                    ? "CancellationException"
-                                                    : Utils.toString(ex));
-                                }
-                            }));
-                }));
-    }
-
 }

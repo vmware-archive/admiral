@@ -53,6 +53,7 @@ import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerFactoryService;
+import com.vmware.admiral.compute.container.util.ResourceDescriptionUtil;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.log.EventLogService;
 import com.vmware.admiral.log.EventLogService.EventLogState;
@@ -295,6 +296,13 @@ public class RequestBrokerService extends
             break;
         case ERROR:
             completeWithError();
+
+            if (isCompositeComponentType(state)) {
+                ResourceDescriptionUtil.deleteClonedCompositeDescription(getHost(), state.resourceDescriptionLink);
+            } else {
+                ResourceDescriptionUtil.deleteResourceDescription(getHost(), state.resourceDescriptionLink);
+            }
+
             break;
         default:
             break;

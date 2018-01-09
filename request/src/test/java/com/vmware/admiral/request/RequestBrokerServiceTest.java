@@ -17,6 +17,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import static com.vmware.admiral.compute.container.CompositeDescriptionCloneService.REVERSE_PARENT_LINKS_PARAM;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_ALLOCATION_REQUEST;
@@ -272,6 +273,160 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         request = startRequest(request);
         request = waitForRequestToComplete(request);
+    }
+
+    @Test
+    public void testRequestFailShouldDeleteTheCreatedDescriptions() throws Throwable {
+        host.log("########  Start of testRequestFailShouldDeleteTheCreatedDescriptions ######## ");
+
+        // ****** Start of testing a single container instance clean up ******
+        host.log("### Request a single container instance. Expected to fail because there is no placement associated with it ###.");
+        final String containerDescLink = containerDesc.documentSelfLink;
+        RequestBrokerState request = TestRequestStateFactory.createRequestState();
+        request.resourceDescriptionLink = containerDescLink;
+        request.tenantLinks = Arrays.asList("unknown");
+
+        host.log("########  Start of request ######## ");
+        request = startRequest(request);
+
+        // wait for request completed state:
+        waitForRequestToFail(request);
+
+        waitFor("Container description is not deleted after waiting.", () -> {
+            ContainerDescription cd = getDocumentNoWait(ContainerDescription.class, containerDescLink);
+            return cd == null;
+        });
+        // ****** End of testing a single container instance clean up ******
+
+        // ****** Start of testing a single container network instance clean up ******
+        host.log("### Request a single network instance. Expected to fail because there is no placement associated with it ###.");
+        final String containerNetDescLink = containerNetworkDesc.documentSelfLink;
+        request = TestRequestStateFactory.createRequestState();
+        request.resourceDescriptionLink = containerNetDescLink;
+        request.tenantLinks = Arrays.asList("unknown");
+
+        host.log("########  Start of request ######## ");
+        request = startRequest(request);
+
+        // wait for request completed state:
+        waitForRequestToFail(request);
+
+        waitFor("Container network description is not deleted after waiting.", () -> {
+            ContainerNetworkDescription cd = getDocumentNoWait(ContainerNetworkDescription.class, containerNetDescLink);
+            return cd == null;
+        });
+        // ****** End of testing a single container network instance clean up ******
+
+        // ****** Start of testing a single container volume instance clean up ******
+        host.log("### Request a single volume instance. Expected to fail because there is no placement created ###.");
+        final String containerVolDescLink = containerVolumeDesc.documentSelfLink;
+        request = TestRequestStateFactory.createRequestState();
+        request.resourceDescriptionLink = containerVolDescLink;
+        request.tenantLinks = Arrays.asList("unknown");
+
+        host.log("########  Start of request ######## ");
+        request = startRequest(request);
+
+        // wait for request completed state:
+        waitForRequestToFail(request);
+
+        waitFor("Container volume description is not deleted after waiting.", () -> {
+            ContainerVolumeDescription cd = getDocumentNoWait(ContainerVolumeDescription.class, containerVolDescLink);
+            return cd == null;
+        });
+        // ****** End of testing a single container network instance clean up ******
+
+        // ****** Start of testing a composite component instance clean up ******
+        host.log("### Request a composite component instance. Expected to fail because there is no placement created ###.");
+        CompositeDescription compositeDesc = createCompositeDesc(true, false,
+                containerDesc, containerNetworkDesc, containerVolumeDesc);
+        assertNotNull(compositeDesc);
+
+        request = TestRequestStateFactory.createRequestState(
+                ResourceType.COMPOSITE_COMPONENT_TYPE.getName(),
+                compositeDesc.documentSelfLink
+        );
+        request.tenantLinks = Arrays.asList("unknown");
+
+        host.log("########  Start of request ######## ");
+        request = startRequest(request);
+
+        // wait for request completed state:
+        waitForRequestToFail(request);
+
+        final String containerDescriptionLink = containerDesc.documentSelfLink;
+        final String containerNetDescriptionLink = containerNetworkDesc.documentSelfLink;
+        final String containerVolDescriptionLink = containerVolumeDesc.documentSelfLink;
+        final String compositeDescLink = compositeDesc.documentSelfLink;
+
+        waitFor("Composite description is not deleted after waiting.", () -> {
+            CompositeDescription cd = getDocumentNoWait(CompositeDescription.class, compositeDescLink);
+            return cd == null;
+        });
+
+        waitFor("Container description should is not deleted after waiting.", () -> {
+            ContainerDescription cd = getDocumentNoWait(ContainerDescription.class, containerDescriptionLink);
+            return cd == null;
+        });
+
+        waitFor("Container network description is not deleted after waiting.", () -> {
+            ContainerNetworkDescription cnd = getDocumentNoWait(ContainerNetworkDescription.class, containerNetDescriptionLink);
+            return cnd == null;
+        });
+
+        waitFor("Container volume description is not deleted after waiting.", () -> {
+            ContainerVolumeDescription cvd = getDocumentNoWait(ContainerVolumeDescription.class, containerVolDescriptionLink);
+            return cvd == null;
+        });
+        // ****** End of testing a composite component instance clean up ******
+    }
+
+    @Test
+    public void testRequestFailShouldNotDeleteDescriptionsInUse() throws Throwable {
+        host.log("########  Start of testRequestFailShouldNotDeleteDescriptionsInUse ######## ");
+
+        // ****** Start of testing a single container instance clean up ******
+        host.log("### Request a single container instance.");
+        RequestBrokerState request = TestRequestStateFactory.createRequestState();
+        request.resourceDescriptionLink = containerDesc.documentSelfLink;
+
+        host.log("########  Start of request ######## ");
+        request = startRequest(request);
+
+        // wait for request completed state:
+        waitForRequestToComplete(request);
+
+        host.log("### Request a single container instance. Expected to fail because there is no placement created."
+                + "Should not delete the description as there is already a container associated with it ###.");
+        request = TestRequestStateFactory.createRequestState();
+        request.resourceDescriptionLink = containerDesc.documentSelfLink;
+        request.tenantLinks = Arrays.asList("unknown");
+
+        host.log("########  Start of request ######## ");
+        request = startRequest(request);
+
+        // wait for request completed state:
+        waitForRequestToFail(request);
+
+        final String containerDescLink = containerDesc.documentSelfLink;
+
+        final long timoutInMillis = 3000; // 3sec
+        long startRequestTime = System.currentTimeMillis();
+
+        waitFor(() -> {
+            if (System.currentTimeMillis() - startRequestTime > timoutInMillis) {
+                return true;
+            }
+
+            ContainerDescription cd = getDocumentNoWait(ContainerDescription.class, containerDescLink);
+            if (cd == null) {
+                fail("Container description is deleted.");
+                return true;
+            }
+
+            return false;
+        });
+        // ****** End of testing a single container instance clean up ******
     }
 
     @Test
