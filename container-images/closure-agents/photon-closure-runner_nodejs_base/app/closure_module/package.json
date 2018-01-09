@@ -4,8 +4,8 @@
     "private": "true",
     "dependencies": {
         "lodash": "4.11.1",
-        "request": "2.80.0",
-        "moment": "2.12.0",
+        "request": "2.81.0",
+        "moment": "2.15.2",
         "unzip": "0.1.11"
     },
     "devDependencies": {}
