@@ -130,8 +130,18 @@ export class ClustersComponent extends AutoRefreshComponent {
 
         this.service.get(cluster.documentSelfLink + '/hosts')
         .then((clusterHostsResult) => {
+            let computeContainerHostLinks = [];
+
+            if (FT.isApplicationEmbedded()) {
+                clusterHostsResult.content.forEach(element => {
+                    computeContainerHostLinks.push(element.documentSelfLink);
+                });
+            } else {
+                computeContainerHostLinks = clusterHostsResult.documentLinks;
+            }
+
             let clusterHostsLinks = {
-                computeContainerHostLinks: clusterHostsResult.documentLinks
+                computeContainerHostLinks: computeContainerHostLinks
             };
             // start hosts data collection
             this.service.patch(Links.HOST_DATA_COLLECTION, clusterHostsLinks, this.projectLink)
