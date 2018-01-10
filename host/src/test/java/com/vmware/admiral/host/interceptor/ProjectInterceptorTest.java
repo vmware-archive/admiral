@@ -45,7 +45,6 @@ import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles;
 import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.admiral.auth.util.AuthUtil;
-import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
@@ -169,8 +168,6 @@ public class ProjectInterceptorTest extends BaseTestCase {
     }
 
     protected void startServices(VerificationHost host) throws Throwable {
-        DeploymentProfileConfig.getInstance().setTest(true);
-
         HostInitCommonServiceConfig.startServices(host);
         HostInitPhotonModelServiceConfig.startServices(host);
         HostInitComputeServicesConfig.startServices(host, true);

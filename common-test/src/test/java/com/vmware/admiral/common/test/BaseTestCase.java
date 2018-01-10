@@ -46,6 +46,7 @@ import org.objenesis.Objenesis;
 import org.objenesis.ObjenesisStd;
 import org.objenesis.instantiator.ObjectInstantiator;
 
+import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.OperationUtil;
@@ -152,10 +153,12 @@ public abstract class BaseTestCase {
         // speed up the test (default is 500ms):
         setFinalStatic(QueryUtil.class
                 .getDeclaredField("QUERY_RETRY_INTERVAL_MILLIS"), 20L);
+        DeploymentProfileConfig.getInstance().setTest(true);
     }
 
     @After
     public void after() throws Throwable {
+        DeploymentProfileConfig.getInstance().setTest(false);
         try {
             host.tearDownInProcessPeers();
             host.tearDown();

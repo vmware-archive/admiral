@@ -27,7 +27,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -61,14 +60,8 @@ public class ContainerControlLoopServiceTest extends RequestBaseTest {
                 .getDeclaredField("MAINTENANCE_INTERVAL_MICROS"), TimeUnit.SECONDS.toMicros(1));
     }
 
-    @After
-    public void tearDown() throws Throwable {
-        DeploymentProfileConfig.getInstance().setTest(true);
-    }
-
     @Before
     public void init() throws Throwable {
-        DeploymentProfileConfig.getInstance().setTest(true);
         waitForServiceAvailability(ContainerControlLoopService.CONTROL_LOOP_INFO_LINK);
     }
 
@@ -323,7 +316,7 @@ public class ContainerControlLoopServiceTest extends RequestBaseTest {
             Map<String, List<String>> redeployedContainersPerContextId = new HashMap<>();
             AtomicBoolean containerFromDesc2Redeployed = new AtomicBoolean(false);
 
-            //Force test periodic maintenance. An @After method should set this back to true
+            // Force test periodic maintenance
             DeploymentProfileConfig.getInstance().setTest(false);
 
             waitFor(() -> {

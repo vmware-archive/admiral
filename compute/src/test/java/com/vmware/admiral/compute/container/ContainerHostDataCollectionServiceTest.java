@@ -72,7 +72,6 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
 
     @Before
     public void setUp() throws Throwable {
-        DeploymentProfileConfig.getInstance().setTest(true);
         preexistingContainerId = TEST_PREEXISTING_CONTAINER_ID
                 + UUID.randomUUID().toString();
 

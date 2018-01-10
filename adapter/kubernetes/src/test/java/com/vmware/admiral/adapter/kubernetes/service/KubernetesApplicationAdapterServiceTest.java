@@ -34,7 +34,6 @@ import com.vmware.admiral.adapter.common.service.mock.MockTaskService.MockTaskSt
 import com.vmware.admiral.adapter.kubernetes.mock.BaseKubernetesMockTest;
 import com.vmware.admiral.adapter.kubernetes.mock.MockKubernetesHost;
 import com.vmware.admiral.adapter.kubernetes.mock.MockKubernetesHostService;
-import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.test.CommonTestStateFactory;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
@@ -67,8 +66,6 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
 
     @Before
     public void startServices() throws Throwable {
-        DeploymentProfileConfig.getInstance().setTest(true);
-
         service = new MockKubernetesHost();
         // Set the service to handle all subpaths of its main path
         service.toggleOption(ServiceOption.URI_NAMESPACE_OWNER, true);

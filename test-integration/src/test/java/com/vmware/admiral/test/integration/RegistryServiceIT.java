@@ -16,12 +16,10 @@ import static com.vmware.admiral.test.integration.TestPropertiesUtil.getSystemOr
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
@@ -40,14 +38,8 @@ public class RegistryServiceIT {
 
     @Before
     public void setUp() {
-        DeploymentProfileConfig.getInstance().setTest(false);
         registryState = new RegistryState();
         ServerX509TrustManager.init(host);
-    }
-
-    @After
-    public void tearDown() {
-        DeploymentProfileConfig.getInstance().setTest(true);
     }
 
     @Test

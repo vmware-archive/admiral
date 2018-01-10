@@ -103,10 +103,6 @@ public class RegistryHostValidatingHelperServiceIT extends BaseTestCase {
         DeploymentProfileConfig.getInstance().setTest(false);
     }
 
-    public void tearDown() throws Throwable {
-        DeploymentProfileConfig.getInstance().setTest(true);
-    }
-
     @Test
     public void testValidateShouldFailWithInvalidUri() throws Throwable {
         Operation op = Operation

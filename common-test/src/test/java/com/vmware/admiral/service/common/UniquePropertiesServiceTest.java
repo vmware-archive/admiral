@@ -21,7 +21,6 @@ import java.util.Collections;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.host.HostInitCommonServiceConfig;
 import com.vmware.admiral.service.common.UniquePropertiesService.UniquePropertiesRequest;
@@ -46,7 +45,6 @@ public class UniquePropertiesServiceTest extends BaseTestCase {
     }
 
     private void startServices(VerificationHost host) {
-        DeploymentProfileConfig.getInstance().setTest(true);
         HostInitCommonServiceConfig.startServices(host);
     }
 

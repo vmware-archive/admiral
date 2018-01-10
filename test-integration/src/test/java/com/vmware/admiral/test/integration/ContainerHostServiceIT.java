@@ -25,7 +25,6 @@ import java.util.HashSet;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -105,11 +104,6 @@ public class ContainerHostServiceIT extends RequestBaseTest {
 
         containerHostUri = UriUtils.buildUri(host, ContainerHostService.SELF_LINK);
         DeploymentProfileConfig.getInstance().setTest(false);
-    }
-
-    @After
-    public void tearDown() throws Throwable {
-        DeploymentProfileConfig.getInstance().setTest(true);
     }
 
     @Test

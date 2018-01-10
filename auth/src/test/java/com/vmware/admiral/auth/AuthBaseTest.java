@@ -46,7 +46,6 @@ import com.vmware.admiral.auth.project.ProjectService.ExpandedProjectState;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.auth.util.ProjectUtil;
-import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.host.HostInitAuthServiceConfig;
 import com.vmware.admiral.host.HostInitCommonServiceConfig;
@@ -171,8 +170,6 @@ public abstract class AuthBaseTest extends BaseTestCase {
     }
 
     protected void startServices(VerificationHost host) throws Throwable {
-        DeploymentProfileConfig.getInstance().setTest(true);
-
         HostInitCommonServiceConfig.startServices(host);
         HostInitPhotonModelServiceConfig.startServices(host);
         HostInitComputeServicesConfig.startServices(host, true);

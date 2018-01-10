@@ -28,7 +28,6 @@ import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
@@ -62,7 +61,6 @@ public class ContainerHostRemovalTaskServiceTest extends RequestBaseTest {
     @Before
     @Override
     public void setUp() throws Throwable {
-        DeploymentProfileConfig.getInstance().setTest(true);
         super.setUp();
 
         request = TestRequestStateFactory.createRequestState();

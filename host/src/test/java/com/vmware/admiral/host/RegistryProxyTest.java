@@ -66,6 +66,7 @@ public class RegistryProxyTest {
 
     @After
     public void cleanUp() throws Throwable {
+        DeploymentProfileConfig.getInstance().setTest(false);
         if (host != null) {
             host.stop();
         }
@@ -255,6 +256,7 @@ public class RegistryProxyTest {
             return messagesCounter;
         }
 
+        @Override
         public void run() {
             /**
              * Steps:

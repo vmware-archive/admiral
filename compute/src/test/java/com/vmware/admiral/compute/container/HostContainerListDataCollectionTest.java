@@ -25,7 +25,6 @@ import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -107,13 +106,6 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
                 SystemContainerDescriptions.AGENT_CONTAINER_NAME, TEST_HOST_ID);
         image = String.format("%s:%s", SystemContainerDescriptions.AGENT_IMAGE_NAME,
                 SystemContainerDescriptions.getAgentImageVersion());
-    }
-
-    @After
-    public void tearDown() throws Throwable {
-        //System container creation is disabled during test.
-        //Disabled it back after this test.
-        DeploymentProfileConfig.getInstance().setTest(true);
     }
 
     @Test

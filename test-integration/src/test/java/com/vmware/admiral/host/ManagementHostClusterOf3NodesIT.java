@@ -72,6 +72,7 @@ public class ManagementHostClusterOf3NodesIT extends BaseManagementHostClusterIT
 
     @After
     public void tearDown() {
+        DeploymentProfileConfig.getInstance().setTest(false);
         tearDownHost(hostsToTeardown);
         scheduler.shutdownNow();
         try {

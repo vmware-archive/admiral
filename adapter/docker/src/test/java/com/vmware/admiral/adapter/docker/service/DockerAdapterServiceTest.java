@@ -41,7 +41,6 @@ import java.util.stream.Collectors;
 
 import javax.net.ssl.TrustManager;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -50,7 +49,6 @@ import com.vmware.admiral.adapter.common.service.mock.MockTaskService.MockTaskSt
 import com.vmware.admiral.adapter.docker.mock.BaseMockDockerTestCase;
 import com.vmware.admiral.adapter.docker.mock.MockDockerPathConstants;
 import com.vmware.admiral.adapter.docker.util.DockerPortMapping.Protocol;
-import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
@@ -131,11 +129,6 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
         setupDockerAdapterService();
 
         createContainer(false /* expect error */);
-    }
-
-    @After
-    public void tearDownContainerState() throws Throwable {
-        DeploymentProfileConfig.getInstance().setTest(true);
     }
 
     protected void createContainerDescription() throws Throwable {

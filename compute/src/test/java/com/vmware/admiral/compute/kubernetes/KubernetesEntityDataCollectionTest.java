@@ -25,7 +25,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
@@ -64,7 +63,6 @@ public class KubernetesEntityDataCollectionTest extends ComputeBaseTest {
 
     @Before
     public void setUp() throws Throwable {
-        DeploymentProfileConfig.getInstance().setTest(true);
         host.startService(Operation.createPost(UriUtils.buildUri(host,
                 MockKubernetesAdapterService.class)), new MockKubernetesAdapterService());
         host.startService(Operation.createPost(UriUtils.buildUri(host,
@@ -89,7 +87,7 @@ public class KubernetesEntityDataCollectionTest extends ComputeBaseTest {
         cs.id = COMPUTE_HOST_ID;
         cs.documentSelfLink = COMPUTE_HOST_ID;
         cs.descriptionLink = computeDesc.documentSelfLink;
-        cs.customProperties = new HashMap<String, String>();
+        cs.customProperties = new HashMap<>();
 
         doPost(cs, ComputeService.FACTORY_LINK);
     }

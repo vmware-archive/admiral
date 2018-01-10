@@ -31,7 +31,6 @@ import com.vmware.admiral.adapter.common.service.mock.MockTaskService.MockTaskSt
 import com.vmware.admiral.adapter.docker.mock.BaseMockDockerTestCase;
 import com.vmware.admiral.adapter.docker.mock.MockDockerHostService;
 import com.vmware.admiral.adapter.docker.mock.MockDockerPathConstants;
-import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.ContainerFactoryService;
@@ -64,8 +63,6 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
 
     @Before
     public void startServices() throws Throwable {
-        DeploymentProfileConfig.getInstance().setTest(true);
-
         mockDockerHost.startService(
                 Operation.createPost(UriUtils.buildUri(
                         mockDockerHost, MockDockerHostService.SELF_LINK)),

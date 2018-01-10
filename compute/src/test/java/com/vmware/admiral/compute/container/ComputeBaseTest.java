@@ -18,7 +18,6 @@ import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 
-import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.common.test.HostInitTestDcpServicesConfig;
 import com.vmware.admiral.host.CompositeComponentInterceptor;
@@ -65,7 +64,6 @@ public abstract class ComputeBaseTest extends BaseTestCase {
     }
 
     private static void startServices(ServiceHost serviceHost) throws Throwable {
-        DeploymentProfileConfig.getInstance().setTest(true);
         HostInitPhotonModelServiceConfig.startServices(serviceHost);
         HostInitTestDcpServicesConfig.startServices(serviceHost);
         HostInitCommonServiceConfig.startServices(serviceHost);

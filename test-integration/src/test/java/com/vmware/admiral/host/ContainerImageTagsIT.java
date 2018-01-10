@@ -28,7 +28,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -90,11 +89,6 @@ public class ContainerImageTagsIT extends BaseTestCase {
         waitForServiceAvailability(ContainerImageService.SELF_LINK);
         waitForServiceAvailability(RegistryService.DEFAULT_INSTANCE_LINK);
         waitForServiceAvailability(ContainerImageTagsService.SELF_LINK);
-    }
-
-    @After
-    public void tearDown() {
-        DeploymentProfileConfig.getInstance().setTest(true);
     }
 
     @Test

@@ -19,7 +19,6 @@ import org.junit.Before;
 
 import com.vmware.admiral.auth.project.ProjectFactoryService;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
-import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.host.HostInitAuthServiceConfig;
 import com.vmware.admiral.host.HostInitCommonServiceConfig;
@@ -37,8 +36,6 @@ public abstract class UpgradeBaseTest extends BaseTestCase {
     }
 
     protected void startServices(VerificationHost host) throws Throwable {
-        DeploymentProfileConfig.getInstance().setTest(true);
-
         HostInitCommonServiceConfig.startServices(host);
         HostInitPhotonModelServiceConfig.startServices(host);
         HostInitComputeServicesConfig.startServices(host, true);
