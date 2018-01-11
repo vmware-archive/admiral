@@ -379,7 +379,7 @@ public class PlacementHostSelectionTaskService
             final Map<String, HostSelection> hostSelectionMap,
             final Queue<HostSelectionFilter> filters) {
         if (isNoSelection(hostSelectionMap)) {
-            failTask(null, new LocalizableValidationException("Compute state not found",
+            failTask(null, new LocalizableValidationException("No suitable host available",
                     "request.placement.compute.missing"));
             return;
         } else {

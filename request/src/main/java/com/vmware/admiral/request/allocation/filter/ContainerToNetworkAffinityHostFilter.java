@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
@@ -52,12 +53,14 @@ public class ContainerToNetworkAffinityHostFilter
         implements HostSelectionFilter<PlacementHostSelectionTaskState> {
     private final Map<String, ServiceNetwork> networks;
     private final ServiceHost host;
+    private final String networkMode;
 
     private static final String NO_KV_STORE = "NONE";
 
     public ContainerToNetworkAffinityHostFilter(ServiceHost host, ContainerDescription desc) {
         this.host = host;
         this.networks = desc.networks;
+        this.networkMode = desc.networkMode;
     }
 
     @Override
@@ -69,11 +72,21 @@ public class ContainerToNetworkAffinityHostFilter
         Map<String, HostSelection> sortedHostSelectionMap;
         if (hostSelectionMap != null) {
             sortedHostSelectionMap = new TreeMap<>(hostSelectionMap);
+            if (sortedHostSelectionMap.isEmpty()) {
+                callback.complete(sortedHostSelectionMap, null);
+                return;
+            }
         } else {
             sortedHostSelectionMap = null;
         }
 
-        if (isActive()) {
+        if (networkMode != null) {
+            filterByNetworkMode(sortedHostSelectionMap);
+        }
+
+
+
+        if (networks != null && networks.size() > 0) {
             if (VolumeUtil.isContainerRequest(state.customProperties)) {
                 findNetworkDescriptionsByLinks(state, sortedHostSelectionMap, callback, null);
             } else {
@@ -294,6 +307,28 @@ public class ContainerToNetworkAffinityHostFilter
                 });
     }
 
+    private void filterByNetworkMode(Map<String, HostSelection>
+            hostSelectionMap) {
+        Iterator<Entry<String, HostSelection>> it = hostSelectionMap.entrySet().iterator();
+        while (it.hasNext()) {
+            Entry<String, HostSelection> entry = it.next();
+            if (entry.getValue() == null) {
+                it.remove();
+            } else {
+                HostSelection hs = entry.getValue();
+                if (hs.hostType != null && hs.hostType.equals(ContainerHostType.VCH) &&
+                        networkMode != null && networkMode.matches
+                        ("host|none")) {
+                    host.log(Level.WARNING,
+                            "Host [%s] dropped because the the network mode 'host' and 'none' "
+                                    + "are not allowed on VCH host.'",
+                            hs.name);
+                    it.remove();
+                }
+            }
+        }
+    }
+
     /*
      * This filter considers all the hosts equal, distinguishable only by whether they have a KV
      * store configured or not. At some point we may want to distinguish also special hosts (e.g.
@@ -421,7 +456,7 @@ public class ContainerToNetworkAffinityHostFilter
 
     @Override
     public boolean isActive() {
-        return networks != null && networks.size() > 0;
+        return networks != null && networks.size() > 0 || networkMode != null;
     }
 
     @Override

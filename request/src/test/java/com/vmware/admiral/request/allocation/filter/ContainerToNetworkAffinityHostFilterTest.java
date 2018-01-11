@@ -21,12 +21,15 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.Test;
 
 import com.vmware.admiral.compute.ContainerHostService;
+import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
@@ -36,6 +39,7 @@ import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionS
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
+import com.vmware.admiral.request.PlacementHostSelectionTaskService.PlacementHostSelectionTaskState;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSelection;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -298,6 +302,71 @@ public class ContainerToNetworkAffinityHostFilterTest extends BaseAffinityHostFi
         assertEquals(expectedNets, affinityConstraintsKeys);
     }
 
+    @Test
+    public void testFilterVCHHostsForSpecificNetworkModeBridge() throws Throwable {
+        testFilterVCHHostsForSpecificNetworkMode("bridge", 3);
+    }
+
+    @Test
+    public void testFilterVCHHostsForSpecificNetworkModeHost() throws Throwable {
+        testFilterVCHHostsForSpecificNetworkMode("host", 2);
+    }
+
+    @Test
+    public void testFilterVCHHostsForSpecificNetworkModeNone() throws Throwable {
+        testFilterVCHHostsForSpecificNetworkMode("none", 2);
+    }
+
+    @Test
+    public void testFilterVCHHostsForSpecificNetworkModeNull() throws Throwable {
+        testFilterVCHHostsForSpecificNetworkMode(null, 3);
+    }
+
+    @Test
+    public void testFilterEmptyHostSelection() throws
+            Throwable {
+        assertEquals(3, initialHostLinks.size());
+
+        ContainerDescription desc = createDescription(new String[] {});
+        desc.networkMode = "bridge";
+        createContainer(desc, initialHostLinks.get(0));
+        createContainer(desc, initialHostLinks.get(1));
+
+        final AtomicReference<Throwable> error = new AtomicReference<>();
+        final Map<String, HostSelection> hostSelectionMap = prepareHostSelectionMap();
+        final Map<String, HostSelection> hostSelectedMap = new HashMap<>();
+
+        Iterator<Entry<String, HostSelection>> it = hostSelectionMap.entrySet().iterator();
+        while (it.hasNext()) {
+            Entry<String, HostSelection> entry = it.next();
+            entry.setValue(null);
+        }
+        HostSelectionFilter<PlacementHostSelectionTaskState> filter = new ContainerToNetworkAffinityHostFilter(
+                host, desc);
+        host.testStart(1);
+        filter
+                .filter(
+                        state,
+                        hostSelectionMap,
+                        (filteredHostSelectionMap, e) -> {
+                            if (e != null) {
+                                error.set(e);
+                            } else {
+                                hostSelectedMap.putAll(filteredHostSelectionMap);
+                            }
+                            host.completeIteration();
+                        });
+
+        host.testWait();
+
+        if (error.get() != null) {
+            throw error.get();
+        }
+
+        assertEquals(0, hostSelectedMap.size());
+
+    }
+
     private ContainerDescription createDescription(String[] networkNames)
             throws Throwable {
         ContainerDescription desc = TestRequestStateFactory.createContainerDescription();
@@ -370,4 +439,67 @@ public class ContainerToNetworkAffinityHostFilterTest extends BaseAffinityHostFi
         createCompositeComponent(compositeDesc, desc, netDesc1, netDesc2);
         return desc;
     }
+
+    private void testFilterVCHHostsForSpecificNetworkMode(String
+            networkModeString, int numberOfSelectedHosts) throws
+            Throwable {
+        assertEquals(3, initialHostLinks.size());
+
+        ContainerDescription desc = createDescription(new String[] {});
+        desc.networkMode = networkModeString;
+        createContainer(desc, initialHostLinks.get(0));
+        createContainer(desc, initialHostLinks.get(1));
+
+        Map<String, HostSelection> hostSelectedMap = filterWithContainerToNetworkAffinityHostFilter(
+                desc);
+
+        assertEquals(numberOfSelectedHosts, hostSelectedMap.size());
+        if (numberOfSelectedHosts < 3) {
+            for (HostSelection hostSelection : hostSelectedMap.values()) {
+                assertEquals(ContainerHostType.DOCKER, hostSelection.hostType);
+            }
+        }
+
+    }
+
+    protected Map<String, HostSelection> filterWithContainerToNetworkAffinityHostFilter(
+            ContainerDescription desc) throws
+            Throwable {
+
+        final AtomicReference<Throwable> error = new AtomicReference<>();
+        final Map<String, HostSelection> hostSelectionMap = prepareHostSelectionMap();
+        final Map<String, HostSelection> hostSelectedMap = new HashMap<>();
+
+        Iterator<HostSelection> it = hostSelectionMap.values().iterator();
+        it.next().hostType = ContainerHostType.VCH;
+        while (it.hasNext()) {
+            it.next().hostType =
+                    ContainerHostType.DOCKER;
+        }
+        HostSelectionFilter<PlacementHostSelectionTaskState> filter = new ContainerToNetworkAffinityHostFilter(
+                host, desc);
+        host.testStart(1);
+        filter
+                .filter(
+                        state,
+                        hostSelectionMap,
+                        (filteredHostSelectionMap, e) -> {
+                            if (e != null) {
+                                error.set(e);
+                            } else {
+                                hostSelectedMap.putAll(filteredHostSelectionMap);
+                            }
+                            host.completeIteration();
+                        });
+
+        host.testWait();
+
+        if (error.get() != null) {
+            throw error.get();
+        }
+
+        return hostSelectedMap;
+
+    }
+
 }

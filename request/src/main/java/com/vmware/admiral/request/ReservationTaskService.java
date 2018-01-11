@@ -348,7 +348,7 @@ public class ReservationTaskService
                                 if (state.tenantLinks != null && !state.tenantLinks.isEmpty()) {
                                     proceedTo(SubStage.QUERYING_GLOBAL);
                                 } else {
-                                    failTask("No available group placements.", null);
+                                    failTask("No suitable host available", null);
                                 }
                             }
                             return;
@@ -477,7 +477,7 @@ public class ReservationTaskService
     private void selectReservation(ReservationTaskState state,
             LinkedHashMap<String, String> resourcePoolsPerGroupPlacementLinks) {
         if (resourcePoolsPerGroupPlacementLinks.isEmpty()) {
-            failTask("No available group placements.", null);
+            failTask("No suitable host available", null);
             return;
         }
 

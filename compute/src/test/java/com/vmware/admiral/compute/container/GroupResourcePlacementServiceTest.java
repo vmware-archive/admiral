@@ -338,9 +338,12 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
                     } else {
                         // Global placement (empty tenantLinks) should exists in list.
                         if (placements.isEmpty()) {
-                            host.log(Level.SEVERE, "No available group placements");
+                            host.log(Level.SEVERE, "No suitable host available");
                             host.failIteration(
-                                    new RuntimeException("No available group placements"));
+                                    new LocalizableValidationException(
+                                            "No suitable host available",
+                                            "request.placement.compute.missing"));
+                            ;
                         }
                         host.completeIteration();
                     }
