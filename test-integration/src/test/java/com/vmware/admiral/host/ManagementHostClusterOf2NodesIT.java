@@ -57,6 +57,7 @@ import com.vmware.xenon.common.test.TestContext;
  * Similar to {@link ManagementHostAuthUsersTest} but this test includes 2 nodes, only SSL enabled
  * and the users' passwords are encrypted.
  */
+@Ignore
 public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT {
 
     private List<ManagementHost> hostsToTeardown;
