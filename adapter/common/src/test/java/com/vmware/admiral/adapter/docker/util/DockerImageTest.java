@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -75,6 +75,14 @@ public class DockerImageTest {
 
         data.add(new String[] { "official repo with custom namespace",
                 "docker.io/user/repo:tag", "docker.io", "user", "repo", "user/repo", "tag" });
+
+        data.add(new String[] { "host and three path components of repo",
+                "host/namespace/category/repo", "host", "namespace/category", "repo",
+                "namespace/category/repo", "latest" });
+
+        data.add(new String[] { "host, port, three path components of repo and tag",
+                "host:5000/namespace/category/repo:tag", "host:5000", "namespace/category", "repo",
+                "namespace/category/repo", "tag" });
 
         return data;
     }

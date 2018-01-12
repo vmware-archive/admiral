@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -14,6 +14,7 @@ import imageUtils from 'core/imageUtils';
 describe('image utils test', function() {
   describe('getImageNamespaceAndName', function() {
     it('should parse namespace and name', function() {
+      expect(imageUtils.getImageNamespaceAndName('http://private-registry.com/ns/category/imagename:tag')).toEqual('ns/category/imagename');
       expect(imageUtils.getImageNamespaceAndName('http://private-registry.com/ns/imagename:tag')).toEqual('ns/imagename');
       expect(imageUtils.getImageNamespaceAndName('http://private-registry.com/imagename:tag')).toEqual('imagename');
       expect(imageUtils.getImageNamespaceAndName('ns/imagename:tag')).toEqual('ns/imagename');

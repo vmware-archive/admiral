@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -61,6 +61,8 @@ var imageUtils = {
     var imageWithoutScheme = image.replace(REGISTRY_SCHEME_REG_EXP, '');
     var parts = imageWithoutScheme.split(SECTION_SEPARATOR);
     switch (parts.length) {
+    case 0:
+      throw new Error('Invalid image format: ' + image);
     case 1:
       // only one section - it is the repository name with optional tag
       return getImageNamespaceAndNameFromParts(null, parts[0]);
@@ -72,12 +74,20 @@ var imageUtils = {
       }
       return getImageNamespaceAndNameFromParts(null, parts[1]);
 
-    case 3:
-      // all sections present
-      return getImageNamespaceAndNameFromParts(parts[1], parts[2]);
-
     default:
-      throw new Error('Invalid image format: ' + image);
+      // three or more sections present: host, namespace and repo. According to Docker
+      // documentation, the most common case is to have two path components in the name of the
+      // repository, however, it is possible to have a different number of path segments:
+      // https://docs.docker.com/registry/spec/api/#overview
+      // We are going to treat the extra path arguments as part of the namespace, e.g. the
+      // repo name host:port/path/to/repo will have "host:port" for host, "path/to" for
+      // namespace and "repo" for name.
+
+      let host = parts[0];
+      let repo = parts[parts.length - 1];
+      let namespace = imageWithoutScheme.substring(host.length + SECTION_SEPARATOR.length,
+                      imageWithoutScheme.length - repo.length - SECTION_SEPARATOR.length);
+      return getImageNamespaceAndNameFromParts(namespace, repo);
     }
   },
 

@@ -4,6 +4,8 @@
 
 * The option to [overwrite the public address](https://github.com/vmware/admiral/wiki/Configuration-guide#enable-or-disable-the-option-to-overwrite-the-public-address-for-a-host) for a host is now enabled by default in the standalone version of Admiral.
 
+* Added support for multiple path segments in the names of repositories, e.g. localhost:5000/category/sub-category/repo-name
+
 Docker hub images & tags: https://hub.docker.com/r/vmware/admiral/
 
 * dev - Standalone
