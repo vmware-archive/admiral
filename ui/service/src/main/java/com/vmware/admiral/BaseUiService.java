@@ -49,7 +49,8 @@ public abstract class BaseUiService extends StatelessService {
 
     @Override
     public void authorizeRequest(Operation op) {
-        // No authorization required. In case the user is not authorized, when retrieving the / we will redirect to login.
+        // No authorization required. In case the user is not authorized, when retrieving the / we
+        // will redirect to login.
         op.complete();
     }
 
@@ -132,6 +133,10 @@ public abstract class BaseUiService extends StatelessService {
 
         for (Entry<Path, String> e : pathToURIPath.entrySet()) {
             String value = e.getValue();
+
+            if (value.contains("/META-INF/")) {
+                continue;
+            }
 
             Operation post = Operation
                     .createPost(UriUtils.buildUri(getHost(), value));
