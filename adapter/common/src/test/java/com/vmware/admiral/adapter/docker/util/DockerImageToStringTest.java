@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -48,6 +48,10 @@ public class DockerImageToStringTest {
 
         data.add(new String[] { "default repository (library) should be kept, with host",
                 "foo:5000/library/admiral", "foo:5000/library/admiral:latest" });
+
+        data.add(new String[] {
+                "host should be set for image with multiple path segments in repo name",
+                "foo:5000/namespace/category/bar", "foo:5000/namespace/category/bar:latest" });
 
         return data;
     }

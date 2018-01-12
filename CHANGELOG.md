@@ -22,6 +22,8 @@
 
 * Various bug fixes and improvements.
 
+* Added support for multiple path segments in the names of repositories, e.g. localhost:5000/category/sub-category/repo-name
+
 ## 0.9.1
 
 * Added Admiral CLI, **a command line tool to manage and automate Admiral**. More information [here] (https://github.com/vmware/admiral/blob/master/cli/README.md).
