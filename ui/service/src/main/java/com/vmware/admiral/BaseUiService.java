@@ -96,7 +96,8 @@ public abstract class BaseUiService extends StatelessService {
                                     .parse(acceptLanguage);
 
                             if (parsed.size() > 0) {
-                                get.addResponseCookie(I18NEXT_COOKIE, parsed.get(0).getRange());
+                                get.addResponseCookie(I18NEXT_COOKIE, parsed.get(0).getRange() +
+                                        ((getHost().getSecurePort() > 0) ? "; Secure" : ""));
                             }
                         }
 
