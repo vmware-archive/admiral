@@ -45,6 +45,7 @@ import org.junit.After;
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.adapter.common.NetworkOperationType;
+import com.vmware.admiral.adapter.common.VolumeOperationType;
 import com.vmware.admiral.adapter.registry.service.RegistryAdapterService;
 import com.vmware.admiral.adapter.registry.service.RegistrySearchResponse;
 import com.vmware.admiral.auth.project.ProjectService;
@@ -73,10 +74,12 @@ import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.ShellContainerExecutorService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
 import com.vmware.admiral.image.service.ContainerImageService;
 import com.vmware.admiral.request.RequestBrokerFactoryService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
+import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState.SubStage;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.SslTrustCertificateService;
@@ -92,6 +95,7 @@ import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
+import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService;
@@ -459,6 +463,58 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
         return request;
     }
 
+    protected RequestBrokerState requestVolume(String resourceDescLink) throws Exception {
+
+        RequestBrokerState request = new RequestBrokerState();
+        request.resourceType = ResourceType.VOLUME_TYPE.getName();
+        request.resourceDescriptionLink = resourceDescLink;
+        request.tenantLinks = TENANT;
+        request = postDocument(RequestBrokerFactoryService.SELF_LINK, request);
+
+        waitForTaskToComplete(request.documentSelfLink);
+
+        request = getDocument(request.documentSelfLink, RequestBrokerState.class);
+        for (String volumeLink : request.resourceLinks) {
+            containersToDelete.add(volumeLink);
+        }
+
+        return request;
+    }
+
+    protected void requestVolumeDelete(Set<String> resourceLinks, boolean verifyDelete)
+            throws Exception {
+
+        RequestBrokerState day2DeleteRequest = new RequestBrokerState();
+        day2DeleteRequest.resourceType = ResourceType.VOLUME_TYPE.getName();
+        day2DeleteRequest.operation = VolumeOperationType.DELETE.id;
+        day2DeleteRequest.resourceLinks = resourceLinks;
+        day2DeleteRequest.tenantLinks = TENANT;
+        day2DeleteRequest = postDocument(RequestBrokerFactoryService.SELF_LINK, day2DeleteRequest,
+                TestDocumentLifeCycle.NO_DELETE);
+
+        waitForTaskToComplete(day2DeleteRequest.documentSelfLink);
+
+        day2DeleteRequest = getDocument(day2DeleteRequest.documentSelfLink, RequestBrokerState.class);
+
+        assertEquals(SubStage.COMPLETED, day2DeleteRequest.taskSubStage);
+        assertEquals(TaskStage.FINISHED, day2DeleteRequest.taskInfo.stage);
+
+        if (!verifyDelete) {
+            return;
+        }
+
+        for (String containerLink : resourceLinks) {
+            ContainerVolumeState conState = getDocument(containerLink, ContainerVolumeState.class);
+            assertNull(conState);
+            String computeStateLink = UriUtils
+                    .buildUriPath(ComputeService.FACTORY_LINK, extractId(containerLink));
+            ComputeState computeState = getDocument(computeStateLink, ComputeState.class);
+            assertNull(computeState);
+            logger.info("[requestContainerDelete] Deleting container: %s", containerLink);
+            containersToDelete.remove(containerLink);
+        }
+    }
+
     protected void requestContainerDelete(Set<String> resourceLinks, boolean verifyDelete)
             throws Exception {
 
@@ -477,6 +533,11 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
                 TestDocumentLifeCycle.NO_DELETE);
 
         waitForTaskToComplete(day2DeleteRequest.documentSelfLink);
+
+        day2DeleteRequest = getDocument(day2DeleteRequest.documentSelfLink, RequestBrokerState.class);
+
+        assertEquals(SubStage.COMPLETED, day2DeleteRequest.taskSubStage);
+        assertEquals(TaskStage.FINISHED, day2DeleteRequest.taskInfo.stage);
 
         if (!verifyDelete) {
             return;

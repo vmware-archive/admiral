@@ -12,9 +12,12 @@
 package com.vmware.admiral.test.integration;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
@@ -23,17 +26,23 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
+import com.vmware.admiral.compute.cluster.ClusterService.ClusterDto;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState.PowerState;
 import com.vmware.admiral.compute.container.volume.VolumeUtil;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.xenon.common.Service;
+import com.vmware.xenon.common.UriUtils;
 
 public class ContainerVolumesIT extends BaseProvisioningOnCoreOsIT {
 
@@ -53,6 +62,37 @@ public class ContainerVolumesIT extends BaseProvisioningOnCoreOsIT {
     public static void afterClass() {
         serviceClient.stop();
     }
+
+    @Test
+    public void volumeProvisionAndDelete() throws Throwable {
+
+        setupEnvironmentForCluster();
+        ClusterDto cluster = createCluster();
+
+        ContainerVolumeDescription volumeDesc = new ContainerVolumeDescription();
+        volumeDesc.name = "Postgres";
+        volumeDesc.external = false;
+        volumeDesc.customProperties = new HashMap<>();
+        volumeDesc.customProperties.put("__containerHostId", Service.getId(cluster.nodeLinks.get(0)));
+        volumeDesc.instanceAdapterReference = UriUtils
+                .buildUri(ManagementUriParts.ADAPTER_DOCKER_VOLUME);
+        volumeDesc = postDocument(ContainerVolumeDescriptionService.FACTORY_LINK, volumeDesc);
+
+        RequestBrokerState request = requestVolume(volumeDesc.documentSelfLink);
+
+        String volumeLink = request.resourceLinks.iterator().next();
+        ContainerVolumeState volume = getDocument(volumeLink, ContainerVolumeState.class);
+
+        assertNotNull(volume);
+
+        assertEquals(PowerState.CONNECTED, volume.powerState);
+        assertEquals("local", volume.scope);
+
+        HashSet<String> links = new HashSet<>();
+        links.add(volume.documentSelfLink);
+        requestVolumeDelete(links, true);
+    }
+
 
     @Before
     public void setUp() throws Exception {

@@ -18,6 +18,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -25,6 +26,8 @@ import java.util.UUID;
 
 import org.junit.Test;
 
+import com.vmware.admiral.adapter.common.VolumeOperationType;
+import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
@@ -37,12 +40,75 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState.PowerState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
+import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState.SubStage;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
+import com.vmware.xenon.common.Service;
+import com.vmware.xenon.common.TaskState.TaskStage;
+import com.vmware.xenon.common.UriUtils;
 
 public class ContainerVolumeProvisionTaskServiceTest extends RequestBaseTest {
+
+    @Test
+    public void volumeProvisionAndDelete() throws Throwable {
+        // Setup Docker host and resource pool.
+        ResourcePoolState resourcePool = createResourcePool();
+        ComputeDescription dockerHostDesc = createDockerHostDescription();
+
+        ComputeState dockerHost1 = createDockerHost(dockerHostDesc, resourcePool, true);
+        addForDeletion(dockerHost1);
+
+        // setup Group Placement:
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(
+                resourcePool);
+
+        ContainerVolumeDescription volumeDesc = new ContainerVolumeDescription();
+        volumeDesc.name = "Postgres";
+        volumeDesc.external = false;
+        volumeDesc.customProperties = new HashMap<>();
+        volumeDesc.customProperties.put("__containerHostId", Service.getId(dockerHost1.documentSelfLink));
+        volumeDesc.instanceAdapterReference = UriUtils
+                .buildUri(ManagementUriParts.ADAPTER_DOCKER_VOLUME);
+        volumeDesc = doPost(volumeDesc, ContainerVolumeDescriptionService.FACTORY_LINK);
+
+        // 1. Request a composite container:
+        RequestBrokerState request = TestRequestStateFactory.createRequestState(
+                ResourceType.VOLUME_TYPE.getName(), volumeDesc.documentSelfLink);
+
+        request.tenantLinks = groupPlacementState.tenantLinks;
+        host.log("########  Start of request ######## ");
+        request = startRequest(request);
+
+        // wait for request completed state:
+        request = waitForRequestToComplete(request);
+
+        String volumeLink = request.resourceLinks.iterator().next();
+        ContainerVolumeState volume = getDocument(ContainerVolumeState.class, volumeLink);
+
+        assertNotNull(volume);
+
+        assertEquals(PowerState.CONNECTED, volume.powerState);
+        assertEquals("local", volume.scope);
+
+        request = TestRequestStateFactory.createRequestState(ResourceType.VOLUME_TYPE.getName(), null);
+        request.tenantLinks = groupPlacementState.tenantLinks;
+        request.resourceLinks = new HashSet<>();
+        request.resourceLinks.add(volumeLink);
+        request.operation = VolumeOperationType.DELETE.id;
+        request = startRequest(request);
+
+        // wait for request completed state:
+        request = waitForRequestToComplete(request);
+        assertEquals(SubStage.COMPLETED, request.taskSubStage);
+        assertEquals(TaskStage.FINISHED, request.taskInfo.stage);
+
+        volume = getDocumentNoWait(ContainerVolumeState.class, volumeLink);
+
+        assertTrue(volume == null);
+    }
+
 
     @Test
     public void testVolumeProvisioningTask() throws Throwable {
