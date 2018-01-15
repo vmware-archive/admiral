@@ -186,7 +186,14 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
             if (ex != null) {
                 op.fail(ex);
             } else {
-                updateHostStateCustomProperties(hostComputeState, o.getBody(Map.class));
+                Map<String, Object> props = null;
+                try {
+                    props = o.getBody(Map.class);
+                } catch (Exception e) {
+                    op.fail(e);
+                    return;
+                }
+                updateHostStateCustomProperties(hostComputeState, props);
                 logFine("Compute state was updated with output of docker info. Request: %s",
                         request.getRequestTrackingLog());
                 op.setBody(hostComputeState);

@@ -835,6 +835,10 @@ public class ContainerHostService extends StatelessService {
             localizedEx = new LocalizableValidationException(e, "Connection timeout", "compute.connection.timeout");
         } else if (e.getCause() instanceof ProtocolException) {
             localizedEx = new LocalizableValidationException(e, "Protocol exception", "compute.protocol.exception");
+        } else if (e instanceof IllegalArgumentException) {
+            localizedEx = new LocalizableValidationException(e,
+                    "Illegal argument exception: " + e.getMessage(), "compute.illegal.argument",
+                    e.getMessage());
         }
 
         if (localizedEx != null) {
