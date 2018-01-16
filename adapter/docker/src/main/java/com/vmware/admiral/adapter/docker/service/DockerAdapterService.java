@@ -1161,10 +1161,11 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
             return;
         }
 
-        // currently VIC does not support container stats
         boolean allowVchStatsCollection = Boolean
                 .valueOf(ConfigurationUtil.getProperty(ALLOW_VCH_STATS_COLLECTION_PROP_NAME));
         if (ContainerHostUtil.isVicHost(context.computeState) && !allowVchStatsCollection) {
+            context.operation.fail(new LocalizableValidationException("Container stats are not supported by VCH hosts.",
+                    "request.container.stats.not.supported"));
             return;
         }
 
