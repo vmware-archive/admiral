@@ -17,7 +17,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 
 import com.vmware.admiral.log.EventLogFactoryService;
-import com.vmware.admiral.service.common.ClusterMonitoringService;
 import com.vmware.admiral.service.common.CommonInitialBootService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
 import com.vmware.admiral.service.common.CounterSubTaskService;
@@ -50,7 +49,6 @@ public class HostInitCommonServiceConfig extends HostInitServiceHelper {
             NodeMigrationService.class,
             NodeHealthCheckService.class,
             SslTrustImportService.class,
-            ClusterMonitoringService.class,
             ConfigurationFactoryService.class,
             SslTrustCertificateFactoryService.class,
             CommonInitialBootService.class,
