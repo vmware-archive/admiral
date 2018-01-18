@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.compute;
 
+import static com.vmware.admiral.compute.cluster.ClusterService.CLUSTER_TYPE_CUSTOM_PROP;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Level;
@@ -94,6 +96,7 @@ public class PlacementZoneUtil {
         }
 
         resourcePool.customProperties = new HashMap<>();
+        resourcePool.customProperties.put(CLUSTER_TYPE_CUSTOM_PROP, hostType.toString());
         if (clusterDetails != null && !clusterDetails.isEmpty()) {
             resourcePool.customProperties.put(
                     ClusterService.CLUSTER_DETAILS_CUSTOM_PROP,

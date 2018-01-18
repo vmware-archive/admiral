@@ -85,6 +85,10 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
     return FT.isHostPublicUriEnabled() && (!this.isEdit || this.isSingleHostCluster);
   }
 
+  get isKubernetesHostOptionEnabled(): boolean {
+    return FT.isKubernetesHostOptionEnabled();
+  }
+
   entityInitialized() {
     this.isEdit = true;
     this.isSingleHostCluster = Utils.isSingleHostCluster(this.entity);

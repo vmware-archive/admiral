@@ -37,6 +37,7 @@
             <select formControlName="type">
               <option value="VCH">VCH</option>
               <option value="DOCKER">DOCKER</option>
+              <option *ngIf="isKubernetesHostOptionEnabled" value="KUBERNETES">KUBERNETES</option>
             </select>
           </div>
         </div>

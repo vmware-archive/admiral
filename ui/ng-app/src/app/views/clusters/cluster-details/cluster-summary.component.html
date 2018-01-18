@@ -26,7 +26,7 @@
             <div class="right-column">{{ cluster?.address }}</div>
             <div class="clear"></div>
         </div>
-        <div *ngIf="cluster && cluster.address" class="summary-subsection-content-row">
+        <div *ngIf="cluster && cluster.type === 'VCH' && cluster.address" class="summary-subsection-content-row">
             <div class="left-column">{{ "clusters.summary.adminPortal" | i18n }}</div>
             <div class="right-column"><a target="_blank" href="{{ adminPortal }}">{{ adminPortal }}</a></div>
             <div class="clear"></div>

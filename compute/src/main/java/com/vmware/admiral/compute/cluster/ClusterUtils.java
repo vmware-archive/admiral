@@ -286,25 +286,23 @@ public class ClusterUtils {
                 resourcePoolState.customProperties,
                 ContainerHostDataCollectionService.RESOURCE_POOL_CPU_USAGE_CUSTOM_PROP)
                 .orElse(0.0);
+        ePZClusterDto.type = ClusterType
+                .valueOf(PropertyUtils.getPropertyString(resourcePoolState.customProperties,
+                        ClusterService.CLUSTER_TYPE_CUSTOM_PROP)
+                        .orElse(ClusterType.DOCKER.toString()));
         if (computeStates == null || computeStates.isEmpty()) {
-            ePZClusterDto.type = PlacementZoneUtil
-                    .isSchedulerPlacementZone(resourcePoolState)
-                            ? ClusterType.VCH
-                            : ClusterType.DOCKER;
             ePZClusterDto.status = ClusterStatus.DISABLED;
             ePZClusterDto.containerCount = 0;
             ePZClusterDto.systemContainersCount = 0;
             ePZClusterDto.totalCpu = 0.0;
         } else {
             if (PlacementZoneUtil.isSchedulerPlacementZone(resourcePoolState)) {
-                ePZClusterDto.type = ClusterType.VCH;
                 ePZClusterDto.address = computeStates.get(0).address;
                 ePZClusterDto.totalCpu = PropertyUtils.getPropertyDouble(
                         computeStates.get(0).customProperties,
                         ContainerHostService.DOCKER_HOST_NUM_CORES_PROP_NAME)
                         .orElse(0.0);
             } else {
-                ePZClusterDto.type = ClusterType.DOCKER;
                 //not available for now
                 ePZClusterDto.totalCpu = 0.0;
             }
