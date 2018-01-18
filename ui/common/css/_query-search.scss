@@ -76,10 +76,14 @@
   background: none;
 }
 
+.query-search-input .twitter-typeahead .token-input.tt-input {
+  border: none;
+}
+
 .query-search-input .tt-menu {
   display: none;
 }
 
 .query-search-input .tt-menu.tt-open:not(.tt-empty) {
-  display: block
+  display: block;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -206,7 +206,11 @@ export class ClustersComponent extends AutoRefreshComponent {
         return I18n.t('clusters.state.' + cluster.status);
     }
 
-    selectItem($event, item) {
+    isItemSelected(item: any) {
+        return item === this.selectedItem;
+    }
+
+    toggleItemSelection($event, item) {
         $event.stopPropagation();
 
         if (this.isItemSelected(item)) {
@@ -215,10 +219,6 @@ export class ClustersComponent extends AutoRefreshComponent {
         } else {
             this.selectedItem = item;
         }
-    }
-
-    isItemSelected(item: any) {
-        return item === this.selectedItem;
     }
 
     get clustersNewRouteRestrictions() {

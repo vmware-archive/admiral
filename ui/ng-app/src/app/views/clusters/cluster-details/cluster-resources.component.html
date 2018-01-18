@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~ Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
   ~
   ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
   ~ You may not use this product except in compliance with the License.
@@ -24,30 +24,36 @@
   </div>
 
   <ng-template let-item="item">
-    <card class="clusterCard">
+    <card class="hostCard" [ngClass]="{'card-actions-selected': isItemSelected(item)}">
+
       <div card-header>
         <clr-icon shape="host" size="48"></clr-icon>
         {{ getHostName(item) }}
-        <clr-dropdown class="card-actions" [clrMenuPosition]="'left-top'" (click)="$event.stopPropagation()">
-          <button class="btn btn-sm btn-link" clrDropdownToggle>
-              <clr-icon shape="ellipsis-vertical" size="20"></clr-icon>
-          </button>
-          <div class="dropdown-menu">
-            <a href="..." class="editHost" clrDropdownItem (click)="editHost($event, item)">
-              <clr-icon shape="pencil" size="20" class="card-drop-down-actions"></clr-icon>{{ "hosts.actions.edit" | i18n }}
-            </a>
-            <a href="..." class="disableHost" *ngIf="operationSupported('DISABLE', item)" clrDropdownItem (click)="disableHost($event, item)">
-              <clr-icon shape="pause" size="20" class="card-drop-down-actions"></clr-icon>{{ "hosts.actions.disable" | i18n }}
-            </a>
-            <a href="..." class="enableHost" *ngIf="operationSupported('ENABLE', item)" clrDropdownItem (click)="enableHost($event, item)">
-              <clr-icon shape="play" size="20" class="card-drop-down-actions"></clr-icon>{{ "hosts.actions.enable" | i18n }}
-            </a>
-            <a href="..." class="deleteHost" clrDropdownItem (click)="deleteHost($event, item)">
-              <clr-icon shape="trash" size="20" class="card-drop-down-actions"></clr-icon>{{ "delete" | i18n }}
-            </a>
-          </div>
-        </clr-dropdown>
+
+          <clr-dropdown class="card-actions" (click)="toggleItemSelection($event, item)">
+              <button type="button" class="btn btn-sm btn-link" clrDropdownTrigger>
+                  <clr-icon shape="ellipsis-vertical" size="20"></clr-icon>
+              </button>
+              <clr-dropdown-menu clrPosition="left-top" *clrIfOpen>
+                  <button type="button" class="dropdown-item editHost"
+                          (click)="editHost($event, item)"><clr-icon shape="pencil" size="20"
+                                class="card-drop-down-actions"></clr-icon>{{ "hosts.actions.edit" | i18n }}</button>
+
+                  <button *ngIf="operationSupported('DISABLE', item)" type="button" class="dropdown-item disableHost"
+                          (click)="disableHost($event, item)"><clr-icon shape="pause" size="20"
+                                class="card-drop-down-actions"></clr-icon>{{ "hosts.actions.disable" | i18n }}</button>
+
+                  <button *ngIf="operationSupported('ENABLE', item)" type="button" class="dropdown-item enableHost"
+                          (click)="enableHost($event, item)"><clr-icon shape="play" size="20"
+                                class="card-drop-down-actions"></clr-icon>{{ "hosts.actions.enable" | i18n }}</button>
+
+                  <button type="button" class="dropdown-item deleteHost"
+                          (click)="deleteHost($event, item)"><clr-icon shape="trash" size="20"
+                                class="card-drop-down-actions"></clr-icon>{{ "delete" | i18n }}</button>
+              </clr-dropdown-menu>
+          </clr-dropdown>
       </div>
+
       <div card-content>
         <div class="form-group">
           <label>{{ "clusters.resources.address" | i18n }}</label>

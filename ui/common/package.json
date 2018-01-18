@@ -8,6 +8,6 @@
     "tsc": "tsc"
   },
   "devDependencies": {
-    "typescript": "2.2.1"
+    "typescript": "2.3"
   }
 }

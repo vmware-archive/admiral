@@ -1,8 +1,16 @@
-@import "node_modules/clarity-ui/src/color/utils/colors.clarity";
-@import "node_modules/clarity-ui/src/utils/variables.clarity";
-@import 'node_modules/admiral-ui-common/css/variables';
+// Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
+// This software is released under MIT license.
+// The full license information can be found in LICENSE in the root directory of this project.
 
-pod-details .content{
+.position-expand {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+pod-details .content {
   @extend .position-expand;
   top: 50px;
 }
@@ -29,7 +37,7 @@ pod-details:hover .maximizableControl .maximizableControlToggle {
 
 .details-properties .content {
   top: $title-top-margin;
-  background-color: #FFFFFF;
+  background-color: #ffffff;
   overflow: auto;
 }
 
@@ -46,7 +54,7 @@ pod-details:hover .maximizableControl .maximizableControlToggle {
 
 .details-usages .content {
   top: $title-top-margin;
-  background-color: #FFFFFF;
+  background-color: #ffffff;
 }
 
 .details-usages compute-stats {
@@ -68,10 +76,10 @@ pod-details:hover .maximizableControl .maximizableControlToggle {
 }
 
 .details-logs .content {
-  @extend .font-mono;
+  //@extend .font-mono;
   top: $title-top-margin;
   background-color: #353434;
-  color: #A6A6A6;
+  color: #a6a6a6;
   overflow: auto;
   white-space: pre-wrap;
   word-wrap: break-word;

@@ -1,14 +1,28 @@
-<div class="main-view">
-  <div class="title">{{"logs.title" | i18n}}</div>
-  <clr-tabs>
-    <clr-tab-link [clrTabLinkId]="'systemLogTab'" [clrTabLinkActive]="true">{{"logs.system.title" | i18n}}</clr-tab-link>
-    <clr-tab-link *ngIf="isHbrEnabled" [clrTabLinkId]="'registryLogTab'">{{"logs.registry.title" | i18n}}</clr-tab-link>
+<!--
+  ~ Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
 
-    <clr-tab-content [clrTabContentId]="'systemLogContent'" [clrTabContentActive]="true">
-      <system-logs></system-logs>
-    </clr-tab-content>
-    <clr-tab-content *ngIf="isHbrEnabled" [clrTabContentId]="'registryLogContent'">
-        <hbr-log></hbr-log>
-    </clr-tab-content>
+<div class="main-view">
+    <div class="title">{{"logs.title" | i18n}}</div>
+    <clr-tabs>
+        <clr-tab>
+            <button clrTabLink id="systemLogTab">{{"logs.system.title" | i18n}}</button>
+            <clr-tab-content id="systemLogContent" *clrIfActive>
+                <system-logs></system-logs>
+            </clr-tab-content>
+        </clr-tab>
+        <clr-tab *ngIf="isHbrEnabled">
+            <button clrTabLink id="registryLogTab">{{"logs.registry.title" | i18n}}</button>
+            <clr-tab-content id="registryLogContent" *clrIfActive>
+                <hbr-log></hbr-log>
+            </clr-tab-content>
+        </clr-tab>
   </clr-tabs>
 </div>

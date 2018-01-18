@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~ Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
   ~
   ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
   ~ You may not use this product except in compliance with the License.
@@ -10,20 +10,25 @@
   -->
 
 <div class="main-view">
-  <div class="title">{{"identity.title" | i18n}}</div>
-  <clr-tabs>
-    <clr-tab-link [clrTabLinkId]="'identityCredentialsTab'" [clrTabLinkActive]="true">{{"identity.credentials" | i18n}}</clr-tab-link>
-    <clr-tab-link [clrTabLinkId]="'identityCertificatesTab'">{{"identity.certificates" | i18n}}</clr-tab-link>
-    <clr-tab-link *ngIf="!embedded" [clrTabLinkId]="'identityUsersGroupsTab'">{{"identity.usersgroups.title" | i18n}}</clr-tab-link>
-
-    <clr-tab-content [clrTabContentId]="'identityCredentialsContent'" [clrTabContentActive]="true">
-      <former-view path="credentials"></former-view>
-    </clr-tab-content>
-    <clr-tab-content [clrTabContentId]="'identityCertificatesContent'">
-      <former-view path="certificates"></former-view>
-    </clr-tab-content>
-    <clr-tab-content *ngIf="!embedded" [clrTabContentId]="'identityUsersGroupsContent'">
-      <app-identity-usersgroups></app-identity-usersgroups>
-    </clr-tab-content>
+    <div class="title">{{"identity.title" | i18n}}</div>
+    <clr-tabs>
+      <clr-tab>
+          <button clrTabLink id="identityCredentialsTab">{{"identity.credentials" | i18n}}</button>
+          <clr-tab-content id="identityCredentialsContent" *clrIfActive>
+              <former-view path="credentials"></former-view>
+          </clr-tab-content>
+      </clr-tab>
+      <clr-tab>
+          <button clrTabLink id="identityCertificatesTab">{{"identity.certificates" | i18n}}</button>
+          <clr-tab-content id="identityCertificatesContent" *clrIfActive>
+              <former-view path="certificates"></former-view>
+          </clr-tab-content>
+      </clr-tab>
+      <clr-tab *ngIf="!embedded">
+          <button clrTabLink id="identityUsersGroupsTab">{{"identity.usersgroups.title" | i18n}}</button>
+          <clr-tab-content id="identityUsersGroupsContent" *clrIfActive>
+              <app-identity-usersgroups></app-identity-usersgroups>
+          </clr-tab-content>
+      </clr-tab>
   </clr-tabs>
 </div>

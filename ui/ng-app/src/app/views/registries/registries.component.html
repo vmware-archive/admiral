@@ -1,18 +1,35 @@
-<div class="main-view">
-  <div class="title">{{"registries.title" | i18n}}</div>
-  <clr-tabs>
-    <clr-tab-link [clrTabLinkId]="'sourceRegistriesTab'" [clrTabLinkActive]="true">{{"registries.sourceRegistries" | i18n}}</clr-tab-link>
-    <clr-tab-link *ngIf="isHbrEnabled" [clrTabLinkId]="'replicationEndpointsTab'">{{"registries.replicationEndpoints" | i18n}}</clr-tab-link>
-    <clr-tab-link *ngIf="isHbrEnabled" [clrTabLinkId]="'replicationRulesTab'">{{"registries.replicationRules" | i18n}}</clr-tab-link>
+<!--
+  ~ Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
 
-    <clr-tab-content [clrTabContentId]="'sourceRegistriesContent'" [clrTabContentActive]="true">
-      <former-view path="registries"></former-view>
-    </clr-tab-content>
-    <clr-tab-content *ngIf="isHbrEnabled" [clrTabContentId]="'replicationEndpointsContent'">
-        <hbr-endpoint></hbr-endpoint>
-    </clr-tab-content>
-    <clr-tab-content *ngIf="isHbrEnabled" [clrTabContentId]="'replicationRulesContent'">
-        <hbr-replication></hbr-replication>
-    </clr-tab-content>
-  </clr-tabs>
+<div class="main-view">
+    <div class="title">{{"registries.title" | i18n}}</div>
+
+    <clr-tabs>
+        <clr-tab>
+            <button clrTabLink id="sourceRegistriesTab">{{"registries.sourceRegistries" | i18n}}</button>
+            <clr-tab-content id="sourceRegistriesContent" *clrIfActive>
+                <former-view path="registries"></former-view>
+            </clr-tab-content>
+        </clr-tab>
+        <clr-tab *ngIf="isHbrEnabled">
+            <button clrTabLink id="replicationEndpointsTab">{{"registries.replicationEndpoints" | i18n}}</button>
+            <clr-tab-content id="replicationEndpointsContent" *clrIfActive>
+                <hbr-endpoint></hbr-endpoint>
+            </clr-tab-content>
+        </clr-tab>
+        <clr-tab *ngIf="isHbrEnabled" >
+            <button clrTabLink id="replicationRulesTab">{{"registries.replicationRules" | i18n}}</button>
+            <clr-tab-content id="replicationRulesContent" *clrIfActive>
+                <hbr-replication></hbr-replication>
+            </clr-tab-content>
+        </clr-tab>
+    </clr-tabs>
 </div>

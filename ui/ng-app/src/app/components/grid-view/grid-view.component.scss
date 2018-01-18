@@ -1,6 +1,8 @@
-@import "node_modules/clarity-ui/src/color/utils/colors.clarity";
-@import "node_modules/clarity-ui/src/utils/variables.clarity";
-@import 'node_modules/admiral-ui-common/css/variables';
+// Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
+// This software is released under MIT license.
+// The full license information can be found in LICENSE in the root directory of this project.
+
+@import 'node_modules/admiral-ui-common/css/mixins';
 
 grid-view {
   position: relative;

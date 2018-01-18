@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~ Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
   ~
   ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
   ~ You may not use this product except in compliance with the License.
@@ -21,11 +21,13 @@
   <div [hidden]="hideTitle" title>{{ title }}</div>
   <div toolbar>
     <button class="btn btn-link addCluster-btn" allowNavigation [roles]="clustersNewRouteRestrictions"
-        [routerLink]="['./cluster/new']"><i class="fa fa-plus"></i>{{ "clusters.new" | i18n | uppercase }}</button>
+            [routerLink]="['./cluster/new']"><i class="fa fa-plus"></i>{{ "clusters.new" | i18n | uppercase }}</button>
   </div>
+
   <ng-template let-item="item">
     <card class="clusterCard" [routerLink]="['./cluster/' + item.documentId]"
           [ngClass]="{'card-actions-selected': isItemSelected(item)}">
+
       <div card-header>
         <div class="clusterIcon">
           <clr-icon shape="rack-server" size="48"></clr-icon>
@@ -35,24 +37,27 @@
           <div *ngIf="item.address" class="clusterAddress truncate">{{ item.address }}</div>
         </div>
 
-        <clr-dropdown class="card-actions" allowNavigation [roles]="clustersCardViewActions"
-                      [clrMenuPosition]="'left-top'" (click)="selectItem($event, item)">
-          <button class="btn btn-sm btn-link" clrDropdownToggle>
-              <clr-icon shape="ellipsis-vertical" size="20"></clr-icon>
+        <clr-dropdown class="card-actions" (click)="toggleItemSelection($event, item)">
+          <button type="button" class="btn btn-sm btn-link" clrDropdownTrigger>
+            <clr-icon shape="ellipsis-vertical" size="20"></clr-icon>
           </button>
-          <div class="dropdown-menu">
-            <a href="..." clrDropdownItem class="cluster-details"
-               [routerLink]="['./cluster/' + item.documentId]"><clr-icon shape="eye" size="20"
-                 class="card-drop-down-actions"></clr-icon>{{ "projects.actions.details" | i18n }}</a>
-            <a href="..." clrDropdownItem class="remove-cluster"
-               (click)="deleteCluster($event, item)"><clr-icon shape="trash" size="20"
-                  class="card-drop-down-actions"></clr-icon>{{ "remove" | i18n }}</a>
-            <a *ngIf="isSupportedRescan" href="..." clrDropdownItem class="rescan-cluster"
-               (click)="rescanCluster($event, item)"><clr-icon shape="refresh" size="20"
-                 class="card-drop-down-actions"></clr-icon>{{ "clusters.actions.rescan" | i18n }}</a>
-          </div>
+          <clr-dropdown-menu clrPosition="left-top" *clrIfOpen>
+            <button type="button" class="dropdown-item cluster-details"
+                    [routerLink]="['./cluster/' + item.documentId]"
+              ><clr-icon shape="eye" size="20" class="card-drop-down-actions"
+                ></clr-icon>{{"projects.actions.details" | i18n}}</button>
+            <button type="button" class="dropdown-item remove-cluster"
+                    (click)="deleteCluster($event, item)"
+               ><clr-icon shape="trash" size="20" class="card-drop-down-actions"
+                 ></clr-icon>{{"remove" | i18n}}</button>
+            <button *ngIf="isSupportedRescan" type="button" class="dropdown-item rescan-cluster"
+                    (click)="rescanCluster($event, item)"
+              ><clr-icon shape="refresh" size="20" class="card-drop-down-actions"
+                ></clr-icon>{{"clusters.actions.rescan" | i18n}}</button>
+          </clr-dropdown-menu>
         </clr-dropdown>
       </div>
+
       <div card-content>
         <div class="form-group">
           <label>{{ "clusters.status" | i18n }}</label>

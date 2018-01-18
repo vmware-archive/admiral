@@ -31,8 +31,8 @@ import * as I18n from 'i18next';
  */
 export class ClusterCreateComponent extends BaseDetailsComponent
                                     implements AfterViewInit, OnInit, OnDestroy {
-  opened: boolean;
-  isEdit: boolean;
+  opened: boolean = false;
+  isEdit: boolean = false;
   credentials: any[];
 
   showCertificateWarning: boolean;

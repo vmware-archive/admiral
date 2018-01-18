@@ -1,4 +1,6 @@
-@import "node_modules/clarity-ui/src/color/utils/colors.clarity";
+// Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
+// This software is released under MIT license.
+// The full license information can be found in LICENSE in the root directory of this project.
 
 .clusterAddress {
     font-size: 13px;
@@ -14,6 +16,7 @@
     margin-left: 10px;
     height: 45px;
     width: 220px;
+
     .truncate {
         text-overflow: ellipsis;
         overflow: hidden;

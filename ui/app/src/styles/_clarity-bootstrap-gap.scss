@@ -30,8 +30,8 @@ form .form-group .ace_editor span {
 
 input:not([type]) {
   @include custom-inputs($clr-baselineRem_1);
-  @include clr-form-fields-appearance($clr-baselineRem_2_5, $clr-form-field-border-color);
-  @include input-border-bottom-animation();
+  @include clr-form-fields-appearance($clr-baselineRem_2_5, $clr-action-blue-light-midtone);
+  @include input-border-bottom-animation($clr-action-blue-light-midtone);
   padding: 0 $clr_baselineRem_0_25;
 }
 
@@ -54,7 +54,7 @@ input:not([type]) {
 
 .app-view .tokenfield {
   @include clr-form-fields-appearance($clr-baselineRem_2_5, $clr-form-field-border-color);
-  @include input-border-bottom-animation();
+  @include input-border-bottom-animation($clr-action-blue-light-midtone);
 }
 
 .app-view .tokenfield.focus {

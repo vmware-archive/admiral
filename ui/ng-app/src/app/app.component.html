@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~ Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
   ~
   ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
   ~ You may not use this product except in compliance with the License.
@@ -10,18 +10,14 @@
   -->
 
 <clr-main-container *ngIf="!isLogin">
-  <clr-alert [clrAlertType]="'alert-danger'"
-    [clrAlertAppLevel]="true"
-    [clrAlertClosable]="false"
-    *ngIf="showSessionTimeout"
-    class="above-modal-backdrop">
+  <clr-alert *ngIf="showSessionTimeout" [clrAlertType]="'alert-danger'" [clrAlertAppLevel]="true"
+             [clrAlertClosable]="false" class="above-modal-backdrop">
     <div class="alert-item">
         <span class="alert-text">
             {{ 'sessionExpired' | i18n }}
         </span>
         <div class="alert-actions">
-            <button class="btn alert-action"
-                (click)="reload()">{{ 'reload' | i18n }}</button>
+            <button class="btn alert-action" (click)="reload()">{{ 'reload' | i18n }}</button>
         </div>
     </div>
   </clr-alert>
@@ -37,11 +33,13 @@
         </a>
     </div>
     <div class="header-nav">
-        <a class="nav-link nav-text" routerLink="/home" routerLinkActive="active">{{ "navigation.home" | i18n }}</a>
-        <a class="nav-link nav-text" allowNavigation [roles]="administrationRouteRestriction" routerLink="/administration" routerLinkActive="active">{{ "navigation.administration" | i18n }}</a>
+        <a class="nav-link nav-text"
+           routerLink="/home" routerLinkActive="active">{{ "navigation.home" | i18n }}</a>
+        <a class="nav-link nav-text" allowNavigation [roles]="administrationRouteRestriction"
+           routerLink="/administration" routerLinkActive="active">{{ "navigation.administration" | i18n }}</a>
     </div>
     <div class="header-actions">
-        <clr-dropdown clrMenuPosition="bottom-right" class="dropdown" *ngIf="userName">
+        <clr-dropdown clrPosition="bottom-right" class="dropdown" *ngIf="userName">
             <button class="nav-text" clrDropdownToggle>
                 <span>{{userName}}</span>
                 <clr-icon shape="caret down"></clr-icon>

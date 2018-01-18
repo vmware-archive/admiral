@@ -1,12 +1,17 @@
+// Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
+// This software is released under MIT license.
+// The full license information can be found in LICENSE in the root directory of this project.
+
 /* You can add global styles to this file, and also import other style files */
 @import "node_modules/clarity-ui/src/main";
 @import 'node_modules/admiral-ui-common/css/variables';
 @import "node_modules/admiral-ui-common/css/tokenfield-override";
 @import "node_modules/admiral-ui-common/css/dropdown";
+@import "node_modules/clarity-ui/src/utils/variables.clarity";
 
 
 .main-container {
-  background-color: #FFFFFF;
+  background-color: #ffffff;
 
   .content-container {
     > *:not(router-outlet) {
@@ -95,7 +100,7 @@ navigation-container > :not(.with-back-button) > back-button {
 
 .main-container .tokenfield {
   @include clr-form-fields-appearance($clr-baselineRem_2_5, $clr-form-field-border-color);
-  @include input-border-bottom-animation();
+  @include input-border-bottom-animation($clr-action-blue-light-midtone);
 }
 
 .main-container .tokenfield.focus {

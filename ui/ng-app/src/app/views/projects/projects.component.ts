@@ -1,6 +1,5 @@
-import { FT } from './../../utils/ft';
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -12,12 +11,16 @@ import { FT } from './../../utils/ft';
 
 import { Component, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
-import { Links } from '../../utils/links';
+
 import { DocumentService } from '../../utils/document.service';
 import { GridViewComponent } from '../../components/grid-view/grid-view.component';
+
+import { FT } from '../../utils/ft';
+import { Links } from '../../utils/links';
+import { RoutesRestriction } from '../../utils/routes-restriction';
 import { Utils } from '../../utils/utils';
+
 import * as I18n from 'i18next';
-import { RoutesRestriction } from './../../utils/routes-restriction';
 
 @Component({
   selector: 'app-projects',
@@ -25,7 +28,7 @@ import { RoutesRestriction } from './../../utils/routes-restriction';
   styleUrls: ['./projects.component.scss']
 })
 /**
- * Projects main component.
+ * Projects grid view.
  */
 export class ProjectsComponent {
 
@@ -80,19 +83,19 @@ export class ProjectsComponent {
     this.projectToDelete = null;
   }
 
-  selectItem($event, item) {
-      $event.stopPropagation();
-
-      if (this.isItemSelected(item)) {
-          // clear selection
-          this.selectedItem = null;
-      } else {
-          this.selectedItem = item;
-      }
-  }
-
   isItemSelected(item: any) {
       return item === this.selectedItem;
+  }
+
+  toggleItemSelection($event, item) {
+    $event.stopPropagation();
+
+    if (this.isItemSelected(item)) {
+      // clear selection
+      this.selectedItem = null;
+    } else {
+      this.selectedItem = item;
+    }
   }
 
   get projectsNewRouteRestriction() {
@@ -118,7 +121,7 @@ export class ProjectsComponent {
     if (idx > -1) {
       return I18n.t('back');
     }
-    return I18n.t('projects.title');;
+    return I18n.t('projects.title');
   }
 
   get projectsCardViewActions() {

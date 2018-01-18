@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -95,9 +95,9 @@ module.exports = (function () {
                     if (properties.suggestionProperties.indexOf(q.substring(0, separatorIndex)) > -1) {
                         // When going up and down through the suggestions, the text input changes to what the
                         // desired value is. For example, when typed 'text' and there is suggestion for
-                        // 'name: text', when the user highlights it, the input will become 'name: text' and would
-                        // cause the new query to be 'name: text', however since this is something we know about,
-                        // We change it as expected to 'text'
+                        // 'name: text', when the user highlights it, the input will become 'name: text'
+                        // and would cause the new query to be 'name: text', however since this is something
+                        // we know about, We change it as expected to 'text'.
                         q = q.substring(separatorIndex + SEPARATOR.length);
                     }
                 }

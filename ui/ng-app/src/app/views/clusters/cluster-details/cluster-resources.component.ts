@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -43,6 +43,8 @@ export class ClusterResourcesComponent extends AutoRefreshComponent
     showEditHost: boolean;
     hostToEdit: any;
     deploymentPolicies: any[];
+
+    selectedItem: any;
 
     hostToDelete: any;
     deleteConfirmationAlert: string;
@@ -209,5 +211,20 @@ export class ClusterResourcesComponent extends AutoRefreshComponent
         });
 
         return false; // prevents navigation
+    }
+
+    isItemSelected(item: any) {
+        return item === this.selectedItem;
+    }
+
+    toggleItemSelection($event, item) {
+        $event.stopPropagation();
+
+        if (this.isItemSelected(item)) {
+            // clear selection
+            this.selectedItem = null;
+        } else {
+            this.selectedItem = item;
+        }
     }
 }

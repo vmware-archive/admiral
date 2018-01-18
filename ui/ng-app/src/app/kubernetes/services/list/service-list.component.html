@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~ Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
   ~
   ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
   ~ You may not use this product except in compliance with the License.
@@ -10,42 +10,51 @@
   -->
 
 <grid-view [serviceEndpoint]="serviceEndpoint"
-  [searchPlaceholder]="'Search for services'"
-  [searchSuggestionProperties]="['name']">
-  <div title>Services</div>
-  <ng-template let-item="item">
-    <card [routerLink]="['./' + item.documentId]">
-      <div card-header>{{item.name}}</div>
-      <div card-content>
-        <div class="form-group">
-          <label>{{"creation" | i18n: { "ns": "kubernetes"} }}</label>
-          <div>{{item.service?.metadata.creationTimestamp || "--"}}</div>
-        </div>
-        <div class="form-group">
-          <label>{{"namespace" | i18n: { "ns": "kubernetes"} }}</label>
-          <div>{{item.service?.metadata.namespace || "--"}}</div>
-        </div>
-      </div>
-      <div card-footer>
-        <clr-dropdown [clrMenuPosition]="'bottom-left'" (click)="$event.stopPropagation()">
-          <button class="btn btn-sm btn-link" clrDropdownToggle>
-              Actions
-              <clr-icon shape="caret down"></clr-icon>
-          </button>
-          <div class="dropdown-menu">
-              <label class="dropdown-header">Dropdown header</label>
-              <a href="..." clrDropdownItem [routerLink]="['./' + item.documentId]">Details</a>
-              <a href="..." clrDropdownItem>Delete</a>
-              <a href="..." class="disabled" clrDropdownItem>Disabled Action</a>
-              <div class="dropdown-divider"></div>
-          </div>
-        </clr-dropdown>
-      </div>
-    </card>
-  </ng-template>
+           [searchPlaceholder]="'Search for services'"
+           [searchSuggestionProperties]="['name']">
+
+    <div title>Services</div>
+
+    <ng-template let-item="item">
+        <card [routerLink]="['./' + item.documentId]"
+              [ngClass]="{'card-actions-selected': isItemSelected(item)}">
+            <div card-header>
+                <div class="clusterIcon">
+                    <clr-icon shape="rack-server" size="48"></clr-icon>
+                </div>
+                <div class="titleHolder">
+                    <div class="truncate">{{ item.name }}</div>
+                </div>
+
+                <clr-dropdown class="card-actions">
+                    <button type="button" class="btn btn-sm btn-link" clrDropdownTrigger>
+                        <clr-icon shape="ellipsis-vertical" size="20"></clr-icon>
+                    </button>
+                    <clr-dropdown-menu clrPosition="top-left" *clrIfOpen>
+                        <button type="button"  class="dropdown-item pod-details"><clr-icon shape="eye" size="20"
+                            class="card-drop-down-actions"></clr-icon>{{"projects.actions.details" | i18n}}</button>
+
+                        <button type="button" class="dropdown-item remove-pod"><clr-icon shape="trash" size="20"
+                            class="card-drop-down-actions"></clr-icon>{{"remove" | i18n}}</button>
+                    </clr-dropdown-menu>
+                </clr-dropdown>
+            </div>
+            <div card-content>
+                <div class="form-group">
+                    <label>{{"creation" | i18n: { "ns": "kubernetes"} }}</label>
+                    <div>{{item.service?.metadata.creationTimestamp || "--"}}</div>
+                </div>
+                <div class="form-group">
+                      <label>{{"namespace" | i18n: { "ns": "kubernetes"} }}</label>
+                    <div>{{item.service?.metadata.namespace || "--"}}</div>
+                </div>
+            </div>
+        </card>
+    </ng-template>
 </grid-view>
+
 <navigation-container>
-  <back-button [routerLink]="['./']">Deployments</back-button>
-  <router-outlet></router-outlet>
+    <back-button [routerLink]="['./']">Deployments</back-button>
+    <router-outlet></router-outlet>
 </navigation-container>
 

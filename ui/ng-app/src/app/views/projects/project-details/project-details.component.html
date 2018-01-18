@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~ Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
   ~
   ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
   ~ You may not use this product except in compliance with the License.
@@ -12,29 +12,43 @@
 <h3 class="projects-details-header-title">{{entity?.name}}</h3>
 
 <clr-tabs>
-    <clr-tab-link [clrTabLinkId]="'summaryTab'" [clrTabLinkActive]="true">{{"projects.summary.title" | i18n}}</clr-tab-link>
-    <clr-tab-link [clrTabLinkId]="'membersTab'">{{"projects.members.title" | i18n}}</clr-tab-link>
-    <clr-tab-link *ngIf="isHbrEnabled" [clrTabLinkId]="'repositoriesTab'">{{"projects.repositories" | i18n}}</clr-tab-link>
-    <clr-tab-link [clrTabLinkId]="'infrastructureTab'">{{"projects.infrastructure" | i18n}}</clr-tab-link>
-    <clr-tab-link *ngIf="isHbrEnabled && hasAccessToRegistryReplication" [clrTabLinkId]="'registryReplicationTab'">{{"projects.registryReplication" | i18n}}</clr-tab-link>
-    <clr-tab-link [clrTabLinkId]="'configurationTab'">{{"projects.config.title" | i18n}}</clr-tab-link>
-
-    <clr-tab-content [clrTabContentId]="'summaryContent'" [clrTabContentActive]="true">
-        <app-project-summary [project]="entity"></app-project-summary>
-    </clr-tab-content>
-    <clr-tab-content [clrTabContentId]="'membersContent'">
-        <app-project-members [project]="entity" (onChange)="reloadProject($event)"></app-project-members>
-    </clr-tab-content>
-    <clr-tab-content *ngIf="isHbrEnabled" [clrTabContentId]="'repositoriesContent'">
-        <hbr-repository-stackview [projectId]="hbrProjectId" [projectName]="projectName" [hasSignedIn]="true" [hasProjectAdminRole]="hasProjectAdminRole" (tagClickEvent)="watchTagClickEvent($event)"></hbr-repository-stackview>
-    </clr-tab-content>
-    <clr-tab-content [clrTabContentId]="'infrastructureContent'">
-        <app-clusters [hideTitle]="true" [projectLink]="entity?.documentSelfLink"></app-clusters>
-    </clr-tab-content>
-    <clr-tab-content *ngIf="isHbrEnabled && hasAccessToRegistryReplication" [clrTabContentId]="'registryReplicationContent'">
-        <hbr-replication [projectId]="hbrProjectId" [withReplicationJob]="true" [readonly]="isRegistryReplicationReadOnly"></hbr-replication>
-    </clr-tab-content>
-    <clr-tab-content [clrTabContentId]="'configurationContent'">
-        <app-project-configuration [project]="entity"></app-project-configuration>
-    </clr-tab-content>
+    <clr-tab>
+        <button clrTabLink id="summaryTab">{{"projects.summary.title" | i18n}}</button>
+        <clr-tab-content id="summaryContent" *clrIfActive>
+            <app-project-summary [project]="entity"></app-project-summary>
+        </clr-tab-content>
+    </clr-tab>
+    <clr-tab>
+        <button clrTabLink id="membersTab">{{"projects.members.title" | i18n}}</button>
+        <clr-tab-content id="membersContent" *clrIfActive>
+            <app-project-members [project]="entity" (onChange)="reloadProject($event)"></app-project-members>
+        </clr-tab-content>
+    </clr-tab>
+    <clr-tab *ngIf="isHbrEnabled">
+        <button clrTabLink id="repositoriesTab">{{"projects.repositories" | i18n}}</button>
+        <clr-tab-content id="repositoriesContent" *clrIfActive>
+            <hbr-repository-stackview [projectId]="hbrProjectId" [projectName]="projectName"
+                                      [hasSignedIn]="true" [hasProjectAdminRole]="hasProjectAdminRole"
+                                      (tagClickEvent)="watchTagClickEvent($event)"></hbr-repository-stackview>
+        </clr-tab-content>
+    </clr-tab>
+    <clr-tab>
+        <button clrTabLink id="infrastructureTab">{{"projects.infrastructure" | i18n}}</button>
+        <clr-tab-content id="infrastructureContent" *clrIfActive>
+            <app-clusters [hideTitle]="true" [projectLink]="entity?.documentSelfLink"></app-clusters>
+        </clr-tab-content>
+    </clr-tab>
+    <clr-tab *ngIf="isHbrEnabled && hasAccessToRegistryReplication">
+        <button clrTabLink id="registryReplicationTab">{{"projects.registryReplication" | i18n}}</button>
+        <clr-tab-content id="registryReplicationContent" *clrIfActive>
+            <hbr-replication [projectId]="hbrProjectId" [withReplicationJob]="true"
+                             [readonly]="isRegistryReplicationReadOnly"></hbr-replication>
+        </clr-tab-content>
+    </clr-tab>
+    <clr-tab>
+        <button clrTabLink id="configurationTab">{{"projects.config.title" | i18n}}</button>
+        <clr-tab-content id="configurationContent" *clrIfActive>
+            <app-project-configuration [project]="entity"></app-project-configuration>
+        </clr-tab-content>
+    </clr-tab>
 </clr-tabs>
