@@ -19,7 +19,6 @@ import static org.junit.Assert.fail;
 import static com.vmware.admiral.host.HostInitDockerAdapterServiceConfig.FIELD_NAME_START_MOCK_HOST_ADAPTER_INSTANCE;
 import static com.vmware.admiral.host.ManagementHostAuthUsersTest.DEFAULT_WAIT_SECONDS_FOR_AUTH_SERVICES;
 import static com.vmware.admiral.host.ManagementHostAuthUsersTest.DELAY_BETWEEN_AUTH_TOKEN_RETRIES;
-import static com.vmware.admiral.host.ManagementHostAuthUsersTest.doDelete;
 import static com.vmware.admiral.host.ManagementHostAuthUsersTest.doRestrictedOperation;
 import static com.vmware.admiral.host.ManagementHostAuthUsersTest.login;
 import static com.vmware.xenon.common.CommandLineArgumentParser.ARGUMENT_ASSIGNMENT;
@@ -76,7 +75,6 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionSer
 import com.vmware.admiral.request.RequestBrokerFactoryService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
-import com.vmware.admiral.service.common.ClusterMonitoringService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.admiral.service.test.MockComputeHostInstanceAdapter;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
@@ -123,10 +121,6 @@ public abstract class BaseManagementHostClusterIT {
     protected static final String PASSWORD = "secret";
 
     private static final String NODE_GROUPS = ServiceUriPaths.DEFAULT_NODE_GROUP;
-
-    private static final long TIMEOUT_FOR_WAIT_CONDITION = 60 * 1000;
-    private static final long DELAY_BETWEEN_RETRIES_IN_MILISEC = 3000;
-    private static final int DEFAULT_RETRY_COUNT = 20;
 
     protected static final String RESOURCE_POOL_LINK = "resource-pool-for-clustering";
     protected static final String GROUP_RESOURCE_STATEMENT_LINK = "group-resource-statement-for-clustering";
@@ -216,7 +210,6 @@ public abstract class BaseManagementHostClusterIT {
         // Get token and disable the data collection and cluster monitoring.
         String token = login(host, USERNAME, PASSWORD, true);
         disableDataCollection(host, token);
-        disableClusterMonitoring(host, token);
         // Set node group maintenance interval to 1 second.
         patchNodeGroupMaintenanceInterval(host, token);
 
@@ -279,20 +272,6 @@ public abstract class BaseManagementHostClusterIT {
 
         } catch (Exception e) {
             throw new RuntimeException("Exception stopping host!", e);
-        }
-    }
-
-    private void sendDeleteToStopHost(ManagementHost host) throws IOException {
-        URI hostUri = host.getUri();
-        hostUri = UriUtils.extendUri(hostUri, "/core/management");
-        String token = login(host, USERNAME, PASSWORD, true);
-        Map<String, String> headers = new HashMap<>();
-        headers.put(Operation.REQUEST_AUTH_TOKEN_HEADER, token);
-        SimpleEntry<Integer, String> result = doDelete(hostUri, headers);
-        if (Operation.STATUS_CODE_ACCEPTED != result.getKey()) {
-            throw new IllegalStateException(String.format("Sending DELETE to /core/management "
-                    + "failed with status code %d and response body %s", result.getKey(), result
-                    .getValue()));
         }
     }
 
@@ -1169,22 +1148,6 @@ public abstract class BaseManagementHostClusterIT {
                     }
                     waiter.completeIteration();
 
-                }).sendWith(host);
-        waiter.await();
-    }
-
-    protected static void disableClusterMonitoring(ManagementHost host, String token) {
-        TestContext waiter = new TestContext(1, Duration.ofMinutes(1));
-        Operation.createDelete(UriUtils.buildUri(host, ClusterMonitoringService.SELF_LINK))
-                .setReferer(host.getUri())
-                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
-                .addRequestHeader(Operation.REQUEST_AUTH_TOKEN_HEADER, token)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        waiter.fail(e);
-                        return;
-                    }
-                    waiter.completeIteration();
                 }).sendWith(host);
         waiter.await();
     }
