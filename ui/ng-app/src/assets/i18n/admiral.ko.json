@@ -40,8 +40,8 @@
     },
     "delete": {
       "title": "프로젝트 제거",
-      "confirmation": "{{projectName}} 프로젝트 제거 확인. 구성원 및 클러스터가 프로젝트와 연결이 끊어집니다. 이 작업은 실행 취소할 수 없습니다.",
-      "confirmationVic": "{{projectName}} 프로젝트 제거 확인. 구성원 및 컨테이너 호스트가 프로젝트와 연결이 끊어집니다. 이 작업은 실행 취소할 수 없습니다."
+      "confirmation": "{{projectName}} 프로젝트 제거 확인. 이 작업은 실행 취소할 수 없습니다.",
+      "confirmationVic": "{{projectName}} 프로젝트 제거 확인. 이 작업은 실행 취소할 수 없습니다."
     },
     "summary": {
       "title": "요약",
@@ -146,6 +146,9 @@
       "DISABLED": "사용 안 함",
       "WARNING": "주의"
     },
+    "actions": {
+      "rescan": "다시 검색"
+    },
     "type": "유형",
     "containers": "컨테이너",
     "cpu": "CPU",
@@ -175,8 +178,13 @@
       "cpu": "CPU",
       "addHost": {
         "title": "호스트 추가",
-        "address": "주소",
-        "addressRequired": "주소는 필수입니다."
+        "address": "URL",
+        "addressRequired": "URL은 필수입니다.",
+        "deploymentPolicy": "배포 정책"
+      },
+      "editHost": {
+        "title": "호스트 편집",
+        "name": "이름"
       }
     },
     "edit": {
@@ -191,30 +199,35 @@
       "url": "URL",
       "urlRequired": "클러스터 URL은 필수입니다.",
       "urlRequiredVic": "컨테이너 호스트 URL이 필요합니다.",
+      "publicAddress": "공용 주소",
+      "publicAddressPlaceholder": "IP 주소 또는 호스트 이름",
+      "publicAddressDescription": "게시된 컨테이너 포트가 도달할 수 있는 주소입니다. 기본값은 URL 필드의 주소입니다.",
       "credentials": "자격 증명"
     },
     "delete": {
       "title": "클러스터 제거",
       "titleVic": "컨테이너 호스트 제거",
-      "confirmation": "{{clusterName}} 클러스터 제거 확인. 이 작업은 실행 취소할 수 없습니다.",
-      "confirmationVic": "{{clusterName}} 컨테이너 호스트 제거 확인. 이 작업은 실행 취소할 수 없습니다."
+      "confirmation": "{{clusterName}} 클러스터 제거 확인. 이 클러스터에 연결된 배포된 엔티티도 제거됩니다. 이 작업은 실행 취소할 수 없습니다.",
+      "confirmationVic": "{{clusterName}} 컨테이너 호스트 제거 확인. 이 컨테이너 호스트에 연결된 배포된 엔티티도 제거됩니다. 이 작업은 실행 취소할 수 없습니다."
     }
   },
   "hosts": {
     "actions": {
       "delete":{
         "title": "호스트 제거",
-        "confirmation": "{{hostName}} 호스트 제거 확인. 이 작업은 실행 취소할 수 없습니다."
+        "confirmation": "{{hostName}} 호스트 제거 확인. 이 호스트에 연결된 배포된 엔티티도 제거됩니다. 이 작업은 실행 취소할 수 없습니다."
       },
       "enable": "사용",
-      "disable": "사용 안 함"
+      "disable": "사용 안 함",
+      "edit": "편집"
     },
     "state": {
       "ON": "켜짐",
       "OFF": "꺼짐",
       "UNKNOWN": "알 수 없음",
       "SUSPEND": "사용 안 함"
-    }
+    },
+    "verified": "확인이 완료되었습니다!"
   },
   "logs": {
     "title": "로그",
@@ -285,6 +298,8 @@
   "yes": "예",
   "remove": "제거",
   "delete": "삭제",
+  "verify": "확인",
+  "update": "업데이트",
   "cancel": "취소",
   "back": "뒤로",
   "refresh": "새로 고침",

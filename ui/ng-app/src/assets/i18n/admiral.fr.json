@@ -40,8 +40,8 @@
     },
     "delete": {
       "title": "Supprimer le projet",
-      "confirmation": "Confirmez la suppression du projet {{projectName}}. Les membres et les clusters seront dissociés du projet. Cette opération ne peut pas être annulée.",
-      "confirmationVic": "Confirmez la suppression du projet {{projectName}}. Les membres et les hôtes de conteneur seront dissociés du projet. Cette opération ne peut pas être annulée."
+      "confirmation": "Confirmez la suppression du projet {{projectName}}. Cette opération ne peut pas être annulée.",
+      "confirmationVic": "Confirmez la suppression du projet {{projectName}}. Cette opération ne peut pas être annulée."
     },
     "summary": {
       "title": "Résumé",
@@ -146,6 +146,9 @@
       "DISABLED": "DÉSACTIVÉ",
       "WARNING": "AVERTISSEMENT"
     },
+    "actions": {
+      "rescan": "Réanalyser"
+    },
     "type": "Type",
     "containers": "Conteneurs",
     "cpu": "CPU",
@@ -175,8 +178,13 @@
       "cpu": "CPU",
       "addHost": {
         "title": "Ajouter un hôte",
-        "address": "Adresse",
-        "addressRequired": "Une adresse est requise."
+        "address": "URL",
+        "addressRequired": "L'URL est requise.",
+        "deploymentPolicy": "Stratégie de déploiement"
+      },
+      "editHost": {
+        "title": "Modifier l'hôte",
+        "name": "Nom"
       }
     },
     "edit": {
@@ -191,30 +199,35 @@
       "url": "URL",
       "urlRequired": "L'URL du cluster est requise.",
       "urlRequiredVic": "L'URL d'hôte de conteneur est requise.",
+      "publicAddress": "Adresse publique",
+      "publicAddressPlaceholder": "Adresse IP ou nom d'hôte",
+      "publicAddressDescription": "Adresse permettant d'accéder aux ports du conteneur publié. Par défaut, il s'agit de l'adresse du champ URL.",
       "credentials": "Informations d'identification"
     },
     "delete": {
       "title": "Supprimer le cluster",
       "titleVic": "Supprimer l'hôte de conteneur",
-      "confirmation": "Confirmez la suppression du cluster {{clusterName}}. Cette opération ne peut pas être annulée.",
-      "confirmationVic": "Confirmez la suppression de l'hôte de conteneur {{clusterName}}. Cette opération ne peut pas être annulée."
+      "confirmation": "Confirmez la suppression du cluster {{clusterName}}. Les entités déployées associées à ce cluster seront également supprimées. Cette opération ne peut pas être annulée.",
+      "confirmationVic": "Confirmez la suppression de l'hôte de conteneur {{clusterName}}. Les entités déployées associées à cet hôte de conteneur seront également supprimées. Cette opération ne peut pas être annulée."
     }
   },
   "hosts": {
     "actions": {
       "delete":{
         "title": "Supprimer l'hôte",
-        "confirmation": "Confirmez la suppression de l'hôte {{hostName}}. Cette opération ne peut pas être annulée."
+        "confirmation": "Confirmez la suppression de l'hôte {{hostName}}. Les entités déployées associées à cet hôte seront également supprimées. Cette opération ne peut pas être annulée."
       },
       "enable": "Activer",
-      "disable": "Désactiver"
+      "disable": "Désactiver",
+      "edit": "Modifier"
     },
     "state": {
       "ON": "ACTIVÉ",
       "OFF": "DÉSACTIVÉ",
       "UNKNOWN": "INCONNU",
       "SUSPEND": "DÉSACTIVÉ"
-    }
+    },
+    "verified": "Vérification effectuée !"
   },
   "logs": {
     "title": "Journaux",
@@ -285,6 +298,8 @@
   "yes": "Oui",
   "remove": "Supprimer",
   "delete": "Supprimer",
+  "verify": "Vérifier",
+  "update": "Mettre à jour",
   "cancel": "Annuler",
   "back": "Retour",
   "refresh": "Actualiser",

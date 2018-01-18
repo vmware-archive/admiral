@@ -40,8 +40,8 @@
     },
     "delete": {
       "title": "Project verwijderen",
-      "confirmation": "Bevestig het verwijderen van het project {{projectName}}. Leden en clusters worden losgekoppeld van het project. De bewerking kan niet ongedaan worden gemaakt.",
-      "confirmationVic": "Bevestig het verwijderen van het project {{projectName}}. Leden en containerhosts worden losgekoppeld van het project. De bewerking kan niet ongedaan worden gemaakt."
+      "confirmation": "Bevestig het verwijderen van het project {{projectName}}. De bewerking kan niet ongedaan worden gemaakt.",
+      "confirmationVic": "Bevestig het verwijderen van het project {{projectName}}. De bewerking kan niet ongedaan worden gemaakt."
     },
     "summary": {
       "title": "Samenvatting",
@@ -146,6 +146,9 @@
       "DISABLED": "UITGESCHAKELD",
       "WARNING": "WAARSCHUWING"
     },
+    "actions": {
+      "rescan": "Opnieuw scannen"
+    },
     "type": "Type",
     "containers": "Containers",
     "cpu": "CPU",
@@ -175,8 +178,13 @@
       "cpu": "CPU",
       "addHost": {
         "title": "Host toevoegen",
-        "address": "Adres",
-        "addressRequired": "Adres is vereist."
+        "address": "URL",
+        "addressRequired": "URL is vereist.",
+        "deploymentPolicy": "Implementatiebeleid"
+      },
+      "editHost": {
+        "title": "Host bewerken",
+        "name": "Naam"
       }
     },
     "edit": {
@@ -191,30 +199,35 @@
       "url": "URL",
       "urlRequired": "Cluster-URL is vereist.",
       "urlRequiredVic": "Containerhost-URL is vereist.",
+      "publicAddress": "Openbaar adres",
+      "publicAddressPlaceholder": "IP-adres of hostnaam",
+      "publicAddressDescription": "Het adres waarop gepubliceerde containerpoorten kunnen worden bereikt. Standaard wordt het adres van het URL-veld gebruikt.",
       "credentials": "Verificatiegegevens"
     },
     "delete": {
       "title": "Cluster verwijderen",
       "titleVic": "Containerhost verwijderen",
-      "confirmation": "Bevestig het verwijderen van het cluster {{clusterName}}. De bewerking kan niet ongedaan worden gemaakt.",
-      "confirmationVic": "Bevestig het verwijderen van de containerhost {{clusterName}}. De bewerking kan niet ongedaan worden gemaakt."
+      "confirmation": "Bevestig het verwijderen van het cluster {{clusterName}}. De geïmplementeerde entiteiten die zijn gekoppeld aan dit cluster, worden ook verwijderd. De bewerking kan niet ongedaan worden gemaakt.",
+      "confirmationVic": "Bevestig het verwijderen van de containerhost {{clusterName}}. De geïmplementeerde entiteiten die zijn gekoppeld aan deze containerhost, worden ook verwijderd. De bewerking kan niet ongedaan worden gemaakt."
     }
   },
   "hosts": {
     "actions": {
       "delete":{
         "title": "Host verwijderen",
-        "confirmation": "Bevestig het verwijderen van de host {{hostName}}. De bewerking kan niet ongedaan worden gemaakt."
+        "confirmation": "Bevestig het verwijderen van de host {{hostName}}. De geïmplementeerde entiteiten die zijn gekoppeld aan deze host, worden ook verwijderd. De bewerking kan niet ongedaan worden gemaakt."
       },
       "enable": "Inschakelen",
-      "disable": "Uitschakelen"
+      "disable": "Uitschakelen",
+      "edit": "Bewerken"
     },
     "state": {
       "ON": "AAN",
       "OFF": "UIT",
       "UNKNOWN": "ONBEKEND",
       "SUSPEND": "UITGESCHAKELD"
-    }
+    },
+    "verified": "Geverifieerd!"
   },
   "logs": {
     "title": "Logboeken",
@@ -285,6 +298,8 @@
   "yes": "Ja",
   "remove": "Verwijderen",
   "delete": "Verwijderen",
+  "verify": "Verifiëren",
+  "update": "Bijwerken",
   "cancel": "Annuleren",
   "back": "Terug",
   "refresh": "Vernieuwen",

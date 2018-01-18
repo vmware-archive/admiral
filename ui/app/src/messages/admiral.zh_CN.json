@@ -38,7 +38,6 @@
       "placementZones": "放置区域",
       "profiles": "配置文件",
       "endpoints": "端点",
-      "machines": "计算机",
       "compute": "计算资源",
       "kubernetesResources": "K8S 资源",
       "kubernetesDeployments": "部署",
@@ -289,12 +288,14 @@
           "templates": "模板",
           "closures": "闭包服务",
           "repositories": "存储库"
-        }
+        },
+        "createTemplate": "模板"
       },
       "details": {
         "create": "创建模板",
         "createNameHint": "模板名称",
         "createProceed": "继续",
+        "errorEmptyName": "请指定模板名称",
         "edit": "编辑模板",
         "newDefinition": {
           "newLabel": "添加容器",
@@ -1391,6 +1392,7 @@
   "unavailable": "不适用",
   "advanced": "高级",
   "noSelection": "未选择任何内容",
+  "noItems": "无任何项",
   "buildNumber": "内部版本号",
   "errors": {
     "hostIp": "值必须是主机名或 IP 地址。",

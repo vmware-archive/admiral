@@ -38,7 +38,6 @@
       "placementZones": "Zone di posizionamento",
       "profiles": "Profili",
       "endpoints": "Endpoint",
-      "machines": "Macchine",
       "compute": "Risorsa di elaborazione",
       "kubernetesResources": "Risorse K8S",
       "kubernetesDeployments": "Distribuzioni",
@@ -289,12 +288,14 @@
           "templates": "Modelli",
           "closures": "Chiusure",
           "repositories": "Repository"
-        }
+        },
+        "createTemplate": "Modello"
       },
       "details": {
         "create": "Crea modello",
         "createNameHint": "Nome modello",
         "createProceed": "Avanti",
+        "errorEmptyName": "Specificare il nome del modello",
         "edit": "Modifica modello",
         "newDefinition": {
           "newLabel": "Aggiungi contenitore",
@@ -1263,7 +1264,7 @@
           "name": "Nome",
           "description": "Descrizione",
           "runtime": "Runtime",
-          "source": "Codice origine",
+          "source": "Codice sorgente",
           "sourceURL": "URL origine",
           "runtimeTypes": {
             "nodejs": "NodeJs 4",
@@ -1300,11 +1301,11 @@
           "dependencies": "Dipendenze",
           "nameDescription": "Nome della chiusura. Se il punto di ingresso non è impostato, il nome verrà utilizzato come nome della funzione da chiamare.",
           "descriptionDescription": "Descrizione della chiusura",
-          "sourceDescription": "Codice di origine da eseguire",
-          "sourceURLDescription": "Codice di origine accessibile tramite URL. Il contenuto potrebbe essere il codice stesso o un file ZIP. Se viene utilizzato l'URL di origine, il campo Codice origine non verrà utilizzato.",
+          "sourceDescription": "Codice sorgente da eseguire",
+          "sourceURLDescription": "Codice sorgente accessibile tramite URL. Il contenuto potrebbe essere il codice stesso o un file ZIP. Se viene utilizzato l'URL del codice sorgente, il campo Codice sorgente non verrà utilizzato.",
           "memoryLimitDescription": "Limite di memoria in megabyte. Il valore massimo consentito è 1536 MB.",
           "timeoutDescription": "Timeout dell'esecuzione in secondi. Se il tempo di esecuzione dell'attività supera il timeout, l'attività viene annullata.",
-          "entrypointDescription": "Funzione principale da chiamare nel formato: file_nome.funzione_nome",
+          "entrypointDescription": "Funzione principale da chiamare nel formato: nome_file.nome_funzione",
           "logDriverDescription": "Driver di registrazione per l'attività di chiusura",
           "logConfigOptionsDescription": "Opzioni supportate per ciascun driver di registrazione",
           "dependenciesDescription": "Dipendenze da installare prima di eseguire il codice",
@@ -1391,6 +1392,7 @@
   "unavailable": "N/A",
   "advanced": "Avanzate",
   "noSelection": "Nessuna selezione",
+  "noItems": "Nessun elemento",
   "buildNumber": "Numero build",
   "errors": {
     "hostIp": "Il valore deve essere il nome host o l'indirizzo IP.",

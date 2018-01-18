@@ -40,8 +40,8 @@
     },
     "delete": {
       "title": "Remover projeto",
-      "confirmation": "Confirme a remoção do projeto {{projectName}}. Os membros e clusters serão desassociados do projeto. A operação não poderá ser desfeita.",
-      "confirmationVic": "Confirme a remoção do projeto {{projectName}}. Os membros e os hosts de contêiner serão desassociados do projeto. A operação não poderá ser desfeita."
+      "confirmation": "Confirme a remoção do projeto {{projectName}}. A operação não poderá ser desfeita.",
+      "confirmationVic": "Confirme a remoção do projeto {{projectName}}. A operação não poderá ser desfeita."
     },
     "summary": {
       "title": "Resumo",
@@ -146,6 +146,9 @@
       "DISABLED": "DESABILITADO",
       "WARNING": "AVISO"
     },
+    "actions": {
+      "rescan": "Verificar novamente"
+    },
     "type": "Tipo",
     "containers": "Contêineres",
     "cpu": "CPU",
@@ -175,8 +178,13 @@
       "cpu": "CPU",
       "addHost": {
         "title": "Adicionar Host",
-        "address": "Endereço",
-        "addressRequired": "O endereço é obrigatório."
+        "address": "URL",
+        "addressRequired": "A URL é obrigatória.",
+        "deploymentPolicy": "Política de implantação"
+      },
+      "editHost": {
+        "title": "Editar Host",
+        "name": "Nome"
       }
     },
     "edit": {
@@ -191,30 +199,35 @@
       "url": "URL",
       "urlRequired": "A URL do cluster é obrigatória.",
       "urlRequiredVic": "A URL do host de contêiner é obrigatória.",
+      "publicAddress": "Endereço público",
+      "publicAddressPlaceholder": "Endereço IP ou nome do host",
+      "publicAddressDescription": "O endereço no qual as portas do contêiner podem ser acessadas. O padrão é o endereço do campo URL.",
       "credentials": "Credenciais"
     },
     "delete": {
       "title": "Remover cluster",
       "titleVic": "Remover Host de Contêiner",
-      "confirmation": "Confirmar a remoção do cluster {{clusterName}}. A operação não poderá ser desfeita.",
-      "confirmationVic": "Confirme a remoção do host de contêiner {{clusterName}}. A operação não poderá ser desfeita."
+      "confirmation": "Confirme a remoção do cluster {{clusterName}}. As entidades implantadas associadas a esse cluster também serão removidas. A operação não pode ser desfeita.",
+      "confirmationVic": "Confirme a remoção do host do contêiner {{clusterName}}. As entidades implantadas associadas a esse host do contêiner também serão removidas. A operação não pode ser desfeita."
     }
   },
   "hosts": {
     "actions": {
       "delete":{
         "title": "Remover Host",
-        "confirmation": "Confirmar a remoção do host {{hostName}}. A operação não poderá ser desfeita."
+        "confirmation": "Confirme a remoção do host {{hostName}}. As entidades implantadas associadas a esse host também serão removidas. A operação não pode ser desfeita."
       },
       "enable": "Habilitar",
-      "disable": "Desativar"
+      "disable": "Desativar",
+      "edit": "Editar"
     },
     "state": {
       "ON": "ATIVADO",
       "OFF": "DESATIVADO",
       "UNKNOWN": "DESCONHECIDO",
       "SUSPEND": "DESABILITADO"
-    }
+    },
+    "verified": "Verificado com êxito!"
   },
   "logs": {
     "title": "Logs",
@@ -285,6 +298,8 @@
   "yes": "Sim",
   "remove": "Remover",
   "delete": "Excluir",
+  "verify": "Verificar",
+  "update": "Atualizar",
   "cancel": "Cancelar",
   "back": "Voltar",
   "refresh": "Atualizar",

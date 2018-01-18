@@ -40,8 +40,8 @@
     },
     "delete": {
       "title": "プロジェクトの削除",
-      "confirmation": "プロジェクト {{projectName}} の削除を確認してください。メンバーおよびクラスタはプロジェクトとの関連付けを解除されます。この操作は元に戻せません。",
-      "confirmationVic": "プロジェクト {{projectName}} の削除を確認してください。メンバーおよびコンテナ ホストはプロジェクトとの関連付けを解除されます。この操作は元に戻せません。"
+      "confirmation": "プロジェクト 「{{projectName}}」 を本当に削除しますか? この操作は元に戻せません。",
+      "confirmationVic": "プロジェクト 「{{projectName}}」 を本当に削除しますか? この操作は元に戻せません。"
     },
     "summary": {
       "title": "概要",
@@ -146,6 +146,9 @@
       "DISABLED": "無効",
       "WARNING": "警告"
     },
+    "actions": {
+      "rescan": "再スキャン"
+    },
     "type": "タイプ",
     "containers": "コンテナ",
     "cpu": "CPU",
@@ -175,8 +178,13 @@
       "cpu": "CPU",
       "addHost": {
         "title": "ホストの追加",
-        "address": "アドレス",
-        "addressRequired": "アドレスは必須です。"
+        "address": "URL",
+        "addressRequired": "URL は必須です。",
+        "deploymentPolicy": "展開ポリシー"
+      },
+      "editHost": {
+        "title": "ホストの編集",
+        "name": "名前"
       }
     },
     "edit": {
@@ -191,30 +199,35 @@
       "url": "URL",
       "urlRequired": "クラスタの URL は必須です。",
       "urlRequiredVic": "コンテナ ホストの URL は必須です。",
+      "publicAddress": "パブリック アドレス",
+      "publicAddressPlaceholder": "IP アドレスまたはホスト名",
+      "publicAddressDescription": "公開されたコンテナ ポートが到達可能なアドレス。URL フィールドからのデフォルトのアドレス。",
       "credentials": "認証情報"
     },
     "delete": {
       "title": "クラスタの削除",
       "titleVic": "コンテナ ホストの削除",
-      "confirmation": "クラスタ {{clusterName}} の削除を確認しください。この操作は元に戻せません。",
-      "confirmationVic": "コンテナ ホスト {{clusterName}} の削除を確認しください。この操作は元に戻せません。"
+      "confirmation": "クラスタ「{{clusterName}}」を本当に削除しますか? このクラスタに関連する展開されたエンティティも同様に削除されます。この操作は元に戻せません。",
+      "confirmationVic": "コンテナ ホスト 「{{clusterName}}」 を本当に削除しますか? このコンテナ ホストに関連する展開されたエンティティも同様に削除されます。この操作は元に戻せません。"
     }
   },
   "hosts": {
     "actions": {
       "delete":{
         "title": "ホストの削除",
-        "confirmation": "ホスト {{hostName}} の削除を確認しください。この操作は元に戻せません。"
+        "confirmation": "ホスト 「{{hostName}}」 を本当に削除しますか? このホストに関連する展開されたエンティティも同様に削除されます。この操作は元に戻せません。"
       },
       "enable": "有効化",
-      "disable": "無効化"
+      "disable": "無効化",
+      "edit": "編集"
     },
     "state": {
       "ON": "有効",
       "OFF": "無効",
       "UNKNOWN": "不明",
       "SUSPEND": "無効"
-    }
+    },
+    "verified": "検証が正常に完了しました。"
   },
   "logs": {
     "title": "ログ",
@@ -285,12 +298,14 @@
   "yes": "はい",
   "remove": "削除",
   "delete": "削除",
+  "verify": "検証",
+  "update": "更新",
   "cancel": "キャンセル",
   "back": "戻る",
   "refresh": "更新",
   "unknown": "不明",
   "assignRoles": "プロジェクトのロールの割り当て",
-  "makeAdmin": "管理者ロールの割り当て",
+  "makeAdmin": " 管理者ロールの割り当て",
   "unmakeAdmin": "管理者ロールの割り当て解除",
   "noItems": "アイテムがありません",
   "reload": "再ロード",

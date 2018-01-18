@@ -38,7 +38,6 @@
       "placementZones": "Zonas de ubicación",
       "profiles": "Perfiles",
       "endpoints": "Endpoints",
-      "machines": "Máquinas",
       "compute": "Recurso informático",
       "kubernetesResources": "Recursos de K8S",
       "kubernetesDeployments": "Implementaciones",
@@ -289,12 +288,14 @@
           "templates": "Plantillas",
           "closures": "Clausuras",
           "repositories": "Repositorios"
-        }
+        },
+        "createTemplate": "Plantilla"
       },
       "details": {
         "create": "Crear plantilla",
         "createNameHint": "Nombre de plantilla",
         "createProceed": "Continuar",
+        "errorEmptyName": "Especifique el nombre de plantilla",
         "edit": "Editar plantilla",
         "newDefinition": {
           "newLabel": "Añadir contenedor",
@@ -1298,18 +1299,18 @@
           "inputs": "Entradas",
           "outputs": "Salidas",
           "dependencies": "Dependencias",
-          "nameDescription": "Nombre de la clausura. Si no se ha definido el punto de entrada, el nombre se usará como nombre de función para llamar.",
+          "nameDescription": "Nombre de la clausura. Si no se ha definido el punto de entrada, el nombre se usará como nombre de la función a la que se va a llamar.",
           "descriptionDescription": "Descripción de la clausura",
-          "sourceDescription": "Código de origen que ejecutar",
-          "sourceURLDescription": "Código de origen accesible a través de URL. El contenido podría ser el propio código o un archivo zip. Si se usa la URL de origen, no se usará el código de origen del campo.",
+          "sourceDescription": "Código de origen que se ejecutará",
+          "sourceURLDescription": "Código de origen accesible a través de una URL. El contenido podría ser el propio código o un archivo zip. Si se usa la URL de origen, no se usará el código de origen del campo.",
           "memoryLimitDescription": "Límite de memoria en megabytes. El valor máximo permitido es 1536 MB.",
           "timeoutDescription": "Tiempo de espera de ejecución en segundos. Si la ejecución supera el tiempo de espera, se cancela la ejecución de la tarea.",
-          "entrypointDescription": "Función principal que se va a llamar con el formato: file_name.function_name",
+          "entrypointDescription": "Función principal a la que se va a llamar con el formato: file_name.function_name",
           "logDriverDescription": "Controlador de registro para la tarea de clausura",
           "logConfigOptionsDescription": "Opciones admitidas para cada controlador de registro",
-          "dependenciesDescription": "Dependencias que instalar antes de ejecutar el código",
+          "dependenciesDescription": "Dependencias que se instalarán antes de ejecutar el código",
           "inputDescription": "Entrada que se usará al ejecutar el código. La entrada debe ser una primitiva o un objeto JSON válido.",
-          "outputDescription": "Nombres de parámetros de salida que usar al rellenar los resultados."
+          "outputDescription": "Nombres de parámetros de salida que se usarán al rellenar los resultados."
         },
         "logs": {
           "title": "Logs"
@@ -1391,6 +1392,7 @@
   "unavailable": "No corresponde",
   "advanced": "Avanzado",
   "noSelection": "Ninguna selección",
+  "noItems": "No hay elementos",
   "buildNumber": "Número de compilación",
   "errors": {
     "hostIp": "El valor debe ser el nombre de host o la dirección IP.",

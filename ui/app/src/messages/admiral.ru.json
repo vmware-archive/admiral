@@ -38,7 +38,6 @@
       "placementZones": "Зоны размещения",
       "profiles": "Профили",
       "endpoints": "Конечные точки",
-      "machines": "Компьютеры",
       "compute": "Вычислительный ресурс",
       "kubernetesResources": "Ресурсы K8S",
       "kubernetesDeployments": "Развертывания",
@@ -289,12 +288,14 @@
           "templates": "Шаблоны",
           "closures": "Закрытия",
           "repositories": "Репозитории"
-        }
+        },
+        "createTemplate": "Шаблон"
       },
       "details": {
         "create": "Создать шаблон",
         "createNameHint": "Имя шаблона",
         "createProceed": "Продолжить",
+        "errorEmptyName": "Укажите имя шаблона",
         "edit": "Изменить шаблон",
         "newDefinition": {
           "newLabel": "Добавить контейнер",
@@ -1391,6 +1392,7 @@
   "unavailable": "Н/д",
   "advanced": "Дополнительно",
   "noSelection": "Нет выбранных элементов",
+  "noItems": "Нет элементов",
   "buildNumber": "Номер сборки",
   "errors": {
     "hostIp": "В качестве значения должно быть указано имя узла или IP-адрес.",

@@ -38,7 +38,6 @@
       "placementZones": "Zonas de Posicionamento",
       "profiles": "Perfis",
       "endpoints": "Endpoints",
-      "machines": "Máquinas",
       "compute": "Recurso de Processamento",
       "kubernetesResources": "Recursos K8S",
       "kubernetesDeployments": "Implantações",
@@ -289,12 +288,14 @@
           "templates": "Modelos",
           "closures": "Execuções rápidas",
           "repositories": "Repositórios"
-        }
+        },
+        "createTemplate": "Modelo"
       },
       "details": {
         "create": "Criar Modelo",
         "createNameHint": "Nome do Modelo",
         "createProceed": "Prosseguir",
+        "errorEmptyName": "Especifique o nome do modelo",
         "edit": "Editar Modelo",
         "newDefinition": {
           "newLabel": "Adicionar Contêiner",
@@ -1263,7 +1264,7 @@
           "name": "Nome",
           "description": "Descrição",
           "runtime": "Tempo de Execução",
-          "source": "Código fonte",
+          "source": "Código-fonte",
           "sourceURL": "URL de Origem",
           "runtimeTypes": {
             "nodejs": "NodeJs 4",
@@ -1298,13 +1299,13 @@
           "inputs": "Entradas",
           "outputs": "Saídas",
           "dependencies": "Dependências",
-          "nameDescription": "Nome da execução rápida. Se o ponto de entrada não estiver definido, o nome será usado como nome da função a ser chamado.",
+          "nameDescription": "Nome da execução rápida. Se o ponto de entrada não estiver definido, o nome será usado como nome da função a ser chamada.",
           "descriptionDescription": "Descrição da execução rápida",
           "sourceDescription": "Código-fonte a ser executado",
-          "sourceURLDescription": "Código-fonte acessível pela URL. O conteúdo pode ser o próprio código ou um arquivo zip. Se o URL de origem for usado, o código-fonte do campo não será usado.",
+          "sourceURLDescription": "Código-fonte acessível pela URL. O conteúdo pode ser o próprio código ou um arquivo zip. Se a URL de origem for usada, o código-fonte do campo não será usado.",
           "memoryLimitDescription": "Limite de memória em megabytes. O valor máximo permitido é 1536 MB.",
           "timeoutDescription": "Tempo limite de execução em segundos. Se a execução da tarefa exceder esse tempo limite, ela será cancelada.",
-          "entrypointDescription": "Principal função a ser chamada, no formato: nome_arquivo.nome_função",
+          "entrypointDescription": "Principal função a ser chamada no formato: nome_arquivo.nome_função",
           "logDriverDescription": "Driver de registro em log para a tarefa de execução rápida",
           "logConfigOptionsDescription": "Opções com suporte para cada driver de registro em log",
           "dependenciesDescription": "Dependências para instalação antes da execução do código",
@@ -1391,6 +1392,7 @@
   "unavailable": "N/D",
   "advanced": "Avançado",
   "noSelection": "Nenhuma Seleção",
+  "noItems": "Nenhum item",
   "buildNumber": "Número da compilação",
   "errors": {
     "hostIp": "O valor deve ser o nome do host ou o endereço IP.",

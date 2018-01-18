@@ -40,8 +40,8 @@
     },
     "delete": {
       "title": "Rimuovi progetto",
-      "confirmation": "Conferma di rimozione del progetto {{projectName}}. I membri e i cluster verranno dissociati dal progetto. L'operazione non potrà essere annullata.",
-      "confirmationVic": "Conferma di rimozione del progetto {{projectName}}. I membri e gli host dei contenitori verranno dissociati dal progetto. L'operazione non potrà essere annullata."
+      "confirmation": "Confermare la rimozione del progetto {{projectName}}. L'operazione non potrà essere annullata.",
+      "confirmationVic": "Confermare la rimozione del progetto {{projectName}}. L'operazione non potrà essere annullata."
     },
     "summary": {
       "title": "Riepilogo",
@@ -146,6 +146,9 @@
       "DISABLED": "DISABILITATO",
       "WARNING": "AVVISO"
     },
+    "actions": {
+      "rescan": "Ripeti scansione"
+    },
     "type": "Tipo",
     "containers": "Contenitori",
     "cpu": "CPU",
@@ -175,8 +178,13 @@
       "cpu": "CPU",
       "addHost": {
         "title": "Aggiungi host",
-        "address": "Indirizzo",
-        "addressRequired": "L'indirizzo è obbligatorio."
+        "address": "URL",
+        "addressRequired": "L'URL è obbligatorio.",
+        "deploymentPolicy": "Criterio di distribuzione"
+      },
+      "editHost": {
+        "title": "Modifica host",
+        "name": "Nome"
       }
     },
     "edit": {
@@ -191,30 +199,35 @@
       "url": "URL",
       "urlRequired": "L'URL del cluster è obbligatorio.",
       "urlRequiredVic": "URL host contenitore richiesto.",
+      "publicAddress": "Indirizzo pubblico",
+      "publicAddressPlaceholder": "Indirizzo IP o nome host",
+      "publicAddressDescription": "Indirizzo presso il quale le porte del contenitore pubblicate possono essere raggiunte. Il valore predefinito è l'indirizzo derivato dal campo URL.",
       "credentials": "Credenziali"
     },
     "delete": {
       "title": "Rimuovi cluster",
       "titleVic": "Rimuovi host contenitore",
-      "confirmation": "Conferma di rimozione del cluster {{clusterName}}. L'operazione non potrà essere annullata.",
-      "confirmationVic": "Conferma di rimozione dell'host contenitore {{clusterName}}. L'operazione non potrà essere annullata."
+      "confirmation": "Confermare la rimozione del cluster {{clusterName}}. Anche le entità distribuite associate al cluster verranno rimosse. L'operazione non potrà essere annullata.",
+      "confirmationVic": "Confermare la rimozione dell'host container {{clusterName}}. Anche le entità distribuite associate all'host container verranno rimosse. L'operazione non potrà essere annullata."
     }
   },
   "hosts": {
     "actions": {
       "delete":{
         "title": "Rimuovi host",
-        "confirmation": "Conferma di rimozione dell'host {{hostName}}. L'operazione non potrà essere annullata."
+        "confirmation": "Confermare la rimozione dell'host {{hostName}}. Anche le entità distribuite associate all'host verranno rimosse. L'operazione non potrà essere annullata."
       },
       "enable": "Attiva",
-      "disable": "Disattiva"
+      "disable": "Disattiva",
+      "edit": "Modifica"
     },
     "state": {
       "ON": "ACCESO",
       "OFF": "SPENTO",
       "UNKNOWN": "SCONOSCIUTO",
       "SUSPEND": "DISABILITATO"
-    }
+    },
+    "verified": "Verifica completata."
   },
   "logs": {
     "title": "Registri",
@@ -285,6 +298,8 @@
   "yes": "Sì",
   "remove": "Rimuovi",
   "delete": "Elimina",
+  "verify": "Verifica",
+  "update": "Aggiorna",
   "cancel": "Annulla",
   "back": "Indietro",
   "refresh": "Aggiorna",

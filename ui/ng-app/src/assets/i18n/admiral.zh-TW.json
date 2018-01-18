@@ -40,8 +40,8 @@
     },
     "delete": {
       "title": "移除專案",
-      "confirmation": "確認移除專案 {{projectName}}。將解除成員和叢集與該專案的關聯。此作業無法復原。",
-      "confirmationVic": "確認移除專案 {{projectName}}。將解除成員和容器主機與該專案的關聯。此作業無法復原。"
+      "confirmation": "確認移除專案 {{projectName}}。此作業無法復原。",
+      "confirmationVic": "確認移除專案 {{projectName}}。此作業無法復原。"
     },
     "summary": {
       "title": "摘要",
@@ -146,6 +146,9 @@
       "DISABLED": "已停用",
       "WARNING": "警告"
     },
+    "actions": {
+      "rescan": "重新掃描"
+    },
     "type": "類型",
     "containers": "容器",
     "cpu": "CPU",
@@ -175,8 +178,13 @@
       "cpu": "CPU",
       "addHost": {
         "title": "新增主機",
-        "address": "位址",
-        "addressRequired": "位址為必填。"
+        "address": "URL",
+        "addressRequired": "URL 為必填。",
+        "deploymentPolicy": "部署原則"
+      },
+      "editHost": {
+        "title": "編輯主機",
+        "name": "名稱"
       }
     },
     "edit": {
@@ -191,30 +199,35 @@
       "url": "URL",
       "urlRequired": "叢集 URL 為必填。",
       "urlRequiredVic": "容器主機 URL 為必填。",
+      "publicAddress": "公用位址",
+      "publicAddressPlaceholder": "IP 位址或主機名稱",
+      "publicAddressDescription": "可連線已發佈容器連接埠的位址。預設值為 URL 欄位中的位址。",
       "credentials": "認證"
     },
     "delete": {
       "title": "移除叢集",
       "titleVic": "移除容器主機",
-      "confirmation": "確認移除叢集 {{clusterName}}。此作業無法復原。",
-      "confirmationVic": "確認移除容器主機 {{clusterName}}。此作業無法復原。"
+      "confirmation": "確認移除叢集 {{clusterName}}。與此叢集相關聯的已部署實體也將移除。此作業無法復原。",
+      "confirmationVic": "確認移除容器主機 {{clusterName}}。與此容器主機相關聯的已部署實體也將移除。此作業無法復原。"
     }
   },
   "hosts": {
     "actions": {
       "delete":{
         "title": "移除主機",
-        "confirmation": "確認移除主機 {{hostName}}。此作業無法復原。"
+        "confirmation": "確認移除主機 {{hostName}}。與此主機相關聯的已部署實體也將移除。此作業無法復原。"
       },
       "enable": "啟用",
-      "disable": "停用"
+      "disable": "停用",
+      "edit": "編輯"
     },
     "state": {
       "ON": "開啟",
       "OFF": "關閉",
       "UNKNOWN": "不明",
       "SUSPEND": "已停用"
-    }
+    },
+    "verified": "已成功驗證!"
   },
   "logs": {
     "title": "記錄",
@@ -285,6 +298,8 @@
   "yes": "是",
   "remove": "移除",
   "delete": "刪除",
+  "verify": "驗證",
+  "update": "更新",
   "cancel": "取消",
   "back": "上一步",
   "refresh": "重新整理",

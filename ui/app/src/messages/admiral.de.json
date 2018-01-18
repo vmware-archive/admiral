@@ -38,7 +38,6 @@
       "placementZones": "Platzierungszonen",
       "profiles": "Profile",
       "endpoints": "Endpoints",
-      "machines": "Maschinen",
       "compute": "Computing-Ressource",
       "kubernetesResources": "K8S-Ressourcen",
       "kubernetesDeployments": "Bereitstellungen",
@@ -289,12 +288,14 @@
           "templates": "Vorlagen",
           "closures": "Abschlüsse",
           "repositories": "Repositorys"
-        }
+        },
+        "createTemplate": "Vorlage"
       },
       "details": {
         "create": "Vorlage erstellen",
         "createNameHint": "Vorlagenname",
         "createProceed": "Fortfahren",
+        "errorEmptyName": "Geben Sie den Vorlagennamen an",
         "edit": "Vorlage bearbeiten",
         "newDefinition": {
           "newLabel": "Container hinzufügen",
@@ -1391,6 +1392,7 @@
   "unavailable": "N/A",
   "advanced": "Erweitert",
   "noSelection": "Keine Auswahl",
+  "noItems": "Keine Elemente",
   "buildNumber": "Build-Nummer",
   "errors": {
     "hostIp": "Wert muss ein Hostname oder eine IP-Adresse sein.",

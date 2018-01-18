@@ -38,7 +38,6 @@
       "placementZones": "配置ゾーン",
       "profiles": "プロファイル",
       "endpoints": "エンドポイント",
-      "machines": "マシン",
       "compute": "コンピューティング",
       "kubernetesResources": "K8S リソース",
       "kubernetesDeployments": "展開",
@@ -289,12 +288,14 @@
           "templates": "テンプレート",
           "closures": "クロージャ",
           "repositories": "リポジトリ"
-        }
+        },
+        "createTemplate": "テンプレート"
       },
       "details": {
         "create": "テンプレートの作成",
         "createNameHint": "テンプレート名",
         "createProceed": "続行",
+        "errorEmptyName": "テンプレート名を指定してください",
         "edit": "次のテンプレートの編集:",
         "newDefinition": {
           "newLabel": "コンテナの追加",
@@ -1302,7 +1303,7 @@
           "descriptionDescription": "クロージャの説明",
           "sourceDescription": "実行するソース コード",
           "sourceURLDescription": "URL からアクセス可能なソース コード。内容はコード自体、または zip ファイルの場合があります。ソース URL を使用する場合、フィールド ソース コードは使用されません。",
-          "memoryLimitDescription": "メモリ制限 (MB)。指定できる最大値は 1536 MB です。",
+          "memoryLimitDescription": "メモリの上限 (MB)。指定できる最大値は 1,536 MB です。",
           "timeoutDescription": "実行タイムアウト (秒)。実行がタイムアウトを超過すると、タスクの実行はキャンセルされます。",
           "entrypointDescription": "呼び出されるメインの関数 (file_name.function_name の形式)。",
           "logDriverDescription": "クロージャ タスクのログ ドライバ",
@@ -1391,6 +1392,7 @@
   "unavailable": "N/A",
   "advanced": "詳細",
   "noSelection": "選択なし",
+  "noItems": "アイテムがありません",
   "buildNumber": "ビルド番号",
   "errors": {
     "hostIp": "値はホスト名または IP アドレスである必要があります。",

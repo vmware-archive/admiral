@@ -38,7 +38,6 @@
       "placementZones": "Zones de placement",
       "profiles": "Profils",
       "endpoints": "Points de terminaison",
-      "machines": "Machines",
       "compute": "Calcul de ressources",
       "kubernetesResources": "Ressources K8S",
       "kubernetesDeployments": "Déploiements",
@@ -289,12 +288,14 @@
           "templates": "Modèles",
           "closures": "Fermetures",
           "repositories": "Référentiels"
-        }
+        },
+        "createTemplate": "Modèle"
       },
       "details": {
         "create": "Créer un modèle",
         "createNameHint": "Nom du modèle",
         "createProceed": "Continuer",
+        "errorEmptyName": "Indiquez le nom du modèle",
         "edit": "Modifier le modèle",
         "newDefinition": {
           "newLabel": "Ajouter un conteneur",
@@ -1287,7 +1288,7 @@
             "name": "Nom",
             "nameHint": "Exemple : result"
           },
-          "memoryLimit": "Limite de mémoire (méga-octets)",
+          "memoryLimit": "Limite de mémoire (mégaoctets)",
           "timeout": "Délai d'expiration (secondes)",
           "entrypoint": "Gestionnaire de point d'entrée",
           "logConfigDriver": "Pilote de journalisation",
@@ -1302,7 +1303,7 @@
           "descriptionDescription": "Description de la fermeture",
           "sourceDescription": "Code source à exécuter",
           "sourceURLDescription": "Code source accessible via URL. Le contenu peut être le code lui-même ou un fichier .zip. Si l'URL source est utilisée, le code source du champ ne sera pas utilisé.",
-          "memoryLimitDescription": "Limite de mémoire en méga-octets. La valeur maximale autorisée est 1 536 Mo.",
+          "memoryLimitDescription": "Limite de mémoire en mégaoctets. La valeur maximale autorisée est 1 536 Mo.",
           "timeoutDescription": "Délai d'expiration de l'exécution en secondes. Si le délai est dépassé, l'exécution de la tâche est annulée.",
           "entrypointDescription": "Fonction principale à appeler sous la forme : file_name.function_name",
           "logDriverDescription": "Pilote de journalisation pour la tâche de fermeture",
@@ -1391,6 +1392,7 @@
   "unavailable": "S/O",
   "advanced": "Avancé",
   "noSelection": "Aucune sélection",
+  "noItems": "Aucun élément",
   "buildNumber": "Numéro de build",
   "errors": {
     "hostIp": "La valeur doit être un nom d'hôte ou une adresse IP.",

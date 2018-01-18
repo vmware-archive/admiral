@@ -38,7 +38,6 @@
       "placementZones": "放置區域",
       "profiles": "設定檔",
       "endpoints": "端點",
-      "machines": "機器",
       "compute": "計算資源",
       "kubernetesResources": "K8S 資源",
       "kubernetesDeployments": "部署",
@@ -289,12 +288,14 @@
           "templates": "範本",
           "closures": "閉包",
           "repositories": "存放庫"
-        }
+        },
+        "createTemplate": "範本"
       },
       "details": {
         "create": "建立範本",
         "createNameHint": "範本名稱",
         "createProceed": "繼續",
+        "errorEmptyName": "請指定範本名稱",
         "edit": "編輯範本",
         "newDefinition": {
           "newLabel": "新增容器",
@@ -1109,7 +1110,7 @@
           "maxRestarts": "重新啟動次數上限",
           "maxRestartsDescription": "容器出現錯誤時的重新啟動計數上限",
           "cpuShares": "CPU 共用率",
-          "cpuSharesDescription": "包含容器 CPU 共用率的整數值 (即，相對權數與其他容器)",
+          "cpuSharesDescription": "包含容器 CPU 共用率的整數值 (即，相對權數與其他容器相比)",
           "memoryLimit": "記憶體限制",
           "memoryLimitDescription": "記憶體限制 (以位元組為單位)",
           "memorySwapLimit": "記憶體交換限制",
@@ -1391,6 +1392,7 @@
   "unavailable": "N/A",
   "advanced": "進階",
   "noSelection": "未選取",
+  "noItems": "沒有項目",
   "buildNumber": "組建編號",
   "errors": {
     "hostIp": "值必須為主機名稱或 IP 位址。",

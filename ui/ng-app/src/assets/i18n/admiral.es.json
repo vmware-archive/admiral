@@ -40,8 +40,8 @@
     },
     "delete": {
       "title": "Quitar proyecto",
-      "confirmation": "Confirme la eliminación del proyecto {{projectName}}. Los miembros y los clústeres no se disociarán del proyecto. La operación no se puede deshacer.",
-      "confirmationVic": "Confirme la eliminación del proyecto {{projectName}}. Los miembros y los hosts de contenedor se disociarán del proyecto. La operación no se puede deshacer."
+      "confirmation": "Confirme la eliminación del proyecto {{projectName}}. La operación no se puede deshacer.",
+      "confirmationVic": "Confirme la eliminación del proyecto {{projectName}}. La operación no se puede deshacer."
     },
     "summary": {
       "title": "Resumen",
@@ -146,6 +146,9 @@
       "DISABLED": "DESHABILITADO",
       "WARNING": "ADVERTENCIA"
     },
+    "actions": {
+      "rescan": "Volver a analizar"
+    },
     "type": "Tipo",
     "containers": "Contenedores",
     "cpu": "CPU",
@@ -175,8 +178,13 @@
       "cpu": "CPU",
       "addHost": {
         "title": "Añadir host",
-        "address": "Dirección",
-        "addressRequired": "La dirección es obligatoria."
+        "address": "URL",
+        "addressRequired": "La URL es obligatoria.",
+        "deploymentPolicy": "Política de implementación"
+      },
+      "editHost": {
+        "title": "Editar host",
+        "name": "Nombre"
       }
     },
     "edit": {
@@ -191,30 +199,35 @@
       "url": "URL",
       "urlRequired": "La dirección URL del clúster es obligatoria.",
       "urlRequiredVic": "La URL del host de contenedor es obligatoria.",
+      "publicAddress": "Dirección pública",
+      "publicAddressPlaceholder": "Dirección IP o nombre de host",
+      "publicAddressDescription": "La dirección en la que se puede acceder a los puertos del contenedor publicado. La dirección del campo de URL se utiliza como valor predeterminado.",
       "credentials": "Credenciales"
     },
     "delete": {
       "title": "Quitar clúster",
       "titleVic": "Quitar host de contenedor",
-      "confirmation": "Confirme la eliminación del clúster {{clusterName}}. La operación no se puede deshacer.",
-      "confirmationVic": "Confirme la eliminación del host de contenedor {{clusterName}}. La operación no se puede deshacer."
+      "confirmation": "Confirme la eliminación del clúster {{clusterName}}. También se eliminarán las entidades implementadas que se asocian con este clúster. La operación no se puede deshacer.",
+      "confirmationVic": "Confirme la eliminación del host de contenedor {{clusterName}}. También se eliminarán las entidades implementadas que se asocian con este host de contenedor. La operación no se puede deshacer."
     }
   },
   "hosts": {
     "actions": {
       "delete":{
         "title": "Quitar host",
-        "confirmation": "Confirme que desea quitar el host {{hostName}}. La operación no se puede deshacer."
+        "confirmation": "Confirme la eliminación del host {{hostName}}. También se eliminarán las entidades implementadas que se asocian con este host. La operación no se puede deshacer."
       },
       "enable": "Habilitar",
-      "disable": "Deshabilitar"
+      "disable": "Deshabilitar",
+      "edit": "Editar"
     },
     "state": {
       "ON": "CONECTADO",
       "OFF": "DESCONECTADO",
       "UNKNOWN": "DESCONOCIDO",
       "SUSPEND": "DESHABILITADO"
-    }
+    },
+    "verified": "Se ha verificado correctamente."
   },
   "logs": {
     "title": "Logs",
@@ -285,6 +298,8 @@
   "yes": "Sí",
   "remove": "Quitar",
   "delete": "Eliminar",
+  "verify": "Verificar",
+  "update": "Actualizar",
   "cancel": "Cancelar",
   "back": "Atrás",
   "refresh": "Actualizar",

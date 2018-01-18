@@ -40,8 +40,8 @@
     },
     "delete": {
       "title": "Projekt entfernen",
-      "confirmation": "Bestätigen Sie das Entfernen von Projekt {{projectName}}. Die Zuweisung von Mitgliedern und Clustern zu diesem Projekt wird aufgehoben. Der Vorgang kann nicht rückgängig gemacht werden.",
-      "confirmationVic": "Bestätigen Sie das Entfernen von Projekt {{projectName}}. Die Zuweisung von Mitgliedern und Container-Hosts zu diesem Projekt wird aufgehoben. Der Vorgang kann nicht rückgängig gemacht werden."
+      "confirmation": "Bestätigen Sie das Entfernen von Projekt {{projectName}}. Der Vorgang kann nicht rückgängig gemacht werden.",
+      "confirmationVic": "Bestätigen Sie das Entfernen von Projekt {{projectName}}. Der Vorgang kann nicht rückgängig gemacht werden."
     },
     "summary": {
       "title": "Übersicht",
@@ -146,6 +146,9 @@
       "DISABLED": "DEAKTIVIERT",
       "WARNING": "WARNUNG"
     },
+    "actions": {
+      "rescan": "Erneut prüfen"
+    },
     "type": "Typ",
     "containers": "Container",
     "cpu": "CPU",
@@ -175,8 +178,13 @@
       "cpu": "CPU",
       "addHost": {
         "title": "Host hinzufügen",
-        "address": "Adresse",
-        "addressRequired": "Die Adresse ist erforderlich."
+        "address": "URL",
+        "addressRequired": "Die URL ist erforderlich.",
+        "deploymentPolicy": "Bereitstellungsrichtlinie"
+      },
+      "editHost": {
+        "title": "Host bearbeiten",
+        "name": "Name"
       }
     },
     "edit": {
@@ -191,30 +199,35 @@
       "url": "URL",
       "urlRequired": "Die Cluster-URL ist erforderlich.",
       "urlRequiredVic": "Container-Host-URL ist erforderlich.",
+      "publicAddress": "Öffentliche Adresse",
+      "publicAddressPlaceholder": "IP-Adresse oder Hostname",
+      "publicAddressDescription": "Die Adresse, unter der veröffentlichte Containerports erreicht werden können. Dies ist standardmäßig die Adresse aus dem URL-Feld.",
       "credentials": "Anmeldedaten"
     },
     "delete": {
       "title": "Cluster entfernen",
       "titleVic": "Container-Host entfernen",
-      "confirmation": "Bestätigen Sie das Entfernen von Cluster {{clusterName}}. Der Vorgang kann nicht rückgängig gemacht werden.",
-      "confirmationVic": "Bestätigen Sie das Entfernen von Container-Host {{clusterName}}. Der Vorgang kann nicht rückgängig gemacht werden."
+      "confirmation": "Bestätigen Sie das Entfernen von Cluster {{clusterName}}. Die bereitgestellten Einheiten, die mit diesem Cluster verknüpft sind, werden ebenfalls entfernt. Der Vorgang kann nicht rückgängig gemacht werden.",
+      "confirmationVic": "Bestätigen Sie das Entfernen von Containerhost {{clusterName}}. Die bereitgestellten Einheiten, die mit diesem Containerhost verknüpft sind, werden ebenfalls entfernt. Der Vorgang kann nicht rückgängig gemacht werden."
     }
   },
   "hosts": {
     "actions": {
       "delete":{
         "title": "Host entfernen",
-        "confirmation": "Bestätigen Sie das Entfernen von Host {{hostName}}. Der Vorgang kann nicht rückgängig gemacht werden."
+        "confirmation": "Bestätigen Sie das Entfernen von Host {{hostName}}. Die bereitgestellten Einheiten, die mit diesem Host verknüpft sind, werden ebenfalls entfernt. Der Vorgang kann nicht rückgängig gemacht werden."
       },
       "enable": "Aktivieren",
-      "disable": "Deaktivieren"
+      "disable": "Deaktivieren",
+      "edit": "Bearbeiten"
     },
     "state": {
       "ON": "EIN",
       "OFF": "AUS",
       "UNKNOWN": "UNBEKANNT",
       "SUSPEND": "DEAKTIVIERT"
-    }
+    },
+    "verified": "Erfolgreich überprüft."
   },
   "logs": {
     "title": "Protokolle",
@@ -285,6 +298,8 @@
   "yes": "Ja",
   "remove": "Entfernen",
   "delete": "Löschen",
+  "verify": "Überprüfen",
+  "update": "Aktualisieren",
   "cancel": "Abbrechen",
   "back": "Zurück",
   "refresh": "Aktualisieren",

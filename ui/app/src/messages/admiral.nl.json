@@ -38,7 +38,6 @@
       "placementZones": "Plaatsingszones",
       "profiles": "Profielen",
       "endpoints": "Endpoints",
-      "machines": "Machines",
       "compute": "Computingbron",
       "kubernetesResources": "K8S-bronnen",
       "kubernetesDeployments": "Implementaties",
@@ -289,12 +288,14 @@
           "templates": "Sjablonen",
           "closures": "Sluitingen",
           "repositories": "Opslagplaatsen"
-        }
+        },
+        "createTemplate": "Sjabloon"
       },
       "details": {
         "create": "Sjabloon maken",
         "createNameHint": "Naam van sjabloon",
         "createProceed": "Doorgaan",
+        "errorEmptyName": "Geef de naam van de sjabloon op",
         "edit": "Sjabloon bewerken",
         "newDefinition": {
           "newLabel": "Container toevoegen",
@@ -1287,7 +1288,7 @@
             "name": "Naam",
             "nameHint": "Voorbeeld: resultaat"
           },
-          "memoryLimit": "Geheugenlimiet (megabyte)",
+          "memoryLimit": "Geheugenlimiet (megabytes)",
           "timeout": "Time-out (seconden)",
           "entrypoint": "Verwerker entrypoint",
           "logConfigDriver": "Logboekstuurprogramma",
@@ -1391,6 +1392,7 @@
   "unavailable": "N.v.t.",
   "advanced": "Geavanceerd",
   "noSelection": "Geen selectie",
+  "noItems": "Geen items",
   "buildNumber": "Versienummer",
   "errors": {
     "hostIp": "Waarde moet hostnaam of IP-adres zijn.",

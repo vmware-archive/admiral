@@ -38,7 +38,6 @@
       "placementZones": "배치 영역",
       "profiles": "프로파일",
       "endpoints": "끝점",
-      "machines": "시스템",
       "compute": "계산 리소스",
       "kubernetesResources": "K8S 리소스",
       "kubernetesDeployments": "배포",
@@ -289,12 +288,14 @@
           "templates": "템플릿",
           "closures": "클로저",
           "repositories": "저장소"
-        }
+        },
+        "createTemplate": "템플릿"
       },
       "details": {
         "create": "템플릿 생성",
         "createNameHint": "템플릿 이름",
         "createProceed": "진행",
+        "errorEmptyName": "템플릿 이름을 지정하십시오.",
         "edit": "다음 템플릿 편집:",
         "newDefinition": {
           "newLabel": "컨테이너 추가",
@@ -1391,6 +1392,7 @@
   "unavailable": "해당 없음",
   "advanced": "고급",
   "noSelection": "선택 항목 없음",
+  "noItems": "항목 없음",
   "buildNumber": "빌드 번호",
   "errors": {
     "hostIp": "값은 호스트 이름 또는 IP 주소여야 합니다.",
