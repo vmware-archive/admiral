@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -143,12 +143,12 @@ export class UsersGroupsAssignRolesComponent implements OnInit, OnChanges {
     }
 
     assignmentsConfirmed() {
-        this.updateAssigments();
+        this.updateAssignments();
 
         this.removeAssignments();
     }
 
-    updateAssigments() {
+    updateAssignments() {
         this.assignments.value.forEach((value) => {
             let projectName = value.project;
             let role = value.role;
@@ -162,33 +162,59 @@ export class UsersGroupsAssignRolesComponent implements OnInit, OnChanges {
                 return;
             }
 
-            let patchValue;
-            if (role === 'PROJECT_ADMIN') {
-                patchValue = {
-                    "administrators": {"add": [this.principal.id]},
-                    "members": {"remove": [this.principal.id]},
-                    "viewers": {"remove": [this.principal.id]}
-                };
-            }
+            let removalActionIdx = this.removedAssigments.findIndex((entry) => {
+                return entry.projectName === projectName;
+            });
 
-            if (role === 'PROJECT_MEMBER') {
-                patchValue = {
-                    "members": {"add": [this.principal.id]},
-                    "administrators": {"remove": [this.principal.id]},
-                    "viewers": {"remove": [this.principal.id]}
-                };
-            }
+            if (removalActionIdx > -1) {
+                // cancel removal action
+                let removalAction = this.removedAssigments[removalActionIdx];
+                this.removedAssigments.splice(removalActionIdx, 1);
 
-            if (role === 'PROJECT_VIEWER') {
-                patchValue = {
-                    "viewers": {"add": [this.principal.id]},
-                    "members": {"remove": [this.principal.id]},
-                    "administrators": {"remove": [this.principal.id]}
-                };
+                if (removalAction.role === role) {
+                    // do nothing
+                } else {
+                    this.updateProjectAssignments(theProject, role);
+                }
+            } else {
+                this.updateProjectAssignments(theProject, role);
             }
-
-            this.updateProject(theProject, patchValue);
         });
+    }
+
+    private updateProjectAssignments(theProject: any, role: any) {
+        let patchValue;
+
+        if (role === 'PROJECT_ADMIN') {
+            patchValue = {
+                "administrators": {"add": [this.principal.id]},
+                "members": {"remove": [this.principal.id]},
+                "viewers": {"remove": [this.principal.id]}
+            };
+        }
+
+        if (role === 'PROJECT_MEMBER') {
+            patchValue = {
+                "members": {"add": [this.principal.id]},
+                "administrators": {"remove": [this.principal.id]},
+                "viewers": {"remove": [this.principal.id]}
+            };
+        }
+
+        if (role === 'PROJECT_VIEWER') {
+            patchValue = {
+                "viewers": {"add": [this.principal.id]},
+                "members": {"remove": [this.principal.id]},
+                "administrators": {"remove": [this.principal.id]}
+            };
+        }
+
+        if (patchValue) {
+            this.updateProject(theProject, patchValue);
+        } else {
+            console.log('cannot update assignments for project ', theProject.name,
+                'unsupported role ', role);
+        }
     }
 
     removeAssignments() {
