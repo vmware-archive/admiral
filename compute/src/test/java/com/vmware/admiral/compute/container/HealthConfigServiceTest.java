@@ -42,11 +42,15 @@ import com.vmware.xenon.common.UriUtils;
 
 public class HealthConfigServiceTest extends ComputeBaseTest {
 
+    private ComputeState computeHost;
+
     @Before
     public void setUp() throws Throwable {
-        waitForServiceAvailability(ContainerDescriptionService.FACTORY_LINK);
+        waitForServiceAvailability(
+                ContainerDescriptionService.FACTORY_LINK,
+                ComputeService.FACTORY_LINK);
+        computeHost = createComputeState(host.getPreferredAddress());
     }
-
 
     @Test
     public void testContainerDescriptionServices() throws Throwable {
@@ -181,7 +185,6 @@ public class HealthConfigServiceTest extends ComputeBaseTest {
         containerDesc = doPost(containerDesc, ContainerDescriptionService.FACTORY_LINK);
 
         ContainerState container = createContainerStateNoAddress(containerDesc.documentSelfLink);
-        container.address = host.getPreferredAddress();
         container.powerState = PowerState.RUNNING;
         container = doPost(container, ContainerFactoryService.SELF_LINK);
 
@@ -212,7 +215,6 @@ public class HealthConfigServiceTest extends ComputeBaseTest {
         containerDesc = doPost(containerDesc, ContainerDescriptionService.FACTORY_LINK);
 
         ContainerState container = createContainerStateNoAddress(containerDesc.documentSelfLink);
-        container.address = host.getPreferredAddress();
         container.powerState = PowerState.RUNNING;
         container = doPost(container, ContainerFactoryService.SELF_LINK);
 
@@ -240,6 +242,9 @@ public class HealthConfigServiceTest extends ComputeBaseTest {
 
     @Test
     public void testHealthCheckWithTcp() throws Throwable {
+        // Create unreachable host to test a healthcheck failure
+        ComputeState unreachableHost = createComputeState("unreachable");
+
         // Create health config and a container to check the health for
         String mockContainerDescriptionLink = UriUtils.buildUriPath(
                 ContainerDescriptionService.FACTORY_LINK, "mockDescId");
@@ -254,7 +259,7 @@ public class HealthConfigServiceTest extends ComputeBaseTest {
         containerDesc = doPost(containerDesc, ContainerDescriptionService.FACTORY_LINK);
 
         ContainerState container = createContainerStateNoAddress(mockContainerDescriptionLink);
-        container.address = "fake";
+        container.parentLink = unreachableHost.documentSelfLink;
         container.powerState = PowerState.RUNNING;
         container = doPost(container, ContainerFactoryService.SELF_LINK);
 
@@ -263,7 +268,7 @@ public class HealthConfigServiceTest extends ComputeBaseTest {
                 containerDesc, container);
 
         ContainerState patch = new ContainerState();
-        patch.address = "localhost";
+        patch.parentLink = computeHost.documentSelfLink;
         URI uri = UriUtils.buildUri(host, container.documentSelfLink);
         doOperation(patch, uri, false, Action.PATCH);
 
@@ -318,7 +323,6 @@ public class HealthConfigServiceTest extends ComputeBaseTest {
         containerDesc = doPost(containerDesc, ContainerDescriptionService.FACTORY_LINK);
 
         ContainerState container = createContainerStateNoAddress(mockContainerDescriptionLink);
-        container.address = host.getPreferredAddress();
         container = doPost(container, ContainerFactoryService.SELF_LINK);
 
         // Start a test service to ping for health check
@@ -426,11 +430,46 @@ public class HealthConfigServiceTest extends ComputeBaseTest {
         });
     }
 
+    private ComputeState createComputeState(String address) {
+        ComputeState computeState = new ComputeState();
+        computeState.address = address;
+        computeState.descriptionLink = "/mockDescriptionId";
+
+        ComputeState[] result = new ComputeState[1];
+        Operation post = Operation.createPost(host, ComputeService.FACTORY_LINK)
+                .setReferer(host.getPreferredAddress())
+                .setBody(computeState)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        host.failIteration(e);
+                    } else {
+                        try {
+                            result[0] = o.getBody(ComputeState.class);
+                            host.completeIteration();
+                        } catch (Throwable ex) {
+                            host.failIteration(ex);
+                        }
+                    }
+                });
+
+        host.testStart(1);
+        host.send(post);
+        host.testWait();
+
+        return result[0];
+    }
+
     private ContainerState createContainerStateNoAddress(String containerDescriptionLink) {
+        return createContainerState(containerDescriptionLink,
+                computeHost.documentSelfLink);
+    }
+
+    private ContainerState createContainerState(String containerDescriptionLink,
+            String parentLink) {
         ContainerState container = new ContainerState();
         container.descriptionLink = containerDescriptionLink;
+        container.parentLink = parentLink;
         container.status = ContainerState.CONTAINER_RUNNING_STATUS;
-        container.address = null;
         container.adapterManagementReference = URI
                 .create("http://remote-host:8082/docker-executor");
         return container;

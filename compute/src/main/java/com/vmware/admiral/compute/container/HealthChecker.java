@@ -37,10 +37,12 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.serialization.ReleaseConstants;
+import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.common.util.UriUtilsExtended;
+import com.vmware.admiral.compute.ContainerHostUtil;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
@@ -201,6 +203,10 @@ public class HealthChecker {
         default:
             host.log(Level.SEVERE, "Health config protocol not supported: %s",
                     healthConfig.protocol);
+            handleHealthResponse(host, containerState, new IllegalArgumentException(
+                    String.format("Health config protocol not supported: %s",
+                            healthConfig.protocol)),
+                    callback);
             break;
         }
     }
@@ -231,7 +237,7 @@ public class HealthChecker {
                     if (r.hasException()) {
                         host.log(Level.SEVERE,
                                 "Failed to retrieve child containers for: %s - %s",
-                                containerDescriptionLink, r.getException());
+                                containerDescriptionLink, Utils.toString(r.getException()));
                     } else if (r.hasResult()) {
                         doHealthCheckRequest(host, r.getResult(), containerDescription.healthConfig,
                                 null);
@@ -328,6 +334,7 @@ public class HealthChecker {
         } catch (URISyntaxException e) {
             host.log(Level.SEVERE, "Health config for container description %s is invalid: %s",
                     containerState.descriptionLink, Utils.toJson(e));
+            handleHealthResponse(host, containerState, e, callback);
             return;
         }
 
@@ -355,6 +362,9 @@ public class HealthChecker {
 
     private URI constructUri(HealthConfig healthConfig, String address, Integer port)
             throws URISyntaxException {
+        AssertUtil.assertNotNull(healthConfig, "healthConfig");
+        AssertUtil.assertNotNull(address, "address");
+
         String urlPath = UriUtils.URI_PATH_CHAR;
         if (healthConfig.urlPath != null && healthConfig.urlPath.length() > 0) {
             urlPath = UriUtils.buildUriPath(healthConfig.urlPath);
@@ -388,8 +398,8 @@ public class HealthChecker {
         }
 
         host.log(Level.WARNING,
-                "Container does not expose ports - using container address as public");
-        callback.accept(containerState.address, healthConfig.port);
+                "Container does not expose ports. Will use host public address instead.");
+        getHostPortBinding(host, containerState, healthConfig.port, null, callback);
     }
 
     private Integer getDefaultPort() {
@@ -400,29 +410,39 @@ public class HealthChecker {
         }
     }
 
-    private void getHostPortBinding(ServiceHost host, ContainerState containerState, int port,
+    private void getHostPortBinding(ServiceHost host, ContainerState containerState, Integer port,
             String hostAddress, BiConsumer<String, Integer> callback) {
         if (hostAddress == null || hostAddress.isEmpty()) {
             getContainerHost(host, containerState.parentLink,
-                    (h) -> getHostPortBinding(host, containerState, port, h.address, callback));
+                    (h) -> {
+                        if (h == null) {
+                            callback.accept(null, port);
+                            return;
+                        }
+
+                        ContainerHostUtil.getHostPublicAddress(host, h, (publicAddress) -> {
+                            getHostPortBinding(host, containerState, port, publicAddress, callback);
+                        });
+                    });
             return;
         }
 
         callback.accept(UriUtilsExtended.extractHost(hostAddress), port);
     }
 
-    private void getContainerHost(ServiceHost host, String parentLink,
+    private void getContainerHost(ServiceHost serviceHost, String containerHostLink,
             Consumer<ComputeState> callback) {
-        host.sendRequest(Operation
-                .createGet(UriUtils.buildUri(host, parentLink))
-                .setReferer(UriUtils.buildUri(host, SERVICE_REFERRER_PATH))
+        serviceHost.sendRequest(Operation
+                .createGet(UriUtils.buildUri(serviceHost, containerHostLink))
+                .setReferer(UriUtils.buildUri(serviceHost, SERVICE_REFERRER_PATH))
                 .setCompletion(
                         (ob, ex) -> {
                             if (ex != null) {
-                                host.log(Level.SEVERE,
+                                serviceHost.log(Level.SEVERE,
                                         "Unable to retrieve container's host during health "
                                                 + "check: %s",
                                         Utils.toJson(ex));
+                                callback.accept(null);
                             } else {
                                 callback.accept(ob.getBody(ComputeState.class));
                             }

@@ -21,9 +21,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -44,6 +46,8 @@ public class ContainerHostUtil {
     public static final String PROPERTY_NAME_DRIVER = "__Driver";
     public static final String VMWARE_VIC_DRIVER1 = "vmware";
     public static final String VMWARE_VIC_DRIVER2 = "vsphere";
+
+    private static final String FEATURE_TOGGLE_HOST_PUBLIC_ADDRESS = "allow.ft.hosts.public-address";
 
     /**
      * Check if this host is a scheduler host (e.g. VIC, Kubernetes)
@@ -224,6 +228,40 @@ public class ContainerHostUtil {
                         }
                     }).sendWith(serviceHost);
         }
+    }
+
+    /**
+     * Returns the public address of the host if the public address feature is enabled. Otherwise,
+     * returns the API (default) address of the host.
+     */
+    public static void getHostPublicAddress(ServiceHost serviceHost, ComputeState computeHost,
+            Consumer<String> addressConsumer) {
+        AssertUtil.assertNotNull(serviceHost, "serviceHost");
+        AssertUtil.assertNotNull(computeHost, "computeHost");
+
+        ConfigurationUtil.getConfigProperty(serviceHost, FEATURE_TOGGLE_HOST_PUBLIC_ADDRESS,
+                (publicAddressEnabled) -> {
+                    // if the feature toggle is disabled, use the host address
+                    if (publicAddressEnabled == null || !Boolean.valueOf(publicAddressEnabled)) {
+                        addressConsumer.accept(computeHost.address);
+                        return;
+                    }
+
+                    // try to obtain and use the public address of the host. If it is not available,
+                    // fall back to the host address
+                    if (computeHost.customProperties == null) {
+                        addressConsumer.accept(computeHost.address);
+                        return;
+                    }
+
+                    String publicAddress = computeHost.customProperties
+                            .get(ContainerHostService.HOST_PUBLIC_ADDRESS_PROP_NAME);
+                    if (publicAddress == null || publicAddress.isEmpty()) {
+                        addressConsumer.accept(computeHost.address);
+                    } else {
+                        addressConsumer.accept(publicAddress);
+                    }
+                });
     }
 
 }
