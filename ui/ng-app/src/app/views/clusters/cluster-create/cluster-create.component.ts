@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -12,14 +12,13 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, ViewEncapsulation } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormGroup, FormControl, Validators } from "@angular/forms";
+import { BaseDetailsComponent } from '../../../components/base/base-details.component';
+import { Constants } from '../../../utils/constants';
+import { DocumentService } from '../../../utils/document.service';
+import { FT } from "../../../utils/ft";
 import { Links } from '../../../utils/links';
 import { Utils } from "../../../utils/utils";
-import { FT } from "../../../utils/ft";
-import { DocumentService } from '../../../utils/document.service';
-import { ProjectService } from '../../../utils/project.service';
 import * as I18n from 'i18next';
-import { Constants } from './../../../utils/constants';
-import { BaseDetailsComponent } from '../../../components/base/base-details.component';
 
 @Component({
   selector: 'app-cluster-create',
@@ -30,7 +29,8 @@ import { BaseDetailsComponent } from '../../../components/base/base-details.comp
 /**
  * Modal for cluster creation.
  */
-export class ClusterCreateComponent extends BaseDetailsComponent implements AfterViewInit, OnInit, OnDestroy {
+export class ClusterCreateComponent extends BaseDetailsComponent
+                                    implements AfterViewInit, OnInit, OnDestroy {
   opened: boolean;
   isEdit: boolean;
   credentials: any[];
@@ -103,7 +103,7 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
     }
 
     if (this.isSingleHostCluster) {
-      let publicAddress = this.entity.publicAddress || "";
+      let publicAddress = this.entity.publicAddress || '';
       this.clusterForm.get('publicAddress').setValue(publicAddress);
     }
   }
@@ -123,35 +123,42 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
   }
 
   ngAfterViewInit() {
-    setTimeout(() => {
-      this.opened = true;
-      this.showCertificateWarning = false;
-    });
+    this.opened = true;
+    this.showCertificateWarning = false;
 
     this.service.list(Links.CREDENTIALS, {}).then(credentials => {
       this.credentials = credentials.documents
-          .filter(c => !Utils.areSystemScopedCredentials(c))
-          .map(this.toCredentialViewModel);
+                          .filter(c => !Utils.areSystemScopedCredentials(c))
+                            .map(this.toCredentialViewModel);
+    }).catch((e) => {
+      console.log('Credentials retrieval failed', e);
     });
   }
 
   toggleModal(open) {
     this.opened = open;
+
     if (!open) {
+      let pathUp = '../../';
       let path: any[] = this.isEdit
-                        ? ['../../' + Utils.getDocumentId(this.entity.documentSelfLink)] : ['../../'];
+                          ? [pathUp + Utils.getDocumentId(this.entity.documentSelfLink)]
+                          : [pathUp];
+
       this.router.navigate(path, { relativeTo: this.route });
     }
   }
 
   toCredentialViewModel(credential) {
-    let vm:any = {};
-    vm.documentSelfLink = credential.documentSelfLink;
-    vm.name = credential.customProperties ? credential.customProperties.__authCredentialsName : '';
-    if (!vm.name) {
-      vm.name = credential.documentId;
+    let credentialsViewModel:any = {};
+
+    credentialsViewModel.documentSelfLink = credential.documentSelfLink;
+    credentialsViewModel.name = credential.customProperties
+                                    ? credential.customProperties.__authCredentialsName : '';
+    if (!credentialsViewModel.name) {
+      credentialsViewModel.name = credential.documentId;
     }
-    return vm;
+
+    return credentialsViewModel;
   }
 
   saveCluster() {
@@ -174,13 +181,16 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
       // TODO check if the backend will handle this
       if (this.isSingleHostCluster) {
         // allow overwriting with empty value
-        let publicAddress = this.clusterForm.value.publicAddress || "";
+        let publicAddress = this.clusterForm.value.publicAddress || '';
         clusterDtoPatch[Constants.clusters.properties.publicAddress] = publicAddress;
       }
 
       this.isSaving = true;
-      this.service.patch(this.entity.documentSelfLink, clusterDtoPatch, this.projectLink).then(() => {
+      this.service.patch(this.entity.documentSelfLink, clusterDtoPatch, this.projectLink)
+        .then(() => {
+        // hide modal
         this.toggleModal(false);
+
       }).catch(error => {
         this.isSaving = false;
         this.alertMessage = Utils.getErrorMessage(error)._generic;
@@ -240,6 +250,7 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
 
   acceptCertificate() {
     this.showCertificateWarning = false;
+
     this.createCluster(true);
   }
 
@@ -251,9 +262,11 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
     if (this.isSaving) {
       return true;
     }
+
     if (this.isEdit) {
       return !this.clusterForm.value.name;
     }
+
     return this.clusterForm.invalid;
   }
 }
