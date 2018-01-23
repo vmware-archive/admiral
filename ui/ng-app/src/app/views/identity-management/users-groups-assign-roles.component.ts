@@ -158,7 +158,7 @@ export class UsersGroupsAssignRolesComponent implements OnInit, OnChanges {
             });
 
             if (!theProject) {
-                console.log('The project is not defined! Cannot update assignments!');
+                console.log('The project is not defined! Cannot update assignments!', projectName);
                 return;
             }
 
@@ -226,7 +226,7 @@ export class UsersGroupsAssignRolesComponent implements OnInit, OnChanges {
             });
 
             if (!theProject) {
-                console.log('The project is not defined! Cannot remove assignments!');
+                console.log('The project is not defined! Cannot remove assignments!', projectName);
                 return;
             }
 

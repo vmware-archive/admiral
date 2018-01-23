@@ -101,6 +101,9 @@ export class ClusterCreateComponent extends BaseDetailsComponent
     if (this.entity.address) {
       this.clusterForm.get('url').setValue(this.entity.address);
     }
+    // the url field is not required while editing
+    this.clusterForm.get('url').setValidators(null);
+    this.clusterForm.get('url').updateValueAndValidity();
 
     if (this.isSingleHostCluster) {
       let publicAddress = this.entity.publicAddress || '';
@@ -256,17 +259,5 @@ export class ClusterCreateComponent extends BaseDetailsComponent
 
   resetAlert() {
     this.alertMessage = null;
-  }
-
-  saveButtonDisabled() {
-    if (this.isSaving) {
-      return true;
-    }
-
-    if (this.isEdit) {
-      return !this.clusterForm.value.name;
-    }
-
-    return this.clusterForm.invalid;
   }
 }

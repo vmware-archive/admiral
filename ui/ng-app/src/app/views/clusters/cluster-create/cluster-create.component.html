@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~ Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
   ~
   ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
   ~ You may not use this product except in compliance with the License.
@@ -77,7 +77,11 @@
                         (onDecline)="cancelCreateCluster()"></verify-certificate>
   </div>
   <div class="modal-footer">
-    <button type="button" class="btn btn-outline" [disabled]="isSaving" (click)="toggleModal(false)">{{ "cancel" | i18n }}</button>
-    <button [clrLoading]="isSaving" type="button" class="btn btn-primary saveCluster-btn" [disabled]="saveButtonDisabled()" (click)="saveCluster()">{{ "save" | i18n }}</button>
+    <button type="button" class="btn btn-outline"
+            [disabled]="isSaving"
+            (click)="toggleModal(false)">{{ "cancel" | i18n }}</button>
+    <button [clrLoading]="isSaving" type="button" class="btn btn-primary saveCluster-btn"
+            [disabled]="isSaving || clusterForm.invalid"
+            (click)="saveCluster()">{{ "save" | i18n }}</button>
   </div>
 </clr-modal>
