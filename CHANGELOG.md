@@ -1,5 +1,7 @@
 # CHANGELOG
 
+## 1.3.2-SNAPSHOT
+
 ## 1.3.1-SNAPSHOT
 
 * The option to [overwrite the public address](https://github.com/vmware/admiral/wiki/Configuration-guide#enable-or-disable-the-option-to-overwrite-the-public-address-for-a-host) for a host is now enabled by default in the standalone version of Admiral.
