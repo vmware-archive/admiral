@@ -32,17 +32,17 @@ public class CommandUtilTest {
                 CommandUtil.spread(new String[] { "sh -c" }));
         assertArrayEquals(new String[] { "sh", "--verbose" },
                 CommandUtil.spread(new String[] { "sh  --verbose" }));
-        assertArrayEquals(new String[] { "./script.sh", "-name", "\"test\"" },
+        assertArrayEquals(new String[] { "./script.sh", "-name", "test" },
                 CommandUtil.spread(new String[] { "./script.sh -name \"test\"" }));
-        assertArrayEquals(new String[] { "./script.sh", "-name=\"test\"" },
+        assertArrayEquals(new String[] { "./script.sh", "-name=test" },
                 CommandUtil.spread(new String[] { "./script.sh -name=\"test\"" }));
-        assertArrayEquals(new String[] { "./script.sh", "-name", "\"te st\"", "\\ foo" },
+        assertArrayEquals(new String[] { "./script.sh", "-name", "te st", "\\ foo" },
                 CommandUtil.spread(new String[] { "./script.sh -name \"te st\" \\ foo"}));
-        assertArrayEquals(new String[] { "./script.sh", "-name", "'te st'", "\\ foo" },
+        assertArrayEquals(new String[] { "./script.sh", "-name", "te st", "\\ foo" },
                 CommandUtil.spread(new String[] { "./script.sh -name 'te st' \\ foo"}));
-        assertArrayEquals(new String[] { "echo", "'test'" },
+        assertArrayEquals(new String[] { "echo", "test" },
                 CommandUtil.spread(new String[] { "echo 'test'"}));
-        assertArrayEquals(new String[] { "sh", "-c", "echo", "\"test\"" },
+        assertArrayEquals(new String[] { "sh", "-c", "echo", "test" },
                 CommandUtil.spread(new String[] { "sh -c echo \"test\""}));
     }
 }

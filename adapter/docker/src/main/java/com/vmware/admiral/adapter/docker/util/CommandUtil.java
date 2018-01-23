@@ -57,7 +57,7 @@ public class CommandUtil {
                             escape = true;
                             break;
                         case '\'':
-                            sb.append(c);
+                            // skipping '' in the array string item
                             state = State.DEFAULT;
                             break;
                         default:
@@ -71,7 +71,7 @@ public class CommandUtil {
                             escape = true;
                             break;
                         case '"':
-                            sb.append(c);
+                            // skipping "" in the array string item
                             state = State.DEFAULT;
                             break;
                         default:
@@ -86,11 +86,11 @@ public class CommandUtil {
                             escape = true;
                             break;
                         case '\'':
-                            sb.append(c);
+                            // skipping '' in the array string item
                             state = State.SINGLE;
                             break;
                         case '"':
-                            sb.append(c);
+                            // skipping "" in the array string item
                             state = State.DOUBLE;
                             break;
                         default:
