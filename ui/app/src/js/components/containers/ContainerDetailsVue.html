@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+  ~ Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
   ~
   ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
   ~ You may not use this product except in compliance with the License.
@@ -10,18 +10,18 @@
   -->
 
 <div>
-  <alert alert-type="danger" v-bind:show-alert="hasGeneralError" v-bind:alert-message="generalError"></alert>
+  <alert alert-type="danger" :show-alert="hasGeneralError" :alert-message="generalError"></alert>
 
   <div class="container-details" v-if="model.instance">
     <alert alert-type="danger" :show-alert="hasOperationError"
                                :alert-message="i18n('app.container.details.operation.failure')"
                                ></alert>
 
-  <a v-if="showBackButton" class="close-button" v-on:click="goBack($event)"><i
+  <a v-if="showBackButton" class="close-button" @click="goBack($event)"><i
       class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
 
   <div class="container-details-header">
-    <div class="title">{{model.instance.names}}<refresh-button v-on:click="refresh()"></refresh-button></div>
+    <div class="title">{{model.instance.names}}<refresh-button @click="refresh()"></refresh-button></div>
     <div :class="'status ' + model.instance.powerState">{{{containerStatusDisplay(model.instance.powerState, model.instance.started, model.instance.status)}}}</div>
     <div class="toolbar-actions">
       <template v-if="hasOperationInProgress() || confirmationOperation">
@@ -66,23 +66,23 @@
     <maximizable-behaviour class="container-details-properties">
       <div class="title">{{i18n('app.container.details.properties')}}</div>
       <div class="content">
-        <container-properties v-bind:model="model.instance"></container-properties>
+        <container-properties :model="model.instance"></container-properties>
       </div>
     </maximizable-behaviour>
     <maximizable-behaviour class="container-details-usages">
       <div class="title">{{i18n('app.container.details.usages')}}</div>
       <div class="content">
-        <container-stats v-bind:model="model"></container-stats>
+        <container-stats :model="model"></container-stats>
       </div>
-      <div class="loading loading-background" v-bind:class="{'hide': !model.statsLoading}">
+      <div class="loading loading-background" :class="{'hide': !model.statsLoading}">
         <span class="vertical-helper"></span>
         <div class="spinner"></div>
       </div>
     </maximizable-behaviour>
     <maximizable-behaviour class="container-details-logs">
       <div class="title">{{i18n('app.container.details.logs')}}</div>
-      <logs-scroll class="content" v-bind:logs="model.logs" v-bind:format="logsSettingsFormat"></logs-scroll>
-      <div class="loading" v-bind:class="{'hide': !model.logsLoading}">
+      <logs-scroll class="content" :logs="model.logs" :format="logsSettingsFormat"></logs-scroll>
+      <div class="loading" :class="{'hide': !model.logsLoading}">
         <span class="vertical-helper"></span>
         <div class="spinner"></div>
       </div>
@@ -91,28 +91,28 @@
           <label>{{i18n('app.container.details.showingLogs')}}</label>
           <div class="radio-inline" v-if="!onVchHost">
             <input type="radio" name="log-option-radio" id="log-since-radio"
-              v-bind:value="logsOption.SINCE"
-              v-bind:checked="logsOption.SINCE == logsSettingsOption"
-              v-on:change="onLogsOptionChange($event)">
+              :value="logsOption.SINCE"
+              :checked="logsOption.SINCE == logsSettingsOption"
+              @change="onLogsOptionChange($event)">
             <label for="log-since-radio" title="{{i18n('app.container.details.logsOptionSince')}}">{{i18n('app.container.details.logsOptionSince')}}</label>
           </div>
           <div class="radio-inline">
             <input type="radio" name="log-option-radio" id="log-tail-radio"
-              v-bind:value="logsOption.TAIL"
-              v-bind:checked="logsOption.TAIL == logsSettingsOption"
-              v-on:change="onLogsOptionChange($event)">
+              :value="logsOption.TAIL"
+              :checked="logsOption.TAIL == logsSettingsOption"
+              @change="onLogsOptionChange($event)">
             <label for="log-tail-radio" title="{{i18n('app.container.details.logsOptionTail')}}">{{i18n('app.container.details.logsOptionTail')}}</label>
           </div>
           <div class="select">
-            <select v-on:change="onLogsSinceChange($event)" v-if="(logsOption.SINCE == logsSettingsOption) && !onVchHost">
+            <select @change="onLogsSinceChange($event)" v-if="(logsOption.SINCE == logsSettingsOption) && !onVchHost">
               <option v-for="duration in logsSinceDurations"
-                      v-bind:value="duration"
-                      v-bind:selected="duration == model.logsSettings.sinceDuration">{{duration | momentHumanize}}</option>
+                      :value="duration"
+                      :selected="duration == model.logsSettings.sinceDuration">{{duration | momentHumanize}}</option>
             </select>
-            <select v-on:change="onLogsTailChange($event)" v-if="logsOption.TAIL == logsSettingsOption">
+            <select @change="onLogsTailChange($event)" v-if="logsOption.TAIL == logsSettingsOption">
               <option v-for="lineNumber in logsTailLines"
-                      v-bind:value="lineNumber"
-                      v-bind:selected="lineNumber == model.logsSettings.tailLines">{{lineNumber}} {{i18n('app.container.details.lines')}}</option>
+                      :value="lineNumber"
+                      :selected="lineNumber == model.logsSettings.tailLines">{{lineNumber}} {{i18n('app.container.details.lines')}}</option>
             </select>
           </div>
         </div>
@@ -120,16 +120,16 @@
           <label>{{i18n('app.container.details.logsFormat')}}</label>
           <div class="radio-inline">
             <input type="radio" name="log-format-radio" id="log-format-radio-ansi"
-              v-bind:value="logsFormat.ANSI"
-              v-bind:checked="logsFormat.ANSI == logsSettingsFormat"
-              v-on:change="onLogsFormatChange($event)">
+              :value="logsFormat.ANSI"
+              :checked="logsFormat.ANSI == logsSettingsFormat"
+              @change="onLogsFormatChange($event)">
             <label for="log-format-radio-ansi" title="{{i18n('app.container.details.logsFormatAnsi')}}">{{i18n('app.container.details.logsFormatAnsi')}}</label>
           </div>
           <div class="radio-inline">
             <input type="radio" name="log-format-radio" id="log-format-radio-raw"
-              v-bind:value="logsFormat.RAW"
-              v-bind:checked="logsFormat.RAW == logsSettingsFormat"
-              v-on:change="onLogsFormatChange($event)">
+              :value="logsFormat.RAW"
+              :checked="logsFormat.RAW == logsSettingsFormat"
+              @change="onLogsFormatChange($event)">
             <label for="log-format-radio-raw" title="{{i18n('app.container.details.logsFormatRaw')}}">{{i18n('app.container.details.logsFormatRaw')}}</label>
           </div>
         </div>

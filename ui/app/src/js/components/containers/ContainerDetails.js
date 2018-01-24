@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -17,9 +17,7 @@ import ContainerProperties from 'components/containers/ContainerProperties'; //e
 import ContainerStats from 'components/containers/ContainerStats'; //eslint-disable-line
 import ContainerShell from 'components/containers/ContainerShell'; //eslint-disable-line
 import ActionConfirmationSupportMixin from 'components/common/ActionConfirmationSupportMixin'; //eslint-disable-line
-
 import { ContainerActions, NavigationActions } from 'actions/Actions';
-
 import constants from 'core/constants';
 import ft from 'core/ft';
 import utils from 'core/utils';

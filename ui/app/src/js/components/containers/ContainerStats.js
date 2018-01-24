@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -19,6 +19,7 @@ const NA = i18n.t('unavailable');
 
 var ContainerStats = Vue.extend({
   template: ContainerStatsVue,
+
   props: {
     model: { required: true },
     containerStopped: {
@@ -27,20 +28,25 @@ var ContainerStats = Vue.extend({
       default: false
     }
   },
+
   computed: {
     onVchHost: function() {
       return utils.isContainerOnVchHost(this.model.instance);
     }
   },
+
   ready: function() {
     this.cpuStats = new RadialProgress($(this.$el).find('.cpu-stats')[0]).diameter(150).value(0)
       .majorTitle(NA).label(i18n.t('app.container.details.cpu')).render();
+
     this.memoryStats = new RadialProgress($(this.$el).find('.memory-stats')[0]).diameter(150)
       .value(0).majorTitle(NA).label(i18n.t('app.container.details.memory')).render();
+
     if (!this.onVchHost) {
       this.networkStats = new NetworkTrafficVisualization($(this.$el)
           .find('.network-stats')[0], i18n);
     }
+
     resetStats.call(this);
 
     this.modelUnwatch = this.$watch('model.instance.powerState', this.onContainerUpdate);
@@ -75,31 +81,35 @@ var ContainerStats = Vue.extend({
       return 'danger';
     }
   },
+
   methods: {
     onDataUpdate: function(newData) {
       if (newData && !this.containerStopped) {
+        // CPU
         var cpuPercentage = newData.cpuUsage;
         if (typeof cpuPercentage !== 'undefined') {
           this.cpuStats.value(cpuPercentage).majorTitle(null).render();
         } else {
           this.cpuStats.value(0).majorTitle(NA).render();
         }
+        this.cpuPercentage = cpuPercentage;
 
+        // Memory
         var memoryPercentage;
         if (!newData.memUsage || !newData.memLimit) {
           memoryPercentage = 0;
         } else {
           memoryPercentage = (newData.memUsage / newData.memLimit) * 100;
         }
-
-        this.cpuPercentage = cpuPercentage;
         this.memoryPercentage = memoryPercentage;
 
         var memoryUsage = formatUtils.formatBytes(newData.memUsage);
         var memoryLimit = formatUtils.formatBytes(newData.memLimit);
+
         this.memoryStats.majorTitle(memoryUsage).minorTitle(memoryLimit).value(memoryPercentage)
           .render();
 
+        // Network
         if (this.networkStats) {
           this.networkStats.setData(newData.networkIn, newData.networkOut);
         }
@@ -121,6 +131,7 @@ var ContainerStats = Vue.extend({
 function resetStats() {
   this.cpuStats.value(0).majorTitle(NA).render();
   this.memoryStats.majorTitle(NA).minorTitle(NA).value(0).render();
+
   if (this.networkStats) {
     this.networkStats.reset(NA);
   }

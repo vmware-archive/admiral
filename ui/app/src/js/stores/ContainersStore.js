@@ -1106,6 +1106,10 @@ let ContainersStore = Reflux.createStore({
     if (operation) {
       operation.forPromise(services.loadContainer(selectedContainerDetails.documentId))
         .then((container) => {
+          if (selectedContainerDetails.isOnVchHost) {
+            container.isOnVchHost = true;
+          }
+
           enhanceContainer(container);
           updateSelectedContainerDetails.call(this, ['instance'], container);
           this.emitChange();
