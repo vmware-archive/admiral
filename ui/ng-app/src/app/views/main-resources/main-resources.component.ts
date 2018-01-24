@@ -182,7 +182,7 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
     }
 
     checkShowLibrary() {
-      if (this.isHbrEnabled || !this.selectedProject) {
+      if (this.isHbrEnabled || !this.selectedProject || FT.isApplicationEmbedded()) {
         this.showLibrary = true;
         return;
       }
@@ -212,7 +212,6 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
         } else {
           this.showLibrary = false;
         }
-
       }).catch(e => {
         this.showLibrary = true;
       })

@@ -16,6 +16,7 @@ import { ProjectService } from "../../utils/project.service";
 import { SessionTimedOutSubject } from '../../utils/ajax.service';
 import { RoutesRestriction } from '../../utils/routes-restriction';
 import { Utils } from '../../utils/utils';
+import { FT } from './../../utils/ft';
 
 @Component({
   selector: 'former-view',
@@ -70,12 +71,14 @@ export class FormerViewComponent {
       this.frameLoading = true;
 
       iframeEl.onload = () => {
-        this.authService.getCachedSecurityContext().then((securityContext) => {
-          iframeEl.contentWindow.authSession = securityContext;
-        });
+        if (!FT.isApplicationEmbedded()) {
+          this.authService.getCachedSecurityContext().then((securityContext) => {
+            iframeEl.contentWindow.authSession = securityContext;
+          });
 
-        iframeEl.contentWindow.isAccessAllowed = Utils.isAccessAllowed;
-        iframeEl.contentWindow.routesRestrictions = RoutesRestriction;
+          iframeEl.contentWindow.isAccessAllowed = Utils.isAccessAllowed;
+          iframeEl.contentWindow.routesRestrictions = RoutesRestriction;
+        }
 
         this.frameLoading = false;
         iframeEl.src = this.url;
