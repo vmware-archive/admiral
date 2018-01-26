@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -55,6 +56,7 @@ import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsSe
 /**
  * Class for test that adds a k8s host
  */
+@Ignore("ignore for vRA 7.3.1")
 @RunWith(Parameterized.class)
 public class ProvisioningOnKubernetesIT extends BaseIntegrationSupportIT {
 
