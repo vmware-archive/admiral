@@ -26,6 +26,7 @@
     <properties>
         <buildDirectory>${project.basedir}/target</buildDirectory>
         <failsafeReportsDirectory>${project.build.directory}/failsafe-reports</failsafeReportsDirectory>
+        <checkstyleFile>../tools/build/checkstyle.xml</checkstyleFile>
     </properties>
 
     <build>

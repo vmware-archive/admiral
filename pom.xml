@@ -104,6 +104,7 @@
         <jacocoSkipReport>false</jacocoSkipReport>
 
         <skipITs>false</skipITs>
+        <checkstyleFile>tools/build/checkstyle.xml</checkstyleFile>
     </properties>
 
     <repositories>
@@ -122,6 +123,17 @@
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
             <releases>
                 <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>vra-maven-local</id>
+            <name>build-artifactory</name>
+            <url>https://build-artifactory.eng.vmware.com/artifactory/vra-maven-local/</url>
+            <releases>
+                <enabled>true</enabled>
             </releases>
             <snapshots>
                 <enabled>true</enabled>
@@ -283,7 +295,7 @@
                     </dependency>
                 </dependencies>
                 <configuration>
-                    <configLocation>tools/build/checkstyle.xml</configLocation>
+                    <configLocation>${checkstyleFile}</configLocation>
                     <encoding>UTF-8</encoding>
                     <consoleOutput>true</consoleOutput>
                     <failsOnError>true</failsOnError>
