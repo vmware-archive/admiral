@@ -171,8 +171,10 @@ var EventLogListVueComponent = Vue.extend({
   },
   events: {
     'do-action': function(actionName) {
-
-      if (actionName === 'deleteAll') {
+      if (actionName === 'refresh') {
+        // Refresh
+        actions.EventLogActions.openEventLog();
+      } else if (actionName === 'deleteAll') {
         // Clear all events
         actions.EventLogActions.clearEventLog();
       }
