@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -44,6 +44,7 @@ import com.vmware.xenon.common.test.TestContext;
  * Similar to {@link ManagementHostClusterOf2NodesIT} but this test includes 3 nodes, only SSL
  * enabled and the users' passwords are encrypted.
  */
+@Ignore
 public class ManagementHostClusterOf3NodesIT extends BaseManagementHostClusterIT {
 
     private int portOne;
