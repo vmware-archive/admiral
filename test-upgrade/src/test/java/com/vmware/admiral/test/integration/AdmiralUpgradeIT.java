@@ -92,7 +92,10 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
 
     @AfterClass
     public static void afterClass() {
-        serviceClient.stop();
+        try {
+            serviceClient.stop();
+        } catch (Exception ignore) {
+        }
     }
 
     @Before

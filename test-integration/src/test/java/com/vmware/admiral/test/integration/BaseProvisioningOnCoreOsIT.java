@@ -41,6 +41,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import org.junit.After;
+import org.junit.BeforeClass;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerOperationType;
@@ -140,6 +141,20 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
 
     public static enum RegistryType {
         V1_HTTP_INSECURE, V1_SSL_SECURE, V2_SSL_SECURE, V2_BASIC_AUTH
+    }
+
+    @BeforeClass
+    public static void init() throws Exception {
+        try {
+            SslTrustCertificateState trustCertificateState = IntegratonTestStateFactory
+                    .createSslTrustCertificateState(
+                            getTestRequiredProp("cert.ci.trust.file"), "CI-trust-cert");
+            postDocument(SslTrustCertificateService.FACTORY_LINK, trustCertificateState);
+        } catch (Exception e) {
+            Utils.logWarning("Cannot create trust certificate using property"
+                    + " cert.ci.trust.file=%s. Error: %s",
+                    getTestRequiredProp("cert.ci.trust.file"), e.getMessage());
+        }
     }
 
     @After
