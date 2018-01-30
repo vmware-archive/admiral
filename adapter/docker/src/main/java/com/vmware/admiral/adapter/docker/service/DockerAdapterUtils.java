@@ -216,6 +216,11 @@ public class DockerAdapterUtils {
         while (portBindingsIt.hasNext()) {
             List<Map<String, String>> portBindingValue = portBindingsIt.next().getValue();
 
+            if (portBindingValue == null) {
+                portBindingsIt.remove();
+                continue;
+            }
+
             Iterator<Map<String, String>> portBindingValueIt = portBindingValue.listIterator();
             while (portBindingValueIt.hasNext()) {
                 Map<String, String> portBinding = portBindingValueIt.next();

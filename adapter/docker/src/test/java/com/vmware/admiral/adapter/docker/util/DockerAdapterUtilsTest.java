@@ -230,6 +230,14 @@ public class DockerAdapterUtilsTest {
         assertFalse(hostConfig.isEmpty());
         assertFalse(inspectMap.isEmpty());
 
+        // filter empty port bindings, when one of the bindings is null
+        portBindings.put("pb1", null);
+        portBindings.put("pb2", newPortBinding(null, "8484"));
+        DockerAdapterUtils.filterHostConfigEmptyPortBindings(inspectMap);
+        assertEquals(1, portBindings.size());
+        assertNotNull(portBindings.get("pb2"));
+        assertNull(portBindings.get("pb1"));
+
         // filter empty port bindings
         portBindings.put("pb1", newPortBinding("127.0.0.1", "8484"));
         portBindings.put("pb2", newPortBinding(null, "8484"));
