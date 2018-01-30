@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,27 +11,17 @@
 
 package com.vmware.admiral.test.ui.pages.applications;
 
-import java.util.Objects;
+import org.openqa.selenium.By;
 
-import com.vmware.admiral.test.ui.pages.common.PageProxy;
-import com.vmware.admiral.test.ui.pages.templates.CreateTemplatePage;
-import com.vmware.admiral.test.ui.pages.templates.EditTemplatePage;
-import com.vmware.admiral.test.ui.pages.templates.TemplatesPage;
+import com.vmware.admiral.test.ui.pages.templates.create.CreateTemplatePage;
+import com.vmware.admiral.test.ui.pages.templates.create.CreateTemplatePageLocators;
+import com.vmware.admiral.test.ui.pages.templates.create.CreateTemplatePageValidator;
 
 public class CreateApplicationPage extends CreateTemplatePage {
 
-    private EditTemplatePage editTemplatePage;
-
-    public CreateApplicationPage(PageProxy parentProxy) {
-        super(parentProxy);
-    }
-
-    @Override
-    protected EditTemplatePage getEditTemplatePage() {
-        if (Objects.isNull(editTemplatePage)) {
-            editTemplatePage = new EditTemplatePage(new PageProxy(new TemplatesPage()));
-        }
-        return editTemplatePage;
+    public CreateApplicationPage(By[] iFrameLocators, CreateTemplatePageValidator validator,
+            CreateTemplatePageLocators pageLocators) {
+        super(iFrameLocators, validator, pageLocators);
     }
 
 }

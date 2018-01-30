@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,63 +11,50 @@
 
 package com.vmware.admiral.test.ui.pages.main;
 
-import static com.codeborne.selenide.Selenide.$;
-
 import com.codeborne.selenide.Condition;
 
-import com.vmware.admiral.test.ui.pages.common.ExtendablePageValidator;
+import org.openqa.selenium.By;
 
-public abstract class AdministrationTabValidator<V extends AdministrationTabValidator<V>>
-        extends ExtendablePageValidator<V> {
+import com.vmware.admiral.test.ui.pages.common.PageValidator;
+
+public class AdministrationTabValidator extends PageValidator<AdministrationTabLocators> {
+
+    public AdministrationTabValidator(By[] iFrameLocators, AdministrationTabLocators pageLocators) {
+        super(iFrameLocators, pageLocators);
+    }
 
     @Override
-    public V validateIsCurrentPage() {
-        $(GlobalSelectors.ADMINISTRATION_BUTTON).shouldHave(Condition.cssClass("active"));
-        return getThis();
+    public void validateIsCurrentPage() {
+        element(locators().administrationTabButton()).shouldHave(Condition.cssClass("active"));
     }
 
-    public V validateIdentityManagementNotAvailable() {
-        $(AdministrationTabSelectors.IDENTITY_MANAGEMENT_BUTTON).shouldNotBe(Condition.visible);
-        return getThis();
+    public void validateIdentityManagementNotAvailable() {
+        element(locators().identityManagementButton())
+                .shouldNotBe(Condition.visible);
     }
 
-    public V validateRegistriesNotAvailable() {
-        $(AdministrationTabSelectors.REGISTRIES_BUTTON).shouldNotBe(Condition.visible);
-        return getThis();
+    public void validateRegistriesNotAvailable() {
+        element(locators().registriesButton()).shouldNotBe(Condition.visible);
     }
 
-    public V validateLogsNotAvailable() {
-        $(AdministrationTabSelectors.LOGS_BUTTON).shouldNotBe(Condition.visible);
-        return getThis();
+    public void validateLogsNotAvailable() {
+        element(locators().logsButton()).shouldNotBe(Condition.visible);
     }
 
-    public V validateProjectsAvailable() {
-        $(AdministrationTabSelectors.PROJECTS_BUTTON).shouldBe(Condition.visible);
-        return getThis();
+    public void validateProjectsAvailable() {
+        element(locators().projectsButton()).shouldBe(Condition.visible);
     }
 
-    public V validateIdentityManagementAvailable() {
-        $(AdministrationTabSelectors.IDENTITY_MANAGEMENT_BUTTON).shouldBe(Condition.visible);
-        return getThis();
+    public void validateIdentityManagementAvailable() {
+        element(locators().identityManagementButton()).shouldBe(Condition.visible);
     }
 
-    public V validateRegistriesAvailable() {
-        $(AdministrationTabSelectors.REGISTRIES_BUTTON).shouldBe(Condition.visible);
-        return getThis();
+    public void validateRegistriesAvailable() {
+        element(locators().registriesButton()).shouldBe(Condition.visible);
     }
 
-    public V validateLogsAvailable() {
-        $(AdministrationTabSelectors.LOGS_BUTTON).shouldBe(Condition.visible);
-        return getThis();
+    public void validateLogsAvailable() {
+        element(locators().logsButton()).shouldBe(Condition.visible);
     }
 
-    public static class DefaultAdministrationTabValidator
-            extends AdministrationTabValidator<DefaultAdministrationTabValidator> {
-
-        @Override
-        public DefaultAdministrationTabValidator getThis() {
-            return this;
-        }
-
-    }
 }

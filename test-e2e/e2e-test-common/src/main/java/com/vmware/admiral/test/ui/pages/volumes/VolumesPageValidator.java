@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,58 +11,48 @@
 
 package com.vmware.admiral.test.ui.pages.volumes;
 
-import static com.codeborne.selenide.Selenide.$;
-
 import com.codeborne.selenide.Condition;
 
 import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.common.PageValidator;
-import com.vmware.admiral.test.ui.pages.main.HomeTabSelectors;
+import com.vmware.admiral.test.ui.pages.volumes.VolumesPage.VolumeState;
 
-public class VolumesPageValidator extends PageValidator {
+public class VolumesPageValidator extends PageValidator<VolumesPageLocators> {
 
-    private final By PAGE_TITLE = By.cssSelector(".title>span:nth-child(1)");
-    private final By CREATE_VOLUME_SLIDE = By
-            .cssSelector(".create-volume.closable-view.slide-and-fade-transition");
-    private final By ITEMS_COUNT = By.cssSelector(".title .total-items");
-
-    private VolumesPage page;
-
-    public VolumesPageValidator(VolumesPage page) {
-        this.page = page;
+    public VolumesPageValidator(By[] iFrameLocators, VolumesPageLocators pageLocators) {
+        super(iFrameLocators, pageLocators);
     }
 
     @Override
-    public VolumesPageValidator validateIsCurrentPage() {
-        $(HomeTabSelectors.VOLUMES_BUTTON).shouldHave(Condition.cssClass("active"));
-        executeInFrame(0, () -> {
-            $(PAGE_TITLE).shouldHave(Condition.text("Volumes"));
-            $(CREATE_VOLUME_SLIDE).shouldNot(Condition.exist);
-        });
-        return this;
+    public void validateIsCurrentPage() {
+        element(locators().pageTitle()).shouldHave(Condition.text("Volumes"));
+        element(locators().childPageSlide()).shouldNot(Condition.exist);
     }
 
-    public VolumesPageValidator validateVolumesCount(int count) {
-        String countText = executeInFrame(0, () -> {
-            return $(ITEMS_COUNT).getText();
-        });
+    public void validateVolumesCount(int count) {
+        String countText = pageActions().getText(locators().itemsCount());
         int actualCount = Integer.parseInt(countText.substring(1, countText.length() - 1));
         if (actualCount != count) {
             throw new AssertionError(String.format(
                     "Volumes count mismatch, expected: [%d], actual: [%d]", count, actualCount));
         }
-        return this;
     }
 
-    public VolumesPageValidator validateVolumeExistsWithName(String name) {
-        executeInFrame(0, () -> $(page.getVolumeCardSelector(name)).should(Condition.exist));
-        return this;
+    public void validateVolumeExistsWithName(String namePrefix) {
+        element(locators().cardByTitlePrefix(namePrefix)).should(Condition.exist);
     }
 
-    public VolumesPageValidator validateVolumeDoesNotExistWithName(String name) {
-        executeInFrame(0, () -> $(page.getVolumeCardSelector(name)).shouldNot(Condition.exist));
-        return this;
+    public void validateVolumeDoesNotExistWithName(String namePrefix) {
+        element(locators().cardByTitlePrefix(namePrefix)).shouldNot(Condition.exist);
+    }
+
+    public void validateVolumeState(String namePrefix, VolumeState state) {
+        String actualState = pageActions().getText(locators().cardHeaderByTitlePrefix(namePrefix));
+        if (!actualState.contentEquals(state.toString())) {
+            throw new AssertionError(String.format(
+                    "Volume state mismatch: expected [%s], actual [%s]", state, actualState));
+        }
     }
 
 }

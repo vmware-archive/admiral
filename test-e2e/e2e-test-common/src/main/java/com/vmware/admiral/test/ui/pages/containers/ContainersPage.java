@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,96 +11,65 @@
 
 package com.vmware.admiral.test.ui.pages.containers;
 
-import static com.codeborne.selenide.Selenide.$;
-import static com.codeborne.selenide.Selenide.actions;
-
-import java.util.Objects;
-
-import com.codeborne.selenide.SelenideElement;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import org.openqa.selenium.By;
 
-import com.vmware.admiral.test.ui.pages.common.HomeTabAdvancedPage;
-import com.vmware.admiral.test.ui.pages.common.PageProxy;
-import com.vmware.admiral.test.ui.pages.containers.provision.ProvisionAContainerPage;
+import com.vmware.admiral.test.ui.pages.common.ResourcePage;
 
-public class ContainersPage extends HomeTabAdvancedPage<ContainersPage, ContainersPageValidator> {
+public class ContainersPage extends ResourcePage<ContainersPageValidator, ContainersPageLocators> {
 
-    private final By CARD_RELATIVE_STOP_BUTTON = By.cssSelector(".fa.fa-stop");
-    private final By CARD_RELATIVE_SCALE_BUTTON = By
-            .cssSelector(".btn.btn-circle-outline.container-action-scale");
-
-    private ProvisionAContainerPage provisionAContainerPage;
-    private ContainersPageValidator validator;
-
-    public ProvisionAContainerPage provisionAContainer() {
-        LOG.info("Provisioning a container");
-        if (Objects.isNull(provisionAContainerPage)) {
-            provisionAContainerPage = new ProvisionAContainerPage(new PageProxy(this));
-        }
-        executeInFrame(0, () -> $(CREATE_RESOURCE_BUTTON).click());
-        provisionAContainerPage.waitToLoad();
-        return provisionAContainerPage;
+    public ContainersPage(By[] iFrameLocators, ContainersPageValidator validator,
+            ContainersPageLocators pageLocators) {
+        super(iFrameLocators, validator, pageLocators);
     }
 
-    public ContainersPage stopContainer(String namePrefix) {
+    public void clickCreateContainer() {
+        LOG.info("Creating a container");
+        pageActions().click(locators().createResourceButton());
+    }
+
+    public void stopContainer(String namePrefix) {
         LOG.info(String.format("Stopping container with name prefix: [%s]", namePrefix));
-        executeInFrame(0, () -> {
-            SelenideElement container = waitForElementToStopMoving(
-                    getContainerCardSelector(namePrefix));
-            actions().moveToElement(container).moveToElement(container.$(CARD_RELATIVE_STOP_BUTTON))
-                    .click().build().perform();
-        });
-        return this;
+        By card = locators().cardByTitlePrefix(namePrefix);
+        waitForElementToSettle(card);
+        pageActions().hover(card);
+        pageActions().click(locators().cardStopButtonByTitlePrefix(namePrefix));
     }
 
-    public ContainersPage deleteContainer(String namePrefix) {
+    public void deleteContainer(String namePrefix) {
         LOG.info(String.format("Deleting container with name prefix: [%s]", namePrefix));
-        executeInFrame(0, () -> {
-            SelenideElement container = waitForElementToStopMoving(
-                    getContainerCardSelector(namePrefix));
-            actions().moveToElement(container)
-                    .moveToElement(container.$(CARD_RELATIVE_DELETE_BUTTON))
-                    .click().build()
-                    .perform();
-            container.$(CARD_RELATIVE_DELETE_CONFIRMATION_BUTTON).click();
-        });
-        return this;
+        deleteItemByTitlePrefix(namePrefix);
     }
 
-    public ContainersPage scaleContainer(String namePrefix) {
+    public void scaleContainer(String namePrefix) {
         LOG.info(String.format("Scaling container with name prefix: [%s]", namePrefix));
-        executeInFrame(0, () -> {
-            SelenideElement container = waitForElementToStopMoving(
-                    getContainerCardSelector(namePrefix));
-            actions().moveToElement(container)
-                    .moveToElement(container.$(CARD_RELATIVE_SCALE_BUTTON))
-                    .click().build()
-                    .perform();
-        });
-        return getThis();
+        By card = locators().cardByTitlePrefix(namePrefix);
+        waitForElementToSettle(card);
+        pageActions().hover(card);
+        pageActions().click(locators().cardScaleButtonByTitlePrefix(namePrefix));
     }
 
-    By getContainerCardSelector(String name) {
-        return By.xpath(String.format(CARD_SELECTOR_BY_NAME_PREFIX_XPATH, name));
+    public void inspectContainer(String namePrefix) {
+        LOG.info(String.format("Inspecting container with name prefix: [%s]", namePrefix));
+        By card = locators().cardByTitlePrefix(namePrefix);
+        waitForElementToSettle(card);
+        pageActions().hover(card);
+        pageActions().click(locators().cardInspectButtonByTitlePrefix(namePrefix));
     }
 
-    @Override
-    public ContainersPageValidator validate() {
-        if (Objects.isNull(validator)) {
-            validator = new ContainersPageValidator(this);
+    public List<String> getContainerPortSettings(String namePrefix) {
+        String text = pageActions().getText(locators().cardPortsHolder(namePrefix));
+        if (text.isEmpty()) {
+            return new ArrayList<>();
         }
-        return validator;
+        return Arrays.asList(text.split("\n"));
     }
 
-    @Override
-    public void waitToLoad() {
-        validate().validateIsCurrentPage();
-        executeInFrame(0, () -> waitForSpinner());
+    public static enum ContainerState {
+        UNKNOWN, PROVISIONING, RUNNING, PAUSED, STOPPED, RETIRED, ERROR;
     }
 
-    @Override
-    public ContainersPage getThis() {
-        return this;
-    }
 }

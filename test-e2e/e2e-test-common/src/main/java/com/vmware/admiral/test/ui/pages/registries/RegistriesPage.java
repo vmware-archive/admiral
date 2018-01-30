@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,30 +11,20 @@
 
 package com.vmware.admiral.test.ui.pages.registries;
 
-import java.util.Objects;
+import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.common.BasicPage;
 
-public class RegistriesPage extends BasicPage<RegistriesPage, RegistriesPageValidator> {
+public class RegistriesPage extends BasicPage<RegistriesPageValidator, RegistriesPageLocators> {
 
-    private RegistriesPageValidator validator;
-
-    @Override
-    public RegistriesPageValidator validate() {
-        if (Objects.isNull(validator)) {
-            validator = new RegistriesPageValidator();
-        }
-        return validator;
+    public RegistriesPage(By[] iFrameLocators, RegistriesPageValidator validator,
+            RegistriesPageLocators pageLocators) {
+        super(iFrameLocators, validator, pageLocators);
     }
 
     @Override
     public void waitToLoad() {
         validate().validateIsCurrentPage();
-    }
-
-    @Override
-    public RegistriesPage getThis() {
-        return this;
     }
 
 }

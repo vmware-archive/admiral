@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -12,19 +12,9 @@
 package com.vmware.admiral.vic.test.ui.util;
 
 import java.io.IOException;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
@@ -33,8 +23,6 @@ import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.config.CookieSpecs;
-import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -42,13 +30,15 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.BasicCookieStore;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+import com.vmware.admiral.test.util.HttpUtils;
 
 public class IdentitySourceConfigurator {
 
@@ -61,7 +51,7 @@ public class IdentitySourceConfigurator {
         this.target = vcTarget;
         authHeaders = getAuthHeaders(target, username, password);
         CookieStore cookies = new BasicCookieStore();
-        httpClient = createUnsecureHttpClient(cookies, authHeaders);
+        httpClient = HttpUtils.createUnsecureHttpClient(cookies, authHeaders);
     }
 
     public void addIdentitySource(String specBody) {
@@ -80,22 +70,11 @@ public class IdentitySourceConfigurator {
         }
     }
 
-    private HttpClient createUnsecureHttpClient(CookieStore cookieStore,
-            Collection<? extends Header> defaultHeaders) {
-        return HttpClientBuilder.create().setSSLContext(newUnsecureSSLContext())
-                .setSSLHostnameVerifier(allowAllHostNameVeririer())
-                .setDefaultCookieStore(cookieStore)
-                .setDefaultHeaders(defaultHeaders)
-                .setDefaultRequestConfig(
-                        RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build())
-                .disableRedirectHandling().build();
-    }
-
     private List<Header> getAuthHeaders(String target, String username,
             String password) {
         String loginTarget = target + "/psc/login";
         CookieStore cookies = new BasicCookieStore();
-        HttpClient client = createUnsecureHttpClient(cookies, null);
+        HttpClient client = HttpUtils.createUnsecureHttpClient(cookies, null);
         HttpUriRequest get = new HttpGet(loginTarget);
         try {
             HttpResponse response = client.execute(get);
@@ -115,13 +94,18 @@ public class IdentitySourceConfigurator {
                     .parse(IOUtils.toString(response.getEntity().getContent(), "UTF-8"));
             EntityUtils.consume(response.getEntity());
             if (response.getStatusLine().getStatusCode() != 200) {
-                throw new RuntimeException("Acquiring token failed due to invalid credentials");
+                throw new RuntimeException(
+                        "Acquiring auth headers failed due to invalid credentials");
             }
 
             Element samlPostForm = doc.getElementById("SamlPostForm");
             String postTarget = samlPostForm.attr("action");
-            String samlResponse = doc.getElementsByAttributeValue("name", "SAMLResponse").get(0)
-                    .attr("value");
+            Elements elements = doc.getElementsByAttributeValue("name", "SAMLResponse");
+            if (elements.size() == 0) {
+                throw new RuntimeException(
+                        "Could not get auth headers, probably the login sequence has changed");
+            }
+            String samlResponse = elements.get(0).attr("value");
             params = new ArrayList<>();
             params.add(new BasicNameValuePair("SAMLResponse", samlResponse));
             params.add(new BasicNameValuePair("RelayState", "SessionId"));
@@ -144,51 +128,21 @@ public class IdentitySourceConfigurator {
                 }
             }
             if (Objects.isNull(jSessionId)) {
-                throw new RuntimeException("Could not get session cookie");
+                throw new RuntimeException(
+                        "Could not get session cookie, probably the login sequence has changed");
             }
             if (Objects.isNull(xsrfToken)) {
-                throw new RuntimeException("Could not get token header");
+                throw new RuntimeException(
+                        "Could not get token header, probably the login sequence has changed");
             }
             List<Header> headers = new ArrayList<>();
             headers.add(new BasicHeader("X-XSRF-TOKEN", xsrfToken));
             headers.add(new BasicHeader("Cookie", "JSESSIONID=" + jSessionId));
             return headers;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException(
+                    "Could not get auth headers", e);
         }
-    }
-
-    private static SSLContext newUnsecureSSLContext() {
-        try {
-            SSLContext sslcontext = SSLContext.getInstance("TLS");
-            sslcontext.init(null, new TrustManager[] { new X509TrustManager() {
-                @Override
-                public X509Certificate[] getAcceptedIssuers() {
-                    return new X509Certificate[0];
-                }
-
-                @Override
-                public void checkServerTrusted(X509Certificate[] chain, String authType) {
-                }
-
-                @Override
-                public void checkClientTrusted(X509Certificate[] chain, String authType) {
-                }
-            } }, new java.security.SecureRandom());
-            return sslcontext;
-        } catch (NoSuchAlgorithmException | KeyManagementException e) {
-            throw new RuntimeException("Cannot create SSL Context.");
-        }
-    }
-
-    private static HostnameVerifier allowAllHostNameVeririer() {
-        return new HostnameVerifier() {
-
-            @Override
-            public boolean verify(String hostname, SSLSession session) {
-                return true;
-            }
-        };
     }
 
 }

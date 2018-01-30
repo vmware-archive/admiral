@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,52 +11,26 @@
 
 package com.vmware.admiral.test.ui.pages.applications;
 
-import static com.codeborne.selenide.Selenide.$;
-
-import java.util.Objects;
-
 import org.openqa.selenium.By;
 
-import com.vmware.admiral.test.ui.pages.common.HomeTabAdvancedPage;
-import com.vmware.admiral.test.ui.pages.common.PageProxy;
+import com.vmware.admiral.test.ui.pages.common.ResourcePage;
 
 public class ApplicationsPage
-        extends HomeTabAdvancedPage<ApplicationsPage, ApplicationsPageValidator> {
+        extends ResourcePage<ApplicationsPageValidator, ApplicationsPageLocators> {
 
-    private CreateApplicationPage createApplicationPage;
-    private ApplicationsPageValidator validator;
-
-    public CreateApplicationPage createTemplate() {
-        LOG.info("Creating template");
-        if (Objects.isNull(createApplicationPage)) {
-            createApplicationPage = new CreateApplicationPage(new PageProxy(this));
-        }
-        executeInFrame(0, () -> $(CREATE_RESOURCE_BUTTON).click());
-        createApplicationPage.waitToLoad();
-        return createApplicationPage;
+    public ApplicationsPage(By[] iFrameLocators, ApplicationsPageValidator validator,
+            ApplicationsPageLocators pageLocators) {
+        super(iFrameLocators, validator, pageLocators);
     }
 
-    By getApplicationCardSelector(String name) {
-        return By.xpath(String.format(CARD_SELECTOR_BY_NAME_PREFIX_XPATH, name));
+    public void clickCreateApplication() {
+        LOG.info("Creating application");
+        pageActions().click(locators().createResourceButton());
     }
 
-    @Override
-    public ApplicationsPageValidator validate() {
-        if (Objects.isNull(validator)) {
-            validator = new ApplicationsPageValidator(this);
-        }
-        return validator;
-    }
-
-    @Override
-    public void waitToLoad() {
-        validate().validateIsCurrentPage();
-        executeInFrame(0, () -> waitForSpinner());
-    }
-
-    @Override
-    public ApplicationsPage getThis() {
-        return this;
+    public void deleteApplication(String namePrefix) {
+        LOG.info(String.format("Deleting application with name prefix: [%s]", namePrefix));
+        deleteItemByTitlePrefix(namePrefix);
     }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,59 +11,54 @@
 
 package com.vmware.admiral.test.ui.pages.containers;
 
-import static com.codeborne.selenide.Selenide.$;
-
 import com.codeborne.selenide.Condition;
 
 import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.common.PageValidator;
-import com.vmware.admiral.test.ui.pages.main.HomeTabSelectors;
+import com.vmware.admiral.test.ui.pages.containers.ContainersPage.ContainerState;
 
-public class ContainersPageValidator extends PageValidator {
+public class ContainersPageValidator extends PageValidator<ContainersPageLocators> {
 
-    private ContainersPage page;
-
-    ContainersPageValidator(ContainersPage page) {
-        this.page = page;
+    public ContainersPageValidator(By[] iFrameLocators, ContainersPageLocators pageLocators) {
+        super(iFrameLocators, pageLocators);
     }
-
-    private final By PAGE_TITLE = By.cssSelector(".title>span:nth-child(1)");
-    private final By CREATE_CONTAINER_SLIDE = By
-            .cssSelector(".create-container.closable-view.slide-and-fade-transition");
-    private final By ITEMS_COUNT_FIELD = By.cssSelector(".title .total-items");
 
     @Override
-    public ContainersPageValidator validateIsCurrentPage() {
-        $(HomeTabSelectors.CONTAINERS_BUTTON).shouldHave(Condition.cssClass("active"));
-        executeInFrame(0, () -> {
-            $(PAGE_TITLE).shouldHave(Condition.text("Containers"));
-            $(CREATE_CONTAINER_SLIDE).shouldNot(Condition.exist);
-        });
-        return this;
+    public void validateIsCurrentPage() {
+        element(locators().pageTitle()).shouldHave(Condition.text("Containers"));
+        element(locators().childPageSlide()).shouldNot(Condition.exist);
     }
 
-    public ContainersPageValidator validateContainerExistsWithName(String name) {
-        executeInFrame(0, () -> $(page.getContainerCardSelector(name)).should(Condition.exist));
-        return this;
+    public void validateContainerExistsWithName(String namePrefix) {
+        element(locators().cardByTitlePrefix(namePrefix)).should(Condition.exist);
     }
 
-    public ContainersPageValidator validateContainerDoesNotExistWithName(String name) {
-        executeInFrame(0, () -> $(page.getContainerCardSelector(name)).shouldNot(Condition.exist));
-        return this;
+    public void validateContainerDoesNotExistWithName(String namePrefix) {
+        element(locators().cardByTitlePrefix(namePrefix)).shouldNot(Condition.exist);
     }
 
-    public ContainersPageValidator validateContainersCount(int expectedCount) {
-        String countText = executeInFrame(0, () -> {
-            return $(ITEMS_COUNT_FIELD).getText();
-        });
+    public void validateContainersCount(int expectedCount) {
+        String countText = pageActions().getText(locators().itemsCount());
         int actualCount = Integer.parseInt(countText.substring(1, countText.length() - 1));
         if (actualCount != expectedCount) {
             throw new AssertionError(String.format(
                     "Containers count mismatch, expected: [%d], actual: [%d]", expectedCount,
                     actualCount));
         }
-        return this;
     }
 
+    public void validateContainerState(String namePrefix, ContainerState state) {
+        String actualState = pageActions().getText(locators().cardHeaderByTitlePrefix(namePrefix));
+        boolean match = false;
+        if (state == ContainerState.RUNNING) {
+            match = actualState.startsWith(state.toString());
+        } else {
+            match = actualState.contentEquals(state.toString());
+        }
+        if (!match) {
+            throw new AssertionError(String.format(
+                    "Container state mismatch: expected [%s], actual [%s]", state, actualState));
+        }
+    }
 }

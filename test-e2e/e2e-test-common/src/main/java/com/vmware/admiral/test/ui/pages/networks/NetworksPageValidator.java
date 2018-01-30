@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,77 +11,59 @@
 
 package com.vmware.admiral.test.ui.pages.networks;
 
-import static com.codeborne.selenide.Selenide.$;
-import static com.codeborne.selenide.Selenide.actions;
-
 import com.codeborne.selenide.Condition;
-import com.codeborne.selenide.SelenideElement;
 
 import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.common.PageValidator;
-import com.vmware.admiral.test.ui.pages.main.HomeTabSelectors;
+import com.vmware.admiral.test.ui.pages.networks.NetworksPage.NetworkState;
 
-public class NetworksPageValidator extends PageValidator {
+public class NetworksPageValidator extends PageValidator<NetworksPageLocators> {
 
-    private final By PAGE_TITLE = By.cssSelector(".list-holder .title>span:nth-child(1)");
-    private final By ITEMS_COUNT = By.cssSelector(".title .total-items");
-    private final By DELETE_NETWORK_ERROR_MESSAGE = By
-            .cssSelector(".alert.alert-warning.alert-dismissible");
-
-    private NetworksPage page;
-
-    public NetworksPageValidator(NetworksPage page) {
-        this.page = page;
+    public NetworksPageValidator(By[] iFrameLocators, NetworksPageLocators pageLocators) {
+        super(iFrameLocators, pageLocators);
     }
 
     @Override
-    public NetworksPageValidator validateIsCurrentPage() {
-        $(HomeTabSelectors.NETWORKS_BUTTON).shouldHave(Condition.cssClass("active"));
-        executeInFrame(0, () -> {
-            $(PAGE_TITLE).shouldHave(Condition.text("Networks"));
-            $(HomeTabSelectors.CHILD_PAGE_SLIDE).shouldNotBe(Condition.exist);
-        });
-        return this;
+    public void validateIsCurrentPage() {
+        element(locators().pageTitle()).shouldHave(Condition.text("Networks"));
+        element(locators().childPageSlide()).shouldNot(Condition.exist);
     }
 
-    public NetworksPageValidator validateNetworkExistsWithName(String namePrefix) {
-        executeInFrame(0, () -> $(page.getNetworkCardSelector(namePrefix)).should(Condition.exist));
-        return this;
+    public void validateNetworkExistsWithName(String namePrefix) {
+        element(locators().cardByTitlePrefix(namePrefix)).should(Condition.exist);
     }
 
-    public NetworksPageValidator validateNetworkDoesNotExist(String namePrefix) {
-        executeInFrame(0,
-                () -> $(page.getNetworkCardSelector(namePrefix)).shouldNot(Condition.exist));
-        return this;
+    public void validateNetworkDoesNotExist(String namePrefix) {
+        element(locators().cardByTitlePrefix(namePrefix)).shouldNot(Condition.exist);
     }
 
-    public NetworksPageValidator validateNetworkCannotBeDeleted(String namePrefix) {
-        executeInFrame(0, () -> {
-            SelenideElement card = waitForElementToStopMoving(
-                    page.getNetworkCardSelector(namePrefix));
-            actions().moveToElement(card)
-                    .click(card.$(page.CARD_RELATIVE_DELETE_BUTTON))
-                    .build()
-                    .perform();
-            card.$(DELETE_NETWORK_ERROR_MESSAGE)
-                    .should(Condition.appear)
-                    .shouldHave(Condition.text("There are connected containers."))
-                    .should(Condition.disappear);
-        });
-        return this;
+    public void validateNetworkCannotBeDeleted(String namePrefix) {
+        By card = locators().cardByTitlePrefix(namePrefix);
+        waitForElementToSettle(card);
+        pageActions().hover(card);
+        pageActions().click(locators().cardDeleteButtonByTitlePrefix(namePrefix));
+        element(locators().deleteNetworkErrorMessageByTitlePrefix(namePrefix))
+                .should(Condition.appear)
+                .shouldHave(Condition.text("There are connected containers."))
+                .should(Condition.disappear);
     }
 
-    public NetworksPageValidator validateNetworksCount(int count) {
-        String countText = executeInFrame(0, () -> {
-            return $(ITEMS_COUNT).getText();
-        });
+    public void validateNetworkState(String namePrefix, NetworkState state) {
+        String actualState = pageActions().getText(locators().cardHeaderByTitlePrefix(namePrefix));
+        if (!actualState.contentEquals(state.toString())) {
+            throw new AssertionError(String.format(
+                    "Network state mismatch: expected [%s], actual [%s]", state, actualState));
+        }
+    }
+
+    public void validateNetworksCount(int count) {
+        String countText = pageActions().getText(locators().itemsCount());
         int actualCount = Integer.parseInt(countText.substring(1, countText.length() - 1));
         if (actualCount != count) {
             throw new AssertionError(String.format(
                     "Networks count mismatch, expected: [%d], actual: [%d]", count, actualCount));
         }
-        return this;
     }
 
 }

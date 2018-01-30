@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,97 +11,80 @@
 
 package com.vmware.admiral.test.ui.pages.common;
 
-import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.Wait;
-import static com.codeborne.selenide.Selenide.switchTo;
 
+import java.awt.Dimension;
+import java.awt.Point;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
-import com.codeborne.selenide.Condition;
-import com.codeborne.selenide.SelenideElement;
-import com.google.common.base.Supplier;
-
 import org.openqa.selenium.By;
-import org.openqa.selenium.Dimension;
-import org.openqa.selenium.Point;
 import org.openqa.selenium.StaleElementReferenceException;
-import org.openqa.selenium.TimeoutException;
 
-import com.vmware.admiral.test.ui.pages.main.GlobalSelectors;
-
-public class BasicClass {
-
-    protected Logger LOG = Logger.getLogger(getClass().getName());
+public abstract class BasicClass<L extends PageLocators> {
 
     private final int WAIT_FOR_MOVING_ELEMENT_CHECK_INTERVAL_MILISECONDS = 150;
 
-    protected SelenideElement waitForElementToStopMoving(By selector) {
-        final int TOTAL_COUNT = 2;
-        AtomicInteger count = new AtomicInteger(TOTAL_COUNT);
-        Wait().pollingEvery(1, TimeUnit.MILLISECONDS)
-                .withTimeout(10, TimeUnit.SECONDS)
-                .ignoring(StaleElementReferenceException.class)
-                .until((f) -> {
-                    SelenideElement element = $(selector);
-                    Point initialPos = element.getCoordinates().inViewPort();
-                    Dimension initialSize = element.getSize();
-                    try {
-                        Thread.sleep(WAIT_FOR_MOVING_ELEMENT_CHECK_INTERVAL_MILISECONDS);
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(
-                                "Waiting for element to stop moving was interrupted: ", e);
-                    }
-                    if (element.getCoordinates().inViewPort().equals(initialPos)
-                            && element.getSize().equals(initialSize)) {
-                        if (count.get() == 0) {
-                            return true;
-                        }
-                        count.decrementAndGet();
-                    } else {
-                        if (count.get() < TOTAL_COUNT) {
-                            count.set(TOTAL_COUNT);
-                        }
-                    }
-                    return false;
-                });
-        return $(selector);
+    protected final Logger LOG = Logger.getLogger(getClass().getName());
+    private final PageActions pageActions;
+    private final By[] iframeLocators;
+    private final L pageLocators;
+
+    public BasicClass(By[] iframeLocators, L pageLocators) {
+        if (Objects.nonNull(iframeLocators)) {
+            this.iframeLocators = iframeLocators.clone();
+        } else {
+            this.iframeLocators = null;
+        }
+        this.pageLocators = pageLocators;
+        this.pageActions = new PageActions(this.iframeLocators);
     }
 
-    private void waitForElementToAppearAndDisappear(By element) {
-        try {
-            Wait().withTimeout(3, TimeUnit.SECONDS)
-                    .until(d -> {
-                        return $(element).is(Condition.visible);
-                    });
-        } catch (TimeoutException e) {
-            // element is not going to appear
-        }
-        Wait().until(d -> {
-            return $(element).is(Condition.hidden);
-        });
+    protected PageActions pageActions() {
+        return pageActions;
+    }
+
+    protected CheckCondition element(By selector) {
+        return new CheckCondition(selector, getFrameLocators());
+    }
+
+    protected By[] getFrameLocators() {
+        return iframeLocators;
+    }
+
+    protected L locators() {
+        return pageLocators;
     }
 
     protected void waitForSpinner() {
-        waitForElementToAppearAndDisappear(GlobalSelectors.SPINNER);
+        pageActions().waitForElementToAppearAndDisappear(locators().spinner());
     }
 
-    protected void executeInFrame(int frame, Runnable action) {
-        switchTo().frame(frame);
-        try {
-            action.run();
-        } finally {
-            switchTo().defaultContent();
-        }
+    protected void waitForElementToSettle(By locator) {
+        final int TOTAL_COUNT = 3;
+        AtomicInteger count = new AtomicInteger(TOTAL_COUNT);
+        Wait().pollingEvery(100, TimeUnit.MILLISECONDS)
+                .withTimeout(10, TimeUnit.SECONDS)
+                .ignoring(StaleElementReferenceException.class)
+                .until((f) -> {
+                    Point initialPos = pageActions().getCoordinates(locator);
+                    Dimension initialSize = pageActions().getDimesion(locator);
+                    try {
+                        Thread.sleep(WAIT_FOR_MOVING_ELEMENT_CHECK_INTERVAL_MILISECONDS);
+                    } catch (InterruptedException e) {
+                    }
+                    if (pageActions().getCoordinates(locator).equals(initialPos)
+                            && pageActions().getDimesion(locator).equals(initialSize)) {
+                        if (count.decrementAndGet() == 0) {
+                            return true;
+                        }
+                    } else {
+                        count.set(TOTAL_COUNT);
+                    }
+                    return false;
+                });
     }
 
-    protected <T> T executeInFrame(int frame, Supplier<T> action) {
-        switchTo().frame(frame);
-        try {
-            return action.get();
-        } finally {
-            switchTo().defaultContent();
-        }
-    }
 }

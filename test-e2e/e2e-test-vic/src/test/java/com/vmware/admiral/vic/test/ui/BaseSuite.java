@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -25,63 +25,50 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
 import com.vmware.admiral.common.util.FileUtil;
-import com.vmware.admiral.test.ui.pages.AdmiralWebClientConfiguration;
+import com.vmware.admiral.vic.test.ui.pages.VICWebClient;
 import com.vmware.admiral.vic.test.ui.util.IdentitySourceConfigurator;
 
 @RunWith(Suite.class)
 public class BaseSuite {
 
+    private static final String MANAGEMENT_PORTAL_PORT = ":8282";
+    private static final String HTTPS_PROTOCOL = "https://";
+    private static String vicUrl;
+
     private static Logger LOG = Logger.getLogger(BaseSuite.class.getName());
 
-    private static Properties properties = FileUtil
+    public static final Properties PROPERTIES = FileUtil
             .getProperties("/" + PropertiesNames.PROPERTIES_FILE_NAME, true);
 
     @BeforeClass
     public static void applyConfiguration() {
+        Configuration.screenshots = false;
         LOG.info("Applying the configuration from the properties file");
-        String timeout = properties.getProperty(PropertiesNames.WAIT_FOR_ELEMENT_TIMEOUT, "10000");
+        String timeout = PROPERTIES.getProperty(PropertiesNames.WAIT_FOR_ELEMENT_TIMEOUT, "10000");
         Configuration.timeout = Integer.parseInt(timeout);
 
-        String closeBrowserTimeout = properties.getProperty(PropertiesNames.BROWSER_CLOSE_TIMEOUT,
+        String closeBrowserTimeout = PROPERTIES.getProperty(PropertiesNames.BROWSER_CLOSE_TIMEOUT,
                 "0");
         Configuration.closeBrowserTimeoutMs = Integer.parseInt(closeBrowserTimeout);
 
-        String pollinfInterval = properties.getProperty(PropertiesNames.POLLING_INTERVAL, "100");
+        Configuration.browser = PROPERTIES.getProperty(PropertiesNames.BROWSER_PROPERTY, "chrome");
+
+        String pollinfInterval = PROPERTIES.getProperty(PropertiesNames.POLLING_INTERVAL, "100");
         Configuration.pollingInterval = Integer.parseInt(pollinfInterval);
 
-        Configuration.reportsFolder = properties.getProperty(PropertiesNames.SCREENSHOTS_FOLDER,
+        Configuration.reportsFolder = PROPERTIES.getProperty(PropertiesNames.SCREENSHOTS_FOLDER,
                 "target/screenshots");
 
-        String loginTimeout = properties.getProperty(PropertiesNames.LOGIN_TIMEOUT_SECONDS);
+        String loginTimeout = PROPERTIES.getProperty(PropertiesNames.LOGIN_TIMEOUT_SECONDS);
         if (!Objects.isNull(loginTimeout) && !loginTimeout.isEmpty()) {
-            AdmiralWebClientConfiguration.setLoginTimeoutSeconds(Integer.parseInt(loginTimeout));
-        }
-
-        String requestPollingInterval = properties
-                .getProperty(PropertiesNames.REQUEST_POLLING_INTERVAL_MILISECONDS);
-        if (!Objects.isNull(requestPollingInterval) && !requestPollingInterval.isEmpty()) {
-            AdmiralWebClientConfiguration.setRequestPollingIntervalMiliseconds(Integer
-                    .parseInt(requestPollingInterval));
-        }
-
-        String addHostTimeout = properties.getProperty(PropertiesNames.ADD_HOST_TIMEOUT_SECONDS);
-        if (!Objects.isNull(addHostTimeout) && !addHostTimeout.isEmpty()) {
-            AdmiralWebClientConfiguration
-                    .setAddHostTimeoutSeconds(Integer.parseInt(addHostTimeout));
-        }
-
-        String deleteHostTimeout = properties
-                .getProperty(PropertiesNames.DELETE_HOST_TIMEOUT_SECONDS);
-        if (!Objects.isNull(deleteHostTimeout) && !deleteHostTimeout.isEmpty()) {
-            AdmiralWebClientConfiguration.setDeleteHostTimeoutSeconds(Integer
-                    .parseInt(deleteHostTimeout));
+            VICWebClient.setLoginTimeoutSeconds(Integer.parseInt(loginTimeout));
         }
     }
 
     @BeforeClass
     public static void configureActiveDirectories() throws IOException {
         LOG.info("Configuring active directories");
-        String adCsv = properties
+        String adCsv = PROPERTIES
                 .getProperty(PropertiesNames.ACTIVE_DIRECTORIES_SPEC_FILES_CSV_PROPERTY).trim();
         if (adCsv.isEmpty()) {
             LOG.warning(
@@ -122,4 +109,28 @@ public class BaseSuite {
         }
     }
 
+    public static String getVicUrl() {
+        if (Objects.isNull(vicUrl)) {
+            vicUrl = getVicIp();
+            if (!vicUrl.startsWith(HTTPS_PROTOCOL)) {
+                vicUrl = HTTPS_PROTOCOL + vicUrl;
+            }
+            if (!vicUrl.endsWith(MANAGEMENT_PORTAL_PORT)) {
+                vicUrl = vicUrl + MANAGEMENT_PORTAL_PORT;
+            }
+        }
+        return vicUrl;
+    }
+
+    protected static String getVicIp() {
+        return PROPERTIES.getProperty(PropertiesNames.VIC_IP_PROPERTY);
+    }
+
+    public static String getDefaultAdminUsername() {
+        return PROPERTIES.getProperty(PropertiesNames.DEFAULT_ADMIN_USERNAME_PROPERTY);
+    }
+
+    public static String getDefaultAdminPassword() {
+        return PROPERTIES.getProperty(PropertiesNames.DEFAULT_ADMIN_PASSWORD_PROPERTY);
+    }
 }

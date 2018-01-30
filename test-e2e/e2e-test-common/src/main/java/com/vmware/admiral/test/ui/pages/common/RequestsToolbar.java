@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,69 +11,67 @@
 
 package com.vmware.admiral.test.ui.pages.common;
 
-import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.Wait;
 
 import java.util.concurrent.TimeUnit;
 
-import com.codeborne.selenide.Condition;
-import com.codeborne.selenide.SelenideElement;
-
 import org.openqa.selenium.By;
 import org.openqa.selenium.TimeoutException;
 
-import com.vmware.admiral.test.ui.pages.AdmiralWebClientConfiguration;
+public class RequestsToolbar extends BasicClass<RequestsToolbarLocators> {
 
-public class RequestsToolbar extends BasicClass {
+    public RequestsToolbar(By[] iframeLocators, RequestsToolbarLocators pageLocators) {
+        super(iframeLocators, pageLocators);
+    }
 
     private final int WAIT_AFTER_REFRESH_ON_FAIL_SECONDS = 3;
-
-    private final By RIGHT_PANEL = By.cssSelector(".right-context-panel .content .requests-list");
-    private final By REQUESTS_BUTTON = By
-            .cssSelector(".toolbar .toolbar-item:nth-child(1) .btn");
-    private final By LAST_REQUEST = By
-            .cssSelector(".requests-list #all .request-item-holder:first-child");
-    private final By REQUEST_RELATIVE_ITEM_NAME = By.cssSelector(".title .name.truncateText");
-    private final By REFRESH_BUTTON = By.cssSelector(".right-context-panel .fa.fa-refresh");
 
     public void waitForLastRequestToSucceed(int timeout) {
         LOG.info(
                 String.format("Waiting for [%d] seconds for the last request to succeed", timeout));
-        executeInFrame(0, () -> {
-            waitForElementToStopMoving(REQUESTS_BUTTON);
+        expandRequestsIfNotExpanded();
+        // Wait a little in case the request is not yet visible
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+        }
+        try {
+            waitForLastToSucceed(timeout);
+        } catch (TimeoutException e) {
+            // TODO maybe should not be necessary?
+            LOG.warning(
+                    "Timeout expired, refreshing requests to verify the request is not finished...");
+            pageActions().click(locators().refreshButton());
             try {
-                waitToSucceed(timeout);
-            } catch (TimeoutException e) {
-                $(REFRESH_BUTTON).click();
-                // TODO maybe should not be necessary?
-                try {
-                    waitToSucceed(WAIT_AFTER_REFRESH_ON_FAIL_SECONDS);
-                } catch (TimeoutException e1) {
-                    throw e;
-                }
+                LOG.info(String.format(
+                        "Waiting for additional [%s] seconds for the request to finish...",
+                        WAIT_AFTER_REFRESH_ON_FAIL_SECONDS));
+                waitForLastToSucceed(WAIT_AFTER_REFRESH_ON_FAIL_SECONDS);
+                LOG.info("Request has finished, proceeding...");
+            } catch (TimeoutException e1) {
+                throw e;
             }
-        });
+        }
     }
 
-    public String getLastRequestTitle() {
-        return executeInFrame(0, () -> $(LAST_REQUEST).$(REQUEST_RELATIVE_ITEM_NAME).attr("title"));
-    }
-
-    private void waitToSucceed(int timeout) {
-        Wait().pollingEvery(AdmiralWebClientConfiguration.getRequestPollingIntervalMiliseconds(),
-                TimeUnit.MILLISECONDS)
-                .withTimeout(timeout, TimeUnit.SECONDS).until(f -> {
+    private void waitForLastToSucceed(int timeout) {
+        Wait().withTimeout(timeout, TimeUnit.SECONDS)
+                .until(f -> {
                     expandRequestsIfNotExpanded();
-                    SelenideElement lastRequest = $(LAST_REQUEST);
-                    return lastRequest.has(Condition.text("FINISHED"))
-                            && lastRequest.has(Condition.text("completed"));
+                    String text = pageActions().getText(locators().lastRequest());
+                    if (text.contains("FAILED")) {
+                        throw new AssertionError("Last request failed");
+                    }
+                    return text.contains("FINISHED")
+                            && text.contains("COMPLETED");
                 });
     }
 
     private void expandRequestsIfNotExpanded() {
-        if (!$(RIGHT_PANEL).isDisplayed()) {
-            $(REQUESTS_BUTTON).click();
-            waitForElementToStopMoving(REQUESTS_BUTTON);
+        if (!pageActions().isDisplayed(locators().toolbarPanel())) {
+            waitForElementToSettle(locators().requestsButton());
+            pageActions().click(locators().requestsButton());
+            waitForElementToSettle(locators().requestsButton());
         }
     }
 

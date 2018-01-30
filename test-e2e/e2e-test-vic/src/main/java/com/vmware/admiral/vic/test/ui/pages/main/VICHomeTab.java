@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,90 +11,40 @@
 
 package com.vmware.admiral.vic.test.ui.pages.main;
 
-import static com.codeborne.selenide.Selenide.$;
-
-import java.util.Objects;
-
-import com.codeborne.selenide.Condition;
-
 import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.main.HomeTab;
-import com.vmware.admiral.test.ui.pages.main.HomeTabSelectors;
-import com.vmware.admiral.test.ui.pages.main.HomeTabValidator;
-import com.vmware.admiral.vic.test.ui.pages.main.VICHomeTab.VICHomeTabValidator;
-import com.vmware.admiral.vic.test.ui.pages.projectrepos.ProjectRepositoriesPage;
 
-public class VICHomeTab extends HomeTab<VICHomeTab, VICHomeTabValidator> {
+public class VICHomeTab extends HomeTab {
 
-    public static final By PROJECT_REPOSITORIES_BUTTON = By.cssSelector(
-            HomeTabSelectors.LEFT_MENU_BASE + " .nav-link[href*=project-repositories]");
+    public VICHomeTab(By[] iFrameLocators, VICHomeTabValidator validator,
+            VICHomeTabLocators pageLocators) {
+        super(iFrameLocators, validator, pageLocators);
+        this.validator = validator;
+        this.locators = pageLocators;
+    }
 
     private VICHomeTabValidator validator;
-
-    private ProjectRepositoriesPage projectRepositoriesPage;
-
-    public ProjectRepositoriesPage navigateToProjectRepositoriesPage() {
-        if (clickIfNotActive(PROJECT_REPOSITORIES_BUTTON)) {
-            LOG.info("Navigating to Project Repositories page");
-            getProjectRepositoriesPage().waitToLoad();
-        }
-        return getProjectRepositoriesPage();
-    }
-
-    private ProjectRepositoriesPage getProjectRepositoriesPage() {
-        if (Objects.isNull(projectRepositoriesPage)) {
-            projectRepositoriesPage = new ProjectRepositoriesPage();
-        }
-        return projectRepositoriesPage;
-    }
+    private VICHomeTabLocators locators;
 
     @Override
     public VICHomeTabValidator validate() {
-        if (Objects.isNull(validator)) {
-            validator = new VICHomeTabValidator(this);
-        }
         return validator;
     }
 
-    @Override
-    public VICHomeTab getThis() {
-        return this;
+    public void clickContainerHostsButton() {
+        LOG.info("Navigating to Container Hosts page");
+        pageActions().click(locators().clustersButton());
     }
 
-    public static class VICHomeTabValidator extends HomeTabValidator<VICHomeTabValidator> {
+    public void clickProjectRepositoriesButton() {
+        LOG.info("Navigating to Project Repositories page");
+        pageActions().click(locators().projectRepositoriesButton());
+    }
 
-        VICHomeTabValidator(VICHomeTab page) {
-            super(page);
-        }
-
-        public VICHomeTabValidator validateProjectRepositoriesAvailable() {
-            $(PROJECT_REPOSITORIES_BUTTON).shouldBe(Condition.visible);
-            return this;
-        }
-
-        public VICHomeTabValidator validateProjectRepositoriesNotAvailable() {
-            $(PROJECT_REPOSITORIES_BUTTON).shouldNotBe(Condition.visible);
-            return this;
-        }
-
-        public VICHomeTabValidator validateAllHomeTabsAreAvailable() {
-            validateApplicationsAvailable();
-            validateContainersAvailable();
-            validateNetworksAvailable();
-            validateVolumesAvailable();
-            validateTemplatesAvailable();
-            validateProjectRepositoriesAvailable();
-            validatePublicRepositoriesAvailable();
-            validateContainerHostsAvailable();
-            return this;
-        }
-
-        @Override
-        public VICHomeTabValidator getThis() {
-            return this;
-        }
-
+    @Override
+    protected VICHomeTabLocators locators() {
+        return locators;
     }
 
 }

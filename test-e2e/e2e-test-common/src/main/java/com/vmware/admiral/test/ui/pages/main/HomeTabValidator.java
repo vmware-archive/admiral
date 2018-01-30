@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,154 +11,124 @@
 
 package com.vmware.admiral.test.ui.pages.main;
 
-import static com.codeborne.selenide.Selenide.$;
-
 import java.util.Arrays;
 import java.util.List;
 
 import com.codeborne.selenide.Condition;
 
-import com.vmware.admiral.test.ui.pages.common.ExtendablePageValidator;
+import org.openqa.selenium.By;
 
-public abstract class HomeTabValidator<V extends HomeTabValidator<V>>
-        extends ExtendablePageValidator<V> {
+import com.vmware.admiral.test.ui.pages.common.PageValidator;
 
-    private HomeTab<?, ?> page;
+public class HomeTabValidator extends PageValidator<HomeTabLocators> {
 
-    public HomeTabValidator(HomeTab<?, ?> page) {
-        this.page = page;
+    public HomeTabValidator(By[] iFrameLocators, HomeTabLocators pageLocators) {
+        super(iFrameLocators, pageLocators);
     }
 
     @Override
-    public V validateIsCurrentPage() {
-        $(GlobalSelectors.HOME_BUTTON).shouldHave(Condition.cssClass("active"));
-        return getThis();
+    public void validateIsCurrentPage() {
+        element(locators().homeButton()).shouldHave(Condition.cssClass("active"));
     }
 
-    public V validateApplicationsNotAvailable() {
-        $(HomeTabSelectors.APPLICATIONS_BUTTON).shouldNotBe(Condition.visible);
-        return getThis();
+    public void validateApplicationsNotAvailable() {
+        element(locators().applicationsButton()).shouldNotBe(Condition.visible);
     }
 
-    public V validateContainersNotAvailable() {
-        $(HomeTabSelectors.CONTAINERS_BUTTON).shouldNotBe(Condition.visible);
-        return getThis();
+    public void validateContainersNotAvailable() {
+        element(locators().containersButton()).shouldNotBe(Condition.visible);
     }
 
-    public V validateNetworksNotAvailable() {
-        $(HomeTabSelectors.NETWORKS_BUTTON).shouldNotBe(Condition.visible);
-        return getThis();
+    public void validateNetworksNotAvailable() {
+        element(locators().networksButton()).shouldNotBe(Condition.visible);
     }
 
-    public V validateVolumesNotAvailable() {
-        $(HomeTabSelectors.VOLUMES_BUTTON).shouldNotBe(Condition.visible);
-        return getThis();
+    public void validateVolumesNotAvailable() {
+        element(locators().volumesButton()).shouldNotBe(Condition.visible);
     }
 
-    public V validateTemplatesNotAvailable() {
-        $(HomeTabSelectors.TEMPLATES_BUTTON).shouldNotBe(Condition.visible);
-        return getThis();
+    public void validateTemplatesNotAvailable() {
+        element(locators().templatesButton()).shouldNotBe(Condition.visible);
     }
 
-    public V validatePublicRepositoriesNotAvailable() {
-        $(HomeTabSelectors.PUBLIC_REPOSITORIES_BUTTON).shouldNotBe(Condition.visible);
-        return getThis();
+    public void validatePublicRepositoriesNotAvailable() {
+        element(locators().publicRepositoriesButton()).shouldNotBe(Condition.visible);
     }
 
-    public V validateContainerHostsNotAvailable() {
-        $(HomeTabSelectors.CONTAINER_HOSTS_BUTTON).shouldNotBe(Condition.visible);
-        return getThis();
+    public void validateContainerHostsNotAvailable() {
+        element(locators().clustersButton()).shouldNotBe(Condition.visible);
     }
 
-    public V validateApplicationsAvailable() {
-        $(HomeTabSelectors.APPLICATIONS_BUTTON).shouldBe(Condition.visible);
-        return getThis();
+    public void validateApplicationsAvailable() {
+        element(locators().applicationsButton()).shouldBe(Condition.visible);
     }
 
-    public V validateContainersAvailable() {
-        $(HomeTabSelectors.CONTAINERS_BUTTON).shouldBe(Condition.visible);
-        return getThis();
+    public void validateContainersAvailable() {
+        element(locators().containersButton()).shouldBe(Condition.visible);
     }
 
-    public V validateNetworksAvailable() {
-        $(HomeTabSelectors.NETWORKS_BUTTON).shouldBe(Condition.visible);
-        return getThis();
+    public void validateNetworksAvailable() {
+        element(locators().networksButton()).shouldBe(Condition.visible);
     }
 
-    public V validateVolumesAvailable() {
-        $(HomeTabSelectors.VOLUMES_BUTTON).shouldBe(Condition.visible);
-        return getThis();
+    public void validateVolumesAvailable() {
+        element(locators().volumesButton()).shouldBe(Condition.visible);
     }
 
-    public V validateTemplatesAvailable() {
-        $(HomeTabSelectors.TEMPLATES_BUTTON).shouldBe(Condition.visible);
-        return getThis();
+    public void validateTemplatesAvailable() {
+        element(locators().templatesButton()).shouldBe(Condition.visible);
     }
 
-    public V validatePublicRepositoriesAvailable() {
-        $(HomeTabSelectors.PUBLIC_REPOSITORIES_BUTTON).shouldBe(Condition.visible);
-        return getThis();
+    public void validatePublicRepositoriesAvailable() {
+        element(locators().publicRepositoriesButton()).shouldBe(Condition.visible);
     }
 
-    public V validateContainerHostsAvailable() {
-        $(HomeTabSelectors.CONTAINER_HOSTS_BUTTON).shouldBe(Condition.visible);
-        return getThis();
+    public void validateContainerHostsAvailable() {
+        element(locators().clustersButton()).shouldBe(Condition.visible);
     }
 
-    public V validateCurrentProjectIs(String projectName) {
-        String currentProjectName = page.getCurrentProject();
+    public void validateCurrentProjectIs(String projectName) {
+        element(locators().currentProjectDiv()).shouldBe(Condition.visible)
+                .shouldNotHave(Condition.exactTextCaseSensitive("--"));
+        String currentProjectName = pageActions()
+                .getText(locators().currentProjectDiv());
         if (!currentProjectName.equals(projectName)) {
             throw new AssertionError(
                     String.format("Project name mismatch: expected[%s], actual[%s]", projectName,
                             currentProjectName));
         }
-        return getThis();
     }
 
-    public V validateProjectIsAvailable(String projectName) {
+    public void validateProjectIsAvailable(String projectName) {
         validateProjectsAreAvailable(projectName);
-        return getThis();
     }
 
-    public V validateProjectsAreAvailable(String... projectNames) {
+    public void validateProjectsAreAvailable(String... projectNames) {
         validateProjectsAreAvailable(Arrays.asList(projectNames));
-        return getThis();
     }
 
-    public V validateProjectsAreAvailable(List<String> projectNames) {
-        List<String> visibleProjectNames = page.getProjectsNames();
+    public void validateProjectsAreAvailable(List<String> projectNames) {
+        pageActions().click(locators().projectsDropdownButton());
         for (String projectName : projectNames) {
-            if (!visibleProjectNames.contains(projectName)) {
-                String error = String.format(
-                        "Project with name [%s] is not available for the current user",
-                        projectName);
-                throw new AssertionError(error);
-            }
+            element(locators().projectSelectorByName(projectName)).shouldBe(Condition.visible);
         }
-        return getThis();
+        pageActions().click(locators().projectsDropdownButton());
     }
 
-    public V validateProjectIsNotAvailable(String projectName) {
+    public void validateProjectIsNotAvailable(String projectName) {
         validateProjectsAreNotAvailable(projectName);
-        return getThis();
     }
 
-    public V validateProjectsAreNotAvailable(String... projectNames) {
+    public void validateProjectsAreNotAvailable(String... projectNames) {
         validateProjectsAreNotAvailable(Arrays.asList(projectNames));
-        return getThis();
     }
 
-    public V validateProjectsAreNotAvailable(List<String> projectNames) {
-        List<String> visibleProjectNames = page.getProjectsNames();
+    public void validateProjectsAreNotAvailable(List<String> projectNames) {
+        pageActions().click(locators().projectsDropdownButton());
         for (String projectName : projectNames) {
-            if (visibleProjectNames.contains(projectName)) {
-                String error = String.format(
-                        "Project with name [%s] is available for the current user, but expected not to be",
-                        projectName);
-                throw new AssertionError(error);
-            }
+            element(locators().projectSelectorByName(projectName)).shouldNotBe(Condition.visible);
         }
-        return getThis();
+        pageActions().click(locators().projectsDropdownButton());
     }
 
 }

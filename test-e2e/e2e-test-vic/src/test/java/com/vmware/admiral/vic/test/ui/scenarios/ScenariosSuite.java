@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -16,7 +16,9 @@ import org.junit.runners.Suite.SuiteClasses;
 import com.vmware.admiral.vic.test.ui.BaseSuite;
 
 @SuiteClasses({
-        RBACAndItemsProjectAwareness.class })
+        RBACAndItemsProjectAwareness.class,
+        // CreateAndProvisionVotingApp.class
+        PushImageToHarborAndProvision.class })
 public class ScenariosSuite extends BaseSuite {
 
 }

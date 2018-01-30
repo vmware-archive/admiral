@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,46 +11,30 @@
 
 package com.vmware.admiral.test.ui.pages.applications;
 
-import static com.codeborne.selenide.Selenide.$;
-
 import com.codeborne.selenide.Condition;
 
 import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.common.PageValidator;
-import com.vmware.admiral.test.ui.pages.main.HomeTabSelectors;
 
-public class ApplicationsPageValidator extends PageValidator {
+public class ApplicationsPageValidator extends PageValidator<ApplicationsPageLocators> {
 
-    private final By PAGE_TITLE = By.cssSelector(".title>span:nth-child(1)");
-    private final By CREATE_APPLICATION_SLIDE = By
-            .cssSelector(".closable-view.slide-and-fade-transition");
-
-    private ApplicationsPage page;
-
-    ApplicationsPageValidator(ApplicationsPage page) {
-        this.page = page;
+    public ApplicationsPageValidator(By[] iFrameLocators, ApplicationsPageLocators pageLocators) {
+        super(iFrameLocators, pageLocators);
     }
 
     @Override
-    public ApplicationsPageValidator validateIsCurrentPage() {
-        $(HomeTabSelectors.APPLICATIONS_BUTTON).shouldHave(Condition.cssClass("active"));
-        executeInFrame(0, () -> {
-            $(PAGE_TITLE).shouldHave(Condition.text("Applications"));
-            $(CREATE_APPLICATION_SLIDE).shouldNot(Condition.exist);
-        });
-        return this;
+    public void validateIsCurrentPage() {
+        element(locators().pageTitle()).shouldHave(Condition.text("Applications"));
+        element(locators().childPageSlide()).shouldNot(Condition.exist);
     }
 
-    public ApplicationsPageValidator validateApplicationExistsWithName(String name) {
-        executeInFrame(0, () -> $(page.getApplicationCardSelector(name)).should(Condition.exist));
-        return this;
+    public void validateApplicationExistsWithName(String namePrefix) {
+        element(locators().cardByTitlePrefix(namePrefix)).should(Condition.exist);
     }
 
-    public ApplicationsPageValidator validateApplicationDoesNotExistWithName(String name) {
-        executeInFrame(0,
-                () -> $(page.getApplicationCardSelector(name)).shouldNot(Condition.exist));
-        return this;
+    public void validateApplicationDoesNotExistWithName(String namePrefix) {
+        element(locators().cardByTitlePrefix(namePrefix)).shouldNot(Condition.exist);
     }
 
 }

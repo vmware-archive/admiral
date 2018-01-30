@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,40 +11,27 @@
 
 package com.vmware.admiral.test.ui.pages.publicrepos;
 
-import static com.codeborne.selenide.Selenide.$;
+import org.openqa.selenium.By;
 
-import java.util.Objects;
-
-import com.vmware.admiral.test.ui.pages.common.HomeTabAdvancedPage;
+import com.vmware.admiral.test.ui.pages.common.ResourcePage;
 
 public class PublicRepositoriesPage
-        extends HomeTabAdvancedPage<PublicRepositoriesPage, PublicRepositoriesPageValidator> {
+        extends ResourcePage<PublicRepositoriesPageValidator, PublicRepositoriesPageLocators> {
 
-    private PublicRepositoriesPageValidator validator;
-
-    @Override
-    public PublicRepositoriesPageValidator validate() {
-        if (Objects.isNull(validator)) {
-            validator = new PublicRepositoriesPageValidator();
-        }
-        return validator;
+    public PublicRepositoriesPage(By[] iFrameLocators, PublicRepositoriesPageValidator validator,
+            PublicRepositoriesPageLocators pageLocators) {
+        super(iFrameLocators, validator, pageLocators);
     }
 
     @Override
-    public PublicRepositoriesPage refresh() {
+    public void refresh() {
         LOG.info("Refreshing...");
-        executeInFrame(0, () -> $(REFRESH_BUTTON).click());
-        return this;
+        pageActions().click(locators().refreshButton());
     }
 
     @Override
     public void waitToLoad() {
         validate().validateIsCurrentPage();
-    }
-
-    @Override
-    public PublicRepositoriesPage getThis() {
-        return this;
     }
 
 }

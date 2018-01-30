@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,48 +11,26 @@
 
 package com.vmware.admiral.test.ui.pages.identity;
 
-import static com.codeborne.selenide.Selenide.$;
-
-import java.util.Objects;
-
 import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.common.BasicPage;
 
 public class IdentityManagementPage
-        extends BasicPage<IdentityManagementPage, IdentityManagementPageValidator> {
+        extends BasicPage<IdentityManagementPageValidator, IdentityManagementPageLocators> {
 
-    private final By USERS_AND_GROUPS_BUTTON = By.cssSelector("#identityUsersGroupsTab .btn");
-
-    protected UsersAndGroupsTab usersAndGroupsTab;
-
-    private IdentityManagementPageValidator validator;
-
-    public UsersAndGroupsTab navigateToUsersAndGroupsTab() {
-        $(USERS_AND_GROUPS_BUTTON).click();
-        if (Objects.isNull(usersAndGroupsTab)) {
-            usersAndGroupsTab = new UsersAndGroupsTab();
-        }
-        return usersAndGroupsTab;
+    public IdentityManagementPage(By[] iFrameLocators, IdentityManagementPageValidator validator,
+            IdentityManagementPageLocators pageLocators) {
+        super(iFrameLocators, validator, pageLocators);
     }
 
-    @Override
-    public IdentityManagementPageValidator validate() {
-        if (Objects.isNull(validator)) {
-            validator = new IdentityManagementPageValidator();
-        }
-        return validator;
+    public void clickUsersAndGroupsTab() {
+        pageActions().click(locators().usersAndGroupsTabButton());
     }
 
     @Override
     public void waitToLoad() {
         validate().validateIsCurrentPage();
         // TODO wait to load
-    }
-
-    @Override
-    public IdentityManagementPage getThis() {
-        return this;
     }
 
 }

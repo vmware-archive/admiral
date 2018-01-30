@@ -1,0 +1,51 @@
+/*
+ * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
+ *
+ * This product is licensed to you under the Apache License, Version 2.0 (the "License").
+ * You may not use this product except in compliance with the License.
+ *
+ * This product may include a number of subcomponents with separate copyright notices
+ * and license terms. Your use of these subcomponents is subject to the terms and
+ * conditions of the subcomponent's license, as noted in the LICENSE file.
+ */
+
+package com.vmware.admiral.test.ui.pages.networks;
+
+import java.util.Objects;
+
+import org.openqa.selenium.By;
+
+import com.vmware.admiral.test.ui.pages.common.ResourcePageLibrary;
+
+public class NetworksPageLibrary extends ResourcePageLibrary {
+
+    private final By[] iframeLocators = new By[] { By.cssSelector("#admiral-content-frame") };
+
+    private NetworksPage networksPage;
+    private CreateNetworkPage createNetwork;
+
+    public NetworksPage networksPage() {
+        if (Objects.isNull(networksPage)) {
+            NetworksPageLocators locators = new NetworksPageLocators();
+            NetworksPageValidator validator = new NetworksPageValidator(getFrameLocators(),
+                    locators);
+            networksPage = new NetworksPage(getFrameLocators(), validator, locators);
+        }
+        return networksPage;
+    }
+
+    public CreateNetworkPage createNetworkPage() {
+        if (Objects.isNull(createNetwork)) {
+            CreateNetworkPageLocators locators = new CreateNetworkPageLocators();
+            CreateNetworkPageValidator validator = new CreateNetworkPageValidator(
+                    getFrameLocators(), locators);
+            createNetwork = new CreateNetworkPage(getFrameLocators(), validator, locators);
+        }
+        return createNetwork;
+    }
+
+    @Override
+    protected By[] getFrameLocators() {
+        return iframeLocators;
+    }
+}

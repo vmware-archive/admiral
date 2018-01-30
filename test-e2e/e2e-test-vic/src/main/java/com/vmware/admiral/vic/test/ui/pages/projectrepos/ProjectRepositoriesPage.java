@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,46 +11,34 @@
 
 package com.vmware.admiral.vic.test.ui.pages.projectrepos;
 
-import static com.codeborne.selenide.Selenide.$;
-
-import java.util.Objects;
-
 import org.openqa.selenium.By;
 
-import com.vmware.admiral.test.ui.pages.common.HomeTabPage;
+import com.vmware.admiral.test.ui.pages.common.BasicPage;
 
 public class ProjectRepositoriesPage
-        extends HomeTabPage<ProjectRepositoriesPage, ProjectRepositoriesPageValidator> {
+        extends BasicPage<ProjectRepositoriesPageValidator, ProjectRepositoriesPageLocators> {
 
-    private final By REFRESH_BUTTON = By.cssSelector(".refresh-btn");
-
-    private ProjectRepositoriesPageValidator validator;
-
-    @Override
-    public ProjectRepositoriesPageValidator validate() {
-        if (Objects.isNull(validator)) {
-            validator = new ProjectRepositoriesPageValidator();
-        }
-        return validator;
+    public ProjectRepositoriesPage(By[] iFrameLocators, ProjectRepositoriesPageValidator validator,
+            ProjectRepositoriesPageLocators pageLocators) {
+        super(iFrameLocators, validator, pageLocators);
     }
 
-    @Override
-    public ProjectRepositoriesPage refresh() {
+    public void refresh() {
         LOG.info("Refreshing...");
-        $(REFRESH_BUTTON).click();
+        pageActions().click(locators().refreshButton());
         waitForSpinner();
-        return this;
-    }
-
-    @Override
-    public ProjectRepositoriesPage getThis() {
-        return this;
     }
 
     @Override
     public void waitToLoad() {
         validate().validateIsCurrentPage();
         waitForSpinner();
+    }
+
+    public void deleteRepository(String name) {
+        LOG.info(String.format("Deleting repository [%s]", name));
+        pageActions().click(locators().rowContextButtonByRepositoryName(name));
+        pageActions().click(locators().rowDeleteButtonByRepositoryName(name));
     }
 
 }

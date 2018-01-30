@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,19 +11,21 @@
 
 package com.vmware.admiral.test.ui.pages.common;
 
-import java.util.function.Consumer;
+import org.openqa.selenium.By;
 
-public abstract class BasicPage<P extends BasicPage<P, V>, V extends PageValidator>
-        extends BasicClass {
+public abstract class BasicPage<V extends PageValidator<L>, L extends PageLocators>
+        extends BasicClass<L> {
 
-    public abstract V validate();
+    private final V validator;
 
-    public P validate(Consumer<V> validationAction) {
-        validationAction.accept(validate());
-        return getThis();
+    public BasicPage(By[] iFrameLocators, V validator, L pageLocators) {
+        super(iFrameLocators, pageLocators);
+        this.validator = validator;
     }
 
-    public abstract P getThis();
+    public V validate() {
+        return validator;
+    }
 
     public abstract void waitToLoad();
 

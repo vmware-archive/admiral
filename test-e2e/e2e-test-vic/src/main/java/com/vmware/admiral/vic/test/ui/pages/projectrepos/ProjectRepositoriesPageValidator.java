@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,24 +11,27 @@
 
 package com.vmware.admiral.vic.test.ui.pages.projectrepos;
 
-import static com.codeborne.selenide.Selenide.$;
-
 import com.codeborne.selenide.Condition;
 
 import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.common.PageValidator;
-import com.vmware.admiral.vic.test.ui.pages.main.VICHomeTab;
 
-public class ProjectRepositoriesPageValidator extends PageValidator {
+public class ProjectRepositoriesPageValidator
+        extends PageValidator<ProjectRepositoriesPageLocators> {
 
-    private final By PAGE_TITLE = By.cssSelector("div.title");
+    public ProjectRepositoriesPageValidator(By[] iFrameLocators,
+            ProjectRepositoriesPageLocators pageLocators) {
+        super(iFrameLocators, pageLocators);
+    }
 
     @Override
-    public ProjectRepositoriesPageValidator validateIsCurrentPage() {
-        $(VICHomeTab.PROJECT_REPOSITORIES_BUTTON).shouldHave(Condition.cssClass("active"));
-        $(PAGE_TITLE).shouldHave(Condition.text("Project Repositories"));
-        return this;
+    public void validateIsCurrentPage() {
+        element(locators().pageTitle()).shouldHave(Condition.text("Project Repositories"));
+    }
+
+    public void validateRepositoryExistsWithName(String name) {
+        element(locators().rowByRepositoryName(name)).should(Condition.exist);
     }
 
 }

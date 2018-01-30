@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,61 +11,113 @@
 
 package com.vmware.admiral.vic.test.ui;
 
+import static com.codeborne.selenide.Selenide.close;
+
+import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.logging.Logger;
 
-import com.codeborne.selenide.junit.ScreenShooter;
+import com.spotify.docker.client.DockerClient;
 
+import org.junit.AfterClass;
 import org.junit.Rule;
-import org.junit.runner.RunWith;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 
-import com.vmware.admiral.common.util.FileUtil;
-import com.vmware.admiral.test.ui.SelenideClassRunner;
+import com.vmware.admiral.test.ui.pages.applications.ApplicationsPageLibrary;
+import com.vmware.admiral.test.ui.pages.containers.ContainersPageLibrary;
+import com.vmware.admiral.test.ui.pages.identity.IdentityManagementPageLibrary;
+import com.vmware.admiral.test.ui.pages.logs.LogsPageLibrary;
+import com.vmware.admiral.test.ui.pages.main.MainPage;
+import com.vmware.admiral.test.ui.pages.networks.NetworksPageLibrary;
+import com.vmware.admiral.test.ui.pages.projects.ProjectsPageLibrary;
+import com.vmware.admiral.test.ui.pages.publicrepos.PublicRepositoriesPageLibrary;
+import com.vmware.admiral.test.ui.pages.registries.RegistriesPageLibrary;
+import com.vmware.admiral.test.ui.pages.templates.TemplatesPageLibrary;
+import com.vmware.admiral.test.ui.pages.volumes.VolumesPageLibrary;
+import com.vmware.admiral.test.util.DockerUtils;
+import com.vmware.admiral.test.util.ScreenshotRule;
+import com.vmware.admiral.test.util.TestStatusLoggerRule;
 import com.vmware.admiral.vic.test.ui.pages.VICWebClient;
+import com.vmware.admiral.vic.test.ui.pages.configuration.ConfigurationPageLibrary;
+import com.vmware.admiral.vic.test.ui.pages.hosts.ContainerHostsPageLibrary;
 import com.vmware.admiral.vic.test.ui.pages.main.VICAdministrationTab;
 import com.vmware.admiral.vic.test.ui.pages.main.VICHomeTab;
+import com.vmware.admiral.vic.test.ui.pages.projectrepos.ProjectRepositoriesPageLibrary;
+import com.vmware.admiral.vic.test.ui.util.DeleteHostsOnFailureRule;
+import com.vmware.admiral.vic.test.ui.util.VCHCleanupOnFailureRule;
+import com.vmware.admiral.vic.test.ui.util.VICReportsRule;
 
-@RunWith(SelenideClassRunner.class)
 public class BaseTest {
 
-    private final String MANAGEMENT_PORTAL_PORT = ":8282";
-    private final String HTTPS_PROTOCOL = "https://";
-
-    protected final Properties PROPERTIES = FileUtil
-            .getProperties("/" + PropertiesNames.PROPERTIES_FILE_NAME, true);
-    private String vicUrl;
+    private static final String HTTPS_PROTOCOL = "https://";
+    protected final Logger LOG = Logger.getLogger(getClass().getName());
+    protected final Properties PROPERTIES = BaseSuite.PROPERTIES;
     private String vchUrl;
 
     @Rule
-    public ScreenShooter makeScreenshotOnFailure = ScreenShooter.failedTests();
+    public TestRule chain = RuleChain
+            .outerRule(new TestStatusLoggerRule())
+            .around(new DeleteHostsOnFailureRule(getVicUrl(),
+                    BaseSuite.getDefaultAdminUsername(), BaseSuite.getDefaultAdminPassword()))
+            .around(new VICReportsRule(getVicUrl(), getDefaultAdminUsername(),
+                    getDefaultAdminPassword()))
+            .around(new VCHCleanupOnFailureRule(getVchUrl()))
+            .around(new ScreenshotRule());
 
-    private VICWebClient client;
+    private VICWebClient client = new VICWebClient();
 
-    protected VICWebClient getClient() {
-        if (Objects.isNull(client)) {
-            client = new VICWebClient();
-        }
-        return client;
+    protected void loginAsAdmin() {
+        String username = PROPERTIES.getProperty(PropertiesNames.DEFAULT_ADMIN_USERNAME_PROPERTY);
+        String password = PROPERTIES.getProperty(PropertiesNames.DEFAULT_ADMIN_PASSWORD_PROPERTY);
+        loginAs(username, password);
+    }
+
+    protected void loginAs(String username, String password) {
+        client.logIn(getVicUrl(), username, password);
+    }
+
+    protected void logOut() {
+        client.main().logOut();
+        client.waitToLogout();
+    }
+
+    protected List<String> getCloudAdminsPrincipalIds() {
+        return null;
+    }
+
+    protected DockerClient getDockerClient() {
+        return DockerUtils.createUnsecureDockerClient(getVchUrl());
     }
 
     protected String getVicUrl() {
-        if (Objects.isNull(vicUrl)) {
-            vicUrl = PROPERTIES.getProperty(PropertiesNames.VIC_IP_PROPERTY);
-            Objects.requireNonNull(vicUrl);
-            if (!vicUrl.startsWith(HTTPS_PROTOCOL)) {
-                vicUrl = HTTPS_PROTOCOL + vicUrl;
-            }
-            if (!vicUrl.endsWith(MANAGEMENT_PORTAL_PORT)) {
-                vicUrl = vicUrl + MANAGEMENT_PORTAL_PORT;
-            }
-        }
-        return vicUrl;
+        return BaseSuite.getVicUrl();
+    }
+
+    protected String getVicIp() {
+        return BaseSuite.getVicIp();
+    }
+
+    protected String getDefaultAdminUsername() {
+        return BaseSuite.getDefaultAdminUsername();
+    }
+
+    protected String getDefaultAdminPassword() {
+        return BaseSuite.getDefaultAdminPassword();
+    }
+
+    protected String getVicVmUsername() {
+        return PROPERTIES.getProperty(PropertiesNames.VIC_VM_USERNAME_PROPERTY);
+    }
+
+    protected String getVicVmPassword() {
+        return PROPERTIES.getProperty(PropertiesNames.VIC_VM_PASSWORD_PROPERTY);
     }
 
     protected String getVchUrl() {
         if (Objects.isNull(vchUrl)) {
             vchUrl = PROPERTIES.getProperty(PropertiesNames.VCH_IP_PROPERTY);
-            Objects.requireNonNull(vchUrl);
             String vchPort = PROPERTIES.getProperty(PropertiesNames.VCH_PORT_PROPERTY);
             Objects.requireNonNull(vchPort);
             if (!vchUrl.startsWith(HTTPS_PROTOCOL)) {
@@ -76,33 +128,81 @@ public class BaseTest {
         return vchUrl;
     }
 
-    protected String getDefaultAdminUsername() {
-        return PROPERTIES.getProperty(PropertiesNames.DEFAULT_ADMIN_USERNAME_PROPERTY);
+    @AfterClass
+    public static void closeBrowser() {
+        close();
     }
 
-    protected String getDefaultAdminPassword() {
-        return PROPERTIES.getProperty(PropertiesNames.DEFAULT_ADMIN_PASSWORD_PROPERTY);
+    protected MainPage main() {
+        return client.main();
     }
 
-    protected VICWebClient loginAsAdmin() {
-        String target = getVicUrl();
-        String username = PROPERTIES.getProperty(PropertiesNames.DEFAULT_ADMIN_USERNAME_PROPERTY);
-        Objects.requireNonNull(username);
-        String password = PROPERTIES.getProperty(PropertiesNames.DEFAULT_ADMIN_PASSWORD_PROPERTY);
-        getClient().logIn(target, username, password);
-        return getClient();
+    protected VICHomeTab home() {
+        return client.home();
     }
 
-    protected VICHomeTab navigateToHomeTab() {
-        return getClient().navigateToHomeTab();
+    protected VICAdministrationTab administration() {
+        return client.administration();
     }
 
-    protected VICAdministrationTab navigateToAdministrationTab() {
-        return getClient().navigateToAdministrationTab();
+    protected ApplicationsPageLibrary applications() {
+        return client.applications();
     }
 
-    protected void logOut() {
-        getClient().logOut();
+    protected ContainersPageLibrary containers() {
+        return client.containers();
+    }
+
+    protected NetworksPageLibrary networks() {
+        return client.networks();
+    }
+
+    protected VolumesPageLibrary volumes() {
+        return client.volumes();
+    }
+
+    protected TemplatesPageLibrary templates() {
+        return client.templates();
+    }
+
+    protected PublicRepositoriesPageLibrary publicRepositories() {
+        return client.publicRepositories();
+    }
+
+    protected ProjectRepositoriesPageLibrary projectRepositories() {
+        return client.projectRepositories();
+    }
+
+    protected ContainerHostsPageLibrary clusters() {
+        return client.clusters();
+    }
+
+    protected IdentityManagementPageLibrary identity() {
+        return client.identity();
+    }
+
+    protected ProjectsPageLibrary projects() {
+        return client.projects();
+    }
+
+    protected RegistriesPageLibrary registries() {
+        return client.registries();
+    }
+
+    protected ConfigurationPageLibrary configuration() {
+        return client.configuration();
+    }
+
+    protected LogsPageLibrary logs() {
+        return client.logs();
+    }
+
+    public void sleep(int miliseconds) {
+        try {
+            Thread.sleep(miliseconds);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

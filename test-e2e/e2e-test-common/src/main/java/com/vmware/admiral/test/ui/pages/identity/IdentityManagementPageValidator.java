@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,22 +11,22 @@
 
 package com.vmware.admiral.test.ui.pages.identity;
 
-import static com.codeborne.selenide.Selenide.$;
-
 import com.codeborne.selenide.Condition;
 
 import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.common.PageValidator;
 
-public class IdentityManagementPageValidator extends PageValidator {
+public class IdentityManagementPageValidator extends PageValidator<IdentityManagementPageLocators> {
 
-    private final By PAGE_TITLE = By.cssSelector("div.title");
+    public IdentityManagementPageValidator(By[] iFrameLocators,
+            IdentityManagementPageLocators pageLocators) {
+        super(iFrameLocators, pageLocators);
+    }
 
     @Override
-    public IdentityManagementPageValidator validateIsCurrentPage() {
-        $(PAGE_TITLE).shouldHave(Condition.text("Identity Management"));
-        return this;
+    public void validateIsCurrentPage() {
+        element(locators().pageTitle()).shouldHave(Condition.text("Identity Management"));
     }
 
 }

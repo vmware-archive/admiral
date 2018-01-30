@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,58 +11,39 @@
 
 package com.vmware.admiral.test.ui.pages.templates;
 
-import static com.codeborne.selenide.Selenide.$;
-
 import com.codeborne.selenide.Condition;
 
 import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.common.PageValidator;
-import com.vmware.admiral.test.ui.pages.main.HomeTabSelectors;
 
-public class TemplatesPageValidator extends PageValidator {
+public class TemplatesPageValidator extends PageValidator<TemplatesPageLocators> {
 
-    private final By PAGE_TITLE = By.cssSelector(".title>span:nth-child(1)");
-    private final By CREATE_TEMPLATE_SLIDE = By
-            .cssSelector(".closable-view.slide-and-fade-transition");
-    private final By ITEMS_COUNT = By.cssSelector(".title .total-items");
-
-    private final TemplatesPage page;
-
-    public TemplatesPageValidator(TemplatesPage page) {
-        this.page = page;
+    public TemplatesPageValidator(By[] iFrameLocators, TemplatesPageLocators pageLocators) {
+        super(iFrameLocators, pageLocators);
     }
 
     @Override
-    public TemplatesPageValidator validateIsCurrentPage() {
-        $(HomeTabSelectors.TEMPLATES_BUTTON).shouldHave(Condition.cssClass("active"));
-        executeInFrame(0, () -> {
-            $(PAGE_TITLE).shouldHave(Condition.exactText("Templates"));
-            $(CREATE_TEMPLATE_SLIDE).shouldNot(Condition.exist);
-        });
-        return this;
+    public void validateIsCurrentPage() {
+        element(locators().pageTitle()).shouldHave(Condition.exactText("Templates"));
+        element(locators().childPageSlide()).shouldNot(Condition.exist);
     }
 
-    public TemplatesPageValidator validateTemplateExistsWithName(String name) {
-        executeInFrame(0, () -> $(page.getTemplateCardSelector(name)).should(Condition.exist));
-        return this;
+    public void validateTemplateExistsWithName(String name) {
+        element(locators().cardByExactTitle(name)).should(Condition.exist);
     }
 
-    public TemplatesPageValidator validateTemplateDoesNotWithName(String name) {
-        executeInFrame(0, () -> $(page.getTemplateCardSelector(name)).shouldNot(Condition.exist));
-        return this;
+    public void validateTemplateDoesNotExistWithName(String name) {
+        element(locators().cardByExactTitle(name)).shouldNot(Condition.exist);
     }
 
-    public TemplatesPageValidator validateTemplatesCount(int count) {
-        String countText = executeInFrame(0, () -> {
-            return $(ITEMS_COUNT).getText();
-        });
+    public void validateTemplatesCount(int count) {
+        String countText = pageActions().getText(locators().itemsCount());
         int actualCount = Integer.parseInt(countText.substring(1, countText.length() - 1));
         if (actualCount != count) {
             throw new AssertionError(String.format(
                     "Templates count mismatch, expected: [%d], actual: [%d]", count, actualCount));
         }
-        return this;
     }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,24 +11,21 @@
 
 package com.vmware.admiral.test.ui.pages.registries;
 
-import static com.codeborne.selenide.Selenide.$;
-
 import com.codeborne.selenide.Condition;
 
 import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.common.PageValidator;
 
-public class RegistriesPageValidator extends PageValidator {
+public class RegistriesPageValidator extends PageValidator<RegistriesPageLocators> {
 
-    private final By PAGE_TITLE = By.cssSelector("div.title");
-    private final By EDIT_PROJECT_SLIDE = By.cssSelector(".full-screen.with-back-button");
+    public RegistriesPageValidator(By[] iFrameLocators, RegistriesPageLocators pageLocators) {
+        super(iFrameLocators, pageLocators);
+    }
 
     @Override
-    public RegistriesPageValidator validateIsCurrentPage() {
-        $(PAGE_TITLE).shouldHave(Condition.text("Registries"));
-        $(EDIT_PROJECT_SLIDE).shouldNot(Condition.exist);
-        return this;
+    public void validateIsCurrentPage() {
+        element(locators().pageTitle()).shouldHave(Condition.text("Registries"));
     }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,23 +11,21 @@
 
 package com.vmware.admiral.test.ui.pages.volumes;
 
-import static com.codeborne.selenide.Selenide.$;
-
 import com.codeborne.selenide.Condition;
 
 import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.common.PageValidator;
 
-public class CreateVolumePageValidator extends PageValidator {
+public class CreateVolumePageValidator extends PageValidator<CreateVolumePageLocators> {
 
-    private final By PAGE_TITLE = By
-            .cssSelector(".create-volume.closable-view.slide-and-fade-transition .title");
+    public CreateVolumePageValidator(By[] iFrameLocators, CreateVolumePageLocators pageLocators) {
+        super(iFrameLocators, pageLocators);
+    }
 
     @Override
-    public CreateVolumePageValidator validateIsCurrentPage() {
-        executeInFrame(0, () -> $(PAGE_TITLE).shouldHave(Condition.text("Create Volume")));
-        return this;
+    public void validateIsCurrentPage() {
+        element(locators().pageTitle()).shouldHave(Condition.text("Create Volume"));
     }
 
 }
