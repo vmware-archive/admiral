@@ -119,11 +119,17 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
     }
 
     @BeforeClass
-    public static void init() throws Exception {
-        SslTrustCertificateState trustCertificateState = IntegratonTestStateFactory
-                .createSslTrustCertificateState(
-                        getTestRequiredProp("cert.ci.trust.file"), "CI-trust-cert");
-        postDocument(SslTrustCertificateService.FACTORY_LINK, trustCertificateState);
+    public static void init() {
+        try {
+            SslTrustCertificateState trustCertificateState = IntegratonTestStateFactory
+                    .createSslTrustCertificateState(
+                            getTestRequiredProp("cert.ci.trust.file"), "CI-trust-cert");
+            postDocument(SslTrustCertificateService.FACTORY_LINK, trustCertificateState);
+        } catch (Exception e) {
+            Utils.logWarning("Cannot create trust certificate using property"
+                    + " cert.ci.trust.file=%s. Error: %s",
+                    getTestRequiredProp("cert.ci.trust.file"), e.getMessage());
+        }
     }
 
     @After
