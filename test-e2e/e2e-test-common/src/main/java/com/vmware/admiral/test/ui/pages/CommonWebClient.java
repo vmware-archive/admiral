@@ -80,7 +80,7 @@ public abstract class CommonWebClient<L extends CommonWebClientLocators> extends
         Objects.requireNonNull(url, "url parameter cannot be null");
         Objects.requireNonNull(username, "username parameter cannot be null");
         open(url);
-        LOG.info(String.format("Logging in with user: [%s]", username));
+        LOG.info(String.format("Logging in to [%s] with user: [%s]", url, username));
         pageActions().sendKeys(username, locators().loginUsernameInput());
         pageActions().sendKeys(password, locators().loginPasswordInput());
         pageActions().click(locators().loginSubmitButton());

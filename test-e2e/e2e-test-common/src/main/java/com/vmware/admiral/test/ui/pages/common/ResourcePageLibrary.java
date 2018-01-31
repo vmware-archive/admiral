@@ -13,6 +13,8 @@ package com.vmware.admiral.test.ui.pages.common;
 
 import java.util.Objects;
 
+import org.openqa.selenium.By;
+
 public abstract class ResourcePageLibrary extends PageLibrary {
 
     private RequestsToolbar requestsToolbar;
@@ -32,5 +34,10 @@ public abstract class ResourcePageLibrary extends PageLibrary {
                     new EventLogToolbarLocators());
         }
         return eventLogsToolar;
+    }
+
+    @Override
+    protected By[] getFrameLocators() {
+        return new By[] { By.cssSelector("iframe[src^='/ogui/index-no-navigation.html']") };
     }
 }

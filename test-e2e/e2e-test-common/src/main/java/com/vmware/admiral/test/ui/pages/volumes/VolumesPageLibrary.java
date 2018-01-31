@@ -13,13 +13,9 @@ package com.vmware.admiral.test.ui.pages.volumes;
 
 import java.util.Objects;
 
-import org.openqa.selenium.By;
-
 import com.vmware.admiral.test.ui.pages.common.ResourcePageLibrary;
 
 public class VolumesPageLibrary extends ResourcePageLibrary {
-
-    private final By[] iframeLocators = new By[] { By.cssSelector("#admiral-content-frame") };
 
     private VolumesPage volumesPage;
     private CreateVolumePage createVolumePage;
@@ -42,11 +38,6 @@ public class VolumesPageLibrary extends ResourcePageLibrary {
             createVolumePage = new CreateVolumePage(getFrameLocators(), validator, locators);
         }
         return createVolumePage;
-    }
-
-    @Override
-    protected By[] getFrameLocators() {
-        return iframeLocators;
     }
 
 }

@@ -13,8 +13,6 @@ package com.vmware.admiral.test.ui.pages.applications;
 
 import java.util.Objects;
 
-import org.openqa.selenium.By;
-
 import com.vmware.admiral.test.ui.pages.common.ResourcePageLibrary;
 import com.vmware.admiral.test.ui.pages.templates.create.CreateTemplatePageLocators;
 import com.vmware.admiral.test.ui.pages.templates.create.CreateTemplatePageValidator;
@@ -23,7 +21,6 @@ public class ApplicationsPageLibrary extends ResourcePageLibrary {
 
     private ApplicationsPage applicationsPage;
     private CreateApplicationPage createApplicationPage;
-    private By[] iframeLocators = new By[] { By.cssSelector("#admiral-content-frame") };
 
     public ApplicationsPage applicationsPage() {
         if (Objects.isNull(applicationsPage)) {
@@ -45,11 +42,6 @@ public class ApplicationsPageLibrary extends ResourcePageLibrary {
                     locators);
         }
         return createApplicationPage;
-    }
-
-    @Override
-    protected By[] getFrameLocators() {
-        return iframeLocators;
     }
 
 }

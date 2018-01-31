@@ -13,15 +13,11 @@ package com.vmware.admiral.test.ui.pages.publicrepos;
 
 import java.util.Objects;
 
-import org.openqa.selenium.By;
-
 import com.vmware.admiral.test.ui.pages.common.ResourcePageLibrary;
 
 public class PublicRepositoriesPageLibrary extends ResourcePageLibrary {
 
     private PublicRepositoriesPage publicRepositories;
-
-    private By[] iframeLocators = new By[] { By.cssSelector("#admiral-content-frame") };
 
     public PublicRepositoriesPage publicRepositories() {
         if (Objects.isNull(publicRepositories)) {
@@ -32,11 +28,6 @@ public class PublicRepositoriesPageLibrary extends ResourcePageLibrary {
                     locators);
         }
         return publicRepositories;
-    }
-
-    @Override
-    protected By[] getFrameLocators() {
-        return iframeLocators;
     }
 
 }

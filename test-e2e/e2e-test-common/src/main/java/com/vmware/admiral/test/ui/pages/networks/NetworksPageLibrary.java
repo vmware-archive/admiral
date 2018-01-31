@@ -13,13 +13,9 @@ package com.vmware.admiral.test.ui.pages.networks;
 
 import java.util.Objects;
 
-import org.openqa.selenium.By;
-
 import com.vmware.admiral.test.ui.pages.common.ResourcePageLibrary;
 
 public class NetworksPageLibrary extends ResourcePageLibrary {
-
-    private final By[] iframeLocators = new By[] { By.cssSelector("#admiral-content-frame") };
 
     private NetworksPage networksPage;
     private CreateNetworkPage createNetwork;
@@ -42,10 +38,5 @@ public class NetworksPageLibrary extends ResourcePageLibrary {
             createNetwork = new CreateNetworkPage(getFrameLocators(), validator, locators);
         }
         return createNetwork;
-    }
-
-    @Override
-    protected By[] getFrameLocators() {
-        return iframeLocators;
     }
 }

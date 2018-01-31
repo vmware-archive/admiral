@@ -13,8 +13,6 @@ package com.vmware.admiral.test.ui.pages.containers;
 
 import java.util.Objects;
 
-import org.openqa.selenium.By;
-
 import com.vmware.admiral.test.ui.pages.common.ResourcePageLibrary;
 import com.vmware.admiral.test.ui.pages.containers.create.BasicTab;
 import com.vmware.admiral.test.ui.pages.containers.create.BasicTabLocators;
@@ -30,8 +28,6 @@ import com.vmware.admiral.test.ui.pages.containers.create.StorageTabLocators;
 import com.vmware.admiral.test.ui.pages.containers.create.StorageTabValidator;
 
 public class ContainersPageLibrary extends ResourcePageLibrary {
-
-    private final By[] iframeLocators = new By[] { By.cssSelector("#admiral-content-frame") };
 
     private ContainersPage containersPage;
     private ContainerStatsPage containerStatsPage;
@@ -96,11 +92,6 @@ public class ContainersPageLibrary extends ResourcePageLibrary {
             storageTab = new StorageTab(getFrameLocators(), validator, locators);
         }
         return storageTab;
-    }
-
-    @Override
-    protected By[] getFrameLocators() {
-        return iframeLocators;
     }
 
 }

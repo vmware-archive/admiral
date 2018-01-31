@@ -91,13 +91,6 @@ public class CreateAndProvisionVotingApp extends BaseTest {
         clusters().certificateModalDialog().waitToLoad();
         clusters().certificateModalDialog().submit();
 
-        // AddContainerHostModalDialog addHostDialog = clusters().addHostDialog();
-        // addHostDialog.waitToLoad();
-        // addHostDialog.setName(HOST_NAME);
-        // addHostDialog.setHostType(HostType.DOCKER);
-        // addHostDialog.setUrl("http://10.23.66.69:2375");
-        // addHostDialog.submit();
-
         createVotingAppTemplate();
 
         templates().templatesPage().provisionTemplate(TEMPLATE_NAME);

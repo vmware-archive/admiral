@@ -13,8 +13,6 @@ package com.vmware.admiral.test.ui.pages.templates;
 
 import java.util.Objects;
 
-import org.openqa.selenium.By;
-
 import com.vmware.admiral.test.ui.pages.common.ResourcePageLibrary;
 import com.vmware.admiral.test.ui.pages.containers.create.BasicTab;
 import com.vmware.admiral.test.ui.pages.containers.create.BasicTabLocators;
@@ -45,8 +43,6 @@ import com.vmware.admiral.test.ui.pages.templates.create.SelectImagePageLocators
 import com.vmware.admiral.test.ui.pages.templates.create.SelectImagePageValidator;
 
 public class TemplatesPageLibrary extends ResourcePageLibrary {
-
-    private final By[] iframeLocators = new By[] { By.cssSelector("#admiral-content-frame") };
 
     private TemplatesPage templatesPage;
     private EditTemplatePage editTemplatePage;
@@ -166,11 +162,6 @@ public class TemplatesPageLibrary extends ResourcePageLibrary {
             addNetworkPage = new AddNetworkPage(getFrameLocators(), validator, locators);
         }
         return addNetworkPage;
-    }
-
-    @Override
-    protected By[] getFrameLocators() {
-        return iframeLocators;
     }
 
 }
