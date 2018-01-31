@@ -77,10 +77,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.http.HttpStatus;
@@ -93,6 +95,8 @@ import com.vmware.admiral.adapter.docker.util.DockerDevice;
 import com.vmware.admiral.adapter.docker.util.DockerImage;
 import com.vmware.admiral.adapter.docker.util.DockerPortMapping;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.task.RetriableTask;
+import com.vmware.admiral.common.task.RetriableTaskBuilder;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.ServiceUtils;
@@ -113,6 +117,7 @@ import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFacto
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.admiral.service.common.LogService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.FileUtils;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
@@ -144,6 +149,13 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
      * finally after 600 sec
      */
     private static final long[] INSPECT_RETRY_AFTER_SECONDS = { 10, 120, 600 };
+
+    /**
+     * default delays to wait before retrying a failed container start operation.
+     *
+     * TODO make this configurable
+     */
+    private static final Long[] START_RETRY_AFTER_SECONDS = { 5L, 10L, 30L };
 
     public static final String SELF_LINK = ManagementUriParts.ADAPTER_DOCKER;
 
@@ -1274,39 +1286,69 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         });
     }
 
+    private boolean isRetriableFailure(int statusCode) {
+        return RETRIABLE_HTTP_STATUSES.contains(statusCode);
+    }
+
     private void processStartContainer(RequestContext context) {
         ensurePropertyExists((retryCountProperty) -> {
-            processStartContainerWithRetry(context, 0, retryCountProperty);
+            new RetriableTaskBuilder<Void>(
+                    String.format("start-container-%s", context.containerState.id))
+                    .withMaximumRetries(retryCountProperty)
+                    .withRetryDelays(START_RETRY_AFTER_SECONDS)
+                    .withRetryDelaysTimeUnit(TimeUnit.SECONDS)
+                    .withServiceHost(getHost())
+                    .withTaskFunction(prepareStartContainerFunction(context))
+                    .execute()
+                    .whenComplete((ignore, ex) -> {
+                        if (ex != null) {
+                            Throwable failureCause = ex instanceof CompletionException
+                                    ? ex.getCause() : ex;
+                            fail(context.request, failureCause);
+                            return;
+                        }
+
+                        handleExceptions(context.request, context.operation, () -> {
+                            NetworkUtils.updateConnectedNetworks(getHost(),
+                                    context.containerState, 1);
+                            inspectContainer(context);
+                        });
+                    });
         });
     }
 
-    private void processStartContainerWithRetry(RequestContext context, int retriesCount,
-            Integer maxRetryCount) {
-        AtomicInteger retryCount = new AtomicInteger(retriesCount);
-        CommandInput startCommandInput = new CommandInput(context.commandInput)
-                .withProperty(DOCKER_CONTAINER_ID_PROP_NAME, context.containerState.id);
-        context.executor.startContainer(startCommandInput, (o, ex) -> {
-            if (ex != null) {
-                if (RETRIABLE_HTTP_STATUSES.contains(o.getStatusCode())
-                        && retryCount.getAndIncrement() < maxRetryCount) {
-                    logWarning("Starting container %s failed, retries left %d. code=%s, error=%s",
-                            context.containerState.names.get(0),
-                            maxRetryCount - retryCount.get(), o.getStatusCode(), ex.getMessage());
-                    markRequestAsRetriedAfterFailure(context.request);
-                    processStartContainerWithRetry(context, retryCount.get(), maxRetryCount);
-                } else {
-                    logSevere("Failure starting container [%s] of host [%s] (status code: %s)",
-                            context.containerState.documentSelfLink,
-                            context.computeState.documentSelfLink, o.getStatusCode());
-                    fail(context.request, o, ex);
+    private Function<RetriableTask<Void>, DeferredResult<Void>> prepareStartContainerFunction(
+            RequestContext context) {
+        return (task) -> {
+            DeferredResult<Void> result = new DeferredResult<>();
+
+            CommandInput startCommandInput = new CommandInput(context.commandInput)
+                    .withProperty(DOCKER_CONTAINER_ID_PROP_NAME,
+                            context.containerState.id);
+            context.executor.startContainer(startCommandInput, (o, ex) -> {
+                if (ex == null) {
+                    // Nothing to do, success completion will be
+                    // handled on the retriable task completion
+                    result.complete(null);
+                    return;
                 }
-            } else {
-                handleExceptions(context.request, context.operation, () -> {
-                    NetworkUtils.updateConnectedNetworks(getHost(), context.containerState, 1);
-                    inspectContainer(context);
-                });
-            }
-        });
+
+                if (isRetriableFailure(o.getStatusCode())) {
+                    markRequestAsRetriedAfterFailure(context.request);
+                } else {
+                    task.preventRetries();
+                    logSevere(
+                            "Failure starting container [%s] of host [%s] (status code: %s)",
+                            context.containerState.documentSelfLink,
+                            context.computeState.documentSelfLink,
+                            o.getStatusCode());
+                }
+
+                result.fail(DockerAdapterUtils.runtimeExceptionFromFailedDockerOperation(o, ex));
+            });
+
+            return result;
+        };
     }
 
     private void processStopContainer(RequestContext context) {

@@ -12,7 +12,7 @@
 package com.vmware.admiral.adapter.docker.service;
 
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_IMAGE_REGISTRY_AUTH;
-import static com.vmware.admiral.adapter.docker.service.DockerAdapterUtils.normalizeDockerError;
+import static com.vmware.admiral.adapter.docker.service.DockerAdapterUtils.exceptionFromFailedDockerOperation;
 import static com.vmware.admiral.common.util.QueryUtil.createAnyPropertyClause;
 import static com.vmware.admiral.compute.ContainerHostService.SSL_TRUST_ALIAS_PROP_NAME;
 
@@ -368,10 +368,7 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
 
     protected Throwable fail(AdapterRequest request, Operation o, Throwable e) {
         if (o != null && o.getBodyRaw() != null) {
-            String reason = normalizeDockerError(o.getBody(String.class));
-            String errMsg = String.format("%s; Reason: %s", e.getMessage(), Utils.toJson(reason));
-
-            e = new Exception(errMsg, e);
+            e = exceptionFromFailedDockerOperation(o, e);
         }
         fail(request, e);
         return e;
