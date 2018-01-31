@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -32,6 +32,8 @@ import com.vmware.admiral.compute.container.ServiceNetwork;
 import com.vmware.admiral.compute.container.network.Ipam;
 import com.vmware.admiral.compute.container.network.IpamConfig;
 import com.vmware.admiral.compute.container.volume.VolumeBinding;
+import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Utils;
 
 public class DockerAdapterUtils {
 
@@ -156,9 +158,37 @@ public class DockerAdapterUtils {
     }
 
     /**
+     * Constructs an {@link Exception} that contains the Docker failure response as a message and
+     * has the original {@link Throwable} as a cause.
+     */
+    public static Exception exceptionFromFailedDockerOperation(Operation failedOperation,
+            Throwable failure) {
+        String reason;
+        if (failedOperation != null && failedOperation.getBodyRaw() != null) {
+            reason = Utils.toJson(normalizeDockerError(failedOperation.getBody(String.class)));
+        } else {
+            reason = "Unknown reason.";
+        }
+
+        String failureMessage = (failure == null) ? "Unknown failure" : failure.getMessage();
+        String errMsg = String.format("%s; Reason: %s", failureMessage, reason);
+        return new Exception(errMsg, failure);
+    }
+
+    /**
+     * Constructs a {@link RuntimeException} that contains the Docker failure response as a message
+     * and has the original {@link Throwable} as a cause.
+     */
+    public static RuntimeException runtimeExceptionFromFailedDockerOperation(
+            Operation failedOperation, Throwable failure) {
+        Exception checkedException = exceptionFromFailedDockerOperation(failedOperation, failure);
+        return new RuntimeException(checkedException.getMessage(), checkedException.getCause());
+    }
+
+    /**
      * Filters the empty port bindings from the host config section retrieved when inspecting a
-     * container deployed on a VCH and connected to a network which uses the "external" driver.
-     * See Github issue #228.
+     * container deployed on a VCH and connected to a network which uses the "external" driver. See
+     * Github issue #228.
      *
      * @param inspectMap
      *            Result of the container INSPECT command
