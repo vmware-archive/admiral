@@ -145,6 +145,13 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
     private static final String ALLOW_VCH_STATS_COLLECTION_PROP_NAME = "allow.vch.stats.collection";
 
     /**
+     * default delays to wait before retrying a failed operation
+     *
+     * TODO make this configurable
+     */
+    private static final Long[] DEFAULT_RETRY_AFTER_SECONDS = { 5L, 10L, 30L };
+
+    /**
      * retry failed inspect command after 10 sec, then if fails, reschedule after 120 sec, and
      * finally after 600 sec
      */
@@ -155,7 +162,14 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
      *
      * TODO make this configurable
      */
-    private static final Long[] START_RETRY_AFTER_SECONDS = { 5L, 10L, 30L };
+    private static final Long[] CREATE_RETRY_AFTER_SECONDS = DEFAULT_RETRY_AFTER_SECONDS;
+
+    /**
+     * default delays to wait before retrying a failed container start operation.
+     *
+     * TODO make this configurable
+     */
+    private static final Long[] START_RETRY_AFTER_SECONDS = DEFAULT_RETRY_AFTER_SECONDS;
 
     public static final String SELF_LINK = ManagementUriParts.ADAPTER_DOCKER;
 
@@ -481,7 +495,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                 handleExceptions(
                         context.request,
                         context.operation,
-                        () -> processCreateContainer(context, 0));
+                        () -> processCreateContainer(context));
             }
         };
 
@@ -505,7 +519,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                 handleExceptions(
                         context.request,
                         context.operation,
-                        () -> processCreateContainer(context, 0));
+                        () -> processCreateContainer(context));
             }
         } else if (imageReference == null) {
             // canonicalize the image name (add latest tag if needed)
@@ -650,8 +664,11 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         });
     }
 
-    @SuppressWarnings("unchecked")
-    private void processCreateContainer(RequestContext context, int retriesCount) {
+    private void processCreateContainer(RequestContext context) {
+        doCreateContainer(context, prepareCreateContainerCommandInput(context));
+    }
+
+    private CommandInput prepareCreateContainerCommandInput(RequestContext context) {
         AssertUtil.assertNotEmpty(context.containerState.names, "containerState.names");
 
         String fullImageName = DockerImage.fromImageName(context.containerDescription.image)
@@ -776,47 +793,101 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
             addVicRequiredConfig(createCommandInput);
         }
 
-        AtomicInteger retryCount = new AtomicInteger(retriesCount);
+        return createCommandInput;
+    }
+
+    private void doCreateContainer(RequestContext context, CommandInput createCommandInput) {
         ensurePropertyExists((retryCountProperty) -> {
-            context.executor.createContainer(createCommandInput, (o, ex) -> {
-                if (ex != null) {
-                    if (shouldTryCreateFromLocalImage(context.containerDescription)) {
-                        logInfo("Unable to create container using local image. Will be fetched"
-                                + " from a remote location...");
-                        context.containerDescription.customProperties
-                                .put(DOCKER_CONTAINER_CREATE_USE_LOCAL_IMAGE_WITH_PRIORITY,
+            new RetriableTaskBuilder<Map<String, String>>(
+                    String.format("create-container-%s", context.containerState.names.get(0)))
+                    .withMaximumRetries(retryCountProperty)
+                            .withRetryDelays(CREATE_RETRY_AFTER_SECONDS)
+                    .withRetryDelaysTimeUnit(TimeUnit.SECONDS)
+                    .withServiceHost(getHost())
+                    .withTaskFunction(prepareCreateContainerFunction(context, createCommandInput))
+                    .execute()
+                    .whenComplete((createResponse, ex) -> {
+                        if (ex != null) {
+                            if (shouldTryCreateFromLocalImage(context.containerDescription)) {
+                                logInfo("Unable to create container using local image. Will be fetched"
+                                        + " from a remote location...");
+                                context.containerDescription.customProperties.put(
+                                        DOCKER_CONTAINER_CREATE_USE_LOCAL_IMAGE_WITH_PRIORITY,
                                         "false");
-                        processContainerDescription(context);
-                    } else if (RETRIABLE_HTTP_STATUSES.contains(o.getStatusCode())
-                            && retryCount.getAndIncrement() < retryCountProperty) {
-                        logWarning("Provisioning for container %s failed with %s. Retries left %d",
-                                context.containerState.names.get(0), Utils.toString(ex),
-                                retryCountProperty - retryCount.get());
-                        processCreateContainer(context, retryCount.get());
-                    } else {
-                        fail(context.request, o, ex);
-                    }
-                } else {
-                    handleExceptions(context.request, context.operation, () -> {
-                        Map<String, Object> body = o.getBody(Map.class);
-                        context.containerState.id = (String) body
-                                .get(DOCKER_CONTAINER_ID_PROP_NAME);
-                        sendRequest(Operation.createPatch(this,
-                                context.containerState.documentSelfLink)
-                                .setBody(context.containerState)
-                                .setCompletion((op, e) -> {
-                                    if (e != null) {
-                                        logWarning(
-                                                "Could not patch container state "
-                                                + "for created container %s",
-                                                context.computeState.name);
-                                    }
-                                    processCreatedContainer(context);
-                                }));
+                                processContainerDescription(context);
+                            } else {
+                                Throwable failureCause = ex instanceof CompletionException
+                                        ? ex.getCause() : ex;
+                                fail(context.request, failureCause);
+                            }
+                        } else {
+                            handleExceptions(context.request, context.operation, () -> {
+                                context.containerState.id = (String) createResponse
+                                        .get(DOCKER_CONTAINER_ID_PROP_NAME);
+                                updateCreatedContainerStateWithId(context);
+                            });
+                        }
                     });
-                }
-            });
         });
+    }
+
+    private Function<RetriableTask<Map<String, String>>, DeferredResult<Map<String, String>>> prepareCreateContainerFunction(
+            RequestContext context, CommandInput createCommandInput) {
+
+        return (task) -> {
+            DeferredResult<Map<String, String>> deferredResult = new DeferredResult<>();
+
+            context.executor.createContainer(createCommandInput, (o, ex) -> {
+                if (ex == null) {
+                    try {
+                        // Nothing to do, success completion will be
+                        // handled on the retriable task completion
+                        @SuppressWarnings("unchecked")
+                        Map<String, String> taskResult = o.getBody(Map.class);
+                        deferredResult.complete(taskResult);
+                    } catch (Throwable e) {
+                        task.preventRetries();
+                        deferredResult.fail(e);
+                    }
+
+                    return;
+                }
+
+                if (isRetriableFailure(o.getStatusCode())
+                        && !shouldTryCreateFromLocalImage(context.containerDescription)) {
+                    // if local image was currently preferred, another task
+                    // will be submitted to try with remote image
+                    markRequestAsRetriedAfterFailure(context.request);
+                } else {
+                    task.preventRetries();
+                    logSevere(
+                            "Failure creating container [%s] of host [%s] (status code: %s)",
+                            context.containerState.names.get(0),
+                            context.computeState.documentSelfLink,
+                            o.getStatusCode());
+                }
+
+                deferredResult.fail(DockerAdapterUtils.runtimeExceptionFromFailedDockerOperation(o, ex));
+            });
+
+            return deferredResult;
+        };
+
+    }
+
+    private void updateCreatedContainerStateWithId(RequestContext context) {
+        sendRequest(Operation.createPatch(this, context.containerState.documentSelfLink)
+                .setBody(context.containerState)
+                .setReferer(getSelfLink())
+                .setCompletion((op, e) -> {
+                    if (e != null) {
+                        logWarning(
+                                "Could not patch container state "
+                                        + "for created container %s",
+                                context.computeState.name);
+                    }
+                    processCreatedContainer(context);
+                }));
     }
 
     private void addVicRequiredConfig(CommandInput input) {
@@ -876,10 +947,6 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
 
     /**
      * get a mapped value or add a new one if it's not mapped yet
-     *
-     * @param commandInput
-     * @param propName
-     * @return
      */
     private Map<String, Object> getOrAddMap(CommandInput commandInput, String propName) {
         Map<String, Object> newMap = new HashMap<>();
