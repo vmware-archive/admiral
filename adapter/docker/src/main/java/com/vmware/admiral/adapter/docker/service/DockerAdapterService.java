@@ -970,7 +970,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         if (context.containerState.networks != null && !context.containerState.networks.isEmpty()) {
             connectCreatedContainerToNetworks(context);
         } else {
-            startCreatedContainer(context);
+            processStartContainer(context);
         }
     }
 
@@ -995,7 +995,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                     }).collect(Collectors.toList());
             DeferredResult.allOf(tasks).whenComplete((ignore, ex) -> {
                 if (ex == null) {
-                    startCreatedContainerWithRetry(context, 0, retryCountProperty);
+                    processStartContainer(context);
                     return;
                 }
 
@@ -1050,51 +1050,6 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
 
             return deferredResult;
         };
-    }
-
-    private void startCreatedContainer(RequestContext context) {
-        ensurePropertyExists((retryCountProperty) -> {
-            startCreatedContainerWithRetry(context, 0, retryCountProperty);
-        });
-    }
-
-    private void startCreatedContainerWithRetry(RequestContext context, int retriesCount,
-            Integer maxRetryCount) {
-        AtomicInteger retryCount = new AtomicInteger(retriesCount);
-        CommandInput startCommandInput = new CommandInput(context.commandInput)
-                .withProperty(DOCKER_CONTAINER_ID_PROP_NAME, context.containerState.id);
-
-        logFine("Starting created container [%s]", context.containerState.id);
-
-        // add port bindings
-        if (context.containerState.ports != null) {
-            addPortBindings(startCommandInput, context.containerState.ports);
-        }
-
-        context.executor.startContainer(startCommandInput, (o, ex) -> {
-            if (ex != null) {
-                if (RETRIABLE_HTTP_STATUSES.contains(o.getStatusCode())
-                        && retryCount.getAndIncrement() < maxRetryCount) {
-                    logWarning(
-                            "Starting created container %s failed, retries left %d. code=%s, error=%s",
-                            context.containerState.names.get(0),
-                            maxRetryCount - retryCount.get(), o.getStatusCode(), ex.getMessage());
-                    markRequestAsRetriedAfterFailure(context.request);
-                    startCreatedContainerWithRetry(context, retryCount.get(), maxRetryCount);
-                } else {
-                    logSevere(
-                            "Failure starting created container [%s] of host [%s] (status code: %s)",
-                            context.containerState.documentSelfLink,
-                            context.computeState.documentSelfLink, o.getStatusCode());
-                    fail(context.request, o, ex);
-                }
-            } else {
-                handleExceptions(context.request, context.operation, () -> {
-                    NetworkUtils.updateConnectedNetworks(getHost(), context.containerState, 1);
-                    inspectContainer(context);
-                });
-            }
-        });
     }
 
     /**
@@ -1419,6 +1374,9 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
             CommandInput startCommandInput = new CommandInput(context.commandInput)
                     .withProperty(DOCKER_CONTAINER_ID_PROP_NAME,
                             context.containerState.id);
+
+            logFine("Starting container [%s]", context.containerState.id);
+
             context.executor.startContainer(startCommandInput, (o, ex) -> {
                 if (ex == null) {
                     // Nothing to do, success completion will be
