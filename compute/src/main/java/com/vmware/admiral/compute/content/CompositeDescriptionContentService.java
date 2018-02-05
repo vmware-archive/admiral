@@ -278,6 +278,13 @@ public class CompositeDescriptionContentService extends StatelessService {
                         LocalizableValidationException ex = new LocalizableValidationException(e,
                                 "Failed to create CompositeDescription: " + Utils.toString(e),
                                 "compute.composite-description.create.failed");
+
+                        // clean descriptions
+                        DeferredResult.allOf(
+                                componentNestedStates.values().stream()
+                                        .map(ns -> ns.sendRequest(this, Action.DELETE, projectLink))
+                                        .collect(Collectors.toList()));
+
                         op.fail(ex);
                     } else {
                         op.addResponseHeader(Operation.LOCATION_HEADER, description.documentSelfLink);
