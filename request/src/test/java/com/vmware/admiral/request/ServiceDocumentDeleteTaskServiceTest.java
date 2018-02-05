@@ -11,6 +11,10 @@
 
 package com.vmware.admiral.request;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -21,6 +25,9 @@ import com.vmware.admiral.log.EventLogService;
 import com.vmware.admiral.log.EventLogService.EventLogState;
 import com.vmware.admiral.log.EventLogService.EventLogState.EventLogType;
 import com.vmware.admiral.request.ServiceDocumentDeleteTaskService.ServiceDocumentDeleteTaskState;
+import com.vmware.admiral.service.common.DefaultSubStage;
+import com.vmware.admiral.service.common.ServiceTaskCallback;
+import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.services.common.QueryTask;
 
 public class ServiceDocumentDeleteTaskServiceTest extends RequestBaseTest {
@@ -38,39 +45,132 @@ public class ServiceDocumentDeleteTaskServiceTest extends RequestBaseTest {
     @Test
     public void testDeleteEvents() throws Throwable {
         int eventsCount = 5;
-        createEventLogs(eventsCount);
+        createEventLogs(eventsCount, null);
 
-        ServiceDocumentDeleteTaskState deleteTaskState = doPost(request, ServiceDocumentDeleteTaskService.FACTORY_LINK);
+        ServiceDocumentDeleteTaskState deleteTaskState = doPost(request,
+                ServiceDocumentDeleteTaskService.FACTORY_LINK);
 
-        waitForTaskSuccess(deleteTaskState.documentSelfLink, ServiceDocumentDeleteTaskService.ServiceDocumentDeleteTaskState.class);
+        waitForTaskSuccess(deleteTaskState.documentSelfLink,
+                ServiceDocumentDeleteTaskService.ServiceDocumentDeleteTaskState.class);
 
-        verifyZeroEvents();
+        verifyEventsCount(0);
+    }
+
+    @Test
+    public void testDeleteDocumentsFailsWithInvalidSubStage() throws Throwable {
+
+        // Make sure we are working with the service create on the host
+        ServiceDocumentDeleteTaskService service = new ServiceDocumentDeleteTaskService();
+        service.setHost(host);
+        host.startFactory(service);
+
+        waitForServiceAvailability(ServiceDocumentDeleteTaskService.FACTORY_LINK);
+
+        // Create a state we are going to work with
+        ServiceDocumentDeleteTaskState state = new ServiceDocumentDeleteTaskState();
+        state.taskInfo = TaskState.createAsStarted();
+        state.taskSubStage = DefaultSubStage.COMPLETED;
+        state.serviceTaskCallback = ServiceTaskCallback.create(ServiceDocumentDeleteTaskService.FACTORY_LINK);
+        state.deleteDocumentKind = "";
+
+        // We need to actually create the state, so we have a documentSelfLink to update when the task fails
+        ServiceDocumentDeleteTaskState created = doPost(state, ServiceDocumentDeleteTaskService.FACTORY_LINK);
+        waitForTaskCompletion(created.documentSelfLink, ServiceDocumentDeleteTaskState.class);
+
+        // get the documentSelfLink
+        state.documentSelfLink = created.documentSelfLink;
+
+        // Test that the task will fail with wrong substage
+        service.handleStartedStagePatch(state);
+        waitForTaskError(state.documentSelfLink, ServiceDocumentDeleteTaskState.class);
+    }
+
+    @Test
+    public void testDeleteEventsWithGroups() throws Throwable {
+        int eventsCountGroup1 = 5;
+        int eventsCountGroup2 = 2;
+        String group1 = "/tenants/qe/groups/" + UUID.randomUUID().toString();
+        String group2 = "/tenants/qe/groups/" + UUID.randomUUID().toString();
+        createEventLogs(eventsCountGroup1, Collections.singletonList(group1));
+        createEventLogs(eventsCountGroup2, Collections.singletonList(group2));
+
+        ServiceDocumentDeleteTaskState deleteTaskState = doPostWithProjectHeader(
+                request, ServiceDocumentDeleteTaskService.FACTORY_LINK, group1,
+                ServiceDocumentDeleteTaskState.class);
+
+        waitForTaskSuccess(deleteTaskState.documentSelfLink,
+                ServiceDocumentDeleteTaskService.ServiceDocumentDeleteTaskState.class);
+
+        // Only event for group1 should get deleted
+        verifyEventsCount(eventsCountGroup2);
+
+        deleteTaskState = doPostWithProjectHeader(
+                request, ServiceDocumentDeleteTaskService.FACTORY_LINK, group2,
+                ServiceDocumentDeleteTaskState.class);
+        waitForTaskSuccess(deleteTaskState.documentSelfLink,
+                ServiceDocumentDeleteTaskService.ServiceDocumentDeleteTaskState.class);
+
+        verifyEventsCount(0);
     }
 
     @Test
     public void testDeleteEventsWhenNoneAreAvailable() throws Throwable {
-        verifyZeroEvents();
+        verifyEventsCount(0);
 
-        ServiceDocumentDeleteTaskState deleteTaskState = doPost(request, ServiceDocumentDeleteTaskService.FACTORY_LINK);
+        ServiceDocumentDeleteTaskState deleteTaskState = doPost(request,
+                ServiceDocumentDeleteTaskService.FACTORY_LINK);
 
-        waitForTaskSuccess(deleteTaskState.documentSelfLink, ServiceDocumentDeleteTaskService.ServiceDocumentDeleteTaskState.class);
+        waitForTaskSuccess(deleteTaskState.documentSelfLink,
+                ServiceDocumentDeleteTaskService.ServiceDocumentDeleteTaskState.class);
 
-        verifyZeroEvents();
+        verifyEventsCount(0);
     }
 
-    private void createEventLogs(int count) throws Throwable {
+    private void createEventLogs(int count, List<String> tenantLinks) throws Throwable {
+
+        int[] initCount = new int[1];
+        Throwable[] initEx = new Throwable[1];
+        boolean[] initDone = new boolean[1];
+
+        waitFor(() -> {
+
+            QueryTask query = QueryUtil.buildQuery(EventLogState.class, true);
+            QueryUtil.addCountOption(query);
+
+            new ServiceDocumentQuery<EventLogState>(host, EventLogState.class)
+                    .query(query, (r) -> {
+                        if (r.hasException()) {
+                            initEx[0] = r.getException();
+                            return;
+                        }
+
+                        initCount[0] = (int) r.getCount();
+                        initDone[0] = true;
+                    });
+
+            return initDone[0];
+        });
+
+        if (initEx[0] != null) {
+            Assert.fail(
+                    String.format("Could not retrieve created events: %s", initEx[0].getMessage()));
+        }
+
         for (int i = 0; i < count; i++) {
             EventLogState event = new EventLogState();
             event.description = "Event";
             event.resourceType = "Res type";
             event.eventLogType = EventLogType.INFO;
+            if (tenantLinks != null && !tenantLinks.isEmpty()) {
+                event.tenantLinks = tenantLinks;
+            }
             event = doPost(event, EventLogService.FACTORY_LINK);
         }
 
         // verify event logs
         boolean[] done = new boolean[1];
         Throwable[] ex = new Throwable[1];
-        waitFor( () -> {
+        waitFor(() -> {
             QueryTask query = QueryUtil.buildQuery(EventLogState.class, true);
             QueryUtil.addCountOption(query);
 
@@ -81,7 +181,7 @@ public class ServiceDocumentDeleteTaskServiceTest extends RequestBaseTest {
                             return;
                         }
 
-                        done[0] = (count == r.getCount());
+                        done[0] = (initCount[0] + count == r.getCount());
                     });
 
             return done[0] || ex[0] != null;
@@ -92,10 +192,10 @@ public class ServiceDocumentDeleteTaskServiceTest extends RequestBaseTest {
         }
     }
 
-    private void verifyZeroEvents() throws Throwable {
-        Long[] zeroCount = new Long[1];
+    private void verifyEventsCount(int count) throws Throwable {
+        Long[] resultCount = new Long[1];
         Throwable[] ex = new Throwable[1];
-        waitFor( () -> {
+        waitFor(() -> {
             QueryTask query = QueryUtil.buildQuery(EventLogState.class, true);
             QueryUtil.addCountOption(query);
 
@@ -105,16 +205,16 @@ public class ServiceDocumentDeleteTaskServiceTest extends RequestBaseTest {
                             ex[0] = r.getException();
                             return;
                         }
-                        zeroCount[0] = r.getCount();
+                        resultCount[0] = r.getCount();
                     });
-            return zeroCount[0] != null;
+            return resultCount[0] != null;
         });
 
         if (ex[0] != null) {
-            Assert.fail("Could not retrieve empty list of events after delete");
+            Assert.fail("Could not retrieve list of events after delete");
         }
 
-        Assert.assertEquals(0, zeroCount[0].longValue());
+        Assert.assertEquals(count, resultCount[0].longValue());
     }
 
 }

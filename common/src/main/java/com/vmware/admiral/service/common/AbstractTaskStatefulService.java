@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
+import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.host.IExtensibilityRegistryHost;
@@ -210,6 +211,20 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
 
         if (startPost.getRequestHeader(Operation.ACCEPT_LANGUAGE_HEADER) != null) {
             locale = startPost.getRequestHeader(Operation.ACCEPT_LANGUAGE_HEADER);
+        }
+
+        // Add project from x-project header to the tenant links to enable project-specific
+        // task operations.
+        if (startPost.getRequestHeader(OperationUtil.PROJECT_ADMIRAL_HEADER) != null) {
+            String project = startPost.getRequestHeader(OperationUtil.PROJECT_ADMIRAL_HEADER);
+
+            if (state.tenantLinks == null) {
+                state.tenantLinks = new ArrayList<>();
+            }
+
+            if (!state.tenantLinks.contains(project)) {
+                state.tenantLinks.add(project);
+            }
         }
 
         startPost.setBody(state);
@@ -771,19 +786,9 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
                 }));
     }
 
-    protected void proceedTo(TaskStage stage, E subStage) {
-        proceedTo(stage, subStage, null);
-    }
-
     private void sendSelfDelete() {
         logFine("Self deleting completed task %s", getUri().getPath());
         sendRequest(Operation.createDelete(getUri()));
-    }
-
-    protected boolean isFailedOrCancelledTask(T state) {
-        return state.taskInfo != null &&
-                (TaskStage.FAILED == state.taskInfo.stage ||
-                        TaskStage.CANCELLED == state.taskInfo.stage);
     }
 
     @Override
