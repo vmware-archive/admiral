@@ -12,6 +12,7 @@
 package com.vmware.admiral.upgrade.transformation;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -89,7 +90,7 @@ public class CompositeComponentsTransformationService extends StatelessService {
             } else {
                 for (Operation op : ops.values()) {
                     ResourceState document = op.getBody(ResourceState.class);
-                    tenantLinks.addAll(document.tenantLinks);
+                    tenantLinks.addAll(new LinkedHashSet<String>(document.tenantLinks));
                 }
                 updateApplicationTenantLinks(state, tenantLinks, post);
             }
@@ -103,6 +104,7 @@ public class CompositeComponentsTransformationService extends StatelessService {
             state.tenantLinks = new ArrayList<>();
         }
         state.tenantLinks.addAll(tenantLinks);
+        state.tenantLinks = new ArrayList<>(new LinkedHashSet<String>(state.tenantLinks));
 
         Operation.createPatch(this, state.documentSelfLink)
                 .setBody(state)
