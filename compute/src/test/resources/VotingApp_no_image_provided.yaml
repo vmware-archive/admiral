@@ -1,0 +1,120 @@
+---
+id: votingApp
+name: votingApp
+status: PUBLISHED
+properties:
+  _leaseDays: 3
+components:
+  back-tier:
+    type: App.Network
+    data:
+      name: back-tier
+  db:
+    type: App.Container
+    dependsOn:
+    - back-tier
+    data:
+      _cluster: 1
+      image: postgres:9.4
+      name: db
+      volumes:
+      - db-data:/var/lib/postgresql/data
+      networks:
+      - aliases: null
+        ipv4_address: null
+        ipv6_address: null
+        name: back-tier
+  front-tier:
+    type: App.Network
+    data:
+      name: front-tier
+  redis:
+    type: App.Container
+    dependsOn:
+    - back-tier
+    data:
+      _cluster: 1
+      image: redis:alpine
+      name: redis
+      networks:
+      - aliases: null
+        ipv4_address: null
+        ipv6_address: null
+        name: back-tier
+      ports:
+      - container_port: 6379
+        protocol: tcp
+  result:
+    type: App.Container
+    dependsOn:
+    - front-tier
+    - back-tier
+    data:
+      _cluster: 1
+      command:
+      - nodemon --debug server.js
+      image: eesprit/voting-app-result
+      name: result
+      networks:
+      - aliases: null
+        ipv4_address: null
+        ipv6_address: null
+        name: front-tier
+      - aliases: null
+        ipv4_address: null
+        ipv6_address: null
+        name: back-tier
+      ports:
+      - container_port: 80
+        protocol: tcp
+      - container_port: 5858
+        protocol: tcp
+  vote:
+    type: App.Container
+    dependsOn:
+    - front-tier
+    - back-tier
+    data:
+      _cluster: 1
+      command:
+      - python app.py
+      image: eesprit/voting-app-vote
+      name: vote
+      networks:
+      - aliases: null
+        ipv4_address: null
+        ipv6_address: null
+        name: front-tier
+      - aliases: null
+        ipv4_address: null
+        ipv6_address: null
+        name: back-tier
+      ports:
+      - container_port: 80
+        protocol: tcp
+  worker:
+    type: App.Container
+    dependsOn:
+    - back-tier
+    data:
+      _cluster: 1
+      # missing image
+      name: worker
+      networks:
+      - aliases: null
+        ipv4_address: null
+        ipv6_address: null
+        name: back-tier
+  db-data:
+    type: App.Volume
+    data:
+      driver: local
+      name: db-data
+layout:
+  back-tier: 2,0
+  db: 0,3
+  front-tier: 1,0
+  redis: 0,4
+  result: 0,0
+  vote: 0,2
+  worker: 0,1
