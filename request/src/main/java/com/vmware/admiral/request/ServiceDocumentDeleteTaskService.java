@@ -74,7 +74,8 @@ public class ServiceDocumentDeleteTaskService
         query.documentExpirationTimeMicros = Utils.fromNowMicrosUtc(
                 TimeUnit.HOURS.toMicros(5));
         if (task.tenantLinks != null) {
-            query.querySpec.query.addBooleanClause(QueryUtil.addTenantClause(task.tenantLinks));
+            // Delete documents only in current tenant and group
+            query.querySpec.query.addBooleanClause(QueryUtil.addTenantAndGroupClause(task.tenantLinks));
         }
 
         List<String> documents = new ArrayList<String>();
