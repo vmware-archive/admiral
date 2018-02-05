@@ -38,6 +38,73 @@ public class RetriableTaskTest {
     }
 
     @Test
+    public void testRetriableTaskConfigurationCannotChangeAfterExcecution() {
+
+        final long retryDelay = 0;
+        final int maxRetries = 0;
+        final int expectedExecutions = 1; // no retries
+
+        AtomicInteger counter = new AtomicInteger(0);
+
+        RetriableTaskBuilder<Integer> task = new RetriableTaskBuilder<Integer>(
+                "should-succeed-on-first-execution")
+                        .withServiceHost(host)
+                        .withRetryDelays(retryDelay)
+                        .withRetryDelaysTimeUnit(TimeUnit.SECONDS)
+                        .withMaximumRetries(maxRetries)
+                        .withTaskFunction(t -> {
+                            return DeferredResult.completed(counter.incrementAndGet());
+                        });
+
+        Integer result = testExecuteTask(task);
+        assertNotNull(result);
+        assertEquals(expectedExecutions, counter.get());
+        assertEquals(expectedExecutions, result.intValue());
+
+        try {
+            task.withMaximumRetries(5);
+            fail("Retriable tasks should not be able to change maximum retries after execution.");
+        } catch (IllegalStateException ex) {
+            assertAlreadyExecutedException(ex);
+        }
+
+        try {
+            task.withRetryDelays(5L);
+            fail("Retriable tasks should not be able to change retry delays after execution.");
+        } catch (IllegalStateException ex) {
+            assertAlreadyExecutedException(ex);
+        }
+
+        try {
+            task.withRetryDelaysTimeUnit(TimeUnit.MINUTES);
+            fail("Retriable tasks should not be able to change retry delays time unit after execution.");
+        } catch (IllegalStateException ex) {
+            assertAlreadyExecutedException(ex);
+        }
+
+        try {
+            task.withServiceHost(new VerificationHost());
+            fail("Retriable tasks should not be able to change service host after execution.");
+        } catch (IllegalStateException ex) {
+            assertAlreadyExecutedException(ex);
+        }
+
+        try {
+            task.withTaskFunction((t) -> DeferredResult.completed(1));
+            fail("Retriable tasks should not be able to change task function after execution.");
+        } catch (IllegalStateException ex) {
+            assertAlreadyExecutedException(ex);
+        }
+
+        try {
+            task.withTaskId("new-task-id");
+            fail("Retriable tasks should not be able to change task id after execution.");
+        } catch (IllegalStateException ex) {
+            assertAlreadyExecutedException(ex);
+        }
+    }
+
+    @Test
     public void testRetriableTaskCanBeExecutedOnlyOnce() {
 
         final long retryDelay = 0;
@@ -65,9 +132,9 @@ public class RetriableTaskTest {
             testExecuteTask(task);
             fail("Retriable tasks should be able to be executed only once.");
         } catch (IllegalStateException ex) {
-            assertTrue("expected error message to contain 'already executed'",
-                    ex.getMessage().contains("already executed"));
+            assertAlreadyExecutedException(ex);
         }
+
     }
 
     @Test
@@ -262,6 +329,11 @@ public class RetriableTaskTest {
         host.testWait();
 
         return result.iterator().next();
+    }
+
+    private void assertAlreadyExecutedException(IllegalStateException ex) {
+        assertTrue("expected error message to contain 'already executed'",
+                ex.getMessage().contains("already executed"));
     }
 
     private VerificationHost createHost() throws Throwable {
