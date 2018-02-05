@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -79,7 +79,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -170,6 +169,13 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
      * TODO make this configurable
      */
     private static final Long[] START_RETRY_AFTER_SECONDS = DEFAULT_RETRY_AFTER_SECONDS;
+
+    /**
+     * default delays to wait before retrying a failed container start operation.
+     *
+     * TODO make this configurable
+     */
+    private static final Long[] CONNECT_NETWORK_RETRY_AFTER_SECONDS = DEFAULT_RETRY_AFTER_SECONDS;
 
     public static final String SELF_LINK = ManagementUriParts.ADAPTER_DOCKER;
 
@@ -800,34 +806,36 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         ensurePropertyExists((retryCountProperty) -> {
             new RetriableTaskBuilder<Map<String, String>>(
                     String.format("create-container-%s", context.containerState.names.get(0)))
-                    .withMaximumRetries(retryCountProperty)
+                            .withMaximumRetries(retryCountProperty)
                             .withRetryDelays(CREATE_RETRY_AFTER_SECONDS)
-                    .withRetryDelaysTimeUnit(TimeUnit.SECONDS)
-                    .withServiceHost(getHost())
-                    .withTaskFunction(prepareCreateContainerFunction(context, createCommandInput))
-                    .execute()
-                    .whenComplete((createResponse, ex) -> {
-                        if (ex != null) {
-                            if (shouldTryCreateFromLocalImage(context.containerDescription)) {
-                                logInfo("Unable to create container using local image. Will be fetched"
-                                        + " from a remote location...");
-                                context.containerDescription.customProperties.put(
-                                        DOCKER_CONTAINER_CREATE_USE_LOCAL_IMAGE_WITH_PRIORITY,
-                                        "false");
-                                processContainerDescription(context);
-                            } else {
-                                Throwable failureCause = ex instanceof CompletionException
-                                        ? ex.getCause() : ex;
-                                fail(context.request, failureCause);
-                            }
-                        } else {
-                            handleExceptions(context.request, context.operation, () -> {
-                                context.containerState.id = (String) createResponse
-                                        .get(DOCKER_CONTAINER_ID_PROP_NAME);
-                                updateCreatedContainerStateWithId(context);
+                            .withRetryDelaysTimeUnit(TimeUnit.SECONDS)
+                            .withServiceHost(getHost())
+                            .withTaskFunction(
+                                    prepareCreateContainerFunction(context, createCommandInput))
+                            .execute()
+                            .whenComplete((createResponse, ex) -> {
+                                if (ex != null) {
+                                    if (shouldTryCreateFromLocalImage(
+                                            context.containerDescription)) {
+                                        logInfo("Unable to create container using local image. Will be fetched"
+                                                + " from a remote location...");
+                                        context.containerDescription.customProperties.put(
+                                                DOCKER_CONTAINER_CREATE_USE_LOCAL_IMAGE_WITH_PRIORITY,
+                                                "false");
+                                        processContainerDescription(context);
+                                    } else {
+                                        Throwable failureCause = ex instanceof CompletionException
+                                                ? ex.getCause() : ex;
+                                        fail(context.request, failureCause);
+                                    }
+                                } else {
+                                    handleExceptions(context.request, context.operation, () -> {
+                                        String id = (String) createResponse
+                                                .get(DOCKER_CONTAINER_ID_PROP_NAME);
+                                        updateCreatedContainerStateWithId(context, id);
+                                    });
+                                }
                             });
-                        }
-                    });
         });
     }
 
@@ -875,15 +883,15 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
 
     }
 
-    private void updateCreatedContainerStateWithId(RequestContext context) {
+    private void updateCreatedContainerStateWithId(RequestContext context, String id) {
+        context.containerState.id = id;
         sendRequest(Operation.createPatch(this, context.containerState.documentSelfLink)
                 .setBody(context.containerState)
                 .setReferer(getSelfLink())
                 .setCompletion((op, e) -> {
                     if (e != null) {
                         logWarning(
-                                "Could not patch container state "
-                                        + "for created container %s",
+                                "Could not patch container state for created container %s",
                                 context.computeState.name);
                     }
                     processCreatedContainer(context);
@@ -968,61 +976,80 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
 
     private void connectCreatedContainerToNetworks(RequestContext context) {
         ensurePropertyExists((retryCountProperty) -> {
-            AtomicInteger count = new AtomicInteger(context.containerState.networks.size());
-            AtomicBoolean error = new AtomicBoolean();
+            List<DeferredResult<Void>> tasks = context.containerState.networks.entrySet().stream()
+                    .map((entry) -> {
+                        return new RetriableTaskBuilder<Void>(
+                                String.format("connect-created-container-%s-to-networks",
+                                        context.containerState.id))
+                                                .withMaximumRetries(retryCountProperty)
+                                                .withRetryDelays(
+                                                        CONNECT_NETWORK_RETRY_AFTER_SECONDS)
+                                                .withRetryDelaysTimeUnit(TimeUnit.SECONDS)
+                                                .withServiceHost(getHost())
+                                                .withTaskFunction(
+                                                        prepareConnectContainerToNetworkFunction(
+                                                                context,
+                                                                entry.getKey(),
+                                                                entry.getValue()))
+                                                .execute();
+                    }).collect(Collectors.toList());
+            DeferredResult.allOf(tasks).whenComplete((ignore, ex) -> {
+                if (ex == null) {
+                    startCreatedContainerWithRetry(context, 0, retryCountProperty);
+                    return;
+                }
 
-            for (Entry<String, ServiceNetwork> entry : context.containerState.networks.entrySet()) {
-                connectCreatedContainerToNetworksWithRetry(context, 0, retryCountProperty,
-                        entry, count, error);
-            }
+                // Update the container state so further actions (e.g. cleanup) can be
+                // performed
+                context.containerState.powerState = ContainerState.PowerState.ERROR;
+                context.requestFailed = true;
+                inspectContainer(context);
+
+                Throwable cause = ex instanceof CompletionException ? ex.getCause() : ex;
+                fail(context.request, cause);
+            });
         });
     }
 
-    private void connectCreatedContainerToNetworksWithRetry(RequestContext context,
-            int retriesCount, Integer maxRetryCount, Entry<String, ServiceNetwork> entry,
-            AtomicInteger count, AtomicBoolean error) {
-        AtomicInteger retryCount = new AtomicInteger(retriesCount);
+    private Function<RetriableTask<Void>, DeferredResult<Void>> prepareConnectContainerToNetworkFunction(
+            RequestContext context, String networkId, ServiceNetwork network) {
+        return (task) -> {
+            DeferredResult<Void> deferredResult = new DeferredResult<>();
 
-        CommandInput connectCommandInput = new CommandInput(context.commandInput);
+            String containerId = context.containerState.id;
+            CommandInput connectCommandInput = new CommandInput(context.commandInput);
+            addNetworkConfig(connectCommandInput, context.containerState.id, networkId, network);
 
-        String containerId = context.containerState.id;
-        String networkId = entry.getKey();
+            logFine("Connecting container [%s] to network [%s]", containerId, networkId);
 
-        addNetworkConfig(connectCommandInput, context.containerState.id, entry.getKey(),
-                entry.getValue());
-
-        logFine("Connecting created container [%s] to network [%s]", containerId, networkId);
-
-        context.executor.connectContainerToNetwork(connectCommandInput, (o, ex) -> {
-            if (ex != null) {
-                if (RETRIABLE_HTTP_STATUSES.contains(o.getStatusCode())
-                        && retryCount.getAndIncrement() < maxRetryCount) {
-                    logWarning(
-                            "Connecting container [%s] to network [%s] failed, retries left %d. code=%s, error=%s",
-                            containerId, networkId, maxRetryCount - retryCount.get(),
-                            o.getStatusCode(), ex.getMessage());
-                    markRequestAsRetriedAfterFailure(context.request);
-                    connectCreatedContainerToNetworksWithRetry(context, retryCount.get(),
-                            maxRetryCount, entry, count, error);
-                } else {
-                    logWarning("Exception while connecting container [%s] to network [%s]",
-                            containerId, networkId);
-                    if (error.compareAndSet(false, true)) {
-                        // Update the container state so further actions (e.g. cleanup) can be
-                        // performed
-                        context.containerState.status = String
-                                .format("Cannot connect container to network %s", networkId);
-                        context.containerState.powerState = ContainerState.PowerState.ERROR;
-                        context.requestFailed = true;
-                        inspectContainer(context);
-
-                        fail(context.request, o, ex);
-                    }
+            context.executor.connectContainerToNetwork(connectCommandInput, (o, ex) -> {
+                if (ex == null) {
+                    // Nothing to do, success completion will be
+                    // handled on the combined tasks completion
+                    deferredResult.complete(null);
+                    return;
                 }
-            } else if (count.decrementAndGet() == 0) {
-                startCreatedContainerWithRetry(context, 0, maxRetryCount);
-            }
-        });
+
+                if (isRetriableFailure(o.getStatusCode())) {
+                    markRequestAsRetriedAfterFailure(context.request);
+                } else {
+                    task.preventRetries();
+                    context.containerState.status = String
+                            .format("Cannot connect container to network %s", networkId);
+                    logSevere(
+                            "Failure connecting container [%s] of host [%s] to network [%s] (status code: %s)",
+                            context.containerState.id,
+                            networkId,
+                            context.computeState.documentSelfLink,
+                            o.getStatusCode());
+                }
+
+                deferredResult
+                        .fail(DockerAdapterUtils.runtimeExceptionFromFailedDockerOperation(o, ex));
+            });
+
+            return deferredResult;
+        };
     }
 
     private void startCreatedContainer(RequestContext context) {
