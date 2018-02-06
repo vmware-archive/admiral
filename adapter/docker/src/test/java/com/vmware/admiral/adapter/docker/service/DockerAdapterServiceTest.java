@@ -59,6 +59,8 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState.Powe
 import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.compute.container.ServiceNetwork;
 import com.vmware.admiral.compute.container.maintenance.ContainerStats;
+import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
+import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
@@ -126,6 +128,7 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
         createContainerDescription();
         createContainerState();
 
+        limitDockerApiRequestsToSingleRetry();
         setupDockerAdapterService();
 
         createContainer(false /* expect error */);
@@ -688,6 +691,36 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
 
         // verify container is removed by issuing an inspect command
         verifyContainerDoesNotExist(containerId);
+    }
+
+    /**
+     * If operations with retries are tested, the overall execution time can be too long. This
+     * method limits the number of retries to a single retry.
+     */
+    private void limitDockerApiRequestsToSingleRetry() throws Throwable {
+        setConfigurationPropertyValue(
+                DockerAdapterService.PROVISION_CONTAINER_RETRIES_COUNT_PARAM_NAME, "1");
+        setConfigurationPropertyValue(
+                DockerAdapterService.PROVISION_CONTAINER_PULL_RETRIES_COUNT_PARAM_NAME, "1");
+    }
+
+    private void setConfigurationPropertyValue(String key, String value) throws Throwable {
+        String propertySelfLink = UriUtils.buildUriPath(ConfigurationFactoryService.SELF_LINK, key);
+        ConfigurationState configurationState = getDocumentNoWait(ConfigurationState.class,
+                propertySelfLink);
+
+        if (configurationState != null) {
+            configurationState.documentSelfLink = propertySelfLink;
+            configurationState.key = key;
+            configurationState.value = value;
+            doPut(configurationState);
+        } else {
+            configurationState = new ConfigurationState();
+            configurationState.documentSelfLink = propertySelfLink;
+            configurationState.key = key;
+            configurationState.value = value;
+            doPost(configurationState, ConfigurationFactoryService.SELF_LINK);
+        }
     }
 
     private void patchContainerState(ContainerState patch) {
