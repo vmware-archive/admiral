@@ -175,6 +175,13 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
      *
      * TODO make this configurable
      */
+    private static final Long[] STOP_RETRY_AFTER_SECONDS = DEFAULT_RETRY_AFTER_SECONDS;
+
+    /**
+     * default delays to wait before retrying a failed container start operation.
+     *
+     * TODO make this configurable
+     */
     private static final Long[] CONNECT_NETWORK_RETRY_AFTER_SECONDS = DEFAULT_RETRY_AFTER_SECONDS;
 
     public static final String SELF_LINK = ManagementUriParts.ADAPTER_DOCKER;
@@ -1343,26 +1350,26 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         ensurePropertyExists((retryCountProperty) -> {
             new RetriableTaskBuilder<Void>(
                     String.format("start-container-%s", context.containerState.id))
-                    .withMaximumRetries(retryCountProperty)
-                    .withRetryDelays(START_RETRY_AFTER_SECONDS)
-                    .withRetryDelaysTimeUnit(TimeUnit.SECONDS)
-                    .withServiceHost(getHost())
-                    .withTaskFunction(prepareStartContainerFunction(context))
-                    .execute()
-                    .whenComplete((ignore, ex) -> {
-                        if (ex != null) {
-                            Throwable failureCause = ex instanceof CompletionException
-                                    ? ex.getCause() : ex;
-                            fail(context.request, failureCause);
-                            return;
-                        }
+                            .withMaximumRetries(retryCountProperty)
+                            .withRetryDelays(START_RETRY_AFTER_SECONDS)
+                            .withRetryDelaysTimeUnit(TimeUnit.SECONDS)
+                            .withServiceHost(getHost())
+                            .withTaskFunction(prepareStartContainerFunction(context))
+                            .execute()
+                            .whenComplete((ignore, ex) -> {
+                                if (ex != null) {
+                                    Throwable failureCause = ex instanceof CompletionException
+                                            ? ex.getCause() : ex;
+                                    fail(context.request, failureCause);
+                                    return;
+                                }
 
-                        handleExceptions(context.request, context.operation, () -> {
-                            NetworkUtils.updateConnectedNetworks(getHost(),
-                                    context.containerState, 1);
-                            inspectContainer(context);
-                        });
-                    });
+                                handleExceptions(context.request, context.operation, () -> {
+                                    NetworkUtils.updateConnectedNetworks(getHost(),
+                                            context.containerState, 1);
+                                    inspectContainer(context);
+                                });
+                            });
         });
     }
 
@@ -1405,37 +1412,63 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
 
     private void processStopContainer(RequestContext context) {
         ensurePropertyExists((retryCountProperty) -> {
-            processStopContainerWithRetry(context, 0, retryCountProperty);
+            new RetriableTaskBuilder<Void>(
+                    String.format("stop-container-%s", context.containerState.id))
+                            .withMaximumRetries(retryCountProperty)
+                            .withRetryDelays(STOP_RETRY_AFTER_SECONDS)
+                            .withRetryDelaysTimeUnit(TimeUnit.SECONDS)
+                            .withServiceHost(getHost())
+                            .withTaskFunction(prepareStopContainerFunction(context))
+                            .execute()
+                            .whenComplete((ignore, ex) -> {
+                                if (ex != null) {
+                                    Throwable failureCause = ex instanceof CompletionException
+                                            ? ex.getCause() : ex;
+                                    fail(context.request, failureCause);
+                                    return;
+                                }
+
+                                handleExceptions(context.request, context.operation, () -> {
+                                    NetworkUtils.updateConnectedNetworks(getHost(),
+                                            context.containerState, -1);
+                                    inspectContainer(context);
+                                });
+                            });
         });
     }
 
-    private void processStopContainerWithRetry(RequestContext context, int retriesCount,
-            int maxRetryCount) {
-        AtomicInteger retryCount = new AtomicInteger(retriesCount);
-        CommandInput stopCommandInput = new CommandInput(context.commandInput)
-                .withProperty(DOCKER_CONTAINER_ID_PROP_NAME, context.containerState.id);
-        context.executor.stopContainer(stopCommandInput, (o, ex) -> {
-            if (ex != null) {
-                if (RETRIABLE_HTTP_STATUSES.contains(o.getStatusCode())
-                        && retryCount.getAndIncrement() < maxRetryCount) {
-                    logWarning("Stopping container %s failed, retries left %d. code=%s, error=%s",
-                            context.containerState.names.get(0),
-                            maxRetryCount - retryCount.get(), o.getStatusCode(), ex.getMessage());
-                    markRequestAsRetriedAfterFailure(context.request);
-                    processStopContainerWithRetry(context, retryCount.get(), maxRetryCount);
-                } else {
-                    logSevere("Failure stopping container [%s] of host [%s] (status code: %s)",
-                            context.containerState.documentSelfLink,
-                            context.computeState.documentSelfLink, o.getStatusCode());
-                    fail(context.request, o, ex);
+    private Function<RetriableTask<Void>, DeferredResult<Void>> prepareStopContainerFunction(
+            RequestContext context) {
+        return (task) -> {
+            DeferredResult<Void> result = new DeferredResult<>();
+
+            CommandInput stopCommandInput = new CommandInput(context.commandInput)
+                    .withProperty(DOCKER_CONTAINER_ID_PROP_NAME, context.containerState.id);
+            logFine("Stopping container [%s]", context.containerState.id);
+            context.executor.stopContainer(stopCommandInput, (o, ex) -> {
+                if (ex == null) {
+                    // Nothing to do, success completion will be
+                    // handled on the retriable task completion
+                    result.complete(null);
+                    return;
                 }
-            } else {
-                handleExceptions(context.request, context.operation, () -> {
-                    NetworkUtils.updateConnectedNetworks(getHost(), context.containerState, -1);
-                    inspectContainer(context);
-                });
-            }
-        });
+
+                if (isRetriableFailure(o.getStatusCode())) {
+                    markRequestAsRetriedAfterFailure(context.request);
+                } else {
+                    task.preventRetries();
+                    logSevere(
+                            "Failure stopping container [%s] of host [%s] (status code: %s)",
+                            context.containerState.documentSelfLink,
+                            context.computeState.documentSelfLink,
+                            o.getStatusCode());
+                }
+
+                result.fail(DockerAdapterUtils.runtimeExceptionFromFailedDockerOperation(o, ex));
+            });
+
+            return result;
+        };
     }
 
     private void markRequestAsRetriedAfterFailure(AdapterRequest request) {
