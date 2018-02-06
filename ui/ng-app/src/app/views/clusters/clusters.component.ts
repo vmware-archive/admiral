@@ -16,6 +16,7 @@ import { ProjectService } from "../../utils/project.service";
 import { GridViewComponent } from '../../components/grid-view/grid-view.component';
 import { AutoRefreshComponent } from '../../components/base/auto-refresh.component';
 import { RoutesRestriction } from '../../utils/routes-restriction';
+import { Constants } from '../../utils/constants';
 import { FT } from '../../utils/ft';
 import { Links } from '../../utils/links';
 import { Utils } from '../../utils/utils';
@@ -158,6 +159,48 @@ export class ClustersComponent extends AutoRefreshComponent {
         });
 
         return false; // prevents navigation
+    }
+
+    disableVchCluster(event, cluster) {
+        event.stopPropagation();
+
+        this.patchVchClusterPowerState(cluster, Constants.hosts.state.SUSPEND);
+    }
+
+    enableVchCluster(event, cluster) {
+        event.stopPropagation();
+
+        this.patchVchClusterPowerState(cluster, Constants.hosts.state.ON);
+    }
+
+    patchVchClusterPowerState(cluster, powerState) {
+        if (!cluster.nodeLinks || cluster.nodeLinks.length < 1) {
+            return;
+        }
+
+        var vchHostLink = cluster.nodeLinks[0];
+
+        this.service.patch(vchHostLink, {'powerState': powerState})
+        .then(result => {
+            this.gridView.refresh();
+        })
+        .catch(err => {
+            console.log(Utils.getErrorMessage(err)._generic);
+        });
+    }
+
+    isVchOperationSupported(op, cluster): boolean {
+        if (!cluster || cluster.type !== 'VCH') {
+            return;
+        }
+
+        if (op === 'ENABLE') {
+            return cluster.status === Constants.clusters.status.DISABLED;
+        } else if (op === 'DISABLE') {
+            return cluster.status === Constants.clusters.status.ON;
+        }
+
+        return false;
     }
 
     refreshCluster(cluster) {

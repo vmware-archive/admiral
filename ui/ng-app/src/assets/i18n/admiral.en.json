@@ -147,7 +147,9 @@
       "WARNING": "WARNING"
     },
     "actions": {
-      "rescan": "Rescan"
+      "rescan": "Rescan",
+      "disable": "Disable",
+      "enable": "Enable"
     },
     "type": "Type",
     "containers": "Containers",
