@@ -69,7 +69,6 @@ import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExec
 
 import java.io.File;
 import java.io.IOException;
-import java.net.ProtocolException;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
@@ -182,16 +181,21 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
      *
      * TODO make this configurable
      */
+    private static final Long[] DELETE_RETRY_AFTER_SECONDS = DEFAULT_RETRY_AFTER_SECONDS;
+
+    /**
+     * default delays to wait before retrying a failed container start operation.
+     *
+     * TODO make this configurable
+     */
     private static final Long[] CONNECT_NETWORK_RETRY_AFTER_SECONDS = DEFAULT_RETRY_AFTER_SECONDS;
 
     public static final String SELF_LINK = ManagementUriParts.ADAPTER_DOCKER;
 
-    public static final String PROVISION_CONTAINER_RETRIES_COUNT_PARAM_NAME =
-            "provision.container.retries.count";
+    public static final String PROVISION_CONTAINER_RETRIES_COUNT_PARAM_NAME = "provision.container.retries.count";
     public static final int PROVISION_CONTAINER_RETRIES_COUNT_DEFAULT = 3;
 
-    public static final String PROVISION_CONTAINER_PULL_RETRIES_COUNT_PARAM_NAME =
-            "provision.container.pull-image.retries.count";
+    public static final String PROVISION_CONTAINER_PULL_RETRIES_COUNT_PARAM_NAME = "provision.container.pull-image.retries.count";
 
     public static final String RETRIED_AFTER_FAILURE = "failedAfterRetry";
 
@@ -212,8 +216,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
             HttpStatus.SC_INTERNAL_SERVER_ERROR,
             HttpStatus.SC_BAD_GATEWAY,
             HttpStatus.SC_SERVICE_UNAVAILABLE,
-            HttpStatus.SC_GATEWAY_TIMEOUT
-    );
+            HttpStatus.SC_GATEWAY_TIMEOUT);
     private static final String DELETE_CONTAINER_MISSING_ERROR = "error 404 for DELETE";
 
     private volatile Integer retriesCount;
@@ -491,8 +494,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
     }
 
     private void processContainerDescription(RequestContext context) {
-        context.containerState.adapterManagementReference =
-                context.containerDescription.instanceAdapterReference;
+        context.containerState.adapterManagementReference = context.containerDescription.instanceAdapterReference;
 
         CommandInput createImageCommandInput = new CommandInput(context.commandInput);
 
@@ -882,7 +884,8 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                             o.getStatusCode());
                 }
 
-                deferredResult.fail(DockerAdapterUtils.runtimeExceptionFromFailedDockerOperation(o, ex));
+                deferredResult
+                        .fail(DockerAdapterUtils.runtimeExceptionFromFailedDockerOperation(o, ex));
             });
 
             return deferredResult;
@@ -1232,7 +1235,8 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         boolean allowVchStatsCollection = Boolean
                 .valueOf(ConfigurationUtil.getProperty(ALLOW_VCH_STATS_COLLECTION_PROP_NAME));
         if (ContainerHostUtil.isVicHost(context.computeState) && !allowVchStatsCollection) {
-            context.operation.fail(new LocalizableValidationException("Container stats are not supported by VCH hosts.",
+            context.operation.fail(new LocalizableValidationException(
+                    "Container stats are not supported by VCH hosts.",
                     "request.container.stats.not.supported"));
             return;
         }
@@ -1320,26 +1324,81 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
     }
 
     private void processDeleteContainer(RequestContext context) {
-        CommandInput commandInput = new CommandInput(context.commandInput).withProperty(
-                DOCKER_CONTAINER_ID_PROP_NAME, context.containerState.id);
+        ensurePropertyExists((retryCountProperty) -> {
+            new RetriableTaskBuilder<Boolean>(
+                    String.format("delete-container-%s", context.containerState.id))
+                            .withMaximumRetries(retryCountProperty)
+                            .withRetryDelays(DELETE_RETRY_AFTER_SECONDS)
+                            .withRetryDelaysTimeUnit(TimeUnit.SECONDS)
+                            .withServiceHost(getHost())
+                            .withTaskFunction(prepareDeleteContainerFunction(context))
+                            .execute()
+                            .whenComplete((deleted, ex) -> {
+                                if (ex != null) {
+                                    Throwable failureCause = ex instanceof CompletionException
+                                            ? ex.getCause() : ex;
+                                    fail(context.request, failureCause);
+                                    return;
+                                }
 
-        context.executor.removeContainer(commandInput, (o, ex) -> {
-            if (ex != null) {
-                if (ex instanceof ProtocolException
-                        && ex.getMessage().contains(DELETE_CONTAINER_MISSING_ERROR)) {
-                    logWarning("Container %s not found", context.containerState.id);
-                    patchTaskStage(context.request, TaskStage.FINISHED, null);
-                } else {
-                    logWarning("Failure while removing container [%s] of host [%s]",
+                                handleExceptions(context.request, context.operation, () -> {
+                                    if (deleted) {
+                                        NetworkUtils.updateConnectedNetworks(getHost(),
+                                                context.containerState, -1);
+                                    }
+                                    patchTaskStage(context.request, TaskStage.FINISHED, null);
+                                });
+                            });
+        });
+    }
+
+    /**
+     * the deferred result completion value indicates whether a container was or was not deleted
+     */
+    private Function<RetriableTask<Boolean>, DeferredResult<Boolean>> prepareDeleteContainerFunction(
+            RequestContext context) {
+        return (task) -> {
+            DeferredResult<Boolean> result = new DeferredResult<>();
+
+            CommandInput deleteCommandInput = new CommandInput(context.commandInput)
+                    .withProperty(DOCKER_CONTAINER_ID_PROP_NAME, context.containerState.id);
+            logFine("Deleting container [%s]", context.containerState.id);
+            context.executor.removeContainer(deleteCommandInput, (o, ex) -> {
+                if (ex == null) {
+                    // Nothing to do, success completion will be
+                    // handled on the retriable task completion
+                    result.complete(true);
+                    return;
+                }
+
+                // there is no container to delete
+                if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND
+                        || ex.getMessage().contains(DELETE_CONTAINER_MISSING_ERROR)) {
+                    logWarning(
+                            "Could not delete container [%s] of host [%s]: "
+                                    + "container not found. Skipping deletion.",
                             context.containerState.documentSelfLink,
                             context.computeState.documentSelfLink);
-                    fail(context.request, o, ex);
+                    result.complete(false);
+                    return;
                 }
-            } else {
-                NetworkUtils.updateConnectedNetworks(getHost(), context.containerState, -1);
-                patchTaskStage(context.request, TaskStage.FINISHED, null);
-            }
-        });
+
+                if (isRetriableFailure(o.getStatusCode())) {
+                    markRequestAsRetriedAfterFailure(context.request);
+                } else {
+                    task.preventRetries();
+                    logSevere(
+                            "Failure deleting container [%s] of host [%s] (status code: %s)",
+                            context.containerState.documentSelfLink,
+                            context.computeState.documentSelfLink,
+                            o.getStatusCode());
+                }
+
+                result.fail(DockerAdapterUtils.runtimeExceptionFromFailedDockerOperation(o, ex));
+            });
+
+            return result;
+        };
     }
 
     private boolean isRetriableFailure(int statusCode) {
