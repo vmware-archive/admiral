@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -406,6 +406,29 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
     }
 
     @Test
+    public void testDeleteWithRetry() throws Throwable {
+        // verify container is running
+        verifyContainerIsRunning(true);
+        assertEquals("Unexpected PowerState in ContainerState",
+                PowerState.RUNNING, containerState.powerState);
+
+        // simulate Docker host down
+        tearDownMockDockerHost();
+
+        sendDeleteContainerRequest();
+
+        // wait for provisioning task stage to change to failed
+        waitForPropertyValue(provisioningTaskLink, MockTaskState.class, "taskInfo.stage",
+                TaskState.TaskStage.FAILED);
+
+        // verify the operation was retried
+        MockTaskState task = getDocument(MockTaskState.class, provisioningTaskLink);
+        assertNotNull(task);
+        assertNotNull(task.customProperties);
+        assertEquals(Boolean.TRUE.toString(), task.customProperties.get(RETRIED_AFTER_FAILURE));
+    }
+
+    @Test
     public void testStopWithRetry() throws Throwable {
         // verify container is running
         verifyContainerIsRunning(true);
@@ -421,6 +444,7 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
         waitForPropertyValue(provisioningTaskLink, MockTaskState.class, "taskInfo.stage",
                 TaskState.TaskStage.FAILED);
 
+        // verify the operation was retried
         MockTaskState task = getDocument(MockTaskState.class, provisioningTaskLink);
         assertNotNull(task);
         assertNotNull(task.customProperties);
@@ -455,6 +479,7 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
         waitForPropertyValue(provisioningTaskLink, MockTaskState.class, "taskInfo.stage",
                 TaskState.TaskStage.FAILED);
 
+        // verify the operation was retried
         MockTaskState task = getDocument(MockTaskState.class, provisioningTaskLink);
         assertNotNull(task);
         assertNotNull(task.customProperties);
@@ -512,7 +537,10 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
     // jira issue VSYM-222 - Delete container fails with error
     @Test
     public void testRemoveMissingContainer() throws Throwable {
+        verifyContainerIsRunning(true);
         removeContainer();
+        verifyContainerDoesNotExist(containerId);
+
         // when we try to delete container that is already deleted the operation should not fail
         removeContainer();
     }
