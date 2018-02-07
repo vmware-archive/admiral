@@ -11,10 +11,13 @@
 
 export class Links {
   public static RESOURCES = '/resources';
+  public static UTIL = '/util';
   public static PODS = Links.RESOURCES + '/kubernetes-pods';
   public static DEPLOYMENTS = Links.RESOURCES + '/kubernetes-deployments';
   public static SERVICES = Links.RESOURCES + '/kubernetes-services';
   public static REPLICATION_CONTROLLERS = Links.RESOURCES + '/kubernetes-replication-controllers';
   public static CONTAINER_LOGS = Links.RESOURCES + '/container-logs';
   public static POD_LOGS = Links.RESOURCES + '/kubernetes-pod-logs';
+
+  public static LONG_URI_GET = Links.UTIL + '/long-uri-get';
 }
