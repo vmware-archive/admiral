@@ -6,6 +6,8 @@
 
 * The option to [overwrite the public address](https://github.com/vmware/admiral/wiki/Configuration-guide#enable-or-disable-the-option-to-overwrite-the-public-address-for-a-host) for a host is now enabled by default in the standalone version of Admiral.
 
+* Redesigned some of the calls to the Docker API to retry with delays on failure. This now applies to create, remove, start, stop, inspect and connect to network commands for a container.
+
 * Added support for multiple path segments in the names of repositories, e.g. localhost:5000/category/sub-category/repo-name
 
 Docker hub images & tags: https://hub.docker.com/r/vmware/admiral/

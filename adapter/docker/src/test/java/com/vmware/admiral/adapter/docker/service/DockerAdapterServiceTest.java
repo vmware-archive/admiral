@@ -499,12 +499,35 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
     }
 
     @Test
-    public void testInspectContainers() throws Throwable {
+    public void testInspectContainer() throws Throwable {
         sendInspectContainerRequest();
 
         // wait for request task stage to change to finish
         waitForPropertyValue(provisioningTaskLink, MockTaskState.class, "taskInfo.stage",
                 TaskState.TaskStage.FINISHED);
+    }
+
+    @Test
+    public void testInspectContainerWithRetry() throws Throwable {
+        // verify container is running
+        verifyContainerIsRunning(true);
+        assertEquals("Unexpected PowerState in ContainerState",
+                PowerState.RUNNING, containerState.powerState);
+
+        // simulate Docker host down
+        tearDownMockDockerHost();
+
+        sendInspectContainerRequest();
+
+        // wait for provisioning task stage to change to failed
+        waitForPropertyValue(provisioningTaskLink, MockTaskState.class, "taskInfo.stage",
+                TaskState.TaskStage.FAILED);
+
+        // verify the operation was retried
+        MockTaskState task = getDocument(MockTaskState.class, provisioningTaskLink);
+        assertNotNull(task);
+        assertNotNull(task.customProperties);
+        assertEquals(Boolean.TRUE.toString(), task.customProperties.get(RETRIED_AFTER_FAILURE));
     }
 
     @Test
