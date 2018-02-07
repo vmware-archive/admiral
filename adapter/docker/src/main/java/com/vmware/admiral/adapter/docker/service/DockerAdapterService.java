@@ -143,17 +143,18 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
     private static final String ALLOW_VCH_STATS_COLLECTION_PROP_NAME = "allow.vch.stats.collection";
 
     /**
-     * default delays to wait before retrying a failed operation
+     * default delays to wait before retrying a failed container operation
      *
      * TODO make this configurable
      */
     private static final Long[] DEFAULT_RETRY_AFTER_SECONDS = { 5L, 10L, 30L };
 
     /**
-     * retry failed inspect command after 10 sec, then if fails, reschedule after 120 sec, and
-     * finally after 600 sec
+     * default delays to wait before retrying a failed container inspect operation.
+     *
+     * TODO make this configurable
      */
-    private static final long[] INSPECT_RETRY_AFTER_SECONDS = { 10, 120, 600 };
+    private static final Long[] INSPECT_RETRY_AFTER_SECONDS = DEFAULT_RETRY_AFTER_SECONDS;
 
     /**
      * default delays to wait before retrying a failed container start operation.
@@ -346,7 +347,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                 break;
 
             case INSPECT:
-                inspectContainer(context);
+                processInspectContainer(context);
                 break;
 
             case EXEC:
@@ -1013,7 +1014,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                 // performed
                 context.containerState.powerState = ContainerState.PowerState.ERROR;
                 context.requestFailed = true;
-                inspectContainer(context);
+                processInspectContainer(context);
 
                 Throwable cause = ex instanceof CompletionException ? ex.getCause() : ex;
                 fail(context.request, cause);
@@ -1105,64 +1106,94 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private void inspectContainer(RequestContext context) {
-        CommandInput inspectCommandInput = new CommandInput(context.commandInput).withProperty(
-                DOCKER_CONTAINER_ID_PROP_NAME, context.containerState.id);
-
-        logFine("Executing inspect container: %s %s", context.containerState.documentSelfLink,
-                context.request.getRequestTrackingLog());
-
+    private void processInspectContainer(RequestContext context) {
         if (context.containerState.id == null) {
-            if (!context.requestFailed &&
-                    (context.containerState.powerState == null
-                            || context.containerState.powerState.isUnmanaged())) {
+            PowerState powerState = context.containerState.powerState;
+            if (!context.requestFailed && (powerState == null || powerState.isUnmanaged())) {
+                logWarning(
+                        "Skipping container inspect for container [%s] of host [%s]: Container power state is %s",
+                        context.containerState.documentSelfLink,
+                        context.computeState.documentSelfLink,
+                        powerState != null ? powerState.toString() : "null");
                 patchTaskStage(context.request, TaskStage.FINISHED, null);
             } else {
-                fail(context.request, new IllegalStateException("container id is required"
-                        + context.request.getRequestTrackingLog()));
+                String error = String.format(
+                        "Cannot inspect container for request [%s]: container id is required",
+                        context.request.getRequestTrackingLog());
+                fail(context.request, new IllegalStateException(error));
             }
             return;
         }
 
-        context.executor.inspectContainer(inspectCommandInput, (o, ex) -> {
-            if (ex != null) {
-                logWarning("Exception while inspecting container [%s] of host [%s]",
-                        context.containerState.documentSelfLink,
-                        context.computeState.documentSelfLink);
-                fail(context.request, o, ex);
-                scheduleRetryInspectContainer(context, inspectCommandInput, 0);
-            } else {
-                handleExceptions(context.request, context.operation, () -> {
-                    Map<String, Object> props = o.getBody(Map.class);
-                    patchContainerState(context.request, context.containerState, props, context);
-                });
-            }
+        doInspectContainer(context);
+    }
+
+    private void doInspectContainer(RequestContext context) {
+        ensurePropertyExists((retryCountProperty) -> {
+            new RetriableTaskBuilder<Map<String, Object>>(
+                    String.format("inspect-container-%s", context.containerState.id))
+                            .withMaximumRetries(retryCountProperty)
+                            .withRetryDelays(INSPECT_RETRY_AFTER_SECONDS)
+                            .withRetryDelaysTimeUnit(TimeUnit.SECONDS)
+                            .withServiceHost(getHost())
+                            .withTaskFunction(prepareInspectContainerFunction(context))
+                            .execute()
+                            .whenComplete((props, ex) -> {
+                                if (ex != null) {
+                                    Throwable failureCause = ex instanceof CompletionException
+                                            ? ex.getCause() : ex;
+                                    fail(context.request, failureCause);
+                                    return;
+                                }
+
+                                handleExceptions(context.request, context.operation, () -> {
+                                    patchContainerState(context.request, context.containerState,
+                                            props, context);
+                                });
+                            });
         });
     }
 
-    /**
-     * Schedules executing INSPECT command on host for given container with several retries at
-     * predefined time intervals.
-     */
-    @SuppressWarnings("unchecked")
-    private void scheduleRetryInspectContainer(RequestContext c, CommandInput inspectCommand,
-            int indexWaiting) {
-        if (indexWaiting < 0 || indexWaiting >= INSPECT_RETRY_AFTER_SECONDS.length) {
-            return;
-        }
-        getHost().schedule(() -> c.executor.inspectContainer(inspectCommand, (o, ex) -> {
-            if (ex != null) {
-                logWarning("Error inspecting container [%s] of host [%s] (retries left: %d): %s",
-                        c.containerState.documentSelfLink, c.computeState.documentSelfLink,
-                        INSPECT_RETRY_AFTER_SECONDS.length - indexWaiting - 1, ex.getMessage());
-                scheduleRetryInspectContainer(c, inspectCommand, indexWaiting + 1);
-            } else {
-                Map<String, Object> props = o.getBody(Map.class);
-                c.requestFailed = true; // set to true to avoid setting task to finished
-                patchContainerState(c.request, c.containerState, props, c);
-            }
-        }), INSPECT_RETRY_AFTER_SECONDS[indexWaiting], TimeUnit.SECONDS);
+    private Function<RetriableTask<Map<String, Object>>, DeferredResult<Map<String, Object>>> prepareInspectContainerFunction(
+            RequestContext context) {
+        return (task) -> {
+            DeferredResult<Map<String, Object>> result = new DeferredResult<>();
+
+            CommandInput inspectCommandInput = new CommandInput(context.commandInput)
+                    .withProperty(DOCKER_CONTAINER_ID_PROP_NAME, context.containerState.id);
+            logFine("Inspecting container [%s] for request [%s]", context.containerState.id,
+                    context.request.getRequestTrackingLog());
+            context.executor.inspectContainer(inspectCommandInput, (o, ex) -> {
+                if (ex == null) {
+                    try {
+                        // Nothing to do, success completion will be
+                        // handled on the retriable task completion
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> props = o.getBody(Map.class);
+                        result.complete(props);
+                    } catch (Throwable e) {
+                        task.preventRetries();
+                        result.fail(e);
+                    }
+                    return;
+                }
+
+                if (isRetriableFailure(o.getStatusCode())) {
+                    markRequestAsRetriedAfterFailure(context.request);
+                } else {
+                    task.preventRetries();
+                    logSevere(
+                            "Failure inspecting container [%s] of host [%s] (status code: %s)",
+                            context.containerState.documentSelfLink,
+                            context.computeState.documentSelfLink,
+                            o.getStatusCode());
+                }
+
+                result.fail(DockerAdapterUtils.runtimeExceptionFromFailedDockerOperation(o, ex));
+            });
+
+            return result;
+        };
     }
 
     private void execContainer(RequestContext context) {
@@ -1426,7 +1457,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                                 handleExceptions(context.request, context.operation, () -> {
                                     NetworkUtils.updateConnectedNetworks(getHost(),
                                             context.containerState, 1);
-                                    inspectContainer(context);
+                                    processInspectContainer(context);
                                 });
                             });
         });
@@ -1490,7 +1521,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                                 handleExceptions(context.request, context.operation, () -> {
                                     NetworkUtils.updateConnectedNetworks(getHost(),
                                             context.containerState, -1);
-                                    inspectContainer(context);
+                                    processInspectContainer(context);
                                 });
                             });
         });
