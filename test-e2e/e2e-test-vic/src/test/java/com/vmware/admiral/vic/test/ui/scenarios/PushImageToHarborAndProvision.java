@@ -16,21 +16,33 @@ import static com.codeborne.selenide.Selenide.open;
 
 import com.codeborne.selenide.Condition;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.clusters.AddClusterModalDialog.HostType;
+import com.vmware.admiral.test.util.AuthContext;
 import com.vmware.admiral.test.util.SSHCommandExecutor;
 import com.vmware.admiral.test.util.SSHCommandExecutor.CommandResult;
 import com.vmware.admiral.vic.test.ui.BaseTest;
+import com.vmware.admiral.vic.test.ui.util.CreateVCHRule;
 
 public class PushImageToHarborAndProvision extends BaseTest {
 
     private final String HARBOR_CERTIFICATE_PATH = "/storage/data/harbor/ca_download/ca.crt";
     private final String NGINX_IMAGE_NAME = "nginx";
-    private final String PROJECT_NAME = "image-path-test";
+    private final String PROJECT_NAME = "hbr-provision";
     private final String TAGGED_IMAGE_PATH = "/wmware/vic/harbor/test/nginx";
     private final String HOST_NAME = PROJECT_NAME + "_host";
+
+    private final AuthContext vicOvaAuthContext = new AuthContext(getVicIp(), getVicVmUsername(),
+            getVicVmPassword());
+    private final AuthContext vcenterAuthContext = new AuthContext(getVcenterIp(),
+            getDefaultAdminUsername(), getDefaultAdminPassword());
+
+    @Rule
+    public CreateVCHRule vchIps = new CreateVCHRule(vicOvaAuthContext, vcenterAuthContext,
+            "harbor-provisioning-test", 1);
 
     @Test
     public void pushImageToHarborAndProvision() {
@@ -46,7 +58,8 @@ public class PushImageToHarborAndProvision extends BaseTest {
         clusters().clustersPage().clickAddClusterButton();
         clusters().addHostDialog().setName(HOST_NAME);
         clusters().addHostDialog().setHostType(HostType.VCH);
-        clusters().addHostDialog().setUrl(getVchUrl());
+        String vchUrl = getVCHUrl(vchIps.getHostsIps()[0]);
+        clusters().addHostDialog().setUrl(vchUrl);
         clusters().addHostDialog().submit();
         clusters().certificateModalDialog().waitToLoad();
         clusters().certificateModalDialog().submit();
@@ -67,6 +80,7 @@ public class PushImageToHarborAndProvision extends BaseTest {
         containers().containerStatsPage().waitToLoad();
         String settings = containers().containerStatsPage().getPortsSettings().get(0);
         String nginxAddress = settings.substring(0, settings.lastIndexOf(":"));
+        LOG.info("NGINX landing page resolved at: " + nginxAddress);
         logOut();
 
         LOG.info("Validating the NGINX landing page");
@@ -97,8 +111,7 @@ public class PushImageToHarborAndProvision extends BaseTest {
     }
 
     private void pushImageToProject() {
-        SSHCommandExecutor executor = new SSHCommandExecutor(getVicIp(), 22, getVicVmUsername(),
-                getVicVmPassword());
+        SSHCommandExecutor executor = new SSHCommandExecutor(vicOvaAuthContext, 22);
         String createDirCommand = String.format("mkdir -p /etc/docker/certs.d/%s", getVicIp());
         CommandResult result = executor.execute(createDirCommand, 10);
         logOutputOrThrow(createDirCommand, result);

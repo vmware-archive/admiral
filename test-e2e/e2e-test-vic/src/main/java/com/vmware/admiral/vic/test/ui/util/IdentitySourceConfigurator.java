@@ -38,6 +38,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import com.vmware.admiral.test.util.AuthContext;
 import com.vmware.admiral.test.util.HttpUtils;
 
 public class IdentitySourceConfigurator {
@@ -47,9 +48,10 @@ public class IdentitySourceConfigurator {
     private final List<Header> authHeaders;
     private final HttpClient httpClient;
 
-    public IdentitySourceConfigurator(String vcTarget, String username, String password) {
-        this.target = vcTarget;
-        authHeaders = getAuthHeaders(target, username, password);
+    public IdentitySourceConfigurator(AuthContext vcenterAuthContext) {
+        this.target = "https://" + vcenterAuthContext.getTarget();
+        authHeaders = getAuthHeaders(target, vcenterAuthContext.getUsername(),
+                vcenterAuthContext.getPassword());
         CookieStore cookies = new BasicCookieStore();
         httpClient = HttpUtils.createUnsecureHttpClient(cookies, authHeaders);
     }

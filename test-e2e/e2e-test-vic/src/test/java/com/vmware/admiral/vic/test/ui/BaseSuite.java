@@ -25,6 +25,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
 import com.vmware.admiral.common.util.FileUtil;
+import com.vmware.admiral.test.util.AuthContext;
 import com.vmware.admiral.vic.test.ui.pages.VICWebClient;
 import com.vmware.admiral.vic.test.ui.util.IdentitySourceConfigurator;
 
@@ -77,19 +78,14 @@ public class BaseSuite {
         }
         List<String> adSpecFilenames = Arrays.asList(adCsv.split(","));
         Properties props = FileUtil.getProperties("/" + PropertiesNames.PROPERTIES_FILE_NAME, true);
-        String vcenterAddress = props.getProperty(PropertiesNames.VCENTER_IP_PROPERTY);
-        if (vcenterAddress.endsWith("/")) {
-            vcenterAddress = vcenterAddress.substring(0, vcenterAddress.length() - 1);
-        }
-        if (!vcenterAddress.startsWith("https://")) {
-            vcenterAddress = "https://" + vcenterAddress;
-        }
-        Objects.requireNonNull(vcenterAddress);
+        String vcenterIp = props.getProperty(PropertiesNames.VCENTER_IP_PROPERTY);
+        Objects.requireNonNull(vcenterIp);
         String adminUsername = props.getProperty(PropertiesNames.DEFAULT_ADMIN_USERNAME_PROPERTY);
         Objects.requireNonNull(adminUsername);
         String adminPassword = props.getProperty(PropertiesNames.DEFAULT_ADMIN_PASSWORD_PROPERTY);
+        AuthContext vcenterAuthContext = new AuthContext(vcenterIp, adminUsername, adminPassword);
         IdentitySourceConfigurator identityConfigurator = new IdentitySourceConfigurator(
-                vcenterAddress, adminUsername, adminPassword);
+                vcenterAuthContext);
 
         for (String fileName : adSpecFilenames) {
             String body = null;
@@ -122,8 +118,12 @@ public class BaseSuite {
         return vicUrl;
     }
 
-    protected static String getVicIp() {
+    public static String getVicIp() {
         return PROPERTIES.getProperty(PropertiesNames.VIC_IP_PROPERTY);
+    }
+
+    public static String getVcenterIp() {
+        return PROPERTIES.getProperty(PropertiesNames.VCENTER_IP_PROPERTY);
     }
 
     public static String getDefaultAdminUsername() {

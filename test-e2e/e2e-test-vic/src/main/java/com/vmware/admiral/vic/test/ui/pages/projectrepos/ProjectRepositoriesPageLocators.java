@@ -20,7 +20,7 @@ public class ProjectRepositoriesPageLocators extends PageLocators {
     private final By REFRESH_BUTTON = By.cssSelector(".refresh-btn");
     private final By PAGE_TITLE = By.cssSelector("div.title");
     private final String ROW_BY_REPOSITORY_VALUE_XPATH = "//clr-dg-cell[./text()='%s']/ancestor::clr-dg-row[contains(concat(' ', @class, ' '), ' datagrid-row ')]";
-    private final String ROW_RELATIVE_CONTEXT_MENU_XPATH = "//clr-icon[contains(concat(' ', @class, ' '), ' datagrid-action-toggle ')]";
+    private final String ROW_RELATIVE_CONTEXT_MENU_XPATH = "//*[contains(concat(' ', @class, ' '), ' datagrid-action-toggle ')]";
     private final String ROW_RELATIVE_DELETE_TUTTON_XPATH = "//button[contains(concat(' ', @class, ' '), ' action-item ')]";
 
     public By pageTitle() {

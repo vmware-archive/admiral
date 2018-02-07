@@ -14,6 +14,7 @@ package com.vmware.admiral.vic.test.ui.scenarios;
 import java.util.Arrays;
 import java.util.List;
 
+import org.junit.Rule;
 import org.junit.Test;
 
 import com.vmware.admiral.test.ui.pages.clusters.AddClusterModalDialog;
@@ -29,7 +30,9 @@ import com.vmware.admiral.test.ui.pages.templates.TemplatesPage;
 import com.vmware.admiral.test.ui.pages.templates.create.CreateTemplatePage;
 import com.vmware.admiral.test.ui.pages.volumes.CreateVolumePage;
 import com.vmware.admiral.test.ui.pages.volumes.VolumesPage;
+import com.vmware.admiral.test.util.AuthContext;
 import com.vmware.admiral.vic.test.ui.BaseTest;
+import com.vmware.admiral.vic.test.ui.util.CreateVCHRule;
 
 /**
  * This test creates two projects, adds users with different roles to the projects, adds non-default
@@ -94,6 +97,15 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
             PROJECT_NAME_ADMIRAL,
             PROJECT_NAME_QE
     });
+
+    private final AuthContext vicOvaAuthContext = new AuthContext(getVicIp(), getVicVmUsername(),
+            getVicVmPassword());
+    private final AuthContext vcenterAuthContext = new AuthContext(getVcenterIp(),
+            getDefaultAdminUsername(), getDefaultAdminPassword());
+
+    @Rule
+    public CreateVCHRule vchIps = new CreateVCHRule(vicOvaAuthContext, vcenterAuthContext,
+            "rbac-test", 2);
 
     @Test
     public void testRbacAndItemProjectAwareness() {
@@ -276,15 +288,10 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
 
     private void addContentToProjects() {
         main().clickHomeTabButton();
-        boolean first = true;
-        for (String projectName : ALL_PROJECTS) {
+        for (int i = 0; i < ALL_PROJECTS.size(); i++) {
+            String projectName = ALL_PROJECTS.get(i);
             home().switchToProject(projectName);
-            if (first) {
-                addVchHostToProject(projectName, true);
-                first = false;
-            } else {
-                addVchHostToProject(projectName, false);
-            }
+            addVchHostToProject(projectName, getVCHUrl(vchIps.getHostsIps()[i]));
             provisionContainerInProject(projectName);
             addNetworkToProject(projectName);
             addVolumeToProject(projectName);
@@ -321,21 +328,17 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
         }
     }
 
-    private void addVchHostToProject(String hostName, boolean acceptCertificate) {
+    private void addVchHostToProject(String hostName, String hostUrl) {
         home().clickContainerHostsButton();
         clusters().clustersPage().clickAddClusterButton();
         AddClusterModalDialog addHostDialog = clusters().addHostDialog();
         addHostDialog.waitToLoad();
         addHostDialog.setName(hostName + HOST_SUFFIX);
         addHostDialog.setHostType(HostType.VCH);
-        addHostDialog.setUrl(getVchUrl());
-        if (acceptCertificate) {
-            clusters().addHostDialog().submit();
-            clusters().certificateModalDialog().waitToLoad();
-            clusters().certificateModalDialog().submit();
-        } else {
-            clusters().addHostDialog().submit();
-        }
+        addHostDialog.setUrl(hostUrl);
+        clusters().addHostDialog().submit();
+        clusters().certificateModalDialog().waitToLoad();
+        clusters().certificateModalDialog().submit();
         clusters().clustersPage().refresh();
         clusters().clustersPage().validate().validateHostExistsWithName(hostName + HOST_SUFFIX);
         clusters().clustersPage().validate().validateHostsCount(1);

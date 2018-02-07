@@ -24,8 +24,8 @@ public class ClustersPageLocators extends PageLocators {
     private final By ALL_HOST_CARDS = By.cssSelector(".items .card-item");
     private final String CLUSTER_CARD_SELECTOR_BY_NAME = "//span[contains(concat(' ', @class, ' '), ' card-item ')]//div[contains(concat(' ', @class, ' '), ' titleHolder ')]/div[1][text()='%s']/ancestor::span[contains(concat(' ', @class, ' '), ' card-item ')]";
     private final String CONTEXT_MENU_BUTTON = "//button[contains(concat(' ', @class, ' '), ' dropdown-toggle ')]";
-    private final String CLUSTER_DELETE_BUTTON = "//a[contains(concat(' ', @class, ' '), ' remove-cluster ')]";
-    private final String CLUSTER_RESCAN_BUTTON = "//a[contains(concat(' ', @class, ' '), ' rescan-cluster ')]";
+    private final String CLUSTER_DELETE_BUTTON = "//*[contains(concat(' ', @class, ' '), ' remove-cluster ')]";
+    private final String CLUSTER_RESCAN_BUTTON = "//*[contains(concat(' ', @class, ' '), ' rescan-cluster ')]";
     private final String CLUSTER_STATUS = "//div[contains(concat(' ', @class, ' '), ' status ')]";
 
     public String clusterCardByNameXpath(String name) {

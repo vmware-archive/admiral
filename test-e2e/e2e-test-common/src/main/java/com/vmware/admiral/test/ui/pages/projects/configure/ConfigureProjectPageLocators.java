@@ -20,7 +20,7 @@ public class ConfigureProjectPageLocators extends PageLocators {
     private static final By PAGE_TITLE = By.cssSelector(".projects-details-header-title");
     private final By BACK_BUTTON = By
             .cssSelector(".full-screen.with-back-button>back-button .close-button");
-    private final By MEMBERS_BUTTON = By.cssSelector("#membersTab .btn");
+    private final By MEMBERS_BUTTON = By.cssSelector("#membersTab");
 
     public By pageTitle() {
         return PAGE_TITLE;

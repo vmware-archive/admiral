@@ -20,8 +20,8 @@ public class ProjectsPageLocators extends PageLocators {
     private final By PAGE_TITLE = By.cssSelector(".title > div");
     private final By ADD_PROJECT_BUTTON = By
             .cssSelector(".toolbar button.btn.btn-link[allownavigation]");
-    private final String CARD_CONTEXT_MENU_BUTTON = "//button[contains(concat(' ', @class, ' '), ' dropdown-toggle ')]";
-    private final String CARD_DELETE_BUTTON = "//a[contains(concat(' ', @class, ' '), ' dropdown-item ')][2]";
+    private final String CARD_CONTEXT_MENU_BUTTON = "//*[contains(concat(' ', @class, ' '), ' dropdown-toggle ')]";
+    private final String CARD_DELETE_BUTTON = "//*[contains(concat(' ', @class, ' '), ' dropdown-item ')][2]";
     private final String PROJECT_CARD_BY_NAME_SELECTOR = "//span[contains(concat(' ', @class, ' '), ' card-item ')]//div[contains(concat(' ', @class, ' '), ' card-header ')]/div/text()[normalize-space()='%s']/ancestor::span[contains(concat(' ', @class, ' '), ' card-item ')]";
 
     public By pageTitle() {

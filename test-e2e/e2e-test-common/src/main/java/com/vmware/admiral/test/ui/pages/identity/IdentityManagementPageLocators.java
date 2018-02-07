@@ -17,9 +17,9 @@ import com.vmware.admiral.test.ui.pages.common.PageLocators;
 
 public class IdentityManagementPageLocators extends PageLocators {
 
-    private final By USERS_AND_GROUPS_BUTTON = By.cssSelector("#identityUsersGroupsTab .btn");
-    private final By CERTIFICATES_BUTTON = By.cssSelector("#identityCertificatesTab .btn");
-    private final By CREDENTIALS_BUTTON = By.cssSelector("#identityCredentialsTab .btn");
+    private final By USERS_AND_GROUPS_BUTTON = By.cssSelector("#identityUsersGroupsTab");
+    private final By CERTIFICATES_BUTTON = By.cssSelector("#identityCertificatesTab");
+    private final By CREDENTIALS_BUTTON = By.cssSelector("#identityCredentialsTab");
     private final By PAGE_TITLE = By.cssSelector("div.title");
 
     public By usersAndGroupsTabButton() {

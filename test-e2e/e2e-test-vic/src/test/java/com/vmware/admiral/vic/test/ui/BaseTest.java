@@ -14,7 +14,6 @@ package com.vmware.admiral.vic.test.ui;
 import static com.codeborne.selenide.Selenide.close;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Properties;
 import java.util.logging.Logger;
 
@@ -45,25 +44,18 @@ import com.vmware.admiral.vic.test.ui.pages.hosts.ContainerHostsPageLibrary;
 import com.vmware.admiral.vic.test.ui.pages.main.VICAdministrationTab;
 import com.vmware.admiral.vic.test.ui.pages.main.VICHomeTab;
 import com.vmware.admiral.vic.test.ui.pages.projectrepos.ProjectRepositoriesPageLibrary;
-import com.vmware.admiral.vic.test.ui.util.DeleteHostsOnFailureRule;
-import com.vmware.admiral.vic.test.ui.util.VCHCleanupOnFailureRule;
 import com.vmware.admiral.vic.test.ui.util.VICReportsRule;
 
 public class BaseTest {
 
-    private static final String HTTPS_PROTOCOL = "https://";
     protected final Logger LOG = Logger.getLogger(getClass().getName());
     protected final Properties PROPERTIES = BaseSuite.PROPERTIES;
-    private String vchUrl;
 
     @Rule
     public TestRule chain = RuleChain
             .outerRule(new TestStatusLoggerRule())
-            .around(new DeleteHostsOnFailureRule(getVicUrl(),
-                    BaseSuite.getDefaultAdminUsername(), BaseSuite.getDefaultAdminPassword()))
             .around(new VICReportsRule(getVicUrl(), getDefaultAdminUsername(),
                     getDefaultAdminPassword()))
-            .around(new VCHCleanupOnFailureRule(getVchUrl()))
             .around(new ScreenshotRule());
 
     private VICWebClient client = new VICWebClient();
@@ -87,8 +79,8 @@ public class BaseTest {
         return null;
     }
 
-    protected DockerClient getDockerClient() {
-        return DockerUtils.createUnsecureDockerClient(getVchUrl());
+    protected DockerClient getDockerClient(String dockerHostUrl) {
+        return DockerUtils.createUnsecureDockerClient(dockerHostUrl);
     }
 
     protected String getVicUrl() {
@@ -97,6 +89,14 @@ public class BaseTest {
 
     protected String getVicIp() {
         return BaseSuite.getVicIp();
+    }
+
+    protected String getVcenterIp() {
+        return BaseSuite.getVcenterIp();
+    }
+
+    public String getVCHUrl(String vchIp) {
+        return "https://" + vchIp + ":" + PROPERTIES.getProperty(PropertiesNames.VCH_PORT_PROPERTY);
     }
 
     protected String getDefaultAdminUsername() {
@@ -113,19 +113,6 @@ public class BaseTest {
 
     protected String getVicVmPassword() {
         return PROPERTIES.getProperty(PropertiesNames.VIC_VM_PASSWORD_PROPERTY);
-    }
-
-    protected String getVchUrl() {
-        if (Objects.isNull(vchUrl)) {
-            vchUrl = PROPERTIES.getProperty(PropertiesNames.VCH_IP_PROPERTY);
-            String vchPort = PROPERTIES.getProperty(PropertiesNames.VCH_PORT_PROPERTY);
-            Objects.requireNonNull(vchPort);
-            if (!vchUrl.startsWith(HTTPS_PROTOCOL)) {
-                vchUrl = HTTPS_PROTOCOL + vchUrl;
-            }
-            vchUrl = vchUrl + ":" + vchPort;
-        }
-        return vchUrl;
     }
 
     @AfterClass

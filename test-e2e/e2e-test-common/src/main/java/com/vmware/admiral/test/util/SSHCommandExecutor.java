@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.test.util;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
@@ -18,6 +19,8 @@ import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.common.IOUtils;
 import net.schmizz.sshj.connection.channel.direct.Session;
 import net.schmizz.sshj.connection.channel.direct.Session.Command;
+import net.schmizz.sshj.xfer.FileSystemFile;
+import net.schmizz.sshj.xfer.LocalSourceFile;
 
 public class SSHCommandExecutor {
 
@@ -26,10 +29,10 @@ public class SSHCommandExecutor {
     private final String password;
     private final int port;
 
-    public SSHCommandExecutor(String target, int port, String username, String password) {
-        this.target = target;
-        this.username = username;
-        this.password = password;
+    public SSHCommandExecutor(AuthContext auth, int port) {
+        this.target = auth.getTarget();
+        this.username = auth.getUsername();
+        this.password = auth.getPassword();
         this.port = port;
     }
 
@@ -45,8 +48,8 @@ public class SSHCommandExecutor {
                     Command cmd = session.exec(command);
                     cmd.join(timeoutSeconds, TimeUnit.SECONDS);
                     cmd.close();
-                    String output = IOUtils.readFully(cmd.getInputStream()).toString();
-                    String error = IOUtils.readFully(cmd.getErrorStream()).toString();
+                    String output = IOUtils.readFully(cmd.getInputStream()).toString().trim();
+                    String error = IOUtils.readFully(cmd.getErrorStream()).toString().trim();
                     int exitStatus = cmd.getExitStatus();
                     CommandResult result = new CommandResult(exitStatus, output, error);
                     return result;
@@ -59,6 +62,22 @@ public class SSHCommandExecutor {
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public void sendFile(File file,
+            String remotePath) throws IOException {
+        SSHClient client = new SSHClient();
+        client.addHostKeyVerifier((a, b, c) -> true);
+        client.connect(target, port);
+        try {
+            client.authPassword(username, password);
+            client.useCompression();
+            LocalSourceFile localFile = new FileSystemFile(file);
+            client.newSCPFileTransfer().upload(localFile, remotePath);
+        } finally {
+            client.disconnect();
+            client.close();
         }
     }
 
