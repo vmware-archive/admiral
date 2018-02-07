@@ -138,8 +138,9 @@ var addEventListeners = function() {
 
 var applyValidationErrors = function($el, errors) {
   errors = errors || {};
+  var escapedErrText = errors._generic ? $el.text(errors._generic).html() : '';
 
-  this.alert.toggle($el, constants.ALERTS.TYPE.FAIL, errors._generic);
+  this.alert.toggle($el, constants.ALERTS.TYPE.FAIL, escapedErrText);
 };
 
 var toggleButtonsState = function($el) {
