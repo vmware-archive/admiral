@@ -402,6 +402,7 @@ public class CompositeTemplateUtil {
         if (!isNullOrEmpty(entity.components)) {
             sanitizeContainerComponents(entity, serialize);
             sanitizeContainerNetworkComponents(entity);
+            sanitizeContainerVolumeComponents(entity);
             normalizeClosureDescriptions(entity, serialize);
         }
     }
@@ -411,6 +412,17 @@ public class CompositeTemplateUtil {
                 entity.components, ContainerNetworkDescription.class).entrySet()) {
 
             ComponentTemplate<ContainerNetworkDescription> component = entry.getValue();
+
+            component.data.id = null;
+            component.data.tenantLinks = null;
+        }
+    }
+
+    private static void sanitizeContainerVolumeComponents(CompositeTemplate entity) {
+        for (Entry<String, ComponentTemplate<ContainerVolumeDescription>> entry : filterComponentTemplates(
+                entity.components, ContainerVolumeDescription.class).entrySet()) {
+
+            ComponentTemplate<ContainerVolumeDescription> component = entry.getValue();
 
             component.data.id = null;
             component.data.tenantLinks = null;
