@@ -22,6 +22,9 @@ components:
       driver: "custom-driver-1"
       options:
         mountpoint: "/data/local/data"
+      id: "testId"
+      tenantLinks:
+      - "/tenants/qe"
   phpconf:
     type: "App.Volume"
     data:
