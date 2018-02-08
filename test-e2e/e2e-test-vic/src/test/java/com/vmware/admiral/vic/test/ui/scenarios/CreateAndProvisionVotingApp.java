@@ -36,7 +36,7 @@ import com.vmware.admiral.test.ui.pages.volumes.VolumesPage.VolumeState;
 import com.vmware.admiral.test.util.AuthContext;
 import com.vmware.admiral.vic.test.ui.BaseTest;
 import com.vmware.admiral.vic.test.ui.pages.hosts.AddContainerHostModalDialog;
-import com.vmware.admiral.vic.test.ui.util.CreateVCHRule;
+import com.vmware.admiral.vic.test.ui.util.CreateVchRule;
 
 public class CreateAndProvisionVotingApp extends BaseTest {
 
@@ -73,7 +73,7 @@ public class CreateAndProvisionVotingApp extends BaseTest {
             getDefaultAdminUsername(), getDefaultAdminPassword());
 
     @Rule
-    public CreateVCHRule vchIps = new CreateVCHRule(vicOvaAuthContext, vcenterAuthContext,
+    public CreateVchRule vchIps = new CreateVchRule(vicOvaAuthContext, vcenterAuthContext,
             "voting-app-test", 1);
 
     @Test
@@ -301,28 +301,16 @@ public class CreateAndProvisionVotingApp extends BaseTest {
     private void voteAndVerify(String votingTarget, String resultTarget) {
         LOG.info("Opening voting app voting page");
         open(votingTarget);
-        LOG.info("Voting six times for cats");
-        for (int i = 0; i < 6; i++) {
-            open(votingTarget);
-            $(By.cssSelector("#a")).click();
-            clearBrowserCache();
-            sleep(1000);
-        }
-        LOG.info("Voting two times for dogs");
-        for (int i = 0; i < 2; i++) {
-            open(votingTarget);
-            $(By.cssSelector("#b")).click();
-            clearBrowserCache();
-            sleep(1000);
-        }
-        // open the voting app result page
+        LOG.info("Voting for cats");
+        $(By.cssSelector("#a")).click();
+        clearBrowserCache();
+        sleep(1000);
         LOG.info("Opening the votig app results page");
         open(resultTarget);
-        // validate result is 75 to 25
         LOG.info("Validating voting results");
-        $(By.cssSelector("#result>span")).shouldHave(Condition.exactText("8 votes"));
-        $(By.cssSelector(".choice.cats .stat.ng-binding")).shouldHave(Condition.exactText("75.0%"));
-        $(By.cssSelector(".choice.dogs .stat.ng-binding")).shouldHave(Condition.exactText("25.0%"));
+        $(By.cssSelector("#result>span")).shouldHave(Condition.exactText("1 vote"));
+        $(By.cssSelector(".choice.cats .stat.ng-binding"))
+                .shouldHave(Condition.exactText("100.0%"));
     }
 
     protected String extractAddressFromPortSetting(List<String> portSettings) {

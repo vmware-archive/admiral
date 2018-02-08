@@ -43,25 +43,31 @@ import com.vmware.admiral.test.util.HttpUtils;
 
 public class IdentitySourceConfigurator {
 
-    private final String target;
+    private final String TARGET;
+    private final String USERNAME;
+    private final String PASSWORD;
     private static final String ADD_AD_ENDPOINT = "/psc/mutation/add?propertyObjectType=com.vmware.vsphere.client.sso.admin.model.IdentitySourceLdapSpec";
-    private final List<Header> authHeaders;
-    private final HttpClient httpClient;
+    HttpClient client;
 
     public IdentitySourceConfigurator(AuthContext vcenterAuthContext) {
-        this.target = "https://" + vcenterAuthContext.getTarget();
-        authHeaders = getAuthHeaders(target, vcenterAuthContext.getUsername(),
-                vcenterAuthContext.getPassword());
-        CookieStore cookies = new BasicCookieStore();
-        httpClient = HttpUtils.createUnsecureHttpClient(cookies, authHeaders);
+        if (!vcenterAuthContext.getTarget().startsWith("https://")) {
+            this.TARGET = "https://" + vcenterAuthContext.getTarget();
+        } else {
+            this.TARGET = vcenterAuthContext.getTarget();
+        }
+        this.USERNAME = vcenterAuthContext.getUsername();
+        this.PASSWORD = vcenterAuthContext.getPassword();
     }
 
     public void addIdentitySource(String specBody) {
+        if (Objects.isNull(client)) {
+            client = authenticateClient(TARGET, USERNAME, PASSWORD);
+        }
         try {
             StringEntity entity = new StringEntity(specBody);
-            HttpPost post = new HttpPost(target + ADD_AD_ENDPOINT);
+            HttpPost post = new HttpPost(TARGET + ADD_AD_ENDPOINT);
             post.setEntity(entity);
-            HttpResponse response = httpClient.execute(post);
+            HttpResponse response = client.execute(post);
             EntityUtils.consume(response.getEntity());
             if (response.getStatusLine().getStatusCode() != 200) {
                 throw new RuntimeException("Could not add identity source, response code was: "
@@ -72,7 +78,7 @@ public class IdentitySourceConfigurator {
         }
     }
 
-    private List<Header> getAuthHeaders(String target, String username,
+    private HttpClient authenticateClient(String target, String username,
             String password) {
         String loginTarget = target + "/psc/login";
         CookieStore cookies = new BasicCookieStore();
@@ -97,50 +103,51 @@ public class IdentitySourceConfigurator {
             EntityUtils.consume(response.getEntity());
             if (response.getStatusLine().getStatusCode() != 200) {
                 throw new RuntimeException(
-                        "Acquiring auth headers failed due to invalid credentials");
+                        "Authenticating to the PSC failed due to invalid credentials");
             }
 
             Element samlPostForm = doc.getElementById("SamlPostForm");
             String postTarget = samlPostForm.attr("action");
-            Elements elements = doc.getElementsByAttributeValue("name", "SAMLResponse");
-            if (elements.size() == 0) {
+            Elements samlElements = doc.getElementsByAttributeValue("name", "SAMLResponse");
+            if (samlElements.size() == 0) {
                 throw new RuntimeException(
-                        "Could not get auth headers, probably the login sequence has changed");
+                        "Authenticating to the PSC failed, probably the login sequence has changed");
             }
-            String samlResponse = elements.get(0).attr("value");
+            String samlResponse = samlElements.get(0).attr("value");
+
             params = new ArrayList<>();
             params.add(new BasicNameValuePair("SAMLResponse", samlResponse));
-            params.add(new BasicNameValuePair("RelayState", "SessionId"));
             post = new HttpPost(postTarget);
             post.setEntity(new UrlEncodedFormEntity(params));
             response = client.execute(post);
             EntityUtils.consume(response.getEntity());
 
+            if (response.getStatusLine().getStatusCode() != 302) {
+                throw new RuntimeException(
+                        "Authenticating to the PSC failed, probably the login sequence has changed");
+            }
             get = new HttpGet(target + "/psc/");
             response = client.execute(get);
             EntityUtils.consume(response.getEntity());
-
-            String jSessionId = null;
-            String xsrfToken = null;
+            if (response.getStatusLine().getStatusCode() != 200) {
+                throw new RuntimeException(
+                        "Authenticating to the PSC failed, probably the login sequence has changed");
+            }
+            String token = null;
             for (Cookie c : cookies.getCookies()) {
-                if (c.getName().equalsIgnoreCase("JSESSIONID")) {
-                    jSessionId = c.getValue();
-                } else if (c.getName().equalsIgnoreCase("XSRF-TOKEN")) {
-                    xsrfToken = c.getValue();
+                if (c.getName().equals("XSRF-TOKEN")) {
+                    token = c.getValue();
+                    break;
                 }
             }
-            if (Objects.isNull(jSessionId)) {
-                throw new RuntimeException(
-                        "Could not get session cookie, probably the login sequence has changed");
+            if (!Objects.isNull(token)) {
+                // PSC 6.5
+                List<Header> headers = new ArrayList<>();
+                headers.add(new BasicHeader("X-XSRF-TOKEN", token));
+                return HttpUtils.createUnsecureHttpClient(cookies, headers);
+            } else {
+                return client;
             }
-            if (Objects.isNull(xsrfToken)) {
-                throw new RuntimeException(
-                        "Could not get token header, probably the login sequence has changed");
-            }
-            List<Header> headers = new ArrayList<>();
-            headers.add(new BasicHeader("X-XSRF-TOKEN", xsrfToken));
-            headers.add(new BasicHeader("Cookie", "JSESSIONID=" + jSessionId));
-            return headers;
         } catch (IOException e) {
             throw new RuntimeException(
                     "Could not get auth headers", e);

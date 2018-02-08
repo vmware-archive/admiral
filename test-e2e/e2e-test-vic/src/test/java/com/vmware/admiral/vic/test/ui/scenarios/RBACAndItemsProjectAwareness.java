@@ -32,7 +32,7 @@ import com.vmware.admiral.test.ui.pages.volumes.CreateVolumePage;
 import com.vmware.admiral.test.ui.pages.volumes.VolumesPage;
 import com.vmware.admiral.test.util.AuthContext;
 import com.vmware.admiral.vic.test.ui.BaseTest;
-import com.vmware.admiral.vic.test.ui.util.CreateVCHRule;
+import com.vmware.admiral.vic.test.ui.util.CreateVchRule;
 
 /**
  * This test creates two projects, adds users with different roles to the projects, adds non-default
@@ -104,7 +104,7 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
             getDefaultAdminUsername(), getDefaultAdminPassword());
 
     @Rule
-    public CreateVCHRule vchIps = new CreateVCHRule(vicOvaAuthContext, vcenterAuthContext,
+    public CreateVchRule vchIps = new CreateVchRule(vicOvaAuthContext, vcenterAuthContext,
             "rbac-test", 2);
 
     @Test

@@ -25,7 +25,7 @@ import com.vmware.admiral.test.util.AuthContext;
 import com.vmware.admiral.test.util.SSHCommandExecutor;
 import com.vmware.admiral.test.util.SSHCommandExecutor.CommandResult;
 import com.vmware.admiral.vic.test.ui.BaseTest;
-import com.vmware.admiral.vic.test.ui.util.CreateVCHRule;
+import com.vmware.admiral.vic.test.ui.util.CreateVchRule;
 
 public class PushImageToHarborAndProvision extends BaseTest {
 
@@ -41,7 +41,7 @@ public class PushImageToHarborAndProvision extends BaseTest {
             getDefaultAdminUsername(), getDefaultAdminPassword());
 
     @Rule
-    public CreateVCHRule vchIps = new CreateVCHRule(vicOvaAuthContext, vcenterAuthContext,
+    public CreateVchRule vchIps = new CreateVchRule(vicOvaAuthContext, vcenterAuthContext,
             "harbor-provisioning-test", 1);
 
     @Test

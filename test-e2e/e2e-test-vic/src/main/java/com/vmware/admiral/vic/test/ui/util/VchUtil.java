@@ -19,7 +19,7 @@ import com.vmware.admiral.test.util.AuthContext;
 import com.vmware.admiral.test.util.SSHCommandExecutor;
 import com.vmware.admiral.test.util.SSHCommandExecutor.CommandResult;
 
-public class VCHUtil {
+public class VchUtil {
 
     private static boolean isEnvironmentReady = false;
 
@@ -41,7 +41,7 @@ public class VCHUtil {
 
     private AuthContext vcenterAuthContext;
 
-    public VCHUtil(AuthContext vicOvaAuthContext, AuthContext vcenterAuthContext) {
+    public VchUtil(AuthContext vicOvaAuthContext, AuthContext vcenterAuthContext) {
         this.vcenterAuthContext = vcenterAuthContext;
         this.executor = new SSHCommandExecutor(vicOvaAuthContext, 22);
         if (!isEnvironmentReady) {
@@ -77,7 +77,7 @@ public class VCHUtil {
         return executor.execute(deleteVchCommand.toString(), 360);
     }
 
-    public CommandResult createDVSPortGroup(String portgroupName, String datacenterName,
+    public CommandResult createDvsPortGroup(String portgroupName, String datacenterName,
             String dvsName, int portsCount) {
         StringBuilder createDVSPortgroup = new StringBuilder();
         createDVSPortgroup.append("python " + SCRIPT_REMOTE_PATH)
@@ -92,7 +92,7 @@ public class VCHUtil {
         return executor.execute(createDVSPortgroup.toString(), 360);
     }
 
-    public CommandResult deleteDVSPortgroup(String portgroupNameName, String datacenterName,
+    public CommandResult deleteDvsPortgroup(String portgroupNameName, String datacenterName,
             String dvsName) {
         StringBuilder createDVSPortgroup = new StringBuilder();
         createDVSPortgroup.append("python " + SCRIPT_REMOTE_PATH)

@@ -22,7 +22,7 @@ import org.junit.runners.model.Statement;
 import com.vmware.admiral.test.util.AuthContext;
 import com.vmware.admiral.test.util.SSHCommandExecutor.CommandResult;
 
-public class CreateVCHRule implements TestRule {
+public class CreateVchRule implements TestRule {
 
     private final Logger LOG = Logger.getLogger(getClass().getName());
 
@@ -36,28 +36,28 @@ public class CreateVCHRule implements TestRule {
 
     private final String[] hostsIps;
 
-    private VCHUtil vchUtil;
+    private VchUtil vchUtil;
 
-    public CreateVCHRule(AuthContext vicOvaAuthContext, AuthContext vcenterAuthContext,
+    public CreateVchRule(AuthContext vicOvaAuthContext, AuthContext vcenterAuthContext,
             String namePrefix,
             int hostsCount) {
         this.hostsCount = hostsCount;
         hostsIps = new String[hostsCount];
         this.namePrefix = namePrefix;
-        vchUtil = new VCHUtil(vicOvaAuthContext, vcenterAuthContext);
+        vchUtil = new VchUtil(vicOvaAuthContext, vcenterAuthContext);
     }
 
-    public CreateVCHRule datacenterName(String datacenterName) {
+    public CreateVchRule datacenterName(String datacenterName) {
         this.datacenterName = datacenterName;
         return this;
     }
 
-    public CreateVCHRule dvsName(String dvsName) {
+    public CreateVchRule dvsName(String dvsName) {
         this.dvsName = dvsName;
         return this;
     }
 
-    public CreateVCHRule datastoreName(String datastoreName) {
+    public CreateVchRule datastoreName(String datastoreName) {
         this.datacenterName = datastoreName;
         return this;
     }
@@ -85,14 +85,14 @@ public class CreateVCHRule implements TestRule {
             String portgroupName = testName + "-" + (i + 1);
             createPortgroup(portgroupName);
             String vchName = testName + "-" + (i + 1);
-            String ip = createVCH(vchName, portgroupName);
+            String ip = createVch(vchName, portgroupName);
             hostsIps[i] = ip;
         }
     }
 
     private void createPortgroup(String name) {
         LOG.info("Creating portgroup with name: " + name);
-        CommandResult result = vchUtil.createDVSPortGroup(name, datacenterName, dvsName, 128);
+        CommandResult result = vchUtil.createDvsPortGroup(name, datacenterName, dvsName, 128);
         if (result.getExitStatus() != 0) {
             String error = String.format(
                     "Creating portgroup failed, command exit status [%d], command output:%n%s",
@@ -105,7 +105,7 @@ public class CreateVCHRule implements TestRule {
 
     private void deletePortgroup(String name) {
         LOG.info("Deleting portgroup with name: " + name);
-        CommandResult result = vchUtil.deleteDVSPortgroup(name, datacenterName, dvsName);
+        CommandResult result = vchUtil.deleteDvsPortgroup(name, datacenterName, dvsName);
         if (result.getExitStatus() != 0) {
             String error = String.format(
                     "Deleting portgroup failed, command exit status [%d], command output:%n%s",
@@ -116,7 +116,7 @@ public class CreateVCHRule implements TestRule {
         }
     }
 
-    private String createVCH(String name, String portgroupName) {
+    private String createVch(String name, String portgroupName) {
         LOG.info("Creating VCH with name: " + name);
         CommandResult result = vchUtil.createVch(name, datastoreName, portgroupName);
         if (result.getExitStatus() != 0) {
@@ -161,7 +161,7 @@ public class CreateVCHRule implements TestRule {
         }
     }
 
-    public CreateVCHRule keepOnSuccess() {
+    public CreateVchRule keepOnSuccess() {
         this.keepOnSuccess = true;
         return this;
     }
