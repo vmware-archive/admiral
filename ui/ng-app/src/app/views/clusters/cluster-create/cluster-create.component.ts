@@ -29,11 +29,10 @@ import * as I18n from 'i18next';
 /**
  * Modal for cluster creation.
  */
-export class ClusterCreateComponent extends BaseDetailsComponent
-                                    implements AfterViewInit, OnInit, OnDestroy {
+export class ClusterCreateComponent implements AfterViewInit, OnInit, OnDestroy {
   opened: boolean = false;
-  isEdit: boolean = false;
   credentials: any[];
+  projectLink: string;
 
   showCertificateWarning: boolean;
   certificate: any;
@@ -63,15 +62,13 @@ export class ClusterCreateComponent extends BaseDetailsComponent
     entity: I18n.t('app.credential.entity', {ns: 'base'})
   } as I18n.TranslationOptions );
 
-  constructor(private router: Router, route: ActivatedRoute, service: DocumentService) {
-    super(route, service, Links.CLUSTERS);
-  }
+  constructor(private router: Router, private route: ActivatedRoute, private service: DocumentService) {}
 
   get title() {
     if (FT.isVic()) {
-      return this.isEdit ? 'clusters.edit.titleEditVic' : 'clusters.edit.titleNewVic';
+      return 'clusters.edit.titleNewVic';
     }
-    return this.isEdit ? 'clusters.edit.titleEdit' : 'clusters.edit.titleNew';
+    return 'clusters.edit.titleNew';
   }
 
   get urlRequiredTextKey() {
@@ -82,33 +79,11 @@ export class ClusterCreateComponent extends BaseDetailsComponent
   }
 
   get showPublicAddressField(): boolean {
-    return FT.isHostPublicUriEnabled() && (!this.isEdit || this.isSingleHostCluster);
+    return FT.isHostPublicUriEnabled() && this.isSingleHostCluster;
   }
 
   get isKubernetesHostOptionEnabled(): boolean {
     return FT.isKubernetesHostOptionEnabled();
-  }
-
-  entityInitialized() {
-    this.isEdit = true;
-    this.isSingleHostCluster = Utils.isSingleHostCluster(this.entity);
-
-    this.clusterForm.get('name').setValue(this.entity.name);
-    if (this.entity.details) {
-      this.clusterForm.get('description').setValue(this.entity.details);
-    }
-    this.clusterForm.get('type').setValue(this.entity.type);
-    if (this.entity.address) {
-      this.clusterForm.get('url').setValue(this.entity.address);
-    }
-    // the url field is not required while editing
-    this.clusterForm.get('url').setValidators(null);
-    this.clusterForm.get('url').updateValueAndValidity();
-
-    if (this.isSingleHostCluster) {
-      let publicAddress = this.entity.publicAddress || '';
-      this.clusterForm.get('publicAddress').setValue(publicAddress);
-    }
   }
 
   ngOnInit() {
@@ -117,8 +92,8 @@ export class ClusterCreateComponent extends BaseDetailsComponent
       if (projectId) {
         this.projectLink = Links.PROJECTS + '/' + projectId;
       }
-      super.ngOnInit();
     });
+    this.populateCredentials();
   }
 
   ngOnDestroy() {
@@ -128,6 +103,12 @@ export class ClusterCreateComponent extends BaseDetailsComponent
   ngAfterViewInit() {
     this.opened = true;
     this.showCertificateWarning = false;
+  }
+
+  populateCredentials() {
+    if (this.credentials) {
+      return;
+    }
 
     this.service.list(Links.CREDENTIALS, {}).then(credentials => {
       this.credentials = credentials.documents
@@ -147,10 +128,6 @@ export class ClusterCreateComponent extends BaseDetailsComponent
       const TAB_ID_PROJECT_INFRASTRUCTURE = 'infra';
 
       let path: any[] = [PATH_UP];
-      if (this.isEdit) {
-        // Edited existing cluster - show cluster details
-        path = [PATH_UP + Utils.getDocumentId(this.entity.documentSelfLink)];
-      } else {
           // New cluster was created
           if (this.router.url.indexOf(PROJECTS_VIEW_URL_PART) > -1) {
             // New cluster was created in the Projects view
@@ -158,7 +135,6 @@ export class ClusterCreateComponent extends BaseDetailsComponent
               // Preselect infrastructure tab in project details view upon new cluster creation
               path = [PATH_UP + TAB_ID_PROJECT_INFRASTRUCTURE];
           }
-        }
       }
 
       this.router.navigate(path, { relativeTo: this.route });
@@ -179,40 +155,7 @@ export class ClusterCreateComponent extends BaseDetailsComponent
   }
 
   saveCluster() {
-    if (this.isEdit) {
-      this.updateCluster();
-    } else {
       this.createCluster(false);
-    }
-  }
-
-  private updateCluster() {
-    let name = this.clusterForm.value.name;
-    if (name) {
-      let description = this.clusterForm.value.description;
-      let clusterDtoPatch = {
-        'name': name,
-        'details':  description
-      };
-
-      // TODO check if the backend will handle this
-      if (this.isSingleHostCluster) {
-        // allow overwriting with empty value
-        let publicAddress = this.clusterForm.value.publicAddress || '';
-        clusterDtoPatch[Constants.clusters.properties.publicAddress] = publicAddress;
-      }
-
-      this.isSaving = true;
-      this.service.patch(this.entity.documentSelfLink, clusterDtoPatch, this.projectLink)
-        .then(() => {
-        // hide modal
-        this.toggleModal(false);
-
-      }).catch(error => {
-        this.isSaving = false;
-        this.alertMessage = Utils.getErrorMessage(error)._generic;
-      });
-    }
   }
 
   private createCluster(certificateAccepted: boolean) {

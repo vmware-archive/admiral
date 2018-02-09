@@ -88,7 +88,10 @@ export class ClusterEditHostComponent implements AfterViewInit, OnChanges {
             let authCredentialsLink =
                     Utils.getCustomPropertyValue(this.host.customProperties, '__authCredentialsLink');
             if (authCredentialsLink) {
-                this.editHostForm.get('credentials').setValue(authCredentialsLink);
+                var credItem = this.credentials.filter((c) => c.documentSelfLink === authCredentialsLink);
+                if (credItem.length > 0) {
+                    this.editHostForm.get('credentials').setValue(credItem[0]);
+                }
             }
 
             let publicAddress = Utils.getCustomPropertyValue(this.host.customProperties,

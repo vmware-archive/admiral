@@ -21,15 +21,15 @@
                 <app-cluster-summary [cluster]="entity"></app-cluster-summary>
             </clr-tab-content>
         </clr-tab>
-        <clr-tab>
+        <clr-tab *ngIf="showResources">
             <button clrTabLink id="resourcesTab"
                     (click)="clickedResourcesTab()">{{"clusters.resources.title" | i18n}}</button>
             <clr-tab-content id="resourcesContent" *clrIfActive>
-                <app-cluster-resources *ngIf="showResources"
-                                       [cluster]="entity" [projectLink]="projectLink"
+                <app-cluster-resources [cluster]="entity" [projectLink]="projectLink"
                                        [tabShown]="resourceTabSelected"
                                        (onChange)="reloadCluster()"></app-cluster-resources>
             </clr-tab-content>
         </clr-tab>
     </clr-tabs>
+
 </div>

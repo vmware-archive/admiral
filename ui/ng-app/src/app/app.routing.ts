@@ -31,6 +31,7 @@ import { RepositoryComponent } from './views/hbr/repository/repository.component
 import { ClustersComponent } from './views/clusters/clusters.component';
 import { ClusterDetailsComponent } from './views/clusters/cluster-details/cluster-details.component';
 import { ClusterCreateComponent } from './views/clusters/cluster-create/cluster-create.component';
+import { ClusterEditComponent } from './views/clusters/cluster-edit/cluster-edit.component';
 
 import { DummyComponent } from './components/dummy/dummy.component';
 
@@ -109,7 +110,7 @@ export const ROUTES: Routes = [
                         roles: RoutesRestriction.CLUSTERS_ID
                     }},
                     { path: 'cluster/:id/edit',
-                        canActivate: [HomeAuthGuard], component: ClusterCreateComponent, data: {
+                        canActivate: [HomeAuthGuard], component: ClusterEditComponent, data: {
                         navigationContainerType: NavigationContainerType.Fullscreen,
                         roles: RoutesRestriction.CLUSTERS_EDIT
                     }}
@@ -203,7 +204,7 @@ export const ROUTES: Routes = [
                             roles: RoutesRestriction.CLUSTERS_ID
                         }
                     },
-                    { path: ':projectId/cluster/:id/edit', component: ClusterCreateComponent,
+                    { path: ':projectId/cluster/:id/edit', component: ClusterEditComponent,
                         canActivate: [AdminAuthGuard],
                         data: {
                             navigationContainerType: NavigationContainerType.Fullscreen,

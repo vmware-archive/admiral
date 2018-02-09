@@ -29,6 +29,7 @@ import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
+import com.vmware.admiral.compute.ContainerHostUtil;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService.ElasticPlacementZoneConfigurationState;
 import com.vmware.admiral.compute.PlacementZoneUtil;
 import com.vmware.admiral.compute.cluster.ClusterService.ClusterDto;
@@ -363,6 +364,11 @@ public class ClusterUtils {
     }
 
     public static ComputeState transformComputeForExpandedCluster(ComputeState state) {
+        // we would like to have access to the whole object in order to update it
+        if (ContainerHostUtil.isVicHost(state)) {
+            return state;
+        }
+
         ComputeState outState = new ComputeState();
         // Cast before passing the compute state in order to use the
         // copyTo method with ServiceDocument instead of ResourceState.

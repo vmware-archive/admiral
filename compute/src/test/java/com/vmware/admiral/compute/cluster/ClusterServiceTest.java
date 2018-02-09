@@ -18,6 +18,9 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import static com.vmware.admiral.compute.ContainerHostUtil.PROPERTY_NAME_DRIVER;
+import static com.vmware.admiral.compute.ContainerHostUtil.VMWARE_VIC_DRIVER1;
+
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -223,6 +226,29 @@ public class ClusterServiceTest extends ComputeBaseTest {
         assertEquals(1, placementZonesLinks.size());
         placementsLinks = getPlacementsLinks();
         assertEquals(1, placementsLinks.size());
+    }
+
+    @Test
+    public void testGetVchCluster() throws Throwable {
+        final String projectLink = buildProjectLink("test-vch-project");
+        PlacementZoneUtil.buildPlacementZoneDefaultName(ContainerHostType.VCH, COMPUTE_ADDRESS);
+
+        ContainerHostSpec hostSpec = createContainerHostSpec(Collections.singletonList(projectLink),
+                ContainerHostType.VCH);
+
+        // mark the host as vch
+        hostSpec.hostState.customProperties.put(PROPERTY_NAME_DRIVER, VMWARE_VIC_DRIVER1);
+
+        ClusterDto clusterDto = createCluster(hostSpec);
+
+        assertNotNull(clusterDto.nodeLinks);
+        assertNotNull(clusterDto.nodes);
+        assertEquals(1, clusterDto.nodes.size());
+
+        // verify the whole compute object is returned
+        ComputeState vchHost = clusterDto.nodes.values().iterator().next();
+        assertNotNull(vchHost.customProperties);
+        assertTrue(vchHost.customProperties.size() > 0);
     }
 
     @Test

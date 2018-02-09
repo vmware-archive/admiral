@@ -51,6 +51,7 @@ import { ClusterResourcesComponent } from './views/clusters/cluster-details/clus
 import { ClusterAddHostComponent } from './views/clusters/cluster-details/cluster-add-host.component';
 import { ClusterEditHostComponent } from './views/clusters/cluster-details/cluster-edit-host.component';
 import { ClusterCreateComponent } from './views/clusters/cluster-create/cluster-create.component';
+import { ClusterEditComponent } from './views/clusters/cluster-edit/cluster-edit.component';
 import { VerifyCertificateComponent } from "./views/verify-certificate/verify-certificate.component";
 import { TagDetailsContainersComponent } from "./views/tag-details/tag-details-containers.component";
 
@@ -126,6 +127,7 @@ export const ADMIRAL_DECLARATIONS = [
   ClusterAddHostComponent,
   ClusterEditHostComponent,
   ClusterCreateComponent,
+  ClusterEditComponent,
 
   GridViewComponent,
   CardComponent,

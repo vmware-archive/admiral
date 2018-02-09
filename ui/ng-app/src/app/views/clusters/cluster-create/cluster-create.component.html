@@ -31,7 +31,7 @@
           <label for="description">{{ "clusters.edit.description" | i18n }}</label>
           <input id="description" type="text" formControlName="description">
         </div>
-        <div class="form-group" *ngIf="!isEdit">
+        <div class="form-group">
           <label for="type">{{ "clusters.edit.type" | i18n }}</label>
           <div class="select" data-name="create-cluster-type">
             <select formControlName="type">
@@ -41,7 +41,7 @@
             </select>
           </div>
         </div>
-        <div class="form-group" *ngIf="!isEdit">
+        <div class="form-group">
           <label for="url" class="required">{{ "clusters.edit.url" | i18n }}</label>
           <label for="url" aria-haspopup="true" role="tooltip" class="tooltip tooltip-validation tooltip-sm tooltip-bottom-left"
               [class.invalid]="clusterForm.get('url').invalid && (clusterForm.get('url').dirty || clusterForm.get('url').touched)">
@@ -59,7 +59,7 @@
             <span class="tooltip-content">{{ "clusters.edit.publicAddressDescription" | i18n }}</span>
           </a>
         </div>
-        <div class="form-group" *ngIf="!isEdit">
+        <div class="form-group">
           <label for="credentials">{{ "clusters.edit.credentials" | i18n }}</label>
           <dropdown formControlName="credentials" [options]="credentials"
             [title]="credentialsTitle"
