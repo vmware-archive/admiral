@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -9,15 +9,14 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Links } from '../../../utils/links';
-import { Utils } from '../../../utils/utils';
-import { DocumentService } from '../../../utils/document.service';
 import { Component, AfterViewInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormGroup, FormControl, Validators } from "@angular/forms";
-import { FT } from "../../../utils/ft";
-
 import { BaseDetailsComponent } from '../../../components/base/base-details.component';
+import { DocumentService } from '../../../utils/document.service';
+import { FT } from "../../../utils/ft";
+import { Links } from '../../../utils/links';
+import { Utils } from '../../../utils/utils';
 
 @Component({
   selector: 'app-project-create',
@@ -54,26 +53,30 @@ export class ProjectCreateComponent extends BaseDetailsComponent implements Afte
 
   entityInitialized() {
     this.isEdit = true;
+
     this.projectForm.get('name').setValue(this.entity.name);
+
     if (this.entity.description) {
       this.projectForm.get('description').setValue(this.entity.description);
     }
+
     if (this.entity.isPublic) {
         this.projectForm.get('isPublic').setValue(this.entity.isPublic);
     }
   }
 
   ngAfterViewInit() {
-    setTimeout(() => {
-      this.opened = true;
-    });
+    this.opened = true;
   }
 
   toggleModal(open) {
     this.opened = open;
+
     if (!open) {
       let path: any[] = this.isEdit
-                        ? ['../../' + Utils.getDocumentId(this.entity.documentSelfLink)] : ['../'];
+                        ? ['../../' + Utils.getDocumentId(this.entity.documentSelfLink)]
+                        : ['../'];
+
       this.router.navigate(path, { relativeTo: this.route });
     }
   }
@@ -84,12 +87,15 @@ export class ProjectCreateComponent extends BaseDetailsComponent implements Afte
       if (this.isEdit) {
         this.service.patch(this.entity.documentSelfLink, this.projectForm.value).then(() => {
           this.toggleModal(false);
+
         }).catch((error) => {
             this.alertMessage = Utils.getErrorMessage(error)._generic;
         });
       } else {
+
         this.service.post(Links.PROJECTS, this.projectForm.value).then(() => {
           this.toggleModal(false);
+
         }).catch((error) => {
             this.alertMessage = Utils.getErrorMessage(error)._generic;
         });

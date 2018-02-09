@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -10,29 +10,38 @@
  */
 
 import { Component } from '@angular/core';
-import { BaseDetailsComponent } from './../../../components/base/base-details.component';
-import { DocumentService } from './../../../utils/document.service';
-import { ActivatedRoute } from '@angular/router';
-import { Links } from './../../../utils/links';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription } from "rxjs/Subscription";
+
+import { BaseDetailsComponent } from '../../../components/base/base-details.component';
+import { AuthService } from '../../../utils/auth.service';
+import { DocumentService } from '../../../utils/document.service';
+
+import { FT } from '../../../utils/ft';
+import { Links } from '../../../utils/links';
+import { Roles } from '../../../utils/roles';
+import { RoutesRestriction } from '../../../utils/routes-restriction';
+import { Utils } from '../../../utils/utils';
+
 import { TagClickEvent } from 'harbor-ui';
-import { RoutesRestriction } from './../../../utils/routes-restriction';
-import { FT } from './../../../utils/ft';
-import { Router } from '@angular/router';
-import { Utils } from './../../../utils/utils';
-import { AuthService } from './../../../utils/auth.service';
-import { Roles } from './../../../utils/roles';
 
 @Component({
   selector: 'app-project-details',
   templateUrl: './project-details.component.html',
   styleUrls: ['./project-details.component.scss']
 })
+/**
+ * Project Details tabbed view.
+ */
 export class ProjectDetailsComponent extends BaseDetailsComponent {
-
   hbrProjectId;
   hbrSessionInfo = {};
   isHbrEnabled = FT.isHbrEnabled();
   userSecurityContext: any;
+
+  // tabs preselection through routing
+  routeTabParamSubscription:Subscription;
+  isActiveTabInfrastructre: boolean = false;
 
   constructor(route: ActivatedRoute, service: DocumentService,
     private router: Router, private authService: AuthService) {
@@ -45,6 +54,22 @@ export class ProjectDetailsComponent extends BaseDetailsComponent {
           console.log(ex);
       });
     }
+  }
+
+  ngOnInit() {
+      super.ngOnInit();
+
+      this.routeTabParamSubscription = this.route.params.subscribe((params) => {
+          let tab = params['tab'];
+          // Activate tab Infrastructure
+          this.isActiveTabInfrastructre = tab === 'infra';
+      });
+  }
+
+  ngOnDestroy() {
+      super.ngOnDestroy();
+
+      this.routeTabParamSubscription.unsubscribe();
   }
 
   get projectName(): string {

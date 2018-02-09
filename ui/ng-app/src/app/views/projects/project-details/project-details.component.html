@@ -34,9 +34,11 @@
     </clr-tab>
     <clr-tab>
         <button clrTabLink id="infrastructureTab">{{"projects.infrastructure" | i18n}}</button>
-        <clr-tab-content id="infrastructureContent" *clrIfActive>
-            <app-clusters [hideTitle]="true" [projectLink]="entity?.documentSelfLink"></app-clusters>
-        </clr-tab-content>
+        <ng-template [(clrIfActive)]="isActiveTabInfrastructre">
+            <clr-tab-content id="infrastructureContent">
+                <app-clusters [hideTitle]="true" [projectLink]="entity?.documentSelfLink"></app-clusters>
+            </clr-tab-content>
+        </ng-template>
     </clr-tab>
     <clr-tab *ngIf="isHbrEnabled && hasAccessToRegistryReplication">
         <button clrTabLink id="registryReplicationTab">{{"projects.registryReplication" | i18n}}</button>

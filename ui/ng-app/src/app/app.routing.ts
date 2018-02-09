@@ -176,6 +176,12 @@ export const ROUTES: Routes = [
                             roles: RoutesRestriction.PROJECTS_ID
                         }
                     },
+                    { path: ':id/:tab', component: ProjectDetailsComponent,
+                        data: {
+                            navigationContainerType: NavigationContainerType.Fullscreen,
+                            roles: RoutesRestriction.PROJECTS_ID
+                        }
+                    },
                     { path: ':id/edit', component: ProjectCreateComponent,
                         canActivate: [AdminAuthGuard],
                         data: {
@@ -204,10 +210,33 @@ export const ROUTES: Routes = [
                             roles: RoutesRestriction.CLUSTERS_EDIT
                         }
                     },
-                    { path: ':id/repositories/:rid/tags/:tid', component: TagDetailsComponent, data: {
-                        navigationContainerType: NavigationContainerType.Fullscreen,
-                        hideBackButton: true
-                     }},
+                    { path: ':projectId/:tab/cluster/new', component: ClusterCreateComponent,
+                        canActivate: [AdminAuthGuard],
+                        data: {
+                            navigationContainerType: NavigationContainerType.Fullscreen,
+                            roles: RoutesRestriction.CLUSTERS_NEW
+                        }
+                    },
+                    { path: ':projectId/:tab/cluster/:id', component: ClusterDetailsComponent,
+                        canActivate: [AdminAuthGuard],
+                        data: {
+                            navigationContainerType: NavigationContainerType.Fullscreen,
+                            roles: RoutesRestriction.CLUSTERS_ID
+                        }
+                    },
+                    { path: ':projectId/:tab/cluster/:id/edit', component: ClusterCreateComponent,
+                        canActivate: [AdminAuthGuard],
+                        data: {
+                            navigationContainerType: NavigationContainerType.Fullscreen,
+                            roles: RoutesRestriction.CLUSTERS_EDIT
+                        }
+                    },
+                    { path: ':id/repositories/:rid/tags/:tid', component: TagDetailsComponent,
+                        data: {
+                            navigationContainerType: NavigationContainerType.Fullscreen,
+                            hideBackButton: true
+                        }
+                     },
                     { path: ':id/add-member', component: ProjectAddMemberComponent,
                         canActivate: [AdminAuthGuard],
                         data: {

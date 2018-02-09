@@ -142,10 +142,24 @@ export class ClusterCreateComponent extends BaseDetailsComponent
     this.opened = open;
 
     if (!open) {
-      let pathUp = '../../';
-      let path: any[] = this.isEdit
-                          ? [pathUp + Utils.getDocumentId(this.entity.documentSelfLink)]
-                          : [pathUp];
+      const PATH_UP = '../../';
+      const PROJECTS_VIEW_URL_PART = 'projects';
+      const TAB_ID_PROJECT_INFRASTRUCTURE = 'infra';
+
+      let path: any[] = [PATH_UP];
+      if (this.isEdit) {
+        // Edited existing cluster - show cluster details
+        path = [PATH_UP + Utils.getDocumentId(this.entity.documentSelfLink)];
+      } else {
+          // New cluster was created
+          if (this.router.url.indexOf(PROJECTS_VIEW_URL_PART) > -1) {
+            // New cluster was created in the Projects view
+            if (this.router.url.indexOf(TAB_ID_PROJECT_INFRASTRUCTURE) < 0) {
+              // Preselect infrastructure tab in project details view upon new cluster creation
+              path = [PATH_UP + TAB_ID_PROJECT_INFRASTRUCTURE];
+          }
+        }
+      }
 
       this.router.navigate(path, { relativeTo: this.route });
     }
