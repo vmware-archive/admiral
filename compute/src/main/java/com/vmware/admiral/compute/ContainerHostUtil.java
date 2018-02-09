@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -23,12 +23,15 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.ConfigurationUtil;
+import com.vmware.admiral.common.util.VersionUtil;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
@@ -43,11 +46,18 @@ public class ContainerHostUtil {
             + "host type '%s' is not supported";
     public static final String CONTAINER_HOST_TYPE_NOT_SUPPORTED_MESSAGE_CODE = "compute.host.type.not.supported";
 
+    public static final String VCH_VERSION_NOT_SUPPORTED_MESSAGE_FORMAT = "VCH version (%s) is not supported.";
+    public static final String VCH_VERSION_NOT_SUPPORTED_MESSAGE_CODE = "compute.host.vch.version.not.supported";
+
     public static final String PROPERTY_NAME_DRIVER = "__Driver";
     public static final String VMWARE_VIC_DRIVER1 = "vmware";
     public static final String VMWARE_VIC_DRIVER2 = "vsphere";
 
+    public static final String PROPERTY_NAME_SERVER_VERSION = "__ServerVersion";
+
     private static final String FEATURE_TOGGLE_HOST_PUBLIC_ADDRESS = "allow.ft.hosts.public-address";
+
+    private static final Logger logger = Logger.getLogger(ContainerHostUtil.class.getName());
 
     /**
      * Check if this host is a scheduler host (e.g. VIC, Kubernetes)
@@ -128,6 +138,92 @@ public class ContainerHostUtil {
     }
 
     /**
+     * Returns the server version that is reported on <code>docker info</code> command.
+     */
+    public static String getHostServerVersion(ComputeState computeState) {
+        if (computeState != null && computeState.customProperties != null) {
+            return computeState.customProperties.get(PROPERTY_NAME_SERVER_VERSION);
+        }
+        return null;
+    }
+
+    /**
+     * Fetches the minimum (inclusive) and maximum (exclusive) supported versions for VCH and checks
+     * whether the version provided is supported. If it is, the returned {@link DeferredResult} will
+     * be completed. Otherwise, it will be failed. Applies to embedded mode only. If Admiral is not
+     * run in embedded mode, every VCH version will be accepted.
+     */
+    public static DeferredResult<Void> verifyVchVersionIsSupported(ServiceHost serviceHost,
+            String vchVersion) {
+        if (!ConfigurationUtil.isEmbedded()) {
+            return DeferredResult.completed(null);
+        }
+
+        if (vchVersion == null || vchVersion.trim().isEmpty()) {
+            String error = String.format(VCH_VERSION_NOT_SUPPORTED_MESSAGE_FORMAT, "unknown");
+            return DeferredResult.failed(new LocalizableValidationException(error,
+                    VCH_VERSION_NOT_SUPPORTED_MESSAGE_CODE, "unknown"));
+        }
+
+        DeferredResult<Void> deferredResult = new DeferredResult<>();
+
+        ConfigurationUtil.getConfigProperty(serviceHost,
+                ConfigurationUtil.VCH_MIN_VERSION_INCLUSIVE_PROPERTY,
+                (minVersionInclusive) -> {
+                    ConfigurationUtil.getConfigProperty(serviceHost,
+                            ConfigurationUtil.VCH_MAX_VERSION_EXCLUSIVE_PROPERTY,
+                            (maxVersionExclusive) -> {
+                                if (isSupportedVchVersion(vchVersion, minVersionInclusive,
+                                        maxVersionExclusive)) {
+                                    deferredResult.complete(null);
+                                    return;
+                                }
+
+                                String error = String.format(
+                                        VCH_VERSION_NOT_SUPPORTED_MESSAGE_FORMAT, vchVersion);
+                                deferredResult.fail(new LocalizableValidationException(error,
+                                        VCH_VERSION_NOT_SUPPORTED_MESSAGE_CODE, vchVersion));
+                            });
+                });
+
+        return deferredResult;
+    }
+
+    protected static boolean isSupportedVchVersion(String vchVersion, String minVersionInclusive,
+            String maxVersionExclusive) {
+
+        try {
+            if (minVersionInclusive != null
+                    && !minVersionInclusive.isEmpty()
+                    && VersionUtil.compareRawVersions(vchVersion, minVersionInclusive) < 0) {
+                return false;
+            }
+        } catch (IllegalArgumentException ex) {
+            logger.log(Level.WARNING,
+                    String.format(
+                            "Failed to compare VCH version [%s] with minimum supported version [%s (inclusive)]",
+                            vchVersion, minVersionInclusive));
+            return false;
+        }
+
+        try {
+            if (maxVersionExclusive != null
+                    && !maxVersionExclusive.isEmpty()
+                    && VersionUtil.compareRawVersions(vchVersion, maxVersionExclusive) >= 0) {
+                return false;
+            }
+        } catch (IllegalArgumentException ex) {
+            logger.log(Level.WARNING,
+                    String.format(
+                            "Failed to compare VCH version [%s] with maximum supported version [%s (exclusive)]",
+                            vchVersion, maxVersionExclusive));
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Check if host is running Kubernetes.
      *
      * @param computeState
@@ -148,8 +244,7 @@ public class ContainerHostUtil {
      */
     public static String getDriver(ComputeState computeState) {
         if (computeState != null && computeState.customProperties != null) {
-            return computeState.customProperties
-                    .get(PROPERTY_NAME_DRIVER);
+            return computeState.customProperties.get(PROPERTY_NAME_DRIVER);
         }
         return null;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -240,8 +241,8 @@ public class ContainerHostService extends StatelessService {
     }
 
     /**
-     * Fetches server certificate and stores its fingerprint as custom property. It is then used
-     * as a hash key to get the client certificate when handshaking. If cannot establish connection
+     * Fetches server certificate and stores its fingerprint as custom property. It is then used as
+     * a hash key to get the client certificate when handshaking. If cannot establish connection
      * sets host power state to unknown. It will be set to the correct one once the data collection
      * passes.
      */
@@ -499,7 +500,19 @@ public class ContainerHostService extends StatelessService {
             // VIC verification relies on data gathered by a docker info command
             getHostInfo(hostSpec, op, hostSpec.sslTrust, (computeState) -> {
                 if (ContainerHostUtil.isVicHost(computeState)) {
-                    doStoreHost(hostSpec, op);
+                    String version = ContainerHostUtil.getHostServerVersion(computeState);
+                    ContainerHostUtil.verifyVchVersionIsSupported(getHost(), version)
+                            .whenComplete((ignore, ex) -> {
+                                if (ex != null) {
+                                    Throwable cause = ex instanceof CompletionException
+                                            ? ex.getCause() : ex;
+                                    logWarning("Unsupported VCH version: %s",
+                                            Utils.toString(cause));
+                                    op.fail(cause);
+                                } else {
+                                    doStoreHost(hostSpec, op);
+                                }
+                            });
                 } else {
                     op.fail(new LocalizableValidationException(
                             CONTAINER_HOST_IS_NOT_VCH_MESSAGE,
@@ -575,8 +588,8 @@ public class ContainerHostService extends StatelessService {
         cs.customProperties.put(ComputeConstants.DOCKER_URI_PROP_NAME, hostSpec.uri.toString());
         cs.customProperties.put(CONTAINER_HOST_TYPE_PROP_NAME, hostType.toString());
         if (hostSpec.sslTrust != null) {
-            cs.customProperties.put(ComputeConstants.HOST_TRUST_CERTS_PROP_NAME, hostSpec.sslTrust
-                    .documentSelfLink);
+            cs.customProperties.put(ComputeConstants.HOST_TRUST_CERTS_PROP_NAME,
+                    hostSpec.sslTrust.documentSelfLink);
         }
 
         sendRequest(store
@@ -717,7 +730,7 @@ public class ContainerHostService extends StatelessService {
                                 .setCompletion((o, e) -> {
                                     if (e != null) {
                                         logWarning("Default host description can't be created."
-                                                        + " Exception: %s",
+                                                + " Exception: %s",
                                                 e instanceof CancellationException
                                                         ? e.getMessage() : Utils.toString(e));
                                         return;
@@ -773,11 +786,12 @@ public class ContainerHostService extends StatelessService {
                         String innerMessage = toReadableErrorMessage(ex, op);
                         String message = String.format("Error connecting to %s : %s",
                                 cs.address, innerMessage);
-                        LocalizableValidationException validationEx =
-                                new LocalizableValidationException(ex.getCause(),
-                                        message, "compute.add.host.connection.error", cs.address,
-                                        innerMessage);
-                        ServiceErrorResponse rsp = Utils.toValidationErrorResponse(validationEx, op);
+                        LocalizableValidationException validationEx = new LocalizableValidationException(
+                                ex.getCause(),
+                                message, "compute.add.host.connection.error", cs.address,
+                                innerMessage);
+                        ServiceErrorResponse rsp = Utils.toValidationErrorResponse(validationEx,
+                                op);
 
                         logWarning("Error sending adapter request with type %s : %s",
                                 request.operationTypeId, rsp.message);
@@ -832,9 +846,11 @@ public class ContainerHostService extends StatelessService {
                         "compute.check.credentials");
             }
         } else if (e.getCause() instanceof ConnectTimeoutException) {
-            localizedEx = new LocalizableValidationException(e, "Connection timeout", "compute.connection.timeout");
+            localizedEx = new LocalizableValidationException(e, "Connection timeout",
+                    "compute.connection.timeout");
         } else if (e.getCause() instanceof ProtocolException) {
-            localizedEx = new LocalizableValidationException(e, "Protocol exception", "compute.protocol.exception");
+            localizedEx = new LocalizableValidationException(e, "Protocol exception",
+                    "compute.protocol.exception");
         } else if (e instanceof IllegalArgumentException) {
             localizedEx = new LocalizableValidationException(e,
                     "Illegal argument exception: " + e.getMessage(), "compute.illegal.argument",
@@ -866,7 +882,8 @@ public class ContainerHostService extends StatelessService {
     private void createHostPortProfile(ComputeState computeState, Operation operation) {
         HostPortProfileService.HostPortProfileState hostPortProfileState = new HostPortProfileService.HostPortProfileState();
         hostPortProfileState.hostLink = computeState.documentSelfLink;
-        // Make sure there is only one HostPortProfile per Host by generating profile id based on host id
+        // Make sure there is only one HostPortProfile per Host by generating profile id based on
+        // host id
         hostPortProfileState.id = computeState.id;
         hostPortProfileState.documentSelfLink = HostPortProfileService.getHostPortProfileLink(
                 computeState.documentSelfLink);
@@ -978,7 +995,8 @@ public class ContainerHostService extends StatelessService {
         ServiceDocument d = super.getDocumentTemplate();
         addServiceRequestRoute(d, Action.PUT,
                 "Add container host. If host is added successfully, it's reference can be "
-                        + "acquired from \"Location\" response header.", null);
+                        + "acquired from \"Location\" response header.",
+                null);
         return d;
     }
 }

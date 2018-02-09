@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -40,6 +40,7 @@ import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.admiral.common.util.VersionUtil;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostUtil;
 import com.vmware.admiral.compute.HostConfigCertificateDistributionService;
@@ -188,22 +189,11 @@ public class HostContainerListDataCollection extends StatefulService {
                 if (version.equals(LATEST_VERSION) && o.version.equals(LATEST_VERSION)) {
                     return 0;
                 } else if (version.equals(LATEST_VERSION)) {
-                    return -1;
-                } else if (o.version.equals(LATEST_VERSION)) {
                     return 1;
+                } else if (o.version.equals(LATEST_VERSION)) {
+                    return -1;
                 } else {
-                    String[] v = version.split("\\.");
-                    String[] vo = o.version.split("\\.");
-                    for (int i = 0; i < v.length; i++) {
-                        int vInt = Integer.parseInt(v[i]);
-                        int voInt = Integer.parseInt(vo[i]);
-                        if (vInt < voInt) {
-                            return -1;
-                        } else if (vInt > voInt) {
-                            return 1;
-                        }
-                    }
-                    return 0;
+                    return VersionUtil.compareNumericVersions(version, o.version);
                 }
             } catch (RuntimeException e) {
                 Utils.logWarning("Unable to compare container versions [%s-%s]", version,

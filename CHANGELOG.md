@@ -8,6 +8,8 @@
 
 * Added support for multiple path segments in the names of repositories, e.g. localhost:5000/category/sub-category/repo-name
 
+* Limited the supported VCH versions to 1.2 and 1.3 in embedded mode. In standalone and VIC modes no restriction is enforced.
+
 Docker hub images & tags: https://hub.docker.com/r/vmware/admiral/
 
 * dev - Standalone

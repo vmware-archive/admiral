@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -33,6 +33,9 @@ public class ConfigurationUtil {
     public static final String VIC_MODE_PROPERTY = "vic";
     public static final String ALLOW_SSH_CONSOLE_PROPERTY = "allow.browser.ssh.console";
     public static final String ALLOW_HOST_EVENTS_SUBSCRIPTIONS = "allow.host.events.subscription";
+
+    public static final String VCH_MIN_VERSION_INCLUSIVE_PROPERTY = "embedded.mode.vch.min.version.inclusive";
+    public static final String VCH_MAX_VERSION_EXCLUSIVE_PROPERTY = "embedded.mode.vch.max.version.exclusive";
 
     // used for IT test in order to simulate this kind of exception
     public static final String THROW_IO_EXCEPTION = "throw.io.exception";

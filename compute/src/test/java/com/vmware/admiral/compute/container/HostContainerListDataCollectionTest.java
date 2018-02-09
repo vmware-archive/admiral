@@ -341,8 +341,16 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
         ContainerVersion cvLatest = ContainerVersion.fromImageName("abc:latest");
 
         assertTrue(cv22.hashCode() != cv23.hashCode());
-        assertTrue(cv22.compareTo(cv23) < 0);
         assertTrue(!cv23.equals(cvLatest));
+
+        assertEquals(0, cvLatest.compareTo(cvLatest));
+        assertEquals(0, cv22.compareTo(cv22));
+
+        assertTrue(cv22.compareTo(cv23) < 0);
+        assertTrue(cv23.compareTo(cv22) > 0);
+
+        assertTrue(cv23.compareTo(cvLatest) < 0);
+        assertTrue(cvLatest.compareTo(cv22) > 0);
     }
 
     private void testStateStuckInProvisioning(boolean isSystemContainerMissingOnHost)
