@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -15,7 +15,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -135,5 +134,18 @@ public class ContainerHostUtilTest {
         state.customProperties = new HashMap<>();
         result = ContainerHostUtil.isSchedulerHost(state);
         assertFalse(result);
+    }
+
+    @Test
+    public void testIsSupportedVchVersion() {
+        assertTrue(ContainerHostUtil.isSupportedVchVersion("1.0.0", null, null));
+        assertTrue(ContainerHostUtil.isSupportedVchVersion("1.0.0", "1.0.0", null));
+        assertTrue(ContainerHostUtil.isSupportedVchVersion("1.0.0", null, "1.1.0"));
+        assertTrue(ContainerHostUtil.isSupportedVchVersion("1.0.0", "1.0.0", "1.1.0"));
+
+        assertFalse(ContainerHostUtil.isSupportedVchVersion("1.0.0", null, "1.0.0"));
+        assertFalse(ContainerHostUtil.isSupportedVchVersion("1.1.0", null, "1.0.0"));
+        assertFalse(ContainerHostUtil.isSupportedVchVersion("1.1", "1.1.1", null));
+        assertFalse(ContainerHostUtil.isSupportedVchVersion("1.0", "2.0", null));
     }
 }
