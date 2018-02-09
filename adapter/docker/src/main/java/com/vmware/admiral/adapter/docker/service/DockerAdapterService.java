@@ -78,7 +78,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -119,7 +118,6 @@ import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.FileUtils;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.Operation.CompletionHandler;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
@@ -157,7 +155,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
     private static final Long[] INSPECT_RETRY_AFTER_SECONDS = DEFAULT_RETRY_AFTER_SECONDS;
 
     /**
-     * default delays to wait before retrying a failed container start operation.
+     * default delays to wait before retrying a failed container create operation.
      *
      * TODO make this configurable
      */
@@ -171,25 +169,40 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
     private static final Long[] START_RETRY_AFTER_SECONDS = DEFAULT_RETRY_AFTER_SECONDS;
 
     /**
-     * default delays to wait before retrying a failed container start operation.
+     * default delays to wait before retrying a failed container stop operation.
      *
      * TODO make this configurable
      */
     private static final Long[] STOP_RETRY_AFTER_SECONDS = DEFAULT_RETRY_AFTER_SECONDS;
 
     /**
-     * default delays to wait before retrying a failed container start operation.
+     * default delays to wait before retrying a failed container delete operation.
      *
      * TODO make this configurable
      */
     private static final Long[] DELETE_RETRY_AFTER_SECONDS = DEFAULT_RETRY_AFTER_SECONDS;
 
     /**
-     * default delays to wait before retrying a failed container start operation.
+     * default delays to wait before retrying a failed container connect to network operation.
      *
      * TODO make this configurable
      */
+
     private static final Long[] CONNECT_NETWORK_RETRY_AFTER_SECONDS = DEFAULT_RETRY_AFTER_SECONDS;
+
+    /**
+     * default delays to wait before retrying a failed pull container image operation.
+     *
+     * TODO make this configurable
+     */
+    private static final Long[] PULL_IMAGE_RETRY_AFTER_SECONDS = DEFAULT_RETRY_AFTER_SECONDS;
+
+    /**
+     * default delays to wait before retrying a failed load container image operation.
+     *
+     * TODO make this configurable
+     */
+    private static final Long[] LOAD_IMAGE_RETRY_AFTER_SECONDS = DEFAULT_RETRY_AFTER_SECONDS;
 
     public static final String SELF_LINK = ManagementUriParts.ADAPTER_DOCKER;
 
@@ -501,18 +514,11 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
 
         URI imageReference = context.containerDescription.imageReference;
 
-        CompletionHandler imageCompletionHandler = (o, ex) -> {
-            if (ex != null) {
-                logWarning("Failure retrieving image for container [%s] of host [%s]",
-                        context.containerState.documentSelfLink,
-                        context.computeState.documentSelfLink);
-                fail(context.request, o, ex);
-            } else {
-                handleExceptions(
-                        context.request,
-                        context.operation,
-                        () -> processCreateContainer(context));
-            }
+        Runnable imageCompletionAction = () -> {
+            handleExceptions(
+                    context.request,
+                    context.operation,
+                    () -> processCreateContainer(context));
         };
 
         if (SystemContainerDescriptions.getAgentImageNameAndVersion()
@@ -520,13 +526,13 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
             String ref = SystemContainerDescriptions.AGENT_IMAGE_REFERENCE;
 
             imageRetrievalManager.retrieveAgentImage(ref, context.request, (imageData) -> {
-                processLoadedImageData(context, imageData, ref, imageCompletionHandler);
+                processLoadImageData(context, imageData, ref, imageCompletionAction);
             });
         } else if (shouldTryCreateFromLocalImage(context.containerDescription)) {
             if (getBundledImage(context.containerDescription) != null) {
                 String ref = getBundledImage(context.containerDescription);
                 imageRetrievalManager.retrieveAgentImage(ref, context.request, (imageData) -> {
-                    processLoadedImageData(context, imageData, ref, imageCompletionHandler);
+                    processLoadImageData(context, imageData, ref, imageCompletionAction);
                 });
             } else {
                 // try to create the container from a local image first. Only if the image is not
@@ -546,7 +552,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
             createImageCommandInput.withProperty(DOCKER_IMAGE_FROM_PROP_NAME, fullImageName);
 
             logInfo("Pulling image: %s %s", fullImageName, context.request.getRequestTrackingLog());
-            processPullImageFromRegistry(context, createImageCommandInput, imageCompletionHandler);
+            processPullImageFromRegistry(context, createImageCommandInput, imageCompletionAction);
         } else {
             // fetch the image first, then execute a image load command
             logInfo("Downloading image from: %s %s", imageReference,
@@ -555,7 +561,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                 if (FILE_SCHEME.equals(imageReference.getScheme())) {
                     // for file scheme use the file and do not delete it (it is not a temp copy)
                     processDownloadedImage(context, new File(imageReference),
-                            imageCompletionHandler, false);
+                            imageCompletionAction, false);
                 } else {
                     // for not file scheme, download it to a temp file
                     File tempFile = File.createTempFile(DOWNLOAD_TEMPFILE_PREFIX, null);
@@ -581,7 +587,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                                             context.request.getRequestTrackingLog());
 
                                     processDownloadedImage(context, tempFile,
-                                            imageCompletionHandler, true);
+                                            imageCompletionAction, true);
                                 }
                             });
 
@@ -598,14 +604,14 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
 
     /**
      * read the temp file containing the downloaded image from the file system and proceed with
-     * imageCompletionHandler
+     * imageCompletionAction
      *
      * @param context
      * @param tempFile
-     * @param imageCompletionHandler
+     * @param imageCompletionAction
      */
     private void processDownloadedImage(RequestContext context, File tempFile,
-            CompletionHandler imageCompletionHandler, boolean isTempFile) {
+            Runnable imageCompletionAction, boolean isTempFile) {
 
         Operation fileReadOp = Operation.createPatch(null)
                 .setContextId(context.request.getRequestId())
@@ -621,63 +627,152 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                                 context.request.getRequestTrackingLog());
                     }
 
-                    processLoadedImageData(context, imageData,
+                    processLoadImageData(context, imageData,
                             context.containerDescription.imageReference.toString(),
-                            imageCompletionHandler);
+                            imageCompletionAction);
                 });
 
         FileUtils.readFileAndComplete(fileReadOp, tempFile);
     }
 
-    private void processLoadedImageData(RequestContext context, byte[] imageData,
-            String fileName,
-            CompletionHandler imageCompletionHandler) {
+    private void processLoadImageData(RequestContext context, byte[] imageData, String fileName,
+            Runnable imageCompletionAction) {
+        // TODO consider merging this functionality with DockerHostAdapterImageService.doLoadImage
         if (imageData == null || imageData.length == 0) {
             String errMsg = String.format("No content loaded for file: %s %s",
                     fileName, context.request.getRequestTrackingLog());
             this.logSevere(errMsg);
-            imageCompletionHandler.handle(null,
-                    new LocalizableValidationException(errMsg, "adapter.load.image.empty", fileName,
-                            context.request.getRequestTrackingLog()));
+            fail(context.request, new LocalizableValidationException(errMsg,
+                    "adapter.load.image.empty", fileName, context.request.getRequestTrackingLog()));
             return;
         }
 
         logInfo("Loaded content for file: %s %s. Now sending to host...", fileName,
                 context.request.getRequestTrackingLog());
+        doLoadImage(context, imageData, fileName, imageCompletionAction);
+    }
 
-        CommandInput loadCommandInput = new CommandInput(context.commandInput)
+    private void doLoadImage(RequestContext context, byte[] imageData, String fileName,
+            Runnable imageCompletionAction) {
+
+        CommandInput loadImageCommandInput = new CommandInput(context.commandInput)
                 .withProperty(DOCKER_IMAGE_DATA_PROP_NAME, imageData);
-        context.executor.loadImage(loadCommandInput, imageCompletionHandler);
+
+        ensurePullRetriesPropertyExists((retryCountProperty) -> {
+            new RetriableTaskBuilder<Void>(
+                    String.format("load-image-from-file-%s", fileName))
+                            .withMaximumRetries(retryCountProperty)
+                            .withRetryDelays(LOAD_IMAGE_RETRY_AFTER_SECONDS)
+                            .withRetryDelaysTimeUnit(TimeUnit.SECONDS)
+                            .withServiceHost(getHost())
+                            .withTaskFunction(prepareLoadImageFunction(context, fileName,
+                                    loadImageCommandInput))
+                            .execute()
+                            .whenComplete((ignore, ex) -> {
+                                if (ex != null) {
+                                    Throwable failureCause = ex instanceof CompletionException
+                                            ? ex.getCause() : ex;
+                                    fail(context.request, failureCause);
+                                    return;
+                                }
+
+                                imageCompletionAction.run();
+                            });
+        });
+    }
+
+    private Function<RetriableTask<Void>, DeferredResult<Void>> prepareLoadImageFunction(
+            RequestContext context, String fileName, CommandInput loadImageCommandInput) {
+        return (task) -> {
+            DeferredResult<Void> result = new DeferredResult<>();
+
+            logFine("Loading container image from file [%s]", fileName);
+
+            context.executor.loadImage(loadImageCommandInput, (o, ex) -> {
+                if (ex == null) {
+                    // Nothing to do, success completion will be
+                    // handled on the retriable task completion
+                    result.complete(null);
+                    return;
+                }
+
+                if (isRetriableFailure(o.getStatusCode())) {
+                    markRequestAsRetriedAfterFailure(context.request);
+                } else {
+                    task.preventRetries();
+                    logSevere(
+                            "Failure loading container image from file [%s] (status code: %s)",
+                            fileName,
+                            o.getStatusCode());
+                }
+
+                result.fail(DockerAdapterUtils.runtimeExceptionFromFailedDockerOperation(o, ex));
+            });
+
+            return result;
+        };
     }
 
     private void processPullImageFromRegistry(RequestContext context,
-            CommandInput createImageCommandInput, CompletionHandler imageCompletionHandler) {
+            CommandInput createImageCommandInput, Runnable imageCompletionAction) {
 
         ensurePullRetriesPropertyExists((retryCountProperty) -> {
-            processPullImageFromRegistryWithRetry(context, createImageCommandInput,
-                    imageCompletionHandler, 0, retryCountProperty);
+            String fullImageName = DockerImage.fromImageName(context.containerDescription.image)
+                    .toString();
+            new RetriableTaskBuilder<Void>(
+                    String.format("pull-image-%s", fullImageName))
+                            .withMaximumRetries(retryCountProperty)
+                            .withRetryDelays(PULL_IMAGE_RETRY_AFTER_SECONDS)
+                            .withRetryDelaysTimeUnit(TimeUnit.SECONDS)
+                            .withServiceHost(getHost())
+                            .withTaskFunction(
+                                    preparePullImageFunction(context, createImageCommandInput))
+                            .execute()
+                            .whenComplete((ignore, ex) -> {
+                                if (ex != null) {
+                                    Throwable failureCause = ex instanceof CompletionException
+                                            ? ex.getCause() : ex;
+                                    fail(context.request, failureCause);
+                                    return;
+                                }
+
+                                imageCompletionAction.run();
+                            });
         });
     }
 
-    private void processPullImageFromRegistryWithRetry(RequestContext context,
-            CommandInput createImageCommandInput, CompletionHandler imageCompletionHandler,
-            int retriesCount, int maxRetryCount) {
-        AtomicInteger retryCount = new AtomicInteger(retriesCount);
-        context.executor.createImage(createImageCommandInput, (op, ex) -> {
-            if (ex != null && RETRIABLE_HTTP_STATUSES.contains(op.getStatusCode())
-                    && retryCount.getAndIncrement() < maxRetryCount) {
-                String fullImageName = DockerImage.fromImageName(context.containerDescription.image)
-                        .toString();
-                logWarning("Pulling image %s failed with %s. Retries left %d",
-                        fullImageName, Utils.toString(ex),
-                        maxRetryCount - retryCount.get());
-                markRequestAsRetriedAfterFailure(context.request);
-                processPullImageFromRegistryWithRetry(context, createImageCommandInput,
-                        imageCompletionHandler, retryCount.get(), maxRetryCount);
-            } else {
-                imageCompletionHandler.handle(op, ex);
-            }
-        });
+    private Function<RetriableTask<Void>, DeferredResult<Void>> preparePullImageFunction(
+            RequestContext context, CommandInput createImageCommandInput) {
+        return (task) -> {
+            DeferredResult<Void> result = new DeferredResult<>();
+
+            String fullImageName = DockerImage.fromImageName(context.containerDescription.image)
+                    .toString();
+            logFine("Pulling container image [%s]", fullImageName);
+
+            context.executor.createImage(createImageCommandInput, (o, ex) -> {
+                if (ex == null) {
+                    // Nothing to do, success completion will be
+                    // handled on the retriable task completion
+                    result.complete(null);
+                    return;
+                }
+
+                if (isRetriableFailure(o.getStatusCode())) {
+                    markRequestAsRetriedAfterFailure(context.request);
+                } else {
+                    task.preventRetries();
+                    logSevere(
+                            "Failure pulling container image [%s] (status code: %s)",
+                            fullImageName,
+                            o.getStatusCode());
+                }
+
+                result.fail(DockerAdapterUtils.runtimeExceptionFromFailedDockerOperation(o, ex));
+            });
+
+            return result;
+        };
     }
 
     private void processCreateContainer(RequestContext context) {
