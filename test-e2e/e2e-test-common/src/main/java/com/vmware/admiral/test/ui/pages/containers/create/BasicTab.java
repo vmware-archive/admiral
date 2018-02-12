@@ -30,8 +30,19 @@ public class BasicTab extends BasicPage<BasicTabValidator, BasicTabLocators> {
 
     public void setTag(String tag) {
         LOG.info(String.format("Setting tag: [%s]", tag));
-        pageActions().clear(locators().tagInput());
-        pageActions().sendKeys(tag, locators().tagInput());
+        // sometimes sending keys to the tag input does not send all keys
+        // so we retry
+        int retries = 5;
+        while (retries > 0) {
+            pageActions().clear(locators().tagInput());
+            pageActions().sendKeys(tag, locators().tagInput());
+            if (pageActions().getAttribute("value", locators().tagInput()).equals(tag)) {
+                return;
+            }
+            LOG.warning("Setting tag failed, retrying...");
+            retries--;
+        }
+        throw new RuntimeException("Could not set image tag: " + tag);
     }
 
     public void setName(String name) {

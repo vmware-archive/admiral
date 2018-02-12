@@ -478,6 +478,7 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
         projects().projectsPage().waitToLoad();
         for (String project : ALL_PROJECTS) {
             projects().projectsPage().clickProjectDeleteButton(project);
+            projects().deleteProjectDialog().waitToLoad();
             projects().deleteProjectDialog().submit();
             projects().projectsPage().waitToLoad();
         }

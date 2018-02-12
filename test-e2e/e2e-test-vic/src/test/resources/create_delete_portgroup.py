@@ -70,6 +70,7 @@ def get_dvs(network_folder, args):
         raise Exception("Could not find distributed virtual switch: " + args.dvswitch)
     return switch
 
+
 def get_network_folder(connection, args):
     dcs = connection.content.rootFolder.childEntity
     dc = None
@@ -98,8 +99,10 @@ def create(dvs, args):
 def delete(network_folder, args):
     portgroup = None
     for item in network_folder.childEntity:
-        if item.name == args.portgroup and item.config.distributedVirtualSwitch.name == args.dvswitch:
-            portgroup = item
+        if isinstance(item, vim.dvs.DistributedVirtualPortgroup):     
+            if item.name == args.portgroup:
+                portgroup = item
+                break
     if portgroup == None:
         raise Exception("Could not find portgroup with name: " + args.portgroup + " in dv switch: " + args.dvswitch)
     task = portgroup.Destroy()
@@ -108,6 +111,7 @@ def delete(network_folder, args):
     if task.info.state == 'error':
         raise Exception("Deleting a portgroup failed: " + task.info.error.msg)
     print("Successfully deleted portgroup: " + args.portgroup)
+
 
 if __name__ == "__main__":
     main()

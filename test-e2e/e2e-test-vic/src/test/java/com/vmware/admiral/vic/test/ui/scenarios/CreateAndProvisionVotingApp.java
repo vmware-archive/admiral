@@ -13,15 +13,16 @@ package com.vmware.admiral.vic.test.ui.scenarios;
 
 import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.open;
-import static com.codeborne.selenide.WebDriverRunner.clearBrowserCache;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import com.codeborne.selenide.Condition;
 
 import org.junit.Rule;
 import org.junit.Test;
 import org.openqa.selenium.By;
+import org.openqa.selenium.TimeoutException;
 
 import com.vmware.admiral.test.ui.pages.applications.ApplicationsPage;
 import com.vmware.admiral.test.ui.pages.clusters.AddClusterModalDialog.HostType;
@@ -107,7 +108,7 @@ public class CreateAndProvisionVotingApp extends BaseTest {
         createVotingAppTemplate();
 
         templates().templatesPage().provisionTemplate(TEMPLATE_NAME);
-        templates().requests().waitForLastRequestToSucceed(720);
+        templates().requests().waitForLastRequestToSucceed(900);
 
         home().clickApplicationsButton();
         ApplicationsPage applicationsPage = applications().applicationsPage();
@@ -147,6 +148,9 @@ public class CreateAndProvisionVotingApp extends BaseTest {
         containers().containerStatsPage().waitToLoad();
         List<String> votePortSettings = containers().containerStatsPage()
                 .getPortsSettings();
+        String votingAddress = extractAddressFromPortSetting(votePortSettings);
+        LOG.info("Voting app voting page address resolved at: " + votingAddress);
+
         home().clickNetworksButton();
         home().clickContainersButton();
         containersPage.waitToLoad();
@@ -154,10 +158,9 @@ public class CreateAndProvisionVotingApp extends BaseTest {
         containers().containerStatsPage().waitToLoad();
         List<String> resultPortSettings = containers().containerStatsPage()
                 .getPortsSettings();
-
-        String votingAddress = extractAddressFromPortSetting(votePortSettings);
         String resultAddress = extractAddressFromPortSetting(resultPortSettings);
         logOut();
+        LOG.info("Voting app results page address resolved at: " + resultAddress);
 
         voteAndVerify(votingAddress, resultAddress);
 
@@ -301,16 +304,25 @@ public class CreateAndProvisionVotingApp extends BaseTest {
     private void voteAndVerify(String votingTarget, String resultTarget) {
         LOG.info("Opening voting app voting page");
         open(votingTarget);
+        sleep(3000);
         LOG.info("Voting for cats");
         $(By.cssSelector("#a")).click();
-        clearBrowserCache();
-        sleep(1000);
         LOG.info("Opening the votig app results page");
         open(resultTarget);
         LOG.info("Validating voting results");
-        $(By.cssSelector("#result>span")).shouldHave(Condition.exactText("1 vote"));
-        $(By.cssSelector(".choice.cats .stat.ng-binding"))
-                .shouldHave(Condition.exactText("100.0%"));
+        $(By.cssSelector(".choice.cats .stat.ng-binding")).should(Condition.exist);
+        try {
+            com.codeborne.selenide.Selenide.Wait()
+                    .withTimeout(10, TimeUnit.SECONDS)
+                    .until(d -> {
+                        return $(By.cssSelector("#result>span"))
+                                .has(Condition.exactText("1 vote")) &&
+                                $(By.cssSelector(".choice.cats .stat.ng-binding"))
+                                        .has(Condition.exactText("100.0%"));
+                    });
+        } catch (TimeoutException e) {
+            LOG.warning("Voting app results page did not show correct results");
+        }
     }
 
     protected String extractAddressFromPortSetting(List<String> portSettings) {

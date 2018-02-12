@@ -36,6 +36,8 @@ public class VchUtil {
     private final String VIC_MACHINE_TOOL_REMOTE_PATH = REMOTE_VIC_MACHINE_PATH
             + "/vic/vic-machine-linux";
     private final String HARBOR_CERTIFICATE_REMOTE_PATH = "/storage/data/harbor/ca_download/ca.crt";
+    private final int SSH_COMMAND_TIMEOUT = 600; // 10 min
+    private final String VIC_MACHINE_TIMEOUT = "10m0s";
 
     private final SSHCommandExecutor executor;
 
@@ -62,8 +64,9 @@ public class VchUtil {
                 .append(" --name " + vchName)
                 .append(" --volume-store " + "'" + datastoreName + "'/" + vchName + "/"
                         + "volumes/:default")
-                .append(" --registry-ca " + HARBOR_CERTIFICATE_REMOTE_PATH);
-        return executor.execute(createVchCommand.toString(), 360);
+                .append(" --registry-ca " + HARBOR_CERTIFICATE_REMOTE_PATH)
+                .append(" --timeout " + VIC_MACHINE_TIMEOUT);
+        return executor.execute(createVchCommand.toString(), SSH_COMMAND_TIMEOUT);
     }
 
     public CommandResult deleteVch(String vchName) {
@@ -73,8 +76,10 @@ public class VchUtil {
                 .append(" --user " + vcenterAuthContext.getUsername())
                 .append(" --password " + vcenterAuthContext.getPassword())
                 .append(" --force")
-                .append(" --name " + vchName);
-        return executor.execute(deleteVchCommand.toString(), 360);
+                .append(" --name " + vchName)
+                .append(" --timeout " + VIC_MACHINE_TIMEOUT);
+        ;
+        return executor.execute(deleteVchCommand.toString(), SSH_COMMAND_TIMEOUT);
     }
 
     public CommandResult createDvsPortGroup(String portgroupName, String datacenterName,
@@ -89,7 +94,7 @@ public class VchUtil {
                 .append(" --dvswitch " + dvsName)
                 .append(" --portgroup " + portgroupName)
                 .append(" --numports " + "128");
-        return executor.execute(createDVSPortgroup.toString(), 360);
+        return executor.execute(createDVSPortgroup.toString(), SSH_COMMAND_TIMEOUT);
     }
 
     public CommandResult deleteDvsPortgroup(String portgroupNameName, String datacenterName,
@@ -103,7 +108,7 @@ public class VchUtil {
                 .append(" --datacenter " + datacenterName)
                 .append(" --dvswitch " + dvsName)
                 .append(" --portgroup " + portgroupNameName);
-        return executor.execute(createDVSPortgroup.toString(), 360);
+        return executor.execute(createDVSPortgroup.toString(), SSH_COMMAND_TIMEOUT);
     }
 
     private void prepareEnvironment() {

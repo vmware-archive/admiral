@@ -106,6 +106,7 @@ public class PushImageToHarborAndProvision extends BaseTest {
         main().clickAdministrationTabButton();
         projects().projectsPage().waitToLoad();
         projects().projectsPage().clickProjectDeleteButton(PROJECT_NAME);
+        projects().deleteProjectDialog().waitToLoad();
         projects().deleteProjectDialog().submit();
         logOut();
     }

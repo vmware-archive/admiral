@@ -17,7 +17,7 @@ import com.vmware.admiral.vic.test.ui.BaseSuite;
 
 @SuiteClasses({
         RBACAndItemsProjectAwareness.class,
-        // CreateAndProvisionVotingApp.class
+        CreateAndProvisionVotingApp.class,
         PushImageToHarborAndProvision.class })
 public class ScenariosSuite extends BaseSuite {
 
