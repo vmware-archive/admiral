@@ -30,8 +30,8 @@ import com.vmware.xenon.common.Utils;
  */
 public class RetriableTask<T> {
 
-    protected static final String ERROR_MESSAGE_RETRIES_PREVENTED = "Retries are prevented";
-    protected static final String ERROR_MESSAGE_MAXIMUM_NUMBER_OF_RETRIES_EXCEEDED = "Maximum number of retries exceeded";
+    protected static final String ERROR_MESSAGE_FORMAT_RETRIES_PREVENTED = "Retries are prevented. Failure: %s";
+    protected static final String ERROR_MESSAGE_FORMAT_MAXIMUM_NUMBER_OF_RETRIES_EXCEEDED = "Maximum number of retries exceeded. Failure: %s";
 
     /**
      * A {@link RuntimeException} that indicates that a {@link RetriableTask} has completed with
@@ -103,6 +103,7 @@ public class RetriableTask<T> {
      */
     public DeferredResult<T> execute() {
         if (executed.getAndSet(true)) {
+            preventRetries();
             RetriableTaskException exception = new RetriableTaskException(
                     String.format("Cannot execute task '%s': task has already been executed",
                             taskConfiguration.getTaskId()));
@@ -169,8 +170,8 @@ public class RetriableTask<T> {
         if (areRetriesPrevented()) {
             log(Level.WARNING, "Cannot retry task '%s', retries are prevented: %s", taskId,
                     ex.getMessage());
-            return DeferredResult
-                    .failed(new RetriableTaskException(ERROR_MESSAGE_RETRIES_PREVENTED, ex));
+            return DeferredResult.failed(new RetriableTaskException(
+                    String.format(ERROR_MESSAGE_FORMAT_RETRIES_PREVENTED, ex.getMessage()), ex));
         }
 
         // check if additional retries are available
@@ -178,10 +179,8 @@ public class RetriableTask<T> {
             log(Level.WARNING,
                     "Cannot retry task '%s', the maximum number of retries (%d) has been reached: %s",
                     taskId, maxRetries, ex.getMessage());
-            return DeferredResult.failed(
-                    new RetriableTaskException(
-                            ERROR_MESSAGE_MAXIMUM_NUMBER_OF_RETRIES_EXCEEDED,
-                            ex));
+            return DeferredResult.failed(new RetriableTaskException(String.format(
+                    ERROR_MESSAGE_FORMAT_MAXIMUM_NUMBER_OF_RETRIES_EXCEEDED, ex.getMessage()), ex));
         }
 
         // calculate the delay before the retry
@@ -226,7 +225,7 @@ public class RetriableTask<T> {
         return retryDelays.get(Math.min(retriesCount, retryDelays.size() - 1));
     }
 
-    private Throwable stripCompletionException(Throwable originalException) {
+    protected static Throwable stripCompletionException(Throwable originalException) {
         if (originalException == null) {
             return null;
         }

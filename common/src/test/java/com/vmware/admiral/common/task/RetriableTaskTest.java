@@ -17,6 +17,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -105,7 +106,7 @@ public class RetriableTaskTest {
     }
 
     @Test
-    public void testRetriableTaskCanBeExecutedOnlyOnce() {
+    public void testRetriableTaskCanBeExecutedOnlyOnceFromBuilder() {
 
         final long retryDelay = 0;
         final int maxRetries = 0;
@@ -135,6 +136,44 @@ public class RetriableTaskTest {
             assertAlreadyExecutedException(ex);
         }
 
+    }
+
+    @Test
+    public void testRetriableTaskCanBeExecutedOnlyOnce() {
+
+        final long retryDelay = 0;
+        final int maxRetries = 0;
+        final int expectedExecutions = 1; // no retries
+
+        AtomicInteger counter = new AtomicInteger(0);
+
+        RetriableTaskBuilder<Integer> task = new RetriableTaskBuilder<Integer>(
+                "should-succeed-on-first-execution")
+                        .withServiceHost(host)
+                        .withRetryDelays(retryDelay)
+                        .withRetryDelaysTimeUnit(TimeUnit.SECONDS)
+                        .withMaximumRetries(maxRetries)
+                        .withTaskFunction(t -> {
+                            int currentExecution = counter.getAndIncrement();
+                            if (currentExecution > 0) {
+                                // a failsafe to avoid recurrsion in case
+                                // the actual implementation gets broken
+                                return DeferredResult.failed(new IllegalStateException(
+                                        "Only a single execution was expected"));
+                            }
+                            // this should fail
+                            return t.execute();
+                        });
+
+
+        try {
+            testExecuteTask(task);
+            fail("Retriable tasks should be able to be executed only once.");
+        } catch (RetriableTaskException ex) {
+            assertAlreadyExecutedException(ex);
+        }
+
+        assertEquals(expectedExecutions, counter.get());
     }
 
     @Test
@@ -274,9 +313,13 @@ public class RetriableTaskTest {
         try {
             testExecuteTask(task);
         } catch (RetriableTaskException ex) {
-            assertEquals(
-                    RetriableTask.ERROR_MESSAGE_MAXIMUM_NUMBER_OF_RETRIES_EXCEEDED,
-                    ex.getMessage());
+            assertTrue(
+                    String.format("Expected error message to start with '%s'",
+                            RetriableTask.ERROR_MESSAGE_FORMAT_MAXIMUM_NUMBER_OF_RETRIES_EXCEEDED),
+                    ex.getMessage()
+                            .startsWith(String.format(
+                                    RetriableTask.ERROR_MESSAGE_FORMAT_MAXIMUM_NUMBER_OF_RETRIES_EXCEEDED,
+                                    "")));
             assertEquals(expectedExecutions, counter.get());
         }
     }
@@ -306,11 +349,30 @@ public class RetriableTaskTest {
         try {
             testExecuteTask(task);
         } catch (RetriableTaskException ex) {
-            assertEquals(
-                    RetriableTask.ERROR_MESSAGE_RETRIES_PREVENTED,
-                    ex.getMessage());
+            assertTrue(
+                    String.format("Expected error message to start with '%s'",
+                            RetriableTask.ERROR_MESSAGE_FORMAT_RETRIES_PREVENTED),
+                    ex.getMessage().startsWith(String
+                            .format(RetriableTask.ERROR_MESSAGE_FORMAT_RETRIES_PREVENTED, "")));
             assertEquals(expectedExecutions, counter.get());
         }
+    }
+
+    @Test
+    public void testStripCompletionException() {
+        String testMessage = "test message";
+        String wrappedMessage = "wrapped message";
+
+        Exception testException = new Exception(testMessage);
+        Exception wrappedOnce = new CompletionException(wrappedMessage, testException);
+        Exception wrappedTwice = new CompletionException(wrappedMessage, wrappedOnce);
+
+        assertEquals(testMessage,
+                RetriableTask.stripCompletionException(testException).getMessage());
+        assertEquals(testMessage,
+                RetriableTask.stripCompletionException(wrappedOnce).getMessage());
+        assertEquals(testMessage,
+                RetriableTask.stripCompletionException(wrappedTwice).getMessage());
     }
 
     private <T> T testExecuteTask(RetriableTaskBuilder<T> task) {
@@ -331,9 +393,12 @@ public class RetriableTaskTest {
         return result.iterator().next();
     }
 
-    private void assertAlreadyExecutedException(IllegalStateException ex) {
-        assertTrue("expected error message to contain 'already executed'",
-                ex.getMessage().contains("already executed"));
+    private void assertAlreadyExecutedException(Exception ex) {
+        String alreadyExecutedText = "has already been executed";
+        assertTrue(
+                String.format("expected error message to contain '%s' but was '%s'",
+                        alreadyExecutedText, ex.getMessage()),
+                ex.getMessage().contains(alreadyExecutedText));
     }
 
     private VerificationHost createHost() throws Throwable {

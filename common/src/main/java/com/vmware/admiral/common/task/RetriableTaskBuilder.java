@@ -214,8 +214,8 @@ public class RetriableTaskBuilder<T> {
 
     private void assertTaskNotExecuted() {
         if (taskExecuted) {
-            throw new IllegalStateException(
-                    String.format("Task '%s' is already executed.", taskConfiguration.getTaskId()));
+            throw new IllegalStateException(String.format("Task '%s' has already been executed.",
+                    taskConfiguration.getTaskId()));
         }
     }
 
