@@ -72,7 +72,7 @@
         <m2e.lifecycle-mapping>1.0.0</m2e.lifecycle-mapping>
 
         <!-- xenon -->
-        <xenon.version>1.5.4-CR6_1</xenon.version>
+        <xenon.version>1.5.4_8</xenon.version>
         <xenon.common.version>${xenon.version}</xenon.common.version>
         <xenon.ui.version>${xenon.version}</xenon.ui.version>
         <xenon.swagger.version>0.0.7</xenon.swagger.version>

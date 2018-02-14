@@ -86,7 +86,7 @@ public class LongURIGetServiceTest extends RequestBaseTest {
         failure = sender.sendAndWaitFailure(op);
 
         assertNotNull(failure.failure);
-        assertEquals("", failure.op.getBody(String.class));
+        assertNotNull(failure.op.getBody(String.class));
         assertEquals(Operation.STATUS_CODE_BAD_REQUEST, failure.op.getStatusCode());
 
         // invalid target URI and content type
