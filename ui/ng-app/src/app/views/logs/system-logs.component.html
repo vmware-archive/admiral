@@ -17,7 +17,7 @@
     <clr-dg-row *clrDgItems="let logEntry of logEntries" [clrDgItem]="member">
         <clr-dg-cell><div class="systemLogColumnContent systemLogEntryDescription">{{ logEntry.description }}</div></clr-dg-cell>
         <clr-dg-cell><div class="systemLogColumnContent">{{ logEntry.eventLogType | severityText }}</div></clr-dg-cell>
-        <clr-dg-cell><div class="systemLogColumnContent">{{ logEntry.documentUpdateTimeMicros | microtime | date:'yyyy-mm-dd HH:mm:ss' }}</div></clr-dg-cell>
+        <clr-dg-cell><div class="systemLogColumnContent">{{ logEntry.documentUpdateTimeMicros | microtime | date:'yyyy-MM-dd HH:mm:ss' }}</div></clr-dg-cell>
     </clr-dg-row>
 
     <clr-dg-footer>
