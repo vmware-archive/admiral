@@ -15,6 +15,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.net.URLDecoder;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -25,6 +27,7 @@ import com.vmware.admiral.service.common.LongURIGetService.LongURIRequest;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.test.TestRequestSender;
 import com.vmware.xenon.common.test.TestRequestSender.FailureResponse;
 
@@ -41,19 +44,26 @@ public class LongURIGetServiceTest extends RequestBaseTest {
     }
 
     @Test
-    public void testGetData() {
+    public void testGetData() throws Exception {
         LongURIRequest body = new LongURIRequest();
-        body.uri = "/resources/elastic-placement-zones-config?%24filter=documentSelfLink%20eq%20'%2Fresources%2Fpools%2Fdefault-placement-zone'%27&documentType=true&expand=true";
-        ServiceDocumentQueryResult result = sender.sendAndWait(Operation
-                .createPost(UriUtils.buildUri(host.getUri(), LongURIGetService.SELF_LINK))
-                .setBody(body), ServiceDocumentQueryResult.class);
+        body.uri = "/resources/elastic-placement-zones-config?%24filter=documentSelfLink%20eq%20'%2Fresources%2Fpools%2Fdefault-placement-zone'&documentType=true&expand=true";
+
+        Operation response = sender.sendAndWait(Operation
+                        .createPost(UriUtils.buildUri(host.getUri(), LongURIGetService.SELF_LINK))
+                        .setBody(body));
+
+        assertNotNull(response);
+        String responsePathQuery = response.getUri().getPath() + "?" + response.getUri().getQuery();
+        assertEquals(URLDecoder.decode(body.uri, Utils.CHARSET), responsePathQuery);
+
+        ServiceDocumentQueryResult result = response.getBody(ServiceDocumentQueryResult.class);
         assertTrue(result.documentCount == 1);
     }
 
     @Test
     public void testGetDataNotExisting() {
         LongURIRequest body = new LongURIRequest();
-        body.uri = "/resources/fake?%24filter=documentSelfLink%20eq%20'%2Fresources%2Fpools%2Fdefault-placement-zone'%27&documentType=true&expand=true";
+        body.uri = "/resources/fake?%24filter=documentSelfLink%20eq%20'%2Fresources%2Fpools%2Fdefault-placement-zone'&documentType=true&expand=true";
         host.sendAndWaitExpectFailure(Operation
                 .createPost(UriUtils.buildUri(host.getUri(), LongURIGetService.SELF_LINK))
                 .setBody(body), Operation.STATUS_CODE_NOT_FOUND);
