@@ -11,9 +11,12 @@
 
 package com.vmware.admiral.service.common;
 
+import java.net.URLDecoder;
+
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatelessService;
+import com.vmware.xenon.common.Utils;
 
 /**
  * The service accepts post request with long uri as body. Then a get request is sent using the uri
@@ -38,6 +41,8 @@ public class LongURIGetService extends StatelessService {
         LongURIRequest body;
         try {
             body = post.getBody(LongURIRequest.class);
+            logFine("LongURIGetService called for %s", body.uri);
+            body.uri = URLDecoder.decode(body.uri, Utils.CHARSET);
         } catch (Exception e) {
             logFine("Exception getting long URI '%s': %s", post.getBody(String.class),
                     e.getMessage());
@@ -45,6 +50,7 @@ public class LongURIGetService extends StatelessService {
             return;
         }
         sendRequest(Operation.createGet(this, body.uri).setCompletion((o, e) -> {
+            post.setUri(o.getUri());
             post.setBodyNoCloning(o.getBodyRaw());
             post.setStatusCode(o.getStatusCode());
             post.transferResponseHeadersFrom(o);
