@@ -9,7 +9,7 @@
     <clr-dg-row *clrDgItems="let container of containers" [clrDgItem]="container">
         <clr-dg-cell><a routerLink="/home/containers/{{getContainerId(container)}}">{{ container.names }}</a></clr-dg-cell>
         <clr-dg-cell>{{ container.powerState }}</clr-dg-cell>
-        <clr-dg-cell>{{ container.created | date:'yyyy-mm-dd HH:mm:ss' }}</clr-dg-cell>
+        <clr-dg-cell>{{ container.created | date:'yyyy-MM-dd HH:mm:ss' }}</clr-dg-cell>
     </clr-dg-row>
 
 </clr-datagrid>
