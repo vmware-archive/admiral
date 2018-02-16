@@ -35,6 +35,21 @@ public class CreateVolumePage
         pageActions().sendKeys(driver, locators().driverInput());
     }
 
+    public void toggleAdvancedOptions(boolean toggle) {
+        LOG.info("Clicking the Advanced checkbox");
+        pageActions().setCheckbox(toggle, locators().advancedCheckbox());
+    }
+
+    public void addDriverOption(String option, String value) {
+        LOG.info(String.format("Adding driver option [%s] with value [%s]", option, value));
+        if (!pageActions().getAttribute("value", locators().lastDriverOptionsKeyInput())
+                .isEmpty()) {
+            pageActions().click(locators().addDriverOptionsInputButton());
+        }
+        pageActions().sendKeys(option, locators().lastDriverOptionsKeyInput());
+        pageActions().sendKeys(value, locators().lastDriverOptionsValueInput());
+    }
+
     public void selectHostByName(String hostName) {
         LOG.info(String.format("Setting host by name: [%s]", hostName));
         pageActions().click(locators().selectHostDropdown());

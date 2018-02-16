@@ -11,9 +11,12 @@
 
 package com.vmware.admiral.test.ui.pages.containers;
 
+import static com.codeborne.selenide.Selenide.Wait;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.openqa.selenium.By;
 
@@ -58,6 +61,24 @@ public class ContainersPage extends ResourcePage<ContainersPageValidator, Contai
         waitForElementToSettle(card);
         pageActions().hover(card);
         pageActions().click(locators().cardInspectButtonByTitlePrefix(namePrefix));
+    }
+
+    public void waitForContainerState(String namePrefix, ContainerState state, int timeoutSeconds) {
+        LOG.info(
+                String.format(
+                        "Waiting [%d] seconds for container witn name prefix [%s] to become in state [%s]",
+                        timeoutSeconds, namePrefix, state.toString()));
+        if (state == ContainerState.RUNNING) {
+            Wait().withTimeout(timeoutSeconds, TimeUnit.SECONDS)
+                    .until(d -> pageActions()
+                            .getText(locators().cardHeaderByTitlePrefix(namePrefix)).trim()
+                            .startsWith(state.toString()));
+        } else {
+            Wait().withTimeout(timeoutSeconds, TimeUnit.SECONDS)
+                    .until(d -> pageActions()
+                            .getText(locators().cardHeaderByTitlePrefix(namePrefix)).trim()
+                            .equals(state.toString()));
+        }
     }
 
     public List<String> getContainerPortSettings(String namePrefix) {

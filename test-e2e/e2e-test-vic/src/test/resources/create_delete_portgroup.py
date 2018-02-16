@@ -41,6 +41,11 @@ def parse_args():
                         default=128,
                         action='store',
                         help='Number of ports of the portgroup, optional, defaults to 128')
+    parser.add_argument('--vlanid',
+                        required=False,
+                        type=int,
+                        action='store',
+                        help='Default vlanId for all ports in the portgroup')
     return parser.parse_args()
 
 
@@ -84,11 +89,18 @@ def get_network_folder(connection, args):
     
     
 def create(dvs, args):
-    dvsSpec = vim.dvs.DistributedVirtualPortgroup.ConfigSpec()
-    dvsSpec.name = args.portgroup
-    dvsSpec.type = "earlyBinding"
-    dvsSpec.numPorts = args.numports
-    task = dvs.CreateDVPortgroup_Task(spec=dvsSpec)
+    dvsPgSpec = vim.dvs.DistributedVirtualPortgroup.ConfigSpec()
+    dvsPgSpec.name = args.portgroup
+    dvsPgSpec.type = "earlyBinding"
+    dvsPgSpec.numPorts = args.numports
+    
+    if (args.vlanid != None):
+        dvsPgSpec.defaultPortConfig = vim.dvs.VmwareDistributedVirtualSwitch.VmwarePortConfigPolicy()
+        dvsPgSpec.defaultPortConfig.vlan = vim.dvs.VmwareDistributedVirtualSwitch.VlanIdSpec()
+        dvsPgSpec.defaultPortConfig.vlan.vlanId = args.vlanid
+        dvsPgSpec.defaultPortConfig.vlan.inherited = False
+    
+    task = dvs.CreateDVPortgroup_Task(spec=dvsPgSpec)
     while task.info.state != "success" and task.info.state != 'error':
         time.sleep(1)
     if task.info.state == 'error':

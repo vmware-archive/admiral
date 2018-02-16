@@ -108,7 +108,7 @@ public class CreateAndProvisionVotingApp extends BaseTest {
         createVotingAppTemplate();
 
         templates().templatesPage().provisionTemplate(TEMPLATE_NAME);
-        templates().requests().waitForLastRequestToSucceed(900);
+        templates().requests().waitForLastRequestToSucceed(1200);
 
         home().clickApplicationsButton();
         ApplicationsPage applicationsPage = applications().applicationsPage();

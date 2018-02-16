@@ -37,6 +37,10 @@ public class ContainerStatsPage
         return Arrays.asList(ports.split("\n"));
     }
 
+    public String getContainerId() {
+        return pageActions().getText(locators().idRow());
+    }
+
     public void navigateBack() {
         pageActions().click(locators().backButton());
     }

@@ -11,9 +11,14 @@
 
 package com.vmware.admiral.test.ui.pages.main;
 
+import static com.codeborne.selenide.Selenide.Wait;
+
+import java.util.concurrent.TimeUnit;
+
 import com.codeborne.selenide.Condition;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.TimeoutException;
 
 import com.vmware.admiral.test.ui.pages.common.BasicPage;
 
@@ -59,8 +64,29 @@ public class HomeTab extends BasicPage<HomeTabValidator, HomeTabLocators> {
             LOG.info(String.format("Current project already is: [%s]", currentProject));
         } else {
             LOG.info(String.format("Switching to project: [%s]", projectName));
-            pageActions().click(locators().projectsDropdownButton());
+            doSwitchToProject(projectName, 5);
+        }
+    }
+
+    private void doSwitchToProject(String projectName, int retries) {
+        if (retries == 0) {
+            throw new RuntimeException("Could not switch to project: " + projectName);
+        }
+        int selectRetries = 5;
+        pageActions().click(locators().projectsDropdownButton());
+        while (selectRetries > 0) {
             pageActions().click(locators().projectSelectorByName(projectName));
+            try {
+                Wait().withTimeout(5, TimeUnit.SECONDS)
+                        .until(d -> element((locators().projectSelectorByName(projectName)))
+                                .is(Condition.hidden));
+                break;
+            } catch (TimeoutException e) {
+                selectRetries--;
+            }
+        }
+        if (!getCurrentProject().equals(projectName)) {
+            doSwitchToProject(projectName, --retries);
         }
     }
 

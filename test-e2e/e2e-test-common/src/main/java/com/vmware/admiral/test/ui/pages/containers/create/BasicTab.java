@@ -53,7 +53,7 @@ public class BasicTab extends BasicPage<BasicTabValidator, BasicTabLocators> {
 
     public void addCommand(String command) {
         LOG.info(String.format("Adding command: [%s]", command));
-        if (pageActions().getAttribute("value", locators().lastCommandInput()).isEmpty()) {
+        if (!pageActions().getAttribute("value", locators().lastCommandInput()).isEmpty()) {
             pageActions().click(locators().addCommandButton());
         }
         pageActions().sendKeys(command, locators().lastCommandInput());

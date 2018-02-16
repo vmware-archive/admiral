@@ -13,6 +13,7 @@ package com.vmware.admiral.vic.test.ui.util;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 import org.junit.rules.TestRule;
@@ -25,6 +26,8 @@ import com.vmware.admiral.test.util.SSHCommandExecutor.CommandResult;
 public class CreateVchRule implements TestRule {
 
     private final Logger LOG = Logger.getLogger(getClass().getName());
+
+    private static final AtomicInteger vlanId = new AtomicInteger(0);
 
     private String datacenterName = "vcqaDC";
     private String dvsName = "vic-bridge-dvs";
@@ -92,7 +95,8 @@ public class CreateVchRule implements TestRule {
 
     private void createPortgroup(String name) {
         LOG.info("Creating portgroup with name: " + name);
-        CommandResult result = vchUtil.createDvsPortGroup(name, datacenterName, dvsName, 128);
+        CommandResult result = vchUtil.createDvsPortGroup(name, datacenterName, dvsName, 128,
+                vlanId.incrementAndGet());
         if (result.getExitStatus() != 0) {
             String error = String.format(
                     "Creating portgroup failed, command exit status [%d], command output:%n%s",

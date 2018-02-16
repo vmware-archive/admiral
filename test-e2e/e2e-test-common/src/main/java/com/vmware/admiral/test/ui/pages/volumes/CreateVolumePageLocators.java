@@ -27,6 +27,15 @@ public class CreateVolumePageLocators extends PageLocators {
             ".closable-view.slide-and-fade-transition .fa.fa-chevron-circle-left");
     private final By PAGE_TITLE = By
             .cssSelector(".closable-view.slide-and-fade-transition .title");
+    private final By ADVANCED_CHECKBOX = By
+            .cssSelector(".form-group:nth-child(5) .checkbox-control");
+    private final By ADD_DRIVER_OPTIONS_BUTTON = By
+            .cssSelector(
+                    ".driver-options .multicolumn-input:last-child .btn.fa-plus");
+    private final By LAST_DRIVER_OPTION_KEY_INPUT = By.cssSelector(
+            ".driver-options .multicolumn-input:last-child .inline-input.form-control[name='key']");
+    private final By LAST_DRIVER_OPTION_VALUE_INPUT = By.cssSelector(
+            ".driver-options .multicolumn-input:last-child .inline-input.form-control[name='value']");
 
     public By pageTitle() {
         return PAGE_TITLE;
@@ -54,5 +63,21 @@ public class CreateVolumePageLocators extends PageLocators {
 
     public By backButton() {
         return BACK_BUTTON;
+    }
+
+    public By advancedCheckbox() {
+        return ADVANCED_CHECKBOX;
+    }
+
+    public By addDriverOptionsInputButton() {
+        return ADD_DRIVER_OPTIONS_BUTTON;
+    }
+
+    public By lastDriverOptionsKeyInput() {
+        return LAST_DRIVER_OPTION_KEY_INPUT;
+    }
+
+    public By lastDriverOptionsValueInput() {
+        return LAST_DRIVER_OPTION_VALUE_INPUT;
     }
 }

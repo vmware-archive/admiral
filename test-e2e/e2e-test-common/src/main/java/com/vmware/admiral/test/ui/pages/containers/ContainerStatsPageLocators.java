@@ -25,6 +25,7 @@ public class ContainerStatsPageLocators extends PageLocators {
     private By MEMORY_USAGE = By.cssSelector(
             CONTAINER_USAGES + " .cpu-stats .radial-progress-labels .radial-progress-label");
     private By PORTS_ROW = By.xpath("//tr/td[./text()='Ports']/../td[2]");
+    private By ID_ROW = By.xpath("//tr/td[./text()='id']/../td[2]");
     private By BACK_BUTTON = By.cssSelector(".container-details .fa-chevron-circle-left");
 
     public By containerStatsSpinner() {
@@ -45,6 +46,10 @@ public class ContainerStatsPageLocators extends PageLocators {
 
     public By portsRow() {
         return PORTS_ROW;
+    }
+
+    public By idRow() {
+        return ID_ROW;
     }
 
     public By logsSpinner() {

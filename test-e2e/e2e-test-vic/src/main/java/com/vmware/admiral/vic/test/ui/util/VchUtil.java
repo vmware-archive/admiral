@@ -83,7 +83,7 @@ public class VchUtil {
     }
 
     public CommandResult createDvsPortGroup(String portgroupName, String datacenterName,
-            String dvsName, int portsCount) {
+            String dvsName, int portsCount, int vlanId) {
         StringBuilder createDVSPortgroup = new StringBuilder();
         createDVSPortgroup.append("python " + SCRIPT_REMOTE_PATH)
                 .append(" --command create")
@@ -93,7 +93,8 @@ public class VchUtil {
                 .append(" --datacenter " + datacenterName)
                 .append(" --dvswitch " + dvsName)
                 .append(" --portgroup " + portgroupName)
-                .append(" --numports " + "128");
+                .append(" --numports " + "128")
+                .append(" --vlanid " + vlanId);
         return executor.execute(createDVSPortgroup.toString(), SSH_COMMAND_TIMEOUT);
     }
 

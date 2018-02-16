@@ -22,7 +22,7 @@ public class BasicTabLocators extends CreateContainerPageLocators {
             .cssSelector(".image-tags-input.search-input .form-control.tt-input");
     private final By ADD_COMMAND_BUTTON = By
             .cssSelector(
-                    ".form-group.container-commands-input .multicolumn-input-add:not([style*=\"hidden\"])");
+                    ".form-group.container-commands-input .multicolumn-input:last-child .btn.fa-plus");
     private final By LAST_COMMAND_INPUT = By
             .cssSelector(
                     ".multicolumn-input:last-child .inline-input.form-control[name='command']");
