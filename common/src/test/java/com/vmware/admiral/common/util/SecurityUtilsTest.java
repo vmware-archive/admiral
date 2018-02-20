@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -25,11 +25,30 @@ import static com.vmware.photon.controller.model.security.util.EncryptionUtils.E
 import java.net.URISyntaxException;
 import java.security.Security;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.vmware.photon.controller.model.security.util.EncryptionUtils;
 
 public class SecurityUtilsTest {
+
+    private static String originalTrustStoreProp;
+    private static String originalTrustStorePasswordProp;
+
+    @BeforeClass
+    public static void setUp() throws Throwable {
+        originalTrustStoreProp = System.getProperty(JAVAX_NET_SSL_TRUST_STORE);
+        originalTrustStorePasswordProp = System.getProperty(JAVAX_NET_SSL_TRUST_STORE_PASSWORD);
+    }
+
+    @AfterClass
+    public static void tearDown() throws Throwable {
+        System.setProperty(JAVAX_NET_SSL_TRUST_STORE,
+                originalTrustStoreProp == null ? "" : originalTrustStoreProp);
+        System.setProperty(JAVAX_NET_SSL_TRUST_STORE_PASSWORD,
+                originalTrustStorePasswordProp == null ? "" : originalTrustStorePasswordProp);
+    }
 
     @Test
     public void testEnsureTlsDisabledAlgorithms() {
@@ -64,9 +83,9 @@ public class SecurityUtilsTest {
         SecurityUtils.ensureTrustStoreSettings();
 
         String trustStore = System.getProperty(JAVAX_NET_SSL_TRUST_STORE);
-        assertNull(trustStore);
+        assertTrue(trustStore == null || "".equals(trustStore));
         String trustStorePassword = System.getProperty(JAVAX_NET_SSL_TRUST_STORE_PASSWORD);
-        assertNull(trustStorePassword);
+        assertTrue(trustStorePassword == null || "".equals(trustStorePassword));
         String securityProperties = System.getProperty(SECURITY_PROPERTIES);
         assertNull(securityProperties);
 
