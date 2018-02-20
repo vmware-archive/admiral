@@ -34,7 +34,8 @@
       <div card-header>
         <img [src]="'/container-image-icons?container-image=' + item.documentSelfLink"/>
         {{item.name}}
-        <clr-dropdown class="card-actions" (click)="toggleItemSelection($event, item)">
+        <clr-dropdown class="card-actions" allowNavigation [projectSelfLink]="item.documentSelfLink"
+                      [roles]="projectsCardViewActions" (click)="toggleItemSelection($event, item)">
             <button type="button" class="btn btn-sm btn-link" clrDropdownTrigger>
                 <clr-icon shape="ellipsis-vertical" size="20"></clr-icon>
             </button>
@@ -43,8 +44,8 @@
                         [routerLink]="['./' + item.documentId]"><clr-icon shape="eye" size="20"
                             class="card-drop-down-actions"></clr-icon>{{"projects.actions.details" | i18n}}</button>
 
-                <button type="button" class="dropdown-item"
-                        (click)="deleteProject($event, item)"><clr-icon shape="trash" size="20"
+                <button type="button" class="dropdown-item" allowNavigation [projectSelfLink]="item.documentSelfLink"
+                        [roles]="projectsCardViewRemoveAction" (click)="deleteProject($event, item)"><clr-icon shape="trash" size="20"
                             class="card-drop-down-actions"></clr-icon>{{"remove" | i18n}}</button>
             </clr-dropdown-menu>
         </clr-dropdown>

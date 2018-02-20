@@ -37,7 +37,8 @@
           <div *ngIf="item.address" class="clusterAddress truncate">{{ item.address }}</div>
         </div>
 
-        <clr-dropdown class="card-actions" (click)="toggleItemSelection($event, item)">
+        <clr-dropdown class="card-actions" allowNavigation [roles]="clustersCardViewActions"
+                      (click)="toggleItemSelection($event, item)">
           <button type="button" class="btn btn-sm btn-link" clrDropdownTrigger>
             <clr-icon shape="ellipsis-vertical" size="20"></clr-icon>
           </button>
