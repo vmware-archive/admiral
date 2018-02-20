@@ -67,6 +67,30 @@ public class ContainerDescriptionServiceTest extends ComputeBaseTest {
                 });
     }
 
+    // VBV-1845
+    @Test
+    public void testInvalidJsonContainerDescription() throws Throwable {
+        InvalidDescription state = new InvalidDescription();
+        state.volumes = "test";
+        Operation op = Operation.createPost(getContainerDescriptionUri())
+                .setBody(state)
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FROM_MIGRATION_TASK)
+                .setReferer(URI.create("/"))
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        host.failIteration(new Exception(
+                                "Migration request for invalid json should be successful"));
+                        return;
+                    } else {
+                        host.completeIteration();
+                    }
+                });
+
+        host.testStart(1);
+        host.sendRequest(op);
+        host.testWait();
+    }
+
     @Test
     public void testValidateShouldFailWithInvalidMemoryLimit() throws Throwable {
         ContainerDescription contDesc = createContainerDescription();
@@ -380,5 +404,10 @@ public class ContainerDescriptionServiceTest extends ComputeBaseTest {
         containerDesc.image = "image:latest";
 
         return containerDesc;
+    }
+
+    private class InvalidDescription {
+        // In the original description volumes are array
+        public String volumes;
     }
 }

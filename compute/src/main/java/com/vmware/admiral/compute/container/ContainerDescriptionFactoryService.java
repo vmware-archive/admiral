@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.compute.container;
 
+import com.google.gson.JsonSyntaxException;
+
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
@@ -34,5 +36,30 @@ public class ContainerDescriptionFactoryService extends AbstractSecuredFactorySe
     public void handleGet(Operation get) {
         OperationUtil.transformProjectHeaderToFilterQuery(get);
         super.handleGet(get);
+    }
+
+    @Override
+    public void handleRequest(Operation op) {
+        // Workaround for invalid json document for container-descriptions during upgrade
+        // VBV-1845
+        if (op.getAction() == Action.POST
+                && op.hasPragmaDirective(Operation.PRAGMA_DIRECTIVE_FROM_MIGRATION_TASK)) {
+            try {
+                op.getBody(this.stateType);
+            } catch (IllegalArgumentException | JsonSyntaxException e) {
+                if (e.getMessage().contains("Unparseable JSON body")
+                        || e.getMessage().contains("IllegalStateException")) {
+                    logWarning(
+                            "Incorrect json structure detected for container-description document during migration: %s. Document will be skipped",
+                            op.getBodyRaw());
+                    op.setBody(null).complete();
+                } else {
+                    throw e;
+                }
+            }
+            super.handleRequest(op);
+        } else {
+            super.handleRequest(op);
+        }
     }
 }
