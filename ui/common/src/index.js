@@ -7,6 +7,7 @@ var DropdownSearchMenu = require('./components/common/DropdownSearchMenu');
 var formatUtils = require('./core/formatUtils');
 var serviceUtils = require('./core/serviceUtils');
 var searchConstants = require('./core/searchConstants');
+var searchUtils = require('./core/searchUtils');
 
 module.exports = {
     RadialProgress: RadialProgress,
@@ -17,5 +18,6 @@ module.exports = {
 
     formatUtils: formatUtils,
     serviceUtils: serviceUtils,
-    searchConstants: searchConstants
+    searchConstants: searchConstants,
+    searchUtils: searchUtils
 }

@@ -7,6 +7,7 @@ import { DropdownSearchMenu } from './components/common/DropdownSearchMenu';
 import { formatUtils } from './core/formatUtils';
 import { serviceUtils } from './core/serviceUtils';
 import { searchConstants } from './core/searchConstants';
+import { searchUtils } from './core/searchUtils';
 
 export { RadialProgress }
 export { NetworkTrafficVisualization }
@@ -17,3 +18,4 @@ export { DropdownSearchMenu }
 export { formatUtils }
 export { serviceUtils }
 export { searchConstants }
+export { searchUtils }

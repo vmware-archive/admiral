@@ -19,12 +19,21 @@
       <ng-content select="[toolbar]"></ng-content>
     </div>
     <div class="col-sm-6 toolbar-secondary">
-      <search [suggestionProperties]="searchSuggestionProperties"
-                  [placeholder]="searchPlaceholder"
-                  [queryOptions]="searchQueryOptions"
-                  [occurrenceProperties]="searchOccurrenceProperties"
-                  (searchChange)="onSearch($event)"
-                  ></search>
+      <form class="form search-form" [formGroup]="searchForm">
+          <div class="search-form-wrapper">
+              <div class="search-form-icon"><clr-icon shape="search" size="20"></clr-icon></div>
+              <div class="search-form-occurrence select">
+                  <select id="occurrenceSelector" formControlName="occurrenceSelector"
+                          [(ngModel)]="occurrenceSelection">
+                      <option value="all">{{ 'search.occurrence.all' | i18n }}</option>
+                  </select>
+              </div>
+              <div class="search-form-input">
+                <input type="text" formControlName="searchGridInput"
+                     [placeholder]="searchPlaceholder" (keyup.enter)="onSearchGrid($event)" />
+              </div>
+          </div>
+      </form>
       <span class="separator"></span>
       <button (click)="refresh()" class="btn btn-link"
               title="{{ 'refresh' | i18n }}"><i class="fa fa-refresh"></i></button>
@@ -34,9 +43,11 @@
 
 <div class="grid-content">
   <div [ngClass]="{'items': true, 'list': !showCardView}" [ngStyle]="itemsHolderStyle" #itemsHolder
-    infiniteScroll [infiniteScrollDistance]="1" [infiniteScrollThrottle]="150" [scrollWindow]="false" (scrolled)="onScroll()">
-    <span *ngFor="let item of items;let i = index; trackBy:trackByFn" class='card-item' [ngStyle]="cardStyles[i]" #cardItem
-      (mouseenter)='onCardEnter(i)' (mouseleave)='onCardLeave(i)'>
+       infiniteScroll [infiniteScrollDistance]="1" [infiniteScrollThrottle]="150"
+       [scrollWindow]="false" (scrolled)="onScroll()">
+    <span *ngFor="let item of items;let i = index; trackBy:trackByFn" class='card-item'
+          [ngStyle]="cardStyles[i]" #cardItem
+          (mouseenter)='onCardEnter(i)' (mouseleave)='onCardLeave(i)'>
       <ng-template [ngTemplateOutlet]="gridItemTmpl" [ngOutletContext]="{item: item}">
       </ng-template>
     </span>

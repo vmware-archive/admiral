@@ -114,3 +114,43 @@ grid-view {
     }
   }
 }
+
+.search-form {
+    width: 100%;
+
+  .search-form-wrapper {
+    display: table;
+    width: 100%;
+
+    .search-form-icon {
+      display: table-cell;
+      min-width: 20px;
+      padding-right: 10px;
+    }
+
+    .search-form-occurrence {
+      display: table-cell;
+      min-width: 120px;
+      vertical-align: bottom;
+
+      select {
+        color: #007cbb;
+        text-transform: uppercase;
+        font-size: 0.5rem;
+        font-weight: 500;
+        letter-spacing: 0.12em;
+      }
+    }
+
+    .search-form-input {
+      display: table-cell;
+      width: 100%;
+      min-width: 300px;
+      padding-left: 10px;
+
+      input {
+        width: 100%;
+      }
+    }
+  }
+}

@@ -37,11 +37,9 @@
               </span>
             </div>
             <div class="col-sm-6 toolbar-secondary">
-              <search :placeholder="i18n('app.template.list.searchImagesTemplatesPlaceholder')"
-                      :placeholder-by-category="placeholderByCategory"
-                      :query-options="queryOptions"
-                      @search-change="search"
-                      ></search>
+              <grid-search :query-options="queryOptions"
+                           :placeholder="searchPlaceholder"
+                           @search-grid-action="search"></grid-search>
             </div>
           </div>
         </div>

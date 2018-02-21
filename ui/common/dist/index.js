@@ -6,6 +6,7 @@ var DropdownSearchMenu = require('./components/common/DropdownSearchMenu');
 var formatUtils = require('./core/formatUtils');
 var serviceUtils = require('./core/serviceUtils');
 var searchConstants = require('./core/searchConstants');
+var searchUtils = require('./core/searchUtils');
 module.exports = {
     RadialProgress: RadialProgress,
     NetworkTrafficVisualization: NetworkTrafficVisualization,
@@ -14,6 +15,7 @@ module.exports = {
     DropdownSearchMenu: DropdownSearchMenu,
     formatUtils: formatUtils,
     serviceUtils: serviceUtils,
-    searchConstants: searchConstants
+    searchConstants: searchConstants,
+    searchUtils: searchUtils
 };
 //# sourceMappingURL=index.js.map

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -51,16 +51,6 @@ var TemplatesViewVueComponent = Vue.extend({
     }
   },
   data: function() {
-    var placeholderByCategory = {};
-    placeholderByCategory[constants.TEMPLATES.SEARCH_CATEGORY.ALL] =
-      i18n.t('app.template.list.searchImagesTemplatesPlaceholder');
-    placeholderByCategory[constants.TEMPLATES.SEARCH_CATEGORY.IMAGES] =
-      i18n.t('app.template.list.searchRepositoriesPlaceholder');
-    placeholderByCategory[constants.TEMPLATES.SEARCH_CATEGORY.TEMPLATES] =
-      i18n.t('app.template.list.searchTemplatesPlaceholder');
-    placeholderByCategory[constants.TEMPLATES.SEARCH_CATEGORY.CLOSURES] =
-      i18n.t('app.template.list.searchClosuresPlaceholder');
-
     var alertData = {};
     alertData.show = false;
     alertData.message = '';
@@ -68,7 +58,6 @@ var TemplatesViewVueComponent = Vue.extend({
 
     return {
       constants: constants,
-      placeholderByCategory: placeholderByCategory,
       // this view behaves better if the target width is set before the width transition
       requiresPreTransitionWidth: true,
       alert: alertData,
@@ -93,8 +82,9 @@ var TemplatesViewVueComponent = Vue.extend({
     },
     selectedCategory: function() {
       var queryOpts = this.queryOptions || {};
-      return queryOpts[constants.SEARCH_CATEGORY_PARAM] ||
-        constants.CONTAINERS.SEARCH_CATEGORY.ALL;
+
+      return queryOpts[constants.SEARCH_CATEGORY_PARAM]
+                || constants.CONTAINERS.SEARCH_CATEGORY.ALL;
     },
     requestsCount: function() {
       var contextView = this.model.contextView;
@@ -145,6 +135,23 @@ var TemplatesViewVueComponent = Vue.extend({
         return i18n.t('app.template.list.searchCategory.closures');
       }
       return i18n.t('app.template.list.searchCategory.repositories');
+    },
+    placeholderByCategoryMap: function() {
+      var placeholderByCategory = {};
+
+      placeholderByCategory[constants.TEMPLATES.SEARCH_CATEGORY.ALL] =
+        i18n.t('app.template.list.searchImagesTemplatesPlaceholder');
+      placeholderByCategory[constants.TEMPLATES.SEARCH_CATEGORY.IMAGES] =
+        i18n.t('app.template.list.searchRepositoriesPlaceholder');
+      placeholderByCategory[constants.TEMPLATES.SEARCH_CATEGORY.TEMPLATES] =
+        i18n.t('app.template.list.searchTemplatesPlaceholder');
+      placeholderByCategory[constants.TEMPLATES.SEARCH_CATEGORY.CLOSURES] =
+        i18n.t('app.template.list.searchClosuresPlaceholder');
+
+      return placeholderByCategory;
+    },
+    searchPlaceholder: function() {
+      return this.placeholderByCategoryMap[this.selectedCategory];
     }
   },
   mixins: [GridHolderMixin],
@@ -418,6 +425,7 @@ var TemplatesViewVueComponent = Vue.extend({
     doSearchAndFilter: function(queryOptions, categoryName) {
       var queryOptionsToSend = $.extend({}, queryOptions);
       queryOptionsToSend[constants.SEARCH_CATEGORY_PARAM] = categoryName;
+
       NavigationActions.openTemplates(queryOptionsToSend);
     },
 

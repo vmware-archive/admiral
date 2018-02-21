@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -17,6 +17,7 @@
 
 /* eslint-disable */
 
+import GridSearch from 'components/common/GridSearch';
 import VueSearch from 'components/common/VueSearch';
 import VueRefreshButton from 'components/common/VueRefreshButton';
 import ListTitle from 'components/common/ListTitle';

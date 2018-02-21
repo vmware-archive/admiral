@@ -139,11 +139,9 @@
       <div class="sub-title">{{i18n('app.template.details.newDefinition.selectImage')}}</div>
       <div class="list-view">
         <div class="toolbar">
-          <search :suggestion-properties="searchSuggestions"
-                  :placeholder="i18n('app.template.list.searchImagesPlaceholder')"
-                  :query-options="model.newContainerDefinition.listView.queryOptions"
-                  @search-change="searchForImage"
-                  ></search>
+          <grid-search :query-options="model.newContainerDefinition.listView.queryOptions"
+                       :placeholder="i18n('app.template.list.searchImagesPlaceholder')"
+                       @search-grid-action="searchForImage"></grid-search>
         </div>
         <div class="grid-container">
           <div class="title">{{i18n("app.template.details.newDefinition.imageListTitle")}}<span class="total-items"></span></div>

@@ -146,6 +146,9 @@
       "DISABLED": "DISABLED",
       "WARNING": "WARNING"
     },
+    "search": {
+      "placeholder": "Search for clusters"
+    },
     "actions": {
       "rescan": "Rescan",
       "disable": "Disable",
@@ -335,6 +338,11 @@
     "registries": "Registries",
     "configuration": "Configuration",
     "logs": "Logs"
+  },
+  "search": {
+    "occurrence": {
+      "all": "Match All"
+    }
   },
   "compute": {
     "resources": "Resources",

@@ -1366,6 +1366,12 @@
     "value": "Value",
     "valueHint": "Example: slow"
   },
+  "search": {
+    "occurrence": {
+      "all": "Match All",
+      "any": "Match Any"
+    }
+  },
   "yes": "Yes",
   "no": "No",
   "ok": "Ok",

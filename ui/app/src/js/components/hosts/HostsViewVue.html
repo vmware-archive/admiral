@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~ Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
   ~
   ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
   ~ You may not use this product except in compliance with the License.
@@ -9,60 +9,50 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 <div class="hosts-view">
-<div class="list-holder" v-bind:class="{'right-context-expanded':  contextExpanded}">
+<div class="list-holder" :class="{'right-context-expanded':  contextExpanded}">
   <div class="main-panel">
     <alert alert-type="danger"
-           v-bind:show-alert="errorMessage"
-           v-bind:alert-message="errorMessage"></alert>
+           :show-alert="errorMessage"
+           :alert-message="errorMessage"></alert>
     <alert alert-type="success"
-           v-bind:show-alert="alertMessage"
-           v-bind:alert-message="alertMessage"></alert>
+           :show-alert="alertMessage"
+           :alert-message="alertMessage"></alert>
     <div class="list-view scroll-view" v-if="model.listView">
-      <list-title v-on:refresh-list="refresh()"
-                    v-bind:has-search-query="isShowingSearchResults" v-bind:count="itemsCount"
-                    v-bind:title="i18n('app.host.list.title')"
-                    v-bind:title-search="i18n('app.host.list.titleSearch')">
-          <refresh-button v-on:click="triggerDataCollection($event)"
-                          v-bind:supported="operationSupported('DATACOLLECT')"
-                          v-bind:icon-name="'gears'"
-                          v-bind:tooltip="i18n('app.host.list.dataCollect')"
-                          v-bind:time="15000"
-                          v-bind:stop-spin="model.dataCollectionEnd"></refresh-button>
+      <list-title @refresh-list="refresh()"
+                    :has-search-query="isShowingSearchResults" :count="itemsCount"
+                    :title="i18n('app.host.list.title')"
+                    :title-search="i18n('app.host.list.titleSearch')">
+          <refresh-button @click="triggerDataCollection($event)"
+                          :supported="operationSupported('DATACOLLECT')"
+                          :icon-name="'gears'"
+                          :tooltip="i18n('app.host.list.dataCollect')"
+                          :time="15000"
+                          :stop-spin="model.dataCollectionEnd"></refresh-button>
       </list-title>
-      <a class="close-button hide" v-on:click="goBack($event)"><i
+      <a class="close-button hide" @click="goBack($event)"><i
         class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
 
       <div class="toolbar">
         <div class="row">
           <div class="col-sm-6 toolbar-primary">
-            <a class="btn btn-link addHost-btn" v-on:click="addHost()"><i
+            <a class="btn btn-link addHost-btn" @click="addHost()"><i
           class="fa fa-plus"></i>{{i18n("app.host.list.create")}}</a>
           </div>
           <div class="col-sm-6 toolbar-secondary">
-            <search v-bind:suggestion-properties="searchSuggestions"
-                  v-bind:placeholder="i18n('app.host.list.searchPlaceholder')"
-                  v-bind:query-options="model.listView.queryOptions"
-                  v-bind:occurrence-properties="
-                      [{
-                        name: constants.SEARCH_OCCURRENCE.ALL,
-                        label: i18n('occurrence.all')
-                      }, {
-                        name: constants.SEARCH_OCCURRENCE.ANY,
-                        label: i18n('occurrence.any')
-                      }]"
-                  v-on:search-change="search">
-            </search>
+            <grid-search :query-options="model.listView.queryOptions"
+                         :placeholder="i18n('app.host.list.searchPlaceholder')"
+                         @search-grid-action="search"></grid-search>
           </div>
         </div>
       </div>
 
       <div class="grid-container">
         <div class="content">
-          <grid v-bind:preferred-width="preferredGridWidth"
-                v-bind:count="itemsCount"
+          <grid :preferred-width="preferredGridWidth"
+                :count="itemsCount"
                 v-infinite-scroll="loadMore()">
             <grid-item v-for="item in model.listView.items" track-by="documentSelfLink">
-              <host-grid-item v-bind:model="item"></host-grid-item>
+              <host-grid-item :model="item"></host-grid-item>
             </grid-item>
           </grid>
         </div>
@@ -74,38 +64,38 @@
     </div>
   </div>
 
-  <context-sidepanel class="right-context-panel" v-on:close="closeToolbar()">
+  <context-sidepanel class="right-context-panel" @close="closeToolbar()">
 
     <div slot="toolbar" class="toolbar">
       <context-sidepanel-toolbar-item
-        v-bind:active="activeContextItem === 'requests'"
-        v-bind:label="i18n('app.request.contextPanelTooltip')"
-        v-bind:notifications="requestsCount"
-        v-on:open="openToolbarRequests()" v-on:close="closeToolbar()">
+        :active="activeContextItem === 'requests'"
+        :label="i18n('app.request.contextPanelTooltip')"
+        :notifications="requestsCount"
+        @open="openToolbarRequests()" @close="closeToolbar()">
       </context-sidepanel-toolbar-item>
 
       <context-sidepanel-toolbar-item
-        v-bind:active="activeContextItem === 'eventlogs'"
-        v-bind:label="i18n('app.eventlog.contextPanelTooltip')"
-        v-bind:notifications="eventLogsCount"
-        v-on:open="openToolbarEventLogs()" v-on:close="closeToolbar()">
+        :active="activeContextItem === 'eventlogs'"
+        :label="i18n('app.eventlog.contextPanelTooltip')"
+        :notifications="eventLogsCount"
+        @open="openToolbarEventLogs()" @close="closeToolbar()">
       </context-sidepanel-toolbar-item>
     </div>
 
     <div slot="content" class="content">
       <requests-list v-if="activeContextItem === 'requests'"
-        v-bind:model="model.contextView.activeItem.data"></requests-list>
+        :model="model.contextView.activeItem.data"></requests-list>
       <eventlog-list v-if="activeContextItem === 'eventlogs'"
-        v-bind:model="model.contextView.activeItem.data"></eventlog-list>
+        :model="model.contextView.activeItem.data"></eventlog-list>
     </div>
 
   </context-sidepanel>
 
   <div v-if="model.hostAddView" transition="slide-and-fade" class="host-view closable-view">
-    <a class="close-button" v-on:click="goBack()"
-       v-bind:class="{'hide': model.hostAddView.contextView.expanded}"><i
+    <a class="close-button" @click="goBack()"
+       :class="{'hide': model.hostAddView.contextView.expanded}"><i
           class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
-    <host-view v-bind:model="model.hostAddView" class="content"></host-view>
+    <host-view :model="model.hostAddView" class="content"></host-view>
   </div>
 
 </div>

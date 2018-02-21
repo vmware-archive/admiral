@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,12 +11,13 @@
 
 import { Component, Input, OnInit, OnChanges, SimpleChanges, ContentChild, ViewChild, ViewChildren,
          TemplateRef, HostListener, ViewEncapsulation } from '@angular/core';
-import { searchConstants } from 'admiral-ui-common';
-import * as I18n from 'i18next';
-import { DocumentService, DocumentListResult } from '../../utils/document.service';
-import { CancelablePromise } from '../../utils/utils';
+import { FormControl, FormGroup } from "@angular/forms";
 import { Router, ActivatedRoute, NavigationEnd } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
+import { searchConstants, searchUtils } from 'admiral-ui-common';
+import { DocumentService, DocumentListResult } from '../../utils/document.service';
+import { CancelablePromise } from '../../utils/utils';
+
 
 @Component({
   selector: 'grid-view',
@@ -29,7 +30,7 @@ import { Subscription } from 'rxjs/Subscription';
  */
 export class GridViewComponent implements OnInit, OnChanges {
   @Input() serviceEndpoint: string;
-  @Input() searchPlaceholder: string;
+  @Input() searchPlaceholder: string = '';
   @Input() searchSuggestionProperties: Array<string>;
   @Input() searchQueryOptions: any;
   @Input() projectLink: string;
@@ -57,14 +58,15 @@ export class GridViewComponent implements OnInit, OnChanges {
   hidePartialRows: boolean = false;
   loadPagesTimeout;
 
-  searchOccurrenceProperties = [{
-    name: searchConstants.SEARCH_OCCURRENCE.ALL,
-    label: I18n.t('occurrence.all', {ns: 'base'})
-  }, {
-    name: searchConstants.SEARCH_OCCURRENCE.ANY,
-    label: I18n.t('occurrence.any', {ns: 'base'})
-  }];
+  // Search
+  searchForm = new FormGroup({
+    occurrenceSelector: new FormControl({value: searchConstants.SEARCH_OCCURRENCE.ALL, disabled: true}),
+    searchGridInput: new FormControl('')
+  });
 
+  occurrenceSelection: any = searchConstants.SEARCH_OCCURRENCE.ALL;
+
+  // Creation
   constructor(protected service: DocumentService, private router: Router,
               private route: ActivatedRoute) { }
 
@@ -80,6 +82,9 @@ export class GridViewComponent implements OnInit, OnChanges {
 
     this.querySub = this.route.queryParams.subscribe(queryParams => {
       this.searchQueryOptions = queryParams;
+      let searchString = searchUtils.getSearchString(this.searchQueryOptions).trim();
+      this.searchForm.get('searchGridInput').setValue(searchString);
+
       this.refresh(true);
     });
   }
@@ -244,7 +249,10 @@ export class GridViewComponent implements OnInit, OnChanges {
     el.offsetHeight;
   }
 
-  onSearch(queryOptions) {
+  onSearchGrid($event) {
+    let searchString = this.searchForm.get("searchGridInput").value;
+    let queryOptions: any = searchUtils.getQueryOptions(searchString, this.occurrenceSelection);
+
     this.router.navigate(['.'], {
       relativeTo: this.route,
       queryParams: queryOptions

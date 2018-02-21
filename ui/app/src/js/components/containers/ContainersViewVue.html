@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+  ~ Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
   ~
   ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
   ~ You may not use this product except in compliance with the License.
@@ -85,18 +85,8 @@
               </a>
             </div>
             <div class="col-sm-6 toolbar-secondary">
-              <search :suggestion-properties-by-category="searchSuggestionsByCategoryMap"
-                      :placeholder-by-category="placeholderByCategoryMap"
-                      :query-options="model.listView.queryOptions"
-                      :occurrence-properties="
-                        [{
-                          name: constants.SEARCH_OCCURRENCE.ALL,
-                          label: i18n('occurrence.all')
-                        }, {
-                          name: constants.SEARCH_OCCURRENCE.ANY,
-                          label: i18n('occurrence.any')
-                        }]"
-                      @search-change="search"></search>
+              <grid-search :query-options="queryOptions" :placeholder="searchPlaceholder"
+                           @search-grid-action="search"></grid-search>
             </div>
           </div>
         </div>

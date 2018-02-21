@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -36,9 +36,8 @@ import GridHolderMixin from 'components/common/GridHolderMixin';
 import constants from 'core/constants';
 import utils from 'core/utils';
 import ft from 'core/ft';
-import { NavigationActions, RequestsActions, NotificationsActions,
-          ContainerActions, ContainersContextToolbarActions
-           } from 'actions/Actions';
+import { NavigationActions, RequestsActions, NotificationsActions, ContainerActions,
+         ContainersContextToolbarActions } from 'actions/Actions';
 
 var ContainersViewVueComponent = Vue.extend({
   template: ContainersViewVue,
@@ -111,8 +110,12 @@ var ContainersViewVueComponent = Vue.extend({
     },
     selectedCategory: function() {
       var queryOpts = this.queryOptions || {};
-      return queryOpts[constants.SEARCH_CATEGORY_PARAM] ||
-        constants.CONTAINERS.SEARCH_CATEGORY.CONTAINERS;
+
+      return queryOpts[constants.SEARCH_CATEGORY_PARAM]
+              || constants.CONTAINERS.SEARCH_CATEGORY.CONTAINERS;
+    },
+    searchPlaceholder: function() {
+      return this.placeholderByCategoryMap[this.selectedCategory];
     },
     selectedItemDocumentId: function() {
       return this.model.selectedItem && this.model.selectedItem.documentId;
@@ -243,6 +246,7 @@ var ContainersViewVueComponent = Vue.extend({
         }
       }, {immediate: true});
   },
+
   detached: function() {
     this.unwatchExpanded();
 
@@ -284,6 +288,7 @@ var ContainersViewVueComponent = Vue.extend({
     },
 
     search: function(queryOptions) {
+
       this.doSearchAndFilter(queryOptions, this.selectedCategory);
     },
 
@@ -410,6 +415,7 @@ var ContainersViewVueComponent = Vue.extend({
       this.selectionMode = false;
       this.selectedItems = [];
       this.lastSelectedItemId = null;
+
       // un-mark items
       $(this.$el).find('.grid-item').removeClass('marked');
 

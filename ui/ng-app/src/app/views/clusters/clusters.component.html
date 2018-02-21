@@ -17,7 +17,8 @@
                      (onCancel)="deleteCanceled()">
 </delete-confirmation>
 
-<grid-view #gridView [serviceEndpoint]="serviceEndpoint" [projectLink]="projectLink">
+<grid-view #gridView [serviceEndpoint]="serviceEndpoint" [projectLink]="projectLink"
+                     [searchPlaceholder]="'clusters.search.placeholder' | i18n">
   <div [hidden]="hideTitle" title>{{ title }}</div>
   <div toolbar>
     <button class="btn btn-link addCluster-btn" allowNavigation [roles]="clustersNewRouteRestrictions"
