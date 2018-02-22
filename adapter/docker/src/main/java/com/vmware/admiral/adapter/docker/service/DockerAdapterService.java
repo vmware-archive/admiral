@@ -1424,6 +1424,12 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         newContainerState.powerState = containerState.powerState;
         newContainerState.status = containerState.status;
 
+        // Temporary log to display unexpectedly large properties, see VBV-1873
+        String propertiesJson = Utils.toJson(properties);
+        if (propertiesJson.length() > 10 * 1024) {
+            logInfo("Patching container state properties after docker inspect: ", propertiesJson);
+        }
+
         // workaround for VCH (see Github issue #228)
         DockerAdapterUtils.filterHostConfigEmptyPortBindings(properties);
 
