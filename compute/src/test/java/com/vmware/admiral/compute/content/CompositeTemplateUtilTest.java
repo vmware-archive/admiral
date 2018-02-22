@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -31,6 +31,8 @@ import static com.vmware.admiral.compute.content.CompositeTemplateUtil.serialize
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import org.junit.Before;
@@ -313,6 +315,8 @@ public class CompositeTemplateUtilTest {
         Map expectedMap = YamlMapper.objectMapper().readValue(expected, Map.class);
         Map actualMap = YamlMapper.objectMapper().readValue(actual, Map.class);
 
+        Logger.getLogger(CompositeTemplateUtilTest.class.getName()).log(Level.INFO,
+                "assertEqualsYamls : expected=<" + expected + "> and actual=<" + actual + ">");
         assertEquals(expectedMap, actualMap);
     }
 
