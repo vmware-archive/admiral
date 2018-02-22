@@ -793,8 +793,8 @@ public class ContainerHostService extends StatelessService {
                         ServiceErrorResponse rsp = Utils.toValidationErrorResponse(validationEx,
                                 op);
 
-                        logWarning("Error sending adapter request with type %s : %s",
-                                request.operationTypeId, rsp.message);
+                        logWarning("Error sending adapter request with type %s : %s. Cause: %s",
+                                request.operationTypeId, rsp.message, Utils.toString(ex));
                         postEventlogError(cs, rsp.message);
                         op.setStatusCode(o.getStatusCode());
                         op.setContentType(Operation.MEDIA_TYPE_APPLICATION_JSON);
@@ -856,12 +856,13 @@ public class ContainerHostService extends StatelessService {
                     "Illegal argument exception: " + e.getMessage(), "compute.illegal.argument",
                     e.getMessage());
         }
-
-        if (localizedEx != null) {
-            return Utils.toValidationErrorResponse(localizedEx, op).message;
-        } else {
-            return "";
+        {
+            localizedEx = new LocalizableValidationException(e,
+                    String.format("Unexpected error: %s", e.getMessage()),
+                    "compute.unexpected.error", e.getMessage());
         }
+
+        return Utils.toValidationErrorResponse(localizedEx, op).message;
     }
 
     private void updateContainerHostInfo(String documentSelfLink) {
