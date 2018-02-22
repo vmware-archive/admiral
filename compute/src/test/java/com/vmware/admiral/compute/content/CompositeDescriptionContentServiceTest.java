@@ -30,7 +30,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -387,20 +386,40 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
                             return;
                         }
 
+                        final long timoutInMillis = 5000; // 5sec
+
                         try {
-                            List<ContainerDescription> containerDescriptions = getDocumentsOfType(ContainerDescription.class);
-                            containerDescriptions = containerDescriptions.stream()
-                                    .filter(cs -> !SystemContainerDescriptions.AGENT_CONTAINER_DESCRIPTION_LINK.equals(cs.documentSelfLink))
-                                    .collect(Collectors.toList());
-                            assertEquals(0, containerDescriptions.size());
+                            long startContainerDescTime = System.currentTimeMillis();
+                            waitFor(() -> {
+                                long count = getDocumentsOfType(ContainerDescription.class).stream()
+                                        .filter(cs -> !SystemContainerDescriptions.AGENT_CONTAINER_DESCRIPTION_LINK.equals(cs.documentSelfLink))
+                                        .count();
+                                if (System.currentTimeMillis() - startContainerDescTime > timoutInMillis) {
+                                    throw new Throwable(String.format("Should not have any container descriptions. Count: %s", count));
+                                }
 
-                            List<ContainerNetworkDescription> containerNetworkDescriptions = getDocumentsOfType(
-                                    ContainerNetworkDescription.class);
-                            assertEquals(0, containerNetworkDescriptions.size());
+                                return count == 0;
+                            });
 
-                            List<ContainerVolumeDescription> containerVolumeDescriptions = getDocumentsOfType(
-                                    ContainerVolumeDescription.class);
-                            assertEquals(0, containerVolumeDescriptions.size());
+                            long startContainerNetworkDescTime = System.currentTimeMillis();
+                            waitFor(() -> {
+                                long count = getDocumentsOfType(ContainerNetworkDescription.class).stream().count();
+                                if (System.currentTimeMillis() - startContainerNetworkDescTime > timoutInMillis) {
+                                    throw new Throwable(String.format("Should not have any container network descriptions. Count: %s", count));
+                                }
+
+                                return count == 0;
+                            });
+
+                            long startContainerVolumeDescTime = System.currentTimeMillis();
+                            waitFor(() -> {
+                                long count = getDocumentsOfType(ContainerVolumeDescription.class).stream().count();
+                                if (System.currentTimeMillis() - startContainerVolumeDescTime > timoutInMillis) {
+                                    throw new Throwable(String.format("Should not have any container volume descriptions. Count: %s", count));
+                                }
+
+                                return count == 0;
+                            });
 
                             host.completeIteration();
                         } catch (Throwable throwable) {
