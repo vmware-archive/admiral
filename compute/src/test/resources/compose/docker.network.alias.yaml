@@ -1,0 +1,20 @@
+version: "2"
+services:
+  app1:
+    image: "harbor.preprod.corp.amway.net/was/emptycell-server1:latest"
+    environment:
+    - "NODE_NAME=Node01"
+    volumes:
+    - "app1Profiles:/apps/WebSphere/AppServer/profiles"
+    - "app1WASSupport:/apps/WebSphere/AppServer/WasSupport"
+    networks:
+      magic-bonus:
+        aliases:
+        - "xxx"
+        - "yyy"
+    hostname: "server1"
+    restart: "always"
+networks:
+  magic-bonus:
+    external:
+      name: bridge
