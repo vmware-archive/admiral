@@ -120,7 +120,7 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
     @Test
     public void testProvision() throws Exception {
         boolean setupOnCluster = useOverlayNetwork();
-        setupCoreOsHost(DockerAdapterType.API, setupOnCluster);
+        setupCoreOsHost(DockerAdapterType.API, setupOnCluster, null);
         checkNumberOfNetworks(serviceClient, NUMBER_OF_NETWORKS_PER_APPLICATION);
 
         if (useExternalNetwork()) {

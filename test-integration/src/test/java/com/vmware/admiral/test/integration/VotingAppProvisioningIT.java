@@ -82,7 +82,7 @@ public class VotingAppProvisioningIT extends BaseProvisioningOnCoreOsIT {
 
     @Test
     public void testProvision() throws Exception {
-        setupCoreOsHost(DockerAdapterType.API, false);
+        setupCoreOsHost(DockerAdapterType.API, false, null);
         checkNumberOfNetworks(serviceClient, NUMBER_OF_NETWORKS_PER_APPLICATION);
 
         logger.info("---------- 5. Create test docker image container description. --------");

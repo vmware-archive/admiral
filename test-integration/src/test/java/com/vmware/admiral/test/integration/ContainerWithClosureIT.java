@@ -146,7 +146,7 @@ public class ContainerWithClosureIT extends BaseProvisioningOnCoreOsIT {
 
     @Test
     public void testNegativeInvalidTemplateProvision() throws Exception {
-        setupCoreOsHost(ContainerHostService.DockerAdapterType.API, false);
+        setupCoreOsHost(ContainerHostService.DockerAdapterType.API, false, null);
 
         logger.info("********************************************************************");
         logger.info("---------- Create RequestBrokerState and start the request --------");
@@ -163,7 +163,7 @@ public class ContainerWithClosureIT extends BaseProvisioningOnCoreOsIT {
 
     @Test
     public void testNegativeTimeoutProvision() throws Exception {
-        setupCoreOsHost(ContainerHostService.DockerAdapterType.API, false);
+        setupCoreOsHost(ContainerHostService.DockerAdapterType.API, false, null);
 
         logger.info("********************************************************************");
         logger.info("---------- Create RequestBrokerState and start the request --------");

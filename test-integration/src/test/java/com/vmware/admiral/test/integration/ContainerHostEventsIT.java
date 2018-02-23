@@ -125,7 +125,7 @@ public class ContainerHostEventsIT extends BaseProvisioningOnCoreOsIT {
     public void testContainerDies() throws Exception {
         compositeDescriptionLink = importTemplate(serviceClient, TEMPLATE_FILE_WITH_SLEEP_COMMAND);
 
-        setupCoreOsHost(ContainerHostService.DockerAdapterType.API, false);
+        setupCoreOsHost(ContainerHostService.DockerAdapterType.API, false, null);
 
         RequestBrokerState rbState = requestContainer(compositeDescriptionLink);
 
@@ -162,7 +162,7 @@ public class ContainerHostEventsIT extends BaseProvisioningOnCoreOsIT {
     public void testHostDies() throws Exception {
         compositeDescriptionLink = importTemplate(serviceClient, TEMPLATE_FILE);
 
-        setupCoreOsHost(ContainerHostService.DockerAdapterType.API, false);
+        setupCoreOsHost(ContainerHostService.DockerAdapterType.API, false, null);
 
         ComputeState cs = getDockerHost();
         assertEquals(ComputeService.PowerState.ON, cs.powerState);
