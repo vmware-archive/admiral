@@ -15,7 +15,6 @@ import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExec
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_CONFIG_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_DOMAINNAME_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_ENTRYPOINT_PROP_NAME;
-import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_ENV_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_HOSTNAME_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_HOST_CONFIG.BINDS_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_HOST_CONFIG.CAP_ADD_PROP_NAME;
@@ -42,7 +41,6 @@ import static com.vmware.admiral.test.integration.data.IntegratonTestStateFactor
 
 import java.net.URI;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -374,13 +372,6 @@ public class DockerProvisioningOnCoreOsIT extends BaseProvisioningOnCoreOsIT {
 
         assertEquals(DOCKER_CONTAINER_WORKING_DIR_PROP_NAME, TEST_WORKING_DIR,
                 config.get(DOCKER_CONTAINER_WORKING_DIR_PROP_NAME));
-
-        Collection<String> actualEnvironment = (Collection<String>) config
-                .get(DOCKER_CONTAINER_ENV_PROP_NAME);
-
-        // verify that the actual environment contains (at least) all of the configured variables
-        assertTrue("environment variables missing",
-                actualEnvironment.containsAll(Arrays.asList(TEST_ENV)));
 
         Map<String, String> actualVolumes = (Map<String, String>) config
                 .get(DOCKER_CONTAINER_VOLUMES_PROP_NAME);

@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.adapter.docker.service;
 
+import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_CONFIG_PROP_NAME;
+import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_ENV_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_HOST_CONFIG_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORK_IPAM_CONFIG_AUX_ADDRESSES_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORK_IPAM_CONFIG_GATEWAY_PROP_NAME;
@@ -236,4 +238,18 @@ public class DockerAdapterUtils {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    public static void filterConfigEnvVariables(Map<String, Object> inspectMap) {
+        if (inspectMap == null) {
+            return;
+        }
+
+        Map<String, Object> containerConfig = (Map<String, Object>) inspectMap
+                .get(DOCKER_CONTAINER_CONFIG_PROP_NAME);
+        if (containerConfig == null) {
+            return;
+        }
+
+        containerConfig.remove(DOCKER_CONTAINER_ENV_PROP_NAME);
+    }
 }

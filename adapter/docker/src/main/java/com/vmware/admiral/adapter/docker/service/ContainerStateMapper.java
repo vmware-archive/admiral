@@ -14,6 +14,7 @@ package com.vmware.admiral.adapter.docker.service;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_COMMAND_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_CONFIG_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_CREATED_PROP_NAME;
+import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_ENV_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_ID_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_IMAGE_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_INSPECT_NETWORKS_PROPS.DOCKER_CONTAINER_NETWORK_ALIASES_PROP_NAME;
@@ -147,6 +148,13 @@ public class ContainerStateMapper {
         String image = (String) config.get(DOCKER_CONTAINER_IMAGE_PROP_NAME);
         if (image != null) {
             containerState.image = image;
+        }
+
+        @SuppressWarnings("unchecked")
+        Collection<String> envList = (Collection<String>) config
+                .get(DOCKER_CONTAINER_ENV_PROP_NAME);
+        if (envList != null) {
+            containerState.env = envList.toArray(new String[0]);
         }
     }
 
