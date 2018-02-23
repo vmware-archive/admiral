@@ -224,6 +224,20 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
             this.host.send(validateBadRequestOnImportOperation(new Date(),
                     "Failed to deserialize CompositeTemplate serialized content!"));
             this.host.testWait();
+
+            this.host.testStart(1);
+            this.host.send(validateBadRequestOnImportOperation(
+                    getContent("docker.invalid.network.yaml"),
+                    "Error processing Docker Compose v2 YAML content"));
+            this.host.testWait();
+        }
+
+        @Test
+        public void testValidateNetworkAlias() throws Throwable {
+            this.host.testStart(1);
+            this.host.send(
+                    validateSuccessfulImportOperation(getContent("docker.network.alias.yaml")));
+            this.host.testWait();
         }
 
         private Operation validateBadRequestOnImportOperation(Object body, String expectedMsg) {
@@ -242,6 +256,24 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
                             host.completeIteration();
                         } else {
                             host.failIteration(new IllegalStateException("Test should have failed!"));
+                        }
+                    });
+        }
+
+        private Operation validateSuccessfulImportOperation(Object body) {
+            // import YAML to Container Description
+            return Operation
+                    .createPost(
+                            UriUtils.buildUri(host, CompositeDescriptionContentService.SELF_LINK))
+                    .setContentType((body instanceof String) ? MEDIA_TYPE_APPLICATION_YAML
+                            : Operation.MEDIA_TYPE_APPLICATION_JSON)
+                    .setBody(body).setCompletion((o, e) -> {
+                        if (e == null) {
+                            assertEquals(Operation.STATUS_CODE_OK, o.getStatusCode());
+                            host.completeIteration();
+                        } else {
+                            host.failIteration(
+                                    new IllegalStateException("Test should have succeeded!"));
                         }
                     });
         }

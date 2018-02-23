@@ -12,23 +12,27 @@
 package com.vmware.admiral.compute.content.compose;
 
 import java.io.IOException;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.util.ClassUtil;
 
 import com.vmware.admiral.compute.container.ServiceNetwork;
 import com.vmware.xenon.common.LocalizableValidationException;
+import com.vmware.xenon.common.Utils;
 
 public class ServiceNetworksDeserializer extends StdDeserializer<ServiceNetworks> {
 
     private static final long serialVersionUID = 1L;
+
+    private static final Logger logger = Logger
+            .getLogger(ServiceNetworksDeserializer.class.getName());
 
     public ServiceNetworksDeserializer() {
         this(ServiceNetworks.class);
@@ -50,8 +54,23 @@ public class ServiceNetworksDeserializer extends StdDeserializer<ServiceNetworks
         if (object instanceof List) {
             networks.values = ((List<String>) object).toArray(new String[] {});
         } else if (object instanceof Map) {
-            Map<String, ServiceNetwork> map = (Map<String, ServiceNetwork>) object;
-            networks.valuesMap = new ObjectMapper().convertValue(map, LinkedHashMap.class);
+            Map<String, Object> map = (Map<String, Object>) object;
+            networks.valuesMap = new HashMap<String, ServiceNetwork>();
+
+            try {
+                for (Map.Entry<String, Object> entry : map.entrySet()) {
+                    String network = (String) entry.getKey();
+                    Map<String, Object> m = (Map<String, Object>) entry.getValue();
+                    ServiceNetwork sn = ServiceNetwork.fromMap(m);
+                    networks.valuesMap.put(network, sn);
+                }
+            } catch (Exception e) {
+                logger.severe("Invalid yaml input for networks: " + Utils.toString(e));
+                throw new LocalizableValidationException("Invalid networks object class '"
+                        + ClassUtil.getClassDescription(object) + "'!",
+                        "compute.service.network.deserialization.error",
+                        ClassUtil.getClassDescription(object));
+            }
         } else {
             throw new LocalizableValidationException("Invalid networks object class '"
                     + ClassUtil.getClassDescription(object) + "'!",

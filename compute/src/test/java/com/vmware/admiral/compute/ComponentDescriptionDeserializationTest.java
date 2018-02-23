@@ -39,7 +39,9 @@ public class ComponentDescriptionDeserializationTest extends ComputeBaseTest {
         container.env = new String[] { "hello" };
         container.image = "library/hello-world";
         container.networks = new HashMap<>();
-        container.networks.put("net1", new ServiceNetwork());
+        ServiceNetwork serviceNetwork = new ServiceNetwork();
+        serviceNetwork.hashCode();
+        container.networks.put("net1", serviceNetwork);
 
         cd.type = ResourceType.CONTAINER_TYPE.getName();
         cd.updateServiceDocument(container);

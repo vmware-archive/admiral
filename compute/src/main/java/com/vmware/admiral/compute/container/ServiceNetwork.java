@@ -12,6 +12,8 @@
 package com.vmware.admiral.compute.container;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.StringJoiner;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -21,6 +23,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ServiceNetwork {
+
+    public static final String FIELD_NAME = "name";
+    public static final String FIELD_NAME_ALIASES = "aliases";
+    public static final String FIELD_NAME_IP4_ADDRESS = "ipv4_address";
+    public static final String FIELD_NAME_IP6_ADDRESS = "ipv6_address";
 
     public String name;
 
@@ -114,5 +121,25 @@ public class ServiceNetwork {
         sb.append("ipv4_address='").append(ipv4_address != null ? ipv4_address : "-").append("',");
         sb.append("ipv6_address='").append(ipv6_address != null ? ipv6_address : "-").append("'}");
         return sb.toString();
+    }
+
+    public static ServiceNetwork fromMap(Map<?,?> map) {
+        ServiceNetwork result = new ServiceNetwork();
+        if (map.containsKey(FIELD_NAME)) {
+            result.name = (String) map.get(FIELD_NAME);
+        }
+        if (map.containsKey(FIELD_NAME_ALIASES)) {
+            result.aliases = (String[]) ((List) map.get(FIELD_NAME_ALIASES)).stream()
+                    .toArray(String[]::new);
+        }
+
+        if (map.containsKey(FIELD_NAME_IP4_ADDRESS)) {
+            result.ipv4_address = (String) map.get(FIELD_NAME_IP4_ADDRESS);
+        }
+
+        if (map.containsKey(FIELD_NAME_IP6_ADDRESS)) {
+            result.ipv6_address = (String) map.get(FIELD_NAME_IP6_ADDRESS);
+        }
+        return result;
     }
 }
