@@ -33,7 +33,7 @@
         </div>
         <div class="form-group" *ngIf="!isEdit">
           <label for="type">{{ "clusters.edit.type" | i18n }}</label>
-          <div class="select">
+          <div class="select" data-name="create-cluster-type">
             <select formControlName="type">
               <option value="VCH">VCH</option>
               <option value="DOCKER">DOCKER</option>
