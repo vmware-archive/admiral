@@ -1,21 +1,37 @@
 # Basic drone yaml to simply trigger downstream builds when code gets pushed to this repo
 # For the secrets, I just used vmware/vic secrets
 pipeline:
+
+  check-org-membership:
+    image: 'wdc-harbor-ci.eng.vmware.com/default-project/vic-integration-test:1.44'
+    pull: true
+    environment:
+      BIN: bin
+      GOPATH: /go
+      SHELL: /bin/bash
+    secrets:
+      - github_automation_api_key
+    commands:
+      - echo ${DRONE_COMMIT_AUTHOR}
+      - /bin/bash -c '[[ ! $(curl --silent "https://api.github.com/orgs/vmware/members/${DRONE_COMMIT_AUTHOR}?access_token=$GITHUB_AUTOMATION_API_KEY") ]]'
+    when:
+      status: success
+
   admiral-build:
     image: alpine
     commands:
-      - echo "Hello World!"
+      - 'echo "Hello World!"'
 
   trigger-downstream:
-      image: plugins/downstream
-      server: https://ci.vcna.io
-      token: ${DRONE_TOKEN}
-      fork: true
-      repositories:
-        - vmware/vic-product
-      when:
-        repo: vmware/admiral
-        event: [ push, tag ]
-        branch: [ master ]
-        status: success
-
+    image: plugins/downstream
+    server: 'https://ci-vic.vmware.com'
+    secrets:
+      - downstream_token
+    fork: true
+    repositories:
+      - vmware/vic-product
+    when:
+      repo: vmware/admiral
+      event: [push, tag]
+      branch: [master]
+      status: success
