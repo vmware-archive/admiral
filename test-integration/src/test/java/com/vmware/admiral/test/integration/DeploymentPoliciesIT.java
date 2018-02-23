@@ -13,6 +13,8 @@ package com.vmware.admiral.test.integration;
 
 import static org.junit.Assert.fail;
 
+import java.util.UUID;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -24,25 +26,32 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.DeploymentPolicyService;
 import com.vmware.admiral.compute.container.DeploymentPolicyService.DeploymentPolicy;
-import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState.SubStage;
 import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpMethod;
+import com.vmware.photon.controller.model.resources.ResourcePoolService;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
 public class DeploymentPoliciesIT extends BaseProvisioningOnCoreOsIT {
 
+    String resourcePoolName;
+    String resourcePoolLink;
+
     @Before
     public void setUp() throws Exception {
-        setupCoreOsHost(DockerAdapterType.API);
+        resourcePoolName = UUID.randomUUID().toString();
+        resourcePoolLink = UriUtils.buildUriPath(
+                ResourcePoolService.FACTORY_LINK, resourcePoolName);
+        setupCoreOsHost(DockerAdapterType.API, false, resourcePoolName);
     }
 
     @After
     public void tearDown() throws Exception {
         GroupResourcePlacementState placement = getDocument(
-                GroupResourcePlacementService.DEFAULT_RESOURCE_PLACEMENT_LINK,
+                resourcePoolLink,
                 GroupResourcePlacementState.class);
         placement.deploymentPolicyLink = null;
         sendRequest(HttpMethod.PUT, placement.documentSelfLink, Utils.toJson(placement));
@@ -59,7 +68,7 @@ public class DeploymentPoliciesIT extends BaseProvisioningOnCoreOsIT {
         validateContainerRequestSuccess(request);
 
         GroupResourcePlacementState placement = getDocument(
-                GroupResourcePlacementService.DEFAULT_RESOURCE_PLACEMENT_LINK,
+                resourcePoolLink,
                 GroupResourcePlacementState.class);
         placement.deploymentPolicyLink = deploymentPolicy.documentSelfLink;
         sendRequest(HttpMethod.PUT, placement.documentSelfLink, Utils.toJson(placement));

@@ -92,8 +92,10 @@ import com.vmware.admiral.test.integration.data.IntegratonTestStateFactory;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
+import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.TaskState.TaskStage;
@@ -222,7 +224,7 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
 
     protected void doProvisionDockerContainerOnCoreOS(boolean downloadImage,
             DockerAdapterType adapterType, boolean setupOnCluster, int networksCount) throws Exception {
-        setupCoreOsHost(adapterType, setupOnCluster);
+        setupCoreOsHost(adapterType, setupOnCluster, null);
         if (networksCount > 0) {
             checkNumberOfNetworks(serviceClient, networksCount);
         }
@@ -241,10 +243,11 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
     }
 
     protected void setupCoreOsHost(DockerAdapterType adapterType) throws Exception {
-        setupCoreOsHost(adapterType, false);
+        setupCoreOsHost(adapterType, false, null);
     }
 
-    protected void setupCoreOsHost(DockerAdapterType adapterType, boolean setupOnCluster)
+    protected void setupCoreOsHost(DockerAdapterType adapterType, boolean setupOnCluster,
+            String resourcePoolName)
             throws Exception {
         logger.info("********************************************************************");
         logger.info("----------  Setup: Add CoreOS VM as DockerHost ComputeState --------");
@@ -268,12 +271,19 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
             throw new IllegalArgumentException("Unexpected adapter type: " + adapterType);
         }
 
+        if (resourcePoolName == null) {
+            resourcePoolName = UUID.randomUUID().toString();
+        }
+
         dockerHostAuthCredentials = postDocument(AuthCredentialsService.FACTORY_LINK,
                 dockerHostAuthCredentials);
-        postDocument(ResourcePoolService.FACTORY_LINK,
-                GroupResourcePlacementService.buildDefaultResourcePool(), TestDocumentLifeCycle.FOR_DELETE_AFTER_CLASS);
+        ResourcePoolState resourcePoolState = postDocument(ResourcePoolService.FACTORY_LINK,
+                GroupResourcePlacementService.buildResourcePool(resourcePoolName),
+                TestDocumentLifeCycle.FOR_DELETE_AFTER_CLASS);
         postDocument(GroupResourcePlacementService.FACTORY_LINK,
-                GroupResourcePlacementService.buildDefaultStateInstance(), TestDocumentLifeCycle.FOR_DELETE_AFTER_CLASS);
+                GroupResourcePlacementService.buildStateInstance(Service.getId(resourcePoolState
+                        .documentSelfLink), resourcePoolState.documentSelfLink),
+                TestDocumentLifeCycle.FOR_DELETE_AFTER_CLASS);
 
         assertNotNull("Failed to create host credentials", dockerHostAuthCredentials);
 
@@ -283,18 +293,20 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
         if (!setupOnCluster) {
             logger.info("---------- 3. Create Docker Host ComputeState for CoreOS VM. --------");
             dockerHostCompute = createDockerHost(getTestRequiredProp("docker.host.address"),
-                    hostPort, credLink, adapterType, null);
+                    hostPort, credLink, adapterType, null, resourcePoolState.documentSelfLink);
         } else {
             dockerHostsInCluster = new ArrayList<>();
             logger.info(
                     "---------- 3. Create Docker Hosts ComputeState Node 1 and Node 2 of cluster for CoreOS VM. --------");
             String node1Address = getTestRequiredProp("docker.host.cluster.node1.address");
             dockerHostsInCluster.add(createDockerHost(node1Address,
-                    hostPort, credLink, adapterType, UriUtilsExtended.extractHost(node1Address)));
+                    hostPort, credLink, adapterType, UriUtilsExtended.extractHost(node1Address),
+                    resourcePoolState.documentSelfLink));
 
             String node2Address = getTestRequiredProp("docker.host.cluster.node2.address");
             dockerHostsInCluster.add(createDockerHost(node2Address,
-                    hostPort, credLink, adapterType, UriUtilsExtended.extractHost(node2Address)));
+                    hostPort, credLink, adapterType, UriUtilsExtended.extractHost(node2Address),
+                    resourcePoolState.documentSelfLink));
         }
 
         logger.info("---------- 4. Add the Docker Host SSL Trust Certificate. --------");
@@ -858,7 +870,7 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
     }
 
     private static ComputeState createDockerHost(String address, String port, String credLink,
-            DockerAdapterType adapterType, String id) throws Exception {
+            DockerAdapterType adapterType, String id, String resourcePoolLink) throws Exception {
         ComputeState compute = IntegratonTestStateFactory.createDockerComputeHost();
         if (id != null) {
             compute.id = id;
@@ -873,6 +885,9 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
 
         // link credentials to host
         compute.customProperties.put(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME, credLink);
+
+        // link to pool link
+        compute.resourcePoolLink = resourcePoolLink;
         return addHost(compute);
     }
 

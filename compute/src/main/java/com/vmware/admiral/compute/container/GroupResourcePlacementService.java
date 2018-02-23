@@ -70,19 +70,30 @@ public class GroupResourcePlacementService extends StatefulService {
     public static final long MIN_MEMORY_LIMIT_BYTES = 4_194_304;
 
     public static ResourcePoolState buildDefaultResourcePool() {
+        return buildResourcePool(DEFAULT_RESOURCE_POOL_ID);
+    }
+
+    public static ResourcePoolState buildResourcePool(String resourcePoolName) {
         ResourcePoolState poolState = new ResourcePoolState();
-        poolState.documentSelfLink = DEFAULT_RESOURCE_POOL_LINK;
-        poolState.name = DEFAULT_RESOURCE_POOL_ID;
+        poolState.documentSelfLink = UriUtils.buildUriPath(
+                ResourcePoolService.FACTORY_LINK, resourcePoolName);
+        poolState.name = resourcePoolName;
         poolState.id = poolState.name;
 
         return poolState;
     }
 
     public static ServiceDocument buildDefaultStateInstance() {
+        return buildStateInstance(DEFAULT_RESOURCE_PLACEMENT_ID, DEFAULT_RESOURCE_POOL_LINK);
+    }
+
+    public static ServiceDocument buildStateInstance(String resourcePlacementName,
+            String resourcePoolDocumentSelfLink) {
         GroupResourcePlacementState rsrvState = new GroupResourcePlacementState();
-        rsrvState.documentSelfLink = DEFAULT_RESOURCE_PLACEMENT_LINK;
-        rsrvState.name = DEFAULT_RESOURCE_PLACEMENT_ID;
-        rsrvState.resourcePoolLink = DEFAULT_RESOURCE_POOL_LINK;
+        rsrvState.documentSelfLink = UriUtils.buildUriPath(
+                FACTORY_LINK, resourcePlacementName);
+        rsrvState.name = resourcePlacementName;
+        rsrvState.resourcePoolLink = resourcePoolDocumentSelfLink;
         rsrvState.tenantLinks = null; // global default group placement
         rsrvState.maxNumberInstances = 1000000;
         rsrvState.priority = DEFAULT_PLACEMENT_PRIORITY;

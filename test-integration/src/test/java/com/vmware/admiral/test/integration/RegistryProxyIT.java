@@ -80,14 +80,14 @@ public class RegistryProxyIT extends BaseProvisioningOnCoreOsIT {
     @Test
     public void testRegistryProxyNoExceptions() throws Exception {
         logger.info("Add docker host.");
-        setupCoreOsHost(DockerAdapterType.API, false);
+        setupCoreOsHost(DockerAdapterType.API, false, null);
         registryProxyHelper(false, RETRY_COUNT);
     }
 
     @Test
     public void testRegistryProxyWithExceptions() throws Exception {
         logger.info("Add docker host.");
-        setupCoreOsHost(DockerAdapterType.API, false);
+        setupCoreOsHost(DockerAdapterType.API, false, null);
         registryProxyHelper(true, RETRY_COUNT);
     }
 
