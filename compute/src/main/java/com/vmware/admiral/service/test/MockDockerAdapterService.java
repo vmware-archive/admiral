@@ -171,7 +171,13 @@ public class MockDockerAdapterService extends BaseMockAdapterService {
         if (contDesc == null && !state.isDeprovisioning()) {
             getDocument(ContainerDescription.class,
                     UriUtils.buildUri(getHost(), containerState.descriptionLink), taskInfo,
-                    (desc) -> processContainerRequest(state, taskInfo, containerState, desc));
+                    (desc) -> {
+                        if (desc == null) {
+                            throw new IllegalStateException("getDocument("
+                                    + containerState.descriptionLink + ") returned null!");
+                        }
+                        processContainerRequest(state, taskInfo, containerState, desc);
+                    });
             return;
         }
 
