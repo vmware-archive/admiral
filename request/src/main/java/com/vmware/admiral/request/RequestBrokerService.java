@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
@@ -96,6 +97,7 @@ import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceErrorResponse;
+import com.vmware.xenon.common.ServiceHost.ServiceAlreadyStartedException;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
@@ -882,6 +884,11 @@ public class RequestBrokerService extends
                     .setContextId(getSelfId())
                     .setCompletion((o, e) -> {
                         if (e != null) {
+                            if (e instanceof ServiceAlreadyStartedException) {
+                                getHost().log(Level.WARNING, "Service %s already started.",
+                                        allocationTask.documentSelfLink);
+                                return;
+                            }
                             failTask("Failure creating resource allocation task", e);
                             return;
                         }

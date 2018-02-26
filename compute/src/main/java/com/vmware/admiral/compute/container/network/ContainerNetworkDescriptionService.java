@@ -66,6 +66,8 @@ public class ContainerNetworkDescriptionService extends StatefulService {
         public static final String CUSTOM_PROPERTY_IPAM_DRIVER = "containers.ipam.driver";
         public static final String CUSTOM_PROPERTY_NETWORK_RANGE_FORMAT_ALLOWED = "network.range.format.allowed";
 
+        public static final String FIELD_NAME_EXTERNAL = "external";
+
         /** An IPAM configuration for a given network. */
         @Documentation(description = "An IPAM configuration for a given network.")
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,

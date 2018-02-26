@@ -221,7 +221,8 @@ public class ContainerNetworkService extends StatefulService {
         if (!changed) {
             patch.setStatusCode(Operation.STATUS_CODE_NOT_MODIFIED);
         } else {
-            CompositeComponentNotifier.notifyCompositionComponentsOnChange(this, patch.getAction(),
+            CompositeComponentNotifier.notifyCompositionComponentsOnChange(this,
+                    patch.getAction(),
                     currentState.compositeComponentLinks, currentCompositeComponentLinks);
         }
 
