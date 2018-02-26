@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -53,6 +53,7 @@ public class CompositeComponentService extends StatefulService {
     public static class CompositeComponent extends
             com.vmware.admiral.service.common.MultiTenantDocument {
 
+        public static final String FIELD_NAME_COMPOSITE_DESCRIPTION_LINK = "compositeDescriptionLink";
         public static final String CUSTOM_PROPERTY_HOST_LINK = "__hostLink";
 
         /** Name of composite description */
