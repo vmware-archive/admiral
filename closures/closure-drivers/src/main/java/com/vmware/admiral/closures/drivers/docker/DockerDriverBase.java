@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -15,7 +15,9 @@ import static com.vmware.admiral.service.common.SslTrustCertificateService.SSL_T
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -33,6 +35,7 @@ import com.vmware.admiral.closures.util.ClosureProps;
 import com.vmware.admiral.closures.util.ClosureUtils;
 import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.admiral.common.util.ServiceDocumentQuery.ServiceDocumentQueryElementResult;
 import com.vmware.admiral.common.util.SubscriptionManager;
 import com.vmware.admiral.service.common.ConfigurationService;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
@@ -103,13 +106,12 @@ public abstract class DockerDriverBase implements ExecutionDriver {
     }
 
     private class ClosureSslTrustQueryCompletionHandler implements
-            Consumer<ServiceDocumentQuery.ServiceDocumentQueryElementResult<SslTrustCertificateState>> {
+            Consumer<ServiceDocumentQueryElementResult<SslTrustCertificateState>> {
 
-        List<SslTrustCertificateState> trustedCerts = new ArrayList<>();
+        Set<String> trustedCerts = new HashSet<>();
 
         @Override
-        public void accept(
-                ServiceDocumentQuery.ServiceDocumentQueryElementResult<SslTrustCertificateState> result) {
+        public void accept(ServiceDocumentQueryElementResult<SslTrustCertificateState> result) {
             if (result.hasException()) {
                 Utils.logWarning("Exception during ssl trust cert loading: %s",
                         (result.getException() instanceof CancellationException)
@@ -117,11 +119,11 @@ public abstract class DockerDriverBase implements ExecutionDriver {
                                 : Utils.toString(result.getException()));
             } else if (result.hasResult()) {
                 SslTrustCertificateState sslTrustCert = result.getResult();
-                trustedCerts.add(sslTrustCert);
+                trustedCerts.add(sslTrustCert.certificate);
             } else {
                 StringBuilder sb = new StringBuilder();
-                for (SslTrustCertificateState cert : trustedCerts) {
-                    sb.append("\n").append(cert.certificate);
+                for (String certificate : trustedCerts) {
+                    sb.append('\n').append(certificate);
                 }
 
                 trustCertificates.set(ClosureUtils.compress((sb.toString())));
