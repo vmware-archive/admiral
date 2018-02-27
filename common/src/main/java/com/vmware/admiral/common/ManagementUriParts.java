@@ -41,6 +41,7 @@ public interface ManagementUriParts {
 
     String UTIL = "/util";
     String LONG_URI_GET = UTIL + "/long-uri-get";
+    String DANGLING_DESCRIPTIONS_CLEANUP = UTIL + "/cleanup-dangling-descriptions";
 
     String CERT_DISTRIBUTION_ADD_REGISTRY = CONFIG + "/cert-dist-add-reg";
     String CERT_DISTRIBUTION_ADD_HOST = CONFIG + "/certs-dist-add-host";
