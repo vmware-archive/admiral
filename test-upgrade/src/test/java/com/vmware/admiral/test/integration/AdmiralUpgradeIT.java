@@ -305,7 +305,7 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
         // create documents to check for after upgrade
         compositeDescriptionLink = importTemplate(serviceClient, TEMPLATE_HELLO_WORLD_NETWORK);
         // try to provision in order to create an event state
-        setupCoreOsHost(DockerAdapterType.API, false);
+        setupCoreOsHost(DockerAdapterType.API, false, null);
         // provision an application with network
         requestContainer(
                 getResourceDescriptionLink(false, RegistryType.V1_SSL_SECURE));
