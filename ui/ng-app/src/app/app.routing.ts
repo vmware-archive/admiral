@@ -177,17 +177,17 @@ export const ROUTES: Routes = [
                             roles: RoutesRestriction.PROJECTS_ID
                         }
                     },
-                    { path: ':id/:tab', component: ProjectDetailsComponent,
-                        data: {
-                            navigationContainerType: NavigationContainerType.Fullscreen,
-                            roles: RoutesRestriction.PROJECTS_ID
-                        }
-                    },
                     { path: ':id/edit', component: ProjectCreateComponent,
                         canActivate: [AdminAuthGuard],
                         data: {
                             navigationContainerType: NavigationContainerType.Fullscreen,
                             roles: RoutesRestriction.PROJECTS_ID_EDIT
+                        }
+                    },
+                    { path: ':id/:tab', component: ProjectDetailsComponent,
+                        data: {
+                            navigationContainerType: NavigationContainerType.Fullscreen,
+                            roles: RoutesRestriction.PROJECTS_ID
                         }
                     },
                     { path: ':projectId/cluster/new', component: ClusterCreateComponent,
