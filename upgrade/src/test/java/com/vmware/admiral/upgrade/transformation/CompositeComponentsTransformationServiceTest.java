@@ -226,6 +226,64 @@ public class CompositeComponentsTransformationServiceTest extends UpgradeBaseTes
         Assert.assertTrue(application.tenantLinks.containsAll(volume.tenantLinks));
     }
 
+    @Test
+    public void testApplicationWithoutComponentLinks() throws Throwable {
+        List<String> componentLinks = null;
+        CompositeComponent application = createCompositeComponent(componentLinks);
+        application.tenantLinks = new ArrayList<>();
+        application.tenantLinks.add("project1");
+        application.tenantLinks.add("project2");
+        application = doPost(application, CompositeComponentFactoryService.SELF_LINK);
+
+        doOperation(new ServiceDocument(),
+                UriUtils.buildUri(host, CompositeComponentsTransformationService.SELF_LINK), false,
+                Service.Action.POST);
+
+        application = getDocument(CompositeComponent.class, application.documentSelfLink);
+        Assert.assertTrue(application.tenantLinks.size() == 2);
+    }
+
+    @Test
+    public void testApplicationWithNonExistingComponents() throws Throwable {
+        List<String> tenantLinks = new ArrayList<String>();
+        tenantLinks.add("project1");
+        tenantLinks.add("project2");
+
+        // containerState1 does not exist
+        ContainerState containerState1 = createContainer(tenantLinks);
+        ContainerState containerState2 = createContainer(tenantLinks);
+        containerState2 = doPost(containerState2, ContainerFactoryService.SELF_LINK);
+
+        tenantLinks.add("project3");
+        ContainerNetworkState network = createNetwork(tenantLinks);
+        network = doPost(network, ContainerNetworkFactoryService.SELF_LINK);
+
+        ContainerVolumeState volume = createVolume(tenantLinks);
+        volume = doPost(volume, ContainerVolumeFactoryService.SELF_LINK);
+
+        List<String> componentLinks = new ArrayList<>();
+        componentLinks.add(containerState1.documentSelfLink);
+        componentLinks.add(containerState2.documentSelfLink);
+        componentLinks.add(network.documentSelfLink);
+        componentLinks.add(volume.documentSelfLink);
+        CompositeComponent application = createCompositeComponent(componentLinks);
+        application.tenantLinks = new ArrayList<>();
+        application.tenantLinks.add("project1");
+        application.tenantLinks.add("project2");
+        application = doPost(application, CompositeComponentFactoryService.SELF_LINK);
+
+        doOperation(new ServiceDocument(),
+                UriUtils.buildUri(host, CompositeComponentsTransformationService.SELF_LINK), false,
+                Service.Action.POST);
+
+        application = getDocument(CompositeComponent.class, application.documentSelfLink);
+        Assert.assertTrue(application.tenantLinks.size() == 3);
+        Assert.assertTrue(application.tenantLinks.containsAll(tenantLinks));
+        Assert.assertTrue(application.tenantLinks.containsAll(containerState1.tenantLinks));
+        Assert.assertTrue(application.tenantLinks.containsAll(network.tenantLinks));
+        Assert.assertTrue(application.tenantLinks.containsAll(volume.tenantLinks));
+    }
+
     private CompositeComponent createCompositeComponent(List<String> componentLinks) {
         CompositeComponent application = new CompositeComponent();
         application.name = UUID.randomUUID().toString();

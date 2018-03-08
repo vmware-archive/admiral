@@ -26,6 +26,7 @@ import com.vmware.admiral.compute.container.CompositeComponentService.CompositeC
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
+import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -77,6 +78,15 @@ public class CompositeComponentsTransformationService extends StatelessService {
 
     private void processApplication(CompositeComponent state, Operation post) {
         Set<String> tenantLinks = ConcurrentHashMap.newKeySet();
+        if (state.componentLinks == null || state.componentLinks.isEmpty()) {
+            logInfo("Composite component %s has no componentLinks. Tenant links will not be updated",
+                    state.documentSelfLink);
+            if (compositeComponentsCount.decrementAndGet() == 0) {
+                logInfo("Composite components tranformation completed successfully");
+                post.complete();
+            }
+            return;
+        }
         List<Operation> getOperations = state.componentLinks.stream()
                 .map(link -> Operation.createGet(getHost(), link)
                         .setReferer(getUri()))
@@ -84,16 +94,23 @@ public class CompositeComponentsTransformationService extends StatelessService {
 
         OperationJoin.create(getOperations).setCompletion((ops, ex) -> {
             if (ex != null) {
-                post.fail(new Throwable(
-                        "Error retrieving composite components: " + Utils.toString(ex),
-                        ex.values().iterator().next()));
-            } else {
-                for (Operation op : ops.values()) {
-                    ResourceState document = op.getBody(ResourceState.class);
+                for (Throwable t : ex.values()) {
+                    if (!(t instanceof ServiceNotFoundException)) {
+                        post.fail(new Throwable(
+                                "Error retrieving composite components: " + Utils.toString(ex),
+                                ex.values().iterator().next()));
+                        return;
+                    }
+                }
+            }
+
+            for (Operation op : ops.values()) {
+                ResourceState document = op.getBody(ResourceState.class);
+                if (document.tenantLinks != null) {
                     tenantLinks.addAll(new LinkedHashSet<String>(document.tenantLinks));
                 }
-                updateApplicationTenantLinks(state, tenantLinks, post);
             }
+            updateApplicationTenantLinks(state, tenantLinks, post);
         }).sendWith(getHost());
     }
 
