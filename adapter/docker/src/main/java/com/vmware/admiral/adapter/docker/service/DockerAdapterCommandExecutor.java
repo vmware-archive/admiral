@@ -169,6 +169,7 @@ public interface DockerAdapterCommandExecutor {
     String DOCKER_VOLUME_MOUNTPOINT_PROP_NAME = "Mountpoint";
     String DOCKER_VOLUME_SCOPE_PROP_NAME = "Scope";
     String DOCKER_VOLUME_STATUS_PROP_NAME = "Status";
+    String DOCKER_VOLUME_OPTIONS_PROP_NAME = "Options";
 
     // local system build image parameters
     String DOCKER_BUILD_IMAGE_DOCKERFILE_PROP_NAME = "dockerfile";

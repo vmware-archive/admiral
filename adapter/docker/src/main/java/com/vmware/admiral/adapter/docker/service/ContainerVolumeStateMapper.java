@@ -14,6 +14,7 @@ package com.vmware.admiral.adapter.docker.service;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_VOLUME_DRIVER_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_VOLUME_MOUNTPOINT_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_VOLUME_NAME_PROP_NAME;
+import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_VOLUME_OPTIONS_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_VOLUME_SCOPE_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_VOLUME_STATUS_PROP_NAME;
 import static com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.VMDK_VOLUME_DRIVER;
@@ -49,6 +50,9 @@ public class ContainerVolumeStateMapper {
         volumeState.driver = (String) properties.get(DOCKER_VOLUME_DRIVER_PROP_NAME);
         volumeState.mountpoint = (String) properties.get(DOCKER_VOLUME_MOUNTPOINT_PROP_NAME);
         volumeState.scope = (String) properties.get(DOCKER_VOLUME_SCOPE_PROP_NAME);
+
+        mapDriverOptions(volumeState, properties);
+
         mapVolumeStatus(volumeState, properties);
 
         updateVolumeName(volumeState, properties);
@@ -69,6 +73,12 @@ public class ContainerVolumeStateMapper {
             Map<String, Object> properties) {
 
         volumeState.status = getMap(properties, DOCKER_VOLUME_STATUS_PROP_NAME);
+    }
+
+    private static void mapDriverOptions(ContainerVolumeState volumeState,
+            Map<String, Object> properties) {
+
+        volumeState.options = getMap(properties, DOCKER_VOLUME_OPTIONS_PROP_NAME);
     }
 
     private static <T> Map<String, String> getMap(Map<String, Object> properties, String propertyName) {
