@@ -30,6 +30,7 @@ import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
 
 public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
 
@@ -247,9 +248,10 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
 
         ContainerVolumeStateMapper.propertiesToContainerVolumeState(newVolumeState, properties);
 
-        logFine("Patching ContainerVolumeState: %s %s",
+        logFine("Patching ContainerVolumeState with properties: %s %s %s",
                 newVolumeState.documentSelfLink,
-                request.getRequestTrackingLog());
+                request.getRequestTrackingLog(),
+                Utils.toJson(newVolumeState));
         sendRequest(Operation
                 .createPatch(request.getVolumeStateReference())
                 .setBodyNoCloning(newVolumeState)

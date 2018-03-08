@@ -496,6 +496,10 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
             CompletionHandler callback) {
         ComputeState computeState = new ComputeState();
         updateHostStateCustomProperties(computeState, properties);
+        logFine("Patching ComputeState with properties: %s %s %s",
+                computeState.documentSelfLink,
+                request.getRequestTrackingLog(),
+                Utils.toJson(computeState));
         sendRequest(Operation
                 .createPatch(request.resourceReference)
                 .setBodyNoCloning(computeState)

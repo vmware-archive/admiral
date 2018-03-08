@@ -1440,8 +1440,10 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                         (e) -> e.getKey(),
                         (e) -> Utils.toJson(e.getValue())));
 
-        logFine("Patching ContainerState: %s %s", containerState.documentSelfLink,
-                request.getRequestTrackingLog());
+        logFine("Patching ContainerState with properties: %s %s %s",
+                containerState.documentSelfLink,
+                request.getRequestTrackingLog(),
+                Utils.toJson(containerState));
         sendRequest(Operation
                 .createPatch(request.getContainerStateReference())
                 .setBodyNoCloning(newContainerState)

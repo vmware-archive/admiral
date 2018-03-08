@@ -278,9 +278,10 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
 
         ContainerNetworkStateMapper.propertiesToContainerNetworkState(newNetworkState, properties);
 
-        logFine("Patching ContainerNetworkState: %s %s",
+        logFine("Patching ContainerNetworkState with properties: %s %s %s",
                 newNetworkState.documentSelfLink,
-                request.getRequestTrackingLog());
+                request.getRequestTrackingLog(),
+                Utils.toJson(newNetworkState));
         sendRequest(Operation
                 .createPatch(request.getNetworkStateReference())
                 .setBodyNoCloning(newNetworkState)
