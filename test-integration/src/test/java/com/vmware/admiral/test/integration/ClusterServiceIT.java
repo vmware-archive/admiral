@@ -51,6 +51,12 @@ public class ClusterServiceIT extends BaseProvisioningOnCoreOsIT {
     @Before
     public void setUp() throws Throwable {
         setupEnvironmentForCluster();
+
+        // clean up
+        ServiceDocumentQueryResult allClusterForCleaning = getAllClusters(false);
+        for (String clusterDocumentSelfLink : allClusterForCleaning.documentLinks) {
+            deleteCluster(clusterDocumentSelfLink);
+        }
     }
 
     @Test
