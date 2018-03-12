@@ -287,10 +287,13 @@ public class ClusterUtils {
                 resourcePoolState.customProperties,
                 ContainerHostDataCollectionService.RESOURCE_POOL_CPU_USAGE_CUSTOM_PROP)
                 .orElse(0.0);
+        ClusterType type = PlacementZoneUtil.isSchedulerPlacementZone(resourcePoolState)
+                ? ClusterType.VCH
+                : ClusterType.DOCKER;
         ePZClusterDto.type = ClusterType
                 .valueOf(PropertyUtils.getPropertyString(resourcePoolState.customProperties,
                         ClusterService.CLUSTER_TYPE_CUSTOM_PROP)
-                        .orElse(ClusterType.DOCKER.toString()));
+                        .orElse(type.toString()));
         if (computeStates == null || computeStates.isEmpty()) {
             ePZClusterDto.status = ClusterStatus.DISABLED;
             ePZClusterDto.containerCount = 0;
