@@ -73,7 +73,7 @@ public class CompositeDescriptionContentServiceWithNetworksAndVolumesTest extend
     @Before
     public void setUp() throws Throwable {
         waitForServiceAvailability(CompositeDescriptionContentService.SELF_LINK);
-        waitForServiceAvailability(CompositeDescriptionService.SELF_LINK);
+        waitForServiceAvailability(CompositeDescriptionService.FACTORY_LINK);
     }
 
     @Test

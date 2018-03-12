@@ -108,7 +108,7 @@ public class ContainerOperationTaskServiceTest extends RequestBaseTest {
         composite.name = "Composite day2OpsTest";
         composite.descriptionLinks = new ArrayList<String>();
         composite.descriptionLinks.add(containerDesc.documentSelfLink);
-        composite = doPost(composite, CompositeDescriptionService.SELF_LINK);
+        composite = doPost(composite, CompositeDescriptionService.FACTORY_LINK);
 
         request = new RequestBrokerState();
         request.resourceType = ResourceType.COMPOSITE_COMPONENT_TYPE.getName();

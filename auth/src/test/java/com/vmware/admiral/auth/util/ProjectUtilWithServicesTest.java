@@ -179,6 +179,6 @@ public class ProjectUtilWithServicesTest extends AuthBaseTest {
         CompositeDescription template = new CompositeDescription();
         template.name = TEST_TEMPLATE_NAME;
         template.tenantLinks = Collections.singletonList(projectLink);
-        return doPost(template, CompositeDescriptionService.SELF_LINK);
+        return doPost(template, CompositeDescriptionService.FACTORY_LINK);
     }
 }

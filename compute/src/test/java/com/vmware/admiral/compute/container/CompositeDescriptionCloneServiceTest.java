@@ -194,7 +194,7 @@ public class CompositeDescriptionCloneServiceTest extends ComputeBaseTest {
         secondComposite.tenantLinks.add("/tenants/qe/groups/dftyguhijokpl");
 
         createdCompositeWithTwoContainers = doPost(secondComposite,
-                CompositeDescriptionService.SELF_LINK);
+                CompositeDescriptionService.FACTORY_LINK);
     }
 
     private void initObjectsWithoutContainers() throws Throwable {
@@ -206,7 +206,7 @@ public class CompositeDescriptionCloneServiceTest extends ComputeBaseTest {
         firstComposite.descriptionLinks = new ArrayList<String>();
 
         createdCompositeWithoutContainers = doPost(firstComposite,
-                CompositeDescriptionService.SELF_LINK);
+                CompositeDescriptionService.FACTORY_LINK);
     }
 
     private CompositeDescription cloneCompositeDesc(CompositeDescription compositeDesc,
