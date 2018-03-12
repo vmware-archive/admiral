@@ -12,6 +12,7 @@
 import GridSearchVue from 'components/common/GridSearchVue.html';
 
 import constants from 'core/constants';
+import utils from 'core/utils';
 import uiCommonLib from 'admiral-ui-common';
 
 var GridSearch = Vue.extend({
@@ -36,14 +37,22 @@ var GridSearch = Vue.extend({
 
   attached: function() {
 
-    this.unwatchQueryOptions = this.$watch('queryOptions', (newQueryOptions) => {
-      this.searchString = uiCommonLib.searchUtils.getSearchString(newQueryOptions);
-      this.occurrenceSelection = uiCommonLib.searchUtils.getOccurrence(newQueryOptions);
-      if (!this.occurrenceSelection) {
-        this.occurrenceSelection = constants.SEARCH_OCCURRENCE.ALL;
-      }
+    this.unwatchQueryOptions = this.$watch('queryOptions', (newQueryOptions, oldQueryOptions) => {
+      if (!utils.equals(oldQueryOptions, newQueryOptions)) {
+        let oldSearchString = uiCommonLib.searchUtils.getSearchString(oldQueryOptions);
+        let oldOccurrenceSelection = uiCommonLib.searchUtils.getOccurrence(oldQueryOptions);
 
-      this.search();
+        this.searchString = uiCommonLib.searchUtils.getSearchString(newQueryOptions);
+        this.occurrenceSelection = uiCommonLib.searchUtils.getOccurrence(newQueryOptions);
+        if (!this.occurrenceSelection) {
+          this.occurrenceSelection = constants.SEARCH_OCCURRENCE.ALL;
+        }
+
+        if (oldSearchString !== this.searchString
+              || oldOccurrenceSelection !== this.occurrenceSelection) {
+          this.search();
+        }
+      }
     }, { immediate: true });
   },
 

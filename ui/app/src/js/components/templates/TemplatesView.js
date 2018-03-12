@@ -376,21 +376,23 @@ var TemplatesViewVueComponent = Vue.extend({
         var queryOpts = {
           $category: constants.CONTAINERS.SEARCH_CATEGORY.APPLICATIONS
         };
-        this.model.listView.queryOptions = queryOpts;
+
         return NavigationActions.openContainers(queryOpts, true);
     },
 
     backToTemplate: function() {
       var viewDetails = this.model.selectedItemDetails;
+
       if (viewDetails && (viewDetails.newContainerDefinition || viewDetails.editContainerDefinition
           || viewDetails.editNetwork || viewDetails.editVolume)) {
+
         return NavigationActions.openTemplateDetails(this.model.selectedItem.type,
                                                      this.model.selectedItem.documentId);
       } else {
         var queryOpts = {
           $category: constants.TEMPLATES.SEARCH_CATEGORY.TEMPLATES
         };
-        this.model.listView.queryOptions = queryOpts;
+
         return NavigationActions.openTemplates(queryOpts, true);
       }
     },
