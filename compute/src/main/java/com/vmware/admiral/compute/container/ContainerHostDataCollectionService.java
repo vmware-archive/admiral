@@ -311,8 +311,9 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 try {
                     loadDCSkip = Double.parseDouble(System.getProperty(LOAD_SKIP_DC_PARAMETER));
                 } catch (NumberFormatException | NullPointerException e) {
-                    logInfo("Value for %s not specified or incorrect", LOAD_SKIP_DC_PARAMETER);
-                    loadDCSkip = osBean.getAvailableProcessors() / 2.0d;
+                    logInfo("Value for %s not specified or incorrect, using default (cpu count)",
+                            LOAD_SKIP_DC_PARAMETER);
+                    loadDCSkip = osBean.getAvailableProcessors();
                 }
             }
 
