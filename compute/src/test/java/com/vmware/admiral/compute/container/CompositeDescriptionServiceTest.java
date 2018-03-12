@@ -79,7 +79,7 @@ public class CompositeDescriptionServiceTest extends ComputeBaseTest {
         composite.descriptionLinks.add(createdFirstContainer.documentSelfLink);
         composite.descriptionLinks.add(createdSecondContainer.documentSelfLink);
 
-        createdComposite = doPost(composite, CompositeDescriptionService.SELF_LINK);
+        createdComposite = doPost(composite, CompositeDescriptionService.FACTORY_LINK);
     }
 
     @Test
@@ -280,7 +280,7 @@ public class CompositeDescriptionServiceTest extends ComputeBaseTest {
 
         CompositeDescription createdCompositeDescriptionTenants = doPost(composite,
                 CompositeDescriptionService
-                        .SELF_LINK);
+                        .FACTORY_LINK);
 
         if (embedded) {
             ConfigurationState config = new ConfigurationState();

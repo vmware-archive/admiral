@@ -36,7 +36,7 @@ public class CompositeDescriptionTransformationServiceTest extends UpgradeBaseTe
     @Before
     public void setUp() throws Throwable {
         waitForServiceAvailability(ProjectFactoryService.SELF_LINK);
-        waitForServiceAvailability(CompositeDescriptionService.SELF_LINK);
+        waitForServiceAvailability(CompositeDescriptionService.FACTORY_LINK);
         waitForServiceAvailability(ProjectService.DEFAULT_PROJECT_LINK);
         waitForServiceAvailability(CompositeDescriptionTransformationService.SELF_LINK);
     }
@@ -193,7 +193,7 @@ public class CompositeDescriptionTransformationServiceTest extends UpgradeBaseTe
         composite.descriptionLinks.add(createdFirstContainer.documentSelfLink);
         composite.descriptionLinks.add(createdSecondContainer.documentSelfLink);
 
-        return doPost(composite, CompositeDescriptionService.SELF_LINK);
+        return doPost(composite, CompositeDescriptionService.FACTORY_LINK);
     }
 
 }

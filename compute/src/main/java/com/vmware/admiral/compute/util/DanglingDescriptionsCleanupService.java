@@ -164,7 +164,7 @@ public class DanglingDescriptionsCleanupService extends StatelessService {
 
     private boolean isCompositeDescriptionLink(String descriptionLink) {
         return descriptionLink != null
-                && descriptionLink.startsWith(CompositeDescriptionService.SELF_LINK);
+                && descriptionLink.startsWith(CompositeDescriptionService.FACTORY_LINK);
     }
 
 }

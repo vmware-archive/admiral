@@ -56,7 +56,7 @@ import com.vmware.xenon.services.common.QueryTask;
  * definition of related services or an application.
  */
 public class CompositeDescriptionService extends StatefulService {
-    public static final String SELF_LINK = ManagementUriParts.COMPOSITE_DESC;
+    public static final String FACTORY_LINK = ManagementUriParts.COMPOSITE_DESC;
     public static final String URI_PARAM_IMAGE_LINKS = "descriptionImages";
 
     public static class CompositeDescription extends

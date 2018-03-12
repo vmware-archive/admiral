@@ -30,7 +30,7 @@ public class CompositeDescriptionTransformationService extends StatelessService 
     public void handlePost(Operation post) {
         ClonePerProjectUtil.getDocuments(CompositeDescription.class,
                 (result) -> ClonePerProjectUtil.processDocuments(result, post, this,
-                        CompositeDescriptionService.SELF_LINK,
+                        CompositeDescriptionService.FACTORY_LINK,
                         UriUtils.buildUri(getHost(), SELF_LINK), getHost(), false),
                 getHost(), post);
     }

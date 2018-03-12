@@ -2512,7 +2512,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         compositeDesc.descriptionLinks = new ArrayList<>();
         compositeDesc.descriptionLinks.add(containerDesc.documentSelfLink);
 
-        compositeDesc = doPost(compositeDesc, CompositeDescriptionService.SELF_LINK);
+        compositeDesc = doPost(compositeDesc, CompositeDescriptionService.FACTORY_LINK);
 
         // 2.2 - clone the CompositeDescription and get a new one with a new ContainerDescription
 
