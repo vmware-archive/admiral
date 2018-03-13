@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -13,6 +13,8 @@ package com.vmware.admiral.service.common;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -48,34 +50,38 @@ public class LogServiceTest extends ComputeBaseTest {
     }
 
     @Test
-    public void testHandleMaintainance() throws Throwable {
+    public void testHandleMaintenance() throws Throwable {
         LogServiceStub logService = new LogServiceStub();
         logService.setHost(host);
 
         host.startFactory(logService);
         waitForServiceAvailability(LogServiceStub.FACTORY_LINK);
 
-        LogServiceState logServiceState = doPost(new LogServiceState(), LogServiceStub.FACTORY_LINK);
+        LogServiceState logServiceState = doPost(new LogServiceState(),
+                LogServiceStub.FACTORY_LINK);
 
         logService.doMaintenance(logServiceState.documentSelfLink);
 
-        logServiceState = getDocumentNoWait(LogServiceState.class, logServiceState.documentSelfLink);
+        logServiceState = getDocumentNoWait(LogServiceState.class,
+                logServiceState.documentSelfLink);
         assertNull(logServiceState);
     }
 
     public static class LogServiceStub extends LogService {
 
-        private static final long EXPIRATION_TIME = 0;
+        private static final long EXPIRATION_TIME = Long.MIN_VALUE;
         public static final String FACTORY_LINK = ManagementUriParts.LOGS + "-stub";
 
         public void doMaintenance(String selfLink) throws Throwable {
             Operation post = Operation.createPost(getHost(), FACTORY_LINK);
+            AtomicBoolean completed = new AtomicBoolean();
+            post.nestCompletion(op -> completed.set(true));
             super.doMaintenance(post, selfLink, EXPIRATION_TIME);
 
-            waitFor(() -> {
-                return post.getStatusCode() > 0;
-            });
+            waitFor(completed::get);
+            logInfo("Maintenance completed. Operation status = %d", post.getStatusCode());
         }
 
     }
+
 }

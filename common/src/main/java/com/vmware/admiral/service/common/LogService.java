@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -124,7 +124,7 @@ public class LogService extends StatefulService {
                     } else {
                         LogServiceState state = o.getBody(LogServiceState.class);
                         long timeSinceLastUpdateMicros =
-                                Utils.getNowMicrosUtc() - state.documentUpdateTimeMicros;
+                                Utils.getSystemNowMicrosUtc() - state.documentUpdateTimeMicros;
                         if (timeSinceLastUpdateMicros >= documentExpirationTime) {
                             sendRequest(Operation.createDelete(this, state.documentSelfLink)
                                     .setCompletion((op, err) -> {
@@ -170,12 +170,13 @@ public class LogService extends StatefulService {
         return template;
     }
 
-    // Default is 16 MB. Not recommended to be increased as it is likely to cause performance problems.
-    // A grand maximum of 64 MB, when we will fail when receiving the response from Docker. Currently,
-    // if the log goes over 64MB, we will still fail, because we won't be able to receive and handle the
-    // response to trim it.
+    // Default is 16 MB. Not recommended to be increased as it is likely to cause performance
+    // problems. A grand maximum of 64 MB, when we will fail when receiving the response from
+    // Docker. Currently, if the log goes over 64MB, we will still fail, because we won't be able to
+    // receive and handle the response to trim it.
     private static int getMaxLogSize() {
-        Integer maxSize = Integer.getInteger(CONTAINER_LOG_MAX_SIZE_PROPERTY, DEFAULT_MAX_LOG_SIZE_VALUE);
+        Integer maxSize = Integer.getInteger(CONTAINER_LOG_MAX_SIZE_PROPERTY,
+                DEFAULT_MAX_LOG_SIZE_VALUE);
         if (maxSize < MIN_LOG_SIZE) {
             maxSize = MIN_LOG_SIZE;
         }

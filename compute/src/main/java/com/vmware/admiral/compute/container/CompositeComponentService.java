@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.logging.Level;
@@ -28,7 +29,6 @@ import com.vmware.admiral.common.serialization.ReleaseConstants;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
-import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.compute.container.util.ResourceDescriptionUtil;
@@ -53,7 +53,8 @@ public class CompositeComponentService extends StatefulService {
     public static class CompositeComponent extends
             com.vmware.admiral.service.common.MultiTenantDocument {
 
-        public static final String FIELD_NAME_COMPOSITE_DESCRIPTION_LINK = "compositeDescriptionLink";
+        public static final String FIELD_NAME_COMPOSITE_DESCRIPTION_LINK =
+                "compositeDescriptionLink";
         public static final String CUSTOM_PROPERTY_HOST_LINK = "__hostLink";
 
         /** Name of composite description */
@@ -80,7 +81,8 @@ public class CompositeComponentService extends StatefulService {
          */
         @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
         @UsageOption(option = PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL)
-        @PropertyOptions(indexing = { PropertyIndexingOption.CASE_INSENSITIVE, PropertyIndexingOption.EXPAND,
+        @PropertyOptions(indexing = { PropertyIndexingOption.CASE_INSENSITIVE,
+                PropertyIndexingOption.EXPAND,
                 PropertyIndexingOption.FIXED_ITEM_NAME })
         public Map<String, String> customProperties;
     }
@@ -175,10 +177,23 @@ public class CompositeComponentService extends StatefulService {
         patch.complete();
 
         if (componentLinksToCheck != null) {
-            deleteDocumentIfNeeded(componentLinksToCheck, () -> {
-                ResourceDescriptionUtil.deleteClonedCompositeDescription(getHost(), currentState.compositeDescriptionLink);
-                ServiceUtils.sendSelfDelete(this);
-            });
+            deleteDocumentIfNeeded(componentLinksToCheck, () ->
+                    sendWithDeferredResult(Operation
+                            .createDelete(getUri())
+                            .setBodyNoCloning(new ServiceDocument())
+                    ).thenCompose(ignored ->
+                            ResourceDescriptionUtil.deleteClonedCompositeDescription(getHost(),
+                                    currentState.compositeDescriptionLink)
+                    ).whenComplete((aVoid, e) -> {
+                        if (e != null) {
+                            if (e instanceof CompletionException) {
+                                e = e.getCause();
+                            }
+                            logSevere("Failed deleting cloned component description %s. Error: %s",
+                                    currentState.compositeDescriptionLink, Utils.toString(e));
+                        }
+                    })
+            );
         }
     }
 
@@ -210,7 +225,7 @@ public class CompositeComponentService extends StatefulService {
                 ContainerNetworkState.FIELD_NAME_SELF_LINK, networkLinks);
         QueryUtil.addExpandOption(networksQuery);
 
-        new ServiceDocumentQuery<ContainerNetworkState>(getHost(),
+        new ServiceDocumentQuery<>(getHost(),
                 ContainerNetworkState.class).query(
                         networksQuery, (r) -> {
                             if (r.hasResult()) {
@@ -218,7 +233,8 @@ public class CompositeComponentService extends StatefulService {
                                         ? r.getResult().external : false;
                                 if (external) {
                                     ContainerNetworkState networkState = r.getResult();
-                                    networkState.compositeComponentLinks.remove(composite.documentSelfLink);
+                                    networkState.compositeComponentLinks.remove(
+                                            composite.documentSelfLink);
                                     updateNetworkState(networkState);
                                 }
                             }
@@ -244,7 +260,7 @@ public class CompositeComponentService extends StatefulService {
                 ContainerVolumeState.FIELD_NAME_SELF_LINK, volumeLinks);
         QueryUtil.addExpandOption(volumesQuery);
 
-        new ServiceDocumentQuery<ContainerVolumeState>(getHost(),
+        new ServiceDocumentQuery<>(getHost(),
                 ContainerVolumeState.class).query(
                         volumesQuery, (r) -> {
                             if (r.hasResult()) {
@@ -252,7 +268,8 @@ public class CompositeComponentService extends StatefulService {
                                         ? r.getResult().external : false;
                                 if (external) {
                                     ContainerVolumeState volumeState = r.getResult();
-                                    volumeState.compositeComponentLinks.remove(composite.documentSelfLink);
+                                    volumeState.compositeComponentLinks.remove(
+                                            composite.documentSelfLink);
                                     updateVolumeState(volumeState);
                                 }
                             }
@@ -264,7 +281,8 @@ public class CompositeComponentService extends StatefulService {
                 .setBody(patch)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        getHost().log(Level.WARNING, "Could not update the component links of network %s", patch.name);
+                        getHost().log(Level.WARNING, "Could not update the component links of"
+                                + " network %s", patch.name);
                     }
                 }));
     }
@@ -274,7 +292,8 @@ public class CompositeComponentService extends StatefulService {
                 .setBody(patch)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        getHost().log(Level.WARNING, "Could not update the component links of volume %s", patch.name);
+                        getHost().log(Level.WARNING, "Could not update the component links of"
+                                + " volume %s", patch.name);
                     }
                 }));
     }
@@ -309,13 +328,12 @@ public class CompositeComponentService extends StatefulService {
     private void queryExternalComponents(List<String> networks, List<String> volumes,
             Runnable deleteCallback) {
 
-        queryExternalNetworks(networks, (allNetworksExternal) -> {
-            queryExternalVolumes(volumes, (allVolumesExternal) -> {
-                if (allNetworksExternal && allVolumesExternal) {
-                    deleteCallback.run();
-                }
-            });
-        });
+        queryExternalNetworks(networks, (allNetworksExternal) ->
+                queryExternalVolumes(volumes, (allVolumesExternal) -> {
+                    if (allNetworksExternal && allVolumesExternal) {
+                        deleteCallback.run();
+                    }
+                }));
     }
 
     private void queryExternalNetworks(List<String> networks, Consumer<Boolean> resultCallback) {
@@ -395,10 +413,11 @@ public class CompositeComponentService extends StatefulService {
         com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
         template.name = "name (string)";
         template.compositeDescriptionLink = "compositeDescriptionLink (string) (optional)";
-        template.componentLinks = new ArrayList<String>(1);
+        template.componentLinks = new ArrayList<>(1);
         template.componentLinks.add("componentLink (string)");
         template.customProperties = new HashMap<>();
 
         return template;
     }
+
 }

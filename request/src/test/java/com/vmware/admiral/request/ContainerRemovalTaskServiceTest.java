@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -438,7 +438,8 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         containerRemovalTask.serviceTaskCallback = ServiceTaskCallback.create(
                 serviceTaskCallbackLink,
                 TaskState.TaskStage.STARTED,
-                ContainerHostRemovalTaskService.ContainerHostRemovalTaskState.SubStage.REMOVED_CONTAINERS,
+                ContainerHostRemovalTaskService.ContainerHostRemovalTaskState.SubStage
+                        .REMOVED_CONTAINERS,
                 TaskState.TaskStage.STARTED,
                 ContainerHostRemovalTaskService.ContainerHostRemovalTaskState.SubStage.ERROR);
 
@@ -450,7 +451,8 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
     public void testRemoveOfClosureContainerOperation() throws Throwable {
         GroupResourcePlacementState ulimitedPlacementState = TestRequestStateFactory
                 .createGroupResourcePlacementState(placementResourceType());
-        ulimitedPlacementState.maxNumberInstances = GroupResourcePlacementService.UNLIMITED_NUMBER_INSTANCES;
+        ulimitedPlacementState.maxNumberInstances = GroupResourcePlacementService
+                .UNLIMITED_NUMBER_INSTANCES;
         ulimitedPlacementState.resourcePoolLink = resourcePool.documentSelfLink;
         ulimitedPlacementState = getOrCreateDocument(ulimitedPlacementState,
                 GroupResourcePlacementService.FACTORY_LINK);
@@ -594,10 +596,10 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         ContainerDescription desc2 = TestRequestStateFactory.createContainerDescription("name2",
                 true, false);
         desc2.affinity = new String[] { desc1.name };
-        CompositeDescription compositeDesc = createCompositeDesc(true, desc1, desc2);
+        CompositeDescription compDesc = createCompositeDesc(true, desc1, desc2);
 
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
-                ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
+                ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compDesc.documentSelfLink);
         request.tenantLinks = groupPlacementState.tenantLinks;
         request = startRequest(request);
         request = waitForRequestToComplete(request);
@@ -606,7 +608,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         CompositeComponent cc = getDocument(CompositeComponent.class,
                 request.resourceLinks.iterator().next());
 
-        assertEquals(compositeDesc.descriptionLinks.size(), cc.componentLinks.size());
+        assertEquals(compDesc.descriptionLinks.size(), cc.componentLinks.size());
 
         List<String> containerLinks = cc.componentLinks;
         ContainerState container1 = getDocument(ContainerState.class, containerLinks.get(0));
@@ -617,7 +619,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         assertNotEquals(desc1.documentSelfLink, container1.descriptionLink);
         assertNotEquals(desc2.documentSelfLink, container1.descriptionLink);
 
-        CompositeComponent compositeComp = getDocument(CompositeComponent.class,
+        final CompositeComponent compositeComp = getDocument(CompositeComponent.class,
                 container1.compositeComponentLink);
         assertNotNull(compositeComp);
 
@@ -639,11 +641,15 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         container2 = searchForDocument(ContainerState.class, containerLinks.get(1));
         assertNull(container2);
 
-        CompositeDescription createdCompDesc = searchForDocument(CompositeDescription.class,
-                compositeDesc.documentSelfLink);
-        assertNull(createdCompDesc);
-        compositeComp = searchForDocument(CompositeComponent.class, compositeComp.documentSelfLink);
-        assertNull(compositeComp);
+        waitFor(() ->
+                searchForDocument(CompositeDescription.class, compDesc.documentSelfLink) == null
+        );
+        waitFor(() ->
+                searchForDocument(CompositeDescription.class, compDesc.documentSelfLink) == null
+        );
+        waitFor(() ->
+                searchForDocument(CompositeComponent.class, compositeComp.documentSelfLink) == null
+        );
     }
 
     /**

@@ -39,20 +39,28 @@ import com.vmware.xenon.services.common.QueryTask;
 
 public class ResourceDescriptionUtil {
 
-    public static final String CANNOT_DELETE_RESOURCE_DESCRIPTION = "Cannot delete resource description";
-    public static final String DESCRIPTION_IS_COMPOSITE_DESCRIPTION_ERROR_FORMAT = "Cannot delete resource description: [%s] "
+    public static final String CANNOT_DELETE_RESOURCE_DESCRIPTION =
+            "Cannot delete resource description";
+    public static final String DESCRIPTION_IS_COMPOSITE_DESCRIPTION_ERROR_FORMAT =
+            "Cannot delete resource description: [%s] "
             + "is a composite description and should be handled with another call.";
-    public static final String RESOURCE_DESCRIPTION_IN_USE_ERROR_FORMAT = CANNOT_DELETE_RESOURCE_DESCRIPTION
-            + ": " + " %s resource states share resource description [%s].";
+    public static final String RESOURCE_DESCRIPTION_IN_USE_ERROR_FORMAT =
+            CANNOT_DELETE_RESOURCE_DESCRIPTION
+                    + ": " + " %s resource states share resource description [%s].";
 
-    public static final String CANNOT_DELETE_COMPOSITE_DESCRIPTION = "Cannot delete composite description";
-    public static final String NOT_COMPOSITE_DESCRIPTION_ERROR_FORMAT = CANNOT_DELETE_COMPOSITE_DESCRIPTION
-            + ": " + "service document [%s] is not a composite description.";
-    public static final String NOT_CLONED_COMPOSITE_DESCRIPTION_ERROR_FORMAT = CANNOT_DELETE_COMPOSITE_DESCRIPTION
-            + ": " + "composite description [%s] is not a clone.";
-    public static final String FAILED_DELETE_COMPONENT_DESC_FROM_COMPOSITE_DESC_ERROR_FORMAT = "Failed to delete component description [%s] "
-            + "from composite description [%s]. Cause: %S: %s";
-    public static final String FAILED_DELETE_CLONED_COMPOSITE_DESC_ERROR_FORMAT = "Failed to delete cloned composite description [%s].";
+    public static final String CANNOT_DELETE_COMPOSITE_DESCRIPTION =
+            "Cannot delete composite description";
+    public static final String NOT_COMPOSITE_DESCRIPTION_ERROR_FORMAT =
+            CANNOT_DELETE_COMPOSITE_DESCRIPTION
+                    + ": " + "service document [%s] is not a composite description.";
+    public static final String NOT_CLONED_COMPOSITE_DESCRIPTION_ERROR_FORMAT =
+            CANNOT_DELETE_COMPOSITE_DESCRIPTION
+                    + ": " + "composite description [%s] is not a clone.";
+    public static final String FAILED_DELETE_COMPONENT_DESC_FROM_COMPOSITE_DESC_ERROR_FORMAT =
+            "Failed to delete component description [%s] "
+                    + "from composite description [%s]. Cause: %S: %s";
+    public static final String FAILED_DELETE_CLONED_COMPOSITE_DESC_ERROR_FORMAT =
+            "Failed to delete cloned composite description [%s].";
 
     private static final Map<String, Class<? extends ServiceDocument>> MAP_KNOWN_DOCUMENT_KIND_TO_CLASS;
     private static final Map<String, Class<? extends ServiceDocument>> MAP_DESCRIPTION_TO_STATE;
@@ -214,8 +222,8 @@ public class ResourceDescriptionUtil {
                 .thenCompose(ignore -> {
                     host.log(Level.INFO,
                             String.format(
-                                    "Resource description [%s] is not referenced by any resource. Deleting description.",
-                                    resourceDescriptionLink));
+                                    "Resource description [%s] is not referenced by any resource."
+                                            + " Deleting description.", resourceDescriptionLink));
                     Operation delete = Operation.createDelete(host, resourceDescriptionLink)
                             .setReferer(host.getUri());
                     return host.sendWithDeferredResult(delete)
@@ -247,11 +255,12 @@ public class ResourceDescriptionUtil {
 
         QueryUtil.addCountOption(resourceStateQueryTask);
 
-        new ServiceDocumentQuery<>(host, ContainerState.class)
+        new ServiceDocumentQuery<>(host, stateClass)
                 .query(resourceStateQueryTask, (r) -> {
                     if (r.hasException()) {
                         String error = String.format(
-                                "Failed to retrieve resources, sharing the same description [%s]: %s",
+                                "Failed to retrieve resources, sharing the same description [%s]:"
+                                        + " %s",
                                 r.getDocumentSelfLink(),
                                 r.getException());
                         host.log(Level.SEVERE, error);
@@ -282,8 +291,8 @@ public class ResourceDescriptionUtil {
                 .setCompletion((o, ex) -> {
                     if (o != null && o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
                         host.log(Level.WARNING,
-                                "Resource description [%s] cannot be found. It is probably deleted already. Skipping deletion.",
-                                resourceDescriptionLink);
+                                "Resource description [%s] cannot be found. It is probably deleted"
+                                        + " already. Skipping deletion.", resourceDescriptionLink);
                         deferredResult.complete(null);
                     } else if (ex != null) {
                         deferredResult.fail(ex);
@@ -292,7 +301,8 @@ public class ResourceDescriptionUtil {
                     }
                 }).sendWith(host);
 
-        return deferredResult.thenApply(ResourceDescriptionUtil::extractResourceDescriptionFromResponse)
+        return deferredResult
+                .thenApply(ResourceDescriptionUtil::extractResourceDescriptionFromResponse)
                 .exceptionally(ex -> {
                     String errMsg = String.format("Failed to retrieve description: %s.",
                             resourceDescriptionLink);
@@ -312,7 +322,8 @@ public class ResourceDescriptionUtil {
         String contentType = response.getContentType();
         if (!contentType.equals(Operation.MEDIA_TYPE_APPLICATION_JSON)) {
             throw new IllegalArgumentException(String.format(
-                    "Cannot extract resource state from operation [%s %s]. Unexpected content type [%s]. Expected: [%s]",
+                    "Cannot extract resource state from operation [%s %s]."
+                            + " Unexpected content type [%s]. Expected: [%s]",
                     response.getAction().toString(),
                     response.getUri().toString(),
                     contentType,
