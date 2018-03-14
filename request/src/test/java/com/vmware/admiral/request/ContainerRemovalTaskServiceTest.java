@@ -58,6 +58,7 @@ import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Service.Action;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.UriUtils;
 
@@ -128,7 +129,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         containerStateLinks = findResourceLinks(ContainerState.class, request.resourceLinks);
         assertTrue(containerStateLinks.isEmpty());
 
-        assertDescriptionGetsDeleted(request.resourceDescriptionLink);
+        assertDescriptionGetsDeleted(ContainerDescription.class, request.resourceDescriptionLink);
 
         // verified the placements have been released:
         groupResourcePlacement = getDocument(GroupResourcePlacementState.class,
@@ -208,7 +209,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         containerStateLinks = findResourceLinks(ContainerState.class, request.resourceLinks);
         assertTrue(containerStateLinks.isEmpty());
 
-        assertDescriptionGetsDeleted(request.resourceDescriptionLink);
+        assertDescriptionGetsDeleted(ContainerDescription.class, request.resourceDescriptionLink);
 
         // verified the placements have been released:
         groupResourcePlacement = getDocument(GroupResourcePlacementState.class,
@@ -278,9 +279,9 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         containerStateLinks = findResourceLinks(ContainerState.class, containerStateLinks);
         assertTrue(containerStateLinks.isEmpty());
 
-        assertDescriptionGetsDeleted(container1.descriptionLink);
-        assertDescriptionGetsDeleted(container2.descriptionLink);
-        assertDescriptionGetsDeleted(container3.descriptionLink);
+        assertDescriptionGetsDeleted(ContainerDescription.class, container1.descriptionLink);
+        assertDescriptionGetsDeleted(ContainerDescription.class, container2.descriptionLink);
+        assertDescriptionGetsDeleted(ContainerDescription.class, container3.descriptionLink);
 
         // verify the CompositeComponent has been removed since all containers part of the
         // composition are removed.
@@ -428,7 +429,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         container = searchForDocument(ContainerState.class, container.documentSelfLink);
         assertNull(container);
 
-        assertDescriptionGetsDeleted(containerDesc.documentSelfLink);
+        assertDescriptionGetsDeleted(ContainerDescription.class, containerDesc.documentSelfLink);
 
         // try to remove the container from ContainerRemovalTaskState
         ContainerRemovalTaskState containerRemovalTask = new ContainerRemovalTaskState();
@@ -477,7 +478,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         containerRemovalTask = startRequest(containerRemovalTask);
         waitForRequestToComplete(containerRemovalTask);
 
-        assertDescriptionGetsDeleted(container.descriptionLink);
+        assertDescriptionGetsDeleted(ContainerDescription.class, container.descriptionLink);
     }
 
     @Test
@@ -519,8 +520,8 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
 
         waitForRequestToComplete(request);
 
-        assertDescriptionGetsDeleted(container1.descriptionLink);
-        assertDescriptionGetsDeleted(container2.descriptionLink);
+        assertDescriptionGetsDeleted(ContainerDescription.class, container1.descriptionLink);
+        assertDescriptionGetsDeleted(ContainerDescription.class, container2.descriptionLink);
 
         container1 = searchForDocument(ContainerState.class, containerLinks.get(0));
         assertNull(container1);
@@ -572,8 +573,8 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
 
         waitForRequestToComplete(request);
 
-        assertDescriptionGetsDeleted(container1.descriptionLink);
-        assertDescriptionGetsDeleted(container2.descriptionLink);
+        assertDescriptionGetsDeleted(ContainerDescription.class, container1.descriptionLink);
+        assertDescriptionGetsDeleted(ContainerDescription.class, container2.descriptionLink);
 
         container1 = searchForDocument(ContainerState.class, containerLinks.get(0));
         assertNull(container1);
@@ -632,8 +633,8 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
 
         waitForRequestToComplete(request);
 
-        assertDescriptionGetsDeleted(container1.descriptionLink);
-        assertDescriptionGetsDeleted(container2.descriptionLink);
+        assertDescriptionGetsDeleted(ContainerDescription.class, container1.descriptionLink);
+        assertDescriptionGetsDeleted(ContainerDescription.class, container2.descriptionLink);
 
         container1 = searchForDocument(ContainerState.class, containerLinks.get(0));
         assertNull(container1);
@@ -702,7 +703,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         request = startRequest(request);
         waitForRequestToComplete(request);
 
-        assertDescriptionGetsDeleted(container1.descriptionLink);
+        assertDescriptionGetsDeleted(ContainerDescription.class, container1.descriptionLink);
     }
 
     /**
@@ -754,7 +755,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
 
         waitForRequestToComplete(request);
 
-        assertDescriptionGetsDeleted(desc.documentSelfLink);
+        assertDescriptionGetsDeleted(ContainerDescription.class, desc.documentSelfLink);
     }
 
     /**
@@ -806,9 +807,9 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
 
         waitForRequestToComplete(request);
 
-        assertDescriptionGetsDeleted(container1.descriptionLink);
-        assertDescriptionGetsDeleted(container2.descriptionLink);
-        assertDescriptionGetsDeleted(container3.descriptionLink);
+        assertDescriptionGetsDeleted(ContainerDescription.class, container1.descriptionLink);
+        assertDescriptionGetsDeleted(ContainerDescription.class, container2.descriptionLink);
+        assertDescriptionGetsDeleted(ContainerDescription.class, container3.descriptionLink);
 
         container1 = searchForDocument(ContainerState.class, containerLinks.get(0));
         assertNull(container1);
@@ -816,9 +817,8 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         container2 = searchForDocument(ContainerState.class, containerLinks.get(1));
         assertNull(container2);
 
-        CompositeDescription createdCompDesc = searchForDocument(CompositeDescription.class,
-                compositeDesc.documentSelfLink);
-        assertNull(createdCompDesc);
+        assertDescriptionGetsDeleted(CompositeDescription.class, compositeDesc.documentSelfLink);
+
         compositeComp = searchForDocument(CompositeComponent.class, compositeComp.documentSelfLink);
         assertNull(compositeComp);
     }
@@ -875,12 +875,13 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         return container;
     }
 
-    private void assertDescriptionGetsDeleted(String descriptionLink) throws Throwable {
+    private <T extends ServiceDocument> void assertDescriptionGetsDeleted(Class<T> type, String
+            descriptionLink)
+            throws Throwable {
         boolean isNull = false;
         int retries = 5;
-
         while (!isNull && retries-- > 0) {
-            ContainerDescription description = getDocumentNoWait(ContainerDescription.class,
+            ServiceDocument description = getDocumentNoWait(type,
                     descriptionLink);
             isNull = (description == null);
             if (!isNull) {
