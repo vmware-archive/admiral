@@ -27,9 +27,9 @@
     <clr-tab *ngIf="isHbrEnabled">
         <button clrTabLink id="repositoriesTab">{{"projects.repositories" | i18n}}</button>
         <clr-tab-content id="repositoriesContent" *clrIfActive>
-            <hbr-repository-stackview [projectId]="hbrProjectId" [projectName]="projectName"
-                                      [hasSignedIn]="true" [hasProjectAdminRole]="hasProjectAdminRole"
-                                      (tagClickEvent)="watchTagClickEvent($event)"></hbr-repository-stackview>
+            <hbr-repository-listview [projectId]="hbrProjectId" [projectName]="projectName"
+                                     [hasSignedIn]="true" [hasProjectAdminRole]="hasProjectAdminRole"
+                                     (tagClickEvent)="watchTagClickEvent($event)"></hbr-repository-listview>
         </clr-tab-content>
     </clr-tab>
     <clr-tab>
@@ -43,8 +43,7 @@
     <clr-tab *ngIf="isHbrEnabled && hasAccessToRegistryReplication">
         <button clrTabLink id="registryReplicationTab">{{"projects.registryReplication" | i18n}}</button>
         <clr-tab-content id="registryReplicationContent" *clrIfActive>
-            <hbr-replication [projectId]="hbrProjectId" [withReplicationJob]="true"
-                             [readonly]="isRegistryReplicationReadOnly"></hbr-replication>
+            <hbr-replication [projectId]="hbrProjectId" [withReplicationJob]="true"></hbr-replication>
         </clr-tab-content>
     </clr-tab>
     <clr-tab>

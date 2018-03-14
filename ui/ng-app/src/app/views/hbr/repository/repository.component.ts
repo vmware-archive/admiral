@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -9,22 +9,22 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { AuthService } from './../../../utils/auth.service';
-import { Utils } from './../../../utils/utils';
-import { ProjectService } from './../../../utils/project.service';
-import { TagClickEvent } from 'harbor-ui';
-import { Router, ActivatedRoute } from '@angular/router';
 import { Component } from '@angular/core';
-import { Roles } from './../../../utils/roles';
+import { Router, ActivatedRoute } from '@angular/router';
+import { TagClickEvent } from 'harbor-ui';
+import { AuthService } from '../../../utils/auth.service';
+import { ProjectService } from '../../../utils/project.service';
+import { Roles } from '../../../utils/roles';
+import { Utils } from '../../../utils/utils';
 
 @Component({
   template: `
     <div class="main-view">
-      <div class="title">Project Repositories</div>
-      <hbr-repository-stackview [projectId]="projectId" [projectName]="projectName" [hasSignedIn]="true"
-        [hasProjectAdminRole]="hasProjectAdminRole" (tagClickEvent)="watchTagClickEvent($event)"
-        style="display: block;"></hbr-repository-stackview>
-
+      <div class="title">{{"navigation.projectRepositories" | i18n}}</div>
+      <hbr-repository-listview [projectId]="projectId" [projectName]="projectName" 
+                               [hasSignedIn]="true" [hasProjectAdminRole]="hasProjectAdminRole"
+                               (tagClickEvent)="watchTagClickEvent($event)"
+                               style="display: block;"></hbr-repository-listview>
       <navigation-container>
         <router-outlet></router-outlet>
       </navigation-container>

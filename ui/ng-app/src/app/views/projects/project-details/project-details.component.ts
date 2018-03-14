@@ -112,11 +112,6 @@ export class ProjectDetailsComponent extends BaseDetailsComponent {
                                                 RoutesRestriction.PROJECT_REGISTRY_REPLICATION);
   }
 
-  get isRegistryReplicationReadOnly() {
-    let accessAllowed = this.hasAccessToRegistryReplication;
-    return !accessAllowed
-  }
-
   get embedded(): boolean {
     return FT.isApplicationEmbedded();
   }
