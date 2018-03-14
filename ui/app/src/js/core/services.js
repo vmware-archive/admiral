@@ -59,14 +59,14 @@ if (DEBUG_SLOW_MODE_TIMEOUT) {
   console.warn('DEBUG SLOW MODE ENABLED! Make sure you are running in dev/test mode.');
 }
 
-var ajax = function(method, url, data, headers, disableReloadOnUnauthorized) {
+var ajax = function(method, url, data, headers, disableReloadOnUnauthorized, skipProjectHeader) {
   return new Promise(function(resolve, reject) {
     var fn = function() {
       $.ajax({
         method: method,
         url: utils.serviceUrl(url),
         dataType: 'json',
-        headers: buildHeaders(headers),
+        headers: buildHeaders(headers, skipProjectHeader),
         data: data,
         contentType: 'application/json',
         statusCode: {
@@ -100,29 +100,29 @@ var ajax = function(method, url, data, headers, disableReloadOnUnauthorized) {
   });
 };
 
-var get = function(url, paramsData) {
-  return ajax('GET', url, paramsData);
+var get = function(url, paramsData, skipProjectHeader) {
+  return ajax('GET', url, paramsData, {}, false, skipProjectHeader);
 };
 
-var post = function(url, entity) {
-  return ajax('POST', url, JSON.stringify(entity));
+var post = function(url, entity, skipProjectHeader) {
+  return ajax('POST', url, JSON.stringify(entity), {}, false, skipProjectHeader);
 };
 
-var put = function(url, entity) {
-  return ajax('PUT', url, JSON.stringify(entity));
+var put = function(url, entity, skipProjectHeader) {
+  return ajax('PUT', url, JSON.stringify(entity), {}, false, skipProjectHeader);
 };
 
-var patch = function(url, entity) {
-  return ajax('PATCH', url, JSON.stringify(entity));
+var patch = function(url, entity, skipProjectHeader) {
+  return ajax('PATCH', url, JSON.stringify(entity), {}, false, skipProjectHeader);
 };
 
-var deleteEntity = function(url) {
+var deleteEntity = function(url, skipProjectHeader) {
   return new Promise(function(resolve, reject) {
     $.ajax({
       method: 'DELETE',
       url: utils.serviceUrl(url),
       data: JSON.stringify({}), // DCP expects empty object in the body to make a delete
-      headers: buildHeaders(),
+      headers: buildHeaders({}, skipProjectHeader),
       contentType: 'application/json',
       dataType: 'text'
     }).done(resolve)
@@ -130,19 +130,21 @@ var deleteEntity = function(url) {
   });
 };
 
-var buildHeaders = function(headers) {
+var buildHeaders = function(headers, skipProjectHeader) {
     if (!headers) {
     headers = {};
   }
 
   headers[PRAGMA_HEADER] = PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE;
 
-  let selectedProject = utils.getSelectedProject();
-  if (selectedProject) {
-    if (utils.isApplicationEmbedded() && selectedProject.id) {
-      headers[HEADER_PROJECT] = selectedProject.id;
-    } else if (selectedProject.documentSelfLink) {
-      headers[HEADER_PROJECT] = selectedProject.documentSelfLink;
+  if (!skipProjectHeader) {
+    let selectedProject = utils.getSelectedProject();
+    if (selectedProject) {
+      if (utils.isApplicationEmbedded() && selectedProject.id) {
+        headers[HEADER_PROJECT] = selectedProject.id;
+      } else if (selectedProject.documentSelfLink) {
+        headers[HEADER_PROJECT] = selectedProject.documentSelfLink;
+      }
     }
   }
 
@@ -304,7 +306,7 @@ var buildQueryPaginationUrl = function(path, query, count, order, limit, params)
   return buildPaginationUrl(path, buildSearchQuery(query), count, order, limit, params);
 };
 
-var list = function(url, expandQuery, paramsData) {
+var list = function(url, expandQuery, paramsData, skipProjectHeader) {
   paramsData = paramsData || {};
   paramsData[DOCUMENT_TYPE_PROP_NAME] = true;
   if (expandQuery) {
@@ -332,9 +334,9 @@ var list = function(url, expandQuery, paramsData) {
     var data = {
       uri: mergedUrl
     };
-    return post(links.LONG_URI_GET, data).then(callback);
+    return post(links.LONG_URI_GET, data, skipProjectHeader).then(callback);
   } else {
-    return get(mergedUrl).then(callback);
+    return get(mergedUrl, null, skipProjectHeader).then(callback);
   }
 };
 
@@ -928,11 +930,11 @@ services.loadTemplateDescriptionImages = function(compositeDescriptionSelfLink) 
 };
 
 services.loadRegistries = function() {
-  return list(links.REGISTRIES, true);
+  return list(links.REGISTRIES, true, null, true);
 };
 
 services.loadRegistry = function(documentSelfLink) {
-  return get(documentSelfLink);
+  return get(documentSelfLink, null, true);
 };
 
 services.createOrUpdateRegistry = function(registry) {
@@ -942,7 +944,7 @@ services.createOrUpdateRegistry = function(registry) {
       url: utils.serviceUrl(links.REGISTRY_HOSTS),
       dataType: 'json',
       data: JSON.stringify(registry),
-      headers: buildHeaders(),
+      headers: buildHeaders({}, true),
       contentType: 'application/json',
       accepts: {
         json: 'application/json'
@@ -955,15 +957,15 @@ services.createOrUpdateRegistry = function(registry) {
 
 services.validateRegistry = function(registry) {
   return put(links.REGISTRY_HOSTS + '?' + REQUEST_PARAM_VALIDATE_OPERATION_NAME + '=true',
-      registry);
+      registry, true);
 };
 
 services.updateRegistry = function(registry) {
-  return patch(registry.documentSelfLink, registry);
+  return patch(registry.documentSelfLink, registry, true);
 };
 
 services.deleteRegistry = function(registry) {
-  return deleteEntity(registry.documentSelfLink);
+  return deleteEntity(registry.documentSelfLink, true);
 };
 
 services.loadRequests = function() {
