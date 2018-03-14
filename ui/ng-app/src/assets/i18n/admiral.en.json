@@ -201,6 +201,8 @@
       "nameRequired": "Name is required.",
       "description": "Description",
       "type": "Type",
+      "typeDocker": "DOCKER",
+      "typeVch": "VCH",
       "url": "URL",
       "urlRequired": "Cluster URL is required.",
       "urlRequiredVic": "Container host URL is required.",

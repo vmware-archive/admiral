@@ -12,12 +12,12 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, ViewEncapsulation } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormGroup, FormControl, Validators } from "@angular/forms";
-import { BaseDetailsComponent } from '../../../components/base/base-details.component';
 import { Constants } from '../../../utils/constants';
 import { DocumentService } from '../../../utils/document.service';
 import { FT } from "../../../utils/ft";
 import { Links } from '../../../utils/links';
 import { Utils } from "../../../utils/utils";
+import { formatUtils } from 'admiral-ui-common';
 import * as I18n from 'i18next';
 
 @Component({
@@ -163,12 +163,13 @@ export class ClusterCreateComponent implements AfterViewInit, OnInit, OnDestroy 
       this.isSaving = true;
 
       let formInput = this.clusterForm.value;
+      let clusterName = formInput.name && formatUtils.escapeHtml(formInput.name);
       let hostState = {
         'address': formInput.url,
         'customProperties': {
           '__containerHostType': formInput.type,
           '__adapterDockerType': 'API',
-          '__clusterName': formInput.name
+          '__clusterName': clusterName
         }
       };
 

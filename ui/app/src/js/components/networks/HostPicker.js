@@ -11,6 +11,7 @@
 
 import HostPickerVue from 'components/networks/HostPickerVue.html';
 import { DropdownSearchMenu } from 'admiral-ui-common';
+import { formatUtils } from 'admiral-ui-common';
 import utils from 'core/utils';
 import services from 'core/services';
 
@@ -21,6 +22,7 @@ var initialQueryPromise;
 
 var HOST_DROPDOWN_RENDERER = function(host) {
   var hostName = host.name || utils.getHostName(host);
+  hostName = hostName && formatUtils.escapeHtml(hostName);
 
   return `
     <div>
