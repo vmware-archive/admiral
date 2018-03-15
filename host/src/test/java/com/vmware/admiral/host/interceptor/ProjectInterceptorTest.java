@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import org.junit.Before;
@@ -46,9 +47,12 @@ import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.common.test.BaseTestCase;
+import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
+import com.vmware.admiral.compute.RegistryHostConfigService;
+import com.vmware.admiral.compute.RegistryHostConfigService.RegistryHostSpec;
 import com.vmware.admiral.compute.cluster.ClusterService;
 import com.vmware.admiral.compute.cluster.ClusterService.ClusterDto;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
@@ -75,6 +79,7 @@ import com.vmware.admiral.host.HostInitComputeServicesConfig;
 import com.vmware.admiral.host.HostInitPhotonModelServiceConfig;
 import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.admiral.service.common.MultiTenantDocument;
+import com.vmware.admiral.service.common.RegistryService.RegistryState;
 import com.vmware.admiral.service.test.MockDockerHostAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -544,6 +549,40 @@ public class ProjectInterceptorTest extends BaseTestCase {
         ComputeState computeState = getDocument(ComputeState.class, dto.nodeLinks.get(0));
 
         assertTrue(computeState.tenantLinks.contains(project.documentSelfLink));
+    }
+
+    @Test
+    public void testCreateRegistryThroughRegistryHostconfigServiceWithIntercept() throws Throwable {
+        String uuid = UUID.randomUUID().toString();
+        RegistryHostSpec hostSpec = new RegistryHostSpec();
+        hostSpec.hostState = new RegistryState();
+        hostSpec.hostState.address = uuid;
+        hostSpec.hostState.name = uuid;
+        hostSpec.hostState.endpointType = RegistryState.DOCKER_REGISTRY_ENDPOINT_TYPE;
+        hostSpec.acceptHostAddress = true;
+
+        String[] registryLink = new String[1];
+        Operation put = Operation.createPut(host, RegistryHostConfigService.SELF_LINK)
+                .setReferer("/")
+                .addRequestHeader(OperationUtil.PROJECT_ADMIRAL_HEADER, project.documentSelfLink)
+                .setBodyNoCloning(hostSpec)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        host.log(Level.SEVERE, "Failed to create registry: %s", Utils.toString(ex));
+                        host.failIteration(ex);
+                    } else {
+                        registryLink[0] = o.getResponseHeader(Operation.LOCATION_HEADER);
+                        host.completeIteration();
+                    }
+                });
+
+        host.testStart(1);
+        host.send(put);
+        host.testWait();
+
+        assertNotNull("Registry link must not be null after creation.", registryLink[0]);
+        RegistryState registryState = getDocument(RegistryState.class, registryLink[0]);
+        assertTrue(registryState.tenantLinks.contains(project.documentSelfLink));
     }
 
     @Test

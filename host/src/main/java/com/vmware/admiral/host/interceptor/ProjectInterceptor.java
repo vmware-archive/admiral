@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -18,6 +18,7 @@ import com.vmware.admiral.closures.services.closure.ClosureService;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptionService;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
+import com.vmware.admiral.compute.RegistryHostConfigService;
 import com.vmware.admiral.compute.cluster.ClusterService;
 import com.vmware.admiral.compute.container.CompositeComponentService;
 import com.vmware.admiral.compute.container.CompositeDescriptionService;
@@ -59,6 +60,7 @@ public class ProjectInterceptor {
         registerType(registry, CompositeComponentService.class);
 
         registerType(registry, RegistryService.class);
+        registerType(registry, RegistryHostConfigService.class);
 
         registerType(registry, RequestBrokerService.class);
     }
