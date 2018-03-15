@@ -1,6 +1,5 @@
 import { RadialProgress } from './components/common/RadialProgress';
 import { NetworkTrafficVisualization } from './components/common/NetworkTrafficVisualization';
-import { Search } from './components/common/Search';
 import { SimpleSearch } from './components/common/SimpleSearch';
 import { DropdownSearchMenu } from './components/common/DropdownSearchMenu';
 
@@ -11,7 +10,6 @@ import { searchUtils } from './core/searchUtils';
 
 export { RadialProgress }
 export { NetworkTrafficVisualization }
-export { Search }
 export { SimpleSearch }
 export { DropdownSearchMenu }
 

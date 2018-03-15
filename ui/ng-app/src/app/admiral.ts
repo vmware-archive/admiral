@@ -61,7 +61,6 @@ import { StatsComponent } from "./components/stats/stats.component";
 import { LogsScrollComponent } from "./components/logs/logs-scroll.component";
 import { MaximizableBehaviourComponent } from "./components/maximizable-behaviour/maximizable-behaviour.component";
 import { BackButtonComponent } from "./components/back-button/back-button.component";
-import { SearchComponent } from "./components/search/search.component";
 import { SimpleSearchComponent } from './components/search/simple-search.component';
 import { DropdownComponent } from './components/dropdown/dropdown.component';
 import { NavigationContainerComponent } from "./components/navigation-container/navigation-container.component";
@@ -135,7 +134,6 @@ export const ADMIRAL_DECLARATIONS = [
   LogsScrollComponent,
   MaximizableBehaviourComponent,
   BackButtonComponent,
-  SearchComponent,
   DropdownComponent,
   NavigationContainerComponent,
   LoginComponent,

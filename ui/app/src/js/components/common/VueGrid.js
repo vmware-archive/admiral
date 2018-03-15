@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -57,12 +57,13 @@ var VueGrid = Vue.extend({
         });
       }
     },
-    layout: function() {
 
+    layout: function() {
       let el = $(this.$el);
       let width = el.width();
       let items = el.children();
-      let length = items.size();
+
+      let length = items.length;
       if (length === 0) {
         el.height(0);
         return;

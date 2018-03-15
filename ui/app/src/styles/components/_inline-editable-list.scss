@@ -1,6 +1,7 @@
 @import "components/inline-delete-confirmation";
 
-.right-context-panel .inline-editable-list, .right-context-panel .requests-list, .right-context-panel .eventlog-list {
+.right-context-panel .inline-editable-list,
+.right-context-panel .requests-list, .right-context-panel .eventlog-list {
   margin: 20px 20px 20px;
 }
 
@@ -10,9 +11,11 @@
   font-weight: 300;
   letter-spacing: 0.03em;
 }
+
 .requests-list ul.nav-justified, .eventlog-list ul.nav-justified {
   margin-top: 25px;
 }
+
 .inline-editable-list > .title > .total-items {
   font-size: 16px;
   margin-left: 4px;
@@ -27,6 +30,7 @@
 .inline-editable-list > div > .table {
   table-layout: fixed;
   margin: 0;
+
   .inline-editable-list > .table {
     margin: 0 0 10px;
     > thead th,
@@ -38,7 +42,6 @@
     }
   }
 }
-
 
 .inline-editable-list .table-striped > tbody > tr .table-actions .delete-inline-item-confirmation {
   background-color: $admiral-table-bgcolor;
@@ -142,7 +145,8 @@
   border: none;
 }
 
-.inline-editable-list .table .highlight-item .table .help-text, .inline-editable-list .table .highlight-item .table .table-actions > div {
+.inline-editable-list .table .highlight-item .table .help-text,
+.inline-editable-list .table .highlight-item .table .table-actions > div {
   display: none;
 }
 .inline-editable-list .table .highlight-item-fail {
@@ -260,7 +264,10 @@
   overflow: auto;
 }
 
-.inline-editable-list .table > thead > tr > th:first-child, .table > thead > tr > td:first-child, .table > tbody > tr > th:first-child, .table > tbody > tr > td:first-child, .table > tfoot > tr > th:first-child, .table > tfoot > tr > td:first-child {
+.inline-editable-list .table > thead > tr > th:first-child,
+.table > thead > tr > td:first-child, .table > tbody > tr > th:first-child,
+.table > tbody > tr > td:first-child, .table > tfoot > tr > th:first-child,
+.table > tfoot > tr > td:first-child {
   padding-left: 12px;
 }
 

@@ -21,7 +21,6 @@ var jsLibsToCopy = [
   './node_modules/seamless-immutable/seamless-immutable.development.js',
   './node_modules/validator/validator.js',
   './node_modules/wamda-typeahead/dist/typeahead.jquery.js',
-  './node_modules/bootstrap-tokenfield/dist/bootstrap-tokenfield.js',
   './node_modules/vue/dist/vue.js',
   './node_modules/vue-infinite-scroll/vue-infinite-scroll.js',
   './node_modules/jsplumb/dist/js/jsPlumb-2.1.5.js',
@@ -61,7 +60,6 @@ var jsLibsToCopyMinified = [
   './node_modules/seamless-immutable/seamless-immutable.production.min.js',
   './node_modules/validator/validator.min.js',
   './node_modules/wamda-typeahead/dist/typeahead.jquery.min.js',
-  './node_modules/bootstrap-tokenfield/dist/bootstrap-tokenfield.min.js',
   './node_modules/vue/dist/vue.min.js',
   './node_modules/vue-infinite-scroll/vue-infinite-scroll.js',
   './node_modules/jsplumb/dist/js/jsPlumb-2.1.5-min.js',
@@ -197,7 +195,6 @@ module.exports = {
   styles: {
     src: [
       src + '/styles/**/*.{sass,scss,css}',
-      './node_modules/bootstrap-tokenfield/dist/css/*.css',
       './node_modules/clarity-ui/*.css',
       './node_modules/font-awesome/css/*.css',
       './node_modules/admiral-ui-common/css/*.css'
