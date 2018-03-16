@@ -31,279 +31,286 @@ import * as I18n from 'i18next';
  */
 export class ClusterEditComponent extends BaseDetailsComponent
                                     implements AfterViewInit, OnInit, OnDestroy {
-  opened: boolean = false;
-  credentials: any[];
+    opened: boolean = false;
+    credentials: any[];
+    // certificate
+    showCertificateWarning: boolean;
+    certificate: any;
+    // alert
+    alertMessage: string;
+    alertType: string;
+    // actions
+    isVerifyingHost: boolean;
+    isHostVerified: boolean;
+    isSavingHost: boolean;
+    // private
+    private sub: any;
+    private isSingleHostCluster: boolean = false;
 
-  showCertificateWarning: boolean;
-  certificate: any;
+    clusterForm = new FormGroup({
+        name: new FormControl('', Validators.required),
+        description: new FormControl(''),
+        publicAddress: new FormControl(''),
+        credentials: new FormControl('')
+    });
 
-  isSaving: boolean;
-  alertMessage: string;
-  alertType: string;
+    credentialsTitle = I18n.t('dropdownSearchMenu.title', {
+        ns: 'base',
+        entity: I18n.t('app.credential.entity', {ns: 'base'})
+    } as I18n.TranslationOptions );
 
-  isVerifyingHost: boolean;
-  isHostVerified: boolean = false;
-  isSavingHost: boolean;
+    credentialsSearchPlaceholder = I18n.t('dropdownSearchMenu.searchPlaceholder', {
+        ns: 'base',
+        entity: I18n.t('app.credential.entity', {ns: 'base'})
+    } as I18n.TranslationOptions );
 
-  private sub: any;
-  private isSingleHostCluster: boolean = false;
-
-  clusterForm = new FormGroup({
-    name: new FormControl('', Validators.required),
-    description: new FormControl(''),
-    url: new FormControl('', Validators.required),
-    publicAddress: new FormControl(''),
-    credentials: new FormControl('')
-  });
-
-  credentialsTitle = I18n.t('dropdownSearchMenu.title', {
-    ns: 'base',
-    entity: I18n.t('app.credential.entity', {ns: 'base'})
-  } as I18n.TranslationOptions );
-
-  credentialsSearchPlaceholder = I18n.t('dropdownSearchMenu.searchPlaceholder', {
-    ns: 'base',
-    entity: I18n.t('app.credential.entity', {ns: 'base'})
-  } as I18n.TranslationOptions );
-
-  constructor(private router: Router, route: ActivatedRoute, service: DocumentService) {
-    super(route, service, Links.CLUSTERS);
-  }
-
-  get title() {
-    if (FT.isVic()) {
-      return 'clusters.edit.titleEditVic';
-    }
-    return 'clusters.edit.titleEdit';
-  }
-
-  get urlRequiredTextKey() {
-    if (FT.isVic()) {
-      return 'clusters.edit.urlRequiredVic'
-    }
-    return 'clusters.edit.urlRequired'
-  }
-
-  get showPublicAddressField(): boolean {
-    return FT.isHostPublicUriEnabled() && this.isSingleHostCluster;
-  }
-
-  get isKubernetesHostOptionEnabled(): boolean {
-    return FT.isKubernetesHostOptionEnabled();
-  }
-
-  get isVch(): boolean {
-    return this.entity && this.entity.type === 'VCH';
-  }
-
-  entityInitialized() {
-    this.isSingleHostCluster = Utils.isSingleHostCluster(this.entity);
-
-    this.clusterForm.get('name').setValue(this.entity.name);
-    if (this.entity.details) {
-      this.clusterForm.get('description').setValue(this.entity.details);
-    }
-    if (this.entity.address) {
-      this.clusterForm.get('url').setValue(this.entity.address);
+    constructor(private router: Router, route: ActivatedRoute, service: DocumentService) {
+        super(route, service, Links.CLUSTERS);
     }
 
-    // populate the credentials if the edited cluster is of type VCH
-    if (this.isVch && this.entity.nodeLinks && this.entity.nodeLinks.length > 0) {
-      var vchHost = this.entity.nodes[this.entity.nodeLinks[0]];
-      let authCredentialsLink = Utils.getCustomPropertyValue(vchHost.customProperties, '__authCredentialsLink');
-      if (authCredentialsLink) {
-        var credItem = this.credentials.filter((c) => c.documentSelfLink === authCredentialsLink);
-        if (credItem.length > 0) {
-          this.clusterForm.get('credentials').setValue(credItem[0]);
+    get title() {
+        return FT.isVic() ? 'clusters.edit.titleEditVic' : 'clusters.edit.titleEdit';
+    }
+
+    get showPublicAddressField(): boolean {
+        return FT.isHostPublicUriEnabled() && this.isSingleHostCluster;
+    }
+
+    get isKubernetesHostOptionEnabled(): boolean {
+        return FT.isKubernetesHostOptionEnabled();
+    }
+
+    get clusterUrl(): string {
+        return this.entity && this.entity.address;
+    }
+
+    get isVch(): boolean {
+        return this.entity && this.entity.type === 'VCH';
+    }
+
+    entityInitialized() {
+        this.isSingleHostCluster = Utils.isSingleHostCluster(this.entity);
+        // Name
+        this.clusterForm.get('name').setValue(this.entity.name);
+        // Description
+        if (this.entity.details) {
+            this.clusterForm.get('description').setValue(this.entity.details);
         }
-      }
+
+        // populate the credentials if the edited cluster is of type VCH
+        if (this.isVch && this.entity.nodeLinks && this.entity.nodeLinks.length > 0) {
+            var vchHost = this.entity.nodes[this.entity.nodeLinks[0]];
+
+            let authCredentialsLink =
+                Utils.getCustomPropertyValue(vchHost.customProperties, '__authCredentialsLink');
+            if (authCredentialsLink) {
+                var credItem = this.credentials
+                            .filter((c) => c.documentSelfLink === authCredentialsLink);
+                if (credItem.length > 0) {
+                    this.clusterForm.get('credentials').setValue(credItem[0]);
+                }
+            }
+        }
+
+        if (this.isSingleHostCluster) {
+            let publicAddress = this.entity.publicAddress || '';
+            this.clusterForm.get('publicAddress').setValue(publicAddress);
+        }
     }
 
-    if (this.isSingleHostCluster) {
-      let publicAddress = this.entity.publicAddress || '';
-      this.clusterForm.get('publicAddress').setValue(publicAddress);
-    }
-  }
+    ngOnInit() {
+        this.sub = this.route.params.subscribe(params => {
+            let projectId = params['projectId'];
+            if (projectId) {
+                this.projectLink = Links.PROJECTS + '/' + projectId;
+            }
+            super.ngOnInit();
+        });
 
-  ngOnInit() {
-    this.sub = this.route.params.subscribe(params => {
-      let projectId = params['projectId'];
-      if (projectId) {
-        this.projectLink = Links.PROJECTS + '/' + projectId;
-      }
-      super.ngOnInit();
-    });
-
-    this.populateCredentials();
-  }
-
-  ngOnDestroy() {
-    this.sub.unsubscribe();
-  }
-
-  ngAfterViewInit() {
-    this.opened = true;
-    this.showCertificateWarning = false;
-  }
-
-  populateCredentials() {
-    if (this.credentials) {
-      return;
+        this.populateCredentials();
     }
 
-    this.service.list(Links.CREDENTIALS, {}).then(credentials => {
-      this.credentials = credentials.documents
-                          .filter(c => !Utils.areSystemScopedCredentials(c))
-                            .map(Utils.toCredentialViewModel);
-    }).catch((e) => {
-      console.log('Credentials retrieval failed', e);
-    });
-  }
-
-  toggleModal(open) {
-    this.opened = open;
-
-    if (!open) {
-      const PATH_UP = '../../';
-
-      let path: any[] = [PATH_UP];
-      path = [PATH_UP + Utils.getDocumentId(this.entity.documentSelfLink)];
-
-      this.router.navigate(path, { relativeTo: this.route });
+    ngOnDestroy() {
+        this.sub.unsubscribe();
     }
-  }
 
-  saveCluster() {
-    let name = this.clusterForm.value.name;
-    if (name) {
-      let description = this.clusterForm.value.description;
-      let clusterDtoPatch = {
-        'name': name,
-        'details':  description
-      };
+    ngAfterViewInit() {
+        this.opened = true;
+        this.showCertificateWarning = false;
+    }
 
-      // TODO check if the backend will handle this
-      if (this.isSingleHostCluster) {
-        // allow overwriting with empty value
-        let publicAddress = this.clusterForm.value.publicAddress || '';
-        clusterDtoPatch[Constants.clusters.properties.publicAddress] = publicAddress;
-      }
+    verifyCluster() {
+        if (this.clusterForm.valid) {
+            this.isVerifyingHost = true;
+            this.isHostVerified = false;
 
-      this.isSaving = true;
-      this.service.patch(this.entity.documentSelfLink, clusterDtoPatch, this.projectLink)
-        .then(() => {
-        // hide modal
+            let host = this.getVchClusterInputData();
+            let hostSpec = {
+                'hostState': host
+            };
+
+            this.service.put(Links.CONTAINER_HOSTS + '?validate=true', hostSpec)
+                .then((response) => {
+                this.isVerifyingHost = false;
+                this.isHostVerified = true;
+
+                this.alertType = Constants.alert.type.SUCCESS;
+                this.alertMessage = I18n.t('hosts.verified');
+            }).catch(error => {
+                this.isVerifyingHost = false;
+
+                this.showErrorMessage(error);
+            });
+        }
+    }
+
+    updateDockerCluster() {
+        if (this.clusterForm.valid) {
+            let name = this.clusterForm.value.name;
+            let description = this.clusterForm.value.description;
+
+            let clusterDtoPatch = {
+                'name': name,
+                'details':  description
+            };
+
+            // TODO check if the backend will handle this
+            if (this.isSingleHostCluster) {
+                // allow overwriting with empty value
+                let publicAddress = this.clusterForm.value.publicAddress || '';
+                clusterDtoPatch[Constants.clusters.properties.publicAddress] = publicAddress;
+            }
+
+            this.isSavingHost = true;
+            this.service.patch(this.entity.documentSelfLink, clusterDtoPatch, this.projectLink)
+                .then(() => {
+                this.onClusterUpdateSuccess();
+
+            }).catch(error => {
+                this.onClusterUpdateError(error);
+            });
+        }
+    }
+
+    updateVchCluster() {
+        if (this.clusterForm.valid) {
+            var hostState = this.getVchClusterInputData();
+
+            let hostSpec = {
+                'hostState': hostState,
+                'isUpdateOperation': true
+            };
+
+            this.isSavingHost = true;
+            this.service.put(Links.CONTAINER_HOSTS, hostSpec).then((response) => {
+                this.onClusterUpdateSuccess();
+
+            }).catch(error => {
+                this.onClusterUpdateError(error);
+            });
+        }
+    }
+
+    cancelCreateCluster() {
+        this.showCertificateWarning = false;
+        this.isSavingHost = false;
+    }
+
+    acceptCertificate() {
+        this.showCertificateWarning = false;
+    }
+
+    populateCredentials() {
+        if (this.credentials) {
+            return;
+        }
+
+        this.service.list(Links.CREDENTIALS, {}).then(credentials => {
+            this.credentials = credentials.documents
+            .filter(c => !Utils.areSystemScopedCredentials(c))
+            .map(Utils.toCredentialViewModel);
+        }).catch((e) => {
+            console.log('Credentials retrieval failed', e);
+        });
+    }
+
+    toggleModal(open) {
+        this.opened = open;
+
+        if (!open) {
+            const PATH_UP = '../../';
+
+            let path: any[] = [PATH_UP];
+            path = [PATH_UP + Utils.getDocumentId(this.entity.documentSelfLink)];
+
+            this.router.navigate(path, { relativeTo: this.route });
+        }
+    }
+
+    onClusterUpdateSuccess() {
+        this.clearView();
+
         this.toggleModal(false);
-
-      }).catch(error => {
-        this.isSaving = false;
-        this.alertMessage = Utils.getErrorMessage(error)._generic;
-      });
-    }
-  }
-
-  getInputHost() {
-    var vchHost = this.entity.nodes[this.entity.nodeLinks[0]];
-    var hostCopy = Object.assign({}, vchHost);
-    hostCopy.customProperties = Object.assign({}, vchHost.customProperties);
-
-    let formInput = this.clusterForm.value;
-
-    if (formInput.name) {
-        hostCopy.customProperties['__hostAlias'] = formInput.name;
     }
 
-    if (formInput.credentials) {
-        hostCopy.customProperties['__authCredentialsLink'] =
-                                                        formInput.credentials.documentSelfLink;
+    onClusterUpdateError(error) {
+        this.isSavingHost = false;
+
+        this.showErrorMessage(error);
     }
-    hostCopy.customProperties['__adapterDockerType'] = 'API';
 
-    // allow overwriting with empty value
-    hostCopy.customProperties[Constants.hosts.customProperties.publicAddress] =
-        formInput.publicAddress || "";
+    clearView() {
+        this.resetAlert();
 
-    if (formInput.deploymentPolicy) {
-        hostCopy.customProperties[Constants.hosts.customProperties.deploymentPolicyLink] =
+        this.isSavingHost = false;
+        this.isVerifyingHost = false;
+        this.isHostVerified = true;
+
+        this.clusterForm.reset();
+        this.clusterForm.markAsPristine();
+    }
+
+    getVchClusterInputData() {
+        var vchHost = this.entity.nodes[this.entity.nodeLinks[0]];
+        var hostCopy = Object.assign({}, vchHost);
+        hostCopy.customProperties = Object.assign({}, vchHost.customProperties);
+
+        let formInput = this.clusterForm.value;
+
+        if (formInput.name) {
+            hostCopy.customProperties['__hostAlias'] = formInput.name;
+        }
+
+        if (formInput.description) {
+            // TODO
+        }
+
+        if (formInput.credentials) {
+            hostCopy.customProperties['__authCredentialsLink'] =
+                formInput.credentials.documentSelfLink;
+        }
+        hostCopy.customProperties['__adapterDockerType'] = 'API';
+
+        // allow overwriting with empty value
+        hostCopy.customProperties[Constants.hosts.customProperties.publicAddress] =
+            formInput.publicAddress || "";
+
+        if (formInput.deploymentPolicy) {
+            hostCopy.customProperties[Constants.hosts.customProperties.deploymentPolicyLink] =
                 formInput.deploymentPolicy.documentSelfLink;
-    } else {
-        delete hostCopy.customProperties[Constants.hosts.customProperties.deploymentPolicyLink];
+        } else {
+            delete hostCopy.customProperties[Constants.hosts.customProperties.deploymentPolicyLink];
+        }
+
+        return hostCopy;
     }
 
-    return hostCopy;
-  }
-
-  verifyCluster() {
-    if (this.clusterForm.valid) {
-        this.isVerifyingHost = true;
-        this.isHostVerified = false;
-
-        let host = this.getInputHost();
-        let hostSpec = {
-            'hostState': host
-        };
-
-        this.service.put(Links.CONTAINER_HOSTS + '?validate=true', hostSpec)
-        .then((response) => {
-            this.isVerifyingHost = false;
-            this.isHostVerified = true;
-
-            this.alertType = Constants.alert.type.SUCCESS;
-            this.alertMessage = I18n.t('hosts.verified');
-        }).catch(error => {
-            this.isVerifyingHost = false;
-
-            this.alertType = Constants.alert.type.DANGER;
-            this.alertMessage = Utils.getErrorMessage(error)._generic;
-        });
+    private showErrorMessage(error) {
+        this.alertType = Constants.alert.type.DANGER;
+        this.alertMessage = Utils.getErrorMessage(error)._generic;
     }
-  }
 
-  clearView() {
-    this.resetAlert();
-
-    this.isSavingHost = false;
-    this.isVerifyingHost = false;
-    this.isHostVerified = true;
-
-    this.clusterForm.reset();
-    this.clusterForm.markAsPristine();
- }
-
-  updateCluster() {
-    if (this.clusterForm.valid) {
-        this.isSavingHost = true;
-
-        var hostState = this.getInputHost();
-        let hostSpec = {
-            'hostState': hostState,
-            'isUpdateOperation': true
-        };
-
-        this.service.put(Links.CONTAINER_HOSTS, hostSpec)
-        .then((response) => {
-            this.clearView();
-
-            this.toggleModal(false);
-        }).catch(error => {
-            this.isSavingHost = false;
-
-            this.alertType = Constants.alert.type.DANGER;
-            this.alertMessage = Utils.getErrorMessage(error)._generic;
-        });
+    resetAlert() {
+        this.alertMessage = null;
     }
-  }
-
-  cancelCreateCluster() {
-    this.showCertificateWarning = false;
-    this.isSaving = false;
-  }
-
-  acceptCertificate() {
-    this.showCertificateWarning = false;
-  }
-
-  resetAlert() {
-    this.alertMessage = null;
-  }
 }

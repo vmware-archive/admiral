@@ -9,20 +9,25 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-  <clr-modal [clrModalOpen]="opened" [clrModalClosable]="!isSaving" (clrModalOpenChange)="toggleModal($event)">
+  <clr-modal [clrModalOpen]="opened" [clrModalClosable]="!isSavingHost"
+             (clrModalOpenChange)="toggleModal($event)">
     <h3 class="modal-title">{{title | i18n}}</h3>
+
     <div class="modal-body">
-      <clr-alert [clrAlertType]="alertType" [(clrAlertClosed)]="!alertMessage"  (clrAlertClosedChange)="resetAlert()">
+      <clr-alert [clrAlertType]="alertType" [(clrAlertClosed)]="!alertMessage"
+                 (clrAlertClosedChange)="resetAlert()">
         <div class="alert-item">
           <span class="alert-text">{{ alertMessage }}</span>
         </div>
       </clr-alert>
+
       <form class="form" [formGroup]="clusterForm">
         <section class="form-block">
           <div class="form-group">
             <label for="name" class="required">{{ "clusters.edit.name" | i18n }}</label>
-            <label for="name" aria-haspopup="true" role="tooltip" class="tooltip tooltip-validation tooltip-sm tooltip-bottom-left"
-                [class.invalid]="clusterForm.get('name').invalid && (clusterForm.get('name').dirty || clusterForm.get('name').touched)">
+            <label for="name" aria-haspopup="true" role="tooltip"
+                   class="tooltip tooltip-validation tooltip-sm tooltip-bottom-left"
+                   [class.invalid]="clusterForm.get('name').invalid && (clusterForm.get('name').dirty || clusterForm.get('name').touched)">
               <input id="name" type="text" formControlName="name">
               <span class="tooltip-content">{{ "clusters.edit.nameRequired" | i18n }}</span>
             </label>
@@ -32,12 +37,8 @@
             <input id="description" type="text" formControlName="description">
           </div>
           <div class="form-group" *ngIf="isVch">
-            <label for="url" class="required">{{ "clusters.edit.url" | i18n }}</label>
-            <label for="url" aria-haspopup="true" role="tooltip" class="tooltip tooltip-validation tooltip-sm tooltip-bottom-left"
-                [class.invalid]="clusterForm.get('url').invalid && (clusterForm.get('url').dirty || clusterForm.get('url').touched)">
-              <input id="url" type="text" [attr.disabled]="isVch"  placeholder="https://hostname:2376" formControlName="url">
-              <span class="tooltip-content">{{ urlRequiredTextKey | i18n }}</span>
-            </label>
+            <label class="required">{{ "clusters.edit.url" | i18n }}</label>
+            <label>{{ clusterUrl }}</label>
           </div>
           <div class="form-group" *ngIf="showPublicAddressField">
             <label for="publicAddress">{{ "clusters.edit.publicAddress" | i18n }}</label>
@@ -49,33 +50,33 @@
               <span class="tooltip-content">{{ "clusters.edit.publicAddressDescription" | i18n }}</span>
             </a>
           </div>
+
           <div class="form-group" *ngIf="isVch">
             <label for="credentials">{{ "clusters.edit.credentials" | i18n }}</label>
-            <dropdown formControlName="credentials" [options]="credentials"
-              [title]="credentialsTitle"
-              [searchPlaceholder]="credentialsSearchPlaceholder"
-              ddClass="top-left">
+            <dropdown formControlName="credentials" [options]="credentials" [title]="credentialsTitle"
+                      [searchPlaceholder]="credentialsSearchPlaceholder"
+                      ddClass="top-left">
             </dropdown>
           </div>
         </section>
       </form>
       <!-- Untrusted certificate prompt -->
       <verify-certificate [visible]="showCertificateWarning"
-                          [hostAddress]="clusterForm.value.url"
+                          [hostAddress]="clusterUrl"
                           [certificate]="certificate"
                           (onAccept)="acceptCertificate()"
                           (onDecline)="cancelCreateCluster()"></verify-certificate>
     </div>
     <div class="modal-footer">
       <button type="button" class="btn btn-outline"
-              [disabled]="isSaving"
+              [disabled]="isSavingHost"
               (click)="toggleModal(false)">{{ "cancel" | i18n }}</button>
-      <button *ngIf="!isVch" [clrLoading]="isSaving" type="button" class="btn btn-primary saveCluster-btn"
-              [disabled]="isSaving || clusterForm.invalid"
-              (click)="saveCluster()">{{ "save" | i18n }}</button>
+      <button *ngIf="!isVch" [clrLoading]="isSavingHost" type="button" class="btn btn-primary saveCluster-btn"
+              [disabled]="isSavingHost || clusterForm.invalid"
+              (click)="updateDockerCluster()">{{ "save" | i18n }}</button>
       <button *ngIf="isVch" [clrLoading]="isSavingHost" type="button" class="btn btn-primary"
               [disabled]="isSavingHost || isVerifyingHost || !isHostVerified"
-              (click)="updateCluster()">{{ "update" | i18n }}</button>
+              (click)="updateVchCluster()">{{ "update" | i18n }}</button>
       <button *ngIf="isVch" [clrLoading]="isVerifyingHost" type="button" class="btn btn-outline"
               [disabled]="isSavingHost || isVerifyingHost"
               (click)="verifyCluster()">{{"verify" | i18n}}</button>
