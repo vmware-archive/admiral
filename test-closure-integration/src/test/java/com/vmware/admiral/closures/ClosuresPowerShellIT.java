@@ -38,6 +38,7 @@ import junit.framework.TestCase;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.BaseClosureIntegrationTest;
@@ -51,6 +52,7 @@ import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.Utils;
 
 @SuppressWarnings("unchecked")
+@Ignore("VBV-1927")
 public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
 
     private static final String IMAGE_NAME_PREFIX = "vmware/photon-closure-runner_";
