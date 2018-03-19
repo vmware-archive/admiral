@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -804,6 +804,9 @@ public class ContainerAllocationTaskService extends
                     .setCompletion(
                             (o, e) -> {
                                 if (e != null) {
+                                    logSevere("Failed to create container state [%s]: %s",
+                                            containerState.documentSelfLink,
+                                            Utils.toString(e));
                                     completeSubTasksCounter(taskCallback, e);
                                     return;
                                 }
