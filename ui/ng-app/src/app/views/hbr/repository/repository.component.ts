@@ -19,7 +19,7 @@ import { Utils } from '../../../utils/utils';
 
 @Component({
   template: `
-    <div class="main-view">
+    <div class="main-view" data-view-name="project-repositories">
       <div class="title">{{"navigation.projectRepositories" | i18n}}</div>
       <hbr-repository-listview [projectId]="projectId" [projectName]="projectName" 
                                [hasSignedIn]="true" [hasProjectAdminRole]="hasProjectAdminRole"
