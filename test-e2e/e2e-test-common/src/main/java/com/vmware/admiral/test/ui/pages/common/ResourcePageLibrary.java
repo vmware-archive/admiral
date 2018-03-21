@@ -17,6 +17,8 @@ import org.openqa.selenium.By;
 
 public abstract class ResourcePageLibrary extends PageLibrary {
 
+    private By[] iframeLocators;
+
     private RequestsToolbar requestsToolbar;
     private EventLogToolbar eventLogsToolar;
 
@@ -38,6 +40,10 @@ public abstract class ResourcePageLibrary extends PageLibrary {
 
     @Override
     protected By[] getFrameLocators() {
-        return new By[] { By.cssSelector("iframe[src^='/ogui/index-no-navigation.html']") };
+        if (Objects.isNull(iframeLocators)) {
+            iframeLocators = new By[] {
+                    By.cssSelector("iframe[src^='/ogui/index-no-navigation.html']") };
+        }
+        return iframeLocators;
     }
 }

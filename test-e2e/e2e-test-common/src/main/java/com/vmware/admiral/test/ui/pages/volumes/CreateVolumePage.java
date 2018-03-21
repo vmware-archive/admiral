@@ -11,7 +11,14 @@
 
 package com.vmware.admiral.test.ui.pages.volumes;
 
+import static com.codeborne.selenide.Selenide.Wait;
+
+import java.util.concurrent.TimeUnit;
+
+import com.codeborne.selenide.Condition;
+
 import org.openqa.selenium.By;
+import org.openqa.selenium.TimeoutException;
 
 import com.vmware.admiral.test.ui.pages.common.BasicPage;
 
@@ -27,6 +34,12 @@ public class CreateVolumePage
         LOG.info(String.format("Setting name: [%s]", name));
         pageActions().clear(locators().nameInput());
         pageActions().sendKeys(name, locators().nameInput());
+    }
+
+    public void setExistingName(String name) {
+        LOG.info(String.format("Setting name: [%s]", name));
+        pageActions().clear(locators().existingNameInput());
+        pageActions().sendKeys(name, locators().existingNameInput());
     }
 
     public void setDriver(String driver) {
@@ -50,10 +63,29 @@ public class CreateVolumePage
         pageActions().sendKeys(value, locators().lastDriverOptionsValueInput());
     }
 
+    public void toggleExistingCheckbox(boolean toggle) {
+        pageActions().setCheckbox(toggle, locators().existingCheckbox());
+    }
+
     public void selectHostByName(String hostName) {
         LOG.info(String.format("Setting host by name: [%s]", hostName));
         pageActions().click(locators().selectHostDropdown());
-        pageActions().click(locators().hostSelectorByName(hostName));
+        int retries = 3;
+        By host = locators().hostSelectorByName(hostName);
+        // sometimes clicking the host fails so we retry
+        while (retries > 0) {
+            try {
+                pageActions().click(host);
+                Wait().withTimeout(2, TimeUnit.SECONDS)
+                        .until(d -> element(host).is(Condition.hidden));
+                break;
+            } catch (TimeoutException e) {
+                if (--retries <= 0) {
+                    throw new RuntimeException("Could not select host for volume");
+                }
+                LOG.info("Selecting the host failed, retrying...");
+            }
+        }
     }
 
     public void navigateBack() {

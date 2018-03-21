@@ -16,6 +16,8 @@ import java.util.logging.Logger;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 
+import com.vmware.xenon.common.Utils;
+
 public class TestStatusLoggerRule extends TestWatcher {
 
     Logger LOG = Logger.getLogger(getClass().getName());
@@ -28,8 +30,9 @@ public class TestStatusLoggerRule extends TestWatcher {
 
     @Override
     protected void failed(Throwable e, Description description) {
-        LOG.info(getMessage(
+        LOG.warning(getMessage(
                 "Failure: " + description.getClassName() + "::" + description.getMethodName()));
+        LOG.warning(Utils.toString(e));
     }
 
     @Override

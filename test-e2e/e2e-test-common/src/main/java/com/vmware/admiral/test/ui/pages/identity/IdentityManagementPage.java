@@ -27,6 +27,14 @@ public class IdentityManagementPage
         pageActions().click(locators().usersAndGroupsTabButton());
     }
 
+    public void clickCertificatesTab() {
+        pageActions().click(locators().certificatesTabButton());
+    }
+
+    public void clickCredentialsTab() {
+        pageActions().click(locators().credentialsTabButton());
+    }
+
     @Override
     public void waitToLoad() {
         validate().validateIsCurrentPage();

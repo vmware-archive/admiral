@@ -70,13 +70,13 @@ public abstract class BasicClass<L extends PageLocators> {
                 .ignoring(StaleElementReferenceException.class)
                 .until((f) -> {
                     Point initialPos = pageActions().getCoordinates(locator);
-                    Dimension initialSize = pageActions().getDimesion(locator);
+                    Dimension initialSize = pageActions().getDimension(locator);
                     try {
                         Thread.sleep(WAIT_FOR_MOVING_ELEMENT_CHECK_INTERVAL_MILISECONDS);
                     } catch (InterruptedException e) {
                     }
                     if (pageActions().getCoordinates(locator).equals(initialPos)
-                            && pageActions().getDimesion(locator).equals(initialSize)) {
+                            && pageActions().getDimension(locator).equals(initialSize)) {
                         if (count.decrementAndGet() == 0) {
                             return true;
                         }

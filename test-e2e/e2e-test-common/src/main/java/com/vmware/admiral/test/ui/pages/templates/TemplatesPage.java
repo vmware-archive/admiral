@@ -23,7 +23,7 @@ public class TemplatesPage extends ResourcePage<TemplatesPageValidator, Template
     }
 
     public void provisionTemplate(String name) {
-        LOG.info("Provisioning template");
+        LOG.info(String.format("Provisioning template [%s]", name));
         By card = locators().cardByExactTitle(name);
         waitForElementToSettle(card);
         pageActions().click(locators().provisionButtonByCardTitle(name));

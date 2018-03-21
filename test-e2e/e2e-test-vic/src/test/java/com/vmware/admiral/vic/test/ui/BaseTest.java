@@ -13,7 +13,6 @@ package com.vmware.admiral.vic.test.ui;
 
 import static com.codeborne.selenide.Selenide.close;
 
-import java.util.List;
 import java.util.Properties;
 import java.util.logging.Logger;
 
@@ -75,10 +74,6 @@ public class BaseTest {
         client.waitToLogout();
     }
 
-    protected List<String> getCloudAdminsPrincipalIds() {
-        return null;
-    }
-
     protected DockerClient getDockerClient(String dockerHostUrl) {
         return DockerUtils.createUnsecureDockerClient(dockerHostUrl);
     }
@@ -95,7 +90,7 @@ public class BaseTest {
         return BaseSuite.getVcenterIp();
     }
 
-    public String getVCHUrl(String vchIp) {
+    protected String getVchUrl(String vchIp) {
         return "https://" + vchIp + ":" + PROPERTIES.getProperty(PropertiesNames.VCH_PORT_PROPERTY);
     }
 

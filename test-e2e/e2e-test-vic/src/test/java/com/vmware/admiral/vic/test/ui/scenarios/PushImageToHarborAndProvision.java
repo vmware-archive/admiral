@@ -14,6 +14,9 @@ package com.vmware.admiral.vic.test.ui.scenarios;
 import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.open;
 
+import java.io.File;
+import java.io.IOException;
+
 import com.codeborne.selenide.Condition;
 
 import org.junit.Rule;
@@ -29,10 +32,15 @@ import com.vmware.admiral.vic.test.ui.util.CreateVchRule;
 
 public class PushImageToHarborAndProvision extends BaseTest {
 
-    private final String HARBOR_CERTIFICATE_PATH = "/storage/data/harbor/ca_download/ca.crt";
+    private final String LOCAL_CERTIFICATE_PATH = "target" + File.separator + "ca.crt";
+    private final String REMOTE_CERTIFICATE_FOLDER_PATH = String.format("/etc/docker/certs.d/%s",
+            getVicIp());
     private final String NGINX_IMAGE_NAME = "nginx";
+    private final String NGINX_IMAGE_TAG = "alpine";
+    private final String NGINX_IMAGE_AND_TAG = NGINX_IMAGE_NAME + ":" + NGINX_IMAGE_TAG;
     private final String PROJECT_NAME = "hbr-provision";
     private final String TAGGED_IMAGE_PATH = "/wmware/vic/harbor/test/nginx";
+    private final String TAGGED_IMAGE = getVicIp() + "/" + PROJECT_NAME + TAGGED_IMAGE_PATH;
     private final String HOST_NAME = PROJECT_NAME + "_host";
 
     private final AuthContext vicOvaAuthContext = new AuthContext(getVicIp(), getVicVmUsername(),
@@ -58,14 +66,20 @@ public class PushImageToHarborAndProvision extends BaseTest {
         clusters().clustersPage().clickAddClusterButton();
         clusters().addHostDialog().setName(HOST_NAME);
         clusters().addHostDialog().setHostType(HostType.VCH);
-        String vchUrl = getVCHUrl(vchIps.getHostsIps()[0]);
+        String vchUrl = getVchUrl(vchIps.getHostsIps()[0]);
         clusters().addHostDialog().setUrl(vchUrl);
         clusters().addHostDialog().submit();
         clusters().certificateModalDialog().waitToLoad();
         clusters().certificateModalDialog().submit();
 
+        main().clickAdministrationTabButton();
+        administration().clickConfigurationButton();
+        configuration().configurationPage()
+                .downloadCertificate(LOCAL_CERTIFICATE_PATH);
+
         pushImageToProject();
 
+        main().clickHomeTabButton();
         home().clickContainersButton();
         containers().containersPage().clickCreateContainer();
         containers().basicTab()
@@ -94,10 +108,13 @@ public class PushImageToHarborAndProvision extends BaseTest {
         containers().containersPage().deleteContainer(NGINX_IMAGE_NAME);
         containers().requests().waitForLastRequestToSucceed(360);
         home().clickProjectRepositoriesButton();
-        projectRepositories().projectRepositoriesPage().deleteRepository(PROJECT_NAME
-                + "/wmware/vic/harbor/test/nginx");
+        projectRepositories().projectRepositoriesPage()
+                .selectRepositoryByName(PROJECT_NAME + TAGGED_IMAGE_PATH);
+        projectRepositories().projectRepositoriesPage().clickDeleteButton();
         projectRepositories().deleteRepositoryModalDialog().waitToLoad();
         projectRepositories().deleteRepositoryModalDialog().submit();
+        projectRepositories().deleteRepositoryModalDialog().waitForDeleteToComplete();
+        projectRepositories().deleteRepositoryModalDialog().close();
         home().clickContainerHostsButton();
         clusters().clustersPage().clickHostDeleteButton(HOST_NAME);
         clusters().deleteHostDialog().waitToLoad();
@@ -113,31 +130,42 @@ public class PushImageToHarborAndProvision extends BaseTest {
 
     private void pushImageToProject() {
         SSHCommandExecutor executor = new SSHCommandExecutor(vicOvaAuthContext, 22);
-        String createDirCommand = String.format("mkdir -p /etc/docker/certs.d/%s", getVicIp());
+
+        LOG.info(String.format("Creating remote folder [%s]", REMOTE_CERTIFICATE_FOLDER_PATH));
+        String createDirCommand = String.format("mkdir -p " + REMOTE_CERTIFICATE_FOLDER_PATH);
         CommandResult result = executor.execute(createDirCommand, 10);
         logOutputOrThrow(createDirCommand, result);
 
-        String copyCertificateCommand = String.format("cp %s /etc/docker/certs.d/%s",
-                HARBOR_CERTIFICATE_PATH, getVicIp());
-        result = executor.execute(copyCertificateCommand, 10);
-        logOutputOrThrow(copyCertificateCommand, result);
+        LOG.info(String.format("Sending certificate to remote path [%s]",
+                REMOTE_CERTIFICATE_FOLDER_PATH));
+        try {
+            executor.sendFile(new File(LOCAL_CERTIFICATE_PATH), REMOTE_CERTIFICATE_FOLDER_PATH);
+        } catch (IOException e) {
+            throw new RuntimeException(
+                    String.format("Could not send the certificate file to remote path [%s]",
+                            REMOTE_CERTIFICATE_FOLDER_PATH),
+                    e);
+        }
 
-        String pullNginxCommand = "docker pull nginx";
+        LOG.info(String.format("Pulling image [%s]", NGINX_IMAGE_AND_TAG));
+        String pullNginxCommand = "docker pull " + NGINX_IMAGE_AND_TAG;
         result = executor.execute(pullNginxCommand, 120);
         logOutputOrThrow(pullNginxCommand, result);
 
-        String taggedImage = getVicIp() + "/" + PROJECT_NAME + TAGGED_IMAGE_PATH;
-        String tagNginxCommand = "docker tag nginx " + taggedImage;
+        LOG.info(
+                String.format("Tagging image [%s] with [%s]", NGINX_IMAGE_AND_TAG, TAGGED_IMAGE));
+        String tagNginxCommand = "docker tag " + NGINX_IMAGE_AND_TAG + " " + TAGGED_IMAGE;
         result = executor.execute(tagNginxCommand, 10);
         logOutputOrThrow(tagNginxCommand, result);
 
+        LOG.info("Logging in to the registry");
         String loginCommand = String.format("docker login %s --username %s --password %s",
-                getVicIp(), getDefaultAdminUsername(),
-                getDefaultAdminPassword());
+                getVicIp(), getDefaultAdminUsername(), getDefaultAdminPassword());
         result = executor.execute(loginCommand, 30);
         logOutputOrThrow(loginCommand, result);
 
-        String pushCommnad = "docker push " + taggedImage;
+        LOG.info(String.format("Pushing image [%s] to the registry", TAGGED_IMAGE));
+        String pushCommnad = "docker push " + TAGGED_IMAGE;
         result = executor.execute(pushCommnad, 120);
         logOutputOrThrow(pushCommnad, result);
     }

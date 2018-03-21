@@ -26,6 +26,7 @@ public class ClustersPageLocators extends PageLocators {
     private final String CONTEXT_MENU_BUTTON = "//button[contains(concat(' ', @class, ' '), ' dropdown-toggle ')]";
     private final String CLUSTER_DELETE_BUTTON = "//*[contains(concat(' ', @class, ' '), ' remove-cluster ')]";
     private final String CLUSTER_RESCAN_BUTTON = "//*[contains(concat(' ', @class, ' '), ' rescan-cluster ')]";
+    private final String CLUSTER_DETAILS_BUTTON = "//*[contains(concat(' ', @class, ' '), ' cluster-details ')]";
     private final String CLUSTER_STATUS = "//div[contains(concat(' ', @class, ' '), ' status ')]";
 
     public String clusterCardByNameXpath(String name) {
@@ -46,6 +47,10 @@ public class ClustersPageLocators extends PageLocators {
 
     public By clusterRescanButtonByName(String name) {
         return By.xpath(clusterCardByNameXpath(name) + CLUSTER_RESCAN_BUTTON);
+    }
+
+    public By clusterDetailsButton(String name) {
+        return By.xpath(clusterCardByNameXpath(name) + CLUSTER_DETAILS_BUTTON);
     }
 
     public By clusterStatusByName(String name) {

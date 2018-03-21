@@ -18,6 +18,8 @@ import com.vmware.admiral.test.ui.pages.common.PageLocators;
 public class CreateVolumePageLocators extends PageLocators {
 
     private final By NAME_INPUT = By.cssSelector(".form-group.volume-name .form-control");
+    private final By EXISTING_NAME_INPUT = By
+            .cssSelector(".form-group.volume-name-search .form-control .tt-input");
     private final By DRIVER_INPUT = By.cssSelector(".form-group.volume-driver .form-control");
     private final By SELECT_HOST_DROPDOWN_BUTTON = By.cssSelector(
             ".form-group:not(.ipam-config):not(.custom-properties):not(.network-name):not([style]) .multicolumn-input .dropdown-select.dropdown-search-menu button.dropdown-toggle");
@@ -36,6 +38,8 @@ public class CreateVolumePageLocators extends PageLocators {
             ".driver-options .multicolumn-input:last-child .inline-input.form-control[name='key']");
     private final By LAST_DRIVER_OPTION_VALUE_INPUT = By.cssSelector(
             ".driver-options .multicolumn-input:last-child .inline-input.form-control[name='value']");
+    private final By EXISTING_CHECKBOX = By
+            .cssSelector(".form-group:nth-child(3) .checkbox-control");
 
     public By pageTitle() {
         return PAGE_TITLE;
@@ -79,5 +83,13 @@ public class CreateVolumePageLocators extends PageLocators {
 
     public By lastDriverOptionsValueInput() {
         return LAST_DRIVER_OPTION_VALUE_INPUT;
+    }
+
+    public By existingCheckbox() {
+        return EXISTING_CHECKBOX;
+    }
+
+    public By existingNameInput() {
+        return EXISTING_NAME_INPUT;
     }
 }

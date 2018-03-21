@@ -35,10 +35,13 @@ public class ProjectRepositoriesPage
         waitForSpinner();
     }
 
-    public void deleteRepository(String name) {
-        LOG.info(String.format("Deleting repository [%s]", name));
-        pageActions().click(locators().rowContextButtonByRepositoryName(name));
-        pageActions().click(locators().rowDeleteButtonByRepositoryName(name));
+    public void selectRepositoryByName(String name) {
+        LOG.info(String.format("Selecting repository [%s]", name));
+        pageActions().click(locators().rowCheckboxByRepositoryName(name));
+    }
+
+    public void clickDeleteButton() {
+        pageActions().click(locators().deleteRepositoriesButton());
     }
 
 }

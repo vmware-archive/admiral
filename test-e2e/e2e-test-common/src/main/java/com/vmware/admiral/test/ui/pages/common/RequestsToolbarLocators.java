@@ -15,23 +15,18 @@ import org.openqa.selenium.By;
 
 public class RequestsToolbarLocators extends PageLocators {
 
-    private final By RIGHT_PANEL = By.cssSelector(".right-context-panel .content .requests-list");
     private final By REQUESTS_BUTTON = By
             .cssSelector(".toolbar .toolbar-item:nth-child(1) .btn");
-    private final By LAST_REQUEST = By
-            .cssSelector(".requests-list #all .request-item-holder:first-child");
+    private final By LAST_REQUEST_PROGRESS = By
+            .cssSelector(".requests-list #all .request-item-holder:first-child .progress-status");
     private final By REFRESH_BUTTON = By.cssSelector(".right-context-panel .fa.fa-refresh");
-
-    public By toolbarPanel() {
-        return RIGHT_PANEL;
-    }
 
     public By requestsButton() {
         return REQUESTS_BUTTON;
     }
 
-    public By lastRequest() {
-        return LAST_REQUEST;
+    public By lastRequestProgress() {
+        return LAST_REQUEST_PROGRESS;
     }
 
     public By refreshButton() {

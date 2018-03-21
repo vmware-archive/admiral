@@ -42,6 +42,7 @@ public class ContainerStatsPage
     }
 
     public void navigateBack() {
+        LOG.info("Navigating back");
         pageActions().click(locators().backButton());
     }
 

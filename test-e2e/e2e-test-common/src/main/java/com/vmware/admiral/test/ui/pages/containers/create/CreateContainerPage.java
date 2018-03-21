@@ -34,8 +34,28 @@ public class CreateContainerPage
     }
 
     public void clickStorageTab() {
-        LOG.info("Navigating to Network tab");
+        LOG.info("Navigating to Storage tab");
         pageActions().click(locators().storageTabButton());
+    }
+
+    public void clickPolicyTab() {
+        LOG.info("Navigating to Policy tab");
+        pageActions().click(locators().policyTabButton());
+    }
+
+    public void clickEnvironmentTab() {
+        LOG.info("Navigating to Environment tab");
+        pageActions().click(locators().environmentTabButton());
+    }
+
+    public void clickHealthConfigTab() {
+        LOG.info("Navigating to Health Config tab");
+        pageActions().click(locators().healthConfigTabButton());
+    }
+
+    public void clickLogConfigTab() {
+        LOG.info("Navigating to Log Config tab");
+        pageActions().click(locators().logConfigTabButton());
     }
 
     public void navigateBack() {

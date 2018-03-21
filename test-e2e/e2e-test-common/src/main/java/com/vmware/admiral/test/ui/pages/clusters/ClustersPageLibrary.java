@@ -23,6 +23,8 @@ public class ClustersPageLibrary extends PageLibrary {
     private AddClusterModalDialog addHostDialog;
     private DeleteClusterModalDialog deleteHostDialog;
     private HostCertificateModalDialog certificateModalDialog;
+    private ClusterDetailsPage clusterDetailsPage;
+    private ResourcesTab resourcesTab;
 
     public ClustersPage clustersPage() {
         if (Objects.isNull(clustersPage)) {
@@ -64,6 +66,26 @@ public class ClustersPageLibrary extends PageLibrary {
                     locators);
         }
         return certificateModalDialog;
+    }
+
+    public ClusterDetailsPage clusterDetailsPage() {
+        if (Objects.isNull(clusterDetailsPage)) {
+            ClusterDetailsPageLocators locators = new ClusterDetailsPageLocators();
+            ClusterDetailsPageValidator validator = new ClusterDetailsPageValidator(
+                    getFrameLocators(), locators);
+            clusterDetailsPage = new ClusterDetailsPage(getFrameLocators(), validator, locators);
+        }
+        return clusterDetailsPage;
+    }
+
+    public ResourcesTab resourcesTab() {
+        if (Objects.isNull(resourcesTab)) {
+            ResourcesTabLocators locators = new ResourcesTabLocators();
+            ResourcesTabValidator validator = new ResourcesTabValidator(getFrameLocators(),
+                    locators);
+            resourcesTab = new ResourcesTab(getFrameLocators(), validator, locators);
+        }
+        return resourcesTab;
     }
 
     @Override

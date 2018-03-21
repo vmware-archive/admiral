@@ -111,12 +111,12 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
     public void testRbacAndItemProjectAwareness() {
 
         loginAsAdmin();
-        createProjects();
-        configureProjects();
         configureCloudAdminRoles();
         logOut();
 
         loginAs(CLOUD_ADMIN_JASON);
+        createProjects();
+        configureProjects();
         validateWithCloudAdminRoleView();
         addContentToProjects();
         logOut();
@@ -135,16 +135,17 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
 
         loginAs(CLOUD_ADMIN_JASON);
         removeContentFromProjects();
+        deleteProjects();
         logOut();
 
         loginAsAdmin();
-        deleteProjects();
         unconfigureCloudAdminRoles();
         logOut();
 
     }
 
     private void validateWithCloudAdminRoleView() {
+        main().clickHomeTabButton();
         home().validate().validateAllHomeTabsAreAvailable();
         home().validate().validateProjectsAreAvailable(ALL_PROJECTS);
         home().validate().validateProjectIsAvailable(PROJECT_NAME_DEFAULT);
@@ -163,6 +164,13 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
         home().validate().validateAllHomeTabsAreAvailable();
         home().validate().validateProjectsAreAvailable(ALL_PROJECTS);
         home().validate().validateProjectIsNotAvailable(PROJECT_NAME_DEFAULT);
+        home().switchToProject(PROJECT_NAME_ADMIRAL);
+        home().clickContainerHostsButton();
+        clusters().clustersPage().waitToLoad();
+        clusters().clustersPage().validate().validateAddHostButtonNotAvailable();
+        clusters().clustersPage().validate()
+                .validateHostActionsNotAvailable(PROJECT_NAME_ADMIRAL + HOST_SUFFIX);
+
         String resourcePrefix = USER_SHAUNA.split("@")[0];
         createAndDeleteResourcesInAdmiralProject(resourcePrefix);
 
@@ -178,6 +186,9 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
                 PROJECT_NAME_ADMIRAL,
                 PROJECT_NAME_QE);
         projects().projectsPage().validate().validateProjectIsNotVisible(PROJECT_NAME_DEFAULT);
+        projects().projectsPage().validate().validateAddProjectButtonNotAvailable();
+        projects().projectsPage().validate()
+                .validateProjectDeleteButtonNotAvailable(PROJECT_NAME_ADMIRAL);
     }
 
     private void createAndDeleteResourcesInAdmiralProject(String resourcePrefix) {
@@ -254,6 +265,11 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
         home().validate().validateProjectsAreAvailable(ALL_PROJECTS);
         home().validate().validateProjectIsNotAvailable(PROJECT_NAME_DEFAULT);
         main().validate().validateAdministrationTabIsNotVisible();
+        home().clickContainerHostsButton();
+        clusters().clustersPage().waitToLoad();
+        clusters().clustersPage().validate().validateAddHostButtonNotAvailable();
+        clusters().clustersPage().validate()
+                .validateHostActionsNotAvailable(PROJECT_NAME_ADMIRAL + HOST_SUFFIX);
         String resourcePrefix = USER_SCOTT.split("@")[0];
         createAndDeleteResourcesInAdmiralProject(resourcePrefix);
     }
@@ -275,12 +291,14 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
     }
 
     private void configureCloudAdminRoles() {
+        main().clickAdministrationTabButton();
         administration().clickIdentityManagementButton();
         identity().identityPage().clickUsersAndGroupsTab();
         identity().usersTab().assignCloudAdminRole(CLOUD_ADMIN_JASON);
     }
 
     private void unconfigureCloudAdminRoles() {
+        main().clickAdministrationTabButton();
         administration().clickIdentityManagementButton();
         identity().identityPage().clickUsersAndGroupsTab();
         identity().usersTab().unassignCloudAdminRole(CLOUD_ADMIN_JASON);
@@ -291,7 +309,7 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
         for (int i = 0; i < ALL_PROJECTS.size(); i++) {
             String projectName = ALL_PROJECTS.get(i);
             home().switchToProject(projectName);
-            addVchHostToProject(projectName, getVCHUrl(vchIps.getHostsIps()[i]));
+            addVchHostToProject(projectName, getVchUrl(vchIps.getHostsIps()[i]));
             provisionContainerInProject(projectName);
             addNetworkToProject(projectName);
             addVolumeToProject(projectName);
@@ -482,11 +500,6 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
             projects().deleteProjectDialog().submit();
             projects().projectsPage().waitToLoad();
         }
-    }
-
-    @Override
-    protected List<String> getCloudAdminsPrincipalIds() {
-        return Arrays.asList(new String[] { CLOUD_ADMIN_JASON });
     }
 
 }

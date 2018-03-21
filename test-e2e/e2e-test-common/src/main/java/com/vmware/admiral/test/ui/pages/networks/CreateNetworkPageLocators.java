@@ -46,7 +46,7 @@ public class CreateNetworkPageLocators extends PageLocators {
         return By.cssSelector(LAST_HOST_INPUT_DIV + ROW_RELATIVE_DROPDOWN);
     }
 
-    public By hostSelectorbyName(String name) {
+    public By hostSelectorByName(String name) {
         return By.cssSelector(
                 LAST_HOST_INPUT_DIV + String.format(ROW_RELATIVE_HOST_SELECTOR_BY_NAME, name));
     }

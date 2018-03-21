@@ -58,10 +58,16 @@ public class CheckCondition extends Action {
     }
 
     public boolean has(Condition condition) {
-        return $(selector).has(condition);
+        switchToFrame();
+        boolean has = $(selector).has(condition);
+        switchTo().defaultContent();
+        return has;
     }
 
     public boolean is(Condition condition) {
-        return $(selector).is(condition);
+        switchToFrame();
+        boolean is = $(selector).is(condition);
+        switchTo().defaultContent();
+        return is;
     }
 }

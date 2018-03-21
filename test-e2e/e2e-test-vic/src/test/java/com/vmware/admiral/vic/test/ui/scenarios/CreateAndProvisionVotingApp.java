@@ -99,7 +99,7 @@ public class CreateAndProvisionVotingApp extends BaseTest {
         addHostDialog.waitToLoad();
         addHostDialog.setName(HOST_NAME);
         addHostDialog.setHostType(HostType.VCH);
-        String vchUrl = getVCHUrl(vchIps.getHostsIps()[0]);
+        String vchUrl = getVchUrl(vchIps.getHostsIps()[0]);
         addHostDialog.setUrl(vchUrl);
         addHostDialog.submit();
         clusters().certificateModalDialog().waitToLoad();
@@ -212,6 +212,7 @@ public class CreateAndProvisionVotingApp extends BaseTest {
     public void createVotingAppTemplate() {
 
         home().clickTemplatesButton();
+        templates().templatesPage().waitToLoad();
         templates().templatesPage().clickCreateTemplateButton();
         templates().createTemplatePage().setName(TEMPLATE_NAME);
         templates().createTemplatePage().clickProceedButton();

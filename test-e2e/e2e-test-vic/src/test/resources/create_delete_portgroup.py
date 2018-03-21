@@ -62,7 +62,7 @@ def main():
         elif args.command == "delete":
             delete(network_folder, args)
     finally:
-        Disconnect(connection)  
+        Disconnect(connection)
 
 
 def get_dvs(network_folder, args):
@@ -86,20 +86,20 @@ def get_network_folder(connection, args):
     if dc == None:
             raise Exception("Could not find datacenter: " + args.datacenter)
     return dc.networkFolder
-    
-    
+
+
 def create(dvs, args):
     dvsPgSpec = vim.dvs.DistributedVirtualPortgroup.ConfigSpec()
     dvsPgSpec.name = args.portgroup
     dvsPgSpec.type = "earlyBinding"
     dvsPgSpec.numPorts = args.numports
-    
+
     if (args.vlanid != None):
         dvsPgSpec.defaultPortConfig = vim.dvs.VmwareDistributedVirtualSwitch.VmwarePortConfigPolicy()
         dvsPgSpec.defaultPortConfig.vlan = vim.dvs.VmwareDistributedVirtualSwitch.VlanIdSpec()
         dvsPgSpec.defaultPortConfig.vlan.vlanId = args.vlanid
         dvsPgSpec.defaultPortConfig.vlan.inherited = False
-    
+
     task = dvs.CreateDVPortgroup_Task(spec=dvsPgSpec)
     while task.info.state != "success" and task.info.state != 'error':
         time.sleep(1)
@@ -107,11 +107,11 @@ def create(dvs, args):
         raise Exception("Creating a portgroup failed: " + task.info.error.msg)
     print("Successfully created portgroup: " + args.portgroup)
 
-    
+
 def delete(network_folder, args):
     portgroup = None
     for item in network_folder.childEntity:
-        if isinstance(item, vim.dvs.DistributedVirtualPortgroup):     
+        if isinstance(item, vim.dvs.DistributedVirtualPortgroup):
             if item.name == args.portgroup:
                 portgroup = item
                 break

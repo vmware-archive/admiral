@@ -19,9 +19,10 @@ public class ProjectRepositoriesPageLocators extends PageLocators {
 
     private final By REFRESH_BUTTON = By.cssSelector(".refresh-btn");
     private final By PAGE_TITLE = By.cssSelector("div.title");
-    private final String ROW_BY_REPOSITORY_VALUE_XPATH = "//clr-dg-cell[./text()='%s']/ancestor::clr-dg-row[contains(concat(' ', @class, ' '), ' datagrid-row ')]";
-    private final String ROW_RELATIVE_CONTEXT_MENU_XPATH = "//*[contains(concat(' ', @class, ' '), ' datagrid-action-toggle ')]";
-    private final String ROW_RELATIVE_DELETE_TUTTON_XPATH = "//button[contains(concat(' ', @class, ' '), ' action-item ')]";
+    private final String ROW_BY_REPOSITORY_VALUE_XPATH = "//clr-dg-cell/a[./text()='%s']/ancestor::clr-dg-row[contains(concat(' ', @class, ' '), ' datagrid-row ')]";
+    // private final String ROW_RELATIVE_CHECKBOX = "//input[@type='checkbox']";
+    private final String ROW_RELATIVE_CHECKBOX = "//clr-checkbox";
+    private final By DELETE_REPOSITORIES_BUTTON = By.cssSelector(".datagrid-action-bar button");
 
     public By pageTitle() {
         return PAGE_TITLE;
@@ -35,13 +36,12 @@ public class ProjectRepositoriesPageLocators extends PageLocators {
         return By.xpath(String.format(ROW_BY_REPOSITORY_VALUE_XPATH, name));
     }
 
-    public By rowContextButtonByRepositoryName(String name) {
+    public By rowCheckboxByRepositoryName(String name) {
         return By.xpath(String.format(ROW_BY_REPOSITORY_VALUE_XPATH, name)
-                + ROW_RELATIVE_CONTEXT_MENU_XPATH);
+                + ROW_RELATIVE_CHECKBOX);
     }
 
-    public By rowDeleteButtonByRepositoryName(String name) {
-        return By.xpath(String.format(ROW_BY_REPOSITORY_VALUE_XPATH, name)
-                + ROW_RELATIVE_DELETE_TUTTON_XPATH);
+    public By deleteRepositoriesButton() {
+        return DELETE_REPOSITORIES_BUTTON;
     }
 }

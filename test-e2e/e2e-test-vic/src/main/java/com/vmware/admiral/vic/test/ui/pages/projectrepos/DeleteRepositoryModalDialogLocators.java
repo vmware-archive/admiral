@@ -18,6 +18,7 @@ import com.vmware.admiral.test.ui.pages.common.ModalDialogLocators;
 public class DeleteRepositoryModalDialogLocators extends ModalDialogLocators {
 
     private By SUBMIT_BUTTON = By.cssSelector(".btn.btn-danger");
+    private By CLOSE_BUTTON = By.cssSelector(".btn.btn-primary");
     private By MODAL_TITLE = By.cssSelector(".modal-header .confirmation-title");
 
     @Override
@@ -28,6 +29,10 @@ public class DeleteRepositoryModalDialogLocators extends ModalDialogLocators {
     @Override
     public By modalTitle() {
         return MODAL_TITLE;
+    }
+
+    public By closeButton() {
+        return CLOSE_BUTTON;
     }
 
 }

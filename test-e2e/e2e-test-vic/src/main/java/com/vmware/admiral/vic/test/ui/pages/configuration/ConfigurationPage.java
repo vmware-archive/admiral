@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.vic.test.ui.pages.configuration;
 
+import java.io.File;
+
 import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.common.BasicPage;
@@ -24,7 +26,10 @@ public class ConfigurationPage
     }
 
     public void downloadCertificate(String localFile) {
-        pageActions().donwload(localFile, locators().certificateDownloadLink());
+        LOG.info(String.format("Downloading certificate"));
+        File downloadedFile = pageActions().donwload(localFile,
+                locators().certificateDownloadLink());
+        LOG.info(String.format("Downloaded certificate to [%s]", downloadedFile.getAbsolutePath()));
     }
 
     @Override

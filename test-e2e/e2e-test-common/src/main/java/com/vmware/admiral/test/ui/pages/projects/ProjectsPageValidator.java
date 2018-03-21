@@ -42,6 +42,35 @@ public class ProjectsPageValidator extends PageValidator<ProjectsPageLocators> {
         }
     }
 
+    public void validateAddProjectButtonAvailable() {
+        element(locators().addProjectButton()).shouldBe(Condition.visible);
+    }
+
+    public void validateAddProjectButtonNotAvailable() {
+        element(locators().addProjectButton()).shouldNotBe(Condition.visible);
+    }
+
+    public void validateProjectDeleteButtonAvailable(String projectName) {
+        validateProjectDeleteButton(projectName, true);
+    }
+
+    public void validateProjectDeleteButtonNotAvailable(String projectName) {
+        validateProjectDeleteButton(projectName, false);
+    }
+
+    private void validateProjectDeleteButton(String projectName, boolean available) {
+        By card = locators().projectCardByName(projectName);
+        waitForElementToSettle(card);
+        pageActions().click(locators().projectContextMenuButtonByName(projectName));
+        if (available) {
+            element(locators().projectDeleteButtonByName(projectName)).shouldBe(Condition.visible);
+        } else {
+            element(locators().projectDeleteButtonByName(projectName))
+                    .shouldNotBe(Condition.visible);
+        }
+        pageActions().click(locators().projectContextMenuButtonByName(projectName));
+    }
+
     public void validateProjectsCount(int expectedCount) {
         int actualCount = pageActions().getElementCount(By.cssSelector(".items .card-item"));
         if (expectedCount != actualCount) {

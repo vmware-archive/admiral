@@ -43,7 +43,7 @@ public class CreateNetworkPage
         }
         pageActions().click(locators().lastHostDropdown());
         int retries = 3;
-        By host = locators().hostSelectorbyName(hostName);
+        By host = locators().hostSelectorByName(hostName);
         // sometimes clicking the host fails so we retry
         while (retries > 0) {
             try {
