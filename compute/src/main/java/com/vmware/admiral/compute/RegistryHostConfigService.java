@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -36,6 +36,7 @@ import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.RegistryConfigCertificateDistributionService.RegistryConfigCertificateDistributionState;
+import com.vmware.admiral.service.common.RegistryFactoryService;
 import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
@@ -130,8 +131,8 @@ public class RegistryHostConfigService extends StatelessService {
         RegistryState hostState = hostSpec.hostState;
         Operation store = null;
         if (hostState.documentSelfLink == null
-                || !hostState.documentSelfLink.startsWith(RegistryService.FACTORY_LINK)) {
-            URI uri = UriUtils.buildUri(getHost(), RegistryService.FACTORY_LINK);
+                || !hostState.documentSelfLink.startsWith(RegistryFactoryService.SELF_LINK)) {
+            URI uri = UriUtils.buildUri(getHost(), RegistryFactoryService.SELF_LINK);
             store = OperationUtil.createForcedPost(uri);
         } else {
             URI uri = UriUtils.buildUri(getHost(), hostState.documentSelfLink);

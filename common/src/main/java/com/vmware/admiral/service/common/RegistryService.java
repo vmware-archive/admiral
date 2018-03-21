@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -21,7 +21,6 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
-import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.CertificateUtilExtended;
 import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.PropertyUtils;
@@ -50,14 +49,12 @@ import com.vmware.xenon.services.common.ServiceUriPaths;
  */
 public class RegistryService extends StatefulService {
 
-    public static final String FACTORY_LINK = ManagementUriParts.REGISTRIES;
-
     protected static final String DEFAULT_REGISTRY_ADDRESS = System.getProperty(
             "admiral.default.registry.address", "https://registry.hub.docker.com");
 
     private static final String DEFAULT_INSTANCE_ID = "default-registry";
-    public static final String DEFAULT_INSTANCE_LINK = UriUtils.buildUriPath(FACTORY_LINK,
-            DEFAULT_INSTANCE_ID);
+    public static final String DEFAULT_INSTANCE_LINK = UriUtils
+            .buildUriPath(RegistryFactoryService.SELF_LINK, DEFAULT_INSTANCE_ID);
     public static final String API_VERSION_PROP_NAME = "apiVersion";
     public static final String DISABLE_DEFAULT_REGISTRY_PROP_NAME = "disable.default.registry";
 
@@ -84,9 +81,9 @@ public class RegistryService extends StatefulService {
             // ensure default registry does not exist
             host.registerForServiceAvailability((o, e) -> {
                 host.log(Level.INFO, "registerForServiceAvailability: %s",
-                        RegistryService.FACTORY_LINK);
+                        RegistryFactoryService.SELF_LINK);
                 deleteDefaultRegistry(host);
-            }, true, RegistryService.FACTORY_LINK);
+            }, true, RegistryFactoryService.SELF_LINK);
 
             return null;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -22,6 +22,7 @@ import java.util.function.Consumer;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
+import com.vmware.admiral.service.common.RegistryFactoryService;
 import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
 import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
@@ -117,7 +118,7 @@ public class HarborInitRegistryService extends StatelessService {
                 RegistryService.ApiVersion.V2.toString());
 
         sendRequest(Operation
-                .createPost(UriUtils.buildUri(getHost(), RegistryService.FACTORY_LINK))
+                .createPost(UriUtils.buildUri(getHost(), RegistryFactoryService.SELF_LINK))
                 .setBodyNoCloning(state)
                 .setCompletion((o, e) -> {
                     if (e != null) {

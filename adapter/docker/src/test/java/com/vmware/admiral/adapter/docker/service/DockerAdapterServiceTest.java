@@ -61,7 +61,7 @@ import com.vmware.admiral.compute.container.ServiceNetwork;
 import com.vmware.admiral.compute.container.maintenance.ContainerStats;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
-import com.vmware.admiral.service.common.RegistryService;
+import com.vmware.admiral.service.common.RegistryFactoryService;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
@@ -304,7 +304,7 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
         registryState.authCredentialsLink = authStateLink;
         registryState.address = "https://test.registry.com:5000";
         registryState.name = "test registry";
-        doPost(registryState, RegistryService.FACTORY_LINK);
+        doPost(registryState, RegistryFactoryService.SELF_LINK);
 
         createContainerDescription("test.registry.com:5000/test/busybox:latest");
         createContainerState();

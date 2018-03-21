@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -34,6 +34,7 @@ import com.vmware.admiral.adapter.registry.service.RegistrySearchResponse.Result
 import com.vmware.admiral.common.test.CommonTestStateFactory;
 import com.vmware.admiral.common.test.HostInitTestDcpServicesConfig;
 import com.vmware.admiral.host.HostInitCommonServiceConfig;
+import com.vmware.admiral.service.common.RegistryFactoryService;
 import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.admiral.service.common.RegistryService.ApiVersion;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
@@ -85,7 +86,7 @@ public class RegistryAdapterServiceTest extends BaseMockRegistryTestCase {
                 ApiVersion.V1.toString());
 
         dockerHubRegistryStateLink = doPost(registryState,
-                RegistryService.FACTORY_LINK).documentSelfLink;
+                RegistryFactoryService.SELF_LINK).documentSelfLink;
         createSslTrustCert(new URI(registryState.address).getHost());
     }
 
@@ -97,7 +98,7 @@ public class RegistryAdapterServiceTest extends BaseMockRegistryTestCase {
         registryState.address = getDefaultRegistryUri().toString();
 
         defaultRegistryStateLink = doPost(registryState,
-                RegistryService.FACTORY_LINK).documentSelfLink;
+                RegistryFactoryService.SELF_LINK).documentSelfLink;
         createSslTrustCert(new URI(registryState.address).getHost());
     }
 
@@ -109,7 +110,8 @@ public class RegistryAdapterServiceTest extends BaseMockRegistryTestCase {
         registryState.customProperties.put(RegistryService.API_VERSION_PROP_NAME,
                 ApiVersion.V2.toString());
 
-        v2RegistryStateLink = doPost(registryState, RegistryService.FACTORY_LINK).documentSelfLink;
+        v2RegistryStateLink = doPost(registryState,
+                RegistryFactoryService.SELF_LINK).documentSelfLink;
         createSslTrustCert(new URI(registryState.address).getHost());
     }
 
@@ -249,7 +251,7 @@ public class RegistryAdapterServiceTest extends BaseMockRegistryTestCase {
         registryState.customProperties.put(RegistryService.API_VERSION_PROP_NAME, "V99");
 
         String unsupportedRegistryStateLink = doPost(registryState,
-                RegistryService.FACTORY_LINK).documentSelfLink;
+                RegistryFactoryService.SELF_LINK).documentSelfLink;
         URI unsupportedRegistryStateUri = UriUtils.buildUri(host, unsupportedRegistryStateLink);
 
         ImageRequest request = new ImageRequest();

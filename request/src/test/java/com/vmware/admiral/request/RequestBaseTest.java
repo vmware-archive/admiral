@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -80,7 +80,7 @@ import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.admiral.service.common.CounterSubTaskService;
-import com.vmware.admiral.service.common.RegistryService;
+import com.vmware.admiral.service.common.RegistryFactoryService;
 import com.vmware.admiral.service.common.ResourceNamePrefixService;
 import com.vmware.admiral.service.common.SslTrustCertificateService;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
@@ -194,7 +194,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
                 ContainerDescriptionService.FACTORY_LINK,
                 ContainerFactoryService.SELF_LINK,
                 ClusteringTaskService.FACTORY_LINK,
-                RegistryService.FACTORY_LINK,
+                RegistryFactoryService.SELF_LINK,
                 ConfigurationFactoryService.SELF_LINK,
                 ConfigurationFactoryService.SELF_LINK,
                 EventLogService.FACTORY_LINK,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -26,7 +26,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.common.test.BaseTestCase;
-import com.vmware.admiral.service.common.RegistryService;
+import com.vmware.admiral.service.common.RegistryFactoryService;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
 
 public class RegistryUtilTest extends BaseTestCase {
@@ -35,8 +35,8 @@ public class RegistryUtilTest extends BaseTestCase {
 
     @Before
     public void setUp() throws Throwable {
-        host.startFactory(new RegistryService());
-        waitForServiceAvailability(RegistryService.FACTORY_LINK);
+        host.startService(new RegistryFactoryService());
+        waitForServiceAvailability(RegistryFactoryService.SELF_LINK);
     }
 
     @Test
@@ -128,7 +128,7 @@ public class RegistryUtilTest extends BaseTestCase {
         registryState.address = address;
         registryState.tenantLinks = tenantLinks;
         registryState.endpointType = RegistryState.DOCKER_REGISTRY_ENDPOINT_TYPE;
-        registryState = doPost(registryState, RegistryService.FACTORY_LINK);
+        registryState = doPost(registryState, RegistryFactoryService.SELF_LINK);
         assertNotNull("Failed to create registry", registryState);
 
         return registryState.documentSelfLink;

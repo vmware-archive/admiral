@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -13,7 +13,7 @@ package com.vmware.admiral.service.common.harbor;
 
 import java.util.regex.Pattern;
 
-import com.vmware.admiral.service.common.RegistryService;
+import com.vmware.admiral.service.common.RegistryFactoryService;
 import com.vmware.xenon.common.UriUtils;
 
 public interface Harbor {
@@ -34,7 +34,7 @@ public interface Harbor {
     String I18N_RESOURCE_SUBPATH = "i18n/lang";
 
     String DEFAULT_REGISTRY_NAME = "default-vic-registry";
-    String DEFAULT_REGISTRY_LINK = UriUtils.buildUriPath(RegistryService.FACTORY_LINK,
+    String DEFAULT_REGISTRY_LINK = UriUtils.buildUriPath(RegistryFactoryService.SELF_LINK,
             DEFAULT_REGISTRY_NAME);
     String DEFAULT_REGISTRY_USER_PREFIX = "vic-registry-";
 

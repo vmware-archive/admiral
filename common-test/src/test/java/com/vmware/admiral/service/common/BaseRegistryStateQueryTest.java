@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -43,10 +43,9 @@ public abstract class BaseRegistryStateQueryTest extends BaseTestCase {
         expectedResultFound.set(false);
         errors.set(false);
 
-        service = new RegistryService ();
-        host.startFactory(service);
+        host.startService(new RegistryFactoryService());
 
-        waitForServiceAvailability(RegistryService.FACTORY_LINK);
+        waitForServiceAvailability(RegistryFactoryService.SELF_LINK);
     }
 
     protected RegistryState createRegistry(List<String> tenantLinks, String id, String address)
@@ -57,7 +56,7 @@ public abstract class BaseRegistryStateQueryTest extends BaseTestCase {
         registryState.address = address;
         registryState.tenantLinks = tenantLinks;
         registryState.endpointType = RegistryState.DOCKER_REGISTRY_ENDPOINT_TYPE;
-        registryState = doPost(registryState, RegistryService.FACTORY_LINK);
+        registryState = doPost(registryState, RegistryFactoryService.SELF_LINK);
         assertNotNull("Failed to create registry: " + id, registryState);
         registries.add(registryState);
 

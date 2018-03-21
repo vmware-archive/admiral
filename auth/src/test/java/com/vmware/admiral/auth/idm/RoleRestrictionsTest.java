@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -33,7 +33,7 @@ import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.admiral.common.test.CommonTestStateFactory;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
-import com.vmware.admiral.service.common.RegistryService;
+import com.vmware.admiral.service.common.RegistryFactoryService;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
 import com.vmware.admiral.service.common.SslTrustCertificateService;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
@@ -143,7 +143,7 @@ public class RoleRestrictionsTest extends AuthBaseTest {
         registry.name = "test";
 
         // POST
-        RegistryState createdState = doPost(registry, RegistryService.FACTORY_LINK);
+        RegistryState createdState = doPost(registry, RegistryFactoryService.SELF_LINK);
         assertNotNull(createdState);
         assertNotNull(createdState.documentSelfLink);
 
@@ -261,22 +261,23 @@ public class RoleRestrictionsTest extends AuthBaseTest {
 
         // GET
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
-        RegistryState createdState = doPost(registry, RegistryService.FACTORY_LINK);
+        RegistryState createdState = doPost(registry, RegistryFactoryService.SELF_LINK);
         assertNotNull(createdState);
         assertNotNull(createdState.documentSelfLink);
 
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_BASIC_USER));
-        doGetWithRestrictionVerification(createdState, RegistryService.FACTORY_LINK, RegistryState.class.getName());
+        doGetWithRestrictionVerification(createdState, RegistryFactoryService.SELF_LINK,
+                RegistryState.class.getName());
 
         // POST
-        doPostWithRestrictionVerification(registry, RegistryService.FACTORY_LINK);
+        doPostWithRestrictionVerification(registry, RegistryFactoryService.SELF_LINK);
 
         // PUT
         createdState.name = "updated-name";
-        doPutWithRestrictionVerification(createdState, RegistryService.FACTORY_LINK);
+        doPutWithRestrictionVerification(createdState, RegistryFactoryService.SELF_LINK);
 
         // DELETE
-        doDeleteWithRestrictionVerification(createdState, RegistryService.FACTORY_LINK);
+        doDeleteWithRestrictionVerification(createdState, RegistryFactoryService.SELF_LINK);
     }
 
     @Test
@@ -379,7 +380,7 @@ public class RoleRestrictionsTest extends AuthBaseTest {
         registry.name = "test";
 
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
-        RegistryState createdState = doPost(registry, RegistryService.FACTORY_LINK);
+        RegistryState createdState = doPost(registry, RegistryFactoryService.SELF_LINK);
         assertNotNull(createdState);
         assertNotNull(createdState.documentSelfLink);
 
@@ -389,7 +390,7 @@ public class RoleRestrictionsTest extends AuthBaseTest {
         getDocument(RegistryState.class, createdState.documentSelfLink);
 
         // POST
-        doPost(registry, RegistryService.FACTORY_LINK);
+        doPost(registry, RegistryFactoryService.SELF_LINK);
 
         // PUT
         createdState.name = "updated-name";

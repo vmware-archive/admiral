@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -26,7 +26,7 @@ import org.junit.Test;
 
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
-import com.vmware.admiral.service.common.RegistryService;
+import com.vmware.admiral.service.common.RegistryFactoryService;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
 import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
 import com.vmware.xenon.common.Operation;
@@ -51,8 +51,8 @@ public class HarborInitRegistryServiceTest {
         VerificationHost.initialize(host, args);
         host.start();
 
-        host.startFactory(new RegistryService());
-        host.waitForServiceAvailable(RegistryService.FACTORY_LINK);
+        host.startService(new RegistryFactoryService());
+        host.waitForServiceAvailable(RegistryFactoryService.SELF_LINK);
 
         host.startService(new ConfigurationFactoryService());
         host.waitForServiceAvailable(ConfigurationFactoryService.SELF_LINK);

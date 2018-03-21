@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -54,7 +54,7 @@ import org.junit.rules.TemporaryFolder;
 
 import com.vmware.admiral.auth.idm.AuthConfigProvider;
 import com.vmware.admiral.auth.util.AuthUtil;
-import com.vmware.admiral.service.common.RegistryService;
+import com.vmware.admiral.service.common.RegistryFactoryService;
 import com.vmware.xenon.common.CommandLineArgumentParser;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
@@ -75,7 +75,7 @@ public class ManagementHostAuthUsersTest extends ManagementHostBaseTest {
     private static final String USERNAME = "administrator@admiral.com";
     private static final String PASSWORD = "Password1!";
 
-    public static final String PROTECTED_ENDPOINT = RegistryService.FACTORY_LINK
+    public static final String PROTECTED_ENDPOINT = RegistryFactoryService.SELF_LINK
             + "/default-registry";
 
     private static final TemporaryFolder sandbox = new TemporaryFolder();
