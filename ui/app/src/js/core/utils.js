@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -1400,6 +1400,41 @@ var utils = {
       tagsToAssign: tagsToAssign
     };
     return request;
+  },
+
+  processTagsForDisplay: function(modelTags) {
+    let tagsInputValue = '';
+
+    if (modelTags) {
+      modelTags.forEach((item) => {
+        tagsInputValue += item.key + ':' + item.value + ' ';
+      });
+    }
+
+    return tagsInputValue.trim();
+  },
+
+  processTagsForSave: function(tagsData) {
+    let tagsInputValue = tagsData || '';
+
+    let tags = tagsInputValue.trim().split(' ');
+
+    // remove duplicate tags, transform data
+    tags = tags.reduce((prev, curr) => {
+      let pair = curr.split(':');
+      let item = {
+        key: pair[0],
+        value: pair[1] || ''
+      };
+
+      if (prev.find((tag) => tag.key === item.key && tag.value === item.value)) {
+        return prev;
+      }
+
+      return [...prev, item];
+    }, []);
+
+    return tags;
   },
 
   getDocumentArray(documentResponse) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -17,7 +17,6 @@ import CertificatesList from 'components/certificates/CertificatesList'; //eslin
 import DeploymentPoliciesList from 'components/deploymentpolicies/DeploymentPoliciesList'; //eslint-disable-line
 import AcceptCertificate from 'components/hosts/AcceptCertificate'; //eslint-disable-line
 import MulticolumnInputs from 'components/common/MulticolumnInputs';
-import Tags from 'components/common/Tags';
 import { HostActions, HostContextToolbarActions } from 'actions/Actions';
 import constants from 'core/constants';
 import utils from 'core/utils';
@@ -74,6 +73,7 @@ var HostAddView = Vue.extend({
       deploymentPolicy: null,
       connectionType: 'API',
       autoConfigure: false,
+      tagsData: '',
       selectedHostType: constants.HOST.TYPE.DOCKER,
       schedulerPlacementZoneName: null,
       allowAcceptCertificateDialog: false
@@ -255,8 +255,6 @@ var HostAddView = Vue.extend({
       this.deploymentPolicy = undefined;
     });
 
-    this.tagsInput = new Tags($(this.$el).find('#tags .tags-input'));
-
     this.unwatchPlacementZones = this.$watch('model.placementZones', () => {
       if (this.model.placementZones === constants.LOADING) {
         this.placementZoneInput.setLoading(true);
@@ -368,8 +366,7 @@ var HostAddView = Vue.extend({
         }
 
         if (model.tags !== oldModel.tags) {
-          this.tagsInput.setValue(model.tags);
-          this.tags = this.tagsInput.getValue();
+          this.tagsData = utils.processTagsForDisplay(model.tags);
         }
 
         if (model.customProperties !== oldModel.customProperties) {
@@ -479,7 +476,7 @@ var HostAddView = Vue.extend({
       }
 
       // tags are supported only for docker hosts
-      let tags = this.isDockerHost ? this.tagsInput.getValue() : [];
+      let tags = this.isDockerHost ? utils.processTagsForSave(this.tagsData) : [];
 
       // By default try to add the host at the given address.
       // If the host has self signed certificate, we may need to accept it,
@@ -497,7 +494,7 @@ var HostAddView = Vue.extend({
       this.allowAcceptCertificateDialog = false;
 
       let hostModel = this.getHostData();
-      let tags = this.tagsInput.getValue();
+      let tags = this.isDockerHost ? utils.processTagsForSave(this.tagsData) : [];
 
       if (this.model.shouldAcceptCertificate.verify) {
         HostActions.acceptCertificateAndVerifyHost(this.acceptCertificateData, hostModel, tags);
@@ -510,6 +507,7 @@ var HostAddView = Vue.extend({
       this.allowAcceptCertificateDialog = false;
     }
   },
+
   events: {
     'manage-certificates': function() {
       HostContextToolbarActions.manageCertificates();

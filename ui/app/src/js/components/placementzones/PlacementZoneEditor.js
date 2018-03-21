@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -10,7 +10,6 @@
  */
 
 import VueDropdownSearch from 'components/common/VueDropdownSearch'; //eslint-disable-line
-import VueTags from 'components/common/VueTags'; //eslint-disable-line
 import PlacementZoneEditorVue from 'components/placementzones/PlacementZoneEditorVue.html';
 import { PlacementZonesActions } from 'actions/Actions';
 import constants from 'core/constants';
@@ -18,28 +17,57 @@ import utils from 'core/utils';
 
 var PlacementZoneEditor = Vue.extend({
   template: PlacementZoneEditorVue,
+
   props: {
     model: {
       required: true,
       type: Object
     }
   },
+
   computed: {
     isDockerPlacementZone: function() {
       return !this.model.item.placementZoneType
         || this.model.item.placementZoneType === constants.PLACEMENT_ZONE.TYPE.DOCKER;
     }
   },
+
   data() {
     let placementPolicy = this.model.item.epzState && this.model.item.epzState.placementPolicy;
     return {
       placementPolicy: placementPolicy && placementPolicy !== 'DEFAULT'
           ? placementPolicy : 'RANDOM',
       saveDisabled: !this.model.item.name,
-      tags: this.model.item.tags || [],
-      tagsToMatch: this.model.item.tagsToMatch || []
+      tagsData: '',
+      tagsToMatchData: ''
     };
   },
+
+  attached() {
+    this.name = this.model.item.name;
+    this.nameInput = $('.name-input', this.$el);
+
+    this.tagsData = utils.processTagsForDisplay(this.model.item.tags || []);
+    this.tagsToMatchData = utils.processTagsForDisplay(this.model.item.tagsToMatch || []);
+
+    if (this.isDockerPlacementZone) {
+      this.dynamicInput = $('.dynamic-input', this.$el);
+      this.tagsToMatchContainer = $('.tagsToMatch', this.$el);
+
+      if (this.model.item && this.model.item.tagsToMatch && this.model.item.tagsToMatch.length) {
+        this.dynamicInput.prop('checked', true);
+        this.tagsToMatchContainer.show();
+      } else {
+        this.dynamicInput.prop('checked', false);
+        this.tagsToMatchContainer.hide();
+      }
+    }
+
+    Vue.nextTick(() => {
+      this.nameInput.focus();
+    });
+  },
+
   methods: {
     cancel($event) {
       $event.stopImmediatePropagation();
@@ -47,6 +75,7 @@ var PlacementZoneEditor = Vue.extend({
 
       PlacementZonesActions.cancelEditPlacementZone();
     },
+
     save($event) {
       $event.stopImmediatePropagation();
       $event.preventDefault();
@@ -87,60 +116,40 @@ var PlacementZoneEditor = Vue.extend({
             ? this.placementPolicy : 'DEFAULT'
       });
 
+      let tags = utils.processTagsForSave(this.tagsData);
+      let tagsToMatch = this.isDynamic() ? utils.processTagsForSave(this.tagsToMatchData) : [];
+
       var tagRequest = utils.createTagAssignmentRequest(item.documentSelfLink,
-          this.model.item.tags || [], this.tags);
+                                                          this.model.item.tags || [], tags);
       if (item.documentSelfLink) {
-        PlacementZonesActions.updatePlacementZone(item, tagRequest,
-            this.tags, this.isDynamic() ? this.tagsToMatch : []);
+        // Update
+        PlacementZonesActions.updatePlacementZone(item, tagRequest, tags, tagsToMatch);
       } else {
-        PlacementZonesActions.createPlacementZone(item, tagRequest,
-            this.isDynamic() ? this.tagsToMatch : []);
+        // Create
+        PlacementZonesActions.createPlacementZone(item, tagRequest, tagsToMatch);
       }
     },
+
     isDynamic() {
-      return this.isDockerPlacementZone
-        && this.dynamicInput.is(':checked');
+      return this.isDockerPlacementZone && this.dynamicInput.is(':checked');
     },
+
     onNameChange() {
       this.name = (this.nameInput.val() || '').trim();
       this.saveDisabled = !this.name;
     },
+
     onPlacementPolicyChange(value) {
       this.placementPolicy = value && value.name;
     },
+
     onDynamicChange() {
       if (this.isDynamic()) {
         this.tagsToMatchContainer.show();
       } else {
         this.tagsToMatchContainer.hide();
       }
-    },
-    onTagsChange(tags) {
-      this.tags = tags;
-    },
-    onTagsToMatchChange(tagsToMatch) {
-      this.tagsToMatch = tagsToMatch;
     }
-  },
-  attached() {
-    this.name = this.model.item.name;
-    this.nameInput = $('.name-input', this.$el);
-    if (this.isDockerPlacementZone) {
-      this.dynamicInput = $('.dynamic-input', this.$el);
-      this.tagsToMatchContainer = $('.tagsToMatch', this.$el);
-
-      if (this.model.item && this.model.item.tagsToMatch && this.model.item.tagsToMatch.length) {
-        this.dynamicInput.prop('checked', true);
-        this.tagsToMatchContainer.show();
-      } else {
-        this.dynamicInput.prop('checked', false);
-        this.tagsToMatchContainer.hide();
-      }
-    }
-
-    Vue.nextTick(() => {
-      this.nameInput.focus();
-    });
   }
 });
 
