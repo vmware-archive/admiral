@@ -536,7 +536,8 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
     public boolean handleRequest(Service service, Operation inboundOp) {
 
         if (AuthUtil.useAuthConfig(this)) {
-            AuthUtils.validateSessionData(inboundOp, getGuestAuthorizationContext());
+            AuthorizationContext authCtx = inboundOp != null ? inboundOp.getAuthorizationContext() : null;
+            AuthUtils.validateSessionData(this, inboundOp, getGuestAuthorizationContext(), authCtx);
         }
 
         return super.handleRequest(service, inboundOp);

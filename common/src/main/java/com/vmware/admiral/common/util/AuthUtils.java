@@ -12,8 +12,11 @@
 package com.vmware.admiral.common.util;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Base64;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 
 import com.google.common.cache.Cache;
@@ -24,6 +27,7 @@ import com.vmware.photon.controller.model.security.util.EncryptionUtils;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.AuthorizationContext;
 import com.vmware.xenon.common.ReflectionUtils;
+import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 import com.vmware.xenon.services.common.authn.AuthenticationConstants;
@@ -77,27 +81,46 @@ public class AuthUtils {
      * @param guestCtx
      *            AuthorizationContext for the guest user
      */
-    public static void validateSessionData(Operation op, AuthorizationContext guestCtx) {
+    public static void validateSessionData(ServiceHost host, Operation op, AuthorizationContext guestCtx, AuthorizationContext authCtx) {
         if (op == null) {
             return;
         }
 
-        AuthorizationContext authCtx = op.getAuthorizationContext();
-        if (authCtx == null || authCtx.isSystemUser()) {
-            return;
-        }
-
-        if (cleanedupSessionsCache.getIfPresent(authCtx.getToken()) != null) {
-
-            Utils.log(AuthUtils.class, AuthUtils.class.getSimpleName(), Level.FINE,
-                    "Invalid session '%s'!", authCtx.getToken());
-
+        if (authCtx == null) {
             try {
-                AUTH_CTX_FIELD.set(op, guestCtx);
-            } catch (Exception e) {
-                Utils.log(AuthUtils.class, AuthUtils.class.getSimpleName(), Level.WARNING,
-                        "Error handling invalid session '%s': %s",
-                        authCtx.getToken(), e.getMessage());
+                Method getAuthorizationContext = ServiceHost.class
+                        .getDeclaredMethod("getAuthorizationContext", Operation.class, Consumer.class);
+                getAuthorizationContext.setAccessible(true);
+
+                Consumer<AuthorizationContext> con = (authorizationContext) -> {
+                    if (authorizationContext == null || authorizationContext.isSystemUser()) {
+                        return;
+                    }
+
+                    op.setAuthorizationContext(authorizationContext);
+                    validateSessionData(host, op, guestCtx, authorizationContext);
+                };
+
+                getAuthorizationContext.invoke(host, op, con);
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e ) {
+                op.fail(e);
+            }
+        } else {
+            if (authCtx.isSystemUser()) {
+                return;
+            }
+
+            if (cleanedupSessionsCache.getIfPresent(authCtx.getToken()) != null) {
+
+                Utils.log(AuthUtils.class, AuthUtils.class.getSimpleName(), Level.FINE, "Invalid session '%s'!",
+                        authCtx.getToken());
+
+                try {
+                    AUTH_CTX_FIELD.set(op, guestCtx);
+                } catch (Exception e) {
+                    Utils.log(AuthUtils.class, AuthUtils.class.getSimpleName(), Level.WARNING,
+                            "Error handling invalid session '%s': %s", authCtx.getToken(), e.getMessage());
+                }
             }
         }
     }

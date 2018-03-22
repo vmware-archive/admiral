@@ -26,6 +26,7 @@ import com.vmware.xenon.common.Claims;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.AuthorizationContext;
 import com.vmware.xenon.common.ReflectionUtils;
+import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 import com.vmware.xenon.services.common.SystemUserService;
@@ -35,6 +36,8 @@ public class AuthUtilsTest {
 
     private static final Field AUTH_CTX_FIELD = ReflectionUtils.getField(Operation.class,
             "authorizationCtx");
+
+    private ServiceHost host = new ServiceHost(){};
 
     @Test
     public void testCreateAuthorizationHeader() {
@@ -89,13 +92,13 @@ public class AuthUtilsTest {
     @Test
     public void testValidateSessionData() throws Exception {
         // No operation
-        AuthUtils.validateSessionData(null, null);
+        AuthUtils.validateSessionData(host,null, null, null);
 
         // No authentication
         Operation getOp = Operation.createGet(UriUtils.buildUri("http://localhost/foo/bar"));
         AUTH_CTX_FIELD.set(getOp, null);
 
-        AuthUtils.validateSessionData(getOp, null);
+        AuthUtils.validateSessionData(host, getOp, null, getOp.getAuthorizationContext());
         assertNull(getOp.getAuthorizationContext());
 
         // System user authentication
@@ -110,7 +113,7 @@ public class AuthUtilsTest {
         AuthorizationContext authCtxSystemUser = authCtxBuilder.getResult();
         AUTH_CTX_FIELD.set(getOp, authCtxSystemUser);
 
-        AuthUtils.validateSessionData(getOp, null);
+        AuthUtils.validateSessionData(host, getOp, null, getOp.getAuthorizationContext());
         assertEquals(authCtxSystemUser, getOp.getAuthorizationContext());
 
         // Regular user valid authentication
@@ -125,7 +128,7 @@ public class AuthUtilsTest {
         AuthorizationContext authCtxUser = authCtxBuilder.getResult();
 
         AUTH_CTX_FIELD.set(getOp, authCtxUser);
-        AuthUtils.validateSessionData(getOp, null);
+        AuthUtils.validateSessionData(host, getOp, null, getOp.getAuthorizationContext());
         assertEquals(authCtxUser, getOp.getAuthorizationContext());
 
         // Regular user after logout authentication
@@ -133,7 +136,7 @@ public class AuthUtilsTest {
         AuthUtils.cleanupSessionData(getOp);
 
         AUTH_CTX_FIELD.set(getOp, authCtxUser);
-        AuthUtils.validateSessionData(getOp, null);
+        AuthUtils.validateSessionData(host, getOp, null, getOp.getAuthorizationContext());
         assertEquals(null, getOp.getAuthorizationContext());
 
         claimsBuilder = new Claims.Builder();
@@ -147,7 +150,7 @@ public class AuthUtilsTest {
         AuthorizationContext authCtxGuestUser = authCtxBuilder.getResult();
 
         AUTH_CTX_FIELD.set(getOp, authCtxUser);
-        AuthUtils.validateSessionData(getOp, authCtxGuestUser);
+        AuthUtils.validateSessionData(host, getOp, authCtxGuestUser, getOp.getAuthorizationContext());
         assertEquals(authCtxGuestUser, getOp.getAuthorizationContext());
     }
 
