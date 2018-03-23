@@ -1,0 +1,57 @@
+<!--
+  ~ Copyright (c) 2018 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="main-view">
+    <table-view [searchPlaceholder]="'Filter endpoints'" (onRefresh)="refreshEndpoints($event)">
+        <span title>{{"endpoints.title" | i18n}}</span>
+
+        <div toolbar>
+            <clr-dg-action-bar>
+                <div class="btn-group" role="group" aria-label="Available Actions">
+                    <button type="button" class="btn btn-sm btn-secondary"><clr-icon
+                        shape="plus"></clr-icon><span
+                        class="btn-spaced-text">{{"endpoints.new" | i18n}}</span></button>
+                    <button type="button" class="btn btn-sm btn-secondary"
+                        [disabled]="selectedEndpoints.length == 0"><clr-icon
+                        shape="close"></clr-icon><span
+                        class="btn-spaced-text">{{"endpoints.delete" | i18n}}</span></button>
+                    </div>
+            </clr-dg-action-bar>
+        </div>
+
+        <div table-content-view>
+            <clr-datagrid class="endpointsGrid" [clrDgLoading]="loading" [clDgRowSelection]="true"
+                          [(clrDgSelected)]="selectedEndpoints">
+                <clr-dg-column>{{"endpoints.name" | i18n}}</clr-dg-column>
+                <clr-dg-column>{{"endpoints.status" | i18n}}</clr-dg-column>
+                <clr-dg-column>{{"endpoints.address" | i18n}}</clr-dg-column>
+
+                <clr-dg-row *clrDgItems="let endpoint of endpoints" [clrDgItem]="endpoint">
+                    <clr-dg-cell><div><a [routerLink]="['./endpoint/' + endpoint.documentId]"
+                                            >{{ endpoint.name }}</a></div></clr-dg-cell>
+                    <clr-dg-cell><div>{{ endpoint.status }}</div></clr-dg-cell>
+                    <clr-dg-cell><div>{{ endpoint.address }}</div></clr-dg-cell>
+                </clr-dg-row>
+
+                <clr-dg-footer>
+                    {{pagination.firstItem + 1}} - {{pagination.lastItem + 1}}
+                    of {{pagination.totalItems}} {{"endpoints.count" | i18n}}
+                    <clr-dg-pagination #pagination [clrDgPageSize]="10"></clr-dg-pagination>
+                </clr-dg-footer>
+            </clr-datagrid>
+        </div>
+    </table-view>
+</div>
+
+<navigation-container>
+    <back-button [routerLink]="['./']">{{"endpoints.title" | i18n}}</back-button>
+    <router-outlet></router-outlet>
+</navigation-container>

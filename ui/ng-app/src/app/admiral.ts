@@ -40,6 +40,7 @@ import { RegistriesComponent } from './views/registries/registries.component';
 import { ConfigurationComponent } from './views/configuration/configuration.component';
 import { LogsComponent } from './views/logs/logs.component';
 import { SystemLogsComponent } from './views/logs/system-logs.component';
+import { EndpointsComponent } from './views/endpoints/endpoints.component';
 
 import { DashboardComponent } from './views/dashboard/dashboard.component';
 import { FormerViewComponent, FormerPlaceholderViewComponent } from './views/former-view/former-view.component';
@@ -56,6 +57,7 @@ import { VerifyCertificateComponent } from "./views/verify-certificate/verify-ce
 import { TagDetailsContainersComponent } from "./views/tag-details/tag-details-containers.component";
 
 import { GridViewComponent } from './components/grid-view/grid-view.component';
+import { TableViewComponent } from "./views/table-view/table-view.component";
 import { CardComponent } from './components/card/card.component';
 import { StatsComponent } from "./components/stats/stats.component";
 import { LogsScrollComponent } from "./components/logs/logs-scroll.component";
@@ -127,8 +129,10 @@ export const ADMIRAL_DECLARATIONS = [
   ClusterEditHostComponent,
   ClusterCreateComponent,
   ClusterEditComponent,
+  EndpointsComponent,
 
   GridViewComponent,
+  TableViewComponent,
   CardComponent,
   StatsComponent,
   LogsScrollComponent,

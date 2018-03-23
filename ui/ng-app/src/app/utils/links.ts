@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -26,6 +26,8 @@ export class Links {
   public static GROUPS = '/groups';
   public static PROJECTS = '/projects';
   public static EVENT_LOGS = Links.RESOURCES + '/event-logs';
+  // TODO correct this when backend is ready
+  public static ENDPOINTS = Links.RESOURCES + '/endpoints';
   public static DEPLOYMENT_POLICIES = Links.RESOURCES + '/deployment-policies';
 
   public static COMPOSITE_DESCRIPTIONS = Links.RESOURCES + '/composite-descriptions';

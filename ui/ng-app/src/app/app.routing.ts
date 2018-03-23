@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -24,6 +24,7 @@ import { ProjectAddMemberComponent } from "./views/projects/project-details/proj
 import { RegistriesComponent } from './views/registries/registries.component';
 import { ConfigurationComponent } from './views/configuration/configuration.component';
 import { LogsComponent } from './views/logs/logs.component';
+import { EndpointsComponent } from './views/endpoints/endpoints.component';
 
 import { DashboardComponent } from './views/dashboard/dashboard.component';
 import { FormerPlaceholderViewComponent } from './views/former-view/former-view.component';
@@ -139,6 +140,9 @@ export const ROUTES: Routes = [
                         navigationContainerType: NavigationContainerType.Fullscreen
                     }}
                 ]
+            },
+            {
+                path: 'endpoints', component: EndpointsComponent
             },
             {
                  path: '**', component: FormerPlaceholderViewComponent

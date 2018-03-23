@@ -68,7 +68,9 @@ export class GridViewComponent implements OnInit, OnChanges {
 
   // Creation
   constructor(protected service: DocumentService, private router: Router,
-              private route: ActivatedRoute) { }
+              private route: ActivatedRoute) {
+      //
+  }
 
   ngOnInit() {
     const urlTree = this.router.createUrlTree(['.'], { relativeTo: this.route });

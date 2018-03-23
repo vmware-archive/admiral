@@ -138,7 +138,7 @@
     "titleVic": "Container Hosts",
     "cluster": "Cluster",
     "clusterVic": "Container Host",
-    "new": "New",
+    "new": "Cluster",
     "status": "Status",
     "state": {
       "ON": "ON",
@@ -275,6 +275,15 @@
       }
     }
   },
+  "endpoints": {
+    "title": "Endpoints",
+    "new": "New Endpoint",
+    "delete": "Delete",
+    "name": "Name",
+    "status": "Status",
+    "address": "Address",
+    "count": "endpoints"
+  },
   "configuration": {
     "title": "Configuration",
     "registry": "Registry"
@@ -339,7 +348,8 @@
     "projects": "Projects",
     "registries": "Registries",
     "configuration": "Configuration",
-    "logs": "Logs"
+    "logs": "Logs",
+    "endpoints": "Endpoints"
   },
   "search": {
     "occurrence": {

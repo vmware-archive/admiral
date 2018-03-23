@@ -57,14 +57,15 @@
               <li *ngIf="embeddedMode"><a class="nav-link" routerLink="registries" routerLinkActive="active">{{ "navigation.registries" | i18n }}</a></li>
               <li *ngIf="areClosuresAllowed"><a class="nav-link" routerLink="closure-definitions" routerLinkActive="active">{{ "navigation.closures" | i18n }}</a></li>
           </ul>
-      </section>
-       <section class="nav-group collapsible" allowNavigation [roles]="clustersRouteRestriction" [projectSelfLink]="currentProjectLink">
+        </section>
+        <section class="nav-group collapsible" allowNavigation [roles]="clustersRouteRestriction" [projectSelfLink]="currentProjectLink">
           <input id="infrastructureCollapse" type="checkbox">
           <label for="infrastructureCollapse">{{ "navigation.infrastructure" | i18n }}</label>
           <ul class="nav-list">
               <li><a class="nav-link" routerLink="clusters" routerLinkActive="active">{{ navigationClustersTextKey | i18n }}</a></li>
           </ul>
-      </section>
+        </section>
+      <a *ngIf="embeddedMode && isPksEnabled" class="nav-link" routerLink="endpoints" routerLinkActive="active">{{ "navigation.endpoints" | i18n }}</a>
       <a *ngIf="embeddedMode" class="nav-link" routerLink="identity-management" routerLinkActive="active">{{ "navigation.identityManagement" | i18n }}</a>
   </section>
 </nav>

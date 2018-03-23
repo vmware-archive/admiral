@@ -99,4 +99,8 @@ export class FT {
   public static allowHostEventsSubscription() {
     return Utils.getConfigurationPropertyBoolean('allow.host.events.subscription');
   }
+
+  public static isPksEnabled() {
+      return Utils.getConfigurationPropertyBoolean('allow.ft.pks');
+  }
 };
