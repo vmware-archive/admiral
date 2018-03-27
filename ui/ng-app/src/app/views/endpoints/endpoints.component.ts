@@ -30,6 +30,9 @@ export class EndpointsComponent implements OnInit {
     endpoints: any[];
     selectedEndpoints: any[] = [];
 
+    showDeleteConfirmation: boolean = false;
+    deleteConfirmationAlert: string;
+
     // Creation
     constructor(protected service: DocumentService, private errorService: ErrorService) {
         //
@@ -55,17 +58,17 @@ export class EndpointsComponent implements OnInit {
             // TODO when backend is ready: this.endpoints = result.documents;
             this.endpoints = [
                 {
-                    documentId: 'endp1', name: 'Endpoint 1',
+                    documentId: 'endp1', documentSelfLink: 'endp1', name: 'Endpoint 1',
                     status: 'Active', address: 'https://endpoint1:443/'
                 }, {
-                    documentId: 'endp2', name: 'Endpoint 2',
+                    documentId: 'endp2',  documentSelfLink: 'endp2', name: 'Endpoint 2',
                     status: 'Active', address: 'https://endpoint2:443/'
                 },
                 {
-                    documentId: 'endp3', name: 'Endpoint 3',
+                    documentId: 'endp3', documentSelfLink: 'endp3', name: 'Endpoint 3',
                     status: 'Active', address: 'https://endpoint3:443/'
                 }, {
-                    documentId: 'endp4', name: 'Endpoint 4',
+                    documentId: 'endp4', documentSelfLink: 'endp4', name: 'Endpoint 4',
                     status: 'Active', address: 'https://endpoint4:443/'
                 }
             ];
@@ -88,5 +91,32 @@ export class EndpointsComponent implements OnInit {
         if ($event) {
             this.listEndpoints($event.queryOptions || {});
         }
+    }
+
+    removeSelectedEndpoints($event) {
+        $event.stopPropagation();
+
+        this.showDeleteConfirmation = true;
+    }
+
+    deleteConfirmed() {
+        let promises: any[] = [];
+
+        this.selectedEndpoints.forEach((endpointToDelete) => {
+           let deletePromise =  this.service.delete(endpointToDelete.documentSelfLink);
+           promises.push(deletePromise);
+        });
+
+        Promise.all(promises).then(() => {
+            this.selectedEndpoints = [];
+
+            this.showDeleteConfirmation = false;
+        }).catch(err => {
+            this.deleteConfirmationAlert = Utils.getErrorMessage(err)._generic;
+        });
+    }
+
+    deleteCanceled() {
+        this.showDeleteConfirmation = false;
     }
 }

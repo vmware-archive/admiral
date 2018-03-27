@@ -277,8 +277,13 @@
   },
   "endpoints": {
     "title": "Endpoints",
+    "searchPlaceholder": "Search for endpoints",
     "new": "New Endpoint",
-    "delete": "Delete",
+    "delete": "Remove",
+    "deleteConfirmation": {
+      "title": "Remove Endpoints",
+      "description": "Confirm the removal of the selected endpoints. The operation cannot be undone."
+    },
     "name": "Name",
     "status": "Status",
     "address": "Address",

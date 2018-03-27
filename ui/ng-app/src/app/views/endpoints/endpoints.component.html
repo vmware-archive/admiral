@@ -9,18 +9,27 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
+<delete-confirmation [title]="'endpoints.deleteConfirmation.title' | i18n"
+                     [description]="'endpoints.deleteConfirmation.description' | i18n"
+                     [(alert)]="deleteConfirmationAlert"
+                     [visible]="showDeleteConfirmation"
+                     (onDelete)="deleteConfirmed()"
+                     (onCancel)="deleteCanceled()">
+</delete-confirmation>
+
 <div class="main-view">
-    <table-view [searchPlaceholder]="'Filter endpoints'" (onRefresh)="refreshEndpoints($event)">
+    <table-view [searchPlaceholder]="'endpoints.searchPlaceholder' | i18n" (onRefresh)="refreshEndpoints($event)">
         <span title>{{"endpoints.title" | i18n}}</span>
 
         <div toolbar>
             <clr-dg-action-bar>
                 <div class="btn-group" role="group" aria-label="Available Actions">
-                    <button type="button" class="btn btn-sm btn-secondary"><clr-icon
-                        shape="plus"></clr-icon><span
-                        class="btn-spaced-text">{{"endpoints.new" | i18n}}</span></button>
+                    <button type="button" class="btn btn-sm btn-secondary" allowNavigation
+                            [routerLink]="['./new']"><clr-icon shape="plus"></clr-icon><span
+                                class="btn-spaced-text">{{"endpoints.new" | i18n}}</span></button>
                     <button type="button" class="btn btn-sm btn-secondary"
-                        [disabled]="selectedEndpoints.length == 0"><clr-icon
+                        [disabled]="selectedEndpoints.length == 0"
+                        (click)="removeSelectedEndpoints($event)"><clr-icon
                         shape="close"></clr-icon><span
                         class="btn-spaced-text">{{"endpoints.delete" | i18n}}</span></button>
                     </div>
@@ -35,7 +44,7 @@
                 <clr-dg-column>{{"endpoints.address" | i18n}}</clr-dg-column>
 
                 <clr-dg-row *clrDgItems="let endpoint of endpoints" [clrDgItem]="endpoint">
-                    <clr-dg-cell><div><a [routerLink]="['./endpoint/' + endpoint.documentId]"
+                    <clr-dg-cell><div><a [routerLink]="['./' + endpoint.documentId]"
                                             >{{ endpoint.name }}</a></div></clr-dg-cell>
                     <clr-dg-cell><div>{{ endpoint.status }}</div></clr-dg-cell>
                     <clr-dg-cell><div>{{ endpoint.address }}</div></clr-dg-cell>
