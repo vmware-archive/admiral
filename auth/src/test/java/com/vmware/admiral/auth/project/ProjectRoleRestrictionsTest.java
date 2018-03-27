@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,12 +11,10 @@
 
 package com.vmware.admiral.auth.project;
 
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 import org.junit.Before;
@@ -93,7 +91,6 @@ public class ProjectRoleRestrictionsTest extends AuthBaseTest {
         verifyDocumentAccessible(cs2.documentSelfLink, USER_EMAIL_FRITZ, true);
     }
 
-
     @Test
     public void testProjectMemberCannotModifyProject() throws Throwable {
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_TONY));
@@ -121,22 +118,6 @@ public class ProjectRoleRestrictionsTest extends AuthBaseTest {
         project.name = "test-name";
 
         doPatch(project, projectLink);
-    }
-
-    private void verifyDocumentAccessible(String documentLink, String userEmail, boolean expectAccessible) throws Throwable {
-        host.assumeIdentity(buildUserServicePath(userEmail));
-        try {
-            Object result = getDocument(Object.class, documentLink);
-            if (!expectAccessible) {
-                throw new IllegalStateException(String.format("%s must not be able to access %s", userEmail, documentLink));
-            } else {
-                assertNotNull(result);
-            }
-        } catch (IllegalAccessError e) {
-            if (expectAccessible) {
-                throw new IllegalStateException(String.format("%s must be able to access %s", userEmail, documentLink), e);
-            }
-        }
     }
 
     private ComputeState createComputeStateAsUser(String projectName, String userEmail)
@@ -176,19 +157,6 @@ public class ProjectRoleRestrictionsTest extends AuthBaseTest {
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN2));
 
         return doPost(cs, ContainerFactoryService.SELF_LINK);
-    }
-
-    private String getProjectLinkByName(String projectName) throws Throwable {
-        ProjectState project = getProjectByName(projectName);
-        return project == null ? null : project.documentSelfLink;
-    }
-
-    private ProjectState getProjectByName(String projectName) throws Throwable {
-        List<ProjectState> projects = getDocumentsOfType(ProjectState.class);
-        return projects.stream()
-                .filter(project -> project.name.equals(projectName))
-                .findFirst()
-                .orElse(null);
     }
 
     private void assertForbiddenMessage(IllegalAccessError e) {

@@ -51,6 +51,7 @@ import com.vmware.admiral.image.service.PopularImagesService;
 import com.vmware.admiral.log.EventLogService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
 import com.vmware.admiral.service.common.CounterSubTaskService;
+import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.admiral.service.common.RegistryFactoryService;
 import com.vmware.admiral.service.common.ResourceNamePrefixService;
 import com.vmware.admiral.service.common.UniquePropertiesService;
@@ -70,6 +71,7 @@ import com.vmware.xenon.services.common.AuthCredentialsService;
 import com.vmware.xenon.services.common.BroadcastQueryPageService;
 import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
+import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
 import com.vmware.xenon.services.common.QueryTask.QueryTerm;
 import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 import com.vmware.xenon.services.common.ResourceGroupService;
@@ -246,8 +248,11 @@ public class AuthUtil {
     }
 
     public static ResourceGroupState buildBasicUsersResourceGroup() {
-        Query resourceGroupQuery = Query.Builder
-                .create()
+
+        Query.Builder resourceGroupQueryBuilder = Query.Builder.create();
+
+        // Add basic clauses
+        resourceGroupQueryBuilder
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
                         buildUriWithWildcard(ConfigurationFactoryService.SELF_LINK),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
@@ -269,9 +274,25 @@ public class AuthUtil {
                 // the call is skipped for basic user.
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
                         ManagementUriParts.NOTIFICATIONS,
-                        MatchType.TERM, Occurance.SHOULD_OCCUR)
-                .build();
+                        MatchType.TERM, Occurance.SHOULD_OCCUR);
 
+        // Add global registries read-only access clause
+        Query globalRegistriesClause = Query.Builder
+                .create(Occurance.SHOULD_OCCUR)
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(RegistryFactoryService.SELF_LINK),
+                        MatchType.WILDCARD, Occurance.MUST_OCCUR)
+                .addFieldClause(
+                        QuerySpecification.buildCollectionItemName(
+                                MultiTenantDocument.FIELD_NAME_TENANT_LINKS),
+                        buildUriWithWildcard(ProjectFactoryService.SELF_LINK),
+                        MatchType.WILDCARD,
+                        Occurance.MUST_NOT_OCCUR)
+                .build();
+        resourceGroupQueryBuilder.addClause(globalRegistriesClause);
+
+        // build the query and use it to create a resource group
+        Query resourceGroupQuery = resourceGroupQueryBuilder.build();
         ResourceGroupState resourceGroupState = buildResourceGroupState(resourceGroupQuery,
                 BASIC_USERS_RESOURCE_GROUP_LINK);
 
@@ -395,10 +416,9 @@ public class AuthUtil {
     }
 
     public static List<Query> fullAccessResourcesForAdminsAndMembers(String projectSelfLink) {
+
         Query resourceGroupQuery = Query.Builder
                 .create()
-                .addCollectionItemClause(ResourceState.FIELD_NAME_TENANT_LINKS, projectSelfLink,
-                        Occurance.SHOULD_OCCUR)
 
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
                         buildUriWithWildcard(CompositeDescriptionCloneService.SELF_LINK),
@@ -474,7 +494,11 @@ public class AuthUtil {
         String projectSelfLink = UriUtils.buildUriPath(ProjectFactoryService.SELF_LINK, projectId);
         Query.Builder queryBuilder = Query.Builder
                 .create()
+
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK, projectSelfLink,
+                        Occurance.SHOULD_OCCUR)
+
+                .addCollectionItemClause(ResourceState.FIELD_NAME_TENANT_LINKS, projectSelfLink,
                         Occurance.SHOULD_OCCUR)
 
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
@@ -488,11 +512,6 @@ public class AuthUtil {
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
                         buildUriWithWildcard(ContainerImageTagsService.SELF_LINK),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
-
-                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
-                        buildUriWithWildcard(RegistryFactoryService.SELF_LINK),
-                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
-
 
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
                         buildUriWithWildcard(ComputeDescriptionService.FACTORY_LINK),
@@ -552,6 +571,20 @@ public class AuthUtil {
             queryBuilder.addClause(query);
         }
 
+        Query projectResourcesQuery = Query.Builder
+                .create(Occurance.SHOULD_OCCUR)
+                // grant access to all project resources denoted by a project link
+                .addCollectionItemClause(ResourceState.FIELD_NAME_TENANT_LINKS,
+                        projectSelfLink,
+                        Occurance.MUST_OCCUR)
+                // revoke access to project-specific registries
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(RegistryFactoryService.SELF_LINK),
+                        MatchType.WILDCARD,
+                        Occurance.MUST_NOT_OCCUR)
+                .build();
+        queryBuilder.addClause(projectResourcesQuery);
+
         Query resourceGroupQuery = queryBuilder.build();
 
         ResourceGroupState resourceGroupState = buildResourceGroupState(
@@ -578,15 +611,29 @@ public class AuthUtil {
 
     public static ResourceGroupState buildProjectViewerResourceGroup(String projectId) {
         String projectSelfLink = UriUtils.buildUriPath(ProjectFactoryService.SELF_LINK, projectId);
-        Query.Builder queryBuilder = Query.Builder
-                .create()
+        Query.Builder viewersQueryBuilder = Query.Builder.create();
+
+        // add access to the project and the Harbor API
+        viewersQueryBuilder
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK, projectSelfLink,
                         Occurance.SHOULD_OCCUR)
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
                         buildUriWithWildcard(HarborApiProxyService.SELF_LINK),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR);
 
-        Query resourceGroupQuery = queryBuilder.build();
+        // add access to the project-specific registries
+        Query projectRegistriesClause = Query.Builder
+                .create(Occurance.SHOULD_OCCUR)
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(RegistryFactoryService.SELF_LINK),
+                        MatchType.WILDCARD, Occurance.MUST_OCCUR)
+                .addCollectionItemClause(MultiTenantDocument.FIELD_NAME_TENANT_LINKS,
+                        projectSelfLink,
+                        Occurance.MUST_OCCUR)
+                .build();
+        viewersQueryBuilder.addClause(projectRegistriesClause);
+
+        Query resourceGroupQuery = viewersQueryBuilder.build();
 
         ResourceGroupState resourceGroupState = buildResourceGroupState(AuthRole.PROJECT_VIEWER,
                 projectId, resourceGroupQuery);

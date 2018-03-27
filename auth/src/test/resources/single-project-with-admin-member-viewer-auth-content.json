@@ -1,0 +1,17 @@
+{
+  "projects": [
+    {
+      "name": "test.project",
+      "description": "Test project description.",
+      "administrators": ["fritz@admiral.com"],
+      "members": ["connie@admiral.com"],
+      "viewers": ["tony@admiral.com"]
+    }
+  ],
+  "roles": {
+    "CLOUD_ADMIN": {
+      "remove": ["fritz@admiral.com", "connie@admiral.com", "tony@admiral.com", "gloria@admiral.com"],
+      "add": ["administrator@admiral.com"]
+    }
+  }
+}

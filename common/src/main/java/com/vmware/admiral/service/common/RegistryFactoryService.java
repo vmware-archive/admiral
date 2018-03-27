@@ -32,7 +32,6 @@ public class RegistryFactoryService extends AbstractSecuredFactoryService {
 
     @Override
     public void handleGet(Operation get) {
-        // TODO write tests
         OperationUtil.transformProjectHeaderToFilterQuery(get, true);
         super.handleGet(get);
     }

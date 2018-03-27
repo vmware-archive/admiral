@@ -19,6 +19,7 @@ import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.Before;
@@ -266,8 +267,9 @@ public class RoleRestrictionsTest extends AuthBaseTest {
         assertNotNull(createdState.documentSelfLink);
 
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_BASIC_USER));
-        doGetWithRestrictionVerification(createdState, RegistryFactoryService.SELF_LINK,
-                RegistryState.class.getName());
+        RegistryState document = getDocument(RegistryState.class, createdState.documentSelfLink);
+        assertNotNull(document);
+        assertEquals(createdState.documentSelfLink, document.documentSelfLink);
 
         // POST
         doPostWithRestrictionVerification(registry, RegistryFactoryService.SELF_LINK);
@@ -382,6 +384,7 @@ public class RoleRestrictionsTest extends AuthBaseTest {
 
         RegistryState registry = new RegistryState();
         registry.name = "test";
+        registry.tenantLinks = Collections.singletonList(createdProject.documentSelfLink);
 
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
         RegistryState createdState = doPost(registry, RegistryFactoryService.SELF_LINK);

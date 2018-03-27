@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
@@ -261,6 +262,42 @@ public abstract class AuthBaseTest extends BaseTestCase {
         URI projectUri = UriUtils.buildUri(host, projectToBeDeleted.documentSelfLink);
 
         doDelete(projectUri, false);
+    }
+
+    protected String getProjectLinkByName(String projectName) throws Throwable {
+        ProjectState project = getProjectByName(projectName);
+        return project == null ? null : project.documentSelfLink;
+    }
+
+    protected ProjectState getProjectByName(String projectName) throws Throwable {
+        List<ProjectState> projects = getDocumentsOfType(ProjectState.class);
+        return projects.stream()
+                .filter(project -> project.name.equals(projectName))
+                .findFirst()
+                .orElse(null);
+    }
+
+    protected void verifyDocumentAccessible(String documentLink, String userEmail,
+            boolean expectAccessible) throws Throwable {
+        host.assumeIdentity(buildUserServicePath(userEmail));
+        try {
+            Object result = getDocument(Object.class, documentLink);
+            if (!expectAccessible) {
+                String error = String.format("%s must not be able to access %s", userEmail,
+                        documentLink);
+                host.log(Level.SEVERE, error);
+                throw new IllegalStateException(error);
+            } else {
+                assertNotNull(result);
+            }
+        } catch (IllegalAccessError e) {
+            if (expectAccessible) {
+                String error = String.format("%s must be able to access %s", userEmail,
+                        documentLink);
+                host.log(Level.SEVERE, error);
+                throw new IllegalStateException(error, e);
+            }
+        }
     }
 
     protected void verifyExceptionMessage(String expected, String message) {
