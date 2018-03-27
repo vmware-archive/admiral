@@ -303,10 +303,6 @@ public class ProjectService extends StatefulService {
                         projectState.tenantLinks = new ArrayList<>();
                     }
 
-                    if (!projectState.tenantLinks.contains(projectState.documentSelfLink)) {
-                        projectState.tenantLinks.add(projectState.documentSelfLink);
-                    }
-
                     return projectState;
                 })
                 .whenComplete((ps, ex) -> {

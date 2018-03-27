@@ -304,6 +304,10 @@ public class RoleRestrictionsTest extends AuthBaseTest {
         createdState.name = "updated-name";
         doPutWithRestrictionVerification(createdState, ProjectFactoryService.SELF_LINK);
 
+        // PATCH
+        createdState.name = "updated-name";
+        doPatchWithRestrictionVerification(createdState, createdState.documentSelfLink);
+
         // DELETE
         doDeleteWithRestrictionVerification(createdState, ProjectFactoryService.SELF_LINK);
     }
@@ -535,6 +539,17 @@ public class RoleRestrictionsTest extends AuthBaseTest {
         }
     }
 
+    private void doPatchWithRestrictionVerification(ServiceDocument doc, String selfLink)
+            throws Throwable {
+        host.log("PATCH to %s", selfLink);
+
+        try {
+            doPatch(doc, selfLink);
+            fail(EXPECTED_ILLEGAL_ACCESS_ERROR_MESSAGE);
+        } catch (IllegalAccessError e) {
+            assertForbiddenMessage(e);
+        }
+    }
 
     private void doDeleteWithRestrictionVerification(ServiceDocument doc, String selfLink) throws Throwable {
         host.log("DELETE to %s", selfLink);

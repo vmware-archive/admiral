@@ -12,6 +12,8 @@
 package com.vmware.admiral.auth.project;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -91,6 +93,36 @@ public class ProjectRoleRestrictionsTest extends AuthBaseTest {
         verifyDocumentAccessible(cs2.documentSelfLink, USER_EMAIL_FRITZ, true);
     }
 
+
+    @Test
+    public void testProjectMemberCannotModifyProject() throws Throwable {
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_TONY));
+
+        String projectLink = getProjectLinkByName(PROJECT_NAME_TEST_PROJECT_1);
+
+        ProjectState project = new ProjectState();
+        project.name = "test-name";
+
+        try {
+            doPatch(project, projectLink);
+            fail(EXPECTED_ILLEGAL_ACCESS_ERROR_MESSAGE);
+        } catch (IllegalAccessError e) {
+            assertForbiddenMessage(e);
+        }
+    }
+
+    @Test
+    public void testProjectAdminCanModifyProject() throws Throwable {
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_FRITZ));
+
+        String projectLink = getProjectLinkByName(PROJECT_NAME_TEST_PROJECT_1);
+
+        ProjectState project = new ProjectState();
+        project.name = "test-name";
+
+        doPatch(project, projectLink);
+    }
+
     private void verifyDocumentAccessible(String documentLink, String userEmail, boolean expectAccessible) throws Throwable {
         host.assumeIdentity(buildUserServicePath(userEmail));
         try {
@@ -158,4 +190,9 @@ public class ProjectRoleRestrictionsTest extends AuthBaseTest {
                 .findFirst()
                 .orElse(null);
     }
+
+    private void assertForbiddenMessage(IllegalAccessError e) {
+        assertTrue(e.getMessage().toLowerCase().startsWith(FORBIDDEN));
+    }
+
 }
