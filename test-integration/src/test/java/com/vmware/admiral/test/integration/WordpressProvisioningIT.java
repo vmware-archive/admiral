@@ -118,6 +118,26 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
     }
 
     @Test
+    public void testProvisionWithRetry() throws Exception {
+        testProvisionHelper(3);
+    }
+
+    public void testProvisionHelper(int retryCount) throws Exception {
+        try {
+            testProvision();
+        } catch (Exception ex) {
+            logger.error(String.format("Provision failed on %s retry with: %s ", retryCount,
+                    Utils.toString(ex)));
+            if (retryCount >= 0 && ex.getMessage()
+                    .contains("dial tcp: lookup registry-1.docker.io: no such host")) {
+                compositeDescriptionLink = importTemplate(serviceClient, templateFile);
+                testProvisionHelper(retryCount - 1);
+            } else {
+                throw ex;
+            }
+        }
+    }
+
     public void testProvision() throws Exception {
         boolean setupOnCluster = useOverlayNetwork();
         setupCoreOsHost(DockerAdapterType.API, setupOnCluster, null);
