@@ -25,9 +25,11 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -606,6 +608,43 @@ public class ClusterServiceTest extends ComputeBaseTest {
         ContainerHostSpec hostSpecDocker1 = createContainerHostSpec(projectLinkVCH);
 
         addHostInCluster(Service.getId(clusterVCH.documentSelfLink), hostSpecDocker1);
+    }
+
+    @Test
+    public void testFilterClustersByType() throws Throwable {
+        final String projectLink = buildProjectLink("test-vch-project");
+
+        ContainerHostSpec hostSpec = createContainerHostSpec(Collections.singletonList(projectLink),
+                ContainerHostType.VCH, "vch-host");
+        createCluster(hostSpec);
+
+        hostSpec = createContainerHostSpec(Collections.singletonList(projectLink),
+                ContainerHostType.DOCKER, "docker-host");
+        createCluster(hostSpec);
+
+        String query = UriUtils.buildUriQuery("type", ClusterType.VCH.toString(),
+                UriUtils.URI_PARAM_ODATA_EXPAND, Boolean.TRUE.toString());
+        URI clusterUri = UriUtils.buildUri(host, ClusterService.SELF_LINK, query);
+
+        Set<Object> result = new HashSet<>();
+        Operation get = Operation.createGet(clusterUri)
+                .setReferer(host.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        host.failIteration(ex);
+                    } else {
+                        result.addAll(
+                                o.getBody(ServiceDocumentQueryResult.class).documents.values());
+                        host.completeIteration();
+                    }
+                });
+
+        host.testStart(1);
+        host.send(get);
+        host.testWait();
+        assertEquals(1, result.size());
+        ClusterDto resultCluster = (ClusterDto) result.iterator().next();
+        assertEquals(ClusterType.VCH, resultCluster.type);
     }
 
     private void verifyCluster(ClusterDto clusterDto, ClusterType clusterType, String expectedName,
@@ -1204,14 +1243,30 @@ public class ClusterServiceTest extends ComputeBaseTest {
         return ch;
     }
 
+    private ContainerHostSpec createContainerHostSpec(List<String> tenantLinks,
+            ContainerHostType hostType, String address)
+            throws Throwable {
+        ContainerHostSpec ch = new ContainerHostSpec();
+        ch.hostState = createComputeState(hostType, ComputeService.PowerState.ON, tenantLinks,
+                null, null, address);
+        return ch;
+    }
+
     private ComputeState createComputeState(ContainerHostType hostType,
             ComputeService.PowerState hostState, List<String> tenantLinks, String clusterName,
-            String clusterDetails
+            String clusterDetails) throws Throwable {
+        return createComputeState(hostType, hostState, tenantLinks, clusterName, clusterDetails,
+                COMPUTE_ADDRESS);
+    }
+
+    private ComputeState createComputeState(ContainerHostType hostType,
+            ComputeService.PowerState hostState, List<String> tenantLinks, String clusterName,
+            String clusterDetails, String address
 
     ) throws Throwable {
         ComputeState cs = new ComputeState();
         cs.id = UUID.randomUUID().toString();
-        cs.address = COMPUTE_ADDRESS;
+        cs.address = address;
         cs.powerState = hostState;
         cs.customProperties = new HashMap<>();
         cs.customProperties.put(ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME,

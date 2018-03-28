@@ -101,6 +101,7 @@ public class ClusterService extends StatelessService {
 
     public static final String HOSTS_FILTER_QUERY_PARAM = "$hostsFilter";
     public static final String CUSTOM_OPTIONS_QUERY_PARAM = "customOptions";
+    public static final String CLUSTER_TYPE_FILTER_QUERY_PARAM = "type";
 
     public ClusterService() {
         super(ClusterDto.class);
@@ -387,6 +388,10 @@ public class ClusterService extends StatelessService {
 
     private void getAllClusters(Operation get) {
         boolean expand = UriUtils.hasODataExpandParamValue(get.getUri());
+
+        String typeFilter = UriUtils.parseUriQueryParams(get.getUri())
+                .get(CLUSTER_TYPE_FILTER_QUERY_PARAM);
+
         URI placementZoneUri = UriUtils.buildUri(getHost(),
                 ElasticPlacementZoneConfigurationService.SELF_LINK, get.getUri().getQuery());
 
@@ -409,6 +414,7 @@ public class ClusterService extends StatelessService {
                         queryResult, get))
                 .thenAccept(clusterDtoList -> {
                     Map<String, Object> ClusterDtoMap = clusterDtoList.stream()
+                            .filter(c -> ClusterUtils.filterByType(c, typeFilter))
                             .collect(Collectors.toMap(
                                     clusterDto -> clusterDto.documentSelfLink,
                                     Function.identity()));

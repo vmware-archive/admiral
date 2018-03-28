@@ -397,4 +397,22 @@ public class ClusterUtils {
     public static boolean isSingleHostSupportedCluster(ClusterDto cluster) {
         return cluster != null && cluster.type == ClusterType.VCH;
     }
+
+    /**
+     * Checks if the cluster is of the specified type. The type filter designates
+     * the cluster type. It can be preceded by "!" which indicates negation.
+     */
+    public static boolean filterByType(ClusterDto cluster, String typeFilter) {
+        if (typeFilter == null) {
+            return true;
+        }
+
+        boolean isFilterExclusive;
+        if (isFilterExclusive = typeFilter.startsWith("!")) {
+            typeFilter = typeFilter.substring(1);
+        }
+        ClusterType filter = ClusterType.valueOf(typeFilter);
+
+        return isFilterExclusive ^ cluster.type.equals(filter);
+    }
 }
