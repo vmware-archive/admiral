@@ -233,8 +233,28 @@ public class HostNetworkListDataCollection extends StatefulService {
         QueryUtil.addExpandOption(queryTask);
         QueryUtil.addBroadcastOption(queryTask);
 
-        new ServiceDocumentQuery<>(getHost(), ContainerNetworkState.class)
-                .query(queryTask, processNetworkStatesQueryResults(body));
+        listHostNetworks(body, (o, ex) -> {
+            if (ex == null) {
+                NetworkListCallback callback = o.getBody(NetworkListCallback.class);
+                if (callback.hostAdapterReference == null) {
+                    callback.hostAdapterReference = ContainerHostDataCollectionService
+                            .getDefaultHostAdapter(getHost());
+                }
+
+                if (callback.networkIdsAndNames != null && callback.networkIdsAndNames.size() != 0) {
+                    intermediate.addBooleanClause(
+                            QueryUtil.addListValueClause(ContainerNetworkState.FIELD_NAME_NAME,
+                                    callback.networkIdsAndNames.values(), MatchType.TERM)
+                                    .setOccurance(Occurance.SHOULD_OCCUR));
+                }
+
+                new ServiceDocumentQuery<>(getHost(), ContainerNetworkState.class)
+                        .query(queryTask, processNetworkStatesQueryResults(callback));
+            } else {
+                unlockCurrentDataCollectionForHost(body.containerHostLink);
+            }
+        });
+
     }
 
     private Consumer<ServiceDocumentQuery.ServiceDocumentQueryElementResult<ContainerNetworkState>> processNetworkStatesQueryResults(
@@ -251,19 +271,8 @@ public class HostNetworkListDataCollection extends StatefulService {
             } else if (r.hasResult()) {
                 existingNetworkStates.add(r.getResult());
             } else {
-                listHostNetworks(body, (o, ex) -> {
-                    if (ex == null) {
-                        NetworkListCallback callback = o.getBody(NetworkListCallback.class);
-                        if (callback.hostAdapterReference == null) {
-                            callback.hostAdapterReference = ContainerHostDataCollectionService
-                                    .getDefaultHostAdapter(getHost());
-                        }
-                        updateContainerNetworkStates(callback, existingNetworkStates,
-                                body.containerHostLink);
-                    } else {
-                        unlockCurrentDataCollectionForHost(body.containerHostLink);
-                    }
-                });
+                updateContainerNetworkStates(body, existingNetworkStates,
+                        body.containerHostLink);
             }
         };
     }
@@ -311,15 +320,13 @@ public class HostNetworkListDataCollection extends StatefulService {
             boolean isOverlay = "overlay".equals(networkState.driver);
 
             boolean existsInCallbackHost = false;
-            if (networkState.id != null) {
-                existsInCallbackHost = callback.networkIdsAndNames.containsKey(networkState.id);
-                callback.networkIdsAndNames.remove(networkState.id);
-            } else if (networkState.powerState == PowerState.PROVISIONING
-                    || networkState.powerState == PowerState.RETIRED
-                    || networkState.powerState == PowerState.ERROR) {
+            if (networkState.powerState != PowerState.CONNECTED) {
                 String name = networkState.name;
                 existsInCallbackHost = callback.networkIdsAndNames.containsValue(name);
                 callback.networkIdsAndNames.values().remove(name);
+            } else if (networkState.id != null) {
+                existsInCallbackHost = callback.networkIdsAndNames.containsKey(networkState.id);
+                callback.networkIdsAndNames.remove(networkState.id);
             }
 
             if (networkState.parentLinks == null) {
