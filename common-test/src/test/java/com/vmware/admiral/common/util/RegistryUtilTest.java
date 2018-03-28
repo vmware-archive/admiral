@@ -46,7 +46,7 @@ public class RegistryUtilTest extends BaseTestCase {
         createRegistry("https://test.registry.com:5001", Arrays.asList(TENANT));
         createRegistry("https://test.registry.com:5002", null);
 
-        verifyRegistryLinksByHostname("test.registry.com:5000", null, expectedLinks);
+        verifyRegistryLinksByHostname("test.registry.com:5000", (String) null, expectedLinks);
     }
 
     @Test
@@ -97,10 +97,16 @@ public class RegistryUtilTest extends BaseTestCase {
 
     private void verifyRegistryLinksByHostname(String hostname, String tenantLink,
             Collection<String> expectedLinks) {
+        verifyRegistryLinksByHostname(hostname,
+                tenantLink == null ? null : Collections.singletonList(tenantLink), expectedLinks);
+    }
+
+    private void verifyRegistryLinksByHostname(String hostname, Collection<String> tenantLinks,
+            Collection<String> expectedLinks) {
         assertNotNull(expectedLinks);
         host.testStart(1);
 
-        RegistryUtil.findRegistriesByHostname(host, hostname, tenantLink, (links, errors) -> {
+        RegistryUtil.findRegistriesByHostname(host, hostname, tenantLinks, (links, errors) -> {
             if (errors != null && !errors.isEmpty()) {
                 host.failIteration(errors.iterator().next());
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -16,6 +16,7 @@ import static com.vmware.admiral.common.util.ServiceUtils.addServiceRequestRoute
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -37,6 +38,7 @@ import com.vmware.admiral.host.HostInitRegistryAdapterServiceConfig;
 import com.vmware.admiral.log.EventLogService;
 import com.vmware.admiral.log.EventLogService.EventLogState;
 import com.vmware.admiral.log.EventLogService.EventLogState.EventLogType;
+import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
@@ -52,8 +54,9 @@ import com.vmware.xenon.common.Utils;
 public class ContainerImageService extends StatelessService {
     public static final String SELF_LINK = ManagementUriParts.IMAGES;
 
-    public static final String TENANT_LINKS_PARAM_NAME = "tenantLinks";
     public static final String REGISTRY_FILTER_QUERY_PARAM_NAME = "registry";
+    public static final String TENANT_LINKS_PARAM_NAME = MultiTenantDocument.FIELD_NAME_TENANT_LINKS;
+    public static final String TENANT_LINKS_SEPARATOR = ",";
 
     @Override
     public void handleRequest(Operation op) {
@@ -96,13 +99,20 @@ public class ContainerImageService extends StatelessService {
         AssertUtil.assertNotNullOrEmpty(searchTerm, SEARCH_QUERY_PROP_NAME);
 
         String registryFilter = queryParams.get(REGISTRY_FILTER_QUERY_PARAM_NAME);
-        String group = queryParams.remove(TENANT_LINKS_PARAM_NAME);
+        String rawTenantLinks = queryParams.remove(TENANT_LINKS_PARAM_NAME);
 
-        logFine("Search in group: " + group);
+        logFine("Searching container images for tenantLinks: " + rawTenantLinks);
+
+        List<String> tenantLinks;
+        if (rawTenantLinks == null || rawTenantLinks.isEmpty()) {
+            tenantLinks = null;
+        } else {
+            tenantLinks = Arrays.asList(rawTenantLinks.split(TENANT_LINKS_SEPARATOR));
+        }
 
         // query for registries and execute an adapter request for each one
         Consumer<Collection<String>> registryLinksConsumer = (registryLinks) -> handleSearchRequest(
-                op, registryAdapterUri, queryParams, registryLinks, group);
+                op, registryAdapterUri, queryParams, registryLinks, rawTenantLinks);
 
         Consumer<Collection<Throwable>> failureConsumer = (failures) -> op.fail(failures.iterator()
                 .next());
@@ -111,24 +121,27 @@ public class ContainerImageService extends StatelessService {
         // otherwise, query for registries and execute an adapter request for each one
         DockerImage image = parseDockerImage(searchTerm);
         if (image != null && image.getHost() != null) {
-            RegistryUtil.findRegistriesByHostname(getHost(), image.getHost(), group, (links, errors) -> {
-                if (errors != null && !errors.isEmpty()) {
-                    op.fail(errors.iterator().next());
-                    return;
-                }
+            RegistryUtil.findRegistriesByHostname(getHost(), image.getHost(), tenantLinks,
+                    (links, errors) -> {
+                        if (errors != null && !errors.isEmpty()) {
+                            op.fail(errors.iterator().next());
+                            return;
+                        }
 
-                if (links.isEmpty()) {
-                    // failed to find a matching registry, create adapter request for each one
-                    RegistryUtil.forEachRegistry(getHost(), group, registryFilter,
-                            registryLinksConsumer, failureConsumer);
-                    return;
-                }
+                        if (links.isEmpty()) {
+                            // failed to find a matching registry, create adapter request for each
+                            // one
+                            RegistryUtil.forEachRegistry(getHost(), tenantLinks, registryFilter,
+                                    registryLinksConsumer, failureConsumer);
+                            return;
+                        }
 
-                queryParams.put(SEARCH_QUERY_PROP_NAME, image.getNamespaceAndRepo());
-                registryLinksConsumer.accept(links);
-            });
+                        queryParams.put(SEARCH_QUERY_PROP_NAME, image.getNamespaceAndRepo());
+                        registryLinksConsumer.accept(links);
+                    });
         } else {
-            RegistryUtil.forEachRegistry(getHost(), group, registryFilter, registryLinksConsumer,
+            RegistryUtil.forEachRegistry(getHost(), tenantLinks, registryFilter,
+                    registryLinksConsumer,
                     failureConsumer);
         }
     }

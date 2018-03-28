@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -12,6 +12,7 @@
 package com.vmware.admiral.service.common;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -47,7 +48,8 @@ public class DisabledRegistryStateQueryTest extends BaseRegistryStateQueryTest {
     public void testDisabledRegistriesExcluded() throws Throwable {
         // initially the registry is enabled so should be included in results
         waitFor("time out waiting for initially included registry.", () -> {
-            RegistryUtil.forEachRegistry(host, TEST_GROUP_TENANT_LINK, null,
+            RegistryUtil.forEachRegistry(host, Collections.singletonList(TEST_GROUP_TENANT_LINK),
+                    null,
                     (registryLinks) -> {
                         System.out.println("REGISTRY LINKS ======> " + registryLinks);
                         if (!registryLinks.contains(registryState.documentSelfLink)) {
@@ -67,7 +69,8 @@ public class DisabledRegistryStateQueryTest extends BaseRegistryStateQueryTest {
 
         // this time expect the grouped registry to be excluded
         waitFor("time out waiting to remove a disabled registry from index..", () -> {
-            RegistryUtil.forEachRegistry(host, TEST_GROUP_TENANT_LINK, null,
+            RegistryUtil.forEachRegistry(host, Collections.singletonList(TEST_GROUP_TENANT_LINK),
+                    null,
                     (registryLinks) -> {
                         if (registryLinks.contains(registryState.documentSelfLink)) {
                             host.log(Level.SEVERE, "Disabled registry %s included in results",

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -52,6 +52,7 @@ import com.vmware.admiral.compute.container.CompositeDescriptionService.Composit
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.TemplateSpec.TemplateType;
 import com.vmware.admiral.image.service.ContainerImageService;
+import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
@@ -92,6 +93,11 @@ public class TemplateSearchService extends StatelessService {
         String query = queryParams.get(QUERY_PARAM);
         AssertUtil.assertNotEmpty(query, QUERY_PARAM);
         query = removeTagFromContainerImageName(query, getHost());
+
+        String projectHeader = OperationUtil.extractProjectFromHeader(get);
+        if (projectHeader != null && !projectHeader.isEmpty()) {
+            queryParams.put(MultiTenantDocument.FIELD_NAME_TENANT_LINKS, projectHeader);
+        }
 
         // FIXME search doesn't work when the text contain non alpha chars so disable for now
         // searching fields indexed as TEXT, so case insensitive

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -43,7 +43,7 @@ public class RegistryUtil {
      * @param registryLinksConsumer
      * @param failureConsumer
      */
-    public static void forEachRegistry(ServiceHost serviceHost, String tenantLink,
+    public static void forEachRegistry(ServiceHost serviceHost, Collection<String> tenantLinks,
             String registryFilter, Consumer<Collection<String>> registryLinksConsumer,
             Consumer<Collection<Throwable>> failureConsumer) {
 
@@ -59,12 +59,12 @@ public class RegistryUtil {
 
         if (registryFilter != null && !registryFilter.isEmpty()) {
             // add query for a registry with a specific name and group
-            queryTasks.add(buildRegistryQueryByNameAndGroup(registryFilter, tenantLink));
-        } else if (tenantLink != null) {
+            queryTasks.add(buildRegistryQueryByNameAndTenantLinks(registryFilter, tenantLinks));
+        } else if (tenantLinks != null && !tenantLinks.isEmpty()) {
             // add query for global groups
-            queryTasks.add(buildRegistryQueryByGroup(null));
+            queryTasks.add(buildRegistryQueryByTenantLinks(null));
             // add query for registries of a specific tenant
-            queryTasks.add(buildRegistryQueryByGroup(tenantLink));
+            queryTasks.add(buildRegistryQueryByTenantLinks(tenantLinks));
         } else {
             // add query for all registries if no tenant
             queryTasks.add(buildAllRegistriesQuery());
@@ -74,16 +74,17 @@ public class RegistryUtil {
     }
 
     public static void findRegistriesByHostname(ServiceHost serviceHost, String hostname,
-            String tenantLink, BiConsumer<Collection<String>, Collection<Throwable>> consumer) {
+            Collection<String> tenantLinks,
+            BiConsumer<Collection<String>, Collection<Throwable>> consumer) {
 
         List<QueryTask> queryTasks = new ArrayList<QueryTask>();
 
-        if (tenantLink != null) {
+        if (tenantLinks != null && !tenantLinks.isEmpty()) {
             // add query for global groups
-            queryTasks.add(buildRegistryQuery(buildQueryByGroup(null),
+            queryTasks.add(buildRegistryQuery(buildQueryByTenantLinks(null),
                     buildQueryByHostname(hostname)));
             // add query for registries of a specific tenant
-            queryTasks.add(buildRegistryQuery(buildQueryByGroup(tenantLink),
+            queryTasks.add(buildRegistryQuery(buildQueryByTenantLinks(tenantLinks),
                     buildQueryByHostname(hostname)));
         } else {
             // add query for all registries if no tenant
@@ -142,18 +143,18 @@ public class RegistryUtil {
     }
 
     /**
-     * Create a query to return all RegistryState links within a group or global RegistryState links
-     * if the group is null/empty
+     * Create a query to return all RegistryState links within a group, tenant or global
+     * RegistryState links if the tenantLinks collection is null/empty.
      *
-     * @param tenantLink
+     * @param tenantLinks
      * @return QueryTask
      */
-    private static Query buildQueryByGroup(String tenantLink) {
-        return QueryUtil.addTenantGroupAndUserClause(tenantLink);
+    private static Query buildQueryByTenantLinks(Collection<String> tenantLinks) {
+        return QueryUtil.addTenantGroupAndUserClause(tenantLinks);
     }
 
     /**
-     * Create a query to return all RegistryState links
+     * Create a query to return all RegistryState links.
      *
      * @return
      */
@@ -162,23 +163,37 @@ public class RegistryUtil {
     }
 
     /**
-     * Create a query to return all RegistryState links within a group or global RegistryState links
-     * if the group is null/empty
+     * Create a query to return all RegistryState links within a group, tenant or global
+     * RegistryState links if the tenantLinks collection is null/empty.
      *
-     * @param tenantLink
+     * @param tenantLinks
      * @return QueryTask
      */
-    private static QueryTask buildRegistryQueryByGroup(String tenantLink) {
-        Query groupClause = QueryUtil.addTenantGroupAndUserClause(tenantLink);
-        return buildRegistryQuery(groupClause);
+    private static QueryTask buildRegistryQueryByTenantLinks(Collection<String> tenantLinks) {
+        return buildRegistryQuery(buildQueryByTenantLinks(tenantLinks));
     }
 
-    private static QueryTask buildRegistryQueryByNameAndGroup(String name, String tenantLink) {
+    /**
+     * Create a query to return all RegistryState links matching a given name. Results are filtered
+     * within a specified group/tenant or are global RegistryState links if the tenantLinks
+     * collection is null/empty.
+     *
+     * @param registryName
+     * @param tenantLinks
+     * @return QueryTask
+     */
+    private static QueryTask buildRegistryQueryByNameAndTenantLinks(String registryName,
+            Collection<String> tenantLinks) {
         Query nameClause = new Query()
                 .setTermPropertyName(RegistryState.FIELD_NAME_NAME)
-                .setTermMatchValue(name);
-        Query groupClause = QueryUtil.addTenantGroupAndUserClause(tenantLink);
-        return buildRegistryQuery(nameClause, groupClause);
+                .setTermMatchValue(registryName);
+
+        if (tenantLinks == null || tenantLinks.isEmpty()) {
+            return buildRegistryQuery(nameClause);
+        }
+
+        Query tenantsClause = buildQueryByTenantLinks(tenantLinks);
+        return buildRegistryQuery(nameClause, tenantsClause);
     }
 
     private static QueryTask buildRegistryQuery(Query... additionalClauses) {

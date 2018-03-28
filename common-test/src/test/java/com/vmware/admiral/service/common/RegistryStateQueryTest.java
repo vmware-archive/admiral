@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -14,6 +14,7 @@ package com.vmware.admiral.service.common;
 import static org.junit.Assert.assertFalse;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
 
@@ -102,7 +103,9 @@ public class RegistryStateQueryTest extends BaseRegistryStateQueryTest {
     }
 
     private void verifyIncludedRegistries(String tenantLink, boolean shouldIncludeGrouped) {
-        RegistryUtil.forEachRegistry(host, tenantLink, null,
+        List<String> tenantLinks = tenantLink == null ? null
+                : Collections.singletonList(tenantLink);
+        RegistryUtil.forEachRegistry(host, tenantLinks, null,
                 (registryLinks) -> {
                     if (!registryLinks.contains(globalRegistryState.documentSelfLink)) {
                         host.log(Level.SEVERE, "Global registry %s missing",
