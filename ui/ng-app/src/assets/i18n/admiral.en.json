@@ -239,6 +239,17 @@
       "confirmationVic": "Confirm removing of container host {{clusterName}}. The deployed entities associated to this container host will be removed as well. The operation cannot be undone."
     }
   },
+  "kubernetes": {
+    "clusters": {
+      "title": "Kubernetes Clusters",
+      "add": "Add Cluster",
+      "new": "New Cluster",
+      "nodeCount": "Nodes",
+      "search": {
+        "placeholder": "Search for Kubernetes Clusters"
+      }
+    }
+  },
   "hosts": {
     "actions": {
       "delete":{
@@ -368,6 +379,7 @@
     "infrastructure": "Infrastructure",
     "clusters": "Clusters",
     "clustersVic": "Container Hosts",
+    "kubernetesClusters": "Kubernetes Clusters",
     "hosts": "Hosts",
     "placements": "Placements",
     "identityManagement": "Identity Management",

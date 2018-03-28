@@ -1,0 +1,41 @@
+<grid-view #gridView [serviceEndpoint]="serviceEndpoint" [searchPlaceholder]="'kubernetes.clusters.search.placeholder' | i18n">
+  <div title>{{ "kubernetes.clusters.title" | i18n }}</div>
+  <div toolbar>
+    <clr-dg-action-bar>
+      <div class="btn-group" role="group" aria-label="Available Actions">
+        <button type="button" class="btn btn-link">
+          <i class="fa fa-plus"></i>{{"kubernetes.clusters.new" | i18n}}
+        </button>
+        <button type="button" class="btn btn-link">
+          <i class="fa fa-plus"></i>{{"kubernetes.clusters.add" | i18n}}
+        </button>
+      </div>
+    </clr-dg-action-bar>
+  </div>
+  <ng-template let-item="item">
+    <card class="clusterCard" [routerLink]="['./' + item.documentId]">
+      <div card-header>
+        <div class="clusterIcon">
+          <clr-icon shape="rack-server" size="48"></clr-icon>
+        </div>
+        <div class="titleHolder">
+          <div class="truncate">{{ item.name }}</div>
+          <div *ngIf="item.address" class="clusterAddress truncate">{{ item.address }}</div>
+        </div>
+      </div>
+      <div card-content>
+        <div class="form-group">
+          <label>{{ "clusters.status" | i18n }}</label>
+          <div class="status {{ item.status }}">{{ clusterState(item) }}</div>
+        </div>
+        <div class="form-group">
+          <label>{{ "kubernetes.clusters.nodeCount" | i18n }}</label>
+          <div>{{ nodeCount(item) }}</div>
+        </div>
+        <div class="progress-static top">
+          <div class="progress-meter {{ item.status }}" data-value="100"></div>
+        </div>
+      </div>
+    </card>
+  </ng-template>
+</grid-view>
