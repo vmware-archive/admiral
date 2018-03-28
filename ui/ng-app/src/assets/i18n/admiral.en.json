@@ -99,6 +99,23 @@
         "confirmation": "Are you sure you want to remove the member from this project?"
       }
     },
+    "projectRegistries": {
+        "title":"Project Registries",
+        "new": "New Project Registry",
+        "nameTitle": "Name",
+        "statusTitle": "Status",
+        "scopeTitle": "Scope",
+        "addressTitle": "Address",
+        "searchPlaceholder": "Search for registries",
+        "scope":{
+          "system": "System",
+          "project": "Project"
+        },
+        "status":{
+          "active": "Active",
+          "disabled": "Disabled"
+        }
+    },
     "config": {
       "title": "Configuration",
       "projectRegistry": "Project registry",

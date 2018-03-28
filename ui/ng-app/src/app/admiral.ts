@@ -32,6 +32,7 @@ import { ProjectSummaryComponent } from "./views/projects/project-details/projec
 import { ProjectConfigurationComponent } from './views/projects/project-details/project-configuration.component';
 import { ProjectCreateComponent } from './views/projects/project-create/project-create.component';
 import { ProjectMembersComponent } from "./views/projects/project-details/project-members.component";
+import { ProjectRegistriesComponent } from './views/projects/project-details/project-registries.component';
 import { ProjectAddMemberComponent } from "./views/projects/project-details/project-add-member.component";
 import { ProjectAddMembersComponent } from "./views/projects/project-details/project-add-members.component";
 import { ProjectEditMemberComponent } from "./views/projects/project-details/project-edit-member.component";
@@ -111,6 +112,7 @@ export const ADMIRAL_DECLARATIONS = [
   ProjectEditMemberComponent,
   ProjectCreateComponent,
   ProjectConfigurationComponent,
+  ProjectRegistriesComponent,
   RegistriesComponent,
   ConfigurationComponent,
   LogsComponent,
