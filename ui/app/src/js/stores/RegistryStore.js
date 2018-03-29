@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -135,10 +135,21 @@ RegistriesStore = Reflux.createStore({
         var registries = [];
         for (var key in result) {
           if (result.hasOwnProperty(key)) {
-            registries.push(result[key]);
+            if (!result[key].tenantLinks || result[key].tenantLinks.length === 0) {
+              registries.push(result[key]);
+            } else {
+              let projectFound = false;
+              result[key].tenantLinks.forEach(tenantLink => {
+                if (tenantLink.startsWith('/projects/')) {
+                  projectFound = true;
+                }
+              });
+              if (!projectFound) {
+                registries.push(result[key]);
+              }
+            }
           }
         }
-
         this.setInData(['registries', 'items'], registries);
         this.emitChange();
       });
@@ -290,11 +301,20 @@ RegistriesStore = Reflux.createStore({
         if (key === newRegistryLocation) {
           newRegistry = new Immutable(allRegistries[key]);
           registries.push(newRegistry);
-        } else {
+        } else if (!allRegistries[key].tenantLinks || allRegistries[key].tenantLinks.length === 0) {
           registries.push(allRegistries[key]);
+        } else {
+          let projectFound = false;
+          allRegistries[key].tenantLinks.forEach(tenantLink => {
+            if (tenantLink.startsWith('/projects/')) {
+              projectFound = true;
+            }
+          });
+          if (!projectFound) {
+            registries.push(allRegistries[key]);
+          }
         }
       }
-
       this.setInData(['registries', 'newItem'], newRegistry);
       this.setInData(['registries', 'items'], registries);
 
