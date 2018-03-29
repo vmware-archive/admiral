@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.host;
 
+import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -49,6 +50,7 @@ import com.vmware.admiral.service.common.ExtensibilitySubscriptionManager;
 import com.vmware.admiral.service.common.NodeMigrationService;
 import com.vmware.admiral.service.common.harbor.HostInitHarborServices;
 import com.vmware.photon.controller.model.security.util.CertificateUtil;
+import com.vmware.photon.controller.model.security.util.EncryptionUtils;
 import com.vmware.xenon.common.CommandLineArgumentParser;
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.LoaderFactoryService;
@@ -185,6 +187,9 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
 
     @Override
     public ServiceHost initialize(String[] args) throws Throwable {
+        // sets encryption file permissions
+        setEncryptionFilePermissions();
+
         CommandLineArgumentParser.parse(this, args);
         Arguments baseArgs = new Arguments();
         if (AuthUtil.isAuthxEnabled(this)) {
@@ -514,6 +519,42 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
                         keyFile.toUri(), keyPassphrase);
             }
             peerListener.start(uri.getPort(), uri.getHost());
+        }
+    }
+
+    /**
+     * Sets read/write permissions only to the owner of the encryption file.
+     */
+    private void setEncryptionFilePermissions() {
+        String encFileParam = null;
+        try {
+            encFileParam = System.getProperty(EncryptionUtils.ENCRYPTION_KEY);
+            if (encFileParam == null) {
+                return;
+            }
+
+            EncryptionUtils.encrypt(null);
+            File f = new File(encFileParam);
+            if (f.exists()) {
+                setPermissionsToOwner(f);
+            }
+        } catch (Exception e) {
+            log(Level.SEVERE, "Cannot change permissions of file %s. Error: %s",
+                    encFileParam, e.getMessage());
+        }
+    }
+
+    private void setPermissionsToOwner(File f) {
+        boolean b = true;
+        try {
+            b = f.setReadable(false, false);
+            b &= f.setWritable(false, false);
+        } finally {
+            b &= f.setReadable(true, true);
+            b &= f.setWritable(true, true);
+        }
+        if (b) {
+            this.log(Level.FINE, "Permissions set to file %s", f.getAbsolutePath());
         }
     }
 
