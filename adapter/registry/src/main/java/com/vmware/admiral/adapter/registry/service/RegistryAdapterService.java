@@ -29,11 +29,13 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.vmware.admiral.adapter.registry.service.RegistrySearchResponse.Result;
+import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AuthUtils;
 import com.vmware.admiral.common.util.DockerImage;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.common.util.ServiceClientFactory;
+import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.admiral.service.common.RegistryService.ApiVersion;
@@ -262,6 +264,12 @@ public class RegistryAdapterService extends StatelessService {
                     }
 
                     context.registryState = o.getBody(RegistryAuthState.class);
+
+                    // needed because the mock registries contains path
+                    if (!DeploymentProfileConfig.getInstance().isTest()) {
+                        context.registryState.address =
+                                UriUtilsExtended.buildDockerRegistryUri(context.registryState.address).toString();
+                    }
 
                     processAuthentication(context, context.registryState.authCredentials);
 

@@ -15,8 +15,10 @@ import static org.junit.Assert.assertFalse;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 import org.junit.Test;
 
@@ -105,8 +107,11 @@ public class RegistryStateQueryTest extends BaseRegistryStateQueryTest {
     private void verifyIncludedRegistries(String tenantLink, boolean shouldIncludeGrouped) {
         List<String> tenantLinks = tenantLink == null ? null
                 : Collections.singletonList(tenantLink);
-        RegistryUtil.forEachRegistry(host, tenantLinks, null,
-                (registryLinks) -> {
+        RegistryUtil.findRegistries(host, tenantLinks, null,
+                (registries, FAIL_ON_ERROR_HANDLER) -> {
+                    Set<String> registryLinks = registries.stream().map(r -> r.documentSelfLink).collect(
+                            Collectors.toSet());
+
                     if (!registryLinks.contains(globalRegistryState.documentSelfLink)) {
                         host.log(Level.SEVERE, "Global registry %s missing",
                                 globalRegistryState.documentSelfLink);
@@ -122,6 +127,6 @@ public class RegistryStateQueryTest extends BaseRegistryStateQueryTest {
                         return;
                     }
                     expectedResultFound.set(true);
-                }, FAIL_ON_ERROR_HANDLER);
+                });
     }
 }

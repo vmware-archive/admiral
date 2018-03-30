@@ -22,7 +22,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ImageOperationType;
@@ -39,6 +39,7 @@ import com.vmware.admiral.log.EventLogService;
 import com.vmware.admiral.log.EventLogService.EventLogState;
 import com.vmware.admiral.log.EventLogService.EventLogState.EventLogType;
 import com.vmware.admiral.service.common.MultiTenantDocument;
+import com.vmware.admiral.service.common.RegistryService.RegistryState;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
@@ -111,38 +112,51 @@ public class ContainerImageService extends StatelessService {
         }
 
         // query for registries and execute an adapter request for each one
-        Consumer<Collection<String>> registryLinksConsumer = (registryLinks) -> handleSearchRequest(
-                op, registryAdapterUri, queryParams, registryLinks, rawTenantLinks);
+        BiConsumer<Collection<RegistryState>, Collection<Throwable>> registriesConsumer = (registries, failures) -> {
+            if (failures != null) {
+                op.fail(failures.iterator()
+                        .next());
+                return;
+            }
+            Map<String, String> registryLinks = new HashMap<>();
+            if (registries != null) {
+                // if same registry is repeated, return it only once
+                registries.stream()
+                        .forEach(registryState -> {
+                            String address = UriUtilsExtended.buildDockerRegistryUri(registryState.address).toString();
+                            if (!registryLinks.containsKey(address)) {
+                                registryLinks.put(address, registryState.documentSelfLink);
+                            }
+                        });
 
-        Consumer<Collection<Throwable>> failureConsumer = (failures) -> op.fail(failures.iterator()
-                .next());
+                handleSearchRequest(op, registryAdapterUri, queryParams, registryLinks.values(), rawTenantLinks);
+            }
+        };
 
         // limit the number of adapter requests if the search term contains a registry hostname
         // otherwise, query for registries and execute an adapter request for each one
         DockerImage image = parseDockerImage(searchTerm);
         if (image != null && image.getHost() != null) {
             RegistryUtil.findRegistriesByHostname(getHost(), image.getHost(), tenantLinks,
-                    (links, errors) -> {
+                    (registries, errors) -> {
                         if (errors != null && !errors.isEmpty()) {
                             op.fail(errors.iterator().next());
                             return;
                         }
 
-                        if (links.isEmpty()) {
+                        if (registries.isEmpty()) {
                             // failed to find a matching registry, create adapter request for each
                             // one
-                            RegistryUtil.forEachRegistry(getHost(), tenantLinks, registryFilter,
-                                    registryLinksConsumer, failureConsumer);
+                            RegistryUtil.findRegistries(getHost(), tenantLinks, registryFilter,
+                                    registriesConsumer);
                             return;
                         }
 
                         queryParams.put(SEARCH_QUERY_PROP_NAME, image.getNamespaceAndRepo());
-                        registryLinksConsumer.accept(links);
+                        registriesConsumer.accept(registries, null);
                     });
         } else {
-            RegistryUtil.forEachRegistry(getHost(), tenantLinks, registryFilter,
-                    registryLinksConsumer,
-                    failureConsumer);
+            RegistryUtil.findRegistries(getHost(), tenantLinks, registryFilter, registriesConsumer);
         }
     }
 

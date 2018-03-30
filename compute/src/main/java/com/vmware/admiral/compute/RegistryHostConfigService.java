@@ -124,7 +124,6 @@ public class RegistryHostConfigService extends StatelessService {
         state.name = state.name.trim();
 
         hostSpec.uri = getHostUri(state);
-        state.address = hostSpec.uri.toString();
     }
 
     private void storeHost(RegistryHostSpec hostSpec, Operation op) {

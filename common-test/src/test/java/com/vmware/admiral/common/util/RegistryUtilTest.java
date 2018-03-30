@@ -21,6 +21,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -41,30 +43,30 @@ public class RegistryUtilTest extends BaseTestCase {
 
     @Test
     public void testFindRegistriesByHostnameNoTenant() throws Throwable {
-        List<String> expectedLinks = new ArrayList<>();
-        expectedLinks.add(createRegistry("https://test.registry.com:5000", null));
+        List<RegistryState> expectedRegistries = new ArrayList<>();
+        expectedRegistries.add(createRegistry("https://test.registry.com:5000", null));
         createRegistry("https://test.registry.com:5001", Arrays.asList(TENANT));
         createRegistry("https://test.registry.com:5002", null);
 
-        verifyRegistryLinksByHostname("test.registry.com:5000", (String) null, expectedLinks);
+        verifyRegistryLinksByHostname("test.registry.com:5000", (String) null, expectedRegistries);
     }
 
     @Test
     public void testFindRegistriesByHostnameWithTenant() throws Throwable {
         List<String> tenantLinks = Arrays.asList(TENANT, DIFFERENT_TENANT);
 
-        List<String> expectedLinks = new ArrayList<>();
-        expectedLinks.add(createRegistry("https://test.registry.com:5000", tenantLinks));
+        List<RegistryState> expectedRegistries = new ArrayList<>();
+        expectedRegistries.add(createRegistry("https://test.registry.com:5000", tenantLinks));
         createRegistry("https://test.registry.com:5001", tenantLinks);
         createRegistry("http://test.registry.com:5002", tenantLinks);
 
-        verifyRegistryLinksByHostname("test.registry.com:5000", TENANT, expectedLinks);
+        verifyRegistryLinksByHostname("test.registry.com:5000", TENANT, expectedRegistries);
     }
 
     @Test
     public void testFindRegistriesByHostnameWithDifferentTenant() throws Throwable {
-        List<String> expectedLinks = new ArrayList<>();
-        expectedLinks.add(createRegistry("https://test.registry.com:5000", Arrays.asList(TENANT)));
+        List<RegistryState> expectedRegistries = new ArrayList<>();
+        expectedRegistries.add(createRegistry("https://test.registry.com:5000", Arrays.asList(TENANT)));
         createRegistry("https://test.registry.com:5001", null);
         createRegistry("http://test.registry.com:5002", null);
 
@@ -76,12 +78,12 @@ public class RegistryUtilTest extends BaseTestCase {
     public void testFindRegistriesByHostnameIncludeGlobals() throws Throwable {
         List<String> tenantLinks = Arrays.asList(TENANT, DIFFERENT_TENANT);
 
-        List<String> expectedLinks = new ArrayList<>();
-        expectedLinks.add(createRegistry("https://test.registry.com:5000", null));
+        List<RegistryState> expectedRegistries = new ArrayList<>();
+        expectedRegistries.add(createRegistry("https://test.registry.com:5000", null));
         createRegistry("https://test.registry.com:5001", null);
         createRegistry("http://test.registry.com:5002", tenantLinks);
 
-        verifyRegistryLinksByHostname("test.registry.com:5000", TENANT, expectedLinks);
+        verifyRegistryLinksByHostname("test.registry.com:5000", TENANT, expectedRegistries);
     }
 
     @Test
@@ -96,27 +98,28 @@ public class RegistryUtilTest extends BaseTestCase {
     }
 
     private void verifyRegistryLinksByHostname(String hostname, String tenantLink,
-            Collection<String> expectedLinks) {
+            Collection<RegistryState> expectedRegistries) {
         verifyRegistryLinksByHostname(hostname,
-                tenantLink == null ? null : Collections.singletonList(tenantLink), expectedLinks);
+                tenantLink == null ? null : Collections.singletonList(tenantLink), expectedRegistries);
     }
 
     private void verifyRegistryLinksByHostname(String hostname, Collection<String> tenantLinks,
-            Collection<String> expectedLinks) {
-        assertNotNull(expectedLinks);
+            Collection<RegistryState> expectedRegistries) {
+        assertNotNull(expectedRegistries);
         host.testStart(1);
 
-        RegistryUtil.findRegistriesByHostname(host, hostname, tenantLinks, (links, errors) -> {
+        RegistryUtil.findRegistriesByHostname(host, hostname, tenantLinks, (registries, errors) -> {
             if (errors != null && !errors.isEmpty()) {
                 host.failIteration(errors.iterator().next());
             }
 
             try {
-                assertNotNull(links);
-                assertEquals("Different number of links expected.",
-                        expectedLinks.size(), links.size());
-                for (String link: expectedLinks) {
-                    assertThat(links, hasItem(link));
+                assertNotNull(registries);
+                assertEquals("Different number of registries expected.",
+                        expectedRegistries.size(), registries.size());
+                Set<String> registriesLinks = registries.stream().map(r -> r.documentSelfLink).collect(Collectors.toSet());
+                for (RegistryState rs : expectedRegistries) {
+                    assertThat(registriesLinks, hasItem(rs.documentSelfLink));
                 }
                 host.completeIteration();
             } catch (Throwable e) {
@@ -127,7 +130,7 @@ public class RegistryUtilTest extends BaseTestCase {
         host.testWait();
     }
 
-    private String createRegistry(String address, List<String> tenantLinks)
+    private RegistryState createRegistry(String address, List<String> tenantLinks)
             throws Throwable {
 
         RegistryState registryState = new RegistryState();
@@ -137,6 +140,6 @@ public class RegistryUtilTest extends BaseTestCase {
         registryState = doPost(registryState, RegistryFactoryService.SELF_LINK);
         assertNotNull("Failed to create registry", registryState);
 
-        return registryState.documentSelfLink;
+        return registryState;
     }
 }

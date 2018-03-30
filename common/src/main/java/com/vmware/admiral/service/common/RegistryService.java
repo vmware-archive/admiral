@@ -72,6 +72,7 @@ public class RegistryService extends StatefulService {
         state.documentSelfLink = DEFAULT_INSTANCE_LINK;
         state.address = DEFAULT_REGISTRY_ADDRESS;
         state.endpointType = RegistryState.DOCKER_REGISTRY_ENDPOINT_TYPE;
+        state.disabled = Boolean.FALSE;
         state.customProperties = new HashMap<>();
         state.customProperties.put(API_VERSION_PROP_NAME, ApiVersion.V1.toString());
 

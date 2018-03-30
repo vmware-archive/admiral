@@ -98,13 +98,13 @@ public class ContainerImageTagsService extends StatelessService {
         }
 
         RegistryUtil.findRegistriesByHostname(getHost(), image.getHost(), tenantLinks,
-                (links, errors) -> {
+                (registries, errors) -> {
                     if (errors != null && !errors.isEmpty()) {
                         op.fail(errors.iterator().next());
                         return;
                     }
 
-                    if (links.isEmpty()) {
+                    if (registries.isEmpty()) {
                         String errMsg = String.format(
                                 "Failed to find registry state with address '%s'.",
                                 image.getHost());
@@ -113,7 +113,8 @@ public class ContainerImageTagsService extends StatelessService {
                         return;
                     }
 
-                    sendListTagRequest(op, registryAdapterUri, imageName, links.iterator().next());
+                    String link = registries.iterator().next().documentSelfLink;
+                    sendListTagRequest(op, registryAdapterUri, imageName, link);
                 });
     }
 

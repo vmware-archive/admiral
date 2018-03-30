@@ -21,9 +21,11 @@ import static com.vmware.admiral.common.util.UriUtilsExtended.flattenQueryParams
 import static com.vmware.admiral.common.util.UriUtilsExtended.parseBooleanParam;
 import static com.vmware.admiral.compute.container.util.ContainerUtil.removeTagFromContainerImageName;
 import static com.vmware.admiral.image.service.ContainerImageService.REGISTRY_FILTER_QUERY_PARAM_NAME;
+import static com.vmware.admiral.image.service.ContainerImageService.TENANT_LINKS_PARAM_NAME;
 import static com.vmware.xenon.common.UriUtils.URI_WILDCARD_CHAR;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -35,6 +37,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.logging.Level;
+import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.StringUtils;
 
 import com.vmware.admiral.adapter.registry.service.RegistryAdapterService;
 import com.vmware.admiral.adapter.registry.service.RegistrySearchResponse;
@@ -44,8 +50,10 @@ import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptio
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.ConfigurationUtil;
+import com.vmware.admiral.common.util.DockerImage;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.common.util.RegistryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.ServiceDocumentQuery.ServiceDocumentQueryElementResult;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
@@ -94,9 +102,16 @@ public class TemplateSearchService extends StatelessService {
         AssertUtil.assertNotEmpty(query, QUERY_PARAM);
         query = removeTagFromContainerImageName(query, getHost());
 
-        String projectHeader = OperationUtil.extractProjectFromHeader(get);
-        if (projectHeader != null && !projectHeader.isEmpty()) {
-            queryParams.put(MultiTenantDocument.FIELD_NAME_TENANT_LINKS, projectHeader);
+        // in vRA the templates are global for the business groups inside a tenant
+        String tenantLink;
+        if (ConfigurationUtil.isEmbedded()) {
+            tenantLink = OperationUtil.extractTenantFromProjectHeader(get);
+        } else {
+            tenantLink = OperationUtil.extractProjectFromHeader(get);
+        }
+
+        if (tenantLink != null && !tenantLink.isEmpty()) {
+            queryParams.put(MultiTenantDocument.FIELD_NAME_TENANT_LINKS, tenantLink);
         }
 
         // FIXME search doesn't work when the text contain non alpha chars so disable for now
@@ -151,7 +166,7 @@ public class TemplateSearchService extends StatelessService {
                 executeTemplateQuery(get, query, queryParams, resultConsumer);
             }
             if (!templatesOnly) {
-                executeImageQuery(queryParams, registryFilter, resultConsumer);
+                executeImageQuery(get, queryParams, registryFilter, resultConsumer);
             }
         }
     }
@@ -274,17 +289,10 @@ public class TemplateSearchService extends StatelessService {
             query = query + URI_WILDCARD_CHAR;
         }
 
-        // in vRA the templates are global for the business groups inside a tenant
-        String tenantLink;
-        if (ConfigurationUtil.isEmbedded()) {
-            tenantLink = OperationUtil.extractTenantFromProjectHeader(get);
-        } else {
-            tenantLink = OperationUtil.extractProjectFromHeader(get);
-        }
-
-        List<String> tenantLinks = null;
-        if (tenantLink != null) {
-            tenantLinks = Arrays.asList(tenantLink.split("\\s*,\\s*"));
+        String tenantLink = queryParams.get(TENANT_LINKS_PARAM_NAME);
+        List<String> tenantLinks = new ArrayList<>();
+        if (tenantLink != null && !tenantLink.isEmpty()) {
+            tenantLinks.add(tenantLink);
         }
 
         QueryTask queryTask = new QueryTask();
@@ -384,7 +392,7 @@ public class TemplateSearchService extends StatelessService {
                 }));
     }
 
-    private void executeImageQuery(Map<String, String> queryParams, String registryFilter,
+    private void executeImageQuery(Operation get, Map<String, String> queryParams, String registryFilter,
             BiConsumer<ServiceDocumentQueryElementResult<TemplateSpec>, Boolean> resultConsumer) {
 
         URI imageSearchUri = UriUtils.buildUri(getHost(), ContainerImageService.SELF_LINK);
@@ -407,6 +415,12 @@ public class TemplateSearchService extends StatelessService {
             queryParams.put(REGISTRY_FILTER_QUERY_PARAM_NAME, registryFilter);
         }
 
+        String tenantLink = queryParams.get(TENANT_LINKS_PARAM_NAME);
+        List<String> tenantLinks = new ArrayList<>();
+        if (tenantLink != null) {
+            tenantLinks.add(tenantLink);
+        }
+
         // pass on the query parameters to the image search service
         imageSearchUri = UriUtils.extendUriWithQuery(imageSearchUri, flattenQueryParams(
                 queryParams));
@@ -415,18 +429,68 @@ public class TemplateSearchService extends StatelessService {
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         resultConsumer.accept(error(ex), null);
-
                     } else {
                         RegistrySearchResponse response = o.getBody(RegistrySearchResponse.class);
                         if (response.results != null) {
-                            for (Result result : response.results) {
-                                resultConsumer.accept(result(createTemplateFromImageResult(
-                                        result), response.results.size()), null);
-                            }
+                            filterResultsByRegistryPath(response.results, tenantLinks, (res, t) -> {
+                                if (t != null && !t.isEmpty()) {
+                                    resultConsumer.accept(error(t.iterator().next()), null);
+                                    return;
+                                }
+
+                                for (Result result : res) {
+                                    resultConsumer.accept(result(createTemplateFromImageResult(
+                                            result), res.size()), null);
+                                }
+
+                                resultConsumer.accept(noResult(), response.isPartialResult);
+                            });
                         }
-                        resultConsumer.accept(noResult(), response.isPartialResult);
                     }
                 }));
+    }
+
+    private void filterResultsByRegistryPath(List<Result> results, List<String> tenantLinks,
+            BiConsumer<Collection<Result>, Collection<Throwable>> consumer) {
+        RegistryUtil.findRegistries(getHost(), tenantLinks, null, (registries, failures) -> {
+            if (failures != null) {
+                consumer.accept(null, failures);
+                return;
+            }
+
+            Set<String> registryAddresses = registries.stream().map(reg -> {
+                try {
+                    if (!StringUtils.isEmpty(reg.address)) {
+                        return new URI(reg.address).getSchemeSpecificPart().replace("//", "");
+                    }
+                } catch (URISyntaxException e) {
+                    consumer.accept(null, Arrays.asList(e));
+                }
+
+                return null;
+            }).collect(Collectors.toSet());
+
+            ArrayList<Result> filteredResults = new ArrayList<>();
+            results.stream().forEach(res -> {
+                String imageName = res.name;
+                DockerImage parsedImage;
+                try {
+                    parsedImage = DockerImage.fromImageName(imageName);
+                } catch (Throwable ex) {
+                    log(Level.SEVERE, "Failed to parse docker image from String '%s': %s",
+                            imageName, Utils.toString(ex));
+                    consumer.accept(null, Arrays.asList(ex));
+                    return;
+                }
+
+                if (registryAddresses.contains(parsedImage.getHost()) ||
+                        registryAddresses.contains(parsedImage.getHost() + "/" + parsedImage.getNamespace())) {
+                    filteredResults.add(res);
+                }
+            });
+
+            consumer.accept(filteredResults, null);
+        });
     }
 
     private TemplateSpec createTemplateFromImageResult(Result result) {

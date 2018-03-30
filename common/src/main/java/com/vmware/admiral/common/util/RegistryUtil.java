@@ -17,11 +17,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -122,25 +120,16 @@ public class RegistryUtil {
     }
 
     /**
-     * Do something with each registry available to the given group (and global registries)
+     * Retrieve all the registries available to the given group (and global registries)
      *
-     * @param tenantLink
-     * @param registryLinksConsumer
-     * @param failureConsumer
+     * @param tenantLinks
+     * @param registryFilter
+     * @param consumer
      */
-    public static void forEachRegistry(ServiceHost serviceHost, Collection<String> tenantLinks,
-            String registryFilter, Consumer<Collection<String>> registryLinksConsumer,
-            Consumer<Collection<Throwable>> failureConsumer) {
+    public static void findRegistries(ServiceHost serviceHost, Collection<String> tenantLinks,
+            String registryFilter, BiConsumer<Collection<RegistryState>, Collection<Throwable>> consumer) {
 
-        BiConsumer<Collection<String>, Collection<Throwable>> consumer = (links, failures) -> {
-            if (failures != null && !failures.isEmpty()) {
-                failureConsumer.accept(failures);
-                return;
-            }
-            registryLinksConsumer.accept(links);
-        };
-
-        List<QueryTask> queryTasks = new ArrayList<QueryTask>();
+        List<QueryTask> queryTasks = new ArrayList<>();
 
         if (registryFilter != null && !registryFilter.isEmpty()) {
             // add query for a registry with a specific name and group
@@ -158,11 +147,18 @@ public class RegistryUtil {
         queryForRegistries(serviceHost, queryTasks, consumer);
     }
 
+    /**
+     * Retrieve the registries available to the given group for the given host (and global registries)
+     * @param serviceHost
+     * @param hostname
+     * @param tenantLinks
+     * @param consumer
+     */
     public static void findRegistriesByHostname(ServiceHost serviceHost, String hostname,
             Collection<String> tenantLinks,
-            BiConsumer<Collection<String>, Collection<Throwable>> consumer) {
+            BiConsumer<Collection<RegistryState>, Collection<Throwable>> consumer) {
 
-        List<QueryTask> queryTasks = new ArrayList<QueryTask>();
+        List<QueryTask> queryTasks = new ArrayList<>();
 
         if (tenantLinks != null && !tenantLinks.isEmpty()) {
             // add query for global groups
@@ -179,8 +175,14 @@ public class RegistryUtil {
         queryForRegistries(serviceHost, queryTasks, consumer);
     }
 
+    /**
+     * Executes the given query tasks
+     * @param serviceHost
+     * @param queryTasks
+     * @param consumer
+     */
     private static void queryForRegistries(ServiceHost serviceHost, Collection<QueryTask> queryTasks,
-            BiConsumer<Collection<String>, Collection<Throwable>> consumer) {
+            BiConsumer<Collection<RegistryState>, Collection<Throwable>> consumer) {
 
         List<Operation> queryOperations = new ArrayList<>();
         for (QueryTask queryTask : queryTasks) {
@@ -198,33 +200,23 @@ public class RegistryUtil {
                             return;
                         }
 
-                        // return one registry link for each address (same registry address can be set in different
-                        // entries, in the same or different tenants (in case of system admin search))
-                        Map<String, String> registryLinks = new HashMap<>();
+                        List<RegistryState> registryStates = new ArrayList<>();
                         for (Operation o : ops.values()) {
                             QueryTask result = o.getBody(QueryTask.class);
 
                             for (Map.Entry<String, Object> document : result.results.documents.entrySet()) {
                                 RegistryState registryState = Utils.fromJson(document.getValue(), RegistryState.class);
-                                // if same registry is repeated, return it only once
-                                if (!registryLinks.containsKey(registryState.address)) {
-                                    registryLinks.put(registryState.address, document.getKey());
-                                }
+                                registryStates.add(registryState);
                             }
                         }
 
-                        consumer.accept(registryLinks.values(), null);
+                        consumer.accept(registryStates, null);
                     })
                     .sendWith(serviceHost);
         } else {
             // no registry links available
             consumer.accept(Collections.emptyList(), null);
         }
-    }
-
-    private static Query buildQueryByHostname(String hostname) {
-        return createAnyPropertyClause(String.format("*://%s*", hostname),
-                RegistryState.FIELD_NAME_ADDRESS);
     }
 
     /**
@@ -281,8 +273,12 @@ public class RegistryUtil {
         return buildRegistryQuery(nameClause, tenantsClause);
     }
 
+    /**
+     * Builds a query task from the given queries.
+     * @param additionalClauses
+     * @return
+     */
     private static QueryTask buildRegistryQuery(Query... additionalClauses) {
-
         List<Query> clauses = new ArrayList<>();
         if (additionalClauses != null) {
             clauses.addAll(Arrays.asList(additionalClauses));
@@ -299,5 +295,10 @@ public class RegistryUtil {
         QueryUtil.addExpandOption(queryTask);
 
         return queryTask;
+    }
+
+    private static Query buildQueryByHostname(String hostname) {
+        return createAnyPropertyClause(String.format("*://%s*", hostname),
+                RegistryState.FIELD_NAME_ADDRESS);
     }
 }

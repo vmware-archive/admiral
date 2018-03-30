@@ -14,7 +14,9 @@ package com.vmware.admiral.service.common;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 import org.junit.Test;
 
@@ -48,17 +50,16 @@ public class DisabledRegistryStateQueryTest extends BaseRegistryStateQueryTest {
     public void testDisabledRegistriesExcluded() throws Throwable {
         // initially the registry is enabled so should be included in results
         waitFor("time out waiting for initially included registry.", () -> {
-            RegistryUtil.forEachRegistry(host, Collections.singletonList(TEST_GROUP_TENANT_LINK),
-                    null,
-                    (registryLinks) -> {
-                        System.out.println("REGISTRY LINKS ======> " + registryLinks);
+            RegistryUtil.findRegistries(host, Collections.singletonList(TEST_GROUP_TENANT_LINK),
+                    null, (registries, FAIL_ON_ERROR_HANDLER) -> {
+                        Set<String> registryLinks = registries.stream().map(r -> r.documentSelfLink).collect(Collectors.toSet());
                         if (!registryLinks.contains(registryState.documentSelfLink)) {
                             host.log(Level.SEVERE, "Registry %s missing from results",
                                     registryState.documentSelfLink);
                             return;
                         }
                         expectedResultFound.set(true);
-                    }, FAIL_ON_ERROR_HANDLER);
+                    });
             return expectedResultFound.get();
         });
 
@@ -69,16 +70,17 @@ public class DisabledRegistryStateQueryTest extends BaseRegistryStateQueryTest {
 
         // this time expect the grouped registry to be excluded
         waitFor("time out waiting to remove a disabled registry from index..", () -> {
-            RegistryUtil.forEachRegistry(host, Collections.singletonList(TEST_GROUP_TENANT_LINK),
+            RegistryUtil.findRegistries(host, Collections.singletonList(TEST_GROUP_TENANT_LINK),
                     null,
-                    (registryLinks) -> {
+                    (registries, FAIL_ON_ERROR_HANDLER) -> {
+                        Set<String> registryLinks = registries.stream().map(r -> r.documentSelfLink).collect(Collectors.toSet());
                         if (registryLinks.contains(registryState.documentSelfLink)) {
                             host.log(Level.SEVERE, "Disabled registry %s included in results",
                                     registryState.documentSelfLink);
                             return;
                         }
                         expectedResultFound.set(true);
-                    }, FAIL_ON_ERROR_HANDLER);
+                    });
             return expectedResultFound.get();
         });
     }

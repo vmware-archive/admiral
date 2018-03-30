@@ -359,6 +359,45 @@ public class RegistryHostValidatingHelperServiceIT extends BaseTestCase {
         assertEquals(TEST_REGISTRY_ADDRESS, regState.address);
     }
 
+    @Test
+    public void testAddRegistryWithMultiplePath() throws Throwable {
+        final String registryPath = "/vmware/admiral";
+        final String registryFullPath = TEST_REGISTRY_ADDRESS + registryPath;
+        RegistryState rs = new RegistryState();
+        rs.address = registryFullPath;
+        rs.name = getClass().getName();
+        rs.endpointType = RegistryState.DOCKER_REGISTRY_ENDPOINT_TYPE;
+
+        RegistryHostSpec hs = new RegistryHostSpec();
+        hs.hostState = rs;
+        hs.acceptHostAddress = true;
+
+        String[] result = new String[] { null };
+
+        Operation createRegistryOp = Operation
+                .createPut(helperUri)
+                .setBody(hs)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        host.failIteration(e);
+                        return;
+                    }
+
+                    result[0] = o.getResponseHeader(Operation.LOCATION_HEADER);
+                    host.completeIteration();
+                });
+
+        host.testStart(1);
+        host.send(createRegistryOp);
+        host.testWait();
+
+        String location = result[0];
+        assertNotNull(location);
+
+        RegistryState regState = getDocument(RegistryState.class, location);
+        assertEquals(registryFullPath, regState.address);
+    }
+
     private RegistryState createRegistryState() {
         RegistryState registryState = new RegistryState();
         registryState.name = getClass().getName();

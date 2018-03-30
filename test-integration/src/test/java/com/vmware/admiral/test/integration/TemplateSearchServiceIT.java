@@ -12,7 +12,9 @@
 package com.vmware.admiral.test.integration;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import static com.vmware.admiral.test.integration.TestPropertiesUtil.getTestRequiredProp;
 
@@ -27,6 +29,8 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -54,9 +58,26 @@ public class TemplateSearchServiceIT extends BaseIntegrationSupportIT {
 
     private static final Logger logger = Logger.getLogger(TemplateSearchServiceIT.class.getName());
 
+    private static RegistryState configuredRegistry;
+
+    private List<RegistryState> registriesToEnable = new ArrayList<>();
+    private List<RegistryState> registriesToDisable = new ArrayList<>();
+
     @BeforeClass
     public static void setUpRegistryInDefaultProject() throws Exception {
-        configureRegistry(getTestRequiredProp("docker.registry.host.address"));
+        configuredRegistry = configureRegistry(getTestRequiredProp("docker.registry.host.address"));
+    }
+
+    @Before
+    public void init() {
+        registriesToEnable = new ArrayList<>();
+        registriesToDisable = new ArrayList<>();
+    }
+
+    @After
+    public void cleanUp() throws Exception {
+        enableRegistries(registriesToEnable);
+        disableRegistries(registriesToDisable);
     }
 
     @Test
@@ -73,7 +94,7 @@ public class TemplateSearchServiceIT extends BaseIntegrationSupportIT {
         URI templateSearchUri = UriUtils.buildUri(new URI(getBaseUrl()),
                 TemplateSearchService.SELF_LINK);
 
-        final List<String> keyValues = new ArrayList<String>(Arrays.asList(
+        final List<String> keyValues = new ArrayList<>(Arrays.asList(
                 TemplateSearchService.IMAGES_ONLY_PARAM, Boolean.toString(true),
                 TemplateSearchService.QUERY_PARAM, searchTerm));
 
@@ -98,7 +119,7 @@ public class TemplateSearchServiceIT extends BaseIntegrationSupportIT {
                 TemplateSearchService.SELF_LINK);
 
         // exclude results from the default registry
-        final List<String> keyValues = new ArrayList<String>(Arrays.asList(
+        final List<String> keyValues = new ArrayList<>(Arrays.asList(
                 TemplateSearchService.IMAGES_ONLY_PARAM, Boolean.toString(true),
                 ContainerImageService.REGISTRY_FILTER_QUERY_PARAM_NAME, REGISTRY_NAME,
                 TemplateSearchService.QUERY_PARAM, "vmware"));
@@ -136,8 +157,6 @@ public class TemplateSearchServiceIT extends BaseIntegrationSupportIT {
         templateSearchUri = UriUtils.extendUriWithQuery(templateSearchUri,
                 keyValues.toArray(new String[keyValues.size()]));
 
-        // we will execute the search in the context of the newly created project.
-
         HashMap<String, String> headers = new HashMap<>();
         headers.put(OperationUtil.PROJECT_ADMIRAL_HEADER, createdProject.documentSelfLink);
 
@@ -151,21 +170,168 @@ public class TemplateSearchServiceIT extends BaseIntegrationSupportIT {
         assertEquals(0, searchResponse.results.size());
     }
 
-    private static void configureRegistry(String address) throws Exception {
+    @Test
+    public void testSearchImagesWhenRegistriesAreDisabled() throws Exception {
+        logger.info("Assert the default registry is there");
+        RegistryState dockerHub = getDocument(RegistryService.DEFAULT_INSTANCE_LINK,
+                RegistryState.class);
+        dockerHub.name = dockerHub.address; // required name when updating a registry
+        assertNotNull(dockerHub);
+
+        logger.info("Assert the preconfigured registry is there");
+        RegistryState configuredReg = getDocument(configuredRegistry.documentSelfLink,
+                RegistryState.class);
+        assertNotNull(configuredReg);
+
+        List<RegistryState> disabledRegistries = disableRegistries(Arrays.asList(dockerHub, configuredReg));
+        registriesToEnable.addAll(disabledRegistries);
+
+        URI templateSearchUri = UriUtils.buildUri(new URI(getBaseUrl()),
+                TemplateSearchService.SELF_LINK);
+
+        final List<String> keyValues = new ArrayList<>(Arrays.asList(
+                TemplateSearchService.IMAGES_ONLY_PARAM, Boolean.toString(true),
+                TemplateSearchService.QUERY_PARAM, "vmware"));
+
+        templateSearchUri = UriUtils.extendUriWithQuery(templateSearchUri,
+                keyValues.toArray(new String[keyValues.size()]));
+
+        logger.info("Search URI built: " + templateSearchUri);
+
+        HashMap<String, String> headers = new HashMap<>();
+        headers.put(OperationUtil.PROJECT_ADMIRAL_HEADER, ProjectService.DEFAULT_PROJECT_LINK);
+
+        HttpResponse httpResponse = SimpleHttpsClient.execute(HttpMethod.GET,
+                templateSearchUri.toString(), null, headers, null);
+        RegistrySearchResponse searchResponse = Utils.fromJson(httpResponse.responseBody,
+                RegistrySearchResponse.class);
+
+        assertEquals(0, searchResponse.results.size());
+    }
+
+    @Test
+    public void testSearchImagesFromRegistriesWithSpecificPath() throws Exception {
+        logger.info("Assert the default registry is there");
+        RegistryState dockerHub = getDocument(RegistryService.DEFAULT_INSTANCE_LINK,
+                RegistryState.class);
+        dockerHub.name = dockerHub.address; // required name when updating a registry
+        assertNotNull(dockerHub);
+
+        logger.info("Assert the preconfigured registry is there");
+        RegistryState configuredReg = getDocument(configuredRegistry.documentSelfLink,
+                RegistryState.class);
+        assertNotNull(configuredReg);
+
+        List<RegistryState> disabledRegistries = disableRegistries(Arrays.asList(dockerHub, configuredReg));
+        registriesToEnable.addAll(disabledRegistries);
+
+        String address = getTestRequiredProp("docker.v2.registry.host.address");
+        logger.info("Configuring registry. Registry address: " + address);
+        logger.info("This registry contains: busybox, sample/busybox, vmware/bellevue");
+        RegistryState v2Registry = configureRegistry(address);
+        assertNotNull(v2Registry);
+        assertFalse(v2Registry.disabled);
+        registriesToDisable.add(v2Registry);
+
+        URI templateSearchUri = UriUtils.buildUri(new URI(getBaseUrl()),
+                TemplateSearchService.SELF_LINK);
+
+        logger.info("Test that the busybox image will be retrieved twice.");
+        final List<String> keyValues = new ArrayList<>(Arrays.asList(
+                TemplateSearchService.IMAGES_ONLY_PARAM, Boolean.toString(true),
+                TemplateSearchService.QUERY_PARAM, "busybox"));
+
+        templateSearchUri = UriUtils.extendUriWithQuery(templateSearchUri,
+                keyValues.toArray(new String[keyValues.size()]));
+
+        logger.info("Search URI built: " + templateSearchUri);
+        HashMap<String, String> headers = new HashMap<>();
+        headers.put(OperationUtil.PROJECT_ADMIRAL_HEADER, ProjectService.DEFAULT_PROJECT_LINK);
+
+        HttpResponse httpResponse = SimpleHttpsClient.execute(HttpMethod.GET,
+                templateSearchUri.toString(), null, headers, null);
+        RegistrySearchResponse searchResponse = Utils.fromJson(httpResponse.responseBody,
+                RegistrySearchResponse.class);
+
+        assertEquals(2, searchResponse.results.size());
+
+        disableRegistries(Arrays.asList(v2Registry));
+
+        logger.info("Test that the busybox image will be retrieved once because of the additional path "
+                + "in the registry.");
+        address = getTestRequiredProp("docker.v2.registry.host.address") + "/sample";
+        logger.info("Configure registry with path. Registry address: " + address);
+        logger.info("This registry contains: busybox, sample/busybox, vmware/bellevue");
+        RegistryState registryWithPath = configureRegistry(address);
+        assertNotNull(registryWithPath);
+        assertFalse(registryWithPath.disabled);
+        registriesToDisable.add(registryWithPath);
+
+        httpResponse = SimpleHttpsClient.execute(HttpMethod.GET,
+                templateSearchUri.toString(), null, headers, null);
+        searchResponse = Utils.fromJson(httpResponse.responseBody,
+                RegistrySearchResponse.class);
+
+        assertEquals(1, searchResponse.results.size());
+    }
+
+    private static RegistryState configureRegistry(String address) throws Exception {
         RegistryState registryState = new RegistryState();
         registryState.address = address;
         registryState.name = REGISTRY_NAME;
         registryState.endpointType = RegistryState.DOCKER_REGISTRY_ENDPOINT_TYPE;
+        registryState.disabled = Boolean.FALSE;
         registryState.tenantLinks = Collections.singletonList(ProjectService.DEFAULT_PROJECT_LINK);
 
         RegistryHostSpec registryHostSpec = new RegistryHostSpec();
         registryHostSpec.hostState = registryState;
         registryHostSpec.acceptCertificate = true;
 
-        createOrUpdateRegistry(registryHostSpec);
+        return createRegistry(registryHostSpec);
     }
 
-    private static void createOrUpdateRegistry(RegistryHostSpec hostSpec) throws Exception {
+    private static RegistryState createRegistry(RegistryHostSpec hostSpec) throws Exception {
+        HttpResponse httpResponse = updateRegistry(hostSpec);
+
+        List<String> headers = httpResponse.headers.get(Operation.LOCATION_HEADER);
+        String documentSelfLink = headers.get(0);
+
+        RegistryState registry = getDocument(documentSelfLink, RegistryState.class);
+        cleanUpAfterClass(registry);
+        return registry;
+    }
+
+    private static List<RegistryState> disableRegistries(List<RegistryState> registries) throws Exception {
+        ArrayList<RegistryState> disabledRegistries = new ArrayList<>();
+        if (registries != null) {
+            for (RegistryState r : registries) {
+                logger.info("Disable registry: " + r.address);
+                r.disabled = true;
+                r = updateRegistry(r);
+                assertTrue(r.disabled);
+                disabledRegistries.add(r);
+            }
+        }
+
+        return disabledRegistries;
+    }
+
+    private static List<RegistryState> enableRegistries(List<RegistryState> registries) throws Exception {
+        ArrayList<RegistryState> enabledRegistries = new ArrayList<>();
+        if (registries != null) {
+            for (RegistryState r : registries) {
+                logger.info("Enable registry: " + r.address);
+                r.disabled = false;
+                r = updateRegistry(r);
+                assertFalse(r.disabled);
+                enabledRegistries.add(r);
+            }
+        }
+
+        return enabledRegistries;
+    }
+
+    private static HttpResponse updateRegistry(RegistryHostSpec hostSpec) throws Exception {
         HttpResponse httpResponse = SimpleHttpsClient.execute(HttpMethod.PUT,
                 getBaseUrl() + buildServiceUri(RegistryHostConfigService.SELF_LINK),
                 Utils.toJson(hostSpec));
@@ -177,9 +343,20 @@ public class TemplateSearchServiceIT extends BaseIntegrationSupportIT {
             throw new IllegalArgumentException(error);
         }
 
-        List<String> headers = httpResponse.headers.get(Operation.LOCATION_HEADER);
-        String documentSelfLink = headers.get(0);
-        cleanUpAfterClass(getDocument(documentSelfLink, RegistryState.class));
+        return httpResponse;
+    }
+
+    private static RegistryState updateRegistry(RegistryState reg) throws Exception {
+        RegistryHostSpec registryHostSpec = new RegistryHostSpec();
+        registryHostSpec.hostState = reg;
+
+        updateRegistry(registryHostSpec);
+
+        reg = getDocument(reg.documentSelfLink,
+                RegistryState.class);
+        assertNotNull(reg);
+
+        return reg;
     }
 
     private ProjectState createProject() throws Exception {
