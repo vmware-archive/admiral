@@ -9,7 +9,15 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-  <div class="main-view">
+<delete-confirmation [title]="'projects.projectRegistries.deleteConfirmation.title' | i18n"
+                     [description]="'projects.projectRegistries.deleteConfirmation.description' | i18n"
+                     [(alert)]="deleteConfirmationAlert"
+                     [visible]="showDeleteConfirmation"
+                     (onDelete)="deleteConfirmed()"
+                     (onCancel)="deleteCanceled()">
+</delete-confirmation>
+
+<div class="main-view">
     <table-view [searchPlaceholder]="'projects.projectRegistries.searchPlaceholder' | i18n" (onRefresh)="refreshProjectRegistries($event)">
         <div toolbar>
             <clr-dg-action-bar>
@@ -18,7 +26,8 @@
                         shape="plus"></clr-icon><span
                         class="btn-spaced-text">{{"projects.projectRegistries.new" | i18n}}</span></button>
                     <button type="button" class="btn btn-sm btn-secondary"
-                        [disabled]="selectedProjectRegistries.length == 0"><clr-icon
+                        [disabled]="selectedProjectRegistries.length == 0"
+                        (click)="removeSelectedRegistries($event)"><clr-icon
                         shape="close"></clr-icon><span
                         class="btn-spaced-text">{{"projects.delete" | i18n}}</span></button>
                     </div>

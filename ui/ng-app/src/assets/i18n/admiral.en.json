@@ -107,13 +107,17 @@
         "scopeTitle": "Scope",
         "addressTitle": "Address",
         "searchPlaceholder": "Search for registries",
-        "scope":{
+        "scope": {
           "system": "System",
           "project": "Project"
         },
-        "status":{
+        "status": {
           "active": "Active",
           "disabled": "Disabled"
+        },
+        "deleteConfirmation": {
+          "title": "Remove Project Registries",
+          "description": "Confirm the removal of the selected registries. The operation cannot be undone."
         }
     },
     "config": {

@@ -30,6 +30,9 @@ export class ProjectRegistriesComponent implements OnInit {
     projectRegistries: any[];
     selectedProjectRegistries: any[] = [];
 
+    showDeleteConfirmation: boolean = false;
+    deleteConfirmationAlert: string;
+
     constructor(protected service: DocumentService, private errorService: ErrorService) {
     }
 
@@ -70,5 +73,30 @@ export class ProjectRegistriesComponent implements OnInit {
         if ($event) {
             this.listProjectRegistries($event.queryOptions || {});
         }
+    }
+
+    removeSelectedRegistries($event) {
+        $event.stopPropagation();
+
+        this.showDeleteConfirmation = true;
+    }
+    deleteConfirmed() {
+        let promises: any[] = [];
+
+        this.selectedProjectRegistries.forEach((registriesToDelete) => {
+           let deletePromise =  this.service.delete(registriesToDelete.documentSelfLink);
+           promises.push(deletePromise);
+        });
+
+        Promise.all(promises).then(() => {
+            this.selectedProjectRegistries = [];
+            this.showDeleteConfirmation = false;
+        }).catch(err => {
+            this.deleteConfirmationAlert = Utils.getErrorMessage(err)._generic;
+        });
+    }
+
+    deleteCanceled() {
+        this.showDeleteConfirmation = false;
     }
 }
