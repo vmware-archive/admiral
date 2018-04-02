@@ -49,6 +49,7 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.serialization.ReleaseConstants;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.common.util.RegistryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
@@ -110,6 +111,8 @@ public class RequestBrokerService extends
         AbstractTaskStatefulService<RequestBrokerService.RequestBrokerState, RequestBrokerService.RequestBrokerState.SubStage> {
 
     public static final String DISPLAY_NAME = "Request";
+    protected static final String REGISTRY_WHITELIST_CHECK_FAILED_ERROR_CODE = "request.registry.whitelist.check.failed";
+    protected static final String REGISTRY_WHITELIST_CHECK_FAILED_ERROR_FORMAT = "Registry whitelist check failed for image %s";
 
     public static class RequestBrokerState
             extends
@@ -802,6 +805,25 @@ public class RequestBrokerService extends
         }
     }
 
+    private void enforceRegistryWhitelist(ContainerDescription containerDescription,
+            RequestBrokerState requestState, Consumer<Throwable> completionHandler) {
+
+        RegistryUtil.isProvisioningAllowedByRegistryWhitelist(getHost(), requestState.tenantLinks,
+                containerDescription.image, (isAllowed, error) -> {
+
+                    if (error != null) {
+                        completionHandler.accept(error);
+                    } else if (!isAllowed) {
+                        String message = String.format(
+                                "Image %s is not stored in a white-listed registry.",
+                                containerDescription.image);
+                        completionHandler.accept(new IllegalStateException(message));
+                    } else {
+                        completionHandler.accept(null);
+                    }
+                });
+    }
+
     private void createReservationTasks(RequestBrokerState state,
             ContainerDescription containerDescription) {
 
@@ -810,6 +832,22 @@ public class RequestBrokerService extends
             return;
         }
 
+        enforceRegistryWhitelist(containerDescription, state, (ex) -> {
+            if (ex != null) {
+                String error = String.format(
+                        REGISTRY_WHITELIST_CHECK_FAILED_ERROR_FORMAT,
+                        containerDescription.image);
+                failTask(error, new LocalizableValidationException(error,
+                        REGISTRY_WHITELIST_CHECK_FAILED_ERROR_CODE,
+                        containerDescription.image));
+            } else {
+                doCreateReservationTasks(state, containerDescription);
+            }
+        });
+    }
+
+    private void doCreateReservationTasks(RequestBrokerState state,
+            ContainerDescription containerDescription) {
         ReservationTaskState rsrvTask = new ReservationTaskState();
         rsrvTask.documentSelfLink = getSelfId();
         rsrvTask.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),

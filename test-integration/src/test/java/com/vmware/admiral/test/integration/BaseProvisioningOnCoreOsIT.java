@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -108,10 +108,9 @@ import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsSe
  * Base class for test that provision a container
  */
 public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportIT {
-    protected static final List<String> TENANT = Collections.singletonList("docker-test");
     protected static ServiceClient serviceClient;
 
-    private static final List<String> TENANT_LINKS = Collections
+    protected static final List<String> TENANT_LINKS = Collections
             .singletonList("/tenants/docker-test");
     private static final List<String> OTHER_TENANT_LINKS = Collections
             .singletonList("/tenants/other-docker-test");
@@ -477,7 +476,7 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
             request.resourceType = meta.resourceType;
         }
         request.resourceDescriptionLink = resourceDescLink;
-        request.tenantLinks = TENANT;
+        request.tenantLinks = TENANT_LINKS;
         request = postDocument(RequestBrokerFactoryService.SELF_LINK, request);
 
         waitForTaskToComplete(request.documentSelfLink);
@@ -495,7 +494,7 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
         RequestBrokerState request = new RequestBrokerState();
         request.resourceType = ResourceType.VOLUME_TYPE.getName();
         request.resourceDescriptionLink = resourceDescLink;
-        request.tenantLinks = TENANT;
+        request.tenantLinks = TENANT_LINKS;
         request = postDocument(RequestBrokerFactoryService.SELF_LINK, request);
 
         waitForTaskToComplete(request.documentSelfLink);
@@ -515,7 +514,7 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
         day2DeleteRequest.resourceType = ResourceType.VOLUME_TYPE.getName();
         day2DeleteRequest.operation = VolumeOperationType.DELETE.id;
         day2DeleteRequest.resourceLinks = resourceLinks;
-        day2DeleteRequest.tenantLinks = TENANT;
+        day2DeleteRequest.tenantLinks = TENANT_LINKS;
         day2DeleteRequest = postDocument(RequestBrokerFactoryService.SELF_LINK, day2DeleteRequest,
                 TestDocumentLifeCycle.NO_DELETE);
 
@@ -589,7 +588,7 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
 
         request.resourceType = meta.resourceType;
         request.resourceDescriptionLink = networkDescLink;
-        request.tenantLinks = TENANT;
+        request.tenantLinks = TENANT_LINKS;
         request = postDocument(RequestBrokerFactoryService.SELF_LINK, request);
 
         waitForTaskToComplete(request.documentSelfLink);

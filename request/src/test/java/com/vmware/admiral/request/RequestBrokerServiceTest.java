@@ -32,6 +32,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.logging.Level;
 
 import org.junit.Test;
 
@@ -79,6 +80,7 @@ import com.vmware.admiral.request.ReservationTaskService.ReservationTaskState;
 import com.vmware.admiral.request.composition.CompositionSubTaskService;
 import com.vmware.admiral.request.compute.ComputeOperationType;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
+import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.admiral.service.test.MockDockerNetworkAdapterService;
 import com.vmware.admiral.service.test.MockDockerNetworkToHostService;
@@ -183,6 +185,56 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         containerState = searchForDocument(ContainerState.class, request.resourceLinks.iterator()
                 .next());
         assertNull(containerState);
+    }
+
+    @Test
+    public void testProvisioningFailsForNonWhitelistedRegistries() throws Throwable {
+        host.log("########  Start of testProvisioningFailsForNonWhitelistedRegistries ######## ");
+        // setup Docker Host:
+        ResourcePoolState resourcePool = createResourcePool();
+        ComputeDescription dockerHostDesc = createDockerHostDescription();
+        createDockerHost(dockerHostDesc, resourcePool);
+
+        // setup Container desc:
+        ContainerDescription containerDesc = createContainerDescription();
+
+        // setup Group Placement:
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(
+                resourcePool);
+
+        // 1. Remove default registry.
+        Operation delete = Operation.createDelete(host, RegistryService.DEFAULT_INSTANCE_LINK)
+                .setReferer("/")
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        host.log(Level.SEVERE, "Could not delete default registry state");
+                        host.failIteration(ex);
+                    } else {
+                        host.completeIteration();
+                    }
+                });
+        host.testStart(1);
+        host.send(delete);
+        host.testWait();
+        // Now no provisioning requests should match the registries whitelist
+
+        // 2. Request a container instance:
+        RequestBrokerState request = TestRequestStateFactory.createRequestState();
+        request.resourceDescriptionLink = containerDesc.documentSelfLink;
+        request.tenantLinks = groupPlacementState.tenantLinks;
+        host.log("########  Start of provisioning request ######## ");
+        request = startRequest(request);
+
+        // 3. wait for the request to fail
+        request = waitForRequestToFail(request);
+
+        // 4. assert failure reason
+        assertNotNull("request.taskInfo.failure is null", request.taskInfo.failure);
+        assertNotNull("request.taskInfo.failure.message is null", request.taskInfo.failure.message);
+        assertEquals(
+                String.format(RequestBrokerService.REGISTRY_WHITELIST_CHECK_FAILED_ERROR_FORMAT,
+                        containerDesc.image),
+                request.taskInfo.failure.message);
     }
 
     /**

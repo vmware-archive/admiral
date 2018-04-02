@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -158,7 +158,7 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
         description.documentSelfLink = UUID.randomUUID().toString();
         description.name = EXTERNAL_NETWORK_NAME;
         description.driver = useOverlayNetwork() ? "overlay" : "bridge";
-        description.tenantLinks = TENANT;
+        description.tenantLinks = TENANT_LINKS;
         description.customProperties = new HashMap<>();
         description.customProperties.put(CONTAINER_HOST_ID_CUSTOM_PROPERTY,
                 Service.getId(getDockerHost().documentSelfLink));

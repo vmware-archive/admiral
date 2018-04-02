@@ -24,6 +24,7 @@ import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.util.CertificateUtilExtended;
 import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.PropertyUtils;
+import com.vmware.admiral.common.util.RegistryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.SslCertificateResolver;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -50,7 +51,8 @@ import com.vmware.xenon.services.common.ServiceUriPaths;
 public class RegistryService extends StatefulService {
 
     protected static final String DEFAULT_REGISTRY_ADDRESS = System.getProperty(
-            "admiral.default.registry.address", "https://registry.hub.docker.com");
+            "admiral.default.registry.address",
+            "https://" + RegistryUtil.DEFAULT_DOCKER_REGISTRY_ADDRESS);
 
     private static final String DEFAULT_INSTANCE_ID = "default-registry";
     public static final String DEFAULT_INSTANCE_LINK = UriUtils

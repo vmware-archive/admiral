@@ -22,7 +22,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.logging.Level;
+import java.util.stream.Collectors;
 
+import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
@@ -35,6 +38,88 @@ import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 import com.vmware.xenon.services.common.ServiceUriPaths;
 
 public class RegistryUtil {
+
+    public static final String DEFAULT_DOCKER_REGISTRY_ADDRESS = "registry.hub.docker.com";
+
+    public static void isProvisioningAllowedByRegistryWhitelist(ServiceHost serviceHost,
+            Collection<String> requestTenantLinks,
+            String containerImage,
+            BiConsumer<Boolean, Throwable> completionHandler) {
+
+        serviceHost.log(Level.INFO, "Checking registry whitelist for image %s", containerImage);
+        // extract the registry hostname from the image.
+        // If no hostname is set, default to Docker Hub
+        DockerImage parsedImage;
+        try {
+            parsedImage = DockerImage.fromImageName(containerImage);
+        } catch (Throwable ex) {
+            serviceHost.log(Level.SEVERE, "Failed to parse docker image from String '%s': %s",
+                    containerImage, Utils.toString(ex));
+            completionHandler.accept(null, ex);
+            return;
+        }
+
+        String registryHost = nonNullValue(parsedImage.getHost(), DEFAULT_DOCKER_REGISTRY_ADDRESS);
+
+        // filter only important tenant links
+        Collection<String> filteredTenantLinks = filterWhitelistRelatedTenantLinks(
+                requestTenantLinks);
+        serviceHost.log(Level.INFO,
+                "Searching for registries with tenantLinks [%s] (Request tenant links are [%s])",
+                filteredTenantLinks == null ? null : String.join(", ", filteredTenantLinks),
+                requestTenantLinks == null ? null : String.join(", ", requestTenantLinks));
+
+        // Try to find a definition of global and/or project specific registries with this hostname
+        findRegistriesByHostname(serviceHost, registryHost, filteredTenantLinks,
+                (registriesLinks, errors) -> {
+                    if (errors != null && !errors.isEmpty()) {
+                        Throwable firstError = errors.iterator().next();
+                        serviceHost.log(Level.SEVERE,
+                                "Failed to query registries with address [%s]: %s", registryHost,
+                                Utils.toString(firstError));
+                        completionHandler.accept(null, firstError);
+                        return;
+                    }
+
+                    // if there is at least one matching registry
+                    // then the provisioning should be permitted
+                    serviceHost.log(Level.INFO, "Found %s matching registries.",
+                            registriesLinks == null ? 0 : registriesLinks.size());
+
+                    // TODO do additional checks for paths in registries
+                    boolean allowRequest = registriesLinks != null && registriesLinks.size() > 0;
+                    completionHandler.accept(allowRequest, null);
+                });
+    }
+
+    private static String nonNullValue(String desiredValue, String defaultValue) {
+        if (desiredValue != null && !desiredValue.isEmpty()) {
+            return desiredValue;
+        }
+
+        return defaultValue;
+    }
+
+    /**
+     * For the purposes of registry whitelist checks, only /projects/{id} and /tenants/{id} tenant
+     * links are important. /tenants/{id}/groups/{group}, /users/{principal} and other custom tenant
+     * links will be removed in the result.
+     */
+    private static Collection<String> filterWhitelistRelatedTenantLinks(
+            Collection<String> allTenantLinks) {
+        if (allTenantLinks == null) {
+            return null;
+        }
+
+        return allTenantLinks.stream().filter((tenantLink) -> {
+            if (tenantLink.startsWith(MultiTenantDocument.PROJECTS_IDENTIFIER)) {
+                return true;
+            }
+
+            return tenantLink.startsWith(MultiTenantDocument.TENANTS_PREFIX)
+                    && !tenantLink.contains(MultiTenantDocument.GROUP_IDENTIFIER);
+        }).collect(Collectors.toSet());
+    }
 
     /**
      * Do something with each registry available to the given group (and global registries)
@@ -202,10 +287,6 @@ public class RegistryUtil {
         if (additionalClauses != null) {
             clauses.addAll(Arrays.asList(additionalClauses));
         }
-        Query endpointTypeClause = new Query()
-                .setTermPropertyName(RegistryState.FIELD_NAME_ENDPOINT_TYPE)
-                .setTermMatchValue(RegistryState.DOCKER_REGISTRY_ENDPOINT_TYPE);
-        clauses.add(endpointTypeClause);
 
         Query excludeDisabledClause = new Query()
                 .setTermPropertyName(RegistryState.FIELD_NAME_DISABLED)
