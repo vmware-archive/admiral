@@ -11,6 +11,9 @@
 
 package com.vmware.admiral.compute.cluster;
 
+import static com.vmware.admiral.compute.ContainerHostUtil.isKubernetesHost;
+import static com.vmware.admiral.compute.ContainerHostUtil.isVicHost;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -29,7 +32,6 @@ import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
-import com.vmware.admiral.compute.ContainerHostUtil;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService.ElasticPlacementZoneConfigurationState;
 import com.vmware.admiral.compute.PlacementZoneUtil;
 import com.vmware.admiral.compute.cluster.ClusterService.ClusterDto;
@@ -368,7 +370,7 @@ public class ClusterUtils {
 
     public static ComputeState transformComputeForExpandedCluster(ComputeState state) {
         // we would like to have access to the whole object in order to update it
-        if (ContainerHostUtil.isVicHost(state)) {
+        if (isVicHost(state) || isKubernetesHost(state)) {
             return state;
         }
 
