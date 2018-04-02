@@ -26,12 +26,12 @@ import java.util.function.Consumer;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ImageOperationType;
-import com.vmware.admiral.adapter.docker.util.DockerImage;
 import com.vmware.admiral.adapter.registry.service.RegistryAdapterService;
 import com.vmware.admiral.adapter.registry.service.RegistrySearchResponse;
 import com.vmware.admiral.adapter.registry.service.RegistrySearchResponse.Result;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.common.util.DockerImage;
 import com.vmware.admiral.common.util.RegistryUtil;
 import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.host.HostInitRegistryAdapterServiceConfig;

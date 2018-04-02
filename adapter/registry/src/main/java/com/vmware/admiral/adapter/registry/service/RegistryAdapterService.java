@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -28,10 +28,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import com.vmware.admiral.adapter.docker.util.DockerImage;
 import com.vmware.admiral.adapter.registry.service.RegistrySearchResponse.Result;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AuthUtils;
+import com.vmware.admiral.common.util.DockerImage;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;

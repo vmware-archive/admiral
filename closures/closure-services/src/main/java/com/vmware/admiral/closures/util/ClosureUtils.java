@@ -34,14 +34,15 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 
-import com.vmware.admiral.adapter.docker.util.DockerImage;
 import com.vmware.admiral.closures.drivers.ContainerConfiguration;
 import com.vmware.admiral.common.util.ConfigurationUtil;
+import com.vmware.admiral.common.util.DockerImage;
 import com.vmware.xenon.common.Utils;
 
 /**

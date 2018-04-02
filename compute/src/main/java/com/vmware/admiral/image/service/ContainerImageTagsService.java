@@ -25,9 +25,9 @@ import java.util.logging.Level;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ImageOperationType;
-import com.vmware.admiral.adapter.docker.util.DockerImage;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.common.util.DockerImage;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.RegistryUtil;
 import com.vmware.admiral.host.HostInitRegistryAdapterServiceConfig;

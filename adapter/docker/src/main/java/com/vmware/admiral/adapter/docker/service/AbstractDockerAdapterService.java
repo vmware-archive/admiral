@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -27,8 +27,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
-import com.vmware.admiral.adapter.docker.util.DockerImage;
 import com.vmware.admiral.common.DeploymentProfileConfig;
+import com.vmware.admiral.common.util.DockerImage;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServerX509TrustManager;

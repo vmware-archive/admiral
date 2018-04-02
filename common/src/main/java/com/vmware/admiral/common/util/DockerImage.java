@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.adapter.docker.util;
+package com.vmware.admiral.common.util;
 
 import static com.vmware.admiral.common.util.UriUtilsExtended.OFFICIAL_REGISTRY_LIST;
 
@@ -79,6 +79,7 @@ public class DockerImage {
      * @return
      */
     public static DockerImage fromImageName(String imageName) {
+        AssertUtil.assertNotNullOrEmpty(imageName, "imageName");
         String[] parts = imageName.split(SECTION_SEPARATOR);
         switch (parts.length) {
         case 0:

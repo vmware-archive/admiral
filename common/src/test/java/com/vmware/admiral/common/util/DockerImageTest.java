@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.adapter.docker.util;
+package com.vmware.admiral.common.util;
 
 import static org.junit.Assert.assertEquals;
 
@@ -20,6 +20,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
+
+import com.vmware.admiral.common.util.DockerImage;
 
 /**
  * Test for DockerImage parsing methods
