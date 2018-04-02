@@ -14,11 +14,13 @@ package com.vmware.admiral.closures.services.closure;
 import java.util.Map;
 import java.util.Set;
 
+import com.esotericsoftware.kryo.serializers.VersionFieldSerializer;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.gson.JsonElement;
 
+import com.vmware.admiral.common.serialization.ReleaseConstants;
 import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.photon.controller.model.resources.ResourceState;
@@ -96,6 +98,14 @@ public class Closure extends ResourceState {
      */
     @Documentation(description = "Links to used resource.")
     public Set<String> resourceLinks;
+
+    /**
+     * Time when the closure execution has ended.
+     * (Used internally)
+     */
+    @Documentation(description = "Time when the closure has ended.")
+    @VersionFieldSerializer.Since(ReleaseConstants.RELEASE_VERSION_1_2_2)
+    public Long endTimeMillis;
 
     /**
      * Time when the closure has been leased for execution.

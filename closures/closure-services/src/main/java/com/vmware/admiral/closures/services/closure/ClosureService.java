@@ -15,6 +15,7 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexin
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
 
 import java.net.URI;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -368,7 +369,7 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
                                                     "Unable to clean resources for %s",
                                                     closure.documentSelfLink));
                                 }
-                            }), 3, TimeUnit.SECONDS);
+                            }), 15, TimeUnit.SECONDS);
 
                             if (closureDesc.notifyUrl != null
                                     && closureDesc.notifyUrl.length() > 0) {
@@ -561,16 +562,18 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
     }
 
     private static boolean shouldUpdateLogs(byte[] oldLogs, byte[] newLogs) {
-        if (oldLogs == newLogs) {
-            return false;
-        }
         if (newLogs == null) {
             return false;
         }
         if (oldLogs == null) {
             return true;
         }
-        return newLogs.length != oldLogs.length;
+
+        if (newLogs.length < oldLogs.length) {
+            return false;
+        }
+
+        return !Arrays.equals(newLogs, oldLogs);
     }
 
     private byte[] shrinkToMaxAllowedSize(byte[] targetArray) {
@@ -622,6 +625,8 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
         closure.state = TaskStage.CANCELLED;
         closure.errorMsg = String.format(errorMsg, closureDesc.resources.timeoutSeconds,
                 closure.documentSelfLink);
+
+        closure.endTimeMillis = System.currentTimeMillis();
 
         sendSelfPatch(closure);
 
@@ -729,8 +734,12 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
             currentState.closureSemaphore = requestedState.closureSemaphore;
         }
 
-        if (requestedState.state == TaskStage.STARTED) {
-            currentState.lastLeasedTimeMillis = System.currentTimeMillis();
+        if (requestedState.lastLeasedTimeMillis != null) {
+            currentState.lastLeasedTimeMillis = requestedState.lastLeasedTimeMillis;
+        }
+
+        if (requestedState.endTimeMillis != null) {
+            currentState.endTimeMillis = requestedState.endTimeMillis;
         }
 
         if (requestedState.serviceTaskCallback != null) {
@@ -739,6 +748,13 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
 
         if (requestedState.logs != null) {
             currentState.logs = requestedState.logs;
+        }
+
+        if (requestedState.state == TaskStage.STARTED) {
+            currentState.lastLeasedTimeMillis = System.currentTimeMillis();
+            currentState.endTimeMillis = 0L;
+        } else if (isDone(requestedState)) {
+            currentState.endTimeMillis = System.currentTimeMillis();
         }
 
         return currentState;

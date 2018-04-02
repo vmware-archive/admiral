@@ -1410,6 +1410,129 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         clean(closureDefChildURI);
     }
 
+
+    @Test
+    public void executeAlreadyExecutedClosure() throws Throwable {
+        this.host.setTimeoutSeconds(1000);
+        // Create Closure Definition
+        URI factoryUri = UriUtils
+                .buildFactoryUri(this.host, ClosureDescriptionFactoryService.class);
+        this.host.testStart(1);
+        ClosureDescription closureDefState = new ClosureDescription();
+        closureDefState.name = "test";
+
+        boolean expectedInVar = true;
+        int expectedOutVar = 1;
+        boolean expectedResult = false;
+
+        closureDefState.source =
+                "function test(x) {print('Hello boolean: ' + x); return !x;} var b = "
+                        + expectedOutVar
+                        + "; result = test(inputs.a);";
+        closureDefState.runtime = "nashorn";
+        closureDefState.outputNames = new ArrayList<>(Collections.singletonList("result"));
+        closureDefState.documentSelfLink = UUID.randomUUID().toString();
+        ResourceConstraints constraints = new ResourceConstraints();
+        constraints.timeoutSeconds = 1;
+        closureDefState.resources = constraints;
+
+        ClosureDescription[] responses = new ClosureDescription[1];
+        URI closureDefChildURI = UriUtils.buildUri(this.host,
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/"
+                        + closureDefState.documentSelfLink);
+        Operation post = Operation
+                .createPost(factoryUri)
+                .setBody(closureDefState)
+                .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
+                    assertNull(e);
+                    responses[0] = o.getBody(ClosureDescription.class);
+                    assertNotNull(responses[0]);
+                }));
+        this.host.send(post);
+        this.host.testWait();
+
+        // Create Closure
+        URI factoryTaskUri = UriUtils.buildFactoryUri(this.host, ClosureFactoryService.class);
+        this.host.testStart(1);
+        Closure closureState = new Closure();
+        closureState.descriptionLink =
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/"
+                        + closureDefState.documentSelfLink;
+        closureState.documentSelfLink = UUID.randomUUID().toString();
+
+        URI closureChildURI = UriUtils.buildUri(this.host,
+                ClosureFactoryService.FACTORY_LINK + "/" + closureState.documentSelfLink);
+        final Closure[] closureResponses = new Closure[1];
+        Operation closurePost = Operation
+                .createPost(factoryTaskUri)
+                .setBody(closureState)
+                .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
+                    closureResponses[0] = o.getBody(Closure.class);
+                    assertEquals(closureState.descriptionLink, closureResponses[0].descriptionLink);
+                    assertEquals(TaskStage.CREATED, closureResponses[0].state);
+                }));
+        this.host.send(closurePost);
+        this.host.testWait();
+
+        // Executing the created Closure
+        this.host.testStart(1);
+        Closure closureRequest = new Closure();
+        Map inputs = new HashMap<>();
+        inputs.put("a", new JsonPrimitive(expectedInVar));
+        closureRequest.inputs = inputs;
+        Operation closureExecPost = Operation
+                .createPost(closureChildURI)
+                .setBody(closureRequest)
+                .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
+                    closureResponses[0] = o.getBody(Closure.class);
+                    assertNotNull(closureResponses[0]);
+                }));
+        this.host.send(closureExecPost);
+        this.host.testWait();
+
+        // Wait for the completion timeout
+        waitForCompletion(closureState.documentSelfLink, TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
+
+        final Closure[] finalClosureResponse = new Closure[1];
+        this.host.testStart(1);
+        Operation closureGet = Operation
+                .createGet(closureChildURI)
+                .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
+                    finalClosureResponse[0] = o.getBody(Closure.class);
+                    assertEquals(closureState.descriptionLink,
+                            finalClosureResponse[0].descriptionLink);
+                    assertEquals(TaskStage.FINISHED, finalClosureResponse[0].state);
+
+                    assertEquals(expectedInVar,
+                            finalClosureResponse[0].inputs.get("a").getAsBoolean());
+                    assertEquals(expectedResult,
+                            finalClosureResponse[0].outputs.get("result").getAsBoolean());
+                }));
+        this.host.send(closureGet);
+        this.host.testWait();
+
+
+        // Executing the already executed Closure
+        this.host.testStart(1);
+        closureExecPost = Operation
+                .createPost(closureChildURI)
+                .setBody(closureRequest)
+                .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
+                    closureResponses[0] = o.getBody(Closure.class);
+                    assertNotNull(e);
+                    assertNotNull(closureResponses[0]);
+                }));
+        this.host.send(closureExecPost);
+        this.host.testWait();
+
+        // Wait for the completion timeout
+        waitForCompletion(closureState.documentSelfLink, TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
+
+        clean(closureChildURI);
+        clean(closureDefChildURI);
+    }
+
+
     @Test
     public void executeInvalidJSScriptTaskTest() throws Throwable {
         // Create Closure Definition

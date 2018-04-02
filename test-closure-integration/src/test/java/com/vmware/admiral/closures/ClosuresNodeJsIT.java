@@ -162,6 +162,8 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
         assertEquals(createdClosure.descriptionLink, closure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, closure.state);
 
+        verifyRunDuration(closure);
+
         assertEquals(expectedInVar, closure.inputs.get("a").getAsInt());
         assertEquals(expectedResult, closure.outputs.get("result").getAsDouble(), 0);
 
@@ -218,6 +220,8 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
 
         assertEquals(createdClosure.descriptionLink, closure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, closure.state);
+
+        verifyRunDuration(closure);
 
         assertEquals(expectedInVar, closure.inputs.get("a").getAsInt());
         assertEquals(expectedResult, closure.outputs.get("result").getAsDouble(), 0);
@@ -279,6 +283,8 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
 
         assertEquals(createdClosure.descriptionLink, finishedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, finishedClosure.state);
+
+        verifyRunDuration(finishedClosure);
 
         verifyJsonArrayInts(expectedInVar, finishedClosure.inputs.get("a").getAsJsonArray());
         verifyJsonArrayInts(expectedResult, finishedClosure.outputs.get("result").getAsJsonArray());
@@ -343,6 +349,8 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
 
+        verifyRunDuration(fetchedClosure);
+
         verifyJsonArrayStrings(expectedInVar, fetchedClosure.inputs.get("a").getAsJsonArray());
         verifyJsonArrayStrings(expectedResult,
                 fetchedClosure.outputs.get("result").getAsJsonArray());
@@ -406,6 +414,9 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
 
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
+
+        verifyRunDuration(fetchedClosure);
+
         verifyJsonArrayBooleans(expectedInVar, fetchedClosure.inputs.get("a").getAsJsonArray());
         verifyJsonArrayBooleans(expectedResult,
                 fetchedClosure.outputs.get("result").getAsJsonArray());
@@ -469,6 +480,8 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
 
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
+
+        verifyRunDuration(fetchedClosure);
 
         assertEquals(expectedInVar.toString(),
                 fetchedClosure.inputs.get("a").getAsString());
@@ -535,6 +548,8 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
 
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
+
+        verifyRunDuration(fetchedClosure);
 
         assertEquals(expectedInVar.toString(),
                 fetchedClosure.inputs.get("a").getAsJsonArray().get(0).getAsString());
@@ -614,6 +629,9 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
 
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
+
+        verifyRunDuration(fetchedClosure);
+
         JsonObject inObj = fetchedClosure.inputs.get("a").getAsJsonObject();
 
         Gson json = new Gson();
@@ -695,6 +713,8 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
 
+        verifyRunDuration(fetchedClosure);
+
         JsonObject inObj = fetchedClosure.inputs.get("a").getAsJsonObject().get("objTest")
                 .getAsJsonObject();
 
@@ -772,6 +792,9 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
 
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
+
+        verifyRunDuration(fetchedClosure);
+
         JsonObject inObj = fetchedClosure.inputs.get("a").getAsJsonArray().get(0).getAsJsonObject();
 
         Gson json = new Gson();
@@ -842,6 +865,8 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
 
+        verifyRunDuration(fetchedClosure);
+
         assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsString());
         assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsString());
 
@@ -895,6 +920,8 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
 
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
+
+        verifyRunDuration(fetchedClosure);
 
         assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsString());
         assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsString());
@@ -950,6 +977,8 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
 
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
+
+        verifyRunDuration(fetchedClosure);
 
         assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsString());
         assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsString());
@@ -1007,6 +1036,8 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
 
+        verifyRunDuration(fetchedClosure);
+
         assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsString());
         assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsString());
 
@@ -1063,6 +1094,8 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
 
+        verifyRunDuration(fetchedClosure);
+
         assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsString());
         assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsString());
 
@@ -1117,6 +1150,8 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
 
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
+
+        verifyRunDuration(fetchedClosure);
 
         assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsString());
         assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsString());
@@ -1173,6 +1208,8 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
 
+        verifyRunDuration(fetchedClosure);
+
         assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsString());
         assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsString());
 
@@ -1228,6 +1265,8 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FAILED, fetchedClosure.state);
 
+        verifyRunDuration(fetchedClosure);
+
         cleanResource(imageRequestLink, serviceClient);
         cleanResource(createdClosure.documentSelfLink, serviceClient);
         cleanResource(closureDescription.documentSelfLink, serviceClient);
@@ -1280,6 +1319,8 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
 
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FAILED, fetchedClosure.state);
+
+        verifyRunDuration(fetchedClosure);
 
         cleanResource(imageRequestLink, serviceClient);
         cleanResource(createdClosure.documentSelfLink, serviceClient);
@@ -1334,6 +1375,8 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
 
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
+
+        verifyRunDuration(fetchedClosure);
 
         assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsBoolean());
         assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsBoolean());
@@ -1390,6 +1433,8 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
 
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
+
+        verifyRunDuration(fetchedClosure);
 
         assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsBoolean());
         assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsBoolean());
@@ -1448,6 +1493,8 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
 
+        verifyRunDuration(fetchedClosure);
+
         assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsBoolean());
         assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsBoolean());
 
@@ -1491,6 +1538,8 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
                 serviceClient);
 
         Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
+
+        verifyRunDuration(fetchedClosure);
 
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FAILED, fetchedClosure.state);
@@ -1798,6 +1847,8 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
         assertEquals(createdClosure.descriptionLink, closure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, closure.state);
 
+        verifyRunDuration(closure);
+
         assertEquals(expectedInVar, closure.inputs.get("a").getAsInt());
         assertEquals(expectedResult, closure.outputs.get("result").getAsDouble(), 0);
 
@@ -1931,6 +1982,8 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
         assertEquals(createdClosure.descriptionLink, closure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, closure.state);
 
+        verifyRunDuration(closure);
+
         assertEquals(expectedInVar, closure.inputs.get("a").getAsInt());
         assertEquals(expectedResult, closure.outputs.get("result").getAsInt(), 0);
 
@@ -1990,6 +2043,8 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
 
         assertEquals(createdClosure.descriptionLink, closure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, closure.state);
+
+        verifyRunDuration(closure);
 
         assertEquals(expectedInVar, closure.inputs.get("a").getAsInt());
         assertEquals(expectedInVar, closure.inputs.get("b").getAsInt());

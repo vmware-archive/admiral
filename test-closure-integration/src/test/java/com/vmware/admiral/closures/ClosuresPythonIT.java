@@ -139,6 +139,8 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
         assertEquals(createdClosure.descriptionLink, closure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, closure.state);
 
+        verifyRunDuration(closure);
+
         assertEquals(expectedInVar, closure.inputs.get("a").getAsInt());
         assertEquals(expectedResult, closure.outputs.get("result").getAsInt(), 0);
 
@@ -200,6 +202,8 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
         assertEquals(createdClosure.descriptionLink, finishedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, finishedClosure.state);
 
+        verifyRunDuration(finishedClosure);
+
         verifyJsonArrayInts(expectedInVar, finishedClosure.inputs.get("a").getAsJsonArray());
         verifyJsonArrayInts(expectedResult, finishedClosure.outputs.get("result").getAsJsonArray());
 
@@ -256,6 +260,8 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
 
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
+
+        verifyRunDuration(fetchedClosure);
 
         assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsString());
         assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsString());
@@ -321,6 +327,8 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
 
+        verifyRunDuration(fetchedClosure);
+
         verifyJsonArrayStrings(expectedInVar, fetchedClosure.inputs.get("a").getAsJsonArray());
         verifyJsonArrayStrings(expectedResult,
                 fetchedClosure.outputs.get("result").getAsJsonArray());
@@ -376,6 +384,8 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
 
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
+
+        verifyRunDuration(fetchedClosure);
 
         assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsBoolean());
         assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsBoolean());
@@ -439,6 +449,8 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
 
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
+
+        verifyRunDuration(fetchedClosure);
         verifyJsonArrayBooleans(expectedInVar, fetchedClosure.inputs.get("a").getAsJsonArray());
         verifyJsonArrayBooleans(expectedResult,
                 fetchedClosure.outputs.get("result").getAsJsonArray());
@@ -517,6 +529,8 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
 
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
+
+        verifyRunDuration(fetchedClosure);
         JsonObject inObj = fetchedClosure.inputs.get("a").getAsJsonObject();
 
         Gson json = new Gson();
@@ -595,6 +609,9 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
 
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
+
+        verifyRunDuration(fetchedClosure);
+
         JsonObject inObj = fetchedClosure.inputs.get("a").getAsJsonArray().get(0).getAsJsonObject();
 
         Gson json = new Gson();
@@ -677,6 +694,8 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
 
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
+
+        verifyRunDuration(fetchedClosure);
 
         JsonObject inObj = fetchedClosure.inputs.get("a").getAsJsonObject().get("objTest")
                 .getAsJsonObject();
@@ -958,6 +977,7 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
 
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FAILED, fetchedClosure.state);
+        verifyRunDuration(fetchedClosure);
         assertTrue(fetchedClosure.errorMsg.length() > 0);
 
         cleanResource(createdClosure.documentSelfLink, serviceClient);
@@ -1010,6 +1030,8 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
         assertEquals(createdClosure.descriptionLink, closure.descriptionLink);
         assertEquals(TaskState.TaskStage.FAILED, closure.state);
 
+        verifyRunDuration(closure);
+
         cleanResource(createdClosure.documentSelfLink, serviceClient);
         cleanResource(closureDescription.documentSelfLink, serviceClient);
     }
@@ -1061,6 +1083,8 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
 
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
+
+        verifyRunDuration(fetchedClosure);
 
         assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsString());
         assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsString());
@@ -1177,6 +1201,8 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
         assertEquals(createdClosure.descriptionLink, closure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, closure.state);
 
+        verifyRunDuration(closure);
+
         assertEquals(expectedInVar, closure.inputs.get("a").getAsInt());
         assertEquals(expectedResult, closure.outputs.get("result").getAsInt(), 0);
 
@@ -1233,6 +1259,8 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
         assertEquals(createdClosure.descriptionLink, closure.descriptionLink);
         assertEquals(TaskState.TaskStage.FAILED, closure.state);
 
+        verifyRunDuration(closure);
+
         cleanResource(createdClosure.documentSelfLink, serviceClient);
         cleanResource(closureDescription.documentSelfLink, serviceClient);
     }
@@ -1285,6 +1313,8 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
 
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
+
+        verifyRunDuration(fetchedClosure);
 
         assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsString());
         assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsString());
@@ -1371,6 +1401,8 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
         assertEquals(createdClosure.descriptionLink, closure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, closure.state);
 
+        verifyRunDuration(closure);
+
         assertEquals(expectedInVar, closure.inputs.get("a").getAsInt());
         assertEquals(expectedResult, closure.outputs.get("result").getAsInt(), 0);
 
@@ -1436,6 +1468,8 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
 
         assertEquals(createdClosure.descriptionLink, closure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, closure.state);
+
+        verifyRunDuration(closure);
 
         assertEquals(expectedInVar, closure.inputs.get("a").getAsInt());
         assertEquals(expectedResult, closure.outputs.get("result").getAsInt(), 0);
@@ -1507,6 +1541,8 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
 
         assertEquals(createdClosure.descriptionLink, closure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, closure.state);
+
+        verifyRunDuration(closure);
 
         assertEquals(expectedInVar, closure.inputs.get("a").getAsInt());
         assertEquals(expectedResult, closure.outputs.get("result").getAsInt(), 0);
@@ -1592,6 +1628,8 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
         assertEquals(createdClosure.descriptionLink, closure.descriptionLink);
         assertEquals(TaskState.TaskStage.FAILED, closure.state);
 
+        verifyRunDuration(closure);
+
         assertTrue("Not expected error: " + closure.errorMsg,
                 closure.errorMsg.contains("ImportError(\"No module named 'keyring'\",)"));
 
@@ -1644,6 +1682,8 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
 
         assertEquals(createdClosure.descriptionLink, closure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, closure.state);
+
+        verifyRunDuration(closure);
 
         assertEquals(expectedInVar, closure.inputs.get("a").getAsInt());
         assertEquals(expectedResult, closure.outputs.get("result").getAsInt(), 0);
@@ -1712,6 +1752,8 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
         assertNotNull(consumedContent);
         assertEquals(TaskState.TaskStage.FINISHED, closure.state);
 
+        verifyRunDuration(closure);
+
         cleanResource(createdClosure.documentSelfLink, serviceClient);
         cleanResource(closureDescription.documentSelfLink, serviceClient);
     }
@@ -1765,6 +1807,8 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
         assertEquals(createdClosure.descriptionLink, closure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, closure.state);
 
+        verifyRunDuration(closure);
+
         assertEquals(expectedInVar, closure.inputs.get("a").getAsInt());
         assertEquals(expectedResult, closure.outputs.get("result").getAsInt(), 0);
 
@@ -1777,6 +1821,7 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
         cleanResource(createdClosure.documentSelfLink, serviceClient);
         cleanResource(closureDescription.documentSelfLink, serviceClient);
     }
+
 
 /*
     @Test

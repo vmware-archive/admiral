@@ -162,6 +162,12 @@ public class BaseClosureIntegrationTest extends BaseProvisioningOnCoreOsIT {
         return dockerBuildImageLink;
     }
 
+    protected void verifyRunDuration(Closure closure) {
+        Long duration = closure.endTimeMillis - closure.lastLeasedTimeMillis;
+        assertTrue(String.format("Run duration is expected to be > 0, actual: %sms", duration),
+                duration > 0);
+    }
+
     protected void registerExternalDockerRegistry(ServiceClient serviceClient) throws Throwable {
         registryState = createRegistryState(DOCKER_REGISTRY_URL);
 
