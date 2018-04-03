@@ -12,7 +12,6 @@
 import { OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from "rxjs/Subscription";
-
 import { DocumentService } from '../../utils/document.service';
 import { ErrorService } from "../../utils/error.service";
 import { Utils } from "../../utils/utils";
@@ -49,11 +48,11 @@ export class BaseDetailsComponent implements OnInit, OnDestroy {
          this.entity = service;
          this.entityInitialized();
 
-       }).catch(err => {
-           console.error('Details failed to load', err);
+       }).catch(error => {
+           console.error('Failed loading entity ', error);
 
            if (this.errorService) {
-               this.errorService.error(Utils.getErrorMessage(err)._generic);
+               this.errorService.error(Utils.getErrorMessage(error)._generic);
            }
        });
     });
@@ -70,11 +69,12 @@ export class BaseDetailsComponent implements OnInit, OnDestroy {
         this.service.getById(this.link, this.id, this.projectLink).then(service => {
             this.entity = service;
             this.entityInitialized();
-        }).catch(err => {
-            console.error('Parent details failed to load', err);
+
+        }).catch(error => {
+            console.error('Failed loading parent entity ', error);
 
             if (this.errorService) {
-                this.errorService.error(Utils.getErrorMessage(err)._generic);
+                this.errorService.error(Utils.getErrorMessage(error)._generic);
             }
         });
     });

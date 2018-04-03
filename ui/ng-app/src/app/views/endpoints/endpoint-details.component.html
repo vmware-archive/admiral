@@ -1,0 +1,90 @@
+<!--
+  ~ Copyright (c) 2018 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<clr-alert [clrAlertType]="'alert-danger'" [(clrAlertClosed)]="!alertMessage" (clrAlertClosedChange)="resetAlert()">
+    <div class="alert-item">
+        <span class="alert-text">{{ alertMessage }}</span>
+    </div>
+</clr-alert>
+
+<h3 *ngIf="editMode" class="projects-details-header-title">{{entity?.name}}</h3>
+<h3 *ngIf="!editMode" class="projects-details-header-title">{{"endpoints.details.titleCreate" | i18n}}</h3>
+
+<clr-tabs>
+    <clr-tab>
+        <button clrTabLink id="generalTab">{{"endpoints.details.generalTabTitle" | i18n}}</button>
+        <clr-tab-content id="generalContent" *clrIfActive>
+            <form [formGroup]="endpointDetailsForm">
+                <section class="form-block">
+                    <div class="form-group">
+                        <label for="endpointName" class="required">{{"endpoints.details.nameFieldTitle" | i18n}}</label>
+                        <label for="endpointName" aria-haspopup="true" role="tooltip"
+                               class="tooltip tooltip-validation tooltip-sm tooltip-right"
+                               [class.invalid]="endpointDetailsForm.get('name').invalid && (endpointDetailsForm.get('name').dirty || endpointDetailsForm.get('name').touched)">
+                            <input id="endpointName" type="text" formControlName="name" size="45">
+                            <span class="tooltip-content">{{"endpoints.details.nameRequired" | i18n}}</span>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label for="endpointDescription">Description</label>
+                        <textarea id="endpointDescription" rows="5" formControlName="description"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="endpointAddress" class="required">{{"endpoints.details.addressFieldTitle" | i18n}}</label>
+                        <label for="endpointAddress" aria-haspopup="true" role="tooltip"
+                               class="tooltip tooltip-validation tooltip-sm tooltip-right"
+                               [class.invalid]="endpointDetailsForm.get('address').invalid && (endpointDetailsForm.get('address').dirty || endpointDetailsForm.get('address').touched)">
+                            <input id="endpointAddress" type="text" formControlName="address" size="45">
+                            <span class="tooltip-content">{{"endpoints.details.addressRequired" | i18n}}</span>
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="endpointUserName" class="required">{{"endpoints.details.userNameFieldTitle" | i18n}}</label>
+                        <label for="endpointUserName" aria-haspopup="true" role="tooltip"
+                               class="tooltip tooltip-validation tooltip-sm tooltip-right"
+                               [class.invalid]="endpointDetailsForm.get('userName').invalid && (endpointDetailsForm.get('userName').dirty || endpointDetailsForm.get('userName').touched)">
+                            <input id="endpointUserName" type="text" formControlName="userName" size="45">
+                            <span class="tooltip-content">{{"endpoints.details.userNameRequired" | i18n}}</span>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label for="endpointPassword" class="required">{{"endpoints.details.passwordFieldTitle" | i18n}}</label>
+                        <label for="endpointPassword" aria-haspopup="true" role="tooltip" class="tooltip tooltip-validation tooltip-sm tooltip-right"
+                               [class.invalid]="endpointDetailsForm.get('password').invalid && (endpointDetailsForm.get('password').dirty || endpointDetailsForm.get('password').touched)">
+                            <input id="endpointPassword" type="password" formControlName="password" size="45">
+                            <span class="tooltip-content">{{"endpoints.details.passwordRequired" | i18n}}</span>
+                        </label>
+                    </div>
+
+                    <button type="button" class="btn btn-secondary"
+                            [disabled]="isSavingEndpoint || isTestingConnection"
+                            (click)="testConnection()">Test Connection</button>
+                    <button type="button" class="btn btn-secondary"
+                            [disabled]="isSavingEndpoint"
+                            (click)="cancel()">{{ "cancel" | i18n }}</button>
+                    <button *ngIf="!editMode" type="button" class="btn btn-primary"
+                            [clrLoading]="isSavingEndpoint || isTestingConnection || endpointDetailsForm.invalid"
+                            (click)="create()">Create</button>
+                    <button *ngIf="editMode" type="button" class="btn btn-primary"
+                            [clrLoading]="isSavingEndpoint || isTestingConnection || endpointDetailsForm.invalid"
+                            (click)="save()">>{{ "save" | i18n }}</button>
+                </section>
+            </form>
+        </clr-tab-content>
+    </clr-tab>
+    <clr-tab *ngIf="editMode">
+        <button clrTabLink id="clustersTab">{{"endpoints.details.clustersTabTitle" | i18n}}</button>
+        <clr-tab-content id="clustersContent" *clrIfActive>
+            Clusters for the selected endpoint
+        </clr-tab-content>
+    </clr-tab>
+</clr-tabs>

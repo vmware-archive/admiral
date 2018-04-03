@@ -27,6 +27,7 @@ import { RegistriesComponent } from './views/registries/registries.component';
 import { ConfigurationComponent } from './views/configuration/configuration.component';
 import { LogsComponent } from './views/logs/logs.component';
 import { EndpointsComponent } from './views/endpoints/endpoints.component';
+import { EndpointDetailsComponent } from './views/endpoints/endpoint-details.component';
 
 import { DashboardComponent } from './views/dashboard/dashboard.component';
 import { FormerPlaceholderViewComponent } from './views/former-view/former-view.component';
@@ -164,7 +165,19 @@ export const ROUTES: Routes = [
                 ]
             },
             {
-                path: 'endpoints', component: EndpointsComponent
+                path: 'endpoints', component: EndpointsComponent,
+                children: [
+                    { path: 'new', component: EndpointDetailsComponent,
+                        data: {
+                            navigationContainerType: NavigationContainerType.Fullscreen
+                        }
+                    },
+                    { path: ':id', component: EndpointDetailsComponent,
+                        data: {
+                            navigationContainerType: NavigationContainerType.Fullscreen
+                        }
+                    }
+                ]
             },
             {
                  path: '**', component: FormerPlaceholderViewComponent

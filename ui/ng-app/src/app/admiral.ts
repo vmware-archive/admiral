@@ -43,6 +43,7 @@ import { ConfigurationComponent } from './views/configuration/configuration.comp
 import { LogsComponent } from './views/logs/logs.component';
 import { SystemLogsComponent } from './views/logs/system-logs.component';
 import { EndpointsComponent } from './views/endpoints/endpoints.component';
+import { EndpointDetailsComponent } from './views/endpoints/endpoint-details.component';
 
 import { DashboardComponent } from './views/dashboard/dashboard.component';
 import { FormerViewComponent, FormerPlaceholderViewComponent } from './views/former-view/former-view.component';
@@ -142,6 +143,7 @@ export const ADMIRAL_DECLARATIONS = [
   KubernetesClustersComponent,
   KubernetesClusterDetailsComponent,
   KubernetesClusterNodesComponent,
+  EndpointDetailsComponent,
 
   GridViewComponent,
   TableViewComponent,
