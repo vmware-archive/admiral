@@ -28,7 +28,8 @@ import { EndpointsComponent } from './views/endpoints/endpoints.component';
 
 import { DashboardComponent } from './views/dashboard/dashboard.component';
 import { FormerPlaceholderViewComponent } from './views/former-view/former-view.component';
-import { RepositoryComponent } from './views/hbr/repository/repository.component';
+import { RepositoriesComponent } from './views/hbr/repository/repositories.component';
+import { SingleRepositoryComponent } from './views/hbr/repository/single-repository.component';
 import { ClustersComponent } from './views/clusters/clusters.component';
 import { ClusterDetailsComponent } from './views/clusters/cluster-details/cluster-details.component';
 import { ClusterCreateComponent } from './views/clusters/cluster-create/cluster-create.component';
@@ -84,12 +85,16 @@ export const ROUTES: Routes = [
                     data: { roles: RoutesRestriction.DEPLOYMENTS }
             },
             {
-                path: 'project-repositories', component: RepositoryComponent,
+                path: 'project-repositories', component: RepositoriesComponent,
                 children: [
-                    { path: 'repositories/:rid/tags/:tid', component: TagDetailsComponent, data: {
+                    { path: 'repositories/:rid', component: SingleRepositoryComponent, data: {
                         navigationContainerType: NavigationContainerType.Fullscreen,
                         hideBackButton: true
                     }},
+                    { path: 'repositories/:rid/tags/:tid', component: TagDetailsComponent, data: {
+                            navigationContainerType: NavigationContainerType.Fullscreen,
+                            hideBackButton: true
+                    }}
                 ]
             },
             {
@@ -255,12 +260,18 @@ export const ROUTES: Routes = [
                             roles: RoutesRestriction.CLUSTERS_EDIT
                         }
                     },
+                    { path: ':id/repositories/:rid', component: SingleRepositoryComponent,
+                        data: {
+                            navigationContainerType: NavigationContainerType.Fullscreen,
+                            hideBackButton: true
+                        }
+                    },
                     { path: ':id/repositories/:rid/tags/:tid', component: TagDetailsComponent,
                         data: {
                             navigationContainerType: NavigationContainerType.Fullscreen,
                             hideBackButton: true
                         }
-                     },
+                    },
                     { path: ':id/add-member', component: ProjectAddMemberComponent,
                         canActivate: [AdminAuthGuard],
                         data: {

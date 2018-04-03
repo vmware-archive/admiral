@@ -12,18 +12,15 @@
 import { Component } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from "rxjs/Subscription";
-
 import { BaseDetailsComponent } from '../../../components/base/base-details.component';
 import { AuthService } from '../../../utils/auth.service';
 import { DocumentService } from '../../../utils/document.service';
-
 import { FT } from '../../../utils/ft';
 import { Links } from '../../../utils/links';
 import { Roles } from '../../../utils/roles';
 import { RoutesRestriction } from '../../../utils/routes-restriction';
 import { Utils } from '../../../utils/utils';
 
-import { TagClickEvent } from 'harbor-ui';
 
 @Component({
   selector: 'app-project-details',
@@ -83,9 +80,8 @@ export class ProjectDetailsComponent extends BaseDetailsComponent {
     }
   }
 
-  watchTagClickEvent(tag: TagClickEvent) {
-    this.router.navigate(['repositories', tag.repository_name, 'tags', tag.tag_name],
-                         {relativeTo: this.route});
+  watchRepoClickEvent(repositoryItem) {
+    this.router.navigate(['repositories', repositoryItem.name], { relativeTo: this.route });
   }
 
   reloadProject(project: any) {

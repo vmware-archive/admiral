@@ -131,6 +131,11 @@
       "preventVulnerableImagesFromRunning": "Prevent vulnerable images from running",
       "preventVulnerableImagesFromRunningDescription_part1": "Prevent images with vulnerability severity of",
       "preventVulnerableImagesFromRunningDescription_part2": "and above from being deployed.",
+      "preventRunSeverity": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High"
+      },
       "vulnerabilityScanning": "Vulnerability scanning",
       "automaticallyScanImagesOnPush": "Automatically scan images on push",
       "automaticallyScanImagesOnPushDescription": "Automatically scan images when they are pushed to the project registry."

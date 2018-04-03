@@ -1,44 +1,43 @@
+<!--
+  ~ Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
 <form [formGroup]="configForm">
-    <div class= "p3">
+    <div class="p3">
         <h6>{{"projects.projectRegistry" | i18n | uppercase}}</h6>
         <section class="form-block">
             <div class="checkbox">
-                <clr-checkbox
-                        formControlName="publicRegistry"
-                        [(ngModel)]="publicRegistry">
-                    {{"projects.public" | i18n}}
-                </clr-checkbox>
-                <div>
-                    {{"projects.config.publicDescription" | i18n}}
-                </div>
+                <clr-checkbox formControlName="publicRegistry" [(ngModel)]="publicRegistry"
+                    >{{"projects.public" | i18n}}</clr-checkbox>
+                <div>{{"projects.config.publicDescription" | i18n}}</div>
             </div>
         </section>
         <h6>{{"projects.config.deploymentSecurity" | i18n | uppercase}}</h6>
         <section class="form-block">
             <div class="checkbox">
-                <clr-checkbox
-                        formControlName="enableContentTrust"
-                        [(ngModel)]="enableContentTrust">
-                    {{"projects.config.enableContentTrust" | i18n}}
-                </clr-checkbox>
-                <div>
-                    {{"projects.config.enableContentTrustDescription" | i18n}}
-                </div>
+                <clr-checkbox formControlName="enableContentTrust" [(ngModel)]="enableContentTrust"
+                    >{{"projects.config.enableContentTrust" | i18n}}</clr-checkbox>
+                <div>{{"projects.config.enableContentTrustDescription" | i18n}}</div>
             </div>
             <div class="checkbox">
-                <clr-checkbox
-                        formControlName="preventVulnerableImagesFromRunning"
-                        [(ngModel)]="preventVulnerableImagesFromRunning">
-                    {{"projects.config.preventVulnerableImagesFromRunning" | i18n}}
-                </clr-checkbox>
+                <clr-checkbox formControlName="preventVulnerableImagesFromRunning"
+                              [(ngModel)]="preventVulnerableImagesFromRunning"
+                >{{"projects.config.preventVulnerableImagesFromRunning" | i18n}}</clr-checkbox>
                 <div>
                     {{"projects.config.preventVulnerableImagesFromRunningDescription_part1" | i18n}}
                     <div class="select severity">
                         <select formControlName="preventVulnerableImagesFromRunningSeverity"
                                 [(ngModel)]="preventVulnerableImagesFromRunningSeverity">
-                            <option value="low">Low</option>
-                            <option value="medium" selected>Medium</option>
-                            <option value="high">High</option>
+                            <option value="low">{{ 'projects.config.preventRunSeverity.low' | i18n }}</option>
+                            <option value="medium" selected>{{ 'projects.config.preventRunSeverity.medium' | i18n }}</option>
+                            <option value="high">{{ 'projects.config.preventRunSeverity.high' | i18n }}</option>
                         </select>
                     </div>
                     {{"projects.config.preventVulnerableImagesFromRunningDescription_part2" | i18n}}
@@ -48,18 +47,14 @@
         <h6>{{"projects.config.vulnerabilityScanning" | i18n | uppercase}}</h6>
         <section class="form-block">
             <div class="checkbox">
-                <clr-checkbox
-                        formControlName="automaticallyScanImagesOnPush"
-                        [(ngModel)]="automaticallyScanImagesOnPush">
-                    {{"projects.config.automaticallyScanImagesOnPush" | i18n}}
-                </clr-checkbox>
-                <div>
-                    {{"projects.config.automaticallyScanImagesOnPushDescription" | i18n}}
-                </div>
+                <clr-checkbox formControlName="automaticallyScanImagesOnPush" [(ngModel)]="automaticallyScanImagesOnPush"
+                    >{{"projects.config.automaticallyScanImagesOnPush" | i18n}}</clr-checkbox>
+                <div>{{"projects.config.automaticallyScanImagesOnPushDescription" | i18n}}</div>
             </div>
         </section>
     </div>
 </form>
+
 <button _ngcontent-c17="" class="btn btn-primary" type="button"
         (click)="saveProjectConfiguration()"
         [disabled]="configForm.pristine">{{"save" | i18n}}</button>

@@ -11,8 +11,11 @@
 
 import { OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { DocumentService } from '../../utils/document.service';
 import { Subscription } from "rxjs/Subscription";
+
+import { DocumentService } from '../../utils/document.service';
+import { ErrorService } from "../../utils/error.service";
+import { Utils } from "../../utils/utils";
 
 /**
  * Base view for a single entity details.
@@ -26,7 +29,7 @@ export class BaseDetailsComponent implements OnInit, OnDestroy {
   private routeParentParamsSubscription: Subscription = null;
 
   constructor(protected route: ActivatedRoute, protected service: DocumentService,
-              protected link: string) {
+              protected link: string, protected errorService: ErrorService = null) {
   }
 
   protected entityInitialized() {
@@ -45,6 +48,13 @@ export class BaseDetailsComponent implements OnInit, OnDestroy {
        this.service.getById(this.link, this.id, this.projectLink).then(service => {
          this.entity = service;
          this.entityInitialized();
+
+       }).catch(err => {
+           console.error('Details failed to load', err);
+
+           if (this.errorService) {
+               this.errorService.error(Utils.getErrorMessage(err)._generic);
+           }
        });
     });
 
@@ -60,6 +70,12 @@ export class BaseDetailsComponent implements OnInit, OnDestroy {
         this.service.getById(this.link, this.id, this.projectLink).then(service => {
             this.entity = service;
             this.entityInitialized();
+        }).catch(err => {
+            console.error('Parent details failed to load', err);
+
+            if (this.errorService) {
+                this.errorService.error(Utils.getErrorMessage(err)._generic);
+            }
         });
     });
   }

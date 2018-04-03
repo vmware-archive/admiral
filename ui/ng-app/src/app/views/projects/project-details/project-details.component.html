@@ -29,7 +29,8 @@
         <clr-tab-content id="repositoriesContent" *clrIfActive>
             <hbr-repository-listview [projectId]="hbrProjectId" [projectName]="projectName"
                                      [hasSignedIn]="true" [hasProjectAdminRole]="hasProjectAdminRole"
-                                     (tagClickEvent)="watchTagClickEvent($event)"></hbr-repository-listview>
+                                     (repoClickEvent)="watchRepoClickEvent($event)"
+                                        ></hbr-repository-listview>
         </clr-tab-content>
     </clr-tab>
     <clr-tab>

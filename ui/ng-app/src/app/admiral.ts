@@ -45,7 +45,8 @@ import { EndpointsComponent } from './views/endpoints/endpoints.component';
 
 import { DashboardComponent } from './views/dashboard/dashboard.component';
 import { FormerViewComponent, FormerPlaceholderViewComponent } from './views/former-view/former-view.component';
-import { RepositoryComponent } from './views/hbr/repository/repository.component';
+import { RepositoriesComponent } from './views/hbr/repository/repositories.component';
+import { SingleRepositoryComponent } from './views/hbr/repository/single-repository.component';
 import { ClustersComponent } from './views/clusters/clusters.component';
 import { ClusterDetailsComponent } from './views/clusters/cluster-details/cluster-details.component';
 import { ClusterSummaryComponent } from './views/clusters/cluster-details/cluster-summary.component';
@@ -124,7 +125,8 @@ export const ADMIRAL_DECLARATIONS = [
   DashboardComponent,
   FormerViewComponent,
   FormerPlaceholderViewComponent,
-  RepositoryComponent,
+  RepositoriesComponent,
+  SingleRepositoryComponent,
   ClustersComponent,
   ClusterDetailsComponent,
   ClusterSummaryComponent,
