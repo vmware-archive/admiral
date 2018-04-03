@@ -64,7 +64,7 @@
           <ul class="nav-list">
               <li><a class="nav-link" routerLink="clusters" routerLinkActive="active">{{ navigationClustersTextKey | i18n }}</a></li>
           </ul>
-          <ul class="nav-list">
+          <ul *ngIf="embeddedMode && isPksEnabled" class="nav-list" >
             <li><a class="nav-link" routerLink="kubernetes/clusters" routerLinkActive="active">{{ "navigation.kubernetesClusters" | i18n }}</a></li>
           </ul>
       </section>
