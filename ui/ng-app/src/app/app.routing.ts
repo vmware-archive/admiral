@@ -35,6 +35,7 @@ import { ClusterCreateComponent } from './views/clusters/cluster-create/cluster-
 import { ClusterEditComponent } from './views/clusters/cluster-edit/cluster-edit.component';
 
 import { KubernetesClustersComponent } from './views/kubernetes/clusters/kubernetes-clusters.component';
+import { KubernetesClusterDetailsComponent } from './views/kubernetes/clusters/details/kubernetes-cluster-details.component';
 
 import { DummyComponent } from './components/dummy/dummy.component';
 
@@ -122,7 +123,18 @@ export const ROUTES: Routes = [
             {
                 path: 'kubernetes/clusters', component: KubernetesClustersComponent,
                 data: { roles: RoutesRestriction.CLUSTERS },
-                canActivate: [HomeAuthGuard]
+                canActivate: [HomeAuthGuard],
+                children: [
+                    {
+                        path: ':id',
+                        canActivate: [HomeAuthGuard],
+                        component: KubernetesClusterDetailsComponent,
+                        data: {
+                            navigationContainerType: NavigationContainerType.Fullscreen,
+                            roles: RoutesRestriction.CLUSTERS_ID
+                        }
+                    }
+                ]
             },
             {
                 path: 'kubernetes/pods', component: PodListComponent,

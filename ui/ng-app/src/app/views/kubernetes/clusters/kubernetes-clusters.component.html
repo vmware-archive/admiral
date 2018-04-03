@@ -50,3 +50,8 @@
     </card>
   </ng-template>
 </grid-view>
+
+<navigation-container>
+  <back-button [routerLink]="['./']">{{ "clusters.title" | i18n }}</back-button>
+  <router-outlet></router-outlet>
+</navigation-container>
