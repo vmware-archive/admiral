@@ -91,6 +91,7 @@ export class ProjectRegistriesComponent implements OnInit {
         Promise.all(promises).then(() => {
             this.selectedProjectRegistries = [];
             this.showDeleteConfirmation = false;
+            this.listProjectRegistries({});
         }).catch(err => {
             this.deleteConfirmationAlert = Utils.getErrorMessage(err)._generic;
         });
