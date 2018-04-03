@@ -35,7 +35,7 @@ export class ClustersComponent extends AutoRefreshComponent {
     @Input() projectLink: string;
     @ViewChild('gridView') gridView: GridViewComponent;
 
-    serviceEndpoint = Links.CLUSTERS;
+    serviceEndpoint = Links.CLUSTERS + '?type=!KUBERNETES';
     clusterToDelete: any;
     deleteConfirmationAlert: string;
 
