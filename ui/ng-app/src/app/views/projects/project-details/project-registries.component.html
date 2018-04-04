@@ -22,8 +22,8 @@
         <div toolbar>
             <clr-dg-action-bar>
                 <div class="btn-group" role="group" aria-label="Available Actions">
-                    <button type="button" class="btn btn-sm btn-secondary"><clr-icon
-                        shape="plus"></clr-icon><span
+                    <button type="button" class="btn btn-sm btn-secondary" allowNavigation
+                    [routerLink]="['./registries/new']"><clr-icon shape="plus"></clr-icon><span
                         class="btn-spaced-text">{{"projects.projectRegistries.new" | i18n}}</span></button>
                     <button type="button" class="btn btn-sm btn-secondary"
                         [disabled]="selectedProjectRegistries.length == 0"
@@ -43,8 +43,10 @@
                 <clr-dg-column>{{"projects.projectRegistries.addressTitle" | i18n}}</clr-dg-column>
 
                 <clr-dg-row *clrDgItems="let registry of projectRegistries" [clrDgItem]="registry">
-                    <clr-dg-cell><span><a [routerLink]="['./registry/' + registry.documentId]"
-                                            >{{ registry.name }}</a></span></clr-dg-cell>
+                    <clr-dg-cell><span *ngIf="registry.tenantLinks && registry.tenantLinks.length > 0"
+                            ><a [routerLink]="['./registry/' + registry.documentId]" >{{ registry.name }}</a></span>
+                        <span *ngIf="!registry.tenantLinks || registry.tenantLinks.length == 0">{{ registry.name }}</span>
+                    </clr-dg-cell>
                     <clr-dg-cell><span *ngIf="registry.disabled && registry.disabled == true"
                         >{{"projects.projectRegistries.status.disabled" | i18n }}</span>
                         <span *ngIf="!registry.disabled || registry.disabled == false"

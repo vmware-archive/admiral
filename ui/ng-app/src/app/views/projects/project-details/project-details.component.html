@@ -43,9 +43,11 @@
     </clr-tab>
     <clr-tab>
         <button clrTabLink id="registryTab">{{"projects.projectRegistries.title" | i18n}}</button>
-        <clr-tab-content id="projectRegistriesContent" *clrIfActive>
-            <app-project-registries></app-project-registries>
-        </clr-tab-content>
+        <ng-template [(clrIfActive)]="isActiveTabRegistries">
+            <clr-tab-content id="projectRegistriesContent">
+                <app-project-registries></app-project-registries>
+            </clr-tab-content>
+        </ng-template>
     </clr-tab>
     <clr-tab *ngIf="isHbrEnabled && hasAccessToRegistryReplication">
         <button clrTabLink id="registryReplicationTab">{{"projects.registryReplication" | i18n}}</button>

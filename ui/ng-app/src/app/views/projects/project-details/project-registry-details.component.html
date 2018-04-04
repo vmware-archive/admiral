@@ -1,0 +1,78 @@
+<!--
+  ~ Copyright (c) 2018 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+  <clr-alert [clrAlertType]="'alert-danger'" [(clrAlertClosed)]="!alertMessage" (clrAlertClosedChange)="resetAlert()">
+        <div class="alert-item">
+            <span class="alert-text">{{ alertMessage }}</span>
+        </div>
+    </clr-alert>
+
+    <h3 *ngIf="editMode" class="projects-details-header-title">{{entity?.name}}</h3>
+    <h3 *ngIf="!editMode" class="projects-details-header-title">{{"projects.projectRegistries.registryDetails.title" | i18n}}</h3>
+
+    <clr-tabs>
+        <clr-tab>
+            <button clrTabLink id="generalTab">{{"projects.projectRegistries.registryDetails.title" | i18n}}</button>
+            <clr-tab-content id="generalContent" *clrIfActive>
+                <form [formGroup]="projectRegistryDetailsForm">
+                    <section class="form-block">
+                        <div class="form-group">
+                            <label for="registryName" class="required">{{"projects.projectRegistries.registryDetails.fieldName" | i18n}}</label>
+                            <label for="registryName" aria-haspopup="true" role="tooltip"
+                                   class="tooltip tooltip-validation tooltip-sm tooltip-right"
+                                   [class.invalid]="projectRegistryDetailsForm.get('name').invalid
+                                   && (projectRegistryDetailsForm.get('name').dirty || projectRegistryDetailsForm.get('name').touched)">
+                                <input id="registryName" type="text" formControlName="name" size="45">
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label for="registryAddress" class="required">{{"projects.projectRegistries.registryDetails.fieldAddress" | i18n}}</label>
+                            <label for="registryAddress" aria-haspopup="true" role="tooltip"
+                                   class="tooltip tooltip-validation tooltip-sm tooltip-right"
+                                   [class.invalid]="projectRegistryDetailsForm.get('address').invalid
+                                   && (projectRegistryDetailsForm.get('address').dirty || projectRegistryDetailsForm.get('address').touched)">
+                                <input id="registryAddress" type="text" formControlName="address" size="45">
+                                <span class="tooltip-content">{{"projects.projectRegistries.registryDetails.addressRequired" | i18n}}</span>
+                            </label>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="registryCredentials">{{"projects.projectRegistries.registryDetails.fieldCredentials" | i18n}}</label>
+                            <dropdown formControlName="credentials" ddClass="top-left"
+                                        [options]="credentials"
+                                        [title]="credentialsTitle"
+                                        [searchPlaceholder]="credentialsSearchPlaceholder">
+                            </dropdown>
+                        </div>
+
+                        <button *ngIf="!editMode" type="button" class="btn btn-primary"
+                                [clrLoading]="isSavingRegistry || isTestingConnection || projectRegistryDetailsForm.invalid"
+                                (click)="save()">{{ "save" | i18n }}</button>
+                        <button type="button" class="btn btn-secondary"
+                                [disabled]="isSavingRegistry || isTestingConnection"
+                                (click)="testConnection()">{{ "verify" | i18n }}</button>
+                        <button type="button" class="btn btn-secondary"
+                                [disabled]="isSavingRegistry"
+                                (click)="cancel()">{{ "cancel" | i18n }}</button>
+                        <button *ngIf="editMode" type="button" class="btn btn-primary"
+                                [clrLoading]="isSavingRegistry || isTestingConnection || projectRegistryDetailsForm.invalid"
+                                (click)="save()">>{{ "save" | i18n }}</button>
+                    </section>
+                </form>
+            </clr-tab-content>
+        </clr-tab>
+        <clr-tab *ngIf="editMode">
+            <button clrTabLink id="clustersTab">{{"endpoints.details.clustersTabTitle" | i18n}}</button>
+            <clr-tab-content id="clustersContent" *clrIfActive>
+                Clusters for the selected endpoint
+            </clr-tab-content>
+        </clr-tab>
+    </clr-tabs>

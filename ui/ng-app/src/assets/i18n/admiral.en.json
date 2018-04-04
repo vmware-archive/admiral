@@ -100,7 +100,7 @@
       }
     },
     "projectRegistries": {
-        "title":"Project Registries",
+        "title": "Project Registries",
         "new": "New Project Registry",
         "nameTitle": "Name",
         "statusTitle": "Status",
@@ -118,6 +118,13 @@
         "deleteConfirmation": {
           "title": "Remove Project Registries",
           "description": "Confirm the removal of the selected registries. The operation cannot be undone."
+        },
+        "registryDetails": {
+          "title": "Add Project Registry",
+          "descriptions": "Add registry to the project",
+          "fieldAddress": "Adress",
+          "fieldName": "Name",
+          "fieldCredentials": "Login credentials"
         }
     },
     "config": {
