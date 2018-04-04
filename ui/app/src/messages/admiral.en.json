@@ -474,7 +474,7 @@
         "addButton": "Registry",
         "addressColumn": "Address",
         "nameColumn": "Name",
-        "statusColumn": "Status"
+        "statusColumn": "Enabled"
       },
       "edit": {
         "createNew": "New Registry",
