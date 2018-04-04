@@ -130,15 +130,11 @@ export const ROUTES: Routes = [
                 data: { roles: RoutesRestriction.CLUSTERS },
                 canActivate: [HomeAuthGuard],
                 children: [
-                    {
-                        path: ':id',
-                        canActivate: [HomeAuthGuard],
-                        component: KubernetesClusterDetailsComponent,
-                        data: {
-                            navigationContainerType: NavigationContainerType.Fullscreen,
-                            roles: RoutesRestriction.CLUSTERS_ID
-                        }
-                    }
+                    { path: ':id',
+                        canActivate: [HomeAuthGuard], component: KubernetesClusterDetailsComponent, data: {
+                        navigationContainerType: NavigationContainerType.Fullscreen,
+                        roles: RoutesRestriction.CLUSTERS_ID
+                    }}
                 ]
             },
             {

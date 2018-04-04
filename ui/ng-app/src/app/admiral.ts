@@ -59,6 +59,7 @@ import { VerifyCertificateComponent } from "./views/verify-certificate/verify-ce
 import { TagDetailsContainersComponent } from "./views/tag-details/tag-details-containers.component";
 import { KubernetesClustersComponent } from './views/kubernetes/clusters/kubernetes-clusters.component';
 import { KubernetesClusterDetailsComponent } from './views/kubernetes/clusters/details/kubernetes-cluster-details.component';
+import { KubernetesClusterNodesComponent } from './views/kubernetes/clusters/details/kubernetes-cluster-nodes.component';
 
 import { GridViewComponent } from './components/grid-view/grid-view.component';
 import { TableViewComponent } from "./views/table-view/table-view.component";
@@ -138,6 +139,7 @@ export const ADMIRAL_DECLARATIONS = [
   EndpointsComponent,
   KubernetesClustersComponent,
   KubernetesClusterDetailsComponent,
+  KubernetesClusterNodesComponent,
 
   GridViewComponent,
   TableViewComponent,

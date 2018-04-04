@@ -13,4 +13,18 @@
     <clr-icon shape="rack-server" size="36"></clr-icon>
     <h3 class="cluster-details-header-title">{{entity?.name}}</h3>
 
+    <clr-tabs>
+        <clr-tab>
+            <button clrTabLink id="summaryTab">{{"kubernetes.clusters.details.summary.title" | i18n}}</button>
+            <clr-tab-content id="summaryContent" *clrIfActive>
+                Summary
+            </clr-tab-content>
+        </clr-tab>
+        <clr-tab>
+            <button clrTabLink id="nodesTab">{{"kubernetes.clusters.details.nodes.title" | i18n}}</button>
+            <clr-tab-content id="nodesContent" *clrIfActive>
+                <app-kubernetes-cluster-nodes></app-kubernetes-cluster-nodes>
+            </clr-tab-content>
+        </clr-tab>
+    </clr-tabs>
 </div>

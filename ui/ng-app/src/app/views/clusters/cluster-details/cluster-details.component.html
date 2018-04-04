@@ -16,14 +16,14 @@
     <clr-tabs>
         <clr-tab>
             <button clrTabLink id="summaryTab"
-                    (click)="clickedSummaryTab()">{{"clusters.summary.title" | i18n}}</button>
+                    (click)="clickedSummaryTab()">{{ "clusters.summary.title" | i18n }}</button>
             <clr-tab-content id="summaryContent" *clrIfActive>
                 <app-cluster-summary [cluster]="entity"></app-cluster-summary>
             </clr-tab-content>
         </clr-tab>
         <clr-tab *ngIf="showResources">
             <button clrTabLink id="resourcesTab"
-                    (click)="clickedResourcesTab()">{{"clusters.resources.title" | i18n}}</button>
+                    (click)="clickedResourcesTab()">{{ "clusters.resources.title" | i18n }}</button>
             <clr-tab-content id="resourcesContent" *clrIfActive>
                 <app-cluster-resources [cluster]="entity" [projectLink]="projectLink"
                                        [tabShown]="resourceTabSelected"

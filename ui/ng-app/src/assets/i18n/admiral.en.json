@@ -252,6 +252,14 @@
       "nodeCount": "Nodes",
       "search": {
         "placeholder": "Search for Kubernetes Clusters"
+      },
+      "details": {
+        "summary": {
+          "title": "Summary"
+        },
+        "nodes": {
+          "title": "Nodes"
+        }
       }
     }
   },
