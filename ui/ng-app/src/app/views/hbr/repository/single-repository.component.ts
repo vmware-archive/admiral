@@ -22,8 +22,7 @@ import { TagClickEvent } from 'harbor-ui';
     template: `
     <div class="main-view" data-view-name="project-repository">
       <div class="title">Project Repository</div>
-      <hbr-repository [projectId]="projectId" [projectName]="projectName"
-                      [repoName]="repoName" [hasSignedIn]="true"
+      <hbr-repository [projectId]="projectId" [repoName]="repoName" [hasSignedIn]="true"
                       [hasProjectAdminRole]="hasProjectAdminRole"
                       (tagClickEvent)="watchTagClickEvent($event)"
                       (backEvt)="backToRepoList($event)"
@@ -97,7 +96,7 @@ export class SingleRepositoryComponent implements OnDestroy {
 
 
     watchTagClickEvent(tag: TagClickEvent) {
-        this.router.navigate(['repositories', tag.repository_name, 'tags', tag.tag_name],
+        this.router.navigate(['tags', tag.tag_name],
                             { relativeTo: this.route });
     }
 
