@@ -13,6 +13,7 @@ import { Component, OnDestroy } from "@angular/core";
 import { Router, ActivatedRoute } from '@angular/router';
 import { Subscription } from "rxjs/Subscription";
 import { AuthService } from '../../../utils/auth.service';
+import { ErrorService } from "../../../utils/error.service";
 import { ProjectService } from '../../../utils/project.service';
 import { Roles } from '../../../utils/roles';
 import { Utils } from '../../../utils/utils';
@@ -21,7 +22,6 @@ import { TagClickEvent } from 'harbor-ui';
 @Component({
     template: `
     <div class="main-view" data-view-name="project-repository">
-      <div class="title">Project Repository</div>
       <hbr-repository [projectId]="projectId" [repoName]="repoName" [hasSignedIn]="true"
                       [hasProjectAdminRole]="hasProjectAdminRole"
                       (tagClickEvent)="watchTagClickEvent($event)"
@@ -49,12 +49,14 @@ export class SingleRepositoryComponent implements OnDestroy {
 
 
     constructor(private router: Router, private route: ActivatedRoute,
-                private projectService: ProjectService, authService: AuthService) {
+                private projectService: ProjectService, authService: AuthService,
+                private errorService: ErrorService) {
 
         authService.getCachedSecurityContext().then((securityContext) => {
             this.userSecurityContext = securityContext;
-        }).catch((ex) => {
-            console.log(ex);
+        }).catch((error) => {
+            console.log(error);
+            this.errorService.error(Utils.getErrorMessage(error)._generic);
         });
 
         this.sub = this.route.params.subscribe(params => {

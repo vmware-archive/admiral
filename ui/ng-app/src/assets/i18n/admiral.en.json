@@ -166,6 +166,9 @@
     "replicationEndpoints": "Replication Endpoints",
     "replicationRules": "Replication Rules"
   },
+  "projectRepositories": {
+      "containerDeploymentStarted": "Container deployment started. See Requests for more details."
+  },
   "clusters": {
     "title": "Clusters",
     "titleVic": "Container Hosts",

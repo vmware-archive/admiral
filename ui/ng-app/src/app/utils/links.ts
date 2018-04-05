@@ -23,6 +23,7 @@ export class Links {
   public static POD_LOGS = Links.RESOURCES + '/kubernetes-pod-logs';
   public static CLUSTERS = Links.RESOURCES + '/clusters';
   public static CONTAINERS = Links.RESOURCES + '/containers';
+  public static CONTAINER_DESCRIPTIONS = Links.RESOURCES + '/container-descriptions';
   public static GROUPS = '/groups';
   public static PROJECTS = '/projects';
   public static EVENT_LOGS = Links.RESOURCES + '/event-logs';
@@ -49,6 +50,8 @@ export class Links {
   public static BASIC_AUTH = '/core/authn/basic';
 
   public static CREDENTIALS = '/core/auth/credentials';
+
+  public static REQUESTS = '/requests';
 
   public static HOST_DATA_COLLECTION =
                             Links.RESOURCES + '/hosts-data-collections/host-info-data-collection';

@@ -12,77 +12,144 @@
 import { Component } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../utils/auth.service';
+import { DocumentService } from '../../../utils/document.service';
+import { ErrorService } from "../../../utils/error.service";
 import { ProjectService } from '../../../utils/project.service';
+
+import { Constants } from "../../../utils/constants";
 import { Roles } from '../../../utils/roles';
 import { Utils } from '../../../utils/utils';
+import { Links } from "../../../utils/links";
+
+import * as I18n from "i18next";
 
 @Component({
   template: `
-    <div class="main-view" data-view-name="project-repositories">
-      <div class="title">{{"navigation.projectRepositories" | i18n}}</div>
+      <div class="main-view" data-view-name="project-repositories">
+          <clr-alert [clrAlertType]="alertType" [(clrAlertClosed)]="!alertMessage"
+                     (clrAlertClosedChange)="resetAlert()">
+              <div class="alert-item"><span class="alert-text">{{ alertMessage }}</span></div>
+          </clr-alert>
 
-      <hbr-repository-listview [projectId]="projectId" [projectName]="projectName" 
-                               [hasSignedIn]="true" [hasProjectAdminRole]="hasProjectAdminRole"
-                               (repoClickEvent)="watchRepoClickEvent($event)"
-                               style="display: block;"></hbr-repository-listview>
+          <div class="title">{{"navigation.projectRepositories" | i18n}}</div>
 
-      <navigation-container>
-        <router-outlet></router-outlet>
-      </navigation-container>
-    </div>
+          <hbr-repository-gridview [projectId]="projectId" [projectName]="projectName" 
+                                   [hasSignedIn]="true" [hasProjectAdminRole]="hasProjectAdminRole"
+                                   (repoClickEvent)="watchRepoClickEvent($event)"
+                                   (repoProvisionEvent)="watchRepoProvisionEvent($event)"
+                                   (addInfoEvent)="watchAddInfoEvent($event)"
+          ></hbr-repository-gridview>
+
+          <navigation-container>
+            <router-outlet></router-outlet>
+          </navigation-container>
+      </div>
   `
 })
 /**
  * Harbor repositories list view.
  */
 export class RepositoriesComponent {
-  private static readonly HBR_DEFAULT_PROJECT_INDEX: Number = 1;
-  private static readonly CUSTOM_PROP_PROJECT_INDEX: string = '__projectIndex';
+    private static readonly HBR_DEFAULT_PROJECT_INDEX: Number = 1;
+    private static readonly CUSTOM_PROP_PROJECT_INDEX: string = '__projectIndex';
 
-  private userSecurityContext: any;
+    private userSecurityContext: any;
 
-  sessionInfo = {};
+    sessionInfo = {};
 
-  constructor(private router: Router, private route: ActivatedRoute,
-              private projectService: ProjectService, authService: AuthService) {
+    alertMessage: string;
+    alertType: any;
 
-    authService.getCachedSecurityContext().then((securityContext) => {
-      this.userSecurityContext = securityContext;
+    constructor(private router: Router, private route: ActivatedRoute,
+              private projectService: ProjectService, authService: AuthService,
+              private documentService: DocumentService, private errorService: ErrorService) {
 
-    }).catch((ex) => {
-      console.log(ex);
-    });
-  }
+        authService.getCachedSecurityContext().then((securityContext) => {
+            this.userSecurityContext = securityContext;
 
-  get projectId(): Number {
-    let selectedProject = this.getSelectedProject();
+        }).catch((error) => {
+            console.log(error);
+            this.errorService.error(Utils.getErrorMessage(error)._generic);
+        });
+    }
 
-    let projectIndex = selectedProject && Utils.getCustomPropertyValue(
+    get projectId(): Number {
+        let selectedProject = this.getSelectedProject();
+
+        let projectIndex = selectedProject && Utils.getCustomPropertyValue(
                 selectedProject.customProperties, RepositoriesComponent.CUSTOM_PROP_PROJECT_INDEX);
 
-    return (projectIndex && Number(projectIndex))
+        return (projectIndex && Number(projectIndex))
             || RepositoriesComponent.HBR_DEFAULT_PROJECT_INDEX;
-  }
+    }
 
-  get projectName(): string {
-    let selectedProject = this.getSelectedProject();
+    get projectName(): string {
+        let selectedProject = this.getSelectedProject();
 
-    return (selectedProject && selectedProject.name) || 'unknown';
-  }
+        return (selectedProject && selectedProject.name) || 'unknown';
+    }
 
-  get hasProjectAdminRole(): boolean {
-    let selectedProject = this.getSelectedProject();
-    let projectLink = selectedProject && selectedProject.documentSelfLink;
+    get hasProjectAdminRole(): boolean {
+        let selectedProject = this.getSelectedProject();
+        let projectLink = selectedProject && selectedProject.documentSelfLink;
 
-    return Utils.isAccessAllowed(this.userSecurityContext, projectLink,
+        return Utils.isAccessAllowed(this.userSecurityContext, projectLink,
                                 [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN]);
-  }
+    }
 
-  private getSelectedProject(): any {
-    return this.projectService && this.projectService.getSelectedProject();
-  }
+    private getSelectedProject(): any {
+        return this.projectService && this.projectService.getSelectedProject();
+    }
 
-  watchRepoClickEvent(repositoryItem) {
-    this.router.navigate(['repositories', repositoryItem.name],{ relativeTo: this.route });
-  }
+    watchRepoClickEvent(repositoryItem) {
+        this.router.navigate(['repositories', repositoryItem.name],
+                                { relativeTo: this.route });
+    }
+
+    watchRepoProvisionEvent(repositoryItem) {
+        var name = Utils.getDocumentId(repositoryItem.name);
+
+        var containerDescription = {
+            image: repositoryItem.name,
+            name: name,
+            publishAll: true
+        };
+
+        var currentComponent = this;
+        var startedRequest:any;
+        this.documentService.post(Links.CONTAINER_DESCRIPTIONS, containerDescription)
+            .then((createdContainerDescription) => {
+
+                var request:any = {};
+                request.resourceType = 'DOCKER_CONTAINER';
+                request.resourceDescriptionLink = createdContainerDescription.documentSelfLink;
+
+                request.tenantLinks = createdContainerDescription.tenantLinks;
+
+                this.documentService.post(Links.REQUESTS, request).then(function(createdRequest) {
+                    startedRequest = createdRequest;
+                    console.log('Provisioning request started', request);
+
+                    // Show show alert message - the request has been triggered
+                    currentComponent.alertType = Constants.alert.type.SUCCESS;
+                    currentComponent.alertMessage = I18n.t('projectRepositories.containerDeploymentStarted');
+                }).catch(error => {
+                    console.log('Failed to start container provisioning', error);
+                    currentComponent.errorService.error(Utils.getErrorMessage(error)._generic);
+                });
+            }).catch(error => {
+                console.log('Failed to create container description', error);
+                currentComponent.errorService.error(Utils.getErrorMessage(error)._generic);
+            });
+    }
+
+    watchAddInfoEvent(repositoryItem) {
+        console.log('Additional Info', repositoryItem);
+        // TODO add implementation
+    }
+
+    resetAlert() {
+        this.alertType = null;
+        this.alertMessage = null;
+    }
 }
