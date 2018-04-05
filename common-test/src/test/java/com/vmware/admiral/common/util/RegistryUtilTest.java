@@ -15,6 +15,7 @@ import static org.hamcrest.CoreMatchers.hasItem;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -96,6 +97,53 @@ public class RegistryUtilTest extends BaseTestCase {
 
         verifyRegistryLinksByHostname("test.registry.com:80", TENANT, Collections.emptyList());
     }
+
+    @Test
+    public void testFilterRegistriesByPath() throws Throwable {
+        List<RegistryState> registries = Arrays.asList(
+                createRegistry("https://test.registry.com:5000/vmware", null),
+                createRegistry("https://test.registry.com:5000/vmware/test", null),
+                createRegistry("https://test.registry.com:5000/test", null),
+                createRegistry("https://test.registry.com:5001/vmware", null),
+                createRegistry("https://test.registry.com:5001", null)
+        );
+
+        host.log("Test same path different hosts");
+        DockerImage image = DockerImage.fromParts("test.registry.com:5000", "vmware",
+                "admiral", "latest");
+        List<RegistryState> filteredRegistries = RegistryUtil.filterRegistriesByPath(host, registries, image);
+        assertNotNull(filteredRegistries);
+        assertEquals(1, filteredRegistries.size());
+        assertEquals("https://test.registry.com:5000/vmware", filteredRegistries.get(0).address);
+
+        host.log("Test image no path");
+        image = DockerImage.fromParts("test.registry.com:5001", "",
+                "admiral", "latest");
+        filteredRegistries = RegistryUtil.filterRegistriesByPath(host, registries, image);
+        assertNotNull(filteredRegistries);
+        assertEquals(1, filteredRegistries.size());
+        assertEquals("https://test.registry.com:5001", filteredRegistries.get(0).address);
+
+        host.log("Test registry no path");
+        image = DockerImage.fromParts("test.registry.com:5001", "vmware",
+                "admiral", "latest");
+        filteredRegistries = RegistryUtil.filterRegistriesByPath(host, registries, image);
+        assertNotNull(filteredRegistries);
+        assertEquals(2, filteredRegistries.size());
+        filteredRegistries.stream().forEach(r -> {
+            assertTrue(r.address.contains("test.registry.com:5001"));
+        });
+
+        host.log("Test registry multiple paths");
+        image = DockerImage.fromParts("test.registry.com:5000", "vmware/test", "vmware", "latest");
+        filteredRegistries = RegistryUtil.filterRegistriesByPath(host, registries, image);
+        assertNotNull(filteredRegistries);
+        assertEquals(2, filteredRegistries.size());
+        filteredRegistries.stream().forEach(r -> {
+            assertTrue(r.address.contains("test.registry.com:5000/vmware"));
+        });
+    }
+
 
     private void verifyRegistryLinksByHostname(String hostname, String tenantLink,
             Collection<RegistryState> expectedRegistries) {

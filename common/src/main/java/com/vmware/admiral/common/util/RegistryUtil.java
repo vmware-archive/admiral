@@ -13,6 +13,8 @@ package com.vmware.admiral.common.util;
 
 import static com.vmware.admiral.common.util.QueryUtil.createAnyPropertyClause;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -69,7 +71,7 @@ public class RegistryUtil {
 
         // Try to find a definition of global and/or project specific registries with this hostname
         findRegistriesByHostname(serviceHost, registryHost, filteredTenantLinks,
-                (registriesLinks, errors) -> {
+                (registries, errors) -> {
                     if (errors != null && !errors.isEmpty()) {
                         Throwable firstError = errors.iterator().next();
                         serviceHost.log(Level.SEVERE,
@@ -79,44 +81,15 @@ public class RegistryUtil {
                         return;
                     }
 
+                    Collection<RegistryState> filteredRegistries = filterRegistriesByPath(serviceHost, registries, parsedImage);
+
                     // if there is at least one matching registry
                     // then the provisioning should be permitted
                     serviceHost.log(Level.INFO, "Found %s matching registries.",
-                            registriesLinks == null ? 0 : registriesLinks.size());
-
-                    // TODO do additional checks for paths in registries
-                    boolean allowRequest = registriesLinks != null && registriesLinks.size() > 0;
+                            filteredRegistries == null ? 0 : filteredRegistries.size());
+                    boolean allowRequest = filteredRegistries != null && filteredRegistries.size() > 0;
                     completionHandler.accept(allowRequest, null);
                 });
-    }
-
-    private static String nonNullValue(String desiredValue, String defaultValue) {
-        if (desiredValue != null && !desiredValue.isEmpty()) {
-            return desiredValue;
-        }
-
-        return defaultValue;
-    }
-
-    /**
-     * For the purposes of registry whitelist checks, only /projects/{id} and /tenants/{id} tenant
-     * links are important. /tenants/{id}/groups/{group}, /users/{principal} and other custom tenant
-     * links will be removed in the result.
-     */
-    private static Collection<String> filterWhitelistRelatedTenantLinks(
-            Collection<String> allTenantLinks) {
-        if (allTenantLinks == null) {
-            return null;
-        }
-
-        return allTenantLinks.stream().filter((tenantLink) -> {
-            if (tenantLink.startsWith(MultiTenantDocument.PROJECTS_IDENTIFIER)) {
-                return true;
-            }
-
-            return tenantLink.startsWith(MultiTenantDocument.TENANTS_PREFIX)
-                    && !tenantLink.contains(MultiTenantDocument.GROUP_IDENTIFIER);
-        }).collect(Collectors.toSet());
     }
 
     /**
@@ -173,6 +146,43 @@ public class RegistryUtil {
         }
 
         queryForRegistries(serviceHost, queryTasks, consumer);
+    }
+
+    /**
+     * Filter registries by image path.
+     * @param host
+     * @param registries
+     * @param image
+     * @return
+     */
+    public static List<RegistryState> filterRegistriesByPath(ServiceHost host, Collection<RegistryState> registries, DockerImage image) {
+        String imageHost = nonNullValue(image.getHost(), DEFAULT_DOCKER_REGISTRY_ADDRESS);
+        String path = image.getNamespace();
+
+        String hostPath = imageHost;
+        if (path != null && !path.isEmpty()) {
+            hostPath = hostPath + "/" + path;
+        }
+
+        final String address = hostPath;
+        host.log(Level.INFO, "Perform filtering of registries by path: %s.", address);
+
+        if (registries != null && !registries.isEmpty()) {
+            return registries.stream().filter(r -> {
+                if (r.address != null && !r.address.isEmpty()) {
+                    try {
+                        String addressPart = new URI(r.address).getSchemeSpecificPart().replace("//", "");
+                        return address.startsWith(addressPart);
+                    } catch (URISyntaxException e) {
+                        host.log(Level.SEVERE, "Failed to build URI. Exception [%s]", e.getMessage());
+                    }
+                }
+
+                return false;
+            }).collect(Collectors.toList());
+        }
+
+        return Collections.emptyList();
     }
 
     /**
@@ -297,8 +307,37 @@ public class RegistryUtil {
         return queryTask;
     }
 
+    /**
+     * For the purposes of registry whitelist checks, only /projects/{id} and /tenants/{id} tenant
+     * links are important. /tenants/{id}/groups/{group}, /users/{principal} and other custom tenant
+     * links will be removed in the result.
+     */
+    private static Collection<String> filterWhitelistRelatedTenantLinks(
+            Collection<String> allTenantLinks) {
+        if (allTenantLinks == null) {
+            return null;
+        }
+
+        return allTenantLinks.stream().filter((tenantLink) -> {
+            if (tenantLink.startsWith(MultiTenantDocument.PROJECTS_IDENTIFIER)) {
+                return true;
+            }
+
+            return tenantLink.startsWith(MultiTenantDocument.TENANTS_PREFIX)
+                    && !tenantLink.contains(MultiTenantDocument.GROUP_IDENTIFIER);
+        }).collect(Collectors.toSet());
+    }
+
     private static Query buildQueryByHostname(String hostname) {
         return createAnyPropertyClause(String.format("*://%s*", hostname),
                 RegistryState.FIELD_NAME_ADDRESS);
+    }
+
+    private static String nonNullValue(String desiredValue, String defaultValue) {
+        if (desiredValue != null && !desiredValue.isEmpty()) {
+            return desiredValue;
+        }
+
+        return defaultValue;
     }
 }

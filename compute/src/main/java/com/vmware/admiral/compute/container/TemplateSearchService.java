@@ -25,7 +25,6 @@ import static com.vmware.admiral.image.service.ContainerImageService.TENANT_LINK
 import static com.vmware.xenon.common.UriUtils.URI_WILDCARD_CHAR;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -38,9 +37,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
-
-import org.apache.commons.lang3.StringUtils;
 
 import com.vmware.admiral.adapter.registry.service.RegistryAdapterService;
 import com.vmware.admiral.adapter.registry.service.RegistrySearchResponse;
@@ -61,6 +57,7 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService.Containe
 import com.vmware.admiral.compute.container.TemplateSpec.TemplateType;
 import com.vmware.admiral.image.service.ContainerImageService;
 import com.vmware.admiral.service.common.MultiTenantDocument;
+import com.vmware.admiral.service.common.RegistryService.RegistryState;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
@@ -458,18 +455,6 @@ public class TemplateSearchService extends StatelessService {
                 return;
             }
 
-            Set<String> registryAddresses = registries.stream().map(reg -> {
-                try {
-                    if (!StringUtils.isEmpty(reg.address)) {
-                        return new URI(reg.address).getSchemeSpecificPart().replace("//", "");
-                    }
-                } catch (URISyntaxException e) {
-                    consumer.accept(null, Arrays.asList(e));
-                }
-
-                return null;
-            }).collect(Collectors.toSet());
-
             ArrayList<Result> filteredResults = new ArrayList<>();
             results.stream().forEach(res -> {
                 String imageName = res.name;
@@ -483,8 +468,12 @@ public class TemplateSearchService extends StatelessService {
                     return;
                 }
 
-                if (registryAddresses.contains(parsedImage.getHost()) ||
-                        registryAddresses.contains(parsedImage.getHost() + "/" + parsedImage.getNamespace())) {
+                List<RegistryState> filteredRegistryStates = RegistryUtil
+                        .filterRegistriesByPath(getHost(), registries, parsedImage);
+
+                log(Level.FINE, "Found %s matching registries.",
+                        filteredRegistryStates == null ? 0 : filteredRegistryStates.size());
+                if (filteredRegistryStates.size() > 0) {
                     filteredResults.add(res);
                 }
             });
