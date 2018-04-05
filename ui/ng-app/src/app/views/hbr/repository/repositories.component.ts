@@ -144,8 +144,8 @@ export class RepositoriesComponent {
     }
 
     watchAddInfoEvent(repositoryItem) {
-        console.log('Additional Info', repositoryItem);
-        // TODO add implementation
+        // Navigate to Container Definition screen
+        this.router.navigate(['/home/templates/image/' + repositoryItem.name + '/newContainer']);
     }
 
     resetAlert() {
