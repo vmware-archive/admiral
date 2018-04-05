@@ -56,23 +56,17 @@
                         <button *ngIf="!editMode" type="button" class="btn btn-primary"
                                 [clrLoading]="isSavingRegistry || isTestingConnection || projectRegistryDetailsForm.invalid"
                                 (click)="save()">{{ "save" | i18n }}</button>
+                        <button *ngIf="editMode" type="button" class="btn btn-primary"
+                                [clrLoading]="isSavingRegistry || isTestingConnection || projectRegistryDetailsForm.invalid"
+                                (click)="update()">{{ "update" | i18n }}</button>
                         <button type="button" class="btn btn-secondary"
                                 [disabled]="isSavingRegistry || isTestingConnection"
                                 (click)="testConnection()">{{ "verify" | i18n }}</button>
                         <button type="button" class="btn btn-secondary"
                                 [disabled]="isSavingRegistry"
                                 (click)="cancel()">{{ "cancel" | i18n }}</button>
-                        <button *ngIf="editMode" type="button" class="btn btn-primary"
-                                [clrLoading]="isSavingRegistry || isTestingConnection || projectRegistryDetailsForm.invalid"
-                                (click)="save()">>{{ "save" | i18n }}</button>
                     </section>
                 </form>
-            </clr-tab-content>
-        </clr-tab>
-        <clr-tab *ngIf="editMode">
-            <button clrTabLink id="clustersTab">{{"endpoints.details.clustersTabTitle" | i18n}}</button>
-            <clr-tab-content id="clustersContent" *clrIfActive>
-                Clusters for the selected endpoint
             </clr-tab-content>
         </clr-tab>
     </clr-tabs>

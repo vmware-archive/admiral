@@ -100,4 +100,8 @@ export class ProjectRegistriesComponent implements OnInit {
     deleteCanceled() {
         this.showDeleteConfirmation = false;
     }
+
+    getRegistryId(registry){
+        return Utils.getDocumentId(registry.documentSelfLink);
+    }
 }

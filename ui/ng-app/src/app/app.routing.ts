@@ -241,14 +241,28 @@ export const ROUTES: Routes = [
                         canActivate: [AdminAuthGuard],
                         data: {
                             navigationContainerType: NavigationContainerType.Fullscreen,
-                            roles: RoutesRestriction.PROJECT_REGISTRIES
+                            roles: RoutesRestriction.PROJECT_REGISTRIES_DETAILS
                         }
                     },
                     { path: ':projectId/:tab/registries/new', component: ProjectRegistryDetailsComponent,
                         canActivate: [AdminAuthGuard],
                         data: {
                             navigationContainerType: NavigationContainerType.Fullscreen,
-                            roles: RoutesRestriction.PROJECT_REGISTRIES
+                            roles: RoutesRestriction.PROJECT_REGISTRIES_DETAILS
+                        }
+                    },
+                    { path: ':projectId/registries/:id/edit', component: ProjectRegistryDetailsComponent,
+                        canActivate: [AdminAuthGuard],
+                        data: {
+                            navigationContainerType: NavigationContainerType.Fullscreen,
+                            roles: RoutesRestriction.PROJECT_REGISTRIES_DETAILS
+                        }
+                    },
+                    { path: ':projectId/:tab/registries/:id/edit', component: ProjectRegistryDetailsComponent,
+                        canActivate: [AdminAuthGuard],
+                        data: {
+                            navigationContainerType: NavigationContainerType.Fullscreen,
+                            roles: RoutesRestriction.PROJECT_REGISTRIES_DETAILS
                         }
                     },
                     { path: ':projectId/:tab/cluster/new', component: ClusterCreateComponent,

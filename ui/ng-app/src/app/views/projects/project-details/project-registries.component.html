@@ -29,7 +29,7 @@
                         [disabled]="selectedProjectRegistries.length == 0"
                         (click)="removeSelectedRegistries($event)"><clr-icon
                         shape="close"></clr-icon><span
-                        class="btn-spaced-text">{{"projects.delete" | i18n}}</span></button>
+                        class="btn-spaced-text">{{"delete" | i18n}}</span></button>
                     </div>
             </clr-dg-action-bar>
         </div>
@@ -44,7 +44,7 @@
 
                 <clr-dg-row *clrDgItems="let registry of projectRegistries" [clrDgItem]="registry">
                     <clr-dg-cell><span *ngIf="registry.tenantLinks && registry.tenantLinks.length > 0"
-                            ><a [routerLink]="['./registry/' + registry.documentId]" >{{ registry.name }}</a></span>
+                            ><a routerLink="./registries/{{getRegistryId(registry)}}/edit">{{ registry.name }}</a></span>
                         <span *ngIf="!registry.tenantLinks || registry.tenantLinks.length == 0">{{ registry.name }}</span>
                     </clr-dg-cell>
                     <clr-dg-cell><span *ngIf="registry.disabled && registry.disabled == true"

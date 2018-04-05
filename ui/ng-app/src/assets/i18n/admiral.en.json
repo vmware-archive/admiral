@@ -102,6 +102,7 @@
     "projectRegistries": {
         "title": "Project Registries",
         "new": "New Project Registry",
+        "delete": "Delete",
         "nameTitle": "Name",
         "statusTitle": "Status",
         "scopeTitle": "Scope",
@@ -122,7 +123,7 @@
         "registryDetails": {
           "title": "Add Project Registry",
           "descriptions": "Add registry to the project",
-          "fieldAddress": "Adress",
+          "fieldAddress": "Address",
           "fieldName": "Name",
           "fieldCredentials": "Login credentials"
         }
