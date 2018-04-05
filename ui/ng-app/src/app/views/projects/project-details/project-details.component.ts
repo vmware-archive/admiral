@@ -38,8 +38,9 @@ export class ProjectDetailsComponent extends BaseDetailsComponent {
 
   // tabs preselection through routing
   routeTabParamSubscription:Subscription;
-  isActiveTabInfrastructre: boolean = false;
+  isActiveTabInfrastructure: boolean = false;
   isActiveTabRegistries: boolean = false;
+  isActiveTabProjectRepositories: boolean = false;
 
   constructor(route: ActivatedRoute, service: DocumentService,
     private router: Router, private authService: AuthService) {
@@ -60,8 +61,9 @@ export class ProjectDetailsComponent extends BaseDetailsComponent {
       this.routeTabParamSubscription = this.route.params.subscribe((params) => {
           let tab = params['tab'];
           // Activate tab Infrastructure
-          this.isActiveTabInfrastructre = tab === 'infra';
+          this.isActiveTabInfrastructure = tab === 'infra';
           this.isActiveTabRegistries = tab === 'registries';
+          this.isActiveTabProjectRepositories = tab === 'hbrRepo';
       });
   }
 

@@ -278,7 +278,19 @@ export const ROUTES: Routes = [
                             hideBackButton: true
                         }
                     },
+                    { path: ':id/:tab/repositories/:rid', component: SingleRepositoryComponent,
+                        data: {
+                            navigationContainerType: NavigationContainerType.Fullscreen,
+                            hideBackButton: true
+                        }
+                    },
                     { path: ':id/repositories/:rid/tags/:tid', component: TagDetailsComponent,
+                        data: {
+                            navigationContainerType: NavigationContainerType.Fullscreen,
+                            hideBackButton: true
+                        }
+                    },
+                    { path: ':id/:tab/repositories/:rid/tags/:tid', component: TagDetailsComponent,
                         data: {
                             navigationContainerType: NavigationContainerType.Fullscreen,
                             hideBackButton: true

@@ -371,6 +371,21 @@ export class Utils {
           }
       }, retryInterval);
   }
+
+  public static getPathUp(url, tabId) {
+      const PATH_UP = '../../';
+      const PROJECTS_VIEW_URL_PART = 'projects';
+
+      let path: any[] = [PATH_UP];
+      if (url.indexOf(PROJECTS_VIEW_URL_PART) > -1) {
+          if (url.indexOf(tabId) < 0) {
+              // Preselect tab in project details view
+              path = [PATH_UP + tabId];
+          }
+      }
+
+      return path;
+  }
 }
 
 export class CancelablePromise<T> {

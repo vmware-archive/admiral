@@ -26,16 +26,18 @@
     </clr-tab>
     <clr-tab *ngIf="isHbrEnabled">
         <button clrTabLink id="repositoriesTab">{{"projects.repositories" | i18n}}</button>
-        <clr-tab-content id="repositoriesContent" *clrIfActive>
-            <hbr-repository-listview [projectId]="hbrProjectId" [projectName]="projectName"
-                                     [hasSignedIn]="true" [hasProjectAdminRole]="hasProjectAdminRole"
-                                     (repoClickEvent)="watchRepoClickEvent($event)"
-                                        ></hbr-repository-listview>
-        </clr-tab-content>
+        <ng-template [(clrIfActive)]="isActiveTabProjectRepositories">
+            <clr-tab-content id="repositoriesContent" *clrIfActive>
+                <hbr-repository-listview [projectId]="hbrProjectId" [projectName]="projectName"
+                                         [hasSignedIn]="true" [hasProjectAdminRole]="hasProjectAdminRole"
+                                         (repoClickEvent)="watchRepoClickEvent($event)"
+                                            ></hbr-repository-listview>
+            </clr-tab-content>
+        </ng-template>
     </clr-tab>
     <clr-tab>
         <button clrTabLink id="infrastructureTab">{{"projects.infrastructure" | i18n}}</button>
-        <ng-template [(clrIfActive)]="isActiveTabInfrastructre">
+        <ng-template [(clrIfActive)]="isActiveTabInfrastructure">
             <clr-tab-content id="infrastructureContent">
                 <app-clusters [hideTitle]="true" [projectLink]="entity?.documentSelfLink"></app-clusters>
             </clr-tab-content>

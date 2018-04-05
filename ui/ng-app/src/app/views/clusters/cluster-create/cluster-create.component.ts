@@ -123,19 +123,7 @@ export class ClusterCreateComponent implements AfterViewInit, OnInit, OnDestroy 
     this.opened = open;
 
     if (!open) {
-      const PATH_UP = '../../';
-      const PROJECTS_VIEW_URL_PART = 'projects';
-      const TAB_ID_PROJECT_INFRASTRUCTURE = 'infra';
-
-      let path: any[] = [PATH_UP];
-          // New cluster was created
-          if (this.router.url.indexOf(PROJECTS_VIEW_URL_PART) > -1) {
-            // New cluster was created in the Projects view
-            if (this.router.url.indexOf(TAB_ID_PROJECT_INFRASTRUCTURE) < 0) {
-              // Preselect infrastructure tab in project details view upon new cluster creation
-              path = [PATH_UP + TAB_ID_PROJECT_INFRASTRUCTURE];
-          }
-      }
+      let path: any[] = Utils.getPathUp(this.router.url, 'infra');
 
       this.router.navigate(path, { relativeTo: this.route });
     }

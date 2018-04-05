@@ -96,13 +96,14 @@ export class SingleRepositoryComponent implements OnDestroy {
         return this.projectService && this.projectService.getSelectedProject();
     }
 
-
     watchTagClickEvent(tag: TagClickEvent) {
         this.router.navigate(['tags', tag.tag_name],
                             { relativeTo: this.route });
     }
 
     backToRepoList($event) {
-        this.router.navigate(['../..'], { relativeTo: this.route });
+        let path: any[] = Utils.getPathUp(this.router.url, 'hbrRepo');
+
+        this.router.navigate(path, { relativeTo: this.route });
     }
 }
