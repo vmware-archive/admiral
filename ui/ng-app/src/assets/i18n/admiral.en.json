@@ -161,7 +161,7 @@
     }
   },
   "registries": {
-    "title": "Registries",
+    "title": "Global Registries",
     "sourceRegistries": "Source Registries",
     "replicationEndpoints": "Replication Endpoints",
     "replicationRules": "Replication Rules"
@@ -398,7 +398,7 @@
     "library": "Library",
     "templates": "Templates",
     "projectRepositories": "Project repositories",
-    "publicRepositories": "Public repositories",
+    "publicRepositories": "Repositories",
     "infrastructure": "Infrastructure",
     "clusters": "Clusters",
     "clustersVic": "Container Hosts",
@@ -407,7 +407,7 @@
     "placements": "Placements",
     "identityManagement": "Identity Management",
     "projects": "Projects",
-    "registries": "Registries",
+    "registries": "Global Registries",
     "configuration": "Configuration",
     "logs": "Logs",
     "endpoints": "Endpoints"
