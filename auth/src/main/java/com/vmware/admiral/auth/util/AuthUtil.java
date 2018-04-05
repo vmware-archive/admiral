@@ -33,6 +33,7 @@ import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
+import com.vmware.admiral.compute.RegistryHostConfigService;
 import com.vmware.admiral.compute.container.CompositeDescriptionCloneService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.compute.container.ContainerLogService;
@@ -330,6 +331,14 @@ public class AuthUtil {
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
                         buildUriWithWildcard(ServiceUriPaths.CORE_QUERY_PAGE),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
+                // this is needed so project admins can create project-specific registries. Since
+                // this service makes calls to the RegistryService, additional authorization rules
+                // are applied there. Because of them, only admins (cloud and project) can create
+                // registries.
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        RegistryHostConfigService.SELF_LINK,
+                        MatchType.TERM, Occurance.SHOULD_OCCUR)
                 .build();
 
         ResourceGroupState resourceGroupState = ResourceGroupState.Builder

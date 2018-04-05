@@ -84,6 +84,18 @@ public class RegistryHostConfigService extends StatelessService {
     }
 
     @Override
+    public void handleRequest(Operation op) {
+        if (op.getAction() == Action.DELETE &&
+                op.getUri().getQuery() == null &&
+                !op.getAuthorizationContext().isSystemUser()) {
+            op.fail(Operation.STATUS_CODE_FORBIDDEN);
+            return;
+        }
+
+        super.handleRequest(op);
+    }
+
+    @Override
     public void handleStart(Operation post) {
         // we depend on another service, start, when it starts
         getHost().registerForServiceAvailability((o, e) -> {

@@ -11,22 +11,30 @@
 
 package com.vmware.admiral.auth.project;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.UUID;
+import java.util.logging.Level;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.auth.AuthBaseTest;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
+import com.vmware.admiral.compute.RegistryHostConfigService;
+import com.vmware.admiral.compute.RegistryHostConfigService.RegistryHostSpec;
 import com.vmware.admiral.compute.container.ContainerFactoryService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
+import com.vmware.admiral.service.common.RegistryService.RegistryState;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Utils;
 
 public class ProjectRoleRestrictionsTest extends AuthBaseTest {
 
@@ -120,6 +128,37 @@ public class ProjectRoleRestrictionsTest extends AuthBaseTest {
         doPatch(project, projectLink);
     }
 
+    @Test
+    public void testCloudAdminCanAddProjectRegistry() throws Throwable {
+        createProjectSpecificRegistryStateAsUser(PROJECT_NAME_TEST_PROJECT_1, USER_EMAIL_ADMIN2);
+    }
+
+    @Test
+    public void testProjectAdminCanAddProjectRegistry() throws Throwable {
+        createProjectSpecificRegistryStateAsUser(PROJECT_NAME_TEST_PROJECT_1, USER_EMAIL_FRITZ);
+    }
+
+    @Test
+    public void testProjectAdminCannotAddGlobalRegistry() throws Throwable {
+        try {
+            createProjectSpecificRegistryStateAsUser(null, USER_EMAIL_FRITZ);
+            fail("Expected project admins not to be able to create global registries");
+        } catch (IllegalAccessError ex) {
+            // expected
+        }
+    }
+
+    @Test
+    public void testProjectMemberCannotAddProjectRegistry() throws Throwable {
+        try {
+            createProjectSpecificRegistryStateAsUser(PROJECT_NAME_TEST_PROJECT_1,
+                    USER_EMAIL_GLORIA);
+            fail("Expected project members not to be able to create project-specific registries");
+        } catch (IllegalAccessError ex) {
+            // expected
+        }
+    }
+
     private ComputeState createComputeStateAsUser(String projectName, String userEmail)
             throws Throwable {
         String projectLink = getProjectLinkByName(projectName);
@@ -154,9 +193,59 @@ public class ProjectRoleRestrictionsTest extends AuthBaseTest {
         cs.tenantLinks = new ArrayList<>();
         cs.tenantLinks.add(projectLink);
 
+        ContainerState result = doPost(cs, ContainerFactoryService.SELF_LINK);
+
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN2));
 
-        return doPost(cs, ContainerFactoryService.SELF_LINK);
+        return result;
+    }
+
+    private RegistryState createProjectSpecificRegistryStateAsUser(String projectName,
+            String userEmail)
+            throws Throwable {
+        String projectLink = projectName == null ? null : getProjectLinkByName(projectName);
+        String userLink = buildUserServicePath(userEmail);
+
+        host.assumeIdentity(userLink);
+
+        RegistryState rs = new RegistryState();
+        rs.name = UUID.randomUUID().toString();
+        rs.address = rs.name;
+        rs.endpointType = RegistryState.DOCKER_REGISTRY_ENDPOINT_TYPE;
+        rs.tenantLinks = projectLink == null ? null : Collections.singletonList(projectLink);
+
+        RegistryHostSpec hostSpec = new RegistryHostSpec();
+        hostSpec.acceptCertificate = true;
+        hostSpec.acceptHostAddress = true;
+        hostSpec.hostState = rs;
+
+        String[] resultLink = new String[1];
+        Operation put = Operation.createPut(host, RegistryHostConfigService.SELF_LINK)
+                .setReferer("/")
+                .setBody(hostSpec)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        host.log(Level.SEVERE, "Failed to PUT a new registry: %s",
+                                Utils.toString(ex));
+                        host.failIteration(ex);
+                    } else {
+                        resultLink[0] = o.getResponseHeader(Operation.LOCATION_HEADER);
+                        host.log(Level.INFO, "Created a new registry with selfLink [%s]",
+                                resultLink[0]);
+                        host.completeIteration();
+                    }
+                });
+
+        host.testStart(1);
+        host.send(put);
+        host.testWait();
+
+        assertNotNull(resultLink[0]);
+        RegistryState result = getDocument(RegistryState.class, resultLink[0]);
+
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN2));
+
+        return result;
     }
 
     private void assertForbiddenMessage(IllegalAccessError e) {
