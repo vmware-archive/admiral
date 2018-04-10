@@ -7,6 +7,7 @@
 @import "components/multicolumn-inputs";
 @import "components/table-sort";
 
+@import "node_modules/admiral-ui-common/css/tokenfield-override";
 @import "radialProgress.css";
 
 @import "components/inline-editable-list";
@@ -1170,6 +1171,10 @@ body > .loading, .container-details > .content .loading {
   > li > a, .dropdown-options-hint {
     padding: 0 20px;
   }
+}
+
+.container-image-input .twitter-typeahead {
+  width: 100%;
 }
 
 .twitter-typeahead .dropdown-options-hint {
