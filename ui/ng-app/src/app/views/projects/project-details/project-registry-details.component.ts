@@ -62,6 +62,19 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
         super(route, documentService, Links.REGISTRIES, errorService);
     }
 
+    ngOnInit() {
+        this.sub = this.route.params.subscribe(params => {
+            let projectId = params['projectId'];
+            if (projectId) {
+                this.projectLink = Links.PROJECTS + '/' + projectId;
+            }
+        });
+    }
+
+    ngOnDestroy() {
+        this.sub.unsubscribe();
+    }
+
     populateCredentials(authCredentialsLink) {
         this.service.list(Links.CREDENTIALS, {}).then(credentials => {
             this.credentials = credentials.documents
@@ -129,7 +142,7 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
             'acceptCertificate': true
         };
 
-        this.service.put(Links.REGISTRY_SPEC, registrySpec).then((response) => {
+        this.service.put(Links.REGISTRY_SPEC, registrySpec, this.projectLink).then((response) => {
             this.isSavingRegistry = false;
             this.router.navigate(['..'], { relativeTo: this.route });
         }).catch(error => {
@@ -152,7 +165,7 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
             'hostState': this.entity,
         };
 
-        this.service.put(Links.REGISTRY_SPEC, registrySpec).then((response) => {
+        this.service.put(Links.REGISTRY_SPEC, registrySpec, this.projectLink).then((response) => {
             this.isSavingRegistry = false;
             this.router.navigate(['../../'], { relativeTo: this.route });
         }).catch(error => {
@@ -163,7 +176,7 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
 
     private cancel() {
         if (this.editMode) {
-            this.router.navigate(['../../'], { relativeTo: this.route });    
+            this.router.navigate(['../../'], { relativeTo: this.route });
         } else {
             this.router.navigate(['..'], { relativeTo: this.route });
         }

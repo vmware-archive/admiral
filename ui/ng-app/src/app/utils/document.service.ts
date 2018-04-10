@@ -207,9 +207,8 @@ export class DocumentService {
     return this.ajax.post(factoryLink, null, postBody, headers);
   }
 
-
-  public put(documentSelfLink, putBody): Promise<any> {
-    return this.ajax.put(documentSelfLink, undefined, putBody, this.buildHeaders());
+  public put(documentSelfLink, putBody, projectLink?: string): Promise<any> {
+    return this.ajax.put(documentSelfLink, undefined, putBody, this.buildHeaders(projectLink));
   }
 
   public delete(documentSelfLink, projectLink?: string): Promise<any> {

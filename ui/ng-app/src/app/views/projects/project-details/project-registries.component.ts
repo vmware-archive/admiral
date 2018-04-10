@@ -9,6 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
+import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit } from '@angular/core';
 import { DocumentListResult, DocumentService } from "../../../utils/document.service";
 import { ErrorService } from "../../../utils/error.service";
@@ -32,12 +33,26 @@ export class ProjectRegistriesComponent implements OnInit {
 
     showDeleteConfirmation: boolean = false;
     deleteConfirmationAlert: string;
+    projectLink: string;
 
-    constructor(protected service: DocumentService, private errorService: ErrorService) {
+    private sub: any;
+
+    constructor(protected service: DocumentService, private errorService: ErrorService, private route: ActivatedRoute) {
     }
 
     ngOnInit() {
+        this.sub = this.route.params.subscribe(params => {
+            console.log(params);
+            let projectId = params['projectId'] || params['id'];
+            if (projectId) {
+                this.projectLink = Links.PROJECTS + '/' + projectId;
+            }
+        });
         this.listProjectRegistries({});
+    }
+
+    ngOnDestroy() {
+        this.sub.unsubscribe();
     }
 
     listProjectRegistries(queryOptions) {
@@ -49,7 +64,7 @@ export class ProjectRegistriesComponent implements OnInit {
 
         this.loading = true;
 
-        this.loadingPromise = new CancelablePromise(this.service.list(Links.REGISTRIES, queryOptions));
+        this.loadingPromise = new CancelablePromise(this.service.list(Links.REGISTRIES, queryOptions, this.projectLink));
 
         this.loadingPromise.getPromise().then(result => {
             this.loading = false;
@@ -80,6 +95,7 @@ export class ProjectRegistriesComponent implements OnInit {
 
         this.showDeleteConfirmation = true;
     }
+
     deleteConfirmed() {
         let promises: any[] = [];
 
