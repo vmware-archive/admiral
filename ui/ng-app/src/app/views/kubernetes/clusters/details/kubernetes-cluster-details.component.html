@@ -23,7 +23,7 @@
         <clr-tab>
             <button clrTabLink id="nodesTab">{{"kubernetes.clusters.details.nodes.title" | i18n}}</button>
             <clr-tab-content id="nodesContent" *clrIfActive>
-                <app-kubernetes-cluster-nodes></app-kubernetes-cluster-nodes>
+                <app-kubernetes-cluster-nodes [cluster]="entity"></app-kubernetes-cluster-nodes>
             </clr-tab-content>
         </clr-tab>
     </clr-tabs>

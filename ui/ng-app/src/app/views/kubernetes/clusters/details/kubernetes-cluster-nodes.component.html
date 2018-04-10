@@ -10,5 +10,37 @@
   -->
 
 <div>
-    Nodes
+    <table-view [searchPlaceholder]="'kubernetes.clusters.details.nodes.searchPlaceholder' | i18n">
+        <div table-content-view>
+            <clr-datagrid class="nodesGrid" [clDgRowSelection]="true">
+                <clr-dg-column>{{"kubernetes.clusters.details.nodes.nameColumn" | i18n}}</clr-dg-column>
+                <clr-dg-column>{{"kubernetes.clusters.details.nodes.cpuColumn" | i18n}}</clr-dg-column>
+                <clr-dg-column>{{"kubernetes.clusters.details.nodes.memoryColumn" | i18n}}</clr-dg-column>
+
+                <clr-dg-row *clrDgItems="let node of nodes" [clrDgItem]="node">
+                    <clr-dg-cell>
+                        <div>{{ node.name }}</div>
+                    </clr-dg-cell>
+                    <clr-dg-cell>
+                        <div class="progress-static labeled">
+                            <div class="progress-meter" attr.data-value="{{ node.cpu }}" attr.data-displayval="{{ node.cpu }}%"></div>
+                            <span>{{ node.cpu }}%</span>
+                        </div>
+                    </clr-dg-cell>
+                    <clr-dg-cell>
+                        <div class="progress-static labeled">
+                            <div class="progress-meter" attr.data-value="{{ node.memory }}" attr.data-displayval="{{ node.memory }}%"></div>
+                            <span>{{ node.memory }}%</span>
+                        </div>
+                    </clr-dg-cell>
+                </clr-dg-row>
+
+                <clr-dg-footer>
+                    {{pagination.firstItem + 1}} - {{pagination.lastItem + 1}} of {{pagination.totalItems}} {{"kubernetes.clusters.details.nodes.count"
+                    | i18n}}
+                    <clr-dg-pagination #pagination [clrDgPageSize]="10"></clr-dg-pagination>
+                </clr-dg-footer>
+            </clr-datagrid>
+        </div>
+    </table-view>
 </div>

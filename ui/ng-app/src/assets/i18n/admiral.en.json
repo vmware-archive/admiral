@@ -269,7 +269,12 @@
           "title": "Summary"
         },
         "nodes": {
-          "title": "Nodes"
+          "title": "Nodes",
+          "searchPlaceholder": "Search for nodes",
+          "nameColumn": "Name",
+          "cpuColumn": "CPU",
+          "memoryColumn": "Memory",
+          "count": "nodes"
         }
       }
     }
