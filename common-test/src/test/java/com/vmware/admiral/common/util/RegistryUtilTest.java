@@ -104,6 +104,7 @@ public class RegistryUtilTest extends BaseTestCase {
                 createRegistry("https://test.registry.com:5000/vmware", null),
                 createRegistry("https://test.registry.com:5000/vmware/test", null),
                 createRegistry("https://test.registry.com:5000/test", null),
+                createRegistry("https://test.registry.com:5000/test2", null),
                 createRegistry("https://test.registry.com:5001/vmware", null),
                 createRegistry("https://test.registry.com:5001", null)
         );
@@ -141,6 +142,15 @@ public class RegistryUtilTest extends BaseTestCase {
         assertEquals(2, filteredRegistries.size());
         filteredRegistries.stream().forEach(r -> {
             assertTrue(r.address.contains("test.registry.com:5000/vmware"));
+        });
+
+        host.log("Test registry path");
+        image = DockerImage.fromParts("test.registry.com:5000", "test", "vmware", "latest");
+        filteredRegistries = RegistryUtil.filterRegistriesByPath(host, registries, image);
+        assertNotNull(filteredRegistries);
+        assertEquals(1, filteredRegistries.size());
+        filteredRegistries.stream().forEach(r -> {
+            assertTrue(r.address.contains("test.registry.com:5000/test"));
         });
     }
 

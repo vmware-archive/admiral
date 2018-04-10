@@ -157,22 +157,32 @@ public class RegistryUtil {
      */
     public static List<RegistryState> filterRegistriesByPath(ServiceHost host, Collection<RegistryState> registries, DockerImage image) {
         String imageHost = nonNullValue(image.getHost(), DEFAULT_DOCKER_REGISTRY_ADDRESS);
-        String path = image.getNamespace();
+        String imagePath = image.getNamespace();
+        host.log(Level.FINE, "Image path: %s.", imagePath);
 
-        String hostPath = imageHost;
-        if (path != null && !path.isEmpty()) {
-            hostPath = hostPath + "/" + path;
+        List<String> imagePathSegments = new ArrayList<>();
+        if (imagePath != null && !imagePath.isEmpty()) {
+            imagePathSegments = Arrays.asList(imagePath.split("/"));
         }
 
-        final String address = hostPath;
-        host.log(Level.INFO, "Perform filtering of registries by path: %s.", address);
-
         if (registries != null && !registries.isEmpty()) {
+            List<String> finalPathSegments = imagePathSegments;
             return registries.stream().filter(r -> {
                 if (r.address != null && !r.address.isEmpty()) {
                     try {
-                        String addressPart = new URI(r.address).getSchemeSpecificPart().replace("//", "");
-                        return address.startsWith(addressPart);
+                        String registryAddress = new URI(r.address).getSchemeSpecificPart().replace("//", "");
+                        String imageAddress = imageHost;
+
+                        if (imageAddress.equals(registryAddress)) {
+                            return true;
+                        }
+
+                        for (String segment: finalPathSegments) {
+                            imageAddress = imageAddress + "/" + segment;
+                            if (imageAddress.equals(registryAddress)) {
+                                return true;
+                            }
+                        }
                     } catch (URISyntaxException e) {
                         host.log(Level.SEVERE, "Failed to build URI. Exception [%s]", e.getMessage());
                     }
