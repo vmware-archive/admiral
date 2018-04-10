@@ -126,7 +126,8 @@
           "fieldAddress": "Address",
           "fieldName": "Name",
           "fieldCredentials": "Login credentials"
-        }
+        },
+        "count": "registries"
     },
     "config": {
       "title": "Configuration",
