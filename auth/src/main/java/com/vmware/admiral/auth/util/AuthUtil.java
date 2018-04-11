@@ -33,6 +33,7 @@ import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
+import com.vmware.admiral.compute.RegistryConfigCertificateDistributionService;
 import com.vmware.admiral.compute.RegistryHostConfigService;
 import com.vmware.admiral.compute.container.CompositeDescriptionCloneService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
@@ -55,6 +56,8 @@ import com.vmware.admiral.service.common.CounterSubTaskService;
 import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.admiral.service.common.RegistryFactoryService;
 import com.vmware.admiral.service.common.ResourceNamePrefixService;
+import com.vmware.admiral.service.common.SslTrustCertificateService;
+import com.vmware.admiral.service.common.SslTrustImportService;
 import com.vmware.admiral.service.common.UniquePropertiesService;
 import com.vmware.admiral.service.common.harbor.HarborApiProxyService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
@@ -414,6 +417,15 @@ public class AuthUtil {
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
                         buildUriWithWildcard(ManagementUriParts.CLUSTERS),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(SslTrustImportService.SELF_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(SslTrustCertificateService.FACTORY_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(RegistryConfigCertificateDistributionService.SELF_LINK),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
                 .build();
 

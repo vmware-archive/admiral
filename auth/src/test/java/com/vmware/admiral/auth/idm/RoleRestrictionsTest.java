@@ -34,6 +34,10 @@ import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.admiral.common.test.CommonTestStateFactory;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
+import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
+import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
+import com.vmware.admiral.service.common.LogService;
+import com.vmware.admiral.service.common.LogService.LogServiceState;
 import com.vmware.admiral.service.common.RegistryFactoryService;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
 import com.vmware.admiral.service.common.SslTrustCertificateService;
@@ -193,13 +197,63 @@ public class RoleRestrictionsTest extends AuthBaseTest {
     }
 
     @Test
-    public void testClaudAdminHasAccessToConfiguration() throws Throwable {
-        // TODO: WIP
+    public void testCloudAdminHasAccessToConfiguration() throws Throwable {
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
+
+        ConfigurationState config = new ConfigurationState();
+        config.key = "key";
+        config.value = "value";
+
+        // POST
+        ConfigurationState createdState = doPost(config, ConfigurationFactoryService.SELF_LINK);
+        assertNotNull(createdState);
+        assertNotNull(createdState.documentSelfLink);
+        assertEquals(config.key, createdState.key);
+        assertEquals(config.value, createdState.value);
+
+        // GET
+        ConfigurationState retrievedState = getDocument(ConfigurationState.class, createdState.documentSelfLink);
+        assertNotNull(retrievedState);
+
+        // PUT
+        createdState.value = "updated-value";
+        ConfigurationState updatedState = doPut(createdState);
+        assertNotNull(updatedState);
+        assertTrue(createdState.value.equals(updatedState.value));
+
+        // DELETE
+        doDelete(UriUtils.buildUri(host, createdState.documentSelfLink), false);
+        retrievedState = getDocumentNoWait(ConfigurationState.class, createdState.documentSelfLink);
+        assertNull(retrievedState);
     }
 
     @Test
-    public void testClaudAdminHasAccessToLogs() throws Throwable {
-        // TODO: WIP
+    public void testCloudAdminHasAccessToLogs() throws Throwable {
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
+
+        LogServiceState log = new LogServiceState();
+        log.logs = new byte[] { 1 };
+
+        // POST
+        LogServiceState createdState = doPost(log, LogService.FACTORY_LINK);
+        assertNotNull(createdState);
+        assertNotNull(createdState.documentSelfLink);
+        assertEquals(log.logs[0], createdState.logs[0]);
+
+        // GET
+        LogServiceState retrievedState = getDocument(LogServiceState.class, createdState.documentSelfLink);
+        assertNotNull(retrievedState);
+
+        // PUT
+        createdState.logs = new byte[] { 1 };
+        LogServiceState updatedState = doPut(createdState);
+        assertNotNull(updatedState);
+        assertEquals(createdState.logs[0], updatedState.logs[0]);
+
+        // DELETE
+        doDelete(UriUtils.buildUri(host, createdState.documentSelfLink), false);
+        retrievedState = getDocumentNoWait(LogServiceState.class, createdState.documentSelfLink);
+        assertNull(retrievedState);
     }
 
     @Test
@@ -316,12 +370,62 @@ public class RoleRestrictionsTest extends AuthBaseTest {
 
     @Test
     public void testBasicUserRestrictionsToConfiguration() throws Throwable {
-        // TODO: WIP
+        ConfigurationState config = new ConfigurationState();
+        config.key = "key";
+        config.value = "value";
+
+        // use admin for creation of the state
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
+        ConfigurationState createdState = doPost(config, ConfigurationFactoryService.SELF_LINK);
+        assertNotNull(createdState);
+        assertNotNull(createdState.documentSelfLink);
+        assertEquals(config.key, createdState.key);
+        assertEquals(config.value, createdState.value);
+
+        // switch role to basic user
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_BASIC_USER));
+
+        // GET
+        ConfigurationState retrievedState = getDocument(ConfigurationState.class, createdState.documentSelfLink);
+        assertNotNull(retrievedState);
+
+        // POST
+        doPostWithRestrictionVerification(config, ConfigurationFactoryService.SELF_LINK);
+
+        // PUT
+        createdState.value = "updated-value";
+        doPutWithRestrictionVerification(createdState, ConfigurationFactoryService.SELF_LINK);
+
+        // DELETE
+        doDeleteWithRestrictionVerification(createdState, ConfigurationFactoryService.SELF_LINK);
     }
 
     @Test
     public void testBasicUserRestrictionsToLogs() throws Throwable {
-        // TODO: WIP
+        LogServiceState log = new LogServiceState();
+        log.logs = new byte[] { 1 };
+
+        // use admin for creation of the state
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
+        LogServiceState createdState = doPost(log, LogService.FACTORY_LINK);
+        assertNotNull(createdState);
+        assertNotNull(createdState.documentSelfLink);
+        assertEquals(log.logs[0], createdState.logs[0]);
+
+        // switch role to basic user
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_BASIC_USER));
+
+        // GET
+        doGetWithRestrictionVerification(createdState, LogService.FACTORY_LINK, LogServiceState.class.getName());
+
+        // POST
+        doPostWithRestrictionVerification(log, LogService.FACTORY_LINK);
+
+        // PUT
+        doPutWithRestrictionVerification(createdState, LogService.FACTORY_LINK);
+
+        // DELETE
+        doDeleteWithRestrictionVerification(createdState, LogService.FACTORY_LINK);
     }
 
     @Test
@@ -365,17 +469,17 @@ public class RoleRestrictionsTest extends AuthBaseTest {
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_GLORIA));
 
         // GET
-        doGetWithRestrictionVerification(createdState, SslTrustCertificateService.FACTORY_LINK, SslTrustCertificateState.class.getName());
+        getDocument(SslTrustCertificateState.class, createdState.documentSelfLink);
 
         // POST
-        doPostWithRestrictionVerification(cert, SslTrustCertificateService.FACTORY_LINK);
+        doPost(cert, SslTrustCertificateService.FACTORY_LINK);
 
         // PUT
         createdState.commonName = "updated-name";
-        doPutWithRestrictionVerification(createdState, SslTrustCertificateService.FACTORY_LINK);
+        doPut(createdState);
 
         // DELETE
-        doDeleteWithRestrictionVerification(createdState, SslTrustCertificateService.FACTORY_LINK);
+        doDelete(UriUtils.buildUri(host, createdState.documentSelfLink), false);
     }
 
 
@@ -409,12 +513,62 @@ public class RoleRestrictionsTest extends AuthBaseTest {
 
     @Test
     public void testProjectAdminRestrictionsToConfiguration() throws Throwable {
-        // TODO: WIP
+        ConfigurationState config = new ConfigurationState();
+        config.key = "key";
+        config.value = "value";
+
+        // use cloud admin for creation of the state
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
+        ConfigurationState createdState = doPost(config, ConfigurationFactoryService.SELF_LINK);
+        assertNotNull(createdState);
+        assertNotNull(createdState.documentSelfLink);
+        assertEquals(config.key, createdState.key);
+        assertEquals(config.value, createdState.value);
+
+        // switch role to project admin
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_GLORIA));
+
+        // GET
+        ConfigurationState retrievedState = getDocument(ConfigurationState.class, createdState.documentSelfLink);
+        assertNotNull(retrievedState);
+
+        // POST
+        doPostWithRestrictionVerification(config, ConfigurationFactoryService.SELF_LINK);
+
+        // PUT
+        createdState.value = "updated-value";
+        doPutWithRestrictionVerification(createdState, ConfigurationFactoryService.SELF_LINK);
+
+        // DELETE
+        doDeleteWithRestrictionVerification(createdState, ConfigurationFactoryService.SELF_LINK);
     }
 
     @Test
     public void testProjectAdminRestrictionsToLogs() throws Throwable {
-        // TODO: WIP
+        LogServiceState log = new LogServiceState();
+        log.logs = new byte[] { 1 };
+
+        // use admin for creation of the state
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
+        LogServiceState createdState = doPost(log, LogService.FACTORY_LINK);
+        assertNotNull(createdState);
+        assertNotNull(createdState.documentSelfLink);
+        assertEquals(log.logs[0], createdState.logs[0]);
+
+        // switch role to project admin
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_GLORIA));
+
+        // GET
+        doGetWithRestrictionVerification(createdState, LogService.FACTORY_LINK, LogServiceState.class.getName());
+
+        // POST
+        doPostWithRestrictionVerification(log, LogService.FACTORY_LINK);
+
+        // PUT
+        doPutWithRestrictionVerification(createdState, LogService.FACTORY_LINK);
+
+        // DELETE
+        doDeleteWithRestrictionVerification(createdState, LogService.FACTORY_LINK);
     }
 
     @Test
