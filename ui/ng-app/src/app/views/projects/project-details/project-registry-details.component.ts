@@ -110,6 +110,7 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
 
     protected routeParamsReceived(params) {
         this.projectId = params && params['projectId'];
+        this.projectLink = this.projectId && [Links.PROJECTS, this.projectId].join('/');
     }
 
     protected entityInitialized() {
