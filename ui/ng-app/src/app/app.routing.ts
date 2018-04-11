@@ -264,14 +264,14 @@ export const ROUTES: Routes = [
                             roles: RoutesRestriction.PROJECT_REGISTRIES_DETAILS
                         }
                     },
-                    { path: ':projectId/registries/:id/edit', component: ProjectRegistryDetailsComponent,
+                    { path: ':projectId/registries/registry/:id/edit', component: ProjectRegistryDetailsComponent,
                         canActivate: [AdminAuthGuard],
                         data: {
                             navigationContainerType: NavigationContainerType.Fullscreen,
                             roles: RoutesRestriction.PROJECT_REGISTRIES_DETAILS
                         }
                     },
-                    { path: ':projectId/:tab/registries/:id/edit', component: ProjectRegistryDetailsComponent,
+                    { path: ':projectId/:tab/registries/registry/:id/edit', component: ProjectRegistryDetailsComponent,
                         canActivate: [AdminAuthGuard],
                         data: {
                             navigationContainerType: NavigationContainerType.Fullscreen,

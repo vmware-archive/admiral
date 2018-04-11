@@ -38,9 +38,7 @@ export class ProjectDetailsComponent extends BaseDetailsComponent {
 
   // tabs preselection through routing
   routeTabParamSubscription:Subscription;
-  isActiveTabInfrastructure: boolean = false;
-  isActiveTabRegistries: boolean = false;
-  isActiveTabProjectRepositories: boolean = false;
+  activatedTab: ProjectDetailsTab;
 
   constructor(route: ActivatedRoute, service: DocumentService,
     private router: Router, private authService: AuthService) {
@@ -59,11 +57,7 @@ export class ProjectDetailsComponent extends BaseDetailsComponent {
       super.ngOnInit();
 
       this.routeTabParamSubscription = this.route.params.subscribe((params) => {
-          let tab = params['tab'];
-          // Activate tab Infrastructure
-          this.isActiveTabInfrastructure = tab === 'infra';
-          this.isActiveTabRegistries = tab === 'registries';
-          this.isActiveTabProjectRepositories = tab === 'hbrRepo';
+          this.activatedTab = params['tab'];
       });
   }
 
@@ -82,6 +76,26 @@ export class ProjectDetailsComponent extends BaseDetailsComponent {
     if (cs.__projectIndex) {
       this.hbrProjectId = parseInt(cs.__projectIndex);
     }
+  }
+
+  get isActiveTabInfrastructure(): boolean {
+    return this.activatedTab === ProjectDetailsTab.Infra;
+  }
+
+  get isActiveTabRegistries(): boolean {
+    return this.activatedTab === ProjectDetailsTab.Registries;
+  }
+
+  get isActiveTabProjectRepositories(): boolean {
+    return this.activatedTab === ProjectDetailsTab.Repositories;
+  }
+
+  infraTabActivated() {
+    this.activatedTab = ProjectDetailsTab.Infra;
+  }
+
+  registriesTabActivated() {
+    this.activatedTab = ProjectDetailsTab.Registries;
   }
 
   watchRepoClickEvent(repositoryItem) {
@@ -115,4 +129,10 @@ export class ProjectDetailsComponent extends BaseDetailsComponent {
   get embedded(): boolean {
     return FT.isApplicationEmbedded();
   }
+}
+
+export enum ProjectDetailsTab {
+  Infra = <any>'infra',
+  Registries = <any>'registries',
+  Repositories = <any>'hbrRepo'
 }

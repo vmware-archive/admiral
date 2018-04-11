@@ -35,6 +35,7 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
     editMode: boolean = false;
     credentials: any[];
     projectLink: string;
+    projectId: string;
     registryLink: string;
 
     showCertificateWarning: boolean;
@@ -107,6 +108,10 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
         return credentialsViewModel;
     }
 
+    protected routeParamsReceived(params) {
+        this.projectId = params && params['projectId'];
+    }
+
     protected entityInitialized() {
         let authCredentialsLink;
         if (this.entity) {
@@ -131,7 +136,7 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
         this.service.put(Links.REGISTRY_SPEC, registrySpec, this.projectLink).then((response) => {
             if (!this.isCertificateResponse(response)) {
                 this.isSavingRegistry = false;
-                this.router.navigate(['..'], { relativeTo: this.route });
+                this.navigateToRegistries();
             }
         }).catch(error => {
             this.isSavingRegistry = false;
@@ -157,7 +162,7 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
         this.service.put(Links.REGISTRY_SPEC, registrySpec, this.projectLink).then((response) => {
             if (!this.isCertificateResponse(response)) {
                 this.isSavingRegistry = false;
-                this.router.navigate(['../../'], { relativeTo: this.route });
+                this.navigateToRegistries();
             }
         }).catch(error => {
             this.isSavingRegistry = false;
@@ -166,10 +171,20 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
     }
 
     private cancel() {
-        if (this.editMode) {
-            this.router.navigate(['../../'], { relativeTo: this.route });
+        this.navigateToRegistries();
+    }
+
+    private navigateToRegistries() {
+        if (this.route.parent) {
+            if (this.projectId) {
+                this.router.navigate([this.projectId, 'registries'], { relativeTo: this.route.parent });
+            } else {
+                // shouldn't happen
+                this.router.navigate(['.'], { relativeTo: this.route.parent });
+            }
         } else {
-            this.router.navigate(['..'], { relativeTo: this.route });
+            // failsafe, should never happen
+            this.router.navigate(['/'], { relativeTo: this.route });
         }
     }
 

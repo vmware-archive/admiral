@@ -44,8 +44,8 @@
 
                 <clr-dg-row *clrDgItems="let registry of projectRegistries" [clrDgItem]="registry">
                     <clr-dg-cell><span *ngIf="registry.tenantLinks && registry.tenantLinks.length > 0"
-                            ><a routerLink="./registries/{{getRegistryId(registry)}}/edit">{{ registry.name }}</a></span>
-                        <span *ngIf="!registry.tenantLinks || registry.tenantLinks.length == 0">{{ registry.name }}</span>
+                            ><a routerLink="./registries/registry/{{getRegistryId(registry)}}/edit">{{ registry.name || registry.address }}</a></span>
+                        <span *ngIf="!registry.tenantLinks || registry.tenantLinks.length == 0">{{ registry.name || registry.address }}</span>
                     </clr-dg-cell>
                     <clr-dg-cell><span *ngIf="registry.disabled && registry.disabled == true"
                         >{{"projects.projectRegistries.status.disabled" | i18n }}</span>

@@ -35,18 +35,23 @@ export class BaseDetailsComponent implements OnInit, OnDestroy {
       // add logic when entity details are loaded.
   }
 
+  protected routeParamsReceived(params) {
+    // do something with the route params.
+  }
+
   ngOnInit() {
     this.routeParamsSubscription = this.route.params.subscribe(params => {
        this.id = params['id'];
 
        if (!this.id) {
            // no need to retrieve data
-         return;
+           this.routeParamsReceived(params);
+           return;
        }
 
        this.service.getById(this.link, this.id, this.projectLink).then(service => {
-         this.entity = service;
-         this.entityInitialized();
+           this.entity = service;
+           this.entityInitialized();
 
        }).catch(error => {
            console.error('Failed loading entity ', error);
@@ -55,6 +60,8 @@ export class BaseDetailsComponent implements OnInit, OnDestroy {
                this.errorService.error(Utils.getErrorMessage(error)._generic);
            }
        });
+
+       this.routeParamsReceived(params);
     });
 
     // try with the parent

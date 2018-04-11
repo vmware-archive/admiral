@@ -37,7 +37,8 @@
     </clr-tab>
     <clr-tab>
         <button clrTabLink id="infrastructureTab">{{"projects.infrastructure" | i18n}}</button>
-        <ng-template [(clrIfActive)]="isActiveTabInfrastructure">
+        <ng-template [clrIfActive]="isActiveTabInfrastructure"
+                     (clrIfActiveChange)="infraTabActivated()">
             <clr-tab-content id="infrastructureContent">
                 <app-clusters [hideTitle]="true" [projectLink]="entity?.documentSelfLink"></app-clusters>
             </clr-tab-content>
@@ -45,7 +46,8 @@
     </clr-tab>
     <clr-tab>
         <button clrTabLink id="registryTab">{{"projects.projectRegistries.title" | i18n}}</button>
-        <ng-template [(clrIfActive)]="isActiveTabRegistries">
+        <ng-template [clrIfActive]="isActiveTabRegistries"
+                     (clrIfActiveChange)="registriesTabActivated()">
             <clr-tab-content id="projectRegistriesContent">
                 <app-project-registries></app-project-registries>
             </clr-tab-content>
