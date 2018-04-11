@@ -17,7 +17,7 @@
         <clr-tab>
             <button clrTabLink id="summaryTab">{{"kubernetes.clusters.details.summary.title" | i18n}}</button>
             <clr-tab-content id="summaryContent" *clrIfActive>
-                Summary
+                <app-kubernetes-cluster-summary [cluster]="entity"></app-kubernetes-cluster-summary>
             </clr-tab-content>
         </clr-tab>
         <clr-tab>

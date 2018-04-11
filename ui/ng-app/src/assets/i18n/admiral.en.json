@@ -267,7 +267,8 @@
       },
       "details": {
         "summary": {
-          "title": "Summary"
+          "title": "Summary",
+          "nodeCount": "Nodes:"
         },
         "nodes": {
           "title": "Nodes",
