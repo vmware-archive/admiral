@@ -20,6 +20,7 @@ import { FormControl, FormGroup } from "@angular/forms";
 import { Utils } from "../../../utils/utils";
 import { formatUtils } from 'admiral-ui-common';
 import * as I18n from 'i18next';
+import { Constants } from '../../../utils/constants';
 
 @Component({
     selector: 'app-project-registry-details',
@@ -35,8 +36,11 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
     credentials: any[];
     projectLink: string;
     registryLink: string;
+
     showCertificateWarning: boolean;
     certificate: any;
+
+    alertType: string;
 
     private sub: any;
     isSaving: boolean;
@@ -63,16 +67,8 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
     }
 
     ngOnInit() {
-        this.sub = this.route.params.subscribe(params => {
-            let projectId = params['projectId'];
-            if (projectId) {
-                this.projectLink = Links.PROJECTS + '/' + projectId;
-            }
-        });
-    }
-
-    ngOnDestroy() {
-        this.sub.unsubscribe();
+        super.ngOnInit();
+        this.populateCredentials(null);
     }
 
     populateCredentials(authCredentialsLink) {
@@ -80,7 +76,9 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
             this.credentials = credentials.documents
                 .filter(c => !Utils.areSystemScopedCredentials(c))
                 .map(this.toCredentialViewModel);
-            this.preselectCredential(authCredentialsLink);
+                if (authCredentialsLink) {
+                    this.preselectCredential(authCredentialsLink);
+                }
         }).catch((e) => {
             console.log('Credentials retrieval failed', e);
         });
@@ -89,7 +87,7 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
     preselectCredential(authCredentialsLink) {
         if (authCredentialsLink) {
             var credItem = this.credentials
-                    .filter((c) => c.documentSelfLink === authCredentialsLink);
+                .filter((c) => c.documentSelfLink === authCredentialsLink);
             if (credItem.length > 0) {
                 this.projectRegistryDetailsForm.get('credentials').setValue(credItem[0]);
             }
@@ -126,32 +124,22 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
         this.alertMessage = null;
     }
 
-    private save() {
+    private save(acceptCert: boolean = false) {
         this.isSavingRegistry = true;
-        let formInput = this.projectRegistryDetailsForm.value;
-        let registryName = formInput.name && formatUtils.escapeHtml(formInput.name);
-        let registryState = {
-            'address': formInput.address,
-            'name': registryName,
-            'endpointType': 'container.docker.registry',
-            'authCredentialsLink': formInput.credentials.documentSelfLink
-        };
-
-        let registrySpec = {
-            'hostState': registryState,
-            'acceptCertificate': true
-        };
+        let registrySpec = this.getRegistrySpec(acceptCert);
 
         this.service.put(Links.REGISTRY_SPEC, registrySpec, this.projectLink).then((response) => {
-            this.isSavingRegistry = false;
-            this.router.navigate(['..'], { relativeTo: this.route });
+            if (!this.isCertificateResponse(response)) {
+                this.isSavingRegistry = false;
+                this.router.navigate(['..'], { relativeTo: this.route });
+            }
         }).catch(error => {
             this.isSavingRegistry = false;
-            this.alertMessage = Utils.getErrorMessage(error)._generic;
+            this.showErrorMessage(error);
         });
     }
 
-    private update() {
+    private update(acceptCert: boolean = false) {
         this.isSavingRegistry = true;
         let formInput = this.projectRegistryDetailsForm.value;
         let registryName = formInput.name && formatUtils.escapeHtml(formInput.name);
@@ -159,18 +147,21 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
         this.entity.name = formInput.name && formatUtils.escapeHtml(formInput.name);
         this.entity.address = formInput.address;
         this.entity.endpointType = 'container.docker.registry';
-        this.entity.authCredentialsLink = formInput.documentSelfLink;
+        this.entity.authCredentialsLink = formInput.credentials.documentSelfLink;
 
         let registrySpec = {
             'hostState': this.entity,
+            'acceptCertificate': acceptCert
         };
 
         this.service.put(Links.REGISTRY_SPEC, registrySpec, this.projectLink).then((response) => {
-            this.isSavingRegistry = false;
-            this.router.navigate(['../../'], { relativeTo: this.route });
+            if (!this.isCertificateResponse(response)) {
+                this.isSavingRegistry = false;
+                this.router.navigate(['../../'], { relativeTo: this.route });
+            }
         }).catch(error => {
             this.isSavingRegistry = false;
-            this.alertMessage = Utils.getErrorMessage(error)._generic;
+            this.showErrorMessage(error);
         });
     }
 
@@ -179,6 +170,71 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
             this.router.navigate(['../../'], { relativeTo: this.route });
         } else {
             this.router.navigate(['..'], { relativeTo: this.route });
+        }
+    }
+
+    private testConnection(acceptCert: boolean = false) {
+        this.isTestingConnection = true;
+        let registrySpec = this.getRegistrySpec(acceptCert);
+
+        this.service.put(Links.REGISTRY_SPEC + '?validate=true', registrySpec).then((response) => {
+            if (!this.isCertificateResponse(response)) {
+                this.isTestingConnection = false;
+                this.alertType = Constants.alert.type.SUCCESS;
+                this.alertMessage = I18n.t('hosts.verified');
+            }
+        }).catch(error => {
+            this.isTestingConnection = false;
+            this.showErrorMessage(error);
+        });
+    }
+
+    private getRegistrySpec(acceptCert: boolean) {
+        let formInput = this.projectRegistryDetailsForm.value;
+        let registryName = formInput.name && formatUtils.escapeHtml(formInput.name);
+        let registryState = {
+            'address': formInput.address,
+            'name': registryName,
+            'endpointType': 'container.docker.registry',
+            'authCredentialsLink': formInput.credentials.documentSelfLink
+        };
+        registryState.authCredentialsLink = formInput.credentials.documentSelfLink;
+        let registrySpec = {
+            'hostState': registryState,
+            'acceptCertificate': acceptCert
+        };
+        return registrySpec;
+    }
+
+    private showErrorMessage(error) {
+        this.alertType = Constants.alert.type.DANGER;
+        this.alertMessage = Utils.getErrorMessage(error)._generic;
+    }
+
+    declineCertificate() {
+        this.showCertificateWarning = false;
+        this.isSavingRegistry = false;
+        this.isTestingConnection = false;
+    }
+
+    acceptCertificate() {
+        this.showCertificateWarning = false;
+        if (this.editMode && this.isSavingRegistry) {
+            this.update(true);
+        } else if (this.isTestingConnection) {
+            this.testConnection(true);
+        } else if (this.isSavingRegistry) {
+            this.save(true);
+        }
+    }
+
+    isCertificateResponse(response: any) {
+        if (response && response.certificate) {
+            this.certificate = response;
+            this.showCertificateWarning = true;
+            return true;
+        } else {
+            return false;
         }
     }
 }

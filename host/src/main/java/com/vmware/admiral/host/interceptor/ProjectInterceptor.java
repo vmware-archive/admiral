@@ -16,9 +16,11 @@ import java.util.ArrayList;
 import com.vmware.admiral.auth.util.SecurityContextUtil;
 import com.vmware.admiral.closures.services.closure.ClosureService;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptionService;
+import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
 import com.vmware.admiral.compute.RegistryHostConfigService;
+import com.vmware.admiral.compute.RegistryHostConfigService.RegistryHostSpec;
 import com.vmware.admiral.compute.cluster.ClusterService;
 import com.vmware.admiral.compute.container.CompositeComponentService;
 import com.vmware.admiral.compute.container.CompositeDescriptionService;
@@ -107,8 +109,30 @@ public class ProjectInterceptor {
         ContainerHostSpec hostSpec = extractContainerHostSpec(op);
         if (hostSpec != null) {
             handleContainerHostSpec(hostSpec, projectLink, op);
+            return DeferredResult.completed(null);
         }
+
+        RegistryHostSpec registrySpec = extractRegistryHostSpec(op);
+        if (registrySpec != null) {
+            handleRegistryHostSpec(registrySpec, projectLink, op);
+        }
+
         return DeferredResult.completed(null);
+    }
+
+    private static void handleRegistryHostSpec(RegistryHostSpec state, String projectLink,
+            Operation op) {
+        if (projectLink == null || projectLink.isEmpty() || state.hostState == null) {
+            return;
+        }
+        if (state.hostState.tenantLinks == null) {
+            state.hostState.tenantLinks = new ArrayList<>();
+        }
+        if (!state.hostState.tenantLinks.contains(projectLink)) {
+            state.hostState.tenantLinks.add(projectLink);
+            op.setBody(state);
+        }
+
     }
 
     private static void handleResourceState(ResourceState state, String projectLink, Operation op) {
@@ -179,11 +203,17 @@ public class ProjectInterceptor {
     }
 
     private static ContainerHostSpec extractContainerHostSpec(Operation o) {
+        if (!o.hasBody() || o.getUri().getPath().equals(ManagementUriParts.REGISTRY_HOSTS)) {
+            return null;
+        }
+        return o.getBody(ContainerHostSpec.class);
+    }
+
+    private static RegistryHostSpec extractRegistryHostSpec(Operation o) {
         if (!o.hasBody()) {
             return null;
         }
-
-        return o.getBody(ContainerHostSpec.class);
+        return o.getBody(RegistryHostSpec.class);
     }
 
     private static DeferredResult<Void> handleClusterServiceOp(Service service, Operation op) {

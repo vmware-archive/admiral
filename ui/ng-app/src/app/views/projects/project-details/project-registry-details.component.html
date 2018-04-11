@@ -9,7 +9,7 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-  <clr-alert [clrAlertType]="'alert-danger'" [(clrAlertClosed)]="!alertMessage" (clrAlertClosedChange)="resetAlert()">
+  <clr-alert [clrAlertType]="alertType" [(clrAlertClosed)]="!alertMessage" (clrAlertClosedChange)="resetAlert()">
         <div class="alert-item">
             <span class="alert-text">{{ alertMessage }}</span>
         </div>
@@ -54,12 +54,13 @@
                         </div>
 
                         <button *ngIf="!editMode" type="button" class="btn btn-primary"
-                                [clrLoading]="isSavingRegistry || isTestingConnection || projectRegistryDetailsForm.invalid"
+                                [clrLoading]="isSavingRegistry || projectRegistryDetailsForm.invalid"
                                 (click)="save()">{{ "save" | i18n }}</button>
                         <button *ngIf="editMode" type="button" class="btn btn-primary"
-                                [clrLoading]="isSavingRegistry || isTestingConnection || projectRegistryDetailsForm.invalid"
+                                [clrLoading]="isSavingRegistry || projectRegistryDetailsForm.invalid"
                                 (click)="update()">{{ "update" | i18n }}</button>
                         <button type="button" class="btn btn-secondary"
+                                [clrLoading]="isTestingConnection"
                                 [disabled]="isSavingRegistry || isTestingConnection"
                                 (click)="testConnection()">{{ "verify" | i18n }}</button>
                         <button type="button" class="btn btn-secondary"
@@ -67,6 +68,13 @@
                                 (click)="cancel()">{{ "cancel" | i18n }}</button>
                     </section>
                 </form>
+                <!-- Untrusted certificate prompt -->
+            <verify-certificate [visible]="showCertificateWarning"
+                [hostAddress]="projectRegistryDetailsForm.value.address"
+                [certificate]="certificate"
+                (onAccept)="acceptCertificate()"
+                (onDecline)="declineCertificate()">
+            </verify-certificate>
             </clr-tab-content>
         </clr-tab>
     </clr-tabs>
