@@ -48,6 +48,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestAddRemoveHost(t *testing.T) {
+	t.Skip("VBV-1952")
 	// Preparing
 	credentialsID, err := credentials.AddByCert("test-credentials", tc.PublicKey, tc.PrivateKey, nil)
 	CheckTestError(err, t)
