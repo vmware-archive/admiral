@@ -13,8 +13,6 @@ package com.vmware.admiral.common.util;
 
 import static com.vmware.admiral.common.util.QueryUtil.createAnyPropertyClause;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -169,22 +167,19 @@ public class RegistryUtil {
             List<String> finalPathSegments = imagePathSegments;
             return registries.stream().filter(r -> {
                 if (r.address != null && !r.address.isEmpty()) {
-                    try {
-                        String registryAddress = new URI(r.address).getSchemeSpecificPart().replace("//", "");
-                        String imageAddress = imageHost;
+                    // strip schema from registry address
+                    String registryAddress = r.address.replaceFirst("^http[s]?:\\/\\/", "");
+                    String imageAddress = imageHost;
 
+                    if (imageAddress.equals(registryAddress)) {
+                        return true;
+                    }
+
+                    for (String segment: finalPathSegments) {
+                        imageAddress = imageAddress + "/" + segment;
                         if (imageAddress.equals(registryAddress)) {
                             return true;
                         }
-
-                        for (String segment: finalPathSegments) {
-                            imageAddress = imageAddress + "/" + segment;
-                            if (imageAddress.equals(registryAddress)) {
-                                return true;
-                            }
-                        }
-                    } catch (URISyntaxException e) {
-                        host.log(Level.SEVERE, "Failed to build URI. Exception [%s]", e.getMessage());
                     }
                 }
 
