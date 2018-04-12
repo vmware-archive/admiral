@@ -122,6 +122,7 @@
         },
         "registryDetails": {
           "title": "Add Project Registry",
+          "editTitle": "Edit Project Registry",
           "descriptions": "Add registry to the project",
           "fieldAddress": "Address",
           "fieldName": "Name",

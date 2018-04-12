@@ -15,12 +15,13 @@
         </div>
     </clr-alert>
 
-    <h3 *ngIf="editMode" class="projects-details-header-title">{{entity?.name}}</h3>
-    <h3 *ngIf="!editMode" class="projects-details-header-title">{{"projects.projectRegistries.registryDetails.title" | i18n}}</h3>
+    <h3 class="projects-details-header-title">{{ editMode ? entity?.name :
+        ("projects.projectRegistries.registryDetails.title" | i18n) }}</h3>
 
     <clr-tabs>
         <clr-tab>
-            <button clrTabLink id="generalTab">{{"projects.projectRegistries.registryDetails.title" | i18n}}</button>
+            <button clrTabLink id="generalTab">{{ editMode ? ("projects.projectRegistries.registryDetails.editTitle" | i18n) :
+                ("projects.projectRegistries.registryDetails.title" | i18n) }}</button>
             <clr-tab-content id="generalContent" *clrIfActive>
                 <form [formGroup]="projectRegistryDetailsForm">
                     <section class="form-block">
