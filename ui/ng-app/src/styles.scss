@@ -6,6 +6,7 @@
 @import "node_modules/clarity-ui/src/main";
 @import 'node_modules/admiral-ui-common/css/variables';
 @import "node_modules/admiral-ui-common/css/dropdown";
+@import "node_modules/admiral-ui-common/css/tokenfield-override";
 @import "node_modules/clarity-ui/src/utils/variables.clarity";
 
 
@@ -114,6 +115,10 @@ navigation-container > :not(.with-back-button) > back-button {
 
 .btn.loading .fa.loader, .btn.loading .fa.loader-inline {
   display: inline-block;
+}
+
+.simple-search-holder .twitter-typeahead {
+  width: 100%;
 }
 
 /* Clarity Ext */
