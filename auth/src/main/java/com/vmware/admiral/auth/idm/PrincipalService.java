@@ -192,6 +192,12 @@ public class PrincipalService extends StatelessService {
                 get.fail(ex);
                 return;
             }
+
+            if (principal == null) {
+                get.fail(new Throwable("Principal does not exist!"));
+                return;
+            }
+
             get.setBody(principal).complete();
         });
     }

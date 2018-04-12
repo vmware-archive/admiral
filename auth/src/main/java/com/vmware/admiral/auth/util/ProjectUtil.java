@@ -46,6 +46,7 @@ import com.vmware.admiral.compute.container.CompositeDescriptionFactoryService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.service.common.harbor.Harbor;
 import com.vmware.admiral.service.common.harbor.HarborApiProxyService;
+import com.vmware.photon.controller.model.adapters.util.Pair;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
@@ -174,7 +175,14 @@ public class ProjectUtil {
                         DeferredResult<Void> tempResult = PrincipalUtil.getPrincipal(service,
                                 requestorOperation,
                                 Service.getId(entry.getValue().documentSelfLink))
-                                .thenAccept(p -> userLinkToPrincipal.put(entry.getKey(), p));
+                                .thenApply(p -> new Pair<>(p, null))
+                                .exceptionally(ex -> new Pair<>(null, ex))
+                                .thenAccept(pair -> {
+                                    if (pair.left != null) {
+                                        userLinkToPrincipal.put(entry.getKey(), pair.left);
+                                    }
+                                });
+
                         results.add(tempResult);
                     }
 
@@ -185,12 +193,26 @@ public class ProjectUtil {
                     List<String> members = roleToUsersLinks.get(AuthRole.PROJECT_MEMBER);
                     List<String> viewers = roleToUsersLinks.get(AuthRole.PROJECT_VIEWER);
 
-                    admins.forEach(
-                            a -> expandedState.administrators.add(userLinkToPrincipal.get(a)));
+                    admins.forEach(a -> {
+                        Principal principal = userLinkToPrincipal.get(a);
+                        if (principal != null) {
+                            expandedState.administrators.add(userLinkToPrincipal.get(a));
+                        }
+                    });
 
-                    members.forEach(m -> expandedState.members.add(userLinkToPrincipal.get(m)));
+                    members.forEach(m -> {
+                        Principal principal = userLinkToPrincipal.get(m);
+                        if (principal != null) {
+                            expandedState.members.add(userLinkToPrincipal.get(m));
+                        }
+                    });
 
-                    viewers.forEach(v -> expandedState.viewers.add(userLinkToPrincipal.get(v)));
+                    viewers.forEach(v -> {
+                        Principal principal = userLinkToPrincipal.get(v);
+                        if (principal != null) {
+                            expandedState.viewers.add(userLinkToPrincipal.get(v));
+                        }
+                    });
                 });
 
         DeferredResult<Void> retrieveAdminsGroupPrincipals = getGroupPrincipals(service,
