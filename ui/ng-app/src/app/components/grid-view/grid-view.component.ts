@@ -288,7 +288,6 @@ export class GridViewComponent implements OnInit, OnChanges {
   }
 
   private doLoadPages(pagesToLoad) {
-    console.log('doLoadPages');
     let loadMore = () => {
       if (pagesToLoad > this.loadedPages && this.nextPageLink) {
         this.loadNextPage().then(loadMore);
@@ -299,7 +298,6 @@ export class GridViewComponent implements OnInit, OnChanges {
   }
 
   private list() {
-    console.log('list');
     if (this.loadingPromise) {
       this.loadingPromise.cancel();
     }

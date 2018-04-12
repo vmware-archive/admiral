@@ -42,7 +42,6 @@ export class ProjectRegistriesComponent implements OnInit {
 
     ngOnInit() {
         this.sub = this.route.params.subscribe(params => {
-            console.log(params);
             let projectId = params['projectId'] || params['id'];
             if (projectId) {
                 this.projectLink = Links.PROJECTS + '/' + projectId;
@@ -56,8 +55,6 @@ export class ProjectRegistriesComponent implements OnInit {
     }
 
     listProjectRegistries(queryOptions) {
-        console.log('listProjectRegistries', 'queryOptions', queryOptions);
-
         if (this.loadingPromise) {
             this.loadingPromise.cancel();
         }
@@ -83,8 +80,6 @@ export class ProjectRegistriesComponent implements OnInit {
     }
 
     refreshProjectRegistries($event) {
-        console.log('Refreshing...', $event);
-
         if ($event) {
             this.listProjectRegistries($event.queryOptions || {});
         }
