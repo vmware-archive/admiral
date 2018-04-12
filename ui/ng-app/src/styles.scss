@@ -119,6 +119,9 @@ navigation-container > :not(.with-back-button) > back-button {
 
 .simple-search-holder .twitter-typeahead {
   width: 100%;
+  .tt-input {
+    width: 100%;
+  }
 }
 
 /* Clarity Ext */

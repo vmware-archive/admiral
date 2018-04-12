@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -34,6 +34,12 @@ export class SimpleSearchComponent implements AfterViewInit, OnChanges {
     search: SimpleSearch;
 
     constructor() { }
+
+    public set value(value:string) {
+        if (this.search) {
+            this.search.setValue(value);
+        }
+    }
 
     public ngAfterViewInit() {
         // NOTE: the results are expected in format:

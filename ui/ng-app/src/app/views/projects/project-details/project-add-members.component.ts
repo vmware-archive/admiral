@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -9,12 +9,13 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { FormGroup, FormControl, Validators } from "@angular/forms";
 import { AuthService } from '../../../utils/auth.service';
 import { DocumentService } from "../../../utils/document.service";
 import { Utils } from "../../../utils/utils";
 import * as I18n from 'i18next';
+import { SimpleSearchComponent } from "../../../components/search/simple-search.component";
 
 const SEARCH_TIMEOUT_MILLIS = 1000;
 
@@ -27,6 +28,7 @@ const SEARCH_TIMEOUT_MILLIS = 1000;
  * Modal add members to project.
  */
 export class ProjectAddMembersComponent {
+    @ViewChild('simpleSearch') simpleSearch: SimpleSearchComponent;
 
     @Input() visible: boolean;
     @Input() project: any;
@@ -70,7 +72,7 @@ export class ProjectAddMembersComponent {
 
         this.searchEventData = $eventData;
 
-        // Clear the timeout in case there is already set.
+        // Clear the timeout in case it is already set.
         if (this.searchTimeout) {
             clearTimeout(this.searchTimeout);
         }
@@ -78,7 +80,6 @@ export class ProjectAddMembersComponent {
         // Schedule the search to begin after 1 second.
         this.searching = true;
         this.searchTimeout = setTimeout(() => this.getAndPropagatePrincipals(), SEARCH_TIMEOUT_MILLIS);
-
     }
 
     getAndPropagatePrincipals() {
@@ -89,7 +90,7 @@ export class ProjectAddMembersComponent {
             this.membersSuggestions = this.members.map((principal) => {
                 let searchResult = {};
                 searchResult['id'] = principal.id;
-                searchResult['name'] = principal.name + ' (' + principal.id + ')'
+                searchResult['name'] = principal.name + ' (' + principal.id + ')';
 
                 return searchResult;
             });
@@ -169,6 +170,9 @@ export class ProjectAddMembersComponent {
         this.members = [];
         this.membersSuggestions = [];
         this.selectedMembers = [];
+        // clear search
+        this.simpleSearch.value = '';
+
         this.addMembersToProjectForm.markAsPristine();
     }
 
