@@ -11,8 +11,6 @@
 
 package com.vmware.admiral.common.util;
 
-import static com.vmware.admiral.common.util.QueryUtil.createAnyPropertyClause;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -33,6 +31,7 @@ import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
+import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 import com.vmware.xenon.services.common.ServiceUriPaths;
 
 public class RegistryUtil {
@@ -334,8 +333,24 @@ public class RegistryUtil {
     }
 
     private static Query buildQueryByHostname(String hostname) {
-        return createAnyPropertyClause(String.format("*://%s*", hostname),
-                RegistryState.FIELD_NAME_ADDRESS);
+        String noSchemaPattern = String.format("%s*", hostname);
+        String httpPattern = String.format("http://%s*", hostname);
+        String httpsPattern = String.format("https://%s*", hostname);
+
+        return Query.Builder.create(Occurance.MUST_OCCUR)
+                .addFieldClause(RegistryState.FIELD_NAME_ADDRESS,
+                        noSchemaPattern,
+                        MatchType.WILDCARD,
+                        Occurance.SHOULD_OCCUR)
+                .addFieldClause(RegistryState.FIELD_NAME_ADDRESS,
+                        httpPattern,
+                        MatchType.WILDCARD,
+                        Occurance.SHOULD_OCCUR)
+                .addFieldClause(RegistryState.FIELD_NAME_ADDRESS,
+                        httpsPattern,
+                        MatchType.WILDCARD,
+                        Occurance.SHOULD_OCCUR)
+                .build();
     }
 
     private static String nonNullValue(String desiredValue, String defaultValue) {
