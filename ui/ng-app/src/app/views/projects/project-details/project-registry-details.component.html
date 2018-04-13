@@ -54,13 +54,15 @@
 
                         <button *ngIf="!editMode" type="button" class="btn btn-primary"
                                 [clrLoading]="isSavingRegistry || projectRegistryDetailsForm.invalid"
+                                [disabled]="disableButtons"
                                 (click)="save()">{{ "save" | i18n }}</button>
                         <button *ngIf="editMode" type="button" class="btn btn-primary"
                                 [clrLoading]="isSavingRegistry || projectRegistryDetailsForm.invalid"
+                                [disabled]="disableButtons"
                                 (click)="update()">{{ "update" | i18n }}</button>
                         <button type="button" class="btn btn-secondary"
                                 [clrLoading]="isTestingConnection"
-                                [disabled]="isSavingRegistry || isTestingConnection"
+                                [disabled]="isSavingRegistry || isTestingConnection || disableButtons"
                                 (click)="testConnection()">{{ "verify" | i18n }}</button>
                         <button type="button" class="btn btn-secondary"
                                 [disabled]="isSavingRegistry"

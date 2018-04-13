@@ -54,6 +54,7 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
 
     isSavingRegistry: boolean = false;
     isTestingConnection: boolean = false;
+    disableButtons: boolean;
 
     alertMessage: string;
 
@@ -65,12 +66,29 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
     constructor(private router: Router, route: ActivatedRoute, documentService: DocumentService,
         errorService: ErrorService) {
         super(route, documentService, Links.REGISTRIES, errorService);
+
+        this.projectRegistryDetailsForm.valueChanges.subscribe(data => {
+            this.toggleButtonsState(data);
+        });
     }
 
     ngOnInit() {
         super.ngOnInit();
+
+        this.disableButtons = true;
         this.populateCredentials(null);
     }
+
+    toggleButtonsState = function(projectRegistryDetailsForm) {
+        let address = projectRegistryDetailsForm.address;
+        let name = projectRegistryDetailsForm.name;
+
+        if (!address || !name) {
+            this.disableButtons = true;
+        } else {
+            this.disableButtons = false;
+        }
+    };
 
     populateCredentials(authCredentialsLink) {
         this.service.list(Links.CREDENTIALS, {}).then(credentials => {
@@ -147,6 +165,8 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
 
     private update(acceptCert: boolean = false) {
         this.isSavingRegistry = true;
+        this.disableButtons = false;
+
         let formInput = this.projectRegistryDetailsForm.value;
         let registryName = formInput.name && formatUtils.escapeHtml(formInput.name);
 
