@@ -72,9 +72,14 @@ import com.vmware.xenon.services.common.UserService.UserState;
 public abstract class AuthBaseTest extends BaseTestCase {
     protected static final String USER_EMAIL_ADMIN = "fritz@admiral.com";
     protected static final String USER_EMAIL_ADMIN2 = "administrator@admiral.com";
+    protected static final String USER_EMAIL_CLOUD_ADMIN = "cloud-admin@admiral.com";
     protected static final String USER_EMAIL_BASIC_USER = "tony@admiral.com";
     protected static final String USER_EMAIL_GLORIA = "gloria@admiral.com";
     protected static final String USER_EMAIL_CONNIE = "connie@admiral.com";
+
+    protected static final String USER_EMAIL_PROJECT_ADMIN_1 = "project-admin-1@admiral.com";
+    protected static final String USER_EMAIL_PROJECT_MEMBER_1 = "project-member-1@admiral.com";
+    protected static final String USER_EMAIL_PROJECT_VIEWER_1 = "project-viewer-1@admiral.com";
 
     protected static final String USER_NAME_ADMIN = "Fritz";
     protected static final String USER_NAME_ADMIN2 = "Administrator";

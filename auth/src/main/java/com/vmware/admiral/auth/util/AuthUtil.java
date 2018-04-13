@@ -401,9 +401,6 @@ public class AuthUtil {
     public static List<Query> fullAccessResourcesForAdmins() {
         Query resourceGroupQuery = Query.Builder.create()
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
-                        buildUriWithWildcard(PrincipalService.SELF_LINK),
-                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
-                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
                         buildUriWithWildcard(buildUserServicePathFromPrincipalId("")),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -18,6 +18,7 @@ import static org.junit.Assert.assertTrue;
 import static com.vmware.admiral.auth.util.PrincipalUtil.encode;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -38,7 +39,6 @@ import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.TestContext;
 
 public class LocalPrincipalProviderTest extends AuthBaseTest {
-    private static final int EXPECTED_PRINCIPALS_COUNT = 7;
 
     private PrincipalProvider provider = new LocalPrincipalProvider();
 
@@ -147,13 +147,11 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
     @Test
     public void testGetPrincipals() {
         String criteria = "i";
-        String expectedPrincipal1 = "connie@admiral.com";
-        String expectedPrincipal2 = "fritz@admiral.com";
-        String expectedPrincipal3 = "gloria@admiral.com";
-        String expectedPrincipal4 = "tony@admiral.com";
-        String expectedPrincipal5 = "administrator@admiral.com";
-        String expectedPrincipal6 = "developers@admiral.com";
-        String expectedPrincipal7 = "superusers@admiral.com";
+
+        List<String> expectedPrincipals = Arrays.asList(USER_EMAIL_ADMIN, USER_EMAIL_BASIC_USER,
+                USER_EMAIL_GLORIA, USER_EMAIL_CONNIE, USER_EMAIL_ADMIN2, USER_GROUP_SUPERUSERS,
+                USER_GROUP_DEVELOPERS, USER_EMAIL_CLOUD_ADMIN, USER_EMAIL_PROJECT_ADMIN_1,
+                USER_EMAIL_PROJECT_MEMBER_1, USER_EMAIL_PROJECT_VIEWER_1);
 
         DeferredResult<List<Principal>> result = provider.getPrincipals(null, criteria);
 
@@ -169,19 +167,13 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
 
         List<Principal> principals = result.getNow(new ArrayList<>());
 
-        assertEquals(EXPECTED_PRINCIPALS_COUNT, principals.size());
+        assertEquals(expectedPrincipals.size(), principals.size());
 
         for (Principal p : principals) {
-            if (p.id.equals(expectedPrincipal1)) {
+            if (p.id.equals(USER_EMAIL_CONNIE)) {
                 assertTrue(p.groups.contains(USER_GROUP_DEVELOPERS));
             }
-            assertTrue(p.id.equals(expectedPrincipal1)
-                    || p.id.equals(expectedPrincipal2)
-                    || p.id.equals(expectedPrincipal3)
-                    || p.id.equals(expectedPrincipal4)
-                    || p.id.equals(expectedPrincipal5)
-                    || p.id.equals(expectedPrincipal6)
-                    || p.id.equals(expectedPrincipal7));
+            assertTrue(expectedPrincipals.contains(p.id));
         }
     }
 

@@ -11,9 +11,13 @@
 
 package com.vmware.admiral.auth.idm;
 
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -21,7 +25,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -71,21 +78,42 @@ public class RoleRestrictionsTest extends AuthBaseTest {
         assertNotNull(createdProject);
         assertNotNull(createdProject.documentSelfLink);
 
-        // Assign basic user to the project as Project Admin
+        // Assign basic users to the project as Project Admins, members and viewers
         ProjectRoles projectRoles = new ProjectRoles();
         projectRoles.administrators = new PrincipalRoleAssignment();
-        projectRoles.administrators.add = Arrays.asList(USER_EMAIL_GLORIA);
+        projectRoles.administrators.add = Arrays.asList(USER_EMAIL_GLORIA,
+                USER_EMAIL_PROJECT_ADMIN_1);
+
+        projectRoles.members = new PrincipalRoleAssignment();
+        projectRoles.members.add = Collections.singletonList(USER_EMAIL_PROJECT_MEMBER_1);
+
+        projectRoles.viewers = new PrincipalRoleAssignment();
+        projectRoles.viewers.add = Collections.singletonList(USER_EMAIL_PROJECT_VIEWER_1);
 
         ExpandedProjectState expandedProjectState = getExpandedProjectState(createdProject.documentSelfLink);
         doPatch(projectRoles, expandedProjectState.documentSelfLink);
         expandedProjectState = getExpandedProjectState(createdProject.documentSelfLink);
-        assertTrue(expandedProjectState.administrators.size() == 1);
-        assertTrue(expandedProjectState.administrators.iterator().next().email
-                .equalsIgnoreCase(USER_EMAIL_GLORIA));
+
+        // validate users were successfully assigned to the project
+        assertTrue(expandedProjectState.administrators.size() == 2);
+        assertTrue(expandedProjectState.members.size() == 1);
+        assertTrue(expandedProjectState.viewers.size() == 1);
+
+        Set<String> adminsList = expandedProjectState.administrators.stream().map(p -> p.email)
+                .collect(Collectors.toSet());
+        Set<String> membersList = expandedProjectState.members.stream().map(p -> p.email)
+                .collect(Collectors.toSet());
+        Set<String> viewersList = expandedProjectState.viewers.stream().map(p -> p.email)
+                .collect(Collectors.toSet());
+
+        assertThat(adminsList, hasItem(USER_EMAIL_GLORIA));
+        assertThat(adminsList, hasItem(USER_EMAIL_PROJECT_ADMIN_1));
+        assertThat(membersList, hasItem(USER_EMAIL_PROJECT_MEMBER_1));
+        assertThat(viewersList, hasItem(USER_EMAIL_PROJECT_VIEWER_1));
     }
 
     @Test
-    public void testClaudAdminHasAccessToCredentials() throws Throwable {
+    public void testCloudAdminHasAccessToCredentials() throws Throwable {
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
 
         AuthCredentialsServiceState cred = new AuthCredentialsServiceState();
@@ -113,7 +141,7 @@ public class RoleRestrictionsTest extends AuthBaseTest {
     }
 
     @Test
-    public void testClaudAdminHasAccessToCertificates() throws Throwable {
+    public void testCloudAdminHasAccessToCertificates() throws Throwable {
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
 
         SslTrustCertificateState cert = new SslTrustCertificateState();
@@ -141,7 +169,7 @@ public class RoleRestrictionsTest extends AuthBaseTest {
     }
 
     @Test
-    public void testClaudAdminHasAccessToRegistries() throws Throwable {
+    public void testCloudAdminHasAccessToRegistries() throws Throwable {
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
 
         RegistryState registry = new RegistryState();
@@ -169,7 +197,7 @@ public class RoleRestrictionsTest extends AuthBaseTest {
     }
 
     @Test
-    public void testClaudAdminHasAccessToProjects() throws Throwable {
+    public void testCloudAdminHasAccessToProjects() throws Throwable {
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
 
         ProjectState project = new ProjectState();
@@ -652,6 +680,85 @@ public class RoleRestrictionsTest extends AuthBaseTest {
         // DELETE
         doDelete(UriUtils.buildUri(host, createdContainerDesc.documentSelfLink), false);
     }
+
+    @Test
+    public void testCloudAdminCanAssignCloudAdminRole() throws Throwable {
+
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_CLOUD_ADMIN));
+        assignCloudAdminRoleTo(USER_EMAIL_BASIC_USER);
+        PrincipalRoles roles = getUserRolesFor(USER_EMAIL_BASIC_USER);
+
+        assertNotNull("could not retrieve roles for user " + USER_EMAIL_BASIC_USER, roles);
+        assertNotNull("roles set is empty or null for user " + USER_EMAIL_BASIC_USER, roles.roles);
+        assertThat(
+                "Expected user " + USER_EMAIL_BASIC_USER + " to have role "
+                        + AuthRole.CLOUD_ADMIN.toString(),
+                roles.roles, hasItem(AuthRole.CLOUD_ADMIN));
+    }
+
+    @Test
+    public void testProjectAdminCannotAssignCloudAdminRole() throws Throwable {
+        assertCannotAssignCloudAdminRoleAs(USER_EMAIL_PROJECT_ADMIN_1);
+    }
+
+    @Test
+    public void testProjectMemberCannotAssignCloudAdminRole() throws Throwable {
+        assertCannotAssignCloudAdminRoleAs(USER_EMAIL_PROJECT_MEMBER_1);
+    }
+
+    @Test
+    public void testProjectViewerCannotAssignCloudAdminRole() throws Throwable {
+        assertCannotAssignCloudAdminRoleAs(USER_EMAIL_PROJECT_VIEWER_1);
+    }
+
+    @Test
+    public void testBasicUserCannotAssignCloudAdminRole() throws Throwable {
+        assertCannotAssignCloudAdminRoleAs(USER_EMAIL_BASIC_USER);
+    }
+
+    private void assertCannotAssignCloudAdminRoleAs(String principalId) throws Throwable {
+        host.assumeIdentity(buildUserServicePath(principalId));
+        try {
+            assignCloudAdminRoleTo(USER_EMAIL_BASIC_USER);
+            fail(String.format(
+                    "Expected user '%s' not to have the privilege to assign the cloud admin role",
+                    principalId));
+        } catch (IllegalAccessError e) {
+            assertThat("Unexpected failure, expected forbidden message",
+                    e.getMessage(), containsString(FORBIDDEN));
+        }
+
+        PrincipalRoles roles = getUserRolesFor(USER_EMAIL_BASIC_USER);
+        assertNotNull("could not retrieve roles for user " + USER_EMAIL_BASIC_USER, roles);
+        assertNotNull("roles set is empty or null for user " + USER_EMAIL_BASIC_USER, roles.roles);
+        String msg = String.format("Expected user '%s' not to have role '%s'",
+                USER_EMAIL_BASIC_USER,
+                AuthRole.CLOUD_ADMIN);
+        Assert.assertThat(msg, roles.roles, not(hasItem(AuthRole.CLOUD_ADMIN)));
+
+    }
+
+    private void assignCloudAdminRoleTo(String principalId) throws Throwable {
+        String rolesLink = buildRolesLinkFor(principalId);
+
+        PrincipalRoleAssignment body = new PrincipalRoleAssignment();
+        body.add = Collections.singletonList(AuthRole.CLOUD_ADMIN.toString());
+
+        doPatch(body, rolesLink);
+
+    }
+
+    private PrincipalRoles getUserRolesFor(String principalId) throws Throwable {
+        String rolesLink = buildRolesLinkFor(principalId);
+        return getDocument(PrincipalRoles.class, rolesLink);
+    }
+
+    private String buildRolesLinkFor(String principalId) {
+        return UriUtils.buildUriPath(PrincipalService.SELF_LINK,
+                principalId,
+                PrincipalService.ROLES_SUFFIX);
+    }
+
 
     private void assertForbiddenMessage(IllegalAccessError e) {
         assertTrue(e.getMessage().toLowerCase().startsWith(FORBIDDEN));
