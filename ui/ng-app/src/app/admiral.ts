@@ -62,6 +62,7 @@ import { VerifyCertificateComponent } from "./views/verify-certificate/verify-ce
 import { TagDetailsContainersComponent } from "./views/tag-details/tag-details-containers.component";
 
 import { KubernetesClustersComponent } from './views/kubernetes/clusters/kubernetes-clusters.component';
+import { KubernetesClusterCreateComponent } from './views/kubernetes/clusters/kubernetes-cluster-create.component';
 import { KubernetesClusterDetailsComponent } from './views/kubernetes/clusters/details/kubernetes-cluster-details.component';
 import { KubernetesClusterSummaryComponent } from './views/kubernetes/clusters/details/kubernetes-cluster-summary.component';
 import { KubernetesClusterNodesComponent } from './views/kubernetes/clusters/details/kubernetes-cluster-nodes.component';
@@ -144,6 +145,7 @@ export const ADMIRAL_DECLARATIONS = [
   ClusterEditComponent,
   EndpointsComponent,
   KubernetesClustersComponent,
+  KubernetesClusterCreateComponent,
   KubernetesClusterDetailsComponent,
   KubernetesClusterSummaryComponent,
   KubernetesClusterNodesComponent,
