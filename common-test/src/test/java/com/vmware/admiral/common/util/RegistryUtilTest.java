@@ -105,8 +105,9 @@ public class RegistryUtilTest extends BaseTestCase {
                 createRegistry("https://test.registry.com:5000/vmware/test", null),
                 createRegistry("https://test.registry.com:5000/test", null),
                 createRegistry("https://test.registry.com:5000/test2", null),
-                createRegistry("https://test.registry.com:5001/vmware", null),
-                createRegistry("https://test.registry.com:5001", null)
+                createRegistry("http://test.registry.com:5001/vmware", null),
+                createRegistry("http://test.registry.com:5001", null),
+                createRegistry("test.registry.com:5002/no-schema", null)
         );
 
         host.log("Test same path different hosts");
@@ -123,7 +124,7 @@ public class RegistryUtilTest extends BaseTestCase {
         filteredRegistries = RegistryUtil.filterRegistriesByPath(host, registries, image);
         assertNotNull(filteredRegistries);
         assertEquals(1, filteredRegistries.size());
-        assertEquals("https://test.registry.com:5001", filteredRegistries.get(0).address);
+        assertEquals("http://test.registry.com:5001", filteredRegistries.get(0).address);
 
         host.log("Test registry no path");
         image = DockerImage.fromParts("test.registry.com:5001", "vmware",
@@ -152,8 +153,32 @@ public class RegistryUtilTest extends BaseTestCase {
         filteredRegistries.stream().forEach(r -> {
             assertTrue(r.address.contains("test.registry.com:5000/test"));
         });
+
+        host.log("Test registry without schema");
+        image = DockerImage.fromParts("test.registry.com:5002", "no-schema", "test", "latest");
+        filteredRegistries = RegistryUtil.filterRegistriesByPath(host, registries, image);
+        assertNotNull(filteredRegistries);
+        assertEquals(1, filteredRegistries.size());
+        filteredRegistries.stream().forEach(r -> {
+            assertTrue(r.address.contains("test.registry.com:5002/no-schema"));
+        });
     }
 
+    @Test
+    public void testFindRegistriesByHostnameWithDifferentSchemas() throws Throwable {
+        List<RegistryState> expectedRegistries = new ArrayList<>();
+        expectedRegistries.add(createRegistry("http://test.registry.com:5000", null));
+        expectedRegistries.add(createRegistry("https://test.registry.com:5000", null));
+        expectedRegistries.add(createRegistry("test.registry.com:5000", null));
+
+        // unexpected registries
+        createRegistry("ftp://test.registry.com:5000", null);
+        createRegistry("file://test.registry.com:5000", null);
+        createRegistry("http://test.registry.com:5001", null);
+        createRegistry("https://test.registry.com:5002", null);
+
+        verifyRegistryLinksByHostname("test.registry.com:5000", (String) null, expectedRegistries);
+    }
 
     private void verifyRegistryLinksByHostname(String hostname, String tenantLink,
             Collection<RegistryState> expectedRegistries) {
