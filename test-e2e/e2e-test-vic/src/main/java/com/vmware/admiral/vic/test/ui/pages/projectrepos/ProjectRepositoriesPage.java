@@ -41,6 +41,7 @@ public class ProjectRepositoriesPage
     }
 
     public void clickDeleteButton() {
+        LOG.info("Clicking the delete button");
         pageActions().click(locators().deleteRepositoriesButton());
     }
 

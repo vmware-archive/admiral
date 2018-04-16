@@ -357,7 +357,11 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
         clusters().addHostDialog().submit();
         clusters().certificateModalDialog().waitToLoad();
         clusters().certificateModalDialog().submit();
-        clusters().clustersPage().refresh();
+        // TODO currently the test are executed on window resolution 1023 x 662
+        // The clusters page refresh button is not visible on this resolution
+        // Uncomment after the resolution has been raised or the button gets visible on this
+        // resolution
+        // clusters().clustersPage().refresh();
         clusters().clustersPage().validate().validateHostExistsWithName(hostName + HOST_SUFFIX);
         clusters().clustersPage().validate().validateHostsCount(1);
     }

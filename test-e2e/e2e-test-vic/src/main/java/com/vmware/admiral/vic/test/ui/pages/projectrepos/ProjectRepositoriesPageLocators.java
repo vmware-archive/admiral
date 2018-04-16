@@ -22,7 +22,8 @@ public class ProjectRepositoriesPageLocators extends PageLocators {
     private final String ROW_BY_REPOSITORY_VALUE_XPATH = "//clr-dg-cell/a[./text()='%s']/ancestor::clr-dg-row[contains(concat(' ', @class, ' '), ' datagrid-row ')]";
     // private final String ROW_RELATIVE_CHECKBOX = "//input[@type='checkbox']";
     private final String ROW_RELATIVE_CHECKBOX = "//clr-checkbox";
-    private final By DELETE_REPOSITORIES_BUTTON = By.cssSelector(".datagrid-action-bar button");
+    private final By DELETE_REPOSITORIES_BUTTON = By
+            .cssSelector(".datagrid-action-bar button:nth-child(3)");
 
     public By pageTitle() {
         return PAGE_TITLE;
