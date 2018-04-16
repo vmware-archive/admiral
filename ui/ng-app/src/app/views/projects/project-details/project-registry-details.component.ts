@@ -68,6 +68,7 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
         super(route, documentService, Links.REGISTRIES, errorService);
 
         this.projectRegistryDetailsForm.valueChanges.subscribe(data => {
+            this.checkForInsecureRegistry(data);
             this.toggleButtonsState(data);
         });
     }
@@ -83,10 +84,16 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
         let address = projectRegistryDetailsForm.address;
         let name = projectRegistryDetailsForm.name;
 
-        if (!address || !name) {
-            this.disableButtons = true;
+        this.disableButtons = !address || !name;
+    };
+
+    checkForInsecureRegistry(projectRegistryDetailsForm) {
+        let address = projectRegistryDetailsForm.address;
+        if (address && address.startsWith('http:')) {
+            this.showAlertMessage(I18n.t('projects.projectRegistries.insecureRegistryHint'),
+                Constants.alert.type.WARNING);
         } else {
-            this.disableButtons = false;
+            this.resetAlert();
         }
     };
 
@@ -159,7 +166,7 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
             }
         }).catch(error => {
             this.isSavingRegistry = false;
-            this.showErrorMessage(error);
+            this.showAlertMessage(Utils.getErrorMessage(error)._generic, Constants.alert.type.DANGER);
         });
     }
 
@@ -187,7 +194,7 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
             }
         }).catch(error => {
             this.isSavingRegistry = false;
-            this.showErrorMessage(error);
+            this.showAlertMessage(Utils.getErrorMessage(error)._generic, Constants.alert.type.DANGER);
         });
     }
 
@@ -221,7 +228,7 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
             }
         }).catch(error => {
             this.isTestingConnection = false;
-            this.showErrorMessage(error);
+            this.showAlertMessage(Utils.getErrorMessage(error)._generic, Constants.alert.type.DANGER);
         });
     }
 
@@ -242,9 +249,9 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
         return registrySpec;
     }
 
-    private showErrorMessage(error) {
-        this.alertType = Constants.alert.type.DANGER;
-        this.alertMessage = Utils.getErrorMessage(error)._generic;
+    private showAlertMessage(message: string, alertType) {
+        this.alertType = alertType;
+        this.alertMessage = message;
     }
 
     declineCertificate() {

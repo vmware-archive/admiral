@@ -128,7 +128,8 @@
           "fieldName": "Name",
           "fieldCredentials": "Login credentials"
         },
-        "count": "registries"
+        "count": "registries",
+        "insecureRegistryHint": "Plain HTTP registry detected! Your connection to this registry is not secure. Make sure your hosts are properly configured and can connect to it. <a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">More info</a>"
     },
     "config": {
       "title": "Configuration",

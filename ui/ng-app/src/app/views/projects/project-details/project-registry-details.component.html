@@ -9,9 +9,9 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-  <clr-alert [clrAlertType]="alertType" [(clrAlertClosed)]="!alertMessage" (clrAlertClosedChange)="resetAlert()">
+    <clr-alert [clrAlertType]="alertType" [(clrAlertClosed)]="!alertMessage" (clrAlertClosedChange)="resetAlert()">
         <div class="alert-item">
-            <span class="alert-text">{{ alertMessage }}</span>
+            <span class="alert-text" [innerHTML]="alertMessage"></span>
         </div>
     </clr-alert>
 

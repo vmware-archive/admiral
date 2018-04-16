@@ -42,7 +42,8 @@ export const Constants = {
     alert: {
         type: {
             DANGER: 'alert-danger',
-            SUCCESS: 'alert-success'
+            SUCCESS: 'alert-success',
+            WARNING: 'alert-warning'
         }
     }
 };
