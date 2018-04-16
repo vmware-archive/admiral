@@ -50,6 +50,7 @@ import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState
 import com.vmware.admiral.service.common.ExtensibilitySubscriptionManager;
 import com.vmware.admiral.service.common.NodeMigrationService;
 import com.vmware.admiral.service.common.harbor.HostInitHarborServices;
+import com.vmware.admiral.upgrade.transformation.ProjectsTransformationBootstrapService;
 import com.vmware.photon.controller.model.security.util.CertificateUtil;
 import com.vmware.photon.controller.model.security.util.EncryptionUtils;
 import com.vmware.xenon.common.CommandLineArgumentParser;
@@ -254,6 +255,9 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
 
         registerForServiceAvailability(AuthBootstrapService.startTask(this), true,
                 AuthBootstrapService.FACTORY_LINK);
+        registerForServiceAvailability(ProjectsTransformationBootstrapService.startTask(this), true,
+                ProjectsTransformationBootstrapService.FACTORY_LINK,
+                ProjectFactoryService.SELF_LINK);
 
         this.log(Level.INFO, "Common services started.");
     }
