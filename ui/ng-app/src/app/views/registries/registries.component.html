@@ -28,7 +28,7 @@
         <clr-tab *ngIf="isHbrEnabled" >
             <button clrTabLink id="replicationRulesTab">{{"registries.replicationRules" | i18n}}</button>
             <clr-tab-content id="replicationRulesContent" *clrIfActive>
-                <hbr-replication></hbr-replication>
+                <hbr-replication [isSystemAdmin]="hasProjectAdminRole"></hbr-replication>
             </clr-tab-content>
         </clr-tab>
     </clr-tabs>

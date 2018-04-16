@@ -21,7 +21,6 @@ import { ProjectsComponent } from './views/projects/projects.component';
 import { ProjectDetailsComponent } from './views/projects/project-details/project-details.component';
 import { ProjectCreateComponent } from './views/projects/project-create/project-create.component';
 import { ProjectAddMemberComponent } from "./views/projects/project-details/project-add-member.component";
-import { ProjectRegistriesComponent } from './views/projects/project-details/project-registries.component';
 import { ProjectRegistryDetailsComponent } from './views/projects/project-details/project-registry-details.component';
 import { RegistriesComponent } from './views/registries/registries.component';
 import { ConfigurationComponent } from './views/configuration/configuration.component';

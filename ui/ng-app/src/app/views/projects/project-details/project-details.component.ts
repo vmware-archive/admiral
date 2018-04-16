@@ -44,7 +44,7 @@ export class ProjectDetailsComponent extends BaseDetailsComponent {
     private router: Router, private authService: AuthService) {
     super(route, service, Links.PROJECTS);
 
-    if(!this.embedded) {
+    if (!this.embedded) {
       this.authService.getCachedSecurityContext().then((securityContext) => {
           this.userSecurityContext = securityContext;
       }).catch((ex) => {

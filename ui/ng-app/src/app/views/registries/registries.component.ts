@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -9,8 +9,12 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { FT } from './../../utils/ft';
-import { Component, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, ViewEncapsulation } from '@angular/core';
+import { AuthService } from "../../utils/auth.service";
+import { ProjectService } from "../../utils/project.service";
+import { FT } from '../../utils/ft';
+import { Roles } from "../../utils/roles";
+import { Utils } from "../../utils/utils";
 
 @Component({
   selector: 'app-registries',
@@ -18,13 +22,35 @@ import { Component, OnInit, ViewEncapsulation } from '@angular/core';
   styleUrls: ['./registries.component.scss'],
   encapsulation: ViewEncapsulation.None
 })
-export class RegistriesComponent implements OnInit {
+/**
+ * Registries main view.
+ */
+export class RegistriesComponent {
 
-  isHbrEnabled = FT.isHbrEnabled();
+    isHbrEnabled = FT.isHbrEnabled();
+    userSecurityContext: any;
 
-  constructor() { }
+    constructor(private projectService: ProjectService, private authService: AuthService) {
 
-  ngOnInit() {
-  }
+          if (!FT.isApplicationEmbedded()) {
+              this.authService.getCachedSecurityContext().then((securityContext) => {
+                  this.userSecurityContext = securityContext;
 
+              }).catch((ex) => {
+                  console.log(ex);
+              });
+          }
+      }
+
+    private getSelectedProject(): any {
+        return this.projectService && this.projectService.getSelectedProject();
+    }
+
+    get hasProjectAdminRole(): boolean {
+        let selectedProject = this.getSelectedProject();
+        let projectSelfLink = selectedProject && selectedProject.documentSelfLink;
+
+        return Utils.isAccessAllowed(this.userSecurityContext, projectSelfLink,
+                                    [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN]);
+    }
 }
