@@ -24,7 +24,8 @@
     </clr-dg-action-bar>
   </div>
   <ng-template let-item="item">
-    <card class="clusterCard" [routerLink]="['./' + item.documentId]">
+    <card class="clusterCard" [routerLink]="['./' + item.documentId]"
+          [ngClass]="{'card-actions-selected': isItemSelected(item)}">
       <div card-header>
         <div class="clusterIcon">
           <clr-icon shape="rack-server" size="48"></clr-icon>
@@ -33,6 +34,20 @@
           <div class="truncate">{{ item.name }}</div>
           <div *ngIf="item.address" class="clusterAddress truncate">{{ item.address }}</div>
         </div>
+        <clr-dropdown class="card-actions" (click)="toggleItemSelection($event, item)">
+          <button type="button" class="btn btn-sm btn-link" clrDropdownTrigger>
+              <clr-icon shape="ellipsis-vertical" size="20"></clr-icon>
+          </button>
+          <clr-dropdown-menu clrPosition="left-top" *clrIfOpen>
+            <button *ngIf="operationSupported('DISABLE', item)" type="button" class="dropdown-item disableHost"
+                      (click)="disableHost($event, item)"><clr-icon shape="pause" size="20"
+                            class="card-drop-down-actions"></clr-icon>{{ "hosts.actions.disable" | i18n }}</button>
+
+              <button *ngIf="operationSupported('ENABLE', item)" type="button" class="dropdown-item enableHost"
+                      (click)="enableHost($event, item)"><clr-icon shape="play" size="20"
+                            class="card-drop-down-actions"></clr-icon>{{ "hosts.actions.enable" | i18n }}</button>
+          </clr-dropdown-menu>
+      </clr-dropdown>
       </div>
       <div card-content>
         <div class="form-group">
