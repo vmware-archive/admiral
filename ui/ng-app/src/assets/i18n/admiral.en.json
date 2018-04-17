@@ -118,7 +118,10 @@
         },
         "deleteConfirmation": {
           "title": "Remove Project Registries",
-          "description": "Confirm the removal of the selected registries. The operation cannot be undone."
+          "description": "Confirm the removal of the selected project registries. Note that global registries cannot be removed from this view. The operation cannot be undone."
+        },
+        "globalRegistriesDeletionSkipped": {
+          "warningMessage": "The global registries from your selection were not deleted. It is not possible to delete global registries from this view."
         },
         "registryDetails": {
           "title": "Add Project Registry",

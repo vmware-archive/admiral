@@ -15,6 +15,7 @@ import { DocumentListResult, DocumentService } from "../../../utils/document.ser
 import { ErrorService } from "../../../utils/error.service";
 import { CancelablePromise, Utils} from "../../../utils/utils";
 import { Links } from "../../../utils/links";
+import * as I18n from 'i18next';
 
 @Component({
     selector: 'app-project-registries',
@@ -25,6 +26,10 @@ import { Links } from "../../../utils/links";
  * View for Project Registries.
  */
 export class ProjectRegistriesComponent implements OnInit {
+    tabAlertClosed: boolean = true;
+    tabAlertType: string = 'alert-warning';
+    tabAlertText: string;
+
     loading: boolean;
     loadingPromise: CancelablePromise<DocumentListResult>;
 
@@ -52,6 +57,12 @@ export class ProjectRegistriesComponent implements OnInit {
 
     ngOnDestroy() {
         this.sub.unsubscribe();
+    }
+
+    private warnGlobalRegistriesSkippedDeletion(): void {
+        this.tabAlertType = 'alert-warning';
+        this.tabAlertText = I18n.t('projects.projectRegistries.globalRegistriesDeletionSkipped.warningMessage');
+        this.tabAlertClosed = false;
     }
 
     listProjectRegistries(queryOptions) {
@@ -93,16 +104,24 @@ export class ProjectRegistriesComponent implements OnInit {
 
     deleteConfirmed() {
         let promises: any[] = [];
+        let globalRegistriesSelected: boolean = false;
 
         this.selectedProjectRegistries.forEach((registriesToDelete) => {
-           let deletePromise =  this.service.delete(registriesToDelete.documentSelfLink);
-           promises.push(deletePromise);
+            if (this.isProjectSpecificRegistry(registriesToDelete)) {
+                let deletePromise =  this.service.delete(registriesToDelete.documentSelfLink);
+                promises.push(deletePromise);
+            } else {
+                globalRegistriesSelected = true;
+            }
         });
 
         Promise.all(promises).then(() => {
             this.selectedProjectRegistries = [];
             this.showDeleteConfirmation = false;
             this.listProjectRegistries({});
+            if (globalRegistriesSelected) {
+                this.warnGlobalRegistriesSkippedDeletion();
+            }
         }).catch(err => {
             this.deleteConfirmationAlert = Utils.getErrorMessage(err)._generic;
         });
@@ -114,5 +133,13 @@ export class ProjectRegistriesComponent implements OnInit {
 
     getRegistryId(registry){
         return Utils.getDocumentId(registry.documentSelfLink);
+    }
+
+    isProjectSpecificRegistry(registry): boolean {
+        return registry
+            && registry.tenantLinks
+            && this.projectLink
+            && Array.isArray(registry.tenantLinks)
+            && registry.tenantLinks.includes(this.projectLink);
     }
 }

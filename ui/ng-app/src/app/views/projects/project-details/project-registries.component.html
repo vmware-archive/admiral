@@ -18,6 +18,14 @@
 </delete-confirmation>
 
 <div class="main-view">
+    <clr-alert [clrAlertType]="tabAlertType" [(clrAlertClosed)]="tabAlertClosed">
+        <div class="alert-item">
+            <span class="alert-text">
+                {{tabAlertText}}
+            </span>
+        </div>
+    </clr-alert>
+
     <table-view [searchPlaceholder]="'projects.projectRegistries.searchPlaceholder' | i18n" (onRefresh)="refreshProjectRegistries($event)">
         <div toolbar>
             <clr-dg-action-bar>
@@ -35,6 +43,7 @@
         </div>
 
         <div table-content-view>
+
             <clr-datagrid class="projectRegistriesGrid" [clrDgLoading]="loading" [clDgRowSelection]="true"
                           [(clrDgSelected)]="selectedProjectRegistries">
                 <clr-dg-column>{{"projects.projectRegistries.nameTitle" | i18n}}</clr-dg-column>
@@ -43,17 +52,17 @@
                 <clr-dg-column>{{"projects.projectRegistries.addressTitle" | i18n}}</clr-dg-column>
 
                 <clr-dg-row *clrDgItems="let registry of projectRegistries" [clrDgItem]="registry">
-                    <clr-dg-cell><span *ngIf="registry.tenantLinks && registry.tenantLinks.length > 0"
+                    <clr-dg-cell><span *ngIf="isProjectSpecificRegistry(registry)"
                             ><a routerLink="./registries/registry/{{getRegistryId(registry)}}/edit">{{ registry.name || registry.address }}</a></span>
-                        <span *ngIf="!registry.tenantLinks || registry.tenantLinks.length == 0">{{ registry.name || registry.address }}</span>
+                        <span *ngIf="!isProjectSpecificRegistry(registry)">{{ registry.name || registry.address }}</span>
                     </clr-dg-cell>
                     <clr-dg-cell><span *ngIf="registry.disabled && registry.disabled == true"
                         >{{"projects.projectRegistries.status.disabled" | i18n }}</span>
                         <span *ngIf="!registry.disabled || registry.disabled == false"
                         >{{"projects.projectRegistries.status.active" | i18n }}</span></clr-dg-cell>
-                    <clr-dg-cell><span *ngIf="registry.tenantLinks && registry.tenantLinks.length > 0"
+                    <clr-dg-cell><span *ngIf="isProjectSpecificRegistry(registry)"
                             >{{"projects.projectRegistries.scope.project" | i18n }}</span>
-                        <span *ngIf="!registry.tenantLinks || registry.tenantLinks.length == 0"
+                        <span *ngIf="!isProjectSpecificRegistry(registry)"
                             >{{"projects.projectRegistries.scope.system" | i18n }}</span>
                     </clr-dg-cell>
                     <clr-dg-cell><span>{{ registry.address }}</span></clr-dg-cell>
