@@ -39,12 +39,15 @@
               <clr-icon shape="ellipsis-vertical" size="20"></clr-icon>
           </button>
           <clr-dropdown-menu clrPosition="left-top" *clrIfOpen>
+            <button type="button" class="dropdown-item cluster-details"
+                    [routerLink]="['./' + item.documentId]"><clr-icon shape="eye" size="20"
+                            class="card-drop-down-actions"></clr-icon>{{"projects.actions.details" | i18n}}</button>
             <button *ngIf="operationSupported('DISABLE', item)" type="button" class="dropdown-item disableHost"
-                      (click)="disableHost($event, item)"><clr-icon shape="pause" size="20"
+                    (click)="disableHost($event, item)"><clr-icon shape="pause" size="20"
                             class="card-drop-down-actions"></clr-icon>{{ "hosts.actions.disable" | i18n }}</button>
 
-              <button *ngIf="operationSupported('ENABLE', item)" type="button" class="dropdown-item enableHost"
-                      (click)="enableHost($event, item)"><clr-icon shape="play" size="20"
+            <button *ngIf="operationSupported('ENABLE', item)" type="button" class="dropdown-item enableHost"
+                    (click)="enableHost($event, item)"><clr-icon shape="play" size="20"
                             class="card-drop-down-actions"></clr-icon>{{ "hosts.actions.enable" | i18n }}</button>
           </clr-dropdown-menu>
       </clr-dropdown>
