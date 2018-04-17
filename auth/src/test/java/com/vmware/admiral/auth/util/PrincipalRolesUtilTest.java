@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -20,8 +20,10 @@ import static com.vmware.admiral.auth.util.PrincipalUtil.encode;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.Test;
@@ -257,7 +259,10 @@ public class PrincipalRolesUtilTest extends AuthBaseTest {
                 PrincipalService.ROLES_SUFFIX));
 
         // Create first project and assign nestedGroup1 as project admin.
-        ProjectState firstProject = createProject("first-project");
+        Map<String, String> customProperties = new HashMap<>();
+        customProperties.put("key1", "value1");
+        customProperties.put("key2", "value2");
+        ProjectState firstProject = createProject("first-project", customProperties);
         assertNotNull(firstProject.documentSelfLink);
         ProjectRoles projectRoles = new ProjectRoles();
         PrincipalRoleAssignment admins = new PrincipalRoleAssignment();
@@ -321,11 +326,13 @@ public class PrincipalRolesUtilTest extends AuthBaseTest {
         assertEquals(firstProject.documentSelfLink, firstProjectEntry.documentSelfLink);
         assertEquals(1, firstProjectEntry.roles.size());
         assertTrue(firstProjectEntry.roles.contains(AuthRole.PROJECT_ADMIN));
+        assertEquals(firstProject.customProperties, firstProjectEntry.customProperties);
 
         assertEquals(secondProject.name, secondProjectEntry.name);
         assertEquals(secondProject.documentSelfLink, secondProjectEntry.documentSelfLink);
         assertEquals(2, secondProjectEntry.roles.size());
         assertTrue(secondProjectEntry.roles.contains(AuthRole.PROJECT_MEMBER));
+        assertEquals(secondProject.customProperties, secondProjectEntry.customProperties);
     }
 
     @Test
