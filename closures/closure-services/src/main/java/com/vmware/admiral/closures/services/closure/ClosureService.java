@@ -57,6 +57,9 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
     private static final Map<String, Integer> TEMPLATE_PROGRESS_MAP = Collections.singletonMap(
             "__DEFAULT__", 0);
 
+    // Contanst used in custom properties to mark closure deployment failure.
+    public static final String FAIL_ON_DEPLOYMENT = "FAIL_ON_DEPLOYMENT";
+
     private final transient DriverRegistry driverRegistry;
 
     public ClosureService(DriverRegistry driverRegistry, long maintenanceTimeout) {
@@ -153,6 +156,7 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
             currentState.state = taskInfo.stage;
             currentState.errorMsg = String.format(errorMsg, taskInfo.stage,
                     taskInfo.failure.message);
+            markFailOnDeployment(currentState);
             this.setState(patchOp, currentState);
             patchOp.setBody(currentState).complete();
 
@@ -189,6 +193,14 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
             logSevere("Error while patching closure: %s", Utils.toString(ex));
             patchOp.fail(ex);
         }
+    }
+
+    private void markFailOnDeployment(Closure currentState) {
+        if (currentState.customProperties == null) {
+            currentState.customProperties = new HashMap<>();
+        }
+
+        currentState.customProperties.put(FAIL_ON_DEPLOYMENT, Boolean.TRUE.toString());
     }
 
     private ClosureTaskState fromClosure(Closure closure) {

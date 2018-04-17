@@ -41,6 +41,7 @@ import org.junit.Test;
 import com.vmware.admiral.BaseClosureIntegrationTest;
 import com.vmware.admiral.SimpleHttpsClient;
 import com.vmware.admiral.closures.services.closure.Closure;
+import com.vmware.admiral.closures.services.closure.ClosureService;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescription;
 import com.vmware.admiral.closures.services.closuredescription.ResourceConstraints;
 import com.vmware.admiral.common.util.ServiceClientFactory;
@@ -1146,6 +1147,9 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
 
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FAILED, fetchedClosure.state);
+        assertNotNull(fetchedClosure.customProperties);
+        assertTrue(Boolean.valueOf(fetchedClosure.customProperties.get(ClosureService
+                .FAIL_ON_DEPLOYMENT)));
 
         cleanResource(createdClosure.documentSelfLink, serviceClient);
         cleanResource(closureDescription.documentSelfLink, serviceClient);
