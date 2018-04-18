@@ -79,6 +79,7 @@ public class ProjectInterceptor {
         if (op.getAction() != Action.POST) {
             return DeferredResult.completed(null);
         }
+
         return handleClusterServiceOp(service, op)
                 .thenCompose(ignore -> setProjectLinkAsTenantLink(service, op));
     }
@@ -227,10 +228,6 @@ public class ProjectInterceptor {
         }
 
         String projectLink = OperationUtil.extractProjectFromHeader(op);
-
-        if (projectLink == null || projectLink.isEmpty()) {
-            return DeferredResult.completed(null);
-        }
 
         return SecurityContextUtil.getSecurityContextForCurrentUser(service)
                 .thenCompose(sc -> {

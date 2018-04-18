@@ -1646,10 +1646,6 @@ public class RequestBrokerService extends
 
         String projectLink = OperationUtil.extractProjectFromHeader(startOp);
 
-        if (projectLink == null || projectLink.isEmpty()) {
-            return DeferredResult.completed(null);
-        }
-
         Operation getSecurityContext = Operation.createGet(this, ManagementUriParts.AUTH_SESSION)
                 .setReferer(startOp.getUri());
 

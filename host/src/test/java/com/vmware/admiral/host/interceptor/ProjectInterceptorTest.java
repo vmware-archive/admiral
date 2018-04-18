@@ -31,6 +31,8 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
+import com.google.common.collect.ImmutableMap;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -145,7 +147,6 @@ public class ProjectInterceptorTest extends BaseTestCase {
         project = createProject("test-project");
         testProject1 = createProject("test-project1");
         testProject2 = createProject("test-project2");
-
     }
 
     @Override
@@ -303,7 +304,6 @@ public class ProjectInterceptorTest extends BaseTestCase {
                 ContainerNetworkDescriptionService.FACTORY_LINK, testProject2.documentSelfLink);
         assertEquals(1, project2Docs.documentLinks.size());
         assertTrue(project2Docs.documentLinks.contains(state2.documentSelfLink));
-
     }
 
     @Test
@@ -683,6 +683,24 @@ public class ProjectInterceptorTest extends BaseTestCase {
         ClusterDto dto = doPostWithProjectHeader(hostSpec, ClusterService.SELF_LINK, testProject1
                 .documentSelfLink, ClusterDto.class);
         assertNotNull(dto.documentSelfLink);
+
+        // Try to delete a cluster as project admin - no project header
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_GLORIA));
+        try {
+            doDelete(UriUtils.buildUri(host, dto.documentSelfLink), false);
+            fail("Delete cluster as project admin should've failed.");
+        } catch (Throwable ex) {
+            assertTrue(ex.getMessage().contains("forbidden"));
+        }
+
+        // Try to delete a cluster as project admin
+        try {
+            doDelete(UriUtils.buildUri(host, dto.documentSelfLink), false,
+                    ImmutableMap.of(OperationUtil.PROJECT_ADMIRAL_HEADER, testProject1.documentSelfLink));
+            fail("Delete cluster as project admin should've failed.");
+        } catch (Throwable ex) {
+            assertTrue(ex.getMessage().contains("forbidden"));
+        }
     }
 
 

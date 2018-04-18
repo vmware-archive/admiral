@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Future;
@@ -937,7 +938,10 @@ public abstract class BaseTestCase {
         doOperation(new ServiceDocument(), uri, expectFailure, Action.DELETE);
     }
 
-    @SuppressWarnings("unchecked")
+    protected void doDelete(URI uri, boolean expectFailure, Map<String, String> requestHeaders) throws Throwable {
+        doOperation(new ServiceDocument(), uri, ServiceDocument.class, expectFailure, Action.DELETE, requestHeaders);
+    }
+
     protected <T extends ServiceDocument> T doOperation(T inState, URI uri,
             boolean expectFailure, Action action) throws Throwable {
         return (T) doOperation(inState, uri, ServiceDocument.class, expectFailure, action);
@@ -945,6 +949,11 @@ public abstract class BaseTestCase {
 
     protected <T> T doOperation(T inState, URI uri, Class<T> type, boolean expectFailure,
             Action action) throws Throwable {
+        return (T) doOperation(inState, uri, type, expectFailure, action, null);
+    }
+
+    protected <T> T doOperation(T inState, URI uri, Class<T> type, boolean expectFailure,
+            Action action, Map<String, String> requestHeaders) throws Throwable {
         host.log("Executing operation %s for resource: %s ...", action.name(), uri);
         final List<T> doc = Arrays.asList((T) null);
         final Throwable[] error = { null };
@@ -961,6 +970,12 @@ public abstract class BaseTestCase {
         }
 
         op.addPragmaDirective(Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY);
+
+        if (requestHeaders != null && !requestHeaders.isEmpty()) {
+            for (Entry<String, String> header : requestHeaders.entrySet()) {
+                op.addRequestHeader(header.getKey(), header.getValue());
+            }
+        }
 
         op.setBody(inState)
                 .setCompletion(
