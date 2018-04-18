@@ -194,16 +194,18 @@ export class ClusterEditComponent extends BaseDetailsComponent
 
     updateVchCluster() {
         if (this.clusterForm.valid) {
-            var hostState = this.getVchClusterInputData();
+            let name = this.clusterForm.value.name;
+            let description = this.clusterForm.value.description;
 
-            let hostSpec = {
-                'hostState': hostState,
-                'isUpdateOperation': true
+            let clusterDtoPatch = {
+                'name': name,
+                'details':  description
             };
 
             this.isSavingHost = true;
-            this.service.put(Links.CONTAINER_HOSTS, hostSpec).then((response) => {
-                this.onClusterUpdateSuccess();
+            this.service.patch(this.entity.documentSelfLink, clusterDtoPatch, this.projectLink)
+                .then(() => {
+                this.updateVchClusterCredentials();
 
             }).catch(error => {
                 this.onClusterUpdateError(error);
@@ -308,6 +310,29 @@ export class ClusterEditComponent extends BaseDetailsComponent
     private showErrorMessage(error) {
         this.alertType = Constants.alert.type.DANGER;
         this.alertMessage = Utils.getErrorMessage(error)._generic;
+    }
+
+    private updateVchClusterCredentials() {
+        let persistedCredsLink = this.entity.nodes[this.entity.nodeLinks[0]].customProperties['__authCredentialsLink'];
+        let formCredentials = this.clusterForm.value.credentials ? this.clusterForm.value.credentials.documentSelfLink : "";
+        if(persistedCredsLink !== formCredentials) {
+            var hostState = this.getVchClusterInputData();
+
+            let hostSpec = {
+                'hostState': hostState,
+                'isUpdateOperation': true
+            };
+
+            this.isSavingHost = true;
+            this.service.put(Links.CONTAINER_HOSTS, hostSpec).then((response) => {
+                this.onClusterUpdateSuccess();
+
+            }).catch(error => {
+                this.onClusterUpdateError(error);
+            });
+        } else {
+            this.onClusterUpdateSuccess();
+        }
     }
 
     resetAlert() {
