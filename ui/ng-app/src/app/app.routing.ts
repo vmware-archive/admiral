@@ -221,6 +221,12 @@ export const ROUTES: Routes = [
                             roles: RoutesRestriction.PROJECTS_ID
                         }
                     },
+                    { path: ':id/:tab', component: ProjectDetailsComponent,
+                        data: {
+                            navigationContainerType: NavigationContainerType.Fullscreen,
+                            roles: RoutesRestriction.PROJECTS_ID
+                        }
+                    },
                     { path: ':id/edit', component: ProjectCreateComponent,
                         canActivate: [AdminAuthGuard],
                         data: {
@@ -228,13 +234,21 @@ export const ROUTES: Routes = [
                             roles: RoutesRestriction.PROJECTS_ID_EDIT
                         }
                     },
-                    { path: ':id/:tab', component: ProjectDetailsComponent,
+                    { path: ':id/:tab/edit', component: ProjectCreateComponent,
+                        canActivate: [AdminAuthGuard],
                         data: {
                             navigationContainerType: NavigationContainerType.Fullscreen,
-                            roles: RoutesRestriction.PROJECTS_ID
+                            roles: RoutesRestriction.PROJECTS_ID_EDIT
                         }
                     },
                     { path: ':projectId/cluster/new', component: ClusterCreateComponent,
+                        canActivate: [AdminAuthGuard],
+                        data: {
+                            navigationContainerType: NavigationContainerType.Fullscreen,
+                            roles: RoutesRestriction.CLUSTERS_NEW
+                        }
+                    },
+                    { path: ':projectId/:tab/cluster/new', component: ClusterCreateComponent,
                         canActivate: [AdminAuthGuard],
                         data: {
                             navigationContainerType: NavigationContainerType.Fullscreen,
@@ -248,7 +262,21 @@ export const ROUTES: Routes = [
                             roles: RoutesRestriction.CLUSTERS_ID
                         }
                     },
+                    { path: ':projectId/:tab/cluster/:id', component: ClusterDetailsComponent,
+                        canActivate: [AdminAuthGuard],
+                        data: {
+                            navigationContainerType: NavigationContainerType.Fullscreen,
+                            roles: RoutesRestriction.CLUSTERS_ID
+                        }
+                    },
                     { path: ':projectId/cluster/:id/edit', component: ClusterEditComponent,
+                        canActivate: [AdminAuthGuard],
+                        data: {
+                            navigationContainerType: NavigationContainerType.Fullscreen,
+                            roles: RoutesRestriction.CLUSTERS_EDIT
+                        }
+                    },
+                    { path: ':projectId/:tab/cluster/:id/edit', component: ClusterEditComponent,
                         canActivate: [AdminAuthGuard],
                         data: {
                             navigationContainerType: NavigationContainerType.Fullscreen,
@@ -281,27 +309,6 @@ export const ROUTES: Routes = [
                         data: {
                             navigationContainerType: NavigationContainerType.Fullscreen,
                             roles: RoutesRestriction.PROJECT_REGISTRIES_DETAILS
-                        }
-                    },
-                    { path: ':projectId/:tab/cluster/new', component: ClusterCreateComponent,
-                        canActivate: [AdminAuthGuard],
-                        data: {
-                            navigationContainerType: NavigationContainerType.Fullscreen,
-                            roles: RoutesRestriction.CLUSTERS_NEW
-                        }
-                    },
-                    { path: ':projectId/:tab/cluster/:id', component: ClusterDetailsComponent,
-                        canActivate: [AdminAuthGuard],
-                        data: {
-                            navigationContainerType: NavigationContainerType.Fullscreen,
-                            roles: RoutesRestriction.CLUSTERS_ID
-                        }
-                    },
-                    { path: ':projectId/:tab/cluster/:id/edit', component: ClusterCreateComponent,
-                        canActivate: [AdminAuthGuard],
-                        data: {
-                            navigationContainerType: NavigationContainerType.Fullscreen,
-                            roles: RoutesRestriction.CLUSTERS_EDIT
                         }
                     },
                     { path: ':id/repositories/:rid', component: SingleRepositoryComponent,

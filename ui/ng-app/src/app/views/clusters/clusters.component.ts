@@ -33,6 +33,8 @@ import * as I18n from 'i18next';
 export class ClustersComponent extends AutoRefreshComponent {
     @Input() hideTitle: boolean = false;
     @Input() projectLink: string;
+    @Input() tabId: string = '';
+
     @ViewChild('gridView') gridView: GridViewComponent;
 
     serviceEndpoint = Links.CLUSTERS + '?type=!KUBERNETES';

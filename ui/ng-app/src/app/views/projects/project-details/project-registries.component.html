@@ -19,33 +19,30 @@
 
 <div class="main-view">
     <clr-alert [clrAlertType]="tabAlertType" [(clrAlertClosed)]="tabAlertClosed">
-        <div class="alert-item">
-            <span class="alert-text">
-                {{tabAlertText}}
-            </span>
-        </div>
+        <div class="alert-item"><span class="alert-text">{{tabAlertText}}</span></div>
     </clr-alert>
 
-    <table-view [searchPlaceholder]="'projects.projectRegistries.searchPlaceholder' | i18n" (onRefresh)="refreshProjectRegistries($event)">
+    <table-view [searchPlaceholder]="'projects.projectRegistries.searchPlaceholder' | i18n"
+                (onRefresh)="refreshProjectRegistries($event)">
         <div toolbar>
             <clr-dg-action-bar>
                 <div class="btn-group" role="group" aria-label="Available Actions">
                     <button type="button" class="btn btn-sm btn-secondary"
-                    [routerLink]="['./registries/new']"><clr-icon shape="plus"></clr-icon><span
-                        class="btn-spaced-text">{{"projects.projectRegistries.new" | i18n}}</span></button>
+                        [routerLink]="['./'+ tabId + '/new']"><clr-icon shape="plus"></clr-icon><span
+                            class="btn-spaced-text">{{"projects.projectRegistries.new" | i18n}}</span></button>
                     <button type="button" class="btn btn-sm btn-secondary"
                         [disabled]="selectedProjectRegistries.length == 0"
                         (click)="removeSelectedRegistries($event)"><clr-icon
                         shape="close"></clr-icon><span
-                        class="btn-spaced-text">{{"delete" | i18n}}</span></button>
+                            class="btn-spaced-text">{{"delete" | i18n}}</span></button>
                     </div>
             </clr-dg-action-bar>
         </div>
 
         <div table-content-view>
 
-            <clr-datagrid class="projectRegistriesGrid" [clrDgLoading]="loading" [clDgRowSelection]="true"
-                          [(clrDgSelected)]="selectedProjectRegistries">
+            <clr-datagrid class="projectRegistriesGrid" [clrDgLoading]="loading"
+                          [clDgRowSelection]="true" [(clrDgSelected)]="selectedProjectRegistries">
                 <clr-dg-column>{{"projects.projectRegistries.nameTitle" | i18n}}</clr-dg-column>
                 <clr-dg-column>{{"projects.projectRegistries.statusTitle" | i18n}}</clr-dg-column>
                 <clr-dg-column>{{"projects.projectRegistries.scopeTitle" | i18n}}</clr-dg-column>
@@ -53,7 +50,8 @@
 
                 <clr-dg-row *clrDgItems="let registry of projectRegistries" [clrDgItem]="registry">
                     <clr-dg-cell><span *ngIf="isProjectSpecificRegistry(registry)"
-                            ><a routerLink="./registries/registry/{{getRegistryId(registry)}}/edit">{{ registry.name || registry.address }}</a></span>
+                            ><a routerLink="./'+ tabId + '/registry/{{getRegistryId(registry)}}/edit"
+                                >{{ registry.name || registry.address }}</a></span>
                         <span *ngIf="!isProjectSpecificRegistry(registry)">{{ registry.name || registry.address }}</span>
                     </clr-dg-cell>
                     <clr-dg-cell><span *ngIf="registry.disabled && registry.disabled == true"

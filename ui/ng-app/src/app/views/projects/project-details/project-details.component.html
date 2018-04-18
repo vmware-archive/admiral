@@ -14,22 +14,30 @@
 <clr-tabs>
     <clr-tab>
         <button clrTabLink id="summaryTab">{{"projects.summary.title" | i18n}}</button>
-        <clr-tab-content id="summaryContent" *clrIfActive>
-            <app-project-summary [project]="entity"></app-project-summary>
-        </clr-tab-content>
+        <ng-template [clrIfActive]="isActiveTabSummary"
+                     (clrIfActiveChange)="summaryTabActivated($event)">
+            <clr-tab-content id="summaryContent">
+                <app-project-summary [project]="entity"></app-project-summary>
+            </clr-tab-content>
+        </ng-template>
     </clr-tab>
     <clr-tab>
         <button clrTabLink id="membersTab">{{"projects.members.title" | i18n}}</button>
-        <clr-tab-content id="membersContent" *clrIfActive>
-            <app-project-members [project]="entity" (onChange)="reloadProject($event)"></app-project-members>
-        </clr-tab-content>
+        <ng-template [clrIfActive]="isActiveTabMembers"
+                     (clrIfActiveChange)="membersTabActivated($event)">
+            <clr-tab-content id="membersContent">
+                <app-project-members [project]="entity" (onChange)="reloadProject($event)"></app-project-members>
+            </clr-tab-content>
+        </ng-template>
     </clr-tab>
     <clr-tab *ngIf="isHbrEnabled">
         <button clrTabLink id="repositoriesTab">{{"projects.repositories" | i18n}}</button>
-        <ng-template [(clrIfActive)]="isActiveTabProjectRepositories">
-            <clr-tab-content id="repositoriesContent" *clrIfActive>
+        <ng-template [clrIfActive]="isActiveTabRepositories"
+                     (clrIfActiveChange)="repositoriesTabActivated($event)">
+            <clr-tab-content id="repositoriesContent">
                 <hbr-repository-listview [projectId]="hbrProjectId" [projectName]="projectName"
-                                         [hasSignedIn]="true" [hasProjectAdminRole]="hasProjectAdminRole"
+                                         [hasSignedIn]="true"
+                                         [hasProjectAdminRole]="hasProjectAdminRole"
                                          (repoClickEvent)="watchRepoClickEvent($event)"
                                             ></hbr-repository-listview>
             </clr-tab-content>
@@ -38,33 +46,40 @@
     <clr-tab>
         <button clrTabLink id="infrastructureTab">{{"projects.infrastructure" | i18n}}</button>
         <ng-template [clrIfActive]="isActiveTabInfrastructure"
-                     (clrIfActiveChange)="infraTabActivated()">
+                     (clrIfActiveChange)="infrastructureTabActivated($event)">
             <clr-tab-content id="infrastructureContent">
-                <app-clusters [hideTitle]="true" [projectLink]="entity?.documentSelfLink"></app-clusters>
+                <app-clusters [hideTitle]="true" [projectLink]="entity?.documentSelfLink"
+                    [tabId]="tabIdForTabViews"></app-clusters>
             </clr-tab-content>
         </ng-template>
     </clr-tab>
     <clr-tab>
         <button clrTabLink id="registryTab">{{"projects.projectRegistries.title" | i18n}}</button>
         <ng-template [clrIfActive]="isActiveTabRegistries"
-                     (clrIfActiveChange)="registriesTabActivated()">
+                     (clrIfActiveChange)="registriesTabActivated($event)">
             <clr-tab-content id="projectRegistriesContent">
-                <app-project-registries></app-project-registries>
+                <app-project-registries [tabId]="tabIdForTabViews"></app-project-registries>
             </clr-tab-content>
         </ng-template>
     </clr-tab>
     <clr-tab *ngIf="isHbrEnabled && hasAccessToRegistryReplication">
         <button clrTabLink id="registryReplicationTab">{{"projects.registryReplication" | i18n}}</button>
-        <clr-tab-content id="registryReplicationContent" *clrIfActive>
-            <hbr-replication [projectId]="hbrProjectId" [projectName]="projectName"
-                             [withReplicationJob]="true"
-                             [isSystemAdmin]="hasProjectAdminRole"></hbr-replication>
-        </clr-tab-content>
+        <ng-template [clrIfActive]="isActiveTabReplication"
+                     (clrIfActiveChange)="replicationTabActivated($event)">
+            <clr-tab-content id="registryReplicationContent">
+                <hbr-replication [projectId]="hbrProjectId" [projectName]="projectName"
+                                 [withReplicationJob]="true"
+                                 [isSystemAdmin]="hasProjectAdminRole"></hbr-replication>
+            </clr-tab-content>
+        </ng-template>
     </clr-tab>
     <clr-tab>
         <button clrTabLink id="configurationTab">{{"projects.config.title" | i18n}}</button>
-        <clr-tab-content id="configurationContent" *clrIfActive>
-            <app-project-configuration [project]="entity"></app-project-configuration>
-        </clr-tab-content>
+        <ng-template [clrIfActive]="isActiveTabConfig"
+                     (clrIfActiveChange)="configTabActivated($event)">
+            <clr-tab-content id="configurationContent">
+                <app-project-configuration [project]="entity"></app-project-configuration>
+            </clr-tab-content>
+        </ng-template>
     </clr-tab>
 </clr-tabs>

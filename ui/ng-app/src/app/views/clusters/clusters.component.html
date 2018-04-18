@@ -21,12 +21,14 @@
                      [searchPlaceholder]="'clusters.search.placeholder' | i18n">
   <div [hidden]="hideTitle" title>{{ title }}</div>
   <div toolbar>
-    <button class="btn btn-link addCluster-btn" allowNavigation [roles]="clustersNewRouteRestrictions"
-            [routerLink]="['./cluster/new']"><i class="fa fa-plus"></i>{{ "clusters.new" | i18n | uppercase }}</button>
+    <button class="btn btn-link addCluster-btn"
+            allowNavigation [roles]="clustersNewRouteRestrictions"
+            [routerLink]="['./'+ tabId + '/cluster/new']"><i
+        class="fa fa-plus"></i>{{ "clusters.new" | i18n | uppercase }}</button>
   </div>
 
   <ng-template let-item="item">
-    <card class="clusterCard" [routerLink]="['./cluster/' + item.documentId]"
+    <card class="clusterCard" [routerLink]="['./'+ tabId + '/cluster/' + item.documentId]"
           [ngClass]="{'card-actions-selected': isItemSelected(item)}">
 
       <div card-header>
@@ -45,7 +47,7 @@
           </button>
           <clr-dropdown-menu clrPosition="left-top" *clrIfOpen>
             <button type="button" class="dropdown-item cluster-details"
-                    [routerLink]="['./cluster/' + item.documentId]">
+                    [routerLink]="['./'+ tabId + '/cluster/' + item.documentId]">
               <clr-icon shape="eye" size="20" class="card-drop-down-actions">
               </clr-icon>{{"projects.actions.details" | i18n}}
             </button>
@@ -54,12 +56,14 @@
               <clr-icon shape="refresh" size="20" class="card-drop-down-actions">
               </clr-icon>{{"clusters.actions.rescan" | i18n}}
             </button>
-            <button *ngIf="isVchOperationSupported('DISABLE', item)" type="button" class="dropdown-item disable-cluster"
+            <button *ngIf="isVchOperationSupported('DISABLE', item)" type="button"
+                    class="dropdown-item disable-cluster"
                     (click)="disableVchCluster($event, item)">
               <clr-icon shape="pause" size="20" class="card-drop-down-actions">
               </clr-icon>{{"clusters.actions.disable" | i18n}}
             </button>
-            <button *ngIf="isVchOperationSupported('ENABLE', item)" type="button" class="dropdown-item enable-cluster"
+            <button *ngIf="isVchOperationSupported('ENABLE', item)" type="button"
+                    class="dropdown-item enable-cluster"
                     (click)="enableVchCluster($event, item)">
               <clr-icon shape="play" size="20" class="card-drop-down-actions">
               </clr-icon>{{"clusters.actions.enable" | i18n}}
@@ -117,6 +121,6 @@
 </grid-view>
 
 <navigation-container>
-  <back-button [routerLink]="['./']">{{ title }}</back-button>
+  <back-button [routerLink]="['./'+ tabId + '/']">{{ title }}</back-button>
   <router-outlet></router-outlet>
 </navigation-container>

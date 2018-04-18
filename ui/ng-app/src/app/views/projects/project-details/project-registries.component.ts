@@ -10,7 +10,7 @@
  */
 
 import { ActivatedRoute } from '@angular/router';
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { DocumentListResult, DocumentService } from "../../../utils/document.service";
 import { ErrorService } from "../../../utils/error.service";
 import { CancelablePromise, Utils} from "../../../utils/utils";
@@ -26,9 +26,7 @@ import * as I18n from 'i18next';
  * View for Project Registries.
  */
 export class ProjectRegistriesComponent implements OnInit {
-    tabAlertClosed: boolean = true;
-    tabAlertType: string = 'alert-warning';
-    tabAlertText: string;
+    @Input() tabId: string = '';
 
     loading: boolean;
     loadingPromise: CancelablePromise<DocumentListResult>;
@@ -42,7 +40,13 @@ export class ProjectRegistriesComponent implements OnInit {
 
     private sub: any;
 
-    constructor(protected service: DocumentService, private errorService: ErrorService, private route: ActivatedRoute) {
+    // alert display
+    tabAlertClosed: boolean = true;
+    tabAlertType: string = 'alert-warning';
+    tabAlertText: string;
+
+    constructor(protected service: DocumentService, private errorService: ErrorService,
+                private route: ActivatedRoute) {
     }
 
     ngOnInit() {
@@ -52,6 +56,7 @@ export class ProjectRegistriesComponent implements OnInit {
                 this.projectLink = Links.PROJECTS + '/' + projectId;
             }
         });
+
         this.listProjectRegistries({});
     }
 
@@ -61,7 +66,8 @@ export class ProjectRegistriesComponent implements OnInit {
 
     private warnGlobalRegistriesSkippedDeletion(): void {
         this.tabAlertType = 'alert-warning';
-        this.tabAlertText = I18n.t('projects.projectRegistries.globalRegistriesDeletionSkipped.warningMessage');
+        this.tabAlertText =
+            I18n.t('projects.projectRegistries.globalRegistriesDeletionSkipped.warningMessage');
         this.tabAlertClosed = false;
     }
 
@@ -72,7 +78,8 @@ export class ProjectRegistriesComponent implements OnInit {
 
         this.loading = true;
 
-        this.loadingPromise = new CancelablePromise(this.service.list(Links.REGISTRIES, queryOptions, this.projectLink));
+        this.loadingPromise = new CancelablePromise(
+                            this.service.list(Links.REGISTRIES, queryOptions, this.projectLink));
 
         this.loadingPromise.getPromise().then(result => {
             this.loading = false;
@@ -136,10 +143,10 @@ export class ProjectRegistriesComponent implements OnInit {
     }
 
     isProjectSpecificRegistry(registry): boolean {
-        return registry
-            && registry.tenantLinks
-            && this.projectLink
-            && Array.isArray(registry.tenantLinks)
-            && registry.tenantLinks.includes(this.projectLink);
+        let hasRegistryTenantLinks = registry && registry.tenantLinks
+                                        && Array.isArray(registry.tenantLinks);
+
+        return hasRegistryTenantLinks && this.projectLink
+                    && registry.tenantLinks.includes(this.projectLink);
     }
 }
