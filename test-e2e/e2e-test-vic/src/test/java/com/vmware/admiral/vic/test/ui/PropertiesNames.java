@@ -26,6 +26,7 @@ public class PropertiesNames {
     public static final String ACTIVE_DIRECTORIES_SPEC_FILES_CSV_PROPERTY = "active.directory.spec.files.csv";
 
     public static final String BROWSER_PROPERTY = "browser";
+    public static final String CHROME_DRIVER_VERSION = "chrome.driver.version";
     public static final String WAIT_FOR_ELEMENT_TIMEOUT = "locate.element.timeout.miliseconds";
     public static final String BROWSER_CLOSE_TIMEOUT = "browser.close.timeout.miliseconds";
     public static final String POLLING_INTERVAL = "polling.interval.miliseconds";

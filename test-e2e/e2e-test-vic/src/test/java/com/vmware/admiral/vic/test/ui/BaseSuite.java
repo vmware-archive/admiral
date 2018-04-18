@@ -53,6 +53,8 @@ public class BaseSuite {
         Configuration.closeBrowserTimeoutMs = Integer.parseInt(closeBrowserTimeout);
 
         Configuration.browser = PROPERTIES.getProperty(PropertiesNames.BROWSER_PROPERTY, "chrome");
+        System.getProperties().put("wdm.chromeDriverVersion",
+                PROPERTIES.getProperty(PropertiesNames.CHROME_DRIVER_VERSION));
 
         String pollinfInterval = PROPERTIES.getProperty(PropertiesNames.POLLING_INTERVAL, "100");
         Configuration.pollingInterval = Integer.parseInt(pollinfInterval);
