@@ -60,6 +60,7 @@ import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsSe
 public class ManagementHostTest {
 
     private static final TemporaryFolder SANDBOX = new TemporaryFolder();
+    public static final int SCHEDULE_TIME = 5 * 1000;
 
     @Before
     public void setup() throws Exception {
@@ -348,26 +349,34 @@ public class ManagementHostTest {
             host.registerForServiceAvailability(host.getTestContext().getCompletion(),
                     ConfigurationFactoryService.SELF_LINK);
             host.getTestContext().await();
+            TestContext ctx = BaseTestCase.testCreate(1);
+            host.schedule(() -> {
+                try {
+                    ConfigurationState config = doGet(host, ConfigurationState.class,
+                            UriUtils
+                            .buildUri(host,
+                            UriUtils.buildUriPath(ConfigurationFactoryService.SELF_LINK, "/key1")));
+                    assertEquals("key1", config.key);
+                    assertEquals("one more", config.value);
+                    assertEquals("one more", ConfigurationUtil.getProperty("key1"));
 
-            ConfigurationState config;
+                    config = doGet(host, ConfigurationState.class, UriUtils.buildUri(host,
+                            UriUtils.buildUriPath(ConfigurationFactoryService.SELF_LINK, "/key2")));
+                    assertEquals("key2", config.key);
+                    assertEquals("4", config.value);
+                    assertEquals("4", ConfigurationUtil.getProperty("key2"));
 
-            config = doGet(host, ConfigurationState.class, UriUtils.buildUri(host,
-                    UriUtils.buildUriPath(ConfigurationFactoryService.SELF_LINK, "/key1")));
-            assertEquals("key1", config.key);
-            assertEquals("one more", config.value);
-            assertEquals("one more", ConfigurationUtil.getProperty("key1"));
-
-            config = doGet(host, ConfigurationState.class, UriUtils.buildUri(host,
-                    UriUtils.buildUriPath(ConfigurationFactoryService.SELF_LINK, "/key2")));
-            assertEquals("key2", config.key);
-            assertEquals("4", config.value);
-            assertEquals("4", ConfigurationUtil.getProperty("key2"));
-
-            config = doGet(host, ConfigurationState.class, UriUtils.buildUri(host,
-                    UriUtils.buildUriPath(ConfigurationFactoryService.SELF_LINK, "/key3")));
-            assertEquals("key3", config.key);
-            assertEquals("false", config.value);
-            assertEquals("false", ConfigurationUtil.getProperty("key3"));
+                    config = doGet(host, ConfigurationState.class, UriUtils.buildUri(host,
+                            UriUtils.buildUriPath(ConfigurationFactoryService.SELF_LINK, "/key3")));
+                    assertEquals("key3", config.key);
+                    assertEquals("false", config.value);
+                    assertEquals("false", ConfigurationUtil.getProperty("key3"));
+                    ctx.completeIteration();
+                } catch (Throwable t) {
+                    ctx.failIteration(t);
+                }
+            }, SCHEDULE_TIME, TimeUnit.MILLISECONDS);
+            ctx.await();
         }
     }
 
