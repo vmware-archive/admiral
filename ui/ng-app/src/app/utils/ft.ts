@@ -1,5 +1,3 @@
-
-
 /*
  * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
@@ -11,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Utils } from './utils';
+import { ConfigUtils } from './config-utils';
 
 var isDocsAvailable = false;
 
@@ -25,7 +23,7 @@ export class FT {
   }
 
   public static isContextAwareHelpEnabled() {
-   return Utils.getConfigurationPropertyBoolean('allow.ensemble.help');
+   return ConfigUtils.getConfigurationPropertyBoolean('allow.ensemble.help');
   }
 
   public static isContextAwareHelpAvailable() {
@@ -33,74 +31,74 @@ export class FT {
   }
 
   public static isNimbusEnabled() {
-    return Utils.getConfigurationPropertyBoolean('allow.nimbus');
+    return ConfigUtils.getConfigurationPropertyBoolean('allow.nimbus');
   }
 
   public static isExternalPhotonAdaptersEnabled() {
-    return Utils.getConfigurationPropertyBoolean('allow.external.photon.adapters');
+    return ConfigUtils.getConfigurationPropertyBoolean('allow.external.photon.adapters');
   }
 
   public static isVchHostOptionEnabled() {
-    return Utils.getConfigurationPropertyBoolean('allow.ft.host-option.vch');
+    return ConfigUtils.getConfigurationPropertyBoolean('allow.ft.host-option.vch');
   }
 
   public static isKubernetesHostOptionEnabled() {
-    return Utils.getConfigurationPropertyBoolean('allow.ft.host-option.kubernetes');
+    return ConfigUtils.getConfigurationPropertyBoolean('allow.ft.host-option.kubernetes');
   }
 
   public static isCreateHostOptionEnabled() {
-    return Utils.getConfigurationPropertyBoolean('allow.ft.host-option.create');
+    return ConfigUtils.getConfigurationPropertyBoolean('allow.ft.host-option.create');
   }
 
   public static areClosuresAllowed() {
-    return Utils.getConfigurationPropertyBoolean('allow.closures');
+    return ConfigUtils.getConfigurationPropertyBoolean('allow.closures');
   }
 
   public static showProjectsInNavigation() {
-    return Utils.getConfigurationPropertyBoolean('allow.ft.projects.in.navigation');
+    return ConfigUtils.getConfigurationPropertyBoolean('allow.ft.projects.in.navigation');
   }
 
   public static isPublicKeyCredentialsDisabled() {
-    return Utils.getConfigurationPropertyBoolean('disable.credentials.publicKey');
+    return ConfigUtils.getConfigurationPropertyBoolean('disable.credentials.publicKey');
   }
 
   public static isRequestGraphEnabled() {
-    return Utils.getConfigurationPropertyBoolean('allow.ft.request-graph');
+    return ConfigUtils.getConfigurationPropertyBoolean('allow.ft.request-graph');
   }
 
   public static isApplicationEmbedded() {
-    return Utils.getConfigurationPropertyBoolean('embedded');
+    return ConfigUtils.getConfigurationPropertyBoolean('embedded');
   }
 
   public static isHbrEnabled() {
-    return Utils.getConfigurationProperty('harbor.tab.url') && !this.isApplicationEmbedded();
+    return ConfigUtils.getConfigurationProperty('harbor.tab.url') && !this.isApplicationEmbedded();
   }
 
   public static isVic() {
-    return Utils.getConfigurationPropertyBoolean('vic');
+    return ConfigUtils.getConfigurationPropertyBoolean('vic');
   }
 
   public static isProfilesSplitEnabled() {
-    return Utils.getConfigurationPropertyBoolean('allow.ft.profiles.split');
+    return ConfigUtils.getConfigurationPropertyBoolean('allow.ft.profiles.split');
   }
 
   public static isHostPublicUriEnabled() {
-    return Utils.getConfigurationPropertyBoolean('allow.ft.hosts.public-address');
+    return ConfigUtils.getConfigurationPropertyBoolean('allow.ft.hosts.public-address');
   }
 
   public static isHostsViewLinksEnabled() {
-    return Utils.getConfigurationPropertyBoolean('allow.ft.hosts.view.links');
+    return ConfigUtils.getConfigurationPropertyBoolean('allow.ft.hosts.view.links');
   }
 
   public static showHostsView() {
-    return Utils.getConfigurationPropertyBoolean('allow.ft.hosts.view');
+    return ConfigUtils.getConfigurationPropertyBoolean('allow.ft.hosts.view');
   }
 
   public static allowHostEventsSubscription() {
-    return Utils.getConfigurationPropertyBoolean('allow.host.events.subscription');
+    return ConfigUtils.getConfigurationPropertyBoolean('allow.host.events.subscription');
   }
 
   public static isPksEnabled() {
-      return Utils.getConfigurationPropertyBoolean('allow.ft.pks');
+      return ConfigUtils.getConfigurationPropertyBoolean('allow.ft.pks');
   }
 };

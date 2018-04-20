@@ -35,26 +35,7 @@ import { HomeAuthGuard } from 'app/services/home-auth-guard.service';
 import { AdminAuthGuard } from 'app/services/admin-auth-guard.service';
 
 import { ADMIRAL_DECLARATIONS } from './admiral';
-
-export function initHarborConfig() {
-    var sc:IServiceConfig = {
-        systemInfoEndpoint: "/hbr-api/systeminfo",
-        repositoryBaseEndpoint: "/hbr-api/repositories",
-        vulnerabilityScanningBaseEndpoint: "/hbr-api/repositories",
-        logBaseEndpoint: "/hbr-api/logs",
-        targetBaseEndpoint: "/hbr-api/targets",
-        replicationRuleEndpoint: "/hbr-api/policies/replication",
-        replicationJobEndpoint: "/hbr-api/jobs/replication",
-        enablei18Support: true,
-        langMessageLoader: FT.isHbrEnabled()? "http" : null,
-        langMessagePathForHttpLoader: "/hbr-api/i18n/lang/",
-        configurationEndpoint: "/hbr-api/configurations",
-        scanJobEndpoint: "/hbr-api/jobs/scan"
-    };
-
-    return sc;
-}
-
+import { initHarborConfig } from './init-harbor-config'
 
 @NgModule({
     declarations: ADMIRAL_DECLARATIONS,

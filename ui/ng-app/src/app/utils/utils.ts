@@ -11,6 +11,7 @@
 
 import * as I18n from 'i18next';
 import { Constants } from './constants';
+import { ConfigUtils } from './config-utils';
 import { FT } from './ft';
 
 const LOGIN_PATH="/login/";
@@ -19,8 +20,6 @@ const REGISTRY_SCHEME_REG_EXP = /^(https?):\/\//;
 
 export class Utils {
   public static ERROR_NOT_FOUND = 404;
-
-  private static configurationProperties;
 
   public static getHashWithQuery(hash:string, queryOptions:any):string {
     var queryString;
@@ -75,26 +74,23 @@ export class Utils {
   }
 
   public static initializeConfigurationProperties(props) {
-    if (this.configurationProperties) {
-      throw new Error('Properties already set');
-    }
-    this.configurationProperties = props;
+    ConfigUtils.initializeConfigurationProperties(props);
   }
 
   public static getConfigurationProperty(property) {
-    return this.configurationProperties && this.configurationProperties[property];
+    return ConfigUtils.getConfigurationProperty(property);
   }
 
   public static getConfigurationProperties() {
-    return this.configurationProperties;
+    return ConfigUtils.getConfigurationProperties();
   }
 
   public static getConfigurationPropertyBoolean(property) {
-    return this.configurationProperties && this.configurationProperties[property] === 'true';
+    return ConfigUtils.getConfigurationPropertyBoolean(property);
   }
 
   public static existsConfigurationProperty(property) {
-    return this.configurationProperties.hasOwnProperty(property);
+    return ConfigUtils.existsConfigurationProperty(property);
   }
 
   public static isSingleHostCluster(clusterEntity) {

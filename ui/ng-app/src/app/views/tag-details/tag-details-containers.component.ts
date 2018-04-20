@@ -1,4 +1,4 @@
-import { initHarborConfig } from './../../app.module';
+import { initHarborConfig } from './../../init-harbor-config';
 import { Ajax } from './../../utils/ajax.service';
 import { Utils } from './../../utils/utils';
 import { Links } from './../../utils/links';
