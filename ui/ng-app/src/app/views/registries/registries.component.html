@@ -15,21 +15,31 @@
     <clr-tabs>
         <clr-tab>
             <button clrTabLink id="sourceRegistriesTab">{{"registries.sourceRegistries" | i18n}}</button>
-            <clr-tab-content id="sourceRegistriesContent" *clrIfActive>
-                <former-view path="registries"></former-view>
-            </clr-tab-content>
+            <ng-template [clrIfActive]="isActiveTabRegistries"
+                         (clrIfActiveChange)="registriesTabActivated($event)">
+                <clr-tab-content id="sourceRegistriesContent">
+                    <former-view path="registries"></former-view>
+                </clr-tab-content>
+            </ng-template>
         </clr-tab>
         <clr-tab *ngIf="isHbrEnabled">
             <button clrTabLink id="replicationEndpointsTab">{{"registries.replicationEndpoints" | i18n}}</button>
-            <clr-tab-content id="replicationEndpointsContent" *clrIfActive>
-                <hbr-endpoint></hbr-endpoint>
-            </clr-tab-content>
+            <ng-template [clrIfActive]="isActiveTabEndpoints"
+                         (clrIfActiveChange)="endpointsTabActivated($event)">
+                <clr-tab-content id="replicationEndpointsContent" *clrIfActive>
+                    <hbr-endpoint></hbr-endpoint>
+                </clr-tab-content>
+            </ng-template>
         </clr-tab>
         <clr-tab *ngIf="isHbrEnabled" >
             <button clrTabLink id="replicationRulesTab">{{"registries.replicationRules" | i18n}}</button>
-            <clr-tab-content id="replicationRulesContent" *clrIfActive>
-                <hbr-replication [isSystemAdmin]="hasProjectAdminRole"></hbr-replication>
-            </clr-tab-content>
+            <ng-template [clrIfActive]="isActiveTabReplication"
+                         (clrIfActiveChange)="replicationTabActivated($event)">
+                <clr-tab-content id="replicationRulesContent">
+                    <hbr-replication [isSystemAdmin]="hasProjectAdminRole"
+                                     (goToRegistry)="navigateToRegistries($event)"></hbr-replication>
+                </clr-tab-content>
+            </ng-template>
         </clr-tab>
     </clr-tabs>
 </div>

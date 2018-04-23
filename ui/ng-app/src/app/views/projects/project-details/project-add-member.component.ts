@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -9,12 +9,13 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import {Component, AfterViewInit} from '@angular/core';
+import { Component, AfterViewInit } from '@angular/core';
 import { FormGroup, FormControl, Validators } from "@angular/forms";
 import { Router, ActivatedRoute } from '@angular/router';
-import {BaseDetailsComponent} from "../../../components/base/base-details.component";
-import { DocumentService } from './../../../utils/document.service';
-import { Links } from './../../../utils/links';
+import { BaseDetailsComponent } from "../../../components/base/base-details.component";
+import { ErrorService } from "../../../utils/error.service";
+import { DocumentService } from '../../../utils/document.service';
+import { Links } from '../../../utils/links';
 
 @Component({
     selector: 'app-project-add-member',
@@ -36,8 +37,9 @@ export class ProjectAddMemberComponent extends BaseDetailsComponent implements A
         memberRole: new FormControl('')
     });
 
-    constructor(private router: Router, protected route: ActivatedRoute, protected service: DocumentService) {
-        super(route, service, Links.PROJECTS);
+    constructor(router: Router, route: ActivatedRoute, service: DocumentService,
+                errorService: ErrorService) {
+        super(Links.PROJECTS, route, router, service, errorService);
     }
 
     ngAfterViewInit() {

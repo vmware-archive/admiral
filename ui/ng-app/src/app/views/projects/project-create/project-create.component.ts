@@ -14,6 +14,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { FormGroup, FormControl, Validators } from "@angular/forms";
 import { BaseDetailsComponent } from '../../../components/base/base-details.component';
 import { DocumentService } from '../../../utils/document.service';
+import { ErrorService } from "../../../utils/error.service";
 import { FT } from "../../../utils/ft";
 import { Links } from '../../../utils/links';
 import { Utils } from '../../../utils/utils';
@@ -39,8 +40,9 @@ export class ProjectCreateComponent extends BaseDetailsComponent implements Afte
 
   alertMessage: string;
 
-  constructor(private router: Router, route: ActivatedRoute, service: DocumentService) {
-    super(route, service, Links.PROJECTS);
+  constructor(router: Router, route: ActivatedRoute, service: DocumentService,
+              errorService: ErrorService) {
+    super(Links.PROJECTS, route, router, service, errorService);
   }
 
   get title() {

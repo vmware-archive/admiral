@@ -63,9 +63,9 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
         entity: I18n.t('app.credential.entity', { ns: 'base' })
     } as I18n.TranslationOptions);
 
-    constructor(private router: Router, route: ActivatedRoute, documentService: DocumentService,
-        errorService: ErrorService) {
-        super(route, documentService, Links.REGISTRIES, errorService);
+    constructor(router: Router, route: ActivatedRoute, documentService: DocumentService,
+                errorService: ErrorService) {
+        super(Links.REGISTRIES, route, router, documentService, errorService);
 
         this.projectRegistryDetailsForm.valueChanges.subscribe(data => {
             this.checkForInsecureRegistry(data);

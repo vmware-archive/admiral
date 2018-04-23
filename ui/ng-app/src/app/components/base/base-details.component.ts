@@ -10,8 +10,9 @@
  */
 
 import { OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from "rxjs/Subscription";
+import { TabbedViewComponent } from "./tabbed-view-component";
 import { DocumentService } from '../../utils/document.service';
 import { ErrorService } from "../../utils/error.service";
 import { Utils } from "../../utils/utils";
@@ -19,7 +20,8 @@ import { Utils } from "../../utils/utils";
 /**
  * Base view for a single entity details.
  */
-export class BaseDetailsComponent implements OnInit, OnDestroy {
+export class BaseDetailsComponent extends TabbedViewComponent
+                                  implements OnInit, OnDestroy {
   id;
   entity;
   protected projectLink: string;
@@ -27,12 +29,14 @@ export class BaseDetailsComponent implements OnInit, OnDestroy {
   private routeParamsSubscription: Subscription = null;
   private routeParentParamsSubscription: Subscription = null;
 
-  constructor(protected route: ActivatedRoute, protected service: DocumentService,
-              protected link: string, protected errorService: ErrorService = null) {
+    constructor(protected link: string, protected route: ActivatedRoute,
+                protected router: Router, protected service: DocumentService,
+                protected errorService: ErrorService) {
+      super(route, router);
   }
 
   protected entityInitialized() {
-      // add logic when entity details are loaded.
+    // add logic when entity details are loaded.
   }
 
   protected routeParamsReceived(params) {
@@ -40,6 +44,8 @@ export class BaseDetailsComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    super.ngOnInit();
+
     this.routeParamsSubscription = this.route.params.subscribe(params => {
        this.id = params['id'];
 
@@ -88,6 +94,8 @@ export class BaseDetailsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    super.ngOnDestroy();
+
     this.routeParamsSubscription.unsubscribe();
     this.routeParentParamsSubscription.unsubscribe();
   }

@@ -10,24 +10,24 @@
  */
 
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute, ParamMap } from '@angular/router';
-import { BaseDetailsComponent } from './../../../../components/base/base-details.component';
-import { DocumentService } from './../../../../utils/document.service';
-import { Links } from './../../../../utils/links';
+import { ActivatedRoute, Router } from '@angular/router';
 import 'rxjs/add/operator/switchMap';
+import { BaseDetailsComponent } from '../../../../components/base/base-details.component';
+import { DocumentService } from '../../../../utils/document.service';
+import { ErrorService } from "../../../../utils/error.service";
+import { Links } from '../../../../utils/links';
 
 @Component({
   selector: 'app-kubernetes-cluster-details',
   templateUrl: './kubernetes-cluster-details.component.html',
   styleUrls: ['./kubernetes-cluster-details.component.scss']
 })
-export class KubernetesClusterDetailsComponent extends BaseDetailsComponent implements OnInit, OnDestroy {
+export class KubernetesClusterDetailsComponent extends BaseDetailsComponent
+                                               implements OnInit, OnDestroy {
 
-  private sub: any;
-  private resourceTabSelected:boolean = false;
-
-  constructor(route: ActivatedRoute, service: DocumentService) {
-    super(route, service, Links.CLUSTERS);
+  constructor(route: ActivatedRoute, router: Router, service: DocumentService,
+              errorService: ErrorService) {
+    super(Links.CLUSTERS, route, router, service, errorService);
   }
 
   protected entityInitialized() {

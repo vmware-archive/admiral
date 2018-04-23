@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -10,9 +10,10 @@
  */
 
 import { Component, ViewEncapsulation } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { BaseDetailsComponent } from '../../../components/base/base-details.component';
 import { DocumentService } from '../../../utils/document.service';
+import { ErrorService } from "../../../utils/error.service";
 import { Links } from '../../../utils/links';
 
 @Component({
@@ -22,7 +23,9 @@ import { Links } from '../../../utils/links';
   encapsulation: ViewEncapsulation.None
 })
 export class DeploymentDetailsComponent extends BaseDetailsComponent {
-  constructor(route: ActivatedRoute, service: DocumentService) {
-    super(route, service, Links.DEPLOYMENTS);
+
+  constructor(route: ActivatedRoute, router: Router, service: DocumentService,
+              errorService: ErrorService) {
+    super(Links.DEPLOYMENTS, route, router, service, errorService);
   }
 }

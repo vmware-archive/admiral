@@ -10,13 +10,12 @@
  */
 
 import { Component } from '@angular/core';
-import { ActivatedRoute } from "@angular/router";
-
+import { ActivatedRoute, Router } from "@angular/router";
+import { FormControl, FormGroup } from "@angular/forms";
 import { BaseDetailsComponent } from '../../components/base/base-details.component';
 import { DocumentService } from "../../utils/document.service";
 import { ErrorService } from "../../utils/error.service";
 import { Links } from "../../utils/links";
-import {FormControl, FormGroup} from "@angular/forms";
 
 
 @Component({
@@ -26,7 +25,7 @@ import {FormControl, FormGroup} from "@angular/forms";
 /**
  * View for endpoint creation.
  */
-export class EndpointDetailsComponent  extends BaseDetailsComponent {
+export class EndpointDetailsComponent extends BaseDetailsComponent {
     editMode: boolean = false;
 
     endpointDetailsForm = new FormGroup({
@@ -42,9 +41,9 @@ export class EndpointDetailsComponent  extends BaseDetailsComponent {
 
     alertMessage: string;
 
-    constructor(route: ActivatedRoute, documentService: DocumentService,
+    constructor(route: ActivatedRoute, documentService: DocumentService, router: Router,
                 errorService: ErrorService) {
-        super(route, documentService, Links.ENDPOINTS, errorService);
+        super(Links.ENDPOINTS, route, router, documentService, errorService);
     }
 
     protected entityInitialized() {

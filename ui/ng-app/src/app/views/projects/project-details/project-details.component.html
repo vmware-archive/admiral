@@ -69,7 +69,8 @@
             <clr-tab-content id="registryReplicationContent">
                 <hbr-replication [projectId]="hbrProjectId" [projectName]="projectName"
                                  [withReplicationJob]="true"
-                                 [isSystemAdmin]="hasProjectAdminRole"></hbr-replication>
+                                 [isSystemAdmin]="hasProjectAdminRole"
+                                 (goToRegistry)="navigateToRegistries($event)"></hbr-replication>
             </clr-tab-content>
         </ng-template>
     </clr-tab>

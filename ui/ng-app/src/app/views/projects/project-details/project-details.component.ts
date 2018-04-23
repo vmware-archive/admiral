@@ -11,7 +11,6 @@
 
 import { Component } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from "rxjs/Subscription";
 import { BaseDetailsComponent } from '../../../components/base/base-details.component';
 import { AuthService } from '../../../utils/auth.service';
 import { DocumentService } from '../../../utils/document.service';
@@ -29,7 +28,6 @@ const TAB_ID_INFRASTRUCTURE = "infra";
 const TAB_ID_REGISTRIES = "registries";
 const TAB_ID_REPLICATION = "replication";
 const TAB_ID_CONFIGURATION = "config";
-const TAB_ID_NONE = "";
 
 @Component({
   selector: 'app-project-details',
@@ -40,20 +38,14 @@ const TAB_ID_NONE = "";
  * Project Details tabbed view.
  */
 export class ProjectDetailsComponent extends BaseDetailsComponent {
-
     hbrProjectId;
     hbrSessionInfo = {};
     isHbrEnabled = FT.isHbrEnabled();
     userSecurityContext: any;
 
-    // tabs preselection through routing
-    routeTabParamSubscription:Subscription;
-    activatedTab: string = TAB_ID_NONE;
-    tabIdForTabViews: string = TAB_ID_NONE;
-
-    constructor(route: ActivatedRoute, service: DocumentService, private router: Router,
+    constructor(route: ActivatedRoute, service: DocumentService, router: Router,
                 private authService: AuthService, errorService: ErrorService) {
-        super(route, service, Links.PROJECTS);
+        super(Links.PROJECTS, route, router, service, errorService);
 
         if (!this.embedded) {
             this.authService.getCachedSecurityContext().then((securityContext) => {
@@ -62,23 +54,9 @@ export class ProjectDetailsComponent extends BaseDetailsComponent {
                 this.errorService.error(Utils.getErrorMessage(error)._generic);
             });
         }
-    }
 
-    ngOnInit() {
-        super.ngOnInit();
-
-        this.routeTabParamSubscription = this.route.params.subscribe((params) => {
-            this.activatedTab = params['tab'];
-            if (this.activatedTab) {
-                this.tabIdForTabViews = TAB_ID_NONE;
-            }
-        });
-    }
-
-    ngOnDestroy() {
-        super.ngOnDestroy();
-
-        this.routeTabParamSubscription.unsubscribe();
+        this.supportedTabs = [TAB_ID_SUMMARY, TAB_ID_MEMBERS, TAB_ID_REPOSITORIES,
+            TAB_ID_INFRASTRUCTURE, TAB_ID_REGISTRIES, TAB_ID_REPLICATION, TAB_ID_CONFIGURATION];
     }
 
     get projectName(): string {
@@ -93,103 +71,59 @@ export class ProjectDetailsComponent extends BaseDetailsComponent {
     }
 
     get isActiveTabSummary(): boolean {
-        return this.activatedTab === TAB_ID_SUMMARY;
+        return this.isActiveTab(TAB_ID_SUMMARY);
     }
 
     summaryTabActivated($event) {
-        this.routeTab($event, TAB_ID_SUMMARY);
+        this.tabActivated($event, TAB_ID_SUMMARY);
     }
 
     get isActiveTabMembers(): boolean {
-        return this.activatedTab === TAB_ID_MEMBERS;
+        return this.isActiveTab(TAB_ID_MEMBERS);
     }
 
     membersTabActivated($event) {
-        this.routeTab($event, TAB_ID_MEMBERS);
+        this.tabActivated($event, TAB_ID_MEMBERS);
     }
 
     get isActiveTabRepositories(): boolean {
-        return this.activatedTab === TAB_ID_REPOSITORIES;
+        return this.isActiveTab(TAB_ID_REPOSITORIES);
     }
 
     repositoriesTabActivated($event) {
-        this.routeTab($event, TAB_ID_REPOSITORIES);
+        this.tabActivated($event, TAB_ID_REPOSITORIES);
     }
 
     get isActiveTabInfrastructure(): boolean {
-        return this.activatedTab === TAB_ID_INFRASTRUCTURE;
+        return this.isActiveTab(TAB_ID_INFRASTRUCTURE);
     }
 
     infrastructureTabActivated($event) {
-        this.routeTab($event, TAB_ID_INFRASTRUCTURE);
+        this.tabActivated($event, TAB_ID_INFRASTRUCTURE);
     }
 
     get isActiveTabRegistries(): boolean {
-        return this.activatedTab === TAB_ID_REGISTRIES;
+        return this.isActiveTab(TAB_ID_REGISTRIES);
     }
 
     registriesTabActivated($event) {
-        this.routeTab($event, TAB_ID_REGISTRIES);
+        this.tabActivated($event, TAB_ID_REGISTRIES);
     }
 
     get isActiveTabReplication() {
-        return this.activatedTab === TAB_ID_REPLICATION;
+        return this.isActiveTab(TAB_ID_REPLICATION);
     }
 
     replicationTabActivated($event) {
-        this.routeTab($event, TAB_ID_REPLICATION);
+        this.tabActivated($event, TAB_ID_REPLICATION);
     }
 
     get isActiveTabConfig() {
-        return this.activatedTab === TAB_ID_CONFIGURATION;
+        return this.isActiveTab(TAB_ID_CONFIGURATION);
     }
 
     configTabActivated($event) {
-        this.routeTab($event, TAB_ID_CONFIGURATION);
-    }
-
-    routeTab(isActivated, currentTab) {
-        let urlSegments = this.route.snapshot.url;
-
-        if (isActivated) {
-            // tab selection has changed
-            if (this.activatedTab !== currentTab) {
-                // is previous tab still present in route
-                let prevTabString = this.activatedTab;
-                let prevTabUrlSegment = urlSegments.find((urlSegment) => {
-                    return urlSegment.path.indexOf(prevTabString) > -1;
-                });
-
-                let path = '';
-                if (prevTabUrlSegment) {
-                    path += '../';
-                }
-
-                this.activatedTab = currentTab;
-
-                let activeTabString = this.activatedTab;
-                let activeTabUrlSegment = urlSegments.find((urlSegment) => {
-                    return urlSegment.path.indexOf(activeTabString) > -1;
-                });
-
-                if (!prevTabUrlSegment && !activeTabUrlSegment) {
-                    // tell subviews what is the current tab selection
-                    // this is workaround for clarity tabs and routing issue
-                    this.tabIdForTabViews = activeTabString;
-                } else {
-
-                    this.tabIdForTabViews = TAB_ID_NONE;
-
-                    let navSubRoute = [];
-                    if (path.length > 0) {
-                        navSubRoute.push(path);
-                    }
-                    navSubRoute.push(this.activatedTab);
-
-                    this.router.navigate(navSubRoute, {relativeTo: this.route});
-                }
-            }
-        }
+        this.tabActivated($event, TAB_ID_CONFIGURATION);
     }
 
     watchRepoClickEvent(repositoryItem) {
@@ -200,6 +134,10 @@ export class ProjectDetailsComponent extends BaseDetailsComponent {
         if (project) {
           this.entity = project;
       }
+    }
+
+    private navigateToRegistries() {
+        this.tabActivated(true, TAB_ID_REGISTRIES);
     }
 
     get hasProjectAdminRole(): boolean {

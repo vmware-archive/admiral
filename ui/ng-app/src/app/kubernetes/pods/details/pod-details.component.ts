@@ -10,9 +10,10 @@
  */
 
 import { Component, ViewEncapsulation } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { BaseDetailsComponent } from '../../../components/base/base-details.component';
 import { DocumentService } from '../../../utils/document.service';
+import { ErrorService } from "../../../utils/error.service";
 import { Links } from '../../../utils/links';
 
 
@@ -105,8 +106,9 @@ export class PodDetailsComponent extends BaseDetailsComponent {
   private loadingStats = true;
   private loadingLogs = true;
 
-  constructor(route: ActivatedRoute, service: DocumentService) {
-    super(route, service, Links.PODS);
+  constructor(route: ActivatedRoute, router: Router, service: DocumentService,
+              errorService: ErrorService) {
+    super(Links.PODS, route, router, service, errorService);
   }
 
   protected entityInitialized() {

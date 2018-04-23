@@ -10,11 +10,18 @@
  */
 
 import { Component, ViewEncapsulation } from '@angular/core';
+import { ActivatedRoute, Router } from "@angular/router";
+import { TabbedViewComponent } from "../../components/base/tabbed-view-component";
 import { AuthService } from "../../utils/auth.service";
 import { ProjectService } from "../../utils/project.service";
 import { FT } from '../../utils/ft';
 import { Roles } from "../../utils/roles";
 import { Utils } from "../../utils/utils";
+
+// tabs
+const TAB_ID_REGISTRIES = "global";
+const TAB_ID_ENDPOINTS = "endpoints";
+const TAB_ID_REPLICATION = "replication";
 
 @Component({
   selector: 'app-registries',
@@ -25,22 +32,26 @@ import { Utils } from "../../utils/utils";
 /**
  * Registries main view.
  */
-export class RegistriesComponent {
+export class RegistriesComponent extends TabbedViewComponent {
 
     isHbrEnabled = FT.isHbrEnabled();
     userSecurityContext: any;
 
-    constructor(private projectService: ProjectService, private authService: AuthService) {
+    constructor(private projectService: ProjectService, private authService: AuthService,
+                route: ActivatedRoute, router: Router) {
+        super(route, router);
 
-          if (!FT.isApplicationEmbedded()) {
-              this.authService.getCachedSecurityContext().then((securityContext) => {
+        if (!FT.isApplicationEmbedded()) {
+            this.authService.getCachedSecurityContext().then((securityContext) => {
                   this.userSecurityContext = securityContext;
 
-              }).catch((ex) => {
-                  console.log(ex);
-              });
-          }
-      }
+            }).catch((ex) => {
+                console.log(ex);
+            });
+        }
+
+        this.supportedTabs = [TAB_ID_REGISTRIES, TAB_ID_ENDPOINTS, TAB_ID_REPLICATION];
+    }
 
     private getSelectedProject(): any {
         return this.projectService && this.projectService.getSelectedProject();
@@ -51,6 +62,34 @@ export class RegistriesComponent {
         let projectSelfLink = selectedProject && selectedProject.documentSelfLink;
 
         return Utils.isAccessAllowed(this.userSecurityContext, projectSelfLink,
-                                    [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN]);
+            [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN]);
+    }
+
+    get isActiveTabRegistries() {
+        return this.isActiveTab(TAB_ID_REGISTRIES);
+    }
+
+    registriesTabActivated($event) {
+        this.tabActivated($event, TAB_ID_REGISTRIES);
+    }
+
+    get isActiveTabEndpoints() {
+        return this.isActiveTab(TAB_ID_ENDPOINTS);
+    }
+
+    endpointsTabActivated($event) {
+        this.tabActivated($event, TAB_ID_ENDPOINTS);
+    }
+
+    get isActiveTabReplication() {
+        return this.isActiveTab(TAB_ID_REPLICATION);
+    }
+
+    replicationTabActivated($event) {
+        this.tabActivated($event, TAB_ID_REPLICATION);
+    }
+
+    private navigateToRegistries($event) {
+        this.tabActivated(true, TAB_ID_REGISTRIES);
     }
 }

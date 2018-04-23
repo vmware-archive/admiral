@@ -15,6 +15,7 @@ import { FormGroup, FormControl, Validators } from "@angular/forms";
 import { BaseDetailsComponent } from '../../../components/base/base-details.component';
 import { Constants } from '../../../utils/constants';
 import { DocumentService } from '../../../utils/document.service';
+import { ErrorService } from "../../../utils/error.service";
 import { FT } from "../../../utils/ft";
 import { Links } from '../../../utils/links';
 import { Utils } from "../../../utils/utils";
@@ -64,8 +65,9 @@ export class ClusterEditComponent extends BaseDetailsComponent
         entity: I18n.t('app.credential.entity', {ns: 'base'})
     } as I18n.TranslationOptions );
 
-    constructor(private router: Router, route: ActivatedRoute, service: DocumentService) {
-        super(route, service, Links.CLUSTERS);
+    constructor(router: Router, route: ActivatedRoute, service: DocumentService,
+                errorService: ErrorService) {
+        super(Links.CLUSTERS, route, router, service, errorService);
     }
 
     get title() {
