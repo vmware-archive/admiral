@@ -149,4 +149,8 @@ export class ProjectRegistriesComponent implements OnInit {
         return hasRegistryTenantLinks && this.projectLink
                     && registry.tenantLinks.includes(this.projectLink);
     }
+
+    getEditLink(registry: any) {
+        return './'+ this.tabId + '/registry/' + this.getRegistryId(registry) + '/edit';
+    }
 }

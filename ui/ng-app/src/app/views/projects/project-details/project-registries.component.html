@@ -50,7 +50,7 @@
 
                 <clr-dg-row *clrDgItems="let registry of projectRegistries" [clrDgItem]="registry">
                     <clr-dg-cell><span *ngIf="isProjectSpecificRegistry(registry)"
-                            ><a routerLink="./'+ tabId + '/registry/{{getRegistryId(registry)}}/edit"
+                            ><a routerLink="{{getEditLink(registry)}}"
                                 >{{ registry.name || registry.address }}</a></span>
                         <span *ngIf="!isProjectSpecificRegistry(registry)">{{ registry.name || registry.address }}</span>
                     </clr-dg-cell>
