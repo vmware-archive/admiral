@@ -64,13 +64,6 @@ export class ProjectRegistriesComponent implements OnInit {
         this.sub.unsubscribe();
     }
 
-    private warnGlobalRegistriesSkippedDeletion(): void {
-        this.tabAlertType = 'alert-warning';
-        this.tabAlertText =
-            I18n.t('projects.projectRegistries.globalRegistriesDeletionSkipped.warningMessage');
-        this.tabAlertClosed = false;
-    }
-
     listProjectRegistries(queryOptions) {
         if (this.loadingPromise) {
             this.loadingPromise.cancel();
@@ -136,6 +129,18 @@ export class ProjectRegistriesComponent implements OnInit {
 
     deleteCanceled() {
         this.showDeleteConfirmation = false;
+    }
+
+    private warnGlobalRegistriesSkippedDeletion(): void {
+        this.tabAlertType = 'alert-warning';
+        this.tabAlertText =
+            I18n.t('projects.projectRegistries.globalRegistriesDeletionSkipped.warningMessage');
+        this.tabAlertClosed = false;
+    }
+
+    resetAlert() {
+        this.tabAlertType = null;
+        this.tabAlertText = null;
     }
 
     getRegistryId(registry){

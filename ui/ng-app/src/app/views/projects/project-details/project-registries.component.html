@@ -18,7 +18,8 @@
 </delete-confirmation>
 
 <div class="main-view">
-    <clr-alert [clrAlertType]="tabAlertType" [(clrAlertClosed)]="tabAlertClosed">
+    <clr-alert *ngIf="tabAlertText" [clrAlertType]="tabAlertType"
+               [(clrAlertClosed)]="tabAlertClosed" (clrAlertClosedChange)="resetAlert()">
         <div class="alert-item"><span class="alert-text">{{tabAlertText}}</span></div>
     </clr-alert>
 
