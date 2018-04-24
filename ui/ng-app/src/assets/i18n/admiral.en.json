@@ -109,7 +109,7 @@
         "addressTitle": "Address",
         "searchPlaceholder": "Search for registries",
         "scope": {
-          "system": "System",
+          "global": "Global",
           "project": "Project"
         },
         "status": {
