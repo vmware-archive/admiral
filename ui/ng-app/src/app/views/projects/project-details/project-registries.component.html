@@ -17,62 +17,60 @@
                      (onCancel)="deleteCanceled()">
 </delete-confirmation>
 
-<div class="main-view">
-    <clr-alert *ngIf="tabAlertText" [clrAlertType]="tabAlertType"
-               [(clrAlertClosed)]="tabAlertClosed" (clrAlertClosedChange)="resetAlert()">
-        <div class="alert-item"><span class="alert-text">{{tabAlertText}}</span></div>
-    </clr-alert>
+<clr-alert *ngIf="tabAlertText" [clrAlertType]="tabAlertType"
+           [(clrAlertClosed)]="tabAlertClosed" (clrAlertClosedChange)="resetAlert()">
+    <div class="alert-item"><span class="alert-text">{{tabAlertText}}</span></div>
+</clr-alert>
 
-    <table-view [searchPlaceholder]="'projects.projectRegistries.searchPlaceholder' | i18n"
-                (onRefresh)="refreshProjectRegistries($event)">
-        <div toolbar>
-            <clr-dg-action-bar>
-                <div class="btn-group" role="group" aria-label="Available Actions">
-                    <button type="button" class="btn btn-sm btn-secondary"
-                        [routerLink]="['./'+ tabId + '/new']"><clr-icon shape="plus"></clr-icon><span
-                            class="btn-spaced-text">{{"projects.projectRegistries.new" | i18n}}</span></button>
-                    <button type="button" class="btn btn-sm btn-secondary"
-                        [disabled]="selectedProjectRegistries.length == 0"
-                        (click)="removeSelectedRegistries($event)"><clr-icon
-                        shape="close"></clr-icon><span
-                            class="btn-spaced-text">{{"delete" | i18n}}</span></button>
-                    </div>
-            </clr-dg-action-bar>
-        </div>
+<table-view [searchPlaceholder]="'projects.projectRegistries.searchPlaceholder' | i18n"
+            (onRefresh)="refreshProjectRegistries($event)">
+    <div toolbar>
+        <clr-dg-action-bar>
+            <div class="btn-group" role="group" aria-label="Available Actions">
+                <button type="button" class="btn btn-sm btn-secondary"
+                    [routerLink]="['./'+ tabId + '/new']"><clr-icon shape="plus"></clr-icon><span
+                        class="btn-spaced-text">{{"projects.projectRegistries.new" | i18n}}</span></button>
+                <button type="button" class="btn btn-sm btn-secondary"
+                    [disabled]="selectedProjectRegistries.length == 0"
+                    (click)="removeSelectedRegistries($event)"><clr-icon
+                    shape="close"></clr-icon><span
+                        class="btn-spaced-text">{{"delete" | i18n}}</span></button>
+                </div>
+        </clr-dg-action-bar>
+    </div>
 
-        <div table-content-view>
+    <div table-content-view>
 
-            <clr-datagrid class="projectRegistriesGrid" [clrDgLoading]="loading"
-                          [clDgRowSelection]="true" [(clrDgSelected)]="selectedProjectRegistries">
-                <clr-dg-column>{{"projects.projectRegistries.nameTitle" | i18n}}</clr-dg-column>
-                <clr-dg-column>{{"projects.projectRegistries.statusTitle" | i18n}}</clr-dg-column>
-                <clr-dg-column>{{"projects.projectRegistries.scopeTitle" | i18n}}</clr-dg-column>
-                <clr-dg-column>{{"projects.projectRegistries.addressTitle" | i18n}}</clr-dg-column>
+        <clr-datagrid class="projectRegistriesGrid" [clrDgLoading]="loading"
+                      [clDgRowSelection]="true" [(clrDgSelected)]="selectedProjectRegistries">
+            <clr-dg-column>{{"projects.projectRegistries.nameTitle" | i18n}}</clr-dg-column>
+            <clr-dg-column>{{"projects.projectRegistries.statusTitle" | i18n}}</clr-dg-column>
+            <clr-dg-column>{{"projects.projectRegistries.scopeTitle" | i18n}}</clr-dg-column>
+            <clr-dg-column>{{"projects.projectRegistries.addressTitle" | i18n}}</clr-dg-column>
 
-                <clr-dg-row *clrDgItems="let registry of projectRegistries" [clrDgItem]="registry">
-                    <clr-dg-cell><span *ngIf="isProjectSpecificRegistry(registry)"
-                            ><a routerLink="{{getEditLink(registry)}}"
-                                >{{ registry.name || registry.address }}</a></span>
-                        <span *ngIf="!isProjectSpecificRegistry(registry)">{{ registry.name || registry.address }}</span>
-                    </clr-dg-cell>
-                    <clr-dg-cell><span *ngIf="registry.disabled && registry.disabled == true"
-                        >{{"projects.projectRegistries.status.disabled" | i18n }}</span>
-                        <span *ngIf="!registry.disabled || registry.disabled == false"
-                        >{{"projects.projectRegistries.status.active" | i18n }}</span></clr-dg-cell>
-                    <clr-dg-cell><span *ngIf="isProjectSpecificRegistry(registry)"
-                            >{{"projects.projectRegistries.scope.project" | i18n }}</span>
-                        <span *ngIf="!isProjectSpecificRegistry(registry)"
-                            >{{"projects.projectRegistries.scope.global" | i18n }}</span>
-                    </clr-dg-cell>
-                    <clr-dg-cell><span>{{ registry.address }}</span></clr-dg-cell>
-                </clr-dg-row>
+            <clr-dg-row *clrDgItems="let registry of projectRegistries" [clrDgItem]="registry">
+                <clr-dg-cell><span *ngIf="isProjectSpecificRegistry(registry)"
+                        ><a routerLink="{{getEditLink(registry)}}"
+                            >{{ registry.name || registry.address }}</a></span>
+                    <span *ngIf="!isProjectSpecificRegistry(registry)">{{ registry.name || registry.address }}</span>
+                </clr-dg-cell>
+                <clr-dg-cell><span *ngIf="registry.disabled && registry.disabled == true"
+                    >{{"projects.projectRegistries.status.disabled" | i18n }}</span>
+                    <span *ngIf="!registry.disabled || registry.disabled == false"
+                    >{{"projects.projectRegistries.status.active" | i18n }}</span></clr-dg-cell>
+                <clr-dg-cell><span *ngIf="isProjectSpecificRegistry(registry)"
+                        >{{"projects.projectRegistries.scope.project" | i18n }}</span>
+                    <span *ngIf="!isProjectSpecificRegistry(registry)"
+                        >{{"projects.projectRegistries.scope.global" | i18n }}</span>
+                </clr-dg-cell>
+                <clr-dg-cell><span>{{ registry.address }}</span></clr-dg-cell>
+            </clr-dg-row>
 
-                <clr-dg-footer>
-                    {{pagination.firstItem + 1}} - {{pagination.lastItem + 1}}
-                    of {{pagination.totalItems}} {{"projects.projectRegistries.count" | i18n}}
-                    <clr-dg-pagination #pagination [clrDgPageSize]="10"></clr-dg-pagination>
-                </clr-dg-footer>
-            </clr-datagrid>
-        </div>
-    </table-view>
-</div>
+            <clr-dg-footer>
+                {{pagination.firstItem + 1}} - {{pagination.lastItem + 1}}
+                of {{pagination.totalItems}} {{"projects.projectRegistries.count" | i18n}}
+                <clr-dg-pagination #pagination [clrDgPageSize]="10"></clr-dg-pagination>
+            </clr-dg-footer>
+        </clr-datagrid>
+    </div>
+</table-view>

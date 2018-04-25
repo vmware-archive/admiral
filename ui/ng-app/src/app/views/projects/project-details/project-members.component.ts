@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,8 +11,10 @@
 
 import { Component, Input, Output, OnChanges, EventEmitter } from '@angular/core';
 import { DocumentService } from "../../../utils/document.service";
+import { ErrorService } from "../../../utils/error.service";
 import * as I18n from 'i18next';
 import { Utils } from "../../../utils/utils";
+
 
 @Component({
     selector: 'app-project-members',
@@ -23,34 +25,38 @@ import { Utils } from "../../../utils/utils";
  *  A project's members view.
  */
 export class ProjectMembersComponent implements OnChanges {
-
     @Input() project: any;
     @Output() onChange: EventEmitter<any> = new EventEmitter();
 
     showAddMembers: boolean;
+    showEditMember: boolean = false;
+    showDeleteMember: boolean = false;
 
     members: any[] = [];
-    memberToDelete: any;
+    selectedProjectMembers: any[] = [];
 
-    selectedMember: any;
+    loading: boolean = false;
 
-    loading:boolean = false;
-
+    memberToDelete: any = null;
+    deleteConfirmationAlert: string;
     get deleteConfirmationDescription(): string {
+
         return this.memberToDelete && this.memberToDelete.id
             && I18n.t('projects.members.deleteMember.confirmation',
                 { projectName:  this.memberToDelete.id } as I18n.TranslationOptions);
     }
-    deleteConfirmationAlert: string;
 
-    constructor(protected service: DocumentService) { }
+    constructor(protected service: DocumentService, protected errorService: ErrorService) {
+    }
 
+    // Add
     onAddMembers() {
         this.showAddMembers = true;
     }
 
     addDone() {
         this.showAddMembers = false;
+
         this.loadProjectAndMembers();
     }
 
@@ -58,21 +64,25 @@ export class ProjectMembersComponent implements OnChanges {
         this.showAddMembers = false;
     }
 
-    onEdit(member) {
-       this.selectedMember = member;
+    // Edit
+    onEdit() {
+        this.showEditMember = true;
     }
 
     editDone() {
-        this.selectedMember = null;
+        this.showEditMember = false;
+
         this.loadProjectAndMembers();
     }
 
     editCanceled() {
-        this.selectedMember = null;
+        this.showEditMember = false;
     }
 
-    onRemove(member) {
-        this.memberToDelete = member;
+    // Delete
+    onRemove() {
+        this.showDeleteMember = true;
+        this.memberToDelete = this.selectedProjectMembers[0];
     }
 
     deleteConfirmed() {
@@ -81,6 +91,7 @@ export class ProjectMembersComponent implements OnChanges {
 
     deleteCanceled() {
         this.memberToDelete = null;
+        this.showDeleteMember = false;
     }
 
     ngOnChanges() {
@@ -133,7 +144,7 @@ export class ProjectMembersComponent implements OnChanges {
                 this.onChange.emit(this.project);
 
             }).catch((e) => {
-                console.log('failed to update project', e);
+                this.errorService.error(Utils.getErrorMessage(e)._generic);
                 this.loading = false;
             })
         }
@@ -146,19 +157,20 @@ export class ProjectMembersComponent implements OnChanges {
     private deleteMember() {
         let patchValue;
 
-        let memberRole = this.getPrincipalRole(this.memberToDelete.id);
+        let principalId = this.memberToDelete.id;
+        let memberRole = this.getPrincipalRole(principalId);
 
         if (memberRole === 'ADMIN') {
             patchValue = {
-                "administrators": {"remove": [this.memberToDelete.id]}
+                "administrators": {"remove": [principalId]}
             };
         } else if (memberRole === 'MEMBER') {
             patchValue = {
-                "members": {"remove": [this.memberToDelete.id]}
+                "members": {"remove": [principalId]}
             };
         } else if (memberRole === 'VIEWER') {
             patchValue = {
-                "viewers": {"remove": [this.memberToDelete.id]}
+                "viewers": {"remove": [principalId]}
             };
         }
 
@@ -181,27 +193,27 @@ export class ProjectMembersComponent implements OnChanges {
     }
 
     private getPrincipalRole(principalId) {
-        let foundMember = this.project.administrators.find((admin) => {
-            return admin.id === this.memberToDelete.id;
+        let foundAdmin = this.project.administrators.find((admin) => {
+            return admin.id === principalId;
         });
 
-        if (foundMember) {
+        if (foundAdmin) {
             return 'ADMIN';
         }
 
-        foundMember = this.project.members.find((member) => {
-            return member.id === this.memberToDelete.id;
+        let foundMember = this.project.members.find((member) => {
+            return member.id === principalId;
         });
 
         if (foundMember) {
             return 'MEMBER';
         }
 
-        foundMember = this.project.viewers.find((viewer) => {
-            return viewer.id === this.memberToDelete.id;
+        let foundViewer = this.project.viewers.find((viewer) => {
+            return viewer.id === principalId;
         });
 
-        if (foundMember) {
+        if (foundViewer) {
             return 'VIEWER'
         }
 
@@ -213,6 +225,7 @@ export class ProjectMembersComponent implements OnChanges {
         this.service.get(this.project.documentSelfLink, true).then((updatedProject) => {
             this.loading = false;
             this.memberToDelete = null;
+            this.showDeleteMember = false;
 
             this.project = updatedProject;
             this.onChange.emit(this.project);

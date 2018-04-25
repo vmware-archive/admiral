@@ -19,24 +19,27 @@
             <ng-content select="[toolbar]"></ng-content>
         </div>
         <div class="col-sm-6 toolbar-secondary">
-            <form class="form search-form" [formGroup]="searchForm">
-                <div class="search-form-wrapper">
-                    <div class="search-form-icon"><clr-icon shape="search" size="20"></clr-icon></div>
-                    <div class="search-form-occurrence select">
-                        <select id="occurrenceSelector" formControlName="occurrenceSelector"
-                                [(ngModel)]="occurrenceSelection">
-                            <option value="all">{{ 'search.occurrence.all' | i18n }}</option>
-                        </select>
+            <ng-template [ngIf]="showSearch">
+                <form class="form search-form" [formGroup]="searchForm">
+                    <div class="search-form-wrapper">
+                        <div class="search-form-icon"><clr-icon shape="search" size="20"></clr-icon></div>
+                        <div class="search-form-occurrence select">
+                            <select id="occurrenceSelector" formControlName="occurrenceSelector"
+                                    [(ngModel)]="occurrenceSelection">
+                                <option value="all">{{ 'search.occurrence.all' | i18n }}</option>
+                            </select>
+                        </div>
+                        <div class="search-form-input">
+                            <input type="text" formControlName="searchGridInput"
+                                   [placeholder]="searchPlaceholder" (keyup.enter)="onSearch($event)" />
+                        </div>
                     </div>
-                    <div class="search-form-input">
-                        <input type="text" formControlName="searchGridInput"
-                               [placeholder]="searchPlaceholder" (keyup.enter)="onSearch($event)" />
-                    </div>
-                </div>
-            </form>
-            <span class="separator"></span>
-            <button (click)="refresh()" class="btn btn-link"
-                    title="{{ 'refresh' | i18n }}"><i class="fa fa-refresh"></i></button>
+                </form>
+                <span class="separator"></span>
+
+                <button (click)="refresh()" class="btn btn-link"
+                        title="{{ 'refresh' | i18n }}"><i class="fa fa-refresh"></i></button>
+            </ng-template>
         </div>
     </div>
 </div>

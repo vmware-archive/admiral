@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~ Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
   ~
   ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
   ~ You may not use this product except in compliance with the License.
@@ -9,50 +9,65 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<clr-datagrid class="projectMembersGrid" [clrDgLoading]="loading">
-    <clr-dg-action-bar>
-        <div class="btn-group" role="group" aria-label="Available Actions">
-            <button type="button" class="btn btn-sm btn-secondary"
-                    (click)="onAddMembers()"><clr-icon shape="add"></clr-icon><span
-                                        class="btn-spaced-text">{{"add" | i18n}}</span></button>
-        </div>
-    </clr-dg-action-bar>
-    <clr-dg-column>{{"projects.members.columnName" | i18n}}</clr-dg-column>
-    <clr-dg-column>{{"projects.members.columnPrimaryId" | i18n}}</clr-dg-column>
-    <clr-dg-column>{{"projects.members.columnSource" | i18n}}</clr-dg-column>
-    <clr-dg-column>{{"projects.members.columnRole" | i18n}}</clr-dg-column>
+<table-view [showSearch]="false">
+    <div toolbar>
+        <clr-dg-action-bar>
+            <div class="btn-group" role="group" aria-label="Available Actions">
+                <button type="button" class="btn btn-sm btn-secondary"
+                        (click)="onAddMembers()"><clr-icon shape="add"></clr-icon><span
+                    class="btn-spaced-text">{{"add" | i18n}}</span></button>
+                <button type="button" class="btn btn-sm btn-secondary"
+                        [disabled]="selectedProjectMembers.length != 1"
+                        (click)="onEdit()"><clr-icon
+                    shape="close"></clr-icon><span
+                    class="btn-spaced-text">{{"edit" | i18n}}</span></button>
+                <button type="button" class="btn btn-sm btn-secondary"
+                        [disabled]="selectedProjectMembers.length != 1"
+                        (click)="onRemove()"><clr-icon
+                    shape="close"></clr-icon><span
+                    class="btn-spaced-text">{{"delete" | i18n}}</span></button>
+            </div>
+        </clr-dg-action-bar>
+    </div>
 
-    <clr-dg-row *clrDgItems="let member of members" [clrDgItem]="member">
-        <clr-dg-action-overflow>
-            <button class="action-item" (click)="onEdit(member)">{{"edit" | i18n}}</button>
-            <button class="action-item" (click)="onRemove(member)">{{"remove" | i18n}}</button>
-        </clr-dg-action-overflow>
-        <clr-dg-cell><clr-icon *ngIf="member.type == 'USER'" shape="user"></clr-icon>
-            <clr-icon *ngIf="member.type == 'GROUP'" shape="group"></clr-icon> {{member.name}}</clr-dg-cell>
-        <clr-dg-cell>{{member.id}}</clr-dg-cell>
-        <clr-dg-cell>
-            <span *ngIf="member.source == 'LOCAL'"> {{"projects.members.source.local" | i18n }} <clr-icon shape="lock"></clr-icon></span>
-            <span *ngIf="member.source == 'LDAP'"> {{"projects.members.source.ldap" | i18n }} <clr-icon shape="lock"></clr-icon></span>
-        </clr-dg-cell>
-        <clr-dg-cell>
-            <span *ngIf="member.role === 'ADMIN'">{{"projects.members.roles.administrator" | i18n }}</span>
-            <span *ngIf="member.role === 'MEMBER'">{{"projects.members.roles.member" | i18n }}</span>
-            <span *ngIf="member.role === 'VIEWER'">{{"projects.members.roles.viewer" | i18n }}</span>
-        </clr-dg-cell>
-    </clr-dg-row>
+    <div table-content-view>
+        <clr-datagrid [clrDgLoading]="loading" [clDgRowSelection]="true"
+                      [(clrDgSelected)]="selectedProjectMembers">
+            <clr-dg-column>{{"projects.members.columnName" | i18n}}</clr-dg-column>
+            <clr-dg-column>{{"projects.members.columnPrimaryId" | i18n}}</clr-dg-column>
+            <clr-dg-column>{{"projects.members.columnSource" | i18n}}</clr-dg-column>
+            <clr-dg-column>{{"projects.members.columnRole" | i18n}}</clr-dg-column>
 
-    <clr-dg-footer>{{members.length}} {{"projects.members.count" | i18n}}</clr-dg-footer>
+            <clr-dg-row *clrDgItems="let member of members" [clrDgItem]="member">
+                <clr-dg-cell><clr-icon *ngIf="member.type == 'USER'" shape="user"></clr-icon>
+                    <clr-icon *ngIf="member.type == 'GROUP'" shape="group"></clr-icon> {{member.name}}</clr-dg-cell>
+                <clr-dg-cell>{{member.id}}</clr-dg-cell>
+                <clr-dg-cell>
+                    <span *ngIf="member.source == 'LOCAL'"> {{"projects.members.source.local" | i18n }} <clr-icon shape="lock"></clr-icon></span>
+                    <span *ngIf="member.source == 'LDAP'"> {{"projects.members.source.ldap" | i18n }} <clr-icon shape="lock"></clr-icon></span>
+                </clr-dg-cell>
+                <clr-dg-cell>
+                    <span *ngIf="member.role === 'ADMIN'">{{"projects.members.roles.administrator" | i18n }}</span>
+                    <span *ngIf="member.role === 'MEMBER'">{{"projects.members.roles.member" | i18n }}</span>
+                    <span *ngIf="member.role === 'VIEWER'">{{"projects.members.roles.viewer" | i18n }}</span>
+                </clr-dg-cell>
+            </clr-dg-row>
 
-</clr-datagrid>
+            <clr-dg-footer>{{members.length}} {{"projects.members.count" | i18n}}</clr-dg-footer>
+
+        </clr-datagrid>
+    </div>
+</table-view>
 
 <delete-confirmation [title]="'projects.members.deleteMember.title' | i18n"
                      [description]="deleteConfirmationDescription"
                      [(alert)]="deleteConfirmationAlert"
-                     [visible]="memberToDelete"
+                     [visible]="showDeleteMember"
                      (onDelete)="deleteConfirmed()"
                      (onCancel)="deleteCanceled()"></delete-confirmation>
 
-<app-project-edit-member [visible]="selectedMember" [project]="project" [member]="selectedMember"
+<app-project-edit-member [visible]="showEditMember" [project]="project"
+                         [member]="selectedProjectMembers[0]"
                          (onChange)="editDone()"
                          (onCancel)="editCanceled()"></app-project-edit-member>
 

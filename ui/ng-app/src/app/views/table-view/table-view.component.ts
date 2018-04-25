@@ -27,6 +27,7 @@ import { searchConstants, searchUtils } from "admiral-ui-common";
 export class TableViewComponent implements OnInit {
     // In
     @Input() searchPlaceholder: string = '';
+    @Input() showSearch: boolean = true;
     // Out
     @Output() onRefresh: EventEmitter<any> = new EventEmitter();
 
