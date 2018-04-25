@@ -13,17 +13,22 @@ package com.vmware.admiral.common.util;
 
 import static com.vmware.admiral.common.util.UriUtilsExtended.OFFICIAL_REGISTRY_LIST;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 /**
  * Docker image name parsing utility
  */
 public class DockerImage {
+    private static final Logger logger = Logger.getLogger(DockerImage.class.getName());
+
     public static final String SECTION_SEPARATOR = "/";
     public static final String TAG_SEPARATOR = ":";
     public static final String DEFAULT_NAMESPACE = "library";
     public static final String DEFAULT_TAG = "latest";
-    private static final Pattern NAMESPACE_PATTERN = Pattern.compile("[a-z0-9_]+");
+    private static final Pattern NAMESPACE_PATTERN =
+            Pattern.compile("[a-z0-9]+(?:(?:[._]|__|[-]+)[a-z0-9]+)*");
 
     private String host;
     private String namespace;
@@ -80,6 +85,8 @@ public class DockerImage {
      */
     public static DockerImage fromImageName(String imageName) {
         AssertUtil.assertNotNullOrEmpty(imageName, "imageName");
+        logger.log(Level.INFO, () -> String.format("Parsing '%s' to DockerImage", imageName));
+
         String[] parts = imageName.split(SECTION_SEPARATOR);
         switch (parts.length) {
         case 0:

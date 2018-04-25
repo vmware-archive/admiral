@@ -21,8 +21,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-import com.vmware.admiral.common.util.DockerImage;
-
 /**
  * Test for DockerImage parsing methods
  */
@@ -54,8 +52,8 @@ public class DockerImageTest {
         data.add(new String[] { "namespace and repo", "namespace/repo", null, "namespace", "repo",
                 "namespace/repo", "latest" });
 
-        data.add(new String[] { "host with dot and repo", "host.name/repo", "host.name", null,
-                "repo", "repo", "latest" });
+        data.add(new String[] { "host with dot and repo", "host.name:443/repo", "host.name:443",
+                null, "repo", "repo", "latest" });
 
         data.add(new String[] { "host with colon and repo", "host:3000/repo", "host:3000", null,
                 "repo", "repo", "latest" });
@@ -85,6 +83,22 @@ public class DockerImageTest {
         data.add(new String[] { "host, port, three path components of repo and tag",
                 "host:5000/namespace/category/repo:tag", "host:5000", "namespace/category", "repo",
                 "namespace/category/repo", "tag" });
+
+        data.add(new String[] { "host, port, three path components containing dash, repo and tag",
+                "host:5000/namespace-project/category/repo:tag", "host:5000",
+                "namespace-project/category", "repo", "namespace-project/category/repo", "tag" });
+
+        data.add(new String[] { "host with dot, two path components of repo and tag",
+                "host-123.local/library/repo:tag", "host-123.local", "library", "repo",
+                "library/repo", "tag" });
+
+        data.add(new String[] { "host, two path components of repo and tag",
+                "host-123/library/repo:tag", "host-123", "library", "repo",
+                "library/repo", "tag" });
+
+        data.add(new String[] { "host, repo and tag",
+                "host-123:443/repo:tag", "host-123:443", null, "repo",
+                "repo", "tag" });
 
         return data;
     }
