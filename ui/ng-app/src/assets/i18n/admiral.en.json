@@ -182,6 +182,7 @@
     "cluster": "Cluster",
     "clusterVic": "Container Host",
     "new": "Cluster",
+    "newVic": "Container Host",
     "status": "Status",
     "state": {
       "ON": "ON",

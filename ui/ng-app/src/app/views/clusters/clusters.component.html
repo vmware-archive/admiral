@@ -24,7 +24,7 @@
     <button class="btn btn-link addCluster-btn"
             allowNavigation [roles]="clustersNewRouteRestrictions"
             [routerLink]="['./'+ tabId + '/cluster/new']"><i
-        class="fa fa-plus"></i>{{ "clusters.new" | i18n | uppercase }}</button>
+        class="fa fa-plus"></i>{{ createButtonText | uppercase }}</button>
   </div>
 
   <ng-template let-item="item">

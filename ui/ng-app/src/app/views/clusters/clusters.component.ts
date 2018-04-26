@@ -98,6 +98,13 @@ export class ClustersComponent extends AutoRefreshComponent {
         return I18n.t('clusters.title');
     }
 
+    get createButtonText() {
+        if (FT.isVic()) {
+            return I18n.t('clusters.newVic');
+        }
+        return I18n.t('clusters.new');
+    }
+
     deleteCluster(event, cluster) {
         this.clusterToDelete = cluster;
         event.stopPropagation();
