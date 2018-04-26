@@ -37,13 +37,9 @@ export class ProjectMembersComponent implements OnChanges {
 
     loading: boolean = false;
 
-    memberToDelete: any = null;
     deleteConfirmationAlert: string;
     get deleteConfirmationDescription(): string {
-
-        return this.memberToDelete && this.memberToDelete.id
-            && I18n.t('projects.members.deleteMember.confirmation',
-                { projectName:  this.memberToDelete.id } as I18n.TranslationOptions);
+        return I18n.t('projects.members.deleteMembers.confirmation');
     }
 
     constructor(protected service: DocumentService, protected errorService: ErrorService) {
@@ -82,15 +78,13 @@ export class ProjectMembersComponent implements OnChanges {
     // Delete
     onRemove() {
         this.showDeleteMember = true;
-        this.memberToDelete = this.selectedProjectMembers[0];
     }
 
     deleteConfirmed() {
-        this.deleteMember();
+        this.deleteMembers();
     }
 
     deleteCanceled() {
-        this.memberToDelete = null;
         this.showDeleteMember = false;
     }
 
@@ -154,23 +148,38 @@ export class ProjectMembersComponent implements OnChanges {
         this.loadMembers(this.project);
     }
 
-    private deleteMember() {
-        let patchValue;
+    private deleteMembers() {
+        let admins: string[] = [];
+        let members: string[] = [];
+        let viewers: string[] = [];
 
-        let principalId = this.memberToDelete.id;
-        let memberRole = this.getPrincipalRole(principalId);
+        this.selectedProjectMembers.forEach((member) => {
+            let principalId = member.id;
 
-        if (memberRole === 'ADMIN') {
-            patchValue = {
-                "administrators": {"remove": [principalId]}
+            let memberRole = this.getPrincipalRole(principalId);
+            if (memberRole === 'ADMIN') {
+                admins.push(principalId);
+            } else if (memberRole === 'MEMBER') {
+                members.push(principalId);
+            } else if (memberRole === 'VIEWER') {
+                viewers.push(principalId);
+            }
+        });
+
+        let patchValue = {};
+        if (admins.length > 0) {
+            patchValue["administrators"] = {
+                "remove": admins
             };
-        } else if (memberRole === 'MEMBER') {
-            patchValue = {
-                "members": {"remove": [principalId]}
+        }
+        if (members.length > 0) {
+            patchValue["members"] = {
+                "remove": members
             };
-        } else if (memberRole === 'VIEWER') {
-            patchValue = {
-                "viewers": {"remove": [principalId]}
+        }
+        if (viewers.length > 0) {
+            patchValue["viewers"] = {
+                "remove": viewers
             };
         }
 
@@ -224,7 +233,6 @@ export class ProjectMembersComponent implements OnChanges {
         this.loading = true;
         this.service.get(this.project.documentSelfLink, true).then((updatedProject) => {
             this.loading = false;
-            this.memberToDelete = null;
             this.showDeleteMember = false;
 
             this.project = updatedProject;

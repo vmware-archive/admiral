@@ -94,9 +94,9 @@
         "local": "Local",
         "ldap": "LDAP"
       },
-      "deleteMember": {
-        "title": "Remove Member from Project",
-        "confirmation": "Are you sure you want to remove the member from this project?"
+      "deleteMembers": {
+        "title": "Remove Members from Project",
+        "confirmation": "Are you sure you want to remove the selected members from this project?"
       }
     },
     "projectRegistries": {

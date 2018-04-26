@@ -22,7 +22,7 @@
                     shape="close"></clr-icon><span
                     class="btn-spaced-text">{{"edit" | i18n}}</span></button>
                 <button type="button" class="btn btn-sm btn-secondary"
-                        [disabled]="selectedProjectMembers.length != 1"
+                        [disabled]="selectedProjectMembers.length == 0"
                         (click)="onRemove()"><clr-icon
                     shape="close"></clr-icon><span
                     class="btn-spaced-text">{{"delete" | i18n}}</span></button>
@@ -59,7 +59,7 @@
     </div>
 </table-view>
 
-<delete-confirmation [title]="'projects.members.deleteMember.title' | i18n"
+<delete-confirmation [title]="'projects.members.deleteMembers.title' | i18n"
                      [description]="deleteConfirmationDescription"
                      [(alert)]="deleteConfirmationAlert"
                      [visible]="showDeleteMember"
