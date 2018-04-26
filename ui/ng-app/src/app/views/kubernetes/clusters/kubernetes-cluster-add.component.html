@@ -1,0 +1,27 @@
+<!--
+  ~ Copyright (c) 2018 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="cluster-add">
+    <clr-tabs>
+        <clr-tab>
+            <button clrTabLink id="existingPks">{{"kubernetes.clusters.add.existing" | i18n}}</button>
+            <clr-tab-content id="existingPksContent" *clrIfActive>
+                Add existing K8S cluster from PKS
+            </clr-tab-content>
+        </clr-tab>
+        <clr-tab>
+            <button clrTabLink id="externalK8s">{{"kubernetes.clusters.add.external" | i18n}}</button>
+            <clr-tab-content id="externalK8sContent" *clrIfActive>
+
+            </clr-tab-content>
+        </clr-tab>
+    </clr-tabs>
+</div>

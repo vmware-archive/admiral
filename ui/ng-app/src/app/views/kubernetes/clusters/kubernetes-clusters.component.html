@@ -15,10 +15,10 @@
     <clr-dg-action-bar>
       <div class="btn-group" role="group" aria-label="Available Actions">
         <button type="button" class="btn btn-link" [routerLink]="['./new']">
-          <i class="fa fa-plus"></i>{{"kubernetes.clusters.new" | i18n}}
+          <i class="fa fa-plus"></i>{{"kubernetes.clusters.newBtn" | i18n}}
         </button>
-        <button type="button" class="btn btn-link">
-          <i class="fa fa-plus"></i>{{"kubernetes.clusters.add" | i18n}}
+        <button type="button" class="btn btn-link" [routerLink]="['./add']">
+          <i class="fa fa-plus"></i>{{"kubernetes.clusters.addBtn" | i18n}}
         </button>
       </div>
     </clr-dg-action-bar>

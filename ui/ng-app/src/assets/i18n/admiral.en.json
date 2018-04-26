@@ -265,11 +265,15 @@
   "kubernetes": {
     "clusters": {
       "title": "Kubernetes Clusters",
-      "add": "Add Cluster",
-      "new": "New Cluster",
+      "addBtn": "Add Cluster",
+      "newBtn": "New Cluster",
       "nodeCount": "Nodes",
       "search": {
         "placeholder": "Search for Kubernetes Clusters"
+      },
+      "add": {
+        "existing": "Existing PKS cluster",
+        "external": "External K8S cluster"
       },
       "details": {
         "summary": {
