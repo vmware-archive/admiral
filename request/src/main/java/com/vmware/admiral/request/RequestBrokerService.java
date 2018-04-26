@@ -1644,7 +1644,12 @@ public class RequestBrokerService extends
             return DeferredResult.completed(null);
         }
 
-        String projectLink = OperationUtil.extractProjectFromHeader(startOp);
+        String link = null;
+        if (state.tenantLinks != null && !state.tenantLinks.isEmpty()) {
+            link = state.tenantLinks.get(0);
+        }
+
+        String projectLink = link == null ? OperationUtil.extractProjectFromHeader(startOp) : link;
 
         Operation getSecurityContext = Operation.createGet(this, ManagementUriParts.AUTH_SESSION)
                 .setReferer(startOp.getUri());
