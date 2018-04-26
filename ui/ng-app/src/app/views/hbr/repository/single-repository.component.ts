@@ -28,9 +28,6 @@ import { TagClickEvent } from 'harbor-ui';
                       (backEvt)="backToRepoList($event)"
                       style="display: block;"></hbr-repository>
     </div>
-    <navigation-container>
-        <router-outlet></router-outlet>
-    </navigation-container>
     `
 })
 /**

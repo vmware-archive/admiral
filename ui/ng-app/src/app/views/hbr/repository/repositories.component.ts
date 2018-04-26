@@ -39,10 +39,6 @@ import * as I18n from "i18next";
                                    (repoProvisionEvent)="watchRepoProvisionEvent($event)"
                                    (addInfoEvent)="watchAddInfoEvent($event)"
           ></hbr-repository-gridview>
-
-          <navigation-container>
-            <router-outlet></router-outlet>
-          </navigation-container>
       </div>
   `
 })
