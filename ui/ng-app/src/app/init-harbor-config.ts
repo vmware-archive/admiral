@@ -19,14 +19,15 @@ export function initHarborConfig() {
         vulnerabilityScanningBaseEndpoint: "/hbr-api/repositories",
         logBaseEndpoint: "/hbr-api/logs",
         targetBaseEndpoint: "/hbr-api/targets",
+        replicationBaseEndpoint: "/hbr-api/replications",
         replicationRuleEndpoint: "/hbr-api/policies/replication",
         replicationJobEndpoint: "/hbr-api/jobs/replication",
+        projectBaseEndpoint: "/hbr-api/projects",
         enablei18Support: true,
         langMessageLoader: FT.isHbrEnabled() ? "http" : null,
         langMessagePathForHttpLoader: "/hbr-api/i18n/lang/",
         configurationEndpoint: "/hbr-api/configurations",
-        scanJobEndpoint: "/hbr-api/jobs/scan",
-        projectBaseEndpoint: "/hbr-api/projects"
+        scanJobEndpoint: "/hbr-api/jobs/scan"
     };
 
     return sc;
