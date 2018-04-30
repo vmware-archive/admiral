@@ -839,6 +839,25 @@ public abstract class BaseTestCase {
         return outState;
     }
 
+    protected <T> T doPost(Object body, String factoryLink, Class<T> stateType) {
+        TestContext ctx = testCreate(1);
+        final Object[] responseBody = new Object[1];
+        Operation create = Operation.createPost(host, factoryLink)
+                .setBody(body)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        ctx.failIteration(ex);
+                        return;
+                    }
+                    responseBody[0] = o.getBodyRaw();
+                    ctx.completeIteration();
+                });
+
+        host.send(create);
+        ctx.await();
+        return Utils.fromJson(responseBody[0], stateType);
+    }
+
     protected <T> T doPostWithProjectHeader(Object body, String factoryLink, String projectLink,
             Class<T> stateType) {
         TestContext ctx = testCreate(1);

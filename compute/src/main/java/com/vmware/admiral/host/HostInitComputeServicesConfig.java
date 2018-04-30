@@ -65,6 +65,7 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeService.Contai
 import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
 import com.vmware.admiral.compute.content.TemplateComputeDescription;
 import com.vmware.admiral.compute.kubernetes.KubernetesEntityDataCollection;
+import com.vmware.admiral.compute.kubernetes.service.ContainerDescriptionToKubernetesDescriptionConverterService;
 import com.vmware.admiral.compute.kubernetes.service.DeploymentService;
 import com.vmware.admiral.compute.kubernetes.service.DeploymentService.DeploymentState;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionContentService;
@@ -116,7 +117,8 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 KubernetesDescriptionContentService.class,
                 PodLogService.class,
                 ClusterService.class,
-                DanglingDescriptionsCleanupService.class);
+                DanglingDescriptionsCleanupService.class,
+                ContainerDescriptionToKubernetesDescriptionConverterService.class);
 
         startServiceFactories(host, CaSigningCertService.class,
                 GroupResourcePlacementService.class,
