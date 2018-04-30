@@ -136,8 +136,8 @@ export class ProjectDetailsComponent extends BaseDetailsComponent {
       }
     }
 
-    private navigateToRegistries() {
-        this.tabActivated(true, TAB_ID_REGISTRIES);
+    private navigateToReplicationEndpoints() {
+        this.router.navigate(['../../registries/replication-endpoints'], { relativeTo: this.route });
     }
 
     get hasProjectAdminRole(): boolean {

@@ -19,9 +19,9 @@ import { Roles } from "../../utils/roles";
 import { Utils } from "../../utils/utils";
 
 // tabs
-const TAB_ID_REGISTRIES = "global";
-const TAB_ID_ENDPOINTS = "endpoints";
-const TAB_ID_REPLICATION = "replication";
+const TAB_ID_REGISTRIES = "global-registries";
+const TAB_ID_ENDPOINTS = "replication-endpoints";
+const TAB_ID_REPLICATION = "replication-rules";
 
 @Component({
   selector: 'app-registries',
@@ -89,7 +89,7 @@ export class RegistriesComponent extends TabbedViewComponent {
         this.tabActivated($event, TAB_ID_REPLICATION);
     }
 
-    private navigateToRegistries($event) {
-        this.tabActivated(true, TAB_ID_REGISTRIES);
+    private navigateToReplicationEndpoints($event) {
+        this.tabActivated(true, TAB_ID_ENDPOINTS);
     }
 }

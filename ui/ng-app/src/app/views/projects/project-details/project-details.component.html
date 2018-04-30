@@ -70,7 +70,7 @@
                 <hbr-replication [projectId]="hbrProjectId" [projectName]="projectName"
                                  [withReplicationJob]="true"
                                  [isSystemAdmin]="hasProjectAdminRole"
-                                 (goToRegistry)="navigateToRegistries($event)"></hbr-replication>
+                                 (goToRegistry)="navigateToReplicationEndpoints()"></hbr-replication>
             </clr-tab-content>
         </ng-template>
     </clr-tab>

@@ -349,13 +349,12 @@ export const ROUTES: Routes = [
             {
                 path: 'registries', component: RegistriesComponent,
                 canActivate: [AdminAuthGuard],
-                data: { roles: RoutesRestriction.REGISTRIES },
-                children: [
-                    { path: ':tab', component: RegistriesComponent,
-                        canActivate: [AdminAuthGuard],
-                        data: { roles: RoutesRestriction.REGISTRIES }
-                    }
-                ]
+                data: { roles: RoutesRestriction.REGISTRIES }
+            },
+            {
+                path: 'registries/:tab', component: RegistriesComponent,
+                canActivate: [AdminAuthGuard],
+                data: { roles: RoutesRestriction.REGISTRIES }
             },
             {
                 path: 'configuration', component: ConfigurationComponent,
