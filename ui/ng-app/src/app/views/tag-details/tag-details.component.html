@@ -8,7 +8,11 @@
   ~ and license terms. Your use of these subcomponents is subject to the terms and
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
-<hbr-tag-detail (backEvt)="goBack($event)" [tagId]="tagId" [repositoryId]="repositoryId"
-                [withAdmiral]="true" [withClair]="true">
-    <tag-details-containers [tagId]="tagId" [repositoryId]="repositoryId"></tag-details-containers>
-</hbr-tag-detail>
+
+<div class="main-view" data-view-name="project-repository-tag">
+    <hbr-tag-detail (backEvt)="goBack($event)" [tagId]="tagId" [repositoryId]="repositoryId"
+                    [withAdmiral]="true" [withClair]="true">
+        <tag-details-containers [tagId]="tagId"
+                                [repositoryId]="repositoryId"></tag-details-containers>
+    </hbr-tag-detail>
+</div>
