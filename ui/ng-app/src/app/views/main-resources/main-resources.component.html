@@ -52,7 +52,7 @@
           <label for="libraryCollapse">{{ "navigation.library" | i18n }}</label>
           <ul class="nav-list">
               <li><a class="nav-link" allowNavigation [roles]="templatesRouteRestriction" [projectSelfLink]="currentProjectLink" routerLink="templates" routerLinkActive="active">{{ "navigation.templates" | i18n }}</a></li>
-              <li *ngIf="isHbrEnabled"><a class="nav-link" routerLink="project-repositories" routerLinkActive="active">{{ "navigation.projectRepositories" | i18n }}</a></li>
+              <li *ngIf="isHbrEnabled"><a class="nav-link" routerLink="project-repositories" routerLinkActive="active">{{ "navigation.internalRepositories" | i18n }}</a></li>
               <li><a class="nav-link" allowNavigation [roles]="publicReposRouteRestriction" [projectSelfLink]="currentProjectLink" routerLink="public-repositories" routerLinkActive="active">{{ "navigation.publicRepositories" | i18n }}</a></li>
               <li *ngIf="embeddedMode"><a class="nav-link" routerLink="registries" routerLinkActive="active">{{ "navigation.registries" | i18n }}</a></li>
               <li *ngIf="areClosuresAllowed"><a class="nav-link" routerLink="closure-definitions" routerLinkActive="active">{{ "navigation.closures" | i18n }}</a></li>

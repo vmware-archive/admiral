@@ -26,6 +26,7 @@
     "clusters": "Clusters",
     "clustersVic": "Container Hosts",
     "repositories": "Repositories",
+    "internalRepositories": "Internal Repositories",
     "infrastructure": "Infrastructure",
     "registryReplication": "Registry Replication",
     "configuration": "Configuration",
@@ -55,7 +56,7 @@
         "users": "users"
       },
       "repositories": {
-        "title": "Project Repositories",
+        "title": "Internal Repositories",
         "repositories": "Repositories:"
       },
       "resources": {
@@ -415,7 +416,7 @@
     "closures": "Closures",
     "library": "Library",
     "templates": "Templates",
-    "projectRepositories": "Project repositories",
+    "internalRepositories": "Internal Repositories",
     "publicRepositories": "Repositories",
     "infrastructure": "Infrastructure",
     "clusters": "Clusters",

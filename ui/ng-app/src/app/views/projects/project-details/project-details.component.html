@@ -31,7 +31,7 @@
         </ng-template>
     </clr-tab>
     <clr-tab *ngIf="isHbrEnabled">
-        <button clrTabLink id="repositoriesTab">{{"projects.repositories" | i18n}}</button>
+        <button clrTabLink id="repositoriesTab">{{"projects.internalRepositories" | i18n}}</button>
         <ng-template [clrIfActive]="isActiveTabRepositories"
                      (clrIfActiveChange)="repositoriesTabActivated($event)">
             <clr-tab-content id="repositoriesContent">

@@ -31,7 +31,7 @@ import * as I18n from "i18next";
               <div class="alert-item"><span class="alert-text">{{ alertMessage }}</span></div>
           </clr-alert>
 
-          <div class="title">{{"navigation.projectRepositories" | i18n}}</div>
+          <div class="title">{{"navigation.internalRepositories" | i18n}}</div>
 
           <hbr-repository-gridview [projectId]="projectId" [projectName]="projectName" 
                                    [hasSignedIn]="true" [hasProjectAdminRole]="hasProjectAdminRole"
