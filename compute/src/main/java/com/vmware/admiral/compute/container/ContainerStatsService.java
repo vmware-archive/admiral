@@ -33,6 +33,8 @@ import com.vmware.xenon.common.Utils;
 public class ContainerStatsService extends StatelessService {
     public static final String SELF_LINK = ManagementUriParts.CONTAINER_STATS;
 
+    public static final String STATS_PERMISSION_URI = "/resources/containers/stats";
+
     public static final String CONTAINER_ID_QUERY_PARAM = "id";
 
     private static final long INSPECT_INTERVAL = TimeUnit.SECONDS.toMicros(70);

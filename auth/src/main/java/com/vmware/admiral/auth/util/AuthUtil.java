@@ -558,7 +558,11 @@ public class AuthUtil {
 
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
                         buildUriWithWildcard(GroupResourcePlacementService.FACTORY_LINK),
-                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR);
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        ContainerStatsService.STATS_PERMISSION_URI,
+                        MatchType.TERM, Occurance.SHOULD_OCCUR);
 
         for (Query query : fullAccessResourcesForAdminsAndMembers(projectSelfLink)) {
             queryBuilder.addClause(query);
