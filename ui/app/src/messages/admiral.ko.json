@@ -355,9 +355,9 @@
           "driverOptions": {
             "label": "드라이버 옵션",
             "keyTitle": "옵션",
-            "keyHint": "예: o",
+            "keyHint": "예: size",
             "valueTitle": "값",
-            "valueHint": "예: size=100m"
+            "valueHint": "예: 100m"
           },
           "existingVolume": "기존",
           "showingCount": "{{count}}개 항목 표시 중(총 {{totalCount}}개 항목)",

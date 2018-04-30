@@ -355,9 +355,9 @@
           "driverOptions": {
             "label": "Параметры драйвера",
             "keyTitle": "Параметр",
-            "keyHint": "Пример: o",
+            "keyHint": "Пример: size",
             "valueTitle": "Значение",
-            "valueHint": "Пример: размер=100м"
+            "valueHint": "Пример: 100m"
           },
           "existingVolume": "Имеющиеся",
           "showingCount": "Показано: {{count}} из {{totalCount}}",

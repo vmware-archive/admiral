@@ -355,9 +355,9 @@
           "driverOptions": {
             "label": "Options de pilote",
             "keyTitle": "Option",
-            "keyHint": "Exemple : o",
+            "keyHint": "Exemple : size",
             "valueTitle": "Valeur",
-            "valueHint": "Exemple : taille=100 m"
+            "valueHint": "Exemple : 100m"
           },
           "existingVolume": "Existant",
           "showingCount": "Affichage de {{count}} sur {{totalCount}}",

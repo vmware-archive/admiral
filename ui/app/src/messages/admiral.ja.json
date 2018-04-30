@@ -355,9 +355,9 @@
           "driverOptions": {
             "label": "ドライバのオプション",
             "keyTitle": "オプション",
-            "keyHint": "例: o",
+            "keyHint": "例: size",
             "valueTitle": "値",
-            "valueHint": "例: size=100m"
+            "valueHint": "例: 100m"
           },
           "existingVolume": "既存",
           "showingCount": "{{count}}/{{totalCount}} を表示中",

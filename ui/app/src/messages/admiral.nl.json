@@ -355,9 +355,9 @@
           "driverOptions": {
             "label": "Opties van stuurprogramma",
             "keyTitle": "Optie",
-            "keyHint": "Voorbeeld: o",
+            "keyHint": "Voorbeeld: size",
             "valueTitle": "Waarde",
-            "valueHint": "Voorbeeld: grootte=100m"
+            "valueHint": "Voorbeeld: 100m"
           },
           "existingVolume": "Bestaand",
           "showingCount": "{{count}} van {{totalCount}} weergegeven",

@@ -355,9 +355,9 @@
           "driverOptions": {
             "label": "驅動程式選項",
             "keyTitle": "選項",
-            "keyHint": "範例: o",
+            "keyHint": "範例: size",
             "valueTitle": "值",
-            "valueHint": "範例: size=100m"
+            "valueHint": "範例: 100m"
           },
           "existingVolume": "現有",
           "showingCount": "顯示第 {{count}} 個，共 {{totalCount}} 個",

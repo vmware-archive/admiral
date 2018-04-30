@@ -355,9 +355,9 @@
           "driverOptions": {
             "label": "Treiberoptionen",
             "keyTitle": "Option",
-            "keyHint": "Beispiel: o",
+            "keyHint": "Beispiel: size",
             "valueTitle": "Wert",
-            "valueHint": "Beispiel: Größe=100 m"
+            "valueHint": "Beispiel: 100m"
           },
           "existingVolume": "Vorhanden",
           "showingCount": "{{count}} von {{totalCount}} werden angezeigt",

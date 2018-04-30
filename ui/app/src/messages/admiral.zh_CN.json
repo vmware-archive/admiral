@@ -355,9 +355,9 @@
           "driverOptions": {
             "label": "驱动程序选项",
             "keyTitle": "选项",
-            "keyHint": "示例: o",
+            "keyHint": "示例: size",
             "valueTitle": "值",
-            "valueHint": "示例: size=100m"
+            "valueHint": "示例: 100m"
           },
           "existingVolume": "现有",
           "showingCount": "显示 {{count}} 项 (共 {{totalCount}} 项)",
