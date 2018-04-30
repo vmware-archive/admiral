@@ -89,6 +89,15 @@ export class RegistriesComponent extends TabbedViewComponent {
         this.tabActivated($event, TAB_ID_REPLICATION);
     }
 
+    private navigateToRelatedProject($event) {
+        let rule = $event;
+        if (rule.projects && rule.projects.length > 0) {
+            let projectName = rule.projects[0].name;
+
+            this.router.navigate(['../projects/' + projectName], { relativeTo: this.route });
+        }
+    }
+
     private navigateToReplicationEndpoints($event) {
         this.tabActivated(true, TAB_ID_ENDPOINTS);
     }

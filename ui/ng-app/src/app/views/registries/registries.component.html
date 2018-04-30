@@ -37,6 +37,7 @@
                          (clrIfActiveChange)="replicationTabActivated($event)">
                 <clr-tab-content id="replicationRulesContent">
                     <hbr-replication [isSystemAdmin]="hasProjectAdminRole"
+                                     (redirect)="navigateToRelatedProject($event)"
                                      (goToRegistry)="navigateToReplicationEndpoints($event)"></hbr-replication>
                 </clr-tab-content>
             </ng-template>
