@@ -89,17 +89,13 @@ export const ROUTES: Routes = [
                     data: { roles: RoutesRestriction.DEPLOYMENTS }
             },
             {
-                path: 'project-repositories', component: RepositoriesComponent,
-                children: [
-                    { path: 'repositories/:rid', component: SingleRepositoryComponent, data: {
-                        navigationContainerType: NavigationContainerType.Fullscreen,
-                        hideBackButton: true
-                    }},
-                    { path: 'repositories/:rid/tags/:tid', component: TagDetailsComponent, data: {
-                            navigationContainerType: NavigationContainerType.Fullscreen,
-                            hideBackButton: true
-                    }}
-                ]
+                path: 'project-repositories', component: RepositoriesComponent
+            },
+            {
+                path: 'project-repositories/repositories/:rid', component: SingleRepositoryComponent
+            },
+            {
+                path: 'project-repositories/repositories/:rid/tags/:tid', component: TagDetailsComponent
             },
             {
                 path: 'registries', component: RegistriesComponent
