@@ -120,6 +120,7 @@ public class HarborInitRegistryService extends StatelessService {
         sendRequest(Operation
                 .createPost(UriUtils.buildUri(getHost(), RegistryFactoryService.SELF_LINK))
                 .setBodyNoCloning(state)
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         logSevere("Unable to create default harbor registry: %s",
