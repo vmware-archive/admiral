@@ -57,7 +57,7 @@ export class ClusterResourcesComponent extends AutoRefreshComponent
 
     ngOnInit(): void {
         this.refreshFnCallScope = this.gridView;
-        this.refreshFn = this.gridView.refresh;
+        this.refreshFn = this.gridView.autoRefresh;
 
         super.ngOnInit();
     }

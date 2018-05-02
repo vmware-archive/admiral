@@ -276,28 +276,32 @@ export class GridViewComponent implements OnInit, OnChanges {
     }
   }
 
-  refresh(resetLoadedPages?) {
+  autoRefresh(resetLoadedPages?) {
+    this.refresh(resetLoadedPages, false);
+  }
+
+  refresh(resetLoadedPages?, showLoadingSpinner = true) {
     var pagesToLoad = resetLoadedPages ? 1 : this.loadedPages;
 
     clearTimeout(this.loadPagesTimeout);
-    this.loadPagesTimeout = setTimeout(() => this.doLoadPages(pagesToLoad), 0);
+    this.loadPagesTimeout = setTimeout(() => this.doLoadPages(pagesToLoad, showLoadingSpinner), 0);
   }
 
   trackByFn(index, item){
     return item.documentSelfLink;
   }
 
-  private doLoadPages(pagesToLoad) {
+  private doLoadPages(pagesToLoad, showLoadingSpinner?) {
     let loadMore = () => {
       if (pagesToLoad > this.loadedPages && this.nextPageLink) {
         this.loadNextPage().then(loadMore);
       }
     };
 
-    this.list().then(loadMore);
+    this.list(showLoadingSpinner).then(loadMore);
   }
 
-  private list() {
+  private list(showLoadingSpinner?) {
     if (this.loadingPromise) {
       this.loadingPromise.cancel();
     }
@@ -306,7 +310,7 @@ export class GridViewComponent implements OnInit, OnChanges {
     // Otherwise for better UX when doing infinite scroll show only full rows
     this.hidePartialRows = true;
 
-    this.loading = true;
+    this.loading = showLoadingSpinner;
     this.loadedPages = 0;
     this.loadingPromise = new CancelablePromise(this.service.list(
                                 this.serviceEndpoint, this.searchQueryOptions, this.projectLink));
