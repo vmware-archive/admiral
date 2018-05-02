@@ -16,7 +16,7 @@
     <parent>
         <artifactId>admiral-closures-parent</artifactId>
         <groupId>com.vmware.admiral.closures</groupId>
-        <version>1.3.2-SNAPSHOT</version>
+        <version>1.4.0-SNAPSHOT</version>
     </parent>
     <artifactId>admiral-closure-services</artifactId>
     <dependencies>

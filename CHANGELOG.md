@@ -1,6 +1,14 @@
 # CHANGELOG
 
+## 1.4.0-SNAPSHOT
+
 ## 1.3.2-SNAPSHOT
+
+* Global and project registries
+
+* Registry whitelist
+
+* Bug fixes
 
 ## 1.3.1-SNAPSHOT
 
