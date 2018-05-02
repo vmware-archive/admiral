@@ -269,6 +269,7 @@
         "manageRegistry": "Manage Registries",
         "provision": "Provision",
         "provisionAdditionalInfo": "Enter additional info",
+        "provisionKubernetesDeployment": "Provision on Kubernetes",
         "editTemplate": "Edit / View Details",
         "official": "Official",
         "trusted": "Trusted",
@@ -1011,6 +1012,7 @@
       },
       "request": {
         "title": "Provision a Container",
+        "kubernetesDeploymentTitle": "Provision a Kubernetes Deployment",
         "provision": "Provision",
         "saveTemplate": "Save as Template",
         "tabs": {
@@ -1100,6 +1102,7 @@
           "workingDirectoryDescription": "The working directory for commands to run in",
           "clusterSize": "Cluster Size",
           "clusterSizeDescription": "The number of nodes to be provisioned",
+          "kubernetesReplicas": "Replicas",
           "restartPolicy": "Restart Policy",
           "restartPolicyDescription": "The behavior to apply when the container exits. The value \"always\" to always restart or \"on-failure\" to restart only when the container exit code is non-zero. If on-failure is used, max restart count controls the number of times to retry before giving up. The default is not to restart",
           "restartPolicyType": {

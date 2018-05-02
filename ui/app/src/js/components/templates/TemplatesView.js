@@ -17,6 +17,7 @@ import TemplateDetailsView from 'components/templates/TemplateDetailsView'; // e
 import RegistryView from 'components/registries/RegistryView'; // eslint-disable-line
 import TemplateImporterView from 'components/templates/TemplateImporterView'; // eslint-disable-line
 import ContainerRequestForm from 'components/containers/ContainerRequestForm'; // eslint-disable-line
+import KuberneterDeploymentRequestForm from 'components/kubernetes/KubernetesDeploymentRequestForm'; // eslint-disable-line
 import ClosureRequestForm from 'components/closures/ClosureRequestForm'; // eslint-disable-line
 import RequestsList from 'components/requests/RequestsList'; //eslint-disable-line
 import EventLogList from 'components/eventlog/EventLogList'; //eslint-disable-line
@@ -220,6 +221,11 @@ var TemplatesViewVueComponent = Vue.extend({
           readOnly: false
         };
       },
+      computed: {
+        isKubernetesEnabled: function() {
+          return ft.isKubernetesHostOptionEnabled();
+        }
+      },
       methods: {
         provisionContainer: function($event) {
           $event.stopPropagation();
@@ -232,6 +238,12 @@ var TemplatesViewVueComponent = Vue.extend({
           $event.preventDefault();
 
           NavigationActions.openContainerRequest(this.model.type, this.model.documentId);
+        },
+        provisionKubernetesDeployment: function($event) {
+          $event.stopPropagation();
+          $event.preventDefault();
+
+          NavigationActions.openKubernetesDeploymentRequest(this.model.type, this.model.documentId);
         }
       }
     },

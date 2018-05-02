@@ -21,7 +21,9 @@ var positionElements = function(numOfItems, canvasWidth, canvasHeight, radius) {
   if (numOfItems === 1) {
     positions.push({
       x: canvasWidth / 2 - radius,
-      y: canvasHeight / 2 - radius
+      y: canvasHeight / 2 - radius,
+      initialX: canvasWidth / 2 - radius,
+      initialY: canvasHeight / 2 - radius
     });
     numOfItems--;
   } else if (numOfItems === 2) {

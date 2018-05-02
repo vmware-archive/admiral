@@ -17,290 +17,11 @@ import utils from 'core/utils';
 import ft from 'core/ft';
 import { formatUtils } from 'admiral-ui-common';
 import imageUtils from 'core/imageUtils';
-import services from 'core/services';
+import definitionFormUtils from 'core/definitionFormUtils';
 import constants from 'core/constants';
 import { TemplateActions } from 'actions/Actions';
 
-const IMAGE_RESULT_LIMIT = 5;
-
-let prepareMultiInputErrors = function(elements, callback) {
-  var hasError = false;
-  var errors = [];
-  for (var idx = 0; idx < elements.length; idx++) {
-    var error = callback(elements[idx]);
-    if (Object.keys(error).length > 0) {
-      hasError = true;
-    }
-
-    errors.push(error);
-  }
-
-  if (hasError) {
-    return errors;
-  }
-
-  return null;
-};
-
-let validateNameValuePair = function(properties) {
-  return prepareMultiInputErrors(properties, (property) => {
-    var error = {};
-    if (!property.name || validator.trim(property.name).length === 0) {
-      error.name = 'errors.propertyNameRequired';
-    }
-    return error;
-  });
-};
-
-let containerDescriptionConstraints = {
-  image: function(image) {
-    if (!image || validator.trim(image).length === 0) {
-      return 'errors.required';
-    }
-  },
-  name: function(name) {
-    if (!name || validator.trim(name).length === 0) {
-      return 'errors.required';
-    } else if (!validator.trim(name).match(/^[a-zA-Z0-9][a-zA-Z0-9_.-]+$/)) {
-      return 'errors.propertyContainerNameInvalid';
-    }
-  },
-  links: function(links) {
-    return prepareMultiInputErrors(links, (link) => {
-      var error = {};
-      if (!link.container) {
-        error.container = 'errors.required';
-      }
-      return error;
-    });
-  },
-  portBindings: function(portBindings) {
-    return prepareMultiInputErrors(portBindings, (portBinding) => {
-      var error = {};
-      if (portBinding.hostPort && !utils.isValidPort(portBinding.hostPort)) {
-        error.hostPort = 'errors.portNumber';
-      }
-      if (!utils.isValidPort(portBinding.containerPort)) {
-        error.containerPort = 'errors.portNumber';
-      }
-      return error;
-    });
-  },
-  networks: function(networks) {
-    return prepareMultiInputErrors(networks, (network) => {
-      var error = {};
-      if (!network.network) {
-        error.network = 'errors.networkRequired';
-      }
-      return error;
-    });
-  },
-  volumes: function(volumes) {
-    return prepareMultiInputErrors(volumes, (volume) => {
-      var error = {};
-      if (!volume.container) {
-        error.container = 'errors.volumeDestinationRequired';
-        return error;
-      }
-      if (!utils.isAbsolutePath(volume.container)) {
-        error.container = 'errors.invalidPath';
-        return error;
-      }
-      if (volume.host) {
-        var test = utils.isAbsolutePathOrName(volume.host);
-        if (!test) {
-          error.host = 'errors.invalidPathOrName';
-        }
-      }
-      return error;
-    });
-  },
-  _cluster: function(clusterSize) {
-    if (clusterSize && !utils.isPositiveInteger(clusterSize)) {
-      return 'errors.positiveNumber';
-    }
-
-    return null;
-  },
-  maximumRetryCount: function(retryCount) {
-    if (retryCount && !utils.isNonNegativeInteger(retryCount)) {
-      return 'errors.nonNegativeNumber';
-    }
-    return null;
-  },
-  cpuShares: function(cpuShares) {
-    if (cpuShares && !utils.isNonNegativeInteger(cpuShares)) {
-      return 'errors.nonNegativeNumber';
-    }
-    return null;
-  },
-  memoryLimit: function(bytes) {
-    if (bytes && !utils.isValidContainerMemory(bytes)) {
-      return 'errors.containerMemory';
-    }
-    return null;
-  },
-  memorySwapLimit: function(memSwapLimit) {
-    if (memSwapLimit && !utils.isInteger(memSwapLimit, -1)) {
-      return 'errors.nonNegativeNumberAndMinusOne';
-    }
-    return null;
-  },
-  affinity: function(affinities) {
-    return prepareMultiInputErrors(affinities, (affinity) => {
-      var error = {};
-      if (affinity.constraint && !affinity.servicename) {
-        error.servicename = 'errors.serviceNameRequired';
-      }
-      return error;
-    });
-  },
-  customProperties: validateNameValuePair,
-  env: validateNameValuePair,
-  healthConfig: function(healthConfig) {
-    if (!healthConfig) {
-      return null;
-    }
-
-    var error = {};
-
-    var urlPathConfig = {
-      require_tld: false,
-      allow_underscores: true
-    };
-    if (healthConfig.protocol === 'HTTP' && healthConfig.urlPath
-        && !validator.isURL(healthConfig.urlPath, urlPathConfig)) {
-      error.urlPath = 'errors.urlPath';
-    }
-
-    if (healthConfig.port && !utils.isValidPort(healthConfig.port)) {
-      error.port = 'errors.portNumber';
-    }
-
-    if (healthConfig.healthyThreshold
-        && !utils.isNonNegativeInteger(healthConfig.healthyThreshold)) {
-      error.healthyThreshold = 'errors.nonNegativeNumber';
-    }
-
-    if (healthConfig.unhealthyThreshold
-        && !utils.isNonNegativeInteger(healthConfig.unhealthyThreshold)) {
-      error.unhealthyThreshold = 'errors.nonNegativeNumber';
-    }
-
-    if (healthConfig.timeoutMillis
-        && !utils.isNonNegativeInteger(healthConfig.timeoutMillis)) {
-      error.timeoutMillis = 'errors.nonNegativeNumber';
-    }
-
-    if (Object.keys(error).length > 0) {
-      return error;
-    }
-    return null;
-  },
-  logConfig: function(logConfig) {
-    return validateNameValuePair(logConfig.config);
-  }
-};
-
-function typeaheadSource($typeaheadHolder) {
-  var timeout;
-  var lastCallback;
-  return (q, syncCallback, asyncCallback) => {
-    lastCallback = asyncCallback;
-    clearTimeout(timeout);
-    if (!q) {
-      asyncCallback([]);
-      $typeaheadHolder.removeClass('loading');
-      return;
-    }
-
-    var image = q;
-    var tag = imageUtils.getImageTag(q);
-    if (tag) {
-      image = q.substring(0, q.length - tag.length);
-    }
-
-    $typeaheadHolder.addClass('loading');
-    timeout = setTimeout(() => {
-      services.loadImageIds(image, IMAGE_RESULT_LIMIT).then((results) => {
-        if (lastCallback === asyncCallback) {
-          for (var i = 0; i < results.length; i++) {
-            if (tag) {
-              results[i] = results[i] + ':' + tag;
-            }
-          }
-          asyncCallback(results);
-          $typeaheadHolder.removeClass('loading');
-        }
-      });
-    }, 300);
-  };
-}
-
-function tagsMatcher(tags) {
-  return (q, syncCallback) => {
-    var matches = tags.filter((t) => t.indexOf(q) !== -1);
-    syncCallback(matches);
-  };
-}
-
-function setTagsTypeahead($element, tags) {
-  $element.typeahead('destroy');
-  $element.typeahead({ minLength: 0 }, {
-    name: 'tags',
-    limit: tags.length,
-    source: tagsMatcher(tags)
-  });
-}
-
 const DEFAULT_TAG = 'latest';
-
-// defaultTag is the tag that will be displayed upon opening the form
-function loadTags($tagsHolder, selection, defaultTag) {
-  var oldSelection = $tagsHolder.data('selection');
-  if (selection === oldSelection) {
-    return;
-  }
-
-  $tagsHolder.data('selection', selection);
-
-  var $tagsInput = $tagsHolder.find('input');
-  var $imageTags = $tagsHolder.find('.form-control');
-
-  $tagsHolder.addClass('loading');
-  if (!defaultTag) {
-    $imageTags.typeahead('val', '');
-    $tagsInput.attr('placeholder', i18n.t('app.container.request.inputs.imageTag.loadingHint'));
-    // update typeahead since placeholder doesn't hide while typing
-    setTagsTypeahead($imageTags, [DEFAULT_TAG]);
-  }
-
-  services.loadImageTags(selection).then((tags) => {
-    if (tags.indexOf(DEFAULT_TAG) < 0) {
-      tags.unshift(DEFAULT_TAG);
-    }
-
-    $tagsHolder.removeClass('loading');
-    if (!defaultTag) {
-      $tagsInput.attr('placeholder', i18n.t('app.container.request.inputs.imageTag.searchHint'));
-    }
-
-    setTagsTypeahead($imageTags, tags);
-  }).catch((e) => {
-    console.log(e);
-    $tagsHolder.removeClass('loading');
-    if (!defaultTag) {
-      $tagsInput.attr('placeholder', i18n.t('app.container.request.inputs.imageTag.searchHint'));
-    }
-    setTagsTypeahead($imageTags, [DEFAULT_TAG]);
-  });
-}
-
-function typeaheadTagsLoader($tagsHolder) {
-  return function(event, selection) {
-    loadTags($tagsHolder, selection, null);
-  };
-}
 
 class ContainerDefinitionForm extends Component {
   constructor() {
@@ -313,19 +34,21 @@ class ContainerDefinitionForm extends Component {
     this.$imageSearch = this.$el.find('.container-image-input .image-name-input .form-control');
     this.$imageSearch.typeahead({}, {
       name: 'images',
-      source: typeaheadSource(this.$el.find('.container-image-input .image-name-input'))
+      source: definitionFormUtils.typeaheadSource(
+        this.$el.find('.container-image-input .image-name-input'))
     });
 
     this.$imageTags = this.$el.find('.container-image-input .image-tags-input .form-control');
-    setTagsTypeahead(this.$imageTags, [DEFAULT_TAG]);
+    definitionFormUtils.setTagsTypeahead(this.$imageTags, [DEFAULT_TAG]);
 
     this.$tagsHolder = this.$el.find('.container-image-input .image-tags-input');
-    this.$imageSearch.bind('typeahead:selected', typeaheadTagsLoader(this.$tagsHolder));
+    this.$imageSearch.bind(
+      'typeahead:selected', definitionFormUtils.typeaheadTagsLoader(this.$tagsHolder));
 
     this.$imageSearch.blur(() => {
       var image = this.$imageSearch.typeahead('val');
       var tag = this.$imageTags.typeahead('val');
-      loadTags(this.$tagsHolder, image, tag);
+      definitionFormUtils.loadTags(this.$tagsHolder, image, tag);
     });
 
     this.commandsEditor = new MulticolumnInputs(
@@ -676,7 +399,8 @@ class ContainerDefinitionForm extends Component {
     /* we need 1:1 relation between input fields and input data to do proper validation */
     this.removeEmptyProperties();
     var rawInput = this.getRawInput();
-    var validationErrors = utils.validate(rawInput, containerDescriptionConstraints);
+    var validationErrors = utils.validate(
+      rawInput, definitionFormUtils.containerDescriptionConstraints());
 
     return validationErrors;
   }
@@ -845,7 +569,7 @@ var updateForm = function(data, oldData) {
       this.$imageSearch.typeahead('val', data.image);
     }
 
-    loadTags(this.$tagsHolder, data.image, tag);
+    definitionFormUtils.loadTags(this.$tagsHolder, data.image, tag);
   }
 
   if (data.name !== oldData.name) {

@@ -45,10 +45,11 @@ const kubernetesTemplateActions = ['openEditKubernetesDefinition', 'cancelEditKu
 
 export var TemplateActions = Reflux.createActions([
   'openTemplates', 'openContainerRequest', 'openTemplateDetails',
-  'increaseClusterSize', 'decreaseClusterSize',
-  'createContainer', 'createContainerWithDetails', 'createContainerTemplate',
-  'removeTemplate', 'saveTemplateName', 'copyTemplate', 'publishTemplate', 'openImportTemplate',
-  'importTemplate', 'openCreateNewTemplate', 'createNewTemplate'
+  'increaseClusterSize', 'decreaseClusterSize', 'createContainer',
+  'createContainerWithDetails', 'createContainerTemplate',
+  'createKubernetesDeploymentTemplate', 'removeTemplate', 'saveTemplateName',
+  'copyTemplate', 'publishTemplate', 'openImportTemplate', 'importTemplate',
+  'openCreateNewTemplate', 'createNewTemplate', 'provisionKubernetesDeploymentTemplate'
 ].concat(containerDefinitionTemplateActions, networkTemplateActions, closureTemplateActions,
   volumeTemplateActions, kubernetesTemplateActions));
 
@@ -175,9 +176,10 @@ export var NotificationsActions = Reflux.createActions([
 */
 export var NavigationActions = Reflux.createActions([
   'openHome', 'openHomeAddHost', 'openHosts', 'openHostsSilently', 'openAddHost', 'editHost',
-  'openTemplates', 'openEventLog', 'openRegistries', 'openContainerRequest', 'openContainers',
-  'openNetworks', 'openContainerDetails', 'openClusterDetails', 'openCompositeContainerDetails',
-  'openTemplateDetails', 'showContainersPerPlacement', 'showMachinesPerPlacement', 'openPlacements',
+  'openTemplates', 'openEventLog', 'openRegistries', 'openContainerRequest',
+  'openKubernetesDeploymentRequest', 'openContainers', 'openNetworks', 'openContainerDetails',
+  'openClusterDetails', 'openCompositeContainerDetails', 'openTemplateDetails',
+  'showContainersPerPlacement', 'showMachinesPerPlacement', 'openPlacements',
   'openClosures', 'openClosuresSilently', 'openAddClosure', 'openClosureDetails',
   'openCompositeClosureDetails', 'openVolumes', 'openCreateNewContainer',
   'openCreateNewApplication', 'openCreateNewNetwork', 'openCreateNewVolume', 'openCreateNewClosure',

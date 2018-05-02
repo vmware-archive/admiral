@@ -889,6 +889,25 @@ let TemplatesStore = Reflux.createStore({
     this.emitChange();
   },
 
+  onOpenKubernetesDeploymentRequest: function(type, itemId) {
+    var containerRequest = {
+      documentId: itemId,
+      selectedForEdit: false,
+      selectedForRequest: false,
+      selectForKubernetesDeployment: true
+    };
+
+    containerRequest.definitionInstance = {
+      image: itemId,
+      name: utils.getDocumentId(itemId)
+    };
+
+    this.setInData(['selectedItem'], containerRequest);
+    this.setInData(['selectedItemDetails'], containerRequest);
+
+    this.emitChange();
+  },
+
   onOpenTemplateDetails: function(type, itemId) {
     var detailsObject = {
       documentId: itemId,
@@ -2116,14 +2135,12 @@ let TemplatesStore = Reflux.createStore({
 
       services.createContainer(containerDescription).then((request) => {
         onContainerCreated(request);
-
       }).catch(this.onGenericCreateError);
 
     } else if (type === constants.TEMPLATES.TYPES.TEMPLATE) {
 
       services.createMultiContainerFromTemplate(itemId).then((request) => {
         onContainerCreated(request);
-
       }).catch(this.onGenericCreateError);
     }
   },
@@ -2140,6 +2157,28 @@ let TemplatesStore = Reflux.createStore({
       actions.NavigationActions.openTemplateDetails(constants.TEMPLATES.TYPES.TEMPLATE,
         documentId);
 
+    }).catch(this.onGenericCreateError);
+  },
+
+  onCreateKubernetesDeploymentTemplate: function(containerDescription) {
+    services.createKubernetesDeploymentTemplate(containerDescription).then((containerTemplate) => {
+      var documentId = utils.getDocumentId(containerTemplate.documentSelfLink);
+      actions.NavigationActions.openTemplateDetails(constants.TEMPLATES.TYPES.TEMPLATE,
+        documentId);
+    }).catch(this.onGenericCreateError);
+  },
+
+  onProvisionKubernetesDeploymentTemplate: function(containerDescription) {
+    services.createKubernetesDeploymentTemplate(containerDescription).then((containerTemplate) => {
+      var documentId = utils.getDocumentId(containerTemplate.documentSelfLink);
+      actions.NavigationActions.openTemplateDetails(constants.TEMPLATES.TYPES.TEMPLATE,
+      documentId);
+
+      var template = {
+        'documentSelfLink': containerTemplate.documentSelfLink
+      };
+
+      this.onCopyTemplate(constants.TEMPLATES.TYPES.TEMPLATE, template);
     }).catch(this.onGenericCreateError);
   },
 

@@ -1524,6 +1524,28 @@ services.createContainerTemplate = function(containerDescription) {
   });
 };
 
+services.createKubernetesDeploymentTemplate = function(containerDescription) {
+
+  return services.createContainerDescription(containerDescription)
+    .then(function(createdContainerDescription) {
+      return services.convertContainerDescriptionToKubernetesDescription(
+        createdContainerDescription)
+          .then(function(kubernetesDescription) {
+              var multiContainerDescription = {
+                name: createdContainerDescription.name,
+                descriptionLinks: [kubernetesDescription.documentSelfLink]
+              };
+
+              return post(links.COMPOSITE_DESCRIPTIONS, multiContainerDescription);
+          });
+    });
+};
+
+services.convertContainerDescriptionToKubernetesDescription = function(containerDescription) {
+    return post(links.CONTAINER_DESCRIPTION_TO_KUBERNETES_DESCRIPTION_CONVERTER,
+      containerDescription);
+};
+
 services.createContainerTemplateForDescription = function(name, descriptionLink) {
    var multiContainerDescription = {
       name: name,

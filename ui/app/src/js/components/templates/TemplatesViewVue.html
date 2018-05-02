@@ -120,6 +120,8 @@
                              :model="model.selectedItemDetails"></template-details-view>
       <container-request-form v-if="model.selectedItemDetails.selectedForRequest"
                              :model="model.selectedItemDetails"></container-request-form>
+      <kubernetes-request-form v-if="model.selectedItemDetails.selectForKubernetesDeployment"
+                             :model="model.selectedItemDetails"></kubernetes-request-form>
       <closure-request-form class="template-details"
                             v-if="!!model.selectedItemDetails.addClosureView && areClosuresAllowed"
                             :shown-in-templates="true"
