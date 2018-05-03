@@ -37,7 +37,7 @@ export class ClustersComponent extends AutoRefreshComponent {
 
     @ViewChild('gridView') gridView: GridViewComponent;
 
-    serviceEndpoint = Links.CLUSTERS + '?type=!KUBERNETES';
+    serviceEndpoint = FT.isApplicationEmbedded() && FT.isPksEnabled() ?  Links.CLUSTERS + '?type=!KUBERNETES' : Links.CLUSTERS;
     clusterToDelete: any;
     deleteConfirmationAlert: string;
 
