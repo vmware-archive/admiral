@@ -269,6 +269,14 @@
       "addBtn": "Add Cluster",
       "newBtn": "New Cluster",
       "nodeCount": "Nodes",
+      "edit": {
+        "name": "Name",
+        "nameRequired": "Name is required.",
+        "description": "Description",
+        "url": "URL",
+        "urlRequired": "Kubernetes cluster URL is required.",
+        "credentials": "Credentials"
+      },
       "search": {
         "placeholder": "Search for Kubernetes Clusters"
       },

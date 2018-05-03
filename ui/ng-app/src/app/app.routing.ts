@@ -39,7 +39,8 @@ import { ClusterEditComponent } from './views/clusters/cluster-edit/cluster-edit
 
 import { KubernetesClustersComponent } from './views/kubernetes/clusters/kubernetes-clusters.component';
 import { KubernetesClusterCreateComponent } from './views/kubernetes/clusters/kubernetes-cluster-create.component';
-import { KubernetesClusterAddComponent } from './views/kubernetes/clusters/kubernetes-cluster-add.component';
+import { KubernetesClusterAddComponent } from './views/kubernetes/clusters/add/kubernetes-cluster-add.component';
+import { KubernetesClusterAddExternalComponent } from './views/kubernetes/clusters/add/external/kubernetes-cluster-add-external.component';
 import { KubernetesClusterDetailsComponent } from './views/kubernetes/clusters/details/kubernetes-cluster-details.component';
 
 import { DummyComponent } from './components/dummy/dummy.component';

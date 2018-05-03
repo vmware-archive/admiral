@@ -11,7 +11,7 @@
 
 import { Component } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import { DocumentService } from '../../../utils/document.service';
+import { DocumentService } from '../../../../utils/document.service';
 
 @Component({
   selector: 'app-kubernetes-cluster-add',
