@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.vmware.admiral.adapter.kubernetes.service.AbstractKubernetesAdapterService.KubernetesContext;
+import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
 import com.vmware.admiral.compute.kubernetes.KubernetesHostConstants;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
@@ -29,6 +30,8 @@ public class ApiUtil {
     public static final String API_PREFIX_V1 = "/api/v1";
     public static final String API_PREFIX_EXTENSIONS_V1BETA = "/apis/extensions/v1beta1";
     public static final String NAMESPACES = "/namespaces/";
+
+    public static final String API_PATH_SEGMENT_PROXY = "proxy";
 
     private static Map<String, String> entityTypeToPath = new HashMap<>();
 
@@ -47,7 +50,8 @@ public class ApiUtil {
     }
 
     static String apiPrefix(KubernetesContext context, String apiVersion) {
-        assert (context.host != null);
+        AssertUtil.assertNotNull(context.host, "context.host");
+        AssertUtil.assertNotNullOrEmpty(context.host.address, "context.host.address");
         return context.host.address + apiVersion;
     }
 
@@ -86,6 +90,19 @@ public class ApiUtil {
 
         return UriUtils.buildUri(uriString);
 
+    }
+
+    public static String buildApiServerProxyUri(KubernetesContext context,
+            String entityApiVersionPrefix, String entityNamespace, String entitySelflink,
+            String proxiedPath) {
+        String uriPath = UriUtils.buildUriPath(
+                NAMESPACES,
+                entityNamespace,
+                entitySelflink,
+                API_PATH_SEGMENT_PROXY,
+                proxiedPath);
+
+        return ApiUtil.apiPrefix(context, ApiUtil.API_PREFIX_V1) + uriPath;
     }
 
     public static URI buildKubernetesUri(String kubernetesSelfLink, KubernetesContext context) {

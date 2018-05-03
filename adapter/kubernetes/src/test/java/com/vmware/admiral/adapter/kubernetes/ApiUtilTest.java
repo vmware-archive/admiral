@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -10,6 +10,8 @@
  */
 
 package com.vmware.admiral.adapter.kubernetes;
+
+import static org.junit.Assert.assertEquals;
 
 import java.util.HashMap;
 
@@ -48,5 +50,18 @@ public class ApiUtilTest {
                 + "/namespaces/" + KubernetesHostConstants.KUBERNETES_HOST_DEFAULT_NAMESPACE;
         String actualPrefix = ApiUtil.namespacePrefix(context, ApiUtil.API_PREFIX_V1);
         Assert.assertEquals(expectedPrefix, actualPrefix);
+    }
+
+    @Test
+    public void buildApiServerProxyUrl() {
+        String apiVersionPrefix = "/api/v1";
+        String namespace = "test-namespace";
+        String selfLink = "/services/test";
+        String proxiedPath = "/test-path";
+
+        String expected = context.host.address
+                + "/api/v1/namespaces/test-namespace/services/test/proxy/test-path";
+        assertEquals(expected, ApiUtil.buildApiServerProxyUri(context, apiVersionPrefix, namespace,
+                selfLink, proxiedPath));
     }
 }

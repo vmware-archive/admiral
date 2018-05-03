@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -233,18 +233,27 @@ public class KubernetesRemoteApiClient {
                                 }
                                 if (counter.decrementAndGet() == 0 && !hasError.get()) {
                                     Map<String, String> properties = new HashMap<>();
+
+                                    // avoid division by zero - NaN causes trouble when being
+                                    // serialized as JSON
+                                    Double cpuUsage = totalCPU.compareAndSet(0D, 0D)
+                                            ? 0D : usedCPU.get() / totalCPU.get();
                                     properties.put(
                                             ContainerHostService.DOCKER_HOST_CPU_USAGE_PCT_PROP_NAME,
-                                            Double.toString(usedCPU.get() / totalCPU.get()));
+                                            Double.toString(cpuUsage));
+
                                     properties.put(
                                             ContainerHostService.DOCKER_HOST_AVAILABLE_MEMORY_PROP_NAME,
                                             Double.toString(totalMem.get() - usedMem.get()));
+
                                     properties.put(
                                             ContainerHostService.DOCKER_HOST_TOTAL_MEMORY_PROP_NAME,
                                             Double.toString(totalMem.get()));
+
                                     properties.put(
                                             ContainerHostService.KUBERNETES_HOST_NODE_LIST_PROP_NAME,
                                             Utils.toJson(nodes));
+
                                     Operation result = new Operation();
                                     result.setBody(properties);
                                     completionHandler.handle(result, null);
@@ -259,11 +268,15 @@ public class KubernetesRemoteApiClient {
 
     public void getStats(KubernetesContext context, Node node, CompletionHandler
             completionHandler) {
-        // This url may not be accessible on every kubernetes setup. It requires that the dashboard
-        // service is running
-        URI uri = UriUtils.buildUri(ApiUtil.apiPrefix(context, ApiUtil.API_PREFIX_V1)
-                + "/proxy/namespaces/kube-system/services/kubernetes-dashboard/api/v1/node/"
-                + node.metadata.name);
+
+        // This url may not be accessible on every kubernetes setup. It requires that the
+        // dashboard service is running
+        String dashboardServiceSelflink = "services/kubernetes-dashboard";
+        String dashboardServiceNamespace = "kube-system";
+        String proxiedPath = UriUtils.buildUriPath("api/v1/node", node.metadata.name);
+
+        URI uri = UriUtils.buildUri(ApiUtil.buildApiServerProxyUri(context, API_PREFIX_V1,
+                dashboardServiceNamespace, dashboardServiceSelflink, proxiedPath));
         sendRequest(Action.GET, uri, null, context, completionHandler);
     }
 
