@@ -8,8 +8,11 @@
   ~ and license terms. Your use of these subcomponents is subject to the terms and
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
+<delete-confirmation [title]="deleteTitle" [description]="deleteConfirmationDescription" [(alert)]="deleteConfirmationAlert"
+  [visible]="clusterToDelete" (onDelete)="deleteConfirmed()" (onCancel)="deleteCanceled()">
+</delete-confirmation>
 
-  <grid-view #gridView [serviceEndpoint]="serviceEndpoint" [searchPlaceholder]="'kubernetes.clusters.search.placeholder' | i18n">
+<grid-view #gridView [serviceEndpoint]="serviceEndpoint" [searchPlaceholder]="'kubernetes.clusters.search.placeholder' | i18n">
   <div title>{{ "kubernetes.clusters.title" | i18n }}</div>
   <div toolbar>
     <clr-dg-action-bar>
@@ -24,8 +27,7 @@
     </clr-dg-action-bar>
   </div>
   <ng-template let-item="item">
-    <card class="clusterCard" [routerLink]="['./' + item.documentId]"
-          [ngClass]="{'card-actions-selected': isItemSelected(item)}">
+    <card class="clusterCard" [routerLink]="['./' + item.documentId]" [ngClass]="{'card-actions-selected': isItemSelected(item)}">
       <div card-header>
         <div class="clusterIcon">
           <clr-icon shape="rack-server" size="48"></clr-icon>
@@ -36,21 +38,19 @@
         </div>
         <clr-dropdown class="card-actions" (click)="toggleItemSelection($event, item)">
           <button type="button" class="btn btn-sm btn-link" clrDropdownTrigger>
-              <clr-icon shape="ellipsis-vertical" size="20"></clr-icon>
+            <clr-icon shape="ellipsis-vertical" size="20"></clr-icon>
           </button>
           <clr-dropdown-menu clrPosition="left-top" *clrIfOpen>
-            <button type="button" class="dropdown-item cluster-details"
-                    [routerLink]="['./' + item.documentId]"><clr-icon shape="eye" size="20"
-                            class="card-drop-down-actions"></clr-icon>{{"projects.actions.details" | i18n}}</button>
-            <button *ngIf="operationSupported('DISABLE', item)" type="button" class="dropdown-item disableHost"
-                    (click)="disableHost($event, item)"><clr-icon shape="pause" size="20"
-                            class="card-drop-down-actions"></clr-icon>{{ "hosts.actions.disable" | i18n }}</button>
-
-            <button *ngIf="operationSupported('ENABLE', item)" type="button" class="dropdown-item enableHost"
-                    (click)="enableHost($event, item)"><clr-icon shape="play" size="20"
-                            class="card-drop-down-actions"></clr-icon>{{ "hosts.actions.enable" | i18n }}</button>
+            <button type="button" class="dropdown-item cluster-details" [routerLink]="['./' + item.documentId]">
+              <clr-icon shape="eye" size="20" class="card-drop-down-actions"></clr-icon>{{"projects.actions.details" | i18n}}</button>
+            <button *ngIf="operationSupported('DISABLE', item)" type="button" class="dropdown-item disableHost" (click)="disableHost($event, item)">
+              <clr-icon shape="pause" size="20" class="card-drop-down-actions"></clr-icon>{{ "hosts.actions.disable" | i18n }}</button>
+            <button *ngIf="operationSupported('ENABLE', item)" type="button" class="dropdown-item enableHost" (click)="enableHost($event, item)">
+              <clr-icon shape="play" size="20" class="card-drop-down-actions"></clr-icon>{{ "hosts.actions.enable" | i18n }}</button>
+            <button type="button" class="dropdown-item remove-cluster" (click)="deleteCluster($event, item)">
+              <clr-icon shape="trash" size="20" class="card-drop-down-actions"></clr-icon>{{"remove" | i18n}}</button>
           </clr-dropdown-menu>
-      </clr-dropdown>
+        </clr-dropdown>
       </div>
       <div card-content>
         <div class="form-group">

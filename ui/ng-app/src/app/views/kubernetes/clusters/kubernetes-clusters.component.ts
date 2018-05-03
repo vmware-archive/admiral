@@ -36,9 +36,49 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
     serviceEndpoint = Links.CLUSTERS + '?type=KUBERNETES';
     selectedItem: any;
 
+    clusterToDelete: any;
+    deleteConfirmationAlert: string;
+
     constructor(protected service: DocumentService, protected projectService: ProjectService,
         protected router: Router, protected route: ActivatedRoute) {
         super(router, route, FT.allowHostEventsSubscription(), Utils.getClustersViewRefreshInterval(), true);
+    }
+
+    get deleteTitle() {
+        return this.clusterToDelete && this.clusterToDelete.name
+            && I18n.t('clusters.delete.title');
+    }
+
+    get deleteConfirmationDescription(): string {
+        return this.clusterToDelete && this.clusterToDelete.name
+            && I18n.t('clusters.delete.confirmation', {
+                clusterName: this.clusterToDelete.name,
+                interpolation: {escapeValue: false}
+            } as I18n.TranslationOptions);
+    }
+
+    deleteCluster(event, cluster) {
+        this.clusterToDelete = cluster;
+        event.stopPropagation();
+        // clear selection
+        this.selectedItem = null;
+
+        return false; // prevents navigation
+    }
+
+    deleteConfirmed() {
+        this.service.delete(this.clusterToDelete.documentSelfLink)
+        .then(result => {
+            this.clusterToDelete = null;
+            this.gridView.refresh();
+        })
+        .catch(err => {
+            this.deleteConfirmationAlert = Utils.getErrorMessage(err)._generic;
+        });
+    }
+
+    deleteCanceled() {
+        this.clusterToDelete = null;
     }
 
     nodeCount(cluster): string {
