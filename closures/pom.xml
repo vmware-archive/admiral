@@ -24,6 +24,10 @@
     <groupId>com.vmware.admiral.closures</groupId>
     <packaging>pom</packaging>
 
+    <properties>
+        <apache.commons-compress>1.16.1</apache.commons-compress>
+    </properties>
+
     <modules>
         <module>closure-services</module>
         <module>closure-adapter</module>
