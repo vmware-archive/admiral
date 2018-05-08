@@ -265,7 +265,7 @@
   },
   "kubernetes": {
     "clusters": {
-      "title": "Kubernetes Clusters",
+      "title": "PKS Clusters",
       "addBtn": "Add Cluster",
       "newBtn": "New Cluster",
       "nodeCount": "Nodes",
@@ -281,8 +281,8 @@
         "placeholder": "Search for Kubernetes Clusters"
       },
       "add": {
-        "existing": "Existing PKS cluster",
-        "external": "External K8S cluster"
+        "existing": "Existing PKS Cluster",
+        "external": "External Kubernetes Cluster"
       },
       "details": {
         "summary": {
@@ -429,7 +429,7 @@
     "infrastructure": "Infrastructure",
     "clusters": "Clusters",
     "clustersVic": "Container Hosts",
-    "kubernetesClusters": "Kubernetes Clusters",
+    "kubernetesClusters": "PKS Clusters",
     "hosts": "Hosts",
     "placements": "Placements",
     "identityManagement": "Identity Management",
