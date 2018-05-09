@@ -399,7 +399,7 @@ public class KubernetesRemoteApiClient {
 
     public void createEntity(KubernetesDescription description, KubernetesContext context,
             CompletionHandler completionHandler) throws IOException {
-        URI uri = ApiUtil.buildKubernetesUri(description, context);
+        URI uri = ApiUtil.buildKubernetesFactoryUri(description, context);
 
         sendRequest(Action.POST, uri, description.getKubernetesEntityAsJson(), context,
                 completionHandler);

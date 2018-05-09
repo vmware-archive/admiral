@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -52,6 +52,20 @@ public class KubernetesDescriptionService extends StatefulService {
          */
         @Documentation(description = "The type of the kubernetes entity.")
         public String type;
+
+        /**
+         * The API version that is to be used for management of this entity in format
+         * group/api-version.
+         */
+        @Documentation(description = "The API version that is to be used for management "
+                + "of this entity in format group/api-version.")
+        public String apiVersion;
+
+        /**
+         * The namespace in which this entity should exist.
+         */
+        @Documentation(description = "The namespace in which this entity should exist.")
+        public String namespace;
 
         public <T extends BaseKubernetesObject> T getKubernetesEntity(Class<T> type)
                 throws IOException {
@@ -126,7 +140,9 @@ public class KubernetesDescriptionService extends StatefulService {
         assertNotNullOrEmpty(kubernetesEntity.metadata.name, "metadata.name");
 
         description.type = kubernetesEntity.kind;
+        description.apiVersion = kubernetesEntity.apiVersion;
         description.name = kubernetesEntity.metadata.name;
+        description.namespace = kubernetesEntity.metadata.namespace;
     }
 
     @Override

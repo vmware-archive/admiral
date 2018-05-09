@@ -12,6 +12,7 @@
 package com.vmware.admiral.compute.content;
 
 import static junit.framework.TestCase.assertNull;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -41,7 +42,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
+import org.hamcrest.CoreMatchers;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -125,6 +129,14 @@ public class KubernetesUtilTest {
     @Before
     public void beforeForKubernetesUtilTest() throws Throwable {
         HostInitComputeServicesConfig.initCompositeComponentRegistry();
+    }
+
+    @Test
+    public void testDeserializeKubernetesEntityHasCorrectClass() throws IOException {
+        assertEquals(Deployment.class,
+                KubernetesUtil.deserializeKubernetesEntity(deploymentYaml).getClass());
+        assertEquals(Service.class,
+                KubernetesUtil.deserializeKubernetesEntity(serviceYamlFormat).getClass());
     }
 
     @Test
@@ -546,5 +558,36 @@ public class KubernetesUtilTest {
         }
 
         assertEquals(false, shouldFail);
+    }
+
+    @Test
+    public void testCreateKubernetesEntityDescription() {
+        final String testKey = "testKey";
+        final String testValue = "testValue";
+
+        PodState podState = new PodState();
+
+        podState.descriptionLink = "/test/description-" + UUID.randomUUID().toString();
+        podState.tenantLinks = Collections.singletonList("/tenants/test-tenant");
+        podState.name = UUID.randomUUID().toString();
+        podState.id = UUID.randomUUID().toString();
+        podState.customProperties = new HashMap<>();
+        podState.customProperties.put(testKey, testValue);
+
+        KubernetesDescription podDescription = KubernetesUtil
+                .createKubernetesEntityDescription(podState);
+        Assert.assertThat(podDescription.documentSelfLink,
+                CoreMatchers.is(podState.descriptionLink));
+        Assert.assertThat(podDescription.name, CoreMatchers.is(podState.name));
+        Assert.assertThat(podDescription.id, CoreMatchers.is(podState.id));
+        Assert.assertThat(podDescription.type, CoreMatchers.is(podState.getType()));
+
+        Assert.assertThat(podDescription.tenantLinks, CoreMatchers.is(podState.tenantLinks));
+
+        Assert.assertThat(podDescription.customProperties,
+                CoreMatchers.is(CoreMatchers.notNullValue()));
+        Assert.assertThat(podDescription.customProperties.get(testKey), CoreMatchers.is(testValue));
+
+        assertEquals(podState.name, podDescription.name);
     }
 }

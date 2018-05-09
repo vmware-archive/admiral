@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -71,6 +71,7 @@ public class KubernetesUtil {
     public static final String REPLICA_SET_TYPE = "ReplicaSet";
     public static final String NODE_TYPE = "Node";
     public static final String NAMESPACE_TYPE = "Namespace";
+    public static final String ENDPOINTS_TYPE = "Endpoints";
 
     public static final String KUBERNETES_API_VERSION_V1 = "v1";
     public static final String KUBERNETES_API_VERSION_V1_BETA1 = "extensions/v1beta1";
@@ -217,7 +218,6 @@ public class KubernetesUtil {
         entityDescription.type = state.getType();
         entityDescription.customProperties = state.customProperties;
 
-        // TODO: double check these
         return entityDescription;
     }
 
