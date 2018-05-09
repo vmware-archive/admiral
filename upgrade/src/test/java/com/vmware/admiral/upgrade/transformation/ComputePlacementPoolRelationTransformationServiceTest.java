@@ -22,6 +22,7 @@ import org.junit.Test;
 import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService.ElasticPlacementZoneConfigurationState;
+import com.vmware.admiral.compute.cluster.ClusterUtils;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.upgrade.UpgradeBaseTest;
@@ -29,6 +30,7 @@ import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.UriUtils;
@@ -97,6 +99,23 @@ public class ComputePlacementPoolRelationTransformationServiceTest extends Upgra
                 GroupResourcePlacementService.DEFAULT_RESOURCE_PLACEMENT_LINK);
         Assert.assertTrue(placement.tenantLinks.size() == 1);
         Assert.assertTrue(placement.tenantLinks.get(0).equals(ProjectService.DEFAULT_PROJECT_LINK));
+
+        host.testStart(1);
+        doPost(compute, ResourcePoolTransformationService.SELF_LINK);
+        DeferredResult<List<ComputeState>> hostsWithinPlacementZone = ClusterUtils
+                .getHostsWithinPlacementZone(pool.epzState.resourcePoolLink,
+                        ProjectService.DEFAULT_PROJECT_LINK, host);
+        hostsWithinPlacementZone.whenComplete((computeStates, ex) -> {
+            if (ex != null) {
+                host.failIteration(ex);
+                return;
+            } else if (computeStates.size() == 1) {
+                host.completeIteration();
+            } else {
+                host.failIteration(new IllegalStateException("Incorrect number of hosts found"));
+            }
+        });
+        host.testWait();
     }
 
     @Test
@@ -294,6 +313,35 @@ public class ComputePlacementPoolRelationTransformationServiceTest extends Upgra
         placement1 = getDocument(GroupResourcePlacementState.class, placement1.documentSelfLink);
         Assert.assertTrue(placement1.tenantLinks.size() == 1);
         Assert.assertTrue(placement1.tenantLinks.get(0).equals("test"));
+    }
+
+    @Test
+    public void testGetComputeStatesForEPZ() throws Throwable {
+        List<String> links = getDocumentLinksOfType(ResourcePoolState.class);
+        Assert.assertTrue(links.size() == 1);
+        ComputeState compute = createComputeState("host1",
+                GroupResourcePlacementService.DEFAULT_RESOURCE_POOL_LINK);
+        compute = doPost(compute, ComputeService.FACTORY_LINK);
+        Assert.assertTrue(compute.tagLinks == null);
+        doPost(compute, ComputePlacementPoolRelationTransformationService.SELF_LINK);
+        doPost(compute, ResourcePoolTransformationService.SELF_LINK);
+
+        host.testStart(1);
+        DeferredResult<List<ComputeState>> hostsWithinPlacementZone = ClusterUtils
+                .getHostsWithinPlacementZone(
+                        GroupResourcePlacementService.DEFAULT_RESOURCE_POOL_LINK,
+                        ProjectService.DEFAULT_PROJECT_LINK, host);
+        hostsWithinPlacementZone.whenComplete((computeStates, ex) -> {
+            if (ex != null) {
+                host.failIteration(ex);
+                return;
+            } else if (computeStates.size() == 1) {
+                host.completeIteration();
+            } else {
+                host.failIteration(new IllegalStateException("Incorrect number of hosts found"));
+            }
+        });
+        host.testWait();
     }
 
     private ComputeState createComputeState(String hostId, String pool) {

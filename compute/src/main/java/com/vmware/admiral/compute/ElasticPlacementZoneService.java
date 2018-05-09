@@ -23,7 +23,6 @@ import java.util.function.Consumer;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.service.common.MultiTenantDocument;
-import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
@@ -256,21 +255,12 @@ public class ElasticPlacementZoneService extends StatefulService {
                 .addFieldClause(ComputeState.FIELD_NAME_RESOURCE_POOL_LINK, epz.resourcePoolLink,
                         Occurance.SHOULD_OCCUR)
                 .build();
-        Query rpSpecificClause = generateContainerRpQuery();
         Query tenantClause = QueryUtil.addTenantClause(rp.tenantLinks);
 
         Query epzQuery = Query.Builder.create()
-                .addClauses(kindClause, assignmentClause, rpSpecificClause, tenantClause)
+                .addClauses(kindClause, assignmentClause, tenantClause)
                 .build();
         return epzQuery;
-    }
-
-    /**
-     * Generates a query clause for computes in a container RP.
-     */
-    private static Query generateContainerRpQuery() {
-        return Query.Builder.create()
-                .addFieldClause(ComputeState.FIELD_NAME_TYPE, ComputeType.VM_GUEST.name()).build();
     }
 
     @Override
