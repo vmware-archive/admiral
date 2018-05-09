@@ -13,6 +13,9 @@ package com.vmware.admiral.compute.kubernetes;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import static com.vmware.admiral.compute.kubernetes.KubernetesEntityDataCollection.DEFAULT_KUBERNETES_ENTITY_DATA_COLLECTION_LINK;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -48,10 +51,12 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService.Co
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.test.TestContext;
+import com.vmware.xenon.common.test.TestRequestSender;
 import com.vmware.xenon.services.common.QueryTask;
 
 public class KubernetesEntityDataCollectionTest extends ComputeBaseTest {
@@ -201,6 +206,46 @@ public class KubernetesEntityDataCollectionTest extends ComputeBaseTest {
         }
         result.setKubernetesEntityFromJson(Utils.toJson(object));
         return result;
+    }
+
+    @Test
+    public void testPost() {
+        TestRequestSender sender = host.getTestRequestSender();
+        TestRequestSender.FailureResponse failureResponse = sender.sendAndWaitFailure(Operation
+                .createPost(host, DEFAULT_KUBERNETES_ENTITY_DATA_COLLECTION_LINK));
+        assertTrue(IllegalArgumentException.class.equals(failureResponse.failure.getClass()));
+
+        failureResponse = sender.sendAndWaitFailure(Operation
+                .createPost(host, DEFAULT_KUBERNETES_ENTITY_DATA_COLLECTION_LINK)
+                .setBodyNoCloning(new KubernetesEntityDataCollectionState()));
+        assertTrue(LocalizableValidationException.class.equals(failureResponse.failure.getClass()));
+        assertTrue(failureResponse.failure.getMessage().startsWith("Only one instance"));
+
+        KubernetesEntityDataCollectionState dc = new KubernetesEntityDataCollectionState();
+        dc.documentSelfLink = DEFAULT_KUBERNETES_ENTITY_DATA_COLLECTION_LINK;
+        Operation response = sender.sendAndWait(Operation
+                .createPost(host, DEFAULT_KUBERNETES_ENTITY_DATA_COLLECTION_LINK)
+                .setBodyNoCloning(dc));
+        assertTrue(Operation.STATUS_CODE_OK == response.getStatusCode());
+    }
+
+    @Test
+    public void testPut() throws Throwable {
+        TestRequestSender sender = host.getTestRequestSender();
+        Operation response = sender.sendAndWait(Operation
+                .createPut(host, DEFAULT_KUBERNETES_ENTITY_DATA_COLLECTION_LINK)
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_POST_TO_PUT)
+                .setBodyNoCloning(new KubernetesEntityDataCollectionState()));
+        assertTrue(Operation.STATUS_CODE_OK == response.getStatusCode());
+
+        TestRequestSender.FailureResponse failureResponse = sender.sendAndWaitFailure(Operation
+                .createPut(host, DEFAULT_KUBERNETES_ENTITY_DATA_COLLECTION_LINK));
+        assertTrue(IllegalArgumentException.class.equals(failureResponse.failure.getClass()));
+
+        response = sender.sendAndWait(Operation
+                .createPut(host, DEFAULT_KUBERNETES_ENTITY_DATA_COLLECTION_LINK)
+                .setBodyNoCloning(new KubernetesEntityDataCollectionState()));
+        assertTrue(Operation.STATUS_CODE_OK == response.getStatusCode());
     }
 
     @Test

@@ -18,7 +18,6 @@ import java.net.URI;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -26,6 +25,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
@@ -42,8 +42,6 @@ import com.vmware.admiral.compute.container.CompositeComponentRegistry;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
 import com.vmware.admiral.compute.kubernetes.service.BaseKubernetesState;
-import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService;
-import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
 import com.vmware.admiral.service.common.DefaultSubStage;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
@@ -119,7 +117,7 @@ public class KubernetesEntityDataCollection extends StatefulService {
     public static class EntityListCallback extends ServiceTaskCallbackResponse {
 
         public String computeHostLink;
-        public Map<String, KubernetesEntityData> idToEntityData = new HashMap<>();
+        public Map<String, KubernetesEntityData> idToEntityData = new ConcurrentHashMap<>();
         public boolean unlockDataCollectionForHost;
     }
 
@@ -475,35 +473,6 @@ public class KubernetesEntityDataCollection extends StatefulService {
                                 callback.run();
                             }
                         }));
-    }
-
-    @SuppressWarnings("unused")
-    private void createDiscoveredEntityDescription(BaseKubernetesState entity) {
-        /*if (entity.kubernetesEntity == null) {
-            logWarning("Yaml missing for entity: %s", entity.documentSelfLink);
-            return;
-        }*/
-
-        logFine("Creating KubernetesDescription for discovered entity: %s", entity.id);
-
-        KubernetesDescription entityDescription =
-                KubernetesUtil.createKubernetesEntityDescription(entity);
-
-        sendRequest(OperationUtil
-                .createForcedPost(this, KubernetesDescriptionService.FACTORY_LINK)
-                .setBody(entityDescription)
-                .setCompletion(
-                        (o, ex) -> {
-                            if (ex != null) {
-                                logSevere("Failed to create KubernetesDescription for discovered"
-                                                + " entity (id=%s): %s",
-                                        entity.id, ex.getMessage());
-                            } else {
-                                logInfo("Created KubernetesDescription for discovered entity: %s",
-                                        entity.id);
-                            }
-                        }));
-
     }
 
     private void handleMissingEntity(ResourceState state) {

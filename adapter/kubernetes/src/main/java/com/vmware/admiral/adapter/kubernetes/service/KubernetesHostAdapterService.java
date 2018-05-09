@@ -61,8 +61,7 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
     private static final String HIDDEN_CUSTOM_PROPERTY_PREFIX = "__";
 
     private static final String NOT_FOUND_EXCEPTION_MESSAGE = "returned error 404";
-    private static final String REQUIRED_PROPERTY_MISSING_MESSAGE =
-            "Required request property '%s' is missing.";
+    private static final String REQUIRED_PROPERTY_MISSING_MESSAGE = "Required request property '%s' is missing.";
 
     @Override
     public void handlePatch(Operation op) {
@@ -265,8 +264,7 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
                         } else {
                             callback.accept(o.getBody(AuthCredentialsServiceState.class));
                         }
-                    })
-            );
+                    }));
         }
     }
 
@@ -309,12 +307,10 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
         client.getPods(context, null, resultHandler.appendResult((o) -> {
             PodList podList = o.getBody(PodList.class);
             if (podList.items != null) {
-                synchronized (callbackResponse) {
-                    for (Pod pod : podList.items) {
-                        if (validateKubernetesObject(pod)) {
-                            KubernetesEntityData data = createEntityData(pod, POD_TYPE);
-                            callbackResponse.idToEntityData.put(pod.metadata.uid, data);
-                        }
+                for (Pod pod : podList.items) {
+                    if (validateKubernetesObject(pod)) {
+                        KubernetesEntityData data = createEntityData(pod, POD_TYPE);
+                        callbackResponse.idToEntityData.put(pod.metadata.uid, data);
                     }
                 }
             }
@@ -322,25 +318,23 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
         client.getServices(context, null, resultHandler.appendResult(o -> {
             ServiceList serviceList = o.getBody(ServiceList.class);
             if (serviceList.items != null) {
-                synchronized (callbackResponse) {
-                    for (Service service : serviceList.items) {
-                        if (validateKubernetesObject(service)) {
-                            KubernetesEntityData data = createEntityData(service, SERVICE_TYPE);
-                            callbackResponse.idToEntityData.put(service.metadata.uid, data);
-                        }
+                for (Service service : serviceList.items) {
+                    if (validateKubernetesObject(service)) {
+                        KubernetesEntityData data = createEntityData(service, SERVICE_TYPE);
+                        callbackResponse.idToEntityData.put(service.metadata.uid, data);
                     }
                 }
+
             }
         }));
         client.getDeployments(context, null, resultHandler.appendResult(o -> {
             DeploymentList deploymentList = o.getBody(DeploymentList.class);
             if (deploymentList.items != null) {
-                synchronized (callbackResponse) {
-                    for (Deployment deployment : deploymentList.items) {
-                        if (validateKubernetesObject(deployment)) {
-                            KubernetesEntityData data = createEntityData(deployment, DEPLOYMENT_TYPE);
-                            callbackResponse.idToEntityData.put(deployment.metadata.uid, data);
-                        }
+                for (Deployment deployment : deploymentList.items) {
+                    if (validateKubernetesObject(deployment)) {
+                        KubernetesEntityData data = createEntityData(deployment,
+                                DEPLOYMENT_TYPE);
+                        callbackResponse.idToEntityData.put(deployment.metadata.uid, data);
                     }
                 }
             }
@@ -348,12 +342,11 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
         client.getReplicationControllers(context, null, resultHandler.appendResult(o -> {
             ReplicationControllerList rcList = o.getBody(ReplicationControllerList.class);
             if (rcList.items != null) {
-                synchronized (callbackResponse) {
-                    for (ReplicationController rc : rcList.items) {
-                        if (validateKubernetesObject(rc)) {
-                            KubernetesEntityData data = createEntityData(rc, REPLICATION_CONTROLLER_TYPE);
-                            callbackResponse.idToEntityData.put(rc.metadata.uid, data);
-                        }
+                for (ReplicationController rc : rcList.items) {
+                    if (validateKubernetesObject(rc)) {
+                        KubernetesEntityData data = createEntityData(rc,
+                                REPLICATION_CONTROLLER_TYPE);
+                        callbackResponse.idToEntityData.put(rc.metadata.uid, data);
                     }
                 }
             }
@@ -361,12 +354,10 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
         client.getReplicaSets(context, null, resultHandler.appendResult(o -> {
             ReplicaSetList rsList = o.getBody(ReplicaSetList.class);
             if (rsList.items != null) {
-                synchronized (callbackResponse) {
-                    for (ReplicaSet rs : rsList.items) {
-                        if (validateKubernetesObject(rs)) {
-                            KubernetesEntityData data = createEntityData(rs, REPLICA_SET_TYPE);
-                            callbackResponse.idToEntityData.put(rs.metadata.uid, data);
-                        }
+                for (ReplicaSet rs : rsList.items) {
+                    if (validateKubernetesObject(rs)) {
+                        KubernetesEntityData data = createEntityData(rs, REPLICA_SET_TYPE);
+                        callbackResponse.idToEntityData.put(rs.metadata.uid, data);
                     }
                 }
             }
