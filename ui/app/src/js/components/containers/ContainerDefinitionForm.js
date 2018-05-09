@@ -21,8 +21,6 @@ import definitionFormUtils from 'core/definitionFormUtils';
 import constants from 'core/constants';
 import { TemplateActions } from 'actions/Actions';
 
-const DEFAULT_TAG = 'latest';
-
 class ContainerDefinitionForm extends Component {
   constructor() {
     super();
@@ -39,7 +37,7 @@ class ContainerDefinitionForm extends Component {
     });
 
     this.$imageTags = this.$el.find('.container-image-input .image-tags-input .form-control');
-    definitionFormUtils.setTagsTypeahead(this.$imageTags, [DEFAULT_TAG]);
+    definitionFormUtils.setTagsTypeahead(this.$imageTags, []);
 
     this.$tagsHolder = this.$el.find('.container-image-input .image-tags-input');
     this.$imageSearch.bind(
