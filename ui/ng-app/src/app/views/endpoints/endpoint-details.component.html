@@ -9,7 +9,7 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<clr-alert [clrAlertType]="'alert-danger'" [(clrAlertClosed)]="!alertMessage" (clrAlertClosedChange)="resetAlert()">
+<clr-alert [clrAlertType]="alertType" [(clrAlertClosed)]="!alertMessage" (clrAlertClosedChange)="resetAlert()">
     <div class="alert-item">
         <span class="alert-text">{{ alertMessage }}</span>
     </div>
@@ -34,48 +34,51 @@
                         </label>
                     </div>
                     <div class="form-group">
-                        <label for="endpointDescription">Description</label>
-                        <textarea id="endpointDescription" rows="5" formControlName="description"></textarea>
+                        <label for="endpointDescription">{{"endpoints.details.descriptionFieldTitle" | i18n}}</label>
+                        <div class="endpoint-description">
+                            <textarea id="endpointDescription" rows="5" formControlName="description"></textarea>
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label for="endpointAddress" class="required">{{"endpoints.details.addressFieldTitle" | i18n}}</label>
-                        <label for="endpointAddress" aria-haspopup="true" role="tooltip"
+                        <label for="uaaAddress" class="required">{{"endpoints.details.uaaAddressFieldTitle" | i18n}}</label>
+                        <label for="uaaAddress" aria-haspopup="true" role="tooltip"
                                class="tooltip tooltip-validation tooltip-sm tooltip-right"
-                               [class.invalid]="endpointDetailsForm.get('address').invalid && (endpointDetailsForm.get('address').dirty || endpointDetailsForm.get('address').touched)">
-                            <input id="endpointAddress" type="text" formControlName="address" size="45">
-                            <span class="tooltip-content">{{"endpoints.details.addressRequired" | i18n}}</span>
-                        </label>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="endpointUserName" class="required">{{"endpoints.details.userNameFieldTitle" | i18n}}</label>
-                        <label for="endpointUserName" aria-haspopup="true" role="tooltip"
-                               class="tooltip tooltip-validation tooltip-sm tooltip-right"
-                               [class.invalid]="endpointDetailsForm.get('userName').invalid && (endpointDetailsForm.get('userName').dirty || endpointDetailsForm.get('userName').touched)">
-                            <input id="endpointUserName" type="text" formControlName="userName" size="45">
-                            <span class="tooltip-content">{{"endpoints.details.userNameRequired" | i18n}}</span>
+                               [class.invalid]="endpointDetailsForm.get('uaaAddress').invalid && (endpointDetailsForm.get('uaaAddress').dirty || endpointDetailsForm.get('uaaAddress').touched)">
+                            <input id="uaaAddress" type="text" formControlName="uaaAddress" size="45">
+                            <span class="tooltip-content">{{"endpoints.details.uaaAddressRequired" | i18n}}</span>
                         </label>
                     </div>
                     <div class="form-group">
-                        <label for="endpointPassword" class="required">{{"endpoints.details.passwordFieldTitle" | i18n}}</label>
-                        <label for="endpointPassword" aria-haspopup="true" role="tooltip" class="tooltip tooltip-validation tooltip-sm tooltip-right"
-                               [class.invalid]="endpointDetailsForm.get('password').invalid && (endpointDetailsForm.get('password').dirty || endpointDetailsForm.get('password').touched)">
-                            <input id="endpointPassword" type="password" formControlName="password" size="45">
-                            <span class="tooltip-content">{{"endpoints.details.passwordRequired" | i18n}}</span>
+                        <label for="uaaCredentials" class="required">{{ "endpoints.details.credentials" | i18n }}</label>
+                        <dropdown formControlName="uaaCredentials" [options]="credentials" [title]="credentialsTitle"
+                                  [searchPlaceholder]="credentialsSearchPlaceholder"
+                                  ddClass="bottom-right">
+                        </dropdown>
+                    </div>
+                    <div class="form-group">
+                        <label for="pksAddress" class="required">{{"endpoints.details.pksAddressFieldTitle" | i18n}}</label>
+                        <label for="pksAddress" aria-haspopup="true" role="tooltip"
+                               class="tooltip tooltip-validation tooltip-sm tooltip-right"
+                               [class.invalid]="endpointDetailsForm.get('pksAddress').invalid && (endpointDetailsForm.get('pksAddress').dirty || endpointDetailsForm.get('pksAddress').touched)">
+                            <input id="pksAddress" type="text" formControlName="pksAddress" size="45">
+                            <span class="tooltip-content">{{"endpoints.details.pksAddressRequired" | i18n}}</span>
                         </label>
                     </div>
 
                     <button type="button" class="btn btn-secondary"
-                            [disabled]="isSavingEndpoint || isTestingConnection"
-                            (click)="testConnection()">Test Connection</button>
+                            [clrLoading]="isTestingConnection"
+                            [disabled]="isSavingEndpoint || endpointDetailsForm.invalid"
+                            (click)="testConnection()">{{"endpoints.details.testConnectionBtn" | i18n}}</button>
                     <button type="button" class="btn btn-secondary"
                             [disabled]="isSavingEndpoint"
                             (click)="cancel()">{{ "cancel" | i18n }}</button>
                     <button *ngIf="!editMode" type="button" class="btn btn-primary"
-                            [clrLoading]="isSavingEndpoint || isTestingConnection || endpointDetailsForm.invalid"
-                            (click)="create()">Create</button>
+                            [clrLoading]="isSavingEndpoint"
+                            [disabled]="endpointDetailsForm.invalid"
+                            (click)="create()">{{"endpoints.details.createBtn" | i18n}}</button>
                     <button *ngIf="editMode" type="button" class="btn btn-primary"
-                            [clrLoading]="isSavingEndpoint || isTestingConnection || endpointDetailsForm.invalid"
+                            [clrLoading]="isSavingEndpoint"
+                            [disabled]="endpointDetailsForm.invalid"
                             (click)="save()">>{{ "save" | i18n }}</button>
                 </section>
             </form>

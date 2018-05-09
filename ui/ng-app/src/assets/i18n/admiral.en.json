@@ -369,7 +369,22 @@
     "name": "Name",
     "status": "Status",
     "address": "Address",
-    "count": "endpoints"
+    "count": "endpoints",
+    "details": {
+      "titleCreate": "Create Endpoint",
+      "generalTabTitle": "General",
+      "nameFieldTitle": "Name",
+      "nameRequired": "Name of endpoint is required.",
+      "descriptionFieldTitle": "Description",
+      "uaaAddressFieldTitle": "UAA Address",
+      "uaaAddressRequired": "The UAA Address is required.",
+      "credentials": "Credentials",
+      "pksAddressFieldTitle": "PKS Address",
+      "pksAddressRequired": "The PKS Address is required.",
+      "createBtn": "Create",
+      "testConnectionBtn": "Test Connection",
+      "clustersTabTitle": "Clusters"
+    }
   },
   "configuration": {
     "title": "Configuration",
