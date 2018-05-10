@@ -16,8 +16,7 @@
     <div title>Pods</div>
 
     <ng-template let-item="item">
-        <card [routerLink]="['./' + item.documentId]"
-              [ngClass]="{'card-actions-selected': isItemSelected(item)}">
+        <card [routerLink]="['./' + item.documentId]">
             <div card-header>
                 <div class="clusterIcon">
                     <clr-icon shape="rack-server" size="48"></clr-icon>
