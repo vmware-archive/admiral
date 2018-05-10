@@ -47,15 +47,32 @@
               </li>
           </ul>
       </section>
-      <section *ngIf="showLibrary"class="nav-group collapsible">
+      <section *ngIf="showLibrary" class="nav-group collapsible">
           <input id="libraryCollapse" type="checkbox">
           <label for="libraryCollapse">{{ "navigation.library" | i18n }}</label>
           <ul class="nav-list">
-              <li><a class="nav-link" allowNavigation [roles]="templatesRouteRestriction" [projectSelfLink]="currentProjectLink" routerLink="templates" routerLinkActive="active">{{ "navigation.templates" | i18n }}</a></li>
-              <li *ngIf="isHbrEnabled"><a class="nav-link" routerLink="project-repositories" routerLinkActive="active">{{ "navigation.internalRepositories" | i18n }}</a></li>
-              <li><a class="nav-link" allowNavigation [roles]="publicReposRouteRestriction" [projectSelfLink]="currentProjectLink" routerLink="public-repositories" routerLinkActive="active">{{ "navigation.publicRepositories" | i18n }}</a></li>
-              <li *ngIf="embeddedMode"><a class="nav-link" routerLink="registries" routerLinkActive="active">{{ "navigation.registries" | i18n }}</a></li>
-              <li *ngIf="areClosuresAllowed"><a class="nav-link" routerLink="closure-definitions" routerLinkActive="active">{{ "navigation.closures" | i18n }}</a></li>
+              <li><a class="nav-link" allowNavigation [roles]="templatesRouteRestriction"
+                     [projectSelfLink]="currentProjectLink" routerLink="templates"
+                     routerLinkActive="active">{{ "navigation.templates" | i18n }}</a></li>
+              <section *ngIf="isHbrEnabled" class="nav-group collapsible">
+                  <input id="repositoriesCollapse" type="checkbox">
+                  <label for="repositoriesCollapse">{{ "navigation.repositories" | i18n }}</label>
+                  <ul class="nav-list">
+                      <li><a class="nav-link" routerLink="project-repositories"
+                             routerLinkActive="active">{{ "navigation.internalRepositories" | i18n }}</a></li>
+                      <li><a class="nav-link" allowNavigation [roles]="publicReposRouteRestriction"
+                             [projectSelfLink]="currentProjectLink" routerLink="public-repositories"
+                             routerLinkActive="active">{{ "navigation.publicRepositories" | i18n }}</a></li>
+                  </ul>
+              </section>
+              <li *ngIf="!isHbrEnabled"><a class="nav-link" allowNavigation
+                    [roles]="publicReposRouteRestriction" [projectSelfLink]="currentProjectLink"
+                    routerLink="public-repositories"
+                    routerLinkActive="active">{{ "navigation.publicRepositories" | i18n }}</a></li>
+              <li *ngIf="embeddedMode"><a class="nav-link" routerLink="registries"
+                    routerLinkActive="active">{{ "navigation.registries" | i18n }}</a></li>
+              <li *ngIf="areClosuresAllowed"><a class="nav-link" routerLink="closure-definitions"
+                    routerLinkActive="active">{{ "navigation.closures" | i18n }}</a></li>
           </ul>
       </section>
       <section class="nav-group collapsible" allowNavigation [roles]="clustersRouteRestriction" [projectSelfLink]="currentProjectLink">
@@ -64,8 +81,9 @@
           <ul class="nav-list">
               <li><a class="nav-link" routerLink="clusters" routerLinkActive="active">{{ navigationClustersTextKey | i18n }}</a></li>
           </ul>
-          <ul *ngIf="embeddedMode && isPksEnabled" class="nav-list" >
-            <li><a class="nav-link" routerLink="kubernetes/clusters" routerLinkActive="active">{{ "navigation.kubernetesClusters" | i18n }}</a></li>
+          <ul *ngIf="embeddedMode && isPksEnabled" class="nav-list">
+            <li><a class="nav-link" routerLink="kubernetes/clusters"
+                    routerLinkActive="active">{{ "navigation.kubernetesClusters" | i18n }}</a></li>
           </ul>
       </section>
       <section *ngIf="embeddedMode && isPksEnabled" class="nav-group collapsible">
