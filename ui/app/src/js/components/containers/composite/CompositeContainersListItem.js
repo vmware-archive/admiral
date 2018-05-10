@@ -139,7 +139,8 @@ var CompositeContainersListItem = Vue.extend({
     },
 
     operationSupported: function(op) {
-      return utils.operationSupported(op, this.model);
+      return utils.operationSupported(op, this.model)
+        || this.removeEmptyCompositeContainers(op, this.model);
     },
 
     showHosts: function($event) {
@@ -215,6 +216,10 @@ var CompositeContainersListItem = Vue.extend({
       let hasNetworks = this.networksCount > 0;
 
       return !hasHosts && !hasContainers && !hasNetworks;
+    },
+
+    removeEmptyCompositeContainers: function(op, model) {
+      return !model.containers && op === constants.CONTAINERS.OPERATION.REMOVE;
     }
   }
 });
