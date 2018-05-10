@@ -48,6 +48,8 @@ import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState
 import com.vmware.admiral.service.common.ExtensibilitySubscriptionManager;
 import com.vmware.admiral.service.common.NodeMigrationService;
 import com.vmware.admiral.service.common.harbor.HostInitHarborServices;
+import com.vmware.admiral.upgrade.transformation.ResourcePoolTransformationBootstrapService;
+import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.security.util.CertificateUtil;
 import com.vmware.xenon.common.CommandLineArgumentParser;
 import com.vmware.xenon.common.FactoryService;
@@ -262,6 +264,10 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
                 CaSigningCertService.FACTORY_LINK);
         registerForServiceAvailability(ContainerLoadBalancerBootstrapService.startTask(this), true,
                 ContainerLoadBalancerBootstrapService.FACTORY_LINK);
+        registerForServiceAvailability(ResourcePoolTransformationBootstrapService.startTask(this),
+                true,
+                ResourcePoolTransformationBootstrapService.FACTORY_LINK,
+                ResourcePoolService.FACTORY_LINK);
 
         HostInitComputeServicesConfig.startServices(this, false);
         HostInitComputeBackgroundServicesConfig.startServices(this);
