@@ -274,15 +274,15 @@
         "nameRequired": "Name is required.",
         "description": "Description",
         "url": "URL",
-        "urlRequired": "Kubernetes cluster URL is required.",
+        "urlRequired": "Cluster URL is required.",
         "credentials": "Credentials"
       },
       "search": {
-        "placeholder": "Search for Kubernetes Clusters"
+        "placeholder": "Search for Clusters"
       },
       "add": {
         "existing": "Existing PKS Cluster",
-        "external": "External Kubernetes Cluster"
+        "external": "External Cluster"
       },
       "details": {
         "summary": {
@@ -452,7 +452,8 @@
     "registries": "Global Registries",
     "configuration": "Configuration",
     "logs": "Logs",
-    "endpoints": "Endpoints"
+    "endpoints": "Endpoints",
+    "pksEndpoints": "PKS Endpoints"
   },
   "search": {
     "occurrence": {

@@ -12,6 +12,7 @@
 import { Component } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { DocumentService } from '../../../../utils/document.service';
+import { ErrorService } from "../../../../utils/error.service";
 
 @Component({
   selector: 'app-kubernetes-cluster-add',
@@ -23,5 +24,7 @@ import { DocumentService } from '../../../../utils/document.service';
  */
 export class KubernetesClusterAddComponent {
 
-    constructor(private router: Router, private route: ActivatedRoute, private service: DocumentService) {}
+    constructor(private router: Router, private route: ActivatedRoute,
+                private documentService: DocumentService, private errorService: ErrorService) {
+    }
 }

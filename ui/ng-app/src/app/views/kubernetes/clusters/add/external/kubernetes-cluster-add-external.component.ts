@@ -12,13 +12,14 @@
 import { Component, OnInit } from "@angular/core";
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormGroup, FormControl, Validators } from "@angular/forms";
+
 import { DocumentService } from "../../../../../utils/document.service";
-import { Utils } from "../../../../../utils/utils";
+import { ErrorService } from "../../../../../utils/error.service";
 import { Links } from "../../../../../utils/links";
+import { Utils } from "../../../../../utils/utils";
+
 import * as I18n from 'i18next';
-import {formatUtils} from "admiral-ui-common";
-import {Constants} from "../../../../../utils/constants";
-import {FT} from "../../../../../utils/ft";
+import { formatUtils } from "admiral-ui-common";
 
 @Component({
     selector: 'app-kubernetes-cluster-add-external',
@@ -26,7 +27,7 @@ import {FT} from "../../../../../utils/ft";
     styleUrls: ['./kubernetes-cluster-add-external.component.scss']
 })
 /**
- * View for adding external kubernetes clusters.
+ * View for adding external clusters.
  */
 export class KubernetesClusterAddExternalComponent implements OnInit {
     credentials: any[];
@@ -36,7 +37,6 @@ export class KubernetesClusterAddExternalComponent implements OnInit {
     certificate: any;
 
     isSaving: boolean;
-    alertMessage: string;
 
     private sub: any;
 
@@ -57,10 +57,8 @@ export class KubernetesClusterAddExternalComponent implements OnInit {
         entity: I18n.t('app.credential.entity', {ns: 'base'})
     } as I18n.TranslationOptions );
 
-    constructor(private router: Router, private route: ActivatedRoute, private service: DocumentService) {}
-
-    get urlRequiredTextKey() {
-        return 'kubernetes.clusters.edit.urlRequired'
+    constructor(private router: Router, private route: ActivatedRoute,
+                private service: DocumentService, private errorService: ErrorService) {
     }
 
     ngOnInit(): void {
@@ -70,6 +68,7 @@ export class KubernetesClusterAddExternalComponent implements OnInit {
                 this.projectLink = Links.PROJECTS + '/' + projectId;
             }
         });
+
         this.populateCredentials();
     }
 
@@ -133,7 +132,8 @@ export class KubernetesClusterAddExternalComponent implements OnInit {
             };
 
             if (formInput.credentials) {
-                hostState.customProperties['__authCredentialsLink'] = formInput.credentials.documentSelfLink;
+                hostState.customProperties['__authCredentialsLink'] =
+                                                            formInput.credentials.documentSelfLink;
             }
 
             if (formInput.description) {
@@ -144,6 +144,7 @@ export class KubernetesClusterAddExternalComponent implements OnInit {
                 'hostState': hostState,
                 'acceptCertificate': certificateAccepted
             };
+
             this.service.post(Links.CLUSTERS, hostSpec, this.projectLink).then((response) => {
                 if (response.certificate) {
                     this.certificate = response;
@@ -154,7 +155,7 @@ export class KubernetesClusterAddExternalComponent implements OnInit {
                 }
             }).catch(error => {
                 this.isSaving = false;
-                this.alertMessage = Utils.getErrorMessage(error)._generic;
+                this.errorService.error(Utils.getErrorMessage(error)._generic);
             });
         }
     }
@@ -168,9 +169,5 @@ export class KubernetesClusterAddExternalComponent implements OnInit {
         this.showCertificateWarning = false;
 
         this.createCluster(true);
-    }
-
-    resetAlert() {
-        this.alertMessage = null;
     }
 }

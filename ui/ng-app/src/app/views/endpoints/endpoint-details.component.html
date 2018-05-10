@@ -9,7 +9,8 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<clr-alert [clrAlertType]="alertType" [(clrAlertClosed)]="!alertMessage" (clrAlertClosedChange)="resetAlert()">
+<clr-alert *ngIf="alertMessage" [clrAlertType]="alertType" [(clrAlertClosed)]="!alertMessage"
+           (clrAlertClosedChange)="resetAlert()">
     <div class="alert-item">
         <span class="alert-text">{{ alertMessage }}</span>
     </div>
@@ -50,7 +51,8 @@
                     </div>
                     <div class="form-group">
                         <label for="uaaCredentials" class="required">{{ "endpoints.details.credentials" | i18n }}</label>
-                        <dropdown formControlName="uaaCredentials" [options]="credentials" [title]="credentialsTitle"
+                        <dropdown formControlName="uaaCredentials" [options]="credentials"
+                                  [title]="credentialsTitle"
                                   [searchPlaceholder]="credentialsSearchPlaceholder"
                                   ddClass="bottom-right">
                         </dropdown>
