@@ -104,6 +104,10 @@ public class RegistryUtil {
         if (registryFilter != null && !registryFilter.isEmpty()) {
             // add query for a registry with a specific name and group
             queryTasks.add(buildRegistryQueryByNameAndTenantLinks(registryFilter, tenantLinks));
+            if (tenantLinks != null) {
+                // add query for a global registry with a specific name
+                queryTasks.add(buildRegistryQueryByNameAndTenantLinks(registryFilter, null));
+            }
         } else if (tenantLinks != null && !tenantLinks.isEmpty()) {
             // add query for global groups
             queryTasks.add(buildRegistryQueryByTenantLinks(null));
@@ -278,10 +282,6 @@ public class RegistryUtil {
         Query nameClause = new Query()
                 .setTermPropertyName(RegistryState.FIELD_NAME_NAME)
                 .setTermMatchValue(registryName);
-
-        if (tenantLinks == null || tenantLinks.isEmpty()) {
-            return buildRegistryQuery(nameClause);
-        }
 
         Query tenantsClause = buildQueryByTenantLinks(tenantLinks);
         return buildRegistryQuery(nameClause, tenantsClause);

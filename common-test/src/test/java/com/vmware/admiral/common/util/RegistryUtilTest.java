@@ -180,6 +180,34 @@ public class RegistryUtilTest extends BaseTestCase {
         verifyRegistryLinksByHostname("test.registry.com:5000", (String) null, expectedRegistries);
     }
 
+    @Test
+    public void testFindRegistriesByRegistryFilterIncludeGlobals() throws Throwable {
+        List<String> tenantLinks = Collections.singletonList(TENANT);
+        List<String> otherTenantLinks = Collections.singletonList(DIFFERENT_TENANT);
+
+        RegistryState globalRegistry = createRegistry("https://test.registry.com:5001", "globalR",
+                null);
+        RegistryState tenantRegistry = createRegistry("http://test.registry.com:5002", "tenantR",
+                tenantLinks);
+        RegistryState otherRegistry = createRegistry("http://test.registry.com:5002", "dummyR",
+                otherTenantLinks);
+
+        List<RegistryState> expectedRegistries = new ArrayList<>();
+        expectedRegistries.add(globalRegistry);
+
+        verifyRegistryLinksByRegistryFilter("globalR", tenantLinks, expectedRegistries);
+
+        verifyRegistryLinksByRegistryFilter("globalR", null, expectedRegistries);
+
+        expectedRegistries.clear();
+        expectedRegistries.add(tenantRegistry);
+        verifyRegistryLinksByRegistryFilter("tenantR", tenantLinks, expectedRegistries);
+
+        verifyRegistryLinksByRegistryFilter("tenantR", null, Collections.emptyList());
+    }
+
+
+
     private void verifyRegistryLinksByHostname(String hostname, String tenantLink,
             Collection<RegistryState> expectedRegistries) {
         verifyRegistryLinksByHostname(hostname,
@@ -196,27 +224,56 @@ public class RegistryUtilTest extends BaseTestCase {
                 host.failIteration(errors.iterator().next());
             }
 
-            try {
-                assertNotNull(registries);
-                assertEquals("Different number of registries expected.",
-                        expectedRegistries.size(), registries.size());
-                Set<String> registriesLinks = registries.stream().map(r -> r.documentSelfLink).collect(Collectors.toSet());
-                for (RegistryState rs : expectedRegistries) {
-                    assertThat(registriesLinks, hasItem(rs.documentSelfLink));
-                }
-                host.completeIteration();
-            } catch (Throwable e) {
-                host.failIteration(e);
-            }
+            verifyFoundRegistries(expectedRegistries, registries);
         });
 
         host.testWait();
     }
 
+    private void verifyRegistryLinksByRegistryFilter(String registryFilter,
+            Collection<String> tenantLinks, Collection<RegistryState> expectedRegistries) {
+        assertNotNull(expectedRegistries);
+        host.testStart(1);
+
+        RegistryUtil.findRegistries(host, tenantLinks, registryFilter, (registries, errors) -> {
+            if (errors != null && !errors.isEmpty()) {
+                host.failIteration(errors.iterator().next());
+            }
+
+            verifyFoundRegistries(expectedRegistries, registries);
+        });
+
+        host.testWait();
+    }
+
+    private void verifyFoundRegistries(Collection<RegistryState> expectedRegistries,
+            Collection<RegistryState> registries) {
+        try {
+            assertNotNull(registries);
+            assertEquals("Different number of registries expected.",
+                    expectedRegistries.size(), registries.size());
+            Set<String> registriesLinks = registries.stream()
+                    .map(r -> r.documentSelfLink)
+                    .collect(Collectors.toSet());
+            for (RegistryState rs : expectedRegistries) {
+                assertThat(registriesLinks, hasItem(rs.documentSelfLink));
+            }
+            host.completeIteration();
+        } catch (Throwable e) {
+            host.failIteration(e);
+        }
+    }
+
     private RegistryState createRegistry(String address, List<String> tenantLinks)
+            throws Throwable {
+        return createRegistry(address, null, tenantLinks);
+    }
+
+    private RegistryState createRegistry(String address, String name, List<String> tenantLinks)
             throws Throwable {
 
         RegistryState registryState = new RegistryState();
+        registryState.name = name;
         registryState.address = address;
         registryState.tenantLinks = tenantLinks;
         registryState.endpointType = RegistryState.DOCKER_REGISTRY_ENDPOINT_TYPE;
