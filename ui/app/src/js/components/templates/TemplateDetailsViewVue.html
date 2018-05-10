@@ -80,29 +80,27 @@
             </kubernetes-template-item>
           </grid-item>
           <grid-item class="new-item">
-            <template-new-item-menu v-if="templateHasGenericEntities || templateHasKubernetesEntities">
-              <div class="new-definition template-new-item" v-if="!templateHasKubernetesEntities"
-                   @click="openAddNewContainerDefinition">
+            <template-new-item-menu v-if="!templateHasKubernetesEntities">
+              <div class="new-definition template-new-item" @click="openAddNewContainerDefinition">
                 <img src="image-assets/resource-icons/container.png"/>
                 <span class="label">{{i18n("app.template.details.newDefinition.newLabel")}}</span>
               </div>
-              <div class="template-new-item" v-if="!templateHasKubernetesEntities"
-                   @click="openAddNewNetwork">
+              <div class="template-new-item" @click="openAddNewNetwork">
                 <img src="image-assets/resource-icons/network.png"/>
                 <span class="label">{{i18n("app.template.details.editNetwork.newLabel")}}</span>
               </div>
-              <div v-if="areClosuresAllowed && !templateHasKubernetesEntities" class="template-new-item"
-                   @click="openAddNewClosure">
+              <div v-if="areClosuresAllowed" class="template-new-item" @click="openAddNewClosure">
                 <img src="image-assets/resource-icons/task.png"/>
                 <span class='label'>{{i18n('app.template.details.editClosures.newTitle')}}</span>
               </div>
-              <div class="template-new-item" v-if="!templateHasKubernetesEntities"
-                   @click="openAddNewVolume">
+              <div class="template-new-item" @click="openAddNewVolume">
                 <img src="image-assets/resource-icons/volume.png"/>
                 <span class="label">{{i18n("app.template.details.editVolume.newLabel")}}</span>
               </div>
-              <div v-if="isKubernetesEnabled && templateHasKubernetesEntities" class="template-new-item"
-                   @click="openAddNewKubernetes">
+            </template-new-item-menu>
+
+            <template-new-item-menu v-if="templateHasKubernetesEntities">
+              <div class="template-new-item" @click="openAddNewKubernetes">
                 <img src="image-assets/resource-icons/kubernetes.png"/>
                 <span class='label'>{{i18n('app.template.details.editKubernetes.newTitle')}}</span>
               </div>
