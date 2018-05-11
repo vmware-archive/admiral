@@ -142,6 +142,9 @@ public interface ManagementUriParts {
             + "/container-description-to-kubernetes-description-converter";
 
 
+    String PKS_NAMESPACE = "/pks";
+    String PKS_ENDPOINTS = RESOURCES + PKS_NAMESPACE + "/endpoints";
+
     // Request tasks:
     String REQUEST = "/request";
     String REQUESTS = "/requests";
