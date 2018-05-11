@@ -65,6 +65,9 @@
           <div class="progress-meter {{ item.status }}" data-value="100"></div>
         </div>
       </div>
+      <div card-footer>
+        <button class="btn btn-sm btn-link" (click)="openDashboard(item)" [disabled]="!isDashboardInstalled(item)">{{ "kubernetes.clusters.dashboard" | i18n }}</button>
+      </div>
     </card>
   </ng-template>
 </grid-view>

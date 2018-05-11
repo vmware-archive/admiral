@@ -29,6 +29,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 
+import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentRegistry;
@@ -45,6 +46,7 @@ import com.vmware.admiral.compute.kubernetes.entities.pods.PodTemplateSpec;
 import com.vmware.admiral.compute.kubernetes.entities.replicaset.ReplicaSet;
 import com.vmware.admiral.compute.kubernetes.entities.replicationcontrollers.ReplicationController;
 import com.vmware.admiral.compute.kubernetes.entities.services.Service;
+import com.vmware.admiral.compute.kubernetes.entities.services.ServicePort;
 import com.vmware.admiral.compute.kubernetes.service.BaseKubernetesState;
 import com.vmware.admiral.compute.kubernetes.service.DeploymentService.DeploymentState;
 import com.vmware.admiral.compute.kubernetes.service.GenericKubernetesEntityService.GenericKubernetesEntityState;
@@ -55,6 +57,7 @@ import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerServic
 import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler.ServiceState;
 import com.vmware.admiral.service.common.LogService;
 import com.vmware.admiral.service.common.ResourceNamePrefixService.ResourceNamePrefixState;
+import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -83,6 +86,9 @@ public class KubernetesUtil {
     public static final String KUBERNETES_LABEL_APP_ID = "admiral_app_id";
 
     private static final Map<String, ResourceType> kindToInternalType = new HashMap<>();
+
+    private static final String KUBERNETES_DASHBOARD_ACCESS_LINK =
+            "/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/";
 
     static {
         kindToInternalType.put(POD_TYPE, ResourceType.KUBERNETES_POD_TYPE);
@@ -366,5 +372,17 @@ public class KubernetesUtil {
             spec.metadata.labels = new HashMap<>();
         }
         return spec;
+    }
+
+    public static String constructDashboardLink(ComputeState host, Service dashboard) {
+        if (dashboard.spec.ports != null) {
+            for (ServicePort port: dashboard.spec.ports) {
+                if (port.nodePort != null) {
+                    return UriUtilsExtended.extractHost(host.address) + ":" + port.nodePort;
+                }
+            }
+        }
+        return UriUtils.buildUri(UriUtils.buildUri(host.address), KUBERNETES_DASHBOARD_ACCESS_LINK)
+                .toString();
     }
 }

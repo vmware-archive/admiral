@@ -20,6 +20,7 @@ import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.creat
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -34,6 +35,7 @@ import com.vmware.admiral.adapter.kubernetes.KubernetesRemoteApiClient;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
+import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
 import com.vmware.admiral.compute.kubernetes.KubernetesEntityDataCollection.EntityListCallback;
 import com.vmware.admiral.compute.kubernetes.KubernetesEntityDataCollection.KubernetesEntityData;
 import com.vmware.admiral.compute.kubernetes.KubernetesHostConstants;
@@ -61,8 +63,11 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
 
     private static final String HIDDEN_CUSTOM_PROPERTY_PREFIX = "__";
 
-    private static final String NOT_FOUND_EXCEPTION_MESSAGE = "returned error 404";
     private static final String REQUIRED_PROPERTY_MISSING_MESSAGE = "Required request property '%s' is missing.";
+
+    private static final String DASHBOARD_SERVICE_NAME = "kubernetes-dashboard";
+    public static final String DASHBOARD_LINK_PROP_NAME = "__dashboardLink";
+    public static final String DASHBOARD_INSTALLED_PROP_NAME = "__dashboardInstalled";
 
     @Override
     public void handlePatch(Operation op) {
@@ -331,6 +336,18 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
 
             }
         }));
+        client.getSystemServices(context, null, resultHandler.appendResult(o -> {
+            ServiceList serviceList = o.getBody(ServiceList.class);
+            if (serviceList.items != null) {
+                List<Service> dashboardServices = serviceList.items.stream()
+                        .filter(s -> DASHBOARD_SERVICE_NAME.equals(s.metadata.name))
+                        .collect(Collectors.toList());
+
+                updateDashboardLink(context.host,
+                        dashboardServices.isEmpty() ? null : dashboardServices.get(0));
+
+            }
+        }));
         client.getDeployments(context, null, resultHandler.appendResult(o -> {
             DeploymentList deploymentList = o.getBody(DeploymentList.class);
             if (deploymentList.items != null) {
@@ -367,6 +384,30 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
             }
         }));
         allStarted.set(true);
+    }
+
+    private void updateDashboardLink(ComputeState clusterHost, Service dashboardService) {
+        ComputeState patchState = new ComputeState();
+        patchState.customProperties = new HashMap<>();
+
+        if (dashboardService != null) {
+            patchState.customProperties.put(DASHBOARD_LINK_PROP_NAME,
+                    KubernetesUtil.constructDashboardLink(clusterHost, dashboardService));
+            patchState.customProperties.put(DASHBOARD_INSTALLED_PROP_NAME,
+                    Boolean.TRUE.toString());
+        } else {
+            patchState.customProperties.put(DASHBOARD_INSTALLED_PROP_NAME,
+                    Boolean.FALSE.toString());
+        }
+
+        Operation.createPatch(this, clusterHost.documentSelfLink)
+                .setBody(patchState)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        logWarning("Failed to patch compute state with dashboard link: %s",
+                                Utils.toString(e));
+                    }
+                }).sendWith(this);
     }
 
     private void updateContext(AdapterRequest request, KubernetesContext context) {

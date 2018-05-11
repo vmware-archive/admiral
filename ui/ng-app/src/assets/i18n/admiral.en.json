@@ -269,6 +269,7 @@
       "addBtn": "Add Cluster",
       "newBtn": "New Cluster",
       "nodeCount": "Nodes",
+      "dashboard": "Dashboard",
       "edit": {
         "name": "Name",
         "nameRequired": "Name is required.",
@@ -287,7 +288,10 @@
       "details": {
         "summary": {
           "title": "Summary",
-          "nodeCount": "Nodes:"
+          "nodeCount": "Nodes:",
+          "dashboard": "Dashboard:",
+          "dashboardInstalled": "INSTALLED",
+          "dashboardNotInstalled": "NOT INSTALLED"
         },
         "nodes": {
           "title": "Nodes",
@@ -427,6 +431,7 @@
   "unmakeAdmin": "Unassign Admin Role",
   "noItems": "No items",
   "reload": "Reload",
+  "notAvailable": "N/A",
   "sessionExpired": "Your session is no longer valid, please log in again!",
   "navigation": {
     "home": "Home",

@@ -36,6 +36,11 @@
                   <div class="right-column">{{ cluster?.clusterCreationTimeMicros | localeDate }}</div>
                   <div class="clear"></div>
               </div>
+              <div *ngIf="dashboard" class="summary-subsection-content-row">
+                <div class="left-column">{{ "kubernetes.clusters.details.summary.dashboard" | i18n }}</div>
+                <div class="right-column"><span [innerHTML]="dashboard"></span>
+                <div class="clear"></div>
+              </div>
           </div>
 
           <div class="summary-subsection">

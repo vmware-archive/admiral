@@ -353,6 +353,19 @@ public class KubernetesRemoteApiClient {
         sendRequest(Action.GET, uri, null, context, completionHandler);
     }
 
+    public void getSystemServices(KubernetesContext context, String appId, CompletionHandler
+            completionHandler) {
+        URI uri = UriUtils.buildUri(ApiUtil.systemNamespacePrefix(context, ApiUtil.API_PREFIX_V1) +
+                getKubernetesPath(SERVICE_TYPE));
+
+        if (appId != null) {
+            uri = UriUtils.extendUriWithQuery(uri, LABEL_SELECTOR_QUERY, String
+                    .format("%s=%s", KUBERNETES_LABEL_APP_ID, appId));
+        }
+
+        sendRequest(Action.GET, uri, null, context, completionHandler);
+    }
+
     public void getDeployments(KubernetesContext context, String appId, CompletionHandler
             completionHandler) {
         URI uri = UriUtils.buildUri(

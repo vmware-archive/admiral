@@ -48,6 +48,7 @@ public class ApiUtil {
             API_VERSION_EXTENSIONS_V1BETA);
 
     public static final String NAMESPACES = "namespaces";
+    public static final String SYSTEM_NAMESPACE = "kube-system";
 
     public static final String API_PATH_SEGMENT_PROXY = "proxy";
 
@@ -89,6 +90,10 @@ public class ApiUtil {
     static String namespacePrefix(KubernetesContext context, String namespace,
             String apiVersionPrefix) {
         return apiPrefix(context, apiVersionPrefix) + UriUtils.buildUriPath(NAMESPACES, namespace);
+    }
+
+    static String systemNamespacePrefix(KubernetesContext context, String apiVersion) {
+        return apiPrefix(context, apiVersion) + UriUtils.buildUriPath(NAMESPACES, SYSTEM_NAMESPACE);
     }
 
     public static URI buildKubernetesFactoryUri(KubernetesDescription description,

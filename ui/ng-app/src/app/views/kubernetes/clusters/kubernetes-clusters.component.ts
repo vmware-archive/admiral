@@ -57,6 +57,26 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
             } as I18n.TranslationOptions);
     }
 
+    isDashboardInstalled(cluster): boolean {
+        var nodeLink = cluster.nodeLinks[0];
+        var installed = Utils.getCustomPropertyValue(cluster.nodes[nodeLink].customProperties, '__dashboardInstalled');
+        return installed === "true";
+    }
+
+    openDashboard(cluster) {
+        event.stopPropagation();
+
+        if (!this.isDashboardInstalled(cluster)) {
+            return;
+        }
+
+        var properties = cluster.nodes[cluster.nodeLinks[0]].customProperties;
+        var dashboardLink = Utils.getCustomPropertyValue(properties, '__dashboardLink');
+        if (dashboardLink) {
+            window.open(dashboardLink);
+        }
+    }
+
     deleteCluster(event, cluster) {
         this.clusterToDelete = cluster;
         event.stopPropagation();
@@ -87,7 +107,7 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
         if (nodesJson) {
             return JSON.parse(nodesJson).length;
         }
-        return 'N/A';
+        return I18n.t('notAvailable');
     }
 
     clusterState(cluster) {

@@ -49,7 +49,26 @@ export class KubernetesClusterSummaryComponent implements OnInit {
                 return JSON.parse(nodesJson).length;
             }
         }
-        return 'N/A';
+        return I18n.t('notAvailable');
+    }
+
+    get dashboard() {
+        if (this.cluster) {
+            var properties = this.cluster.nodes[this.cluster.nodeLinks[0]].customProperties;
+            var dashboardLink = Utils.getCustomPropertyValue(properties, '__dashboardLink');
+            if (dashboardLink) {
+                var labelInstalled = I18n.t('kubernetes.clusters.details.summary.dashboardInstalled');
+                return `<a href="${dashboardLink}" target="_blank">${labelInstalled}</a>`;
+            }
+            var dashboardInstalled = Utils.getCustomPropertyValue(properties, '__dashboardInstalled');
+            if (dashboardInstalled === 'true') {
+                return I18n.t('kubernetes.clusters.details.summary.dashboardInstalled');
+            }
+            if (dashboardInstalled === 'false') {
+                return I18n.t('kubernetes.clusters.details.summary.dashboardNotInstalled');
+            }
+        }
+        return I18n.t('notAvailable');
     }
 
     ngOnInit() {
