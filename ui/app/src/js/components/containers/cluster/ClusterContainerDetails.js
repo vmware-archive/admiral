@@ -15,12 +15,16 @@ import VueToolbarActionButton from 'components/common/VueToolbarActionButton'; /
 import ClusterContainersListItem from 'components/containers/cluster/ClusterContainersListItem';  //eslint-disable-line
 import ContainersListItem from 'components/containers/ContainersListItem'; //eslint-disable-line
 import ContainerDetails from 'components/containers/ContainerDetails'; //eslint-disable-line
+import ActionConfirmationSupportMixin from 'components/common/ActionConfirmationSupportMixin';
 import constants from 'core/constants'; //eslint-disable-line
 import utils from 'core/utils';
 import { ContainerActions, NavigationActions } from 'actions/Actions';
 
 var ClusterContainerDetails = Vue.extend({
   template: ClusterContainerDetailsVue,
+  mixins: [
+    ActionConfirmationSupportMixin
+  ],
   props: {
     model: {
       required: true,
@@ -82,11 +86,10 @@ var ClusterContainerDetails = Vue.extend({
 
       ContainerActions.stopCluster(this.model.listView.items);
     },
-    removeCluster: function($event) {
-      $event.stopPropagation();
-      $event.preventDefault();
-
-      ContainerActions.removeCluster(this.model.listView.items);
+    handleConfirmation: function(actionName) {
+      if (actionName === 'removeCluster') {
+        ContainerActions.removeCluster(this.model.listView.items);
+      }
     }
   },
 

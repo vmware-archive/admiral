@@ -19,17 +19,25 @@
         class="total-items">({{keys(model.listView.items).length || 0}})</span><refresh-button
         v-on:click="refresh()"></refresh-button></div>
 
-      <div class="toolbar-actions" v-if="!model.selectedItem">
-        <toolbar-action-button id="stop" icon-name="stop" v-bind:label="i18n('app.container.actions.stop')"
-                               v-bind:supported="operationSupported('STOP')"
-                               v-on:click="stopCluster($event)"></toolbar-action-button>
-        <toolbar-action-button id="start" icon-name="play" v-bind:label="i18n('app.container.actions.start')"
-                               v-bind:supported="operationSupported('START')"
-                               v-on:click="startCluster($event)"></toolbar-action-button>
-        <toolbar-action-button id="remove" icon-name="trash" v-bind:label="i18n('app.container.actions.remove')"
-                               v-bind:supported="operationSupported('REMOVE')"
-                               v-on:click="removeCluster($event)"></toolbar-action-button>
-      </div>
+        <div class="toolbar-actions" v-if="!model.selectedItem">
+          <template v-if="confirmationOperation">
+            <div class="progress-holder">
+              <action-confirmation :action-name="confirmationOperation"
+                                   :action-title="i18n('app.container.actions.remove')"></action-confirmation>
+            </div>
+          </template>
+          <template v-else>
+            <toolbar-action-button id="stop" icon-name="stop" v-bind:label="i18n('app.container.actions.stop')"
+                                   v-bind:supported="operationSupported('STOP')"
+                                   v-on:click="stopCluster($event)"></toolbar-action-button>
+            <toolbar-action-button id="start" icon-name="play" v-bind:label="i18n('app.container.actions.start')"
+                                   v-bind:supported="operationSupported('START')"
+                                   v-on:click="startCluster($event)"></toolbar-action-button>
+            <toolbar-action-button id="remove" icon-name="trash" v-bind:label="i18n('app.container.actions.remove')"
+                                   v-bind:supported="operationSupported('REMOVE')"
+                                   v-on:click="askConfirmation($event, 'removeCluster')"></toolbar-action-button>
+          </template>
+        </div>
 
       <grid v-bind:context-selected="model.selectedItem">
         <grid-item v-for="item in model.listView.items" track-by="documentId"
