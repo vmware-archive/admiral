@@ -797,7 +797,6 @@ let TemplatesStore = Reflux.createStore({
     this.setInData(['selectedItemDetails'], null);
     this.setInData(['contextView'], {});
 
-
     if (utils.isApplicationEmbedded()) {
       services.loadGroups().then((groupsResult) => {
         this.setInData(['groups'], Object.values(groupsResult));
@@ -807,6 +806,11 @@ let TemplatesStore = Reflux.createStore({
       });
     } else {
       actions.ResourceGroupsActions.retrieveGroups();
+    }
+
+    if (queryOptions[constants.SEARCH_CATEGORY_PARAM] ===
+          constants.TEMPLATES.SEARCH_CATEGORY.IMAGES) {
+      this.loadAvailableRegistries();
     }
 
     var shouldLoadRecommended = !queryOptions ||
@@ -2407,6 +2411,45 @@ let TemplatesStore = Reflux.createStore({
     this.setInData(['selectedItemDetails', 'templateDetails', 'listView', 'error'],
       utils.getErrorMessage(e));
     this.emitChange();
+  },
+
+  loadAvailableRegistries: function() {
+    services.loadRegistries().then((result) => {
+      // currently selected project
+      let selectedProject = utils.getSelectedProject();
+      let selectedProjectKey;
+      if (selectedProject) {
+        if (utils.isApplicationEmbedded() && selectedProject.id) {
+          selectedProjectKey = selectedProject.id;
+        } else if (selectedProject.documentSelfLink) {
+          selectedProjectKey = selectedProject.documentSelfLink;
+        }
+      }
+
+      var availableRepositories = Object.values(result).filter((repository) => {
+        if (!repository.tenantLinks || repository.tenantLinks.length === 0) {
+          // global repository
+          return true;
+        } else {
+          let projectLink = repository.tenantLinks.find(tenantLink => {
+            return tenantLink === selectedProjectKey;
+          });
+
+          if (projectLink) {
+            // project repository
+            return true;
+          }
+        }
+        // not configured for current project
+        return false;
+      });
+
+      this.setInData(['listView', 'availableRepositories'], availableRepositories);
+      this.emitChange();
+
+    }).catch((error) => {
+      console.error('Failed retrieving available repositories', error);
+    });
   }
 });
 

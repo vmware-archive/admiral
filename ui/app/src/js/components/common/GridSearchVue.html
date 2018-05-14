@@ -25,4 +25,7 @@
                  @keyup.enter="onSearch($event)" />
     </div>
   </div>
+  <div v-if="searchTagName" id="searchTagsSelector" class="form-group search-tags-selection">
+    <div class="form-control dropdown-holder"></div>
+  </div>
 </div>

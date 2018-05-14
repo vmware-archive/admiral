@@ -18,7 +18,6 @@ import { serviceUtils } from 'admiral-ui-common';
 const IMAGES_SEARCH_QUERY_PROP_NAME = 'q';
 const IMAGES_SEARCH_LIMIT_PROP_NAME = 'limit';
 const IMAGES_SEARCH_QUERY_WILDCARD = '*';
-const REGISTRY_FILTER_QUERY_TAG_NAME = 'registry:';
 const REGISTRY_FILTER_QUERY_PROP_NAME = 'registry';
 const TEMPLATES_SEARCH_QUERY_TEMPLATES_ONLY_PARAM = 'templatesOnly';
 const TEMPLATES_SEARCH_QUERY_TEMPLATES_PARENTS_ONLY_PARAM = 'templatesParentOnly';
@@ -833,26 +832,20 @@ services.loadTemplates = function(queryOptions) {
     queryOptions = {};
   }
 
-  var anys = toArrayIfDefined(queryOptions.any);
-
   var params = {};
-  if (anys) {
-    // search only the registries specified by name
-    var registryNames = [];
-    anys = anys.filter(any => {
-      if (any.startsWith(REGISTRY_FILTER_QUERY_TAG_NAME)) {
-        registryNames.push(any.substr(REGISTRY_FILTER_QUERY_TAG_NAME.length, any.length));
-        return false;
-      }
-      return true;
-    });
 
-    if (registryNames.length > 0) {
+  if (queryOptions[REGISTRY_FILTER_QUERY_PROP_NAME]) {
+    let registryName = queryOptions[REGISTRY_FILTER_QUERY_PROP_NAME];
+    if (registryName.length > 0) {
       // search in a single registry and ignore others
-      params[REGISTRY_FILTER_QUERY_PROP_NAME] = registryNames[0];
+      params[REGISTRY_FILTER_QUERY_PROP_NAME] = registryName;
     }
+  }
 
+  var anys = toArrayIfDefined(queryOptions.any);
+  if (anys) {
     if (anys.length === 0) {
+      // nothing to search for
       return {
         results: [],
         isPartialResult: false
@@ -866,19 +859,21 @@ services.loadTemplates = function(queryOptions) {
     params[IMAGES_SEARCH_QUERY_PROP_NAME] = IMAGES_SEARCH_QUERY_WILDCARD;
   }
 
-  if (queryOptions[constants.SEARCH_CATEGORY_PARAM] ===
-      constants.TEMPLATES.SEARCH_CATEGORY.TEMPLATES) {
+  let searchCategory = queryOptions[constants.SEARCH_CATEGORY_PARAM];
+  if (searchCategory === constants.TEMPLATES.SEARCH_CATEGORY.TEMPLATES) {
     params[TEMPLATES_SEARCH_QUERY_TEMPLATES_ONLY_PARAM] = true;
     params[TEMPLATES_SEARCH_QUERY_TEMPLATES_PARENTS_ONLY_PARAM] = true;
-  } else if (queryOptions[constants.SEARCH_CATEGORY_PARAM] ===
-             constants.TEMPLATES.SEARCH_CATEGORY.IMAGES) {
+
+  } else if (searchCategory === constants.TEMPLATES.SEARCH_CATEGORY.IMAGES) {
     params[TEMPLATES_SEARCH_QUERY_IMAGES_ONLY_PARAM] = true;
   }
 
   return list(links.TEMPLATES, false, params).then(function(data) {
     var results = data.results || [];
     var isPartialResult = data.isPartialResult || false;
+
     results.sort(utils.templateSortFn);
+
     return {
       results: results,
       isPartialResult: isPartialResult

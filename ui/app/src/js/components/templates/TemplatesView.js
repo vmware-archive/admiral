@@ -81,6 +81,25 @@ var TemplatesViewVueComponent = Vue.extend({
     queryOptions: function() {
       return this.model.listView && this.model.listView.queryOptions;
     },
+    searchTag: function() {
+      let searchTag;
+      if (this.selectedCategory === constants.TEMPLATES.SEARCH_CATEGORY.IMAGES) {
+        searchTag = 'registry';
+      }
+
+      return searchTag;
+    },
+    searchTagOptions: function() {
+      var searchTagOptions;
+
+      if (this.searchTag && this.model.listView.availableRepositories) {
+        searchTagOptions = this.model.listView.availableRepositories.map((repo) => {
+          return repo.name ? repo.name : repo.address;
+        });
+      }
+
+      return searchTagOptions;
+    },
     selectedCategory: function() {
       var queryOpts = this.queryOptions || {};
 
