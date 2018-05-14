@@ -109,6 +109,7 @@ public class ContainerHostUtil {
             ResourceType resourceType) {
 
         switch (resourceType) {
+        case KUBERNETES_GENERIC_TYPE:
         case KUBERNETES_DEPLOYMENT_TYPE:
         case KUBERNETES_POD_TYPE:
         case KUBERNETES_REPLICATION_CONTROLLER_TYPE:

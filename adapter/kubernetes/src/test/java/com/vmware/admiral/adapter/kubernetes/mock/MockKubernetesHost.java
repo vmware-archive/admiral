@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -28,6 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import com.vmware.admiral.adapter.kubernetes.KubernetesApiEndpointsUtil;
 import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
 import com.vmware.admiral.compute.kubernetes.entities.deployments.Deployment;
 import com.vmware.admiral.compute.kubernetes.entities.services.Service;
@@ -35,7 +36,6 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
-import com.vmware.xenon.common.Utils;
 
 public class MockKubernetesHost extends StatelessService {
 
@@ -89,7 +89,14 @@ public class MockKubernetesHost extends StatelessService {
             deployment.metadata.uid = UUID.randomUUID().toString();
             callbackRandomly(post, post.getBody(Deployment.class));
         } else {
-            post.fail(new IllegalArgumentException("Unknown uri " + uri));
+            BaseKubernetesObject k8sObject = post.getBody(BaseKubernetesObject.class);
+            String expectedEndpoint = KubernetesApiEndpointsUtil.getEntityEndpoint(k8sObject.kind);
+            if (uri.endsWith(expectedEndpoint)) {
+                k8sObject.metadata.uid = UUID.randomUUID().toString();
+                callbackRandomly(post, k8sObject);
+            } else {
+                post.fail(new IllegalArgumentException("Unknown uri " + uri));
+            }
         }
     }
 
@@ -108,23 +115,19 @@ public class MockKubernetesHost extends StatelessService {
     }
 
     private void callbackRandomly(Operation post, BaseKubernetesObject element) {
-        String responseBody = Utils.toJson(element);
-
         if (Math.random() > 0.5) {
-            deployedElements.add(element);
-            deployedElementsMap.put(post.getBody(BaseKubernetesObject.class).metadata.name,
-                    element);
-            post.setBody(responseBody);
-            post.complete();
+            doCallback(post, element);
         } else {
-            getHost().schedule(() -> {
-                deployedElements.add(element);
-                deployedElementsMap.put(post.getBody(BaseKubernetesObject.class).metadata.name,
-                        element);
-                post.setBody(responseBody);
-                post.complete();
-            }, 20, TimeUnit.MILLISECONDS);
+            getHost().schedule(() -> doCallback(post, element), 20, TimeUnit.MILLISECONDS);
         }
+    }
+
+    private void doCallback(Operation post, BaseKubernetesObject element) {
+        deployedElements.add(element);
+        deployedElementsMap.put(element.metadata.name, element);
+        post.setBody(element);
+        post.complete();
+
     }
 
     private void handleFetchLog(Operation get) {

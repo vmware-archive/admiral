@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -64,6 +64,15 @@ public class RequestBrokerKubernetesServiceTest extends RequestBaseTest {
 
     @Test
     public void testRequestLifeCycle() throws Throwable {
+        doTestRequestLifeCycle(false);
+    }
+
+    @Test
+    public void testRequestLifeCycleOnSpecificGroupPlacement() throws Throwable {
+        doTestRequestLifeCycle(true);
+    }
+
+    private void doTestRequestLifeCycle(boolean sendGroupPlacementState) throws Throwable {
         host.log("########  Start of testRequestLifeCycle ######## ");
         // setup K8S Host:
         ResourcePoolState resourcePool = createResourcePool();
@@ -81,6 +90,15 @@ public class RequestBrokerKubernetesServiceTest extends RequestBaseTest {
         request.resourceType = ResourceType.COMPOSITE_COMPONENT_TYPE.getName();
         request.resourceDescriptionLink = cd.documentSelfLink;
         request.tenantLinks = groupPlacementState.tenantLinks;
+
+        if (sendGroupPlacementState) {
+            // if this is set, the CompositeKubernetesProvisioningTaskService will
+            // skip the reservation step and will use this group placement. This could
+            // be done in order to test the compute host placement selection code that
+            // would otherwise be skipped.
+            request.groupResourcePlacementLink = groupPlacementState.documentSelfLink;
+        }
+
         host.log("########  Start of request ######## ");
         request = startRequest(request);
 
@@ -93,13 +111,15 @@ public class RequestBrokerKubernetesServiceTest extends RequestBaseTest {
                 extractId(requestSelfLink));
 
         // 2. Reservation stage:
-        String rsrvSelfLink = UriUtils.buildUriPath(ReservationTaskFactoryService.SELF_LINK,
-                extractId(requestSelfLink));
-        ReservationTaskState rsrvTask = getDocument(ReservationTaskState.class, rsrvSelfLink);
-        assertNotNull(rsrvTask);
-        assertEquals(request.resourceDescriptionLink, rsrvTask.resourceDescriptionLink);
-        assertEquals(provisioningSelfLink, rsrvTask.serviceTaskCallback.serviceSelfLink);
-        assertEquals(request.tenantLinks, rsrvTask.tenantLinks);
+        if (!sendGroupPlacementState) {
+            String rsrvSelfLink = UriUtils.buildUriPath(ReservationTaskFactoryService.SELF_LINK,
+                    extractId(requestSelfLink));
+            ReservationTaskState rsrvTask = getDocument(ReservationTaskState.class, rsrvSelfLink);
+            assertNotNull(rsrvTask);
+            assertEquals(request.resourceDescriptionLink, rsrvTask.resourceDescriptionLink);
+            assertEquals(provisioningSelfLink, rsrvTask.serviceTaskCallback.serviceSelfLink);
+            assertEquals(request.tenantLinks, rsrvTask.tenantLinks);
+        }
 
         // 3. Provisioning stage:
         String compositionTaskSelfLink = UriUtils.buildUriPath(

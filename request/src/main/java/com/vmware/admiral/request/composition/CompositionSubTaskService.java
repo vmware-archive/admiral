@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -157,6 +157,12 @@ public class CompositionSubTaskService
 
         /** Set by Task. Indicating that it is in the second phase after allocation */
         public boolean postAllocation;
+
+        /**
+         * (Internal) the groupResourcePlacementState that links to ResourcePool
+         */
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
+        public String groupResourcePlacementLink;
     }
 
     public CompositionSubTaskService() {

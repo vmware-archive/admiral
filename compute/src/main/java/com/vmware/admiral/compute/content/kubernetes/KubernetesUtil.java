@@ -40,12 +40,14 @@ import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObjec
 import com.vmware.admiral.compute.kubernetes.entities.common.ObjectMeta;
 import com.vmware.admiral.compute.kubernetes.entities.deployments.Deployment;
 import com.vmware.admiral.compute.kubernetes.entities.pods.Pod;
+import com.vmware.admiral.compute.kubernetes.entities.pods.PodTemplate;
 import com.vmware.admiral.compute.kubernetes.entities.pods.PodTemplateSpec;
 import com.vmware.admiral.compute.kubernetes.entities.replicaset.ReplicaSet;
 import com.vmware.admiral.compute.kubernetes.entities.replicationcontrollers.ReplicationController;
 import com.vmware.admiral.compute.kubernetes.entities.services.Service;
 import com.vmware.admiral.compute.kubernetes.service.BaseKubernetesState;
 import com.vmware.admiral.compute.kubernetes.service.DeploymentService.DeploymentState;
+import com.vmware.admiral.compute.kubernetes.service.GenericKubernetesEntityService.GenericKubernetesEntityState;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
 import com.vmware.admiral.compute.kubernetes.service.PodService.PodState;
 import com.vmware.admiral.compute.kubernetes.service.ReplicaSetService.ReplicaSetState;
@@ -91,8 +93,9 @@ public class KubernetesUtil {
                 ResourceType.KUBERNETES_REPLICATION_CONTROLLER_TYPE);
     }
 
-    public static ResourceType getResourceType(String type) {
-        return kindToInternalType.get(type);
+    public static ResourceType getResourceType(String entityKind) {
+        ResourceType type = kindToInternalType.get(entityKind);
+        return type != null ? type : ResourceType.KUBERNETES_GENERIC_TYPE;
     }
 
     public static BaseKubernetesObject deserializeKubernetesEntity(String yaml)
@@ -104,15 +107,17 @@ public class KubernetesUtil {
             if (POD_TYPE.equals(entity.kind)) {
                 entity = YamlMapper.objectMapper().readValue(yaml.trim(), Pod.class);
             } else if (POD_TEMPLATE.equals(entity.kind)) {
-                throw new IllegalArgumentException("Not implemented.");
+                entity = YamlMapper.objectMapper().readValue(yaml.trim(), PodTemplate.class);
             } else if (REPLICATION_CONTROLLER_TYPE.equals(entity.kind)) {
-                throw new IllegalArgumentException("Not implemented.");
+                entity = YamlMapper.objectMapper().readValue(yaml.trim(),
+                        ReplicationController.class);
             } else if (DEPLOYMENT_TYPE.equals(entity.kind)) {
                 entity = YamlMapper.objectMapper().readValue(yaml.trim(), Deployment.class);
             } else if (SERVICE_TYPE.equals(entity.kind)) {
                 entity = YamlMapper.objectMapper().readValue(yaml.trim(), Service.class);
             } else {
-                throw new IllegalArgumentException("Invalid kubernetes kind.");
+                entity = YamlMapper.objectMapper().readValue(yaml.trim(),
+                        BaseKubernetesObject.class);
             }
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException(
@@ -201,7 +206,7 @@ public class KubernetesUtil {
         case KubernetesUtil.REPLICA_SET_TYPE:
             return new ReplicaSetState();
         default:
-            return null;
+            return new GenericKubernetesEntityState();
         }
     }
 

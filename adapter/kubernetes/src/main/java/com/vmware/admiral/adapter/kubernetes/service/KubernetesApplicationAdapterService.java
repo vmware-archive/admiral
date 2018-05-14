@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -19,9 +19,8 @@ import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.REPLI
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.SERVICE_TYPE;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -35,6 +34,7 @@ import com.vmware.admiral.compute.container.CompositeComponentRegistry;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
+import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
 import com.vmware.admiral.compute.kubernetes.entities.deployments.Deployment;
 import com.vmware.admiral.compute.kubernetes.entities.deployments.DeploymentList;
 import com.vmware.admiral.compute.kubernetes.entities.pods.Pod;
@@ -48,6 +48,8 @@ import com.vmware.admiral.compute.kubernetes.entities.services.ServiceList;
 import com.vmware.admiral.compute.kubernetes.service.BaseKubernetesState;
 import com.vmware.admiral.compute.kubernetes.service.DeploymentService;
 import com.vmware.admiral.compute.kubernetes.service.DeploymentService.DeploymentState;
+import com.vmware.admiral.compute.kubernetes.service.GenericKubernetesEntityService;
+import com.vmware.admiral.compute.kubernetes.service.GenericKubernetesEntityService.GenericKubernetesEntityState;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
 import com.vmware.admiral.compute.kubernetes.service.PodService;
@@ -58,6 +60,8 @@ import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerServic
 import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerService.ReplicationControllerState;
 import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler;
 import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler.ServiceState;
+import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.CompletionHandler;
 import com.vmware.xenon.common.OperationJoin;
@@ -211,17 +215,6 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
 
     private void validateKubernetesDescriptionTypes(RequestContext context,
             List<KubernetesDescription> descriptions) {
-        HashSet<String> supportedTypes = new HashSet<>(
-                Arrays.asList(DEPLOYMENT_TYPE, SERVICE_TYPE, REPLICATION_CONTROLLER_TYPE,
-                        POD_TYPE));
-
-        for (KubernetesDescription description : descriptions) {
-            if (!supportedTypes.contains(description.type)) {
-                fail(context.request, new IllegalArgumentException(
-                        "Unsupported kubernetes type: " + description.type));
-                return;
-            }
-        }
 
         String compositeComponentId = UriUtils.getLastPathSegment(context.compositeComponent
                 .documentSelfLink);
@@ -332,6 +325,7 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
         discoverReplicaSets(context, failureCallback, successfulCallback);
         discoverPods(context, failureCallback, successfulCallback);
 
+        // TODO discover generic entities
     }
 
     private void discoverDeployments(RequestContext context, Consumer<Throwable> failureCallback,
@@ -613,8 +607,12 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
             factoryLink = PodService.FACTORY_LINK;
             break;
         default:
-            fail(context.request, new IllegalArgumentException(
-                    "Unsupported kubernetes type: " + description.type));
+            BaseKubernetesObject k8sObject = response.getBody(BaseKubernetesObject.class);
+            GenericKubernetesEntityState k8sState = new GenericKubernetesEntityState();
+            k8sState.entity = k8sObject;
+            k8sState.name = k8sObject.metadata != null ? k8sObject.metadata.name : null;
+            state = k8sState;
+            factoryLink = GenericKubernetesEntityService.FACTORY_LINK;
             return;
         }
         state.documentSelfLink = state.getMetadata().uid;
@@ -651,93 +649,118 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
                 .filter(c -> c.startsWith(PodService.FACTORY_LINK))
                 .collect(Collectors.toList());
 
-        // Delete deployments.
-        deleteComponents(context, deploymentComponents, () ->
+        List<String> genericComponents = context.compositeComponent.componentLinks.stream()
+                .filter(c -> c.startsWith(GenericKubernetesEntityService.FACTORY_LINK))
+                .collect(Collectors.toList());
+
+        DeferredResult.completed(null)
+                // Delete deployments.
+                .thenCompose(ignore -> deleteComponents(context, deploymentComponents))
+                .exceptionally(ex -> {
+                    throw logAndCreateException(ex, "Failed to delete kubernetes deployments");
+                })
                 // Delete replication controllers.
-                deleteComponents(context, replicationControllerComponents, () ->
-                        // Delete services.
-                        deleteComponents(context, serviceComponents, () ->
-                                // Delete replica sets.
-                                deleteComponents(context, replicaSetComponents, () ->
-                                        // Delete pods.
-                                        deleteComponents(context, podComponents, () ->
-                                                // Finished.
-                                                patchTaskStage(context.request, TaskStage.FINISHED,
-                                                        null))))));
-    }
-
-    private void deleteComponents(RequestContext context, List<String> componentLinks, Runnable
-            callback) {
-
-        if (componentLinks == null || componentLinks.isEmpty()) {
-            callback.run();
-            return;
-        }
-
-        AtomicInteger counter = new AtomicInteger(componentLinks.size());
-        AtomicBoolean hasError = new AtomicBoolean(false);
-
-        Consumer<Throwable> failureCallback = (ex) -> {
-            if (hasError.compareAndSet(false, true)) {
-                fail(context.request, ex);
-            } else {
-                logWarning("Failure creating kubernetes entity: %s", Utils.toString(ex));
-            }
-        };
-
-        Consumer<String> successfulCallback = (link) -> {
-            deleteState(link, (o, ex) -> {
-                if (ex != null) {
-                    failureCallback.accept(ex);
-                } else {
-                    if (counter.decrementAndGet() == 0 && !hasError.get()) {
-                        callback.run();
-                    }
-                }
-            });
-        };
-
-        for (String componentLink : componentLinks) {
-            getState(context, componentLink,
-                    (state) -> context.client.deleteEntity(state.kubernetesSelfLink,
-                            context.kubernetesContext,
-                            (o, ex) -> {
-                                if (ex != null) {
-                                    failureCallback.accept(ex);
-                                } else {
-                                    successfulCallback.accept(componentLink);
-                                }
-                            }));
-        }
-    }
-
-    private void deleteState(String selfLink, CompletionHandler handler) {
-        sendRequest(Operation
-                .createDelete(this, selfLink)
-                .setCompletion(handler));
-    }
-
-    @SuppressWarnings("unchecked")
-    private void getState(RequestContext context, String selfLink,
-            Consumer<BaseKubernetesState> callBack) {
-        sendRequest(Operation
-                .createGet(this, selfLink)
-                .setCompletion((o, ex) -> {
+                .thenCompose(ignore -> deleteComponents(context, replicationControllerComponents))
+                .exceptionally(ex -> {
+                    throw logAndCreateException(ex,
+                            "Failed to delete kubernetes replication controllers.");
+                })
+                // Delete services.
+                .thenCompose(ignore -> deleteComponents(context, serviceComponents))
+                .exceptionally(ex -> {
+                    throw logAndCreateException(ex, "Failed to delete kubernetes services.");
+                })
+                // Delete replica sets.
+                .thenCompose(ignore -> deleteComponents(context, replicaSetComponents))
+                .exceptionally(ex -> {
+                    throw logAndCreateException(ex, "Failed to delete kubernetes replica sets.");
+                })
+                // Delete pods.
+                .thenCompose(ignore -> deleteComponents(context, podComponents))
+                .exceptionally(ex -> {
+                    throw logAndCreateException(ex, "Failed to delete kubernetes pods.");
+                })
+                // Delete generic components.
+                .thenCompose(ignore -> deleteComponents(context, genericComponents))
+                .exceptionally(ex -> {
+                    throw logAndCreateException(ex,
+                            "Failed to delete kubernetes generic entities.");
+                })
+                .whenComplete((ignore, ex) -> {
                     if (ex != null) {
-                        fail(context.request, new IllegalStateException(String.format("Unable to "
-                                        + "get resource state for %s, reason: %s", selfLink,
-                                Utils.toString(ex))));
+                        Throwable cause = ex instanceof CompletionException ? ex.getCause() : ex;
+                        fail(context.request, cause);
                     } else {
-                        Class stateClass = CompositeComponentRegistry
-                                .metaByStateLink(selfLink).stateClass;
-                        BaseKubernetesState entity = (BaseKubernetesState) o.getBody(stateClass);
-                        callBack.accept(entity);
+                        patchTaskStage(context.request, TaskStage.FINISHED, null);
                     }
-                }));
+                });
     }
 
-    private static String getApplicationUniqueAffix(CompositeComponent cc,
-            CompositeDescription cd) {
-        return cc.name.replace(cd.name, "");
+    private CompletionException logAndCreateException(Throwable ex, String message) {
+        logSevere(message);
+        return ex instanceof CompletionException ? (CompletionException) ex
+                : new CompletionException(ex);
     }
+
+    private DeferredResult<Void> deleteComponents(RequestContext context,
+            List<String> componentLinks) {
+        if (componentLinks == null || componentLinks.isEmpty()) {
+            return DeferredResult.completed(null);
+        }
+
+        List<DeferredResult<Void>> operations = componentLinks.stream()
+                .map(link -> {
+                    return getState(context, link)
+                            .thenCompose(state -> deleteKubernetesEntity(context, state))
+                            .thenCompose(ignore -> deleteState(link));
+                }).collect(Collectors.toList());
+
+        return DeferredResult.allOf(operations).thenAccept(ignore -> {
+        });
+    }
+
+    private DeferredResult<Void> deleteKubernetesEntity(RequestContext context,
+            BaseKubernetesState state) {
+        DeferredResult<Void> result = new DeferredResult<>();
+
+        context.client.deleteEntity(state.kubernetesSelfLink, context.kubernetesContext,
+                (o, ex) -> {
+                    if (ex != null) {
+                        Throwable cause = ex instanceof CompletionException ? ex.getCause() : ex;
+                        logWarning("Failure deleting kubernetes entity: %s", Utils.toString(cause));
+                        result.fail(ex);
+                    } else {
+                        result.complete(null);
+                    }
+                });
+
+        return result;
+    }
+
+    private DeferredResult<Void> deleteState(String selfLink) {
+        return sendWithDeferredResult(Operation
+                .createDelete(this, selfLink))
+                        .thenAccept(ignore -> {
+                        });
+    }
+
+    private DeferredResult<BaseKubernetesState> getState(RequestContext context, String selfLink) {
+        return sendWithDeferredResult(Operation.createGet(this, selfLink))
+                .exceptionally(ex -> {
+
+                    Throwable cause = ex instanceof CompletionException ? ex.getCause() : ex;
+                    logWarning("Unable to get resource state for %s, reason: %s", selfLink,
+                            Utils.toString(cause));
+
+                    throw ex instanceof CompletionException
+                            ? (CompletionException) ex
+                            : new CompletionException(ex);
+                }).thenApply(op -> {
+                    Class<? extends ResourceState> stateClass = CompositeComponentRegistry
+                            .metaByStateLink(selfLink).stateClass;
+                    return (BaseKubernetesState) op.getBody(stateClass);
+                });
+
+    }
+
 }

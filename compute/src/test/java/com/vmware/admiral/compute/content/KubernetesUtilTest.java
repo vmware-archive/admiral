@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -13,8 +13,11 @@ package com.vmware.admiral.compute.content;
 
 import static junit.framework.TestCase.assertNull;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 
 import static com.vmware.admiral.common.util.FileUtil.switchToUnixLineEnds;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.deserializeCompositeTemplate;
@@ -44,8 +47,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
-import org.hamcrest.CoreMatchers;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -57,17 +58,27 @@ import com.vmware.admiral.compute.container.HealthChecker.HealthConfig.HttpVersi
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig.RequestProtocol;
 import com.vmware.admiral.compute.content.kubernetes.KubernetesTemplate;
 import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
+import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
 import com.vmware.admiral.compute.kubernetes.entities.common.ResourceRequirements;
 import com.vmware.admiral.compute.kubernetes.entities.deployments.Deployment;
 import com.vmware.admiral.compute.kubernetes.entities.pods.Container;
 import com.vmware.admiral.compute.kubernetes.entities.pods.ExecAction;
 import com.vmware.admiral.compute.kubernetes.entities.pods.HTTPGetAction;
+import com.vmware.admiral.compute.kubernetes.entities.pods.Pod;
+import com.vmware.admiral.compute.kubernetes.entities.pods.PodTemplate;
 import com.vmware.admiral.compute.kubernetes.entities.pods.Probe;
 import com.vmware.admiral.compute.kubernetes.entities.pods.TCPSocketAction;
+import com.vmware.admiral.compute.kubernetes.entities.replicaset.ReplicaSet;
+import com.vmware.admiral.compute.kubernetes.entities.replicationcontrollers.ReplicationController;
 import com.vmware.admiral.compute.kubernetes.entities.services.Service;
 import com.vmware.admiral.compute.kubernetes.service.BaseKubernetesState;
+import com.vmware.admiral.compute.kubernetes.service.DeploymentService.DeploymentState;
+import com.vmware.admiral.compute.kubernetes.service.GenericKubernetesEntityService.GenericKubernetesEntityState;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
 import com.vmware.admiral.compute.kubernetes.service.PodService.PodState;
+import com.vmware.admiral.compute.kubernetes.service.ReplicaSetService.ReplicaSetState;
+import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerService.ReplicationControllerState;
+import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler.ServiceState;
 import com.vmware.admiral.host.HostInitComputeServicesConfig;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Service.Action;
@@ -99,6 +110,65 @@ public class KubernetesUtilTest {
             + "        - containerPort: 3306\n"
             + "          name: mysql";
 
+    private static final String podYaml = "apiVersion: v1\n"
+            + "kind: Pod\n"
+            + "metadata:\n"
+            + "  name: some-pod\n"
+            + "spec:\n"
+            + "  containers:\n"
+            + "  - name: some-test-pod\n"
+            + "    image: alpine\n";
+
+    private static final String podTemplateYaml = "apiVersion: v1\n"
+            + "kind: PodTemplate\n"
+            + "metadata:\n"
+            + "  name: pod-template-test\n"
+            + "template:\n"
+            + "  metadata:\n"
+            + "    name: some-test-pod-from-template\n"
+            + "  spec:\n"
+            + "    containers:\n"
+            + "    - name: some-test-alpine\n"
+            + "      image: alpine\n";
+
+    private static final String replicationControllerYaml = "apiVersion: v1\n"
+            + "kind: ReplicationController\n"
+            + "metadata:\n"
+            + "  name: replication-controller-test\n"
+            + "spec:\n"
+            + "  replicas: 2\n"
+            + "  selector:\n"
+            + "    app: replication-controller-test\n"
+            + "  template:\n"
+            + "    metadata:\n"
+            + "      name: replication-controller-test\n"
+            + "      labels:\n"
+            + "        app: replication-controller-test\n"
+            + "    spec:\n"
+            + "      containers:\n"
+            + "      - name: nginx\n"
+            + "        image: nginx\n"
+            + "        ports:\n"
+            + "        - containerPort: 80\n";
+
+    private static final String replicaSetYaml = "apiVersion: apps/v1\n"
+            + "kind: ReplicaSet\n"
+            + "metadata:\n"
+            + "  name: replicaset-test\n"
+            + "spec:\n"
+            + "  replicas: 2\n"
+            + "  selector:\n"
+            + "    matchLabels:\n"
+            + "      app: replicaset-test\n"
+            + "  template:\n"
+            + "    metadata:\n"
+            + "      labels:\n"
+            + "        app: replicaset-test\n"
+            + "    spec:\n"
+            + "      containers:\n"
+            + "      - name: some-alpine\n"
+            + "        image: alpine\n";
+
     private static final String invalidDeploymentYaml = "apiVersion: extensions/v1beta1\n"
             + "kind: Deployment\n";
 
@@ -126,6 +196,14 @@ public class KubernetesUtilTest {
             "    app: \"my-app\"\n" +
             "    tier: \"db\"\n";
 
+    private static final String secretYaml = "apiVersion: v1\n" +
+            "kind: Secret\n" +
+            "metadata:\n" +
+            "  name: some-secret\n" +
+            "type: Opaque\n" +
+            "data:\n" +
+            "  key: value\n";
+
     @Before
     public void beforeForKubernetesUtilTest() throws Throwable {
         HostInitComputeServicesConfig.initCompositeComponentRegistry();
@@ -133,10 +211,36 @@ public class KubernetesUtilTest {
 
     @Test
     public void testDeserializeKubernetesEntityHasCorrectClass() throws IOException {
+        assertEquals(Pod.class,
+                KubernetesUtil.deserializeKubernetesEntity(podYaml).getClass());
+        assertEquals(PodTemplate.class,
+                KubernetesUtil.deserializeKubernetesEntity(podTemplateYaml).getClass());
+        assertEquals(ReplicationController.class,
+                KubernetesUtil.deserializeKubernetesEntity(replicationControllerYaml).getClass());
         assertEquals(Deployment.class,
                 KubernetesUtil.deserializeKubernetesEntity(deploymentYaml).getClass());
         assertEquals(Service.class,
                 KubernetesUtil.deserializeKubernetesEntity(serviceYamlFormat).getClass());
+        assertEquals(BaseKubernetesObject.class,
+                KubernetesUtil.deserializeKubernetesEntity(secretYaml).getClass());
+    }
+
+    @Test
+    public void testCreateKubernetesEntityStateCreatesInstancessOfCorrectClass() {
+        assertEquals(PodState.class,
+                KubernetesUtil.createKubernetesEntityState(KubernetesUtil.POD_TYPE).getClass());
+        assertEquals(ServiceState.class,
+                KubernetesUtil.createKubernetesEntityState(KubernetesUtil.SERVICE_TYPE).getClass());
+        assertEquals(DeploymentState.class, KubernetesUtil
+                .createKubernetesEntityState(KubernetesUtil.DEPLOYMENT_TYPE).getClass());
+        assertEquals(ReplicationControllerState.class,
+                KubernetesUtil
+                        .createKubernetesEntityState(KubernetesUtil.REPLICATION_CONTROLLER_TYPE)
+                        .getClass());
+        assertEquals(ReplicaSetState.class, KubernetesUtil
+                .createKubernetesEntityState(KubernetesUtil.REPLICA_SET_TYPE).getClass());
+        assertEquals(GenericKubernetesEntityState.class,
+                KubernetesUtil.createKubernetesEntityState("any-other-kind").getClass());
     }
 
     @Test
@@ -514,6 +618,59 @@ public class KubernetesUtilTest {
     }
 
     @Test
+    public void testSetApplicationLabelOnReplicationController() throws IOException {
+        KubernetesDescription kd = new KubernetesDescription();
+        kd.kubernetesEntity = replicationControllerYaml;
+        kd.type = KubernetesUtil.REPLICATION_CONTROLLER_TYPE;
+
+        String testCompositeId = "123456";
+
+        kd = KubernetesUtil.setApplicationLabel(kd, testCompositeId);
+
+        ReplicationController replicationController = kd
+                .getKubernetesEntity(ReplicationController.class);
+
+        assertNotNull(replicationController);
+        assertNotNull(replicationController.metadata);
+        assertNotNull(replicationController.metadata.labels);
+        assertEquals(testCompositeId,
+                replicationController.metadata.labels.get(KUBERNETES_LABEL_APP_ID));
+
+        assertNotNull(replicationController.spec);
+        assertNotNull(replicationController.spec.template);
+        assertNotNull(replicationController.spec.template.metadata);
+        assertNotNull(replicationController.spec.template.metadata.labels);
+        assertEquals(testCompositeId,
+                replicationController.spec.template.metadata.labels.get(KUBERNETES_LABEL_APP_ID));
+    }
+
+    @Test
+    public void testSetApplicationLabelOnReplicaSet() throws IOException {
+        KubernetesDescription kd = new KubernetesDescription();
+        kd.kubernetesEntity = replicaSetYaml;
+        kd.type = KubernetesUtil.REPLICA_SET_TYPE;
+
+        String testCompositeId = "123456";
+
+        kd = KubernetesUtil.setApplicationLabel(kd, testCompositeId);
+
+        ReplicaSet replicaSet = kd.getKubernetesEntity(ReplicaSet.class);
+
+        assertNotNull(replicaSet);
+        assertNotNull(replicaSet.metadata);
+        assertNotNull(replicaSet.metadata.labels);
+        assertEquals(testCompositeId,
+                replicaSet.metadata.labels.get(KUBERNETES_LABEL_APP_ID));
+
+        assertNotNull(replicaSet.spec);
+        assertNotNull(replicaSet.spec.template);
+        assertNotNull(replicaSet.spec.template.metadata);
+        assertNotNull(replicaSet.spec.template.metadata.labels);
+        assertEquals(testCompositeId,
+                replicaSet.spec.template.metadata.labels.get(KUBERNETES_LABEL_APP_ID));
+    }
+
+    @Test
     public void testGetStateTypeFromSelfLink() {
         String selfLink = "/resources/kubernetes-pods/376fdq673";
         Class<? extends BaseKubernetesState> expectedClass = PodState.class;
@@ -576,17 +733,15 @@ public class KubernetesUtilTest {
 
         KubernetesDescription podDescription = KubernetesUtil
                 .createKubernetesEntityDescription(podState);
-        Assert.assertThat(podDescription.documentSelfLink,
-                CoreMatchers.is(podState.descriptionLink));
-        Assert.assertThat(podDescription.name, CoreMatchers.is(podState.name));
-        Assert.assertThat(podDescription.id, CoreMatchers.is(podState.id));
-        Assert.assertThat(podDescription.type, CoreMatchers.is(podState.getType()));
+        assertThat(podDescription.documentSelfLink, is(podState.descriptionLink));
+        assertThat(podDescription.name, is(podState.name));
+        assertThat(podDescription.id, is(podState.id));
+        assertThat(podDescription.type, is(podState.getType()));
 
-        Assert.assertThat(podDescription.tenantLinks, CoreMatchers.is(podState.tenantLinks));
+        assertThat(podDescription.tenantLinks, is(podState.tenantLinks));
 
-        Assert.assertThat(podDescription.customProperties,
-                CoreMatchers.is(CoreMatchers.notNullValue()));
-        Assert.assertThat(podDescription.customProperties.get(testKey), CoreMatchers.is(testValue));
+        assertThat(podDescription.customProperties, is(notNullValue()));
+        assertThat(podDescription.customProperties.get(testKey), is(testValue));
 
         assertEquals(podState.name, podDescription.name);
     }

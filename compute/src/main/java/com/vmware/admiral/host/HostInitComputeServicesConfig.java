@@ -68,6 +68,8 @@ import com.vmware.admiral.compute.kubernetes.KubernetesEntityDataCollection;
 import com.vmware.admiral.compute.kubernetes.service.ContainerDescriptionToKubernetesDescriptionConverterService;
 import com.vmware.admiral.compute.kubernetes.service.DeploymentService;
 import com.vmware.admiral.compute.kubernetes.service.DeploymentService.DeploymentState;
+import com.vmware.admiral.compute.kubernetes.service.GenericKubernetesEntityService;
+import com.vmware.admiral.compute.kubernetes.service.GenericKubernetesEntityService.GenericKubernetesEntityState;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionContentService;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
@@ -134,6 +136,7 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 EpzComputeEnumerationTaskService.class,
                 PlacementCapacityUpdateTaskService.class,
                 KubernetesDescriptionService.class,
+                GenericKubernetesEntityService.class,
                 PodService.class,
                 DeploymentService.class,
                 ReplicationControllerService.class,
@@ -181,6 +184,10 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                         ContainerLoadBalancerDescription.class,
                         ContainerLoadBalancerService.FACTORY_LINK,
                         ContainerLoadBalancerState.class);
+
+        CompositeComponentRegistry.registerComponent(ResourceType.KUBERNETES_GENERIC_TYPE.getName(),
+                KubernetesDescriptionService.FACTORY_LINK, KubernetesDescription.class,
+                GenericKubernetesEntityService.FACTORY_LINK, GenericKubernetesEntityState.class);
 
         CompositeComponentRegistry.registerComponent(ResourceType.KUBERNETES_POD_TYPE.getName(),
                 KubernetesDescriptionService.FACTORY_LINK, KubernetesDescription.class,

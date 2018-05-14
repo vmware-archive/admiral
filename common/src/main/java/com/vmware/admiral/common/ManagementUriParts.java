@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -140,7 +140,7 @@ public interface ManagementUriParts {
     String KUBERNETES_POD_LOGS = RESOURCES + "/kubernetes-pod-logs";
     String CONTAINER_DESCRIPTION_TO_KUBERNETES_DESCRIPTION_CONVERTER = RESOURCES
             + "/container-description-to-kubernetes-description-converter";
-
+    String KUBERNETES_GENERIC_ENTITIES = RESOURCES + "/kubernetes-generic-entities";
 
     String PKS_NAMESPACE = "/pks";
     String PKS_ENDPOINTS = RESOURCES + PKS_NAMESPACE + "/endpoints";

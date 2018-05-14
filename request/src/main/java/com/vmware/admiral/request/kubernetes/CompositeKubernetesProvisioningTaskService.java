@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -409,6 +409,7 @@ public class CompositeKubernetesProvisioningTaskService extends
         ResourceType resourceType = ResourceType.fromName(meta.resourceType);
 
         switch (resourceType) {
+        case KUBERNETES_GENERIC_TYPE:
         case KUBERNETES_DEPLOYMENT_TYPE:
         case KUBERNETES_POD_TYPE:
         case KUBERNETES_REPLICATION_CONTROLLER_TYPE:

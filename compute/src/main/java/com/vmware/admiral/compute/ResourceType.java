@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -28,6 +28,7 @@ public enum ResourceType {
     CLOSURE_TYPE("CLOSURE", "App.Closure"),
     CONFIGURE_HOST_TYPE("CONFIGURE_HOST", ""),
     CONTAINER_LOAD_BALANCER_TYPE("CONTAINER_LOAD_BALANCER", "App.LoadBalancer"),
+    KUBERNETES_GENERIC_TYPE("KUBERNETES_GENERIC", "Kubernetes.Generic"),
     KUBERNETES_POD_TYPE("KUBERNETES_POD", "Kubernetes.Pod"),
     KUBERNETES_DEPLOYMENT_TYPE("KUBERNETES_DEPLOYMENT", "Kubernetes.Deployment"),
     KUBERNETES_SERVICE_TYPE("KUBERNETES_SERVICE", "Kubernetes.Service"),

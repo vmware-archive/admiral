@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -122,6 +122,12 @@ public class CompositionTaskService
         /** (Internal) Set by task when preparing context in case a specific scheduler can handle the task. */
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public String externalSchedulerTaskLink;
+
+        /**
+         * (Internal) the groupResourcePlacementState that links to ResourcePool
+         */
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
+        public String groupResourcePlacementLink;
     }
 
     public CompositionTaskService() {
@@ -343,6 +349,8 @@ public class CompositionTaskService
         task.tenantLinks = state.tenantLinks;
         task.requestTrackerLink = state.requestTrackerLink;
 
+        task.groupResourcePlacementLink = state.groupResourcePlacementLink;
+
         sendRequest(Operation
                 .createPost(this, state.externalSchedulerTaskLink)
                 .setBody(task)
@@ -438,6 +446,7 @@ public class CompositionTaskService
         compositionSubTask.allocationRequest = true;
         compositionSubTask.operation = RequestBrokerState.PROVISION_RESOURCE_OPERATION;
         compositionSubTask.compositeDescriptionLink = state.resourceDescriptionLink;
+        compositionSubTask.groupResourcePlacementLink = state.groupResourcePlacementLink;
 
         if (resourceNode.dependsOn != null && !resourceNode.dependsOn.isEmpty()) {
             compositionSubTask.dependsOnLinks = resourceNode.dependsOn

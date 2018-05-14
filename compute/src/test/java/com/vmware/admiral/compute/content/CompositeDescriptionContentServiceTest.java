@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -304,7 +304,7 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
                     assertTrue("unexpected component name: " + cd.name,
                             Arrays.asList("wordpress", "mysql", "public-wpnet", "wpnet", "wordpress-mysql-svc",
                                     "wordpress-mysql-dpl", "wordpress-svc", "wordpress-dpl", "wordpress-lb",
-                                    "wordpress-container-lb").contains(cd.name));
+                                    "wordpress-container-lb", "wordpress-secret").contains(cd.name));
                 });
             }
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -22,6 +22,7 @@ import com.vmware.admiral.compute.container.ContainerService;
 import com.vmware.admiral.compute.container.loadbalancer.ContainerLoadBalancerService;
 import com.vmware.admiral.compute.container.util.CompositeComponentNotifier;
 import com.vmware.admiral.compute.kubernetes.service.DeploymentService;
+import com.vmware.admiral.compute.kubernetes.service.GenericKubernetesEntityService;
 import com.vmware.admiral.compute.kubernetes.service.PodService;
 import com.vmware.admiral.compute.kubernetes.service.ReplicaSetService;
 import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerService;
@@ -47,6 +48,7 @@ public class CompositeComponentInterceptor {
         registerType(registry, ClosureService.class);
         registerType(registry, ContainerLoadBalancerService.class);
 
+        registerType(registry, GenericKubernetesEntityService.class);
         registerType(registry, DeploymentService.class);
         registerType(registry, PodService.class);
         registerType(registry, ServiceEntityHandler.class);
