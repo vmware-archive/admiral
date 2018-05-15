@@ -21,6 +21,7 @@ public class ConfigureProjectPageLocators extends PageLocators {
     private final By BACK_BUTTON = By
             .cssSelector(".full-screen.with-back-button>back-button .close-button");
     private final By MEMBERS_BUTTON = By.cssSelector("#membersTab");
+    private final By PROJECT_REGISTRIES_BUTTON = By.cssSelector("#registryTab");
 
     public By pageTitle() {
         return PAGE_TITLE;
@@ -32,5 +33,9 @@ public class ConfigureProjectPageLocators extends PageLocators {
 
     public By membersTabButton() {
         return MEMBERS_BUTTON;
+    }
+
+    public By projectRegistriesTabButton() {
+        return PROJECT_REGISTRIES_BUTTON;
     }
 }

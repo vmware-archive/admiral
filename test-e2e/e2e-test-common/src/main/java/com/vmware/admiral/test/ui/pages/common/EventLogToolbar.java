@@ -19,4 +19,8 @@ public class EventLogToolbar extends BasicClass<EventLogToolbarLocators> {
         super(iframeLocators, pageLocators);
     }
 
+    public String getLastEventMessage() {
+        return pageActions().getText(locators().lastLogMessage());
+    }
+
 }

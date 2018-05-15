@@ -9,18 +9,16 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.test.ui.pages.clusters;
+package com.vmware.admiral.test.ui.pages.common;
 
 import org.openqa.selenium.By;
 
-import com.vmware.admiral.test.ui.pages.common.ModalDialog;
+public class CertificateModalDialog extends
+        ModalDialog<CertificateModalDialogValidator, CertificateModalDialogLocators> {
 
-public class HostCertificateModalDialog extends
-        ModalDialog<HostCertificateModalDialogValidator, HostCertificateModalDialogLocators> {
-
-    public HostCertificateModalDialog(By[] iFrameLocators,
-            HostCertificateModalDialogValidator validator,
-            HostCertificateModalDialogLocators pageLocators) {
+    public CertificateModalDialog(By[] iFrameLocators,
+            CertificateModalDialogValidator validator,
+            CertificateModalDialogLocators pageLocators) {
         super(iFrameLocators, validator, pageLocators);
     }
 

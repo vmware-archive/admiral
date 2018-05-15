@@ -9,25 +9,17 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.vic.test.ui.pages.projectrepos;
+package com.vmware.admiral.vic.test.ui.pages.internalrepos;
 
 import org.openqa.selenium.By;
 
-import com.vmware.admiral.test.ui.pages.common.PageLocators;
-
-public class ProjectRepositoriesPageLocators extends PageLocators {
+public class BuiltInRepositoriesListPageLocators extends BuiltInRepositoriesCommonPageLocators {
 
     private final By REFRESH_BUTTON = By.cssSelector(".refresh-btn");
-    private final By PAGE_TITLE = By.cssSelector("div.title");
     private final String ROW_BY_REPOSITORY_VALUE_XPATH = "//clr-dg-cell/a[./text()='%s']/ancestor::clr-dg-row[contains(concat(' ', @class, ' '), ' datagrid-row ')]";
-    // private final String ROW_RELATIVE_CHECKBOX = "//input[@type='checkbox']";
     private final String ROW_RELATIVE_CHECKBOX = "//clr-checkbox";
     private final By DELETE_REPOSITORIES_BUTTON = By
             .cssSelector(".datagrid-action-bar button:nth-child(3)");
-
-    public By pageTitle() {
-        return PAGE_TITLE;
-    }
 
     public By refreshButton() {
         return REFRESH_BUTTON;

@@ -9,25 +9,22 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.test.ui.pages.clusters;
+package com.vmware.admiral.vic.test.ui.pages.internalrepos;
 
 import com.codeborne.selenide.Condition;
 
 import org.openqa.selenium.By;
 
-import com.vmware.admiral.test.ui.pages.common.PageValidator;
+public class BuiltInRepositoriesCardPageValidator
+        extends BuiltInRepositoriesCommonPageValidator<BuiltInRepositoriesCardPageLocators> {
 
-public class HostCertificateModalDialogValidator
-        extends PageValidator<HostCertificateModalDialogLocators> {
-
-    public HostCertificateModalDialogValidator(By[] iFrameLocators,
-            HostCertificateModalDialogLocators pageLocators) {
+    public BuiltInRepositoriesCardPageValidator(By[] iFrameLocators,
+            BuiltInRepositoriesCardPageLocators pageLocators) {
         super(iFrameLocators, pageLocators);
     }
 
-    @Override
-    public void validateIsCurrentPage() {
-        element(locators().modalTitle()).shouldHave(Condition.exactText("Verify Certficate"));
+    public void validateRepositoryExistsWithName(String name) {
+        element(locators().repositoryCardByName(name)).should(Condition.exist);
     }
 
 }

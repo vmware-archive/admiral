@@ -39,8 +39,8 @@ import com.vmware.admiral.test.ui.pages.main.MainPageLocators;
 import com.vmware.admiral.test.ui.pages.main.MainPageValidator;
 import com.vmware.admiral.test.ui.pages.networks.NetworksPageLibrary;
 import com.vmware.admiral.test.ui.pages.projects.ProjectsPageLibrary;
-import com.vmware.admiral.test.ui.pages.publicrepos.PublicRepositoriesPageLibrary;
-import com.vmware.admiral.test.ui.pages.registries.RegistriesPageLibrary;
+import com.vmware.admiral.test.ui.pages.publicrepos.RepositoriesPageLibrary;
+import com.vmware.admiral.test.ui.pages.registries.GlobalRegistriesPageLibrary;
 import com.vmware.admiral.test.ui.pages.templates.TemplatesPageLibrary;
 import com.vmware.admiral.test.ui.pages.volumes.VolumesPageLibrary;
 
@@ -71,8 +71,8 @@ public abstract class CommonWebClient<L extends CommonWebClientLocators> extends
     private IdentityManagementPageLibrary identity;
     private LogsPageLibrary logs;
     private ProjectsPageLibrary projects;
-    private PublicRepositoriesPageLibrary publicRepositories;
-    private RegistriesPageLibrary registries;
+    private RepositoriesPageLibrary publicRepositories;
+    private GlobalRegistriesPageLibrary registries;
     private TemplatesPageLibrary templates;
     private VolumesPageLibrary volumes;
 
@@ -181,16 +181,16 @@ public abstract class CommonWebClient<L extends CommonWebClientLocators> extends
         return projects;
     }
 
-    public PublicRepositoriesPageLibrary publicRepositories() {
+    public RepositoriesPageLibrary repositories() {
         if (Objects.isNull(publicRepositories)) {
-            publicRepositories = new PublicRepositoriesPageLibrary();
+            publicRepositories = new RepositoriesPageLibrary();
         }
         return publicRepositories;
     }
 
-    public RegistriesPageLibrary registries() {
+    public GlobalRegistriesPageLibrary registries() {
         if (Objects.isNull(registries)) {
-            registries = new RegistriesPageLibrary();
+            registries = new GlobalRegistriesPageLibrary();
         }
         return registries;
     }

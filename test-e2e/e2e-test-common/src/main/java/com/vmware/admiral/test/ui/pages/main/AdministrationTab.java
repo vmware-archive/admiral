@@ -33,7 +33,7 @@ public class AdministrationTab
         pageActions().click(locators().identityManagementButton());
     }
 
-    public void clickRegistriesButton() {
+    public void clickGlobalRegistriesButton() {
         LOG.info("Navigating to Registries page");
         pageActions().click(locators().registriesButton());
     }

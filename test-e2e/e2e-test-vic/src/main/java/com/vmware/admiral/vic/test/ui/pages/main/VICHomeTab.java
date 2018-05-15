@@ -37,8 +37,8 @@ public class VICHomeTab extends HomeTab {
         pageActions().click(locators().clustersButton());
     }
 
-    public void clickProjectRepositoriesButton() {
-        LOG.info("Navigating to Project Repositories page");
+    public void clickBuiltInRepositoriesButton() {
+        LOG.info("Navigating to Built-In Repositories page");
         pageActions().click(locators().projectRepositoriesButton());
     }
 

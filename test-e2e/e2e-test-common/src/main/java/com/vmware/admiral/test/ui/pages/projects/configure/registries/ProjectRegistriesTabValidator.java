@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.test.ui.pages.projects.configure.members;
+package com.vmware.admiral.test.ui.pages.projects.configure.registries;
 
 import com.codeborne.selenide.Condition;
 
@@ -17,9 +17,10 @@ import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.common.PageValidator;
 
-public class MembersTabValidator extends PageValidator<MembersTabLocators> {
+public class ProjectRegistriesTabValidator extends PageValidator<ProjectRegistriesTabLocators> {
 
-    public MembersTabValidator(By[] iFrameLocators, MembersTabLocators pageLocators) {
+    public ProjectRegistriesTabValidator(By[] iFrameLocators,
+            ProjectRegistriesTabLocators pageLocators) {
         super(iFrameLocators, pageLocators);
     }
 

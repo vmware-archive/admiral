@@ -11,21 +11,21 @@
 
 package com.vmware.admiral.test.ui.pages.registries;
 
-import com.codeborne.selenide.Condition;
-
 import org.openqa.selenium.By;
 
-import com.vmware.admiral.test.ui.pages.common.PageValidator;
+import com.vmware.admiral.test.ui.pages.common.PageLocators;
 
-public class RegistriesPageValidator extends PageValidator<RegistriesPageLocators> {
+public class GlobalRegistriesPageLocators extends PageLocators {
 
-    public RegistriesPageValidator(By[] iFrameLocators, RegistriesPageLocators pageLocators) {
-        super(iFrameLocators, pageLocators);
+    private final By PAGE_TITLE = By.cssSelector("div.title");
+    private final By SOURCE_REGISTRIES_BUTTON = By.cssSelector("#sourceRegistriesTab");
+
+    public By pageTitle() {
+        return PAGE_TITLE;
     }
 
-    @Override
-    public void validateIsCurrentPage() {
-        element(locators().pageTitle()).shouldHave(Condition.text("Registries"));
+    public By sourceRegistriesButton() {
+        return SOURCE_REGISTRIES_BUTTON;
     }
 
 }

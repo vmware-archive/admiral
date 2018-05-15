@@ -9,29 +9,22 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.vic.test.ui.pages.projectrepos;
+package com.vmware.admiral.vic.test.ui.pages.internalrepos;
 
 import org.openqa.selenium.By;
 
-import com.vmware.admiral.test.ui.pages.common.BasicPage;
+public class BuiltInRepositoriesListPage extends
+        BuiltInRepositoriesCommonPage<BuiltInRepositoriesListPageValidator, BuiltInRepositoriesListPageLocators> {
 
-public class ProjectRepositoriesPage
-        extends BasicPage<ProjectRepositoriesPageValidator, ProjectRepositoriesPageLocators> {
-
-    public ProjectRepositoriesPage(By[] iFrameLocators, ProjectRepositoriesPageValidator validator,
-            ProjectRepositoriesPageLocators pageLocators) {
+    public BuiltInRepositoriesListPage(By[] iFrameLocators,
+            BuiltInRepositoriesListPageValidator validator,
+            BuiltInRepositoriesListPageLocators pageLocators) {
         super(iFrameLocators, validator, pageLocators);
     }
 
     public void refresh() {
         LOG.info("Refreshing...");
         pageActions().click(locators().refreshButton());
-        waitForSpinner();
-    }
-
-    @Override
-    public void waitToLoad() {
-        validate().validateIsCurrentPage();
         waitForSpinner();
     }
 

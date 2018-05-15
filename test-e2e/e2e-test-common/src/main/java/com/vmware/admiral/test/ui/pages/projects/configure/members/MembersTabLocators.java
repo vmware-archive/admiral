@@ -13,17 +13,12 @@ package com.vmware.admiral.test.ui.pages.projects.configure.members;
 
 import org.openqa.selenium.By;
 
-import com.vmware.admiral.test.ui.pages.common.PageLocators;
+import com.vmware.admiral.test.ui.pages.projects.configure.ConfigureProjectPageLocators;
 
-public class MembersTabLocators extends PageLocators {
+public class MembersTabLocators extends ConfigureProjectPageLocators {
 
-    private By MEMBERS_TAB_INDCATOR = By.cssSelector("#membersTab");
     private final By ADD_MEMBERS_BUTTON = By
-            .cssSelector(".projectMembersGrid .btn.btn-sm.btn-secondary");
-
-    public By tabIndicator() {
-        return MEMBERS_TAB_INDCATOR;
-    }
+            .cssSelector("#membersContent .btn-group .btn:first-child");
 
     public By addMembersButton() {
         return ADD_MEMBERS_BUTTON;

@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.vic.test.ui.pages.projectrepos;
+package com.vmware.admiral.test.ui.pages.registries;
 
 import com.codeborne.selenide.Condition;
 
@@ -17,21 +17,20 @@ import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.common.PageValidator;
 
-public class ProjectRepositoriesPageValidator
-        extends PageValidator<ProjectRepositoriesPageLocators> {
+public class SourceRegistriesTabValidator extends PageValidator<SourceRegistriesTabLocators> {
 
-    public ProjectRepositoriesPageValidator(By[] iFrameLocators,
-            ProjectRepositoriesPageLocators pageLocators) {
+    public SourceRegistriesTabValidator(By[] iFrameLocators,
+            SourceRegistriesTabLocators pageLocators) {
         super(iFrameLocators, pageLocators);
+    }
+
+    public void validateRegistryExistsWithAddress(String address) {
+        element(locators().registryRowByAddress(address)).should(Condition.exist);
     }
 
     @Override
     public void validateIsCurrentPage() {
-        element(locators().pageTitle()).shouldHave(Condition.text("Project Repositories"));
-    }
-
-    public void validateRepositoryExistsWithName(String name) {
-        element(locators().rowByRepositoryName(name)).should(Condition.exist);
+        element(locators().sourceRegistriesButton()).shouldHave(Condition.cssClass("active"));
     }
 
 }

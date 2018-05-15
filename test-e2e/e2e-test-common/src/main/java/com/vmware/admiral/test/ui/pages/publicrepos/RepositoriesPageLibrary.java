@@ -15,19 +15,19 @@ import java.util.Objects;
 
 import com.vmware.admiral.test.ui.pages.common.ResourcePageLibrary;
 
-public class PublicRepositoriesPageLibrary extends ResourcePageLibrary {
+public class RepositoriesPageLibrary extends ResourcePageLibrary {
 
-    private PublicRepositoriesPage publicRepositories;
+    private RepositoriesPage repositories;
 
-    public PublicRepositoriesPage publicRepositories() {
-        if (Objects.isNull(publicRepositories)) {
-            PublicRepositoriesPageLocators locators = new PublicRepositoriesPageLocators();
-            PublicRepositoriesPageValidator validator = new PublicRepositoriesPageValidator(
+    public RepositoriesPage repositoriesPage() {
+        if (Objects.isNull(repositories)) {
+            RepositoriesPageLocators locators = new RepositoriesPageLocators();
+            RepositoriesPageValidator validator = new RepositoriesPageValidator(
                     getFrameLocators(), locators);
-            publicRepositories = new PublicRepositoriesPage(getFrameLocators(), validator,
+            repositories = new RepositoriesPage(getFrameLocators(), validator,
                     locators);
         }
-        return publicRepositories;
+        return repositories;
     }
 
 }

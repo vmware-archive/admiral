@@ -9,23 +9,22 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.test.ui.pages.projects.configure.members;
+package com.vmware.admiral.vic.test.ui.pages.internalrepos;
 
 import com.codeborne.selenide.Condition;
 
 import org.openqa.selenium.By;
 
-import com.vmware.admiral.test.ui.pages.common.PageValidator;
+public class BuiltInRepositoriesListPageValidator
+        extends BuiltInRepositoriesCommonPageValidator<BuiltInRepositoriesListPageLocators> {
 
-public class MembersTabValidator extends PageValidator<MembersTabLocators> {
-
-    public MembersTabValidator(By[] iFrameLocators, MembersTabLocators pageLocators) {
+    public BuiltInRepositoriesListPageValidator(By[] iFrameLocators,
+            BuiltInRepositoriesListPageLocators pageLocators) {
         super(iFrameLocators, pageLocators);
     }
 
-    @Override
-    public void validateIsCurrentPage() {
-        element(locators().membersTabButton()).shouldHave(Condition.cssClass("active"));
+    public void validateRepositoryExistsWithName(String name) {
+        element(locators().rowByRepositoryName(name)).should(Condition.exist);
     }
 
 }

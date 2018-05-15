@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.test.ui.pages.publicrepos;
+package com.vmware.admiral.vic.test.ui.pages.internalrepos;
 
 import com.codeborne.selenide.Condition;
 
@@ -17,16 +17,16 @@ import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.common.PageValidator;
 
-public class PublicRepositoriesPageValidator extends PageValidator<PublicRepositoriesPageLocators> {
+public class BuiltInRepositoriesCommonPageValidator<L extends BuiltInRepositoriesCommonPageLocators>
+        extends PageValidator<L> {
 
-    public PublicRepositoriesPageValidator(By[] iFrameLocators,
-            PublicRepositoriesPageLocators pageLocators) {
+    public BuiltInRepositoriesCommonPageValidator(By[] iFrameLocators, L pageLocators) {
         super(iFrameLocators, pageLocators);
     }
 
     @Override
     public void validateIsCurrentPage() {
-        element(locators().pageTitle()).shouldHave(Condition.text("Popular Repositories"));
+        element(locators().pageTitle()).shouldHave(Condition.text("Built-in Repositories"));
     }
 
 }

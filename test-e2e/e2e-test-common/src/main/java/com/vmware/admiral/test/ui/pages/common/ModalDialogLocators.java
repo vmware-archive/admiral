@@ -19,7 +19,7 @@ public class ModalDialogLocators extends PageLocators {
     private final By MODAL_BACKDROP = By.cssSelector(".modal-backdrop");
     private final By SAVE_BUTTON = By.cssSelector(MODAL_BASE + " .btn.btn-primary");
     private final By CANCEL_BUTTON = By.cssSelector(MODAL_BASE + " .btn.btn-outline");
-    private final By MODAL_TITLE = By.cssSelector(".modal-content .modal-title");
+    private final By MODAL_TITLE = By.cssSelector(MODAL_BASE + " .modal-title");
 
     public By submitButton() {
         return SAVE_BUTTON;

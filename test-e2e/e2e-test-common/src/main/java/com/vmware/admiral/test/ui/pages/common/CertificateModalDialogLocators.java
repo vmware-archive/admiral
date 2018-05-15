@@ -9,13 +9,11 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.test.ui.pages.clusters;
+package com.vmware.admiral.test.ui.pages.common;
 
 import org.openqa.selenium.By;
 
-import com.vmware.admiral.test.ui.pages.common.ModalDialogLocators;
-
-public class HostCertificateModalDialogLocators extends ModalDialogLocators {
+public class CertificateModalDialogLocators extends ModalDialogLocators {
 
     private By ACCEPTC_CERTIFICATE_BITTON = By.cssSelector("verify-certificate .btn.btn-primary");
     private By CANCEL_CERTIFICATE_BITTON = By

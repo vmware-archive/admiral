@@ -19,13 +19,13 @@ import java.util.Objects;
 import com.vmware.admiral.test.ui.pages.CommonWebClient;
 import com.vmware.admiral.vic.test.ui.pages.configuration.ConfigurationPageLibrary;
 import com.vmware.admiral.vic.test.ui.pages.hosts.ContainerHostsPageLibrary;
+import com.vmware.admiral.vic.test.ui.pages.internalrepos.BuiltInRepositoriesPageLibrary;
 import com.vmware.admiral.vic.test.ui.pages.main.VICAdministrationTab;
 import com.vmware.admiral.vic.test.ui.pages.main.VICAdministrationTabLocators;
 import com.vmware.admiral.vic.test.ui.pages.main.VICAdministrationTabValidator;
 import com.vmware.admiral.vic.test.ui.pages.main.VICHomeTab;
 import com.vmware.admiral.vic.test.ui.pages.main.VICHomeTabLocators;
 import com.vmware.admiral.vic.test.ui.pages.main.VICHomeTabValidator;
-import com.vmware.admiral.vic.test.ui.pages.projectrepos.ProjectRepositoriesPageLibrary;
 
 public class VICWebClient extends CommonWebClient<VICWebCLientLocators> {
 
@@ -38,7 +38,7 @@ public class VICWebClient extends CommonWebClient<VICWebCLientLocators> {
 
     private ContainerHostsPageLibrary clusters;
     private ConfigurationPageLibrary configuration;
-    private ProjectRepositoriesPageLibrary projectRepositories;
+    private BuiltInRepositoriesPageLibrary builtInRepositories;
 
     @Override
     protected void waitForLandingPage() {
@@ -46,7 +46,7 @@ public class VICWebClient extends CommonWebClient<VICWebCLientLocators> {
         if (landingUrl.endsWith("/applications")) {
             applications().applicationsPage().waitToLoad();
         } else if (landingUrl.endsWith("/project-repositories")) {
-            projectRepositories().projectRepositoriesPage().waitToLoad();
+            builtInRepositories().internalRepositoriesCardPage().waitToLoad();
         } else {
             Wait().until(d -> pageActions().isDisplayed(locators().loggedUserDiv()));
         }
@@ -88,11 +88,11 @@ public class VICWebClient extends CommonWebClient<VICWebCLientLocators> {
         return configuration;
     }
 
-    public ProjectRepositoriesPageLibrary projectRepositories() {
-        if (Objects.isNull(projectRepositories)) {
-            projectRepositories = new ProjectRepositoriesPageLibrary();
+    public BuiltInRepositoriesPageLibrary builtInRepositories() {
+        if (Objects.isNull(builtInRepositories)) {
+            builtInRepositories = new BuiltInRepositoriesPageLibrary();
         }
-        return projectRepositories;
+        return builtInRepositories;
     }
 
 }

@@ -19,38 +19,28 @@ import java.io.IOException;
 
 import com.codeborne.selenide.Condition;
 
-import org.junit.Rule;
 import org.junit.Test;
 import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.clusters.AddClusterModalDialog.HostType;
-import com.vmware.admiral.test.util.AuthContext;
 import com.vmware.admiral.test.util.SSHCommandExecutor;
 import com.vmware.admiral.test.util.SSHCommandExecutor.CommandResult;
 import com.vmware.admiral.vic.test.ui.BaseTest;
-import com.vmware.admiral.vic.test.ui.util.CreateVchRule;
+import com.vmware.admiral.vic.test.ui.util.TestProperties;
 
 public class PushImageToHarborAndProvision extends BaseTest {
 
     private final String LOCAL_CERTIFICATE_PATH = "target" + File.separator + "ca.crt";
     private final String REMOTE_CERTIFICATE_FOLDER_PATH = String.format("/etc/docker/certs.d/%s",
-            getVicIp());
+            TestProperties.vicIp());
     private final String NGINX_IMAGE_NAME = "nginx";
     private final String NGINX_IMAGE_TAG = "alpine";
     private final String NGINX_IMAGE_AND_TAG = NGINX_IMAGE_NAME + ":" + NGINX_IMAGE_TAG;
     private final String PROJECT_NAME = "hbr-provision";
     private final String TAGGED_IMAGE_PATH = "/wmware/vic/harbor/test/nginx";
-    private final String TAGGED_IMAGE = getVicIp() + "/" + PROJECT_NAME + TAGGED_IMAGE_PATH;
+    private final String TAGGED_IMAGE = TestProperties.vicIp() + "/" + PROJECT_NAME
+            + TAGGED_IMAGE_PATH;
     private final String HOST_NAME = PROJECT_NAME + "_host";
-
-    private final AuthContext vicOvaAuthContext = new AuthContext(getVicIp(), getVicVmUsername(),
-            getVicVmPassword());
-    private final AuthContext vcenterAuthContext = new AuthContext(getVcenterIp(),
-            getDefaultAdminUsername(), getDefaultAdminPassword());
-
-    @Rule
-    public CreateVchRule vchIps = new CreateVchRule(vicOvaAuthContext, vcenterAuthContext,
-            "harbor-provisioning-test", 1);
 
     @Test
     public void pushImageToHarborAndProvision() {
@@ -66,7 +56,8 @@ public class PushImageToHarborAndProvision extends BaseTest {
         clusters().clustersPage().clickAddClusterButton();
         clusters().addHostDialog().setName(HOST_NAME);
         clusters().addHostDialog().setHostType(HostType.VCH);
-        String vchUrl = getVchUrl(vchIps.getHostsIps()[0]);
+        String vchIp = POOL.getHostFromThePool();
+        String vchUrl = getVchUrl(vchIp);
         clusters().addHostDialog().setUrl(vchUrl);
         clusters().addHostDialog().submit();
         clusters().certificateModalDialog().waitToLoad();
@@ -80,16 +71,17 @@ public class PushImageToHarborAndProvision extends BaseTest {
         pushImageToProject();
 
         main().clickHomeTabButton();
-        home().clickContainersButton();
-        containers().containersPage().clickCreateContainer();
-        containers().basicTab()
-                .setImage(getVicIp() + ":443/" + PROJECT_NAME + TAGGED_IMAGE_PATH);
+        home().clickBuiltInRepositoriesButton();
+        builtInRepositories().internalRepositoriesCardPage().waitToLoad();
+        builtInRepositories().internalRepositoriesCardPage()
+                .provisionRepositoryWithAdditionalInfo(PROJECT_NAME + TAGGED_IMAGE_PATH);
         containers().basicTab().setName(NGINX_IMAGE_NAME);
         containers().createContainerPage().clickNetworkTab();
         containers().networkTab().addPortBinding(null, "80");
         containers().createContainerPage().submit();
-        containers().requests().waitForLastRequestToSucceed(720);
-        containers().containersPage().refresh();
+        repositories().requests().waitForLastRequestToSucceed(720);
+        home().clickContainersButton();
+        containers().containersPage().waitToLoad();
         containers().containersPage().inspectContainer(NGINX_IMAGE_NAME);
         containers().containerStatsPage().waitToLoad();
         String settings = containers().containerStatsPage().getPortsSettings().get(0);
@@ -107,14 +99,15 @@ public class PushImageToHarborAndProvision extends BaseTest {
         containers().containersPage().waitToLoad();
         containers().containersPage().deleteContainer(NGINX_IMAGE_NAME);
         containers().requests().waitForLastRequestToSucceed(360);
-        home().clickProjectRepositoriesButton();
-        projectRepositories().projectRepositoriesPage()
-                .selectRepositoryByName(PROJECT_NAME + TAGGED_IMAGE_PATH);
-        projectRepositories().projectRepositoriesPage().clickDeleteButton();
-        projectRepositories().deleteRepositoryModalDialog().waitToLoad();
-        projectRepositories().deleteRepositoryModalDialog().submit();
-        projectRepositories().deleteRepositoryModalDialog().waitForDeleteToComplete();
-        projectRepositories().deleteRepositoryModalDialog().close();
+        home().clickBuiltInRepositoriesButton();
+        builtInRepositories().internalRepositoriesCardPage().waitToLoad();
+        builtInRepositories().internalRepositoriesCardPage()
+                .deleteRepository(PROJECT_NAME + TAGGED_IMAGE_PATH);
+
+        builtInRepositories().deleteRepositoryModalDialog().waitToLoad();
+        builtInRepositories().deleteRepositoryModalDialog().submit();
+        builtInRepositories().deleteRepositoryModalDialog().waitForDeleteToComplete();
+        builtInRepositories().deleteRepositoryModalDialog().close();
         home().clickContainerHostsButton();
         clusters().clustersPage().clickHostDeleteButton(HOST_NAME);
         clusters().deleteHostDialog().waitToLoad();
@@ -129,7 +122,7 @@ public class PushImageToHarborAndProvision extends BaseTest {
     }
 
     private void pushImageToProject() {
-        SSHCommandExecutor executor = new SSHCommandExecutor(vicOvaAuthContext, 22);
+        SSHCommandExecutor executor = createVicOvaSshCommandExecutor();
 
         LOG.info(String.format("Creating remote folder [%s]", REMOTE_CERTIFICATE_FOLDER_PATH));
         String createDirCommand = String.format("mkdir -p " + REMOTE_CERTIFICATE_FOLDER_PATH);
@@ -160,7 +153,8 @@ public class PushImageToHarborAndProvision extends BaseTest {
 
         LOG.info("Logging in to the registry");
         String loginCommand = String.format("docker login %s --username %s --password %s",
-                getVicIp(), getDefaultAdminUsername(), getDefaultAdminPassword());
+                TestProperties.vicIp(), TestProperties.defaultAdminUsername(),
+                TestProperties.defaultAdminPassword());
         result = executor.execute(loginCommand, 30);
         logOutputOrThrow(loginCommand, result);
 
@@ -170,7 +164,7 @@ public class PushImageToHarborAndProvision extends BaseTest {
         logOutputOrThrow(pushCommnad, result);
     }
 
-    private void logOutputOrThrow(String command, CommandResult result) {
+    protected void logOutputOrThrow(String command, CommandResult result) {
         if (result.getExitStatus() != 0) {
             String error = String.format(
                     "Command [%s] failed with exit status [%d], error output:\n%s",

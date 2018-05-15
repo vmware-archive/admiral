@@ -17,8 +17,11 @@ public class RequestsToolbarLocators extends PageLocators {
 
     private final By REQUESTS_BUTTON = By
             .cssSelector(".toolbar .toolbar-item:nth-child(1) .btn");
+    private final String LAST_REQUEST_CSS = ".requests-list #all .request-item-holder:first-child";
     private final By LAST_REQUEST_PROGRESS = By
-            .cssSelector(".requests-list #all .request-item-holder:first-child .progress-status");
+            .cssSelector(LAST_REQUEST_CSS + " .progress-status");
+    private final By LAST_REQUEST = By
+            .cssSelector(LAST_REQUEST_CSS);
     private final By REFRESH_BUTTON = By.cssSelector(".right-context-panel .fa.fa-refresh");
 
     public By requestsButton() {
@@ -31,6 +34,10 @@ public class RequestsToolbarLocators extends PageLocators {
 
     public By refreshButton() {
         return REFRESH_BUTTON;
+    }
+
+    public By lastRequest() {
+        return LAST_REQUEST;
     }
 
 }

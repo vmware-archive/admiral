@@ -15,6 +15,9 @@ import java.util.Objects;
 
 import org.openqa.selenium.By;
 
+import com.vmware.admiral.test.ui.pages.common.CertificateModalDialog;
+import com.vmware.admiral.test.ui.pages.common.CertificateModalDialogLocators;
+import com.vmware.admiral.test.ui.pages.common.CertificateModalDialogValidator;
 import com.vmware.admiral.test.ui.pages.common.PageLibrary;
 import com.vmware.admiral.test.ui.pages.projects.configure.ConfigureProjectPage;
 import com.vmware.admiral.test.ui.pages.projects.configure.ConfigureProjectPageLocators;
@@ -31,6 +34,7 @@ public class ProjectsPageLibrary extends PageLibrary {
     private ProjectsPage projectsPage;
     private AddProjectModalDialog addProjectDialog;
     private DeleteProjectModalDialog deleteProjectDialog;
+    private CertificateModalDialog certificateModalDialog;
 
     private ConfigureProjectPage configureProject;
     private MembersTab membersTab;
@@ -94,6 +98,17 @@ public class ProjectsPageLibrary extends PageLibrary {
             addMemberDialog = new AddMemberModalDialog(getFrameLocators(), validator, locators);
         }
         return addMemberDialog;
+    }
+
+    public CertificateModalDialog certificateModalDialog() {
+        if (Objects.isNull(certificateModalDialog)) {
+            CertificateModalDialogLocators locators = new CertificateModalDialogLocators();
+            CertificateModalDialogValidator validator = new CertificateModalDialogValidator(
+                    getFrameLocators(), locators);
+            certificateModalDialog = new CertificateModalDialog(getFrameLocators(), validator,
+                    locators);
+        }
+        return certificateModalDialog;
     }
 
     @Override

@@ -13,14 +13,15 @@ package com.vmware.admiral.test.ui.pages.registries;
 
 import org.openqa.selenium.By;
 
-import com.vmware.admiral.test.ui.pages.common.PageLocators;
+import com.vmware.admiral.test.ui.pages.common.ModalDialogLocators;
 
-public class RegistriesPageLocators extends PageLocators {
+public class RegistryCertificateModalDialogLocators extends ModalDialogLocators {
 
-    private final By PAGE_TITLE = By.cssSelector("div.title");
+    private final By CANCEL_BUTTON = By.cssSelector(MODAL_BASE + " .confirmCancel");
 
-    public By pageTitle() {
-        return PAGE_TITLE;
+    @Override
+    public By cancelButton() {
+        return CANCEL_BUTTON;
     }
 
 }

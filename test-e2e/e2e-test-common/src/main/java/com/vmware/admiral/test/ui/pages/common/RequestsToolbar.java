@@ -29,30 +29,54 @@ public class RequestsToolbar extends BasicClass<RequestsToolbarLocators> {
     private final int WAIT_AFTER_REFRESH_ON_FAIL_SECONDS = 5;
 
     public void waitForLastRequestToSucceed(int timeout) {
+        waitForLastRequestRequest(timeout, true);
+    }
+
+    public void waitForLastRequestToFail(int timeout) {
+        waitForLastRequestRequest(timeout, false);
+    }
+
+    public void clickLastRequest() {
+        pageActions().click(locators().lastRequest());
+    }
+
+    private void waitForLastRequestRequest(int timeout, boolean shouldSucceed) {
+        String expectedState = shouldSucceed ? "succeed" : "fail";
         LOG.info(
-                String.format("Waiting for [%d] seconds for the last request to succeed", timeout));
+                String.format("Waiting for [%d] seconds for the last request to %s", timeout,
+                        expectedState));
         // Wait a little in case the request is not yet visible
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
         }
         try {
-            waitForLastToSucceed(timeout);
+            if (shouldSucceed) {
+                waitForLastToSucceed(timeout);
+            } else {
+                waitForLastToFail(timeout);
+            }
         } catch (TimeoutException e) {
             // TODO maybe should not be necessary?
             LOG.warning(
                     "Timeout expired, refreshing requests to verify the request is not finished...");
             pageActions().click(locators().refreshButton());
+            LOG.info(String.format(
+                    "Waiting for additional [%s] seconds for the request to finish...",
+                    WAIT_AFTER_REFRESH_ON_FAIL_SECONDS));
             try {
-                LOG.info(String.format(
-                        "Waiting for additional [%s] seconds for the request to finish...",
-                        WAIT_AFTER_REFRESH_ON_FAIL_SECONDS));
-                waitForLastToSucceed(WAIT_AFTER_REFRESH_ON_FAIL_SECONDS);
-                LOG.info("Request has finished, proceeding...");
+                if (shouldSucceed) {
+                    waitForLastToSucceed(WAIT_AFTER_REFRESH_ON_FAIL_SECONDS);
+                    LOG.info("Request has succeeded, proceeding...");
+                } else {
+                    waitForLastToFail(WAIT_AFTER_REFRESH_ON_FAIL_SECONDS);
+                    LOG.info("Request has failed, proceeding...");
+                }
             } catch (TimeoutException e1) {
                 throw e;
             }
         }
+
     }
 
     private void waitForLastToSucceed(int timeout) {
@@ -62,10 +86,26 @@ public class RequestsToolbar extends BasicClass<RequestsToolbarLocators> {
                     expandRequestsIfNotExpanded();
                     String text = pageActions().getText(locators().lastRequestProgress());
                     if (text.contains("FAILED")) {
-                        throw new AssertionError("Last request failed");
+                        throw new AssertionError(
+                                "Last request failed, but was expected to succeed");
                     }
                     return text.contains("FINISHED")
                             && text.contains("COMPLETED");
+                });
+    }
+
+    private void waitForLastToFail(int timeout) {
+        Wait().withTimeout(timeout, TimeUnit.SECONDS)
+                .pollingEvery(1, TimeUnit.SECONDS)
+                .until(f -> {
+                    expandRequestsIfNotExpanded();
+                    String text = pageActions().getText(locators().lastRequestProgress());
+                    if (text.contains("FINISHED") && text.contains("COMPLETED")) {
+                        throw new AssertionError(
+                                "Last request succeeded, but was expected to fail");
+                    }
+                    return text.contains("FAILED")
+                            && text.contains("ERROR");
                 });
     }
 

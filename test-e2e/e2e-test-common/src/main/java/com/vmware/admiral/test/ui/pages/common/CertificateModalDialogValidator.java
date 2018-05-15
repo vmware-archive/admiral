@@ -11,15 +11,21 @@
 
 package com.vmware.admiral.test.ui.pages.common;
 
+import com.codeborne.selenide.Condition;
+
 import org.openqa.selenium.By;
 
-public class EventLogToolbarLocators extends PageLocators {
+public class CertificateModalDialogValidator
+        extends PageValidator<CertificateModalDialogLocators> {
 
-    private final By LAST_LOG_MESSAGE = By
-            .cssSelector(".eventlog-list #all .eventlog-item:first-child .description");
+    public CertificateModalDialogValidator(By[] iFrameLocators,
+            CertificateModalDialogLocators pageLocators) {
+        super(iFrameLocators, pageLocators);
+    }
 
-    public By lastLogMessage() {
-        return LAST_LOG_MESSAGE;
+    @Override
+    public void validateIsCurrentPage() {
+        element(locators().modalTitle()).shouldHave(Condition.exactText("Verify Certficate"));
     }
 
 }

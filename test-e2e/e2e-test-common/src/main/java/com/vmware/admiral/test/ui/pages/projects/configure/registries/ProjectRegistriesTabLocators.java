@@ -9,17 +9,19 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.test.ui.pages.common;
+package com.vmware.admiral.test.ui.pages.projects.configure.registries;
 
 import org.openqa.selenium.By;
 
-public class EventLogToolbarLocators extends PageLocators {
+import com.vmware.admiral.test.ui.pages.projects.configure.ConfigureProjectPageLocators;
 
-    private final By LAST_LOG_MESSAGE = By
-            .cssSelector(".eventlog-list #all .eventlog-item:first-child .description");
+public class ProjectRegistriesTabLocators extends ConfigureProjectPageLocators {
 
-    public By lastLogMessage() {
-        return LAST_LOG_MESSAGE;
+    private final By ADD_REGISTRY_BUTTON = By
+            .cssSelector("#projectRegistriesContent .btn:first-child");
+
+    public By addRegistryButton() {
+        return ADD_REGISTRY_BUTTON;
     }
 
 }

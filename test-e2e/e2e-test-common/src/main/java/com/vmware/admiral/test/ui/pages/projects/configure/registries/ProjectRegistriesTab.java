@@ -9,24 +9,18 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.test.ui.pages.publicrepos;
+package com.vmware.admiral.test.ui.pages.projects.configure.registries;
 
 import org.openqa.selenium.By;
 
-import com.vmware.admiral.test.ui.pages.common.ResourcePage;
+import com.vmware.admiral.test.ui.pages.common.BasicPage;
 
-public class PublicRepositoriesPage
-        extends ResourcePage<PublicRepositoriesPageValidator, PublicRepositoriesPageLocators> {
+public class ProjectRegistriesTab
+        extends BasicPage<ProjectRegistriesTabValidator, ProjectRegistriesTabLocators> {
 
-    public PublicRepositoriesPage(By[] iFrameLocators, PublicRepositoriesPageValidator validator,
-            PublicRepositoriesPageLocators pageLocators) {
+    public ProjectRegistriesTab(By[] iFrameLocators, ProjectRegistriesTabValidator validator,
+            ProjectRegistriesTabLocators pageLocators) {
         super(iFrameLocators, validator, pageLocators);
-    }
-
-    @Override
-    public void refresh() {
-        LOG.info("Refreshing...");
-        pageActions().click(locators().refreshButton());
     }
 
     @Override

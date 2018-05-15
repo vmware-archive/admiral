@@ -30,6 +30,8 @@ public class EditTemplatePage
     }
 
     public void connectContainerToVolume(String containerName, String volumeName) {
+        LOG.info(String.format("Connecting container [%s] to volume [%s]", containerName,
+                volumeName));
         pageActions().hover(locators().resourceDragAreaByName(volumeName));
         // TODO There is a glitch which requires clicking the crag area first, otherwise the drawing
         // is inadequate
@@ -40,6 +42,8 @@ public class EditTemplatePage
     }
 
     public void connectContainerToNetwork(String containerName, String networkName) {
+        LOG.info(String.format("Connecting container [%s] to network [%s]", containerName,
+                networkName));
         pageActions().hover(locators().resourceDragAreaByName(networkName));
         // TODO There is a glitch which requires clicking the crag area first, otherwise the drawing
         // is inadequate

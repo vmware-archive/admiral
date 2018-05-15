@@ -13,6 +13,6 @@ package com.vmware.admiral.test.ui.pages.publicrepos;
 
 import com.vmware.admiral.test.ui.pages.common.ResourcePageLocators;
 
-public class PublicRepositoriesPageLocators extends ResourcePageLocators {
+public class RepositoriesPageLocators extends ResourcePageLocators {
 
 }

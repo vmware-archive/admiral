@@ -15,6 +15,9 @@ import java.util.Objects;
 
 import org.openqa.selenium.By;
 
+import com.vmware.admiral.test.ui.pages.common.CertificateModalDialog;
+import com.vmware.admiral.test.ui.pages.common.CertificateModalDialogLocators;
+import com.vmware.admiral.test.ui.pages.common.CertificateModalDialogValidator;
 import com.vmware.admiral.test.ui.pages.common.PageLibrary;
 
 public class ClustersPageLibrary extends PageLibrary {
@@ -22,7 +25,7 @@ public class ClustersPageLibrary extends PageLibrary {
     private ClustersPage clustersPage;
     private AddClusterModalDialog addHostDialog;
     private DeleteClusterModalDialog deleteHostDialog;
-    private HostCertificateModalDialog certificateModalDialog;
+    private CertificateModalDialog certificateModalDialog;
     private ClusterDetailsPage clusterDetailsPage;
     private ResourcesTab resourcesTab;
 
@@ -57,12 +60,12 @@ public class ClustersPageLibrary extends PageLibrary {
         return deleteHostDialog;
     }
 
-    public HostCertificateModalDialog certificateModalDialog() {
+    public CertificateModalDialog certificateModalDialog() {
         if (Objects.isNull(certificateModalDialog)) {
-            HostCertificateModalDialogLocators locators = new HostCertificateModalDialogLocators();
-            HostCertificateModalDialogValidator validator = new HostCertificateModalDialogValidator(
+            CertificateModalDialogLocators locators = new CertificateModalDialogLocators();
+            CertificateModalDialogValidator validator = new CertificateModalDialogValidator(
                     getFrameLocators(), locators);
-            certificateModalDialog = new HostCertificateModalDialog(getFrameLocators(), validator,
+            certificateModalDialog = new CertificateModalDialog(getFrameLocators(), validator,
                     locators);
         }
         return certificateModalDialog;

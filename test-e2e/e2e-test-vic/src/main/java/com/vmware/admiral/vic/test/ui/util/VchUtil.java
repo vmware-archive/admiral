@@ -13,6 +13,7 @@ package com.vmware.admiral.vic.test.ui.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.logging.Logger;
 
 import com.vmware.admiral.test.util.AuthContext;
@@ -35,7 +36,6 @@ public class VchUtil {
     private final String REMOTE_VIC_MACHINE_TAR_PATH = "/opt/vmware/fileserver/files/vic*.tar.gz";
     private final String VIC_MACHINE_TOOL_REMOTE_PATH = REMOTE_VIC_MACHINE_PATH
             + "/vic/vic-machine-linux";
-    private final String HARBOR_CERTIFICATE_REMOTE_PATH = "/storage/data/harbor/ca_download/ca.crt";
     private final int SSH_COMMAND_TIMEOUT = 600; // 10 min
     private final String VIC_MACHINE_TIMEOUT = "10m0s";
 
@@ -52,7 +52,8 @@ public class VchUtil {
         }
     }
 
-    public CommandResult createVch(String vchName, String datastoreName, String portgroupName) {
+    public CommandResult createVch(String vchName, String datastoreName, String portgroupName,
+            String additionalParameters) {
         StringBuilder createVchCommand = new StringBuilder();
         createVchCommand.append(VIC_MACHINE_TOOL_REMOTE_PATH + " create")
                 .append(" --target " + vcenterAuthContext.getTarget())
@@ -64,8 +65,11 @@ public class VchUtil {
                 .append(" --name " + vchName)
                 .append(" --volume-store " + "'" + datastoreName + "'/" + vchName + "/"
                         + "volumes/:default")
-                .append(" --registry-ca " + HARBOR_CERTIFICATE_REMOTE_PATH)
+                .append(" --insecure-registry=*")
                 .append(" --timeout " + VIC_MACHINE_TIMEOUT);
+        if (Objects.nonNull(additionalParameters)) {
+            createVchCommand.append(" " + additionalParameters);
+        }
         return executor.execute(createVchCommand.toString(), SSH_COMMAND_TIMEOUT);
     }
 

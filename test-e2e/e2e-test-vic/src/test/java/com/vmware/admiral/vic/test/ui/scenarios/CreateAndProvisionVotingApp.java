@@ -19,7 +19,6 @@ import java.util.concurrent.TimeUnit;
 
 import com.codeborne.selenide.Condition;
 
-import org.junit.Rule;
 import org.junit.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.TimeoutException;
@@ -34,10 +33,8 @@ import com.vmware.admiral.test.ui.pages.projects.AddProjectModalDialog;
 import com.vmware.admiral.test.ui.pages.templates.create.EditTemplatePage;
 import com.vmware.admiral.test.ui.pages.volumes.VolumesPage;
 import com.vmware.admiral.test.ui.pages.volumes.VolumesPage.VolumeState;
-import com.vmware.admiral.test.util.AuthContext;
 import com.vmware.admiral.vic.test.ui.BaseTest;
 import com.vmware.admiral.vic.test.ui.pages.hosts.AddContainerHostModalDialog;
-import com.vmware.admiral.vic.test.ui.util.CreateVchRule;
 
 public class CreateAndProvisionVotingApp extends BaseTest {
 
@@ -68,15 +65,6 @@ public class CreateAndProvisionVotingApp extends BaseTest {
     private final String DB_CONTAINER_TAG = "9.4";
     private final String DB_CONTAINER_NAME = "db";
 
-    private final AuthContext vicOvaAuthContext = new AuthContext(getVicIp(), getVicVmUsername(),
-            getVicVmPassword());
-    private final AuthContext vcenterAuthContext = new AuthContext(getVcenterIp(),
-            getDefaultAdminUsername(), getDefaultAdminPassword());
-
-    @Rule
-    public CreateVchRule vchIps = new CreateVchRule(vicOvaAuthContext, vcenterAuthContext,
-            "voting-app-test", 1);
-
     @Test
     public void createAndProvisionVotingApp() {
         loginAsAdmin();
@@ -99,7 +87,8 @@ public class CreateAndProvisionVotingApp extends BaseTest {
         addHostDialog.waitToLoad();
         addHostDialog.setName(HOST_NAME);
         addHostDialog.setHostType(HostType.VCH);
-        String vchUrl = getVchUrl(vchIps.getHostsIps()[0]);
+        String hostIp = POOL.getHostFromThePool();
+        String vchUrl = getVchUrl(hostIp);
         addHostDialog.setUrl(vchUrl);
         addHostDialog.submit();
         clusters().certificateModalDialog().waitToLoad();

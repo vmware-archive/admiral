@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.vic.test.ui.pages.projectrepos;
+package com.vmware.admiral.vic.test.ui.pages.internalrepos;
 
 import java.util.Objects;
 
@@ -17,20 +17,34 @@ import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.common.PageLibrary;
 
-public class ProjectRepositoriesPageLibrary extends PageLibrary {
+public class BuiltInRepositoriesPageLibrary extends PageLibrary {
 
-    private ProjectRepositoriesPage projectRepositoriesPage;
+    private BuiltInRepositoriesListPage builtInRepositoriesListPage;
     private DeleteRepositoryModalDialog deleteRepositoryModalDialog;
+    private BuiltInRepositoriesCardPage builtInRepositoriesCardPage;
 
-    public ProjectRepositoriesPage projectRepositoriesPage() {
-        if (Objects.isNull(projectRepositoriesPage)) {
-            ProjectRepositoriesPageLocators locators = new ProjectRepositoriesPageLocators();
-            ProjectRepositoriesPageValidator validator = new ProjectRepositoriesPageValidator(
+    public BuiltInRepositoriesListPage internalRepositoriesListPage() {
+        if (Objects.isNull(builtInRepositoriesListPage)) {
+            BuiltInRepositoriesListPageLocators locators = new BuiltInRepositoriesListPageLocators();
+            BuiltInRepositoriesListPageValidator validator = new BuiltInRepositoriesListPageValidator(
                     getFrameLocators(), locators);
-            projectRepositoriesPage = new ProjectRepositoriesPage(getFrameLocators(), validator,
+            builtInRepositoriesListPage = new BuiltInRepositoriesListPage(getFrameLocators(),
+                    validator,
                     locators);
         }
-        return projectRepositoriesPage;
+        return builtInRepositoriesListPage;
+    }
+
+    public BuiltInRepositoriesCardPage internalRepositoriesCardPage() {
+        if (Objects.isNull(builtInRepositoriesCardPage)) {
+            BuiltInRepositoriesCardPageLocators locators = new BuiltInRepositoriesCardPageLocators();
+            BuiltInRepositoriesCardPageValidator validator = new BuiltInRepositoriesCardPageValidator(
+                    getFrameLocators(), locators);
+            builtInRepositoriesCardPage = new BuiltInRepositoriesCardPage(getFrameLocators(),
+                    validator,
+                    locators);
+        }
+        return builtInRepositoriesCardPage;
     }
 
     public DeleteRepositoryModalDialog deleteRepositoryModalDialog() {

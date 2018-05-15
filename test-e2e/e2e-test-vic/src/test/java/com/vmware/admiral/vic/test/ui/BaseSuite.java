@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.Properties;
 import java.util.logging.Logger;
 
 import com.codeborne.selenide.Configuration;
@@ -28,6 +27,7 @@ import com.vmware.admiral.common.util.FileUtil;
 import com.vmware.admiral.test.util.AuthContext;
 import com.vmware.admiral.vic.test.ui.pages.VICWebClient;
 import com.vmware.admiral.vic.test.ui.util.IdentitySourceConfigurator;
+import com.vmware.admiral.vic.test.ui.util.TestProperties;
 
 @RunWith(Suite.class)
 public class BaseSuite {
@@ -38,31 +38,25 @@ public class BaseSuite {
 
     private static Logger LOG = Logger.getLogger(BaseSuite.class.getName());
 
-    public static final Properties PROPERTIES = FileUtil
-            .getProperties("/" + PropertiesNames.PROPERTIES_FILE_NAME, true);
-
     @BeforeClass
     public static void applyConfiguration() {
         Configuration.screenshots = false;
         LOG.info("Applying the configuration from the properties file");
-        String timeout = PROPERTIES.getProperty(PropertiesNames.WAIT_FOR_ELEMENT_TIMEOUT, "10000");
+        String timeout = TestProperties.waitForElementTimeoutMiliseconds();
         Configuration.timeout = Integer.parseInt(timeout);
 
-        String closeBrowserTimeout = PROPERTIES.getProperty(PropertiesNames.BROWSER_CLOSE_TIMEOUT,
-                "0");
+        String closeBrowserTimeout = TestProperties.browserCloseTimeoutMiliseconds();
         Configuration.closeBrowserTimeoutMs = Integer.parseInt(closeBrowserTimeout);
 
-        Configuration.browser = PROPERTIES.getProperty(PropertiesNames.BROWSER_PROPERTY, "chrome");
-        System.getProperties().put("wdm.chromeDriverVersion",
-                PROPERTIES.getProperty(PropertiesNames.CHROME_DRIVER_VERSION));
+        Configuration.browser = TestProperties.browser();
+        System.getProperties().put("wdm.chromeDriverVersion", TestProperties.chromeDriverVersion());
 
-        String pollinfInterval = PROPERTIES.getProperty(PropertiesNames.POLLING_INTERVAL, "100");
+        String pollinfInterval = TestProperties.pollingIntervalMiliseconds();
         Configuration.pollingInterval = Integer.parseInt(pollinfInterval);
 
-        Configuration.reportsFolder = PROPERTIES.getProperty(PropertiesNames.SCREENSHOTS_FOLDER,
-                "target/screenshots");
+        Configuration.reportsFolder = TestProperties.screenshotFolder();
 
-        String loginTimeout = PROPERTIES.getProperty(PropertiesNames.LOGIN_TIMEOUT_SECONDS);
+        String loginTimeout = TestProperties.loginTimeoutSeconds();
         if (!Objects.isNull(loginTimeout) && !loginTimeout.isEmpty()) {
             VICWebClient.setLoginTimeoutSeconds(Integer.parseInt(loginTimeout));
         }
@@ -71,20 +65,19 @@ public class BaseSuite {
     @BeforeClass
     public static void configureActiveDirectories() throws IOException {
         LOG.info("Configuring active directories");
-        String adCsv = PROPERTIES
-                .getProperty(PropertiesNames.ACTIVE_DIRECTORIES_SPEC_FILES_CSV_PROPERTY).trim();
+        String adCsv = TestProperties.activeDiroctorySpecFilesCsv().trim();
         if (adCsv.isEmpty()) {
             LOG.warning(
                     "No active direcories spec files were specified in the properties file, no active directories will be configured");
             return;
         }
         List<String> adSpecFilenames = Arrays.asList(adCsv.split(","));
-        Properties props = FileUtil.getProperties("/" + PropertiesNames.PROPERTIES_FILE_NAME, true);
-        String vcenterIp = props.getProperty(PropertiesNames.VCENTER_IP_PROPERTY);
+
+        String vcenterIp = TestProperties.vcenterIp();
         Objects.requireNonNull(vcenterIp);
-        String adminUsername = props.getProperty(PropertiesNames.DEFAULT_ADMIN_USERNAME_PROPERTY);
+        String adminUsername = TestProperties.defaultAdminUsername();
         Objects.requireNonNull(adminUsername);
-        String adminPassword = props.getProperty(PropertiesNames.DEFAULT_ADMIN_PASSWORD_PROPERTY);
+        String adminPassword = TestProperties.defaultAdminPassword();
         AuthContext vcenterAuthContext = new AuthContext(vcenterIp, adminUsername, adminPassword);
         IdentitySourceConfigurator identityConfigurator = new IdentitySourceConfigurator(
                 vcenterAuthContext);
@@ -109,7 +102,7 @@ public class BaseSuite {
 
     public static String getVicUrl() {
         if (Objects.isNull(vicUrl)) {
-            vicUrl = getVicIp();
+            vicUrl = TestProperties.vicIp();
             if (!vicUrl.startsWith(HTTPS_PROTOCOL)) {
                 vicUrl = HTTPS_PROTOCOL + vicUrl;
             }
@@ -118,21 +111,5 @@ public class BaseSuite {
             }
         }
         return vicUrl;
-    }
-
-    public static String getVicIp() {
-        return PROPERTIES.getProperty(PropertiesNames.VIC_IP_PROPERTY);
-    }
-
-    public static String getVcenterIp() {
-        return PROPERTIES.getProperty(PropertiesNames.VCENTER_IP_PROPERTY);
-    }
-
-    public static String getDefaultAdminUsername() {
-        return PROPERTIES.getProperty(PropertiesNames.DEFAULT_ADMIN_USERNAME_PROPERTY);
-    }
-
-    public static String getDefaultAdminPassword() {
-        return PROPERTIES.getProperty(PropertiesNames.DEFAULT_ADMIN_PASSWORD_PROPERTY);
     }
 }

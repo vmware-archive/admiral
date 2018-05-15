@@ -14,7 +14,6 @@ package com.vmware.admiral.vic.test.ui.scenarios;
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.Rule;
 import org.junit.Test;
 
 import com.vmware.admiral.test.ui.pages.clusters.AddClusterModalDialog;
@@ -30,9 +29,7 @@ import com.vmware.admiral.test.ui.pages.templates.TemplatesPage;
 import com.vmware.admiral.test.ui.pages.templates.create.CreateTemplatePage;
 import com.vmware.admiral.test.ui.pages.volumes.CreateVolumePage;
 import com.vmware.admiral.test.ui.pages.volumes.VolumesPage;
-import com.vmware.admiral.test.util.AuthContext;
 import com.vmware.admiral.vic.test.ui.BaseTest;
-import com.vmware.admiral.vic.test.ui.util.CreateVchRule;
 
 /**
  * This test creates two projects, adds users with different roles to the projects, adds non-default
@@ -74,18 +71,13 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
     private final String VOLUME_SUFFIX = "_volume";
     private final String CONTAINER_SUFFIX = "_container";
 
-    private final String IMAGE_NAME = "alpine";
+    private final String IMAGE_NAME = "library/alpine";
 
     private final String USER_SHAUNA = "shauna@coke.sqa-horizon.local";
-    private final String USER_ISTOYANOV = "istoyanov@vcac.sqa-horizon.local";
     private final String USER_SCOTT = "scott@coke.sqa-horizon.local";
-    private final String USER_SERGEY = "sergey@coke.sqa-horizon.local";
-    private final String USER_AKRACHEVA = "akracheva@vcac.sqa-horizon.local";
     private final String USER_CONNIE = "connie@coke.sqa-horizon.local";
 
     private final String USER_GROUP_COKE = "coke@coke.sqa-horizon.local";
-    private final String USER_GROUP_SOFIA_DEV_TEAM = "sofiadevteam@vcac.sqa-horizon.local";
-    private final String USER_GROUP_SOFIA_QE_TEAM = "sofiaqeteam@vcac.sqa-horizon.local";
 
     private final String CLOUD_ADMIN_JASON = "jason@coke.sqa-horizon.local";
 
@@ -97,15 +89,6 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
             PROJECT_NAME_ADMIRAL,
             PROJECT_NAME_QE
     });
-
-    private final AuthContext vicOvaAuthContext = new AuthContext(getVicIp(), getVicVmUsername(),
-            getVicVmPassword());
-    private final AuthContext vcenterAuthContext = new AuthContext(getVcenterIp(),
-            getDefaultAdminUsername(), getDefaultAdminPassword());
-
-    @Rule
-    public CreateVchRule vchIps = new CreateVchRule(vicOvaAuthContext, vcenterAuthContext,
-            "rbac-test", 2);
 
     @Test
     public void testRbacAndItemProjectAwareness() {
@@ -251,9 +234,32 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
         createTemplate.waitToLoad();
         createTemplate.setName(resourcePrefix + TEMPLATE_SUFFIX);
         createTemplate.clickProceedButton();
+        templates().editTemplatePage().waitToLoad();
+        templates().editTemplatePage().clickAddContainerButton();
+        templates().selectImagePage().waitToLoad();
+        templates().selectImagePage().selectImageByName(IMAGE_NAME);
+        templates().basicTab().setName(resourcePrefix + CONTAINER_SUFFIX);
+        templates().addContainerPage().submit();
+
+        templates().editTemplatePage().waitToLoad();
+        templates().editTemplatePage().clickAddVolumeButton();
+        templates().addVolumePage().setName(resourcePrefix + VOLUME_SUFFIX);
+        templates().addVolumePage().submit();
+        templates().editTemplatePage().connectContainerToVolume(resourcePrefix +
+                CONTAINER_SUFFIX,
+                resourcePrefix + VOLUME_SUFFIX);
         templates().editTemplatePage().navigateBack();
-        templatesPage.refresh();
-        templatesPage.validate().validateTemplateExistsWithName(resourcePrefix + TEMPLATE_SUFFIX);
+        templates().templatesPage().waitToLoad();
+        templates().templatesPage().provisionTemplate(resourcePrefix + TEMPLATE_SUFFIX);
+        templates().requests().waitForLastRequestToSucceed(REQUEST_TIMEOUT);
+        home().clickApplicationsButton();
+        applications().applicationsPage().deleteApplication(resourcePrefix + TEMPLATE_SUFFIX);
+        applications().requests().waitForLastRequestToSucceed(REQUEST_TIMEOUT);
+        applications().applicationsPage().refresh();
+        applications().applicationsPage().validate()
+                .validateApplicationDoesNotExistWithName(resourcePrefix + TEMPLATE_SUFFIX);
+        home().clickTemplatesButton();
+        templatesPage.waitToLoad();
         templatesPage.deleteTemplate(resourcePrefix + TEMPLATE_SUFFIX);
         templatesPage.refresh();
         templatesPage.validate()
@@ -309,7 +315,9 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
         for (int i = 0; i < ALL_PROJECTS.size(); i++) {
             String projectName = ALL_PROJECTS.get(i);
             home().switchToProject(projectName);
-            addVchHostToProject(projectName, getVchUrl(vchIps.getHostsIps()[i]));
+            String vchIp = POOL.getHostFromThePool();
+            String vchUrl = getVchUrl(vchIp);
+            addVchHostToProject(projectName, vchUrl);
             provisionContainerInProject(projectName);
             addNetworkToProject(projectName);
             addVolumeToProject(projectName);
@@ -320,6 +328,10 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
     private void removeContentFromProjects() {
         for (String projectName : ALL_PROJECTS) {
             home().switchToProject(projectName);
+            home().clickApplicationsButton();
+            applications().applicationsPage().deleteApplication(projectName + TEMPLATE_SUFFIX);
+            applications().requests().waitForLastRequestToSucceed(REQUEST_TIMEOUT);
+
             home().clickContainersButton();
             containers().containersPage().waitToLoad();
             containers().containersPage().deleteContainer(projectName + CONTAINER_SUFFIX);
@@ -357,11 +369,7 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
         clusters().addHostDialog().submit();
         clusters().certificateModalDialog().waitToLoad();
         clusters().certificateModalDialog().submit();
-        // TODO currently the test are executed on window resolution 1023 x 662
-        // The clusters page refresh button is not visible on this resolution
-        // Uncomment after the resolution has been raised or the button gets visible on this
-        // resolution
-        // clusters().clustersPage().refresh();
+        clusters().clustersPage().refresh();
         clusters().clustersPage().validate().validateHostExistsWithName(hostName + HOST_SUFFIX);
         clusters().clustersPage().validate().validateHostsCount(1);
     }
@@ -373,6 +381,7 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
         BasicTab basicTab = containers().basicTab();
         basicTab.setName(containerName + CONTAINER_SUFFIX);
         basicTab.setImage(IMAGE_NAME);
+
         containers().createContainerPage().submit();
         containers().requests().waitForLastRequestToSucceed(REQUEST_TIMEOUT);
         containers().containersPage().refresh();
@@ -382,18 +391,45 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
     }
 
     private void addTemplateToProject(String namePrefix) {
+        String templateName = namePrefix + TEMPLATE_SUFFIX;
+        String containerName = namePrefix + TEMPLATE_SUFFIX + CONTAINER_SUFFIX;
+        String networkName = namePrefix + TEMPLATE_SUFFIX + NETWORK_SUFFIX;
+        String volumeName = namePrefix + TEMPLATE_SUFFIX + VOLUME_SUFFIX;
         home().clickTemplatesButton();
         templates().templatesPage().waitToLoad();
         templates().templatesPage().clickCreateTemplateButton();
         templates().createTemplatePage().waitToLoad();
-        templates().createTemplatePage().setName(namePrefix + TEMPLATE_SUFFIX);
+        templates().createTemplatePage().setName(templateName);
         templates().createTemplatePage().clickProceedButton();
+        templates().editTemplatePage().waitToLoad();
+        templates().editTemplatePage().clickAddContainerButton();
+        templates().selectImagePage().waitToLoad();
+        templates().selectImagePage().selectImageByName(IMAGE_NAME);
+        templates().basicTab().setName(containerName);
+        templates().addContainerPage().submit();
+        templates().editTemplatePage().waitToLoad();
+        templates().editTemplatePage().clickAddNetworkButton();
+        templates().addNetworkPage().setName(networkName);
+        templates().addNetworkPage().submit();
+        templates().editTemplatePage().waitToLoad();
+        templates().editTemplatePage().clickAddVolumeButton();
+        templates().addVolumePage().setName(volumeName);
+        templates().addVolumePage().submit();
+        templates().editTemplatePage().waitToLoad();
+        templates().editTemplatePage().connectContainerToNetwork(containerName, networkName);
+        templates().editTemplatePage().connectContainerToVolume(containerName, volumeName);
         templates().editTemplatePage().navigateBack();
-        templates().templatesPage().waitToLoad();
-        templates().templatesPage().refresh();
-        templates().templatesPage().validate()
-                .validateTemplateExistsWithName(namePrefix + TEMPLATE_SUFFIX);
-        templates().templatesPage().validate().validateTemplatesCount(1);
+        templates().templatesPage().provisionTemplate(templateName);
+        templates().requests().waitForLastRequestToSucceed(REQUEST_TIMEOUT);
+        home().clickApplicationsButton();
+        applications().applicationsPage().validate()
+                .validateApplicationExistsWithName(templateName);
+        home().clickContainersButton();
+        containers().containersPage().validate().validateContainerExistsWithName(containerName);
+        home().clickNetworksButton();
+        networks().networksPage().validate().validateNetworkExistsWithName(networkName);
+        home().clickVolumesButton();
+        volumes().volumesPage().validate().validateVolumeExistsWithName(volumeName);
     }
 
     private void addNetworkToProject(String networkName) {
@@ -426,7 +462,6 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
     }
 
     private void configureProjects() {
-
         projects().projectsPage().clickProjectCard(PROJECT_NAME_ADMIRAL);
         projects().configureProjectPage().waitToLoad();
         projects().configureProjectPage().clickMembersTabButton();
@@ -434,13 +469,11 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
         AddMemberModalDialog addMemberDialogue = projects().addMemberDialog();
         addMemberDialogue.waitToLoad();
         addMemberDialogue.addMember(USER_SHAUNA);
-        addMemberDialogue.addMember(USER_ISTOYANOV);
         addMemberDialogue.setRole(ProjectMemberRole.ADMIN);
         addMemberDialogue.submit();
         projects().membersTab().clickAddMemebersButton();
         addMemberDialogue.waitToLoad();
         addMemberDialogue.addMember(USER_SCOTT);
-        addMemberDialogue.addMember(USER_SERGEY);
         addMemberDialogue.setRole(ProjectMemberRole.MEMBER);
         addMemberDialogue.submit();
         projects().membersTab().clickAddMemebersButton();
@@ -457,19 +490,12 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
         projects().membersTab().clickAddMemebersButton();
         addMemberDialogue.waitToLoad();
         addMemberDialogue.addMember(USER_SHAUNA);
-        addMemberDialogue.addMember(USER_AKRACHEVA);
         addMemberDialogue.setRole(ProjectMemberRole.ADMIN);
         addMemberDialogue.submit();
         projects().membersTab().clickAddMemebersButton();
         addMemberDialogue.waitToLoad();
         addMemberDialogue.addMember(USER_SCOTT);
-        addMemberDialogue.addMember(USER_GROUP_SOFIA_QE_TEAM);
         addMemberDialogue.setRole(ProjectMemberRole.MEMBER);
-        addMemberDialogue.submit();
-        projects().membersTab().clickAddMemebersButton();
-        addMemberDialogue.waitToLoad();
-        addMemberDialogue.addMember(USER_GROUP_SOFIA_DEV_TEAM);
-        addMemberDialogue.setRole(ProjectMemberRole.VIEWER);
         addMemberDialogue.submit();
         projects().configureProjectPage().navigateBack();
         projects().projectsPage().waitToLoad();

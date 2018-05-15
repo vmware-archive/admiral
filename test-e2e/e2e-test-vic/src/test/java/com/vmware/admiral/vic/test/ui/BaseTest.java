@@ -13,10 +13,7 @@ package com.vmware.admiral.vic.test.ui;
 
 import static com.codeborne.selenide.Selenide.close;
 
-import java.util.Properties;
 import java.util.logging.Logger;
-
-import com.spotify.docker.client.DockerClient;
 
 import org.junit.AfterClass;
 import org.junit.Rule;
@@ -30,38 +27,67 @@ import com.vmware.admiral.test.ui.pages.logs.LogsPageLibrary;
 import com.vmware.admiral.test.ui.pages.main.MainPage;
 import com.vmware.admiral.test.ui.pages.networks.NetworksPageLibrary;
 import com.vmware.admiral.test.ui.pages.projects.ProjectsPageLibrary;
-import com.vmware.admiral.test.ui.pages.publicrepos.PublicRepositoriesPageLibrary;
-import com.vmware.admiral.test.ui.pages.registries.RegistriesPageLibrary;
+import com.vmware.admiral.test.ui.pages.publicrepos.RepositoriesPageLibrary;
+import com.vmware.admiral.test.ui.pages.registries.GlobalRegistriesPageLibrary;
 import com.vmware.admiral.test.ui.pages.templates.TemplatesPageLibrary;
 import com.vmware.admiral.test.ui.pages.volumes.VolumesPageLibrary;
-import com.vmware.admiral.test.util.DockerUtils;
+import com.vmware.admiral.test.util.AuthContext;
+import com.vmware.admiral.test.util.SSHCommandExecutor;
 import com.vmware.admiral.test.util.ScreenshotRule;
 import com.vmware.admiral.test.util.TestStatusLoggerRule;
 import com.vmware.admiral.vic.test.ui.pages.VICWebClient;
 import com.vmware.admiral.vic.test.ui.pages.configuration.ConfigurationPageLibrary;
 import com.vmware.admiral.vic.test.ui.pages.hosts.ContainerHostsPageLibrary;
+import com.vmware.admiral.vic.test.ui.pages.internalrepos.BuiltInRepositoriesPageLibrary;
 import com.vmware.admiral.vic.test.ui.pages.main.VICAdministrationTab;
 import com.vmware.admiral.vic.test.ui.pages.main.VICHomeTab;
-import com.vmware.admiral.vic.test.ui.pages.projectrepos.ProjectRepositoriesPageLibrary;
-import com.vmware.admiral.vic.test.ui.util.VICReportsRule;
+import com.vmware.admiral.vic.test.ui.util.TestProperties;
+import com.vmware.admiral.vic.test.ui.util.VchPoolRule;
 
 public class BaseTest {
 
     protected final Logger LOG = Logger.getLogger(getClass().getName());
-    protected final Properties PROPERTIES = BaseSuite.PROPERTIES;
+
+    private static final AuthContext vicOvaAuthContext = new AuthContext(TestProperties.vicIp(),
+            TestProperties.vicSshUsername(), TestProperties.vicSshPassword());
+    private static final AuthContext vcenterAuthContext = new AuthContext(
+            TestProperties.vcenterIp(),
+            TestProperties.defaultAdminUsername(), TestProperties.defaultAdminPassword());
+
+    public final VchPoolRule POOL = new VchPoolRule();
 
     @Rule
     public TestRule chain = RuleChain
             .outerRule(new TestStatusLoggerRule())
-            .around(new VICReportsRule(getVicUrl(), getDefaultAdminUsername(),
-                    getDefaultAdminPassword()))
+            .around(POOL)
             .around(new ScreenshotRule());
 
     private VICWebClient client = new VICWebClient();
 
+    protected static String getVicUrl() {
+        return BaseSuite.getVicUrl();
+    }
+
+    protected static String getVchUrl(String vchIp) {
+        return "https://" + vchIp + ":" + TestProperties.defaultVchPort();
+    }
+
+    protected static AuthContext getVicOvaAuthContext() {
+        return vicOvaAuthContext;
+    }
+
+    protected static AuthContext getVcenterAuthContext() {
+        return vcenterAuthContext;
+    }
+
+    @AfterClass
+    public static void closeBrowser() {
+        close();
+    }
+
     protected void loginAsAdmin() {
-        String username = PROPERTIES.getProperty(PropertiesNames.DEFAULT_ADMIN_USERNAME_PROPERTY);
-        String password = PROPERTIES.getProperty(PropertiesNames.DEFAULT_ADMIN_PASSWORD_PROPERTY);
+        String username = TestProperties.defaultAdminUsername();
+        String password = TestProperties.defaultAdminPassword();
         loginAs(username, password);
     }
 
@@ -72,47 +98,6 @@ public class BaseTest {
     protected void logOut() {
         client.main().logOut();
         client.waitToLogout();
-    }
-
-    protected DockerClient getDockerClient(String dockerHostUrl) {
-        return DockerUtils.createUnsecureDockerClient(dockerHostUrl);
-    }
-
-    protected String getVicUrl() {
-        return BaseSuite.getVicUrl();
-    }
-
-    protected String getVicIp() {
-        return BaseSuite.getVicIp();
-    }
-
-    protected String getVcenterIp() {
-        return BaseSuite.getVcenterIp();
-    }
-
-    protected String getVchUrl(String vchIp) {
-        return "https://" + vchIp + ":" + PROPERTIES.getProperty(PropertiesNames.VCH_PORT_PROPERTY);
-    }
-
-    protected String getDefaultAdminUsername() {
-        return BaseSuite.getDefaultAdminUsername();
-    }
-
-    protected String getDefaultAdminPassword() {
-        return BaseSuite.getDefaultAdminPassword();
-    }
-
-    protected String getVicVmUsername() {
-        return PROPERTIES.getProperty(PropertiesNames.VIC_VM_USERNAME_PROPERTY);
-    }
-
-    protected String getVicVmPassword() {
-        return PROPERTIES.getProperty(PropertiesNames.VIC_VM_PASSWORD_PROPERTY);
-    }
-
-    @AfterClass
-    public static void closeBrowser() {
-        close();
     }
 
     protected MainPage main() {
@@ -147,12 +132,12 @@ public class BaseTest {
         return client.templates();
     }
 
-    protected PublicRepositoriesPageLibrary publicRepositories() {
-        return client.publicRepositories();
+    protected RepositoriesPageLibrary repositories() {
+        return client.repositories();
     }
 
-    protected ProjectRepositoriesPageLibrary projectRepositories() {
-        return client.projectRepositories();
+    protected BuiltInRepositoriesPageLibrary builtInRepositories() {
+        return client.builtInRepositories();
     }
 
     protected ContainerHostsPageLibrary clusters() {
@@ -167,7 +152,7 @@ public class BaseTest {
         return client.projects();
     }
 
-    protected RegistriesPageLibrary registries() {
+    protected GlobalRegistriesPageLibrary registries() {
         return client.registries();
     }
 
@@ -177,6 +162,10 @@ public class BaseTest {
 
     protected LogsPageLibrary logs() {
         return client.logs();
+    }
+
+    protected static SSHCommandExecutor createVicOvaSshCommandExecutor() {
+        return new SSHCommandExecutor(getVicOvaAuthContext(), 22);
     }
 
     public void sleep(int miliseconds) {
