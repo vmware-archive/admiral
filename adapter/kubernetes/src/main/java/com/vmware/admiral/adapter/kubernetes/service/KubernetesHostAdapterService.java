@@ -18,6 +18,7 @@ import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.REPLI
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.SERVICE_TYPE;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.createEntityData;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -114,7 +115,8 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
                 fail(request, o, ex);
             } else {
                 @SuppressWarnings("unchecked")
-                Map<String, Object> properties = o.getBody(Map.class);
+                Map<String, Object> properties = (o != null) ? o.getBody(Map.class)
+                        : Collections.emptyMap();
                 patchHostState(request, properties,
                         (o1, ex1) -> patchTaskStage(request, TaskStage.FINISHED, ex1));
             }
@@ -227,8 +229,10 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
                         op.fail(ex1);
                     } else {
                         ComputeState computeState = new ComputeState();
-                        computeState.customProperties = op1.getBody(Map.class);
-                        op.setBody(computeState);
+                        if (op1 != null) {
+                            computeState.customProperties = op1.getBody(Map.class);
+                            op.setBody(computeState);
+                        }
                         op.complete();
                     }
                 });

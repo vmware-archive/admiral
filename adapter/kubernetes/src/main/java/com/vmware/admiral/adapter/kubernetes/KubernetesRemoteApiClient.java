@@ -28,11 +28,11 @@ import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.SERVI
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -189,8 +189,8 @@ public class KubernetesRemoteApiClient {
                 AtomicDouble totalMem = new AtomicDouble(0D);
                 AtomicDouble usedMem = new AtomicDouble(0D);
                 AtomicInteger counter = new AtomicInteger(nodeList.items.size());
-                AtomicBoolean hasError = new AtomicBoolean();
-                List<KubernetesNodeData> nodes = new ArrayList<>(nodeList.items.size());
+                List<KubernetesNodeData> nodes = Collections
+                        .synchronizedList(new ArrayList<>(nodeList.items.size()));
                 if (nodeList != null && nodeList.items != null) {
                     for (Node node : nodeList.items) {
                         if (node == null || node.metadata == null || node.metadata.name == null) {
@@ -200,8 +200,8 @@ public class KubernetesRemoteApiClient {
                             if (ex2 != null) {
                                 logger.log(Level.WARNING, String.format("Error while getting stats "
                                         + "for node %s", node.metadata.name), ex2);
-                                if (hasError.compareAndSet(false, true)) {
-                                    completionHandler.handle(null, ex2);
+                                if (counter.decrementAndGet() == 0) {
+                                    completionHandler.handle(null, null);
                                 }
                             } else {
                                 @SuppressWarnings("unchecked")
@@ -228,10 +228,8 @@ public class KubernetesRemoteApiClient {
                                         usedMem.addAndGet(val);
                                     }
                                 }
-                                synchronized (nodes) {
-                                    nodes.add(nodeData);
-                                }
-                                if (counter.decrementAndGet() == 0 && !hasError.get()) {
+                                nodes.add(nodeData);
+                                if (counter.decrementAndGet() == 0) {
                                     Map<String, String> properties = new HashMap<>();
 
                                     // avoid division by zero - NaN causes trouble when being
