@@ -55,25 +55,11 @@ export class EndpointsComponent implements OnInit {
 
         this.loadingPromise.getPromise().then(result => {
             this.loading = false;
-            // TODO when backend is ready: this.endpoints = result.documents;
-            this.endpoints = [
-                {
-                    documentId: 'endp1', documentSelfLink: 'endp1', name: 'Endpoint 1',
-                    status: 'Active', address: 'https://endpoint1:443/'
-                }, {
-                    documentId: 'endp2',  documentSelfLink: 'endp2', name: 'Endpoint 2',
-                    status: 'Active', address: 'https://endpoint2:443/'
-                },
-                {
-                    documentId: 'endp3', documentSelfLink: 'endp3', name: 'Endpoint 3',
-                    status: 'Active', address: 'https://endpoint3:443/'
-                }, {
-                    documentId: 'endp4', documentSelfLink: 'endp4', name: 'Endpoint 4',
-                    status: 'Active', address: 'https://endpoint4:443/'
-                }
-            ];
+            this.endpoints = result.documents;
+
         }).catch(error => {
             this.loading = false;
+
             if (error) {
                 if (error.isCanceled) {
                     // ok to be canceled
@@ -85,12 +71,8 @@ export class EndpointsComponent implements OnInit {
         })
     }
 
-    refreshEndpoints($event) {
-        console.log('Refreshing...', $event);
-
-        if ($event) {
-            this.listEndpoints($event.queryOptions || {});
-        }
+    refreshEndpoints($event?) {
+        this.listEndpoints($event && $event.queryOptions || {});
     }
 
     removeSelectedEndpoints($event) {
@@ -111,6 +93,7 @@ export class EndpointsComponent implements OnInit {
             this.selectedEndpoints = [];
 
             this.showDeleteConfirmation = false;
+            this.refreshEndpoints();
         }).catch(err => {
             this.deleteConfirmationAlert = Utils.getErrorMessage(err)._generic;
         });

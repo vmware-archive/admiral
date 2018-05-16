@@ -27,8 +27,7 @@ export class Links {
   public static GROUPS = '/groups';
   public static PROJECTS = '/projects';
   public static EVENT_LOGS = Links.RESOURCES + '/event-logs';
-  // TODO correct this when backend is ready
-  public static ENDPOINTS = Links.RESOURCES + '/endpoints';
+  public static ENDPOINTS = Links.RESOURCES + '/pks/endpoints';
   public static DEPLOYMENT_POLICIES = Links.RESOURCES + '/deployment-policies';
 
   public static COMPOSITE_DESCRIPTIONS = Links.RESOURCES + '/composite-descriptions';

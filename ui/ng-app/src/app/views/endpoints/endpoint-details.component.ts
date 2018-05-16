@@ -11,11 +11,10 @@
 
 import { Component } from '@angular/core';
 import { ActivatedRoute, Router } from "@angular/router";
-import {FormControl, FormGroup, Validators} from "@angular/forms";
+import { FormControl, FormGroup, Validators } from "@angular/forms";
 import { BaseDetailsComponent } from '../../components/base/base-details.component';
 import { DocumentService } from "../../utils/document.service";
 import { ErrorService } from "../../utils/error.service";
-import { Constants } from "../../utils/constants";
 import { Links } from "../../utils/links";
 import { Utils } from "../../utils/utils";
 
@@ -39,7 +38,7 @@ export class EndpointDetailsComponent extends BaseDetailsComponent {
         name: new FormControl('', Validators.required),
         description: new FormControl(''),
         uaaAddress: new FormControl('', Validators.required),
-        uaaCredentials: new FormControl('', Validators.required),
+        uaaCredentials: new FormControl(''),
         pksAddress: new FormControl('', Validators.required)
     });
 
@@ -66,27 +65,11 @@ export class EndpointDetailsComponent extends BaseDetailsComponent {
 
     protected entityInitialized() {
         if (this.entity) {
-            // edit mode
             this.editMode = true;
-            // Name
             this.endpointDetailsForm.get('name').setValue(this.entity.name);
-            // Description
-            if (this.entity.details) {
-                this.endpointDetailsForm.get('description').setValue(this.entity.details);
-            }
-
-            // TODO uaa and pks address population
-
-            // TODO credentials population
-            let authCredentialsLink =
-                Utils.getCustomPropertyValue(this.entity.customProperties, '__authCredentialsLink');
-            if (authCredentialsLink) {
-                let credItem = this.credentials
-                                    .filter((c) => c.documentSelfLink === authCredentialsLink);
-                if (credItem.length > 0) {
-                    this.endpointDetailsForm.get('uaaCredentials').setValue(credItem[0]);
-                }
-            }
+            this.endpointDetailsForm.get('description').setValue(this.entity.desc);
+            this.endpointDetailsForm.get("uaaAddress").setValue(this.entity.uaaEndpoint);
+            this.endpointDetailsForm.get("pksAddress").setValue(this.entity.apiEndpoint);
         }
     }
 
@@ -105,41 +88,58 @@ export class EndpointDetailsComponent extends BaseDetailsComponent {
             this.credentials = credentials.documents
                                     .filter(c => !Utils.areSystemScopedCredentials(c))
                                     .map(Utils.toCredentialViewModel);
+
+            if (this.entity && this.entity.authCredentialsLink) {
+                let credItem = this.credentials && this.credentials.filter((c) =>
+                    c.documentSelfLink === this.entity.authCredentialsLink
+                );
+                if (credItem && credItem.length > 0) {
+                    this.endpointDetailsForm.get('uaaCredentials').setValue(credItem[0]);
+                }
+            }
         }).catch((e) => {
             console.log('Credentials retrieval failed', e);
         });
     }
 
     create() {
-        console.log('create');
-
         if (this.endpointDetailsForm.valid) {
-            // TODO - if success -> this.goBack(); else show err, stay on same screen
             this.isSavingEndpoint = true;
 
+            this.service.post(Links.ENDPOINTS, this.getEndpointData()).then(() => {
+                this.isSavingEndpoint = false;
+
+                this.goBack();
+            }).catch(error => {
+                this.isSavingEndpoint = false;
+                this.errorService.error(Utils.getErrorMessage(error)._generic);
+            });
         }
     }
 
     save() {
-        console.log('save');
-
         if (this.endpointDetailsForm.valid) {
-            // TODO - if success -> this.goBack(); else show err, stay on same screen
-            // this.isSavingEndpoint = true;
+            this.isSavingEndpoint = true;
 
+            this.service.patch(this.entity.documentSelfLink, this.getEndpointData())
+                            .then(() => {
+                this.isSavingEndpoint = false;
+
+                this.goBack();
+            }).catch(error => {
+                this.isSavingEndpoint = false;
+                this.errorService.error(Utils.getErrorMessage(error)._generic);
+            });
         }
     }
 
     testConnection() {
-        console.log('test connection');
-
         if (this.endpointDetailsForm.valid) {
             // TODO - if success show green message - connection success, else show red err message
             // this.isTestingConnection = true;
             //
             // this.alertType = Constants.alert.type.SUCCESS;
             // this.alertMessage = I18n.t('endpoint.connectionVerified');
-
         }
     }
 
@@ -148,11 +148,32 @@ export class EndpointDetailsComponent extends BaseDetailsComponent {
     }
 
     goBack() {
-        this.router.navigate(['../'], {relativeTo: this.route});
+        this.router.navigate(['..'], {relativeTo: this.route});
     }
 
     resetAlert() {
         this.alertType = null;
         this.alertMessage = null;
+    }
+
+    getEndpointData() {
+        let endpointData;
+
+        if (this.endpointDetailsForm.valid) {
+            this.isSavingEndpoint = true;
+
+            let uaaCredentialsLink = this.endpointDetailsForm.get("uaaCredentials").value
+                && this.endpointDetailsForm.get("uaaCredentials").value.documentSelfLink;
+
+            endpointData = {
+                name: this.endpointDetailsForm.get("name").value,
+                desc: this.endpointDetailsForm.get("description").value,
+                uaaEndpoint: this.endpointDetailsForm.get("uaaAddress").value,
+                apiEndpoint: this.endpointDetailsForm.get("pksAddress").value,
+                authCredentialsLink: uaaCredentialsLink
+            };
+        }
+
+        return endpointData;
     }
 }

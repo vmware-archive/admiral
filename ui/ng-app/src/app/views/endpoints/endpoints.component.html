@@ -18,7 +18,8 @@
 </delete-confirmation>
 
 <div class="main-view">
-    <table-view [searchPlaceholder]="'endpoints.searchPlaceholder' | i18n" (onRefresh)="refreshEndpoints($event)">
+    <table-view [searchPlaceholder]="'endpoints.searchPlaceholder' | i18n"
+                (onRefresh)="refreshEndpoints($event)">
         <span title>{{"endpoints.title" | i18n}}</span>
 
         <div toolbar>
