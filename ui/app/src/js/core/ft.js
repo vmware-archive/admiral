@@ -43,6 +43,10 @@ var ft = {
     return utils.getConfigurationPropertyBoolean('allow.ft.host-option.kubernetes');
   },
 
+  isPksEnabled: function() {
+    return utils.getConfigurationPropertyBoolean('allow.ft.pks');
+  },
+
   isCreateHostOptionEnabled: function() {
     return utils.getConfigurationPropertyBoolean('allow.ft.host-option.create');
   },

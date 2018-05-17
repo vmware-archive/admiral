@@ -241,8 +241,8 @@ var TemplatesViewVueComponent = Vue.extend({
         };
       },
       computed: {
-        isKubernetesEnabled: function() {
-          return ft.isKubernetesHostOptionEnabled();
+        isPksEnabled: function() {
+          return ft.isPksEnabled();
         }
       },
       methods: {

@@ -55,7 +55,7 @@
             <li><a href="#" class="create-container-additional-btn"
                    v-on:click="provisionContainerAdditionalInfo($event)"
                   >{{i18n("app.template.list.provisionAdditionalInfo")}}</a></li>
-            <li v-if="isKubernetesEnabled"><a href="#" class="create-container-additional-btn"
+            <li v-if="isPksEnabled"><a href="#" class="create-container-additional-btn"
                    v-on:click="provisionKubernetesDeployment($event)"
                   >{{i18n("app.template.list.provisionKubernetesDeployment")}}</a></li>
           </ul>
