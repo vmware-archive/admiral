@@ -808,17 +808,16 @@ let TemplatesStore = Reflux.createStore({
       actions.ResourceGroupsActions.retrieveGroups();
     }
 
-    if (queryOptions[constants.SEARCH_CATEGORY_PARAM] ===
-          constants.TEMPLATES.SEARCH_CATEGORY.IMAGES) {
-      this.loadAvailableRegistries();
-    }
+    let isImagesSearch = queryOptions[constants.SEARCH_CATEGORY_PARAM] ===
+                          constants.TEMPLATES.SEARCH_CATEGORY.IMAGES;
 
-    var shouldLoadRecommended = !queryOptions ||
+    this.loadAvailableRegistries(isImagesSearch);
+
+    let shouldLoadRecommended = !queryOptions ||
       (Object.keys(queryOptions).length === 1 &&
         (queryOptions[constants.SEARCH_CATEGORY_PARAM] ===
           constants.TEMPLATES.SEARCH_CATEGORY.ALL ||
-          queryOptions[constants.SEARCH_CATEGORY_PARAM] ===
-          constants.TEMPLATES.SEARCH_CATEGORY.IMAGES));
+          isImagesSearch));
     if (shouldLoadRecommended) {
       loadRecommended.call(this);
     } else if (queryOptions[constants.SEARCH_CATEGORY_PARAM] ===
@@ -2413,7 +2412,11 @@ let TemplatesStore = Reflux.createStore({
     this.emitChange();
   },
 
-  loadAvailableRegistries: function() {
+  loadAvailableRegistries: function(isImagesSearch) {
+    if (!utils.isVic() || !isImagesSearch) {
+      return;
+    }
+
     services.loadRegistries().then((result) => {
       // currently selected project
       let selectedProject = utils.getSelectedProject();
@@ -2427,6 +2430,10 @@ let TemplatesStore = Reflux.createStore({
       }
 
       var availableRepositories = Object.values(result).filter((repository) => {
+        if (repository.disabled) {
+          return false;
+        }
+
         if (!repository.tenantLinks || repository.tenantLinks.length === 0) {
           // global repository
           return true;
