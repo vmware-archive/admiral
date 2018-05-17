@@ -173,19 +173,13 @@ export const ROUTES: Routes = [
                 ]
             },
             {
-                path: 'endpoints', component: EndpointsComponent,
-                children: [
-                    { path: 'new', component: EndpointDetailsComponent,
-                        data: {
-                            navigationContainerType: NavigationContainerType.Fullscreen
-                        }
-                    },
-                    { path: ':id', component: EndpointDetailsComponent,
-                        data: {
-                            navigationContainerType: NavigationContainerType.Fullscreen
-                        }
-                    }
-                ]
+                path: 'endpoints', component: EndpointsComponent
+            },
+            {
+                path: 'endpoints/new', component: EndpointDetailsComponent
+            },
+            {
+                path: 'endpoints/:id', component: EndpointDetailsComponent
             },
             {
                  path: '**', component: FormerPlaceholderViewComponent
