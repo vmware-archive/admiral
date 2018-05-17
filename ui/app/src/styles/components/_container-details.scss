@@ -195,8 +195,20 @@ $elements-side-margin: $elements-margin / 2;
     left: 0;
     width: 100%;
 
+    .form-group {
+      padding-right: 0;
+      padding-left: 0;
+    }
+
     div.radio-inline, div.select {
       min-width: 60px;
+    }
+
+    div.select {
+      max-width: fit-content;
+    }
+
+    div.radio-inline {
       max-width: 25%;
     }
 
