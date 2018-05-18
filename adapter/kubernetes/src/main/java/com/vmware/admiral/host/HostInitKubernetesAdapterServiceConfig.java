@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -14,6 +14,7 @@ package com.vmware.admiral.host;
 import com.vmware.admiral.adapter.kubernetes.service.KubernetesAdapterService;
 import com.vmware.admiral.adapter.kubernetes.service.KubernetesApplicationAdapterService;
 import com.vmware.admiral.adapter.kubernetes.service.KubernetesHostAdapterService;
+import com.vmware.admiral.adapter.pks.service.PKSAdapterService;
 import com.vmware.admiral.service.kubernetes.test.MockKubernetesApplicationAdapterService;
 import com.vmware.admiral.service.test.MockKubernetesAdapterService;
 import com.vmware.xenon.common.Operation;
@@ -44,6 +45,9 @@ public class HostInitKubernetesAdapterServiceConfig {
                     Operation.createPost(UriUtils.buildUri(host,
                             KubernetesApplicationAdapterService.class)),
                     new KubernetesApplicationAdapterService());
+            host.startService(
+                    Operation.createPost(UriUtils.buildUri(host, PKSAdapterService.class)),
+                    new PKSAdapterService());
         }
     }
 }
