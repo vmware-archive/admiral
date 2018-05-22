@@ -1915,13 +1915,21 @@ services.triggerDataCollection = function() {
 };
 
 services.loadPopularImages = function() {
-  return list(links.POPULAR_IMAGES);
+  if (ft.areFavoriteImagesEnabled()) {
+    return get(links.FAVORITE_IMAGES + '?expand', null, true);
+  } else {
+    return list(links.POPULAR_IMAGES);
+  }
 };
 
 services.loadScript = function(src) {
   return new Promise((resolve, reject) => {
     $.getScript(src).done(resolve).fail(reject);
   });
+};
+
+services.addImageToFavorites = function(image) {
+  return post(links.FAVORITE_IMAGES, image, true);
 };
 
 //this method encodes scheme, hostname and port parts of the given uri

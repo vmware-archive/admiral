@@ -12,28 +12,46 @@
 import constants from 'core/constants';
 import imageUtils from 'core/imageUtils';
 import services from 'core/services';
+import ft from 'core/ft';
 
 const REGISTRY_SCHEME_REG_EXP = /^(https?):\/\//;
+
+var processImages = function(context, images) {
+  images.forEach((i) => {
+    processImage(i);
+  });
+  context.images = images;
+};
+
+var processImage = function(popularImage) {
+  var host = popularImage.registry.replace(REGISTRY_SCHEME_REG_EXP, '');
+  popularImage.documentId = host + '/' + popularImage.name;
+  popularImage.icon = imageUtils.getImageIconLink(popularImage.name);
+  popularImage.type = constants.TEMPLATES.TYPES.IMAGE;
+  popularImage.isFavorite = true;
+};
 
 var recommendedImages = {
   images: null,
   loadImages: function() {
-    if (this.images != null) {
-      return Promise.resolve();
-    }
     var _this = this;
-    return services.loadPopularImages().then((result) => {
-      if (result != null) {
-        for (var i = 0; i < result.length; i++) {
-          var image = result[i];
-          var host = image.registry.replace(REGISTRY_SCHEME_REG_EXP, '');
-          image.documentId = host + '/' + image.name;
-          image.icon = imageUtils.getImageIconLink(image.name);
-          image.type = constants.TEMPLATES.TYPES.IMAGE;
+    if (ft.areFavoriteImagesEnabled()) {
+      return services.loadPopularImages().then((result) => {
+        if (result != null) {
+          var images = Object.values(result.documents);
+          processImages(_this, images);
         }
-        _this.images = result;
+      });
+    } else {
+      if (this.images != null) {
+        return Promise.resolve();
       }
-    });
+      return services.loadPopularImages().then((result) => {
+        if (result != null) {
+          processImages(_this, result);
+        }
+      });
+    }
   },
   getIcon: function(id) {
     if (this.images != null) {

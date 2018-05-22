@@ -49,7 +49,8 @@ export var TemplateActions = Reflux.createActions([
   'createContainerWithDetails', 'createContainerTemplate',
   'createKubernetesDeploymentTemplate', 'removeTemplate', 'saveTemplateName',
   'copyTemplate', 'publishTemplate', 'openImportTemplate', 'importTemplate',
-  'openCreateNewTemplate', 'createNewTemplate', 'provisionKubernetesDeploymentTemplate'
+  'openCreateNewTemplate', 'createNewTemplate', 'provisionKubernetesDeploymentTemplate',
+  'addImageToFavorites', 'removeImageFromFavorites'
 ].concat(containerDefinitionTemplateActions, networkTemplateActions, closureTemplateActions,
   volumeTemplateActions, kubernetesTemplateActions));
 

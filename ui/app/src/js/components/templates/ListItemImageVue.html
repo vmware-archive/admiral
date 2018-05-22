@@ -8,10 +8,13 @@
   ~ and license terms. Your use of these subcomponents is subject to the terms and
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
-
+<div class="alert" :class="{'success': model.alert.type === 'success', 'fail': model.alert.type === 'danger'}"
+  role="alert" v-if="model.alert"><i class="fa alert-icon"
+  :class="{'fa-check': model.alert.type === 'success', 'fa-exclamation-circle': model.alert.type === 'fail'}"
+></i><span>{{model.alert.message}}</span></div>
 <div class="image-item" :data-name="model.registry + '/' + model.name">
   <div class="image-header">
-    <img v-bind:src="model.icon"/>
+    <img :src="model.icon"/>
     <div class="title-holder">
       <div class="title truncateText" :title="model.name">{{model.name}}</div>
       <div class="truncateText" :title="model.registry">{{model.registry}}</div>
@@ -46,17 +49,23 @@
       <template v-else><div>
         <div class="dropdown">
           <button type="button" class="btn create-container-btn"
-                  v-on:click="provisionContainer($event)">{{i18n("app.template.list.provision")}}</button>
+                  @click="provisionContainer($event)">{{i18n("app.template.list.provision")}}</button>
           <button type="button" class="btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
             <span class="caret"></span>
             <span class="sr-only">Toggle Dropdown</span>
           </button>
           <ul class="dropdown-menu">
             <li><a href="#" class="create-container-additional-btn"
-                   v-on:click="provisionContainerAdditionalInfo($event)"
+                   @click="provisionContainerAdditionalInfo($event)"
                   >{{i18n("app.template.list.provisionAdditionalInfo")}}</a></li>
+            <li v-if="addToFavoriteSupported"><a href="#" class="create-container-additional-btn"
+                   @click="addImageToFavorites($event)"
+                  >{{i18n("app.template.list.addToFavorites")}}</a></li>
+            <li v-if="removeFromFavoriteSupported"><a href="#" class="create-container-additional-btn"
+                   @click="removeImageFromFavorites($event)"
+                  >{{i18n("app.template.list.removeFromFavorites")}}</a></li>
             <li v-if="isPksEnabled"><a href="#" class="create-container-additional-btn"
-                   v-on:click="provisionKubernetesDeployment($event)"
+                   @click="provisionKubernetesDeployment($event)"
                   >{{i18n("app.template.list.provisionKubernetesDeployment")}}</a></li>
           </ul>
         </div>

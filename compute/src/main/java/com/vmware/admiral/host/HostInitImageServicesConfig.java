@@ -22,4 +22,5 @@ public class HostInitImageServicesConfig extends HostInitServiceHelper {
         startServices(host, ContainerImageService.class, ContainerImageTagsService.class,
                 PopularImagesService.class);
     }
+
 }

@@ -54,6 +54,7 @@ var links = Immutable({
   KUBERNETES_DESC_CONTENT: RESOURCES + '/kubernetes-templates',
   CONTAINER_DESCRIPTION_TO_KUBERNETES_DESCRIPTION_CONVERTER: RESOURCES +
       '/container-description-to-kubernetes-description-converter',
+  FAVORITE_IMAGES: RESOURCES + '/favorite-images',
 
   MANAGE_CONTAINERS_ENDPOINT: '/manage',
   DATA_COLLECTION: '/data-collection/types/App.Container',

@@ -290,7 +290,10 @@
           "closures": "Closures",
           "repositories": "Repositories"
         },
-        "createTemplate": "Template"
+        "createTemplate": "Template",
+        "addToFavorites": "Add Image to Favorites",
+        "removeFromFavorites": "Remove Image from Favorites",
+        "addedImageToFavoritesMessage": "Image added to favorites"
       },
       "details": {
         "create": "Create Template",

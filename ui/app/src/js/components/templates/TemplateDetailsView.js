@@ -460,7 +460,7 @@ var TemplateDetailsView = Vue.extend({
         };
       },
       attached: function() {
-        $(this.$el).on('click', '.select-image-btn', () =>
+        $(this.$el.nextElementSibling).on('click', '.select-image-btn', () =>
                 TemplateActions.selectImageForContainerDescription(this.model.documentId));
       },
       detached: function() {

@@ -84,6 +84,8 @@ import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler;
 import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler.ServiceState;
 import com.vmware.admiral.compute.pks.PKSEndpointService;
 import com.vmware.admiral.compute.util.DanglingDescriptionsCleanupService;
+import com.vmware.admiral.image.service.FavoriteImageFactoryService;
+import com.vmware.admiral.image.service.FavoriteImagesService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -121,7 +123,8 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 PodLogService.class,
                 ClusterService.class,
                 DanglingDescriptionsCleanupService.class,
-                ContainerDescriptionToKubernetesDescriptionConverterService.class);
+                ContainerDescriptionToKubernetesDescriptionConverterService.class,
+                FavoriteImageFactoryService.class);
 
         startServiceFactories(host, CaSigningCertService.class,
                 GroupResourcePlacementService.class,
@@ -142,7 +145,8 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 ReplicationControllerService.class,
                 ServiceEntityHandler.class,
                 ReplicaSetService.class,
-                PKSEndpointService.class);
+                PKSEndpointService.class,
+                FavoriteImagesService.class);
 
         startServices(host, ContainerHostService.class);
 

@@ -25,6 +25,7 @@ import DeploymentPolicyStore from 'stores/DeploymentPolicyStore';
 import ContextPanelStoreMixin from 'stores/mixins/ContextPanelStoreMixin';
 import CrudStoreMixin from 'stores/mixins/CrudStoreMixin';
 import recommendedImages from 'core/recommendedImages';
+import ft from 'core/ft';
 
 const DTO_IMAGE_TYPE = 'CONTAINER_IMAGE_DESCRIPTION';
 const DTO_TEMPLATE_TYPE = 'COMPOSITE_DESCRIPTION';
@@ -244,9 +245,22 @@ let loadRecommended = function(forContainerDefinition) {
     listViewPath = ['listView'];
   }
 
-  this.setInData(listViewPath.concat(['items']), recommendedImages.images);
-  this.setInData(listViewPath.concat(['searchedItems']), false);
-  this.emitChange();
+  if (ft.areFavoriteImagesEnabled()) {
+    recommendedImages.loadImages().then(() => {
+      var globalRepositories = this.data.listView.globalRepositories;
+      var images = globalRepositories ?
+        recommendedImages.images.filter(i => globalRepositories.includes(i.registry)) :
+        recommendedImages.images;
+      this.setInData(listViewPath.concat(['items']), images);
+      this.setInData(listViewPath.concat(['favoriteImages']), images.map(i => i.documentId));
+      this.setInData(listViewPath.concat(['searchedItems']), false);
+      this.emitChange();
+    });
+  } else {
+    this.setInData(listViewPath.concat(['items']), recommendedImages.images);
+    this.setInData(listViewPath.concat(['searchedItems']), false);
+    this.emitChange();
+  }
 };
 
 let handlePublishTemplate = function(templateDocumentSelfLink, alertObj) {
@@ -811,20 +825,27 @@ let TemplatesStore = Reflux.createStore({
     let isImagesSearch = queryOptions[constants.SEARCH_CATEGORY_PARAM] ===
                           constants.TEMPLATES.SEARCH_CATEGORY.IMAGES;
 
-    this.loadAvailableRegistries(isImagesSearch);
-
     let shouldLoadRecommended = !queryOptions ||
       (Object.keys(queryOptions).length === 1 &&
         (queryOptions[constants.SEARCH_CATEGORY_PARAM] ===
           constants.TEMPLATES.SEARCH_CATEGORY.ALL ||
           isImagesSearch));
     if (shouldLoadRecommended) {
-      loadRecommended.call(this);
+      this.loadAvailableRegistries(isImagesSearch).then(() => {
+        loadRecommended.call(this);
+      }).catch((e) => {
+        console.log('Unable to load favorite images' + e);
+      });
     } else if (queryOptions[constants.SEARCH_CATEGORY_PARAM] ===
       constants.TEMPLATES.SEARCH_CATEGORY.CLOSURES) {
       searchClosures.call(this, queryOptions);
     } else {
-      searchImages.call(this, queryOptions);
+      this.loadAvailableRegistries(isImagesSearch).then(() => {
+        searchImages.call(this, queryOptions);
+      }).catch((e) => {
+        console.log('Unable to search for ' +
+          queryOptions[constants.SEARCH_CATEGORY_PARAM] + '' + e);
+      });
     }
   },
 
@@ -2412,12 +2433,36 @@ let TemplatesStore = Reflux.createStore({
     this.emitChange();
   },
 
+  onAddImageToFavorites: function(model) {
+    var requestBody = {
+      name: model.name,
+      description: model.description,
+      registry: model.registry
+    };
+
+    services.addImageToFavorites(requestBody).then(() => {
+      this.showImageAddedToFavoritesMessage(model);
+    }).catch((e) => {
+      console.log('Could not add image to favorites' + e);
+    });
+  },
+
+  onRemoveImageFromFavorites: function(model) {
+    if (model && model.documentSelfLink) {
+      services.deleteDocument(model.documentSelfLink).then(() => {
+        loadRecommended.call(this);
+      }).catch((e) => {
+        console.log('Could not remove image from favorites ' + e);
+      });
+    }
+  },
+
   loadAvailableRegistries: function(isImagesSearch) {
-    if (!utils.isVic() || !isImagesSearch) {
-      return;
+    if (!isImagesSearch) {
+      return Promise.resolve();
     }
 
-    services.loadRegistries().then((result) => {
+    return services.loadRegistries().then((result) => {
       // currently selected project
       let selectedProject = utils.getSelectedProject();
       let selectedProjectKey;
@@ -2451,12 +2496,52 @@ let TemplatesStore = Reflux.createStore({
         return false;
       });
 
+      var globalRepositories = availableRepositories.filter(r => !r.tenantLinks && !r.disabled)
+      .map(r => r.address);
+
       this.setInData(['listView', 'availableRepositories'], availableRepositories);
+      this.setInData(['listView', 'globalRepositories'], globalRepositories);
       this.emitChange();
 
     }).catch((error) => {
       console.error('Failed retrieving available repositories', error);
     });
+  },
+
+  showImageAddedToFavoritesMessage: function(model) {
+    let imageAddedMessage = {
+      type: constants.ALERTS.TYPE.SUCCESS,
+      message: i18n.t('app.template.list.addedImageToFavoritesMessage')
+    };
+
+    let queriedImages = utils.getIn(this.getData(), ['listView', 'items']).asMutable({
+      deep: true
+    });
+    let favoriteImages = utils.getIn(this.getData(), ['listView', 'favoriteImages']).asMutable({
+      deep: true
+    });
+
+    let imageToAdd;
+    queriedImages.forEach((i) => {
+      if (i.documentId === model.documentId) {
+        imageToAdd = i;
+      }
+    });
+
+    imageToAdd.alert = imageAddedMessage;
+    favoriteImages.push(model.documentId);
+
+    this.setInData(['listView', 'itemsLoading'], false);
+    this.setInData(['listView', 'items'], queriedImages);
+    this.setInData(['listView', 'favoriteImages'], favoriteImages);
+    this.emitChange();
+
+    setTimeout(() => {
+      imageToAdd.alert = null;
+
+      this.setInData(['listView', 'items'], queriedImages);
+      this.emitChange();
+    }, 1000);
   }
 });
 

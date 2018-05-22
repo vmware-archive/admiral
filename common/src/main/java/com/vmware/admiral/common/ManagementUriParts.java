@@ -68,6 +68,7 @@ public interface ManagementUriParts {
     String PLACEMENT_UPDATE_TASKS = RESOURCES + "/placement-update-tasks";
     String TAG_ASSIGNMENT = RESOURCES + "/tag-assignment";
     String CLUSTERS = RESOURCES + "/clusters";
+    String FAVORITE_IMAGES = RESOURCES + "/favorite-images";
 
     // Projects
     String PROJECTS = "/projects";

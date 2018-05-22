@@ -81,6 +81,10 @@ var ft = {
 
   allowHostEventsSubscription: function() {
     return utils.getConfigurationPropertyBoolean('allow.host.events.subscription');
+  },
+
+  areFavoriteImagesEnabled: function() {
+    return utils.getConfigurationPropertyBoolean('allow.ft.favorite-images');
   }
 };
 

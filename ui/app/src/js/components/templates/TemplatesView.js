@@ -241,6 +241,23 @@ var TemplatesViewVueComponent = Vue.extend({
         };
       },
       computed: {
+        parentListView: function() {
+          return this.$parent.$parent.$parent.model.listView;
+        },
+        isRegistryGlobal: function() {
+          var globalRepositories = this.parentListView.globalRepositories;
+          return globalRepositories ? globalRepositories.includes(this.model.registry) : false;
+        },
+        isFavorite: function() {
+          var favoriteImages = this.parentListView.favoriteImages;
+          return this.model.isFavorite || favoriteImages.includes(this.model.documentId);
+        },
+        addToFavoriteSupported: function() {
+          return ft.areFavoriteImagesEnabled() && this.isRegistryGlobal && !this.isFavorite;
+        },
+        removeFromFavoriteSupported: function() {
+          return ft.areFavoriteImagesEnabled() && this.model.isFavorite;
+        },
         isPksEnabled: function() {
           return ft.isPksEnabled();
         }
@@ -263,6 +280,18 @@ var TemplatesViewVueComponent = Vue.extend({
           $event.preventDefault();
 
           NavigationActions.openKubernetesDeploymentRequest(this.model.type, this.model.documentId);
+        },
+        addImageToFavorites: function($event) {
+          $event.stopPropagation();
+          $event.preventDefault();
+
+          TemplateActions.addImageToFavorites(this.model);
+        },
+        removeImageFromFavorites: function($event) {
+          $event.stopPropagation();
+          $event.preventDefault();
+
+          TemplateActions.removeImageFromFavorites(this.model);
         }
       }
     },
