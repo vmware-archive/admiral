@@ -15,7 +15,8 @@
             <label for="name" class="required">{{"kubernetes.clusters.edit.name" | i18n}}</label>
             <label for="name" aria-haspopup="true" role="tooltip"
                    class="tooltip tooltip-validation tooltip-sm tooltip-bottom-left"
-                   [class.invalid]="clusterForm.get('name').invalid && (clusterForm.get('name').dirty || clusterForm.get('name').touched)">
+                   [class.invalid]="clusterForm.get('name').invalid
+                                    && (clusterForm.get('name').dirty || clusterForm.get('name').touched)">
                 <input id="name" type="text" formControlName="name" size="45">
                 <span class="tooltip-content">{{"kubernetes.clusters.edit.nameRequired" | i18n}}</span>
             </label>
@@ -28,7 +29,8 @@
             <label for="url" class="required">{{"kubernetes.clusters.edit.url" | i18n}}</label>
             <label for="url" aria-haspopup="true" role="tooltip"
                    class="tooltip tooltip-validation tooltip-sm tooltip-bottom-left"
-                   [class.invalid]="clusterForm.get('url').invalid && (clusterForm.get('url').dirty || clusterForm.get('url').touched)">
+                   [class.invalid]="clusterForm.get('url').invalid
+                                    && (clusterForm.get('url').dirty || clusterForm.get('url').touched)">
                 <input id="url" type="text" placeholder="https://hostname:2376" formControlName="url" size="45">
                 <span class="tooltip-content">{{"kubernetes.clusters.edit.urlRequired" | i18n}}</span>
             </label>

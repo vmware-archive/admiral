@@ -25,7 +25,8 @@
           <label for="name" class="required">{{ "clusters.edit.name" | i18n }}</label>
           <label for="name" aria-haspopup="true" role="tooltip"
                  class="tooltip tooltip-validation tooltip-sm tooltip-bottom-left"
-                 [class.invalid]="clusterForm.get('name').invalid && (clusterForm.get('name').dirty || clusterForm.get('name').touched)">
+                 [class.invalid]="clusterForm.get('name').invalid
+                            && (clusterForm.get('name').dirty || clusterForm.get('name').touched)">
             <input id="name" type="text" formControlName="name">
             <span class="tooltip-content">{{ "clusters.edit.nameRequired" | i18n }}</span>
           </label>
@@ -40,7 +41,6 @@
             <select formControlName="type">
               <option value="VCH">{{ "clusters.edit.typeVch" | i18n }}</option>
               <option value="DOCKER">{{ "clusters.edit.typeDocker" | i18n }}</option>
-              <option *ngIf="isKubernetesHostOptionEnabled" value="KUBERNETES">KUBERNETES</option>
             </select>
           </div>
         </div>
@@ -48,7 +48,8 @@
           <label for="url" class="required">{{ "clusters.edit.url" | i18n }}</label>
           <label for="url" aria-haspopup="true" role="tooltip"
                  class="tooltip tooltip-validation tooltip-sm tooltip-bottom-left"
-                 [class.invalid]="clusterForm.get('url').invalid && (clusterForm.get('url').dirty || clusterForm.get('url').touched)">
+                 [class.invalid]="clusterForm.get('url').invalid
+                 && (clusterForm.get('url').dirty || clusterForm.get('url').touched)">
             <input id="url" type="text" placeholder="https://hostname:2376" formControlName="url">
             <span class="tooltip-content">{{ urlRequiredTextKey | i18n }}</span>
           </label>

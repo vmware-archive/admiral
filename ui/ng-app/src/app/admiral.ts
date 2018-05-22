@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -62,12 +62,14 @@ import { VerifyCertificateComponent } from "./views/verify-certificate/verify-ce
 import { TagDetailsContainersComponent } from "./views/tag-details/tag-details-containers.component";
 
 import { KubernetesClustersComponent } from './views/kubernetes/clusters/kubernetes-clusters.component';
-import { KubernetesClusterCreateComponent } from './views/kubernetes/clusters/kubernetes-cluster-create.component';
-import { KubernetesClusterDetailsComponent } from './views/kubernetes/clusters/details/kubernetes-cluster-details.component';
-import { KubernetesClusterSummaryComponent } from './views/kubernetes/clusters/details/kubernetes-cluster-summary.component';
-import { KubernetesClusterNodesComponent } from './views/kubernetes/clusters/details/kubernetes-cluster-nodes.component';
-import { KubernetesClusterAddComponent } from './views/kubernetes/clusters/add/kubernetes-cluster-add.component';
-import { KubernetesClusterAddExternalComponent } from './views/kubernetes/clusters/add/external/kubernetes-cluster-add-external.component';
+import { KubernetesClusterNewComponent } from './views/kubernetes/clusters/cluster-new/kubernetes-cluster-new.component';
+import { KubernetesClusterNewSettingsComponent } from './views/kubernetes/clusters/cluster-new/kubernetes-cluster-new-settings.component';
+import { KubernetesClusterNewFileComponent } from './views/kubernetes/clusters/cluster-new/kubernetes-cluster-new-file.component';
+import { KubernetesClusterDetailsComponent } from './views/kubernetes/clusters/cluster-details/kubernetes-cluster-details.component';
+import { KubernetesClusterSummaryComponent } from './views/kubernetes/clusters/cluster-details/kubernetes-cluster-summary.component';
+import { KubernetesClusterNodesComponent } from './views/kubernetes/clusters/cluster-details/kubernetes-cluster-nodes.component';
+import { KubernetesClusterAddComponent } from './views/kubernetes/clusters/cluster-add/kubernetes-cluster-add.component';
+import { KubernetesClusterAddExternalComponent } from './views/kubernetes/clusters/cluster-add-external/kubernetes-cluster-add-external.component';
 
 import { GridViewComponent } from './components/grid-view/grid-view.component';
 import { TableViewComponent } from "./views/table-view/table-view.component";
@@ -147,7 +149,9 @@ export const ADMIRAL_DECLARATIONS = [
   ClusterEditComponent,
   EndpointsComponent,
   KubernetesClustersComponent,
-  KubernetesClusterCreateComponent,
+  KubernetesClusterNewComponent,
+  KubernetesClusterNewSettingsComponent,
+  KubernetesClusterNewFileComponent,
   KubernetesClusterDetailsComponent,
   KubernetesClusterSummaryComponent,
   KubernetesClusterNodesComponent,

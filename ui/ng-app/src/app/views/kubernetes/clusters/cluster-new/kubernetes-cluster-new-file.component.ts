@@ -12,13 +12,12 @@
 import { Component } from '@angular/core';
 
 @Component({
-  selector: 'app-kubernetes-cluster-create',
-  templateUrl: './kubernetes-cluster-create.component.html',
-  styleUrls: ['./kubernetes-cluster-create.component.scss']
+    selector: 'app-kubernetes-cluster-new-file',
+    templateUrl: './kubernetes-cluster-new-file.component.html'
 })
 /**
- * Modal for kubernetes cluster creation.
+ * New kubernetes cluster view - file tab.
  */
-export class KubernetesClusterCreateComponent {
+export class KubernetesClusterNewFileComponent {
 
 }

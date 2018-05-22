@@ -38,10 +38,10 @@ import { ClusterCreateComponent } from './views/clusters/cluster-create/cluster-
 import { ClusterEditComponent } from './views/clusters/cluster-edit/cluster-edit.component';
 
 import { KubernetesClustersComponent } from './views/kubernetes/clusters/kubernetes-clusters.component';
-import { KubernetesClusterCreateComponent } from './views/kubernetes/clusters/kubernetes-cluster-create.component';
-import { KubernetesClusterAddComponent } from './views/kubernetes/clusters/add/kubernetes-cluster-add.component';
-import { KubernetesClusterAddExternalComponent } from './views/kubernetes/clusters/add/external/kubernetes-cluster-add-external.component';
-import { KubernetesClusterDetailsComponent } from './views/kubernetes/clusters/details/kubernetes-cluster-details.component';
+import { KubernetesClusterNewComponent } from './views/kubernetes/clusters/cluster-new/kubernetes-cluster-new.component';
+import { KubernetesClusterAddComponent } from './views/kubernetes/clusters/cluster-add/kubernetes-cluster-add.component';
+import { KubernetesClusterAddExternalComponent } from './views/kubernetes/clusters/cluster-add-external/kubernetes-cluster-add-external.component';
+import { KubernetesClusterDetailsComponent } from './views/kubernetes/clusters/cluster-details/kubernetes-cluster-details.component';
 
 import { DummyComponent } from './components/dummy/dummy.component';
 
@@ -131,22 +131,23 @@ export const ROUTES: Routes = [
                 data: { roles: RoutesRestriction.CLUSTERS },
                 canActivate: [HomeAuthGuard],
                 children: [
-                    { path: 'new',
-                        canActivate: [HomeAuthGuard], component: KubernetesClusterCreateComponent, data: {
-                        navigationContainerType: NavigationContainerType.Fullscreen,
-                        roles: RoutesRestriction.CLUSTERS_NEW
-                    }},
-                    { path: 'add',
-                        canActivate: [HomeAuthGuard], component: KubernetesClusterAddComponent, data: {
-                        navigationContainerType: NavigationContainerType.Fullscreen,
-                        roles: RoutesRestriction.CLUSTERS_NEW
-                    }},
                     { path: ':id',
-                        canActivate: [HomeAuthGuard], component: KubernetesClusterDetailsComponent, data: {
-                        navigationContainerType: NavigationContainerType.Fullscreen,
-                        roles: RoutesRestriction.CLUSTERS_ID
+                        canActivate: [HomeAuthGuard], component: KubernetesClusterDetailsComponent,
+                        data: {
+                            navigationContainerType: NavigationContainerType.Fullscreen,
+                            roles: RoutesRestriction.CLUSTERS_ID
                     }}
                 ]
+            },
+            {
+                path: 'kubernetes/new', component: KubernetesClusterNewComponent,
+                data: { roles: RoutesRestriction.CLUSTERS_NEW },
+                canActivate: [HomeAuthGuard]
+            },
+            {
+                path: 'kubernetes/add', component: KubernetesClusterAddComponent,
+                data: { roles: RoutesRestriction.CLUSTERS_NEW },
+                canActivate: [HomeAuthGuard]
             },
             {
                 path: 'kubernetes/pods', component: PodListComponent,

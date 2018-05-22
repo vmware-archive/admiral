@@ -8,26 +8,32 @@
   ~ and license terms. Your use of these subcomponents is subject to the terms and
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
-<delete-confirmation [title]="deleteTitle" [description]="deleteConfirmationDescription" [(alert)]="deleteConfirmationAlert"
-  [visible]="clusterToDelete" (onDelete)="deleteConfirmed()" (onCancel)="deleteCanceled()">
+<delete-confirmation [title]="deleteTitle" [description]="deleteConfirmationDescription"
+                     [(alert)]="deleteConfirmationAlert" [visible]="clusterToDelete"
+                     (onDelete)="deleteConfirmed()" (onCancel)="deleteCanceled()">
 </delete-confirmation>
 
-<grid-view #gridView [serviceEndpoint]="serviceEndpoint" [searchPlaceholder]="'kubernetes.clusters.search.placeholder' | i18n">
+<grid-view #gridView [serviceEndpoint]="serviceEndpoint"
+                [searchPlaceholder]="'kubernetes.clusters.search.placeholder' | i18n">
+
   <div title>{{ "kubernetes.clusters.title" | i18n }}</div>
+
   <div toolbar>
     <clr-dg-action-bar>
       <div class="btn-group" role="group" aria-label="Available Actions">
-        <button type="button" class="btn btn-link" [routerLink]="['./new']">
+        <button type="button" class="btn btn-link" [routerLink]="['../new']">
           <i class="fa fa-plus"></i>{{"kubernetes.clusters.newBtn" | i18n}}
         </button>
-        <button type="button" class="btn btn-link" [routerLink]="['./add']">
+        <button type="button" class="btn btn-link" [routerLink]="['../add']">
           <i class="fa fa-plus"></i>{{"kubernetes.clusters.addBtn" | i18n}}
         </button>
       </div>
     </clr-dg-action-bar>
   </div>
+
   <ng-template let-item="item">
-    <card class="clusterCard" [routerLink]="['./' + item.documentId]" [ngClass]="{'card-actions-selected': isItemSelected(item)}">
+    <card class="clusterCard" [routerLink]="['./' + item.documentId]"
+          [ngClass]="{'card-actions-selected': isItemSelected(item)}">
       <div card-header>
         <div class="clusterIcon">
           <clr-icon shape="rack-server" size="48"></clr-icon>
@@ -66,13 +72,9 @@
         </div>
       </div>
       <div card-footer>
-        <button class="btn btn-sm btn-link" (click)="openDashboard(item)" [disabled]="!isDashboardInstalled(item)">{{ "kubernetes.clusters.dashboard" | i18n }}</button>
+        <button class="btn btn-sm btn-link" (click)="openDashboard(item)"
+                [disabled]="!isDashboardInstalled(item)">{{ "kubernetes.clusters.dashboard" | i18n }}</button>
       </div>
     </card>
   </ng-template>
 </grid-view>
-
-<navigation-container>
-  <back-button [routerLink]="['./']">{{ "kubernetes.clusters.title" | i18n }}</back-button>
-  <router-outlet></router-outlet>
-</navigation-container>

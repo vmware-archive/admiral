@@ -46,20 +46,23 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
 
     get deleteTitle() {
         return this.clusterToDelete && this.clusterToDelete.name
-            && I18n.t('clusters.delete.title');
+                    && I18n.t('clusters.delete.title');
     }
 
     get deleteConfirmationDescription(): string {
-        return this.clusterToDelete && this.clusterToDelete.name
-            && I18n.t('clusters.delete.confirmation', {
-                clusterName: this.clusterToDelete.name,
-                interpolation: {escapeValue: false}
-            } as I18n.TranslationOptions);
+        return this.clusterToDelete
+                    && this.clusterToDelete.name
+                    && I18n.t('clusters.delete.confirmation', {
+                        clusterName: this.clusterToDelete.name,
+                        interpolation: { escapeValue: false }
+                    } as I18n.TranslationOptions);
     }
 
     isDashboardInstalled(cluster): boolean {
-        var nodeLink = cluster.nodeLinks[0];
-        var installed = Utils.getCustomPropertyValue(cluster.nodes[nodeLink].customProperties, '__dashboardInstalled');
+        let nodeLink = cluster.nodeLinks[0];
+        let installed =
+            Utils.getCustomPropertyValue(cluster.nodes[nodeLink].customProperties, '__dashboardInstalled');
+
         return installed === "true";
     }
 
@@ -70,8 +73,8 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
             return;
         }
 
-        var properties = cluster.nodes[cluster.nodeLinks[0]].customProperties;
-        var dashboardLink = Utils.getCustomPropertyValue(properties, '__dashboardLink');
+        let properties = cluster.nodes[cluster.nodeLinks[0]].customProperties;
+        let dashboardLink = Utils.getCustomPropertyValue(properties, '__dashboardLink');
         if (dashboardLink) {
             window.open(dashboardLink);
         }
@@ -87,12 +90,11 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
     }
 
     deleteConfirmed() {
-        this.service.delete(this.clusterToDelete.documentSelfLink)
-        .then(result => {
+        this.service.delete(this.clusterToDelete.documentSelfLink).then(() => {
             this.clusterToDelete = null;
+
             this.gridView.refresh();
-        })
-        .catch(err => {
+        }).catch(err => {
             this.deleteConfirmationAlert = Utils.getErrorMessage(err)._generic;
         });
     }
@@ -102,11 +104,14 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
     }
 
     nodeCount(cluster): string {
-        var nodeLink = cluster.nodeLinks[0];
-        var nodesJson = Utils.getCustomPropertyValue(cluster.nodes[nodeLink].customProperties, '__nodes');
+        let nodeLink = cluster.nodeLinks[0];
+        let nodesJson =
+            Utils.getCustomPropertyValue(cluster.nodes[nodeLink].customProperties, '__nodes');
+
         if (nodesJson) {
             return JSON.parse(nodesJson).length;
         }
+
         return I18n.t('notAvailable');
     }
 
@@ -134,10 +139,10 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
         var hostLink = cluster.nodeLinks[0];
 
         this.service.patch(hostLink, {'powerState': Constants.hosts.state.ON})
-        .then(result => {
-            this.gridView.refresh();
-        })
-        .catch(err => {
+            .then(() => {
+
+                this.gridView.refresh();
+        }).catch((err) => {
             console.log(Utils.getErrorMessage(err)._generic);
         });
 
@@ -154,10 +159,10 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
         var hostLink = cluster.nodeLinks[0];
 
         this.service.patch(hostLink, {'powerState': Constants.hosts.state.SUSPEND})
-        .then(result => {
-            this.gridView.refresh();
-        })
-        .catch(err => {
+            .then(() => {
+
+                this.gridView.refresh();
+        }).catch((err) => {
             console.log(Utils.getErrorMessage(err)._generic);
         });
 

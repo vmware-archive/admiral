@@ -13,10 +13,10 @@ import { Component, OnInit } from "@angular/core";
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormGroup, FormControl, Validators } from "@angular/forms";
 
-import { DocumentService } from "../../../../../utils/document.service";
-import { ErrorService } from "../../../../../utils/error.service";
-import { Links } from "../../../../../utils/links";
-import { Utils } from "../../../../../utils/utils";
+import { DocumentService } from "../../../../utils/document.service";
+import { ErrorService } from "../../../../utils/error.service";
+import { Links } from "../../../../utils/links";
+import { Utils } from "../../../../utils/utils";
 
 import * as I18n from 'i18next';
 import { formatUtils } from "admiral-ui-common";
@@ -108,8 +108,7 @@ export class KubernetesClusterAddExternalComponent implements OnInit {
     }
 
     cancelAdding() {
-        let path = ['../'];
-        this.router.navigate(path, { relativeTo: this.route });
+        this.goBack();
     }
 
     saveCluster() {
@@ -169,5 +168,9 @@ export class KubernetesClusterAddExternalComponent implements OnInit {
         this.showCertificateWarning = false;
 
         this.createCluster(true);
+    }
+
+    goBack() {
+        this.router.navigate(['../clusters'], {relativeTo: this.route});
     }
 }

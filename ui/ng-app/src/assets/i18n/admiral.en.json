@@ -304,6 +304,38 @@
       }
     }
   },
+  "pks": {
+    "new": {
+      "title": "New Cluster",
+      "settings": {
+        "title": "Settings",
+        "fieldRowTitleEndpoint": "PKS",
+        "fieldTitleEndpoint": "PKS Endpoint",
+        "fieldTitleName": "Cluster Name",
+        "nameFieldRequired": "Cluster name is required.",
+        "fieldTitlePlan": "Plan",
+        "plan": {
+          "small": "Small",
+          "medium": "Medium",
+          "large": "Large"
+        },
+        "fieldTitleNumberNodes": "Number of Nodes",
+        "fieldTitleMaster": "Master",
+        "masterFieldRequired": "Master field is required. Only values bigger than 0 can be entered.",
+        "masterFieldDescription": "A single master may be suitable for dev/test clusters, but for production deployments 3 or 5 masters are more appropriate.",
+        "masterFieldDescription3Nodes": "- 3 masters: A single master can fail, but the cluster will not be able to advance state. A new master needs to be joined, before the cluster can advance state.",
+        "masterFieldDescription5Nodes": "- 5 masters: A single master can fail, and the cluster will be able to advance state.",
+        "fieldTitleWorker": "Worker",
+        "workerFieldRequired": "Worker field is required. Only values bigger than 2 can be entered."
+      },
+      "file": {
+        "title": "File"
+      }
+    },
+    "add": {
+      "title": "Add Cluster"
+    }
+  },
   "hosts": {
     "actions": {
       "delete":{
@@ -385,7 +417,6 @@
       "credentials": "Credentials",
       "pksAddressFieldTitle": "PKS Address",
       "pksAddressRequired": "The PKS Address is required.",
-      "createBtn": "Create",
       "testConnectionBtn": "Test Connection",
       "clustersTabTitle": "Clusters"
     }
@@ -416,6 +447,7 @@
   },
   "edit": "Edit",
   "save": "Save",
+  "create": "Create",
   "add": "Add",
   "yes": "Yes",
   "remove": "Remove",
@@ -444,7 +476,7 @@
     "closures": "Closures",
     "library": "Library",
     "templates": "Templates",
-    "repositories": "Repositories",
+    "repositories": "All Repositories",
     "internalRepositories": "Built-in Repositories",
     "publicRepositories": "Repositories",
     "infrastructure": "Infrastructure",

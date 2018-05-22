@@ -82,10 +82,6 @@ export class ClusterCreateComponent implements AfterViewInit, OnInit, OnDestroy 
     return FT.isHostPublicUriEnabled() && this.isSingleHostCluster;
   }
 
-  get isKubernetesHostOptionEnabled(): boolean {
-    return FT.isKubernetesHostOptionEnabled();
-  }
-
   ngOnInit() {
     this.sub = this.route.params.subscribe(params => {
       let projectId = params['projectId'];
