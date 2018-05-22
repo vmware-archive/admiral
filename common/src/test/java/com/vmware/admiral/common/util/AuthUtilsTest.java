@@ -60,6 +60,14 @@ public class AuthUtilsTest {
         credentials.userEmail = email;
         credentials.privateKey = password;
         assertEquals(expectedHeader, AuthUtils.createAuthorizationHeader(credentials));
+
+        // Bearer token
+        String token = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJrdWJlcm5ldGVzL";
+        expectedHeader = String.format("Bearer %s", token);
+        credentials = new AuthCredentialsServiceState();
+        credentials.type = "Bearer";
+        credentials.privateKey = token;
+        assertEquals(expectedHeader, AuthUtils.createAuthorizationHeader(credentials));
     }
 
     @Test

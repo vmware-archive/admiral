@@ -35,6 +35,8 @@ import com.vmware.xenon.services.common.authn.BasicAuthenticationUtils;
 
 public class AuthUtils {
 
+    public static final String BEARER_TOKEN_AUTH_TYPE = "Bearer";
+
     /*
      * Cache of cleaned up sessions (i.e. sessions whose user has been logged out).
      * This approach works just fine in the VIC context since it's (still) a single node,
@@ -54,6 +56,10 @@ public class AuthUtils {
     public static String createAuthorizationHeader(AuthCredentialsServiceState authState) {
         if (authState == null) {
             return null;
+        }
+
+        if (BEARER_TOKEN_AUTH_TYPE.equals(authState.type)) {
+            return new StringBuffer("Bearer ").append(authState.privateKey).toString();
         }
 
         AuthCredentialsType authCredentialsType = AuthCredentialsType.valueOf(authState.type);
