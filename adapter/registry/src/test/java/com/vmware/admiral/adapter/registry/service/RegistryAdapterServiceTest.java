@@ -15,9 +15,11 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
@@ -321,6 +323,105 @@ public class RegistryAdapterServiceTest extends BaseMockRegistryTestCase {
         host.testStart(1);
         host.send(adapterOperation);
         host.testWait();
+    }
+
+
+    @Test
+    public void testDuplicateRegistryInsideProjectShouldFail() throws Throwable {
+        RegistryState registryState = new RegistryState();
+        registryState.address = "http://0.0.0.0";
+        registryState.name = "TestRegistry";
+        registryState.tenantLinks = new ArrayList<>();
+        registryState.tenantLinks.add("test-project");
+
+        doPost(registryState, RegistryFactoryService.SELF_LINK);
+
+        try {
+            doPost(registryState, RegistryFactoryService.SELF_LINK);
+            fail("Should not be possible to add the same registry twice in the same scope");
+        } catch (Exception e) {
+            assertTrue(e.getMessage().contains(RegistryFactoryService.REGISTRY_ALREADY_EXISTS));
+        }
+    }
+
+    @Test
+    public void testDuplicateGlobalRegistryShrouldFails() throws Throwable {
+        RegistryState registryState = new RegistryState();
+        registryState.address = "http://0.0.0.0";
+        registryState.name = "TestRegistry";
+
+        doPost(registryState, RegistryFactoryService.SELF_LINK);
+
+        try {
+            doPost(registryState, RegistryFactoryService.SELF_LINK);
+            fail("Should not be possible to add the same registry twice in the same scope");
+        } catch (Exception e) {
+            assertTrue(e.getMessage().contains(RegistryFactoryService.REGISTRY_ALREADY_EXISTS));
+        }
+    }
+
+    @Test
+    public void testSameRegistryAsGlobalAndProject() throws Throwable {
+        RegistryState registryState = new RegistryState();
+        registryState.address = "http://0.0.0.0";
+        registryState.name = "TestRegistry";
+        registryState.tenantLinks = new ArrayList<>();
+
+        doPost(registryState, RegistryFactoryService.SELF_LINK);
+
+        registryState.tenantLinks.add("test-project");
+        doPost(registryState, RegistryFactoryService.SELF_LINK);
+    }
+
+    @Test
+    public void testSameRegistryTwoDifferentProjectsRemoveOldTenantLink() throws Throwable {
+        RegistryState registryState = new RegistryState();
+        registryState.address = "http://0.0.0.0";
+        registryState.name = "TestRegistry";
+        registryState.tenantLinks = new ArrayList<>();
+
+        registryState.tenantLinks.add("test-project1");
+        doPost(registryState, RegistryFactoryService.SELF_LINK);
+
+        registryState.tenantLinks.remove("test-project1");
+        registryState.tenantLinks.add("test-project2");
+
+        doPost(registryState, RegistryFactoryService.SELF_LINK);
+    }
+
+    @Test
+    public void testSameRegistryTwoDifferentProjectsNotRemoveOldTenantLinkShouldFail() throws
+            Throwable {
+        RegistryState registryState = new RegistryState();
+        registryState.address = "http://0.0.0.0";
+        registryState.name = "TestRegistry";
+        registryState.tenantLinks = new ArrayList<>();
+
+        registryState.tenantLinks.add("test-project1");
+        doPost(registryState, RegistryFactoryService.SELF_LINK);
+
+        registryState.tenantLinks.add("test-project2");
+        try {
+            doPost(registryState, RegistryFactoryService.SELF_LINK);
+            fail();
+        } catch (Exception e) {
+            assertTrue(e.getMessage().contains(RegistryFactoryService.REGISTRY_ALREADY_EXISTS));
+        }
+    }
+
+    @Test
+    public void testSameRegistryPartiallyMatchingAddress() throws Throwable {
+        RegistryState registryState = new RegistryState();
+        registryState.address = "http://example.com:5000";
+        registryState.name = "TestRegistry1";
+        registryState.tenantLinks = new ArrayList<>();
+
+        registryState.tenantLinks.add("test-project");
+        doPost(registryState, RegistryFactoryService.SELF_LINK);
+
+        registryState.address = "http://example.com:5000/extra/path";
+        registryState.name = "TestRegistry2";
+        doPost(registryState, RegistryFactoryService.SELF_LINK);
     }
 
     @Test

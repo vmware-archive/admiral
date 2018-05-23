@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.junit.Assert;
@@ -174,6 +175,7 @@ public class RoleRestrictionsTest extends AuthBaseTest {
 
         RegistryState registry = new RegistryState();
         registry.name = "test";
+        registry.address = UUID.randomUUID().toString();
 
         // POST
         RegistryState createdState = doPost(registry, RegistryFactoryService.SELF_LINK);
@@ -341,6 +343,7 @@ public class RoleRestrictionsTest extends AuthBaseTest {
 
         RegistryState registry = new RegistryState();
         registry.name = "test";
+        registry.address = UUID.randomUUID().toString();
 
         // GET
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
@@ -354,6 +357,7 @@ public class RoleRestrictionsTest extends AuthBaseTest {
         assertEquals(createdState.documentSelfLink, document.documentSelfLink);
 
         // POST
+        registry.address = UUID.randomUUID().toString();
         doPostWithRestrictionVerification(registry, RegistryFactoryService.SELF_LINK);
 
         // PUT
@@ -516,6 +520,7 @@ public class RoleRestrictionsTest extends AuthBaseTest {
 
         RegistryState registry = new RegistryState();
         registry.name = "test";
+        registry.address = UUID.randomUUID().toString();
         registry.tenantLinks = Collections.singletonList(createdProject.documentSelfLink);
 
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
@@ -529,6 +534,7 @@ public class RoleRestrictionsTest extends AuthBaseTest {
         getDocument(RegistryState.class, createdState.documentSelfLink);
 
         // POST
+        registry.address = UUID.randomUUID().toString();
         doPost(registry, RegistryFactoryService.SELF_LINK);
 
         // PUT

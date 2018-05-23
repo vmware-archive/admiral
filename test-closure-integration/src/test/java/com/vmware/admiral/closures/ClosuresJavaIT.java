@@ -39,6 +39,7 @@ import com.vmware.admiral.closures.services.closure.Closure;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescription;
 import com.vmware.admiral.closures.services.closuredescription.ResourceConstraints;
 import com.vmware.admiral.common.util.ServiceClientFactory;
+import com.vmware.admiral.service.common.RegistryFactoryService;
 import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.Utils;
@@ -86,7 +87,14 @@ public class ClosuresJavaIT extends BaseClosureIntegrationTest {
     public void init() throws Throwable {
         logger.info("Executing against docker host: %s ", dockerHostCompute.address);
 
-        registerExternalDockerRegistry(serviceClient);
+        try {
+            registerExternalDockerRegistry(serviceClient);
+        } catch (Exception e) {
+            // registry already added
+            if (!e.getMessage().contains(RegistryFactoryService.REGISTRY_ALREADY_EXISTS)) {
+                throw e;
+            }
+        }
     }
 
     @Test
