@@ -1,0 +1,63 @@
+<!--
+  ~ Copyright (c) 2018 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div>Select an endpoint and then select one or more existing, unassigned Kubernetes clusters
+    to add to the current business group.</div>
+
+<form class="form" [formGroup]="addExistingClustersForm">
+    <section class="form-block">
+        <div class="form-group" style="margin-bottom: -10px;">
+            <label for="endpoint">{{ "pks.new.settings.fieldTitleEndpoint" | i18n }}</label>
+            <dropdown formControlName="endpoint" [options]="endpoints"
+                      [title]="endpointsTitle"
+                      [searchPlaceholder]="endpointsSearchPlaceholder"
+                      (ngModelChange)="onChangeEndpoint($event)"
+                      ddClass="bottom-right">
+            </dropdown>
+        </div>
+
+        <table-view [showSearch]="false" [showToolbar]="false">
+            <div table-content-view>
+                <clr-datagrid [clrDgLoading]="loading" [clDgRowSelection]="true"
+                              [(clrDgSelected)]="selectedClusters">
+                    <clr-dg-column>Name</clr-dg-column>
+                    <clr-dg-column>Status</clr-dg-column>
+                    <clr-dg-column>API Endpoint</clr-dg-column>
+                    <clr-dg-column># Masters</clr-dg-column>
+                    <clr-dg-column># Workers</clr-dg-column>
+                    <clr-dg-column>Kubernetes Version</clr-dg-column>
+
+                    <clr-dg-row *clrDgItems="let cluster of clusters" [clrDgItem]="cluster">
+                        <clr-dg-cell></clr-dg-cell>
+                        <clr-dg-cell></clr-dg-cell>
+                        <clr-dg-cell></clr-dg-cell>
+                        <clr-dg-cell></clr-dg-cell>
+                        <clr-dg-cell></clr-dg-cell>
+                        <clr-dg-cell></clr-dg-cell>
+                    </clr-dg-row>
+
+                    <clr-dg-footer>{{clusters.length}} {{"pks.existingClusters.count" | i18n}}</clr-dg-footer>
+
+                </clr-datagrid>
+            </div>
+        </table-view>
+
+        <div style="margin-top: 20px;">
+        <button type="button" class="btn btn-outline"
+                [disabled]="isAdding"
+                (click)="cancel()">{{"cancel" | i18n}}</button>
+        <button type="button" class="btn btn-primary addClusters-btn"
+                [clrLoading]="isAdding"
+                [disabled]="isAdding"
+                (click)="add()">{{"add" | i18n}}</button>
+        </div>
+    </section>
+</form>

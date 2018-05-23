@@ -10,21 +10,18 @@
  */
 
 import { Component } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
-import { DocumentService } from '../../../../utils/document.service';
-import { ErrorService } from "../../../../utils/error.service";
+import { FT } from "../../../../utils/ft";
 
 @Component({
   selector: 'app-kubernetes-cluster-add',
-  templateUrl: './kubernetes-cluster-add.component.html',
-  styleUrls: ['./kubernetes-cluster-add.component.scss']
+  templateUrl: './kubernetes-cluster-add.component.html'
 })
 /**
  * View for adding existing kubernetes clusters.
  */
 export class KubernetesClusterAddComponent {
 
-    constructor(private router: Router, private route: ActivatedRoute,
-                private documentService: DocumentService, private errorService: ErrorService) {
+    get addExternalEnabled() {
+        return FT.isPksEnabled() && FT.isKubernetesHostOptionEnabled();
     }
 }

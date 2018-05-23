@@ -64,11 +64,11 @@ import { TagDetailsContainersComponent } from "./views/tag-details/tag-details-c
 import { KubernetesClustersComponent } from './views/kubernetes/clusters/kubernetes-clusters.component';
 import { KubernetesClusterNewComponent } from './views/kubernetes/clusters/cluster-new/kubernetes-cluster-new.component';
 import { KubernetesClusterNewSettingsComponent } from './views/kubernetes/clusters/cluster-new/kubernetes-cluster-new-settings.component';
-import { KubernetesClusterNewFileComponent } from './views/kubernetes/clusters/cluster-new/kubernetes-cluster-new-file.component';
 import { KubernetesClusterDetailsComponent } from './views/kubernetes/clusters/cluster-details/kubernetes-cluster-details.component';
 import { KubernetesClusterSummaryComponent } from './views/kubernetes/clusters/cluster-details/kubernetes-cluster-summary.component';
 import { KubernetesClusterNodesComponent } from './views/kubernetes/clusters/cluster-details/kubernetes-cluster-nodes.component';
 import { KubernetesClusterAddComponent } from './views/kubernetes/clusters/cluster-add/kubernetes-cluster-add.component';
+import { KubernetesClusterAddExistingComponent } from './views/kubernetes/clusters/cluster-add/kubernetes-cluster-add-existing.component';
 import { KubernetesClusterAddExternalComponent } from './views/kubernetes/clusters/cluster-add-external/kubernetes-cluster-add-external.component';
 
 import { GridViewComponent } from './components/grid-view/grid-view.component';
@@ -151,11 +151,11 @@ export const ADMIRAL_DECLARATIONS = [
   KubernetesClustersComponent,
   KubernetesClusterNewComponent,
   KubernetesClusterNewSettingsComponent,
-  KubernetesClusterNewFileComponent,
   KubernetesClusterDetailsComponent,
   KubernetesClusterSummaryComponent,
   KubernetesClusterNodesComponent,
   KubernetesClusterAddComponent,
+  KubernetesClusterAddExistingComponent,
   KubernetesClusterAddExternalComponent,
   EndpointDetailsComponent,
 

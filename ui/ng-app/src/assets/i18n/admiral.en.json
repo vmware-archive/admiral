@@ -321,12 +321,12 @@
         },
         "fieldTitleNumberNodes": "Number of Nodes",
         "fieldTitleMaster": "Master",
-        "masterFieldRequired": "Master field is required. Only values bigger than 0 can be entered.",
+        "masterFieldRequired": "Master field is required. Only integer values bigger than 0 can be entered.",
         "masterFieldDescription": "A single master may be suitable for dev/test clusters, but for production deployments 3 or 5 masters are more appropriate.",
         "masterFieldDescription3Nodes": "- 3 masters: A single master can fail, but the cluster will not be able to advance state. A new master needs to be joined, before the cluster can advance state.",
         "masterFieldDescription5Nodes": "- 5 masters: A single master can fail, and the cluster will be able to advance state.",
         "fieldTitleWorker": "Worker",
-        "workerFieldRequired": "Worker field is required. Only values bigger than 2 can be entered."
+        "workerFieldRequired": "Worker field is required. Only integer values bigger than 0 can be entered."
       },
       "file": {
         "title": "File"

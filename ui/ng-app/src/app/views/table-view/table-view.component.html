@@ -13,7 +13,7 @@
     <ng-content select="[title]"></ng-content>
 </div>
 
-<div class="toolbar">
+<div class="toolbar" *ngIf="showToolbar">
     <div class="row">
         <div class="col-sm-6 toolbar-primary">
             <ng-content select="[toolbar]"></ng-content>
@@ -31,7 +31,7 @@
                         </div>
                         <div class="search-form-input">
                             <input type="text" formControlName="searchGridInput"
-                                   [placeholder]="searchPlaceholder" (keyup.enter)="onSearch($event)" />
+                                   [placeholder]="searchPlaceholder" (keyup.enter)="onSearch($event)"/>
                         </div>
                     </div>
                 </form>

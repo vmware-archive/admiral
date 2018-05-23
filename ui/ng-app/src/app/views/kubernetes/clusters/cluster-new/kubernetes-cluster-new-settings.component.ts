@@ -12,9 +12,11 @@
 import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
+import { BaseDetailsComponent } from "../../../../components/base/base-details.component";
 import { DocumentService } from "../../../../utils/document.service";
 import { ErrorService } from "../../../../utils/error.service";
 import { Links } from "../../../../utils/links";
+import { Utils}  from "../../../../utils/utils";
 
 import * as I18n from 'i18next';
 
@@ -26,7 +28,9 @@ import * as I18n from 'i18next';
 /**
  * New kubernetes cluster view - settings tab.
  */
-export class KubernetesClusterNewSettingsComponent implements OnInit {
+export class KubernetesClusterNewSettingsComponent extends BaseDetailsComponent
+                                                    implements OnInit {
+    editMode: boolean = false;
 
     endpoints: any[];
 
@@ -37,9 +41,11 @@ export class KubernetesClusterNewSettingsComponent implements OnInit {
         name: new FormControl('', Validators.required),
         plan: new FormControl(''),
         master: new FormControl( 1, Validators.compose(
-                                        [ Validators.min(1), Validators.required ])),
-        worker: new FormControl(3, Validators.compose(
-                                        [ Validators.min(3), Validators.required ]))
+                                        [ Validators.min(1),
+                                            Validators.pattern('[\\d]+'), Validators.required ])),
+        worker: new FormControl(1, Validators.compose(
+                                        [ Validators.min(1),
+                                            Validators.pattern('[\\d]+'), Validators.required ]))
     });
 
     planSelection: any = 'SMALL';
@@ -56,9 +62,13 @@ export class KubernetesClusterNewSettingsComponent implements OnInit {
 
     constructor(protected route: ActivatedRoute, protected service: DocumentService,
                 protected router: Router, protected errorService: ErrorService) {
+
+        super(Links.CLUSTERS, route, router, service, errorService);
     }
 
     ngOnInit(): void {
+        super.ngOnInit();
+
         this.populateEndpoints();
     }
 
@@ -69,14 +79,31 @@ export class KubernetesClusterNewSettingsComponent implements OnInit {
 
         this.service.list(Links.ENDPOINTS, {}).then(result => {
             this.endpoints = result.documents;
-            console.log('endpoints', this.endpoints);
-        }).catch((e) => {
-            console.log('Endpoints retrieval failed', e);
+        }).catch((error) => {
+            console.log(error);
+            this.errorService.error(Utils.getErrorMessage(error)._generic);
         });
+    }
+
+    entityInitialized() {
+        if (this.entity) {
+            this.editMode = true;
+
+            this.newClusterSettingsForm.get('endpoint').disable();
+            this.newClusterSettingsForm.get('name').setValue(this.entity.name);
+            this.newClusterSettingsForm.get('plan').disable();
+            this.newClusterSettingsForm.get('master').disable();
+            // TODO finish prepopulation
+        }
     }
 
     create() {
         // TODO Implement
+        this.goBack();
+    }
+
+    update() {
+        // TODO Update Cluster
         this.goBack();
     }
 
@@ -85,7 +112,8 @@ export class KubernetesClusterNewSettingsComponent implements OnInit {
     }
 
     goBack() {
-        this.router.navigate(['../clusters'], {relativeTo: this.route});
-    }
+        let path = (this.editMode) ? '../../..' : '../clusters';
 
+        this.router.navigate([path], {relativeTo: this.route});
+    }
 }

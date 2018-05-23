@@ -32,7 +32,7 @@
   </div>
 
   <ng-template let-item="item">
-    <card class="clusterCard" [routerLink]="['./' + item.documentId]"
+    <card class="clusterCard" [routerLink]="['./cluster/' + item.documentId]"
           [ngClass]="{'card-actions-selected': isItemSelected(item)}">
       <div card-header>
         <div class="clusterIcon">
@@ -47,7 +47,7 @@
             <clr-icon shape="ellipsis-vertical" size="20"></clr-icon>
           </button>
           <clr-dropdown-menu clrPosition="left-top" *clrIfOpen>
-            <button type="button" class="dropdown-item cluster-details" [routerLink]="['./' + item.documentId]">
+            <button type="button" class="dropdown-item cluster-details" [routerLink]="['./cluster/' + item.documentId]">
               <clr-icon shape="eye" size="20" class="card-drop-down-actions"></clr-icon>{{"projects.actions.details" | i18n}}</button>
             <button *ngIf="operationSupported('DISABLE', item)" type="button" class="dropdown-item disableHost" (click)="disableHost($event, item)">
               <clr-icon shape="pause" size="20" class="card-drop-down-actions"></clr-icon>{{ "hosts.actions.disable" | i18n }}</button>
