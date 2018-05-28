@@ -613,7 +613,7 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
             k8sState.name = k8sObject.metadata != null ? k8sObject.metadata.name : null;
             state = k8sState;
             factoryLink = GenericKubernetesEntityService.FACTORY_LINK;
-            return;
+            break;
         }
         state.documentSelfLink = state.getMetadata().uid;
         state.compositeComponentLink = component.documentSelfLink;

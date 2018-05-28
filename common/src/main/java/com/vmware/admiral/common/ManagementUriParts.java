@@ -145,6 +145,7 @@ public interface ManagementUriParts {
 
     String PKS_NAMESPACE = "/pks";
     String PKS_ENDPOINTS = RESOURCES + PKS_NAMESPACE + "/endpoints";
+    String PKS_CLUSTERS = RESOURCES + PKS_NAMESPACE + "/clusters";
 
     // Request tasks:
     String REQUEST = "/request";

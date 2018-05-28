@@ -51,7 +51,7 @@ public class PKSAdapterService extends StatelessService {
             .expireAfterWrite(12, TimeUnit.HOURS)
             .build();
 
-    private static class RequestContext extends AdapterRequest {
+    public static class RequestContext extends AdapterRequest {
         public Operation operation;
         public List<String> tenantLinks;
         public PKSEndpointService.Endpoint endpoint;
