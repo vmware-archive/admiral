@@ -248,7 +248,7 @@ var TemplateDetailsView = Vue.extend({
 
           let links = [];
           let rows = $(this.$el).find('.template-links .row');
-          for (let i = 0; i < rows.size(); i++) {
+          for (let i = 0; i < rows.size; i++) {
             links.push(constructLink($(rows[i]).find('.link-service').text(),
                                      $(rows[i]).find('.link-alias').text()));
           }
