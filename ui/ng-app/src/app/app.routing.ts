@@ -160,12 +160,10 @@ export const ROUTES: Routes = [
                 ]
             },
             {
-                path: 'kubernetes/deployments', component: DeploymentListComponent,
-                children: [
-                    { path: ':id', component: DeploymentDetailsComponent, data: {
-                        navigationContainerType: NavigationContainerType.Fullscreen
-                    }}
-                ]
+                path: 'kubernetes/deployments', component: DeploymentListComponent
+            },
+            {
+                path: 'kubernetes/deployments/:id', component: DeploymentDetailsComponent
             },
             {
                 path: 'kubernetes/services', component: ServiceListComponent,

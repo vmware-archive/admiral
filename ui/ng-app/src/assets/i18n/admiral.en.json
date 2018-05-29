@@ -302,6 +302,29 @@
           "count": "nodes"
         }
       }
+    },
+    "deployments": {
+      "title": "Deployments",
+      "search": {
+        "placeholder": "Search for deployments"
+      },
+      "item": {
+        "creation": "Created:",
+        "namespace": "Namespace:",
+        "containersNumber": "Containers:",
+        "restartPolicy": "Restart Policy:",
+        "strategy": "Strategy:",
+        "replicas": "Replicas:",
+        "terminationGracePeriodSeconds": "Termination Grace Period (seconds):",
+        "dnsPolicy": "DNS Policy:",
+        "summaryTitle": "Summary",
+        "containersTitle": "Containers",
+        "containers": {
+          "name": "Name",
+          "image": "Image",
+          "env": "Env"
+        }
+      }
     }
   },
   "pks": {
@@ -452,6 +475,7 @@
   "yes": "Yes",
   "remove": "Remove",
   "delete": "Delete",
+  "details": "Details",
   "verify": "Verify",
   "update": "Update",
   "cancel": "Cancel",
@@ -474,6 +498,11 @@
     "networks": "Networks",
     "volumes": "Volumes",
     "closures": "Closures",
+    "kubernetes": {
+      "title": "Kubernetes",
+      "deployments": "Deployments",
+      "pods": "Pods"
+    },
     "library": "Library",
     "templates": "Templates",
     "repositories": "All Repositories",

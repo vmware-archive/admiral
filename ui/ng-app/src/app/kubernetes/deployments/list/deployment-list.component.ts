@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -9,20 +9,33 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component } from '@angular/core';
-import { slideAndFade } from '../../../utils/transitions';
+import { Component, ViewChild } from '@angular/core';
 import { Links } from '../../../utils/links';
-import { Router } from '@angular/router';
-import { DocumentService } from '../../../utils/document.service';
-import { DeploymentDetailsComponent } from '../details/deployment-details.component';
-import { NavigationContainerType } from '../../../components/navigation-container/navigation-container.component';
 
 @Component({
   selector: 'deployment-list',
   templateUrl: './deployment-list.component.html',
-  styleUrls: ['./deployment-list.component.scss'],
-  animations: [slideAndFade()]
+  styleUrls: ['./deployment-list.component.scss']
 })
+/**
+ * Deployments list view.
+ */
 export class DeploymentListComponent {
-  serviceEndpoint = Links.DEPLOYMENTS;
+    serviceEndpoint = Links.DEPLOYMENTS;
+    selectedItem: any;
+
+    isItemSelected(item: any) {
+        return item === this.selectedItem;
+    }
+
+    toggleItemSelection($event, item) {
+        $event.stopPropagation();
+
+        if (this.isItemSelected(item)) {
+            // clear selection
+            this.selectedItem = null;
+        } else {
+            this.selectedItem = item;
+        }
+    }
 }

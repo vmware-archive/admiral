@@ -22,10 +22,22 @@ import { Links } from '../../../utils/links';
   styleUrls: ['./deployment-details.component.scss'],
   encapsulation: ViewEncapsulation.None
 })
+/**
+ * Details view for a single deployment.
+ */
 export class DeploymentDetailsComponent extends BaseDetailsComponent {
 
   constructor(route: ActivatedRoute, router: Router, service: DocumentService,
               errorService: ErrorService) {
     super(Links.DEPLOYMENTS, route, router, service, errorService);
+  }
+
+  get deploymentSpecification() {
+      return this.entity && this.entity.deployment.spec;
+  }
+
+  get containers() {
+      return this.deploymentSpecification
+                ? this.deploymentSpecification.template.spec.containers : [];
   }
 }

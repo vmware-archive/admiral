@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~ Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
   ~
   ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
   ~ You may not use this product except in compliance with the License.
@@ -9,70 +9,68 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<div *ngIf="entity">
-  <table class="table table-hover">
-    <thead>
-      <tr>
-        <th>{{"customProperties.name" | i18n}}</th>
-        <th>{{"customProperties.value" | i18n}}</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>{{"creation" | i18n: { "ns": "kubernetes"} }}</td>
-        <td>{{entity.deployment.metadata.creationTimestamp}}</td>
-      </tr>
-      <tr>
-        <td>{{"namespace" | i18n: { "ns": "kubernetes"} }}</td>
-        <td>{{entity.deployment.metadata.namespace}}</td>
-      </tr>
-       <tr>
-        <td>{{"replicas" | i18n: { "ns": "kubernetes"} }}</td>
-        <td>{{entity.deployment.spec.replicas}}</td>
-      </tr>
-      <tr>
-        <td colspan="2">
-          <span>{{"containers" | i18n: { "ns": "kubernetes"} }}</span>
-            <table *ngFor="let container of entity.deployment.spec.template.spec.containers" class="table table-hover">
-              <thead>
-                <tr>
-                  <th>{{"customProperties.name" | i18n}}</th>
-                  <th>{{"customProperties.value" | i18n}}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>{{"containers.name" | i18n: { "ns": "kubernetes"} }}</td>
-                  <td>{{container.name}}</td>
-                </tr>
-                <tr>
-                  <td>{{"containers.image" | i18n: { "ns": "kubernetes"} }}</td>
-                  <td>{{container.image}}</td>
-                </tr>
-                <tr>
-                  <td>{{"containers.env" | i18n: { "ns": "kubernetes"} }}</td>
-                  <td>{{container.env}}</td>
-                </tr>
-              </tbody>
-            </table>
-        </td>
-      </tr>
-      <tr>
-        <td>{{"restartPolicy" | i18n: { "ns": "kubernetes"} }}</td>
-        <td>{{entity.deployment.spec.template.spec.restartPolicy}}</td>
-      </tr>
-      <tr>
-        <td>terminationGracePeriodSeconds</td>
-        <td>{{entity.deployment.spec.template.spec.terminationGracePeriodSeconds}}</td>
-      </tr>
-      <tr>
-        <td>dnsPolicy</td>
-        <td>{{entity.deployment.spec.template.spec.dnsPolicy}}</td>
-      </tr>
-      <tr>
-        <td>{{"strategy" | i18n: { "ns": "kubernetes"} }}</td>
-        <td>{{entity.deployment.spec.strategy.type}}</td>
-      </tr>
-    </tbody>
-  </table>
+<div class="main-view">
+    <img [src]="'/container-image-icons?container-image=' + entity?.documentSelfLink"/>
+    <h3 class="deployment-title">{{entity?.name}}</h3>
+
+    <div class="deployment-summary">
+        <div class="summary-subsection">
+            <div class="summary-subsection-title">{{ "kubernetes.deployments.item.summaryTitle" | i18n }}</div>
+            <div class="summary-subsection-content-row">
+                <div class="left-column">{{"kubernetes.deployments.item.creation" | i18n}}</div>
+                <div class="right-column">{{entity?.deployment?.metadata.creationTimestamp | date:'yyyy-MM-dd HH:mm:ss' || "--"}}</div>
+                <div class="clear"></div>
+            </div>
+            <div class="summary-subsection-content-row">
+                <div class="left-column">{{"kubernetes.deployments.item.namespace" | i18n}}</div>
+                <div class="right-column">{{entity?.deployment.metadata.namespace}}</div>
+                <div class="clear"></div>
+            </div>
+            <div class="summary-subsection-content-row">
+                <div class="left-column">{{"kubernetes.deployments.item.replicas" | i18n}}</div>
+                <div class="right-column">{{deploymentSpecification?.replicas}}</div>
+                <div class="clear"></div>
+            </div>
+            <div class="summary-subsection-content-row">
+                <div class="left-column">{{"kubernetes.deployments.item.restartPolicy" | i18n}}</div>
+                <div class="right-column">{{deploymentSpecification?.template.spec.restartPolicy}}</div>
+                <div class="clear"></div>
+            </div>
+            <div class="summary-subsection-content-row">
+                <div class="left-column">{{"kubernetes.deployments.item.terminationGracePeriodSeconds" | i18n}}</div>
+                <div class="right-column">{{deploymentSpecification?.template.spec.terminationGracePeriodSeconds}}</div>
+                <div class="clear"></div>
+            </div>
+            <div class="summary-subsection-content-row">
+                <div class="left-column">{{"kubernetes.deployments.item.dnsPolicy" | i18n}}</div>
+                <div class="right-column">{{deploymentSpecification?.template.spec.dnsPolicy}}</div>
+                <div class="clear"></div>
+            </div>
+            <div class="summary-subsection-content-row">
+                <div class="left-column">{{"kubernetes.deployments.item.strategy" | i18n}}</div>
+                <div class="right-column">{{deploymentSpecification?.strategy.type}}</div>
+                <div class="clear"></div>
+            </div>
+        </div>
+
+        <div class="summary-subsection">
+            <div class="summary-subsection-title">{{"kubernetes.deployments.item.containersTitle" | i18n}}</div>
+
+            <table-view [showSearch]="false" [showToolbar]="false">
+                <div table-content-view>
+                    <clr-datagrid [clDgRowSelection]="false">
+                        <clr-dg-column>{{"kubernetes.deployments.item.containers.name" | i18n}}</clr-dg-column>
+                        <clr-dg-column>{{"kubernetes.deployments.item.containers.image" | i18n}}</clr-dg-column>
+                        <clr-dg-column>{{"kubernetes.deployments.item.containers.env" | i18n}}</clr-dg-column>
+
+                        <clr-dg-row *clrDgItems="let container of this.containers" [clrDgItem]="container">
+                            <clr-dg-cell>{{container.name}}</clr-dg-cell>
+                            <clr-dg-cell>{{container.image}}</clr-dg-cell>
+                            <clr-dg-cell>{{container.env}}</clr-dg-cell>
+                        </clr-dg-row>
+                    </clr-datagrid>
+                </div>
+            </table-view>
+        </div>
+    </div>
 </div>

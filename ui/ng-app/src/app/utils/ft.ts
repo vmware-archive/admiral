@@ -99,6 +99,7 @@ export class FT {
   }
 
   public static isPksEnabled() {
-      return ConfigUtils.getConfigurationPropertyBoolean('allow.ft.pks');
+      return this.isApplicationEmbedded()
+                && ConfigUtils.getConfigurationPropertyBoolean('allow.ft.pks');
   }
 };

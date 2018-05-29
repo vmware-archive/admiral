@@ -31,17 +31,17 @@
               <li><a class="nav-link" routerLink="networks" routerLinkActive="active">{{ "navigation.networks" | i18n }}</a></li>
               <li><a class="nav-link" routerLink="volumes" routerLinkActive="active">{{ "navigation.volumes" | i18n }}</a></li>
               <li *ngIf="areClosuresAllowed"><a class="nav-link" routerLink="closures" routerLinkActive="active">{{ "navigation.closures" | i18n }}</a></li>
-              <li *ngIf="kubernetesEnabled">
+              <li *ngIf="kubernetesEnabled || isPksEnabled">
                   <section class="nav-group collapsible">
                       <input id="deploymentsCollapse" type="checkbox">
-                        <label for="deploymentsCollapse">Kubernetes</label>
+                        <label for="deploymentsCollapse">{{ "navigation.kubernetes.title" | i18n }}</label>
                         <ul class="nav-list">
                             <li><a class="nav-link" routerLink="kubernetes/deployments"
-                                routerLinkActive="active">Deployments</a></li>
+                                routerLinkActive="active">{{ "navigation.kubernetes.deployments" | i18n }}</a></li>
                             <li><a class="nav-link" routerLink="kubernetes/pods"
-                                routerLinkActive="active">Pods</a></li>
-                            <li><a class="nav-link" routerLink="kubernetes/services"
-                                routerLinkActive="active">Services</a></li>
+                                routerLinkActive="active">{{ "navigation.kubernetes.pods" | i18n }}</a></li>
+                            <li *ngIf="kubernetesEnabled"><a class="nav-link"
+                                routerLink="kubernetes/services" routerLinkActive="active">Services</a></li>
                         </ul>
                   </section>
               </li>
@@ -81,12 +81,12 @@
           <ul class="nav-list">
               <li><a class="nav-link" routerLink="clusters" routerLinkActive="active">{{ navigationClustersTextKey | i18n }}</a></li>
           </ul>
-          <ul *ngIf="embeddedMode && isPksEnabled" class="nav-list">
+          <ul *ngIf="isPksEnabled" class="nav-list">
             <li><a class="nav-link" routerLink="kubernetes/clusters"
                     routerLinkActive="active">{{ "navigation.kubernetesClusters" | i18n }}</a></li>
           </ul>
       </section>
-      <section *ngIf="embeddedMode && isPksEnabled" class="nav-group collapsible">
+      <section *ngIf="isPksEnabled" class="nav-group collapsible">
           <input id="endpointsCollapse" type="checkbox">
           <label for="endpointsCollapse">{{ "navigation.endpoints" | i18n }}</label>
           <ul class="nav-list">

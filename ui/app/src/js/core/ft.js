@@ -44,7 +44,7 @@ var ft = {
   },
 
   isPksEnabled: function() {
-    return utils.getConfigurationPropertyBoolean('allow.ft.pks');
+    return utils.isApplicationEmbedded() && utils.getConfigurationPropertyBoolean('allow.ft.pks');
   },
 
   isCreateHostOptionEnabled: function() {
