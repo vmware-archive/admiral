@@ -53,6 +53,8 @@ public class RegistryService extends StatefulService {
     protected static final String DEFAULT_REGISTRY_ADDRESS = System.getProperty(
             "admiral.default.registry.address",
             "https://" + RegistryUtil.DEFAULT_DOCKER_REGISTRY_ADDRESS);
+    protected static final String DEFAULT_REGISTRY_NAME = System
+            .getProperty("admiral.default.registry.name", "dockerhub");
 
     private static final String DEFAULT_INSTANCE_ID = "default-registry";
     public static final String DEFAULT_INSTANCE_LINK = UriUtils
@@ -71,6 +73,7 @@ public class RegistryService extends StatefulService {
         RegistryState state = new RegistryState();
         state.documentSelfLink = DEFAULT_INSTANCE_LINK;
         state.address = DEFAULT_REGISTRY_ADDRESS;
+        state.name = DEFAULT_REGISTRY_NAME;
         state.endpointType = RegistryState.DOCKER_REGISTRY_ENDPOINT_TYPE;
         state.disabled = Boolean.FALSE;
         state.customProperties = new HashMap<>();
