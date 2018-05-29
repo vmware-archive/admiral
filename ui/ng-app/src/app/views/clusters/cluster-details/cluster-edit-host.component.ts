@@ -40,6 +40,12 @@ export class ClusterEditHostComponent implements AfterViewInit, OnChanges {
     alertMessage: string;
     alertType: string;
 
+    projectLinks: string[] = [];
+    showCertificateWarning: boolean = false;
+    certificate: string;
+    trustCertLink: string;
+    hostUri: string;
+
     @Output() onChange: EventEmitter<any> = new EventEmitter();
     @Output() onCancel: EventEmitter<any> = new EventEmitter();
 
@@ -180,11 +186,21 @@ export class ClusterEditHostComponent implements AfterViewInit, OnChanges {
 
             this.documentService.put(Links.CONTAINER_HOSTS + '?validate=true', hostSpec)
             .then((response) => {
-                this.isVerifyingHost = false;
-                this.isHostVerified = true;
+                if (response === null) {
+                    this.isVerifyingHost = false;
+                    this.isHostVerified = true;
 
-                this.alertType = Constants.alert.type.SUCCESS;
-                this.alertMessage = I18n.t('hosts.verified');
+                    this.alertType = Constants.alert.type.SUCCESS;
+                    this.alertMessage = I18n.t('hosts.verified');
+                } else {
+                    this.showCertificateWarning = true;
+                    this.projectLinks = hostSpec.hostState.tenantLinks;
+                    this.certificate = response;
+
+                    let hostCustomProperties = hostSpec.hostState.customProperties;
+                    this.trustCertLink = hostCustomProperties['__trustCertLink'];
+                    this.hostUri = hostCustomProperties['__dockerUri'];
+                }
             }).catch(error => {
                 this.isVerifyingHost = false;
 
@@ -216,5 +232,49 @@ export class ClusterEditHostComponent implements AfterViewInit, OnChanges {
                 this.alertMessage = Utils.getErrorMessage(error)._generic;
             });
         }
+    }
+
+    acceptCertificate() {
+        this.showCertificateWarning = false;
+        this.isVerifyingHost = false;
+        this.isHostVerified = true;
+
+        this.importOrUpdateCertificate();
+    }
+
+    cancelEditHost() {
+        this.showCertificateWarning = false;
+        this.isVerifyingHost = false;
+    }
+
+    /**
+     * Reimports a host's certificate if for some reason it was removed from trusted
+     * certificates while the host is still present.
+     * Updates the trusted certificate of the host if for some reason the certificte
+     * was changed on the host while the host is still present.
+     */
+    private importOrUpdateCertificate() {
+        this.documentService.get(this.trustCertLink).then((response) => {
+            this.documentService.patch(this.trustCertLink, {
+                certificate: this.certificate
+            }).then(() => {
+                this.alertType = Constants.alert.type.SUCCESS;
+                this.alertMessage = I18n.t('hosts.verified');
+            });
+        }).catch((error) => {
+            if (error.status === 404) {
+                this.documentService.put(Links.SSL_TRUST_CERTS_IMPORT, {
+                    hostUri: this.hostUri,
+                    acceptCertificate: true,
+                    tenantLinks: this.projectLinks
+                }).then(() => {
+                    this.alertType = Constants.alert.type.SUCCESS;
+                    this.alertMessage = I18n.t('hosts.verified');
+                });
+            } else {
+                this.alertType = Constants.alert.type.DANGER;
+                this.alertMessage = Utils.getErrorMessage(error)._generic;
+            }
+        });
     }
 }

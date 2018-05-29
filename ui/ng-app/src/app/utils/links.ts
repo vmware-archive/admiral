@@ -40,6 +40,7 @@ export class Links {
   public static INSTANCE_TYPES = Links.CONFIG + '/instance-types';
   public static REGISTRIES = Links.CONFIG + '/registries';
   public static REGISTRY_SPEC = Links.CONFIG + '/registry-spec';
+  public static SSL_TRUST_CERTS_IMPORT = Links.CONFIG + '/trust-certs-import';
 
   public static AUTH = '/auth';
   public static USER_SESSION = Links.AUTH + '/session';

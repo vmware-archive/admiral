@@ -56,6 +56,12 @@
                 </div>
             </section>
         </form>
+        <!-- Untrusted certificate prompt -->
+        <verify-certificate [visible]="showCertificateWarning"
+                            [hostAddress]="editHostForm.value.url"
+                            [certificate]="certificate"
+                            (onAccept)="acceptCertificate()"
+                            (onDecline)="cancelEditHost()"></verify-certificate>
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-outline"
