@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~ Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
   ~
   ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
   ~ You may not use this product except in compliance with the License.
@@ -9,51 +9,90 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<div *ngIf="entity">
-  <div class="details-header">
-    <div class="title">{{entity.names}}</div>
-    <div class="status {{entity.powerState}}"></div>
-    <div class="toolbar-actions">
-    </div>
-  </div>
-  <div class="content">
-    <maximizable-behaviour class="details-properties">
-      <div class="title">Properties</div>
-      <div class="content">
-        <pod-details-properties [entity]="entity"></pod-details-properties>
-      </div>
-    </maximizable-behaviour>
-    <maximizable-behaviour class="details-usages">
-      <div class="title">Usages</div>
-      <div class="content">
-        <compute-stats [cpuUsage]="40" [memUsage]="512*1024*1024" [memLimit]="2048*1024*1024" [networkIn]="120" [networkOut]="329"></compute-stats>
-      </div>
-      <div *ngIf="loadingStats" class="central-block-loading loading-background">
-        <span class="vertical-helper"></span>
-        <div class="spinner"></div>
-      </div>
-    </maximizable-behaviour>
-    <maximizable-behaviour class="details-logs">
-      <div class="title">Logs</div>
-      <!--<clr-tabs class="content">
-        <clr-tab-link *ngFor="let logs of logsByComponent">{{logs.name}}</clr-tab-link>
-        <clr-tab-content *ngFor="let logs of logsByComponent">
-          <logs-scroll [logs]="logs.content"></logs-scroll>
+<div class="main-view">
+    <img [src]="'/container-image-icons?container-image=' + entity?.documentSelfLink"/>
+    <h3 class="pod-title">{{entity?.name}} - {{entity?.pod?.status.phase}}</h3>
+
+    <clr-tabs>
+    <clr-tab>
+        <button clrTabLink id="podDetailsTab">{{"kubernetes.pods.item.summaryTitle" | i18n}}</button>
+        <clr-tab-content id="podDetailsTab" *clrIfActive>
+            <div class="pod-summary">
+                <div class="summary-subsection">
+                    <div class="summary-subsection-title">{{ "kubernetes.pods.item.summaryTitle" | i18n }}</div>
+                    <div class="summary-subsection-content-row">
+                        <div class="left-column">{{"kubernetes.pods.item.creation" | i18n}}</div>
+                        <div class="right-column">{{entity?.pod?.metadata.creationTimestamp | date:'yyyy-MM-dd HH:mm:ss' || "--"}}</div>
+                        <div class="clear"></div>
+                    </div>
+                    <div class="summary-subsection-content-row">
+                        <div class="left-column">{{"kubernetes.pods.item.namespace" | i18n}}</div>
+                        <div class="right-column">{{entity?.pod?.metadata.namespace}}</div>
+                        <div class="clear"></div>
+                    </div>
+                    <div class="summary-subsection-content-row">
+                        <div class="left-column">{{"kubernetes.pods.item.containersNumber" | i18n}}</div>
+                        <div class="right-column">{{entity?.pod?.spec.containers.length}}</div>
+                        <div class="clear"></div>
+                    </div>
+                    <div class="summary-subsection-content-row">
+                        <div class="left-column">{{"kubernetes.pods.item.startTime" | i18n}}</div>
+                        <div class="right-column">{{entity?.pod?.status.startTime | date:'yyyy-MM-dd HH:mm:ss' || "--"}}</div>
+                        <div class="clear"></div>
+                    </div>
+                    <div class="summary-subsection-content-row">
+                        <div class="left-column">{{"kubernetes.pods.item.ip" | i18n}}</div>
+                        <div class="right-column">{{entity?.pod?.status.podIP || "--"}}</div>
+                        <div class="clear"></div>
+                    </div>
+                </div>
+                <div class="summary-subsection">
+                    <div class="summary-subsection-title">{{"kubernetes.pods.item.containerStatuses.title" | i18n}}</div>
+
+                    <table-view [showSearch]="false" [showToolbar]="false">
+                        <div table-content-view>
+                            <clr-datagrid [clDgRowSelection]="false">
+                                <clr-dg-column>{{"kubernetes.pods.item.containerStatus.name" | i18n}}</clr-dg-column>
+                                <clr-dg-column>{{"kubernetes.pods.item.containerStatus.state" | i18n}}</clr-dg-column>
+
+                                <clr-dg-row *clrDgItems="let containerStatus of containerStatuses" [clrDgItem]="containerStatus">
+                                    <clr-dg-cell>{{containerStatus.name}}</clr-dg-cell>
+                                    <clr-dg-cell>{{containerStatus.status}}</clr-dg-cell>
+                                </clr-dg-row>
+                            </clr-datagrid>
+                        </div>
+                    </table-view>
+                </div>
+                <div class="summary-subsection">
+                    <div class="summary-subsection-title">{{"kubernetes.pods.item.volumes.title" | i18n}}</div>
+
+                    <table-view [showSearch]="false" [showToolbar]="false">
+                        <div table-content-view>
+                            <clr-datagrid [clDgRowSelection]="false">
+                                <clr-dg-column>{{"kubernetes.pods.item.volumes.name" | i18n}}</clr-dg-column>
+                                <clr-dg-column>{{"kubernetes.pods.item.volumes.hostPath" | i18n}}</clr-dg-column>
+
+                                <clr-dg-row *clrDgItems="let volume of entity?.pod?.spec.volumes" [clrDgItem]="volume">
+                                    <clr-dg-cell>{{volume.name}}</clr-dg-cell>
+                                    <clr-dg-cell>{{volume.hostPath?.path}}</clr-dg-cell>
+                                </clr-dg-row>
+                            </clr-datagrid>
+                        </div>
+                    </table-view>
+                </div>
+            </div>
         </clr-tab-content>
-      </clr-tabs>-->
-      <logs-scroll class="content" [logs]="logs"></logs-scroll>
-      <div *ngIf="loadingLogs" class="central-block-loading">
-        <span class="vertical-helper"></span>
-        <div class="spinner"></div>
-      </div>
-      <div class="logs-settings">
-        <span>Logs since</span>
-        <select v-on:change="onLogsSinceChange($event)" v-if="logsSettings">
-          <option v-for="duration in logsSinceDurations"
-                  v-bind:value="duration"
-                  v-bind:selected="duration === logsSettings.sinceDuration">{{duration}}</option>
-        </select>
-      </div>
-    </maximizable-behaviour>
-  </div>
+    </clr-tab>
+    <clr-tab>
+        <button clrTabLink id="podLogsTab">{{"kubernetes.pods.item.logsTitle" | i18n}}</button>
+        <clr-tab-content id="podLogsTab" *clrIfActive>
+            <div class="pod-summary">
+                <div class="summary-subsection">
+                    <div class="summary-subsection-title">{{"kubernetes.pods.item.logsTitle" | i18n}}</div>
+                    <div class="pod-logs">{{ this.logs }}</div>
+                </div>
+            </div>
+        </clr-tab-content>
+    </clr-tab>
+    </clr-tabs>
 </div>

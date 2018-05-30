@@ -325,6 +325,32 @@
           "env": "Env"
         }
       }
+    },
+    "pods": {
+        "title": "Pods",
+        "search": {
+            "placeholder": "Search for pods"
+        },
+        "item": {
+            "creation": "Created:",
+            "namespace": "Namespace:",
+            "containersNumber": "Containers:",
+            "status": "Status:",
+            "startTime": "Started:",
+            "ip": "IP:",
+            "summaryTitle": "Summary",
+            "containerStatus": {
+              "title": "Containers",
+              "name": "Container Name",
+              "state": "Status"
+            },
+            "volumes": {
+              "title": "Volumes",
+              "name": "Volume Name",
+              "hostPath": "Path on Host"
+            },
+            "logsTitle": "Logs"
+        }
     }
   },
   "pks": {

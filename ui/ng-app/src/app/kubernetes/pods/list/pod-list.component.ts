@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -9,13 +9,8 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { slideAndFade } from '../../../utils/transitions';
+import { Component } from '@angular/core';
 import { Links } from '../../../utils/links';
-import { DocumentService } from '../../../utils/document.service';
-import { PodDetailsComponent } from '../details/pod-details.component';
-import { NavigationContainerType } from '../../../components/navigation-container/navigation-container.component';
 
 const REGISTRY_SCHEME_REG_EXP = /^(https?):\/\//;
 const SECTION_SEPARATOR = '/';
@@ -43,42 +38,61 @@ function getImageNamespaceAndNameFromParts(namespace, imageAndTag) {
 @Component({
   selector: 'pod-list',
   templateUrl: './pod-list.component.html',
-  styleUrls: ['./pod-list.component.scss'],
-  animations: [slideAndFade()]
+  styleUrls: ['./pod-list.component.scss']
 })
+/**
+ * Pods list view.
+ */
 export class PodListComponent {
-  serviceEndpoint = Links.PODS;
+    serviceEndpoint = Links.PODS;
 
-  getImageNamespaceAndName(image) {
-    var imageWithoutScheme = image.replace(REGISTRY_SCHEME_REG_EXP, '');
-    var parts = imageWithoutScheme.split(SECTION_SEPARATOR);
-    switch (parts.length) {
-    case 1:
-      // only one section - it is the repository name with optional tag
-      return getImageNamespaceAndNameFromParts(null, parts[0]);
+    selectedItem: any;
 
-    case 2:
-      // since there are two sections the second one can be either a host or a namespace
-      if (isValidNamespace(parts[0])) {
-        return getImageNamespaceAndNameFromParts(parts[0], parts[1]);
-      }
-      return getImageNamespaceAndNameFromParts(null, parts[1]);
-
-    case 3:
-      // all sections present
-      return getImageNamespaceAndNameFromParts(parts[1], parts[2]);
-
-    default:
-      throw new Error('Invalid image format: ' + image);
+    isItemSelected(item: any) {
+        return item === this.selectedItem;
     }
-  }
 
-  getImageIconLink(image) {
-    if (!image) {
-      return;
+    toggleItemSelection($event, item) {
+        $event.stopPropagation();
+
+        if (this.isItemSelected(item)) {
+            // clear selection
+            this.selectedItem = null;
+        } else {
+            this.selectedItem = item;
+        }
     }
-    let l = '/container-image-icons?container-image=' + this.getImageNamespaceAndName(image);
-    return l;
-  }
 
+    getImageNamespaceAndName(image) {
+        var imageWithoutScheme = image.replace(REGISTRY_SCHEME_REG_EXP, '');
+        var parts = imageWithoutScheme.split(SECTION_SEPARATOR);
+
+        switch (parts.length) {
+            case 1:
+                // only one section - it is the repository name with optional tag
+                return getImageNamespaceAndNameFromParts(null, parts[0]);
+
+            case 2:
+                // since there are two sections the second one can be either a host or a namespace
+                if (isValidNamespace(parts[0])) {
+                    return getImageNamespaceAndNameFromParts(parts[0], parts[1]);
+                }
+                return getImageNamespaceAndNameFromParts(null, parts[1]);
+
+            case 3:
+                // all sections present
+                return getImageNamespaceAndNameFromParts(parts[1], parts[2]);
+
+            default:
+                throw new Error('Invalid image format: ' + image);
+            }
+    }
+
+    getImageIconLink(image) {
+        if (!image) {
+            return;
+        }
+
+        return '/container-image-icons?container-image=' + this.getImageNamespaceAndName(image);
+    }
 }

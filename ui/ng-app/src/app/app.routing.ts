@@ -152,12 +152,10 @@ export const ROUTES: Routes = [
                 data: { roles: RoutesRestriction.CLUSTERS_ID }
             },
             {
-                path: 'kubernetes/pods', component: PodListComponent,
-                children: [
-                    { path: ':id', component: PodDetailsComponent, data: {
-                        navigationContainerType: NavigationContainerType.Fullscreen
-                    }}
-                ]
+                path: 'kubernetes/pods', component: PodListComponent
+            },
+            {
+                path: 'kubernetes/pods/:id', component: PodDetailsComponent
             },
             {
                 path: 'kubernetes/deployments', component: DeploymentListComponent

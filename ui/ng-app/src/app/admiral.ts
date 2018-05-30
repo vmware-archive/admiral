@@ -85,7 +85,6 @@ import { LoginComponent } from './components/login/login.component';
 
 import { PodListComponent } from './kubernetes/pods/list/pod-list.component';
 import { PodDetailsComponent } from './kubernetes/pods/details/pod-details.component';
-import { PodDetailsPropertiesComponent } from './kubernetes/pods/details/pod-details-properties.component';
 import { DeploymentListComponent } from './kubernetes/deployments/list/deployment-list.component';
 import { DeploymentDetailsComponent } from './kubernetes/deployments/details/deployment-details.component';
 import { ServiceListComponent } from './kubernetes/services/list/service-list.component';
@@ -172,7 +171,6 @@ export const ADMIRAL_DECLARATIONS = [
 
   PodListComponent,
   PodDetailsComponent,
-  PodDetailsPropertiesComponent,
   DeploymentListComponent,
   DeploymentDetailsComponent,
   ServiceListComponent,

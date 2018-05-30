@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, ViewChild } from '@angular/core';
+import { Component } from '@angular/core';
 import { Links } from '../../../utils/links';
 
 @Component({
