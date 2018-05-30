@@ -86,6 +86,12 @@ var ContainerDetailsVueComponent = Vue.extend({
         this.startRefreshPollingTimeout = setTimeout(
           () => this.refreshContainersInterval, constants.CONTAINERS.START_REFRESH_POLLING_DELAY);
       }
+
+      if (!this.refreshLogsInterval) {
+        this.refreshLogsInterval = setInterval(() => {
+          ContainerActions.refreshContainerLogs();
+        }, REFRESH_LOGS_TIMEOUT);
+      }
     }
   },
 
@@ -101,6 +107,9 @@ var ContainerDetailsVueComponent = Vue.extend({
 
       clearInterval(this.refreshContainerInterval);
       this.refreshContainerInterval = null;
+
+      clearInterval(this.refreshLogsInterval);
+      this.refreshLogsInterval = null;
 
       ContainerActions.stopRescanContainer();
     }
@@ -233,6 +242,7 @@ var ContainerDetailsVueComponent = Vue.extend({
 
     refresh: function() {
       ContainerActions.refreshContainer();
+      ContainerActions.refreshContainerLogs();
     },
 
     goBack: function() {
