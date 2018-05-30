@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 import javax.net.ssl.TrustManager;
 
+import com.vmware.admiral.adapter.pks.entities.KubeConfig;
 import com.vmware.admiral.adapter.pks.entities.PKSCluster;
 import com.vmware.admiral.adapter.pks.entities.PKSPlan;
 import com.vmware.admiral.adapter.pks.entities.UAATokenResponse;
@@ -109,7 +110,7 @@ public class PKSRemoteClientService {
     public DeferredResult<List<PKSCluster>> getClusters(PKSContext ctx) {
         try {
             URI uri = UriUtils.buildUri(ctx.pksAPIUri, "v1/clusters");
-            Operation op = buildOperation(uri, ctx);
+            Operation op = buildGetOperation(uri, ctx);
 
             return serviceClient.sendWithDeferredResult(op)
                     .thenApply(o -> {
@@ -134,7 +135,7 @@ public class PKSRemoteClientService {
     public DeferredResult<PKSCluster> getCluster(PKSContext ctx, String cluster) {
         try {
             URI uri = UriUtils.buildUri(ctx.pksAPIUri, "v1/clusters", cluster);
-            Operation op = buildOperation(uri, ctx);
+            Operation op = buildGetOperation(uri, ctx);
 
             return serviceClient.sendWithDeferredResult(op)
                     .thenApply(o -> {
@@ -160,7 +161,7 @@ public class PKSRemoteClientService {
     public DeferredResult<List<PKSPlan>> getPlans(PKSContext ctx) {
         try {
             URI uri = UriUtils.buildUri(ctx.pksAPIUri, "v1/plans");
-            Operation op = buildOperation(uri, ctx);
+            Operation op = buildGetOperation(uri, ctx);
 
             return serviceClient.sendWithDeferredResult(op)
                     .thenApply(o -> {
@@ -177,6 +178,31 @@ public class PKSRemoteClientService {
                     });
         } catch (Exception e) {
             logger.severe(String.format("Error getting PKS plans from %s, reason: %s",
+                    ctx.pksAPIUri, e.getMessage()));
+            return DeferredResult.failed(e);
+        }
+    }
+
+    public DeferredResult<KubeConfig.AuthInfo> createUser(PKSContext ctx, String cluster) {
+        try {
+            URI uri = UriUtils.buildUri(ctx.pksAPIUri, "v1/clusters", cluster, "binds");
+            Operation op = buildPostOperation(uri, ctx);
+
+            return serviceClient.sendWithDeferredResult(op)
+                    .thenApply(o -> {
+                        KubeConfig config = o.getBody(KubeConfig.class);
+                        logger.fine(() -> String.format("Got response from %s for plans : %s",
+                                ctx.pksAPIUri, Utils.toJson(config)));
+                        return config.users[0];
+                    })
+                    .exceptionally(t -> {
+                        throw DeferredUtils.logErrorAndThrow(t,
+                                e -> String.format("Error creating user from %s, reason: %s",
+                                        ctx.pksAPIUri, e.getMessage()),
+                                getClass());
+                    });
+        } catch (Exception e) {
+            logger.severe(String.format("Error creating user from %s, reason: %s",
                     ctx.pksAPIUri, e.getMessage()));
             return DeferredResult.failed(e);
         }
@@ -268,9 +294,30 @@ public class PKSRemoteClientService {
      * @param ctx PKS context with the token
      * @return operation instance
      */
-    private Operation buildOperation(URI uri, PKSContext ctx) {
-        return Operation.createGet(uri)
-                .addRequestHeader(Operation.ACCEPT_HEADER, Operation.MEDIA_TYPE_APPLICATION_JSON)
+    private Operation buildGetOperation(URI uri, PKSContext ctx) {
+        return buildOperation(Operation.createGet(uri), ctx);
+    }
+
+    /**
+     * Creates <code>POST</code> operation initialized with authorization header.
+     *
+     * @param uri operation uri
+     * @param ctx PKS context with the token
+     * @return operation instance
+     */
+    private Operation buildPostOperation(URI uri, PKSContext ctx) {
+        return buildOperation(Operation.createPost(uri), ctx);
+    }
+
+    /**
+     * Creates operation initialized with authorization header.
+     *
+     * @param uri operation uri
+     * @param ctx PKS context with the token
+     * @return operation instance
+     */
+    private Operation buildOperation(Operation op, PKSContext ctx) {
+        return op.addRequestHeader(Operation.ACCEPT_HEADER, Operation.MEDIA_TYPE_APPLICATION_JSON)
                 .addRequestHeader(Operation.AUTHORIZATION_HEADER, "Bearer " + ctx.accessToken)
                 .setAuthorizationContext(null)
                 .setReferer(host.getUri())

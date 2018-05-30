@@ -27,6 +27,7 @@ import com.vmware.admiral.adapter.pks.PKSRemoteClientService;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.DeferredUtils;
+import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.compute.pks.PKSEndpointService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -41,6 +42,8 @@ import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsSe
 public class PKSAdapterService extends StatelessService {
 
     public static final String SELF_LINK = ManagementUriParts.ADAPTER_PKS;
+
+    public static final String CLUSTER_NAME_PROP_NAME = "__clusterName";
 
     private static final long MAINTENANCE_INTERVAL_MICROS = Long.getLong(
             "dcp.management.docker.adapter.periodic.maintenance.period.micros",
@@ -127,6 +130,8 @@ public class PKSAdapterService extends StatelessService {
             return pksListClusters(ctx);
         case GET_CLUSTER:
             return pksGetCluster(ctx);
+        case CREATE_USER:
+            return pksCreateUser(ctx);
         case CREATE_CLUSTER:
             //TODO implementation
             break;
@@ -140,6 +145,28 @@ public class PKSAdapterService extends StatelessService {
         DeferredResult<Void> result = new DeferredResult<>();
         result.fail(new IllegalArgumentException("unsupported operation"));
         return result;
+    }
+
+    private DeferredResult<Void> pksCreateUser(RequestContext ctx) {
+        String cluster = PropertyUtils
+                .getPropertyString(ctx.customProperties, CLUSTER_NAME_PROP_NAME).orElse(null);
+
+        if (cluster == null) {
+            //TODO proper localizable exception
+            DeferredResult<Void> result = new DeferredResult<>();
+            result.fail(new IllegalArgumentException("cluster name is required"));
+            return result;
+        }
+
+        return getPKSContext(ctx.endpoint)
+                .thenCompose(pksContext -> getClient().createUser(pksContext, cluster))
+                .thenAccept(authInfo -> ctx.operation.setBodyNoCloning(authInfo).complete())
+                .exceptionally(t -> {
+                    throw DeferredUtils.logErrorAndThrow(t,
+                            e -> String.format("Error creating user for cluster [%s], reason: %s",
+                                    cluster, e.getMessage()),
+                            getClass());
+                });
     }
 
     private DeferredResult<Void> pksListClusters(RequestContext ctx) {
