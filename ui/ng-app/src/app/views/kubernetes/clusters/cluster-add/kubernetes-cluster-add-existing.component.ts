@@ -14,6 +14,7 @@ import { FormControl, FormGroup } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { DocumentService } from "../../../../utils/document.service";
 import { ErrorService } from "../../../../utils/error.service";
+import { ProjectService } from "../../../../utils/project.service";
 import { Links } from "../../../../utils/links";
 import { Utils } from "../../../../utils/utils";
 
@@ -21,7 +22,8 @@ import * as I18n from 'i18next';
 
 @Component({
     selector: 'app-kubernetes-cluster-add-existing',
-    templateUrl: './kubernetes-cluster-add-existing.component.html'
+    templateUrl: './kubernetes-cluster-add-existing.component.html',
+    styleUrls: ['./kubernetes-cluster-add-existing.component.scss']
 })
 /**
  * View for adding existing clusters.
@@ -29,10 +31,12 @@ import * as I18n from 'i18next';
 export class KubernetesClusterAddExistingComponent implements OnInit {
     loading: boolean = false;
     isAdding: boolean = false;
+
     endpoints: any[];
+    selectedEndpoint: any;
 
     clusters: any[] = [];
-    selectedClusters: any[];
+    selectedClusters: any[] = [];
 
     addExistingClustersForm = new FormGroup({
         endpoint: new FormControl('')
@@ -48,8 +52,9 @@ export class KubernetesClusterAddExistingComponent implements OnInit {
         entity: I18n.t('app.endpoint.entity', {ns: 'base'})
     } as I18n.TranslationOptions );
 
-    constructor(protected route: ActivatedRoute, protected service: DocumentService,
-                protected router: Router, protected errorService: ErrorService) {
+    constructor(protected route: ActivatedRoute, protected router: Router,
+                protected service: DocumentService, protected projectService: ProjectService,
+                protected errorService: ErrorService) {
     }
 
     ngOnInit(): void {
@@ -61,7 +66,7 @@ export class KubernetesClusterAddExistingComponent implements OnInit {
             return;
         }
 
-        this.service.list(Links.ENDPOINTS, {}).then(result => {
+        this.service.list(Links.PKS_ENDPOINTS, {}).then(result => {
             this.endpoints = result.documents;
         }).catch((error) => {
             console.log(error);
@@ -69,14 +74,50 @@ export class KubernetesClusterAddExistingComponent implements OnInit {
         });
     }
 
-    onChangeEndpoint($event) {
-        console.log('Endpoint selection changed', $event);
+    onChangeEndpoint(endpoint) {
+        this.selectedEndpoint = endpoint;
 
-        // TODO Retrieve available clusters from the selected endpoint
+        if (!this.selectedEndpoint) {
+            this.clusters = [];
+            this.selectedClusters = [];
+
+            return;
+        }
+
+        this.loading = true;
+
+        this.service.listPksClusters({ endpointLink: endpoint.documentSelfLink})
+            .then((result) => {
+                this.loading = false;
+
+                // TODO clusters in provisioning (in process of adding to admiral)
+                // state should not be selectable
+                this.clusters = result.documents.map(resultDoc => {
+                    return {
+                        name: resultDoc.name,
+                        plan: resultDoc.plan_name,
+                        masterNodesCount: resultDoc.kubernetes_master_ips.length,
+                        workerNodesCount: resultDoc.parameters.kubernetes_worker_instances,
+                        addedInAdmiral: resultDoc.parameters.__clusterExists
+                    };
+                })
+        }).catch(error => {
+            this.loading = false;
+
+            console.log(error);
+        })
     }
 
     add() {
-        // TODO Add the selected clusters to the system
+        let suitableForAddClusters = this.getSelectedClustersSuitableForAdd();
+        if (suitableForAddClusters.length === 0) {
+            // no suitable clusters for adding
+            return;
+        }
+
+        // TODO Add the suitable clusters to the business group
+        let selectedProject = this.projectService.getSelectedProject().documentSelfLink;
+        console.log('adding to business group', selectedProject);
 
         this.goBack();
     }
@@ -87,5 +128,9 @@ export class KubernetesClusterAddExistingComponent implements OnInit {
 
     goBack() {
         this.router.navigate(['../clusters'], {relativeTo: this.route});
+    }
+
+    getSelectedClustersSuitableForAdd() {
+        return this.selectedClusters.filter(cluster => !cluster.addedInAdmiral);
     }
 }

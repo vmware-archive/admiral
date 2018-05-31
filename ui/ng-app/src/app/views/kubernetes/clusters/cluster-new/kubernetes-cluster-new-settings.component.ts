@@ -77,7 +77,7 @@ export class KubernetesClusterNewSettingsComponent extends BaseDetailsComponent
             return;
         }
 
-        this.service.list(Links.ENDPOINTS, {}).then(result => {
+        this.service.list(Links.PKS_ENDPOINTS, {}).then(result => {
             this.endpoints = result.documents;
         }).catch((error) => {
             console.log(error);

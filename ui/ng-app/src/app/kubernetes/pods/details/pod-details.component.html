@@ -52,8 +52,8 @@
                     <table-view [showSearch]="false" [showToolbar]="false">
                         <div table-content-view>
                             <clr-datagrid [clDgRowSelection]="false">
-                                <clr-dg-column>{{"kubernetes.pods.item.containerStatus.name" | i18n}}</clr-dg-column>
-                                <clr-dg-column>{{"kubernetes.pods.item.containerStatus.state" | i18n}}</clr-dg-column>
+                                <clr-dg-column>{{"kubernetes.pods.item.containerStatuses.name" | i18n}}</clr-dg-column>
+                                <clr-dg-column>{{"kubernetes.pods.item.containerStatuses.state" | i18n}}</clr-dg-column>
 
                                 <clr-dg-row *clrDgItems="let containerStatus of containerStatuses" [clrDgItem]="containerStatus">
                                     <clr-dg-cell>{{containerStatus.name}}</clr-dg-cell>

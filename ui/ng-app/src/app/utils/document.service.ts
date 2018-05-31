@@ -216,15 +216,24 @@ export class DocumentService {
   }
 
   public listProjects() {
-      if (FT.isApplicationEmbedded()) {
-        return this.ajax.get(Links.GROUPS, null).then(result => {
-          let documents = result || [];
-          return new DocumentListResult(documents, result.nextPageLink, result.totalCount);
-        });
-      } else {
-        return this.list(Links.PROJECTS, null);
-      }
+    if (FT.isApplicationEmbedded()) {
+      return this.ajax.get(Links.GROUPS, null).then(result => {
+        let documents = result || [];
+        return new DocumentListResult(documents, result.nextPageLink, result.totalCount);
+      });
+    } else {
+      return this.list(Links.PROJECTS, null);
     }
+  }
+
+  public listPksClusters(params) {
+
+      return this.ajax.get(Links.PKS_CLUSTERS, params).then(result => {
+          let documents = result || [];
+
+          return new DocumentListResult(documents, result.nextPageLink, result.totalCount);
+      });
+  }
 
   private buildHeaders(projectLink?: string): Headers {
     if (!this.projectService && !projectLink) {

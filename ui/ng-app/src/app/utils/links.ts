@@ -27,7 +27,8 @@ export class Links {
   public static GROUPS = '/groups';
   public static PROJECTS = '/projects';
   public static EVENT_LOGS = Links.RESOURCES + '/event-logs';
-  public static ENDPOINTS = Links.RESOURCES + '/pks/endpoints';
+  public static PKS_ENDPOINTS = Links.RESOURCES + '/pks/endpoints';
+  public static PKS_CLUSTERS = Links.RESOURCES + '/pks/clusters';
   public static DEPLOYMENT_POLICIES = Links.RESOURCES + '/deployment-policies';
 
   public static COMPOSITE_DESCRIPTIONS = Links.RESOURCES + '/composite-descriptions';

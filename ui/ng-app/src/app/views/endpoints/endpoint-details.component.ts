@@ -60,7 +60,7 @@ export class EndpointDetailsComponent extends BaseDetailsComponent {
 
     constructor(route: ActivatedRoute, documentService: DocumentService, router: Router,
                 errorService: ErrorService) {
-        super(Links.ENDPOINTS, route, router, documentService, errorService);
+        super(Links.PKS_ENDPOINTS, route, router, documentService, errorService);
     }
 
     protected entityInitialized() {
@@ -106,7 +106,7 @@ export class EndpointDetailsComponent extends BaseDetailsComponent {
         if (this.endpointDetailsForm.valid) {
             this.isSavingEndpoint = true;
 
-            this.service.post(Links.ENDPOINTS, this.getEndpointData()).then(() => {
+            this.service.post(Links.PKS_ENDPOINTS, this.getEndpointData()).then(() => {
                 this.isSavingEndpoint = false;
 
                 this.goBack();

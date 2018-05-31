@@ -339,7 +339,7 @@
             "startTime": "Started:",
             "ip": "IP:",
             "summaryTitle": "Summary",
-            "containerStatus": {
+            "containerStatuses": {
               "title": "Containers",
               "name": "Container Name",
               "state": "Status"
@@ -376,13 +376,21 @@
         "masterFieldDescription5Nodes": "- 5 masters: A single master can fail, and the cluster will be able to advance state.",
         "fieldTitleWorker": "Worker",
         "workerFieldRequired": "Worker field is required. Only integer values bigger than 0 can be entered."
-      },
-      "file": {
-        "title": "File"
       }
     },
     "add": {
-      "title": "Add Cluster"
+      "title": "Add Cluster",
+      "existingClusters": {
+        "descriptionText": "Select an endpoint and then select one or more existing, unassigned Kubernetes clusters to add to the current business group.",
+        "fieldTitleEndpoint": "Endpoint:",
+        "columnTitleName": "Name",
+        "columnTitleMastersCount": "# Masters",
+        "columnTitleWorkersCount": "# Workers",
+        "columnTitlePlan": "Plan",
+        "yes": "Yes",
+        "no": "No",
+        "count": "clusters"
+      }
     }
   },
   "hosts": {
