@@ -38,19 +38,19 @@
 
   <div class="tab-content">
     <div role="tabpanel" class="tab-pane" id="all" v-infinite-scroll="loadMore('all')">
-      <request-item v-for="request in model.items | asMutable | orderBy 'documentUpdateTimeMicros' -1"
+      <request-item v-for="request in model.items | asMutable"
                     track-by="documentSelfLink"
                     v-bind:model="request">
       </request-item>
     </div>
     <div role="tabpanel" class="tab-pane" id="running" v-infinite-scroll="loadMore('running')">
-      <request-item v-for="request in model.items | asMutable | filterBy requestRunningFilter | orderBy 'documentUpdateTimeMicros' -1"
+      <request-item v-for="request in model.items | asMutable | filterBy requestRunningFilter"
                     track-by="documentSelfLink"
                     v-bind:model="request">
       </request-item>
     </div>
     <div role="tabpanel" class="tab-pane" id="failed" v-infinite-scroll="loadMore('failed')">
-      <request-item v-for="request in model.items | asMutable | filterBy requestFailedFilter | orderBy 'documentUpdateTimeMicros' -1"
+      <request-item v-for="request in model.items | asMutable | filterBy requestFailedFilter"
                     track-by="documentSelfLink"
                     v-bind:model="request">
       </request-item>
