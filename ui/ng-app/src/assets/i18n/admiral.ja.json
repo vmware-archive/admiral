@@ -26,6 +26,7 @@
     "clusters": "クラスタ",
     "clustersVic": "コンテナ ホスト",
     "repositories": "リポジトリ",
+    "internalRepositories": "内部リポジトリ",
     "infrastructure": "インフラストラクチャ",
     "registryReplication": "レジストリのレプリケーション",
     "configuration": "構成",
@@ -55,7 +56,7 @@
         "users": "ユーザー"
       },
       "repositories": {
-        "title": "プロジェクト リポジトリ",
+        "title": "内部リポジトリ",
         "repositories": "リポジトリ:"
       },
       "resources": {
@@ -94,10 +95,45 @@
         "local": "ローカル",
         "ldap": "LDAP"
       },
-      "deleteMember": {
+      "deleteMembers": {
         "title": "プロジェクトからのメンバーの削除",
-        "confirmation": "このプロジェクトからメンバーを削除しますか?"
+        "confirmation": "このプロジェクトから選択したメンバーを削除しますか?"
       }
+    },
+    "projectRegistries": {
+        "title": "プロジェクト レジストリ",
+        "new": "新しいプロジェクト レジストリ",
+        "delete": "削除",
+        "nameTitle": "名前",
+        "statusTitle": "ステータス",
+        "scopeTitle": "スコープ",
+        "addressTitle": "アドレス",
+        "searchPlaceholder": "レジストリの検索",
+        "scope": {
+          "global": "グローバル",
+          "project": "プロジェクト"
+        },
+        "status": {
+          "active": "有効",
+          "disabled": "無効"
+        },
+        "deleteConfirmation": {
+          "title": "プロジェクト レジストリの削除",
+          "description": "選択したプロジェクト レジストリを削除するか確認してください。グローバル レジストリはこのビューから削除できないことに注意してください。この操作は元に戻すことができません。"
+        },
+        "globalRegistriesDeletionSkipped": {
+          "warningMessage": "選択したグローバル レジストリは削除されませんでした。このビューからグローバル レジストリを削除することはできません。"
+        },
+        "registryDetails": {
+          "title": "プロジェクト レジストリの追加",
+          "editTitle": "プロジェクト レジストリの編集",
+          "descriptions": "レジストリをプロジェクトに追加",
+          "fieldAddress": "アドレス",
+          "fieldName": "名前",
+          "fieldCredentials": "ログイン認証情報"
+        },
+        "count": "レジストリ",
+        "insecureRegistryHint": "単純な HTTP レジストリが検出されました。このレジストリへの接続は安全ではありません。ホストを適切に設定し、レジストリに接続できるようにしてください。<a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">詳細情報</a>"
     },
     "config": {
       "title": "構成",
@@ -110,6 +146,11 @@
       "preventVulnerableImagesFromRunning": "脆弱なイメージの実行を防止",
       "preventVulnerableImagesFromRunningDescription_part1": "脆弱性の深刻度が",
       "preventVulnerableImagesFromRunningDescription_part2": "以上のイメージの展開を防止します。",
+      "preventRunSeverity": {
+        "low": "低",
+        "medium": "中",
+        "high": "高"
+      },
       "vulnerabilityScanning": "脆弱性のスキャン",
       "automaticallyScanImagesOnPush": "プッシュ時にイメージを自動スキャン",
       "automaticallyScanImagesOnPushDescription": "プロジェクト レジストリにイメージをプッシュするときに、自動的にスキャンします。"
@@ -128,17 +169,21 @@
     }
   },
   "registries": {
-    "title": "レジストリ",
+    "title": "グローバル レジストリ",
     "sourceRegistries": "ソース レジストリ",
     "replicationEndpoints": "レプリケーション エンドポイント",
     "replicationRules": "レプリケーション ルール"
+  },
+  "projectRepositories": {
+      "containerDeploymentStarted": "コンテナの展開を開始しました。詳細については、申請を参照してください。"
   },
   "clusters": {
     "title": "クラスタ",
     "titleVic": "コンテナ ホスト",
     "cluster": "クラスタ",
     "clusterVic": "コンテナ ホスト",
-    "new": "新規",
+    "new": "クラスタ",
+    "newVic": "コンテナ ホスト",
     "status": "ステータス",
     "state": {
       "ON": "有効",
@@ -146,8 +191,13 @@
       "DISABLED": "無効",
       "WARNING": "警告"
     },
+    "search": {
+      "placeholder": "クラスタの検索"
+    },
     "actions": {
-      "rescan": "再スキャン"
+      "rescan": "再スキャン",
+      "disable": "無効化",
+      "enable": "有効化"
     },
     "type": "タイプ",
     "containers": "コンテナ",
@@ -196,6 +246,8 @@
       "nameRequired": "名前は必須です。",
       "description": "説明",
       "type": "タイプ",
+      "typeDocker": "DOCKER",
+      "typeVch": "VCH",
       "url": "URL",
       "urlRequired": "クラスタの URL は必須です。",
       "urlRequiredVic": "コンテナ ホストの URL は必須です。",
@@ -209,6 +261,47 @@
       "titleVic": "コンテナ ホストの削除",
       "confirmation": "クラスタ「{{clusterName}}」を本当に削除しますか? このクラスタに関連する展開されたエンティティも同様に削除されます。この操作は元に戻せません。",
       "confirmationVic": "コンテナ ホスト 「{{clusterName}}」 を本当に削除しますか? このコンテナ ホストに関連する展開されたエンティティも同様に削除されます。この操作は元に戻せません。"
+    }
+  },
+  "kubernetes": {
+    "clusters": {
+      "title": "PKS クラスタ",
+      "addBtn": "クラスタの追加",
+      "newBtn": "新規クラスタ",
+      "nodeCount": "ノード",
+      "dashboard": "ダッシュボード",
+      "edit": {
+        "name": "名前",
+        "nameRequired": "名前は必須です。",
+        "description": "説明",
+        "url": "URL",
+        "urlRequired": "クラスタの URL は必須です。",
+        "credentials": "認証情報"
+      },
+      "search": {
+        "placeholder": "クラスタの検索"
+      },
+      "add": {
+        "existing": "既存の PKS クラスタ",
+        "external": "外部クラスタ"
+      },
+      "details": {
+        "summary": {
+          "title": "概要",
+          "nodeCount": "ノード:",
+          "dashboard": "ダッシュボード:",
+          "dashboardInstalled": "インストール済み",
+          "dashboardNotInstalled": "未インストール"
+        },
+        "nodes": {
+          "title": "ノード",
+          "searchPlaceholder": "ノードの検索",
+          "nameColumn": "名前",
+          "cpuColumn": "CPU",
+          "memoryColumn": "メモリ",
+          "count": "ノード"
+        }
+      }
     }
   },
   "hosts": {
@@ -268,6 +361,35 @@
       }
     }
   },
+  "endpoints": {
+    "title": "エンドポイント",
+    "searchPlaceholder": "エンドポイントの検索",
+    "new": "新規エンドポイント",
+    "delete": "削除",
+    "deleteConfirmation": {
+      "title": "エンドポイントの削除",
+      "description": "選択したエンドポイントを削除するか確認してください。この操作は元に戻すことができません。"
+    },
+    "name": "名前",
+    "status": "ステータス",
+    "address": "アドレス",
+    "count": "エンドポイント",
+    "details": {
+      "titleCreate": "エンドポイントの作成",
+      "generalTabTitle": "全般",
+      "nameFieldTitle": "名前",
+      "nameRequired": "エンドポイントの名前は必須です。",
+      "descriptionFieldTitle": "説明",
+      "uaaAddressFieldTitle": "UAA アドレス",
+      "uaaAddressRequired": "UAA アドレスは必須です。",
+      "credentials": "認証情報",
+      "pksAddressFieldTitle": "PKS アドレス",
+      "pksAddressRequired": "PKS アドレスは必須です。",
+      "createBtn": "作成",
+      "testConnectionBtn": "接続をテスト",
+      "clustersTabTitle": "クラスタ"
+    }
+  },
   "configuration": {
     "title": "構成",
     "registry": "レジストリ"
@@ -309,6 +431,7 @@
   "unmakeAdmin": "管理者ロールの割り当て解除",
   "noItems": "アイテムがありません",
   "reload": "再ロード",
+  "notAvailable": "N/A",
   "sessionExpired": "セッションが無効になりました。ログインし直してください。",
   "navigation": {
     "home": "ホーム",
@@ -321,18 +444,27 @@
     "closures": "クロージャ",
     "library": "ライブラリ",
     "templates": "テンプレート",
-    "projectRepositories": "プロジェクト リポジトリ",
-    "publicRepositories": "パブリック リポジトリ",
+    "repositories": "リポジトリ",
+    "internalRepositories": "組み込みリポジトリ",
+    "publicRepositories": "リポジトリ",
     "infrastructure": "インフラストラクチャ",
     "clusters": "クラスタ",
     "clustersVic": "コンテナ ホスト",
+    "kubernetesClusters": "PKS クラスタ",
     "hosts": "ホスト",
     "placements": "配置",
     "identityManagement": "ID 管理",
     "projects": "プロジェクト",
-    "registries": "レジストリ",
+    "registries": "グローバル レジストリ",
     "configuration": "構成",
-    "logs": "ログ"
+    "logs": "ログ",
+    "endpoints": "エンドポイント",
+    "pksEndpoints": "PKS エンドポイント"
+  },
+  "search": {
+    "occurrence": {
+      "all": "すべてに一致"
+    }
   },
   "compute": {
     "resources": "リソース",

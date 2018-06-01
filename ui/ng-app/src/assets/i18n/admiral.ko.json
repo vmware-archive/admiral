@@ -26,6 +26,7 @@
     "clusters": "클러스터",
     "clustersVic": "컨테이너 호스트",
     "repositories": "저장소",
+    "internalRepositories": "내부 저장소",
     "infrastructure": "인프라",
     "registryReplication": "레지스트리 복제",
     "configuration": "구성",
@@ -55,7 +56,7 @@
         "users": "사용자"
       },
       "repositories": {
-        "title": "프로젝트 저장소",
+        "title": "내부 저장소",
         "repositories": "저장소:"
       },
       "resources": {
@@ -94,10 +95,45 @@
         "local": "로컬",
         "ldap": "LDAP"
       },
-      "deleteMember": {
+      "deleteMembers": {
         "title": "프로젝트에서 구성원 제거",
-        "confirmation": "이 프로젝트에서 구성원을 제거하시겠습니까?"
+        "confirmation": "선택한 구성원을 이 프로젝트에서 제거하시겠습니까?"
       }
+    },
+    "projectRegistries": {
+        "title": "프로젝트 레지스트리",
+        "new": "새 프로젝트 레지스트리",
+        "delete": "삭제",
+        "nameTitle": "이름",
+        "statusTitle": "상태",
+        "scopeTitle": "범위",
+        "addressTitle": "주소",
+        "searchPlaceholder": "레지스트리 검색",
+        "scope": {
+          "global": "글로벌",
+          "project": "프로젝트"
+        },
+        "status": {
+          "active": "활성",
+          "disabled": "사용 안 함"
+        },
+        "deleteConfirmation": {
+          "title": "프로젝트 레지스트리 제거",
+          "description": "선택한 프로젝트 레지스트리 제거를 확인합니다. 글로벌 레지스트리는 이 보기에서 제거할 수 없습니다. 이 작업은 실행 취소할 수 없습니다."
+        },
+        "globalRegistriesDeletionSkipped": {
+          "warningMessage": "선택 항목에서 글로벌 레지스트리가 삭제되지 않았습니다. 이 보기에서는 글로벌 레지스트리를 삭제할 수 없습니다."
+        },
+        "registryDetails": {
+          "title": "프로젝트 레지스트리 추가",
+          "editTitle": "프로젝트 레지스트리 편집",
+          "descriptions": "프로젝트에 레지스트리 추가",
+          "fieldAddress": "주소",
+          "fieldName": "이름",
+          "fieldCredentials": "로그인 자격 증명"
+        },
+        "count": "레지스트리",
+        "insecureRegistryHint": "일반 HTTP 레지스트리가 감지되었습니다. 이 레지스트리에 대한 연결이 안전하지 않습니다. 호스트가 올바르게 구성되어 있고 연결 가능한지 확인하십시오. <a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">추가 정보</a>"
     },
     "config": {
       "title": "구성",
@@ -110,6 +146,11 @@
       "preventVulnerableImagesFromRunning": "공격에 취약한 이미지 실행 방지",
       "preventVulnerableImagesFromRunningDescription_part1": "취약성 심각도가",
       "preventVulnerableImagesFromRunningDescription_part2": "이상인 이미지가 배포되지 않도록 방지합니다.",
+      "preventRunSeverity": {
+        "low": "낮음",
+        "medium": "중간",
+        "high": "높음"
+      },
       "vulnerabilityScanning": "취약성 검색",
       "automaticallyScanImagesOnPush": "푸시될 때 자동으로 이미지 검색",
       "automaticallyScanImagesOnPushDescription": "이미지가 프로젝트 레지스트리에 푸시될 때 이미지를 자동으로 검색합니다."
@@ -128,17 +169,21 @@
     }
   },
   "registries": {
-    "title": "레지스트리",
+    "title": "글로벌 레지스트리",
     "sourceRegistries": "소스 레지스트리",
     "replicationEndpoints": "복제 끝점",
     "replicationRules": "복제 규칙"
+  },
+  "projectRepositories": {
+      "containerDeploymentStarted": "컨테이너 배포가 시작되었습니다. 자세한 내용은 [요청]을 참조하십시오."
   },
   "clusters": {
     "title": "클러스터",
     "titleVic": "컨테이너 호스트",
     "cluster": "클러스터",
     "clusterVic": "컨테이너 호스트",
-    "new": "새로 만들기",
+    "new": "클러스터",
+    "newVic": "컨테이너 호스트",
     "status": "상태",
     "state": {
       "ON": "켜짐",
@@ -146,8 +191,13 @@
       "DISABLED": "사용 안 함",
       "WARNING": "주의"
     },
+    "search": {
+      "placeholder": "클러스터 검색"
+    },
     "actions": {
-      "rescan": "다시 검색"
+      "rescan": "다시 검색",
+      "disable": "사용 안 함",
+      "enable": "사용"
     },
     "type": "유형",
     "containers": "컨테이너",
@@ -196,6 +246,8 @@
       "nameRequired": "이름은 필수입니다.",
       "description": "설명",
       "type": "유형",
+      "typeDocker": "DOCKER",
+      "typeVch": "VCH",
       "url": "URL",
       "urlRequired": "클러스터 URL은 필수입니다.",
       "urlRequiredVic": "컨테이너 호스트 URL이 필요합니다.",
@@ -209,6 +261,47 @@
       "titleVic": "컨테이너 호스트 제거",
       "confirmation": "{{clusterName}} 클러스터 제거 확인. 이 클러스터에 연결된 배포된 엔티티도 제거됩니다. 이 작업은 실행 취소할 수 없습니다.",
       "confirmationVic": "{{clusterName}} 컨테이너 호스트 제거 확인. 이 컨테이너 호스트에 연결된 배포된 엔티티도 제거됩니다. 이 작업은 실행 취소할 수 없습니다."
+    }
+  },
+  "kubernetes": {
+    "clusters": {
+      "title": "PKS 클러스터",
+      "addBtn": "클러스터 추가",
+      "newBtn": "새 클러스터",
+      "nodeCount": "노드",
+      "dashboard": "대시보드",
+      "edit": {
+        "name": "이름",
+        "nameRequired": "이름은 필수입니다.",
+        "description": "설명",
+        "url": "URL",
+        "urlRequired": "클러스터 URL은 필수입니다.",
+        "credentials": "자격 증명"
+      },
+      "search": {
+        "placeholder": "클러스터 검색"
+      },
+      "add": {
+        "existing": "기존 PKS 클러스터",
+        "external": "외부 클러스터"
+      },
+      "details": {
+        "summary": {
+          "title": "요약",
+          "nodeCount": "노드:",
+          "dashboard": "대시보드:",
+          "dashboardInstalled": "설치됨",
+          "dashboardNotInstalled": "설치되지 않음"
+        },
+        "nodes": {
+          "title": "노드",
+          "searchPlaceholder": "노드 검색",
+          "nameColumn": "이름",
+          "cpuColumn": "CPU",
+          "memoryColumn": "메모리",
+          "count": "노드"
+        }
+      }
     }
   },
   "hosts": {
@@ -268,6 +361,35 @@
       }
     }
   },
+  "endpoints": {
+    "title": "끝점",
+    "searchPlaceholder": "끝점 검색",
+    "new": "새 끝점",
+    "delete": "제거",
+    "deleteConfirmation": {
+      "title": "끝점 제거",
+      "description": "선택한 끝점 제거를 확인합니다. 이 작업은 실행 취소할 수 없습니다."
+    },
+    "name": "이름",
+    "status": "상태",
+    "address": "주소",
+    "count": "끝점",
+    "details": {
+      "titleCreate": "끝점 생성",
+      "generalTabTitle": "일반",
+      "nameFieldTitle": "이름",
+      "nameRequired": "끝점의 이름은 필수입니다.",
+      "descriptionFieldTitle": "설명",
+      "uaaAddressFieldTitle": "UAA 주소",
+      "uaaAddressRequired": "UAA 주소는 필수입니다.",
+      "credentials": "자격 증명",
+      "pksAddressFieldTitle": "PKS 주소",
+      "pksAddressRequired": "PKS 주소는 필수입니다.",
+      "createBtn": "생성",
+      "testConnectionBtn": "연결 테스트",
+      "clustersTabTitle": "클러스터"
+    }
+  },
   "configuration": {
     "title": "구성",
     "registry": "레지스트리"
@@ -309,6 +431,7 @@
   "unmakeAdmin": "관리자 역할 할당 취소",
   "noItems": "항목 없음",
   "reload": "다시 로드",
+  "notAvailable": "해당 없음",
   "sessionExpired": "세션이 더 이상 유효하지 않습니다. 다시 로그인하십시오!",
   "navigation": {
     "home": "홈",
@@ -321,18 +444,27 @@
     "closures": "클로저",
     "library": "라이브러리",
     "templates": "템플릿",
-    "projectRepositories": "프로젝트 저장소",
-    "publicRepositories": "공용 저장소",
+    "repositories": "저장소",
+    "internalRepositories": "기본 제공 저장소",
+    "publicRepositories": "저장소",
     "infrastructure": "인프라",
     "clusters": "클러스터",
     "clustersVic": "컨테이너 호스트",
+    "kubernetesClusters": "PKS 클러스터",
     "hosts": "호스트",
     "placements": "배치",
     "identityManagement": "ID 관리",
     "projects": "프로젝트",
-    "registries": "레지스트리",
+    "registries": "글로벌 레지스트리",
     "configuration": "구성",
-    "logs": "로그"
+    "logs": "로그",
+    "endpoints": "끝점",
+    "pksEndpoints": "PKS 끝점"
+  },
+  "search": {
+    "occurrence": {
+      "all": "모두 일치"
+    }
   },
   "compute": {
     "resources": "리소스",

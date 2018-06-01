@@ -26,6 +26,7 @@
     "clusters": "Кластеры",
     "clustersVic": "Узлы контейнеров",
     "repositories": "Репозитории",
+    "internalRepositories": "Внутренние репозитории",
     "infrastructure": "Инфраструктура",
     "registryReplication": "Репликация реестра",
     "configuration": "Конфигурация",
@@ -55,7 +56,7 @@
         "users": "пользователи"
       },
       "repositories": {
-        "title": "Репозитории проекта",
+        "title": "Внутренние репозитории",
         "repositories": "Репозитории:"
       },
       "resources": {
@@ -94,10 +95,45 @@
         "local": "Локальный",
         "ldap": "LDAP"
       },
-      "deleteMember": {
-        "title": "Удалить участника из проекта",
-        "confirmation": "Действительно удалить участника из этого проекта?"
+      "deleteMembers": {
+        "title": "Удаление участников из проекта",
+        "confirmation": "Действительно удалить из этого проекта выбранных участников?"
       }
+    },
+    "projectRegistries": {
+        "title": "Реестры проекта",
+        "new": "Создать реестр проекта",
+        "delete": "Удалить",
+        "nameTitle": "Имя",
+        "statusTitle": "Состояние",
+        "scopeTitle": "Охват",
+        "addressTitle": "Адрес",
+        "searchPlaceholder": "Поиск реестров",
+        "scope": {
+          "global": "Глобальный",
+          "project": "Проект"
+        },
+        "status": {
+          "active": "Активный",
+          "disabled": "Отключенный"
+        },
+        "deleteConfirmation": {
+          "title": "Удаление реестров проекта",
+          "description": "Подтвердите удаление выбранных реестров проекта. Обратите внимание: из этого представления невозможно удалить глобальные реестры. Операция необратима."
+        },
+        "globalRegistriesDeletionSkipped": {
+          "warningMessage": "Глобальные реестры, входящие в число выбранных элементов, не удалены. Из этого представления невозможно удалить глобальные реестры."
+        },
+        "registryDetails": {
+          "title": "Добавление реестра проекта",
+          "editTitle": "Изменение реестра проекта",
+          "descriptions": "Добавить в проект реестр",
+          "fieldAddress": "Адрес",
+          "fieldName": "Имя",
+          "fieldCredentials": "Учетные данные для входа"
+        },
+        "count": "реестр.",
+        "insecureRegistryHint": "Обнаружен реестр, основанный на обычном протоколе HTTP! Подключение к этому реестру не защищено. Убедитесь, что узлы правильно настроены и способны подключиться к реестру. <a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">Подробнее</a>"
     },
     "config": {
       "title": "Конфигурация",
@@ -110,6 +146,11 @@
       "preventVulnerableImagesFromRunning": "Исключить запуск уязвимых образов",
       "preventVulnerableImagesFromRunningDescription_part1": "Исключить развертывание образов со степенью уязвимости",
       "preventVulnerableImagesFromRunningDescription_part2": "и выше.",
+      "preventRunSeverity": {
+        "low": "Низкий",
+        "medium": "Средний",
+        "high": "Высокий"
+      },
       "vulnerabilityScanning": "Проверка уязвимостей",
       "automaticallyScanImagesOnPush": "Автоматически проверять образы при отправке",
       "automaticallyScanImagesOnPushDescription": "Автоматически проверять образы при отправке в реестр проекта."
@@ -128,17 +169,21 @@
     }
   },
   "registries": {
-    "title": "Реестры",
+    "title": "Глобальные реестры",
     "sourceRegistries": "Реестры источников",
     "replicationEndpoints": "Конечные точки репликации",
     "replicationRules": "Правила репликации"
+  },
+  "projectRepositories": {
+      "containerDeploymentStarted": "Контейнеры начали развертываться. Дополнительные сведения см. в разделе "Запросы"."
   },
   "clusters": {
     "title": "Кластеры",
     "titleVic": "Узлы контейнеров",
     "cluster": "Кластер",
     "clusterVic": "Узел контейнера",
-    "new": "Создать",
+    "new": "Кластер",
+    "newVic": "Узел контейнера",
     "status": "Состояние",
     "state": {
       "ON": "Включено",
@@ -146,8 +191,13 @@
       "DISABLED": "ОТКЛЮЧЕНО",
       "WARNING": "ПРЕДУПРЕЖДЕНИЕ"
     },
+    "search": {
+      "placeholder": "Найти кластеры"
+    },
     "actions": {
-      "rescan": "Повторить поиск"
+      "rescan": "Повторить поиск",
+      "disable": "Отключить",
+      "enable": "Включить"
     },
     "type": "Тип",
     "containers": "Контейнеры",
@@ -196,6 +246,8 @@
       "nameRequired": "Необходимо указать имя.",
       "description": "Описание",
       "type": "Тип",
+      "typeDocker": "DOCKER",
+      "typeVch": "VCH",
       "url": "URL-адрес",
       "urlRequired": "Необходимо указать URL-адрес кластера.",
       "urlRequiredVic": "Необходимо указать URL-адрес узла контейнера.",
@@ -209,6 +261,47 @@
       "titleVic": "Удалить узел контейнера",
       "confirmation": "Подтвердите удаление кластера {{clusterName}}. Развернутые объекты, связанные с этим кластером, будут также удалены. Это действие невозможно отменить.",
       "confirmationVic": "Подтвердите удаление узла контейнера {{clusterName}}. Развернутые объекты, связанные с этим узлом контейнера, будут также удалены. Это действие невозможно отменить."
+    }
+  },
+  "kubernetes": {
+    "clusters": {
+      "title": "Кластеры PKS",
+      "addBtn": "Добавить кластер",
+      "newBtn": "Создать кластер",
+      "nodeCount": "Узлы",
+      "dashboard": "Панель мониторинга",
+      "edit": {
+        "name": "Имя",
+        "nameRequired": "Необходимо указать имя.",
+        "description": "Описание",
+        "url": "URL-адрес",
+        "urlRequired": "Необходимо указать URL-адрес кластера.",
+        "credentials": "Учетные данные"
+      },
+      "search": {
+        "placeholder": "Найти кластеры"
+      },
+      "add": {
+        "existing": "Существующий кластер PKS",
+        "external": "Внешний кластер"
+      },
+      "details": {
+        "summary": {
+          "title": "Сводка",
+          "nodeCount": "Узлы:",
+          "dashboard": "Панель мониторинга:",
+          "dashboardInstalled": "УСТАНОВЛЕНО",
+          "dashboardNotInstalled": "НЕ УСТАНОВЛЕНО"
+        },
+        "nodes": {
+          "title": "Узлы",
+          "searchPlaceholder": "Искать узлы",
+          "nameColumn": "Имя",
+          "cpuColumn": "ЦП",
+          "memoryColumn": "Оперативная память",
+          "count": "Узлы"
+        }
+      }
     }
   },
   "hosts": {
@@ -268,6 +361,35 @@
       }
     }
   },
+  "endpoints": {
+    "title": "Конечные точки",
+    "searchPlaceholder": "Искать конечные точки",
+    "new": "Создать конечную точку",
+    "delete": "Удалить",
+    "deleteConfirmation": {
+      "title": "Удаление конечных точек",
+      "description": "Подтвердите удаление выбранных конечных точек. Операция необратима."
+    },
+    "name": "Имя",
+    "status": "Состояние",
+    "address": "Адрес",
+    "count": "конечн. точ.",
+    "details": {
+      "titleCreate": "Создание конечной точки",
+      "generalTabTitle": "Общие",
+      "nameFieldTitle": "Имя",
+      "nameRequired": "Необходимо указать имя конечной точки.",
+      "descriptionFieldTitle": "Описание",
+      "uaaAddressFieldTitle": "UAA-адрес",
+      "uaaAddressRequired": "Необходимо указать UAA-адрес.",
+      "credentials": "Учетные данные",
+      "pksAddressFieldTitle": "PKS-адрес",
+      "pksAddressRequired": "Необходимо указать PKS-адрес.",
+      "createBtn": "Создать",
+      "testConnectionBtn": "Проверить подключение",
+      "clustersTabTitle": "Кластеры"
+    }
+  },
   "configuration": {
     "title": "Конфигурация",
     "registry": "Реестр"
@@ -309,6 +431,7 @@
   "unmakeAdmin": "Отменить назначение роли администратора",
   "noItems": "Нет элементов",
   "reload": "Перезагрузить",
+  "notAvailable": "Н/д",
   "sessionExpired": "Ваш сеанс прекращен. Выполните вход повторно.",
   "navigation": {
     "home": "Главная страница",
@@ -321,18 +444,27 @@
     "closures": "Закрытия",
     "library": "Библиотека",
     "templates": "Шаблоны",
-    "projectRepositories": "Репозитории проекта",
-    "publicRepositories": "Общедоступные репозитории",
+    "repositories": "Репозитории",
+    "internalRepositories": "Встроенные репозитории",
+    "publicRepositories": "Репозитории",
     "infrastructure": "Инфраструктура",
     "clusters": "Кластеры",
     "clustersVic": "Узлы контейнеров",
+    "kubernetesClusters": "Кластеры PKS",
     "hosts": "Узлы",
     "placements": "Размещения",
     "identityManagement": "Управление идентификацией",
     "projects": "Проекты",
-    "registries": "Реестры",
+    "registries": "Глобальные реестры",
     "configuration": "Конфигурация",
-    "logs": "Журналы"
+    "logs": "Журналы",
+    "endpoints": "Конечные точки",
+    "pksEndpoints": "Конечные точки PKS"
+  },
+  "search": {
+    "occurrence": {
+      "all": "Соответствие всем критериям"
+    }
   },
   "compute": {
     "resources": "Ресурсы",

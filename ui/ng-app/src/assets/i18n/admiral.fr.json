@@ -26,6 +26,7 @@
     "clusters": "Clusters",
     "clustersVic": "Hôtes de conteneur",
     "repositories": "Référentiels",
+    "internalRepositories": "Référentiels internes",
     "infrastructure": "Infrastructure",
     "registryReplication": "Réplication du registre",
     "configuration": "Configuration",
@@ -55,7 +56,7 @@
         "users": "utilisateurs"
       },
       "repositories": {
-        "title": "Référentiels de projets",
+        "title": "Référentiels internes",
         "repositories": "Référentiels :"
       },
       "resources": {
@@ -94,10 +95,45 @@
         "local": "Local",
         "ldap": "LDAP"
       },
-      "deleteMember": {
-        "title": "Supprimer le membre du projet",
-        "confirmation": "Voulez-vous vraiment supprimer ce membre de ce projet ?"
+      "deleteMembers": {
+        "title": "Supprimer les membres du projet",
+        "confirmation": "Voulez-vous vraiment supprimer les membres sélectionnés de ce projet ?"
       }
+    },
+    "projectRegistries": {
+        "title": "Registres de projet",
+        "new": "Nouveau registre de projet",
+        "delete": "Supprimer",
+        "nameTitle": "Nom",
+        "statusTitle": "Statut",
+        "scopeTitle": "Portée",
+        "addressTitle": "Adresse",
+        "searchPlaceholder": "Rechercher des registres",
+        "scope": {
+          "global": "Global",
+          "project": "Projet"
+        },
+        "status": {
+          "active": "Actif",
+          "disabled": "Désactivé"
+        },
+        "deleteConfirmation": {
+          "title": "Supprimer les registres de projet",
+          "description": "Confirmez la suppression des registres de projet sélectionnés. Notez que les registres globaux ne peuvent pas être supprimés à partir de cette vue. Cette opération ne peut pas être annulée."
+        },
+        "globalRegistriesDeletionSkipped": {
+          "warningMessage": "Les registres globaux de votre sélection n'ont pas été supprimés, car il n'est pas possible de les supprimer à partir de cette vue."
+        },
+        "registryDetails": {
+          "title": "Ajouter un registre de projet",
+          "editTitle": "Modifier le registre de projet",
+          "descriptions": "Ajouter un registre au projet",
+          "fieldAddress": "Adresse",
+          "fieldName": "Nom",
+          "fieldCredentials": "Informations d'identification de connexion"
+        },
+        "count": "registres",
+        "insecureRegistryHint": "Registre HTTP simple détecté. La connexion au registre n'est pas sécurisée. Vérifiez que les hôtes sont correctement configurés et que vous pouvez vous y connecter. <a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">Plus d'informations</a>"
     },
     "config": {
       "title": "Configuration",
@@ -110,6 +146,11 @@
       "preventVulnerableImagesFromRunning": "Empêcher les images vulnérables de s'exécuter",
       "preventVulnerableImagesFromRunningDescription_part1": "Empêcher les images avec un niveau de vulnérabilité de",
       "preventVulnerableImagesFromRunningDescription_part2": "et au-dessus d'être déployées.",
+      "preventRunSeverity": {
+        "low": "Minimum",
+        "medium": "Intermédiaire",
+        "high": "Maximum"
+      },
       "vulnerabilityScanning": "Analyse de la vulnérabilité",
       "automaticallyScanImagesOnPush": "Analyse automatique des images lors du transfert",
       "automaticallyScanImagesOnPushDescription": "Analyse automatiquement les images lorsqu'elles sont transférées dans le registre de produits."
@@ -128,17 +169,21 @@
     }
   },
   "registries": {
-    "title": "Registres",
+    "title": "Registres globaux",
     "sourceRegistries": "Registres source",
     "replicationEndpoints": "Points de terminaison de la réplication",
     "replicationRules": "Règles de la réplication"
+  },
+  "projectRepositories": {
+      "containerDeploymentStarted": "Déploiement du conteneur démarré. Pour plus de détails, consultez la section Demandes."
   },
   "clusters": {
     "title": "Clusters",
     "titleVic": "Hôtes de conteneur",
     "cluster": "Cluster",
     "clusterVic": "Hôte de conteneur",
-    "new": "Nouveau",
+    "new": "Cluster",
+    "newVic": "Hôte de conteneur",
     "status": "Statut",
     "state": {
       "ON": "ACTIVÉ",
@@ -146,8 +191,13 @@
       "DISABLED": "DÉSACTIVÉ",
       "WARNING": "AVERTISSEMENT"
     },
+    "search": {
+      "placeholder": "Rechercher des clusters"
+    },
     "actions": {
-      "rescan": "Réanalyser"
+      "rescan": "Réanalyser",
+      "disable": "Désactiver",
+      "enable": "Activer"
     },
     "type": "Type",
     "containers": "Conteneurs",
@@ -196,6 +246,8 @@
       "nameRequired": "Un nom est requis.",
       "description": "Description",
       "type": "Type",
+      "typeDocker": "DOCKER",
+      "typeVch": "VCH",
       "url": "URL",
       "urlRequired": "L'URL du cluster est requise.",
       "urlRequiredVic": "L'URL d'hôte de conteneur est requise.",
@@ -209,6 +261,47 @@
       "titleVic": "Supprimer l'hôte de conteneur",
       "confirmation": "Confirmez la suppression du cluster {{clusterName}}. Les entités déployées associées à ce cluster seront également supprimées. Cette opération ne peut pas être annulée.",
       "confirmationVic": "Confirmez la suppression de l'hôte de conteneur {{clusterName}}. Les entités déployées associées à cet hôte de conteneur seront également supprimées. Cette opération ne peut pas être annulée."
+    }
+  },
+  "kubernetes": {
+    "clusters": {
+      "title": "Clusters PKS",
+      "addBtn": "Ajouter un cluster",
+      "newBtn": "Nouveau cluster",
+      "nodeCount": "Nœuds",
+      "dashboard": "Tableau de bord",
+      "edit": {
+        "name": "Nom",
+        "nameRequired": "Un nom est requis.",
+        "description": "Description",
+        "url": "URL",
+        "urlRequired": "L'URL du cluster est requise.",
+        "credentials": "Informations d'identification"
+      },
+      "search": {
+        "placeholder": "Rechercher des clusters"
+      },
+      "add": {
+        "existing": "Cluster PKS existant",
+        "external": "Cluster externe"
+      },
+      "details": {
+        "summary": {
+          "title": "Résumé",
+          "nodeCount": "Nœuds :",
+          "dashboard": "Tableau de bord :",
+          "dashboardInstalled": "INSTALLÉ",
+          "dashboardNotInstalled": "NON INSTALLÉ"
+        },
+        "nodes": {
+          "title": "Nœuds",
+          "searchPlaceholder": "Rechercher des nœuds",
+          "nameColumn": "Nom",
+          "cpuColumn": "CPU",
+          "memoryColumn": "Mémoire",
+          "count": "Nœuds"
+        }
+      }
     }
   },
   "hosts": {
@@ -268,6 +361,35 @@
       }
     }
   },
+  "endpoints": {
+    "title": "Points de terminaison",
+    "searchPlaceholder": "Rechercher des points de terminaison",
+    "new": "Nouveau point de terminaison",
+    "delete": "Supprimer",
+    "deleteConfirmation": {
+      "title": "Supprimer des points de terminaison",
+      "description": "Confirmez la suppression des points de terminaison sélectionnés. Cette opération ne peut pas être annulée."
+    },
+    "name": "Nom",
+    "status": "Statut",
+    "address": "Adresse",
+    "count": "points de terminaison",
+    "details": {
+      "titleCreate": "Créer un point de terminaison",
+      "generalTabTitle": "Général",
+      "nameFieldTitle": "Nom",
+      "nameRequired": "Le nom du point de terminaison est requis.",
+      "descriptionFieldTitle": "Description",
+      "uaaAddressFieldTitle": "Adresse UAA",
+      "uaaAddressRequired": "L'adresse UAA est requise.",
+      "credentials": "Informations d'identification",
+      "pksAddressFieldTitle": "Adresse PKS",
+      "pksAddressRequired": "L'adresse PKS est requise.",
+      "createBtn": "Créer",
+      "testConnectionBtn": "Tester la connexion",
+      "clustersTabTitle": "Clusters"
+    }
+  },
   "configuration": {
     "title": "Configuration",
     "registry": "Registre"
@@ -309,6 +431,7 @@
   "unmakeAdmin": "Annuler l'attribution du rôle d'administrateur",
   "noItems": "Aucun élément",
   "reload": "Recharger",
+  "notAvailable": "S/O",
   "sessionExpired": "Votre session n'est plus valide. Veuillez vous reconnecter.",
   "navigation": {
     "home": "Accueil",
@@ -321,18 +444,27 @@
     "closures": "Fermetures",
     "library": "Bibliothèque",
     "templates": "Modèles",
-    "projectRepositories": "Référentiels de projets",
-    "publicRepositories": "Référentiels publics",
+    "repositories": "Référentiels",
+    "internalRepositories": "Référentiels intégrés",
+    "publicRepositories": "Référentiels",
     "infrastructure": "Infrastructure",
     "clusters": "Clusters",
     "clustersVic": "Hôtes de conteneur",
+    "kubernetesClusters": "Clusters PKS",
     "hosts": "Hôtes",
     "placements": "Placements",
     "identityManagement": "Gestion des identités",
     "projects": "Projets",
-    "registries": "Registres",
+    "registries": "Registres globaux",
     "configuration": "Configuration",
-    "logs": "Journaux"
+    "logs": "Journaux",
+    "endpoints": "Points de terminaison",
+    "pksEndpoints": "Points de terminaison PKS"
+  },
+  "search": {
+    "occurrence": {
+      "all": "Faire correspondre à tous"
+    }
   },
   "compute": {
     "resources": "Ressources",

@@ -269,6 +269,7 @@
         "manageRegistry": "Gérer les registres",
         "provision": "Provisionner",
         "provisionAdditionalInfo": "Entrer des informations supplémentaires",
+        "provisionKubernetesDeployment": "Provisionner sur Kubernetes",
         "editTemplate": "Modifier/Afficher des détails",
         "official": "Officiel",
         "trusted": "Approuvé",
@@ -357,7 +358,7 @@
             "keyTitle": "Option",
             "keyHint": "Exemple : size",
             "valueTitle": "Valeur",
-            "valueHint": "Exemple : 100m"
+            "valueHint": "Exemple : 100 m"
           },
           "existingVolume": "Existant",
           "showingCount": "Affichage de {{count}} sur {{totalCount}}",
@@ -474,7 +475,7 @@
         "addButton": "Registre",
         "addressColumn": "Adresse",
         "nameColumn": "Nom",
-        "statusColumn": "État"
+        "statusColumn": "Activé"
       },
       "edit": {
         "createNew": "Nouveau registre",
@@ -1011,6 +1012,7 @@
       },
       "request": {
         "title": "Provisionner un conteneur",
+        "kubernetesDeploymentTitle": "Provisionner un déploiement Kubernetes",
         "provision": "Provisionner",
         "saveTemplate": "Enregistrer comme modèle",
         "tabs": {
@@ -1100,6 +1102,7 @@
           "workingDirectoryDescription": "Répertoire de travail dans lequel exécuter les commandes",
           "clusterSize": "Taille du cluster",
           "clusterSizeDescription": "Nombre de nœuds à provisionner",
+          "kubernetesReplicas": "Réplicas",
           "restartPolicy": "Stratégie de redémarrage",
           "restartPolicyDescription": "Comportement à appliquer à la sortie du conteneur. La valeur est « toujours » pour toujours redémarrer ou « lors d'un échec » pour redémarrer uniquement lorsque le code de sortie du conteneur est différent de zéro. Si la valeur lors d'un échec est utilisée, le nombre de redémarrages maximal contrôle le nombre de tentatives à effectuer avant d'abandonner. Le comportement par défaut est de ne pas redémarrer.",
           "restartPolicyType": {
@@ -1365,6 +1368,12 @@
     "nameHint": "Exemple : speedchecker",
     "value": "Valeur",
     "valueHint": "Exemple : slow"
+  },
+  "search": {
+    "occurrence": {
+      "all": "Faire correspondre à tous",
+      "any": "Faire correspondre à n'importe quel"
+    }
   },
   "yes": "Oui",
   "no": "Non",

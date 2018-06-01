@@ -26,6 +26,7 @@
     "clusters": "Clusters",
     "clustersVic": "Containerhosts",
     "repositories": "Opslagplaatsen",
+    "internalRepositories": "Interne opslagplaatsen",
     "infrastructure": "Infrastructuur",
     "registryReplication": "Registerreplicatie",
     "configuration": "Configuratie",
@@ -55,7 +56,7 @@
         "users": "gebruikers"
       },
       "repositories": {
-        "title": "Projectopslagplaatsen",
+        "title": "Interne opslagplaatsen",
         "repositories": "Opslagplaatsen:"
       },
       "resources": {
@@ -94,10 +95,45 @@
         "local": "Lokaal",
         "ldap": "LDAP"
       },
-      "deleteMember": {
-        "title": "Lid uit project verwijderen",
-        "confirmation": "Weet u zeker dat u het lid uit dit project wilt verwijderen?"
+      "deleteMembers": {
+        "title": "Leden uit project verwijderen",
+        "confirmation": "Weet u zeker dat u de geselecteerde leden uit het project wilt verwijderen?"
       }
+    },
+    "projectRegistries": {
+        "title": "Projectregisters",
+        "new": "Nieuw projectregister",
+        "delete": "Verwijderen",
+        "nameTitle": "Naam",
+        "statusTitle": "Status",
+        "scopeTitle": "Bereik",
+        "addressTitle": "Adres",
+        "searchPlaceholder": "Zoeken naar registers",
+        "scope": {
+          "global": "Algemeen",
+          "project": "Project"
+        },
+        "status": {
+          "active": "Actief",
+          "disabled": "Uitgeschakeld"
+        },
+        "deleteConfirmation": {
+          "title": "Projectregisters verwijderen",
+          "description": "Bevestig de verwijdering van de geselecteerde projectregisters. Houd er rekening mee dat algemene registers niet uit deze weergave kunnen worden verwijderd. De bewerking kan niet ongedaan worden gemaakt."
+        },
+        "globalRegistriesDeletionSkipped": {
+          "warningMessage": "De algemene registers van uw selectie zijn niet verwijderd. Het is niet mogelijk om algemene registers uit deze weergave te verwijderen."
+        },
+        "registryDetails": {
+          "title": "Projectregister toevoegen",
+          "editTitle": "Projectregister bewerken",
+          "descriptions": "Register toevoegen aan het project",
+          "fieldAddress": "Adres",
+          "fieldName": "Naam",
+          "fieldCredentials": "Verificatiegegevens voor aanmelden"
+        },
+        "count": "registers",
+        "insecureRegistryHint": "Register met eenvoudig HTTP gedetecteerd! Uw verbinding met dit register is niet veilig. Zorg dat uw hosts juist zijn geconfigureerd en er verbinding mee kunnen maken. <a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">Meer info</a>"
     },
     "config": {
       "title": "Configuratie",
@@ -110,6 +146,11 @@
       "preventVulnerableImagesFromRunning": "Verhinderen dat kwetsbare images worden uitgevoerd",
       "preventVulnerableImagesFromRunningDescription_part1": "Verhinderen dat images met een kwetsbaarheidsgraad van",
       "preventVulnerableImagesFromRunningDescription_part2": "en hoger worden geïmplementeerd.",
+      "preventRunSeverity": {
+        "low": "Laag",
+        "medium": "Normaal",
+        "high": "Hoog"
+      },
       "vulnerabilityScanning": "Scannen op kwetsbaarheden",
       "automaticallyScanImagesOnPush": "Images automatisch scannen bij push",
       "automaticallyScanImagesOnPushDescription": "Images automatisch scannen wanneer ze naar het projectregister worden gepusht."
@@ -128,17 +169,21 @@
     }
   },
   "registries": {
-    "title": "Registers",
+    "title": "Algemene registers",
     "sourceRegistries": "Bronregisters",
     "replicationEndpoints": "Replicatie-endpoints",
     "replicationRules": "Replicatieregels"
+  },
+  "projectRepositories": {
+      "containerDeploymentStarted": "Containerimplementatie is gestart. Zie aanvragen voor meer informatie."
   },
   "clusters": {
     "title": "Clusters",
     "titleVic": "Containerhosts",
     "cluster": "Cluster",
     "clusterVic": "Containerhost",
-    "new": "Nieuw",
+    "new": "Cluster",
+    "newVic": "Containerhost",
     "status": "Status",
     "state": {
       "ON": "AAN",
@@ -146,8 +191,13 @@
       "DISABLED": "UITGESCHAKELD",
       "WARNING": "WAARSCHUWING"
     },
+    "search": {
+      "placeholder": "Zoeken naar clusters"
+    },
     "actions": {
-      "rescan": "Opnieuw scannen"
+      "rescan": "Opnieuw scannen",
+      "disable": "Uitschakelen",
+      "enable": "Inschakelen"
     },
     "type": "Type",
     "containers": "Containers",
@@ -196,6 +246,8 @@
       "nameRequired": "Naam is vereist.",
       "description": "Beschrijving",
       "type": "Type",
+      "typeDocker": "DOCKER",
+      "typeVch": "VCH",
       "url": "URL",
       "urlRequired": "Cluster-URL is vereist.",
       "urlRequiredVic": "Containerhost-URL is vereist.",
@@ -209,6 +261,47 @@
       "titleVic": "Containerhost verwijderen",
       "confirmation": "Bevestig het verwijderen van het cluster {{clusterName}}. De geïmplementeerde entiteiten die zijn gekoppeld aan dit cluster, worden ook verwijderd. De bewerking kan niet ongedaan worden gemaakt.",
       "confirmationVic": "Bevestig het verwijderen van de containerhost {{clusterName}}. De geïmplementeerde entiteiten die zijn gekoppeld aan deze containerhost, worden ook verwijderd. De bewerking kan niet ongedaan worden gemaakt."
+    }
+  },
+  "kubernetes": {
+    "clusters": {
+      "title": "PKS-clusters",
+      "addBtn": "Cluster toevoegen",
+      "newBtn": "Nieuw cluster",
+      "nodeCount": "Knooppunten",
+      "dashboard": "Dashboard",
+      "edit": {
+        "name": "Naam",
+        "nameRequired": "Naam is vereist.",
+        "description": "Beschrijving",
+        "url": "URL",
+        "urlRequired": "Cluster-URL is vereist.",
+        "credentials": "Verificatiegegevens"
+      },
+      "search": {
+        "placeholder": "Zoeken naar clusters"
+      },
+      "add": {
+        "existing": "Bestaand PKS-cluster",
+        "external": "Extern cluster"
+      },
+      "details": {
+        "summary": {
+          "title": "Samenvatting",
+          "nodeCount": "Knooppunten:",
+          "dashboard": "Dashboard:",
+          "dashboardInstalled": "GEÏNSTALLEERD",
+          "dashboardNotInstalled": "NIET GEÏNSTALLEERD"
+        },
+        "nodes": {
+          "title": "Knooppunten",
+          "searchPlaceholder": "Zoeken naar knooppunten",
+          "nameColumn": "Naam",
+          "cpuColumn": "CPU",
+          "memoryColumn": "Geheugen",
+          "count": "Knooppunten"
+        }
+      }
     }
   },
   "hosts": {
@@ -268,6 +361,35 @@
       }
     }
   },
+  "endpoints": {
+    "title": "Endpoints",
+    "searchPlaceholder": "Zoeken naar endpoints",
+    "new": "Nieuw endpoint",
+    "delete": "Verwijderen",
+    "deleteConfirmation": {
+      "title": "Endpoints verwijderen",
+      "description": "Bevestig de verwijdering van de geselecteerde endpoints. De bewerking kan niet ongedaan worden gemaakt."
+    },
+    "name": "Naam",
+    "status": "Status",
+    "address": "Adres",
+    "count": "endpoints",
+    "details": {
+      "titleCreate": "Endpoint maken",
+      "generalTabTitle": "Algemeen",
+      "nameFieldTitle": "Naam",
+      "nameRequired": "Naam van endpoint is verplicht.",
+      "descriptionFieldTitle": "Beschrijving",
+      "uaaAddressFieldTitle": "UAA-adres",
+      "uaaAddressRequired": "Het UAA-adres is verplicht.",
+      "credentials": "Verificatiegegevens",
+      "pksAddressFieldTitle": "PKS-adres",
+      "pksAddressRequired": "Het PKS-adres is verplicht.",
+      "createBtn": "Maken",
+      "testConnectionBtn": "Testverbinding",
+      "clustersTabTitle": "Clusters"
+    }
+  },
   "configuration": {
     "title": "Configuratie",
     "registry": "Register"
@@ -309,6 +431,7 @@
   "unmakeAdmin": "Toewijzing van beheerdersrol opheffen",
   "noItems": "Geen items",
   "reload": "Herladen",
+  "notAvailable": "N.v.t.",
   "sessionExpired": "Uw sessie is niet meer geldig. U moet zich opnieuw aanmelden.",
   "navigation": {
     "home": "Home",
@@ -321,18 +444,27 @@
     "closures": "Sluitingen",
     "library": "Bibliotheek",
     "templates": "Sjablonen",
-    "projectRepositories": "Projectopslagplaatsen",
-    "publicRepositories": "Openbare opslagplaatsen",
+    "repositories": "Opslagplaatsen",
+    "internalRepositories": "Ingebouwde opslagplaatsen",
+    "publicRepositories": "Opslagplaatsen",
     "infrastructure": "Infrastructuur",
     "clusters": "Clusters",
     "clustersVic": "Containerhosts",
+    "kubernetesClusters": "PKS-clusters",
     "hosts": "Hosts",
     "placements": "Plaatsingen",
     "identityManagement": "Identiteitsbeheer",
     "projects": "Projecten",
-    "registries": "Registers",
+    "registries": "Algemene registers",
     "configuration": "Configuratie",
-    "logs": "Logboeken"
+    "logs": "Logboeken",
+    "endpoints": "Endpoints",
+    "pksEndpoints": "PKS-endpoints"
+  },
+  "search": {
+    "occurrence": {
+      "all": "Alle overeenkomende"
+    }
   },
   "compute": {
     "resources": "Bronnen",

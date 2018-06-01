@@ -269,6 +269,7 @@
         "manageRegistry": "Gestisci registri",
         "provision": "Provisioning",
         "provisionAdditionalInfo": "Immettere le informazioni aggiuntive",
+        "provisionKubernetesDeployment": "Eseguire il provisioning su Kubernetes",
         "editTemplate": "Modifica/Visualizza dettagli",
         "official": "Ufficiali",
         "trusted": "Attendibili",
@@ -355,9 +356,9 @@
           "driverOptions": {
             "label": "Opzioni driver",
             "keyTitle": "Opzione",
-            "keyHint": "Esempio: size",
+            "keyHint": "Esempio: dimensione",
             "valueTitle": "Valore",
-            "valueHint": "Esempio: 100m"
+            "valueHint": "Esempio: 100 m"
           },
           "existingVolume": "Esistente",
           "showingCount": "Visualizzazione di {{count}} su {{totalCount}}",
@@ -474,7 +475,7 @@
         "addButton": "Registro",
         "addressColumn": "Indirizzo",
         "nameColumn": "Nome",
-        "statusColumn": "Stato"
+        "statusColumn": "Abilitato"
       },
       "edit": {
         "createNew": "Nuovo registro",
@@ -1011,6 +1012,7 @@
       },
       "request": {
         "title": "Provisioning di un contenitore",
+        "kubernetesDeploymentTitle": "Eseguire il provisioning di una distribuzione Kubernetes",
         "provision": "Provisioning",
         "saveTemplate": "Salva come modello",
         "tabs": {
@@ -1100,6 +1102,7 @@
           "workingDirectoryDescription": "Directory di lavoro in cui eseguire i comandi",
           "clusterSize": "Dimensioni cluster",
           "clusterSizeDescription": "Numero di nodi di cui effettuare il provisioning",
+          "kubernetesReplicas": "Repliche",
           "restartPolicy": "Criterio di riavvio",
           "restartPolicyDescription": "Comportamento da applicare quando si esce dal contenitore. Il valore \"Sempre\" consente di effettuare sempre il riavvio, mentre il valore \"In caso di errore\" consente di eseguire il riavvio solo quando il codice di uscita del contenitore è diverso da zero. Se viene utilizzata l'opzione \"In caso di errore\", il numero massimo di riavvii controlla il numero di tentativi da effettuare prima di rinunciare. L'impostazione predefinita non prevede il riavvio",
           "restartPolicyType": {
@@ -1365,6 +1368,12 @@
     "nameHint": "Esempio: controllo velocità",
     "value": "Valore",
     "valueHint": "Esempio: lento"
+  },
+  "search": {
+    "occurrence": {
+      "all": "Trova tutte le corrispondenze",
+      "any": "Trova una corrispondenza qualsiasi"
+    }
   },
   "yes": "Sì",
   "no": "No",

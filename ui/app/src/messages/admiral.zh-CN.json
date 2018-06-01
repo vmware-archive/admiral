@@ -269,6 +269,7 @@
         "manageRegistry": "管理注册表",
         "provision": "置备",
         "provisionAdditionalInfo": "输入其他信息",
+        "provisionKubernetesDeployment": "在 Kubernetes 上置备",
         "editTemplate": "编辑/查看详细信息",
         "official": "官方",
         "trusted": "受信任",
@@ -474,7 +475,7 @@
         "addButton": "注册表",
         "addressColumn": "地址",
         "nameColumn": "名称",
-        "statusColumn": "状态"
+        "statusColumn": "已启用"
       },
       "edit": {
         "createNew": "新建注册表",
@@ -1011,6 +1012,7 @@
       },
       "request": {
         "title": "置备容器",
+        "kubernetesDeploymentTitle": "置备 Kubernetes 部署",
         "provision": "置备",
         "saveTemplate": "另存为模板",
         "tabs": {
@@ -1100,6 +1102,7 @@
           "workingDirectoryDescription": "要在其中运行命令的工作目录",
           "clusterSize": "群集大小",
           "clusterSizeDescription": "要置备的节点数",
+          "kubernetesReplicas": "副本",
           "restartPolicy": "重新启动策略",
           "restartPolicyDescription": "容器退出时要应用的行为。如果值为“始终”，则表示始终重新启动，如果值为“出现错误时”，则表示仅在容器退出代码非零时重新启动。如果使用“出现错误时”，则最大重新启动计数将控制放弃前重试的次数。默认设置为不重新启动",
           "restartPolicyType": {
@@ -1365,6 +1368,12 @@
     "nameHint": "示例: speedchecker",
     "value": "值",
     "valueHint": "示例: slow"
+  },
+  "search": {
+    "occurrence": {
+      "all": "匹配所有",
+      "any": "匹配任意"
+    }
   },
   "yes": "确定",
   "no": "否",

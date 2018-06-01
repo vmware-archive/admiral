@@ -269,6 +269,7 @@
         "manageRegistry": "Administrar registros",
         "provision": "Aprovisionar",
         "provisionAdditionalInfo": "Introducir información adicional",
+        "provisionKubernetesDeployment": "Aprovisionar en Kubernetes",
         "editTemplate": "Editar/ver detalles",
         "official": "Oficial",
         "trusted": "De confianza",
@@ -357,7 +358,7 @@
             "keyTitle": "Opción",
             "keyHint": "Ejemplo: size",
             "valueTitle": "Valor",
-            "valueHint": "Ejemplo: 100m"
+            "valueHint": "Ejemplo: 100 m"
           },
           "existingVolume": "Existente",
           "showingCount": "Mostrando {{count}} de {{totalCount}}",
@@ -474,7 +475,7 @@
         "addButton": "Registro",
         "addressColumn": "Dirección",
         "nameColumn": "Nombre",
-        "statusColumn": "Estado"
+        "statusColumn": "Habilitado"
       },
       "edit": {
         "createNew": "Nuevo registro",
@@ -1011,6 +1012,7 @@
       },
       "request": {
         "title": "Aprovisionar un contenedor",
+        "kubernetesDeploymentTitle": "Aprovisionar una implementación de Kubernetes",
         "provision": "Aprovisionar",
         "saveTemplate": "Guardar como plantilla",
         "tabs": {
@@ -1100,6 +1102,7 @@
           "workingDirectoryDescription": "El directorio de trabajo donde se ejecutarán los comandos",
           "clusterSize": "Tamaño del clúster",
           "clusterSizeDescription": "El número de nodos que se van a aprovisionar",
+          "kubernetesReplicas": "Réplicas",
           "restartPolicy": "Política de reinicio",
           "restartPolicyDescription": "El comportamiento que aplicar cuando se sale del contenedor. El valor \"siempre\" para reiniciar siempre o \"tras un error\" para reiniciar únicamente cuando el código de salida del contenedor es distinto de cero. Si se usa la opción \"tras un error\", la cantidad máxima de reinicios controla el número de reintentos antes de abandonar. El valor predeterminado es no reiniciar",
           "restartPolicyType": {
@@ -1365,6 +1368,12 @@
     "nameHint": "Ejemplo: speedchecker",
     "value": "Valor",
     "valueHint": "Ejemplo: slow"
+  },
+  "search": {
+    "occurrence": {
+      "all": "Coincidir todos",
+      "any": "Coincidir alguno"
+    }
   },
   "yes": "Sí",
   "no": "No",

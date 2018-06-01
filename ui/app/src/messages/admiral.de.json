@@ -269,6 +269,7 @@
         "manageRegistry": "Registrierungen verwalten",
         "provision": "Bereitstellen",
         "provisionAdditionalInfo": "Zusätzliche Informationen eingeben",
+        "provisionKubernetesDeployment": "Bereitstellung für Kubernetes",
         "editTemplate": "Details bearbeiten/anzeigen",
         "official": "Offiziell",
         "trusted": "Vertrauenswürdig",
@@ -474,7 +475,7 @@
         "addButton": "Registrierung",
         "addressColumn": "Adresse",
         "nameColumn": "Name",
-        "statusColumn": "Status"
+        "statusColumn": "Aktiviert"
       },
       "edit": {
         "createNew": "Neue Registrierung",
@@ -1011,6 +1012,7 @@
       },
       "request": {
         "title": "Container bereitstellen",
+        "kubernetesDeploymentTitle": "Bereitstellen einer Kubernetes-Bereitstellung",
         "provision": "Bereitstellen",
         "saveTemplate": "Als Vorlage speichern",
         "tabs": {
@@ -1100,6 +1102,7 @@
           "workingDirectoryDescription": "Das Arbeitsverzeichnis, in dem Befehle ausgeführt werden",
           "clusterSize": "Clustergröße",
           "clusterSizeDescription": "Die Anzahl der bereitzustellenden Knoten",
+          "kubernetesReplicas": "Replikate",
           "restartPolicy": "Richtlinie neu starten",
           "restartPolicyDescription": "Das anzuwendende Verhalten, wenn der Container beendet wird. Der Wert „Immer“, um das System immer neu zu starten, oder „Bei Fehler“, um das System nur dann neu zu starten, wenn der Beendigungscode des Containers nicht Null ist. Wenn „Bei Fehler“ verwendet wird, steuert die Anzahl der maximalen Neustarts die Anzahl von Wiederholungsversuchen, bevor die Versuche aufgegeben werden. Standard ist, das System nicht erneut zu starten.",
           "restartPolicyType": {
@@ -1365,6 +1368,12 @@
     "nameHint": "Beispiel: speedchecker",
     "value": "Wert",
     "valueHint": "Beispiel: slow"
+  },
+  "search": {
+    "occurrence": {
+      "all": "Alle abgleichen",
+      "any": "Beliebige abgleichen"
+    }
   },
   "yes": "Ja",
   "no": "Nein",

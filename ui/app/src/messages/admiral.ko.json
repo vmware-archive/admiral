@@ -269,6 +269,7 @@
         "manageRegistry": "레지스트리 관리",
         "provision": "프로비저닝",
         "provisionAdditionalInfo": "추가 정보 입력",
+        "provisionKubernetesDeployment": "Kubernetes에 프로비저닝",
         "editTemplate": "세부 정보 편집/보기",
         "official": "공식",
         "trusted": "신뢰",
@@ -474,7 +475,7 @@
         "addButton": "레지스트리",
         "addressColumn": "주소",
         "nameColumn": "이름",
-        "statusColumn": "상태"
+        "statusColumn": "사용"
       },
       "edit": {
         "createNew": "새 레지스트리",
@@ -1011,6 +1012,7 @@
       },
       "request": {
         "title": "컨테이너 프로비저닝",
+        "kubernetesDeploymentTitle": "Kubernetes 배포 프로비저닝",
         "provision": "프로비저닝",
         "saveTemplate": "템플릿으로 저장",
         "tabs": {
@@ -1100,6 +1102,7 @@
           "workingDirectoryDescription": "명령을 실행할 작업 디렉토리",
           "clusterSize": "클러스터 크기",
           "clusterSizeDescription": "프로비저닝할 노드 수",
+          "kubernetesReplicas": "복제본",
           "restartPolicy": "다시 시작 정책",
           "restartPolicyDescription": "컨테이너가 종료할 때 적용되는 동작입니다. 항상 다시 시작하려면 [항상]을, 컨테이너 종료 코드가 0이 아닌 경우에만 다시 시작하려면 [실패 시]를 설정합니다. [실패 시]가 사용되면 [최대 다시 시작 횟수]는 포기하기 전까지 다시 시도할 횟수를 제어합니다. 기본값은 [다시 시작하지 않음]입니다.",
           "restartPolicyType": {
@@ -1365,6 +1368,12 @@
     "nameHint": "예: speedchecker",
     "value": "값",
     "valueHint": "예: slow"
+  },
+  "search": {
+    "occurrence": {
+      "all": "모두 일치",
+      "any": "임의 일치"
+    }
   },
   "yes": "예",
   "no": "아니요",

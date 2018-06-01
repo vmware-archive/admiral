@@ -26,6 +26,7 @@
     "clusters": "群集",
     "clustersVic": "容器主机",
     "repositories": "存储库",
+    "internalRepositories": "内部存储库",
     "infrastructure": "基础架构",
     "registryReplication": "注册表复制",
     "configuration": "配置",
@@ -55,7 +56,7 @@
         "users": "用户"
       },
       "repositories": {
-        "title": "项目存储库",
+        "title": "内部存储库",
         "repositories": "存储库:"
       },
       "resources": {
@@ -94,10 +95,45 @@
         "local": "本地",
         "ldap": "LDAP"
       },
-      "deleteMember": {
+      "deleteMembers": {
         "title": "从项目中移除成员",
-        "confirmation": "是否确定要从此项目中移除成员?"
+        "confirmation": "是否确定要从此项目中移除选定成员?"
       }
+    },
+    "projectRegistries": {
+        "title": "项目注册表",
+        "new": "新建项目注册表",
+        "delete": "删除",
+        "nameTitle": "名称",
+        "statusTitle": "状态",
+        "scopeTitle": "范围",
+        "addressTitle": "地址",
+        "searchPlaceholder": "搜索注册表",
+        "scope": {
+          "global": "全局",
+          "project": "项目"
+        },
+        "status": {
+          "active": "活动",
+          "disabled": "已禁用"
+        },
+        "deleteConfirmation": {
+          "title": "移除项目注册表",
+          "description": "确认移除选定项目注册表。请注意，无法从此视图中移除全局注册表。此操作无法撤消。"
+        },
+        "globalRegistriesDeletionSkipped": {
+          "warningMessage": "未删除所选全局注册表。无法从此视图中删除全局注册表。"
+        },
+        "registryDetails": {
+          "title": "添加项目注册表",
+          "editTitle": "编辑项目注册表",
+          "descriptions": "将注册表添加到项目",
+          "fieldAddress": "地址",
+          "fieldName": "名称",
+          "fieldCredentials": "登录凭据"
+        },
+        "count": "注册表",
+        "insecureRegistryHint": "检测到普通 HTTP 注册表! 您与此注册表的连接不安全。请确保您的主机已正确配置，且可以连接到注册表。<a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">更多信息</a>"
     },
     "config": {
       "title": "配置",
@@ -110,6 +146,11 @@
       "preventVulnerableImagesFromRunning": "阻止运行有漏洞的映像",
       "preventVulnerableImagesFromRunningDescription_part1": "阻止部署漏洞严重性为",
       "preventVulnerableImagesFromRunningDescription_part2": "及以上程度的映像。",
+      "preventRunSeverity": {
+        "low": "低",
+        "medium": "中",
+        "high": "高"
+      },
       "vulnerabilityScanning": "漏洞扫描",
       "automaticallyScanImagesOnPush": "推送时自动扫描映像",
       "automaticallyScanImagesOnPushDescription": "将映像推送到项目注册表时自动扫描它们。"
@@ -128,17 +169,21 @@
     }
   },
   "registries": {
-    "title": "注册表",
+    "title": "全局注册表",
     "sourceRegistries": "源注册表",
     "replicationEndpoints": "复制端点",
     "replicationRules": "复制规则"
+  },
+  "projectRepositories": {
+      "containerDeploymentStarted": "容器部署已启动。有关更多详细信息，请参见请求。"
   },
   "clusters": {
     "title": "群集",
     "titleVic": "容器主机",
     "cluster": "群集",
     "clusterVic": "容器主机",
-    "new": "新建",
+    "new": "群集",
+    "newVic": "容器主机",
     "status": "状态",
     "state": {
       "ON": "开启",
@@ -146,8 +191,13 @@
       "DISABLED": "已禁用",
       "WARNING": "警告"
     },
+    "search": {
+      "placeholder": "搜索群集"
+    },
     "actions": {
-      "rescan": "重新扫描"
+      "rescan": "重新扫描",
+      "disable": "禁用",
+      "enable": "启用"
     },
     "type": "类型",
     "containers": "容器",
@@ -196,6 +246,8 @@
       "nameRequired": "“名称”是必填字段。",
       "description": "描述",
       "type": "类型",
+      "typeDocker": "DOCKER",
+      "typeVch": "VCH",
       "url": "URL",
       "urlRequired": "“群集 URL”是必填字段。",
       "urlRequiredVic": "“容器主机 URL”是必填字段。",
@@ -209,6 +261,47 @@
       "titleVic": "移除容器主机",
       "confirmation": "确认移除群集 {{clusterName}}。与此群集关联的已部署实体也将被移除。此操作不可撤消。",
       "confirmationVic": "确认移除容器主机 {{clusterName}}。与此容器主机相关联的已部署实体也将被删除。此操作不可撤消。"
+    }
+  },
+  "kubernetes": {
+    "clusters": {
+      "title": "PKS 群集",
+      "addBtn": "添加群集",
+      "newBtn": "新建群集",
+      "nodeCount": "节点",
+      "dashboard": "仪表板",
+      "edit": {
+        "name": "名称",
+        "nameRequired": "“名称”是必填字段。",
+        "description": "描述",
+        "url": "URL",
+        "urlRequired": "“群集 URL”是必填字段。",
+        "credentials": "凭据"
+      },
+      "search": {
+        "placeholder": "搜索群集"
+      },
+      "add": {
+        "existing": "现有 PKS 群集",
+        "external": "外部群集"
+      },
+      "details": {
+        "summary": {
+          "title": "摘要",
+          "nodeCount": "节点:",
+          "dashboard": "仪表板:",
+          "dashboardInstalled": "已安装",
+          "dashboardNotInstalled": "未安装"
+        },
+        "nodes": {
+          "title": "节点",
+          "searchPlaceholder": "搜索节点",
+          "nameColumn": "名称",
+          "cpuColumn": "CPU",
+          "memoryColumn": "内存",
+          "count": "节点"
+        }
+      }
     }
   },
   "hosts": {
@@ -268,6 +361,35 @@
       }
     }
   },
+  "endpoints": {
+    "title": "端点",
+    "searchPlaceholder": "搜索端点",
+    "new": "新建端点",
+    "delete": "移除",
+    "deleteConfirmation": {
+      "title": "移除端点",
+      "description": "确认移除所选端点。此操作无法撤消。"
+    },
+    "name": "名称",
+    "status": "状态",
+    "address": "地址",
+    "count": "端点",
+    "details": {
+      "titleCreate": "创建端点",
+      "generalTabTitle": "常规",
+      "nameFieldTitle": "名称",
+      "nameRequired": "“端点名称”是必填字段。",
+      "descriptionFieldTitle": "描述",
+      "uaaAddressFieldTitle": "UAA 地址",
+      "uaaAddressRequired": "“UAA 地址”是必填字段。",
+      "credentials": "凭据",
+      "pksAddressFieldTitle": "PKS 地址",
+      "pksAddressRequired": "“PKS 地址”是必填字段。",
+      "createBtn": "创建",
+      "testConnectionBtn": "测试连接",
+      "clustersTabTitle": "群集"
+    }
+  },
   "configuration": {
     "title": "配置",
     "registry": "注册表"
@@ -309,6 +431,7 @@
   "unmakeAdmin": "取消分配管理员角色",
   "noItems": "无任何项",
   "reload": "重新加载",
+  "notAvailable": "不适用",
   "sessionExpired": "您的会话不再有效，请重新登录!",
   "navigation": {
     "home": "主页",
@@ -321,18 +444,27 @@
     "closures": "闭包服务",
     "library": "库",
     "templates": "模板",
-    "projectRepositories": "项目存储库",
-    "publicRepositories": "公用存储库",
+    "repositories": "存储库",
+    "internalRepositories": "内置存储库",
+    "publicRepositories": "存储库",
     "infrastructure": "基础架构",
     "clusters": "群集",
     "clustersVic": "容器主机",
+    "kubernetesClusters": "PKS 群集",
     "hosts": "主机",
     "placements": "放置",
     "identityManagement": "身份管理",
     "projects": "项目",
-    "registries": "注册表",
+    "registries": "全局注册表",
     "configuration": "配置",
-    "logs": "日志"
+    "logs": "日志",
+    "endpoints": "端点",
+    "pksEndpoints": "PKS 端点"
+  },
+  "search": {
+    "occurrence": {
+      "all": "匹配所有"
+    }
   },
   "compute": {
     "resources": "资源",

@@ -269,6 +269,7 @@
         "manageRegistry": "Registers beheren",
         "provision": "Inrichten",
         "provisionAdditionalInfo": "Extra informatie invoeren",
+        "provisionKubernetesDeployment": "Inrichting op Kubernetes",
         "editTemplate": "Details bewerken/bekijken",
         "official": "Officieel",
         "trusted": "Vertrouwd",
@@ -474,7 +475,7 @@
         "addButton": "Register",
         "addressColumn": "Adres",
         "nameColumn": "Naam",
-        "statusColumn": "Status"
+        "statusColumn": "Ingeschakeld"
       },
       "edit": {
         "createNew": "Nieuw register",
@@ -1011,6 +1012,7 @@
       },
       "request": {
         "title": "Een container inrichten",
+        "kubernetesDeploymentTitle": "Een Kubernetes-implementatie inrichten",
         "provision": "Inrichten",
         "saveTemplate": "Opslaan als sjabloon",
         "tabs": {
@@ -1100,6 +1102,7 @@
           "workingDirectoryDescription": "De werkdirectory waarin opdrachten moeten worden uitgevoerd",
           "clusterSize": "Clustergrootte",
           "clusterSizeDescription": "Het aantal knooppunten dat moet worden ingericht",
+          "kubernetesReplicas": "Replica's",
           "restartPolicy": "Beleid opnieuw starten",
           "restartPolicyDescription": "Het gedrag dat moet worden toegepast als de container wordt afgesloten. De waarde 'altijd' om altijd opnieuw te starten of 'indien mislukt' om alleen opnieuw te starten wanneer de afsluitcode van de container niet nul is. Als 'indien mislukt' wordt gebruikt, bepaalt het maximum aantal keer opnieuw starten het aantal keer dat er opnieuw wordt geprobeerd, voordat er wordt opgegeven. De standaardinstelling is om niet opnieuw te starten",
           "restartPolicyType": {
@@ -1365,6 +1368,12 @@
     "nameHint": "Voorbeeld: speedchecker",
     "value": "Waarde",
     "valueHint": "Voorbeeld: slow"
+  },
+  "search": {
+    "occurrence": {
+      "all": "Alle overeenkomende",
+      "any": "Willekeurig overeenkomende"
+    }
   },
   "yes": "Ja",
   "no": "Nee",

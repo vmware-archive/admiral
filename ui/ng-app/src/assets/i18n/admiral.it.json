@@ -26,6 +26,7 @@
     "clusters": "Cluster",
     "clustersVic": "Host contenitori",
     "repositories": "Repository",
+    "internalRepositories": "Repository interni",
     "infrastructure": "Infrastruttura",
     "registryReplication": "Replica registro",
     "configuration": "Configurazione",
@@ -55,7 +56,7 @@
         "users": "utenti"
       },
       "repositories": {
-        "title": "Repository del progetto",
+        "title": "Repository interni",
         "repositories": "Repository:"
       },
       "resources": {
@@ -94,10 +95,45 @@
         "local": "Locale",
         "ldap": "LDAP"
       },
-      "deleteMember": {
-        "title": "Rimuovi membro dal progetto",
-        "confirmation": "Rimuovere il membro da questo progetto?"
+      "deleteMembers": {
+        "title": "Rimuovi membri dal progetto",
+        "confirmation": "Rimuovere i membri selezionati da questo progetto?"
       }
+    },
+    "projectRegistries": {
+        "title": "Registri di progetto",
+        "new": "Nuovo registro di progetto",
+        "delete": "Elimina",
+        "nameTitle": "Nome",
+        "statusTitle": "Stato",
+        "scopeTitle": "Ambito",
+        "addressTitle": "Indirizzo",
+        "searchPlaceholder": "Ricerca di registri",
+        "scope": {
+          "global": "Globale",
+          "project": "Progetto"
+        },
+        "status": {
+          "active": "Attivo",
+          "disabled": "Disabilitato"
+        },
+        "deleteConfirmation": {
+          "title": "Rimuovi registri di progetto",
+          "description": "Confermare la rimozione dei registri di progetto selezionati. I registri globali non possono essere rimossi da questa vista. L'operazione non può essere annullata."
+        },
+        "globalRegistriesDeletionSkipped": {
+          "warningMessage": "I registri globali selezionati non sono stati eliminati. Non è possibile eliminare i registri globali da questa vista."
+        },
+        "registryDetails": {
+          "title": "Aggiungi registro di progetto",
+          "editTitle": "Modifica registro di progetto",
+          "descriptions": "Aggiungi registro al progetto",
+          "fieldAddress": "Indirizzo",
+          "fieldName": "Nome",
+          "fieldCredentials": "Credenziali di accesso"
+        },
+        "count": "registri",
+        "insecureRegistryHint": "Rilevato registro HTTP normale. La connessione a questo registro non è sicura. Assicurarsi che gli host siano configurati correttamente e che possano connettersi al registro. <a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">Ulteriori informazioni</a>"
     },
     "config": {
       "title": "Configurazione",
@@ -110,6 +146,11 @@
       "preventVulnerableImagesFromRunning": "Impedisci esecuzione immagini vulnerabili",
       "preventVulnerableImagesFromRunningDescription_part1": "Impedisce che le immagini con un livello di vulnerabilità pari a",
       "preventVulnerableImagesFromRunningDescription_part2": "e superiore vengano distribuite.",
+      "preventRunSeverity": {
+        "low": "Basso",
+        "medium": "Medio",
+        "high": "Alto"
+      },
       "vulnerabilityScanning": "Scansione vulnerabilità",
       "automaticallyScanImagesOnPush": "Esegui scansione automatica delle immagini sottoposte a push",
       "automaticallyScanImagesOnPushDescription": "Esegue automaticamente la scansione delle immagini sottoposte a push nel registro di progetto."
@@ -128,17 +169,21 @@
     }
   },
   "registries": {
-    "title": "Registri",
+    "title": "Registri globali",
     "sourceRegistries": "Registri di origine",
     "replicationEndpoints": "Endpoint di replica",
     "replicationRules": "Regole di replica"
+  },
+  "projectRepositories": {
+      "containerDeploymentStarted": "Distribuzione dei contenitori avviata. Per ulteriori dettagli, vedere le richieste."
   },
   "clusters": {
     "title": "Cluster",
     "titleVic": "Host contenitori",
     "cluster": "Cluster",
     "clusterVic": "Host contenitore",
-    "new": "Nuovo",
+    "new": "Cluster",
+    "newVic": "Host contenitore",
     "status": "Stato",
     "state": {
       "ON": "ACCESO",
@@ -146,8 +191,13 @@
       "DISABLED": "DISABILITATO",
       "WARNING": "AVVISO"
     },
+    "search": {
+      "placeholder": "Cerca cluster"
+    },
     "actions": {
-      "rescan": "Ripeti scansione"
+      "rescan": "Ripeti scansione",
+      "disable": "Disattiva",
+      "enable": "Attiva"
     },
     "type": "Tipo",
     "containers": "Contenitori",
@@ -196,6 +246,8 @@
       "nameRequired": "Il nome è obbligatorio.",
       "description": "Descrizione",
       "type": "Tipo",
+      "typeDocker": "DOCKER",
+      "typeVch": "VCH",
       "url": "URL",
       "urlRequired": "L'URL del cluster è obbligatorio.",
       "urlRequiredVic": "URL host contenitore richiesto.",
@@ -209,6 +261,47 @@
       "titleVic": "Rimuovi host contenitore",
       "confirmation": "Confermare la rimozione del cluster {{clusterName}}. Anche le entità distribuite associate al cluster verranno rimosse. L'operazione non potrà essere annullata.",
       "confirmationVic": "Confermare la rimozione dell'host container {{clusterName}}. Anche le entità distribuite associate all'host container verranno rimosse. L'operazione non potrà essere annullata."
+    }
+  },
+  "kubernetes": {
+    "clusters": {
+      "title": "Cluster PKS",
+      "addBtn": "Aggiungi cluster",
+      "newBtn": "Nuovo cluster",
+      "nodeCount": "Nodi",
+      "dashboard": "Dashboard",
+      "edit": {
+        "name": "Nome",
+        "nameRequired": "Il nome è obbligatorio.",
+        "description": "Descrizione",
+        "url": "URL",
+        "urlRequired": "L'URL del cluster è obbligatorio.",
+        "credentials": "Credenziali"
+      },
+      "search": {
+        "placeholder": "Cerca cluster"
+      },
+      "add": {
+        "existing": "Cluster PKS esistente",
+        "external": "Cluster esterno"
+      },
+      "details": {
+        "summary": {
+          "title": "Riepilogo",
+          "nodeCount": "Nodi:",
+          "dashboard": "Dashboard:",
+          "dashboardInstalled": "INSTALLATO",
+          "dashboardNotInstalled": "NON INSTALLATO"
+        },
+        "nodes": {
+          "title": "Nodi",
+          "searchPlaceholder": "Cerca nodi",
+          "nameColumn": "Nome",
+          "cpuColumn": "CPU",
+          "memoryColumn": "Memoria",
+          "count": "Nodi"
+        }
+      }
     }
   },
   "hosts": {
@@ -268,6 +361,35 @@
       }
     }
   },
+  "endpoints": {
+    "title": "Endpoint",
+    "searchPlaceholder": "Cerca endpoint",
+    "new": "Nuovo endpoint",
+    "delete": "Rimuovi",
+    "deleteConfirmation": {
+      "title": "Rimuovi endpoint",
+      "description": "Confermare la rimozione degli endpoint selezionati. L'operazione non può essere annullata."
+    },
+    "name": "Nome",
+    "status": "Stato",
+    "address": "Indirizzo",
+    "count": "endpoint",
+    "details": {
+      "titleCreate": "Crea endpoint",
+      "generalTabTitle": "Generale",
+      "nameFieldTitle": "Nome",
+      "nameRequired": "Il nome dell'endpoint è obbligatorio.",
+      "descriptionFieldTitle": "Descrizione",
+      "uaaAddressFieldTitle": "Indirizzo UAA",
+      "uaaAddressRequired": "L'indirizzo UAA è obbligatorio.",
+      "credentials": "Credenziali",
+      "pksAddressFieldTitle": "Indirizzo PKS",
+      "pksAddressRequired": "L'indirizzo PKS è obbligatorio.",
+      "createBtn": "Crea",
+      "testConnectionBtn": "Prova connessione",
+      "clustersTabTitle": "Cluster"
+    }
+  },
   "configuration": {
     "title": "Configurazione",
     "registry": "Registro"
@@ -309,6 +431,7 @@
   "unmakeAdmin": "Annulla assegnazione ruolo amministratore",
   "noItems": "Nessun elemento",
   "reload": "Ricarica",
+  "notAvailable": "N/A",
   "sessionExpired": "La sessione non è più valida. Accedere nuovamente.",
   "navigation": {
     "home": "Home",
@@ -321,18 +444,27 @@
     "closures": "Chiusure",
     "library": "Libreria",
     "templates": "Modelli",
-    "projectRepositories": "Repository del progetto",
-    "publicRepositories": "Repository pubblici",
+    "repositories": "Repository",
+    "internalRepositories": "Repository integrati",
+    "publicRepositories": "Repository",
     "infrastructure": "Infrastruttura",
     "clusters": "Cluster",
     "clustersVic": "Host contenitori",
+    "kubernetesClusters": "Cluster PKS",
     "hosts": "Host",
     "placements": "Posizionamenti",
     "identityManagement": "Gestione identità",
     "projects": "Progetti",
-    "registries": "Registri",
+    "registries": "Registri globali",
     "configuration": "Configurazione",
-    "logs": "Registri"
+    "logs": "Registri",
+    "endpoints": "Endpoint",
+    "pksEndpoints": "Endpoint PKS"
+  },
+  "search": {
+    "occurrence": {
+      "all": "Trova tutte le corrispondenze"
+    }
   },
   "compute": {
     "resources": "Risorse",

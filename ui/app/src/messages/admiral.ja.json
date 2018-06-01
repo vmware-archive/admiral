@@ -269,6 +269,7 @@
         "manageRegistry": "レジストリの管理",
         "provision": "プロビジョニング",
         "provisionAdditionalInfo": "追加情報の入力",
+        "provisionKubernetesDeployment": "Kubernetes でのプロビジョニング",
         "editTemplate": "詳細の編集/表示",
         "official": "公式",
         "trusted": "信頼済み",
@@ -474,7 +475,7 @@
         "addButton": "レジストリ",
         "addressColumn": "アドレス",
         "nameColumn": "名前",
-        "statusColumn": "ステータス"
+        "statusColumn": "有効"
       },
       "edit": {
         "createNew": "新規レジストリ",
@@ -1011,6 +1012,7 @@
       },
       "request": {
         "title": "コンテナのプロビジョニング",
+        "kubernetesDeploymentTitle": "Kubernetes 展開のプロビジョニング",
         "provision": "プロビジョニング",
         "saveTemplate": "テンプレートとして保存",
         "tabs": {
@@ -1100,6 +1102,7 @@
           "workingDirectoryDescription": "コマンドの実行場所となる作業ディレクトリ",
           "clusterSize": "クラスタのサイズ",
           "clusterSizeDescription": "プロビジョニングするノードの数",
+          "kubernetesReplicas": "レプリカ",
           "restartPolicy": "再起動ポリシー",
           "restartPolicyDescription": "終了する際の動作。常に再起動する場合は値を [常時] にし、コンテナの終了コードがゼロ以外の値の場合にのみ再起動する場合は [障害時] と設定します。[障害時] を使用する場合、[再起動の最大回数] を設定します。デフォルトは「再起動なし」です。",
           "restartPolicyType": {
@@ -1365,6 +1368,12 @@
     "nameHint": "例: speedchecker",
     "value": "値",
     "valueHint": "例: slow"
+  },
+  "search": {
+    "occurrence": {
+      "all": "すべてに一致",
+      "any": "いずれかに一致"
+    }
   },
   "yes": "はい",
   "no": "いいえ",

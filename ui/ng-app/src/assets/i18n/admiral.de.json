@@ -26,6 +26,7 @@
     "clusters": "Cluster",
     "clustersVic": "Container-Hosts",
     "repositories": "Repositorys",
+    "internalRepositories": "Interne Repositorys",
     "infrastructure": "Infrastruktur",
     "registryReplication": "Registrierungsreplizierung",
     "configuration": "Konfiguration",
@@ -55,7 +56,7 @@
         "users": "Benutzer"
       },
       "repositories": {
-        "title": "Projekt-Repositorys",
+        "title": "Interne Repositorys",
         "repositories": "Repositorys:"
       },
       "resources": {
@@ -94,10 +95,45 @@
         "local": "Lokal",
         "ldap": "LDAP"
       },
-      "deleteMember": {
-        "title": "Mitglied aus Projekt entfernen ",
-        "confirmation": "Möchten Sie das Mitglied wirklich aus diesem Projekt entfernen?"
+      "deleteMembers": {
+        "title": "Mitglieder aus Projekt entfernen",
+        "confirmation": "Möchten Sie die ausgewählten Mitglieder wirklich aus diesem Projekt entfernen?"
       }
+    },
+    "projectRegistries": {
+        "title": "Projektregistrierungen",
+        "new": "Neue Projektregistrierung",
+        "delete": "Löschen",
+        "nameTitle": "Name",
+        "statusTitle": "Status",
+        "scopeTitle": "Geltungsbereich",
+        "addressTitle": "Adresse",
+        "searchPlaceholder": "Nach Registrierungen suchen",
+        "scope": {
+          "global": "Global",
+          "project": "Projekt"
+        },
+        "status": {
+          "active": "Aktiv",
+          "disabled": "Deaktiviert"
+        },
+        "deleteConfirmation": {
+          "title": "Projektregistrierungen entfernen",
+          "description": "Bestätigen Sie die Entfernung der ausgewählten Projektregistrierungen. Beachten Sie, dass globale Registrierungen nicht aus dieser Ansicht entfernt werden können. Der Vorgang kann nicht rückgängig gemacht werden."
+        },
+        "globalRegistriesDeletionSkipped": {
+          "warningMessage": "Die globalen Registrierungen in Ihrer Auswahl wurden nicht gelöscht. Es ist nicht möglich, globale Registrierungen aus dieser Ansicht zu löschen."
+        },
+        "registryDetails": {
+          "title": "Projektregistrierung hinzufügen",
+          "editTitle": "Projektregistrierung bearbeiten",
+          "descriptions": "Registrierung zum Projekt hinzufügen",
+          "fieldAddress": "Adresse",
+          "fieldName": "Name",
+          "fieldCredentials": "Anmeldeinformationen"
+        },
+        "count": "Registrierungen",
+        "insecureRegistryHint": "Einfache HTTP-Registrierung erkannt! Ihre Verbindung mit dieser Registrierung ist nicht sicher. Stellen Sie sicher, dass die Hosts ordnungsgemäß konfiguriert sind und eine Verbindung zu ihnen hergestellt werden kann. <a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">Weitere Informationen</a>"
     },
     "config": {
       "title": "Konfiguration",
@@ -110,6 +146,11 @@
       "preventVulnerableImagesFromRunning": "Ausführung von Images mit Sicherheitslücken verhindern",
       "preventVulnerableImagesFromRunningDescription_part1": "Bereitstellung von Images mit einem Sicherheitslücken-Schweregrad ab",
       "preventVulnerableImagesFromRunningDescription_part2": "verhindern.",
+      "preventRunSeverity": {
+        "low": "Niedrig",
+        "medium": "Mittel",
+        "high": "Hoch"
+      },
       "vulnerabilityScanning": "Prüfung auf Sicherheitslücken",
       "automaticallyScanImagesOnPush": "Images beim Weitergeben automatisch prüfen",
       "automaticallyScanImagesOnPushDescription": "Images automatisch prüfen, wenn sie zur Projektregistrierung weitergegeben werden."
@@ -128,17 +169,21 @@
     }
   },
   "registries": {
-    "title": "Registrierungen",
+    "title": "Globale Registrierungen",
     "sourceRegistries": "Quellregistrierungen",
     "replicationEndpoints": "Endpoints für Replizierung",
     "replicationRules": "Replizierungsregeln"
+  },
+  "projectRepositories": {
+      "containerDeploymentStarted": "Container-Bereitstellung hat begonnen. Weitere Einzelheiten finden Sie in den Anforderungen."
   },
   "clusters": {
     "title": "Cluster",
     "titleVic": "Container-Hosts",
     "cluster": "Cluster",
     "clusterVic": "Container-Host",
-    "new": "Neu",
+    "new": "Cluster",
+    "newVic": "Container-Host",
     "status": "Status",
     "state": {
       "ON": "EIN",
@@ -146,8 +191,13 @@
       "DISABLED": "DEAKTIVIERT",
       "WARNING": "WARNUNG"
     },
+    "search": {
+      "placeholder": "Nach Clustern suchen"
+    },
     "actions": {
-      "rescan": "Erneut prüfen"
+      "rescan": "Erneut prüfen",
+      "disable": "Deaktivieren",
+      "enable": "Aktivieren"
     },
     "type": "Typ",
     "containers": "Container",
@@ -196,6 +246,8 @@
       "nameRequired": "Der Name ist erforderlich.",
       "description": "Beschreibung",
       "type": "Typ",
+      "typeDocker": "DOCKER",
+      "typeVch": "VCH",
       "url": "URL",
       "urlRequired": "Die Cluster-URL ist erforderlich.",
       "urlRequiredVic": "Container-Host-URL ist erforderlich.",
@@ -209,6 +261,47 @@
       "titleVic": "Container-Host entfernen",
       "confirmation": "Bestätigen Sie das Entfernen von Cluster {{clusterName}}. Die bereitgestellten Einheiten, die mit diesem Cluster verknüpft sind, werden ebenfalls entfernt. Der Vorgang kann nicht rückgängig gemacht werden.",
       "confirmationVic": "Bestätigen Sie das Entfernen von Containerhost {{clusterName}}. Die bereitgestellten Einheiten, die mit diesem Containerhost verknüpft sind, werden ebenfalls entfernt. Der Vorgang kann nicht rückgängig gemacht werden."
+    }
+  },
+  "kubernetes": {
+    "clusters": {
+      "title": "PKS-Cluster",
+      "addBtn": "Cluster hinzufügen",
+      "newBtn": "Neuer Cluster",
+      "nodeCount": "Knoten",
+      "dashboard": "Dashboard",
+      "edit": {
+        "name": "Name",
+        "nameRequired": "Der Name ist erforderlich.",
+        "description": "Beschreibung",
+        "url": "URL",
+        "urlRequired": "Die Cluster-URL ist erforderlich.",
+        "credentials": "Anmeldedaten"
+      },
+      "search": {
+        "placeholder": "Nach Clustern suchen"
+      },
+      "add": {
+        "existing": "Vorhandener PKS-Cluster",
+        "external": "Externer Cluster"
+      },
+      "details": {
+        "summary": {
+          "title": "Übersicht",
+          "nodeCount": "Knoten:",
+          "dashboard": "Dashboard:",
+          "dashboardInstalled": "INSTALLIERT",
+          "dashboardNotInstalled": "NICHT INSTALLIERT"
+        },
+        "nodes": {
+          "title": "Knoten",
+          "searchPlaceholder": "Nach Knoten suchen",
+          "nameColumn": "Name",
+          "cpuColumn": "CPU",
+          "memoryColumn": "Arbeitsspeicher",
+          "count": "Knoten"
+        }
+      }
     }
   },
   "hosts": {
@@ -268,6 +361,35 @@
       }
     }
   },
+  "endpoints": {
+    "title": "Endpoints",
+    "searchPlaceholder": "Nach Endpoints suchen",
+    "new": "Neuer Endpoint",
+    "delete": "Entfernen",
+    "deleteConfirmation": {
+      "title": "Endpoints entfernen",
+      "description": "Bestätigen Sie die Entfernung der ausgewählten Endpoints. Der Vorgang kann nicht rückgängig gemacht werden."
+    },
+    "name": "Name",
+    "status": "Status",
+    "address": "Adresse",
+    "count": "Endpoints",
+    "details": {
+      "titleCreate": "Endpoint erstellen",
+      "generalTabTitle": "Allgemein",
+      "nameFieldTitle": "Name",
+      "nameRequired": "Name des Endpoints ist erforderlich.",
+      "descriptionFieldTitle": "Beschreibung",
+      "uaaAddressFieldTitle": "UAA-Adresse",
+      "uaaAddressRequired": "Die UAA-Adresse ist erforderlich.",
+      "credentials": "Anmeldedaten",
+      "pksAddressFieldTitle": "PKS-Adresse",
+      "pksAddressRequired": "Die PKS-Adresse ist erforderlich.",
+      "createBtn": "Erstellen",
+      "testConnectionBtn": "Verbindung testen",
+      "clustersTabTitle": "Cluster"
+    }
+  },
   "configuration": {
     "title": "Konfiguration",
     "registry": "Registrierung"
@@ -309,6 +431,7 @@
   "unmakeAdmin": "Zuweisung von Admin-Rolle aufheben",
   "noItems": "Keine Elemente",
   "reload": "Neu laden",
+  "notAvailable": "n. z.",
   "sessionExpired": "Ihre Sitzung ist nicht mehr gültig, melden Sie sich erneut an.",
   "navigation": {
     "home": "Start",
@@ -321,18 +444,27 @@
     "closures": "Abschlüsse",
     "library": "Bibliothek",
     "templates": "Vorlagen",
-    "projectRepositories": "Projekt-Repositorys",
-    "publicRepositories": "Öffentliche Repositorys",
+    "repositories": "Repositorys",
+    "internalRepositories": "Integrierte Repositorys",
+    "publicRepositories": "Repositorys",
     "infrastructure": "Infrastruktur",
     "clusters": "Cluster",
     "clustersVic": "Container-Hosts",
+    "kubernetesClusters": "PKS-Cluster",
     "hosts": "Hosts",
     "placements": "Platzierungen",
     "identityManagement": "Identitätsverwaltung",
     "projects": "Projekte",
-    "registries": "Registrierungen",
+    "registries": "Globale Registrierungen",
     "configuration": "Konfiguration",
-    "logs": "Protokolle"
+    "logs": "Protokolle",
+    "endpoints": "Endpoints",
+    "pksEndpoints": "PKS-Endpoints"
+  },
+  "search": {
+    "occurrence": {
+      "all": "Alle abgleichen"
+    }
   },
   "compute": {
     "resources": "Ressourcen",
