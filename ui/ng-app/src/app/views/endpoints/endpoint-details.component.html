@@ -96,7 +96,29 @@
         <clr-tab *ngIf="editMode">
             <button clrTabLink id="clustersTab">{{"endpoints.details.clustersTabTitle" | i18n}}</button>
             <clr-tab-content id="clustersContent" *clrIfActive>
-                Clusters for the selected endpoint
+
+                <table-view [showSearch]="false" [showToolbar]="false">
+                    <div table-content-view>
+                        <clr-datagrid [clrDgLoading]="loadingClusters" [clDgRowSelection]="false">
+                            <clr-dg-column>{{"pks.add.existingClusters.columnTitleName" | i18n}}</clr-dg-column>
+                            <clr-dg-column>{{"pks.add.existingClusters.columnTitleMastersCount" | i18n}}</clr-dg-column>
+                            <clr-dg-column>{{"pks.add.existingClusters.columnTitleWorkersCount" | i18n}}</clr-dg-column>
+                            <clr-dg-column>{{"pks.add.existingClusters.columnTitlePlan" | i18n}}</clr-dg-column>
+                            <clr-dg-column>Added</clr-dg-column>
+
+                            <clr-dg-row *clrDgItems="let cluster of clusters" [clrDgItem]="cluster">
+                                <clr-dg-cell>{{cluster.name}}</clr-dg-cell>
+                                <clr-dg-cell>{{cluster.masterNodesCount}}</clr-dg-cell>
+                                <clr-dg-cell>{{cluster.workerNodesCount}}</clr-dg-cell>
+                                <clr-dg-cell>{{"pks.new.settings.plan." + cluster.plan | i18n}}</clr-dg-cell>
+                                <clr-dg-cell>{{cluster.addedInAdmiral ? "pks.add.existingClusters.yes" : "pks.add.existingClusters.no" | i18n}}</clr-dg-cell>
+                            </clr-dg-row>
+
+                            <clr-dg-footer>{{clusters.length}} {{"pks.add.existingClusters.count" | i18n}}</clr-dg-footer>
+
+                        </clr-datagrid>
+                    </div>
+                </table-view>
             </clr-tab-content>
         </clr-tab>
     </clr-tabs>

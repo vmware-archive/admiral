@@ -9,6 +9,13 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
+<clr-alert *ngIf="alertMessage" [clrAlertType]="alertType" [(clrAlertClosed)]="!alertMessage"
+           (clrAlertClosedChange)="resetAlert()">
+    <div class="alert-item">
+        <span class="alert-text">{{ alertMessage }}</span>
+    </div>
+</clr-alert>
+
 <delete-confirmation [title]="'endpoints.deleteConfirmation.title' | i18n"
                      [description]="'endpoints.deleteConfirmation.description' | i18n"
                      [(alert)]="deleteConfirmationAlert"

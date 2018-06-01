@@ -15,6 +15,7 @@ import { FormControl, FormGroup, Validators } from "@angular/forms";
 import { BaseDetailsComponent } from '../../components/base/base-details.component';
 import { DocumentService } from "../../utils/document.service";
 import { ErrorService } from "../../utils/error.service";
+import { Constants } from "../../utils/constants";
 import { Links } from "../../utils/links";
 import { Utils } from "../../utils/utils";
 
@@ -45,6 +46,9 @@ export class EndpointDetailsComponent extends BaseDetailsComponent {
     isSavingEndpoint: boolean = false;
     isTestingConnection: boolean = false;
 
+    loadingClusters: boolean = false;
+    clusters: any[] = [];
+
     alertType: any;
     alertMessage: string;
 
@@ -70,6 +74,31 @@ export class EndpointDetailsComponent extends BaseDetailsComponent {
             this.endpointDetailsForm.get('description').setValue(this.entity.desc);
             this.endpointDetailsForm.get("uaaAddress").setValue(this.entity.uaaEndpoint);
             this.endpointDetailsForm.get("pksAddress").setValue(this.entity.apiEndpoint);
+
+            // Load clusters for the endpoint
+            this.loadingClusters = true;
+            this.service.listPksClusters({ endpointLink: this.entity.documentSelfLink})
+                .then((result) => {
+                this.loadingClusters = false;
+
+                // TODO clusters in provisioning (in process of adding to admiral)
+                // state should not be selectable
+                this.clusters = result.documents.map(resultDoc => {
+                    return {
+                        name: resultDoc.name,
+                        plan: resultDoc.plan_name,
+                        masterNodesCount: resultDoc.kubernetes_master_ips.length,
+                        workerNodesCount: resultDoc.parameters.kubernetes_worker_instances,
+                        addedInAdmiral: resultDoc.parameters.__clusterExists
+                    };
+                })
+            }).catch(error => {
+                this.loadingClusters = false;
+                this.clusters = [];
+
+                console.error('PKS Clusters listing for endpoint failed', error);
+                this.showErrorMessage(error);
+            })
         }
     }
 
@@ -97,8 +126,9 @@ export class EndpointDetailsComponent extends BaseDetailsComponent {
                     this.endpointDetailsForm.get('uaaCredentials').setValue(credItem[0]);
                 }
             }
-        }).catch((e) => {
-            console.log('Credentials retrieval failed', e);
+        }).catch((error) => {
+            console.error('Credentials retrieval failed', error);
+            this.showErrorMessage(error);
         });
     }
 
@@ -112,7 +142,8 @@ export class EndpointDetailsComponent extends BaseDetailsComponent {
                 this.goBack();
             }).catch(error => {
                 this.isSavingEndpoint = false;
-                this.errorService.error(Utils.getErrorMessage(error)._generic);
+                console.error('Failed to create endpoint', error);
+                this.showErrorMessage(error);
             });
         }
     }
@@ -128,7 +159,13 @@ export class EndpointDetailsComponent extends BaseDetailsComponent {
                 this.goBack();
             }).catch(error => {
                 this.isSavingEndpoint = false;
-                this.errorService.error(Utils.getErrorMessage(error)._generic);
+                if (error.status === 304) {
+                    // it's ok
+                    this.goBack();
+                }
+
+                console.error('Failed to save endpoint', error);
+                this.showErrorMessage(error);
             });
         }
     }
@@ -149,6 +186,11 @@ export class EndpointDetailsComponent extends BaseDetailsComponent {
 
     goBack() {
         this.router.navigate(['..'], {relativeTo: this.route});
+    }
+
+    private showErrorMessage(error) {
+        this.alertType = Constants.alert.type.DANGER;
+        this.alertMessage = Utils.getErrorMessage(error)._generic;
     }
 
     resetAlert() {

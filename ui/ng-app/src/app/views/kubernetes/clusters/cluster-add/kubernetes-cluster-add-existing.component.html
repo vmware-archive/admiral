@@ -9,6 +9,13 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
+<clr-alert *ngIf="alertMessage" [clrAlertType]="alertType" [(clrAlertClosed)]="!alertMessage"
+           (clrAlertClosedChange)="resetAlert()">
+    <div class="alert-item">
+        <span class="alert-text">{{ alertMessage }}</span>
+    </div>
+</clr-alert>
+
 <div class="add-existing-cluster-description">{{"pks.add.existingClusters.descriptionText" | i18n}}</div>
 
 <form class="form" [formGroup]="addExistingClustersForm">
@@ -53,7 +60,7 @@
                     (click)="cancel()">{{"cancel" | i18n}}</button>
             <button type="button" class="btn btn-primary addClusters-btn"
                     [clrLoading]="isAdding"
-                    [disabled]="isAdding"
+                    [disabled]="isAdding || (selectedClusters.length !== 1)"
                     (click)="add()">{{"add" | i18n}}</button>
         </div>
     </section>

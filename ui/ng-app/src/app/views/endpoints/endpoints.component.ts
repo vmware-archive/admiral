@@ -14,6 +14,7 @@ import { DocumentListResult, DocumentService } from "../../utils/document.servic
 import { ErrorService } from "../../utils/error.service";
 import { CancelablePromise, Utils} from "../../utils/utils";
 import { Links } from "../../utils/links";
+import {Constants} from "../../utils/constants";
 
 @Component({
     selector: 'app-endpoints',
@@ -32,6 +33,10 @@ export class EndpointsComponent implements OnInit {
 
     showDeleteConfirmation: boolean = false;
     deleteConfirmationAlert: string;
+
+    // alert
+    alertMessage: string;
+    alertType: string;
 
     // Creation
     constructor(protected service: DocumentService, private errorService: ErrorService) {
@@ -66,7 +71,7 @@ export class EndpointsComponent implements OnInit {
                     // ok to be canceled
                 } else {
                     console.error('Failed loading endpoints ', error);
-                    this.errorService.error(Utils.getErrorMessage(error)._generic);
+                    this.showErrorMessage(error);
                 }
             }
         })
@@ -102,5 +107,15 @@ export class EndpointsComponent implements OnInit {
 
     deleteCanceled() {
         this.showDeleteConfirmation = false;
+    }
+
+    private showErrorMessage(error) {
+        this.alertType = Constants.alert.type.DANGER;
+        this.alertMessage = Utils.getErrorMessage(error)._generic;
+    }
+
+    resetAlert() {
+        this.alertType = null;
+        this.alertMessage = null;
     }
 }

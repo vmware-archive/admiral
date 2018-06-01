@@ -15,10 +15,12 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { DocumentService } from "../../../../utils/document.service";
 import { ErrorService } from "../../../../utils/error.service";
 import { ProjectService } from "../../../../utils/project.service";
+import { Constants } from "../../../../utils/constants";
 import { Links } from "../../../../utils/links";
 import { Utils } from "../../../../utils/utils";
 
 import * as I18n from 'i18next';
+
 
 @Component({
     selector: 'app-kubernetes-cluster-add-existing',
@@ -35,8 +37,13 @@ export class KubernetesClusterAddExistingComponent implements OnInit {
     endpoints: any[];
     selectedEndpoint: any;
 
+    originalClusters: any[] = [];
     clusters: any[] = [];
     selectedClusters: any[] = [];
+
+    // alert
+    alertMessage: string;
+    alertType: string;
 
     addExistingClustersForm = new FormGroup({
         endpoint: new FormControl('')
@@ -69,8 +76,8 @@ export class KubernetesClusterAddExistingComponent implements OnInit {
         this.service.list(Links.PKS_ENDPOINTS, {}).then(result => {
             this.endpoints = result.documents;
         }).catch((error) => {
-            console.log(error);
-            this.errorService.error(Utils.getErrorMessage(error)._generic);
+            console.error('PKS Endpoints listing failed', error);
+            this.showErrorMessage(error);
         });
     }
 
@@ -92,8 +99,10 @@ export class KubernetesClusterAddExistingComponent implements OnInit {
 
                 // TODO clusters in provisioning (in process of adding to admiral)
                 // state should not be selectable
+                this.originalClusters = result.documents;
                 this.clusters = result.documents.map(resultDoc => {
                     return {
+                        uuid: resultDoc.uuid,
                         name: resultDoc.name,
                         plan: resultDoc.plan_name,
                         masterNodesCount: resultDoc.kubernetes_master_ips.length,
@@ -103,23 +112,39 @@ export class KubernetesClusterAddExistingComponent implements OnInit {
                 })
         }).catch(error => {
             this.loading = false;
-
-            console.log(error);
+            console.error('PKS Clusters listing failed', error);
+            this.showErrorMessage(error);
         })
     }
 
     add() {
         let suitableForAddClusters = this.getSelectedClustersSuitableForAdd();
-        if (suitableForAddClusters.length === 0) {
-            // no suitable clusters for adding
+        if (suitableForAddClusters.length !== 1) {
+            // Currently only single cluster can be added
             return;
         }
 
-        // TODO Add the suitable clusters to the business group
         let selectedProject = this.projectService.getSelectedProject().documentSelfLink;
-        console.log('adding to business group', selectedProject);
+        this.isAdding = true;
+        let clusterToAdd = this.originalClusters.find(originalCluster => {
+                return originalCluster.uuid === suitableForAddClusters[0].uuid;
+        });
+        let addClusterRequest = {
+            'endpointLink': this.selectedEndpoint.documentSelfLink,
+            'tenantLinks': [ selectedProject ],
+            'cluster': clusterToAdd
+        };
 
-        this.goBack();
+        this.service.post(Links.PKS_CLUSTERS_ADD, addClusterRequest, selectedProject)
+            .then((result) => {
+                this.isAdding = false;
+                console.log('Clusters added', result);
+                this.goBack();
+        }).catch(error => {
+            this.isAdding = false;
+            console.error('Could not add PKS cluster', error);
+            this.showErrorMessage(error);
+        });
     }
 
     cancel() {
@@ -128,6 +153,16 @@ export class KubernetesClusterAddExistingComponent implements OnInit {
 
     goBack() {
         this.router.navigate(['../clusters'], {relativeTo: this.route});
+    }
+
+    private showErrorMessage(error) {
+        this.alertType = Constants.alert.type.DANGER;
+        this.alertMessage = Utils.getErrorMessage(error)._generic;
+    }
+
+    resetAlert() {
+        this.alertType = null;
+        this.alertMessage = null;
     }
 
     getSelectedClustersSuitableForAdd() {

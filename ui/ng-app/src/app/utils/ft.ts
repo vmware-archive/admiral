@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -43,7 +43,8 @@ export class FT {
   }
 
   public static isKubernetesHostOptionEnabled() {
-    return ConfigUtils.getConfigurationPropertyBoolean('allow.ft.host-option.kubernetes');
+    return !this.isVic()
+        && ConfigUtils.getConfigurationPropertyBoolean('allow.ft.host-option.kubernetes');
   }
 
   public static isCreateHostOptionEnabled() {
@@ -99,7 +100,7 @@ export class FT {
   }
 
   public static isPksEnabled() {
-      return this.isApplicationEmbedded()
+      return !this.isVic() && this.isApplicationEmbedded()
                 && ConfigUtils.getConfigurationPropertyBoolean('allow.ft.pks');
   }
 };
