@@ -2462,7 +2462,7 @@ let TemplatesStore = Reflux.createStore({
       return Promise.resolve();
     }
 
-    return services.loadRegistries().then((result) => {
+    return services.loadRegistries(utils.isApplicationEmbedded()).then((result) => {
       // currently selected project
       let selectedProject = utils.getSelectedProject();
       let selectedProjectKey;
@@ -2484,7 +2484,7 @@ let TemplatesStore = Reflux.createStore({
           return true;
         } else {
           let projectLink = repository.tenantLinks.find(tenantLink => {
-            return tenantLink === selectedProjectKey;
+            return tenantLink === selectedProjectKey || selectedProjectKey.startsWith(tenantLink);
           });
 
           if (projectLink) {
@@ -2496,13 +2496,15 @@ let TemplatesStore = Reflux.createStore({
         return false;
       });
 
-      var globalRepositories = availableRepositories.filter(r => !r.tenantLinks && !r.disabled)
-      .map(r => r.address);
+      // filter out repository names for only global repositories
+      // get the names of all available repositories for embedded mode
+      var globalRepositories = availableRepositories
+          .filter(r => utils.isApplicationEmbedded() || !r.tenantLinks)
+          .map(r => r.address);
 
       this.setInData(['listView', 'availableRepositories'], availableRepositories);
       this.setInData(['listView', 'globalRepositories'], globalRepositories);
       this.emitChange();
-
     }).catch((error) => {
       console.error('Failed retrieving available repositories', error);
     });

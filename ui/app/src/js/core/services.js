@@ -924,8 +924,20 @@ services.loadTemplateDescriptionImages = function(compositeDescriptionSelfLink) 
   return get(compositeDescriptionSelfLink, params);
 };
 
-services.loadRegistries = function() {
-  return list(links.REGISTRIES, true, null, true);
+services.loadRegistries = function(loadDefaultRegistry) {
+    if (loadDefaultRegistry) {
+        return list(links.REGISTRIES, true, null, true).then(registries => {
+          return services.loadRegistry('/config/registries/default-registry').then(r => {
+            registries[r.documentSelfLink] = r;
+            return registries;
+          }).catch(e => {
+            console.log('Unable to load default registry.' + e);
+            return registries;
+          });
+        });
+    } else {
+        return list(links.REGISTRIES, true, null, true);
+    }
 };
 
 services.loadRegistry = function(documentSelfLink) {
