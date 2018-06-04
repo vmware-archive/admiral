@@ -72,7 +72,8 @@ export class FT {
   }
 
   public static isHbrEnabled() {
-    return ConfigUtils.getConfigurationProperty('harbor.tab.url') && !this.isApplicationEmbedded();
+    return !this.isApplicationEmbedded()
+                && ConfigUtils.getConfigurationProperty('harbor.tab.url');
   }
 
   public static isVic() {
@@ -100,7 +101,6 @@ export class FT {
   }
 
   public static isPksEnabled() {
-      return !this.isVic() && this.isApplicationEmbedded()
-                && ConfigUtils.getConfigurationPropertyBoolean('allow.ft.pks');
+      return !this.isVic() && ConfigUtils.getConfigurationPropertyBoolean('allow.ft.pks');
   }
 };

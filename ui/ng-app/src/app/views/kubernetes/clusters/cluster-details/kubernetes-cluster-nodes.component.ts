@@ -31,15 +31,22 @@ export class KubernetesClusterNodesComponent implements OnChanges {
 
     constructor(private service: DocumentService) { }
 
+    hasNodes() {
+        return this.cluster && this.cluster.nodes
+                    && this.cluster.nodeLinks && this.cluster.nodeLinks.length > 0;
+    }
+
     ngOnChanges(changes: SimpleChanges) {
-        if (!this.cluster) {
+        if (!this.hasNodes()) {
             return;
         }
+
         var nodeLink = this.cluster.nodeLinks[0];
         var nodesJson = Utils.getCustomPropertyValue(this.cluster.nodes[nodeLink].customProperties, '__nodes');
         if (!nodesJson) {
             return;
         }
+
         var nodes = JSON.parse(nodesJson);
         this.nodes = nodes.map(n => ({
             name: n.name,

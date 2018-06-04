@@ -40,11 +40,12 @@ var ft = {
   },
 
   isKubernetesHostOptionEnabled: function() {
-    return utils.getConfigurationPropertyBoolean('allow.ft.host-option.kubernetes');
+    return !utils.isVic()
+              && utils.getConfigurationPropertyBoolean('allow.ft.host-option.kubernetes');
   },
 
   isPksEnabled: function() {
-    return utils.isApplicationEmbedded() && utils.getConfigurationPropertyBoolean('allow.ft.pks');
+    return !utils.isVic() && utils.getConfigurationPropertyBoolean('allow.ft.pks');
   },
 
   isCreateHostOptionEnabled: function() {

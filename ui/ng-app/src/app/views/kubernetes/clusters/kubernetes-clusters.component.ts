@@ -40,8 +40,10 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
     deleteConfirmationAlert: string;
 
     constructor(protected service: DocumentService, protected projectService: ProjectService,
-        protected router: Router, protected route: ActivatedRoute) {
-        super(router, route, FT.allowHostEventsSubscription(), Utils.getClustersViewRefreshInterval(), true);
+                protected router: Router, protected route: ActivatedRoute) {
+
+        super(router, route, FT.allowHostEventsSubscription(),
+                Utils.getClustersViewRefreshInterval(), true);
     }
 
     get deleteTitle() {
@@ -58,7 +60,25 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
                     } as I18n.TranslationOptions);
     }
 
+    hasNodes(cluster) {
+        return cluster && cluster.nodes && cluster.nodeLinks && cluster.nodeLinks.length > 0;
+    }
+
+    getClusterCustomProperties(cluster) {
+        let properties;
+        if (this.hasNodes(cluster)) {
+            properties = cluster.nodes[cluster.nodeLinks[0]].customProperties;
+        }
+
+        return properties;
+    }
+
     isDashboardInstalled(cluster): boolean {
+        let clusterCustomProperties = this.getClusterCustomProperties(cluster);
+        if (!clusterCustomProperties) {
+            return false;
+        }
+
         let nodeLink = cluster.nodeLinks[0];
         let installed =
             Utils.getCustomPropertyValue(cluster.nodes[nodeLink].customProperties, '__dashboardInstalled');
@@ -104,6 +124,11 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
     }
 
     nodeCount(cluster): string {
+        let clusterCustomProperties = this.getClusterCustomProperties(cluster);
+        if (!clusterCustomProperties) {
+            return I18n.t('notAvailable');
+        }
+
         let nodeLink = cluster.nodeLinks[0];
         let nodesJson =
             Utils.getCustomPropertyValue(cluster.nodes[nodeLink].customProperties, '__nodes');
@@ -132,7 +157,7 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
     enableHost(event, cluster) {
         event.stopPropagation();
 
-        if (!cluster.nodeLinks || cluster.nodeLinks.length < 1) {
+        if (!this.hasNodes(cluster)) {
             return;
         }
 
@@ -152,7 +177,7 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
     disableHost(event, cluster) {
         event.stopPropagation();
 
-        if (!cluster.nodeLinks || cluster.nodeLinks.length < 1) {
+        if (!this.hasNodes(cluster)) {
             return;
         }
 
