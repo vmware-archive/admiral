@@ -28,7 +28,7 @@ import com.vmware.admiral.compute.kubernetes.entities.common.ObjectMeta;
 import com.vmware.admiral.compute.kubernetes.entities.pods.Container;
 import com.vmware.admiral.compute.kubernetes.entities.pods.Pod;
 import com.vmware.admiral.compute.kubernetes.entities.pods.PodSpec;
-import com.vmware.admiral.compute.kubernetes.service.PodService;
+import com.vmware.admiral.compute.kubernetes.service.PodFactoryService;
 import com.vmware.admiral.compute.kubernetes.service.PodService.PodState;
 import com.vmware.admiral.host.ComputeInitialBootService;
 import com.vmware.admiral.host.HostInitCommonServiceConfig;
@@ -50,7 +50,7 @@ public class KubernetesMaintenanceTest extends ComputeBaseTest {
         HostInitKubernetesAdapterServiceConfig.startServices(host, true);
         waitForServiceAvailability(ComputeInitialBootService.SELF_LINK);
         waitForInitialBootServiceToBeSelfStopped(ComputeInitialBootService.SELF_LINK);
-        waitForServiceAvailability(PodService.FACTORY_LINK);
+        waitForServiceAvailability(PodFactoryService.SELF_LINK);
         waitForServiceAvailability(KubernetesAdapterService.SELF_LINK);
     }
 
@@ -67,7 +67,7 @@ public class KubernetesMaintenanceTest extends ComputeBaseTest {
         podState.pod.metadata = new ObjectMeta();
         podState.pod.metadata.selfLink = "/api/v1/namespaces/default/pods/test-pod";
         podState.pod.metadata.name = "test-pod";
-        podState = doPost(podState, PodService.FACTORY_LINK);
+        podState = doPost(podState, PodFactoryService.SELF_LINK);
 
         waitFor(() -> MockKubernetesAdapterService.requestOnInspect != null);
 

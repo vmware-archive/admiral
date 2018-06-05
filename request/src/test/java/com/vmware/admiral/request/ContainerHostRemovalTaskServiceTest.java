@@ -44,9 +44,9 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionSer
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
-import com.vmware.admiral.compute.kubernetes.service.PodService;
+import com.vmware.admiral.compute.kubernetes.service.PodFactoryService;
 import com.vmware.admiral.compute.kubernetes.service.PodService.PodState;
-import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler;
+import com.vmware.admiral.compute.kubernetes.service.ServiceEntityFactoryHandler;
 import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler.ServiceState;
 import com.vmware.admiral.request.ContainerHostRemovalTaskService.ContainerHostRemovalTaskState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
@@ -433,11 +433,11 @@ public class ContainerHostRemovalTaskServiceTest extends RequestBaseTest {
 
         PodState podState = new PodState();
         podState.parentLink = computeHost.documentSelfLink;
-        podState = doPost(podState, PodService.FACTORY_LINK);
+        podState = doPost(podState, PodFactoryService.SELF_LINK);
 
         ServiceState serviceState = new ServiceState();
         serviceState.parentLink = computeHost.documentSelfLink;
-        serviceState = doPost(serviceState, ServiceEntityHandler.FACTORY_LINK);
+        serviceState = doPost(serviceState, ServiceEntityFactoryHandler.SELF_LINK);
 
         RequestBrokerState request = new RequestBrokerState();
         request.resourceType = ResourceType.CONTAINER_HOST_TYPE.getName();

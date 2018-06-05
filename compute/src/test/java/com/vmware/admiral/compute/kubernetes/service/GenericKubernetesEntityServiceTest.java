@@ -22,19 +22,18 @@ import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
 import com.vmware.admiral.compute.kubernetes.entities.common.ObjectMeta;
 import com.vmware.admiral.compute.kubernetes.service.GenericKubernetesEntityService.GenericKubernetesEntityState;
-import com.vmware.xenon.common.FactoryService;
 
 public class GenericKubernetesEntityServiceTest extends ComputeBaseTest {
 
     @Before
     public void setUp() throws Throwable {
-        waitForServiceAvailability(GenericKubernetesEntityService.FACTORY_LINK);
+        waitForServiceAvailability(GenericKubernetesEntityFactoryService.SELF_LINK);
     }
 
     @Test
     public void testGenericKubernetesEntityServices() throws Throwable {
         verifyService(
-                FactoryService.create(GenericKubernetesEntityService.class),
+                GenericKubernetesEntityFactoryService.class,
                 GenericKubernetesEntityState.class,
                 (prefix, index) -> {
                     GenericKubernetesEntityState entityState = new GenericKubernetesEntityState();

@@ -30,6 +30,9 @@ import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionS
 import com.vmware.admiral.compute.container.network.ContainerNetworkService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService;
+import com.vmware.admiral.compute.kubernetes.service.DeploymentService;
+import com.vmware.admiral.compute.kubernetes.service.PodService;
+import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler;
 import com.vmware.admiral.request.RequestBrokerService;
 import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.admiral.service.common.RegistryService;
@@ -65,6 +68,10 @@ public class ProjectInterceptor {
         registerType(registry, RegistryHostConfigService.class);
 
         registerType(registry, RequestBrokerService.class);
+
+        registerType(registry, DeploymentService.class);
+        registerType(registry, PodService.class);
+        registerType(registry, ServiceEntityHandler.class);
     }
 
     private static void registerType(OperationInterceptorRegistry registry,

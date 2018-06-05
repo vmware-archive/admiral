@@ -80,3 +80,48 @@ spec:
         ports:
         - containerPort: 3306
           name: mysql
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  selfLink: /api/v1/namespaces/default/pods/wordpress-mysql-pod
+  name: wordpress-mysql-pod
+spec:
+  containers:
+  - image: wordpress:4.6.1-apache
+    name: wordpress
+    env:
+    - name: WORDPRESS_DB_HOST
+      value: wordpress-mysql
+    - name: WORDPRESS_DB_PASSWORD
+      value: pass@word01
+    ports:
+    - containerPort: 80
+      name: wordpress
+---
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: wordpress-mysql-replcontr
+  selfLink: /api/v1/namespaces/default/replicationcontrollers/wordpress-mysql-replcontr
+spec:
+  replicas: 2
+  selector:
+    app: wordpress-mysql-replcontr
+  template:
+    metadata:
+      name: wordpress-mysql-replcontr
+      labels:
+        app: wordpress-mysql-replcontr
+    spec:
+      containers:
+      - image: wordpress:4.6.1-apache
+        name: wordpress
+        env:
+        - name: WORDPRESS_DB_HOST
+          value: wordpress-mysql
+        - name: WORDPRESS_DB_PASSWORD
+          value: pass@word01
+        ports:
+        - containerPort: 80
+          name: wordpress

@@ -129,7 +129,7 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
         };
         private static BiConsumer<Operation, List<String>> verifyKubernetesTemplate = (o, descLinks) -> {
             CompositeDescription cd = o.getBody(CompositeDescription.class);
-            assertEquals("descriptionLinks.size", 4, cd.descriptionLinks.size());
+            assertEquals("descriptionLinks.size", 6, cd.descriptionLinks.size());
 
             descLinks.addAll(cd.descriptionLinks);
         };
@@ -304,7 +304,8 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
                     assertTrue("unexpected component name: " + cd.name,
                             Arrays.asList("wordpress", "mysql", "public-wpnet", "wpnet", "wordpress-mysql-svc",
                                     "wordpress-mysql-dpl", "wordpress-svc", "wordpress-dpl", "wordpress-lb",
-                                    "wordpress-container-lb", "wordpress-secret").contains(cd.name));
+                                    "wordpress-container-lb", "wordpress-secret", "wordpress-mysql-replcontr",
+                                    "wordpress-mysql-pod").contains(cd.name));
                 });
             }
         }

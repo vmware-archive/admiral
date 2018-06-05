@@ -11,7 +11,6 @@
 
 package com.vmware.admiral.compute.kubernetes.service;
 
-import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
 import com.vmware.admiral.compute.kubernetes.entities.common.ObjectMeta;
 import com.vmware.admiral.compute.kubernetes.service.GenericKubernetesEntityService.GenericKubernetesEntityState;
@@ -19,8 +18,6 @@ import com.vmware.xenon.common.Utils;
 
 public class GenericKubernetesEntityService
         extends AbstractKubernetesObjectService<GenericKubernetesEntityState> {
-
-    public static final String FACTORY_LINK = ManagementUriParts.KUBERNETES_GENERIC_ENTITIES;
 
     public static class GenericKubernetesEntityState extends BaseKubernetesState {
 

@@ -48,7 +48,7 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionSer
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
-import com.vmware.admiral.compute.kubernetes.service.PodService;
+import com.vmware.admiral.compute.kubernetes.service.PodFactoryService;
 import com.vmware.admiral.compute.kubernetes.service.PodService.PodState;
 import com.vmware.admiral.request.RequestBaseTest;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
@@ -368,7 +368,7 @@ public class CompositeComponentRemovalTaskServiceTest extends RequestBaseTest {
     private PodState createPod(CompositeComponent composite) throws Throwable {
         PodState pod = new PodState();
         pod.compositeComponentLink = composite.documentSelfLink;
-        pod = doPost(pod, PodService.FACTORY_LINK);
+        pod = doPost(pod, PodFactoryService.SELF_LINK);
         addForDeletion(pod);
         return pod;
     }

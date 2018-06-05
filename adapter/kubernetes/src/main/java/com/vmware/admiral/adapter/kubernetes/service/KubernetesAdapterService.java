@@ -29,7 +29,7 @@ import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
 import com.vmware.admiral.compute.kubernetes.entities.pods.Container;
 import com.vmware.admiral.compute.kubernetes.service.BaseKubernetesState;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
-import com.vmware.admiral.compute.kubernetes.service.PodService;
+import com.vmware.admiral.compute.kubernetes.service.PodFactoryService;
 import com.vmware.admiral.compute.kubernetes.service.PodService.PodState;
 import com.vmware.admiral.service.common.LogService;
 import com.vmware.admiral.service.common.LogService.LogServiceState;
@@ -153,7 +153,7 @@ public class KubernetesAdapterService extends AbstractKubernetesAdapterService {
     }
 
     private void processFetchPodLogs(RequestContext context) {
-        if (!context.kubernetesState.documentSelfLink.startsWith(PodService.FACTORY_LINK)) {
+        if (!context.kubernetesState.documentSelfLink.startsWith(PodFactoryService.SELF_LINK)) {
             throw new IllegalArgumentException("Cannot fetch logs for types that are not pods.");
         }
 

@@ -14,7 +14,6 @@ package com.vmware.admiral.adapter.kubernetes.service;
 import static org.junit.Assert.assertEquals;
 
 import static com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent.CUSTOM_PROPERTY_HOST_LINK;
-import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.DEPLOYMENT_TYPE;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.KUBERNETES_LABEL_APP_ID;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.POD_TYPE;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.REPLICA_SET_TYPE;
@@ -48,6 +47,7 @@ import com.vmware.admiral.compute.kubernetes.entities.replicaset.ReplicaSet;
 import com.vmware.admiral.compute.kubernetes.service.DeploymentService.DeploymentState;
 import com.vmware.admiral.compute.kubernetes.service.PodService.PodState;
 import com.vmware.admiral.compute.kubernetes.service.ReplicaSetService.ReplicaSetState;
+import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerService.ReplicationControllerState;
 import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler.ServiceState;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -115,19 +115,14 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
         waitForPropertyValue(provisioningTaskLink, MockTaskState.class, "taskInfo.stage",
                 TaskState.TaskStage.FINISHED);
 
-        assertEquals(8, service.deployedElements.size());
+        assertEquals(10, service.deployedElements.size());
 
         List<BaseKubernetesObject> kubernetesElements = new ArrayList<>();
         service.deployedElements.forEach(e -> kubernetesElements.add(e));
 
         // Assert that services are deployed first.
-        // Checking on 4, 5, 6, 7 index because pods and replica sets are
-        // added manually before everything else, in the real case k8s
-        // will create them once deployments are created.
         assertEquals(KubernetesUtil.SERVICE_TYPE, kubernetesElements.get(4).kind);
         assertEquals(KubernetesUtil.SERVICE_TYPE, kubernetesElements.get(5).kind);
-        assertEquals(DEPLOYMENT_TYPE, kubernetesElements.get(6).kind);
-        assertEquals(DEPLOYMENT_TYPE, kubernetesElements.get(7).kind);
 
         // Assert that states are created and they have correct compositeComponentLink.
         CompositeComponent finalCompositeComponent = compositeComponent;
@@ -161,7 +156,7 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
                 })));
 
         resourceLinks = getDocumentLinksOfType(PodState.class);
-        assertEquals(2, resourceLinks.size());
+        assertEquals(3, resourceLinks.size());
         resourceLinks.forEach(link -> doOperation(Operation.createGet(host, link)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
@@ -182,6 +177,20 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
                         host.failIteration(ex);
                     } else {
                         ReplicaSetState state = o.getBody(ReplicaSetState.class);
+                        assertEquals(state.compositeComponentLink,
+                                finalCompositeComponent.documentSelfLink);
+                        host.completeIteration();
+                    }
+                })));
+
+        resourceLinks = getDocumentLinksOfType(ReplicationControllerState.class);
+        assertEquals(1, resourceLinks.size());
+        resourceLinks.forEach(link -> doOperation(Operation.createGet(host, link)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        host.failIteration(ex);
+                    } else {
+                        ReplicationControllerState state = o.getBody(ReplicationControllerState.class);
                         assertEquals(state.compositeComponentLink,
                                 finalCompositeComponent.documentSelfLink);
                         host.completeIteration();
@@ -271,7 +280,7 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
         resourceLinks = getDocumentLinksOfType(ServiceState.class);
         assertEquals(2, resourceLinks.size());
 
-        assertEquals(4, service.deployedElementsMap.size());
+        assertEquals(6, service.deployedElementsMap.size());
 
     }
 

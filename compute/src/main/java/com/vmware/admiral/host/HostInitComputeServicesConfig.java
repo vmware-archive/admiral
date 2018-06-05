@@ -66,21 +66,21 @@ import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
 import com.vmware.admiral.compute.content.TemplateComputeDescription;
 import com.vmware.admiral.compute.kubernetes.KubernetesEntityDataCollection;
 import com.vmware.admiral.compute.kubernetes.service.ContainerDescriptionToKubernetesDescriptionConverterService;
-import com.vmware.admiral.compute.kubernetes.service.DeploymentService;
+import com.vmware.admiral.compute.kubernetes.service.DeploymentFactoryService;
 import com.vmware.admiral.compute.kubernetes.service.DeploymentService.DeploymentState;
-import com.vmware.admiral.compute.kubernetes.service.GenericKubernetesEntityService;
+import com.vmware.admiral.compute.kubernetes.service.GenericKubernetesEntityFactoryService;
 import com.vmware.admiral.compute.kubernetes.service.GenericKubernetesEntityService.GenericKubernetesEntityState;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionContentService;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
+import com.vmware.admiral.compute.kubernetes.service.PodFactoryService;
 import com.vmware.admiral.compute.kubernetes.service.PodLogService;
-import com.vmware.admiral.compute.kubernetes.service.PodService;
 import com.vmware.admiral.compute.kubernetes.service.PodService.PodState;
 import com.vmware.admiral.compute.kubernetes.service.ReplicaSetService;
 import com.vmware.admiral.compute.kubernetes.service.ReplicaSetService.ReplicaSetState;
 import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerService;
 import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerService.ReplicationControllerState;
-import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler;
+import com.vmware.admiral.compute.kubernetes.service.ServiceEntityFactoryHandler;
 import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler.ServiceState;
 import com.vmware.admiral.compute.pks.PKSEndpointService;
 import com.vmware.admiral.compute.util.DanglingDescriptionsCleanupService;
@@ -124,7 +124,11 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 ClusterService.class,
                 DanglingDescriptionsCleanupService.class,
                 ContainerDescriptionToKubernetesDescriptionConverterService.class,
-                FavoriteImageFactoryService.class);
+                FavoriteImageFactoryService.class,
+                DeploymentFactoryService.class,
+                PodFactoryService.class,
+                ServiceEntityFactoryHandler.class,
+                GenericKubernetesEntityFactoryService.class);
 
         startServiceFactories(host, CaSigningCertService.class,
                 GroupResourcePlacementService.class,
@@ -139,11 +143,7 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 EpzComputeEnumerationTaskService.class,
                 PlacementCapacityUpdateTaskService.class,
                 KubernetesDescriptionService.class,
-                GenericKubernetesEntityService.class,
-                PodService.class,
-                DeploymentService.class,
                 ReplicationControllerService.class,
-                ServiceEntityHandler.class,
                 ReplicaSetService.class,
                 PKSEndpointService.class,
                 FavoriteImagesService.class);
@@ -191,20 +191,20 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
 
         CompositeComponentRegistry.registerComponent(ResourceType.KUBERNETES_GENERIC_TYPE.getName(),
                 KubernetesDescriptionService.FACTORY_LINK, KubernetesDescription.class,
-                GenericKubernetesEntityService.FACTORY_LINK, GenericKubernetesEntityState.class);
+                GenericKubernetesEntityFactoryService.SELF_LINK, GenericKubernetesEntityState.class);
 
         CompositeComponentRegistry.registerComponent(ResourceType.KUBERNETES_POD_TYPE.getName(),
                 KubernetesDescriptionService.FACTORY_LINK, KubernetesDescription.class,
-                PodService.FACTORY_LINK, PodState.class);
+                PodFactoryService.SELF_LINK, PodState.class);
 
         CompositeComponentRegistry
                 .registerComponent(ResourceType.KUBERNETES_DEPLOYMENT_TYPE.getName(),
                         KubernetesDescriptionService.FACTORY_LINK, KubernetesDescription.class,
-                        DeploymentService.FACTORY_LINK, DeploymentState.class);
+                        DeploymentFactoryService.SELF_LINK, DeploymentState.class);
 
         CompositeComponentRegistry.registerComponent(ResourceType.KUBERNETES_SERVICE_TYPE.getName(),
                 KubernetesDescriptionService.FACTORY_LINK, KubernetesDescription.class,
-                ServiceEntityHandler.FACTORY_LINK, ServiceState.class);
+                ServiceEntityFactoryHandler.SELF_LINK, ServiceState.class);
 
         CompositeComponentRegistry
                 .registerComponent(ResourceType.KUBERNETES_REPLICATION_CONTROLLER_TYPE.getName(),

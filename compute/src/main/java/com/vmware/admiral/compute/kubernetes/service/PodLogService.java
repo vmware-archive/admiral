@@ -47,7 +47,7 @@ public class PodLogService extends StatelessService {
             return;
         }
 
-        String podStateLink = UriUtils.buildUriPath(PodService.FACTORY_LINK, podId);
+        String podStateLink = UriUtils.buildUriPath(PodFactoryService.SELF_LINK, podId);
 
         sendRequest(Operation
                 .createGet(this, podStateLink)

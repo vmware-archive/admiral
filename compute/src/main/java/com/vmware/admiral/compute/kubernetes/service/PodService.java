@@ -11,7 +11,6 @@
 
 package com.vmware.admiral.compute.kubernetes.service;
 
-import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
 import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
 import com.vmware.admiral.compute.kubernetes.entities.common.ObjectMeta;
@@ -20,8 +19,6 @@ import com.vmware.admiral.compute.kubernetes.service.PodService.PodState;
 import com.vmware.xenon.common.Utils;
 
 public class PodService extends AbstractKubernetesObjectService<PodState> {
-
-    public static final String FACTORY_LINK = ManagementUriParts.KUBERNETES_PODS;
 
     public static class PodState extends BaseKubernetesState {
 

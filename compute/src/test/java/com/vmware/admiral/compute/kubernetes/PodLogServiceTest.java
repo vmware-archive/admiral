@@ -29,8 +29,8 @@ import com.vmware.admiral.compute.kubernetes.entities.common.ObjectMeta;
 import com.vmware.admiral.compute.kubernetes.entities.pods.Container;
 import com.vmware.admiral.compute.kubernetes.entities.pods.Pod;
 import com.vmware.admiral.compute.kubernetes.entities.pods.PodSpec;
+import com.vmware.admiral.compute.kubernetes.service.PodFactoryService;
 import com.vmware.admiral.compute.kubernetes.service.PodLogService;
-import com.vmware.admiral.compute.kubernetes.service.PodService;
 import com.vmware.admiral.compute.kubernetes.service.PodService.PodState;
 import com.vmware.admiral.service.common.LogService;
 import com.vmware.admiral.service.common.LogService.LogServiceState;
@@ -43,7 +43,7 @@ public class PodLogServiceTest extends ComputeBaseTest {
     @Before
     public void setUp() throws Throwable {
         waitForServiceAvailability(LogService.FACTORY_LINK);
-        waitForServiceAvailability(PodService.FACTORY_LINK);
+        waitForServiceAvailability(PodFactoryService.SELF_LINK);
         waitForServiceAvailability(PodLogService.SELF_LINK);
 
     }
@@ -137,7 +137,7 @@ public class PodLogServiceTest extends ComputeBaseTest {
         podState.pod.metadata.selfLink = "/api/v1/namespaces/default/pods/test-pod";
         podState.pod.metadata.uid = UUID.randomUUID().toString();
         podState.documentSelfLink = podState.pod.metadata.uid;
-        podState = doPost(podState, PodService.FACTORY_LINK);
+        podState = doPost(podState, PodFactoryService.SELF_LINK);
         return podState;
     }
 

@@ -39,10 +39,10 @@ import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObjec
 import com.vmware.admiral.compute.kubernetes.entities.common.ObjectMeta;
 import com.vmware.admiral.compute.kubernetes.service.BaseKubernetesState;
 import com.vmware.admiral.compute.kubernetes.service.DeploymentService.DeploymentState;
-import com.vmware.admiral.compute.kubernetes.service.PodService;
+import com.vmware.admiral.compute.kubernetes.service.PodFactoryService;
 import com.vmware.admiral.compute.kubernetes.service.PodService.PodState;
 import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerService.ReplicationControllerState;
-import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler;
+import com.vmware.admiral.compute.kubernetes.service.ServiceEntityFactoryHandler;
 import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler.ServiceState;
 import com.vmware.admiral.service.test.MockKubernetesAdapterService;
 import com.vmware.admiral.service.test.MockKubernetesHostAdapterService;
@@ -77,7 +77,7 @@ public class KubernetesEntityDataCollectionTest extends ComputeBaseTest {
                 ComputeService.FACTORY_LINK,
                 ComputeDescriptionService.FACTORY_LINK,
                 KubernetesEntityDataCollection.DEFAULT_KUBERNETES_ENTITY_DATA_COLLECTION_LINK,
-                PodService.FACTORY_LINK,
+                PodFactoryService.SELF_LINK,
                 MockKubernetesAdapterService.SELF_LINK,
                 MockKubernetesHostAdapterService.SELF_LINK
         );
@@ -324,7 +324,7 @@ public class KubernetesEntityDataCollectionTest extends ComputeBaseTest {
 
         host.testStart(2);
         host.sendRequest(
-                Operation.createPost(UriUtils.buildUri(host, PodService.FACTORY_LINK))
+                Operation.createPost(UriUtils.buildUri(host, PodFactoryService.SELF_LINK))
                         .setBody(existingPod)
                         .setReferer(host.getUri())
                         .setCompletion((o, ex) -> {
@@ -336,7 +336,7 @@ public class KubernetesEntityDataCollectionTest extends ComputeBaseTest {
                             }
                         }));
         host.sendRequest(
-                Operation.createPost(UriUtils.buildUri(host, ServiceEntityHandler.FACTORY_LINK))
+                Operation.createPost(UriUtils.buildUri(host, ServiceEntityFactoryHandler.SELF_LINK))
                         .setBody(existingService)
                         .setReferer(host.getUri())
                         .setCompletion((o, ex) -> {

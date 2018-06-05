@@ -46,19 +46,19 @@ import com.vmware.admiral.compute.kubernetes.entities.replicationcontrollers.Rep
 import com.vmware.admiral.compute.kubernetes.entities.services.Service;
 import com.vmware.admiral.compute.kubernetes.entities.services.ServiceList;
 import com.vmware.admiral.compute.kubernetes.service.BaseKubernetesState;
-import com.vmware.admiral.compute.kubernetes.service.DeploymentService;
+import com.vmware.admiral.compute.kubernetes.service.DeploymentFactoryService;
 import com.vmware.admiral.compute.kubernetes.service.DeploymentService.DeploymentState;
-import com.vmware.admiral.compute.kubernetes.service.GenericKubernetesEntityService;
+import com.vmware.admiral.compute.kubernetes.service.GenericKubernetesEntityFactoryService;
 import com.vmware.admiral.compute.kubernetes.service.GenericKubernetesEntityService.GenericKubernetesEntityState;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
-import com.vmware.admiral.compute.kubernetes.service.PodService;
+import com.vmware.admiral.compute.kubernetes.service.PodFactoryService;
 import com.vmware.admiral.compute.kubernetes.service.PodService.PodState;
 import com.vmware.admiral.compute.kubernetes.service.ReplicaSetService;
 import com.vmware.admiral.compute.kubernetes.service.ReplicaSetService.ReplicaSetState;
 import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerService;
 import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerService.ReplicationControllerState;
-import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler;
+import com.vmware.admiral.compute.kubernetes.service.ServiceEntityFactoryHandler;
 import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler.ServiceState;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.DeferredResult;
@@ -353,7 +353,9 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
                     deploymentState.documentSelfLink = deployment.metadata.uid;
                     deploymentState.id = deployment.metadata.uid;
                     deploymentState.kubernetesSelfLink = deployment.metadata.selfLink;
-                    sendRequest(Operation.createPost(this, DeploymentService.FACTORY_LINK)
+                    deploymentState.tenantLinks = context.compositeComponent.tenantLinks;
+
+                    sendRequest(Operation.createPost(this, DeploymentFactoryService.SELF_LINK)
                             .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
                             .setBody(deploymentState)
                             .setCompletion((op, err) -> {
@@ -402,6 +404,8 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
                             controllerState.documentSelfLink = controller.metadata.uid;
                             controllerState.id = controller.metadata.uid;
                             controllerState.kubernetesSelfLink = controller.metadata.selfLink;
+                            controllerState.tenantLinks = context.compositeComponent.tenantLinks;
+
                             sendRequest(Operation
                                     .createPost(this, ReplicationControllerService.FACTORY_LINK)
                                     .addPragmaDirective(
@@ -451,7 +455,9 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
                     serviceState.documentSelfLink = service.metadata.uid;
                     serviceState.id = service.metadata.uid;
                     serviceState.kubernetesSelfLink = service.metadata.selfLink;
-                    sendRequest(Operation.createPost(this, ServiceEntityHandler.FACTORY_LINK)
+                    serviceState.tenantLinks = context.compositeComponent.tenantLinks;
+
+                    sendRequest(Operation.createPost(this, ServiceEntityFactoryHandler.SELF_LINK)
                             .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
                             .setBody(serviceState)
                             .setCompletion((op, err) -> {
@@ -498,6 +504,8 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
                     replicaSetState.documentSelfLink = replicaSet.metadata.uid;
                     replicaSetState.id = replicaSet.metadata.uid;
                     replicaSetState.kubernetesSelfLink = replicaSet.metadata.selfLink;
+                    replicaSetState.tenantLinks = context.compositeComponent.tenantLinks;
+
                     sendRequest(Operation.createPost(this, ReplicaSetService.FACTORY_LINK)
                             .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
                             .setBody(replicaSetState)
@@ -545,7 +553,9 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
                     podState.documentSelfLink = pod.metadata.uid;
                     podState.id = pod.metadata.uid;
                     podState.kubernetesSelfLink = pod.metadata.selfLink;
-                    sendRequest(Operation.createPost(this, PodService.FACTORY_LINK)
+                    podState.tenantLinks = context.compositeComponent.tenantLinks;
+
+                    sendRequest(Operation.createPost(this, PodFactoryService.SELF_LINK)
                             .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
                             .setBody(podState)
                             .setCompletion((op, err) -> {
@@ -580,7 +590,7 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
             deploymentState.deployment = deployment;
             deploymentState.name = deployment.metadata.name;
             state = deploymentState;
-            factoryLink = DeploymentService.FACTORY_LINK;
+            factoryLink = DeploymentFactoryService.SELF_LINK;
             break;
         case SERVICE_TYPE:
             Service service = response.getBody(Service.class);
@@ -588,7 +598,7 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
             serviceState.service = service;
             serviceState.name = service.metadata.name;
             state = serviceState;
-            factoryLink = ServiceEntityHandler.FACTORY_LINK;
+            factoryLink = ServiceEntityFactoryHandler.SELF_LINK;
             break;
         case REPLICATION_CONTROLLER_TYPE:
             ReplicationController controller = response.getBody(ReplicationController.class);
@@ -604,7 +614,7 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
             podState.pod = pod;
             podState.name = pod.metadata.name;
             state = podState;
-            factoryLink = PodService.FACTORY_LINK;
+            factoryLink = PodFactoryService.SELF_LINK;
             break;
         default:
             BaseKubernetesObject k8sObject = response.getBody(BaseKubernetesObject.class);
@@ -612,7 +622,7 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
             k8sState.entity = k8sObject;
             k8sState.name = k8sObject.metadata != null ? k8sObject.metadata.name : null;
             state = k8sState;
-            factoryLink = GenericKubernetesEntityService.FACTORY_LINK;
+            factoryLink = GenericKubernetesEntityFactoryService.SELF_LINK;
             break;
         }
         state.documentSelfLink = state.getMetadata().uid;
@@ -621,6 +631,7 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
         state.parentLink = context.kubernetesContext.host.documentSelfLink;
         state.id = state.getMetadata().uid;
         state.kubernetesSelfLink = state.getMetadata().selfLink;
+        state.tenantLinks = component.tenantLinks;
 
         sendRequest(Operation.createPost(this, factoryLink)
                 .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
@@ -630,7 +641,7 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
 
     private void processApplicationDelete(RequestContext context) {
         List<String> deploymentComponents = context.compositeComponent.componentLinks.stream()
-                .filter(c -> c.startsWith(DeploymentService.FACTORY_LINK))
+                .filter(c -> c.startsWith(DeploymentFactoryService.SELF_LINK))
                 .collect(Collectors.toList());
 
         List<String> replicationControllerComponents = context.compositeComponent.componentLinks
@@ -638,7 +649,7 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
                 .collect(Collectors.toList());
 
         List<String> serviceComponents = context.compositeComponent.componentLinks.stream()
-                .filter(c -> c.startsWith(ServiceEntityHandler.FACTORY_LINK))
+                .filter(c -> c.startsWith(ServiceEntityFactoryHandler.SELF_LINK))
                 .collect(Collectors.toList());
 
         List<String> replicaSetComponents = context.compositeComponent.componentLinks.stream()
@@ -646,11 +657,11 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
                 .collect(Collectors.toList());
 
         List<String> podComponents = context.compositeComponent.componentLinks.stream()
-                .filter(c -> c.startsWith(PodService.FACTORY_LINK))
+                .filter(c -> c.startsWith(PodFactoryService.SELF_LINK))
                 .collect(Collectors.toList());
 
         List<String> genericComponents = context.compositeComponent.componentLinks.stream()
-                .filter(c -> c.startsWith(GenericKubernetesEntityService.FACTORY_LINK))
+                .filter(c -> c.startsWith(GenericKubernetesEntityFactoryService.SELF_LINK))
                 .collect(Collectors.toList());
 
         DeferredResult.completed(null)
@@ -762,5 +773,4 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
                 });
 
     }
-
 }

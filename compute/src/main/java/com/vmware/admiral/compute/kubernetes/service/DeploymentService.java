@@ -11,7 +11,6 @@
 
 package com.vmware.admiral.compute.kubernetes.service;
 
-import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
 import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
 import com.vmware.admiral.compute.kubernetes.entities.common.ObjectMeta;
@@ -20,8 +19,6 @@ import com.vmware.admiral.compute.kubernetes.service.DeploymentService.Deploymen
 import com.vmware.xenon.common.Utils;
 
 public class DeploymentService extends AbstractKubernetesObjectService<DeploymentState> {
-
-    public static final String FACTORY_LINK = ManagementUriParts.KUBERNETES_DEPLOYMENTS;
 
     public static class DeploymentState extends BaseKubernetesState {
 
