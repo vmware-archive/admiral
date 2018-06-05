@@ -31,7 +31,7 @@
               <li><a class="nav-link" routerLink="networks" routerLinkActive="active">{{ "navigation.networks" | i18n }}</a></li>
               <li><a class="nav-link" routerLink="volumes" routerLinkActive="active">{{ "navigation.volumes" | i18n }}</a></li>
               <li *ngIf="areClosuresAllowed"><a class="nav-link" routerLink="closures" routerLinkActive="active">{{ "navigation.closures" | i18n }}</a></li>
-              <li *ngIf="kubernetesEnabled || isPksEnabled">
+              <li *ngIf="isPksEnabled">
                   <section class="nav-group collapsible">
                       <input id="deploymentsCollapse" type="checkbox">
                         <label for="deploymentsCollapse">{{ "navigation.kubernetes.title" | i18n }}</label>
@@ -40,8 +40,9 @@
                                 routerLinkActive="active">{{ "navigation.kubernetes.deployments" | i18n }}</a></li>
                             <li><a class="nav-link" routerLink="kubernetes/pods"
                                 routerLinkActive="active">{{ "navigation.kubernetes.pods" | i18n }}</a></li>
-                            <li *ngIf="kubernetesEnabled"><a class="nav-link"
-                                routerLink="kubernetes/services" routerLinkActive="active">Services</a></li>
+                            <li *ngIf="externalKubernetesEnabled"><a class="nav-link"
+                                routerLink="kubernetes/services"
+                                routerLinkActive="active">{{ "navigation.kubernetes.services" | i18n }}</a></li>
                         </ul>
                   </section>
               </li>

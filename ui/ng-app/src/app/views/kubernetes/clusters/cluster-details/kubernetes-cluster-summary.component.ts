@@ -41,6 +41,10 @@ export class KubernetesClusterSummaryComponent implements OnInit {
         return '';
     }
 
+    hasNodes() {
+        return this.cluster && this.cluster.nodeLinks && this.cluster.nodeLinks.length > 0;
+    }
+
     get clusterCustomProperties() {
         let properties;
         if (this.cluster && this.cluster.nodes && this.cluster.nodeLinks
@@ -52,12 +56,8 @@ export class KubernetesClusterSummaryComponent implements OnInit {
     }
 
     get nodeCount() {
-        if (this.clusterCustomProperties) {
-            var nodesJson = Utils.getCustomPropertyValue(this.clusterCustomProperties, '__nodes');
-            if (nodesJson) {
-
-                return JSON.parse(nodesJson).length;
-            }
+        if (this.hasNodes()) {
+            return this.cluster.nodeLinks.length;
         }
 
         return I18n.t('notAvailable');

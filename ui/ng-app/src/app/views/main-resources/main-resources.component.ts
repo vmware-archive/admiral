@@ -28,13 +28,14 @@ import { FT } from './../../utils/ft';
   encapsulation: ViewEncapsulation.None
 })
 export class MainResourcesComponent implements OnInit, OnDestroy {
-
-    kubernetesEnabled = FT.isKubernetesHostOptionEnabled();
-    areClosuresAllowed = FT.areClosuresAllowed();
-
+    // features
     embeddedMode = FT.isApplicationEmbedded();
-    isHbrEnabled = FT.isHbrEnabled();
+
     isPksEnabled = FT.isPksEnabled();
+    externalKubernetesEnabled = FT.isExternalKubernetesEnabled();
+
+    isHbrEnabled = FT.isHbrEnabled();
+    areClosuresAllowed = FT.areClosuresAllowed();
     showHostsView = FT.showHostsView();
 
     routeObserve: Subscription;

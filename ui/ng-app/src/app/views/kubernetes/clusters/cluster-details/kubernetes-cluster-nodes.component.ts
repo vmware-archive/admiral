@@ -10,11 +10,7 @@
  */
 
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
-import { AutoRefreshComponent } from "../../../../components/base/auto-refresh.component";
 import { DocumentService } from "../../../../utils/document.service";
-import { FT } from '../../../../utils/ft';
-import { Utils } from "../../../../utils/utils";
 
 @Component({
     selector: 'app-kubernetes-cluster-nodes',
@@ -29,7 +25,8 @@ export class KubernetesClusterNodesComponent implements OnChanges {
 
     nodes: any[];
 
-    constructor(private service: DocumentService) { }
+    constructor(service: DocumentService) {
+    }
 
     hasNodes() {
         return this.cluster && this.cluster.nodes
@@ -41,17 +38,21 @@ export class KubernetesClusterNodesComponent implements OnChanges {
             return;
         }
 
-        var nodeLink = this.cluster.nodeLinks[0];
-        var nodesJson = Utils.getCustomPropertyValue(this.cluster.nodes[nodeLink].customProperties, '__nodes');
-        if (!nodesJson) {
-            return;
-        }
+        this.nodes = this.cluster.nodeLinks.map((nodeLink) => {
+            return this.cluster.nodes[nodeLink];
+        })
 
-        var nodes = JSON.parse(nodesJson);
-        this.nodes = nodes.map(n => ({
-            name: n.name,
-            cpu: Math.floor(n.usedCPU),
-            memory: Math.floor(parseFloat(n.availableMem) / parseFloat(n.totalMem) * 100)
-        }));
+        // var nodeLink = this.cluster.nodeLinks[0];
+        // var nodesJson = Utils.getCustomPropertyValue(this.cluster.nodes[nodeLink].customProperties, '__nodes');
+        // if (!nodesJson) {
+        //     return;
+        // }
+        //
+        // var nodes = JSON.parse(nodesJson);
+        // this.nodes = nodes.map(n => ({
+        //     name: n.name,
+        //     cpu: Math.floor(n.usedCPU),
+        //     memory: Math.floor(parseFloat(n.availableMem) / parseFloat(n.totalMem) * 100)
+        // }));
     }
 }

@@ -42,8 +42,8 @@ export class FT {
     return ConfigUtils.getConfigurationPropertyBoolean('allow.ft.host-option.vch');
   }
 
-  public static isKubernetesHostOptionEnabled() {
-    return !this.isVic()
+  public static isExternalKubernetesEnabled() {
+    return this.isPksEnabled()
         && ConfigUtils.getConfigurationPropertyBoolean('allow.ft.host-option.kubernetes');
   }
 

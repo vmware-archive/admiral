@@ -78,10 +78,6 @@ export class ClusterEditComponent extends BaseDetailsComponent
         return FT.isHostPublicUriEnabled() && this.isSingleHostCluster;
     }
 
-    get isKubernetesHostOptionEnabled(): boolean {
-        return FT.isKubernetesHostOptionEnabled();
-    }
-
     get clusterUrl(): string {
         return this.entity && this.entity.address;
     }

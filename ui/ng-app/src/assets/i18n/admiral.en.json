@@ -297,8 +297,12 @@
           "title": "Nodes",
           "searchPlaceholder": "Search for nodes",
           "nameColumn": "Name",
-          "cpuColumn": "CPU",
-          "memoryColumn": "Memory",
+          "powerStateColumn": "Powered",
+          "statusColumn": "Status",
+          "powerState": {
+            "ON": "On",
+            "OFF": "Off"
+          },
           "count": "nodes"
         }
       }
@@ -377,6 +381,9 @@
         "fieldTitleWorker": "Worker",
         "workerFieldRequired": "Worker field is required. Only integer values bigger than 0 can be entered."
       }
+    },
+    "edit": {
+      "title": "Edit Cluster"
     },
     "add": {
       "title": "Add Cluster",
@@ -535,7 +542,8 @@
     "kubernetes": {
       "title": "Kubernetes",
       "deployments": "Deployments",
-      "pods": "Pods"
+      "pods": "Pods",
+      "services": "Services"
     },
     "library": "Library",
     "templates": "Templates",

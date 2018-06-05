@@ -10,6 +10,11 @@
  */
 
 import { Component } from '@angular/core';
+import { ActivatedRoute, Router } from "@angular/router";
+import { BaseDetailsComponent } from "../../../../components/base/base-details.component";
+import { DocumentService } from "../../../../utils/document.service";
+import { ErrorService } from "../../../../utils/error.service";
+import { Links } from "../../../../utils/links";
 
 @Component({
     selector: 'app-kubernetes-cluster-new',
@@ -17,8 +22,20 @@ import { Component } from '@angular/core';
     styleUrls: ['./kubernetes-cluster-new.component.scss']
 })
 /**
- * New kubernetes cluster view.
+ * New/Edit kubernetes cluster view.
  */
-export class KubernetesClusterNewComponent {
+export class KubernetesClusterNewComponent extends BaseDetailsComponent {
+    editMode: boolean = false;
 
+    constructor(protected route: ActivatedRoute, protected service: DocumentService,
+                protected router: Router, protected errorService: ErrorService) {
+
+        super(Links.CLUSTERS, route, router, service, errorService);
+    }
+
+    entityInitialized() {
+        if (this.entity) {
+            this.editMode = true;
+        }
+    }
 }

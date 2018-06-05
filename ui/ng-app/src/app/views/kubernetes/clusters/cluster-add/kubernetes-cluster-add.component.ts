@@ -22,6 +22,6 @@ import { FT } from "../../../../utils/ft";
 export class KubernetesClusterAddComponent {
 
     get addExternalEnabled() {
-        return false; // FT.isPksEnabled() && FT.isKubernetesHostOptionEnabled();
+        return FT.isExternalKubernetesEnabled();
     }
 }

@@ -108,9 +108,6 @@ var TemplateDetailsView = Vue.extend({
     areClosuresAllowed: function() {
       return ft.areClosuresAllowed();
     },
-    isKubernetesEnabled: function() {
-      return ft.isKubernetesHostOptionEnabled();
-    },
     templateHasKubernetesEntities: function() {
       return this.kubernetes.length > 0;
     },

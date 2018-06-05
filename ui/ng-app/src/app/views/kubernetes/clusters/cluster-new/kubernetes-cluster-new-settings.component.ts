@@ -112,7 +112,7 @@ export class KubernetesClusterNewSettingsComponent extends BaseDetailsComponent
     }
 
     goBack() {
-        let path = (this.editMode) ? '../../..' : '../clusters';
+        let path = (this.editMode) ? '..' : '../clusters';
 
         this.router.navigate([path], {relativeTo: this.route});
     }

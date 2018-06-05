@@ -46,9 +46,6 @@ export default Vue.component('sidenav', {
       if (feature === 'closures') {
 
         return ft.areClosuresAllowed();
-      } else if (feature === 'k8s') {
-
-        return ft.isKubernetesHostOptionEnabled();
       } else if (feature === 'projects') {
 
         return ft.showProjectsInNavigation();

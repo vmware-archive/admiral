@@ -39,8 +39,8 @@ var ft = {
     return utils.getConfigurationPropertyBoolean('allow.ft.host-option.vch');
   },
 
-  isKubernetesHostOptionEnabled: function() {
-    return !utils.isVic()
+  isExternalKubernetesEnabled: function() {
+    return this.isPksEnabled()
               && utils.getConfigurationPropertyBoolean('allow.ft.host-option.kubernetes');
   },
 

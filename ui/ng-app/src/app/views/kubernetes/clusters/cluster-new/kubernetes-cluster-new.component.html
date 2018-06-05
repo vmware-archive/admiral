@@ -10,7 +10,7 @@
   -->
 
 <div class="main-view">
-    <div class="title">{{"pks.new.title" | i18n}}</div>
+    <div class="title">{{(editMode ? "pks.edit.title": "pks.new.title") | i18n}}</div>
 
     <clr-tabs>
         <clr-tab>

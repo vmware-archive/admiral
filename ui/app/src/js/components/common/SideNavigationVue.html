@@ -59,27 +59,5 @@
                href="#/closures">{{i18n("app.navbar.closures")}}</a></li>
        </ul>
     </section>
-    <section v-if="isFeatureEnabled('k8s')" class="nav-group collapsible">
-      <input id="nav-category-k8s-resources" type="checkbox">
-      <label for="nav-category-k8s-resources">{{i18n("app.navbar.kubernetesResources")}}</label>
-      <ul class="nav-list">
-        <li><a class="nav-link"
-               data-cmd="navigation-{{constants.VIEWS.KUBERNETES_RESOURCES.VIEWS.APPLICATIONS.name}}"
-               :class="{'active': currentView === constants.VIEWS.KUBERNETES_RESOURCES.VIEWS.APPLICATIONS.name}"
-               href="#/kubernetes/applications">{{i18n("app.navbar.applications")}}</a></li>
-        <li><a class="nav-link" data-cmd="navigation-{{constants.VIEWS.KUBERNETES_RESOURCES.VIEWS.DEPLOYMENTS.name}}"
-               :class="{'active': currentView === constants.VIEWS.KUBERNETES_RESOURCES.VIEWS.DEPLOYMENTS.name}"
-               href="#/kubernetes/deployments">{{i18n("app.navbar.kubernetesDeployments")}}</a></li>
-        <li><a class="nav-link" data-cmd="navigation-{{constants.VIEWS.KUBERNETES_RESOURCES.VIEWS.SERVICES.name}}"
-               :class="{'active': currentView === constants.VIEWS.KUBERNETES_RESOURCES.VIEWS.SERVICES.name}"
-               href="#/kubernetes/services">{{i18n("app.navbar.kubernetesServices")}}</a></li>
-        <li><a class="nav-link" data-cmd="navigation-{{constants.VIEWS.KUBERNETES_RESOURCES.VIEWS.REPLICATION_CONTROLLERS.name}}"
-               :class="{'active': currentView === constants.VIEWS.KUBERNETES_RESOURCES.VIEWS.REPLICATION_CONTROLLERS.name}"
-               href="#/kubernetes/replication-controllers">{{i18n("app.navbar.kubernetesReplicationControllers")}}</a></li>
-        <li><a class="nav-link" data-cmd="navigation-{{constants.VIEWS.KUBERNETES_RESOURCES.VIEWS.PODS.name}}"
-               :class="{'active': currentView === constants.VIEWS.KUBERNETES_RESOURCES.VIEWS.PODS.name}"
-               href="#/kubernetes/pods">{{i18n("app.navbar.kubernetesPods")}}</a></li>
-      </ul>
-    </section>
   </section>
 </nav>

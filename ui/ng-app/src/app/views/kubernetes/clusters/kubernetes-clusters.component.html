@@ -8,15 +8,16 @@
   ~ and license terms. Your use of these subcomponents is subject to the terms and
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
+
 <delete-confirmation [title]="deleteTitle" [description]="deleteConfirmationDescription"
                      [(alert)]="deleteConfirmationAlert" [visible]="clusterToDelete"
                      (onDelete)="deleteConfirmed()" (onCancel)="deleteCanceled()">
 </delete-confirmation>
 
 <grid-view #gridView [serviceEndpoint]="serviceEndpoint"
-                [searchPlaceholder]="'kubernetes.clusters.search.placeholder' | i18n">
+                     [searchPlaceholder]="'kubernetes.clusters.search.placeholder' | i18n">
 
-  <div title>{{ "kubernetes.clusters.title" | i18n }}</div>
+  <div title>{{"kubernetes.clusters.title" | i18n}}</div>
 
   <div toolbar>
     <clr-dg-action-bar>
@@ -47,33 +48,66 @@
             <clr-icon shape="ellipsis-vertical" size="20"></clr-icon>
           </button>
           <clr-dropdown-menu clrPosition="left-top" *clrIfOpen>
-            <button type="button" class="dropdown-item cluster-details" [routerLink]="['./cluster/' + item.documentId]">
-              <clr-icon shape="eye" size="20" class="card-drop-down-actions"></clr-icon>{{"projects.actions.details" | i18n}}</button>
-            <button *ngIf="operationSupported('DISABLE', item)" type="button" class="dropdown-item disableHost" (click)="disableHost($event, item)">
-              <clr-icon shape="pause" size="20" class="card-drop-down-actions"></clr-icon>{{ "hosts.actions.disable" | i18n }}</button>
-            <button *ngIf="operationSupported('ENABLE', item)" type="button" class="dropdown-item enableHost" (click)="enableHost($event, item)">
-              <clr-icon shape="play" size="20" class="card-drop-down-actions"></clr-icon>{{ "hosts.actions.enable" | i18n }}</button>
-            <button type="button" class="dropdown-item remove-cluster" (click)="deleteCluster($event, item)">
-              <clr-icon shape="trash" size="20" class="card-drop-down-actions"></clr-icon>{{"remove" | i18n}}</button>
+            <button type="button" class="dropdown-item cluster-details"
+                    [routerLink]="['./cluster/' + item.documentId]"><clr-icon
+                shape="eye" size="20" class="card-drop-down-actions"
+                ></clr-icon>{{"projects.actions.details" | i18n}}</button>
+            <button *ngIf="operationSupported('DISABLE', item)" type="button"
+                    class="dropdown-item disableHost" (click)="disableHost($event, item)"><clr-icon
+                shape="pause" size="20" class="card-drop-down-actions"
+                ></clr-icon>{{"hosts.actions.disable" | i18n}}</button>
+            <button *ngIf="operationSupported('ENABLE', item)" type="button"
+                    class="dropdown-item enableHost" (click)="enableHost($event, item)"><clr-icon
+                shape="play" size="20" class="card-drop-down-actions"
+                ></clr-icon>{{"hosts.actions.enable" | i18n}}</button>
+            <button type="button" class="dropdown-item remove-cluster"
+                    (click)="deleteCluster($event, item)"><clr-icon
+                shape="trash" size="20" class="card-drop-down-actions"
+                ></clr-icon>{{"remove" | i18n}}</button>
           </clr-dropdown-menu>
         </clr-dropdown>
       </div>
+
       <div card-content>
         <div class="form-group">
-          <label>{{ "clusters.status" | i18n }}</label>
-          <div class="status {{ item.status }}">{{ clusterState(item) }}</div>
+          <label>{{"clusters.status" | i18n}}</label>
+          <div class="status {{ item.status }}">{{clusterState(item)}}</div>
         </div>
         <div class="form-group">
-          <label>{{ "kubernetes.clusters.nodeCount" | i18n }}</label>
+          <label>{{"kubernetes.clusters.nodeCount" | i18n}}</label>
           <div>{{ nodeCount(item) }}</div>
         </div>
+          <div class="form-group">
+              <label>{{"clusters.cpu" | i18n}}</label>
+              <div class="row">
+                  <div class="progress-block col-sm-4">
+                      <div class="progress-static">
+                          <div class="progress-meter" attr.data-value="{{cpuPercentageLevel(item)}}"></div>
+                      </div>
+                  </div>
+                  <div class="col-sm-8 progress-details p7"
+                        >{{getResourceLabel(item.cpuUsage, item.totalCpu, 'Hz')}}</div>
+              </div>
+          </div>
+          <div class="form-group">
+              <label>{{"clusters.memory" | i18n}}</label>
+              <div class="row">
+                  <div class="progress-block col-sm-4">
+                      <div class="progress-static">
+                          <div class="progress-meter" attr.data-value="{{memoryPercentageLevel(item)}}"></div>
+                      </div>
+                  </div>
+                  <div class="col-sm-8 progress-details p7"
+                        >{{getResourceLabel(item.memoryUsage, item.totalMemory, 'B')}}</div>
+              </div>
+          </div>
         <div class="progress-static top">
           <div class="progress-meter {{ item.status }}" data-value="100"></div>
         </div>
       </div>
       <div card-footer>
         <button class="btn btn-sm btn-link" (click)="openDashboard(item)"
-                [disabled]="!isDashboardInstalled(item)">{{ "kubernetes.clusters.dashboard" | i18n }}</button>
+                [disabled]="!isDashboardInstalled(item)">{{"kubernetes.clusters.dashboard" | i18n}}</button>
       </div>
     </card>
   </ng-template>
