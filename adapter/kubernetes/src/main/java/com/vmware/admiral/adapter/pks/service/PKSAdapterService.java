@@ -12,9 +12,13 @@
 package com.vmware.admiral.adapter.pks.service;
 
 import java.net.URI;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.logging.Level;
 
 import com.google.common.cache.Cache;
@@ -22,10 +26,13 @@ import com.google.common.cache.CacheBuilder;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.pks.PKSContext;
+import com.vmware.admiral.adapter.pks.PKSException;
 import com.vmware.admiral.adapter.pks.PKSOperationType;
 import com.vmware.admiral.adapter.pks.PKSRemoteClientService;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.task.RetriableTask;
+import com.vmware.admiral.common.task.RetriableTaskBuilder;
 import com.vmware.admiral.common.util.DeferredUtils;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
@@ -53,6 +60,8 @@ public class PKSAdapterService extends StatelessService {
             .newBuilder()
             .expireAfterWrite(12, TimeUnit.HOURS)
             .build();
+
+    private static final long REMOVE_TOKEN_BEFORE_EXPIRE_MILLIS = 2 * MAINTENANCE_INTERVAL_MICROS;
 
     public static class RequestContext extends AdapterRequest {
         public Operation operation;
@@ -83,6 +92,26 @@ public class PKSAdapterService extends StatelessService {
     }
 
     @Override
+    public void handlePatch(Operation op) {
+        RequestContext ctx = op.getBody(RequestContext.class);
+        ctx.validate();
+        ctx.operation = op;
+
+        getEndpoint(ctx.resourceReference)
+                .thenAccept(e -> ctx.endpoint = e)
+                .thenCompose(aVoid -> processOperationWithRetry(ctx))
+                .exceptionally(t -> {
+                    if (t instanceof CompletionException) {
+                        t = t.getCause();
+                    }
+                    op.fail(t);
+                    DeferredUtils.logException(t, Level.SEVERE,
+                            e -> String.format("Error: %s", Utils.toString(e)), getClass());
+                    return null;
+                });
+    }
+
+    @Override
     public void handlePeriodicMaintenance(Operation op) {
         if (getProcessingStage() != ProcessingStage.AVAILABLE) {
             logFine("Skipping maintenance since service is not available: %s ", getUri());
@@ -98,58 +127,93 @@ public class PKSAdapterService extends StatelessService {
 
         logFine("Performing maintenance for: %s", getUri());
 
-        getClient().handleMaintenance(Operation.createPost(op.getUri()));
+        try {
+            getClient().handleMaintenance(Operation.createPost(op.getUri()));
+            expireCachedTokens();
+        } catch (Exception ignored) {
+        }
 
         op.complete();
     }
 
-    @Override
-    public void handlePatch(Operation op) {
-        RequestContext ctx = op.getBody(RequestContext.class);
-        ctx.validate();
-        ctx.operation = op;
-
-        getEndpoint(ctx.resourceReference)
-                .thenAccept(e -> ctx.endpoint = e)
-                .thenCompose(aVoid -> processOperation(ctx))
-                .exceptionally(t -> {
-                    op.fail(t);
-                    DeferredUtils.logException(t, Level.SEVERE,
-                            e -> String.format("Error: %s", Utils.toString(e)), getClass());
-                    return null;
-                });
-    }
-
-    private DeferredResult<Void> processOperation(RequestContext ctx) {
-        PKSOperationType operationType = PKSOperationType.instanceById(ctx.operationTypeId);
-        logInfo("Received [%s] for endpoint [%s]",
-                PKSOperationType.extractDisplayName(operationType.id), ctx.endpoint.name);
-
-        switch (operationType) {
-        case LIST_CLUSTERS:
-            return pksListClusters(ctx);
-        case GET_CLUSTER:
-            return pksGetCluster(ctx);
-        case CREATE_USER:
-            return pksCreateUser(ctx);
-        case CREATE_CLUSTER:
-            //TODO implementation
-            break;
-        case DELETE_CLUSTER:
-            //TODO implementation
-            break;
-        default:
-            break;
-        }
+    private DeferredResult<Void> processOperationWithRetry(RequestContext ctx) {
+        PKSOperationType ot = PKSOperationType.instanceById(ctx.operationTypeId);
+        logInfo("Received [%s] for endpoint [%s]", ot.getDisplayName(), ctx.endpoint.name);
 
         DeferredResult<Void> result = new DeferredResult<>();
-        result.fail(new IllegalArgumentException("unsupported operation"));
+        new RetriableTaskBuilder<Void>("process-pks-operation-" + ctx.operation.getId())
+                .withMaximumRetries(1)
+                .withRetryDelays(5L)
+                .withRetryDelaysTimeUnit(TimeUnit.SECONDS)
+                .withServiceHost(getHost())
+                .withTaskFunction(processOperationTask(ctx, ot))
+                .execute()
+                .whenComplete((ignored, t) -> {
+                    if (t != null) {
+                        result.fail(t);
+                    } else {
+                        result.complete(null);
+                    }
+                });
+
         return result;
+    }
+
+    private Function<RetriableTask<Void>, DeferredResult<Void>> processOperationTask(
+            RequestContext ctx, PKSOperationType operationType) {
+        return (task) -> {
+            DeferredResult<Void> result = new DeferredResult<>();
+            try {
+                switch (operationType) {
+                case LIST_CLUSTERS:
+                    result = pksListClusters(ctx);
+                    break;
+                case GET_CLUSTER:
+                    result = pksGetCluster(ctx);
+                    break;
+                case CREATE_USER:
+                    result = pksCreateUser(ctx);
+                    break;
+                /*
+                case CREATE_CLUSTER:
+                    //TODO implementation
+                    break;
+                case DELETE_CLUSTER:
+                    //TODO implementation
+                    break;
+                */
+                default:
+                    result.fail(new IllegalArgumentException("unsupported operation"));
+                    return result;
+                }
+
+                result.exceptionally(t -> {
+                    // if status code is 401 (UNAUTHORIZED) invalidate the token and retry,
+                    // else prevent retries
+                    if (t instanceof PKSException) {
+                        PKSException p = (PKSException) t;
+                        if (p.getErrorCode() == Operation.STATUS_CODE_UNAUTHORIZED) {
+                            logInfo("Operation for %s returned code 401, invalidate token and retry",
+                                    ctx.endpoint.documentSelfLink);
+                            pksContextCache.invalidate(ctx.endpoint.documentSelfLink);
+                        } else {
+                            task.preventRetries();
+                        }
+                    }
+                    throw DeferredUtils.wrap(t);
+                });
+
+            } catch (Exception e) {
+                result.fail(e);
+            }
+            return result;
+        };
     }
 
     private DeferredResult<Void> pksCreateUser(RequestContext ctx) {
         String cluster = PropertyUtils
-                .getPropertyString(ctx.customProperties, CLUSTER_NAME_PROP_NAME).orElse(null);
+                .getPropertyString(ctx.customProperties, CLUSTER_NAME_PROP_NAME)
+                .orElse(null);
 
         if (cluster == null) {
             //TODO proper localizable exception
@@ -160,25 +224,13 @@ public class PKSAdapterService extends StatelessService {
 
         return getPKSContext(ctx.endpoint)
                 .thenCompose(pksContext -> getClient().createUser(pksContext, cluster))
-                .thenAccept(authInfo -> ctx.operation.setBodyNoCloning(authInfo).complete())
-                .exceptionally(t -> {
-                    throw DeferredUtils.logErrorAndThrow(t,
-                            e -> String.format("Error creating user for cluster [%s], reason: %s",
-                                    cluster, e.getMessage()),
-                            getClass());
-                });
+                .thenAccept(authInfo -> ctx.operation.setBodyNoCloning(authInfo).complete());
     }
 
     private DeferredResult<Void> pksListClusters(RequestContext ctx) {
         return getPKSContext(ctx.endpoint)
                 .thenCompose(pksContext -> getClient().getClusters(pksContext))
-                .thenAccept(pksClusters -> ctx.operation.setBodyNoCloning(pksClusters).complete())
-                .exceptionally(t -> {
-                    throw DeferredUtils.logErrorAndThrow(t,
-                            e -> String.format("Error getting clusters for %s, reason: %s",
-                                    ctx.endpoint.documentSelfLink, e.getMessage()),
-                            getClass());
-                });
+                .thenAccept(pksClusters -> ctx.operation.setBodyNoCloning(pksClusters).complete());
     }
 
     private DeferredResult<Void> pksGetCluster(RequestContext ctx) {
@@ -190,14 +242,7 @@ public class PKSAdapterService extends StatelessService {
         }
         return getPKSContext(ctx.endpoint)
                 .thenCompose(pksContext -> getClient().getCluster(pksContext, ctx.computeState.id))
-                .thenAccept(pksCluster -> ctx.operation.setBodyNoCloning(pksCluster).complete())
-                .exceptionally(t -> {
-                    throw DeferredUtils.logErrorAndThrow(t,
-                            e -> String.format("Error getting cluster %s for %s, reason: %s",
-                                    ctx.computeState.id, ctx.endpoint.documentSelfLink,
-                                    e.getMessage()),
-                            getClass());
-                });
+                .thenAccept(pksCluster -> ctx.operation.setBodyNoCloning(pksCluster).complete());
     }
 
     private DeferredResult<PKSEndpointService.Endpoint> getEndpoint(URI uri) {
@@ -223,15 +268,40 @@ public class PKSAdapterService extends StatelessService {
     }
 
     private DeferredResult<PKSContext> getPKSContext(PKSEndpointService.Endpoint endpoint) {
-        //TODO implement retriable logic
         DeferredResult<PKSContext> result = new DeferredResult<>();
-        try {
-            result.complete(pksContextCache.get(endpoint.documentSelfLink,
-                    () -> createNewPKSContext(endpoint)));
-        } catch (ExecutionException e) {
-            result.fail(e);
-        }
+        new RetriableTaskBuilder<PKSContext>("get-token-from-" + endpoint.uaaEndpoint)
+                .withMaximumRetries(1)
+                .withRetryDelays(15L)
+                .withRetryDelaysTimeUnit(TimeUnit.SECONDS)
+                .withServiceHost(getHost())
+                .withTaskFunction(retriableLoginTask(endpoint))
+                .execute()
+                .whenComplete((pksContext, t) -> {
+                    if (t != null) {
+                        DeferredUtils.logException(t, Level.SEVERE,
+                                e -> String.format("Cannot get token from %s, reason: %s",
+                                        endpoint.uaaEndpoint, e.getMessage()), getClass());
+                        result.fail(t);
+                    } else {
+                        result.complete(pksContext);
+                    }
+                });
         return result;
+    }
+
+    private Function<RetriableTask<PKSContext>, DeferredResult<PKSContext>> retriableLoginTask(
+            PKSEndpointService.Endpoint endpoint) {
+
+        return (task) -> {
+            DeferredResult<PKSContext> result = new DeferredResult<>();
+            try {
+                result.complete(pksContextCache.get(endpoint.documentSelfLink,
+                        () -> createNewPKSContext(endpoint)));
+            } catch (ExecutionException e) {
+                result.fail(e);
+            }
+            return result;
+        };
     }
 
     private PKSContext createNewPKSContext(PKSEndpointService.Endpoint endpoint)
@@ -261,6 +331,19 @@ public class PKSAdapterService extends StatelessService {
 
         throw new IllegalArgumentException("Credential type " + authCredentialsType.name()
                 + " is not supported");
+    }
+
+    private void expireCachedTokens() {
+        ConcurrentMap<String, PKSContext> map = pksContextCache.asMap();
+        long currentTime = System.currentTimeMillis();
+        LinkedList<String> expiredKeys = new LinkedList<>();
+        map.forEach((key, pksContext) -> {
+            if (currentTime - pksContext.expireMillisTime > REMOVE_TOKEN_BEFORE_EXPIRE_MILLIS) {
+                expiredKeys.add(key);
+                logInfo("Removing expired token for %s", key);
+            }
+        });
+        expiredKeys.forEach(pksContextCache::invalidate);
     }
 
     private void initClient() {

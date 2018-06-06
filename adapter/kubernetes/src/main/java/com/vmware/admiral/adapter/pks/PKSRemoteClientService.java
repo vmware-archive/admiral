@@ -81,30 +81,28 @@ public class PKSRemoteClientService {
     }
 
     private static String encodeParameters(HashMap<String, String> m) {
-        if (m == null || m.isEmpty()) {
-            return "";
-        }
-
         StringBuilder sb = new StringBuilder();
-        m.entrySet().forEach(entry -> sb.append(encodeQueryParam(entry)));
-        if (sb.length() > 0) {
-            sb.setLength(sb.length() - 1);
+
+        if (m != null) {
+            m.entrySet().forEach(entry -> sb.append(encodeQueryParam(entry)));
+            if (sb.length() > 0) {
+                sb.setLength(sb.length() - 1);
+            }
         }
 
         return sb.toString();
     }
 
     private static String encodeQueryParam(Map.Entry<String, String> kv) {
+        String result = "";
         try {
-            return URLEncoder.encode(kv.getKey(), Utils.CHARSET)
+            result = URLEncoder.encode(kv.getKey(), Utils.CHARSET)
                     + UriUtils.URI_QUERY_PARAM_KV_CHAR
                     + URLEncoder.encode(kv.getValue(), Utils.CHARSET)
                     + UriUtils.URI_QUERY_PARAM_LINK_CHAR;
-        } catch (UnsupportedEncodingException e) {
-            logger.warning(() -> String.format("Skipping key-value: [%s]=[%s], reason: %s",
-                    kv.getKey(), kv.getValue(), e.getMessage()));
+        } catch (UnsupportedEncodingException ignored) {
         }
-        return "";
+        return result;
     }
 
     public DeferredResult<List<PKSCluster>> getClusters(PKSContext ctx) {
@@ -112,7 +110,7 @@ public class PKSRemoteClientService {
             URI uri = UriUtils.buildUri(ctx.pksAPIUri, "v1/clusters");
             Operation op = buildGetOperation(uri, ctx);
 
-            return serviceClient.sendWithDeferredResult(op)
+            return sendWithDeferredResult(op)
                     .thenApply(o -> {
                         PKSCluster[] clusters = o.getBody(PKSCluster[].class);
                         logger.fine(() -> String.format("Got response from %s for clusters : %s",
@@ -127,7 +125,7 @@ public class PKSRemoteClientService {
                     });
         } catch (Exception e) {
             logger.severe(String.format("Error getting PKS clusters from %s, reason: %s",
-                    ctx.pksAPIUri, e.getMessage()));
+                    ctx != null ? ctx.pksAPIUri : "null-context", e.getMessage()));
             return DeferredResult.failed(e);
         }
     }
@@ -137,7 +135,7 @@ public class PKSRemoteClientService {
             URI uri = UriUtils.buildUri(ctx.pksAPIUri, "v1/clusters", cluster);
             Operation op = buildGetOperation(uri, ctx);
 
-            return serviceClient.sendWithDeferredResult(op)
+            return sendWithDeferredResult(op)
                     .thenApply(o -> {
                         PKSCluster result = o.getBody(PKSCluster.class);
                         logger.fine(() -> String.format("Got response from %s for cluster %s : %s",
@@ -153,7 +151,7 @@ public class PKSRemoteClientService {
                     });
         } catch (Exception e) {
             logger.severe(String.format("Error getting PKS cluster from %s, reason: %s",
-                    ctx.pksAPIUri, e.getMessage()));
+                    ctx != null ? ctx.pksAPIUri : "null-context", e.getMessage()));
             return DeferredResult.failed(e);
         }
     }
@@ -163,7 +161,7 @@ public class PKSRemoteClientService {
             URI uri = UriUtils.buildUri(ctx.pksAPIUri, "v1/plans");
             Operation op = buildGetOperation(uri, ctx);
 
-            return serviceClient.sendWithDeferredResult(op)
+            return sendWithDeferredResult(op)
                     .thenApply(o -> {
                         PKSPlan[] plans = o.getBody(PKSPlan[].class);
                         logger.fine(() -> String.format("Got response from %s for plans : %s",
@@ -178,7 +176,7 @@ public class PKSRemoteClientService {
                     });
         } catch (Exception e) {
             logger.severe(String.format("Error getting PKS plans from %s, reason: %s",
-                    ctx.pksAPIUri, e.getMessage()));
+                    ctx != null ? ctx.pksAPIUri : "null-context", e.getMessage()));
             return DeferredResult.failed(e);
         }
     }
@@ -188,10 +186,10 @@ public class PKSRemoteClientService {
             URI uri = UriUtils.buildUri(ctx.pksAPIUri, "v1/clusters", cluster, "binds");
             Operation op = buildPostOperation(uri, ctx);
 
-            return serviceClient.sendWithDeferredResult(op)
+            return sendWithDeferredResult(op)
                     .thenApply(o -> {
                         KubeConfig config = o.getBody(KubeConfig.class);
-                        logger.fine(() -> String.format("Got response from %s for plans : %s",
+                        logger.fine(() -> String.format("Got response from %s for create user : %s",
                                 ctx.pksAPIUri, Utils.toJson(config)));
                         return config.users[0];
                     })
@@ -203,11 +201,13 @@ public class PKSRemoteClientService {
                     });
         } catch (Exception e) {
             logger.severe(String.format("Error creating user from %s, reason: %s",
-                    ctx.pksAPIUri, e.getMessage()));
+                    ctx != null ? ctx.pksAPIUri : "null-context", e.getMessage()));
             return DeferredResult.failed(e);
         }
     }
 
+    /*
+    // TODO implement necessary methods
     public void createCluster() {
     }
 
@@ -216,6 +216,7 @@ public class PKSRemoteClientService {
 
     public void resizeCluster() {
     }
+    */
 
     /**
      * Obtains token from UAA service.
@@ -252,14 +253,18 @@ public class PKSRemoteClientService {
                             return;
                         }
 
-                        UAATokenResponse response = o.getBody(UAATokenResponse.class);
-                        logger.fine(() -> String.format("Received token for %s from %s",
-                                user, uaaEndpoint));
+                        try {
+                            UAATokenResponse response = o.getBody(UAATokenResponse.class);
+                            logger.fine(() -> String.format("Received token for %s from %s",
+                                    user, uaaEndpoint));
 
-                        deferredResult.complete(response);
+                            deferredResult.complete(response);
+                        } catch (Exception e1) {
+                            deferredResult.fail(e1);
+                        }
                     });
 
-            host.sendRequest(op);
+            serviceClient.sendRequest(op);
         } catch (Exception e) {
             logger.severe(() -> String.format("Error sending login request for %s to %s,"
                     + " reason: %s", user, uaaEndpoint, e.getMessage()));
@@ -268,10 +273,6 @@ public class PKSRemoteClientService {
         }
 
         return deferredResult;
-    }
-
-    public void logout() {
-        // not needed
     }
 
     public void stop() {
@@ -312,7 +313,7 @@ public class PKSRemoteClientService {
     /**
      * Creates operation initialized with authorization header.
      *
-     * @param uri operation uri
+     * @param op  operation to modify
      * @param ctx PKS context with the token
      * @return operation instance
      */
@@ -353,6 +354,20 @@ public class PKSRemoteClientService {
                 .forceRemote();
 
         return o;
+    }
+
+    private DeferredResult<Operation> sendWithDeferredResult(Operation op) {
+        DeferredResult<Operation> deferred = new DeferredResult<>();
+        op.nestCompletion((response, e) -> {
+            if (e != null) {
+                PKSException p = new PKSException(e.getMessage(), e, response.getStatusCode());
+                deferred.fail(p);
+            } else {
+                deferred.complete(response);
+            }
+        });
+        serviceClient.send(op);
+        return deferred;
     }
 
 }

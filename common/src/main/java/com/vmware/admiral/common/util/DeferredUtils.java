@@ -33,18 +33,10 @@ public final class DeferredUtils {
      */
     public static CompletionException logErrorAndThrow(Throwable t, Function<Throwable, String> m,
             Class c) {
-        Throwable cause = t instanceof CompletionException ? t.getCause() : t;
 
-        try {
-            String msg = m.apply(cause);
-            Utils.log(c, c.getSimpleName(), Level.SEVERE, () -> msg);
-        } catch (Throwable e) {
-            Utils.logWarning("DeferredUtils: Cannot log an error, error: %s", e.getMessage());
-        }
+        logException(t, Level.SEVERE, m, c);
 
-        return t instanceof CompletionException
-                ? (CompletionException) t
-                : new CompletionException(t);
+        return wrap(t);
     }
 
     /**
@@ -65,6 +57,16 @@ public final class DeferredUtils {
         } catch (Throwable e) {
             Utils.logWarning("DeferredUtils: Cannot log an error, error: %s", e.getMessage());
         }
+    }
+
+    /**
+     * Returns same instance if <code>t</code> is instance of CompletionException or wraps it in
+     * CompletionException.
+     */
+    public static CompletionException wrap(Throwable t) {
+        return t instanceof CompletionException
+                ? (CompletionException) t
+                : new CompletionException(t);
     }
 
 }

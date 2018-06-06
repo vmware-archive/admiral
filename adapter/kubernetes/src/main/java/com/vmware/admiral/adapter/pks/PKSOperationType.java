@@ -42,7 +42,7 @@ public enum PKSOperationType {
         return operationsById.get(id);
     }
 
-    public static String extractDisplayName(String id) {
+    public String getDisplayName() {
         return id.substring(id.lastIndexOf(".") + 1);
     }
 
