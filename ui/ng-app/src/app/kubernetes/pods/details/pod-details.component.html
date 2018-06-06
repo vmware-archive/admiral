@@ -10,7 +10,7 @@
   -->
 
 <div class="main-view">
-    <img [src]="'/container-image-icons?container-image=' + entity?.documentSelfLink"/>
+    <img [src]="'./container-image-icons?container-image=' + entity?.documentSelfLink"/>
     <h3 class="pod-title">{{entity?.name}} - {{entity?.pod?.status.phase}}</h3>
 
     <clr-tabs>
