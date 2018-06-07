@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -19,6 +19,7 @@ import static org.junit.Assert.assertTrue;
 import java.lang.reflect.Field;
 import java.util.Base64;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
@@ -26,8 +27,11 @@ import com.vmware.xenon.common.Claims;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.AuthorizationContext;
 import com.vmware.xenon.common.ReflectionUtils;
+import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.common.TestServiceHost.SomeExampleService;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.test.VerificationHost;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 import com.vmware.xenon.services.common.SystemUserService;
 import com.vmware.xenon.services.common.authn.AuthenticationConstants;
@@ -37,7 +41,20 @@ public class AuthUtilsTest {
     private static final Field AUTH_CTX_FIELD = ReflectionUtils.getField(Operation.class,
             "authorizationCtx");
 
-    private ServiceHost host = new ServiceHost(){};
+    private VerificationHost host;
+
+    @Before
+    public void setUp() throws Throwable {
+        ServiceHost.Arguments args = new ServiceHost.Arguments();
+        args.sandbox = null; // ask runtime to pick a random storage location
+        args.port = 0; // ask runtime to pick a random port
+        args.isAuthorizationEnabled = false;
+
+        host = new VerificationHost();
+
+        host = VerificationHost.initialize(host, args);
+        host.start();
+    }
 
     @Test
     public void testCreateAuthorizationHeader() {
@@ -139,13 +156,35 @@ public class AuthUtilsTest {
         AuthUtils.validateSessionData(host, getOp, null, getOp.getAuthorizationContext());
         assertEquals(authCtxUser, getOp.getAuthorizationContext());
 
+        // Regular user valid authentication through token
+        claimsBuilder = new Claims.Builder();
+        claimsBuilder.setIssuer(AuthenticationConstants.DEFAULT_ISSUER);
+        claimsBuilder.setSubject("/core/authz/regular-user");
+
+        authCtxBuilder = AuthorizationContext.Builder.create();
+        authCtxBuilder.setClaims(claimsBuilder.getResult());
+        authCtxBuilder.setToken("regular-token");
+
+        authCtxUser = authCtxBuilder.getResult();
+
+        Service s = new SomeExampleService();
+        host.addPrivilegedService(SomeExampleService.class);
+        host.cacheAuthorizationContext(s, authCtxUser.getToken(), authCtxUser);
+
+        AUTH_CTX_FIELD.set(getOp, null);
+        getOp.addRequestHeader(Operation.REQUEST_AUTH_TOKEN_HEADER,
+                authCtxUser.getToken());
+        AuthUtils.validateSessionData(host, getOp, null, null);
+        assertEquals(authCtxUser, getOp.getAuthorizationContext());
+        host.clearAuthorizationContext(s, authCtxUser.getClaims().getSubject());
+
         // Regular user after logout authentication
         getOp.addRequestHeader(Operation.REQUEST_AUTH_TOKEN_HEADER, authCtxUser.getToken());
         AuthUtils.cleanupSessionData(getOp);
 
         AUTH_CTX_FIELD.set(getOp, authCtxUser);
         AuthUtils.validateSessionData(host, getOp, null, getOp.getAuthorizationContext());
-        assertEquals(null, getOp.getAuthorizationContext());
+        assertNull(getOp.getAuthorizationContext());
 
         claimsBuilder = new Claims.Builder();
         claimsBuilder.setIssuer(AuthenticationConstants.DEFAULT_ISSUER);
@@ -158,7 +197,8 @@ public class AuthUtilsTest {
         AuthorizationContext authCtxGuestUser = authCtxBuilder.getResult();
 
         AUTH_CTX_FIELD.set(getOp, authCtxUser);
-        AuthUtils.validateSessionData(host, getOp, authCtxGuestUser, getOp.getAuthorizationContext());
+        AuthUtils.validateSessionData(host, getOp, authCtxGuestUser,
+                getOp.getAuthorizationContext());
         assertEquals(authCtxGuestUser, getOp.getAuthorizationContext());
     }
 

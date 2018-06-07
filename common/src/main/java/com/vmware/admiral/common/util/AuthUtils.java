@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -59,19 +59,19 @@ public class AuthUtils {
         }
 
         if (BEARER_TOKEN_AUTH_TYPE.equals(authState.type)) {
-            return new StringBuffer("Bearer ").append(authState.privateKey).toString();
+            String token = EncryptionUtils.decrypt(authState.privateKey);
+            return "Bearer " + token;
         }
 
         AuthCredentialsType authCredentialsType = AuthCredentialsType.valueOf(authState.type);
-        if (AuthCredentialsType.Password.equals(authCredentialsType)) {
+        if (AuthCredentialsType.Password == authCredentialsType) {
             String username = authState.userEmail;
             String password = EncryptionUtils.decrypt(authState.privateKey);
 
             String code = new String(Base64.getEncoder().encode(
-                    new StringBuffer(username).append(":").append(password).toString().getBytes()));
-            String headerValue = new StringBuffer("Basic ").append(code).toString();
+                    (username + ":" + password).getBytes()));
 
-            return headerValue;
+            return "Basic " + code;
         }
 
         return null;
@@ -87,7 +87,8 @@ public class AuthUtils {
      * @param guestCtx
      *            AuthorizationContext for the guest user
      */
-    public static void validateSessionData(ServiceHost host, Operation op, AuthorizationContext guestCtx, AuthorizationContext authCtx) {
+    public static void validateSessionData(ServiceHost host, Operation op,
+            AuthorizationContext guestCtx, AuthorizationContext authCtx) {
         if (op == null) {
             return;
         }
@@ -95,7 +96,8 @@ public class AuthUtils {
         if (authCtx == null) {
             try {
                 Method getAuthorizationContext = ServiceHost.class
-                        .getDeclaredMethod("getAuthorizationContext", Operation.class, Consumer.class);
+                        .getDeclaredMethod("getAuthorizationContext", Operation.class,
+                                Consumer.class);
                 getAuthorizationContext.setAccessible(true);
 
                 Consumer<AuthorizationContext> con = (authorizationContext) -> {
@@ -108,7 +110,8 @@ public class AuthUtils {
                 };
 
                 getAuthorizationContext.invoke(host, op, con);
-            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e ) {
+            } catch (NoSuchMethodException | IllegalAccessException
+                    | InvocationTargetException e ) {
                 op.fail(e);
             }
         } else {
@@ -117,15 +120,15 @@ public class AuthUtils {
             }
 
             if (cleanedupSessionsCache.getIfPresent(authCtx.getToken()) != null) {
-
-                Utils.log(AuthUtils.class, AuthUtils.class.getSimpleName(), Level.FINE, "Invalid session '%s'!",
-                        authCtx.getToken());
+                Utils.log(AuthUtils.class, AuthUtils.class.getSimpleName(), Level.FINE,
+                        "Invalid session '%s'!", authCtx.getToken());
 
                 try {
                     AUTH_CTX_FIELD.set(op, guestCtx);
                 } catch (Exception e) {
                     Utils.log(AuthUtils.class, AuthUtils.class.getSimpleName(), Level.WARNING,
-                            "Error handling invalid session '%s': %s", authCtx.getToken(), e.getMessage());
+                            "Error handling invalid session '%s': %s", authCtx.getToken(),
+                            e.getMessage());
                 }
             }
         }
@@ -152,11 +155,10 @@ public class AuthUtils {
 
             op.addResponseHeader(Operation.REQUEST_AUTH_TOKEN_HEADER, "");
 
-            StringBuilder buf = new StringBuilder()
-                    .append(AuthenticationConstants.REQUEST_AUTH_TOKEN_COOKIE).append('=')
-                    .append(sessionId).append("; Path=/; Max-Age=0");
-
-            op.addResponseHeader(Operation.SET_COOKIE_HEADER, buf.toString());
+            String buf = AuthenticationConstants.REQUEST_AUTH_TOKEN_COOKIE + '='
+                    + sessionId + "; Path=/; Max-Age=0";
+            op.addResponseHeader(Operation.SET_COOKIE_HEADER, buf);
         }
     }
+
 }
