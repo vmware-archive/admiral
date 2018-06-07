@@ -153,6 +153,10 @@ public class UriUtilsExtended {
         return addressPatternMatcher(address).group("host");
     }
 
+    public static String extractPort(String address) {
+        return addressPatternMatcher(address).group("port");
+    }
+
     public static String extractHostAndPort(String address) {
         Matcher matcher = addressPatternMatcher(address);
         String hostname = matcher.group("host");

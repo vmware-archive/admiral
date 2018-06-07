@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -46,7 +47,6 @@ import com.vmware.admiral.compute.kubernetes.entities.pods.PodTemplateSpec;
 import com.vmware.admiral.compute.kubernetes.entities.replicaset.ReplicaSet;
 import com.vmware.admiral.compute.kubernetes.entities.replicationcontrollers.ReplicationController;
 import com.vmware.admiral.compute.kubernetes.entities.services.Service;
-import com.vmware.admiral.compute.kubernetes.entities.services.ServicePort;
 import com.vmware.admiral.compute.kubernetes.service.BaseKubernetesState;
 import com.vmware.admiral.compute.kubernetes.service.DeploymentService.DeploymentState;
 import com.vmware.admiral.compute.kubernetes.service.GenericKubernetesEntityService.GenericKubernetesEntityState;
@@ -375,14 +375,12 @@ public class KubernetesUtil {
     }
 
     public static String constructDashboardLink(ComputeState host, Service dashboard) {
-        if (dashboard.spec.ports != null) {
-            for (ServicePort port: dashboard.spec.ports) {
-                if (port.nodePort != null) {
-                    return UriUtilsExtended.extractHost(host.address) + ":" + port.nodePort;
-                }
-            }
-        }
-        return UriUtils.buildUri(UriUtils.buildUri(host.address), KUBERNETES_DASHBOARD_ACCESS_LINK)
+        String scheme = Optional.ofNullable(UriUtilsExtended.extractScheme(host.address))
+                .orElse(UriUtils.HTTPS_SCHEME);
+        String hostname = UriUtilsExtended.extractHost(host.address);
+        String port = Optional.ofNullable(UriUtilsExtended.extractPort(host.address)).orElse("-1");
+        return UriUtils.buildUri(scheme, hostname, Integer.parseInt(port),
+                KUBERNETES_DASHBOARD_ACCESS_LINK, null)
                 .toString();
     }
 }

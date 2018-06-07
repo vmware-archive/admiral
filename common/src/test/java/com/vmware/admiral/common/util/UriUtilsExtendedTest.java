@@ -358,4 +358,10 @@ public class UriUtilsExtendedTest {
         }
     }
 
+    @Test
+    public void testExtractHostPort() {
+        assertEquals("5000" ,UriUtilsExtended.extractPort("localhost:5000"));
+        assertEquals("5000" ,UriUtilsExtended.extractPort("https://test-host:5000"));
+        assertEquals(null ,UriUtilsExtended.extractPort("localhost"));
+    }
 }
