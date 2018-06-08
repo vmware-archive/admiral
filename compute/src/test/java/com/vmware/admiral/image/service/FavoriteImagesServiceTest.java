@@ -12,6 +12,8 @@
 package com.vmware.admiral.image.service;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertTrue;
 
 import java.util.LinkedList;
@@ -139,6 +141,35 @@ public class FavoriteImagesServiceTest extends ComputeBaseTest {
         removeImageFromFavorites(nginxImageState);
 
         checkImages();
+    }
+
+    @Test
+    public void testFavoriteImageEquals() {
+        FavoriteImage img1 = new FavoriteImage();
+        img1.name = "genericName";
+        img1.description = "genericDescription";
+        img1.registry = "genericRegistry";
+        FavoriteImage img2 = new FavoriteImage();
+        img2.name = "genericName";
+        img2.description = "genericDescription";
+        img2.registry = "genericRegistry";
+        FavoriteImage img3 = new FavoriteImage();
+        img3.name = "genericName2";
+        img3.description = "genericDescription2";
+        img3.registry = "genericRegistry2";
+        FavoriteImage img4 = null;
+
+        assertNotSame(img1, img2);
+        assertNotSame(img1, img3);
+        assertNotSame(img1, img4);
+
+        assertFalse(img1.equals(new Object()));
+        assertTrue(img1.equals(img1));
+        assertTrue(img1.equals(img2));
+        assertFalse(img1.equals(img3));
+        assertFalse(img1.equals(img4));
+
+        assertEquals(img1.hashCode(), img2.hashCode());
     }
 
     private void checkImages(FavoriteImage... expectedImages) throws Throwable {

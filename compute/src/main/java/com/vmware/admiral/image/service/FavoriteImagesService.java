@@ -14,7 +14,7 @@ package com.vmware.admiral.image.service;
 import java.util.Objects;
 
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.xenon.common.ServiceDocument;
+import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.xenon.common.StatefulService;
 
 public class FavoriteImagesService extends StatefulService {
@@ -28,14 +28,14 @@ public class FavoriteImagesService extends StatefulService {
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);
     }
 
-    public static class FavoriteImage extends ServiceDocument {
+    public static class FavoriteImage extends MultiTenantDocument {
+
         public static final String FIELD_NAME_NAME = "name";
         public static final String FIELD_NAME_DESCRIPTION = "description";
-
         public static final String FIELD_NAME_REGISTRY = "registry";
+
         public String name;
         public String description;
-
         public String registry;
 
         @Override
@@ -53,9 +53,8 @@ public class FavoriteImagesService extends StatefulService {
             }
             FavoriteImage i = (FavoriteImage) obj;
             return i.name.equals(this.name) &&
-                    i.description.equals(this.description) &&
-                    i.registry.equals(this.registry);
+                    i.registry.equals(this.registry) &&
+                    i.description.equals(this.description);
         }
-
     }
 }

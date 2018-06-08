@@ -1928,7 +1928,14 @@ services.triggerDataCollection = function() {
 
 services.loadPopularImages = function() {
   if (ft.areFavoriteImagesEnabled()) {
-    return get(links.FAVORITE_IMAGES + '?expand', null, true);
+    var params = $.extend(params || {}, {
+      [EXPAND_QUERY_PROP_NAME]: true,
+      [DOCUMENT_TYPE_PROP_NAME]: true,
+      [ODATA_LIMIT_PROP_NAME]: 1000
+    });
+    let url = mergeUrl(links.FAVORITE_IMAGES, params);
+
+    return get(url, null, true);
   } else {
     return list(links.POPULAR_IMAGES);
   }
