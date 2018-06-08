@@ -103,13 +103,13 @@
                             <clr-dg-column>{{"pks.add.existingClusters.columnTitleMastersCount" | i18n}}</clr-dg-column>
                             <clr-dg-column>{{"pks.add.existingClusters.columnTitleWorkersCount" | i18n}}</clr-dg-column>
                             <clr-dg-column>{{"pks.add.existingClusters.columnTitlePlan" | i18n}}</clr-dg-column>
-                            <clr-dg-column>Added</clr-dg-column>
+                            <clr-dg-column>{{"pks.add.existingClusters.columnTitleInAdmiral" | i18n}}</clr-dg-column>
 
                             <clr-dg-row *clrDgItems="let cluster of clusters" [clrDgItem]="cluster">
                                 <clr-dg-cell>{{cluster.name}}</clr-dg-cell>
                                 <clr-dg-cell>{{cluster.masterNodesCount}}</clr-dg-cell>
                                 <clr-dg-cell>{{cluster.workerNodesCount}}</clr-dg-cell>
-                                <clr-dg-cell>{{"pks.new.settings.plan." + cluster.plan | i18n}}</clr-dg-cell>
+                                <clr-dg-cell>{{(cluster.plan ? "pks.new.settings.plan." + cluster.plan : "notAvailable") | i18n}}</clr-dg-cell>
                                 <clr-dg-cell>{{(cluster.addedInAdmiral ? "pks.add.existingClusters.yes" : "pks.add.existingClusters.no") | i18n}}</clr-dg-cell>
                             </clr-dg-row>
 

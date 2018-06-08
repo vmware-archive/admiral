@@ -393,7 +393,7 @@
         "columnTitleName": "Name",
         "columnTitleMastersCount": "# Masters",
         "columnTitleWorkersCount": "# Workers",
-        "columnTitlePlan": "Plan",
+        "columnTitleInAdmiral": "Registered",
         "yes": "Yes",
         "no": "No",
         "count": "clusters"

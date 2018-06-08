@@ -100,12 +100,20 @@ export class KubernetesClusterAddExistingComponent implements OnInit {
                 // TODO clusters in provisioning (in process of adding to admiral)
                 // state should not be selectable
                 this.originalClusters = result.documents;
-                this.clusters = result.documents.map(resultDoc => {
+
+                this.clusters = this.originalClusters.map(resultDoc => {
+                    // cafe uses different data format
+                    let masterNodesCount = resultDoc.kubernetes_master_ips
+                        ? resultDoc.kubernetes_master_ips.length
+                        : resultDoc.masterIPs && resultDoc.masterIPs.length;
+                    let planName = resultDoc.plan_name
+                        ? resultDoc.plan_name : resultDoc.planName;
+
                     return {
                         uuid: resultDoc.uuid,
                         name: resultDoc.name,
-                        plan: resultDoc.plan_name,
-                        masterNodesCount: resultDoc.kubernetes_master_ips.length,
+                        plan: planName || '',
+                        masterNodesCount: masterNodesCount || 1,
                         workerNodesCount: resultDoc.parameters.kubernetes_worker_instances,
                         addedInAdmiral: resultDoc.parameters.__clusterExists
                     };
@@ -121,17 +129,27 @@ export class KubernetesClusterAddExistingComponent implements OnInit {
         let suitableForAddClusters = this.getSelectedClustersSuitableForAdd();
         if (suitableForAddClusters.length !== 1) {
             // Currently only single cluster can be added
+            this.alertType = Constants.alert.type.WARNING;
+            this.alertMessage = 'Cannot add selected clusters. '
+                                    + (suitableForAddClusters.length > 1
+                                        ? "Cannot add more than one cluster at a time."
+                                        : "Check if they are already added.");
             return;
         }
 
-        let selectedProject = this.projectService.getSelectedProject().documentSelfLink;
+        this.resetAlert();
+
+        let selectedProject = this.projectService.getSelectedProject();
+        let projectId = selectedProject.documentSelfLink
+                            ? selectedProject.documentSelfLink : selectedProject.id;
         this.isAdding = true;
         let clusterToAdd = this.originalClusters.find(originalCluster => {
                 return originalCluster.uuid === suitableForAddClusters[0].uuid;
         });
+
         let addClusterRequest = {
             'endpointLink': this.selectedEndpoint.documentSelfLink,
-            'tenantLinks': [ selectedProject ],
+            // 'tenantLinks': [ '/tenants/qe', projectId ], TODO to be fixed in the BE
             'cluster': clusterToAdd
         };
 

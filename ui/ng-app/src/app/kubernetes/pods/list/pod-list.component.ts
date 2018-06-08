@@ -9,8 +9,15 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from "@angular/router";
+import { AutoRefreshComponent } from "../../../components/base/auto-refresh.component";
+import { GridViewComponent } from "../../../components/grid-view/grid-view.component";
+import { DocumentService } from "../../../utils/document.service";
+import { ProjectService } from "../../../utils/project.service";
+import { FT } from "../../../utils/ft";
 import { Links } from '../../../utils/links';
+import { Utils } from "../../../utils/utils";
 
 const REGISTRY_SCHEME_REG_EXP = /^(https?):\/\//;
 const SECTION_SEPARATOR = '/';
@@ -43,10 +50,35 @@ function getImageNamespaceAndNameFromParts(namespace, imageAndTag) {
 /**
  * Pods list view.
  */
-export class PodListComponent {
+export class PodListComponent extends AutoRefreshComponent {
+    @ViewChild('gridView') gridView: GridViewComponent;
     serviceEndpoint = Links.PODS;
+    projectLink: string;
 
     selectedItem: any;
+
+    constructor(protected service: DocumentService, protected projectService: ProjectService,
+                protected router: Router, protected route: ActivatedRoute) {
+        super(router, route, FT.allowHostEventsSubscription(),
+            Utils.getClustersViewRefreshInterval(), true);
+
+        projectService.activeProject.subscribe((value) => {
+            if (value && value.documentSelfLink) {
+                this.projectLink = value.documentSelfLink;
+            } else if (value && value.id) {
+                this.projectLink = value.id;
+            } else {
+                this.projectLink = undefined;
+            }
+        });
+    }
+
+    ngOnInit(): void {
+        this.refreshFnCallScope = this.gridView;
+        this.refreshFn = this.gridView.autoRefresh;
+
+        super.ngOnInit();
+    }
 
     isItemSelected(item: any) {
         return item === this.selectedItem;

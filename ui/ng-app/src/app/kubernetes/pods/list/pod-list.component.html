@@ -9,7 +9,7 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<grid-view #gridView [serviceEndpoint]="serviceEndpoint"
+<grid-view #gridView [serviceEndpoint]="serviceEndpoint"  [projectLink]="projectLink"
            [searchPlaceholder]="'kubernetes.pods.search.placeholder' | i18n"
            [searchSuggestionProperties]="['name', 'ip', 'status']">
 

@@ -9,8 +9,15 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from "@angular/router";
+import { AutoRefreshComponent } from "../../../components/base/auto-refresh.component";
+import { GridViewComponent } from "../../../components/grid-view/grid-view.component";
+import { DocumentService } from "../../../utils/document.service";
+import { ProjectService } from "../../../utils/project.service";
+import { FT } from "../../../utils/ft";
 import { Links } from '../../../utils/links';
+import { Utils } from "../../../utils/utils";
 
 @Component({
   selector: 'deployment-list',
@@ -20,9 +27,35 @@ import { Links } from '../../../utils/links';
 /**
  * Deployments list view.
  */
-export class DeploymentListComponent {
+export class DeploymentListComponent extends AutoRefreshComponent {
+    @ViewChild('gridView') gridView: GridViewComponent;
     serviceEndpoint = Links.DEPLOYMENTS;
+    projectLink: string;
+
     selectedItem: any;
+
+    constructor(protected service: DocumentService, protected projectService: ProjectService,
+                protected router: Router, protected route: ActivatedRoute) {
+        super(router, route, FT.allowHostEventsSubscription(),
+            Utils.getClustersViewRefreshInterval(), true);
+
+        projectService.activeProject.subscribe((value) => {
+            if (value && value.documentSelfLink) {
+                this.projectLink = value.documentSelfLink;
+            } else if (value && value.id) {
+                this.projectLink = value.id;
+            } else {
+                this.projectLink = undefined;
+            }
+        });
+    }
+
+    ngOnInit(): void {
+        this.refreshFnCallScope = this.gridView;
+        this.refreshFn = this.gridView.autoRefresh;
+
+        super.ngOnInit();
+    }
 
     isItemSelected(item: any) {
         return item === this.selectedItem;

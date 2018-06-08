@@ -89,8 +89,15 @@ export class KubernetesClusterNewSettingsComponent extends BaseDetailsComponent
         if (this.entity) {
             this.editMode = true;
 
+            let entityEndpoint = this.entity.nodes && this.entity.nodes.length > 0
+                && this.entity.nodes[0] && this.entity.nodes[0].customProperties
+                && this.entity.nodes[0].customProperties['__pksEndpoint'];
+            this.newClusterSettingsForm.get('endpoint').setValue(entityEndpoint);
             this.newClusterSettingsForm.get('endpoint').disable();
+
             this.newClusterSettingsForm.get('name').setValue(this.entity.name);
+            this.newClusterSettingsForm.get('name').disable();
+
             this.newClusterSettingsForm.get('plan').disable();
             this.newClusterSettingsForm.get('master').disable();
             // TODO finish prepopulation

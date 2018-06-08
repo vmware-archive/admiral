@@ -83,7 +83,8 @@ var TemplatesViewVueComponent = Vue.extend({
     },
     searchTag: function() {
       let searchTag;
-      if (this.selectedCategory === constants.TEMPLATES.SEARCH_CATEGORY.IMAGES) {
+      if (this.selectedCategory === constants.TEMPLATES.SEARCH_CATEGORY.IMAGES
+            && this.model.listView.availableRepositories) {
         searchTag = 'registry';
       }
 

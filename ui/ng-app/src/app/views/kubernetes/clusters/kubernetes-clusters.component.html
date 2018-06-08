@@ -14,7 +14,7 @@
                      (onDelete)="deleteConfirmed()" (onCancel)="deleteCanceled()">
 </delete-confirmation>
 
-<grid-view #gridView [serviceEndpoint]="serviceEndpoint"
+<grid-view #gridView [serviceEndpoint]="serviceEndpoint" [projectLink]="projectLink"
                      [searchPlaceholder]="'kubernetes.clusters.search.placeholder' | i18n">
 
   <div title>{{"kubernetes.clusters.title" | i18n}}</div>

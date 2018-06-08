@@ -30,8 +30,9 @@ import * as I18n from 'i18next';
  * Kubernetes Clusters main grid view.
  */
 export class KubernetesClustersComponent extends AutoRefreshComponent {
-
     @ViewChild('gridView') gridView: GridViewComponent;
+
+    projectLink: string;
 
     serviceEndpoint = Links.CLUSTERS + '?type=KUBERNETES';
     selectedItem: any;
@@ -44,6 +45,23 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
 
         super(router, route, FT.allowHostEventsSubscription(),
                 Utils.getClustersViewRefreshInterval(), true);
+
+        projectService.activeProject.subscribe((value) => {
+            if (value && value.documentSelfLink) {
+                this.projectLink = value.documentSelfLink;
+            } else if (value && value.id) {
+                this.projectLink = value.id;
+            } else {
+                this.projectLink = undefined;
+            }
+        });
+    }
+
+    ngOnInit(): void {
+        this.refreshFnCallScope = this.gridView;
+        this.refreshFn = this.gridView.autoRefresh;
+
+        super.ngOnInit();
     }
 
     get deleteTitle() {
@@ -110,7 +128,8 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
     }
 
     deleteConfirmed() {
-        this.service.delete(this.clusterToDelete.documentSelfLink).then(() => {
+        this.service.delete(this.clusterToDelete.documentSelfLink, this.projectLink)
+            .then(() => {
             this.clusterToDelete = null;
 
             this.gridView.refresh();
@@ -178,7 +197,7 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
 
         var hostLink = cluster.nodeLinks[0];
 
-        this.service.patch(hostLink, {'powerState': Constants.hosts.state.ON})
+        this.service.patch(hostLink, {'powerState': Constants.hosts.state.ON}, this.projectLink)
             .then(() => {
 
                 this.gridView.refresh();
@@ -198,7 +217,7 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
 
         var hostLink = cluster.nodeLinks[0];
 
-        this.service.patch(hostLink, {'powerState': Constants.hosts.state.SUSPEND})
+        this.service.patch(hostLink, {'powerState': Constants.hosts.state.SUSPEND}, this.projectLink)
             .then(() => {
 
                 this.gridView.refresh();
