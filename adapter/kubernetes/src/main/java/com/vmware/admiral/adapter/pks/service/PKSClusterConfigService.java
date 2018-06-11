@@ -12,6 +12,7 @@
 package com.vmware.admiral.adapter.pks.service;
 
 import static com.vmware.admiral.adapter.pks.service.PKSAdapterService.CLUSTER_NAME_PROP_NAME;
+import static com.vmware.admiral.common.util.OperationUtil.PROJECT_ADMIRAL_HEADER;
 import static com.vmware.admiral.compute.ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME;
 import static com.vmware.admiral.compute.ContainerHostService.CONTAINER_HOST_TYPE_PROP_NAME;
 import static com.vmware.admiral.compute.ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME;
@@ -19,6 +20,7 @@ import static com.vmware.admiral.compute.ContainerHostService.PKS_CLUSTER_UUID_P
 import static com.vmware.admiral.compute.ContainerHostService.PKS_ENDPOINT_PROP_NAME;
 import static com.vmware.admiral.compute.cluster.ClusterService.CLUSTER_NAME_CUSTOM_PROP;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
@@ -34,6 +36,7 @@ import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
 import com.vmware.admiral.compute.cluster.ClusterService;
+import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
@@ -47,7 +50,7 @@ public class PKSClusterConfigService extends StatelessService {
 
     public static final String SELF_LINK = ManagementUriParts.PKS_CLUSTERS_CONFIG;
 
-    public static class AddClusterRequest {
+    public static class AddClusterRequest extends MultiTenantDocument {
 
         public static final String FIELD_NAME_ENDPOINT_LINK = "endpointLink";
         public static final String FIELD_NAME_CLUSTER = "cluster";
@@ -57,7 +60,6 @@ public class PKSClusterConfigService extends StatelessService {
 
         public String endpointLink;
         public PKSCluster cluster;
-        public List<String> tenantLinks;
 
         public void validate() {
             AssertUtil.assertNotNullOrEmpty(endpointLink, FIELD_NAME_ENDPOINT_LINK);
@@ -66,6 +68,7 @@ public class PKSClusterConfigService extends StatelessService {
             AssertUtil.assertNotNull(cluster.uuid, "cluster.uuid");
             AssertUtil.assertNotNull(cluster.name, "cluster.name");
             AssertUtil.assertNotNull(getExternalAddress(), "external-hostname");
+            AssertUtil.assertNotEmpty(tenantLinks, FIELD_NAME_TENANT_LINKS);
         }
 
         public String getExternalAddress() {
@@ -99,6 +102,7 @@ public class PKSClusterConfigService extends StatelessService {
     public void handlePost(Operation op) {
         try {
             AddClusterRequest request = op.getBody(AddClusterRequest.class);
+            setProjectLinkAsTenantLink(op, request);
             request.validate();
 
             handleAddRequest(op, request);
@@ -201,5 +205,15 @@ public class PKSClusterConfigService extends StatelessService {
                     }
                     consumer.accept(o.getBody(AuthCredentialsServiceState.class).documentSelfLink);
                 }).sendWith(this);
+    }
+
+    private void setProjectLinkAsTenantLink(Operation op, AddClusterRequest request) {
+        String projectLink = op.getRequestHeader(PROJECT_ADMIRAL_HEADER);
+        if (projectLink != null) {
+            if (request.tenantLinks == null) {
+                request.tenantLinks = new ArrayList<>();
+            }
+            request.tenantLinks.add(projectLink);
+        }
     }
 }
