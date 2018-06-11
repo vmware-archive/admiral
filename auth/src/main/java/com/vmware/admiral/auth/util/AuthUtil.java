@@ -49,6 +49,7 @@ import com.vmware.admiral.compute.container.TemplateSearchService;
 import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
 import com.vmware.admiral.image.service.ContainerImageService;
 import com.vmware.admiral.image.service.ContainerImageTagsService;
+import com.vmware.admiral.image.service.FavoriteImageFactoryService;
 import com.vmware.admiral.image.service.PopularImagesService;
 import com.vmware.admiral.log.EventLogService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
@@ -278,7 +279,10 @@ public class AuthUtil {
                 // the call is skipped for basic user.
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
                         ManagementUriParts.NOTIFICATIONS,
-                        MatchType.TERM, Occurance.SHOULD_OCCUR);
+                        MatchType.TERM, Occurance.SHOULD_OCCUR)
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(FavoriteImageFactoryService.SELF_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR);
 
         // Add global registries read-only access clause
         Query globalRegistriesClause = Query.Builder

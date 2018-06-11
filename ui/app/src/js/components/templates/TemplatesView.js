@@ -254,10 +254,12 @@ var TemplatesViewVueComponent = Vue.extend({
           return this.model.isFavorite || favoriteImages.includes(this.model.documentId);
         },
         addToFavoriteSupported: function() {
-          return ft.areFavoriteImagesEnabled() && this.isRegistryGlobal && !this.isFavorite;
+          return ft.areFavoriteImagesEnabled() && utils.isAccessAllowed(['CLOUD_ADMIN']) &&
+              this.isRegistryGlobal && !this.isFavorite;
         },
         removeFromFavoriteSupported: function() {
-          return ft.areFavoriteImagesEnabled() && this.model.isFavorite;
+          return ft.areFavoriteImagesEnabled() && utils.isAccessAllowed(['CLOUD_ADMIN']) &&
+              this.model.isFavorite;
         },
         isPksEnabled: function() {
           return ft.isPksEnabled();
