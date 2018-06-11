@@ -149,14 +149,13 @@ export class KubernetesClusterAddExistingComponent implements OnInit {
 
         let addClusterRequest = {
             'endpointLink': this.selectedEndpoint.documentSelfLink,
-            // 'tenantLinks': [ '/tenants/qe', projectId ], TODO to be fixed in the BE
+           // 'tenantLinks': [ '/tenants/qe', projectId ], // TODO to be fixed in the BE
             'cluster': clusterToAdd
         };
 
         this.service.post(Links.PKS_CLUSTERS_ADD, addClusterRequest, selectedProject)
             .then((result) => {
                 this.isAdding = false;
-                console.log('Clusters added', result);
                 this.goBack();
         }).catch(error => {
             this.isAdding = false;

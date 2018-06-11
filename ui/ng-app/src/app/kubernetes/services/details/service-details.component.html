@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~ Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
   ~
   ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
   ~ You may not use this product except in compliance with the License.
@@ -9,32 +9,31 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<div *ngIf="entity">
-  <table class="table table-hover">
-    <thead>
-      <tr>
-        <th>{{"customProperties.name" | i18n}}</th>
-        <th>{{"customProperties.value" | i18n}}</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>{{"ports" | i18n: { "ns": "kubernetes"} }}</td>
-        <td>
-          <div *ngFor="let portLink of portLinks">
-            <a *ngIf="portLink.link" [href]="portLink.link" target="_blank">{{portLink.name}}</a>
-            <span *ngIf="!portLink.link">{{portLink.name}}</span>
-          </div>
-        </td>
-      </tr>
-      <tr>
-        <td>{{"creation" | i18n: { "ns": "kubernetes"} }}</td>
-        <td>{{entity.service.metadata.creationTimestamp}}</td>
-      </tr>
-      <tr>
-        <td>{{"namespace" | i18n: { "ns": "kubernetes"} }}</td>
-        <td>{{entity.service.metadata.namespace}}</td>
-      </tr>
-    </tbody>
-  </table>
+<div class="main-view">
+    <img [src]="'./container-image-icons?container-image=' + entity?.documentSelfLink"/>
+    <h3 class="service-title">{{entity?.name}}</h3>
+
+    <div class="service-summary">
+        <div class="summary-subsection">
+            <div class="summary-subsection-title">{{ "kubernetes.services.item.summaryTitle" | i18n }}</div>
+            <div class="summary-subsection-content-row">
+                <div class="left-column">{{"kubernetes.services.item.creation" | i18n}}</div>
+                <div class="right-column">{{entity?.service?.metadata.creationTimestamp | date:'yyyy-MM-dd HH:mm:ss' || "--"}}</div>
+                <div class="clear"></div>
+            </div>
+            <div class="summary-subsection-content-row">
+                <div class="left-column">{{"kubernetes.services.item.namespace" | i18n}}</div>
+                <div class="right-column">{{entity?.service.metadata.namespace}}</div>
+                <div class="clear"></div>
+            </div>
+            <div class="summary-subsection-content-row">
+                <div class="left-column">{{"kubernetes.services.item.ports" | i18n}}</div>
+                <div class="right-column"><div *ngFor="let portLink of portLinks">
+                    <a *ngIf="portLink.link" [href]="portLink.link" target="_blank">{{portLink.name}}</a>
+                    <span *ngIf="!portLink.link">{{portLink.name}}</span>
+                </div></div>
+                <div class="clear"></div>
+            </div>
+        </div>
+    </div>
 </div>

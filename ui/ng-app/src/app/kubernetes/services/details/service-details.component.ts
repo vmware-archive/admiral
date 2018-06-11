@@ -72,7 +72,7 @@ let getPortLinks = function(hostIp, ports) {
   encapsulation: ViewEncapsulation.None
 })
 export class ServiceDetailsComponent extends BaseDetailsComponent {
-  private portLinks: Array<any>;
+  portLinks: Array<any>;
 
   constructor(route: ActivatedRoute, router: Router, service: DocumentService,
               errorService: ErrorService) {

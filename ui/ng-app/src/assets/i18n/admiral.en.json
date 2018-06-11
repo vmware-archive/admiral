@@ -355,6 +355,18 @@
             },
             "logsTitle": "Logs"
         }
+    },
+    "services": {
+      "title": "Services",
+      "search": {
+        "placeholder": "Search for services"
+      },
+      "item": {
+        "summaryTitle": "Summary",
+        "creation": "Created:",
+        "namespace": "Namespace:",
+        "ports": "Ports:"
+      }
     }
   },
   "pks": {

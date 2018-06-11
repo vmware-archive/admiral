@@ -228,18 +228,7 @@ export class DocumentService {
 
   public listPksClusters(params) {
       return this.ajax.get(Links.PKS_CLUSTERS, params).then(result => {
-          let documents;
-
-          if (FT.isApplicationEmbedded()) {
-             documents = result || [];
-          } else {
-              documents = result.documentLinks.map(link => {
-                  let document = result.documents[link];
-                  document.documentId = Utils.getDocumentId(link);
-
-                  return document;
-              });
-          }
+          let documents = result || [];
 
           return new DocumentListResult(documents, result.nextPageLink, result.totalCount);
       });

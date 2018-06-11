@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -9,21 +9,67 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { slideAndFade } from '../../../utils/transitions';
+import { Component, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from "@angular/router";
 import { Links } from '../../../utils/links';
-import { DocumentService } from '../../../utils/document.service';
-import { NavigationContainerType } from '../../../components/navigation-container/navigation-container.component';
-import { ServiceDetailsComponent } from './../details/service-details.component';
-
+import { AutoRefreshComponent } from "../../../components/base/auto-refresh.component";
+import { GridViewComponent } from "../../../components/grid-view/grid-view.component";
+import { DocumentService } from "../../../utils/document.service";
+import { ProjectService } from "../../../utils/project.service";
+import { FT } from "../../../utils/ft";
+import { Utils } from "../../../utils/utils";
 
 @Component({
   selector: 'service-list',
   templateUrl: './service-list.component.html',
-  styleUrls: ['./service-list.component.scss'],
-  animations: [slideAndFade()]
+  styleUrls: ['./service-list.component.scss']
 })
-export class ServiceListComponent {
-  serviceEndpoint = Links.SERVICES;
+/**
+ * Kubernetes services list view.
+ */
+export class ServiceListComponent extends AutoRefreshComponent {
+    @ViewChild('gridView') gridView: GridViewComponent;
+    serviceEndpoint = Links.SERVICES;
+    projectLink: string;
+
+
+    selectedItem: any;
+
+    constructor(protected service: DocumentService, protected projectService: ProjectService,
+                protected router: Router, protected route: ActivatedRoute) {
+        super(router, route, FT.allowHostEventsSubscription(),
+            Utils.getClustersViewRefreshInterval(), true);
+
+        projectService.activeProject.subscribe((value) => {
+            if (value && value.documentSelfLink) {
+                this.projectLink = value.documentSelfLink;
+            } else if (value && value.id) {
+                this.projectLink = value.id;
+            } else {
+                this.projectLink = undefined;
+            }
+        });
+    }
+
+    ngOnInit(): void {
+        this.refreshFnCallScope = this.gridView;
+        this.refreshFn = this.gridView.autoRefresh;
+
+        super.ngOnInit();
+    }
+
+    isItemSelected(item: any) {
+        return item === this.selectedItem;
+    }
+
+    toggleItemSelection($event, item) {
+        $event.stopPropagation();
+
+        if (this.isItemSelected(item)) {
+            // clear selection
+            this.selectedItem = null;
+        } else {
+            this.selectedItem = item;
+        }
+    }
 }
