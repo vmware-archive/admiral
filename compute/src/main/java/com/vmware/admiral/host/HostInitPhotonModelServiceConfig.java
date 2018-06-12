@@ -11,7 +11,11 @@
 
 package com.vmware.admiral.host;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.vmware.photon.controller.model.PhotonModelMetricServices;
 import com.vmware.photon.controller.model.PhotonModelServices;
@@ -20,6 +24,7 @@ import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.photon.controller.model.security.PhotonModelSecurityServices;
 import com.vmware.photon.controller.model.security.ssl.ServerX509TrustManager;
 import com.vmware.photon.controller.model.tasks.PhotonModelTaskServices;
+import com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.serialization.JsonMapper;
@@ -60,6 +65,19 @@ public class HostInitPhotonModelServiceConfig {
                     "Exception staring photon model adapter registry: %s",
                     Utils.toString(e));
         }
+    }
+
+    public static Collection<ServiceMetadata> getServiceMetadata() {
+        // add all services even if they are remote in this particular configuration
+        // this ensures the db schema is the same in different configurations and validation passes
+        return Stream.of(
+                PhotonModelServices.SERVICES_METADATA,
+                PhotonModelTaskServices.SERVICES_METADATA,
+                PhotonModelMetricServices.SERVICES_METADATA,
+                PhotonModelSecurityServices.SERVICES_METADATA)
+
+                .flatMap(Arrays::stream)
+                .collect(Collectors.toList());
     }
 
 }

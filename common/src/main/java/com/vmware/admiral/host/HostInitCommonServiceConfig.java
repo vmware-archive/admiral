@@ -11,6 +11,12 @@
 
 package com.vmware.admiral.host;
 
+import static com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata.factoryService;
+import static com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata.service;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -33,6 +39,7 @@ import com.vmware.admiral.service.common.ReverseProxyService;
 import com.vmware.admiral.service.common.SslTrustCertificateFactoryService;
 import com.vmware.admiral.service.common.SslTrustImportService;
 import com.vmware.admiral.service.common.UniquePropertiesService;
+import com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
@@ -43,6 +50,26 @@ import com.vmware.xenon.common.Utils;
 public class HostInitCommonServiceConfig extends HostInitServiceHelper {
     public static final int COMMON_SERVICES_AVAILABILITY_TIMEOUT = Integer
             .getInteger("common.services.initialization.timeout.seconds", 300);
+
+    public static final Collection<ServiceMetadata> SERVICES_METADATA = Collections
+            .unmodifiableList(Arrays.asList(
+                    service(NodeHealthCheckService.class),
+                    service(NodeMigrationService.class),
+                    service(SslTrustImportService.class),
+                    service(ConfigurationFactoryService.class),
+                    service(SslTrustCertificateFactoryService.class),
+                    service(CommonInitialBootService.class),
+                    service(ReverseProxyService.class),
+                    service(ExtensibilitySubscriptionFactoryService.class),
+                    service(LongURIGetService.class),
+                    service(RegistryFactoryService.class),
+                    service(EventLogFactoryService.class),
+                    factoryService(ResourceNamePrefixService.class),
+                    factoryService(LogService.class),
+                    factoryService(CounterSubTaskService.class),
+                    factoryService(ExtensibilitySubscriptionCallbackService.class),
+                    factoryService(EventTopicService.class),
+                    factoryService(UniquePropertiesService.class)));
 
     @SuppressWarnings("unchecked")
     private static final Class<? extends Service>[] servicesToStart = new Class[] {
@@ -125,5 +152,4 @@ public class HostInitCommonServiceConfig extends HostInitServiceHelper {
             throw new RuntimeException(t[0]);
         }
     }
-
 }

@@ -16,7 +16,6 @@ import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_CLUSTER_STATUS_REM
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_ENDPOINT_PROP_NAME;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_LAST_ACTION_DELETE;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_LAST_ACTION_STATE_FAILED;
-import static com.vmware.admiral.request.pks.PKSClusterRemovalTaskService.PKSClusterRemovalTaskState.SubStage;
 import static com.vmware.admiral.request.pks.PKSClusterRemovalTaskService.PKSClusterRemovalTaskState.SubStage.INSTANCES_REMOVED;
 import static com.vmware.admiral.request.pks.PKSClusterRemovalTaskService.PKSClusterRemovalTaskState.SubStage.INSTANCES_REMOVING;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
@@ -37,6 +36,7 @@ import com.vmware.admiral.adapter.pks.entities.PKSCluster;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.compute.cluster.ClusterService;
+import com.vmware.admiral.request.pks.PKSClusterRemovalTaskService.PKSClusterRemovalTaskState.SubStage;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.TaskServiceDocument;
@@ -113,7 +113,6 @@ public class PKSClusterRemovalTaskService extends
         super.toggleOption(ServiceOption.PERSISTENCE, true);
         super.toggleOption(ServiceOption.REPLICATION, true);
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
-        super.toggleOption(ServiceOption.INSTRUMENTATION, true);
         super.toggleOption(ServiceOption.PERIODIC_MAINTENANCE, true);
         super.setMaintenanceIntervalMicros(POLL_PKS_ENDPOINT_INTERVAL_MICROS);
         super.transientSubStages = SubStage.TRANSIENT_SUB_STAGES;

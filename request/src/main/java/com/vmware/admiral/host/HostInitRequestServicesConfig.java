@@ -11,6 +11,13 @@
 
 package com.vmware.admiral.host;
 
+import static com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata.factoryService;
+import static com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata.service;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+
 import com.vmware.admiral.request.ClosureAllocationTaskService;
 import com.vmware.admiral.request.ClosureProvisionTaskService;
 import com.vmware.admiral.request.ClosureRemovalTaskFactoryService;
@@ -53,12 +60,59 @@ import com.vmware.admiral.request.pks.PKSClusterProvisioningTaskService;
 import com.vmware.admiral.request.pks.PKSClusterRemovalTaskService;
 import com.vmware.admiral.request.pks.PKSClusterResizeTaskService;
 import com.vmware.admiral.service.common.TagAssignmentService;
+import com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 
 public class HostInitRequestServicesConfig extends HostInitServiceHelper {
+
+    public static final Collection<ServiceMetadata> SERVICES_METADATA = Collections
+            .unmodifiableList(
+                    Arrays.asList(service(RequestBrokerFactoryService.class),
+                            service(ContainerAllocationTaskFactoryService.class),
+                            service(ReservationTaskFactoryService.class),
+                            service(ReservationRemovalTaskFactoryService.class),
+                            service(ContainerRemovalTaskFactoryService.class),
+                            service(ClosureRemovalTaskFactoryService.class),
+                            service(ContainerOperationTaskFactoryService.class),
+                            service(ContainerHostRemovalTaskFactoryService.class),
+                            service(CompositionSubTaskFactoryService.class),
+                            service(CompositionTaskFactoryService.class),
+                            service(RequestStatusFactoryService.class),
+                            service(NotificationsService.class),
+                            service(RequestInitialBootService.class),
+                            service(TagAssignmentService.class),
+                            service(RequestBrokerGraphService.class),
+                            factoryService(ClosureAllocationTaskService.class),
+                            factoryService(ClosureProvisionTaskService.class),
+                            factoryService(ContainerRedeploymentTaskService.class),
+                            factoryService(ContainerNetworkAllocationTaskService.class),
+                            factoryService(ContainerNetworkProvisionTaskService.class),
+                            factoryService(ContainerLoadBalancerAllocationTaskService.class),
+                            factoryService(ContainerLoadBalancerProvisionTaskService.class),
+                            factoryService(ContainerLoadBalancerRemovalTaskService.class),
+                            factoryService(ContainerLoadBalancerReconfigureTaskService.class),
+                            factoryService(ContainerLoadBalancerBootstrapService.class),
+                            factoryService(ContainerNetworkRemovalTaskService.class),
+                            factoryService(ContainerVolumeAllocationTaskService.class),
+                            factoryService(ContainerVolumeProvisionTaskService.class),
+                            factoryService(ContainerVolumeRemovalTaskService.class),
+                            factoryService(ClusteringTaskService.class),
+                            factoryService(ComputeRemovalTaskService.class),
+                            factoryService(PlacementHostSelectionTaskService.class),
+                            factoryService(ResourceNamePrefixTaskService.class),
+                            factoryService(ReservationAllocationTaskService.class),
+                            factoryService(CompositeComponentRemovalTaskService.class),
+                            factoryService(ServiceDocumentDeleteTaskService.class),
+                            factoryService(ContainerPortsAllocationTaskService.class),
+                            factoryService(ContainerControlLoopService.class),
+                            factoryService(CompositeKubernetesProvisioningTaskService.class),
+                            factoryService(CompositeKubernetesRemovalTaskService.class),
+                            factoryService(PKSClusterProvisioningTaskService.class),
+                            factoryService(PKSClusterRemovalTaskService.class),
+                            factoryService(PKSClusterResizeTaskService.class)));
 
     public static void startServices(ServiceHost host) {
         startServices(host,

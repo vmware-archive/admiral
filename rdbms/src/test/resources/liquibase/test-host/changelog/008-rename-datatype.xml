@@ -1,0 +1,967 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet author="dannyh (generated)" id="1524096474765-1">
+        <addColumn tableName="docs_core_transactionservicestate">
+            <column name="(documentkind)" type="text"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-2">
+        <createIndex indexName="docs_core_authcredentialsservicestate_idx_2f3ac71aa5f52c65" tableName="docs_core_authcredentialsservicestate">
+            <column computed="true" name="(data -&gt; 'tenantLinks')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-3">
+        <createIndex indexName="docs_core_authcredentialsservicestate_idx_data" tableName="docs_core_authcredentialsservicestate">
+            <column name="data"/>
+        </createIndex>
+        <modifySql>
+            <regExpReplace replace="\(.+\)" with=" USING gin $0"/>
+        </modifySql>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-4">
+        <createIndex indexName="docs_core_checkpointstate_idx_data" tableName="docs_core_checkpointstate">
+            <column name="data"/>
+        </createIndex>
+        <modifySql>
+            <regExpReplace replace="\(.+\)" with=" USING gin $0"/>
+        </modifySql>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-5">
+        <createIndex indexName="docs_core_resourcegroupstate_idx_2d54f671affb335" tableName="docs_core_resourcegroupstate">
+            <column computed="true" name="(data #&gt; '{query,term,matchType}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-6">
+        <createIndex indexName="docs_core_resourcegroupstate_idx_2db9a091052bb35" tableName="docs_core_resourcegroupstate">
+            <column computed="true" name="(data #&gt; '{query,term,range,min}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-7">
+        <createIndex indexName="docs_core_resourcegroupstate_idx_35537be8cab06467" tableName="docs_core_resourcegroupstate">
+            <column computed="true" name="(data #&gt; '{query,term,propertyName}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-8">
+        <createIndex indexName="docs_core_resourcegroupstate_idx_38f79a093e11bf35" tableName="docs_core_resourcegroupstate">
+            <column computed="true" name="(data #&gt; '{query,term,range,max}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-9">
+        <createIndex indexName="docs_core_resourcegroupstate_idx_5fa9cc8c2c997267" tableName="docs_core_resourcegroupstate">
+            <column computed="true" name="(data #&gt; '{query,term,propertyType}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-10">
+        <createIndex indexName="docs_core_resourcegroupstate_idx_675594ffae9a90f" tableName="docs_core_resourcegroupstate">
+            <column computed="true" name="(data #&gt; '{query,term,matchValue}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-11">
+        <createIndex indexName="docs_core_resourcegroupstate_idx_7cf4f5de1836535" tableName="docs_core_resourcegroupstate">
+            <column computed="true" name="(data #&gt; '{query,term,sortOrder}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-12">
+        <createIndex indexName="docs_core_resourcegroupstate_idx_8176519f4fa04f0f" tableName="docs_core_resourcegroupstate">
+            <column computed="true" name="(data #&gt; '{query,term,range,type}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-13">
+        <createIndex indexName="docs_core_resourcegroupstate_idx_be2b6bd6d3410f87" tableName="docs_core_resourcegroupstate">
+            <column computed="true" name="(data #&gt; '{query,occurance}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-14">
+        <createIndex indexName="docs_core_resourcegroupstate_idx_c0e86a29d05d301d" tableName="docs_core_resourcegroupstate">
+            <column computed="true" name="(data #&gt; '{query,term,range,precisionStep}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-15">
+        <createIndex indexName="docs_core_resourcegroupstate_idx_data" tableName="docs_core_resourcegroupstate">
+            <column name="data"/>
+        </createIndex>
+        <modifySql>
+            <regExpReplace replace="\(.+\)" with=" USING gin $0"/>
+        </modifySql>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-16">
+        <createIndex indexName="docs_core_tenantstate_idx_data" tableName="docs_core_tenantstate">
+            <column name="data"/>
+        </createIndex>
+        <modifySql>
+            <regExpReplace replace="\(.+\)" with=" USING gin $0"/>
+        </modifySql>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-17">
+        <createIndex indexName="docs_core_transactionservicestate_idx_1d0f9d5455990ef" tableName="docs_core_transactionservicestate">
+            <column computed="true" name="(data -&gt; 'taskInfo.failure.details')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-18">
+        <createIndex indexName="docs_core_transactionservicestate_idx_2f3ac71aa5f52c65" tableName="docs_core_transactionservicestate">
+            <column computed="true" name="(data -&gt; 'tenantLinks')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-19">
+        <createIndex indexName="docs_core_transactionservicestate_idx_2ff60eb8b379b067" tableName="docs_core_transactionservicestate">
+            <column computed="true" name="(data #&gt; '{taskInfo,durationMicros}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-20">
+        <createIndex indexName="docs_core_transactionservicestate_idx_4aa8334f8e109edd" tableName="docs_core_transactionservicestate">
+            <column computed="true" name="(data -&gt; 'readLinks')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-21">
+        <createIndex indexName="docs_core_transactionservicestate_idx_53b6b9f9e3801305" tableName="docs_core_transactionservicestate">
+            <column computed="true" name="(data #&gt; '{taskInfo,failure,message}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-22">
+        <createIndex indexName="docs_core_transactionservicestate_idx_593532c4966bb0dd" tableName="docs_core_transactionservicestate">
+            <column computed="true" name="(data #&gt; '{taskInfo,stage}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-23">
+        <createIndex indexName="docs_core_transactionservicestate_idx_72ff1d9eaee6839f" tableName="docs_core_transactionservicestate">
+            <column computed="true" name="(data -&gt; 'createdLinks')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-24">
+        <createIndex indexName="docs_core_transactionservicestate_idx_76d709f94e2d319f" tableName="docs_core_transactionservicestate">
+            <column computed="true" name="(data -&gt; 'deletedLinks')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-25">
+        <createIndex indexName="docs_core_transactionservicestate_idx_93fc43810509d8ef" tableName="docs_core_transactionservicestate">
+            <column name="(documentkind)"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-26">
+        <createIndex indexName="docs_core_transactionservicestate_idx_9a4f22c1653ec0cd" tableName="docs_core_transactionservicestate">
+            <column computed="true" name="(data #&gt; '{taskInfo,failure,messageId}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-27">
+        <createIndex indexName="docs_core_transactionservicestate_idx_d9dc2bbb580b4a65" tableName="docs_core_transactionservicestate">
+            <column computed="true" name="(data -&gt; 'failedLinks')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-28">
+        <createIndex indexName="docs_core_transactionservicestate_idx_fa617e66378ee257" tableName="docs_core_transactionservicestate">
+            <column computed="true" name="(data #&gt; '{taskInfo,failure,statusCode}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-29">
+        <createIndex indexName="docs_core_usergroupstate_idx_2d54f671affb335" tableName="docs_core_usergroupstate">
+            <column computed="true" name="(data #&gt; '{query,term,matchType}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-30">
+        <createIndex indexName="docs_core_usergroupstate_idx_2db9a091052bb35" tableName="docs_core_usergroupstate">
+            <column computed="true" name="(data #&gt; '{query,term,range,min}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-31">
+        <createIndex indexName="docs_core_usergroupstate_idx_38f79a093e11bf35" tableName="docs_core_usergroupstate">
+            <column computed="true" name="(data #&gt; '{query,term,range,max}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-32">
+        <createIndex indexName="docs_core_usergroupstate_idx_8176519f4fa04f0f" tableName="docs_core_usergroupstate">
+            <column computed="true" name="(data #&gt; '{query,term,range,type}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-33">
+        <createIndex indexName="docs_core_usergroupstate_idx_be2b6bd6d3410f87" tableName="docs_core_usergroupstate">
+            <column computed="true" name="(data #&gt; '{query,occurance}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-34">
+        <createIndex indexName="docs_core_userstate_idx_ce3db3c97ce7e577" tableName="docs_core_userstate">
+            <column computed="true" name="(data -&gt; 'userGroupLinks')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-35">
+        <createIndex indexName="docs_core_userstate_idx_data" tableName="docs_core_userstate">
+            <column name="data"/>
+        </createIndex>
+        <modifySql>
+            <regExpReplace replace="\(.+\)" with=" USING gin $0"/>
+        </modifySql>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-36">
+        <createIndex indexName="docs_testimmutablestate_idx_2f3ac71aa5f52c65" tableName="docs_testimmutablestate">
+            <column computed="true" name="(data -&gt; 'tenantLinks')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-37">
+        <createIndex indexName="docs_testperiodicstate_idx_data" tableName="docs_testperiodicstate">
+            <column name="data"/>
+        </createIndex>
+        <modifySql>
+            <regExpReplace replace="\(.+\)" with=" USING gin $0"/>
+        </modifySql>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-38">
+        <createIndex indexName="docs_teststate_idx_2f3ac71aa5f52c65" tableName="docs_teststate">
+            <column computed="true" name="(data -&gt; 'tenantLinks')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-39">
+        <createIndex indexName="docs_teststate_idx_data" tableName="docs_teststate">
+            <column name="data"/>
+        </createIndex>
+        <modifySql>
+            <regExpReplace replace="\(.+\)" with=" USING gin $0"/>
+        </modifySql>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-40">
+        <createIndex indexName="docs_teststate_idx_e79f4d3b4ab322dd" tableName="docs_teststate">
+            <column computed="true" name="(data -&gt; 'intValues')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-41">
+        <dropIndex indexName="docs_core_authcredentialsservicestate_idx_5bdaa1e6be3a1697" tableName="docs_core_authcredentialsservicestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-42">
+        <dropIndex indexName="docs_core_authcredentialsservicestate_idx_b61c10e4d72fd065" tableName="docs_core_authcredentialsservicestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-43">
+        <dropIndex indexName="docs_core_transactionservicestate_idx_a6ef94348b40f495" tableName="docs_core_transactionservicestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-44">
+        <dropIndex indexName="docs_core_transactionservicestate_idx_c98d2aebbc16ce95" tableName="docs_core_transactionservicestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-45">
+        <dropIndex indexName="docs_core_userstate_idx_eafc452e843c00dd" tableName="docs_core_userstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-46">
+        <dropIndex indexName="docs_teststate_idx_5bdaa1e6be3a1697" tableName="docs_teststate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-47">
+        <dropIndex indexName="docs_teststate_idx_6c9e21bf559b43bf" tableName="docs_teststate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-48">
+        <modifyDataType columnName="documentauthprincipallink" newDataType="clob" tableName="docs_core_authcredentialsservicestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-49">
+        <modifyDataType columnName="documentauthprincipallink" newDataType="clob" tableName="docs_core_checkpointstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-50">
+        <modifyDataType columnName="documentauthprincipallink" newDataType="clob" tableName="docs_core_resourcegroupstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-51">
+        <modifyDataType columnName="documentauthprincipallink" newDataType="clob" tableName="docs_core_rolestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-52">
+        <modifyDataType columnName="documentauthprincipallink" newDataType="clob" tableName="docs_core_tenantstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-53">
+        <modifyDataType columnName="documentauthprincipallink" newDataType="clob" tableName="docs_core_transactionservicestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-54">
+        <modifyDataType columnName="documentauthprincipallink" newDataType="clob" tableName="docs_core_usergroupstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-55">
+        <modifyDataType columnName="documentauthprincipallink" newDataType="clob" tableName="docs_core_userstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-56">
+        <modifyDataType columnName="documentauthprincipallink" newDataType="clob" tableName="docs_testimmutablestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-57">
+        <modifyDataType columnName="documentauthprincipallink" newDataType="clob" tableName="docs_testperiodicstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-58">
+        <modifyDataType columnName="documentauthprincipallink" newDataType="clob" tableName="docs_teststate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-59">
+        <modifyDataType columnName="documentexpirationtimemicros" newDataType="bigint" tableName="docs_core_authcredentialsservicestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-60">
+        <modifyDataType columnName="documentexpirationtimemicros" newDataType="bigint" tableName="docs_core_checkpointstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-61">
+        <modifyDataType columnName="documentexpirationtimemicros" newDataType="bigint" tableName="docs_core_resourcegroupstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-62">
+        <modifyDataType columnName="documentexpirationtimemicros" newDataType="bigint" tableName="docs_core_rolestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-63">
+        <modifyDataType columnName="documentexpirationtimemicros" newDataType="bigint" tableName="docs_core_tenantstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-64">
+        <modifyDataType columnName="documentexpirationtimemicros" newDataType="bigint" tableName="docs_core_transactionservicestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-65">
+        <modifyDataType columnName="documentexpirationtimemicros" newDataType="bigint" tableName="docs_core_usergroupstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-66">
+        <modifyDataType columnName="documentexpirationtimemicros" newDataType="bigint" tableName="docs_core_userstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-67">
+        <modifyDataType columnName="documentexpirationtimemicros" newDataType="bigint" tableName="docs_testimmutablestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-68">
+        <modifyDataType columnName="documentexpirationtimemicros" newDataType="bigint" tableName="docs_testperiodicstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-69">
+        <modifyDataType columnName="documentexpirationtimemicros" newDataType="bigint" tableName="docs_teststate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-70">
+        <modifyDataType columnName="documentkind" newDataType="clob" tableName="docs_core_authcredentialsservicestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-71">
+        <modifyDataType columnName="documentkind" newDataType="clob" tableName="docs_core_checkpointstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-72">
+        <modifyDataType columnName="documentkind" newDataType="clob" tableName="docs_core_resourcegroupstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-73">
+        <modifyDataType columnName="documentkind" newDataType="clob" tableName="docs_core_rolestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-74">
+        <modifyDataType columnName="documentkind" newDataType="clob" tableName="docs_core_tenantstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-75">
+        <modifyDataType columnName="documentkind" newDataType="clob" tableName="docs_core_transactionservicestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-76">
+        <modifyDataType columnName="documentkind" newDataType="clob" tableName="docs_core_usergroupstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-77">
+        <modifyDataType columnName="documentkind" newDataType="clob" tableName="docs_core_userstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-78">
+        <modifyDataType columnName="documentkind" newDataType="clob" tableName="docs_testimmutablestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-79">
+        <modifyDataType columnName="documentkind" newDataType="clob" tableName="docs_testperiodicstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-80">
+        <modifyDataType columnName="documentkind" newDataType="clob" tableName="docs_teststate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-81">
+        <modifyDataType columnName="documentselflink" newDataType="clob" tableName="docs_core_authcredentialsservicestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-82">
+        <modifyDataType columnName="documentselflink" newDataType="clob" tableName="docs_core_checkpointstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-83">
+        <modifyDataType columnName="documentselflink" newDataType="clob" tableName="docs_core_resourcegroupstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-84">
+        <modifyDataType columnName="documentselflink" newDataType="clob" tableName="docs_core_rolestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-85">
+        <modifyDataType columnName="documentselflink" newDataType="clob" tableName="docs_core_tenantstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-86">
+        <modifyDataType columnName="documentselflink" newDataType="clob" tableName="docs_core_transactionservicestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-87">
+        <modifyDataType columnName="documentselflink" newDataType="clob" tableName="docs_core_usergroupstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-88">
+        <modifyDataType columnName="documentselflink" newDataType="clob" tableName="docs_core_userstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-89">
+        <modifyDataType columnName="documentselflink" newDataType="clob" tableName="docs_testimmutablestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-90">
+        <modifyDataType columnName="documentselflink" newDataType="clob" tableName="docs_testperiodicstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-91">
+        <modifyDataType columnName="documentselflink" newDataType="clob" tableName="docs_teststate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-92">
+        <modifyDataType columnName="documenttransactionid" newDataType="clob" tableName="docs_core_authcredentialsservicestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-93">
+        <modifyDataType columnName="documenttransactionid" newDataType="clob" tableName="docs_core_checkpointstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-94">
+        <modifyDataType columnName="documenttransactionid" newDataType="clob" tableName="docs_core_resourcegroupstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-95">
+        <modifyDataType columnName="documenttransactionid" newDataType="clob" tableName="docs_core_rolestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-96">
+        <modifyDataType columnName="documenttransactionid" newDataType="clob" tableName="docs_core_tenantstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-97">
+        <modifyDataType columnName="documenttransactionid" newDataType="clob" tableName="docs_core_transactionservicestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-98">
+        <modifyDataType columnName="documenttransactionid" newDataType="clob" tableName="docs_core_usergroupstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-99">
+        <modifyDataType columnName="documenttransactionid" newDataType="clob" tableName="docs_core_userstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-100">
+        <modifyDataType columnName="documenttransactionid" newDataType="clob" tableName="docs_testimmutablestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-101">
+        <modifyDataType columnName="documenttransactionid" newDataType="clob" tableName="docs_testperiodicstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-102">
+        <modifyDataType columnName="documenttransactionid" newDataType="clob" tableName="docs_teststate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-103">
+        <modifyDataType columnName="documentupdateaction" newDataType="clob" tableName="docs_core_authcredentialsservicestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-104">
+        <modifyDataType columnName="documentupdateaction" newDataType="clob" tableName="docs_core_checkpointstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-105">
+        <modifyDataType columnName="documentupdateaction" newDataType="clob" tableName="docs_core_resourcegroupstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-106">
+        <modifyDataType columnName="documentupdateaction" newDataType="clob" tableName="docs_core_rolestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-107">
+        <modifyDataType columnName="documentupdateaction" newDataType="clob" tableName="docs_core_tenantstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-108">
+        <modifyDataType columnName="documentupdateaction" newDataType="clob" tableName="docs_core_transactionservicestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-109">
+        <modifyDataType columnName="documentupdateaction" newDataType="clob" tableName="docs_core_usergroupstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-110">
+        <modifyDataType columnName="documentupdateaction" newDataType="clob" tableName="docs_core_userstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-111">
+        <modifyDataType columnName="documentupdateaction" newDataType="clob" tableName="docs_testimmutablestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-112">
+        <modifyDataType columnName="documentupdateaction" newDataType="clob" tableName="docs_testperiodicstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-113">
+        <modifyDataType columnName="documentupdateaction" newDataType="clob" tableName="docs_teststate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-114">
+        <modifyDataType columnName="documentupdatetimemicros" newDataType="bigint" tableName="docs_core_authcredentialsservicestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-115">
+        <modifyDataType columnName="documentupdatetimemicros" newDataType="bigint" tableName="docs_core_checkpointstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-116">
+        <modifyDataType columnName="documentupdatetimemicros" newDataType="bigint" tableName="docs_core_resourcegroupstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-117">
+        <modifyDataType columnName="documentupdatetimemicros" newDataType="bigint" tableName="docs_core_rolestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-118">
+        <modifyDataType columnName="documentupdatetimemicros" newDataType="bigint" tableName="docs_core_tenantstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-119">
+        <modifyDataType columnName="documentupdatetimemicros" newDataType="bigint" tableName="docs_core_transactionservicestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-120">
+        <modifyDataType columnName="documentupdatetimemicros" newDataType="bigint" tableName="docs_core_usergroupstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-121">
+        <modifyDataType columnName="documentupdatetimemicros" newDataType="bigint" tableName="docs_core_userstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-122">
+        <modifyDataType columnName="documentupdatetimemicros" newDataType="bigint" tableName="docs_testimmutablestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-123">
+        <modifyDataType columnName="documentupdatetimemicros" newDataType="bigint" tableName="docs_testperiodicstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-124">
+        <modifyDataType columnName="documentupdatetimemicros" newDataType="bigint" tableName="docs_teststate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-125">
+        <modifyDataType columnName="documentversion" newDataType="bigint" tableName="docs_core_authcredentialsservicestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-126">
+        <modifyDataType columnName="documentversion" newDataType="bigint" tableName="docs_core_checkpointstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-127">
+        <modifyDataType columnName="documentversion" newDataType="bigint" tableName="docs_core_resourcegroupstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-128">
+        <modifyDataType columnName="documentversion" newDataType="bigint" tableName="docs_core_rolestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-129">
+        <modifyDataType columnName="documentversion" newDataType="bigint" tableName="docs_core_tenantstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-130">
+        <modifyDataType columnName="documentversion" newDataType="bigint" tableName="docs_core_transactionservicestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-131">
+        <modifyDataType columnName="documentversion" newDataType="bigint" tableName="docs_core_usergroupstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-132">
+        <modifyDataType columnName="documentversion" newDataType="bigint" tableName="docs_core_userstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-133">
+        <modifyDataType columnName="documentversion" newDataType="bigint" tableName="docs_testimmutablestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-134">
+        <modifyDataType columnName="documentversion" newDataType="bigint" tableName="docs_testperiodicstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-135">
+        <modifyDataType columnName="documentversion" newDataType="bigint" tableName="docs_teststate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-136">
+        <dropIndex indexName="docs_core_authcredentialsservicestate_idx_2a284a8a99cc13f5" tableName="docs_core_authcredentialsservicestate"/>
+        <createIndex indexName="docs_core_authcredentialsservicestate_idx_2a284a8a99cc13f5" tableName="docs_core_authcredentialsservicestate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'type')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-137">
+        <dropIndex indexName="docs_core_authcredentialsservicestate_idx_3bc8ca00f621b78d" tableName="docs_core_authcredentialsservicestate"/>
+        <createIndex indexName="docs_core_authcredentialsservicestate_idx_3bc8ca00f621b78d" tableName="docs_core_authcredentialsservicestate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'privateKey')"/>
+        </createIndex>
+        <modifySql>
+            <regExpReplace replace="\(.+\)" with=" USING hash $0"/>
+        </modifySql>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-138">
+        <dropIndex indexName="docs_core_authcredentialsservicestate_idx_753a60c0c882792f" tableName="docs_core_authcredentialsservicestate"/>
+        <createIndex indexName="docs_core_authcredentialsservicestate_idx_753a60c0c882792f" tableName="docs_core_authcredentialsservicestate" unique="false">
+            <column computed="true" name="((data -&gt;&gt; 'documentEpoch')::bigint)"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-139">
+        <dropIndex indexName="docs_core_authcredentialsservicestate_idx_7671b2c3127146dd" tableName="docs_core_authcredentialsservicestate"/>
+        <createIndex indexName="docs_core_authcredentialsservicestate_idx_7671b2c3127146dd" tableName="docs_core_authcredentialsservicestate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'tokenReference')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-140">
+        <dropIndex indexName="docs_core_authcredentialsservicestate_idx_832c28d4e64715bf" tableName="docs_core_authcredentialsservicestate"/>
+        <createIndex indexName="docs_core_authcredentialsservicestate_idx_832c28d4e64715bf" tableName="docs_core_authcredentialsservicestate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'publicKey')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-141">
+        <dropIndex indexName="docs_core_authcredentialsservicestate_idx_8a6e3a21f9d03fbf" tableName="docs_core_authcredentialsservicestate"/>
+        <createIndex indexName="docs_core_authcredentialsservicestate_idx_8a6e3a21f9d03fbf" tableName="docs_core_authcredentialsservicestate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'userEmail')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-142">
+        <dropIndex indexName="docs_core_authcredentialsservicestate_idx_8ba3aa373f16912f" tableName="docs_core_authcredentialsservicestate"/>
+        <createIndex indexName="docs_core_authcredentialsservicestate_idx_8ba3aa373f16912f" tableName="docs_core_authcredentialsservicestate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'documentOwner')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-143">
+        <dropIndex indexName="docs_core_authcredentialsservicestate_idx_b43dabe6b0f7732d" tableName="docs_core_authcredentialsservicestate"/>
+        <createIndex indexName="docs_core_authcredentialsservicestate_idx_b43dabe6b0f7732d" tableName="docs_core_authcredentialsservicestate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'documentSourceLink')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-144">
+        <dropIndex indexName="docs_core_authcredentialsservicestate_idx_b9de6f18e66ffc5" tableName="docs_core_authcredentialsservicestate"/>
+        <createIndex indexName="docs_core_authcredentialsservicestate_idx_b9de6f18e66ffc5" tableName="docs_core_authcredentialsservicestate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'userLink')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-145">
+        <dropIndex indexName="docs_core_authcredentialsservicestate_idx_d71e4ea919613295" tableName="docs_core_authcredentialsservicestate"/>
+        <createIndex indexName="docs_core_authcredentialsservicestate_idx_d71e4ea919613295" tableName="docs_core_authcredentialsservicestate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'privateKeyId')"/>
+        </createIndex>
+        <modifySql>
+            <regExpReplace replace="\(.+\)" with=" USING hash $0"/>
+        </modifySql>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-146">
+        <dropIndex indexName="docs_core_checkpointstate_idx_753a60c0c882792f" tableName="docs_core_checkpointstate"/>
+        <createIndex indexName="docs_core_checkpointstate_idx_753a60c0c882792f" tableName="docs_core_checkpointstate" unique="false">
+            <column computed="true" name="((data -&gt;&gt; 'documentEpoch')::bigint)"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-147">
+        <dropIndex indexName="docs_core_checkpointstate_idx_7b535d3e5987dbf" tableName="docs_core_checkpointstate"/>
+        <createIndex indexName="docs_core_checkpointstate_idx_7b535d3e5987dbf" tableName="docs_core_checkpointstate" unique="false">
+            <column computed="true" name="((data -&gt;&gt; 'timestamp')::bigint)"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-148">
+        <dropIndex indexName="docs_core_checkpointstate_idx_8ba3aa373f16912f" tableName="docs_core_checkpointstate"/>
+        <createIndex indexName="docs_core_checkpointstate_idx_8ba3aa373f16912f" tableName="docs_core_checkpointstate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'documentOwner')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-149">
+        <dropIndex indexName="docs_core_checkpointstate_idx_90e72ee4b87bc097" tableName="docs_core_checkpointstate"/>
+        <createIndex indexName="docs_core_checkpointstate_idx_90e72ee4b87bc097" tableName="docs_core_checkpointstate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'factoryLink')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-150">
+        <dropPrimaryKey tableName="docs_core_checkpointstate"/>
+        <addPrimaryKey columnNames="documentselflink" tableName="docs_core_checkpointstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-151">
+        <dropIndex indexName="docs_core_checkpointstate_idx_b43dabe6b0f7732d" tableName="docs_core_checkpointstate"/>
+        <createIndex indexName="docs_core_checkpointstate_idx_b43dabe6b0f7732d" tableName="docs_core_checkpointstate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'documentSourceLink')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-152">
+        <dropIndex indexName="docs_core_resourcegroupstate_idx_753a60c0c882792f" tableName="docs_core_resourcegroupstate"/>
+        <createIndex indexName="docs_core_resourcegroupstate_idx_753a60c0c882792f" tableName="docs_core_resourcegroupstate" unique="false">
+            <column computed="true" name="((data -&gt;&gt; 'documentEpoch')::bigint)"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-153">
+        <dropIndex indexName="docs_core_resourcegroupstate_idx_8ba3aa373f16912f" tableName="docs_core_resourcegroupstate"/>
+        <createIndex indexName="docs_core_resourcegroupstate_idx_8ba3aa373f16912f" tableName="docs_core_resourcegroupstate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'documentOwner')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-154">
+        <dropPrimaryKey tableName="docs_core_resourcegroupstate"/>
+        <addPrimaryKey columnNames="documentselflink" tableName="docs_core_resourcegroupstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-155">
+        <dropIndex indexName="docs_core_resourcegroupstate_idx_b43dabe6b0f7732d" tableName="docs_core_resourcegroupstate"/>
+        <createIndex indexName="docs_core_resourcegroupstate_idx_b43dabe6b0f7732d" tableName="docs_core_resourcegroupstate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'documentSourceLink')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-156">
+        <dropIndex indexName="docs_core_rolestate_idx_2b6ea6770f5ab93d" tableName="docs_core_rolestate"/>
+        <createIndex indexName="docs_core_rolestate_idx_2b6ea6770f5ab93d" tableName="docs_core_rolestate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'policy')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-157">
+        <dropIndex indexName="docs_core_rolestate_idx_332129e2ef454dc5" tableName="docs_core_rolestate"/>
+        <createIndex indexName="docs_core_rolestate_idx_332129e2ef454dc5" tableName="docs_core_rolestate" unique="false">
+            <column computed="true" name="((data -&gt;&gt; 'priority')::bigint)"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-158">
+        <dropIndex indexName="docs_core_rolestate_idx_753a60c0c882792f" tableName="docs_core_rolestate"/>
+        <createIndex indexName="docs_core_rolestate_idx_753a60c0c882792f" tableName="docs_core_rolestate" unique="false">
+            <column computed="true" name="((data -&gt;&gt; 'documentEpoch')::bigint)"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-159">
+        <dropIndex indexName="docs_core_rolestate_idx_8ba3aa373f16912f" tableName="docs_core_rolestate"/>
+        <createIndex indexName="docs_core_rolestate_idx_8ba3aa373f16912f" tableName="docs_core_rolestate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'documentOwner')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-160">
+        <dropIndex indexName="docs_core_rolestate_idx_a2c0a4c7cf2dc19f" tableName="docs_core_rolestate"/>
+        <createIndex indexName="docs_core_rolestate_idx_a2c0a4c7cf2dc19f" tableName="docs_core_rolestate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'resourceGroupLink')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-161">
+        <dropIndex indexName="docs_core_rolestate_idx_b43dabe6b0f7732d" tableName="docs_core_rolestate"/>
+        <createIndex indexName="docs_core_rolestate_idx_b43dabe6b0f7732d" tableName="docs_core_rolestate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'documentSourceLink')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-162">
+        <createIndex indexName="docs_core_rolestate_idx_b4a9bbf6ebaaf935" tableName="docs_core_rolestate" unique="false">
+            <column name="documentupdateaction"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-163">
+        <createIndex indexName="docs_core_rolestate_idx_data" tableName="docs_core_rolestate" unique="false">
+            <column name="data"/>
+        </createIndex>
+        <modifySql>
+            <regExpReplace replace="\(.+\)" with=" USING gin $0"/>
+        </modifySql>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-164">
+        <dropIndex indexName="docs_core_tenantstate_idx_3f93d2373855c5ed" tableName="docs_core_tenantstate"/>
+        <createIndex indexName="docs_core_tenantstate_idx_3f93d2373855c5ed" tableName="docs_core_tenantstate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'id')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-165">
+        <dropIndex indexName="docs_core_tenantstate_idx_4433cfc83de12b8d" tableName="docs_core_tenantstate"/>
+        <createIndex indexName="docs_core_tenantstate_idx_4433cfc83de12b8d" tableName="docs_core_tenantstate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'parentLink')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-166">
+        <dropIndex indexName="docs_core_tenantstate_idx_753a60c0c882792f" tableName="docs_core_tenantstate"/>
+        <createIndex indexName="docs_core_tenantstate_idx_753a60c0c882792f" tableName="docs_core_tenantstate" unique="false">
+            <column computed="true" name="((data -&gt;&gt; 'documentEpoch')::bigint)"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-167">
+        <dropIndex indexName="docs_core_tenantstate_idx_8ba3aa373f16912f" tableName="docs_core_tenantstate"/>
+        <createIndex indexName="docs_core_tenantstate_idx_8ba3aa373f16912f" tableName="docs_core_tenantstate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'documentOwner')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-168">
+        <dropIndex indexName="docs_core_tenantstate_idx_b43dabe6b0f7732d" tableName="docs_core_tenantstate"/>
+        <createIndex indexName="docs_core_tenantstate_idx_b43dabe6b0f7732d" tableName="docs_core_tenantstate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'documentSourceLink')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-169">
+        <dropIndex indexName="docs_core_tenantstate_idx_b751f77110bb45f5" tableName="docs_core_tenantstate"/>
+        <createIndex indexName="docs_core_tenantstate_idx_b751f77110bb45f5" tableName="docs_core_tenantstate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'name')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-170">
+        <createIndex indexName="docs_core_transactionservicestate_idx_10234950344f812d" tableName="docs_core_transactionservicestate" unique="false">
+            <column computed="true" name="(data -&gt; 'modifiedLinks')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-171">
+        <createIndex indexName="docs_core_transactionservicestate_idx_54d00dc62485d387" tableName="docs_core_transactionservicestate" unique="false">
+            <column name="documentversion"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-172">
+        <dropIndex indexName="docs_core_transactionservicestate_idx_753a60c0c882792f" tableName="docs_core_transactionservicestate"/>
+        <createIndex indexName="docs_core_transactionservicestate_idx_753a60c0c882792f" tableName="docs_core_transactionservicestate" unique="false">
+            <column computed="true" name="((data -&gt;&gt; 'documentEpoch')::bigint)"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-173">
+        <dropIndex indexName="docs_core_transactionservicestate_idx_8ba3aa373f16912f" tableName="docs_core_transactionservicestate"/>
+        <createIndex indexName="docs_core_transactionservicestate_idx_8ba3aa373f16912f" tableName="docs_core_transactionservicestate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'documentOwner')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-174">
+        <createIndex indexName="docs_core_transactionservicestate_idx_a0af8cd8bc4bf3a5" tableName="docs_core_transactionservicestate" unique="false">
+            <column computed="true" name="(data -&gt; 'taskInfo.failure.stackTrace')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-175">
+        <dropIndex indexName="docs_core_transactionservicestate_idx_a6398d710db89e95" tableName="docs_core_transactionservicestate"/>
+        <createIndex indexName="docs_core_transactionservicestate_idx_a6398d710db89e95" tableName="docs_core_transactionservicestate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'taskSubStage')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-176">
+        <dropIndex indexName="docs_core_transactionservicestate_idx_b43dabe6b0f7732d" tableName="docs_core_transactionservicestate"/>
+        <createIndex indexName="docs_core_transactionservicestate_idx_b43dabe6b0f7732d" tableName="docs_core_transactionservicestate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'documentSourceLink')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-177">
+        <createIndex indexName="docs_core_transactionservicestate_idx_data" tableName="docs_core_transactionservicestate" unique="false">
+            <column name="data"/>
+        </createIndex>
+        <modifySql>
+            <regExpReplace replace="\(.+\)" with=" USING gin $0"/>
+        </modifySql>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-178">
+        <createIndex indexName="docs_core_usergroupstate_idx_35537be8cab06467" tableName="docs_core_usergroupstate" unique="false">
+            <column computed="true" name="(data #&gt; '{query,term,propertyName}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-179">
+        <createIndex indexName="docs_core_usergroupstate_idx_5fa9cc8c2c997267" tableName="docs_core_usergroupstate" unique="false">
+            <column computed="true" name="(data #&gt; '{query,term,propertyType}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-180">
+        <createIndex indexName="docs_core_usergroupstate_idx_675594ffae9a90f" tableName="docs_core_usergroupstate" unique="false">
+            <column computed="true" name="(data #&gt; '{query,term,matchValue}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-181">
+        <dropIndex indexName="docs_core_usergroupstate_idx_753a60c0c882792f" tableName="docs_core_usergroupstate"/>
+        <createIndex indexName="docs_core_usergroupstate_idx_753a60c0c882792f" tableName="docs_core_usergroupstate" unique="false">
+            <column computed="true" name="((data -&gt;&gt; 'documentEpoch')::bigint)"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-182">
+        <createIndex indexName="docs_core_usergroupstate_idx_7cf4f5de1836535" tableName="docs_core_usergroupstate" unique="false">
+            <column computed="true" name="(data #&gt; '{query,term,sortOrder}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-183">
+        <dropIndex indexName="docs_core_usergroupstate_idx_8ba3aa373f16912f" tableName="docs_core_usergroupstate"/>
+        <createIndex indexName="docs_core_usergroupstate_idx_8ba3aa373f16912f" tableName="docs_core_usergroupstate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'documentOwner')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-184">
+        <dropIndex indexName="docs_core_usergroupstate_idx_b43dabe6b0f7732d" tableName="docs_core_usergroupstate"/>
+        <createIndex indexName="docs_core_usergroupstate_idx_b43dabe6b0f7732d" tableName="docs_core_usergroupstate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'documentSourceLink')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-185">
+        <createIndex indexName="docs_core_usergroupstate_idx_bb49daff2edfd50f" tableName="docs_core_usergroupstate" unique="false">
+            <column name="documenttransactionid"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-186">
+        <createIndex indexName="docs_core_usergroupstate_idx_c0e86a29d05d301d" tableName="docs_core_usergroupstate" unique="false">
+            <column computed="true" name="(data #&gt; '{query,term,range,precisionStep}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-187">
+        <dropIndex indexName="docs_core_userstate_idx_4b9c7f8a2053494f" tableName="docs_core_userstate"/>
+        <createIndex indexName="docs_core_userstate_idx_4b9c7f8a2053494f" tableName="docs_core_userstate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'email')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-188">
+        <dropIndex indexName="docs_core_userstate_idx_753a60c0c882792f" tableName="docs_core_userstate"/>
+        <createIndex indexName="docs_core_userstate_idx_753a60c0c882792f" tableName="docs_core_userstate" unique="false">
+            <column computed="true" name="((data -&gt;&gt; 'documentEpoch')::bigint)"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-189">
+        <dropIndex indexName="docs_core_userstate_idx_8ba3aa373f16912f" tableName="docs_core_userstate"/>
+        <createIndex indexName="docs_core_userstate_idx_8ba3aa373f16912f" tableName="docs_core_userstate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'documentOwner')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-190">
+        <dropPrimaryKey tableName="docs_core_userstate"/>
+        <addPrimaryKey columnNames="documentselflink" tableName="docs_core_userstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-191">
+        <dropIndex indexName="docs_core_userstate_idx_b43dabe6b0f7732d" tableName="docs_core_userstate"/>
+        <createIndex indexName="docs_core_userstate_idx_b43dabe6b0f7732d" tableName="docs_core_userstate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'documentSourceLink')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-192">
+        <dropIndex indexName="docs_testimmutablestate_idx_753a60c0c882792f" tableName="docs_testimmutablestate"/>
+        <createIndex indexName="docs_testimmutablestate_idx_753a60c0c882792f" tableName="docs_testimmutablestate" unique="false">
+            <column computed="true" name="((data -&gt;&gt; 'documentEpoch')::bigint)"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-193">
+        <dropIndex indexName="docs_testimmutablestate_idx_7e1aa6c68c7307bf" tableName="docs_testimmutablestate"/>
+        <createIndex indexName="docs_testimmutablestate_idx_7e1aa6c68c7307bf" tableName="docs_testimmutablestate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'firstName')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-194">
+        <dropIndex indexName="docs_testimmutablestate_idx_8ba3aa373f16912f" tableName="docs_testimmutablestate"/>
+        <createIndex indexName="docs_testimmutablestate_idx_8ba3aa373f16912f" tableName="docs_testimmutablestate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'documentOwner')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-195">
+        <dropPrimaryKey tableName="docs_testimmutablestate"/>
+        <addPrimaryKey columnNames="documentselflink" tableName="docs_testimmutablestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-196">
+        <dropIndex indexName="docs_testimmutablestate_idx_b43dabe6b0f7732d" tableName="docs_testimmutablestate"/>
+        <createIndex indexName="docs_testimmutablestate_idx_b43dabe6b0f7732d" tableName="docs_testimmutablestate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'documentSourceLink')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-197">
+        <dropIndex indexName="docs_testimmutablestate_idx_d68ba322a82db3c5" tableName="docs_testimmutablestate"/>
+        <createIndex indexName="docs_testimmutablestate_idx_d68ba322a82db3c5" tableName="docs_testimmutablestate" unique="false">
+            <column computed="true" name="(lower(data -&gt;&gt; 'lastName'))"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-198">
+        <createIndex indexName="docs_testimmutablestate_idx_da  ta" tableName="docs_testimmutablestate" unique="false">
+            <column name="data"/>
+        </createIndex>
+        <modifySql>
+            <regExpReplace replace="\(.+\)" with=" USING gin $0"/>
+        </modifySql>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-199">
+        <dropIndex indexName="docs_testperiodicstate_idx_753a60c0c882792f" tableName="docs_testperiodicstate"/>
+        <createIndex indexName="docs_testperiodicstate_idx_753a60c0c882792f" tableName="docs_testperiodicstate" unique="false">
+            <column computed="true" name="((data -&gt;&gt; 'documentEpoch')::bigint)"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-200">
+        <dropIndex indexName="docs_testperiodicstate_idx_7e1aa6c68c7307bf" tableName="docs_testperiodicstate"/>
+        <createIndex indexName="docs_testperiodicstate_idx_7e1aa6c68c7307bf" tableName="docs_testperiodicstate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'firstName')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-201">
+        <dropIndex indexName="docs_testperiodicstate_idx_8ba3aa373f16912f" tableName="docs_testperiodicstate"/>
+        <createIndex indexName="docs_testperiodicstate_idx_8ba3aa373f16912f" tableName="docs_testperiodicstate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'documentOwner')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-202">
+        <dropIndex indexName="docs_testperiodicstate_idx_9c8765d1fd31074f" tableName="docs_testperiodicstate"/>
+        <createIndex indexName="docs_testperiodicstate_idx_9c8765d1fd31074f" tableName="docs_testperiodicstate" unique="false">
+            <column computed="true" name="((data -&gt;&gt; 'calls')::bigint)"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-203">
+        <dropPrimaryKey tableName="docs_testperiodicstate"/>
+        <addPrimaryKey columnNames="documentselflink" tableName="docs_testperiodicstate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-204">
+        <dropIndex indexName="docs_testperiodicstate_idx_b43dabe6b0f7732d" tableName="docs_testperiodicstate"/>
+        <createIndex indexName="docs_testperiodicstate_idx_b43dabe6b0f7732d" tableName="docs_testperiodicstate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'documentSourceLink')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-205">
+        <dropIndex indexName="docs_testperiodicstate_idx_d68ba322a82db3c5" tableName="docs_testperiodicstate"/>
+        <createIndex indexName="docs_testperiodicstate_idx_d68ba322a82db3c5" tableName="docs_testperiodicstate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'lastName')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-206">
+        <dropIndex indexName="docs_teststate_idx_73d9b02d2a9151c5" tableName="docs_teststate"/>
+        <createIndex indexName="docs_teststate_idx_73d9b02d2a9151c5" tableName="docs_teststate" unique="false">
+            <column computed="true" name="((data -&gt;&gt; 'intValue')::bigint)"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-207">
+        <dropIndex indexName="docs_teststate_idx_753a60c0c882792f" tableName="docs_teststate"/>
+        <createIndex indexName="docs_teststate_idx_753a60c0c882792f" tableName="docs_teststate" unique="false">
+            <column computed="true" name="((data -&gt;&gt; 'documentEpoch')::bigint)"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-208">
+        <dropIndex indexName="docs_teststate_idx_7e1aa6c68c7307bf" tableName="docs_teststate"/>
+        <createIndex indexName="docs_teststate_idx_7e1aa6c68c7307bf" tableName="docs_teststate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'firstName')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-209">
+        <dropIndex indexName="docs_teststate_idx_8ba3aa373f16912f" tableName="docs_teststate"/>
+        <createIndex indexName="docs_teststate_idx_8ba3aa373f16912f" tableName="docs_teststate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'documentOwner')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-210">
+        <dropIndex indexName="docs_teststate_idx_8cee2087bb8009b7" tableName="docs_teststate"/>
+        <createIndex indexName="docs_teststate_idx_8cee2087bb8009b7" tableName="docs_teststate" unique="false">
+            <column computed="true" name="((data -&gt;&gt; 'age')::bigint)"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-211">
+        <dropPrimaryKey tableName="docs_teststate"/>
+        <addPrimaryKey columnNames="documentselflink" tableName="docs_teststate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-212">
+        <dropIndex indexName="docs_teststate_idx_b43dabe6b0f7732d" tableName="docs_teststate"/>
+        <createIndex indexName="docs_teststate_idx_b43dabe6b0f7732d" tableName="docs_teststate" unique="false">
+            <column computed="true" name="(data -&gt;&gt; 'documentSourceLink')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524096474765-213">
+        <dropIndex indexName="docs_teststate_idx_d68ba322a82db3c5" tableName="docs_teststate"/>
+        <createIndex indexName="docs_teststate_idx_d68ba322a82db3c5" tableName="docs_teststate" unique="false">
+            <column computed="true" name="(lower(data -&gt;&gt; 'lastName'))"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

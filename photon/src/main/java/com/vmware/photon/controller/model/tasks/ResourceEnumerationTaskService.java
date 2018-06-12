@@ -103,7 +103,6 @@ public class ResourceEnumerationTaskService
         super.toggleOption(ServiceOption.IDEMPOTENT_POST, true);
         super.toggleOption(ServiceOption.REPLICATION, true);
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
-        super.toggleOption(ServiceOption.INSTRUMENTATION, true);
     }
 
     @Override

@@ -46,7 +46,8 @@ public class AbstractShellContainerService extends StatelessService {
 
         if (shellContainer == null) {
             String shellContainerLink = SystemContainerDescriptions.getSystemContainerSelfLink(
-                    SystemContainerDescriptions.AGENT_CONTAINER_NAME, Service.getId(hostLink));
+                    SystemContainerDescriptions.AGENT_CONTAINER_NAME,
+                    Service.getId(hostLink != null ? hostLink : ""));
             sendRequest(Operation.createGet(this, shellContainerLink).setCompletion((o, e) -> {
                 if (e != null) {
                     op.fail(e);

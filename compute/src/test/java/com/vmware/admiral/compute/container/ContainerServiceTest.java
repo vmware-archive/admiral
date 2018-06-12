@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.common.util.QueryUtil;
@@ -141,6 +142,7 @@ public class ContainerServiceTest extends ComputeBaseTest {
         countQueryContainers(numberOfContainers + 1);
     }
 
+    @Ignore("No versions when with postgres")
     @Test
     public void testVersionRetentionWtihOData() throws Throwable {
         ContainerState state = createContainer("/parent/1", "tenant1");

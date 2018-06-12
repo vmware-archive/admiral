@@ -64,7 +64,6 @@ public class ContainerAllocationTaskFactoryService extends AbstractSecuredFactor
         super(ContainerAllocationTaskState.class);
         super.toggleOption(ServiceOption.PERSISTENCE, true);
         super.toggleOption(ServiceOption.REPLICATION, true);
-        super.toggleOption(ServiceOption.INSTRUMENTATION, true);
     }
 
     @Override

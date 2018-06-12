@@ -94,6 +94,11 @@
             <groupId>${xenon.group}</groupId>
             <artifactId>xenon-swagger-adapter</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.vmware.admiral</groupId>
+            <artifactId>admiral-rdbms</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <!-- TEST -->
         <dependency>
@@ -122,6 +127,13 @@
             <artifactId>admiral-compute</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.vmware.admiral</groupId>
+            <artifactId>admiral-rdbms</artifactId>
+            <version>${project.version}</version>
+            <classifier>tests</classifier>
             <scope>test</scope>
         </dependency>
 
@@ -153,6 +165,10 @@
     </profiles>
     <build>
         <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
             <resource>
                 <directory>images-bin</directory>
             </resource>

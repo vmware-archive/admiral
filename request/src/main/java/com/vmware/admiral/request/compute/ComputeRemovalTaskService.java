@@ -134,7 +134,6 @@ public class ComputeRemovalTaskService extends
         super(ComputeRemovalTaskState.class, SubStage.class, DISPLAY_NAME);
         super.toggleOption(ServiceOption.REPLICATION, true);
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
-        super.toggleOption(ServiceOption.INSTRUMENTATION, true);
         super.transientSubStages = SubStage.TRANSIENT_SUB_STAGES;
         super.subscriptionSubStages = EnumSet.copyOf(SubStage.SUBSCRIPTION_SUB_STAGES);
     }

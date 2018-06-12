@@ -19,6 +19,7 @@ import com.vmware.xenon.common.Service;
 public class DockerImageFactoryService extends AbstractSecuredFactoryService {
 
     public static final String FACTORY_LINK = ManagementUriParts.CLOSURES_IMAGES;
+    public static final String SELF_LINK = ManagementUriParts.CLOSURES_IMAGES;
 
     private DriverRegistry driverRegistry;
 

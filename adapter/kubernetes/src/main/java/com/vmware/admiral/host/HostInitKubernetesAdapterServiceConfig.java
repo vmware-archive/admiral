@@ -11,6 +11,12 @@
 
 package com.vmware.admiral.host;
 
+import static com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata.service;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+
 import com.vmware.admiral.adapter.kubernetes.service.KubernetesAdapterService;
 import com.vmware.admiral.adapter.kubernetes.service.KubernetesApplicationAdapterService;
 import com.vmware.admiral.adapter.kubernetes.service.KubernetesHostAdapterService;
@@ -22,11 +28,24 @@ import com.vmware.admiral.adapter.pks.service.PKSPlanListService;
 import com.vmware.admiral.adapter.pks.test.MockPKSAdapterService;
 import com.vmware.admiral.service.kubernetes.test.MockKubernetesApplicationAdapterService;
 import com.vmware.admiral.service.test.MockKubernetesAdapterService;
+import com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 
 public class HostInitKubernetesAdapterServiceConfig {
+
+    public static final Collection<ServiceMetadata> SERVICES_METADATA = Collections
+            .unmodifiableList(Arrays.asList(
+                    service(KubernetesAdapterService.class),
+                    service(KubernetesHostAdapterService.class),
+                    service(KubernetesApplicationAdapterService.class),
+                    service(PKSAdapterService.class),
+                    service(PKSClusterListService.class),
+                    service(PKSPlanListService.class),
+                    service(PKSClusterConfigService.class),
+                    service(KubeConfigContentService.class)));
+
     public static void startServices(ServiceHost host, boolean startMockHostAdapterInstance) {
         if (startMockHostAdapterInstance) {
             host.startService(

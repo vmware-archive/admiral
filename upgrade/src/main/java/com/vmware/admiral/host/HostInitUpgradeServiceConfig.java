@@ -11,6 +11,13 @@
 
 package com.vmware.admiral.host;
 
+import static com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata.factoryService;
+import static com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata.service;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+
 import com.vmware.admiral.upgrade.transformation.CompositeComponentsTransformationService;
 import com.vmware.admiral.upgrade.transformation.CompositeDescriptionTransformationService;
 import com.vmware.admiral.upgrade.transformation.ComputePlacementPoolRelationTransformationService;
@@ -19,9 +26,21 @@ import com.vmware.admiral.upgrade.transformation.ContainerVolumesTransformationS
 import com.vmware.admiral.upgrade.transformation.ContainersTransformationService;
 import com.vmware.admiral.upgrade.transformation.ProjectsTransformationBootstrapService;
 import com.vmware.admiral.upgrade.transformation.ResourcePoolTransformationService;
+import com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata;
 import com.vmware.xenon.common.ServiceHost;
 
 public class HostInitUpgradeServiceConfig extends HostInitServiceHelper {
+
+    public static final Collection<ServiceMetadata> SERVICES_METADATA = Collections
+            .unmodifiableList(Arrays.asList(
+                    service(CompositeDescriptionTransformationService.class),
+                    service(ContainersTransformationService.class),
+                    service(ComputePlacementPoolRelationTransformationService.class),
+                    service(ContainerVolumesTransformationService.class),
+                    service(ContainerNetworksTransformationService.class),
+                    service(CompositeComponentsTransformationService.class),
+                    service(ResourcePoolTransformationService.class),
+                    factoryService(ProjectsTransformationBootstrapService.class)));
 
     public static void startServices(ServiceHost host) {
 

@@ -104,7 +104,6 @@ public class ProvisionComputeTaskService
 
     public ProvisionComputeTaskService() {
         super(ProvisionComputeTaskState.class);
-        super.toggleOption(ServiceOption.INSTRUMENTATION, true);
     }
 
     @Override

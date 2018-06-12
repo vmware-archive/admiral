@@ -13,19 +13,21 @@ package com.vmware.admiral.host.interceptor;
 
 import java.util.concurrent.CompletionException;
 import java.util.function.BiFunction;
-import java.util.function.Predicate;
 import java.util.logging.Level;
 
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationProcessingChain;
+import com.vmware.xenon.common.OperationProcessingChain.Filter;
+import com.vmware.xenon.common.OperationProcessingChain.FilterReturnCode;
+import com.vmware.xenon.common.OperationProcessingChain.OperationProcessingContext;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.Service.Action;
 
 /**
  * A predicate with deferred result that can be added to an {@link OperationProcessingChain}.
  */
-public class DeferredOperationPredicate implements Predicate<Operation> {
+public class DeferredOperationPredicate implements Filter {
     private final Service service;
     private final Action action;
     private final BiFunction<Service, Operation, DeferredResult<Void>> predicate;
@@ -46,21 +48,22 @@ public class DeferredOperationPredicate implements Predicate<Operation> {
     }
 
     @Override
-    public boolean test(Operation operation) {
+    public FilterReturnCode processRequest(Operation operation,
+            OperationProcessingContext context) {
         if (operation.isSynchronize() || operation.isFromReplication()) {
             // do not process synchronization or replication operations
-            return true;
+            return FilterReturnCode.CONTINUE_PROCESSING;
         }
 
         if (action != null && action != operation.getAction()) {
-            return true;
+            return FilterReturnCode.CONTINUE_PROCESSING;
         }
 
         DeferredResult<Void> dr;
         try {
             dr = this.predicate.apply(this.service, operation);
             if (dr == null) {
-                return true;
+                return FilterReturnCode.CONTINUE_PROCESSING;
             }
         } catch (Exception e) {
             dr = DeferredResult.failed(e);
@@ -81,9 +84,10 @@ public class DeferredOperationPredicate implements Predicate<Operation> {
                 }
                 operation.fail(e);
             } else {
-                this.service.getOperationProcessingChain().resumeProcessingRequest(operation, this);
+                this.service.getOperationProcessingChain().resumeProcessingRequest(operation,
+                        context, FilterReturnCode.CONTINUE_PROCESSING, null);
             }
         });
-        return false;
+        return FilterReturnCode.SUCCESS_STOP_PROCESSING;
     }
 }

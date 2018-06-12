@@ -18,7 +18,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -27,39 +26,40 @@ import org.junit.Test;
 
 import com.vmware.admiral.common.util.SubscriptionManager;
 import com.vmware.admiral.common.util.SubscriptionManager.SubscriptionNotification;
+import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.ServiceDocument;
-import com.vmware.xenon.common.test.MinimalTestServiceState;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.TestContext;
-import com.vmware.xenon.services.common.MinimalTestService;
 import com.vmware.xenon.services.common.ServiceUriPaths;
 
 public class SubscriptionManagementTest extends ComputeBaseTest {
-    private Service service;
-    private List<SubscriptionNotification<MinimalTestServiceState>> results;
-    private MinimalTestServiceState state;
-    private MinimalTestServiceState updatedState;
-    private SubscriptionNotification<MinimalTestServiceState> notification;
-    private SubscriptionManager<MinimalTestServiceState> subscriptionManager;
+    private List<SubscriptionNotification<ContainerState>> results;
+    private ContainerState state;
+    private ContainerState updatedState;
+    private SubscriptionNotification<ContainerState> notification;
+    private SubscriptionManager<ContainerState> subscriptionManager;
     private final String updatedTestId = "updatedTestId";
     private final String updatedTestValue = "updateTestValue";
     private TestContext activeContext;
 
     @Before
     public void setUp() throws Throwable {
-        state = new MinimalTestServiceState();
+        waitForServiceAvailability(ContainerDescriptionService.FACTORY_LINK);
+        waitForServiceAvailability(CompositeDescriptionFactoryService.SELF_LINK);
+        waitForServiceAvailability(ContainerFactoryService.SELF_LINK);
+
+        state = new ContainerState();
         state.id = updatedTestId;
-        state.stringValue = updatedTestValue;
-
-        service = initService();
+        state.image = updatedTestValue;
+        state = doPost(state, ContainerFactoryService.SELF_LINK);
         results = Collections.synchronizedList(new ArrayList<>());
-        subscriptionManager = new SubscriptionManager<>(
-                host, host.getId(), service.getSelfLink(), MinimalTestServiceState.class);
 
+        subscriptionManager = new SubscriptionManager<>(
+                host, host.getId(), state.documentSelfLink, ContainerState.class);
         waitForServiceAvailability(ServiceUriPaths.CORE_QUERY_TASKS);
-        waitForServiceAvailability(service.getSelfLink());
+        waitForServiceAvailability(state.documentSelfLink);
     }
 
     private String subscribe() throws Throwable {
@@ -86,7 +86,7 @@ public class SubscriptionManagementTest extends ComputeBaseTest {
     public void testNotificationSubscriptionUpdates() throws Throwable {
         subscribe();
 
-        state.documentSelfLink = service.getSelfLink();
+        state.documentSelfLink = state.documentSelfLink;
         doOperation(Action.PUT, state);
 
         notification = getNotification();
@@ -95,7 +95,7 @@ public class SubscriptionManagementTest extends ComputeBaseTest {
         assertTrue(notification.isUpdate());
         updatedState = notification.getResult();
         assertEquals(updatedTestId, updatedState.id);
-        assertEquals(updatedTestValue, updatedState.stringValue);
+        assertEquals(updatedTestValue, updatedState.image);
 
         state.id = updatedTestValue + updatedTestId;
 
@@ -106,7 +106,7 @@ public class SubscriptionManagementTest extends ComputeBaseTest {
         assertTrue(notification.isUpdate());
         updatedState = notification.getResult();
         assertEquals(updatedTestValue + updatedTestId, updatedState.id);
-        assertEquals(updatedTestValue, updatedState.stringValue);
+        assertEquals(updatedTestValue, updatedState.image);
 
         doOperation(Action.DELETE, new ServiceDocument());
 
@@ -126,7 +126,7 @@ public class SubscriptionManagementTest extends ComputeBaseTest {
 
         subscriptionManager.close();
         subscriptionManager = new SubscriptionManager<>(
-                host, host.getId(), service.getSelfLink(), MinimalTestServiceState.class, true);
+                host, host.getId(), state.documentSelfLink, ContainerState.class, true);
 
         subscribe();
 
@@ -137,7 +137,7 @@ public class SubscriptionManagementTest extends ComputeBaseTest {
         assertTrue(notification.isUpdate());
         updatedState = notification.getResult();
         assertEquals(updatedTestId, updatedState.id);
-        assertEquals(updatedTestValue, updatedState.stringValue);
+        assertEquals(updatedTestValue, updatedState.image);
 
         state.id = updatedTestValue + updatedTestId;
 
@@ -148,7 +148,7 @@ public class SubscriptionManagementTest extends ComputeBaseTest {
         assertTrue(notification.isUpdate());
         updatedState = notification.getResult();
         assertEquals(updatedTestValue + updatedTestId, updatedState.id);
-        assertEquals(updatedTestValue, updatedState.stringValue);
+        assertEquals(updatedTestValue, updatedState.image);
 
         doOperation(Action.DELETE, new ServiceDocument());
 
@@ -165,7 +165,8 @@ public class SubscriptionManagementTest extends ComputeBaseTest {
         this.activeContext = ctx;
         // wait also for the update notification to get called in the handler.
         Operation op = new Operation();
-        op.setUri(service.getUri())
+
+        op.setUri(UriUtils.buildUri(host, this.state.documentSelfLink))
                 .setAction(action)
                 .setBody(state)
                 .setCompletion(ctx.getCompletion());
@@ -173,13 +174,7 @@ public class SubscriptionManagementTest extends ComputeBaseTest {
         testWait(ctx);
     }
 
-    private Service initService() throws Throwable {
-        return host.doThroughputServiceStart(1, MinimalTestService.class,
-                host.buildMinimalTestState(),
-                EnumSet.of(Service.ServiceOption.PERSISTENCE), null).get(0);
-    }
-
-    private Consumer<SubscriptionNotification<MinimalTestServiceState>> handler() {
+    private Consumer<SubscriptionNotification<ContainerState>> handler() {
         return (r) -> {
             results.clear();
             results.add(r);
@@ -187,11 +182,11 @@ public class SubscriptionManagementTest extends ComputeBaseTest {
         };
     }
 
-    private SubscriptionNotification<MinimalTestServiceState> getNotification() {
+    private SubscriptionNotification<ContainerState> getNotification() {
         if (results.isEmpty()) {
             return null;
         }
-        SubscriptionNotification<MinimalTestServiceState> result = results.get(0);
+        SubscriptionNotification<ContainerState> result = results.get(0);
         results.clear();
         return result;
     }

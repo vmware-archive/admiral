@@ -88,7 +88,6 @@ public class BaseKubernetesMockTest extends BaseTestCase {
         HostInitCommonServiceConfig.startServices(host);
         HostInitComputeServicesConfig.startServices(host, false);
         HostInitKubernetesAdapterServiceConfig.startServices(host, false);
-        waitForServiceAvailability(ComputeInitialBootService.SELF_LINK);
         waitForInitialBootServiceToBeSelfStopped(ComputeInitialBootService.SELF_LINK);
 
         host.log("Using test kubernetes URI: %s", kubernetesUri);

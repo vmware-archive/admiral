@@ -1,0 +1,19 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet author="dannyh (generated)" id="1527021683464-1">
+        <createIndex indexName="docs_testperiodicstate_idx_intvalue" tableName="docs_testperiodicstate">
+            <column computed="true" name="((data -&gt;&gt; 'intValue')::bigint)"/>
+        </createIndex>
+        <modifySql>
+            <regExpReplace replace="\(.+\)" with=" USING btree $0"/>
+        </modifySql>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1527021683464-2">
+        <createIndex indexName="docs_testperiodicstate_idx_tenantlinks" tableName="docs_testperiodicstate">
+            <column computed="true" name="(data -&gt; 'tenantLinks')"/>
+        </createIndex>
+        <modifySql>
+            <regExpReplace replace="\(.+\)" with=" USING gin $0"/>
+        </modifySql>
+    </changeSet>
+</databaseChangeLog>

@@ -77,10 +77,19 @@ import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.http.netty.NettyHttpServiceClient;
 import com.vmware.xenon.common.test.TestContext;
 import com.vmware.xenon.common.test.VerificationHost;
+import com.vmware.xenon.rdbms.test.PostgresVerificationHost;
 import com.vmware.xenon.services.common.AuthCredentialsService;
 import com.vmware.xenon.services.common.QueryTask;
 
 public abstract class BaseTestCase {
+
+    // whether to use Lucene or Postgres index in all unit tests
+    public static final boolean USE_POSTGRES_INDEX = Boolean.parseBoolean(
+            System.getProperty("test.usePostgres", "false"));
+
+    static {
+        PostgresVerificationHost.setPostgresEnabled(USE_POSTGRES_INDEX);
+    }
 
     protected static final int WAIT_FOR_STAGE_CHANGE_COUNT = Integer.getInteger(
             "dcp.management.test.change.count", 2500);
@@ -93,7 +102,7 @@ public abstract class BaseTestCase {
     protected static final int MAINTENANCE_INTERVAL_MILLIS = 20;
     protected VerificationHost host;
 
-    protected static class CustomizationVerificationHost extends VerificationHost {
+    protected static class CustomizationVerificationHost extends PostgresVerificationHost {
 
         /**
          * Users configuration file (full path). Specifying a file automatically enables Xenon's
@@ -1009,10 +1018,15 @@ public abstract class BaseTestCase {
                                 return;
                             }
                             if (!o.hasBody()) {
-                                ctx.failIteration(new IllegalStateException("body was expected"));
-                                return;
+                                if (o.getStatusCode() < 400) {
+                                    doc.set(0, inState);
+                                } else {
+                                    ctx.failIteration(
+                                            new IllegalStateException("body was expected"));
+                                }
+                            } else {
+                                doc.set(0, o.getBody(type));
                             }
-                            doc.set(0, o.getBody(type));
                             if (expectFailure) {
                                 ctx.failIteration(new IllegalStateException(
                                         "ERROR: operation completed successfully but exception excepted."));

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <include file="changelog/001-initial.xml" relativeToChangelogFile="true"/>
+    <include file="changelog/002-new-table.xml" relativeToChangelogFile="true"/>
+    <include file="changelog/003-core-tables-rename.xml" relativeToChangelogFile="true"/>
+    <include file="changelog/004-create-immutable-table.xml" relativeToChangelogFile="true"/>
+    <include file="changelog/005-add-xenon-tables.xml" relativeToChangelogFile="true"/>
+    <include file="changelog/006-checkpoint-service.xml" relativeToChangelogFile="true"/>
+    <include file="changelog/007-updateaction.xml" relativeToChangelogFile="true"/>
+    <include file="changelog/008-rename-datatype.xml" relativeToChangelogFile="true"/>
+    <include file="changelog/009-new-indexes.xml" relativeToChangelogFile="true"/>
+</databaseChangeLog>

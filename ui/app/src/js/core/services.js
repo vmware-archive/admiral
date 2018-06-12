@@ -293,7 +293,8 @@ var buildPaginationUrl = function(path, filter, count, order, limit, params) {
     [DOCUMENT_TYPE_PROP_NAME]: true,
     [ODATA_COUNT_PROP_NAME]: count,
     [ODATA_LIMIT_PROP_NAME]: limit || calculateLimit(),
-    [ODATA_ORDERBY_PROP_NAME]: order
+    [ODATA_ORDERBY_PROP_NAME]: order,
+    [EXPAND_QUERY_PROP_NAME]: true
   });
   if (filter) {
     params[ODATA_FILTER_PROP_NAME] = filter;

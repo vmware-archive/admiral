@@ -11,6 +11,13 @@
 
 package com.vmware.admiral.host;
 
+import static com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata.factoryService;
+import static com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata.service;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+
 import com.vmware.admiral.closures.services.closure.Closure;
 import com.vmware.admiral.closures.services.closure.ClosureFactoryService;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescription;
@@ -92,12 +99,68 @@ import com.vmware.admiral.image.service.FavoriteImagesService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 
 public class HostInitComputeServicesConfig extends HostInitServiceHelper {
+
+    public static final Collection<ServiceMetadata> SERVICES_METADATA = Collections
+            .unmodifiableList(Arrays.asList(
+                    service(ContainerFactoryService.class),
+                    service(ContainerDescriptionFactoryService.class),
+                    service(ContainerNetworkDescriptionFactoryService.class),
+                    service(ContainerVolumeDescriptionFactoryService.class),
+                    service(ContainerVolumeFactoryService.class),
+                    service(ContainerNetworkFactoryService.class),
+                    service(ContainerStatsService.class),
+                    service(RegistryHostConfigService.class),
+                    service(CompositeDescriptionFactoryService.class),
+                    service(CompositeDescriptionCloneService.class),
+                    service(CompositeDescriptionContentService.class),
+                    service(TemplateSearchService.class),
+                    service(CompositeComponentFactoryService.class),
+                    service(ContainerLogService.class),
+                    service(ContainerShellService.class),
+                    service(ShellContainerExecutorService.class),
+                    service(HostConfigCertificateDistributionService.class),
+                    service(RegistryConfigCertificateDistributionService.class),
+                    service(ComputeInitialBootService.class),
+                    service(ElasticPlacementZoneConfigurationService.class),
+                    service(KubernetesDescriptionContentService.class),
+                    service(PodLogService.class),
+                    service(ClusterService.class),
+                    service(DanglingDescriptionsCleanupService.class),
+                    service(ContainerDescriptionToKubernetesDescriptionConverterService.class),
+                    service(FavoriteImageFactoryService.class),
+                    service(DeploymentFactoryService.class),
+                    service(PodFactoryService.class),
+                    service(ServiceEntityFactoryHandler.class),
+                    service(GenericKubernetesEntityFactoryService.class),
+                    service(PKSEndpointFactoryService.class),
+                    service(PKSCreateEndpointService.class),
+                    service(FavoriteImagePopulateInEmbeddedService.class),
+                    service(ContainerHostService.class),
+
+                    factoryService(CaSigningCertService.class),
+                    factoryService(GroupResourcePlacementService.class),
+                    factoryService(KubernetesEntityDataCollection.class),
+                    factoryService(HostContainerListDataCollection.class),
+                    factoryService(HostNetworkListDataCollection.class),
+                    factoryService(HostVolumeListDataCollection.class),
+                    factoryService(ContainerHostDataCollectionService.class),
+                    factoryService(DeploymentPolicyService.class),
+                    factoryService(HostPortProfileService.class),
+                    factoryService(ElasticPlacementZoneService.class),
+                    factoryService(EpzComputeEnumerationTaskService.class),
+                    factoryService(PlacementCapacityUpdateTaskService.class),
+                    factoryService(KubernetesDescriptionService.class),
+                    factoryService(ReplicationControllerService.class),
+                    factoryService(ReplicaSetService.class),
+                    factoryService(FavoriteImagesService.class),
+                    factoryService(FavoriteImagePopulateFlagService.class)));
 
     public static void startServices(ServiceHost host, boolean startMockContainerHostService) {
 
@@ -197,7 +260,8 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
 
         CompositeComponentRegistry.registerComponent(ResourceType.KUBERNETES_GENERIC_TYPE.getName(),
                 KubernetesDescriptionService.FACTORY_LINK, KubernetesDescription.class,
-                GenericKubernetesEntityFactoryService.SELF_LINK, GenericKubernetesEntityState.class);
+                GenericKubernetesEntityFactoryService.SELF_LINK,
+                GenericKubernetesEntityState.class);
 
         CompositeComponentRegistry.registerComponent(ResourceType.KUBERNETES_POD_TYPE.getName(),
                 KubernetesDescriptionService.FACTORY_LINK, KubernetesDescription.class,

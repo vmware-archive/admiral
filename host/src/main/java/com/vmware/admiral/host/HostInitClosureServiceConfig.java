@@ -11,7 +11,12 @@
 
 package com.vmware.admiral.host;
 
+import static com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata.factoryService;
+
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -25,6 +30,7 @@ import com.vmware.admiral.closures.services.closure.ClosureFactoryService;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptionFactoryService;
 import com.vmware.admiral.closures.services.images.DockerImageFactoryService;
 import com.vmware.admiral.service.test.MockClosureFactoryService;
+import com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata;
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
@@ -33,6 +39,13 @@ import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
 public class HostInitClosureServiceConfig extends HostInitServiceHelper {
+
+    public static final Collection<ServiceMetadata> SERVICES_METADATA = Collections
+            .unmodifiableList(Arrays.asList(
+                    factoryService(AdmiralAdapterFactoryService.class),
+                    factoryService(ClosureDescriptionFactoryService.class),
+                    factoryService(DockerImageFactoryService.class),
+                    factoryService(ClosureFactoryService.class)));
 
     private static final DriverRegistry driverRegistry = new DriverRegistryImpl();
 

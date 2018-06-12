@@ -15,6 +15,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -124,7 +125,10 @@ public class ProjectServiceWithCustomPropertiesTest extends AuthBaseTest {
 
         host.testStart(1);
         // Test simple filtered GET request to the factory
-        Operation.createGet(UriUtils.buildUri(host, ProjectFactoryService.SELF_LINK, filterQuery))
+        URI uri = UriUtils.buildUri(host, ProjectFactoryService.SELF_LINK,
+                filterQuery);
+        Operation
+                .createGet(UriUtils.buildExpandLinksQueryUri(uri))
                 .setReferer(host.getUri())
                 .setCompletion((o, e) -> {
                     if (e != null) {

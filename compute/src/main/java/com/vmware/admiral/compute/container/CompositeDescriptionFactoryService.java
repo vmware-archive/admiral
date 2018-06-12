@@ -30,7 +30,6 @@ public class CompositeDescriptionFactoryService extends AbstractSecuredFactorySe
         super.toggleOption(ServiceOption.PERSISTENCE, true);
         super.toggleOption(ServiceOption.REPLICATION, true);
         super.toggleOption(ServiceOption.IDEMPOTENT_POST, true);
-        super.toggleOption(ServiceOption.INSTRUMENTATION, true);
     }
 
     @Override

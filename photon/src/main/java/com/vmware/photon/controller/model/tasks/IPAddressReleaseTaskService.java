@@ -23,7 +23,6 @@ import com.vmware.photon.controller.model.query.QueryUtils;
 import com.vmware.photon.controller.model.resources.IPAddressService;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.Utils;
@@ -51,7 +50,6 @@ public class IPAddressReleaseTaskService extends StatelessService {
     public static final long IP_ADDRESS_MAINTENANCE_PERIOD_MICROS = TimeUnit.MINUTES.toMicros(5);
 
     public IPAddressReleaseTaskService() {
-        super.toggleOption(Service.ServiceOption.INSTRUMENTATION, true);
         super.toggleOption(ServiceOption.PERIODIC_MAINTENANCE, true);
         super.setMaintenanceIntervalMicros(IP_ADDRESS_MAINTENANCE_PERIOD_MICROS);
     }

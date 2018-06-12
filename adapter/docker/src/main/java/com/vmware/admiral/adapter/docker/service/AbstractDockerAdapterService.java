@@ -64,7 +64,6 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
     public AbstractDockerAdapterService() {
         super();
         super.toggleOption(ServiceOption.PERIODIC_MAINTENANCE, true);
-        super.toggleOption(ServiceOption.INSTRUMENTATION, true);
         super.setMaintenanceIntervalMicros(MAINTENANCE_INTERVAL_MICROS);
     }
 

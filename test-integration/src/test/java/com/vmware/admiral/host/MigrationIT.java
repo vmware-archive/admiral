@@ -42,6 +42,7 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.VerificationHost;
+import com.vmware.xenon.services.common.LegacyMigrationTaskService;
 import com.vmware.xenon.services.common.MigrationTaskService;
 
 public class MigrationIT extends RequestBaseTest {
@@ -279,6 +280,10 @@ public class MigrationIT extends RequestBaseTest {
         Operation post = Operation.createPost(u);
         host.startService(post, MigrationTaskService.createFactory());
         host.waitForServiceAvailable(MigrationTaskService.FACTORY_LINK);
+        u = UriUtils.buildUri(host, LegacyMigrationTaskService.FACTORY_LINK);
+        post = Operation.createPost(u);
+        host.startService(post, LegacyMigrationTaskService.createFactory());
+        host.waitForServiceAvailable(LegacyMigrationTaskService.FACTORY_LINK);
     }
 
     private void verifyComputeStatesExist() {

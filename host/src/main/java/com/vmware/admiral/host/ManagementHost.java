@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.logging.Level;
@@ -54,6 +55,7 @@ import com.vmware.admiral.service.common.harbor.HostInitHarborServices;
 import com.vmware.admiral.upgrade.transformation.ProjectsTransformationBootstrapService;
 import com.vmware.photon.controller.model.security.util.CertificateUtil;
 import com.vmware.photon.controller.model.security.util.EncryptionUtils;
+import com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata;
 import com.vmware.xenon.common.CommandLineArgumentParser;
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.LoaderFactoryService;
@@ -64,17 +66,22 @@ import com.vmware.xenon.common.Operation.AuthorizationContext;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.http.netty.NettyHttpListener;
 import com.vmware.xenon.common.http.netty.NettyHttpServiceClient;
+import com.vmware.xenon.services.common.LegacyMigrationTaskService;
 import com.vmware.xenon.services.common.MigrationTaskService;
 import com.vmware.xenon.services.common.ServiceUriPaths;
+import com.vmware.xenon.services.rdbms.PostgresSchemaManager;
+import com.vmware.xenon.services.rdbms.PostgresServiceHost;
 import com.vmware.xenon.swagger.SwaggerDescriptorService;
 
 /**
  * Stand alone process entry point for management of infrastructure and applications.
  */
-public class ManagementHost extends ServiceHost implements IExtensibilityRegistryHost {
+public class ManagementHost extends PostgresServiceHost implements IExtensibilityRegistryHost {
 
     static {
         if (System.getProperty("service.document.version.retention.limit") == null) {
@@ -125,6 +132,11 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
      * File path to certificate file (same value as ServiceHost.Arguments)
      */
     public Path certificateFile;
+
+    /**
+     * Flag to run the host with postgres document index as opposed to the default lucene index.
+     */
+    public boolean withPostgres;
 
     private ExtensibilitySubscriptionManager extensibilityRegistry;
 
@@ -182,6 +194,7 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
 
         log(Level.INFO, "**** Dynamic service loading enabled. ****");
         log(Level.INFO, "**** Migration service starting... ****");
+        super.startFactory(new LegacyMigrationTaskService());
         super.startFactory(new MigrationTaskService());
         // Clean up authorization context to avoid privileged access.
         setAuthorizationContext(null);
@@ -199,6 +212,16 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
         if (AuthUtil.isAuthxEnabled(this)) {
             baseArgs.isAuthorizationEnabled = true;
         }
+
+        // initialize Lucene or Postgres index
+        super.enablePostgres = this.withPostgres;
+        if (this.withPostgres) {
+            log(Level.INFO, "ManagementHost is being initialized with Postgres index");
+            enableLiquibase();
+        } else {
+            log(Level.INFO, "ManagementHost is being initialized with Lucene index");
+        }
+
         ServiceHost h = super.initialize(args, baseArgs);
         h.setProcessOwner(true);
         validatePeerArgs();
@@ -217,6 +240,49 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
         ConfigurationUtil.initialize(configs);
 
         return h;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    protected void registerPostgresSchema(PostgresSchemaManager sm) {
+        Collection<ServiceMetadata> allServices = new ArrayList<>();
+
+        allServices.addAll(HostInitAuthServiceConfig.SERVICES_METADATA);
+        allServices.addAll(HostInitClosureServiceConfig.SERVICES_METADATA);
+        allServices.addAll(HostInitCommonServiceConfig.SERVICES_METADATA);
+        allServices.addAll(HostInitComputeBackgroundServicesConfig.SERVICES_METADATA);
+        allServices.addAll(HostInitComputeServicesConfig.SERVICES_METADATA);
+        allServices.addAll(HostInitDockerAdapterServiceConfig.SERVICES_METADATA);
+        allServices.addAll(HostInitImageServicesConfig.SERVICES_METADATA);
+        allServices.addAll(HostInitRequestServicesConfig.SERVICES_METADATA);
+        allServices.addAll(HostInitUiServicesConfig.SERVICES_METADATA);
+        allServices.addAll(HostInitUpgradeServiceConfig.SERVICES_METADATA);
+        allServices.addAll(HostInitKubernetesAdapterServiceConfig.SERVICES_METADATA);
+        allServices.addAll(HostInitPhotonModelServiceConfig.getServiceMetadata());
+        allServices.addAll(HostInitRegistryAdapterServiceConfig.SERVICES_METADATA);
+
+        allServices.add(ServiceMetadata.factoryService(MigrationTaskService.class));
+
+        for (ServiceMetadata serviceMetadata : allServices) {
+            if (serviceMetadata.isFactory
+                    && StatefulService.class.isAssignableFrom(serviceMetadata.serviceClass)) {
+                try {
+                    if (serviceMetadata.factoryCreator != null) {
+                        sm.addFactory((StatefulService) serviceMetadata.factoryCreator.get()
+                                .createServiceInstance());
+                    } else {
+                        sm.addFactory(
+                                (Class<? extends StatefulService>) serviceMetadata.serviceClass);
+                    }
+                } catch (Throwable e) {
+                    log(Level.SEVERE, "Cannot register service factory for %s: %s",
+                            serviceMetadata.serviceClass.getCanonicalName(), Utils.toString(e));
+                }
+            } else if (FactoryService.class.isAssignableFrom(serviceMetadata.serviceClass)) {
+                sm.addCustomFactory((Class<? extends FactoryService>) serviceMetadata.serviceClass);
+            }
+        }
+        super.registerPostgresSchema(sm);
     }
 
     protected void startFabricServices() throws Throwable {

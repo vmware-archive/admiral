@@ -27,7 +27,6 @@ public class CompositionTaskFactoryService extends AbstractSecuredFactoryService
         super(CompositionTaskState.class);
         super.toggleOption(ServiceOption.PERSISTENCE, true);
         super.toggleOption(ServiceOption.REPLICATION, true);
-        super.toggleOption(ServiceOption.INSTRUMENTATION, true);
     }
 
     @Override

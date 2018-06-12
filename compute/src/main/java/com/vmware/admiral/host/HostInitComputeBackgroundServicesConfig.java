@@ -11,8 +11,15 @@
 
 package com.vmware.admiral.host;
 
+import static com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata.service;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+
 import com.vmware.admiral.compute.EpzComputeEnumerationPeriodicService;
 import com.vmware.admiral.compute.PlacementCapacityUpdatePeriodicService;
+import com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata;
 import com.vmware.xenon.common.ServiceHost;
 
 /**
@@ -23,6 +30,11 @@ import com.vmware.xenon.common.ServiceHost;
  * background activities can introduce non-deterministic behavior.
  */
 public class HostInitComputeBackgroundServicesConfig extends HostInitServiceHelper {
+
+    public static final Collection<ServiceMetadata> SERVICES_METADATA =
+            Collections.unmodifiableList(Arrays.asList(
+                service(EpzComputeEnumerationPeriodicService.class),
+                    service(PlacementCapacityUpdatePeriodicService.class)));
 
     public static void startServices(ServiceHost host) {
         startServices(host,

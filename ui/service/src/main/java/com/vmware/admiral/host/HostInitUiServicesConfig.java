@@ -11,13 +11,28 @@
 
 package com.vmware.admiral.host;
 
+import static com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata.service;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+
 import com.vmware.admiral.ContainerImageIconService;
 import com.vmware.admiral.UiNgService;
 import com.vmware.admiral.UiOgService;
 import com.vmware.admiral.UiService;
+import com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata;
 import com.vmware.xenon.common.ServiceHost;
 
 public class HostInitUiServicesConfig extends HostInitServiceHelper {
+
+    public static final Collection<ServiceMetadata> SERVICES_METADATA = Collections
+            .unmodifiableList(Arrays.asList(
+                    service(UiService.class),
+                    service(UiNgService.class),
+                    service(UiOgService.class),
+                    service(ContainerImageIconService.class),
+                    service(com.vmware.xenon.ui.UiService.class)));
 
     public static void startServices(ServiceHost host) {
         startServices(host, UiService.class, UiNgService.class, UiOgService.class,

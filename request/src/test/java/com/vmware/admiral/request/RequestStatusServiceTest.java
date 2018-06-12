@@ -25,6 +25,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
@@ -57,6 +58,7 @@ import com.vmware.xenon.services.common.QueryTask.QueryTerm;
 /**
  * Test for RequestStatusService
  */
+@Ignore
 public class RequestStatusServiceTest extends RequestBaseTest {
     public static final String EXPECTED_LAST_PHASE = RequestBrokerService.DISPLAY_NAME;
     public static final String EXPECTED_LAST_SUBSTAGE =

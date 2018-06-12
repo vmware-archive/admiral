@@ -20,6 +20,7 @@ import com.vmware.xenon.common.Service;
 public class ClosureDescriptionFactoryService extends AbstractSecuredFactoryService {
 
     public static final String FACTORY_LINK = ManagementUriParts.CLOSURES_DESC;
+    public static final String SELF_LINK = ManagementUriParts.CLOSURES_DESC;
 
     public ClosureDescriptionFactoryService() {
         super(ClosureDescription.class);

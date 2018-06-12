@@ -965,9 +965,14 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         }
 
         // and there must be no container network state left
-        ServiceDocumentQueryResult networkStates = getDocument(ServiceDocumentQueryResult.class,
-                ContainerNetworkService.FACTORY_LINK);
-        assertEquals(0L, networkStates.documentCount.longValue());
+        waitFor(() -> {
+            ServiceDocumentQueryResult networkStates = getDocument(ServiceDocumentQueryResult.class,
+                    ContainerNetworkService.FACTORY_LINK);
+            if (networkStates.documentCount.intValue() == 0) {
+                return true;
+            }
+            return false;
+        });
     }
 
     @Test

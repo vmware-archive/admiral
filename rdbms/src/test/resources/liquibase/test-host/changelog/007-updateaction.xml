@@ -1,0 +1,135 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet author="dannyh (generated)" id="1524036797865-1">
+        <addColumn tableName="docs_core_authcredentialsservicestate">
+            <column name="documentupdateaction" type="varchar">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524036797865-2">
+        <addColumn tableName="docs_core_checkpointstate">
+            <column name="documentupdateaction" type="varchar">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524036797865-3">
+        <addColumn tableName="docs_core_resourcegroupstate">
+            <column name="documentupdateaction" type="varchar">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524036797865-4">
+        <addColumn tableName="docs_core_rolestate">
+            <column name="documentupdateaction" type="varchar">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524036797865-5">
+        <addColumn tableName="docs_core_tenantstate">
+            <column name="documentupdateaction" type="varchar">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524036797865-6">
+        <addColumn tableName="docs_core_transactionservicestate">
+            <column name="documentupdateaction" type="varchar">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524036797865-7">
+        <addColumn tableName="docs_core_usergroupstate">
+            <column name="documentupdateaction" type="varchar">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524036797865-8">
+        <addColumn tableName="docs_core_userstate">
+            <column name="documentupdateaction" type="varchar">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524036797865-9">
+        <addColumn tableName="docs_testimmutablestate">
+            <column name="documentupdateaction" type="varchar">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524036797865-10">
+        <addColumn tableName="docs_testperiodicstate">
+            <column name="documentupdateaction" type="varchar">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524036797865-11">
+        <addColumn tableName="docs_teststate">
+            <column name="documentupdateaction" type="varchar">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524036797865-12">
+        <createIndex indexName="docs_core_authcredentialsservicestate_idx_f2fb816bfd0e7935" tableName="docs_core_authcredentialsservicestate">
+            <column name="documentupdateaction"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524036797865-13">
+        <createIndex indexName="docs_core_checkpointstate_idx_f2fb816bfd0e7935" tableName="docs_core_checkpointstate">
+            <column name="documentupdateaction"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524036797865-14">
+        <createIndex indexName="docs_core_resourcegroupstate_idx_f2fb816bfd0e7935" tableName="docs_core_resourcegroupstate">
+            <column name="documentupdateaction"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524036797865-15">
+        <createIndex indexName="docs_core_rolestate_idx_f2fb816bfd0e7935" tableName="docs_core_rolestate">
+            <column name="documentupdateaction"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524036797865-16">
+        <createIndex indexName="docs_core_tenantstate_idx_f2fb816bfd0e7935" tableName="docs_core_tenantstate">
+            <column name="documentupdateaction"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524036797865-17">
+        <createIndex indexName="docs_core_transactionservicestate_idx_f2fb816bfd0e7935" tableName="docs_core_transactionservicestate">
+            <column name="documentupdateaction"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524036797865-18">
+        <createIndex indexName="docs_core_usergroupstate_idx_f2fb816bfd0e7935" tableName="docs_core_usergroupstate">
+            <column name="documentupdateaction"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524036797865-19">
+        <createIndex indexName="docs_core_userstate_idx_f2fb816bfd0e7935" tableName="docs_core_userstate">
+            <column name="documentupdateaction"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524036797865-20">
+        <createIndex indexName="docs_testimmutablestate_idx_f2fb816bfd0e7935" tableName="docs_testimmutablestate">
+            <column name="documentupdateaction"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524036797865-21">
+        <createIndex indexName="docs_testperiodicstate_idx_f2fb816bfd0e7935" tableName="docs_testperiodicstate">
+            <column name="documentupdateaction"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1524036797865-22">
+        <createIndex indexName="docs_teststate_idx_f2fb816bfd0e7935" tableName="docs_teststate">
+            <column name="documentupdateaction"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

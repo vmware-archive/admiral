@@ -11,7 +11,12 @@
 
 package com.vmware.admiral.host;
 
+import static com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata.service;
+
 import java.net.URI;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.logging.Level;
 
 import com.vmware.admiral.adapter.docker.service.DockerAdapterService;
@@ -30,12 +35,22 @@ import com.vmware.admiral.service.test.MockDockerNetworkAdapterService;
 import com.vmware.admiral.service.test.MockDockerNetworkToHostService;
 import com.vmware.admiral.service.test.MockDockerVolumeAdapterService;
 import com.vmware.admiral.service.test.MockDockerVolumeToHostService;
+import com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 
 public class HostInitDockerAdapterServiceConfig {
     public static final String FIELD_NAME_START_MOCK_HOST_ADAPTER_INSTANCE = "startMockHostAdapterInstance";
+
+    public static final Collection<ServiceMetadata> SERVICES_METADATA = Collections
+            .unmodifiableList(Arrays.asList(
+                    service(DockerAdapterService.class),
+                    service(DockerOperationTypesService.class),
+                    service(DockerHostAdapterService.class),
+                    service(DockerNetworkAdapterService.class),
+                    service(DockerVolumeAdapterService.class),
+                    service(DockerHostAdapterImageService.class)));
 
     public static void startServices(ServiceHost host, boolean startMockHostAdapterInstance) {
         if (startMockHostAdapterInstance) {

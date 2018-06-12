@@ -1,0 +1,83 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet author="pmitrov (generated)" id="1523878655396-1">
+        <createTable tableName="docs_core_checkpointstate">
+            <column name="data" type="JSONB">
+                <constraints nullable="false"/>
+            </column>
+            <column name="documentauthprincipallink" type="VARCHAR"/>
+            <column name="documentkind" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="documenttransactionid" type="VARCHAR"/>
+            <column name="documentupdatetimemicros" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="documentversion" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="documentselflink" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="documentexpirationtimemicros" type="BIGINT"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1523878655396-2">
+        <addPrimaryKey columnNames="documentselflink" tableName="docs_core_checkpointstate"/>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1523878655396-3">
+        <createIndex indexName="docs_core_checkpointstate_idx_169914d09a4ed50f" tableName="docs_core_checkpointstate">
+            <column name="documenttransactionid"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1523878655396-4">
+        <createIndex indexName="docs_core_checkpointstate_idx_22fa292763a18305" tableName="docs_core_checkpointstate">
+            <column name="documentupdatetimemicros"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1523878655396-5">
+        <createIndex indexName="docs_core_checkpointstate_idx_5e65856c01969387" tableName="docs_core_checkpointstate">
+            <column name="documentversion"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1523878655396-6">
+        <createIndex indexName="docs_core_checkpointstate_idx_753a60c0c882792f" tableName="docs_core_checkpointstate">
+            <column computed="true" name="(data #&gt; '{documentEpoch}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1523878655396-7">
+        <createIndex indexName="docs_core_checkpointstate_idx_7b535d3e5987dbf" tableName="docs_core_checkpointstate">
+            <column computed="true" name="(data #&gt; '{timestamp}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1523878655396-8">
+        <createIndex indexName="docs_core_checkpointstate_idx_7b586275c84bd295" tableName="docs_core_checkpointstate">
+            <column name="documentkind"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1523878655396-9">
+        <createIndex indexName="docs_core_checkpointstate_idx_8ba3aa373f16912f" tableName="docs_core_checkpointstate">
+            <column computed="true" name="(data #&gt; '{documentOwner}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1523878655396-10">
+        <createIndex indexName="docs_core_checkpointstate_idx_90e72ee4b87bc097" tableName="docs_core_checkpointstate">
+            <column computed="true" name="(data #&gt; '{factoryLink}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1523878655396-11">
+        <createIndex indexName="docs_core_checkpointstate_idx_b0dfca95bee3d5d5" tableName="docs_core_checkpointstate">
+            <column name="documentexpirationtimemicros"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1523878655396-12">
+        <createIndex indexName="docs_core_checkpointstate_idx_b43dabe6b0f7732d" tableName="docs_core_checkpointstate">
+            <column computed="true" name="(data #&gt; '{documentSourceLink}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1523878655396-13">
+        <createIndex indexName="docs_core_checkpointstate_idx_c61b7619d978c37f" tableName="docs_core_checkpointstate">
+            <column name="documentauthprincipallink"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

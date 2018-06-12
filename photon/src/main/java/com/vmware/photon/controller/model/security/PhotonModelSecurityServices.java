@@ -11,14 +11,22 @@
 
 package com.vmware.photon.controller.model.security;
 
+import static com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata.factoryService;
+
 import com.vmware.photon.controller.model.security.service.SslTrustCertificateFactoryService;
 import com.vmware.photon.controller.model.security.service.SslTrustCertificateService;
+import com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata;
 import com.vmware.xenon.common.ServiceHost;
 
 /**
  * Helper class that starts all the photon model security related services
  */
 public class PhotonModelSecurityServices {
+
+    public static final ServiceMetadata[] SERVICES_METADATA = {
+            factoryService(SslTrustCertificateService.class,
+                    SslTrustCertificateFactoryService::new)
+    };
 
     public static final String[] LINKS = {
             SslTrustCertificateService.FACTORY_LINK };

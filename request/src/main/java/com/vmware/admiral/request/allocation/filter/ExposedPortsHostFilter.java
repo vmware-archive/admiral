@@ -65,7 +65,8 @@ public class ExposedPortsHostFilter
                 hostSelectionMap.keySet());
 
         //Get only containers with hostPorts that match those from the description
-        QueryUtil.addListValueClause(q, HOST_PORT_QUERY_SELECTION, descExposedPorts);
+        // TODO It should be possible to handle it with query for now filter on the fly
+        // QueryUtil.addListValueClause(q, HOST_PORT_QUERY_SELECTION, descExposedPorts);
 
         //Get only powered on containers or those being provisioned
         QueryUtil.addListValueClause(q, FIELD_NAME_POWER_STATE,
@@ -76,13 +77,19 @@ public class ExposedPortsHostFilter
         ServiceDocumentQuery<ContainerState> query = new ServiceDocumentQuery<ContainerState>(
                 host, ContainerState.class);
         List<ContainerState> containerStates = new ArrayList<>();
-        QueryUtil.addBroadcastOption(q);
         query.query(q, (r) -> {
             if (r.hasException()) {
                 throw new HostSelectionFilterException("Error querying for container states.",
                         "request.exposed-ports.filter.containers.query.error");
             } else if (r.hasResult()) {
-                containerStates.add(r.getResult());
+                if (r.getResult().ports != null) {
+                    for (PortBinding portBinding : r.getResult().ports) {
+                        if (descExposedPorts.contains(portBinding.hostPort)) {
+                            containerStates.add(r.getResult());
+                            break;
+                        }
+                    }
+                }
             } else {
                 for (ContainerState cs : containerStates) {
                     hostSelectionMap.remove(cs.parentLink);

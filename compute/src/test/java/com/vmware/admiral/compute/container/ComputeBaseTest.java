@@ -45,7 +45,6 @@ public abstract class ComputeBaseTest extends BaseTestCase {
     @Before
     public void beforeForComputeBase() throws Throwable {
         startServices(host);
-        waitForServiceAvailability(ComputeInitialBootService.SELF_LINK);
         waitForInitialBootServiceToBeSelfStopped(ComputeInitialBootService.SELF_LINK);
     }
 

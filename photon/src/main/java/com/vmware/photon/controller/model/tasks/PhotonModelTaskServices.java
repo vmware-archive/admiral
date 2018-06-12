@@ -11,10 +11,14 @@
 
 package com.vmware.photon.controller.model.tasks;
 
+import static com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata.factoryService;
+import static com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata.service;
+
 import com.vmware.photon.controller.model.tasks.monitoring.SingleResourceStatsAggregationTaskService;
 import com.vmware.photon.controller.model.tasks.monitoring.SingleResourceStatsCollectionTaskService;
 import com.vmware.photon.controller.model.tasks.monitoring.StatsAggregationTaskService;
 import com.vmware.photon.controller.model.tasks.monitoring.StatsCollectionTaskService;
+import com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.services.common.TaskFactoryService;
@@ -23,6 +27,28 @@ import com.vmware.xenon.services.common.TaskFactoryService;
  * Helper class that starts all the photon model Task services
  */
 public class PhotonModelTaskServices {
+
+    public static final ServiceMetadata[] SERVICES_METADATA = {
+            service(IPAddressReleaseTaskService.class),
+            factoryService(ResourceAllocationTaskService.class),
+            factoryService(ResourceEnumerationTaskService.class),
+            factoryService(ImageEnumerationTaskService.class),
+            factoryService(ScheduledTaskService.class),
+            factoryService(ResourceRemovalTaskService.class),
+            factoryService(ProvisionComputeTaskService.class),
+            factoryService(ProvisionNetworkTaskService.class),
+            factoryService(IPAddressAllocationTaskService.class),
+            factoryService(ProvisionSubnetTaskService.class),
+            factoryService(ProvisionLoadBalancerTaskService.class),
+            factoryService(SnapshotTaskService.class),
+            factoryService(ProvisionSecurityGroupTaskService.class),
+            factoryService(StatsCollectionTaskService.class),
+            factoryService(SingleResourceStatsCollectionTaskService.class),
+            factoryService(StatsAggregationTaskService.class),
+            factoryService(EndpointAllocationTaskService.class),
+            factoryService(SingleResourceStatsAggregationTaskService.class),
+            factoryService(SubTaskService.class)
+    };
 
     public static final String[] LINKS = {
             SshCommandTaskService.FACTORY_LINK,

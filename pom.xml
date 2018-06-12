@@ -34,6 +34,7 @@
     </licenses>
 
     <modules>
+        <module>rdbms</module>
         <module>common-test</module>
         <module>photon</module>
         <module>common</module>
@@ -78,10 +79,11 @@
         <m2e.lifecycle-mapping>1.0.0</m2e.lifecycle-mapping>
 
         <!-- xenon -->
-        <xenon.version>1.5.4_9</xenon.version>
+        <xenon.version>1.6.12</xenon.version>
         <xenon.common.version>${xenon.version}</xenon.common.version>
         <xenon.ui.version>${xenon.version}</xenon.ui.version>
         <xenon.swagger.version>0.0.7</xenon.swagger.version>
+        <xenon.rdbms.version>0.0.9</xenon.rdbms.version>
         <xenon.group>com.vmware.xenon</xenon.group>
 
         <!-- other -->
@@ -109,8 +111,12 @@
         <mockito.version>2.19.0</mockito.version>
         <jacoco.version>0.7.5.201505241946</jacoco.version>
 
-        <!-- Jacoco -->
-        <jacocoSkipReport>false</jacocoSkipReport>
+        <!-- rdbms -->
+        <hikaricp.version>3.0.0</hikaricp.version>
+        <junit.version>4.12</junit.version>
+        <postgres.version>42.2.2</postgres.version>
+        <assertj.version>3.8.0</assertj.version>
+        <liquibase.version>3.5.5</liquibase.version>
 
         <skipITs>false</skipITs>
 

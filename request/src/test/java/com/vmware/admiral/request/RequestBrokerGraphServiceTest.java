@@ -15,6 +15,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.common.ManagementUriParts;
@@ -37,6 +38,7 @@ import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 
+@Ignore
 public class RequestBrokerGraphServiceTest extends RequestBaseTest {
 
     @Test

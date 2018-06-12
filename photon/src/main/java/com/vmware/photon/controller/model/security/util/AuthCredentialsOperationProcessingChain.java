@@ -13,13 +13,14 @@ package com.vmware.photon.controller.model.security.util;
 
 import static com.vmware.photon.controller.model.constants.PhotonModelConstants.CUSTOM_PROP_CREDENTIALS_SCOPE;
 
-import java.util.function.Predicate;
-
 import com.vmware.photon.controller.model.constants.PhotonModelConstants.CredentialsScope;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationProcessingChain;
+import com.vmware.xenon.common.OperationProcessingChain.Filter;
+import com.vmware.xenon.common.OperationProcessingChain.FilterReturnCode;
+import com.vmware.xenon.common.OperationProcessingChain.OperationProcessingContext;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.services.common.AuthCredentialsService;
@@ -32,44 +33,47 @@ import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsSe
  * - Encrypts the private key field of a {@link AuthCredentialsServiceState} when needed if the
  * encryption is enabled.
  */
-public class AuthCredentialsOperationProcessingChain extends OperationProcessingChain {
+public class AuthCredentialsOperationProcessingChain {
 
     public static final String CREDENTIALS_IN_USE_MESSAGE = "Credentials are in use";
     public static final String CREDENTIALS_IN_USE_MESSAGE_CODE = "host.credentials.in.use";
 
-    public AuthCredentialsOperationProcessingChain(FactoryService service) {
-        super(service);
-        this.add(new Predicate<Operation>() {
+    public static OperationProcessingChain createOperationProcessingChain(FactoryService service) {
+        return OperationProcessingChain.create(new Filter() {
             @Override
-            public boolean test(Operation op) {
+            public FilterReturnCode processRequest(Operation op,
+                    OperationProcessingContext context) {
                 if (op.getAction() == Action.POST) {
-                    return handlePatchPostPut(service, op);
+                    handlePatchPostPut(service, op);
                 }
-                return true;
+                return FilterReturnCode.CONTINUE_PROCESSING;
             }
         });
     }
 
-    public AuthCredentialsOperationProcessingChain(AuthCredentialsService service) {
-        super(service);
-        this.add(new Predicate<Operation>() {
+    public static OperationProcessingChain createOperationProcessingChain(
+            AuthCredentialsService service) {
+        return OperationProcessingChain.create(new Filter() {
             @Override
-            public boolean test(Operation op) {
+            public FilterReturnCode processRequest(Operation op,
+                    OperationProcessingContext context) {
                 switch (op.getAction()) {
                 case DELETE:
-                    return handleDelete(service, op, this);
+                    handleDelete(service, op, this);
+                    break;
                 case PATCH:
                 case POST:
                 case PUT:
-                    return handlePatchPostPut(service, op);
+                    handlePatchPostPut(service, op);
+                    break;
                 default:
-                    return true;
                 }
+                return FilterReturnCode.CONTINUE_PROCESSING;
             }
         });
     }
 
-    protected boolean handlePatchPostPut(Service service, Operation op) {
+    protected static void handlePatchPostPut(Service service, Operation op) {
         AuthCredentialsServiceState body = op.getBody(AuthCredentialsServiceState.class);
 
         // Credentials with SYSTEM scope need the password in plain text or they can't be used to
@@ -82,14 +86,11 @@ public class AuthCredentialsOperationProcessingChain extends OperationProcessing
             body.privateKey = EncryptionUtils.encrypt(body.privateKey);
             op.setBodyNoCloning(body);
         }
-        return true;
     }
 
-    protected boolean handleDelete(AuthCredentialsService service, Operation op,
-            Predicate<Operation> invokingFilter) {
+    protected static void handleDelete(AuthCredentialsService service, Operation op,
+            Filter invokingFilter) {
         // TODO - Prevent deletion of a {@link AuthCredentialsServiceState} if its in use by any
         // state.
-        return true;
     }
-
 }

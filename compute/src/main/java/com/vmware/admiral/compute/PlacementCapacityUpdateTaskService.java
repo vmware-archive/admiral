@@ -189,7 +189,6 @@ public class PlacementCapacityUpdateTaskService extends
                 PlacementCapacityUpdateTaskState.SubStage.class, DISPLAY_NAME);
         super.toggleOption(ServiceOption.REPLICATION, true);
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
-        super.toggleOption(ServiceOption.INSTRUMENTATION, true);
         super.toggleOption(ServiceOption.IDEMPOTENT_POST, true);
 
         // these are one-off tasks that are not needed upon completion

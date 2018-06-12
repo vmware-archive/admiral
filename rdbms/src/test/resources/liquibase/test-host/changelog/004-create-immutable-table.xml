@@ -1,0 +1,88 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet author="dannyh (generated)" id="1521280293591-1">
+        <createTable catalogName="test" schemaName="public" tableName="docs_testimmutablestate">
+            <column name="data" type="JSONB">
+                <constraints nullable="false"/>
+            </column>
+            <column name="documentauthprincipallink" type="VARCHAR"/>
+            <column name="documentkind" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="documenttransactionid" type="VARCHAR"/>
+            <column name="documentupdatetimemicros" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="documentversion" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="documentselflink" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="documentexpirationtimemicros" type="BIGINT"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1521280293591-2">
+        <addPrimaryKey catalogName="test" columnNames="documentselflink" schemaName="public" tableName="docs_testimmutablestate"/>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1521280293591-3">
+        <createIndex catalogName="test" indexName="docs_testimmutablestate_idx_169914d09a4ed50f" schemaName="public" tableName="docs_testimmutablestate">
+            <column name="documenttransactionid"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1521280293591-4">
+        <createIndex catalogName="test" indexName="docs_testimmutablestate_idx_22fa292763a18305" schemaName="public" tableName="docs_testimmutablestate">
+            <column name="documentupdatetimemicros"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1521280293591-5">
+        <createIndex catalogName="test" indexName="docs_testimmutablestate_idx_5bdaa1e6be3a1697" schemaName="public" tableName="docs_testimmutablestate">
+            <column computed="true" name="(data #&gt; '{tenantLinks}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1521280293591-6">
+        <createIndex catalogName="test" indexName="docs_testimmutablestate_idx_5e65856c01969387" schemaName="public" tableName="docs_testimmutablestate">
+            <column name="documentversion"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1521280293591-7">
+        <createIndex catalogName="test" indexName="docs_testimmutablestate_idx_753a60c0c882792f" schemaName="public" tableName="docs_testimmutablestate">
+            <column computed="true" name="(data #&gt; '{documentEpoch}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1521280293591-8">
+        <createIndex catalogName="test" indexName="docs_testimmutablestate_idx_7b586275c84bd295" schemaName="public" tableName="docs_testimmutablestate">
+            <column name="documentkind"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1521280293591-9">
+        <createIndex catalogName="test" indexName="docs_testimmutablestate_idx_7e1aa6c68c7307bf" schemaName="public" tableName="docs_testimmutablestate">
+            <column computed="true" name="(data #&gt; '{firstName}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1521280293591-10">
+        <createIndex catalogName="test" indexName="docs_testimmutablestate_idx_8ba3aa373f16912f" schemaName="public" tableName="docs_testimmutablestate">
+            <column computed="true" name="(data #&gt; '{documentOwner}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1521280293591-11">
+        <createIndex catalogName="test" indexName="docs_testimmutablestate_idx_b0dfca95bee3d5d5" schemaName="public" tableName="docs_testimmutablestate">
+            <column name="documentexpirationtimemicros"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1521280293591-12">
+        <createIndex catalogName="test" indexName="docs_testimmutablestate_idx_b43dabe6b0f7732d" schemaName="public" tableName="docs_testimmutablestate">
+            <column computed="true" name="(data #&gt; '{documentSourceLink}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1521280293591-13">
+        <createIndex catalogName="test" indexName="docs_testimmutablestate_idx_c61b7619d978c37f" schemaName="public" tableName="docs_testimmutablestate">
+            <column name="documentauthprincipallink"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="dannyh (generated)" id="1521280293591-14">
+        <createIndex catalogName="test" indexName="docs_testimmutablestate_idx_d68ba322a82db3c5" schemaName="public" tableName="docs_testimmutablestate">
+            <column computed="true" name="(lower(data #&gt;&gt; '{lastName}'))"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

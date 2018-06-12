@@ -1,0 +1,188 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet author="pmitrov (generated)" id="1521726357523-1">
+        <createTable catalogName="test" schemaName="public" tableName="docs_core_authcredentialsservicestate">
+            <column name="data" type="JSONB">
+                <constraints nullable="false"/>
+            </column>
+            <column name="documentauthprincipallink" type="VARCHAR"/>
+            <column name="documentkind" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="documenttransactionid" type="VARCHAR"/>
+            <column name="documentupdatetimemicros" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="documentversion" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="documentselflink" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="documentexpirationtimemicros" type="BIGINT"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1521726357523-2">
+        <createTable catalogName="test" schemaName="public" tableName="docs_core_resourcegroupstate">
+            <column name="data" type="JSONB">
+                <constraints nullable="false"/>
+            </column>
+            <column name="documentauthprincipallink" type="VARCHAR"/>
+            <column name="documentkind" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="documenttransactionid" type="VARCHAR"/>
+            <column name="documentupdatetimemicros" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="documentversion" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="documentselflink" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="documentexpirationtimemicros" type="BIGINT"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1521726357523-3">
+        <addPrimaryKey catalogName="test" columnNames="documentselflink" schemaName="public" tableName="docs_core_authcredentialsservicestate"/>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1521726357523-4">
+        <addPrimaryKey catalogName="test" columnNames="documentselflink" schemaName="public" tableName="docs_core_resourcegroupstate"/>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1521726357523-5">
+        <createIndex catalogName="test" indexName="docs_core_authcredentialsservicestate_idx_169914d09a4ed50f" schemaName="public" tableName="docs_core_authcredentialsservicestate">
+            <column name="documenttransactionid"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1521726357523-6">
+        <createIndex catalogName="test" indexName="docs_core_authcredentialsservicestate_idx_22fa292763a18305" schemaName="public" tableName="docs_core_authcredentialsservicestate">
+            <column name="documentupdatetimemicros"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1521726357523-7">
+        <createIndex catalogName="test" indexName="docs_core_authcredentialsservicestate_idx_2a284a8a99cc13f5" schemaName="public" tableName="docs_core_authcredentialsservicestate">
+            <column computed="true" name="(data #&gt; '{type}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1521726357523-8">
+        <createIndex catalogName="test" indexName="docs_core_authcredentialsservicestate_idx_3bc8ca00f621b78d" schemaName="public" tableName="docs_core_authcredentialsservicestate">
+            <column computed="true" name="(data #&gt; '{privateKey}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1521726357523-9">
+        <createIndex catalogName="test" indexName="docs_core_authcredentialsservicestate_idx_5bdaa1e6be3a1697" schemaName="public" tableName="docs_core_authcredentialsservicestate">
+            <column computed="true" name="(data #&gt; '{tenantLinks}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1521726357523-10">
+        <createIndex catalogName="test" indexName="docs_core_authcredentialsservicestate_idx_5e65856c01969387" schemaName="public" tableName="docs_core_authcredentialsservicestate">
+            <column name="documentversion"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1521726357523-11">
+        <createIndex catalogName="test" indexName="docs_core_authcredentialsservicestate_idx_753a60c0c882792f" schemaName="public" tableName="docs_core_authcredentialsservicestate">
+            <column computed="true" name="(data #&gt; '{documentEpoch}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1521726357523-12">
+        <createIndex catalogName="test" indexName="docs_core_authcredentialsservicestate_idx_7671b2c3127146dd" schemaName="public" tableName="docs_core_authcredentialsservicestate">
+            <column computed="true" name="(data #&gt; '{tokenReference}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1521726357523-13">
+        <createIndex catalogName="test" indexName="docs_core_authcredentialsservicestate_idx_7b586275c84bd295" schemaName="public" tableName="docs_core_authcredentialsservicestate">
+            <column name="documentkind"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1521726357523-14">
+        <createIndex catalogName="test" indexName="docs_core_authcredentialsservicestate_idx_832c28d4e64715bf" schemaName="public" tableName="docs_core_authcredentialsservicestate">
+            <column computed="true" name="(data #&gt; '{publicKey}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1521726357523-15">
+        <createIndex catalogName="test" indexName="docs_core_authcredentialsservicestate_idx_8a6e3a21f9d03fbf" schemaName="public" tableName="docs_core_authcredentialsservicestate">
+            <column computed="true" name="(data #&gt; '{userEmail}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1521726357523-16">
+        <createIndex catalogName="test" indexName="docs_core_authcredentialsservicestate_idx_8ba3aa373f16912f" schemaName="public" tableName="docs_core_authcredentialsservicestate">
+            <column computed="true" name="(data #&gt; '{documentOwner}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1521726357523-17">
+        <createIndex catalogName="test" indexName="docs_core_authcredentialsservicestate_idx_b0dfca95bee3d5d5" schemaName="public" tableName="docs_core_authcredentialsservicestate">
+            <column name="documentexpirationtimemicros"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1521726357523-18">
+        <createIndex catalogName="test" indexName="docs_core_authcredentialsservicestate_idx_b43dabe6b0f7732d" schemaName="public" tableName="docs_core_authcredentialsservicestate">
+            <column computed="true" name="(data #&gt; '{documentSourceLink}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1521726357523-19">
+        <createIndex catalogName="test" indexName="docs_core_authcredentialsservicestate_idx_b61c10e4d72fd065" schemaName="public" tableName="docs_core_authcredentialsservicestate">
+            <column computed="true" name="(data #&gt; '{customProperties}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1521726357523-20">
+        <createIndex catalogName="test" indexName="docs_core_authcredentialsservicestate_idx_b9de6f18e66ffc5" schemaName="public" tableName="docs_core_authcredentialsservicestate">
+            <column computed="true" name="(data #&gt; '{userLink}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1521726357523-21">
+        <createIndex catalogName="test" indexName="docs_core_authcredentialsservicestate_idx_c61b7619d978c37f" schemaName="public" tableName="docs_core_authcredentialsservicestate">
+            <column name="documentauthprincipallink"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1521726357523-22">
+        <createIndex catalogName="test" indexName="docs_core_authcredentialsservicestate_idx_d71e4ea919613295" schemaName="public" tableName="docs_core_authcredentialsservicestate">
+            <column computed="true" name="(data #&gt; '{privateKeyId}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1521726357523-23">
+        <createIndex catalogName="test" indexName="docs_core_resourcegroupstate_idx_169914d09a4ed50f" schemaName="public" tableName="docs_core_resourcegroupstate">
+            <column name="documenttransactionid"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1521726357523-24">
+        <createIndex catalogName="test" indexName="docs_core_resourcegroupstate_idx_22fa292763a18305" schemaName="public" tableName="docs_core_resourcegroupstate">
+            <column name="documentupdatetimemicros"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1521726357523-25">
+        <createIndex catalogName="test" indexName="docs_core_resourcegroupstate_idx_5e65856c01969387" schemaName="public" tableName="docs_core_resourcegroupstate">
+            <column name="documentversion"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1521726357523-26">
+        <createIndex catalogName="test" indexName="docs_core_resourcegroupstate_idx_753a60c0c882792f" schemaName="public" tableName="docs_core_resourcegroupstate">
+            <column computed="true" name="(data #&gt; '{documentEpoch}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1521726357523-27">
+        <createIndex catalogName="test" indexName="docs_core_resourcegroupstate_idx_7b586275c84bd295" schemaName="public" tableName="docs_core_resourcegroupstate">
+            <column name="documentkind"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1521726357523-28">
+        <createIndex catalogName="test" indexName="docs_core_resourcegroupstate_idx_8ba3aa373f16912f" schemaName="public" tableName="docs_core_resourcegroupstate">
+            <column computed="true" name="(data #&gt; '{documentOwner}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1521726357523-29">
+        <createIndex catalogName="test" indexName="docs_core_resourcegroupstate_idx_b0dfca95bee3d5d5" schemaName="public" tableName="docs_core_resourcegroupstate">
+            <column name="documentexpirationtimemicros"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1521726357523-30">
+        <createIndex catalogName="test" indexName="docs_core_resourcegroupstate_idx_b43dabe6b0f7732d" schemaName="public" tableName="docs_core_resourcegroupstate">
+            <column computed="true" name="(data #&gt; '{documentSourceLink}')"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="pmitrov (generated)" id="1521726357523-31">
+        <createIndex catalogName="test" indexName="docs_core_resourcegroupstate_idx_c61b7619d978c37f" schemaName="public" tableName="docs_core_resourcegroupstate">
+            <column name="documentauthprincipallink"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

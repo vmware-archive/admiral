@@ -28,7 +28,6 @@ public class RequestBrokerFactoryService extends AbstractSecuredFactoryService {
         super(RequestBrokerState.class);
         super.toggleOption(ServiceOption.PERSISTENCE, true);
         super.toggleOption(ServiceOption.REPLICATION, true);
-        super.toggleOption(ServiceOption.INSTRUMENTATION, true);
     }
 
     @Override

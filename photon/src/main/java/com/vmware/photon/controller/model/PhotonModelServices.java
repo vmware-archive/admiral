@@ -11,6 +11,8 @@
 
 package com.vmware.photon.controller.model;
 
+import static com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata.factoryService;
+
 import com.vmware.photon.controller.model.monitoring.InMemoryResourceMetricService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeService;
@@ -35,12 +37,39 @@ import com.vmware.photon.controller.model.resources.SubnetRangeService;
 import com.vmware.photon.controller.model.resources.SubnetService;
 import com.vmware.photon.controller.model.resources.TagFactoryService;
 import com.vmware.photon.controller.model.resources.TagService;
+import com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata;
 import com.vmware.xenon.common.ServiceHost;
 
 /**
  * Helper class that starts all the photon model provisioning services
  */
 public class PhotonModelServices {
+
+    public static final ServiceMetadata[] SERVICES_METADATA = {
+            factoryService(ComputeDescriptionService.class),
+            factoryService(ComputeService.class),
+            factoryService(ResourcePoolService.class),
+            factoryService(ResourceDescriptionService.class),
+            factoryService(DiskService.class),
+            factoryService(SnapshotService.class),
+            factoryService(NetworkInterfaceService.class),
+            factoryService(NetworkInterfaceDescriptionService.class),
+            factoryService(SubnetService.class),
+            factoryService(SubnetRangeService.class),
+            factoryService(IPAddressService.class),
+            factoryService(ResourceGroupService.class),
+            factoryService(NetworkService.class),
+            factoryService(FirewallService.class),
+            factoryService(SecurityGroupService.class),
+            factoryService(StorageDescriptionService.class),
+            factoryService(EndpointService.class),
+            factoryService(ImageService.class),
+            factoryService(InMemoryResourceMetricService.class),
+            factoryService(TagService.class),
+            factoryService(LoadBalancerDescriptionService.class),
+            factoryService(LoadBalancerService.class),
+            factoryService(RouterService.class)
+    };
 
     public static final String[] LINKS = {
             ComputeDescriptionService.FACTORY_LINK,

@@ -60,7 +60,6 @@ public abstract class AbstractKubernetesAdapterService extends StatelessService 
     public AbstractKubernetesAdapterService() {
         super();
         super.toggleOption(ServiceOption.PERIODIC_MAINTENANCE, true);
-        super.toggleOption(ServiceOption.INSTRUMENTATION, true);
         super.setMaintenanceIntervalMicros(MAINTENANCE_INTERVAL_MICROS);
     }
 

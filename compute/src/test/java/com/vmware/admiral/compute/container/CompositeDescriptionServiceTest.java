@@ -192,7 +192,10 @@ public class CompositeDescriptionServiceTest extends ComputeBaseTest {
         CompositeDescriptionImages retrievedCompositeDescriptionImages = result[0];
         assertNotNull(retrievedCompositeDescriptionImages);
         assertNotNull(retrievedCompositeDescriptionImages.descriptionImages);
-        assertEquals(2, retrievedCompositeDescriptionImages.descriptionImages.size());
+        // System container description is created with postgres. With lucene it takes some time so
+        // check for 2 or 3
+        assertTrue(retrievedCompositeDescriptionImages.descriptionImages.size() == 2
+                || retrievedCompositeDescriptionImages.descriptionImages.size() == 3);
         assertEquals(createdFirstContainer.image, retrievedCompositeDescriptionImages
                 .descriptionImages.get(createdFirstContainer.documentSelfLink));
         assertEquals(createdSecondContainer.image, retrievedCompositeDescriptionImages

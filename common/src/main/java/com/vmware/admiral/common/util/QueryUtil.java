@@ -532,7 +532,7 @@ public class QueryUtil {
         result.documentLinks = documents.stream().map(d -> d.documentSelfLink)
                 .collect(Collectors.toList());
         result.documents = new HashMap<>();
-        documents.forEach(d -> result.documents.put(d.documentSelfLink, Utils.toJson(d)));
+        documents.forEach(d -> result.documents.put(d.documentSelfLink, d));
         return result;
     }
 }

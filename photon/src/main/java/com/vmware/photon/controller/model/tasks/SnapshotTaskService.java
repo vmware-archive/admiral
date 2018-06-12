@@ -64,7 +64,6 @@ public class SnapshotTaskService extends TaskService<SnapshotTaskService.Snapsho
         super(SnapshotTaskState.class);
         super.toggleOption(ServiceOption.REPLICATION, true);
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
-        super.toggleOption(ServiceOption.INSTRUMENTATION, true);
     }
 
     @Override

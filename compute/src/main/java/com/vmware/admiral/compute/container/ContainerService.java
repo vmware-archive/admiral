@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -54,6 +55,9 @@ import com.vmware.xenon.services.common.QueryTask;
  * container instances acting as a shared template.
  */
 public class ContainerService extends StatefulService {
+
+    private static final long CONTAINER_DESCRIPTION_DELETE_CHECK_WAIT = Long.getLong(
+            "com.vmware.admiral.container.description.delete.check.wait", 1000);
 
     public static class ContainerState
             extends com.vmware.photon.controller.model.resources.ResourceState
@@ -359,6 +363,10 @@ public class ContainerService extends StatefulService {
         ContainerState currentState = getState(delete);
         super.handleDelete(delete);
 
+        deleteContainerDescription(currentState);
+    }
+
+    private void deleteContainerDescription(ContainerState currentState) {
         // do no delete THE agent container description
         if ((currentState.descriptionLink == null)
                 || (SystemContainerDescriptions.AGENT_CONTAINER_DESCRIPTION_LINK
@@ -391,6 +399,14 @@ public class ContainerService extends StatefulService {
                     } else if (r.hasResult() && r.getCount() != 0) {
                         logFine("Child containers for: %s = %s",
                                 containerDescriptionLink, r.getCount());
+                        // when deleting multiple containers at once sometimes a container
+                        // description is not deleted. schedule another check to make sure that if
+                        // needed the description will be deleted
+                        getHost().schedule(() -> {
+                            logInfo("Additional check for containers with description %s will be performed",
+                                    containerDescriptionLink);
+                            deleteContainerDescription(currentState);
+                        }, CONTAINER_DESCRIPTION_DELETE_CHECK_WAIT, TimeUnit.MILLISECONDS);
                     } else {
                         logInfo("No other child containers found for: %s",
                                 containerDescriptionLink);

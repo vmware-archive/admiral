@@ -81,7 +81,6 @@ public class ContainerPortsAllocationTaskService
         super.toggleOption(ServiceOption.PERSISTENCE, true);
         super.toggleOption(ServiceOption.REPLICATION, true);
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
-        super.toggleOption(ServiceOption.INSTRUMENTATION, true);
         super.transientSubStages = ContainerPortsAllocationTaskState.SubStage.TRANSIENT_SUB_STAGES;
     }
 
@@ -275,8 +274,12 @@ public class ContainerPortsAllocationTaskService
                                     completeSubTasksCounter(taskCallback, e);
                                     return;
                                 }
-                                ContainerService.ContainerState body = o
-                                        .getBody(ContainerService.ContainerState.class);
+                                ContainerService.ContainerState body = null;
+                                if (o.getStatusCode() == Operation.STATUS_CODE_NOT_MODIFIED) {
+                                    body = containerState;
+                                } else {
+                                    body = o.getBody(ContainerService.ContainerState.class);
+                                }
                                 logInfo("Updated ContainerState: %s", body.documentSelfLink);
                                 completeSubTasksCounter(taskCallback, null);
                             }));

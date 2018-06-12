@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -36,6 +37,7 @@ import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.photon.controller.model.resources.SecurityGroupService.SecurityGroupState;
 import com.vmware.photon.controller.model.resources.StorageDescriptionService.StorageDescription;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ReflectionUtils;
 import com.vmware.xenon.common.ServiceDocument;
@@ -162,5 +164,14 @@ public class PhotonModelUtils {
             }
         }
         return new ImmutablePair<>(result, Boolean.valueOf(hasChanged));
+    }
+
+    /**
+     * Wait\Block for {@link DeferredResult} to complete.
+     * <p>
+     * <b>Note</b>: Use with care, for example within tests.
+     */
+    public static <T> T waitToComplete(DeferredResult<T> dr) {
+        return ((CompletableFuture<T>) dr.toCompletionStage()).join();
     }
 }

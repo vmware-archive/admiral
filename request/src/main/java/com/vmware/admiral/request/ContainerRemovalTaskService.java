@@ -117,7 +117,6 @@ public class ContainerRemovalTaskService
         super.toggleOption(ServiceOption.PERSISTENCE, true);
         super.toggleOption(ServiceOption.REPLICATION, true);
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
-        super.toggleOption(ServiceOption.INSTRUMENTATION, true);
         super.transientSubStages = SubStage.TRANSIENT_SUB_STAGES;
         this.subscriptionSubStages = EnumSet.copyOf(SubStage.SUBSCRIPTION_SUB_STAGES);
     }
@@ -211,8 +210,10 @@ public class ContainerRemovalTaskService
     private QueryTask createResourcesQuery(Class<? extends ServiceDocument> type,
             Collection<String> resourceLinks) {
         QueryTask query = QueryUtil.buildQuery(type, false);
-        QueryUtil.addListValueClause(query, ServiceDocument.FIELD_NAME_SELF_LINK, resourceLinks);
-
+        if (resourceLinks != null && !resourceLinks.isEmpty()) {
+            QueryUtil.addListValueClause(query, ServiceDocument.FIELD_NAME_SELF_LINK,
+                    resourceLinks);
+        }
         return query;
     }
 

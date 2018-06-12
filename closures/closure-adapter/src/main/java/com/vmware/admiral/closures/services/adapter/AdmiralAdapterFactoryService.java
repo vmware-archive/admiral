@@ -18,12 +18,12 @@ import com.vmware.xenon.common.Service;
 public class AdmiralAdapterFactoryService extends AbstractSecuredFactoryService {
 
     public static final String FACTORY_LINK = ManagementUriParts.REQUEST_CLOSURE_RUN;
+    public static final String SELF_LINK = ManagementUriParts.REQUEST_CLOSURE_RUN;
 
     public AdmiralAdapterFactoryService() {
         super(AdmiralAdapterService.AdmiralAdapterTaskState.class);
         super.toggleOption(ServiceOption.PERSISTENCE, true);
         super.toggleOption(ServiceOption.REPLICATION, true);
-        super.toggleOption(ServiceOption.INSTRUMENTATION, true);
     }
 
     @Override

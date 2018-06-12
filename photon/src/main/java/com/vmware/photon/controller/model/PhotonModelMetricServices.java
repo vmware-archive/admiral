@@ -11,7 +11,10 @@
 
 package com.vmware.photon.controller.model;
 
+import static com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata.factoryService;
+
 import com.vmware.photon.controller.model.monitoring.ResourceMetricsService;
+import com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceHost;
@@ -22,6 +25,10 @@ import com.vmware.xenon.common.UriUtils;
  * Helper class that starts all the photon model provisioning services
  */
 public class PhotonModelMetricServices {
+
+    public static final ServiceMetadata[] SERVICES_METADATA = {
+            factoryService(ResourceMetricsService.class)
+    };
 
     public static final String[] LINKS = {
             ResourceMetricsService.FACTORY_LINK};
