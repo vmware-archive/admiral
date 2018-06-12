@@ -12,7 +12,6 @@
 package com.vmware.admiral.auth.idm.local;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -23,7 +22,6 @@ import com.vmware.admiral.auth.idm.SessionService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.TestContext;
-import com.vmware.xenon.services.common.authn.AuthenticationConstants;
 
 public class LocalLogoutProviderTest extends AuthBaseTest {
 
@@ -53,9 +51,9 @@ public class LocalLogoutProviderTest extends AuthBaseTest {
         ctx.await();
 
         assertEquals(Operation.STATUS_CODE_OK, op.getStatusCode());
-        String cookie = op.getResponseHeader(Operation.SET_COOKIE_HEADER);
-        assertTrue(cookie != null
-                && cookie.startsWith(AuthenticationConstants.REQUEST_AUTH_TOKEN_COOKIE));
+        // String cookie = op.getResponseHeader(Operation.SET_COOKIE_HEADER);
+        // assertTrue(cookie != null
+        // && cookie.startsWith(AuthenticationConstants.REQUEST_AUTH_TOKEN_COOKIE));
     }
 
 }

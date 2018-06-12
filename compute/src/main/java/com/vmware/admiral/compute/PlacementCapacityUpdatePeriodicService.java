@@ -43,7 +43,6 @@ public class PlacementCapacityUpdatePeriodicService extends StatelessService {
     private final AtomicBoolean invalidated = new AtomicBoolean();
 
     public PlacementCapacityUpdatePeriodicService() {
-        super.toggleOption(ServiceOption.INSTRUMENTATION, true);
         super.toggleOption(ServiceOption.PERIODIC_MAINTENANCE, true);
         super.setMaintenanceIntervalMicros(MAINTENANCE_INTERVAL_MICROS);
     }

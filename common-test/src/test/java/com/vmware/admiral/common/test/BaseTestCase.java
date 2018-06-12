@@ -1009,10 +1009,15 @@ public abstract class BaseTestCase {
                                 return;
                             }
                             if (!o.hasBody()) {
-                                ctx.failIteration(new IllegalStateException("body was expected"));
-                                return;
+                                if (o.getStatusCode() < 400) {
+                                    doc.set(0, inState);
+                                } else {
+                                    ctx.failIteration(
+                                            new IllegalStateException("body was expected"));
+                                }
+                            } else {
+                                doc.set(0, o.getBody(type));
                             }
-                            doc.set(0, o.getBody(type));
                             if (expectFailure) {
                                 ctx.failIteration(new IllegalStateException(
                                         "ERROR: operation completed successfully but exception excepted."));

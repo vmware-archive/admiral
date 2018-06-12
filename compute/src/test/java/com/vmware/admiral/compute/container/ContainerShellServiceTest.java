@@ -133,7 +133,8 @@ public class ContainerShellServiceTest extends ComputeBaseTest {
                     + UriUtils.getLastPathSegment(containerState.documentSelfLink));
             fail("It should have failed!");
         } catch (ServiceNotFoundException e) {
-            assertEquals("Service not found: " + host.getPublicUriAsString(), e.getMessage());
+            assertTrue(
+                    e.getMessage().contains("Service not found: " + host.getPublicUriAsString()));
         }
     }
 

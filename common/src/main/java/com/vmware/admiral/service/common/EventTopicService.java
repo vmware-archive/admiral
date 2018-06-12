@@ -12,7 +12,6 @@
 package com.vmware.admiral.service.common;
 
 import com.vmware.admiral.common.ManagementUriParts;
-
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocument.Documentation;
@@ -56,7 +55,6 @@ public class EventTopicService extends StatefulService {
         super(EventTopicState.class);
         super.toggleOption(ServiceOption.PERSISTENCE, true);
         super.toggleOption(ServiceOption.REPLICATION, true);
-        super.toggleOption(ServiceOption.INSTRUMENTATION, true);
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
         super.toggleOption(ServiceOption.IDEMPOTENT_POST, true);
     }

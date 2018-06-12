@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.compute.ContainerHostService;
@@ -148,6 +149,7 @@ public class ContainerNetworkProvisionTaskServiceTest extends RequestBaseTest {
     }
 
     // VBV-685
+    @Ignore
     @Test
     public void testNetworkWithSpecialNameProvisioningTask() throws Throwable {
         String networkName = "special chars network";

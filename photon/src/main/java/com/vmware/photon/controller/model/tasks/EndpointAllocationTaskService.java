@@ -141,7 +141,6 @@ public class EndpointAllocationTaskService
         super(EndpointAllocationTaskState.class);
         super.toggleOption(ServiceOption.REPLICATION, true);
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
-        super.toggleOption(ServiceOption.INSTRUMENTATION, true);
     }
 
     @Override

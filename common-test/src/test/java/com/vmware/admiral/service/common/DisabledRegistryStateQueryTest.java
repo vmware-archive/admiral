@@ -29,8 +29,7 @@ import com.vmware.xenon.common.UriUtils;
  * Test the RegistryState query in RegistryFactoryService
  */
 public class DisabledRegistryStateQueryTest extends BaseRegistryStateQueryTest {
-    private static final String GROUPED_REGISTRY_ID = DisabledRegistryStateQueryTest.class
-            + "-grouped";
+    private static final String GROUPED_REGISTRY_ID = "Disabled-registy-grouped";
 
     private static final String TEST_GROUP = "test-group";
     private static final String TEST_GROUP_TENANT_LINK = "/tenants/" + TEST_GROUP;

@@ -27,7 +27,6 @@ public class ReservationRemovalTaskFactoryService extends AbstractSecuredFactory
         super(ReservationRemovalTaskState.class);
         super.toggleOption(ServiceOption.PERSISTENCE, true);
         super.toggleOption(ServiceOption.REPLICATION, true);
-        super.toggleOption(ServiceOption.INSTRUMENTATION, true);
     }
 
     @Override

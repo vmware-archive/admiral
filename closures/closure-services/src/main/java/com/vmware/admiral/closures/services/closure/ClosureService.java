@@ -68,7 +68,6 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
         super.toggleOption(ServiceOption.REPLICATION, true);
         super.toggleOption(ServiceOption.PERSISTENCE, true);
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
-        super.toggleOption(ServiceOption.INSTRUMENTATION, true);
         super.toggleOption(ServiceOption.PERIODIC_MAINTENANCE, true);
 
         super.setMaintenanceIntervalMicros(maintenanceTimeout);

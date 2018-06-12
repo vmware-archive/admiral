@@ -391,8 +391,6 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
 
         // release what's left of the provisioned resources
         releasePlacement(placementState, descLink, count);
-
-        doDelete(UriUtils.buildUri(host, descLink), false);
     }
 
     @Test

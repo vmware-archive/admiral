@@ -63,7 +63,6 @@ public class ClosureProvisionTaskService extends
         super.toggleOption(Service.ServiceOption.PERSISTENCE, true);
         super.toggleOption(Service.ServiceOption.REPLICATION, true);
         super.toggleOption(Service.ServiceOption.OWNER_SELECTION, true);
-        super.toggleOption(Service.ServiceOption.INSTRUMENTATION, true);
         super.toggleOption(Service.ServiceOption.IDEMPOTENT_POST, true);
     }
 

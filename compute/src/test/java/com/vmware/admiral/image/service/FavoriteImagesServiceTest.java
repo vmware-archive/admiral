@@ -141,7 +141,13 @@ public class FavoriteImagesServiceTest extends ComputeBaseTest {
         validateImage(nginxImage, nginxImageState);
         checkImages(nginxImage);
 
-        FavoriteImage newNginxImageState = addImageToFavorites(nginxImage).getBody(FavoriteImage.class);
+        Operation addOperation = addImageToFavorites(nginxImage);
+        FavoriteImage newNginxImageState;
+        if (addOperation.getStatusCode() == Operation.STATUS_CODE_NOT_MODIFIED) {
+            newNginxImageState = nginxImageState;
+        } else {
+            newNginxImageState = addOperation.getBody(FavoriteImage.class);
+        }
 
         assertEquals(nginxImageState.documentSelfLink, newNginxImageState.documentSelfLink);
         checkImages(nginxImage);

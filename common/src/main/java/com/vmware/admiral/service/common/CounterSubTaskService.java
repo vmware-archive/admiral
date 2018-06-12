@@ -78,7 +78,7 @@ public class CounterSubTaskService extends StatefulService {
             Consumer<String> callbackFunc) {
         try {
             final String link = UriUtils.buildUriPath(CounterSubTaskService.FACTORY_LINK,
-                    UUID.randomUUID().toString(), service.getSelfLink());
+                    UUID.randomUUID().toString());
             subTaskInitState.documentSelfLink = link;
             subTaskInitState.documentExpirationTimeMicros = ServiceUtils
                     .getDefaultTaskExpirationTimeInMicros();

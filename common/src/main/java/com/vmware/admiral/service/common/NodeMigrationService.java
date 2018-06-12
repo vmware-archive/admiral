@@ -27,8 +27,8 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.TaskState.TaskStage;
-import com.vmware.xenon.services.common.MigrationTaskService;
-import com.vmware.xenon.services.common.MigrationTaskService.State;
+import com.vmware.xenon.services.common.LegacyMigrationTaskService;
+import com.vmware.xenon.services.common.LegacyMigrationTaskService.State;
 import com.vmware.xenon.services.common.ServiceUriPaths;
 
 /**
@@ -153,7 +153,8 @@ public class NodeMigrationService extends StatelessService {
             migrationState.sourceFactoryLink = currentService;
             migrationState.migrateMismatchedOwnerDocuments = true;
 
-            Operation operation = Operation.createPost(this, MigrationTaskService.FACTORY_LINK)
+            Operation operation = Operation
+                    .createPost(this, LegacyMigrationTaskService.FACTORY_LINK)
                     .setBody(migrationState)
                     .setCompletion((o, ex) -> {
                         if (ex != null) {

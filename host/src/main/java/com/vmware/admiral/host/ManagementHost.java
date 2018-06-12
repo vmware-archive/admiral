@@ -66,6 +66,7 @@ import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.http.netty.NettyHttpListener;
 import com.vmware.xenon.common.http.netty.NettyHttpServiceClient;
+import com.vmware.xenon.services.common.LegacyMigrationTaskService;
 import com.vmware.xenon.services.common.MigrationTaskService;
 import com.vmware.xenon.services.common.ServiceUriPaths;
 import com.vmware.xenon.swagger.SwaggerDescriptorService;
@@ -180,6 +181,7 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
 
         log(Level.INFO, "**** Dynamic service loading enabled. ****");
         log(Level.INFO, "**** Migration service starting... ****");
+        super.startFactory(new LegacyMigrationTaskService());
         super.startFactory(new MigrationTaskService());
         // Clean up authorization context to avoid privileged access.
         setAuthorizationContext(null);

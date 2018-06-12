@@ -109,7 +109,6 @@ public class ResourceRemovalTaskService
         super(ResourceRemovalTaskState.class);
         super.toggleOption(Service.ServiceOption.REPLICATION, true);
         super.toggleOption(Service.ServiceOption.OWNER_SELECTION, true);
-        super.toggleOption(Service.ServiceOption.INSTRUMENTATION, true);
     }
 
     @Override

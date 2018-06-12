@@ -90,7 +90,6 @@ public class SshCommandTaskService extends TaskService<SshCommandTaskService.Ssh
 
     public SshCommandTaskService(ExecutorService executor) {
         super(SshCommandTaskState.class);
-        super.toggleOption(Service.ServiceOption.INSTRUMENTATION, true);
         this.executor = executor;
     }
 

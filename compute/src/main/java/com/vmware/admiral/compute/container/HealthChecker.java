@@ -477,7 +477,11 @@ public class HealthChecker {
                         return;
                     }
                     if (callback != null) {
-                        callback.accept(ob.getBody(ContainerStats.class));
+                        if (ob.getStatusCode() == Operation.STATUS_CODE_NOT_MODIFIED) {
+                            callback.accept(containerStats);
+                        } else {
+                            callback.accept(ob.getBody(ContainerStats.class));
+                        }
                     }
                 }));
     }

@@ -29,7 +29,6 @@ public class RequestStatusFactoryService extends AbstractSecuredFactoryService {
         super(RequestStatus.class);
         super.toggleOption(ServiceOption.PERSISTENCE, true);
         super.toggleOption(ServiceOption.REPLICATION, true);
-        super.toggleOption(ServiceOption.INSTRUMENTATION, true);
         super.toggleOption(ServiceOption.IDEMPOTENT_POST, true);
     }
 

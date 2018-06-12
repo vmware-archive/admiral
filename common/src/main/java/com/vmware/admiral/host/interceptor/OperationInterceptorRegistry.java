@@ -16,7 +16,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
-import java.util.function.Predicate;
 import java.util.logging.Level;
 
 import com.vmware.xenon.common.DeferredResult;
@@ -76,9 +75,11 @@ public class OperationInterceptorRegistry {
         if (interceptors != null) {
             OperationProcessingChain chain = getServiceOperationProcessingChain(service);
             for (InterceptorData data : interceptors) {
-                Predicate<Operation> filter = new DeferredOperationPredicate(service, data.action,
+                DeferredOperationPredicate filter = new DeferredOperationPredicate(service,
+                        data.action,
                         data.interceptor);
-                chain.add(filter);
+                filter.init();
+                chain.getFilters().add(filter);
             }
         }
     }
@@ -104,7 +105,7 @@ public class OperationInterceptorRegistry {
     private OperationProcessingChain getServiceOperationProcessingChain(Service service) {
         OperationProcessingChain chain = service.getOperationProcessingChain();
         if (chain == null) {
-            chain = new OperationProcessingChain(service);
+            chain = OperationProcessingChain.create();
             service.setOperationProcessingChain(chain);
         }
         return chain;

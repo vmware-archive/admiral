@@ -30,7 +30,6 @@ public abstract class AbstractCallbackServiceHandler extends
     public AbstractCallbackServiceHandler() {
         super(CallbackServiceHandlerState.class, DefaultSubStage.class, getDisplayName());
         super.toggleOption(ServiceOption.PERSISTENCE, true);
-        super.toggleOption(ServiceOption.INSTRUMENTATION, true);
 
         this.setSelfDelete(true);
     }
