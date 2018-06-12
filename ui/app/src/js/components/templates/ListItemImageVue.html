@@ -12,8 +12,9 @@
   role="alert" v-if="model.alert"><i class="fa alert-icon"
   :class="{'fa-check': model.alert.type === 'success', 'fa-exclamation-circle': model.alert.type === 'fail'}"
 ></i><span>{{model.alert.message}}</span></div>
-<div class="image-item" :data-name="model.registry + '/' + model.name">
-  <div class="image-header">
+  <div class="image-item" :data-name="model.registry + '/' + model.name">
+    <div v-if="isFavorite" class="favImage"><i class="fa fa-star"></i></div>
+    <div class="image-header">
     <img :src="model.icon"/>
     <div class="title-holder">
       <div class="title truncateText" :title="model.name">{{model.name}}</div>

@@ -324,6 +324,12 @@
     margin-left: -20px;
     margin-right: -20px;
   }
+  .list-view .image-item .favImage {
+    position:  absolute;
+    top: 1px;
+    left: 5px;
+    color: $secondary-hint_title_color;
+  }
   .list-view .image-item .image-content {
     font-weight: 300;
     margin-bottom: 10px;
