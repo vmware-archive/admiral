@@ -45,7 +45,10 @@ public class FavoriteImagesServiceTest extends ComputeBaseTest {
     }
 
     @Before
-    public void initObjects() {
+    public void initObjects() throws Throwable {
+
+        cleanUpFavoriteImages();
+
         nginxImage = new FavoriteImage();
         nginxImage.name = "library/nginx";
         nginxImage.description = "Official build of Nginx.";
@@ -62,6 +65,11 @@ public class FavoriteImagesServiceTest extends ComputeBaseTest {
                 + "package index and only 5 MB in size!";
         alpineImage.registry = DEFAULT_REGISTRY;
 
+    }
+
+    @Test
+    public void testNoAddedFavoriteImages() throws Throwable {
+        checkImages();
     }
 
     @Test
@@ -125,7 +133,7 @@ public class FavoriteImagesServiceTest extends ComputeBaseTest {
         checkImages();
     }
 
-    @Test(expected = Exception.class)
+    @Test
     public void testAddExistingImageToFavorites() throws Throwable {
         FavoriteImage nginxImageState = addImageToFavorites(nginxImage)
                 .getBody(FavoriteImage.class);
@@ -133,13 +141,36 @@ public class FavoriteImagesServiceTest extends ComputeBaseTest {
         validateImage(nginxImage, nginxImageState);
         checkImages(nginxImage);
 
-        Operation operationResponse = addImageToFavorites(nginxImage);
+        FavoriteImage newNginxImageState = addImageToFavorites(nginxImage).getBody(FavoriteImage.class);
 
-        assertEquals(Operation.STATUS_CODE_BAD_REQUEST, operationResponse.getStatusCode());
+        assertEquals(nginxImageState.documentSelfLink, newNginxImageState.documentSelfLink);
         checkImages(nginxImage);
 
         removeImageFromFavorites(nginxImageState);
 
+        checkImages();
+    }
+
+    @Test
+    public void testAddRemoveImageFromFavoritesWithTenantLinks() throws Throwable {
+        List<String> tenantLinks = new LinkedList<>();
+        tenantLinks.add("/projects/qe");
+
+        FavoriteImage nginxWithTenantLink = new FavoriteImage();
+        nginxWithTenantLink.name = nginxImage.name;
+        nginxWithTenantLink.description = nginxImage.description;
+        nginxWithTenantLink.registry = nginxImage.registry;
+        nginxWithTenantLink.tenantLinks = tenantLinks;
+
+        FavoriteImage nginxImageState = addImageToFavorites(nginxImage).getBody(FavoriteImage.class);
+        FavoriteImage nginxWithTenantLinkState = addImageToFavorites(nginxWithTenantLink).getBody(FavoriteImage.class);
+
+        checkImages(nginxImage, nginxWithTenantLink);
+
+        removeImageFromFavorites(nginxWithTenantLinkState);
+        checkImages(nginxImage);
+
+        removeImageFromFavorites(nginxImageState);
         checkImages();
     }
 
@@ -170,6 +201,20 @@ public class FavoriteImagesServiceTest extends ComputeBaseTest {
         assertFalse(img1.equals(img4));
 
         assertEquals(img1.hashCode(), img2.hashCode());
+    }
+
+    private void cleanUpFavoriteImages() throws Throwable {
+
+        List<FavoriteImage> images = getDocumentsOfType(FavoriteImage.class);
+
+        images.forEach(i -> {
+            try {
+                host.log(Level.INFO, "Removing default image " + i.name);
+                removeImageFromFavorites(i);
+            } catch (Throwable throwable) {
+                throwable.printStackTrace();
+            }
+        });
     }
 
     private void checkImages(FavoriteImage... expectedImages) throws Throwable {

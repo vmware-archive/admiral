@@ -37,15 +37,6 @@ public class FavoriteImageFactoryService extends AbstractSecuredFactoryService {
     }
 
     /**
-     * Thrown when the image which is to be added to favorites is already added.
-     */
-    public class FavoriteImageAlreadyExistsException extends Exception {
-        public FavoriteImageAlreadyExistsException(String message) {
-            super(message);
-        }
-    }
-
-    /**
      * Thrown when the registry an image belongs to is either not global or disabled,
      * or both.
      */
@@ -103,6 +94,12 @@ public class FavoriteImageFactoryService extends AbstractSecuredFactoryService {
 
         queryTask.querySpec.query.addBooleanClause(nameClause);
         queryTask.querySpec.query.addBooleanClause(registryClause);
+
+        if (imageToFavorite.tenantLinks != null && !imageToFavorite.tenantLinks.isEmpty()) {
+            Query tenantLinkClause = QueryUtil.addTenantClause(imageToFavorite.tenantLinks);
+            queryTask.querySpec.query.addBooleanClause(tenantLinkClause);
+        }
+
         QueryUtil.addExpandOption(queryTask);
 
         List<FavoriteImage> existingFavorites = new LinkedList<>();
@@ -116,9 +113,10 @@ public class FavoriteImageFactoryService extends AbstractSecuredFactoryService {
                         if (existingFavorites.isEmpty()) {
                             completeOrFailOperationForRegistry(post, imageToFavorite.registry);
                         } else {
-                            post.setStatusCode(Operation.STATUS_CODE_BAD_REQUEST);
-                            post.fail(new FavoriteImageAlreadyExistsException("Image " +
-                                    "already exists as favorite"));
+                            //If the image is already added, add the existing image state to the POST body
+                            post.setStatusCode(Operation.STATUS_CODE_NOT_MODIFIED);
+                            post.setBody(existingFavorites.get(0));
+                            post.complete();
                         }
                     }
                 });

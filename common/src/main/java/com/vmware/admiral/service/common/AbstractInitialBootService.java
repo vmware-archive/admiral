@@ -53,6 +53,11 @@ public abstract class AbstractInitialBootService extends StatelessService {
             ServiceDocument... states) {
         if (states == null || states.length == 0) {
             post.complete();
+            logInfo("Finish initial boot service: %s", getSelfLink());
+            if (selfDelete) {
+                logInfo("Stopping initial boot service: %s", getSelfLink());
+                sendRequest(Operation.createDelete(getUri()));
+            }
             return;
         }
         final AtomicInteger countDown = new AtomicInteger(states.length);

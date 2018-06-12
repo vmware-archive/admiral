@@ -86,6 +86,7 @@ import com.vmware.admiral.compute.pks.PKSCreateEndpointService;
 import com.vmware.admiral.compute.pks.PKSEndpointService;
 import com.vmware.admiral.compute.util.DanglingDescriptionsCleanupService;
 import com.vmware.admiral.image.service.FavoriteImageFactoryService;
+import com.vmware.admiral.image.service.FavoriteImagePopulateFlagService;
 import com.vmware.admiral.image.service.FavoriteImagesService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeService;
@@ -148,7 +149,8 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 ReplicationControllerService.class,
                 ReplicaSetService.class,
                 PKSEndpointService.class,
-                FavoriteImagesService.class);
+                FavoriteImagesService.class,
+                FavoriteImagePopulateFlagService.class);
 
         startServices(host, ContainerHostService.class);
 

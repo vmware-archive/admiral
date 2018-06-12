@@ -15,6 +15,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+import java.util.List;
 
 import org.junit.After;
 import org.junit.Test;
@@ -34,6 +37,10 @@ import com.vmware.admiral.compute.container.HostVolumeListDataCollection.HostVol
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
 import com.vmware.admiral.compute.kubernetes.KubernetesEntityDataCollection;
 import com.vmware.admiral.compute.kubernetes.KubernetesEntityDataCollection.KubernetesEntityDataCollectionState;
+import com.vmware.admiral.image.service.FavoriteImagePopulateFlagService;
+import com.vmware.admiral.image.service.FavoriteImagePopulateFlagService.FavoriteImagePopulateFlag;
+import com.vmware.admiral.image.service.FavoriteImagesService;
+import com.vmware.admiral.image.service.FavoriteImagesService.FavoriteImage;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.TaskState.TaskStage;
 
@@ -179,6 +186,23 @@ public class ComputeInitialBootServiceTest extends ComputeBaseTest {
         assertEquals(GroupResourcePlacementService.DEFAULT_RESOURCE_POOL_ID,
                 resourcePoolState.name);
         assertEquals(GroupResourcePlacementService.DEFAULT_RESOURCE_POOL_ID, resourcePoolState.id);
+    }
+
+    @Test
+    public void testDefaultFavoriteImagesCreatedOnStartUp() throws Throwable {
+        List<FavoriteImage> defaultImages = FavoriteImagesService.buildDefaultFavoriteImages(host);
+        List<FavoriteImage> favoriteImages = getDocumentsOfType(FavoriteImage.class);
+
+        assertEquals(defaultImages.size(), favoriteImages.size());
+
+        favoriteImages.forEach(i -> {
+            assertTrue(defaultImages.contains(i));
+        });
+
+        FavoriteImagePopulateFlag shouldPopulateFlag = getDocument(FavoriteImagePopulateFlag.class,
+                FavoriteImagePopulateFlagService.FAVORITE_IMAGE_POPULATE_FLAG_LINK);
+
+        assertFalse(shouldPopulateFlag.shouldPopulate);
     }
 
 }
