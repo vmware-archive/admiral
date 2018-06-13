@@ -745,4 +745,12 @@ public class KubernetesUtilTest {
 
         assertEquals(podState.name, podDescription.name);
     }
+
+    @Test
+    public void testParseBytes() {
+        assertEquals(new Double(624.2), KubernetesUtil.parseBytes("624.2"));
+        assertEquals(new Double(624), KubernetesUtil.parseBytes("624"));
+        assertEquals(new Double(638976), KubernetesUtil.parseBytes("624Ki"));
+        assertEquals(new Double(2.34881024E8), KubernetesUtil.parseBytes("224Mi"));
+    }
 }

@@ -18,9 +18,7 @@ public class KubernetesNodeData {
 
     public String name;
 
-    public Double usedCPU;
+    public String cpuCores;
 
-    public Double availableMem;
-
-    public Double totalMem;
+    public double totalMemory;
 }

@@ -41,8 +41,18 @@ export class KubernetesClusterSummaryComponent implements OnInit {
         return '';
     }
 
-    hasNodes() {
-        return this.cluster && this.cluster.nodeLinks && this.cluster.nodeLinks.length > 0;
+    get isPKSCluster(): boolean {
+        if (this.cluster) {
+            return Utils.getCustomPropertyValue(this.clusterCustomProperties, '__pksClusterUUID');
+        }
+        return false;
+    }
+
+    get planName() {
+        if (this.cluster) {
+            return Utils.getCustomPropertyValue(this.clusterCustomProperties, '__pksPlanName');
+        }
+        return I18n.t('notAvailable');
     }
 
     get clusterCustomProperties() {
@@ -56,8 +66,11 @@ export class KubernetesClusterSummaryComponent implements OnInit {
     }
 
     get nodeCount() {
-        if (this.hasNodes()) {
-            return this.cluster.nodeLinks.length;
+        if (this.cluster) {
+            var nodesString = Utils.getCustomPropertyValue(this.clusterCustomProperties, '__nodes');
+            if (nodesString) {
+                return JSON.parse(nodesString).length;
+            }
         }
 
         return I18n.t('notAvailable');

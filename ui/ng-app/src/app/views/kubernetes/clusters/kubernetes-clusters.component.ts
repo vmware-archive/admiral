@@ -142,9 +142,12 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
         this.clusterToDelete = null;
     }
 
-    nodeCount(cluster): string {
-        if (this.hasNodes(cluster)) {
-            return cluster.nodeLinks.length;
+    nodeCount(cluster) {
+        if (cluster) {
+            var nodesString = Utils.getCustomPropertyValue(this.getClusterCustomProperties(cluster), '__nodes');
+            if (nodesString) {
+                return JSON.parse(nodesString).length;
+            }
         }
 
         return I18n.t('notAvailable');
@@ -154,18 +157,12 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
         return I18n.t('clusters.state.' + cluster.status);
     }
 
-    cpuPercentageLevel(cluster) {
-        if (!cluster) {
-            return 0;
+    formatNumber(number) {
+        if (!number) {
+            return '0';
         }
-        return Math.floor(cluster.cpuUsage / cluster.totalCpu * 100);
-    }
-
-    memoryPercentageLevel(cluster) {
-        if (!cluster) {
-            return 0;
-        }
-        return Math.floor(cluster.memoryUsage / cluster.totalMemory * 100);
+        let m = Utils.getMagnitude(number);
+        return Utils.formatBytes(number, m) + ' ' + Utils.magnitudes[m];
     }
 
     getResourceLabel(b1, b2, unit) {

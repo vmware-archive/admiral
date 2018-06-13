@@ -23,6 +23,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -89,6 +91,20 @@ public class KubernetesUtil {
 
     private static final String KUBERNETES_DASHBOARD_ACCESS_LINK =
             "/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/";
+
+    private static final Pattern PATTERN_KUBERNETES_BYTES = Pattern
+            .compile("^(?<bytes>\\d+.?(\\d+)?)(?<unit>Ei|Pi|Ti|Gi|Mi|Ki)?$");
+
+    private static final Map<String, Double> units = new HashMap<>();
+
+    static {
+        units.put("Ki", Math.pow(2, 10));
+        units.put("Mi", Math.pow(2, 20));
+        units.put("Gi", Math.pow(2, 30));
+        units.put("Ti", Math.pow(2, 40));
+        units.put("Pi", Math.pow(2, 50));
+        units.put("Ei", Math.pow(2, 60));
+    }
 
     static {
         kindToInternalType.put(POD_TYPE, ResourceType.KUBERNETES_POD_TYPE);
@@ -382,5 +398,18 @@ public class KubernetesUtil {
         return UriUtils.buildUri(scheme, hostname, Integer.parseInt(port),
                 KUBERNETES_DASHBOARD_ACCESS_LINK, null)
                 .toString();
+    }
+
+    public static Double parseBytes(String bytes) {
+        Matcher matcher = PATTERN_KUBERNETES_BYTES.matcher(bytes);
+        if (!matcher.matches()) {
+            throw new NumberFormatException("Invalid number: " + bytes);
+        }
+        Double number = Double.valueOf(matcher.group("bytes"));
+        String unit = matcher.group("unit");
+        if (unit != null) {
+            number *= units.getOrDefault(unit, 1D);
+        }
+        return number;
     }
 }

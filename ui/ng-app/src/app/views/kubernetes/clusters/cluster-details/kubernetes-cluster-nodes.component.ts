@@ -11,6 +11,7 @@
 
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { DocumentService } from "../../../../utils/document.service";
+import { Utils } from "../../../../utils/utils";
 
 @Component({
     selector: 'app-kubernetes-cluster-nodes',
@@ -28,31 +29,28 @@ export class KubernetesClusterNodesComponent implements OnChanges {
     constructor(service: DocumentService) {
     }
 
-    hasNodes() {
-        return this.cluster && this.cluster.nodes
-                    && this.cluster.nodeLinks && this.cluster.nodeLinks.length > 0;
-    }
-
     ngOnChanges(changes: SimpleChanges) {
-        if (!this.hasNodes()) {
+        if (!this.cluster) {
             return;
         }
+        var nodeLink = this.cluster.nodeLinks[0];
+        var nodesJson = Utils.getCustomPropertyValue(this.cluster.nodes[nodeLink].customProperties, '__nodes');
+        if (!nodesJson) {
+            return;
+        }
+        var nodes = JSON.parse(nodesJson);
+        this.nodes = nodes.map(n => ({
+            name: n.name,
+            cpuCores: n.cpuCores,
+            totalMemory: this.formatNumber(n.totalMemory)
+        }));
+    }
 
-        this.nodes = this.cluster.nodeLinks.map((nodeLink) => {
-            return this.cluster.nodes[nodeLink];
-        })
-
-        // var nodeLink = this.cluster.nodeLinks[0];
-        // var nodesJson = Utils.getCustomPropertyValue(this.cluster.nodes[nodeLink].customProperties, '__nodes');
-        // if (!nodesJson) {
-        //     return;
-        // }
-        //
-        // var nodes = JSON.parse(nodesJson);
-        // this.nodes = nodes.map(n => ({
-        //     name: n.name,
-        //     cpu: Math.floor(n.usedCPU),
-        //     memory: Math.floor(parseFloat(n.availableMem) / parseFloat(n.totalMem) * 100)
-        // }));
+    formatNumber(number) {
+        if (!number) {
+            return '0';
+        }
+        let m = Utils.getMagnitude(number);
+        return Utils.formatBytes(number, m) + ' ' + Utils.magnitudes[m];
     }
 }

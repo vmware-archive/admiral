@@ -16,6 +16,7 @@ import static com.vmware.admiral.common.util.OperationUtil.PROJECT_ADMIRAL_HEADE
 import static com.vmware.admiral.compute.ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME;
 import static com.vmware.admiral.compute.ContainerHostService.CONTAINER_HOST_TYPE_PROP_NAME;
 import static com.vmware.admiral.compute.ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME;
+import static com.vmware.admiral.compute.ContainerHostService.PKS_CLUSTER_PLAN_NAME_PROP_NAME;
 import static com.vmware.admiral.compute.ContainerHostService.PKS_CLUSTER_UUID_PROP_NAME;
 import static com.vmware.admiral.compute.ContainerHostService.PKS_ENDPOINT_PROP_NAME;
 import static com.vmware.admiral.compute.cluster.ClusterService.CLUSTER_NAME_CUSTOM_PROP;
@@ -180,6 +181,8 @@ public class PKSClusterConfigService extends StatelessService {
                 clusterRequest.endpointLink);
         kubernetesHost.customProperties.put(PKS_CLUSTER_UUID_PROP_NAME,
                 clusterRequest.cluster.uuid);
+        kubernetesHost.customProperties.put(PKS_CLUSTER_PLAN_NAME_PROP_NAME,
+                clusterRequest.cluster.planName);
 
         ContainerHostSpec clusterSpec = new ContainerHostSpec();
         clusterSpec.hostState = kubernetesHost;

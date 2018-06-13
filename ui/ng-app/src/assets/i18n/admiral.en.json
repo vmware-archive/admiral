@@ -290,15 +290,17 @@
           "title": "Summary",
           "nodeCount": "Nodes:",
           "dashboard": "Dashboard:",
+          "planName": "Plan:",
           "dashboardInstalled": "INSTALLED",
-          "dashboardNotInstalled": "NOT INSTALLED"
+          "dashboardNotInstalled": "NOT INSTALLED",
+          "totalMemory": "Total Memory:"
         },
         "nodes": {
           "title": "Nodes",
           "searchPlaceholder": "Search for nodes",
           "nameColumn": "Name",
-          "powerStateColumn": "Powered",
-          "statusColumn": "Status",
+          "cpuCountColumn": "# CPUs",
+          "totalMemoryColumn": "Total Memory",
           "powerState": {
             "ON": "On",
             "OFF": "Off"
@@ -405,6 +407,7 @@
         "columnTitleName": "Name",
         "columnTitleMastersCount": "# Masters",
         "columnTitleWorkersCount": "# Workers",
+        "columnTitlePlan": "Plan",
         "columnTitleInAdmiral": "Registered",
         "yes": "Yes",
         "no": "No",

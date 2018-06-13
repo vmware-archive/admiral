@@ -38,7 +38,12 @@
               </div>
               <div *ngIf="dashboard" class="summary-subsection-content-row">
                 <div class="left-column">{{ "kubernetes.clusters.details.summary.dashboard" | i18n }}</div>
-                <div class="right-column"><span [innerHTML]="dashboard"></span>
+                <div class="right-column"><span [innerHTML]="dashboard"></span></div>
+                <div class="clear"></div>
+              </div>
+              <div *ngIf="isPKSCluster" class="summary-subsection-content-row">
+                <div class="left-column">{{ "kubernetes.clusters.details.summary.planName" | i18n }}</div>
+                <div class="right-column">{{ planName }}</div>
                 <div class="clear"></div>
               </div>
           </div>
@@ -51,7 +56,7 @@
                   <div class="clear"></div>
               </div>
               <div class="summary-subsection-content-row">
-                  <div class="left-column">{{ "clusters.summary.memory" | i18n }}</div>
+                  <div class="left-column">{{ "kubernetes.clusters.details.summary.totalMemory" | i18n }}</div>
                   <div class="right-column">{{ formatNumber(cluster?.totalMemory) }}B</div>
                   <div class="clear"></div>
               </div>

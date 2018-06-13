@@ -77,30 +77,10 @@
           <label>{{"kubernetes.clusters.nodeCount" | i18n}}</label>
           <div>{{ nodeCount(item) }}</div>
         </div>
-          <div class="form-group">
-              <label>{{"clusters.cpu" | i18n}}</label>
-              <div class="row">
-                  <div class="progress-block col-sm-4">
-                      <div class="progress-static">
-                          <div class="progress-meter" attr.data-value="{{cpuPercentageLevel(item)}}"></div>
-                      </div>
-                  </div>
-                  <div class="col-sm-8 progress-details p7"
-                        >{{getResourceLabel(item.cpuUsage, item.totalCpu, 'Hz')}}</div>
-              </div>
-          </div>
-          <div class="form-group">
-              <label>{{"clusters.memory" | i18n}}</label>
-              <div class="row">
-                  <div class="progress-block col-sm-4">
-                      <div class="progress-static">
-                          <div class="progress-meter" attr.data-value="{{memoryPercentageLevel(item)}}"></div>
-                      </div>
-                  </div>
-                  <div class="col-sm-8 progress-details p7"
-                        >{{getResourceLabel(item.memoryUsage, item.totalMemory, 'B')}}</div>
-              </div>
-          </div>
+        <div class="form-group">
+          <label>{{"clusters.memory" | i18n}}</label>
+          <div>{{ formatNumber(item?.totalMemory) }}B</div>
+        </div>
         <div class="progress-static top">
           <div class="progress-meter {{ item.status }}" data-value="100"></div>
         </div>
