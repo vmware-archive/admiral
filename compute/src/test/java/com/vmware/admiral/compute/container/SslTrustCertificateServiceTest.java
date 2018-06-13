@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -36,6 +36,7 @@ import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.UriUtils;
 
 public class SslTrustCertificateServiceTest extends ComputeBaseTest {
+    private static final String HTTPS_HOST_COM = "https://host.com";
     private String sslTrust1;
     private String sslTrust2;
     private SslTrustCertificateState sslTrustCert;
@@ -46,6 +47,7 @@ public class SslTrustCertificateServiceTest extends ComputeBaseTest {
         sslTrust2 = CommonTestStateFactory.getFileContent("test_ssl_trust2.PEM").trim();
         sslTrustCert = new SslTrustCertificateState();
         sslTrustCert.certificate = sslTrust1;
+        sslTrustCert.origin = HTTPS_HOST_COM;
 
         waitForServiceAvailability(SslTrustCertificateService.FACTORY_LINK);
         waitForServiceAvailability(ContainerFactoryService.SELF_LINK);
@@ -119,11 +121,13 @@ public class SslTrustCertificateServiceTest extends ComputeBaseTest {
         SslTrustCertificateState sslTrustCert1 = new SslTrustCertificateState();
         sslTrustCert1.certificate = sslTrust1;
         sslTrustCert1.subscriptionLink = null;
+        sslTrustCert1.origin = HTTPS_HOST_COM;
         sslTrustCert1 = doPost(sslTrustCert1, SslTrustCertificateService.FACTORY_LINK);
 
         SslTrustCertificateState sslTrustCert2 = new SslTrustCertificateState();
         sslTrustCert2.certificate = sslTrust1;
         sslTrustCert2.subscriptionLink = "subscription-link";
+        sslTrustCert2.origin = HTTPS_HOST_COM;
         sslTrustCert2 = doPost(sslTrustCert2, SslTrustCertificateService.FACTORY_LINK);
 
         sslTrustCert = getDocument(SslTrustCertificateState.class,
@@ -216,6 +220,7 @@ public class SslTrustCertificateServiceTest extends ComputeBaseTest {
     }
 
     private void validateCertProperties(SslTrustCertificateState state) throws Exception {
+        assertEquals(HTTPS_HOST_COM, state.origin);
         X509Certificate[] certificates = CertificateUtil.createCertificateChain(state.certificate);
 
         for (X509Certificate cert : certificates) {

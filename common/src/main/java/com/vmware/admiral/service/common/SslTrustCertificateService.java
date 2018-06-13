@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -17,7 +17,10 @@ import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
 import java.security.cert.X509Certificate;
 import java.util.concurrent.TimeUnit;
 
+import com.esotericsoftware.kryo.serializers.VersionFieldSerializer;
+
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.serialization.ReleaseConstants;
 import com.vmware.admiral.common.util.ValidationUtils;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
@@ -101,6 +104,15 @@ public class SslTrustCertificateService extends StatefulService {
                 usage = { PropertyUsageOption.SERVICE_USE, PropertyUsageOption.LINK,
                         PropertyUsageOption.SINGLE_ASSIGNMENT })
         public String subscriptionLink;
+
+        /**
+         *
+         */
+        @Documentation(description = "Origin host uri from which the certificate is imported."
+                + " Cert could be a wildcard one, and valid for many hosts, this is just the"
+                + " initial source.")
+        @VersionFieldSerializer.Since(ReleaseConstants.RELEASE_VERSION_1_5_0)
+        public String origin;
 
         public String getAlias() {
             return Service.getId(this.documentSelfLink);

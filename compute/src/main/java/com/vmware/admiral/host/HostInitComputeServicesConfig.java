@@ -82,6 +82,7 @@ import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerServic
 import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerService.ReplicationControllerState;
 import com.vmware.admiral.compute.kubernetes.service.ServiceEntityFactoryHandler;
 import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler.ServiceState;
+import com.vmware.admiral.compute.pks.PKSCreateEndpointService;
 import com.vmware.admiral.compute.pks.PKSEndpointService;
 import com.vmware.admiral.compute.util.DanglingDescriptionsCleanupService;
 import com.vmware.admiral.image.service.FavoriteImageFactoryService;
@@ -128,7 +129,8 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 DeploymentFactoryService.class,
                 PodFactoryService.class,
                 ServiceEntityFactoryHandler.class,
-                GenericKubernetesEntityFactoryService.class);
+                GenericKubernetesEntityFactoryService.class,
+                PKSCreateEndpointService.class);
 
         startServiceFactories(host, CaSigningCertService.class,
                 GroupResourcePlacementService.class,

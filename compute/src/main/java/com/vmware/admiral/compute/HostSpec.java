@@ -16,7 +16,7 @@ import java.util.List;
 
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
 
-abstract class HostSpec {
+public abstract class HostSpec {
 
     /**
      * Boolean flag indicating whether the certificate of the host should be accepted or will

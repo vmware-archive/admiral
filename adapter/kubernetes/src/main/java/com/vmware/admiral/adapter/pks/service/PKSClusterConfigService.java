@@ -11,7 +11,7 @@
 
 package com.vmware.admiral.adapter.pks.service;
 
-import static com.vmware.admiral.adapter.pks.service.PKSAdapterService.CLUSTER_NAME_PROP_NAME;
+import static com.vmware.admiral.adapter.pks.PKSConstants.CLUSTER_NAME_PROP_NAME;
 import static com.vmware.admiral.common.util.OperationUtil.PROJECT_ADMIRAL_HEADER;
 import static com.vmware.admiral.compute.ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME;
 import static com.vmware.admiral.compute.ContainerHostService.CONTAINER_HOST_TYPE_PROP_NAME;
@@ -115,7 +115,7 @@ public class PKSClusterConfigService extends StatelessService {
 
     private void handleAddRequest(Operation op, AddClusterRequest clusterRequest) {
         AdapterRequest adapterRequest = new AdapterRequest();
-        adapterRequest.operationTypeId = PKSOperationType.CREATE_USER.toString();
+        adapterRequest.operationTypeId = PKSOperationType.CREATE_USER.id;
         adapterRequest.serviceTaskCallback = ServiceTaskCallback.createEmpty();
         adapterRequest.resourceReference = UriUtils.buildUri(getHost(),
                 clusterRequest.endpointLink);
@@ -126,7 +126,7 @@ public class PKSClusterConfigService extends StatelessService {
                 .setBodyNoCloning(adapterRequest)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        logSevere("Adapter request for listing PKS clusters failed. Error: %s",
+                        logSevere("Adapter request for add PKS cluster failed. Error: %s",
                                 Utils.toString(ex));
                         op.fail(ex);
                     } else {
@@ -219,4 +219,5 @@ public class PKSClusterConfigService extends StatelessService {
             request.tenantLinks.add(projectLink);
         }
     }
+
 }

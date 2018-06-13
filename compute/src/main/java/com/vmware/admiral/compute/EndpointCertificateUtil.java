@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -30,7 +30,7 @@ public class EndpointCertificateUtil {
 
     private static final Logger logger = Logger.getLogger(EndpointCertificateUtil.class.getName());
 
-    static void validateSslTrust(Service sender, HostSpec hostSpec, Operation op,
+    public static void validateSslTrust(Service sender, HostSpec hostSpec, Operation op,
             Runnable callbackFunction) {
 
         if (hostSpec.sslTrust != null) {
@@ -63,8 +63,9 @@ public class EndpointCertificateUtil {
                     if (e != null) {
                         String message = String.format("Error connecting to %s : %s",
                                 hostSpec.uri.toString(), e.getMessage());
-                        LocalizableValidationException ex = new LocalizableValidationException(message,
-                                "compute.add.host.connection.error", hostSpec.uri.toString(), e.getMessage());
+                        LocalizableValidationException ex = new LocalizableValidationException(
+                                message, "compute.add.host.connection.error",
+                                hostSpec.uri.toString(), e.getMessage());
                         ServiceErrorResponse rsp = Utils.toValidationErrorResponse(ex, op);
                         logger.severe(rsp.message);
                         op.setStatusCode(o.getStatusCode());
@@ -75,15 +76,18 @@ public class EndpointCertificateUtil {
                     // The SSL trust is not trusted self signed and must be accepted by the user
                     // return to the user the certificate for confirmation.
                     if (o.getStatusCode() == Operation.STATUS_CODE_OK) {
-                        op.setBody(o.getBody(SslTrustCertificateState.class));
+                        SslTrustCertificateState body = o.getBody(SslTrustCertificateState.class);
+                        // return in origin field the uri for which this certificate is
+                        body.origin = hostSpec.uri.toString();
+                        op.setBody(body);
                         op.setStatusCode(Operation.STATUS_CODE_OK);
                         op.complete();
                         return;
                     }
 
+                    // certificate is trusted
                     if (o.getStatusCode() == HttpURLConnection.HTTP_ACCEPTED) {
-                        hostSpec.sslTrust = o.getBody
-                                (SslTrustCertificateState.class);
+                        hostSpec.sslTrust = o.getBody(SslTrustCertificateState.class);
                         callbackFunction.run();
                         return;
                     }
@@ -123,4 +127,5 @@ public class EndpointCertificateUtil {
                 hostSpec.uri, t.getMessage());
         op.fail(new Exception(errMsg, t));
     }
+
 }

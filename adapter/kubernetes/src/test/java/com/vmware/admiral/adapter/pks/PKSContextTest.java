@@ -13,6 +13,7 @@ package com.vmware.admiral.adapter.pks;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Before;
@@ -52,6 +53,15 @@ public class PKSContextTest {
         assertEquals(uaaTokenResponse.accessToken, pksContext.accessToken);
         assertEquals(uaaTokenResponse.refreshToken, pksContext.refreshToken);
         assertTrue(pksContext.expireMillisTime > System.currentTimeMillis());
+
+        pksContext = PKSContext.create(endpoint, null);
+        assertNotNull(pksContext.pksUAAUri);
+        assertEquals(endpoint.uaaEndpoint, pksContext.pksUAAUri.toString());
+        assertNotNull(pksContext.pksAPIUri);
+        assertEquals(endpoint.apiEndpoint, pksContext.pksAPIUri.toString());
+        assertNull(pksContext.accessToken);
+        assertNull(pksContext.refreshToken);
+        assertEquals(0, pksContext.expireMillisTime);
     }
 
     @Test

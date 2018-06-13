@@ -13,6 +13,7 @@ package com.vmware.admiral.compute.pks;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.function.BiConsumer;
@@ -66,7 +67,6 @@ public class PKSEndpointServiceTest extends ComputeBaseTest {
             assertEquals(Operation.STATUS_CODE_BAD_REQUEST, ser.statusCode);
             assertTrue(ser.message.startsWith("Unsupported scheme, must be http or https"));
         });
-
     }
 
     @Test
@@ -96,7 +96,19 @@ public class PKSEndpointServiceTest extends ComputeBaseTest {
             assertEquals(patch2.apiEndpoint, r.apiEndpoint);
             assertEquals(endpoint1.uaaEndpoint, r.uaaEndpoint);
         });
+    }
 
+    @Test
+    public void testDelete() throws Throwable {
+        Endpoint endpoint = new Endpoint();
+        endpoint.apiEndpoint = "http://localhost";
+        endpoint.uaaEndpoint = "https://localhost";
+
+        endpoint = createEndpoint(endpoint);
+
+        delete(endpoint.documentSelfLink);
+        endpoint = getDocumentNoWait(Endpoint.class, endpoint.documentSelfLink);
+        assertNull(endpoint);
     }
 
     private Endpoint createEndpoint(Endpoint endpoint) {

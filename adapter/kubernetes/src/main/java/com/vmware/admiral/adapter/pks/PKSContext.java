@@ -24,16 +24,18 @@ public class PKSContext {
     public URI pksAPIUri;
     public String accessToken;
     public String refreshToken;
-    public long expireMillisTime;
+    public long expireMillisTime = 0;
 
     public static PKSContext create(PKSEndpointService.Endpoint endpoint,
             UAATokenResponse uaaTokenResponse) {
         PKSContext pksContext = new PKSContext();
-        pksContext.accessToken = uaaTokenResponse.accessToken;
-        pksContext.refreshToken = uaaTokenResponse.refreshToken;
         pksContext.pksUAAUri = URI.create(endpoint.uaaEndpoint);
         pksContext.pksAPIUri = URI.create(endpoint.apiEndpoint);
-        pksContext.expireMillisTime = calculateExpireTime(uaaTokenResponse.expiresIn);
+        if (uaaTokenResponse != null) {
+            pksContext.accessToken = uaaTokenResponse.accessToken;
+            pksContext.refreshToken = uaaTokenResponse.refreshToken;
+            pksContext.expireMillisTime = calculateExpireTime(uaaTokenResponse.expiresIn);
+        }
 
         return pksContext;
     }

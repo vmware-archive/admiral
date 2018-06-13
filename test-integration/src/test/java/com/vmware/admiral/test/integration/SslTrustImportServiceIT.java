@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -51,7 +51,7 @@ public class SslTrustImportServiceIT extends ComputeBaseTest {
     }
 
     @Test
-    public void testImportPublicCertificateShouldReturAccepted() throws Throwable {
+    public void testImportPublicCertificateShouldReturnAccepted() throws Throwable {
         request.hostUri = URI.create(certTrustedUrl);// public trusted certificate
 
         Operation response = putRequest(request);
@@ -78,6 +78,7 @@ public class SslTrustImportServiceIT extends ComputeBaseTest {
 
         assertEquals(request.hostUri.getHost(), sslTrustState.commonName);
         assertEquals(request.hostUri.getHost(), sslTrustState.issuerName);
+        assertEquals(certSelfSignedUrl, sslTrustState.origin);
     }
 
     @Test
@@ -107,6 +108,7 @@ public class SslTrustImportServiceIT extends ComputeBaseTest {
 
         assertEquals(request.hostUri.getHost(), sslTrustState.commonName);
         assertEquals(request.hostUri.getHost(), sslTrustState.issuerName);
+        assertEquals(certSelfSignedUrl, sslTrustState.origin);
 
         assertEquals(request.tenantLinks.size(), sslTrustState.tenantLinks.size());
         Collections.sort(request.tenantLinks);

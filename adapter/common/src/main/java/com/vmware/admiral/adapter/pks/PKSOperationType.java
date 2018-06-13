@@ -19,7 +19,8 @@ public enum PKSOperationType {
     GET_CLUSTER("PKS.GetCluster"),
     CREATE_USER("PKS.CreateUser"),
     CREATE_CLUSTER("PKS.CreateCluster"),
-    DELETE_CLUSTER("PKS.DeleteCluster");
+    DELETE_CLUSTER("PKS.DeleteCluster"),
+    LIST_PLANS("PKS.ListPlans");
 
     public final String id;
 

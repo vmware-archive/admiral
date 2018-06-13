@@ -30,6 +30,8 @@ public class PKSEndpointService extends StatefulService {
     public static final String FACTORY_LINK = ManagementUriParts.PKS_ENDPOINTS;
 
     public static class Endpoint extends ResourceState {
+        public static final String FIELD_NAME_UAA_ENDPOINT = "uaaEndpoint";
+        public static final String FIELD_NAME_API_ENDPOINT = "apiEndpoint";
 
         @Documentation(description = "UAA endpoint address")
         @UsageOption(option = PropertyUsageOption.REQUIRED)
@@ -59,9 +61,8 @@ public class PKSEndpointService extends StatefulService {
             return;
         }
 
-        Endpoint endpoint = op.getBody(Endpoint.class);
-
         try {
+            Endpoint endpoint = op.getBody(Endpoint.class);
             validate(endpoint);
             op.complete();
         } catch (Throwable e) {
