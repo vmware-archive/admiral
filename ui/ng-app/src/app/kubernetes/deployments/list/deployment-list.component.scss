@@ -4,13 +4,19 @@
 
 .titleHolder {
     display: inline-block;
-    margin-left: 10px;
+    margin-left: 5px;
     height: 45px;
-    width: 220px;
+    max-width: 215px;
 
     .truncate {
         text-overflow: ellipsis;
         overflow: hidden;
         white-space: nowrap;
     }
+}
+
+.actionsHolder {
+    position: absolute;
+    right: 6px;
+    top: 12px;
 }

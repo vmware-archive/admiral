@@ -1,12 +1,16 @@
+// Copyright (c) 2018 VMware, Inc. All Rights Reserved.
+// This software is released under MIT license.
+// The full license information can be found in LICENSE in the root directory of this project.
 
-service-details {
-  .table {
-    th, td {
-      text-align: left;
+.service-title {
+    display: inline;
+    margin-left: 10px;
+}
 
-      .table {
-        margin-bottom: 24px;
-      }
-    }
-  }
+.service-summary {
+    margin-top: 20px;
+}
+
+.summary-subsection-content-row .left-column {
+    width: 350px;
 }

@@ -16,25 +16,30 @@
     <div title>{{"kubernetes.pods.title" | i18n | titlecase}}</div>
 
     <ng-template let-item="item">
-        <card [routerLink]="['./' + item.documentId]" [ngClass]="{'card-actions-selected': isItemSelected(item)}">
+        <card [routerLink]="['./' + item.documentId]"
+              [ngClass]="{'card-actions-selected': isItemSelected(item)}">
             <div card-header>
-                <img [src]="'./container-image-icons?container-image=' + item.documentSelfLink"/>
-                <div class="titleHolder">
-                    <div class="truncate">{{ item.name }}</div>
+                <div>
+                    <img [src]="'./container-image-icons?container-image=' + item.documentSelfLink"/>
+                    <div class="titleHolder" [title]="item.name">
+                        <div class="truncate">{{ item.name }}</div>
+                    </div>
                 </div>
 
-                <clr-dropdown class="card-actions" (click)="toggleItemSelection($event, item)">
-                    <button type="button" class="btn btn-sm btn-link" clrDropdownTrigger>
-                        <clr-icon shape="ellipsis-vertical" size="20"></clr-icon>
-                    </button>
-                    <clr-dropdown-menu clrPosition="left-top" *clrIfOpen>
-                        <button type="button" class="dropdown-item cluster-details"
-                                [routerLink]="['./' + item.documentId]">
-                            <clr-icon shape="eye" size="20" class="card-drop-down-actions">
-                            </clr-icon>{{"details" | i18n}}
+                <div class="actionsHolder">
+                    <clr-dropdown class="card-actions" (click)="toggleItemSelection($event, item)">
+                        <button type="button" class="btn btn-sm btn-link" clrDropdownTrigger>
+                            <clr-icon shape="ellipsis-vertical" size="20"></clr-icon>
                         </button>
-                    </clr-dropdown-menu>
-                </clr-dropdown>
+                        <clr-dropdown-menu clrPosition="left-top" *clrIfOpen>
+                            <button type="button" class="dropdown-item cluster-details"
+                                    [routerLink]="['./' + item.documentId]">
+                                <clr-icon shape="eye" size="20" class="card-drop-down-actions">
+                                </clr-icon>{{"details" | i18n}}
+                            </button>
+                        </clr-dropdown-menu>
+                    </clr-dropdown>
+                </div>
             </div>
 
             <div card-content>
