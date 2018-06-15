@@ -35,12 +35,17 @@
                   </a>
                 </span>
               </span>
+
+              <search-tag-selector :query-options="queryOptions"
+                                   :search-tag-name="searchTag"
+                                   :search-tag-options="searchTagOptions"
+                                   @search-option-select="changeSearchTagSelection"
+                ></search-tag-selector>
             </div>
             <div class="col-sm-6 toolbar-secondary">
               <grid-search :query-options="queryOptions"
-                           :placeholder="searchPlaceholder"
                            :search-tag-name="searchTag"
-                           :search-tag-options="searchTagOptions"
+                           :placeholder="searchPlaceholder"
                            @search-grid-action="search"></grid-search>
             </div>
           </div>

@@ -10,14 +10,15 @@
  */
 
 /**
- * Helper class that imports The common Vue components so they can be used without imports in other
- * Vue components. Internally when components are imported for the first time they register as Vue
- * components.
+ * Helper class that imports the common Vue components, so that they can be used without need for
+ * imports in other Vue components.
+ * Internally when components are imported for the first time they register as Vue components.
  * */
 
 /* eslint-disable */
 
 import GridSearch from 'components/common/GridSearch';
+import VueGridSearchTag from 'components/common/VueGridSearchTag';
 import VueSearch from 'components/common/VueSearch';
 import VueRefreshButton from 'components/common/VueRefreshButton';
 import ListTitle from 'components/common/ListTitle';

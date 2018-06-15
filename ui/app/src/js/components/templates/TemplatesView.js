@@ -481,6 +481,18 @@ var TemplatesViewVueComponent = Vue.extend({
       this.doSearchAndFilter(queryOptions, this.selectedCategory);
     },
 
+    changeSearchTagSelection: function($eventData) {
+      var qo = $.extend({}, this.queryOptions);
+
+      if ($eventData) {
+        qo[$eventData.name] = $eventData.value;
+      } else if (!$eventData) {
+        delete qo[this.searchTag];
+      }
+
+      this.search(qo);
+    },
+
     selectCategory(categoryName, $event) {
       this.doSearchAndFilter(this.queryOptions, categoryName);
       $event.stopPropagation();

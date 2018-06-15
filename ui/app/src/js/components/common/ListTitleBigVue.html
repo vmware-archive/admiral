@@ -2,12 +2,12 @@
   <span v-if="count > -1" class="total-items">({{count}})</span>
   <div class="title-big-actions" v-if="!actionName" transition="fade-in">
     <slot></slot>
-    <big-action-button v-bind:name="'refresh'"
-                       v-bind:icon-name="'refresh'"
-                       v-bind:label="i18n('refresh')"
-                       v-bind:spinning="true"
+    <big-action-button :name="'refresh'"
+                       :icon-name="'refresh'"
+                       :label="i18n('refresh')"
+                       :spinning="true"
       ></big-action-button>
   </div>
-  <action-confirmation v-else v-bind:action-name="actionName"
-                       v-bind:action-title="actionTitle"></action-confirmation>
+  <action-confirmation v-else :action-name="actionName"
+                       :action-title="actionTitle"></action-confirmation>
 </div>

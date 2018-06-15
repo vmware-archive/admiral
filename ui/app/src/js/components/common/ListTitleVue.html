@@ -1,7 +1,7 @@
 <div class="title"><span>{{hasSearchQuery ? titleSearch : title}}</span><span
       v-if="count > -1" class="total-items">({{count}})</span><span
-  v-if="!actionName" transition="fade-in"><refresh-button
-      v-on:click="notifyRefresh()"></refresh-button><slot></slot></span>
-  <action-confirmation v-else v-bind:action-name="actionName"
-                       v-bind:action-title="actionTitle"></action-confirmation>
+      v-if="!actionName" transition="fade-in"><refresh-button
+      @click="notifyRefresh()"></refresh-button><slot></slot></span>
+  <action-confirmation v-else :action-name="actionName"
+                              :action-title="actionTitle"></action-confirmation>
 </div>
