@@ -2123,7 +2123,24 @@ let TemplatesStore = Reflux.createStore({
   },
 
   onCreateContainer: function(type, itemId) {
+    services.loadImageTags(itemId).then((tags) => {
+      if (tags && tags.indexOf('latest') === -1) {
+        // if no latest tag is available - then open provision container view
+        actions.NavigationActions.openContainerRequest(type, itemId);
+      } else {
+
+        this.provisionContainer(type, itemId);
+      }
+    }).catch(error => {
+      console.error('Cannot load tags for image', error);
+      // provision anyway
+      this.provisionContainer(type, itemId);
+    });
+  },
+
+  provisionContainer: function(type, itemId) {
     var items = this.data.listView.items.asMutable();
+
     for (var i = 0; i < items.length; i++) {
       if (items[i].documentId === itemId) {
         items[i] = utils.setIn(items[i], ['provisioning'], true);
