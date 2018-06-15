@@ -162,12 +162,14 @@ export const ROUTES: Routes = [
             {
                 path: 'kubernetes/deployments/:id', component: DeploymentDetailsComponent
             },
+            /* k8s services are out of the current scope.
             {
                 path: 'kubernetes/services', component: ServiceListComponent
             },
             {
                 path: 'kubernetes/services/:id', component: ServiceDetailsComponent
             },
+            */
             {
                 path: 'endpoints', component: EndpointsComponent
             },

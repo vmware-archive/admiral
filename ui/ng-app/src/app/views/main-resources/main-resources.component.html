@@ -40,9 +40,11 @@
                                 routerLinkActive="active">{{ "navigation.kubernetes.deployments" | i18n }}</a></li>
                             <li><a class="nav-link" routerLink="kubernetes/pods"
                                 routerLinkActive="active">{{ "navigation.kubernetes.pods" | i18n }}</a></li>
-                            <li *ngIf="externalKubernetesEnabled"><a class="nav-link"
-                                routerLink="kubernetes/services"
-                                routerLinkActive="active">{{ "navigation.kubernetes.services" | i18n }}</a></li>
+                            <!-- k8s services are out of the current scope.
+                                <li *ngIf="externalKubernetesEnabled"><a class="nav-link"
+                                    routerLink="kubernetes/services"
+                                    routerLinkActive="active">{{ "navigation.kubernetes.services" | i18n }}</a></li>
+                            -->
                         </ul>
                   </section>
               </li>
