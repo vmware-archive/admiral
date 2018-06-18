@@ -403,7 +403,7 @@ public class RegistryAdapterServiceTest extends BaseMockRegistryTestCase {
         registryState.tenantLinks.add("test-project2");
         try {
             doPost(registryState, RegistryFactoryService.SELF_LINK);
-            fail();
+            fail("Should not be possible to add the same registry in two different projects");
         } catch (Exception e) {
             assertTrue(e.getMessage().contains(RegistryFactoryService.REGISTRY_ALREADY_EXISTS));
         }
