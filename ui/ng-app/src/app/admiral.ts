@@ -70,6 +70,7 @@ import { KubernetesClusterNodesComponent } from './views/kubernetes/clusters/clu
 import { KubernetesClusterAddComponent } from './views/kubernetes/clusters/cluster-add/kubernetes-cluster-add.component';
 import { KubernetesClusterAddExistingComponent } from './views/kubernetes/clusters/cluster-add/kubernetes-cluster-add-existing.component';
 import { KubernetesClusterAddExternalComponent } from './views/kubernetes/clusters/cluster-add-external/kubernetes-cluster-add-external.component';
+import { KubernetesClusterEditExternalComponent } from "./views/kubernetes/clusters/cluster-edit/kubernetes-cluster-edit-external.component";
 
 import { GridViewComponent } from './components/grid-view/grid-view.component';
 import { TableViewComponent } from "./views/table-view/table-view.component";
@@ -156,6 +157,7 @@ export const ADMIRAL_DECLARATIONS = [
   KubernetesClusterAddComponent,
   KubernetesClusterAddExistingComponent,
   KubernetesClusterAddExternalComponent,
+  KubernetesClusterEditExternalComponent,
   EndpointDetailsComponent,
 
   GridViewComponent,

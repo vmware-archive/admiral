@@ -12,7 +12,6 @@
 import { Component, OnInit } from "@angular/core";
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormGroup, FormControl, Validators } from "@angular/forms";
-
 import { DocumentService } from "../../../../utils/document.service";
 import { ErrorService } from "../../../../utils/error.service";
 import { Links } from "../../../../utils/links";
@@ -31,13 +30,13 @@ import { formatUtils } from "admiral-ui-common";
  */
 export class KubernetesClusterAddExternalComponent implements OnInit {
     credentials: any[];
-    projectLink: string;
-
+    // actions
+    isSaving: boolean;
+    // certificate
     showCertificateWarning: boolean;
     certificate: any;
-
-    isSaving: boolean;
-
+    // project/group
+    projectLink: string;
     private sub: any;
 
     clusterForm = new FormGroup({
@@ -87,87 +86,78 @@ export class KubernetesClusterAddExternalComponent implements OnInit {
 
         this.service.list(Links.CREDENTIALS, {}).then(credentials => {
             this.credentials = credentials.documents
-                .filter(c => !Utils.areSystemScopedCredentials(c))
-                .map(this.toCredentialViewModel);
+            .filter(c => !Utils.areSystemScopedCredentials(c))
+            .map(Utils.toCredentialViewModel);
         }).catch((e) => {
             console.log('Credentials retrieval failed', e);
         });
     }
 
-    toCredentialViewModel(credential) {
-        let credentialsViewModel: any = {};
-
-        credentialsViewModel.documentSelfLink = credential.documentSelfLink;
-        credentialsViewModel.name = credential.customProperties
-            ? credential.customProperties.__authCredentialsName : '';
-        if (!credentialsViewModel.name) {
-            credentialsViewModel.name = credential.documentId;
-        }
-
-        return credentialsViewModel;
-    }
-
-    cancelAdding() {
-        this.goBack();
-    }
-
-    saveCluster() {
+    save() {
         this.createCluster(false);
+    }
+
+    cancel() {
+        this.goBack();
     }
 
     private createCluster(certificateAccepted: boolean) {
         if (this.clusterForm.valid) {
-            this.isSaving = true;
+            let formValues = this.clusterForm.value;
 
-            let formInput = this.clusterForm.value;
-            let clusterName = formInput.name && formatUtils.escapeHtml(formInput.name);
             let hostState = {
-                'address': formInput.url,
+                'address': formValues.url,
                 'customProperties': {
                     '__adapterDockerType': 'API',
                     '__containerHostType': 'KUBERNETES',
-                    '__clusterName': clusterName
+                    '__clusterName': formValues.name && formatUtils.escapeHtml(formValues.name)
                 }
             };
 
-            if (formInput.credentials) {
+            if (formValues.credentials) {
                 hostState.customProperties['__authCredentialsLink'] =
-                                                            formInput.credentials.documentSelfLink;
+                                                            formValues.credentials.documentSelfLink;
             }
 
-            if (formInput.description) {
-                hostState.customProperties['__clusterDetails'] = formInput.description;
+            if (formValues.description) {
+                hostState.customProperties['__clusterDetails'] = formValues.description;
             }
 
-            let hostSpec = {
+            let clusterSpec = {
                 'hostState': hostState,
                 'acceptCertificate': certificateAccepted
             };
 
-            this.service.post(Links.CLUSTERS, hostSpec, this.projectLink).then((response) => {
+            this.isSaving = true;
+
+            this.service.post(Links.CLUSTERS, clusterSpec, this.projectLink).then((response) => {
                 if (response.certificate) {
                     this.certificate = response;
                     this.showCertificateWarning = true;
                 } else {
                     this.isSaving = false;
-                    this.cancelAdding();
+                    this.goBack();
                 }
             }).catch(error => {
                 this.isSaving = false;
+
+                console.error(error);
                 this.errorService.error(Utils.getErrorMessage(error)._generic);
             });
         }
-    }
-
-    cancelCreateCluster() {
-        this.showCertificateWarning = false;
-        this.isSaving = false;
     }
 
     acceptCertificate() {
         this.showCertificateWarning = false;
 
         this.createCluster(true);
+    }
+
+    cancelAcceptCertificate() {
+        this.showCertificateWarning = false;
+        this.isSaving = false;
+
+        this.goBack();
     }
 
     goBack() {

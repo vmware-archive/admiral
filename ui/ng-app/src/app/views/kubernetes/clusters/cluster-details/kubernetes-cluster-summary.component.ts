@@ -10,8 +10,12 @@
  */
 
 import { Component, Input, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from "@angular/router";
+import { DocumentService } from "../../../../utils/document.service";
+import { ErrorService } from "../../../../utils/error.service";
 import { Utils } from '../../../../utils/utils';
 import { FT } from '../../../../utils/ft';
+
 import * as I18n from 'i18next';
 
 @Component({
@@ -24,8 +28,11 @@ import * as I18n from 'i18next';
  *  A kubernetes cluster's summary view.
  */
 export class KubernetesClusterSummaryComponent implements OnInit {
-
     @Input() cluster: any;
+
+    constructor(protected route: ActivatedRoute, protected service: DocumentService,
+                protected router: Router, protected errorService: ErrorService) {
+    }
 
     get clusterResourcesTextKey() {
         if (FT.isVic()) {
@@ -99,6 +106,18 @@ export class KubernetesClusterSummaryComponent implements OnInit {
 
     ngOnInit() {
         // DOM init
+    }
+
+    editCluster() {
+        let editNavLink;
+        if (this.isPKSCluster) {
+            editNavLink = ['./edit'];
+        } else {
+            // external
+            editNavLink = ['./edit-external'];
+        }
+
+        this.router.navigate(editNavLink, {relativeTo: this.route});
     }
 
     formatNumber(number) {

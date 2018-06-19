@@ -311,9 +311,11 @@ export class ClusterEditComponent extends BaseDetailsComponent
     }
 
     private updateVchClusterCredentials() {
-        let persistedCredsLink = this.entity.nodes[this.entity.nodeLinks[0]].customProperties['__authCredentialsLink'];
-        let formCredentials = this.clusterForm.value.credentials ? this.clusterForm.value.credentials.documentSelfLink : "";
-        if(persistedCredsLink !== formCredentials) {
+        let persistedCredsLink =
+            this.entity.nodes[this.entity.nodeLinks[0]].customProperties['__authCredentialsLink'];
+        let formCredentials = this.clusterForm.value.credentials
+                                ? this.clusterForm.value.credentials.documentSelfLink : "";
+        if (persistedCredsLink !== formCredentials) {
             var hostState = this.getVchClusterInputData();
 
             let hostSpec = {
