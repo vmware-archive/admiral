@@ -275,10 +275,6 @@ export class Utils {
   }
 
   public static isAccessAllowed(securityContext, projectSelfLink, roles): boolean {
-    if (FT.isApplicationEmbedded()) {
-      return true;
-    }
-
     if (!roles) {
       throw new Error("Roles not provided!");
     }
@@ -287,8 +283,9 @@ export class Utils {
         return false;
     }
 
+    let securityContextRoles = FT.isApplicationEmbedded() ? securityContext : securityContext.roles;
+
     // check for system roles
-    let securityContextRoles = securityContext.roles;
     if (securityContextRoles) {
       for (var i = 0; i < securityContextRoles.length; i += 1) {
         let role = securityContextRoles[i];

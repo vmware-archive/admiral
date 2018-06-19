@@ -62,6 +62,7 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
     selectedProject;
     projects;
     showLibrary: boolean;
+    showKubernetes: boolean;
 
     alertMessage: string;
 
@@ -124,6 +125,7 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
         this.projectService.setSelectedProject(this.selectedProject);
 
         this.checkShowLibrary();
+        this.checkShowKubernetes();
       });
     }
 
@@ -183,6 +185,18 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
       });
     }
 
+    checkShowKubernetes() {
+      if (FT.isApplicationEmbedded() && FT.isPksEnabled()) {
+        this.authService.getCachedSecurityContext().then(securityContext => {
+          // check if the user is only container developer
+          if (securityContext && securityContext.indexOf(Roles.VRA_CONTAINER_DEVELOPER) > -1 &&
+                securityContext.indexOf(Roles.VRA_CONTAINER_ADMIN) == -1) {
+            this.showKubernetes = true;
+          }
+        });
+      }
+    }
+
     checkShowLibrary() {
       if (this.isHbrEnabled || !this.selectedProject || FT.isApplicationEmbedded()) {
         this.showLibrary = true;
@@ -223,6 +237,10 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
         return RoutesRestriction.DEPLOYMENTS;
     }
 
+    get infrastructureRouteRestriction() {
+        return RoutesRestriction.INFRASTRUCTURE;
+    }
+
     get clustersRouteRestriction() {
         return RoutesRestriction.CLUSTERS;
     }
@@ -247,5 +265,15 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
       return "navigation.clusters";
     }
 
+    get endpointsRouteRestriction() {
+        return RoutesRestriction.ENDPOINTS_MENU_VRA;
+    }
 
+    get identityManagementRouteRestriction() {
+        return RoutesRestriction.IDENTITY_MANAGEMENT;
+    }
+
+    get registriesRouteRestriction() {
+        return RoutesRestriction.REGISTRIES;
+    }
 }

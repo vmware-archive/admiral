@@ -50,6 +50,23 @@
               </li>
           </ul>
       </section>
+
+      <section *ngIf="showKubernetes" class="nav-group collapsible">
+        <input id="deploymentsCollapse" type="checkbox">
+        <label for="deploymentsCollapse">{{ "navigation.kubernetes.title" | i18n }}</label>
+        <ul class="nav-list">
+            <li><a class="nav-link" routerLink="kubernetes/deployments"
+                routerLinkActive="active">{{ "navigation.kubernetes.deployments" | i18n }}</a></li>
+            <li><a class="nav-link" routerLink="kubernetes/pods"
+                routerLinkActive="active">{{ "navigation.kubernetes.pods" | i18n }}</a></li>
+             <!--k8s services are out of the current scope.
+            <li *ngIf="externalKubernetesEnabled"><a class="nav-link"
+                routerLink="kubernetes/services"
+                routerLinkActive="active">{{ "navigation.kubernetes.services" | i18n }}</a></li>
+            -->
+        </ul>
+      </section>
+
       <section *ngIf="showLibrary" class="nav-group collapsible">
           <input id="libraryCollapse" type="checkbox">
           <label for="libraryCollapse">{{ "navigation.library" | i18n }}</label>
@@ -73,15 +90,16 @@
                     routerLink="public-repositories"
                     routerLinkActive="active">{{ "navigation.publicRepositories" | i18n }}</a></li>
               <li *ngIf="embeddedMode"><a class="nav-link" routerLink="registries"
+                    allowNavigation [roles]="registriesRouteRestriction"
                     routerLinkActive="active">{{ "navigation.registries" | i18n }}</a></li>
               <li *ngIf="areClosuresAllowed"><a class="nav-link" routerLink="closure-definitions"
                     routerLinkActive="active">{{ "navigation.closures" | i18n }}</a></li>
           </ul>
       </section>
-      <section class="nav-group collapsible" allowNavigation [roles]="clustersRouteRestriction" [projectSelfLink]="currentProjectLink">
+      <section class="nav-group collapsible" allowNavigation [roles]="infrastructureRouteRestriction" [projectSelfLink]="currentProjectLink">
           <input id="infrastructureCollapse" type="checkbox">
           <label for="infrastructureCollapse">{{ "navigation.infrastructure" | i18n }}</label>
-          <ul class="nav-list">
+          <ul class="nav-list" allowNavigation [roles]="clustersRouteRestriction">
               <li><a class="nav-link" routerLink="clusters" routerLinkActive="active">{{ navigationClustersTextKey | i18n }}</a></li>
           </ul>
           <ul *ngIf="isPksEnabled" class="nav-list">
@@ -96,7 +114,7 @@
               <li><a class="nav-link" routerLink="endpoints" routerLinkActive="active">{{ "navigation.pksEndpoints" | i18n }}</a></li>
           </ul>
       </section>
-      <a *ngIf="embeddedMode" class="nav-link" routerLink="identity-management" routerLinkActive="active">{{ "navigation.identityManagement" | i18n }}</a>
+      <a *ngIf="embeddedMode" class="nav-link" allowNavigation [roles]="identityManagementRouteRestriction" routerLink="identity-management" routerLinkActive="active">{{ "navigation.identityManagement" | i18n }}</a>
   </section>
 </nav>
 <!-- Content Area -->

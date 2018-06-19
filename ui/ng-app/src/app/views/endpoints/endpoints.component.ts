@@ -15,6 +15,7 @@ import { ErrorService } from "../../utils/error.service";
 import { Constants } from "../../utils/constants";
 import { Links } from "../../utils/links";
 import { CancelablePromise, Utils} from "../../utils/utils";
+import { RoutesRestriction } from '../../utils/routes-restriction';
 
 @Component({
     selector: 'app-endpoints',
@@ -114,5 +115,13 @@ export class EndpointsComponent implements OnInit {
     resetAlert() {
         this.alertType = null;
         this.alertMessage = null;
+    }
+
+    get endpointsNewRouteRestriction() {
+        return RoutesRestriction.ENDPOINTS_NEW_VRA;
+    }
+
+    get endpointsRemoveRouteRestriction() {
+        return RoutesRestriction.ENDPOINTS_REMOVE_VRA;
     }
 }
