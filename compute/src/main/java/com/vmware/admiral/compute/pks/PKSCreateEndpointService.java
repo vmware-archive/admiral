@@ -131,9 +131,6 @@ public class PKSCreateEndpointService extends StatelessService {
     }
 
     private void validateConnection(EndpointSpec endpointSpec, Operation op) {
-        endpointSpec.acceptCertificate = false;
-        endpointSpec.acceptHostAddress = false;
-        endpointSpec.acceptCertificateForHost = null;
         validateSslTrust(endpointSpec, op,
                 () -> pingEndpoint(endpointSpec, op, (ignored) -> completeOperationSuccess(op))
         );
@@ -257,54 +254,6 @@ public class PKSCreateEndpointService extends StatelessService {
         op.setBody(null);
         op.complete();
     }
-
-    /*
-            try {
-            EndpointSpec endpointSpec = op.getBody(EndpointSpec.class);
-            validate(endpointSpec.endpoint);
-
-            URI uaaUri = URI.create(endpointSpec.endpoint.uaaEndpoint);
-            HostSpec uaaHostSpec = new HostSpec() {
-                @Override
-                public boolean isSecureScheme() {
-                    return UriUtils.HTTPS_SCHEME.equals(uaaUri.getScheme());
-                }
-
-                @Override
-                public List<String> getHostTenantLinks() {
-                    return null;
-                }
-            };
-            uaaHostSpec.uri = uaaUri;
-
-            EndpointCertificateUtil.validateSslTrust(this, uaaHostSpec, op, () -> {
-                URI apiUri = URI.create(endpointSpec.endpoint.apiEndpoint);
-
-                HostSpec apiHostSpec = new HostSpec() {
-                    @Override
-                    public boolean isSecureScheme() {
-                        return UriUtils.HTTPS_SCHEME.equals(apiUri.getScheme());
-                    }
-
-                    @Override
-                    public List<String> getHostTenantLinks() {
-                        return null;
-                    }
-                };
-                apiHostSpec.uri = apiUri;
-
-                EndpointCertificateUtil.validateSslTrust(this, apiHostSpec, op, () -> {
-                    op.setBodyNoCloning(endpointSpec.endpoint);
-                    op.complete();
-                });
-            });
-        } catch (Throwable e) {
-            logSevere("Error creating PKS endpoint: %s. Error: %s", e.getMessage(),
-                    Utils.toString(e));
-            op.fail(e);
-        }
-
-     */
 
     private void validate(EndpointSpec spec) {
         AssertUtil.assertNotNull(spec, "endpoint spec");
