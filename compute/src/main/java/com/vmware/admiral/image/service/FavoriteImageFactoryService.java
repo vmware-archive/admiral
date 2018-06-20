@@ -68,6 +68,13 @@ public class FavoriteImageFactoryService extends AbstractSecuredFactoryService {
 
     @Override
     public void handlePost(Operation op) {
+        /**
+         * If it is an internal xenon request, proceed with the operation.
+         */
+        if (op.isSynchronize()) {
+            super.handlePost(op);
+            return;
+        }
         completeOrFailOperationForImage(op);
     }
 

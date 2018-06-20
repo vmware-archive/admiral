@@ -48,9 +48,16 @@ public class RegistryFactoryService extends AbstractSecuredFactoryService {
         super.handleGet(get);
     }
 
-
     @Override
     public void handlePost(Operation post) {
+        /**
+         * If it is an internal xenon request, proceed with the operation.
+         */
+        if (post.isSynchronize()) {
+            super.handlePost(post);
+            return;
+        }
+
         QueryTask queryTask = QueryUtil.buildQuery(RegistryState.class, true);
         RegistryState registry = post.getBody(RegistryState.class);
         AssertUtil.assertNotNullOrEmpty(registry.address, "registry.address");
