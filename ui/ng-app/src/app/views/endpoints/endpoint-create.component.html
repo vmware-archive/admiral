@@ -1,0 +1,92 @@
+<!--
+  ~ Copyright (c) 2018 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<clr-alert *ngIf="alertMessage" [clrAlertType]="alertType" [(clrAlertClosed)]="!alertMessage"
+           (clrAlertClosedChange)="resetAlert()">
+    <div class="alert-item">
+        <span class="alert-text">{{ alertMessage }}</span>
+    </div>
+</clr-alert>
+
+<form [formGroup]="endpointDetailsForm">
+    <section class="form-block">
+        <div class="form-group">
+            <label for="endpointName" class="required">{{"endpoints.details.nameFieldTitle" | i18n}}</label>
+            <label for="endpointName" aria-haspopup="true" role="tooltip"
+                   class="tooltip tooltip-validation tooltip-sm tooltip-right"
+                   [class.invalid]="endpointDetailsForm.get('name').invalid
+                                                    && (endpointDetailsForm.get('name').dirty
+                                                    || endpointDetailsForm.get('name').touched)">
+                <input id="endpointName" type="text" formControlName="name" size="45">
+                <span class="tooltip-content">{{"endpoints.details.nameRequired" | i18n}}</span>
+            </label>
+        </div>
+        <div class="form-group">
+            <label for="endpointDescription">{{"endpoints.details.descriptionFieldTitle" | i18n}}</label>
+            <div class="endpoint-description">
+                <textarea id="endpointDescription" rows="5" formControlName="description"></textarea>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="uaaAddress" class="required">{{"endpoints.details.uaaAddressFieldTitle" | i18n}}</label>
+            <label for="uaaAddress" aria-haspopup="true" role="tooltip"
+                   class="tooltip tooltip-validation tooltip-sm tooltip-right"
+                   [class.invalid]="endpointDetailsForm.get('uaaAddress').invalid
+                                                    && (endpointDetailsForm.get('uaaAddress').dirty
+                                                    || endpointDetailsForm.get('uaaAddress').touched)">
+                <input id="uaaAddress" type="text" formControlName="uaaAddress" size="45">
+                <span class="tooltip-content">{{"endpoints.details.uaaAddressRequired" | i18n}}</span>
+            </label>
+        </div>
+        <div class="form-group">
+            <label for="uaaCredentials">{{ "endpoints.details.credentials" | i18n }}</label>
+            <dropdown formControlName="uaaCredentials" [options]="credentials"
+                      [title]="credentialsTitle"
+                      [searchPlaceholder]="credentialsSearchPlaceholder"
+                      ddClass="bottom-right">
+            </dropdown>
+        </div>
+        <div class="form-group">
+            <label for="pksAddress" class="required">{{"endpoints.details.pksAddressFieldTitle" | i18n}}</label>
+            <label for="pksAddress" aria-haspopup="true" role="tooltip"
+                   class="tooltip tooltip-validation tooltip-sm tooltip-right"
+                   [class.invalid]="endpointDetailsForm.get('pksAddress').invalid
+                                        && (endpointDetailsForm.get('pksAddress').dirty
+                                        || endpointDetailsForm.get('pksAddress').touched)">
+                <input id="pksAddress" type="text" formControlName="pksAddress" size="45">
+                <span class="tooltip-content">{{"endpoints.details.pksAddressRequired" | i18n}}</span>
+            </label>
+        </div>
+
+        <button type="button" class="btn btn-secondary"
+                [clrLoading]="isTestingConnection"
+                [disabled]="isSavingEndpoint || endpointDetailsForm.invalid"
+                (click)="testConnection()">{{"endpoints.details.testConnectionBtn" | i18n}}</button>
+        <button type="button" class="btn btn-secondary"
+                [disabled]="isSavingEndpoint"
+                (click)="cancel()">{{ "cancel" | i18n }}</button>
+        <button *ngIf="!editMode" type="button" class="btn btn-primary"
+                [clrLoading]="isSavingEndpoint"
+                [disabled]="endpointDetailsForm.invalid || isTestingConnection"
+                (click)="create()">{{"create" | i18n}}</button>
+        <button *ngIf="editMode" type="button" class="btn btn-primary"
+                [clrLoading]="isSavingEndpoint"
+                [disabled]="endpointDetailsForm.invalid || isTestingConnection"
+                (click)="save()">{{ "save" | i18n }}</button>
+    </section>
+</form>
+
+<!-- Untrusted certificate prompt -->
+<verify-certificate [visible]="showCertificateWarning"
+                    [hostAddress]="endpointDetailsForm.value.url"
+                    [certificate]="certificate"
+                    (onAccept)="acceptCertificate()"
+                    (onDecline)="cancelAcceptCertificate()"></verify-certificate>

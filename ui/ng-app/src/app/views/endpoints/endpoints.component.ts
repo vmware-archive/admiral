@@ -12,9 +12,9 @@
 import { Component, OnInit } from '@angular/core';
 import { DocumentListResult, DocumentService } from "../../utils/document.service";
 import { ErrorService } from "../../utils/error.service";
-import { CancelablePromise, Utils} from "../../utils/utils";
+import { Constants } from "../../utils/constants";
 import { Links } from "../../utils/links";
-import {Constants} from "../../utils/constants";
+import { CancelablePromise, Utils} from "../../utils/utils";
 
 @Component({
     selector: 'app-endpoints',
@@ -48,8 +48,6 @@ export class EndpointsComponent implements OnInit {
     }
 
     listEndpoints(queryOptions) {
-        console.log('listEndpoints', 'queryOptions', queryOptions);
-
         if (this.loadingPromise) {
             this.loadingPromise.cancel();
         }
@@ -58,11 +56,10 @@ export class EndpointsComponent implements OnInit {
 
         this.loadingPromise =
                         new CancelablePromise(this.service.list(Links.PKS_ENDPOINTS, queryOptions));
-
         this.loadingPromise.getPromise().then(result => {
             this.loading = false;
-            this.endpoints = result.documents;
 
+            this.endpoints = result.documents;
         }).catch(error => {
             this.loading = false;
 

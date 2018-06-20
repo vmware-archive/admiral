@@ -28,6 +28,8 @@ export class Links {
   public static PROJECTS = '/projects';
   public static EVENT_LOGS = Links.RESOURCES + '/event-logs';
   public static PKS_ENDPOINTS = Links.RESOURCES + '/pks/endpoints';
+  public static PKS_ENDPOINT_CREATE = Links.RESOURCES + '/pks/create-endpoint';
+  public static PKS_ENDPOINT_TEST_CONNECTION = Links.RESOURCES + '/pks/create-endpoint?validate';
   public static PKS_CLUSTERS = Links.RESOURCES + '/pks/clusters';
   public static PKS_CLUSTERS_ADD = Links.RESOURCES + '/pks/clusters-config';
   public static DEPLOYMENT_POLICIES = Links.RESOURCES + '/deployment-policies';

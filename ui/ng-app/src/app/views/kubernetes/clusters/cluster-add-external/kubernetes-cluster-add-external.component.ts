@@ -14,6 +14,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { FormGroup, FormControl, Validators } from "@angular/forms";
 import { DocumentService } from "../../../../utils/document.service";
 import { ErrorService } from "../../../../utils/error.service";
+import { ProjectService } from "../../../../utils/project.service";
 import { Links } from "../../../../utils/links";
 import { Utils } from "../../../../utils/utils";
 
@@ -35,9 +36,6 @@ export class KubernetesClusterAddExternalComponent implements OnInit {
     // certificate
     showCertificateWarning: boolean;
     certificate: any;
-    // project/group
-    projectLink: string;
-    private sub: any;
 
     clusterForm = new FormGroup({
         name: new FormControl('', Validators.required),
@@ -57,22 +55,12 @@ export class KubernetesClusterAddExternalComponent implements OnInit {
     } as I18n.TranslationOptions );
 
     constructor(private router: Router, private route: ActivatedRoute,
-                private service: DocumentService, private errorService: ErrorService) {
+                private service: DocumentService, private projectService: ProjectService,
+                private errorService: ErrorService) {
     }
 
     ngOnInit(): void {
-        this.sub = this.route.params.subscribe(params => {
-            let projectId = params['projectId'];
-            if (projectId) {
-                this.projectLink = Links.PROJECTS + '/' + projectId;
-            }
-        });
-
         this.populateCredentials();
-    }
-
-    ngOnDestroy() {
-        this.sub.unsubscribe();
     }
 
     ngAfterViewInit() {
@@ -130,8 +118,12 @@ export class KubernetesClusterAddExternalComponent implements OnInit {
 
             this.isSaving = true;
 
-            this.service.post(Links.CLUSTERS, clusterSpec, this.projectLink).then((response) => {
+            this.service.post(Links.CLUSTERS, clusterSpec,
+                                this.projectService.getSelectedProject().documentSelfLink)
+                .then((response) => {
+
                 if (response.certificate) {
+                    // certificate has to be accepted by the user
                     this.certificate = response;
                     this.showCertificateWarning = true;
                 } else {

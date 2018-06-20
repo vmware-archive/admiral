@@ -497,7 +497,9 @@
       "pksAddressFieldTitle": "PKS Address",
       "pksAddressRequired": "The PKS Address is required.",
       "testConnectionBtn": "Test Connection",
-      "clustersTabTitle": "Clusters"
+      "clustersTabTitle": "Clusters",
+      "connectionVerified": "Connection to endpoint is successful.",
+      "certificateNotAccepted": "The certificate is not accepted. Cannot proceed."
     }
   },
   "configuration": {

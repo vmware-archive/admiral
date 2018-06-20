@@ -139,7 +139,6 @@ export class KubernetesClusterAddExistingComponent implements OnInit {
 
         this.resetAlert();
 
-        let selectedProjectLink = this.projectService.getSelectedProject().documentSelfLink;
         this.isAdding = true;
         let clusterToAdd = this.originalClusters.find(originalCluster => {
                 return originalCluster.uuid === suitableForAddClusters[0].uuid;
@@ -150,7 +149,8 @@ export class KubernetesClusterAddExistingComponent implements OnInit {
             'cluster': clusterToAdd
         };
 
-        this.service.post(Links.PKS_CLUSTERS_ADD, addClusterRequest, selectedProjectLink)
+        this.service.post(Links.PKS_CLUSTERS_ADD, addClusterRequest,
+                            this.projectService.getSelectedProject().documentSelfLink)
             .then((result) => {
                 this.isAdding = false;
                 this.goBack();
