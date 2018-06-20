@@ -405,6 +405,7 @@
         "descriptionText": "Select an endpoint and then select one or more existing, unassigned Kubernetes clusters to add to the current business group.",
         "fieldTitleEndpoint": "Endpoint:",
         "columnTitleName": "Name",
+        "columnTitleHostname": "Hostname",
         "columnTitleMastersCount": "# Masters",
         "columnTitleWorkersCount": "# Workers",
         "columnTitlePlan": "Plan",

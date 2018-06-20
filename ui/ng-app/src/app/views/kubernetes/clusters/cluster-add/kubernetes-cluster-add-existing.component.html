@@ -35,6 +35,7 @@
                 <clr-datagrid [clrDgLoading]="loading" [clDgRowSelection]="true"
                               [(clrDgSelected)]="selectedClusters">
                     <clr-dg-column>{{"pks.add.existingClusters.columnTitleName" | i18n}}</clr-dg-column>
+                    <clr-dg-column>{{"pks.add.existingClusters.columnTitleHostname" | i18n}}</clr-dg-column>
                     <clr-dg-column>{{"pks.add.existingClusters.columnTitleMastersCount" | i18n}}</clr-dg-column>
                     <clr-dg-column>{{"pks.add.existingClusters.columnTitleWorkersCount" | i18n}}</clr-dg-column>
                     <clr-dg-column>{{"pks.add.existingClusters.columnTitlePlan" | i18n}}</clr-dg-column>
@@ -42,6 +43,7 @@
 
                     <clr-dg-row *clrDgItems="let cluster of clusters" [clrDgItem]="cluster">
                         <clr-dg-cell>{{cluster.name}}</clr-dg-cell>
+                        <clr-dg-cell>{{cluster.hostname}}</clr-dg-cell>
                         <clr-dg-cell>{{cluster.masterNodesCount}}</clr-dg-cell>
                         <clr-dg-cell>{{cluster.workerNodesCount}}</clr-dg-cell>
                         <clr-dg-cell>{{(cluster.plan ? "pks.new.settings.plan." + cluster.plan : "notAvailable") | i18n}}</clr-dg-cell>

@@ -112,6 +112,7 @@ export class KubernetesClusterAddExistingComponent implements OnInit {
                     return {
                         uuid: resultDoc.uuid,
                         name: resultDoc.name,
+                        hostname: resultDoc.parameters.kubernetes_master_host,
                         plan: planName || '',
                         masterNodesCount: masterNodesCount || 1,
                         workerNodesCount: resultDoc.parameters.kubernetes_worker_instances,
