@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -22,6 +22,7 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOp
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -47,6 +48,7 @@ import com.vmware.admiral.request.ReservationAllocationTaskService.ReservationAl
 import com.vmware.admiral.request.ReservationTaskService.ReservationTaskState.SubStage;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSelection;
+import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
@@ -430,6 +432,13 @@ public class ReservationTaskService
         placementTask.tenantLinks = state.tenantLinks;
         placementTask.customProperties = state.customProperties;
         placementTask.contextId = getContextId(state);
+        // make sure customProperties is a non-null modifiable map
+        placementTask.customProperties = placementTask.customProperties == null
+                ? new HashMap<>()
+                : new HashMap<>(placementTask.customProperties);
+        // workaround for some affinity filters which expect the context id to be a custom property
+        placementTask.customProperties.putIfAbsent(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY,
+                placementTask.contextId);
         placementTask.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskStage.STARTED,
                 isGlobal(state) ? SubStage.HOSTS_SELECTED_GLOBAL : SubStage.HOSTS_SELECTED,

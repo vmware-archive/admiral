@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -34,6 +34,7 @@ import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.request.ReservationTaskService.ReservationTaskState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
+import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
@@ -136,12 +137,13 @@ public class ReservationTaskServiceTest extends RequestBaseTest {
 
         assertEquals(groupPlacementState.allocatedInstancesCount, task.resourceCount);
 
-        // check custom properties overridden:
-        assertEquals(2, task.customProperties.size());
+        // check custom properties overridden. Account for the added context id as well
+        assertEquals(groupPlacementState.customProperties.size() + 1, task.customProperties.size());
         assertEquals(groupPlacementState.customProperties.get("key1"),
                 task.customProperties.get("key1"));
         assertEquals(groupPlacementState.customProperties.get("key2"),
                 task.customProperties.get("key2"));
+        assertTrue(task.customProperties.containsKey(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY));
     }
 
     @Test

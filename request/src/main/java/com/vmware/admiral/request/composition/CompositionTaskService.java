@@ -34,8 +34,11 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
+
 import org.yaml.snakeyaml.util.UriEncoder;
 
+import com.vmware.admiral.common.serialization.ReleaseConstants;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.compute.BindingEvaluator;
 import com.vmware.admiral.compute.ResourceType;
@@ -127,6 +130,7 @@ public class CompositionTaskService
          * (Internal) the groupResourcePlacementState that links to ResourcePool
          */
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
+        @Since(ReleaseConstants.RELEASE_VERSION_1_4_1)
         public String groupResourcePlacementLink;
     }
 

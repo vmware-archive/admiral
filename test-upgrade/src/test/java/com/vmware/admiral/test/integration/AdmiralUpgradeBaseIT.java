@@ -11,7 +11,10 @@
 
 package com.vmware.admiral.test.integration;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+
+import static com.vmware.admiral.test.integration.TestPropertiesUtil.getSystemOrTestProp;
 
 import java.net.URI;
 import java.util.HashSet;
@@ -30,6 +33,7 @@ import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService.ElasticPlacementZoneConfigurationState;
+import com.vmware.admiral.compute.container.ContainerDescriptionFactoryService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService.ContainerHostDataCollectionState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
@@ -43,6 +47,7 @@ import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceClient;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
@@ -50,7 +55,8 @@ import com.vmware.xenon.services.common.ServiceUriPaths;
 
 public abstract class AdmiralUpgradeBaseIT extends BaseProvisioningOnCoreOsIT {
     private static final String DOCUMENT_LINKS = "documentLinks";
-    private static final String TEMPLATE_HELLO_WORLD_NETWORK = "HelloWorld_network.yaml";
+    private static final String TEMPLATE_HELLO_WORLD_NETWORK = getSystemOrTestProp(
+            "test.upgrade.template.hello-world-with-network", "HelloWorld_network.yaml");
 
     private static final String SEPARATOR = "/";
     private static final String EXPAND = "?expand";
@@ -117,14 +123,13 @@ public abstract class AdmiralUpgradeBaseIT extends BaseProvisioningOnCoreOsIT {
 
     protected void validateContent(ContainerState admiralContainer) throws Exception {
         logger.info("---------- Validate compatibility. --------");
+        waitForSuccessfulHealthcheck(admiralContainer);
+
         changeBaseURI(admiralContainer);
         // wait for the admiral container to start
-        URI uri = URI.create(getBaseUrl() + NodeHealthCheckService.SELF_LINK);
-        waitForStatusCode(uri, Operation.STATUS_CODE_OK);
-        uri = URI.create(getBaseUrl() + ManagementUriParts.CONTAINERS);
-        waitForStatusCode(uri, Operation.STATUS_CODE_OK);
-        uri = URI.create(getBaseUrl() + ManagementUriParts.CONTAINER_HOSTS);
-        waitForStatusCode(uri, Operation.STATUS_CODE_OK);
+        logger.info("--- Ensure all important services are up and running. ---");
+        waitForServiceToBecomeAvailable(ManagementUriParts.CONTAINERS);
+        waitForServiceToBecomeAvailable(ManagementUriParts.CONTAINER_HOSTS);
 
         com.vmware.admiral.test.integration.client.ComputeState dockerHost = getDocument(
                 COMPUTE_SELF_LINK,
@@ -146,44 +151,54 @@ public abstract class AdmiralUpgradeBaseIT extends BaseProvisioningOnCoreOsIT {
                     .get(ContainerHostService.SSL_TRUST_ALIAS_PROP_NAME) != null);
         });
 
+        logger.info("--- Validate credentials. ---");
         com.vmware.admiral.test.integration.client.AuthCredentialsServiceState credentials = getDocument(
                 CREDENTIALS_SELF_LINK,
                 com.vmware.admiral.test.integration.client.AuthCredentialsServiceState.class);
-        assertTrue(credentials != null);
+        assertNotNull(credentials);
 
         // container
+        logger.info("--- Validate containers. ---");
         validateResources(ManagementUriParts.CONTAINERS,
                 com.vmware.admiral.test.integration.client.ContainerState.class);
 
         // application
+        logger.info("--- Validate applications. ---");
         validateResources(ManagementUriParts.COMPOSITE_COMPONENT,
                 com.vmware.admiral.test.integration.client.CompositeComponent.class);
 
         // network
+        logger.info("--- Validate networks. ---");
         validateResources(ManagementUriParts.CONTAINER_NETWORKS,
                 com.vmware.admiral.test.integration.client.ContainerNetworkState.class);
 
         // event-log
+        logger.info("--- Validate event logs. ---");
         validateResources(ManagementUriParts.EVENT_LOG,
                 com.vmware.admiral.test.integration.client.EventLogState.class);
 
         // request-status
+        logger.info("--- Validate request statuses. ---");
         validateResources(ManagementUriParts.REQUEST_STATUS,
                 com.vmware.admiral.test.integration.client.ContainerRequestStatus.class);
 
         // placement
+        logger.info("--- Validate placements. ---");
         validateResources(ManagementUriParts.RESOURCE_GROUP_PLACEMENTS,
                 com.vmware.admiral.test.integration.client.GroupResourcePlacementState.class);
 
         // composite-description (template)
+        logger.info("--- Validate composite descriptions. ---");
         validateResources(ManagementUriParts.COMPOSITE_DESC,
                 com.vmware.admiral.test.integration.client.CompositeDescription.class);
 
          // certificate
+        logger.info("--- Validate certificates. ---");
         validateResources(ManagementUriParts.SSL_TRUST_CERTS,
                 com.vmware.admiral.test.integration.client.SslTrustCertificateState.class);
 
         // placement zone
+        logger.info("--- Validate placement zones. ---");
         validateResources(ManagementUriParts.ELASTIC_PLACEMENT_ZONE_CONFIGURATION,
                 com.vmware.admiral.test.integration.client.ElasticPlacementZoneConfigurationState.class);
 
@@ -193,43 +208,63 @@ public abstract class AdmiralUpgradeBaseIT extends BaseProvisioningOnCoreOsIT {
     protected void changeBaseURI(ContainerState admiralContainer) throws Exception {
         String parent = admiralContainer.parentLink;
         ComputeState computeState = getDocument(parent, ComputeState.class);
-        setBaseURI(String.format("http://%s:%s", computeState.address,
-                admiralContainer.ports.get(0).hostPort));
+        String baseUri = String.format("http://%s:%s", computeState.address,
+                admiralContainer.ports.get(0).hostPort);
+        logger.warning("Changing base URI to [%s]", baseUri);
+        setBaseURI(baseUri);
     }
 
     protected void addContentToTheProvisionedAdmiral(ContainerState admiralContainer)
             throws Exception {
         changeBaseURI(admiralContainer);
+
         // wait for the admiral container to start. In 0.9.1 health check service is not available
+        logger.info("--- Giving Admiral some time to boot. ---");
         Thread.sleep(20000);
-        URI uri = URI.create(getBaseUrl() + ManagementUriParts.CONTAINERS);
-        waitForStatusCode(uri, Operation.STATUS_CODE_OK);
-        uri = URI.create(getBaseUrl() + ManagementUriParts.CONTAINER_HOSTS);
-        waitForStatusCode(uri, Operation.STATUS_CODE_OK);
+
+        // ensure some core services are up and running
+        logger.info("--- Ensure all important services are up and running. ---");
+        waitForServiceToBecomeAvailable(ManagementUriParts.CONTAINERS);
+        waitForServiceToBecomeAvailable(ManagementUriParts.REQUESTS);
+        waitForServiceToBecomeAvailable(ManagementUriParts.REQUEST_STATUS);
+        waitForServiceToBecomeAvailable(ManagementUriParts.CONTAINER_HOSTS);
+
         // Create event. The template does not exist on the new admiral host
+        logger.info("--- Create a dummy failed event log. ---");
         boolean requestContainerFailed = false;
         try {
-            requestContainer(getResourceDescriptionLink(false, RegistryType.V1_SSL_SECURE));
-        } catch (Exception e) {
-            // Do nothing we want the request to fail in order to create an event
-            requestContainerFailed = true;
+            requestContainer(UriUtils.buildUriPath(
+                    ContainerDescriptionFactoryService.SELF_LINK,
+                    "no-such-description"));
+        } catch (IllegalStateException e) {
+            if (e.getMessage().contains("Service not found")) {
+                // Do nothing we want the request to fail in order to create an event
+                requestContainerFailed = true;
+            } else {
+                logger.error("Unexpected error thrown: %s", Utils.toString(e));
+            }
         }
         if (!requestContainerFailed) {
             throw new IllegalStateException("Container request was expected to fail!");
         }
 
         // create documents to check for after upgrade
+        logger.info("--- Import a sample template. ---");
         String templateLink = importTemplate(serviceClient, TEMPLATE_HELLO_WORLD_NETWORK);
         // try to provision in order to create an event state
+        logger.info("--- Add a Docker host. ---");
         setupCoreOsHost(DockerAdapterType.API, false, null);
         // provision an application with network
+        logger.info("--- Provision the imported template. ---");
         requestContainer(templateLink);
 
+        logger.info("--- Create some credentials. ---");
         AuthCredentialsServiceState credentials = IntegratonTestStateFactory
                 .createAuthCredentials(false);
         postDocument(AuthCredentialsService.FACTORY_LINK, credentials);
 
         // placement zone
+        logger.info("--- Create a placement zone. ---");
         ElasticPlacementZoneConfigurationState epzConfigState = new ElasticPlacementZoneConfigurationState();
         epzConfigState.resourcePoolState = IntegratonTestStateFactory.createResourcePool();
         postDocument(ManagementUriParts.ELASTIC_PLACEMENT_ZONE_CONFIGURATION, epzConfigState);
@@ -237,8 +272,25 @@ public abstract class AdmiralUpgradeBaseIT extends BaseProvisioningOnCoreOsIT {
         setBaseURI(null);
     }
 
+    protected void waitForSuccessfulHealthcheck(ContainerState admiralContainer) throws Exception {
+        logger.info("--- Waiting for a successful healthcheck. ---");
+        changeBaseURI(admiralContainer);
+        waitForServiceToBecomeAvailable(NodeHealthCheckService.SELF_LINK);
+        setBaseURI(null);
+    }
+
+    private void waitForServiceToBecomeAvailable(String serviceSelfLink) throws Exception {
+        logger.info("- Waiting for service to return status code OK [%s] -", serviceSelfLink);
+        URI uri = URI.create(getBaseUrl() + serviceSelfLink);
+        waitForStatusCode(uri, Operation.STATUS_CODE_OK);
+        logger.info("- Service is now available [%s] -", serviceSelfLink);
+    }
+
     private <T> void validateResources(String endpoint, Class<? extends T> clazz)
             throws Exception {
+        URI uri = URI.create(getBaseUrl() + endpoint);
+        waitForStatusCode(uri, Operation.STATUS_CODE_OK);
+
         HttpResponse response = SimpleHttpsClient.execute(HttpMethod.GET,
                 getBaseUrl() + buildServiceUri(endpoint + EXPAND), null, null);
         assertTrue(response.statusCode == 200);
@@ -249,10 +301,10 @@ public abstract class AdmiralUpgradeBaseIT extends BaseProvisioningOnCoreOsIT {
         for (int i = 0; i < documentLinks.size(); i++) {
             String selfLink = documentLinks.get(i).getAsString();
             T state = getDocument(selfLink, clazz);
-            assertTrue(state != null);
+            assertNotNull("Expected non-null instance of class " + clazz.getName(), state);
             // add applications created in the initialization phase for deletion
             if (com.vmware.admiral.test.integration.client.CompositeComponent.class.equals(clazz)) {
-                deleteApplicationAfter(selfLink);
+                applicationsToDelete.add(selfLink);
             }
         }
     }

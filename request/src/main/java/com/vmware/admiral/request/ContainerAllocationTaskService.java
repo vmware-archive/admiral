@@ -480,6 +480,13 @@ public class ContainerAllocationTaskService extends
         placementTask.tenantLinks = state.tenantLinks;
         placementTask.customProperties = state.customProperties;
         placementTask.contextId = getContextId(state);
+        // make sure customProperties is a non-null modifiable map
+        placementTask.customProperties = placementTask.customProperties == null
+                ? new HashMap<>()
+                : new HashMap<>(placementTask.customProperties);
+        // workaround for some affinity filters which expect the context id to be a custom property
+        placementTask.customProperties.putIfAbsent(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY,
+                placementTask.contextId);
         placementTask.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskStage.STARTED, SubStage.BUILD_RESOURCES_LINKS,
                 TaskStage.STARTED, SubStage.ERROR);

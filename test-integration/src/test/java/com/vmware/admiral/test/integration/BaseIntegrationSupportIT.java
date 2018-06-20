@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -92,18 +92,13 @@ public abstract class BaseIntegrationSupportIT {
             "test.task.change.wait.retry.count", 600);
     protected static final int STATE_CHANGE_WAIT_POLLING_PERIOD_MILLIS = Integer.getInteger(
             "test.state.change.wait.period.millis", 1000);
-
     protected static final Queue<ServiceDocument> documentsForDeletionAfterClass =
             new LinkedBlockingQueue<>();
     protected static final Queue<ServiceDocument> documentsForDeletion =
             new LinkedBlockingQueue<>();
 
-    protected final TestLogger logger;
+    protected static final TestLogger logger = new TestLogger(BaseIntegrationSupportIT.class);
     private static String baseURI;
-
-    protected BaseIntegrationSupportIT() {
-        logger = new TestLogger(getClass());
-    }
 
     @Rule
     public Timeout globalTimeout = Timeout.seconds(TimeUnit.MINUTES.toSeconds(5));
@@ -323,7 +318,7 @@ public abstract class BaseIntegrationSupportIT {
             Map<String, String> headers) throws Exception {
         HttpResponse httpResponse = SimpleHttpsClient.execute(method,
                 getBaseUrl() + buildServiceUri(link), body, headers, null);
-        if (httpResponse.responseBody == null && HttpMethod.GET == method) {
+        if (httpResponse.responseBody == null) {
             Utils.logWarning("Body for method %s and link: %s is null. Status code: %s", method,
                     link, httpResponse.statusCode);
         }
@@ -431,8 +426,14 @@ public abstract class BaseIntegrationSupportIT {
                         uri.toString(), null, headers, getUnsecuredSSLSocketFactory());
                 if (expectedStatusCode == httpResponse.statusCode) {
                     return;
+                } else {
+                    logger.info("Expected status code %s but got %s. Will retry. Response body: %s",
+                            expectedStatusCode, httpResponse.statusCode, httpResponse.responseBody);
                 }
             } catch (Exception x) {
+                logger.info(
+                        "An exception was thrown while waiting for status code [%s] for uri [%s]. Will retry. Exception message: %s",
+                        expectedStatusCode, uri.toString(), x.getMessage());
                 // failed - keep waiting
             }
             Thread.sleep(STATE_CHANGE_WAIT_POLLING_PERIOD_MILLIS);

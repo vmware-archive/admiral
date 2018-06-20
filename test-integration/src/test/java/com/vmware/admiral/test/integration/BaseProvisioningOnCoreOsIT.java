@@ -478,6 +478,9 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
         request.resourceDescriptionLink = resourceDescLink;
         request.tenantLinks = TENANT_LINKS;
         request = postDocument(RequestBrokerFactoryService.SELF_LINK, request);
+        assertNotNull("unexpected state: request is null", request);
+        assertNotNull("unexpected state: request.documentSelfLink is null",
+                request.documentSelfLink);
 
         waitForTaskToComplete(request.documentSelfLink);
 

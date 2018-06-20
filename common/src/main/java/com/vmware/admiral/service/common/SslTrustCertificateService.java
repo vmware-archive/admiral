@@ -111,7 +111,7 @@ public class SslTrustCertificateService extends StatefulService {
         @Documentation(description = "Origin host uri from which the certificate is imported."
                 + " Cert could be a wildcard one, and valid for many hosts, this is just the"
                 + " initial source.")
-        @VersionFieldSerializer.Since(ReleaseConstants.RELEASE_VERSION_1_5_0)
+        @VersionFieldSerializer.Since(ReleaseConstants.RELEASE_VERSION_1_4_1)
         public String origin;
 
         public String getAlias() {
