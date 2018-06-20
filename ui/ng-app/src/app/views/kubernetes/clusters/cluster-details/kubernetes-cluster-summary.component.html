@@ -9,10 +9,14 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-  <div toolbar>
+      <div toolbar>
         <button class="btn btn-link" (click)="editCluster()">
           <clr-icon shape="edit" size="12"></clr-icon>
           <span class="btn-spaced-text">{{ "edit" | i18n }}</span>
+        </button>
+        <button class="btn btn-link" (click)="downloadKubeConfig()">
+            <clr-icon shape="download" size="12"></clr-icon>
+            <span class="btn-spaced-text">{{ "kubernetes.clusters.details.summary.kubeConfigBtn" | i18n }}</span>
         </button>
       </div>
 

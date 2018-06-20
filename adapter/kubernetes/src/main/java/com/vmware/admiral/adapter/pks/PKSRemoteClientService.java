@@ -181,7 +181,7 @@ public class PKSRemoteClientService {
         }
     }
 
-    public DeferredResult<KubeConfig.AuthInfo> createUser(PKSContext ctx, String cluster) {
+    public DeferredResult<KubeConfig> createUser(PKSContext ctx, String cluster) {
         try {
             URI uri = UriUtils.buildUri(ctx.pksAPIUri, "v1/clusters", cluster, "binds");
             Operation op = buildPostOperation(uri, ctx);
@@ -191,7 +191,7 @@ public class PKSRemoteClientService {
                         KubeConfig config = o.getBody(KubeConfig.class);
                         logger.fine(() -> String.format("Got response from %s for create user : %s",
                                 ctx.pksAPIUri, Utils.toJson(config)));
-                        return config.users[0];
+                        return config;
                     })
                     .exceptionally(t -> {
                         throw DeferredUtils.logErrorAndThrow(t,

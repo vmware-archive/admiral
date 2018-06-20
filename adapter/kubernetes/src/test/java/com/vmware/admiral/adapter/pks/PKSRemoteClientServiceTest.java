@@ -283,7 +283,7 @@ public class PKSRemoteClientServiceTest {
         doNothing().when(mockClient).send(valueCapture.capture());
 
         // test casual exception
-        DeferredResult<KubeConfig.AuthInfo> result = client.createUser(null, null);
+        DeferredResult<KubeConfig> result = client.createUser(null, null);
         try {
             result.toCompletionStage().toCompletableFuture().get();
             fail("should not reach here");
@@ -297,13 +297,13 @@ public class PKSRemoteClientServiceTest {
         result = client.createUser(ctx, "cluster1");
 
         Operation op = valueCapture.getValue();
-        op.setBodyNoCloning("{\"users\": [{\"kind\":\"u\",\"user\":{\"token\" : \"tok\"}}]}");
+        op.setBodyNoCloning("{\"users\": [{\"name\": \"u\",\"user\": {\"token\": \"tok\"}}]}");
         op.complete();
 
-        KubeConfig.AuthInfo authInfo = result.toCompletionStage().toCompletableFuture().get();
-        assertNotNull(authInfo);
-        assertEquals("u", authInfo.name);
-        assertEquals("tok", authInfo.user.token);
+        KubeConfig kubeConfig = result.toCompletionStage().toCompletableFuture().get();
+        assertNotNull(kubeConfig);
+        assertEquals("u", kubeConfig.users.get(0).name);
+        assertEquals("tok", kubeConfig.users.get(0).user.token);
 
         // test exceptionally clause
         result = client.createUser(ctx, "cluster-missing");

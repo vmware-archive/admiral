@@ -32,6 +32,7 @@ export class Links {
   public static PKS_ENDPOINT_TEST_CONNECTION = Links.RESOURCES + '/pks/create-endpoint?validate';
   public static PKS_CLUSTERS = Links.RESOURCES + '/pks/clusters';
   public static PKS_CLUSTERS_ADD = Links.RESOURCES + '/pks/clusters-config';
+  public static KUBE_CONFIG_CONTENT = Links.RESOURCES + '/kube-config';
   public static DEPLOYMENT_POLICIES = Links.RESOURCES + '/deployment-policies';
 
   public static COMPOSITE_DESCRIPTIONS = Links.RESOURCES + '/composite-descriptions';

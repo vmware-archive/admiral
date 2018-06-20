@@ -19,5 +19,7 @@ public interface PKSConstants {
     String CLUSTER_NAME_PROP_NAME = "__clusterName";
     String VALIDATE_CONNECTION = "validate_connection";
     String CREDENTIALS_LINK = "credentials";
-
+    String KUBE_CONFIG_PROP_NAME = "__kubeConfig";
+    String KUBERNETES_MASTER_HOST_PROP_NAME = "kubernetes_master_host";
+    String KUBERNETES_MASTER_PORT_PROP_NAME = "kubernetes_master_port";
 }

@@ -14,6 +14,7 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { DocumentService } from "../../../../utils/document.service";
 import { ErrorService } from "../../../../utils/error.service";
 import { Utils } from '../../../../utils/utils';
+import { Links } from '../../../../utils/links';
 import { FT } from '../../../../utils/ft';
 
 import * as I18n from 'i18next';
@@ -118,6 +119,22 @@ export class KubernetesClusterSummaryComponent implements OnInit {
         }
 
         this.router.navigate(editNavLink, {relativeTo: this.route});
+    }
+
+    downloadKubeConfig() {
+        if (!this.cluster) {
+            return;
+        }
+
+        var hostLink = this.cluster.nodeLinks && this.cluster.nodeLinks[0];
+
+        if (!hostLink) {
+            console.log('cannot download kubeconfig: no hosts found');
+            return;
+        }
+
+        var kubeConfigLink = Links.KUBE_CONFIG_CONTENT + '?hostLink=' + hostLink;
+        window.location.href = kubeConfigLink;
     }
 
     formatNumber(number) {

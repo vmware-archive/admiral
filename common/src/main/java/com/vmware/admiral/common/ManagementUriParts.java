@@ -148,7 +148,8 @@ public interface ManagementUriParts {
     String PKS_ENDPOINTS = RESOURCES + PKS_NAMESPACE + "/endpoints";
     String PKS_CREATE_ENDPOINT = RESOURCES + PKS_NAMESPACE + "/create-endpoint";
     String PKS_CLUSTERS = RESOURCES + PKS_NAMESPACE + "/clusters";
-    String PKS_CLUSTERS_CONFIG = RESOURCES + PKS_NAMESPACE +  "/clusters-config";
+    String PKS_CLUSTERS_CONFIG = RESOURCES + PKS_NAMESPACE + "/clusters-config";
+    String PKS_KUBE_CONFIG_CONTENT = RESOURCES + "/kube-config";
 
     // Request tasks:
     String REQUEST = "/request";

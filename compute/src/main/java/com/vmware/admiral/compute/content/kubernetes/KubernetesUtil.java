@@ -79,6 +79,7 @@ public class KubernetesUtil {
     public static final String NODE_TYPE = "Node";
     public static final String NAMESPACE_TYPE = "Namespace";
     public static final String ENDPOINTS_TYPE = "Endpoints";
+    public static final String CONFIG_TYPE = "Config";
 
     public static final String KUBERNETES_API_VERSION_V1 = "v1";
     public static final String KUBERNETES_API_VERSION_V1_BETA1 = "extensions/v1beta1";
@@ -320,8 +321,8 @@ public class KubernetesUtil {
                 return desc;
 
             case REPLICATION_CONTROLLER_TYPE:
-                ReplicationController controller = desc.getKubernetesEntity(ReplicationController
-                        .class);
+                ReplicationController controller = desc
+                        .getKubernetesEntity(ReplicationController.class);
                 if (controller.spec == null || controller.spec.template == null) {
                     return desc;
                 }
@@ -365,11 +366,11 @@ public class KubernetesUtil {
 
     }
 
-    public static <T extends BaseKubernetesState> Class<T> getStateTypeFromSelfLink(String
-            selfLink) {
+    public static <T extends BaseKubernetesState> Class<T> getStateTypeFromSelfLink(
+            String selfLink) {
 
-        Class<? extends ResourceState> resourceStateClass =
-                CompositeComponentRegistry.metaByStateLink(selfLink).stateClass;
+        Class<? extends ResourceState> resourceStateClass = CompositeComponentRegistry
+                .metaByStateLink(selfLink).stateClass;
 
         return fromResourceStateToBaseKubernetesState(resourceStateClass);
 

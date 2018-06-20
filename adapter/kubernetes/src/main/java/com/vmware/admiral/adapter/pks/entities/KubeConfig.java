@@ -11,46 +11,64 @@
 
 package com.vmware.admiral.adapter.pks.entities;
 
+import java.util.List;
+
 import com.google.gson.annotations.SerializedName;
 
-public class KubeConfig {
+import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
 
-    public static class Token {
+/*
+ * Returned by 'pks get-credentials' command.
+ */
+public class KubeConfig extends BaseKubernetesObject {
 
-        @SerializedName("token")
-        public String token;
+    public static class Cluster {
+
+        public String server;
+
+        @SerializedName("certificate-authority-data")
+        public String certificateAuthorityData;
+    }
+
+    public static class ClusterEntry {
+
+        public String name;
+
+        public Cluster cluster;
+    }
+
+    public static class Context {
+
+        public String cluster;
+
+        public String user;
+    }
+
+    public static class ContextEntry {
+
+        public String name;
+
+        public Context context;
     }
 
     public static class AuthInfo {
 
-        @SerializedName("kind")
-        public String name;
-
-        @SerializedName("user")
-        public Token user;
+        public String token;
     }
 
-    @SerializedName("kind")
-    public String kind;
+    public static class UserEntry {
 
-    @SerializedName("apiVersion")
-    public String apiVersion;
+        public String name;
 
-    @SerializedName("preferences")
-    public Object preferences;
+        public AuthInfo user;
+    }
 
-    @SerializedName("clusters")
-    public Object[] clusters;
+    public List<ClusterEntry> clusters;
 
-    @SerializedName("users")
-    public AuthInfo[] users;
+    public List<ContextEntry> contexts;
 
-    @SerializedName("contexts")
-    public Object[] contexts;
+    public List<UserEntry> users;
 
     @SerializedName("current-context")
     public String currentContext;
-
-    @SerializedName("extensions")
-    public Object[] extensions;
 }

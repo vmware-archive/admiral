@@ -21,7 +21,6 @@ import java.util.UUID;
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.pks.PKSOperationType;
 import com.vmware.admiral.adapter.pks.entities.KubeConfig;
-import com.vmware.admiral.adapter.pks.entities.KubeConfig.Token;
 import com.vmware.admiral.adapter.pks.entities.PKSCluster;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.xenon.common.Operation;
@@ -45,10 +44,12 @@ public class MockPKSAdapterService extends StatelessService {
         request.validate();
 
         if (PKSOperationType.CREATE_USER.id.equals(request.operationTypeId)) {
-            KubeConfig.AuthInfo result = new KubeConfig.AuthInfo();
-            result.name = "user";
-            result.user = new Token();
-            result.user.token = "token";
+            KubeConfig.UserEntry userEntry = new KubeConfig.UserEntry();
+            userEntry.name = "user";
+            userEntry.user = new KubeConfig.AuthInfo();
+            userEntry.user.token = "token";
+            KubeConfig result = new KubeConfig();
+            result.users = Arrays.asList(userEntry);
             op.setBodyNoCloning(result).complete();
             return;
         }

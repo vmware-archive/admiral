@@ -241,7 +241,7 @@ public class PKSAdapterService extends StatelessService {
 
         return getPKSContext(ctx.endpoint)
                 .thenCompose(pksContext -> getClient().createUser(pksContext, cluster))
-                .thenAccept(authInfo -> ctx.operation.setBodyNoCloning(authInfo).complete());
+                .thenAccept(kubeConfig -> ctx.operation.setBodyNoCloning(kubeConfig).complete());
     }
 
     private DeferredResult<Void> pksListClusters(RequestContext ctx) {
