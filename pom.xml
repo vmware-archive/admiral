@@ -35,6 +35,7 @@
 
     <modules>
         <module>common-test</module>
+        <module>photon</module>
         <module>common</module>
         <module>auth</module>
         <module>compute</module>
@@ -77,9 +78,6 @@
         <xenon.ui.version>${xenon.version}</xenon.ui.version>
         <xenon.swagger.version>0.0.7</xenon.swagger.version>
         <xenon.group>com.vmware.xenon</xenon.group>
-
-        <!-- Photon Model -->
-        <photon.model.version>0.6.31</photon.model.version>
 
         <!-- other -->
         <bouncycastle.version>1.57</bouncycastle.version>
@@ -160,32 +158,6 @@
                 <groupId>${xenon.group}</groupId>
                 <artifactId>xenon-swagger-adapter</artifactId>
                 <version>${xenon.swagger.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.vmware.photon.controller</groupId>
-                <artifactId>photon-model</artifactId>
-                <version>${photon.model.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.vmware.photon.controller</groupId>
-                <artifactId>photon-model-security</artifactId>
-                <version>${photon.model.version}</version>
-            </dependency>
-           <dependency>
-                <groupId>com.vmware.photon.controller</groupId>
-                <artifactId>photon-model-tasks</artifactId>
-                <version>${photon.model.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.vmware.photon.controller</groupId>
-                <artifactId>photon-adapter-util</artifactId>
-                <version>${photon.model.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.vmware.photon.controller</groupId>
-                <artifactId>photon-model-adapters-registry</artifactId>
-                <version>${photon.model.version}</version>
             </dependency>
 
             <dependency>
@@ -444,6 +416,11 @@
                         <groupId>org.jacoco</groupId>
                         <artifactId>jacoco-maven-plugin</artifactId>
                         <version>${jacoco.version}</version>
+                        <configuration>
+                                <excludes>
+                                    <exclude>com/vmware/photon/controller/model/**/*</exclude>
+                                </excludes>
+                        </configuration>
                         <executions>
                             <execution>
                                 <id>prepare-agent</id>

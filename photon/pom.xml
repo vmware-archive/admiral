@@ -21,46 +21,59 @@
         <version>1.4.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>admiral-compute</artifactId>
+    <artifactId>admiral-photon</artifactId>
     <packaging>jar</packaging>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+    </build>
 
     <dependencies>
         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>admiral-common</artifactId>
-            <version>${project.version}</version>
+            <groupId>${xenon.group}</groupId>
+            <artifactId>xenon-common</artifactId>
         </dependency>
         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>admiral-adapter-common</artifactId>
-            <version>${project.version}</version>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk15on</artifactId>
+            <version>${bouncycastle.version}</version>
         </dependency>
         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>admiral-adapter-registry</artifactId>
-            <version>${project.version}</version>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk15on</artifactId>
+            <version>${bouncycastle.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.vmware.admiral.closures</groupId>
-            <artifactId>admiral-closure-services</artifactId>
-            <version>${project.version}</version>
+            <groupId>commons-net</groupId>
+            <artifactId>commons-net</artifactId>
+            <version>3.5</version>
         </dependency>
-
         <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.4</version>
         </dependency>
-
         <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
+             <groupId>commons-validator</groupId>
+             <artifactId>commons-validator</artifactId>
+             <version>1.5.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.jcraft</groupId>
+            <artifactId>jsch</artifactId>
+            <version>0.1.54</version>
         </dependency>
 
         <!-- TEST -->
         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>admiral-common-test</artifactId>
-            <version>${project.version}</version>
+            <groupId>${xenon.group}</groupId>
+            <artifactId>xenon-common</artifactId>
+            <version>${xenon.version}</version>
             <classifier>tests</classifier>
             <scope>test</scope>
         </dependency>
