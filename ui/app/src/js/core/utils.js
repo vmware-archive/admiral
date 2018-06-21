@@ -1359,19 +1359,30 @@ var utils = {
 
     if (volumes) {
 
-      foundVolume = volumes.find((volume) => {
-        let volumeName = volume.name;
-        let idxContainerVolNameEnd = containerVolumeString.indexOf(':');
+      let idxContainerVolNameEnd = containerVolumeString.indexOf(':');
 
-        let containerVolumeName = (idxContainerVolNameEnd > -1)
-          && containerVolumeString.substring(0, idxContainerVolNameEnd);
+      let containerVolumeName = (idxContainerVolNameEnd > -1)
+        && containerVolumeString.substring(0, idxContainerVolNameEnd);
 
-        return containerVolumeName.indexOf(volumeName) > -1
-                || volumeName.indexOf(containerVolumeName) > -1;
-      });
+      foundVolume = utils.findBestMatch(containerVolumeName, volumes);
     }
 
     return foundVolume;
+  },
+
+  findBestMatch: function(stringToBeMatched, allValues) {
+    if (!stringToBeMatched || !allValues) {
+      return null;
+    }
+
+    let searchIn = allValues.filter(a => a.name.indexOf(stringToBeMatched) > -1);
+
+    if (!searchIn) {
+      return null;
+    }
+
+    // returns the one that matches the best
+    return searchIn.reduce((a, b) => a.name.length <= b.name.length ? a : b);
   },
 
   createTagAssignmentRequest: function(resourceLink, originalTags, newTags) {
