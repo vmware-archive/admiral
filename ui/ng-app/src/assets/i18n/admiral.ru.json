@@ -106,16 +106,16 @@
         "delete": "Удалить",
         "nameTitle": "Имя",
         "statusTitle": "Состояние",
-        "scopeTitle": "Охват",
+        "scopeTitle": "Область",
         "addressTitle": "Адрес",
         "searchPlaceholder": "Поиск реестров",
         "scope": {
-          "global": "Глобальный",
+          "global": "Глобально",
           "project": "Проект"
         },
         "status": {
-          "active": "Активный",
-          "disabled": "Отключенный"
+          "active": "Активно",
+          "disabled": "Отключено"
         },
         "deleteConfirmation": {
           "title": "Удаление реестров проекта",
@@ -133,7 +133,7 @@
           "fieldCredentials": "Учетные данные для входа"
         },
         "count": "реестр.",
-        "insecureRegistryHint": "Обнаружен реестр, основанный на обычном протоколе HTTP! Подключение к этому реестру не защищено. Убедитесь, что узлы правильно настроены и способны подключиться к реестру. <a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">Подробнее</a>"
+        "insecureRegistryHint": "Обнаружен простой HTTP-реестр. Ваше подключение к этому реестру не защищено. Убедитесь, что узлы правильно настроены и что подключение к ним возможно. <a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">Подробнее</a>"
     },
     "config": {
       "title": "Конфигурация",
@@ -298,9 +298,101 @@
           "searchPlaceholder": "Искать узлы",
           "nameColumn": "Имя",
           "cpuColumn": "ЦП",
-          "memoryColumn": "Оперативная память",
+          "memoryColumn": "Память",
           "count": "Узлы"
         }
+      }
+    },
+    "deployments": {
+      "title": "Развертывания",
+      "search": {
+        "placeholder": "Поиск развертываний"
+      },
+      "item": {
+        "creation": "Создано:",
+        "namespace": "Пространство имен
+:",
+        "containersNumber": "Контейнеры:",
+        "restartPolicy": "Политика перезапуска
+:",
+        "strategy": "Стратегия:",
+        "replicas": "Реплики:",
+        "terminationGracePeriodSeconds": "Льготный период прерывания (в секундах):",
+        "dnsPolicy": "Политика DNS:",
+        "summaryTitle": "Сводка",
+        "containersTitle": "Контейнеры",
+        "containers": {
+          "name": "Имя",
+          "image": "Образ",
+          "env": "Среда"
+        }
+      }
+    },
+    "pods": {
+        "title": "Элементы Pod",
+        "search": {
+            "placeholder": "Поиск элементов Pod"
+        },
+        "item": {
+            "creation": "Создано:",
+            "namespace": "Пространство имен
+:",
+            "containersNumber": "Контейнеры:",
+            "status": "Состояние:",
+            "startTime": "Запущено:",
+            "ip": "IP-адрес:",
+            "summaryTitle": "Сводка",
+            "containerStatuses": {
+              "title": "Контейнеры",
+              "name": "Имя контейнера",
+              "state": "Состояние"
+            },
+            "volumes": {
+              "title": "Тома",
+              "name": "Имя тома",
+              "hostPath": "Расположение на узле"
+            },
+            "logsTitle": "Журналы"
+        }
+    }
+  },
+  "pks": {
+    "new": {
+      "title": "Создать кластер",
+      "settings": {
+        "title": "Параметры",
+        "fieldRowTitleEndpoint": "PKS",
+        "fieldTitleEndpoint": "Конечная точка PKS",
+        "fieldTitleName": "Имя кластера",
+        "nameFieldRequired": "Требуется указать имя кластера.",
+        "fieldTitlePlan": " План",
+        "plan": {
+          "small": "Небольшой",
+          "medium": "Средний",
+          "large": "Большой"
+        },
+        "fieldTitleNumberNodes": "Количество узлов",
+        "fieldTitleMaster": "Образец",
+        "masterFieldRequired": "Основное поле является обязательным. Можно ввести только целое число больше 0.",
+        "masterFieldDescription": "Один основной узел может подойти для кластеров тестирования или разработки, но для производственных кластеров лучше использовать 3 или 5 основных узлов.",
+        "masterFieldDescription3Nodes": "-3 основных диска: может произойти сбой одного главного узла, но кластер не сможет улучшить состояние. Необходимо присоединить новый основной узел, прежде чем кластер сможет улучшить состояние.",
+        "masterFieldDescription5Nodes": "-5 образцов: может произойти сбой одного главного узла, но кластер сможет улучшить состояние.",
+        "fieldTitleWorker": "Рабочий процесс",
+        "workerFieldRequired": "Поле рабочего процесса является обязательным. Можно ввести только целое число больше 0."
+      }
+    },
+    "add": {
+      "title": "Добавить кластер",
+      "existingClusters": {
+        "descriptionText": "Выберите конечную точку, а затем выберите один или несколько существующих, неназначенных кластеров Kubernetes для добавления к текущей бизнес-группе.",
+        "fieldTitleEndpoint": "Конечная точка:",
+        "columnTitleName": "Имя",
+        "columnTitleMastersCount": "Количество основных узлов",
+        "columnTitleWorkersCount": "Количество рабочих процессов",
+        "columnTitlePlan": " План",
+        "yes": "Да",
+        "no": "Нет",
+        "count": "Кластеры"
       }
     }
   },
@@ -364,7 +456,7 @@
   "endpoints": {
     "title": "Конечные точки",
     "searchPlaceholder": "Искать конечные точки",
-    "new": "Создать конечную точку",
+    "new": "Новая конечная точка",
     "delete": "Удалить",
     "deleteConfirmation": {
       "title": "Удаление конечных точек",
@@ -385,7 +477,6 @@
       "credentials": "Учетные данные",
       "pksAddressFieldTitle": "PKS-адрес",
       "pksAddressRequired": "Необходимо указать PKS-адрес.",
-      "createBtn": "Создать",
       "testConnectionBtn": "Проверить подключение",
       "clustersTabTitle": "Кластеры"
     }
@@ -416,10 +507,12 @@
   },
   "edit": "Изменить",
   "save": "Сохранить",
+  "create": "Создание",
   "add": "Добавить",
   "yes": "Да",
   "remove": "Удалить",
   "delete": "Удалить",
+  "details": "Сведения",
   "verify": "Проверить",
   "update": "Обновить",
   "cancel": "Отмена",
@@ -442,9 +535,14 @@
     "networks": "Сети",
     "volumes": "Тома",
     "closures": "Закрытия",
+    "kubernetes": {
+      "title": "Kubernetes",
+      "deployments": "Развертывания",
+      "pods": "Элементы Pod"
+    },
     "library": "Библиотека",
     "templates": "Шаблоны",
-    "repositories": "Репозитории",
+    "repositories": "Все репозитории",
     "internalRepositories": "Встроенные репозитории",
     "publicRepositories": "Репозитории",
     "infrastructure": "Инфраструктура",

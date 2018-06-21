@@ -302,6 +302,95 @@
           "count": "節點"
         }
       }
+    },
+    "deployments": {
+      "title": "部署",
+      "search": {
+        "placeholder": "搜尋部署"
+      },
+      "item": {
+        "creation": "建立時間:",
+        "namespace": "命名空間:",
+        "containersNumber": "容器:",
+        "restartPolicy": "重新啟動原則:",
+        "strategy": "策略:",
+        "replicas": "複本:",
+        "terminationGracePeriodSeconds": "終止寬限期 (秒):",
+        "dnsPolicy": "DNS 原則:",
+        "summaryTitle": "摘要",
+        "containersTitle": "容器",
+        "containers": {
+          "name": "名稱",
+          "image": "映像",
+          "env": "環境"
+        }
+      }
+    },
+    "pods": {
+        "title": "網繭",
+        "search": {
+            "placeholder": "搜尋網繭"
+        },
+        "item": {
+            "creation": "建立時間:",
+            "namespace": "命名空間:",
+            "containersNumber": "容器:",
+            "status": "狀態:",
+            "startTime": "已開始:",
+            "ip": "IP:",
+            "summaryTitle": "摘要",
+            "containerStatuses": {
+              "title": "容器",
+              "name": "容器名稱",
+              "state": "狀態"
+            },
+            "volumes": {
+              "title": "磁碟區",
+              "name": "磁碟區名稱",
+              "hostPath": "主機上的路徑"
+            },
+            "logsTitle": "記錄"
+        }
+    }
+  },
+  "pks": {
+    "new": {
+      "title": "新增叢集",
+      "settings": {
+        "title": "設定",
+        "fieldRowTitleEndpoint": "PKS",
+        "fieldTitleEndpoint": "PKS 端點",
+        "fieldTitleName": "叢集名稱",
+        "nameFieldRequired": "叢集名稱為必填。",
+        "fieldTitlePlan": " 計劃",
+        "plan": {
+          "small": "小",
+          "medium": "中等",
+          "large": "大"
+        },
+        "fieldTitleNumberNodes": "節點數",
+        "fieldTitleMaster": "主要",
+        "masterFieldRequired": "主節點欄位為必填。僅可以輸入大於 0 的整數值。",
+        "masterFieldDescription": "單一主節點可能適用於開發/測試叢集，但對於生產部署，3 或 5 個主節點更合適。",
+        "masterFieldDescription3Nodes": "- 3 個主節點: 單一主節點可能會失敗，但叢集將無法進入狀態。需要加入新的主節點，叢集才能進入狀態。",
+        "masterFieldDescription5Nodes": "- 5 個主節點: 單一主節點可能會失敗，且叢集將可以進入狀態。",
+        "fieldTitleWorker": "Worker",
+        "workerFieldRequired": "Worker 欄位為必填。僅可以輸入大於 0 的整數值。"
+      }
+    },
+    "add": {
+      "title": "新增叢集",
+      "existingClusters": {
+        "descriptionText": "選取端點，然後選取一或多個現有未指派的 Kubernetes 叢集，以新增至目前的業務群組。",
+        "fieldTitleEndpoint": "端點:",
+        "columnTitleName": "名稱",
+        "columnTitleMastersCount": "主節點數",
+        "columnTitleWorkersCount": "Worker 數",
+        "columnTitlePlan": " 計劃",
+        "yes": "是",
+        "no": "否",
+        "count": "叢集"
+      }
     }
   },
   "hosts": {
@@ -385,7 +474,6 @@
       "credentials": "認證",
       "pksAddressFieldTitle": "PKS 位址",
       "pksAddressRequired": "PKS 位址為必填。",
-      "createBtn": "建立",
       "testConnectionBtn": "測試連線",
       "clustersTabTitle": "叢集"
     }
@@ -416,10 +504,12 @@
   },
   "edit": "編輯",
   "save": "儲存",
+  "create": "建立",
   "add": "新增",
   "yes": "是",
   "remove": "移除",
   "delete": "刪除",
+  "details": "詳細資料",
   "verify": "驗證",
   "update": "更新",
   "cancel": "取消",
@@ -442,9 +532,14 @@
     "networks": "網路",
     "volumes": "磁碟區",
     "closures": "閉包",
+    "kubernetes": {
+      "title": "Kubernetes",
+      "deployments": "部署",
+      "pods": "網繭"
+    },
     "library": "程式庫",
     "templates": "範本",
-    "repositories": "存放庫",
+    "repositories": "所有存放庫",
     "internalRepositories": "內建存放庫",
     "publicRepositories": "存放庫",
     "infrastructure": "基礎結構",

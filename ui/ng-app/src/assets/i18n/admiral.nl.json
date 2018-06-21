@@ -97,7 +97,7 @@
       },
       "deleteMembers": {
         "title": "Leden uit project verwijderen",
-        "confirmation": "Weet u zeker dat u de geselecteerde leden uit het project wilt verwijderen?"
+        "confirmation": "Weet u zeker dat u de geselecteerde leden uit dit project wilt verwijderen?"
       }
     },
     "projectRegistries": {
@@ -299,8 +299,97 @@
           "nameColumn": "Naam",
           "cpuColumn": "CPU",
           "memoryColumn": "Geheugen",
-          "count": "Knooppunten"
+          "count": "knooppunten"
         }
+      }
+    },
+    "deployments": {
+      "title": "Implementaties",
+      "search": {
+        "placeholder": "Zoeken naar implementaties"
+      },
+      "item": {
+        "creation": "Gemaakt:",
+        "namespace": "Naamruimte:",
+        "containersNumber": "Containers:",
+        "restartPolicy": "Beleid voor opnieuw starten:",
+        "strategy": "Strategie:",
+        "replicas": "Replica's:",
+        "terminationGracePeriodSeconds": "Respijtperiode voor beëindiging (in seconden):",
+        "dnsPolicy": "DNS-beleid:",
+        "summaryTitle": "Samenvatting",
+        "containersTitle": "Containers",
+        "containers": {
+          "name": "Naam",
+          "image": "Image",
+          "env": "Omg"
+        }
+      }
+    },
+    "pods": {
+        "title": "Pods",
+        "search": {
+            "placeholder": "Zoeken naar pods"
+        },
+        "item": {
+            "creation": "Gemaakt:",
+            "namespace": "Naamruimte:",
+            "containersNumber": "Containers:",
+            "status": "Status:",
+            "startTime": "Gestart:",
+            "ip": "IP:",
+            "summaryTitle": "Samenvatting",
+            "containerStatuses": {
+              "title": "Containers",
+              "name": "Containernaam",
+              "state": "Status"
+            },
+            "volumes": {
+              "title": "Volumes",
+              "name": "Volumenaam",
+              "hostPath": "Pad op host"
+            },
+            "logsTitle": "Logboeken"
+        }
+    }
+  },
+  "pks": {
+    "new": {
+      "title": "Nieuw cluster",
+      "settings": {
+        "title": "Instellingen",
+        "fieldRowTitleEndpoint": "PKS",
+        "fieldTitleEndpoint": "PKS-endpoint",
+        "fieldTitleName": "Clusternaam",
+        "nameFieldRequired": "Clusternaam is verplicht.",
+        "fieldTitlePlan": " Plan",
+        "plan": {
+          "small": "Klein",
+          "medium": "Normaal",
+          "large": "Groot"
+        },
+        "fieldTitleNumberNodes": "Aantal knooppunten",
+        "fieldTitleMaster": "Master",
+        "masterFieldRequired": "Het veld Master is verplicht. Alleen gehele getallen groter dan 0 kunnen worden ingevoerd.",
+        "masterFieldDescription": "Eén master is mogelijk geschikt voor ontwikkelings- of testclusters, maar voor productie-implementaties zijn 3 of 5 masters beter.",
+        "masterFieldDescription3Nodes": "- 3 masters: één master kan mislukken, maar het cluster kan niet verdergaan vanuit deze status. Er moet een nieuwe master worden toegevoegd, voordat het cluster kan verdergaan vanuit deze status.",
+        "masterFieldDescription5Nodes": "- 5 masters: één master kan mislukken en het cluster kan verdergaan vanuit deze status.",
+        "fieldTitleWorker": "Werker",
+        "workerFieldRequired": "Het veld Werker is verplicht. Alleen gehele getallen groter dan 0 kunnen worden ingevoerd."
+      }
+    },
+    "add": {
+      "title": "Cluster toevoegen",
+      "existingClusters": {
+        "descriptionText": "Selecteer een endpoint en selecteer vervolgens een of meer bestaande, niet-toegewezen Kubernetes-clusters die u wilt toevoegen aan de huidige bedrijfsgroep.",
+        "fieldTitleEndpoint": "Endpoint:",
+        "columnTitleName": "Naam",
+        "columnTitleMastersCount": "Aantal masters",
+        "columnTitleWorkersCount": "Aantal werkers",
+        "columnTitlePlan": " Plan",
+        "yes": "Ja",
+        "no": "Nee",
+        "count": "clusters"
       }
     }
   },
@@ -385,7 +474,6 @@
       "credentials": "Verificatiegegevens",
       "pksAddressFieldTitle": "PKS-adres",
       "pksAddressRequired": "Het PKS-adres is verplicht.",
-      "createBtn": "Maken",
       "testConnectionBtn": "Testverbinding",
       "clustersTabTitle": "Clusters"
     }
@@ -416,10 +504,12 @@
   },
   "edit": "Bewerken",
   "save": "Opslaan",
+  "create": "Maken",
   "add": "Toevoegen",
   "yes": "Ja",
   "remove": "Verwijderen",
   "delete": "Verwijderen",
+  "details": "Details",
   "verify": "Verifiëren",
   "update": "Bijwerken",
   "cancel": "Annuleren",
@@ -442,9 +532,14 @@
     "networks": "Netwerken",
     "volumes": "Volumes",
     "closures": "Sluitingen",
+    "kubernetes": {
+      "title": "Kubernetes",
+      "deployments": "Implementaties",
+      "pods": "Pods"
+    },
     "library": "Bibliotheek",
     "templates": "Sjablonen",
-    "repositories": "Opslagplaatsen",
+    "repositories": "Alle opslagplaatsen",
     "internalRepositories": "Ingebouwde opslagplaatsen",
     "publicRepositories": "Opslagplaatsen",
     "infrastructure": "Infrastructuur",

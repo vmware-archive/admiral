@@ -106,7 +106,7 @@
         "delete": "削除",
         "nameTitle": "名前",
         "statusTitle": "ステータス",
-        "scopeTitle": "スコープ",
+        "scopeTitle": "範囲",
         "addressTitle": "アドレス",
         "searchPlaceholder": "レジストリの検索",
         "scope": {
@@ -119,7 +119,7 @@
         },
         "deleteConfirmation": {
           "title": "プロジェクト レジストリの削除",
-          "description": "選択したプロジェクト レジストリを削除するか確認してください。グローバル レジストリはこのビューから削除できないことに注意してください。この操作は元に戻すことができません。"
+          "description": "選択したプロジェクト レジストリを削除しますか？グローバル レジストリはこのビューから削除できないことに注意してください。この操作は元に戻すことができません。"
         },
         "globalRegistriesDeletionSkipped": {
           "warningMessage": "選択したグローバル レジストリは削除されませんでした。このビューからグローバル レジストリを削除することはできません。"
@@ -302,6 +302,95 @@
           "count": "ノード"
         }
       }
+    },
+    "deployments": {
+      "title": "展開",
+      "search": {
+        "placeholder": "展開の検索"
+      },
+      "item": {
+        "creation": "作成日時:",
+        "namespace": "名前空間:",
+        "containersNumber": "コンテナ:",
+        "restartPolicy": "再起動ポリシー:",
+        "strategy": "戦略:",
+        "replicas": "レプリカ:",
+        "terminationGracePeriodSeconds": "終了猶予期間 (秒):",
+        "dnsPolicy": "DNS ポリシー:",
+        "summaryTitle": "概要",
+        "containersTitle": "コンテナ",
+        "containers": {
+          "name": "名前",
+          "image": "イメージ",
+          "env": "環境"
+        }
+      }
+    },
+    "pods": {
+        "title": "ポッド",
+        "search": {
+            "placeholder": "ポッドの検索"
+        },
+        "item": {
+            "creation": "作成日時:",
+            "namespace": "名前空間:",
+            "containersNumber": "コンテナ:",
+            "status": "ステータス:",
+            "startTime": "開始済み:",
+            "ip": "IP アドレス:",
+            "summaryTitle": "概要",
+            "containerStatuses": {
+              "title": "コンテナ",
+              "name": "コンテナ名",
+              "state": "ステータス"
+            },
+            "volumes": {
+              "title": "ボリューム",
+              "name": "ボリューム名",
+              "hostPath": "ホスト上のパス"
+            },
+            "logsTitle": "ログ"
+        }
+    }
+  },
+  "pks": {
+    "new": {
+      "title": "新規クラスタ",
+      "settings": {
+        "title": "設定",
+        "fieldRowTitleEndpoint": "PKS",
+        "fieldTitleEndpoint": "PKS エンドポイント",
+        "fieldTitleName": "クラスタ名",
+        "nameFieldRequired": "クラスタ名は必須です。",
+        "fieldTitlePlan": " プラン",
+        "plan": {
+          "small": "小",
+          "medium": "中",
+          "large": "大"
+        },
+        "fieldTitleNumberNodes": "ノード数",
+        "fieldTitleMaster": "マスター",
+        "masterFieldRequired": "マスター フィールドは必須です。0 よりも大きい整数のみを入力できます。",
+        "masterFieldDescription": "開発/テスト クラスタではマスターの数を 1 台とする場合がありますが、本番環境では 3 台または 5 台のマスターを使用したほうが安全です。",
+        "masterFieldDescription3Nodes": "-マスター数が 3 台の場合： 1 台のマスターに障害が発生しても問題はありませんが、クラスタは高度に安全な状態ではありません。クラスタを高度な状態にするには、新しいマスターを追加する必要があります。",
+        "masterFieldDescription5Nodes": "-マスター数が 5 台の場合： 1 台のマスターに障害が発生しても、クラスタは高度に安全な状態を維持することができます。",
+        "fieldTitleWorker": "ワーカー",
+        "workerFieldRequired": "ワーカー フィールドは必須です。0 よりも大きい整数のみを入力できます。"
+      }
+    },
+    "add": {
+      "title": "クラスタの追加",
+      "existingClusters": {
+        "descriptionText": "エンドポイントを選択し、割り当てられていない既存の Kubernetes クラスタを 1 つ以上選択して、現在のビジネス グループに追加します。",
+        "fieldTitleEndpoint": "エンドポイント:",
+        "columnTitleName": "名前",
+        "columnTitleMastersCount": "マスター数",
+        "columnTitleWorkersCount": "ワーカー数",
+        "columnTitlePlan": " プラン",
+        "yes": "はい",
+        "no": "いいえ",
+        "count": "クラスタ"
+      }
     }
   },
   "hosts": {
@@ -385,7 +474,6 @@
       "credentials": "認証情報",
       "pksAddressFieldTitle": "PKS アドレス",
       "pksAddressRequired": "PKS アドレスは必須です。",
-      "createBtn": "作成",
       "testConnectionBtn": "接続をテスト",
       "clustersTabTitle": "クラスタ"
     }
@@ -416,10 +504,12 @@
   },
   "edit": "編集",
   "save": "保存",
+  "create": "作成",
   "add": "追加",
   "yes": "はい",
   "remove": "削除",
   "delete": "削除",
+  "details": "詳細",
   "verify": "検証",
   "update": "更新",
   "cancel": "キャンセル",
@@ -442,9 +532,14 @@
     "networks": "ネットワーク",
     "volumes": "ボリューム",
     "closures": "クロージャ",
+    "kubernetes": {
+      "title": "Kubernetes",
+      "deployments": "展開",
+      "pods": "ポッド"
+    },
     "library": "ライブラリ",
     "templates": "テンプレート",
-    "repositories": "リポジトリ",
+    "repositories": "すべてのリポジトリ",
     "internalRepositories": "組み込みリポジトリ",
     "publicRepositories": "リポジトリ",
     "infrastructure": "インフラストラクチャ",

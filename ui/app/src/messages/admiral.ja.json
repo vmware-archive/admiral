@@ -290,7 +290,10 @@
           "closures": "クロージャ",
           "repositories": "リポジトリ"
         },
-        "createTemplate": "テンプレート"
+        "createTemplate": "テンプレート",
+        "addToFavorites": "イメージをお気に入りに追加",
+        "removeFromFavorites": "イメージをお気に入りから削除",
+        "addedImageToFavoritesMessage": "イメージをお気に入りに追加しました"
       },
       "details": {
         "create": "テンプレートの作成",

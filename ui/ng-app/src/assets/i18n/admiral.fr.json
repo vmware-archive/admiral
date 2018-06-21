@@ -133,7 +133,7 @@
           "fieldCredentials": "Informations d'identification de connexion"
         },
         "count": "registres",
-        "insecureRegistryHint": "Registre HTTP simple détecté. La connexion au registre n'est pas sécurisée. Vérifiez que les hôtes sont correctement configurés et que vous pouvez vous y connecter. <a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">Plus d'informations</a>"
+        "insecureRegistryHint": "Registre HTTP ordinaire détecté. La connexion au registre n'est pas sécurisée. Vérifiez que les hôtes sont correctement configurés et que vous pouvez vous y connecter. <a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">Plus d'informations</a>"
     },
     "config": {
       "title": "Configuration",
@@ -302,6 +302,95 @@
           "count": "Nœuds"
         }
       }
+    },
+    "deployments": {
+      "title": "Déploiements",
+      "search": {
+        "placeholder": "Rechercher des déploiements"
+      },
+      "item": {
+        "creation": "Créé le :",
+        "namespace": "Espace de noms :",
+        "containersNumber": "Conteneurs :",
+        "restartPolicy": "Stratégie de redémarrage :",
+        "strategy": "Stratégie :",
+        "replicas": "Réplicas :",
+        "terminationGracePeriodSeconds": "Période de grâce d'arrêt (secondes) :",
+        "dnsPolicy": "Stratégie DNS :",
+        "summaryTitle": "Résumé",
+        "containersTitle": "Conteneurs",
+        "containers": {
+          "name": "Nom",
+          "image": "Image",
+          "env": "Env."
+        }
+      }
+    },
+    "pods": {
+        "title": "Espaces",
+        "search": {
+            "placeholder": "Rechercher des espaces"
+        },
+        "item": {
+            "creation": "Créé le :",
+            "namespace": "Espace de noms :",
+            "containersNumber": "Conteneurs :",
+            "status": "Statut :",
+            "startTime": "Démarré :",
+            "ip": "Adresse IP :",
+            "summaryTitle": "Résumé",
+            "containerStatuses": {
+              "title": "Conteneurs",
+              "name": "Nom du conteneur",
+              "state": "Statut"
+            },
+            "volumes": {
+              "title": "Volumes",
+              "name": "Nom du volume",
+              "hostPath": "Chemin d'accès sur l'hôte"
+            },
+            "logsTitle": "Journaux"
+        }
+    }
+  },
+  "pks": {
+    "new": {
+      "title": "Nouveau cluster",
+      "settings": {
+        "title": "Paramètres",
+        "fieldRowTitleEndpoint": "PKS",
+        "fieldTitleEndpoint": "Point de terminaison PKS",
+        "fieldTitleName": "Nom du cluster",
+        "nameFieldRequired": "Le nom du cluster est requis.",
+        "fieldTitlePlan": " Plan",
+        "plan": {
+          "small": "Petite",
+          "medium": "Intermédiaire",
+          "large": "Grande"
+        },
+        "fieldTitleNumberNodes": "Nombre de nœuds",
+        "fieldTitleMaster": "Maître",
+        "masterFieldRequired": "Le champ Maître est obligatoire. Vous pouvez uniquement entrer des nombres entiers supérieurs à 0.",
+        "masterFieldDescription": "Un seul maître peut être utilisé pour les clusters de test ou de développement, mais pour les déploiements de production, 3 ou 5 maîtres sont plus appropriés.",
+        "masterFieldDescription3Nodes": "- 3 maîtres : un maître unique peut échouer, et par conséquent, l'état du cluster ne pourra pas être actualisé. Un nouveau maître doit être associé pour que l'état du cluster puisse être actualisé.",
+        "masterFieldDescription5Nodes": "- 5 maîtres : un maître unique peut échouer, mais l'état du cluster peut être actualisé.",
+        "fieldTitleWorker": "Travailleur",
+        "workerFieldRequired": "Le champ Travailleur est obligatoire. Vous pouvez uniquement entrer des nombres entiers supérieurs à 0."
+      }
+    },
+    "add": {
+      "title": "Ajouter un cluster",
+      "existingClusters": {
+        "descriptionText": "Sélectionnez un point de terminaison, puis un ou plusieurs clusters Kubernetes non attribués existants à ajouter au groupe d'activité en cours.",
+        "fieldTitleEndpoint": "Point de terminaison :",
+        "columnTitleName": "Nom",
+        "columnTitleMastersCount": "Nombre de maîtres",
+        "columnTitleWorkersCount": "Nombre de travailleurs",
+        "columnTitlePlan": " Plan",
+        "yes": "Oui",
+        "no": "Non",
+        "count": "Clusters"
+      }
     }
   },
   "hosts": {
@@ -385,7 +474,6 @@
       "credentials": "Informations d'identification",
       "pksAddressFieldTitle": "Adresse PKS",
       "pksAddressRequired": "L'adresse PKS est requise.",
-      "createBtn": "Créer",
       "testConnectionBtn": "Tester la connexion",
       "clustersTabTitle": "Clusters"
     }
@@ -416,10 +504,12 @@
   },
   "edit": "Modifier",
   "save": "Enregistrer",
+  "create": "Créer",
   "add": "Ajouter",
   "yes": "Oui",
   "remove": "Supprimer",
   "delete": "Supprimer",
+  "details": "Détails",
   "verify": "Vérifier",
   "update": "Mettre à jour",
   "cancel": "Annuler",
@@ -442,9 +532,14 @@
     "networks": "Réseaux",
     "volumes": "Volumes",
     "closures": "Fermetures",
+    "kubernetes": {
+      "title": "Kubernetes",
+      "deployments": "Déploiements",
+      "pods": "Espaces"
+    },
     "library": "Bibliothèque",
     "templates": "Modèles",
-    "repositories": "Référentiels",
+    "repositories": "Tous les référentiels",
     "internalRepositories": "Référentiels intégrés",
     "publicRepositories": "Référentiels",
     "infrastructure": "Infrastructure",

@@ -290,7 +290,10 @@
           "closures": "Fermetures",
           "repositories": "Référentiels"
         },
-        "createTemplate": "Modèle"
+        "createTemplate": "Modèle",
+        "addToFavorites": "Ajouter l'image aux favoris",
+        "removeFromFavorites": "Supprimer l'image des favoris",
+        "addedImageToFavoritesMessage": "Image ajoutée aux favoris"
       },
       "details": {
         "create": "Créer un modèle",

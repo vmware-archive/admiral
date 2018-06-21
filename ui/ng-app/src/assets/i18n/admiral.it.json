@@ -302,6 +302,95 @@
           "count": "Nodi"
         }
       }
+    },
+    "deployments": {
+      "title": "Distribuzioni",
+      "search": {
+        "placeholder": "Cerca distribuzioni"
+      },
+      "item": {
+        "creation": "Data creazione:",
+        "namespace": "Spazio dei nomi:",
+        "containersNumber": "Contenitori:",
+        "restartPolicy": "Criterio di riavvio:",
+        "strategy": "Strategia:",
+        "replicas": "Repliche:",
+        "terminationGracePeriodSeconds": "Periodo di proroga termine (in secondi):",
+        "dnsPolicy": "Criterio DNS:",
+        "summaryTitle": "Riepilogo",
+        "containersTitle": "Contenitori",
+        "containers": {
+          "name": "Nome",
+          "image": "Immagine",
+          "env": "Amb"
+        }
+      }
+    },
+    "pods": {
+        "title": "POD",
+        "search": {
+            "placeholder": "Cerca POD"
+        },
+        "item": {
+            "creation": "Data creazione:",
+            "namespace": "Spazio dei nomi:",
+            "containersNumber": "Contenitori:",
+            "status": "Stato:",
+            "startTime": "Avviata:",
+            "ip": "IP:",
+            "summaryTitle": "Riepilogo",
+            "containerStatuses": {
+              "title": "Contenitori",
+              "name": "Nome del contenitore",
+              "state": "Stato"
+            },
+            "volumes": {
+              "title": "Volumi",
+              "name": "Nome volume",
+              "hostPath": "Percorso host"
+            },
+            "logsTitle": "Registri"
+        }
+    }
+  },
+  "pks": {
+    "new": {
+      "title": "Nuovo cluster",
+      "settings": {
+        "title": "Impostazioni",
+        "fieldRowTitleEndpoint": "PKS",
+        "fieldTitleEndpoint": "Endpoint PKS",
+        "fieldTitleName": "Nome cluster",
+        "nameFieldRequired": "Il nome del cluster è obbligatorio.",
+        "fieldTitlePlan": " Piano",
+        "plan": {
+          "small": "Piccolo",
+          "medium": "Medio",
+          "large": "Grande"
+        },
+        "fieldTitleNumberNodes": "Numero di nodi",
+        "fieldTitleMaster": "Master",
+        "masterFieldRequired": "Il campo master è obbligatorio. È possibile immettere solo valori interi maggiori di 0.",
+        "masterFieldDescription": "Un singolo master potrebbe essere adatto per i cluster di sviluppo/test, ma per le distribuzioni di produzione sono più appropriati 3 o 5 master.",
+        "masterFieldDescription3Nodes": "- 3 master: potrebbe verificarsi un problema con un solo master, ma il cluster non riuscirà a passare a un nuovo stato. A questo scopo è necessario unire un nuovo master.",
+        "masterFieldDescription5Nodes": "-5 master: potrebbe verificarsi un problema con un solo master e il cluster riuscirà a passare a un nuovo stato.",
+        "fieldTitleWorker": "Worker",
+        "workerFieldRequired": "Il campo Worker è obbligatorio. È possibile immettere solo valori interi maggiori di 0."
+      }
+    },
+    "add": {
+      "title": "Aggiungi cluster",
+      "existingClusters": {
+        "descriptionText": "Selezionare un endpoint, quindi uno o più cluster Kubernetes esistenti non assegnati da aggiungere al gruppo di business corrente.",
+        "fieldTitleEndpoint": "Endpoint:",
+        "columnTitleName": "Nome",
+        "columnTitleMastersCount": "N. master",
+        "columnTitleWorkersCount": "N. Worker",
+        "columnTitlePlan": " Piano",
+        "yes": "Sì",
+        "no": "No",
+        "count": "Cluster"
+      }
     }
   },
   "hosts": {
@@ -385,7 +474,6 @@
       "credentials": "Credenziali",
       "pksAddressFieldTitle": "Indirizzo PKS",
       "pksAddressRequired": "L'indirizzo PKS è obbligatorio.",
-      "createBtn": "Crea",
       "testConnectionBtn": "Prova connessione",
       "clustersTabTitle": "Cluster"
     }
@@ -416,10 +504,12 @@
   },
   "edit": "Modifica",
   "save": "Salva",
+  "create": "Crea",
   "add": "Aggiungi",
   "yes": "Sì",
   "remove": "Rimuovi",
   "delete": "Elimina",
+  "details": "Dettagli",
   "verify": "Verifica",
   "update": "Aggiorna",
   "cancel": "Annulla",
@@ -442,9 +532,14 @@
     "networks": "Reti",
     "volumes": "Volumi",
     "closures": "Chiusure",
+    "kubernetes": {
+      "title": "Kubernetes",
+      "deployments": "Distribuzioni",
+      "pods": "POD"
+    },
     "library": "Libreria",
     "templates": "Modelli",
-    "repositories": "Repository",
+    "repositories": "Tutti i repository",
     "internalRepositories": "Repository integrati",
     "publicRepositories": "Repository",
     "infrastructure": "Infrastruttura",

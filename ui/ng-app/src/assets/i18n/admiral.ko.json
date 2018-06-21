@@ -302,6 +302,95 @@
           "count": "노드"
         }
       }
+    },
+    "deployments": {
+      "title": "배포",
+      "search": {
+        "placeholder": "배포 검색"
+      },
+      "item": {
+        "creation": "생성 시간:",
+        "namespace": "네임스페이스:",
+        "containersNumber": "컨테이너:",
+        "restartPolicy": "다시 시작 정책:",
+        "strategy": "전략:",
+        "replicas": "복제본:",
+        "terminationGracePeriodSeconds": "종료 유예 기간(초):",
+        "dnsPolicy": "DNS 정책:",
+        "summaryTitle": "요약",
+        "containersTitle": "컨테이너",
+        "containers": {
+          "name": "이름",
+          "image": "이미지",
+          "env": "환경"
+        }
+      }
+    },
+    "pods": {
+        "title": "포드",
+        "search": {
+            "placeholder": "포드 검색"
+        },
+        "item": {
+            "creation": "생성 시간:",
+            "namespace": "네임스페이스:",
+            "containersNumber": "컨테이너:",
+            "status": "상태:",
+            "startTime": "시작 시간:",
+            "ip": "IP:",
+            "summaryTitle": "요약",
+            "containerStatuses": {
+              "title": "컨테이너",
+              "name": "컨테이너 이름",
+              "state": "상태"
+            },
+            "volumes": {
+              "title": "볼륨",
+              "name": "볼륨 이름",
+              "hostPath": "호스트의 경로"
+            },
+            "logsTitle": "로그"
+        }
+    }
+  },
+  "pks": {
+    "new": {
+      "title": "새 클러스터",
+      "settings": {
+        "title": "설정",
+        "fieldRowTitleEndpoint": "PKS",
+        "fieldTitleEndpoint": "PKS 끝점",
+        "fieldTitleName": "클러스터 이름",
+        "nameFieldRequired": "클러스터 이름은 필수입니다.",
+        "fieldTitlePlan": "계획",
+        "plan": {
+          "small": "작음",
+          "medium": "중간",
+          "large": "큼"
+        },
+        "fieldTitleNumberNodes": "노드 수",
+        "fieldTitleMaster": "마스터",
+        "masterFieldRequired": "마스터 필드는 필수입니다. 0보다 큰 정수 값만 입력할 수 있습니다.",
+        "masterFieldDescription": "개발/테스트 클러스터에는 단일 마스터가 적합할 수 있지만 운영 배포에는 3 또는 5개 마스터가 더 적합합니다.",
+        "masterFieldDescription3Nodes": "- 3개 마스터: 단일 마스터의 실패는 허용되지만 클러스터가 상태를 진행할 수 없습니다. 클러스터가 상태를 진행하려면 새 마스터를 가입해야 합니다.",
+        "masterFieldDescription5Nodes": "- 5개 마스터: 단일 마스터의 실패가 허용되며 클러스터가 상태를 진행할 수 있습니다.",
+        "fieldTitleWorker": "작업자",
+        "workerFieldRequired": "작업자 필드는 필수입니다. 0보다 큰 정수 값만 입력할 수 있습니다."
+      }
+    },
+    "add": {
+      "title": "클러스터 추가",
+      "existingClusters": {
+        "descriptionText": "끝점을 선택하고 현재 비즈니스 그룹에 추가할 하나 이상의 할당되지 않은 기존 Kubernetes 클러스터를 선택합니다.",
+        "fieldTitleEndpoint": "끝점:",
+        "columnTitleName": "이름",
+        "columnTitleMastersCount": "마스터 수",
+        "columnTitleWorkersCount": "작업자 수",
+        "columnTitlePlan": "계획",
+        "yes": "예",
+        "no": "아니요",
+        "count": "클러스터"
+      }
     }
   },
   "hosts": {
@@ -385,7 +474,6 @@
       "credentials": "자격 증명",
       "pksAddressFieldTitle": "PKS 주소",
       "pksAddressRequired": "PKS 주소는 필수입니다.",
-      "createBtn": "생성",
       "testConnectionBtn": "연결 테스트",
       "clustersTabTitle": "클러스터"
     }
@@ -416,10 +504,12 @@
   },
   "edit": "편집",
   "save": "저장",
+  "create": "생성",
   "add": "추가",
   "yes": "예",
   "remove": "제거",
   "delete": "삭제",
+  "details": "세부 정보",
   "verify": "확인",
   "update": "업데이트",
   "cancel": "취소",
@@ -442,9 +532,14 @@
     "networks": "네트워크",
     "volumes": "볼륨",
     "closures": "클로저",
+    "kubernetes": {
+      "title": "Kubernetes",
+      "deployments": "배포",
+      "pods": "포드"
+    },
     "library": "라이브러리",
     "templates": "템플릿",
-    "repositories": "저장소",
+    "repositories": "모든 저장소",
     "internalRepositories": "기본 제공 저장소",
     "publicRepositories": "저장소",
     "infrastructure": "인프라",

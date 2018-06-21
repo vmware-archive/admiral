@@ -290,7 +290,10 @@
           "closures": "Закрытия",
           "repositories": "Репозитории"
         },
-        "createTemplate": "Шаблон"
+        "createTemplate": "Шаблон",
+        "addToFavorites": "Добавить изображение в избранное",
+        "removeFromFavorites": "Удалить изображение из избранного",
+        "addedImageToFavoritesMessage": "Изображение добавлено в избранное"
       },
       "details": {
         "create": "Создать шаблон",
@@ -475,7 +478,7 @@
         "addButton": "Реестр",
         "addressColumn": "Адрес",
         "nameColumn": "Имя",
-        "statusColumn": "Включено"
+        "statusColumn": "Включен"
       },
       "edit": {
         "createNew": "Новый реестр",

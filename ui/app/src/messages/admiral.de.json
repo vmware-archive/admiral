@@ -290,7 +290,10 @@
           "closures": "Abschlüsse",
           "repositories": "Repositorys"
         },
-        "createTemplate": "Vorlage"
+        "createTemplate": "Vorlage",
+        "addToFavorites": "Image zu Favoriten hinzufügen",
+        "removeFromFavorites": "Image aus Favoriten entfernen",
+        "addedImageToFavoritesMessage": "Image zu Favoriten hinzugefügt"
       },
       "details": {
         "create": "Vorlage erstellen",
@@ -358,7 +361,7 @@
             "keyTitle": "Option",
             "keyHint": "Beispiel: size",
             "valueTitle": "Wert",
-            "valueHint": "Beispiel: 100m"
+            "valueHint": "Beispiel: 100 m"
           },
           "existingVolume": "Vorhanden",
           "showingCount": "{{count}} von {{totalCount}} werden angezeigt",

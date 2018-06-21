@@ -196,7 +196,7 @@
     },
     "actions": {
       "rescan": "Verificar novamente",
-      "disable": "Desabilitar",
+      "disable": "Desativar",
       "enable": "Habilitar"
     },
     "type": "Tipo",
@@ -267,12 +267,12 @@
     "clusters": {
       "title": "Clusters do PKS",
       "addBtn": "Adicionar Cluster",
-      "newBtn": "Novo Cluster",
+      "newBtn": "Novo cluster",
       "nodeCount": "Nós",
       "dashboard": "Painel",
       "edit": {
         "name": "Nome",
-        "nameRequired": "O Nome é obrigatório.",
+        "nameRequired": "O nome é obrigatório.",
         "description": "Descrição",
         "url": "URL",
         "urlRequired": "A URL do cluster é obrigatória.",
@@ -301,6 +301,95 @@
           "memoryColumn": "Memória",
           "count": "Nós"
         }
+      }
+    },
+    "deployments": {
+      "title": "Implantações",
+      "search": {
+        "placeholder": "Procurar implantações"
+      },
+      "item": {
+        "creation": "Criado:",
+        "namespace": "Namespace:",
+        "containersNumber": "Contêineres:",
+        "restartPolicy": "Política de Reinício:",
+        "strategy": "Estratégia:",
+        "replicas": "Réplicas:",
+        "terminationGracePeriodSeconds": "Período de Carência de Rescisão (segundos):",
+        "dnsPolicy": "Política de DNS:",
+        "summaryTitle": "Resumo",
+        "containersTitle": "Contêineres",
+        "containers": {
+          "name": "Nome",
+          "image": "Imagem",
+          "env": "Amb"
+        }
+      }
+    },
+    "pods": {
+        "title": "Pods",
+        "search": {
+            "placeholder": "Procurar pods"
+        },
+        "item": {
+            "creation": "Criado:",
+            "namespace": "Namespace:",
+            "containersNumber": "Contêineres:",
+            "status": "Status:",
+            "startTime": "Iniciado:",
+            "ip": "IP:",
+            "summaryTitle": "Resumo",
+            "containerStatuses": {
+              "title": "Contêineres",
+              "name": "Nome do Contêiner",
+              "state": "Status"
+            },
+            "volumes": {
+              "title": "Volumes",
+              "name": "Nome do Volume",
+              "hostPath": "Caminho no Host"
+            },
+            "logsTitle": "Logs"
+        }
+    }
+  },
+  "pks": {
+    "new": {
+      "title": "Novo cluster",
+      "settings": {
+        "title": "Configurações",
+        "fieldRowTitleEndpoint": "PKS",
+        "fieldTitleEndpoint": "Endpoint PKS",
+        "fieldTitleName": "Nome do cluster",
+        "nameFieldRequired": "O nome do cluster é necessário.",
+        "fieldTitlePlan": "Plano",
+        "plan": {
+          "small": "Pequeno",
+          "medium": "Médio",
+          "large": "Grande"
+        },
+        "fieldTitleNumberNodes": "Número de Nós",
+        "fieldTitleMaster": "Mestre",
+        "masterFieldRequired": "O campo mestre é obrigatório. Apenas valores de número inteiro maiores que 0 podem ser inseridos.",
+        "masterFieldDescription": "Um único mestre pode ser adequado para clusters de teste/desenvolvimento, mas para implantações de produção, 3 ou 5 mestres são mais adequados.",
+        "masterFieldDescription3Nodes": "- 3 mestres: um único mestre pode falhar, mas o cluster não poderá avançar o estado. Um novo mestre precisa ingressar antes que o cluster possa avançar o estado.",
+        "masterFieldDescription5Nodes": "- 5 mestres: um único mestre pode falhar e o cluster poderá avançar o estado.",
+        "fieldTitleWorker": "Trabalhador",
+        "workerFieldRequired": "O campo de trabalhador é obrigatório. Apenas valores de número inteiro maiores que 0 podem ser inseridos."
+      }
+    },
+    "add": {
+      "title": "Adicionar Cluster",
+      "existingClusters": {
+        "descriptionText": "Selecione um endpoint e, em seguida, selecione um ou mais clusters Kubernetes existentes e não atribuídos para adicionar ao grupo de negócios atual.",
+        "fieldTitleEndpoint": "Endpoint:",
+        "columnTitleName": "Nome",
+        "columnTitleMastersCount": "Nº de Mestres",
+        "columnTitleWorkersCount": "Nº de Trabalhadores",
+        "columnTitlePlan": "Plano",
+        "yes": "Sim",
+        "no": "Não",
+        "count": "clusters"
       }
     }
   },
@@ -385,8 +474,7 @@
       "credentials": "Credenciais",
       "pksAddressFieldTitle": "Endereço PKS",
       "pksAddressRequired": "O Endereço PKS é obrigatório.",
-      "createBtn": "Criar",
-      "testConnectionBtn": "Testar Conexão",
+      "testConnectionBtn": "Testar conexão",
       "clustersTabTitle": "Clusters"
     }
   },
@@ -416,10 +504,12 @@
   },
   "edit": "Editar",
   "save": "Salvar",
+  "create": "Criar",
   "add": "Adicionar",
   "yes": "Sim",
   "remove": "Remover",
   "delete": "Excluir",
+  "details": "Detalhes",
   "verify": "Verificar",
   "update": "Atualizar",
   "cancel": "Cancelar",
@@ -442,9 +532,14 @@
     "networks": "Redes",
     "volumes": "Volumes",
     "closures": "Execuções rápidas",
+    "kubernetes": {
+      "title": "Kubernetes",
+      "deployments": "Implantações",
+      "pods": "Pods"
+    },
     "library": "Biblioteca",
     "templates": "Modelos",
-    "repositories": "Repositórios",
+    "repositories": "Todos os Repositórios",
     "internalRepositories": "Repositórios Internos",
     "publicRepositories": "Repositórios",
     "infrastructure": "Infraestrutura",

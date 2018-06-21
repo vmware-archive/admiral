@@ -290,7 +290,10 @@
           "closures": "Clausuras",
           "repositories": "Repositorios"
         },
-        "createTemplate": "Plantilla"
+        "createTemplate": "Plantilla",
+        "addToFavorites": "Añadir imagen a Favoritos",
+        "removeFromFavorites": "Quitar imagen de Favoritos",
+        "addedImageToFavoritesMessage": "Imagen añadida a Favoritos"
       },
       "details": {
         "create": "Crear plantilla",

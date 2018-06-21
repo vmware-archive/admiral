@@ -290,7 +290,10 @@
           "closures": "Sluitingen",
           "repositories": "Opslagplaatsen"
         },
-        "createTemplate": "Sjabloon"
+        "createTemplate": "Sjabloon",
+        "addToFavorites": "Afbeelding toevoegen aan favorieten",
+        "removeFromFavorites": "Afbeelding verwijderen uit favorieten",
+        "addedImageToFavoritesMessage": "Afbeelding toegevoegd aan favorieten"
       },
       "details": {
         "create": "Sjabloon maken",

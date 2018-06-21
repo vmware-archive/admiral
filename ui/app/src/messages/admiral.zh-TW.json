@@ -290,7 +290,10 @@
           "closures": "閉包",
           "repositories": "存放庫"
         },
-        "createTemplate": "範本"
+        "createTemplate": "範本",
+        "addToFavorites": "將映像新增至 [我的最愛]",
+        "removeFromFavorites": "從 [我的最愛] 中移除映像",
+        "addedImageToFavoritesMessage": "映像已新增至 [我的最愛]"
       },
       "details": {
         "create": "建立範本",

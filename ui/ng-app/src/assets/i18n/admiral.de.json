@@ -133,7 +133,7 @@
           "fieldCredentials": "Anmeldeinformationen"
         },
         "count": "Registrierungen",
-        "insecureRegistryHint": "Einfache HTTP-Registrierung erkannt! Ihre Verbindung mit dieser Registrierung ist nicht sicher. Stellen Sie sicher, dass die Hosts ordnungsgemäß konfiguriert sind und eine Verbindung zu ihnen hergestellt werden kann. <a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">Weitere Informationen</a>"
+        "insecureRegistryHint": "Einfache HTTP-Registrierung erkannt. Ihre Verbindung mit dieser Registrierung ist nicht sicher. Stellen Sie sicher, dass die Hosts ordnungsgemäß konfiguriert sind und eine Verbindung zu ihr hergestellt werden kann. <a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">Weitere Informationen</a>"
     },
     "config": {
       "title": "Konfiguration",
@@ -302,6 +302,95 @@
           "count": "Knoten"
         }
       }
+    },
+    "deployments": {
+      "title": "Bereitstellungen",
+      "search": {
+        "placeholder": "Nach Bereitstellungen suchen"
+      },
+      "item": {
+        "creation": "Erstellt:",
+        "namespace": "Namespace:",
+        "containersNumber": "Container:",
+        "restartPolicy": "Neustartrichtlinie:",
+        "strategy": "Strategie:",
+        "replicas": "Replikate:",
+        "terminationGracePeriodSeconds": "Toleranzperiode für Beendigung (in Sekunden):",
+        "dnsPolicy": "DNS-Richtlinie:",
+        "summaryTitle": "Übersicht",
+        "containersTitle": "Container",
+        "containers": {
+          "name": "Name",
+          "image": "Image",
+          "env": "Env"
+        }
+      }
+    },
+    "pods": {
+        "title": "Pods",
+        "search": {
+            "placeholder": "Nach Pods suchen"
+        },
+        "item": {
+            "creation": "Erstellt:",
+            "namespace": "Namespace:",
+            "containersNumber": "Container:",
+            "status": "Status:",
+            "startTime": "Gestartet:",
+            "ip": "IP:",
+            "summaryTitle": "Übersicht",
+            "containerStatuses": {
+              "title": "Container",
+              "name": "Container-Name",
+              "state": "Status"
+            },
+            "volumes": {
+              "title": "Volumes",
+              "name": "Volume-Name",
+              "hostPath": "Pfad auf Host"
+            },
+            "logsTitle": "Protokolle"
+        }
+    }
+  },
+  "pks": {
+    "new": {
+      "title": "Neuer Cluster",
+      "settings": {
+        "title": "Einstellungen",
+        "fieldRowTitleEndpoint": "PKS",
+        "fieldTitleEndpoint": "PKS-Endpoint",
+        "fieldTitleName": "Clustername",
+        "nameFieldRequired": "Clustername ist erforderlich.",
+        "fieldTitlePlan": "Plan",
+        "plan": {
+          "small": "Klein",
+          "medium": "Mittel",
+          "large": "Groß"
+        },
+        "fieldTitleNumberNodes": "Anzahl der Knoten",
+        "fieldTitleMaster": "Master",
+        "masterFieldRequired": "Master-Feld ist erforderlich. Nur Ganzzahlwerte größer 0 können eingegeben werden.",
+        "masterFieldDescription": "Ein einzelner Master ist möglicherweise für Dev-/Test-Cluster geeignet, aber für Produktionsbereitstellungen sind 3 oder 5 Master besser geeignet.",
+        "masterFieldDescription3Nodes": "– 3 Master: Ein einzelner Master kann ausfallen, aber der Cluster wird nicht in der Lage sein, den Status zu erweitern. Ein neuer Master muss hinzugefügt werden, bevor der Cluster den Status erweitern kann.",
+        "masterFieldDescription5Nodes": "– 5 Master 5: Ein einzelner Master kann ausfallen, und der Cluster wird in der Lage sein, den Status zu erweitern.",
+        "fieldTitleWorker": "Worker",
+        "workerFieldRequired": "Worker-Feld ist erforderlich. Nur Ganzzahlwerte größer 0 können eingegeben werden."
+      }
+    },
+    "add": {
+      "title": "Cluster hinzufügen",
+      "existingClusters": {
+        "descriptionText": "Wählen Sie einen Endpoint und dann einen oder mehrere vorhandene, nicht zugewiesene Kubernetes-Cluster aus, die zur aktuellen Business-Gruppe hinzugefügt werden.",
+        "fieldTitleEndpoint": "Endpoint:",
+        "columnTitleName": "Name",
+        "columnTitleMastersCount": "Anz. Master",
+        "columnTitleWorkersCount": "Anz. Worker",
+        "columnTitlePlan": "Plan",
+        "yes": "Ja",
+        "no": "Nein",
+        "count": "Cluster"
+      }
     }
   },
   "hosts": {
@@ -385,7 +474,6 @@
       "credentials": "Anmeldedaten",
       "pksAddressFieldTitle": "PKS-Adresse",
       "pksAddressRequired": "Die PKS-Adresse ist erforderlich.",
-      "createBtn": "Erstellen",
       "testConnectionBtn": "Verbindung testen",
       "clustersTabTitle": "Cluster"
     }
@@ -416,10 +504,12 @@
   },
   "edit": "Bearbeiten",
   "save": "Speichern",
+  "create": "Erstellen",
   "add": "Hinzufügen",
   "yes": "Ja",
   "remove": "Entfernen",
   "delete": "Löschen",
+  "details": "Details",
   "verify": "Überprüfen",
   "update": "Aktualisieren",
   "cancel": "Abbrechen",
@@ -431,7 +521,7 @@
   "unmakeAdmin": "Zuweisung von Admin-Rolle aufheben",
   "noItems": "Keine Elemente",
   "reload": "Neu laden",
-  "notAvailable": "n. z.",
+  "notAvailable": "N/A",
   "sessionExpired": "Ihre Sitzung ist nicht mehr gültig, melden Sie sich erneut an.",
   "navigation": {
     "home": "Start",
@@ -442,9 +532,14 @@
     "networks": "Netzwerke",
     "volumes": "Volumes",
     "closures": "Abschlüsse",
+    "kubernetes": {
+      "title": "Kubernetes",
+      "deployments": "Bereitstellungen",
+      "pods": "Pods"
+    },
     "library": "Bibliothek",
     "templates": "Vorlagen",
-    "repositories": "Repositorys",
+    "repositories": "Alle Repositorys",
     "internalRepositories": "Integrierte Repositorys",
     "publicRepositories": "Repositorys",
     "infrastructure": "Infrastruktur",

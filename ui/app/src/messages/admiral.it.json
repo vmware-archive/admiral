@@ -290,7 +290,10 @@
           "closures": "Chiusure",
           "repositories": "Repository"
         },
-        "createTemplate": "Modello"
+        "createTemplate": "Modello",
+        "addToFavorites": "Aggiungi immagine a Preferiti",
+        "removeFromFavorites": "Rimuovi immagine da Preferiti",
+        "addedImageToFavoritesMessage": "Immagine aggiunta a Preferiti"
       },
       "details": {
         "create": "Crea modello",

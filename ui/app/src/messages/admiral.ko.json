@@ -290,7 +290,10 @@
           "closures": "클로저",
           "repositories": "저장소"
         },
-        "createTemplate": "템플릿"
+        "createTemplate": "템플릿",
+        "addToFavorites": "이미지를 즐겨찾기에 추가",
+        "removeFromFavorites": "이미지를 즐겨찾기에서 제거",
+        "addedImageToFavoritesMessage": "이미지가 즐겨찾기에 추가됨"
       },
       "details": {
         "create": "템플릿 생성",

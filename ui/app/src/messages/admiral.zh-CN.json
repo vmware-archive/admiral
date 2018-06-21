@@ -290,7 +290,10 @@
           "closures": "闭包服务",
           "repositories": "存储库"
         },
-        "createTemplate": "模板"
+        "createTemplate": "模板",
+        "addToFavorites": "将映像添加到收藏夹",
+        "removeFromFavorites": "从收藏夹移除映像",
+        "addedImageToFavoritesMessage": "映像已加入收藏夹"
       },
       "details": {
         "create": "创建模板",

@@ -147,9 +147,9 @@
       "preventVulnerableImagesFromRunningDescription_part1": "Evite que se implementen imágenes con la gravedad de vulnerabilidad de",
       "preventVulnerableImagesFromRunningDescription_part2": "y superior.",
       "preventRunSeverity": {
-        "low": "Baja",
-        "medium": "Media",
-        "high": "Alta"
+        "low": "Bajo",
+        "medium": "Mediano",
+        "high": "Alto"
       },
       "vulnerabilityScanning": "Análisis de vulnerabilidad",
       "automaticallyScanImagesOnPush": "Analizar automáticamente las imágenes en inserción",
@@ -302,6 +302,95 @@
           "count": "Nodos"
         }
       }
+    },
+    "deployments": {
+      "title": "Implementaciones",
+      "search": {
+        "placeholder": "Buscar implementaciones"
+      },
+      "item": {
+        "creation": "Creación:",
+        "namespace": "Espacio de nombres:",
+        "containersNumber": "Contenedores:",
+        "restartPolicy": "Política de reinicio:",
+        "strategy": "Estrategia:",
+        "replicas": "Réplicas:",
+        "terminationGracePeriodSeconds": "Período de gracia de terminación (segundos):",
+        "dnsPolicy": "Política de DNS:",
+        "summaryTitle": "Resumen",
+        "containersTitle": "Contenedores",
+        "containers": {
+          "name": "Nombre",
+          "image": "Imagen",
+          "env": "Entorno"
+        }
+      }
+    },
+    "pods": {
+        "title": "Pods",
+        "search": {
+            "placeholder": "Buscar pods"
+        },
+        "item": {
+            "creation": "Creación:",
+            "namespace": "Espacio de nombres:",
+            "containersNumber": "Contenedores:",
+            "status": "Estado:",
+            "startTime": "Hora de inicio:",
+            "ip": "IP:",
+            "summaryTitle": "Resumen",
+            "containerStatuses": {
+              "title": "Contenedores",
+              "name": "Nombre del contenedor",
+              "state": "Estado"
+            },
+            "volumes": {
+              "title": "Volúmenes",
+              "name": "Nombre del volumen",
+              "hostPath": "Ruta en el host"
+            },
+            "logsTitle": "Logs"
+        }
+    }
+  },
+  "pks": {
+    "new": {
+      "title": "Nuevo clúster",
+      "settings": {
+        "title": "Configuración",
+        "fieldRowTitleEndpoint": "PKS",
+        "fieldTitleEndpoint": "Endpoint PKS",
+        "fieldTitleName": "Nombre de clúster",
+        "nameFieldRequired": "Se requiere el nombre del clúster.",
+        "fieldTitlePlan": "Plan",
+        "plan": {
+          "small": "Pequeño",
+          "medium": "Mediano",
+          "large": "Grande"
+        },
+        "fieldTitleNumberNodes": "Número de nodos",
+        "fieldTitleMaster": "Máster",
+        "masterFieldRequired": "Se requiere el campo maestro. Únicamente se pueden introducir valores enteros superiores a 0.",
+        "masterFieldDescription": "Puede que un único maestro sea suficiente para los clústeres de prueba o de desarrollo; no obstante, para las implementaciones de producción, es más adecuado utilizar 3 o 5 maestros.",
+        "masterFieldDescription3Nodes": "- 3 maestros: se puede producir un error en un maestro, pero el clúster no podrá avanzar a otro estado. Se debe unir un maestro nuevo para que el clúster pueda avanzar a otro estado.",
+        "masterFieldDescription5Nodes": "- 5 maestros: se puede producir un error en un maestro y el clúster podrá avanzar a otro estado.",
+        "fieldTitleWorker": "Trabajo",
+        "workerFieldRequired": "Se requiere el campo de trabajo. Únicamente se pueden introducir valores enteros superiores a 0."
+      }
+    },
+    "add": {
+      "title": "Agregar clúster",
+      "existingClusters": {
+        "descriptionText": "Seleccione un endpoint y, a continuación, seleccione uno o varios clústeres de Kubernetes existentes sin asignar para agregarlos al grupo empresarial actual.",
+        "fieldTitleEndpoint": "Endpoint:",
+        "columnTitleName": "Nombre",
+        "columnTitleMastersCount": "Número de maestros",
+        "columnTitleWorkersCount": "Número de trabajadores",
+        "columnTitlePlan": "Plan",
+        "yes": "Sí",
+        "no": "No",
+        "count": "Clústeres"
+      }
     }
   },
   "hosts": {
@@ -385,7 +474,6 @@
       "credentials": "Credenciales",
       "pksAddressFieldTitle": "Dirección PKS",
       "pksAddressRequired": "La dirección PKS es obligatoria.",
-      "createBtn": "Crear",
       "testConnectionBtn": "Probar conexión",
       "clustersTabTitle": "Clústeres"
     }
@@ -416,10 +504,12 @@
   },
   "edit": "Editar",
   "save": "Guardar",
+  "create": "Crear",
   "add": "Añadir",
   "yes": "Sí",
   "remove": "Quitar",
   "delete": "Eliminar",
+  "details": "Detalles",
   "verify": "Verificar",
   "update": "Actualizar",
   "cancel": "Cancelar",
@@ -442,9 +532,14 @@
     "networks": "Redes",
     "volumes": "Volúmenes",
     "closures": "Clausuras",
+    "kubernetes": {
+      "title": "Kubernetes",
+      "deployments": "Implementaciones",
+      "pods": "Pods"
+    },
     "library": "Biblioteca",
     "templates": "Plantillas",
-    "repositories": "Repositorios",
+    "repositories": "Todos los repositorios",
     "internalRepositories": "Repositorios integrados",
     "publicRepositories": "Repositorios",
     "infrastructure": "Infraestructura",
