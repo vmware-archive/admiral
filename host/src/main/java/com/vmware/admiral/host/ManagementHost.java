@@ -154,9 +154,6 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
         log(Level.INFO, "Initializing ...");
         initialize(args);
 
-        //TODO remove the debugging mode
-        toggleDebuggingMode(true);
-
         log(Level.INFO, "Registering service interceptors ...");
         registerOperationInterceptors();
 
