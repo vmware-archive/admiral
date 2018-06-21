@@ -23,12 +23,16 @@ export class RoutesRestriction {
   public static PROJECTS = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN];
   public static PROJECTS_NEW = [Roles.CLOUD_ADMIN];
 
-  public static DEPLOYMENTS = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN, Roles.PROJECT_MEMBER, Roles.VRA_CONTAINER_ADMIN];
-  public static TEMPLATES = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN, Roles.PROJECT_MEMBER, Roles.VRA_CONTAINER_ADMIN, Roles.VRA_CONTAINER_DEVELOPER];
-  public static TEMPLATES_NEW_IMPORT = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN, Roles.PROJECT_MEMBER, Roles.VRA_CONTAINER_ADMIN];
+  public static DEPLOYMENTS = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN, Roles.PROJECT_MEMBER,
+                               Roles.VRA_CONTAINER_ADMIN];
+  public static TEMPLATES = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN, Roles.PROJECT_MEMBER,
+                             Roles.VRA_CONTAINER_ADMIN, Roles.VRA_CONTAINER_DEVELOPER];
+  public static TEMPLATES_NEW_IMPORT = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN,
+                                        Roles.PROJECT_MEMBER, Roles.VRA_CONTAINER_ADMIN];
 
   public static PUBLIC_REPOSITORIES = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN,
-                                       Roles.PROJECT_MEMBER, Roles.VRA_CONTAINER_ADMIN, Roles.VRA_CONTAINER_DEVELOPER];
+                                       Roles.PROJECT_MEMBER, Roles.VRA_CONTAINER_ADMIN,
+                                       Roles.VRA_CONTAINER_DEVELOPER];
 
   public static PROJECTS_ID = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN];
   public static PROJECTS_ID_EDIT = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN];
@@ -47,15 +51,20 @@ export class RoutesRestriction {
   public static PROJECT_REGISTRIES = [Roles.PROJECT_ADMIN];
   public static PROJECT_REGISTRIES_DETAILS = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN];
 
-  public static CLUSTERS = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN, Roles.PROJECT_MEMBER, Roles.VRA_CONTAINER_ADMIN];
+  public static CLUSTERS = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN, Roles.PROJECT_MEMBER,
+                            Roles.VRA_CONTAINER_ADMIN];
   public static CLUSTERS_NEW = [Roles.CLOUD_ADMIN, Roles.VRA_CONTAINER_ADMIN];
   public static CLUSTERS_ID = [Roles.CLOUD_ADMIN, Roles.VRA_CONTAINER_ADMIN];
   public static CLUSTERS_EDIT = [Roles.CLOUD_ADMIN, Roles.VRA_CONTAINER_ADMIN];
 
-  public static KUBERNETES_CLUSTERS = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN, Roles.PROJECT_MEMBER, Roles.VRA_CONTAINER_ADMIN, Roles.VRA_CONTAINER_DEVELOPER];
-  public static KUBERNETES_CLUSTERS_NEW = [Roles.CLOUD_ADMIN, Roles.VRA_CONTAINER_ADMIN, Roles.VRA_CONTAINER_DEVELOPER];
+  public static KUBERNETES_CLUSTERS = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN,
+                                       Roles.PROJECT_MEMBER,Roles.VRA_CONTAINER_ADMIN,
+                                       Roles.VRA_CONTAINER_DEVELOPER];
+  public static KUBERNETES_CLUSTERS_NEW = [Roles.CLOUD_ADMIN, Roles.VRA_CONTAINER_ADMIN,
+                                           Roles.VRA_CONTAINER_DEVELOPER];
   public static KUBERNETES_CLUSTERS_ADD = [Roles.CLOUD_ADMIN, Roles.VRA_CONTAINER_ADMIN];
-  public static KUBERNETES_CLUSTERS_ID = [Roles.CLOUD_ADMIN, Roles.VRA_CONTAINER_ADMIN, Roles.VRA_CONTAINER_DEVELOPER];
+  public static KUBERNETES_CLUSTERS_ID = [Roles.CLOUD_ADMIN, Roles.VRA_CONTAINER_ADMIN,
+                                          Roles.VRA_CONTAINER_DEVELOPER];
   public static KUBERNETES_CLUSTERS_EDIT = [Roles.CLOUD_ADMIN, Roles.VRA_CONTAINER_ADMIN];
 
   public static REQUESTS_DELETE = [Roles.CLOUD_ADMIN, Roles.VRA_CONTAINER_ADMIN];
@@ -67,9 +76,12 @@ export class RoutesRestriction {
   public static KUBERNETES_MENU = [Roles.VRA_CONTAINER_DEVELOPER];
 
   public static INFRASTRUCTURE = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN, Roles.PROJECT_MEMBER,
-                                  Roles.VRA_CONTAINER_ADMIN, Roles.VRA_CONTAINER_ADMIN, Roles.VRA_CONTAINER_DEVELOPER];
+                                  Roles.VRA_CONTAINER_ADMIN, Roles.VRA_CONTAINER_ADMIN,
+                                  Roles.VRA_CONTAINER_DEVELOPER];
 
   public static FAVORITE_IMAGES = [Roles.CLOUD_ADMIN, Roles.VRA_CONTAINER_ADMIN];
   public static DEPLOYMENT_POLICIES = [Roles.CLOUD_ADMIN, Roles.VRA_CONTAINER_ADMIN];
-  public static PROVISIONING_ADDITIONAL_INFO_BUTTON = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN, Roles.PROJECT_MEMBER, Roles.VRA_CONTAINER_ADMIN];
+  public static PROVISIONING_ADDITIONAL_INFO_BUTTON = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN,
+                                                       Roles.PROJECT_MEMBER,
+                                                       Roles.VRA_CONTAINER_ADMIN];
 }

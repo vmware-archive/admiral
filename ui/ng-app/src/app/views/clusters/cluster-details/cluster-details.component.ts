@@ -50,6 +50,17 @@ export class ClusterDetailsComponent extends BaseDetailsComponent
   protected entityInitialized() {
   }
 
+  get showBackLink() {
+      let urlSegments = this.route.snapshot.url;
+
+      let clusterInProjectAdminView = urlSegments.find((urlSegment) => {
+          return urlSegment.path.indexOf('projects') > -1;
+      });
+
+      // the cluster details are shown as part of projects view in administration
+      return !!clusterInProjectAdminView;
+  }
+
   get showResources() {
     if (this.entity) {
       return this.entity.type == 'DOCKER';

@@ -9,16 +9,18 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, OnInit, OnDestroy, AfterViewInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormGroup, FormControl, Validators } from "@angular/forms";
 import { Constants } from '../../../utils/constants';
 import { DocumentService } from '../../../utils/document.service';
+import { ProjectService } from "../../../utils/project.service";
 import { FT } from "../../../utils/ft";
 import { Links } from '../../../utils/links';
 import { Utils } from "../../../utils/utils";
-import { formatUtils } from 'admiral-ui-common';
+
 import * as I18n from 'i18next';
+import { formatUtils } from 'admiral-ui-common';
 
 @Component({
   selector: 'app-cluster-create',
@@ -27,179 +29,171 @@ import * as I18n from 'i18next';
   encapsulation: ViewEncapsulation.None,
 })
 /**
- * Modal for cluster creation.
+ * View for cluster creation.
  */
-export class ClusterCreateComponent implements AfterViewInit, OnInit, OnDestroy {
-  opened: boolean = false;
-  credentials: any[];
-  projectLink: string;
+export class ClusterCreateComponent implements OnInit {
+    credentials: any[];
 
-  showCertificateWarning: boolean;
-  certificate: any;
+    showCertificateWarning: boolean;
+    certificate: any;
 
-  isSaving: boolean;
-  alertMessage: string;
+    isSaving: boolean;
 
-  private sub: any;
-  private isSingleHostCluster: boolean = false;
+    alertType: string;
+    alertMessage: string;
 
-  clusterForm = new FormGroup({
-    name: new FormControl('', Validators.required),
-    description: new FormControl(''),
-    type: new FormControl('VCH'),
-    url: new FormControl('', Validators.required),
-    publicAddress: new FormControl(''),
-    credentials: new FormControl('')
-  });
+    private isSingleHostCluster: boolean = false;
 
-  credentialsTitle = I18n.t('dropdownSearchMenu.title', {
-    ns: 'base',
-    entity: I18n.t('app.credential.entity', {ns: 'base'})
-  } as I18n.TranslationOptions );
-
-  credentialsSearchPlaceholder = I18n.t('dropdownSearchMenu.searchPlaceholder', {
-    ns: 'base',
-    entity: I18n.t('app.credential.entity', {ns: 'base'})
-  } as I18n.TranslationOptions );
-
-  constructor(private router: Router, private route: ActivatedRoute, private service: DocumentService) {}
-
-  get title() {
-    if (FT.isVic()) {
-      return 'clusters.edit.titleNewVic';
-    }
-    return 'clusters.edit.titleNew';
-  }
-
-  get urlRequiredTextKey() {
-    if (FT.isVic()) {
-      return 'clusters.edit.urlRequiredVic'
-    }
-    return 'clusters.edit.urlRequired'
-  }
-
-  get showPublicAddressField(): boolean {
-    return FT.isHostPublicUriEnabled() && this.isSingleHostCluster;
-  }
-
-  ngOnInit() {
-    this.sub = this.route.params.subscribe(params => {
-      let projectId = params['projectId'];
-      if (projectId) {
-        this.projectLink = Links.PROJECTS + '/' + projectId;
-      }
+    clusterForm = new FormGroup({
+        name: new FormControl('', Validators.required),
+        description: new FormControl(''),
+        type: new FormControl('VCH'),
+        url: new FormControl('', Validators.required),
+        publicAddress: new FormControl(''),
+        credentials: new FormControl('')
     });
-    this.populateCredentials();
-  }
 
-  ngOnDestroy() {
-    this.sub.unsubscribe();
-  }
+    credentialsTitle = I18n.t('dropdownSearchMenu.title', {
+        ns: 'base',
+        entity: I18n.t('app.credential.entity', {ns: 'base'})
+    } as I18n.TranslationOptions );
 
-  ngAfterViewInit() {
-    this.opened = true;
-    this.showCertificateWarning = false;
-  }
+    credentialsSearchPlaceholder = I18n.t('dropdownSearchMenu.searchPlaceholder', {
+        ns: 'base',
+        entity: I18n.t('app.credential.entity', {ns: 'base'})
+    } as I18n.TranslationOptions );
 
-  populateCredentials() {
-    if (this.credentials) {
-      return;
+    constructor(private router: Router, private route: ActivatedRoute,
+                private documentService: DocumentService, private projectService: ProjectService) {
+        //
     }
 
-    this.service.list(Links.CREDENTIALS, {}).then(credentials => {
-      this.credentials = credentials.documents
-                          .filter(c => !Utils.areSystemScopedCredentials(c))
-                            .map(this.toCredentialViewModel);
-    }).catch((e) => {
-      console.log('Credentials retrieval failed', e);
-    });
-  }
-
-  toggleModal(open) {
-    this.opened = open;
-
-    if (!open) {
-      let path: any[] = Utils.getPathUp(this.router.url, 'infra');
-
-      this.router.navigate(path, { relativeTo: this.route });
-    }
-  }
-
-  toCredentialViewModel(credential) {
-    let credentialsViewModel:any = {};
-
-    credentialsViewModel.documentSelfLink = credential.documentSelfLink;
-    credentialsViewModel.name = credential.customProperties
-                                    ? credential.customProperties.__authCredentialsName : '';
-    if (!credentialsViewModel.name) {
-      credentialsViewModel.name = credential.documentId;
+    get title() {
+        return FT.isVic() ? 'clusters.edit.titleNewVic' : 'clusters.edit.titleNew';
     }
 
-    return credentialsViewModel;
-  }
+    get urlRequiredTextKey() {
+        return FT.isVic() ? 'clusters.edit.urlRequiredVic' : 'clusters.edit.urlRequired';
+    }
 
-  saveCluster() {
-      this.createCluster(false);
-  }
+    get showPublicAddressField(): boolean {
+        return FT.isHostPublicUriEnabled() && this.isSingleHostCluster;
+    }
 
-  private createCluster(certificateAccepted: boolean) {
-    if (this.clusterForm.valid) {
-      this.isSaving = true;
+    ngOnInit() {
+        this.populateCredentials();
+    }
 
-      let formInput = this.clusterForm.value;
-      let clusterName = formInput.name && formatUtils.escapeHtml(formInput.name);
-      let hostState = {
-        'address': formInput.url,
-        'customProperties': {
-          '__containerHostType': formInput.type,
-          '__adapterDockerType': 'API',
-          '__clusterName': clusterName
+    populateCredentials() {
+        if (this.credentials) {
+            return;
         }
-      };
 
-      if (formInput.credentials) {
-        hostState.customProperties['__authCredentialsLink'] = formInput.credentials.documentSelfLink;
-      }
+        this.documentService.list(Links.CREDENTIALS, {}).then(credentials => {
+            this.credentials = credentials.documents
+                                    .filter(c => !Utils.areSystemScopedCredentials(c))
+                                        .map(Utils.toCredentialViewModel);
+        }).catch((error) => {
+            console.error('Credentials retrieval failed', error);
 
-      if (formInput.description) {
-        hostState.customProperties['__clusterDetails'] = formInput.description;
-      }
+            this.showAlertMessage(Constants.alert.type.DANGER,
+                                    Utils.getErrorMessage(error)._generic);
+        });
+    }
 
-      if (formInput.publicAddress) {
-        hostState.customProperties[Constants.hosts.customProperties.publicAddress] = formInput.publicAddress;
-      }
+    save() {
+        this.createCluster(false);
+    }
 
-      let hostSpec = {
-        'hostState': hostState,
-        'acceptCertificate': certificateAccepted
-      };
-      this.service.post(Links.CLUSTERS, hostSpec, this.projectLink).then((response) => {
-        if (response.certificate) {
-          this.certificate = response;
-          this.showCertificateWarning = true;
-        } else {
-          this.isSaving = false;
-          this.toggleModal(false);
+    private createCluster(certificateAccepted: boolean) {
+        if (this.clusterForm.valid) {
+            this.isSaving = true;
+
+            let formInput = this.clusterForm.value;
+            let clusterName = formInput.name && formatUtils.escapeHtml(formInput.name);
+            let hostState = {
+                'address': formInput.url,
+                'customProperties': {
+                  '__containerHostType': formInput.type,
+                  '__adapterDockerType': 'API',
+                  '__clusterName': clusterName
+                }
+            };
+
+            if (formInput.credentials) {
+                hostState.customProperties['__authCredentialsLink']
+                                                        = formInput.credentials.documentSelfLink;
+            }
+
+            if (formInput.description) {
+                hostState.customProperties['__clusterDetails'] = formInput.description;
+            }
+
+            if (formInput.publicAddress) {
+                hostState.customProperties[Constants.hosts.customProperties.publicAddress]
+                                                        = formInput.publicAddress;
+            }
+
+            let hostSpec = {
+                'hostState': hostState,
+                'acceptCertificate': certificateAccepted
+            };
+
+            this.documentService.post(Links.CLUSTERS, hostSpec,
+                                      this.projectService.getSelectedProject().documentSelfLink)
+                .then((response) => {
+
+                if (response.certificate) {
+                    // certificate to be accepted by the user
+                  this.certificate = response;
+                  this.showCertificateWarning = true;
+                } else {
+                  this.isSaving = false;
+                  this.goBack();
+                }
+            }).catch(error => {
+                this.isSaving = false;
+
+                this.showAlertMessage(Constants.alert.type.DANGER,
+                                        Utils.getErrorMessage(error)._generic);
+            });
         }
-      }).catch(error => {
+    }
+
+    cancel() {
+        this.showCertificateWarning = false;
         this.isSaving = false;
-        this.alertMessage = Utils.getErrorMessage(error)._generic;
-      });
+
+        this.goBack();
     }
-  }
 
-  cancelCreateCluster() {
-    this.showCertificateWarning = false;
-    this.isSaving = false;
-  }
+    acceptCertificate() {
+        this.showCertificateWarning = false;
 
-  acceptCertificate() {
-    this.showCertificateWarning = false;
+        this.createCluster(true);
+    }
 
-    this.createCluster(true);
-  }
+    cancelAcceptCertificate() {
+        this.showCertificateWarning = false;
+        this.isSaving = false;
 
-  resetAlert() {
-    this.alertMessage = null;
-  }
+        this.showAlertMessage(Constants.alert.type.WARNING,
+                        'Cannot proceed. Certificate is not accepted.');
+    }
+
+    goBack() {
+        let path: any[] = Utils.getPathUp(this.router.url, 'infra');
+
+        this.router.navigate(path, { relativeTo: this.route });
+    }
+
+    private showAlertMessage(messageType, message) {
+        this.alertType = messageType;
+        this.alertMessage = message;
+    }
+
+    resetAlert() {
+        this.alertType = null;
+        this.alertMessage = null;
+    }
 }

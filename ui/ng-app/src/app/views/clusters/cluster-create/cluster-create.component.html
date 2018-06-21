@@ -9,16 +9,13 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<clr-modal [clrModalOpen]="opened" [clrModalClosable]="!isSaving"
-           (clrModalOpenChange)="toggleModal($event)">
-  <h3 class="modal-title">{{title | i18n}}</h3>
-  <div class="modal-body">
-    <clr-alert [clrAlertType]="'alert-danger'" [(clrAlertClosed)]="!alertMessage"
+<div class="main-view">
+    <clr-alert *ngIf="alertMessage" [clrAlertType]="alertType" [(clrAlertClosed)]="!alertMessage"
                (clrAlertClosedChange)="resetAlert()">
-      <div class="alert-item">
-        <span class="alert-text">{{ alertMessage }}</span>
-      </div>
+        <div class="alert-item"><span class="alert-text">{{ alertMessage }}</span></div>
     </clr-alert>
+
+  <div class="title">{{title | i18n}}</div>
     <form class="form" [formGroup]="clusterForm">
       <section class="form-block">
         <div class="form-group">
@@ -31,10 +28,12 @@
             <span class="tooltip-content">{{ "clusters.edit.nameRequired" | i18n }}</span>
           </label>
         </div>
+
         <div class="form-group">
           <label for="description">{{ "clusters.edit.description" | i18n }}</label>
           <input id="description" type="text" formControlName="description">
         </div>
+
         <div class="form-group">
           <label for="type">{{ "clusters.edit.type" | i18n }}</label>
           <div class="select" data-name="create-cluster-type">
@@ -44,6 +43,7 @@
             </select>
           </div>
         </div>
+
         <div class="form-group">
           <label for="url" class="required">{{ "clusters.edit.url" | i18n }}</label>
           <label for="url" aria-haspopup="true" role="tooltip"
@@ -54,6 +54,7 @@
             <span class="tooltip-content">{{ urlRequiredTextKey | i18n }}</span>
           </label>
         </div>
+
         <div class="form-group" *ngIf="showPublicAddressField">
           <label for="publicAddress">{{ "clusters.edit.publicAddress" | i18n }}</label>
           <input id="publicAddress" type="text"
@@ -64,6 +65,7 @@
             <span class="tooltip-content">{{ "clusters.edit.publicAddressDescription" | i18n }}</span>
           </a>
         </div>
+
         <div class="form-group">
           <label for="credentials">{{ "clusters.edit.credentials" | i18n }}</label>
           <dropdown formControlName="credentials" ddClass="top-left"
@@ -74,19 +76,20 @@
         </div>
       </section>
     </form>
+
+  <div>
+    <button type="button" class="btn btn-outline"
+            [disabled]="isSaving"
+            (click)="cancel()">{{ "cancel" | i18n }}</button>
+    <button [clrLoading]="isSaving" type="button" class="btn btn-primary saveCluster-btn"
+            [disabled]="isSaving || clusterForm.invalid"
+            (click)="save()">{{ "save" | i18n }}</button>
+  </div>
+
     <!-- Untrusted certificate prompt -->
     <verify-certificate [visible]="showCertificateWarning"
                         [hostAddress]="clusterForm.value.url"
                         [certificate]="certificate"
                         (onAccept)="acceptCertificate()"
-                        (onDecline)="cancelCreateCluster()"></verify-certificate>
-  </div>
-  <div class="modal-footer">
-    <button type="button" class="btn btn-outline"
-            [disabled]="isSaving"
-            (click)="toggleModal(false)">{{ "cancel" | i18n }}</button>
-    <button [clrLoading]="isSaving" type="button" class="btn btn-primary saveCluster-btn"
-            [disabled]="isSaving || clusterForm.invalid"
-            (click)="saveCluster()">{{ "save" | i18n }}</button>
-  </div>
-</clr-modal>
+                        (onDecline)="cancelAcceptCertificate()"></verify-certificate>
+</div>

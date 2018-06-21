@@ -261,7 +261,8 @@
       "titleVic": "Remove Container Host",
       "confirmation": "Confirm removing of cluster {{clusterName}}. The deployed entities associated to this cluster will be removed as well. The operation cannot be undone.",
       "confirmationVic": "Confirm removing of container host {{clusterName}}. The deployed entities associated to this container host will be removed as well. The operation cannot be undone."
-    }
+    },
+    "backLinkTextProject": "Project"
   },
   "kubernetes": {
     "clusters": {

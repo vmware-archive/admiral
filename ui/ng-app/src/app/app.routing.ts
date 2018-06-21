@@ -107,24 +107,21 @@ export const ROUTES: Routes = [
             {
                 path: 'clusters', component: ClustersComponent,
                 data: { roles: RoutesRestriction.CLUSTERS },
-                canActivate: [HomeAuthGuard],
-                children: [
-                    { path: 'cluster/new',
-                        canActivate: [HomeAuthGuard], component: ClusterCreateComponent, data: {
-                        navigationContainerType: NavigationContainerType.Default,
-                        roles: RoutesRestriction.CLUSTERS_NEW
-                    }},
-                    { path: 'cluster/:id',
-                        canActivate: [HomeAuthGuard], component: ClusterDetailsComponent, data: {
-                        navigationContainerType: NavigationContainerType.Fullscreen,
-                        roles: RoutesRestriction.CLUSTERS_ID
-                    }},
-                    { path: 'cluster/:id/edit',
-                        canActivate: [HomeAuthGuard], component: ClusterEditComponent, data: {
-                        navigationContainerType: NavigationContainerType.Fullscreen,
-                        roles: RoutesRestriction.CLUSTERS_EDIT
-                    }}
-                ]
+                canActivate: [HomeAuthGuard]
+            },
+            {
+                path: 'clusters/cluster/new', component: ClusterCreateComponent,
+                data: { roles: RoutesRestriction.CLUSTERS_NEW },
+                canActivate: [HomeAuthGuard]
+            },
+            {
+                path: 'clusters/cluster/:id', component: ClusterDetailsComponent,
+                data: { roles: RoutesRestriction.CLUSTERS_ID },
+                canActivate: [HomeAuthGuard]
+            },
+            { path: 'clusters/cluster/:id/edit', component: ClusterEditComponent,
+                data: { roles: RoutesRestriction.CLUSTERS_EDIT },
+                canActivate: [HomeAuthGuard]
             },
             {
                 path: 'kubernetes/clusters', component: KubernetesClustersComponent,
@@ -214,136 +211,75 @@ export const ROUTES: Routes = [
                             navigationContainerType: NavigationContainerType.Default,
                             roles: RoutesRestriction.PROJECTS_NEW
                         }
-                    },
-                    { path: ':id', component: ProjectDetailsComponent,
-                        canActivate: [AdminAuthGuard],
-                        data: {
-                            navigationContainerType: NavigationContainerType.Fullscreen,
-                            roles: RoutesRestriction.PROJECTS_ID
-                        }
-                    },
-                    { path: ':id/:tab', component: ProjectDetailsComponent,
-                        data: {
-                            navigationContainerType: NavigationContainerType.Fullscreen,
-                            roles: RoutesRestriction.PROJECTS_ID
-                        }
-                    },
-                    { path: ':id/edit', component: ProjectCreateComponent,
-                        canActivate: [AdminAuthGuard],
-                        data: {
-                            navigationContainerType: NavigationContainerType.Fullscreen,
-                            roles: RoutesRestriction.PROJECTS_ID_EDIT
-                        }
-                    },
-                    { path: ':id/:tab/edit', component: ProjectCreateComponent,
-                        canActivate: [AdminAuthGuard],
-                        data: {
-                            navigationContainerType: NavigationContainerType.Fullscreen,
-                            roles: RoutesRestriction.PROJECTS_ID_EDIT
-                        }
-                    },
-                    { path: ':projectId/cluster/new', component: ClusterCreateComponent,
-                        canActivate: [AdminAuthGuard],
-                        data: {
-                            navigationContainerType: NavigationContainerType.Fullscreen,
-                            roles: RoutesRestriction.CLUSTERS_NEW
-                        }
-                    },
-                    { path: ':projectId/:tab/cluster/new', component: ClusterCreateComponent,
-                        canActivate: [AdminAuthGuard],
-                        data: {
-                            navigationContainerType: NavigationContainerType.Fullscreen,
-                            roles: RoutesRestriction.CLUSTERS_NEW
-                        }
-                    },
-                    { path: ':projectId/cluster/:id', component: ClusterDetailsComponent,
-                        canActivate: [AdminAuthGuard],
-                        data: {
-                            navigationContainerType: NavigationContainerType.Fullscreen,
-                            roles: RoutesRestriction.CLUSTERS_ID
-                        }
-                    },
-                    { path: ':projectId/:tab/cluster/:id', component: ClusterDetailsComponent,
-                        canActivate: [AdminAuthGuard],
-                        data: {
-                            navigationContainerType: NavigationContainerType.Fullscreen,
-                            roles: RoutesRestriction.CLUSTERS_ID
-                        }
-                    },
-                    { path: ':projectId/cluster/:id/edit', component: ClusterEditComponent,
-                        canActivate: [AdminAuthGuard],
-                        data: {
-                            navigationContainerType: NavigationContainerType.Fullscreen,
-                            roles: RoutesRestriction.CLUSTERS_EDIT
-                        }
-                    },
-                    { path: ':projectId/:tab/cluster/:id/edit', component: ClusterEditComponent,
-                        canActivate: [AdminAuthGuard],
-                        data: {
-                            navigationContainerType: NavigationContainerType.Fullscreen,
-                            roles: RoutesRestriction.CLUSTERS_EDIT
-                        }
-                    },
-                    { path: ':projectId/registries/new', component: ProjectRegistryDetailsComponent,
-                        canActivate: [AdminAuthGuard],
-                        data: {
-                            navigationContainerType: NavigationContainerType.Fullscreen,
-                            roles: RoutesRestriction.PROJECT_REGISTRIES_DETAILS
-                        }
-                    },
-                    { path: ':projectId/:tab/registries/new', component: ProjectRegistryDetailsComponent,
-                        canActivate: [AdminAuthGuard],
-                        data: {
-                            navigationContainerType: NavigationContainerType.Fullscreen,
-                            roles: RoutesRestriction.PROJECT_REGISTRIES_DETAILS
-                        }
-                    },
-                    { path: ':projectId/registries/registry/:id/edit', component: ProjectRegistryDetailsComponent,
-                        canActivate: [AdminAuthGuard],
-                        data: {
-                            navigationContainerType: NavigationContainerType.Fullscreen,
-                            roles: RoutesRestriction.PROJECT_REGISTRIES_DETAILS
-                        }
-                    },
-                    { path: ':projectId/:tab/registries/registry/:id/edit', component: ProjectRegistryDetailsComponent,
-                        canActivate: [AdminAuthGuard],
-                        data: {
-                            navigationContainerType: NavigationContainerType.Fullscreen,
-                            roles: RoutesRestriction.PROJECT_REGISTRIES_DETAILS
-                        }
-                    },
-                    { path: ':id/repositories/:rid', component: SingleRepositoryComponent,
-                        data: {
-                            navigationContainerType: NavigationContainerType.Fullscreen,
-                            hideBackButton: true
-                        }
-                    },
-                    { path: ':id/:tab/repositories/:rid', component: SingleRepositoryComponent,
-                        data: {
-                            navigationContainerType: NavigationContainerType.Fullscreen,
-                            hideBackButton: true
-                        }
-                    },
-                    { path: ':id/repositories/:rid/tags/:tid', component: TagDetailsComponent,
-                        data: {
-                            navigationContainerType: NavigationContainerType.Fullscreen,
-                            hideBackButton: true
-                        }
-                    },
-                    { path: ':id/:tab/repositories/:rid/tags/:tid', component: TagDetailsComponent,
-                        data: {
-                            navigationContainerType: NavigationContainerType.Fullscreen,
-                            hideBackButton: true
-                        }
-                    },
-                    { path: ':id/add-member', component: ProjectAddMemberComponent,
-                        canActivate: [AdminAuthGuard],
-                        data: {
-                            navigationContainerType: NavigationContainerType.Fullscreen,
-                            roles: RoutesRestriction.PROJECTS_ID_ADD_MEMBER
-                        }
                     }
                 ]
+            },
+            { path: 'projects/:id', component: ProjectDetailsComponent,
+                canActivate: [AdminAuthGuard],
+                data: { roles: RoutesRestriction.PROJECTS_ID }
+            },
+            { path: 'projects/:id/edit', component: ProjectCreateComponent,
+                canActivate: [AdminAuthGuard],
+                data: { roles: RoutesRestriction.PROJECTS_ID_EDIT }
+            },
+            { path: 'projects/:id/:tab', component: ProjectDetailsComponent,
+                data: { roles: RoutesRestriction.PROJECTS_ID }
+            },
+            { path: 'projects/:id/:tab/edit', component: ProjectCreateComponent,
+                canActivate: [AdminAuthGuard],
+                data: { roles: RoutesRestriction.PROJECTS_ID_EDIT }
+            },
+            { path: 'projects/:projectId/cluster/new', component: ClusterCreateComponent,
+                canActivate: [AdminAuthGuard],
+                data: { roles: RoutesRestriction.CLUSTERS_NEW }
+            },
+            { path: 'projects/:projectId/:tab/cluster/new', component: ClusterCreateComponent,
+                canActivate: [AdminAuthGuard],
+                data: { roles: RoutesRestriction.CLUSTERS_NEW }
+            },
+            { path: 'projects/:projectId/cluster/:id', component: ClusterDetailsComponent,
+                canActivate: [AdminAuthGuard],
+                data: { roles: RoutesRestriction.CLUSTERS_ID }
+            },
+            { path: 'projects/:projectId/:tab/cluster/:id', component: ClusterDetailsComponent,
+                canActivate: [AdminAuthGuard],
+                data: { roles: RoutesRestriction.CLUSTERS_ID }
+            },
+            { path: 'projects/:projectId/cluster/:id/edit', component: ClusterEditComponent,
+                canActivate: [AdminAuthGuard],
+                data: { roles: RoutesRestriction.CLUSTERS_EDIT }
+            },
+            { path: 'projects/:projectId/:tab/cluster/:id/edit', component: ClusterEditComponent,
+                canActivate: [AdminAuthGuard],
+                data: { roles: RoutesRestriction.CLUSTERS_EDIT }
+            },
+            { path: 'projects/:projectId/registries/new', component: ProjectRegistryDetailsComponent,
+                canActivate: [AdminAuthGuard],
+                data: { roles: RoutesRestriction.PROJECT_REGISTRIES_DETAILS }
+            },
+            { path: 'projects/:projectId/:tab/registries/new', component: ProjectRegistryDetailsComponent,
+                canActivate: [AdminAuthGuard],
+                data: { roles: RoutesRestriction.PROJECT_REGISTRIES_DETAILS }
+            },
+            { path: 'projects/:projectId/registries/registry/:id/edit', component: ProjectRegistryDetailsComponent,
+                canActivate: [AdminAuthGuard],
+                data: { roles: RoutesRestriction.PROJECT_REGISTRIES_DETAILS }
+            },
+            { path: 'projects/:projectId/:tab/registries/registry/:id/edit', component: ProjectRegistryDetailsComponent,
+                canActivate: [AdminAuthGuard],
+                data: { roles: RoutesRestriction.PROJECT_REGISTRIES_DETAILS }
+            },
+            { path: 'projects/:id/repositories/:rid', component: SingleRepositoryComponent
+            },
+            { path: 'projects/:id/:tab/repositories/:rid', component: SingleRepositoryComponent
+            },
+            { path: 'projects/:id/repositories/:rid/tags/:tid', component: TagDetailsComponent
+            },
+            { path: 'projects/:id/:tab/repositories/:rid/tags/:tid', component: TagDetailsComponent
+            },
+            { path: 'projects/:id/add-member', component: ProjectAddMemberComponent,
+                canActivate: [AdminAuthGuard],
+                data: { roles: RoutesRestriction.PROJECTS_ID_ADD_MEMBER }
             },
             {
                 path: 'registries', component: RegistriesComponent,

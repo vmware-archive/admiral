@@ -63,6 +63,11 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
         entity: I18n.t('app.credential.entity', { ns: 'base' })
     } as I18n.TranslationOptions);
 
+    credentialsSearchPlaceholder = I18n.t('dropdownSearchMenu.searchPlaceholder', {
+        ns: 'base',
+        entity: I18n.t('app.credential.entity', {ns: 'base'})
+    } as I18n.TranslationOptions );
+
     constructor(router: Router, route: ActivatedRoute, documentService: DocumentService,
                 errorService: ErrorService) {
         super(Links.REGISTRIES, route, router, documentService, errorService);
@@ -162,7 +167,7 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
         this.service.put(Links.REGISTRY_SPEC, registrySpec, this.projectLink).then((response) => {
             if (!this.isCertificateResponse(response)) {
                 this.isSavingRegistry = false;
-                this.navigateToRegistries();
+                this.goBack();
             }
         }).catch(error => {
             this.isSavingRegistry = false;
@@ -190,7 +195,7 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
         this.service.put(Links.REGISTRY_SPEC, registrySpec, this.projectLink).then((response) => {
             if (!this.isCertificateResponse(response)) {
                 this.isSavingRegistry = false;
-                this.navigateToRegistries();
+                this.goBack();
             }
         }).catch(error => {
             this.isSavingRegistry = false;
@@ -198,25 +203,17 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
         });
     }
 
-    private cancel() {
-        this.navigateToRegistries();
+    cancel() {
+        this.goBack();
     }
 
-    private navigateToRegistries() {
-        if (this.route.parent) {
-            if (this.projectId) {
-                this.router.navigate([this.projectId, 'registries'], { relativeTo: this.route.parent });
-            } else {
-                // shouldn't happen
-                this.router.navigate(['.'], { relativeTo: this.route.parent });
-            }
-        } else {
-            // failsafe, should never happen
-            this.router.navigate(['/'], { relativeTo: this.route });
-        }
+    private goBack() {
+        let pathUp = this.editMode ? '../../..' : '..';
+
+        this.router.navigate([pathUp], { relativeTo: this.route });
     }
 
-    private testConnection(acceptCert: boolean = false) {
+    testConnection(acceptCert: boolean = false) {
         this.isTestingConnection = true;
         let registrySpec = this.getRegistrySpec(acceptCert);
 

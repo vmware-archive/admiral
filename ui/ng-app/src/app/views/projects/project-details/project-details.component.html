@@ -9,9 +9,11 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<h3 class="projects-details-header-title">{{entity?.name}}</h3>
+<div class="main-view">
+    <img [src]="'./container-image-icons?container-image=' + entity?.documentSelfLink"/>
+    <h3 class="projects-details-header-title">{{entity?.name}}</h3>
 
-<clr-tabs>
+    <clr-tabs>
     <clr-tab>
         <button clrTabLink id="summaryTab">{{"projects.summary.title" | i18n}}</button>
         <ng-template [clrIfActive]="isActiveTabSummary"
@@ -83,4 +85,5 @@
             </clr-tab-content>
         </ng-template>
     </clr-tab>
-</clr-tabs>
+    </clr-tabs>
+</div>

@@ -1,7 +1,22 @@
-.cluster-details {
-    margin-top: 20px;
-}
+// Copyright (c) 2018 VMware, Inc. All Rights Reserved.
+// This software is released under MIT license.
+// The full license information can be found in LICENSE in the root directory of this project.
 
 .cluster-details-header-title {
     display: inline;
+}
+
+.back-nav-link {
+    font-size: 14px;
+    text-decoration: none;
+    margin-bottom: 10px;
+    color: #007cbb;
+}
+
+.back-nav-link a:visited {
+    color: #007cbb;
+}
+
+.back-nav-link a:hover {
+    text-decoration: none;
 }
