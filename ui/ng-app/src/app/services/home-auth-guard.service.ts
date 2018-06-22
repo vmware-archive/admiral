@@ -37,15 +37,21 @@ export class HomeAuthGuard implements CanActivate {
       let roles = route.data["roles"] as Array<string>;
       let path = route.url[0].path;
 
-      if (FT.isApplicationEmbedded()) {
-        return resolve(true);
-      }
-
       // First check for system roles.
       this.authService.getCachedSecurityContext().then((securityContext) => {
-        if (securityContext && securityContext.roles) {
-          for (var index = 0; index < securityContext.roles.length; index++) {
-            var role = securityContext.roles[index];
+        if (FT.isApplicationEmbedded()) {
+          if (securityContext && securityContext.indexOf(Roles.VRA_CONTAINER_DEVELOPER) > -1 &&
+                securityContext.indexOf(Roles.VRA_CONTAINER_ADMIN) == -1 && this.router.url === '/') {
+            this.router.navigate(['/home/kubernetes/deployments']);
+            return resolve(true);
+          }
+        }
+
+        let securityContextRoles = FT.isApplicationEmbedded() ? securityContext : securityContext.roles;
+
+        if (securityContextRoles) {
+          for (var index = 0; index < securityContextRoles.length; index++) {
+            var role = securityContextRoles[index];
             if (roles.indexOf(role) != -1) {
               return resolve(true);
             }

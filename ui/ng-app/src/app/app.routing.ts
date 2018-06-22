@@ -128,33 +128,33 @@ export const ROUTES: Routes = [
             },
             {
                 path: 'kubernetes/clusters', component: KubernetesClustersComponent,
-                data: { roles: RoutesRestriction.CLUSTERS },
+                data: { roles: RoutesRestriction.KUBERNETES_CLUSTERS },
                 canActivate: [HomeAuthGuard]
             },
             {
                 path: 'kubernetes/new', component: KubernetesClusterNewComponent,
-                data: { roles: RoutesRestriction.CLUSTERS_NEW },
+                data: { roles: RoutesRestriction.KUBERNETES_CLUSTERS_NEW },
                 canActivate: [HomeAuthGuard]
             },
             {
                 path: 'kubernetes/add', component: KubernetesClusterAddComponent,
-                data: { roles: RoutesRestriction.CLUSTERS_NEW },
+                data: { roles: RoutesRestriction.KUBERNETES_CLUSTERS_NEW },
                 canActivate: [HomeAuthGuard]
             },
             {
                 path: 'kubernetes/clusters/cluster/:id',
                 canActivate: [HomeAuthGuard], component: KubernetesClusterDetailsComponent,
-                data: { roles: RoutesRestriction.CLUSTERS_ID }
+                data: { roles: RoutesRestriction.KUBERNETES_CLUSTERS_ID }
             },
             {
                 path: 'kubernetes/clusters/cluster/:id/edit',
                 canActivate: [HomeAuthGuard], component: KubernetesClusterNewComponent,
-                data: { roles: RoutesRestriction.CLUSTERS_ID }
+                data: { roles: RoutesRestriction.KUBERNETES_CLUSTERS_EDIT }
             },
             {
                 path: 'kubernetes/clusters/cluster/:id/edit-external',
                 canActivate: [HomeAuthGuard], component: KubernetesClusterEditExternalComponent,
-                data: { roles: RoutesRestriction.CLUSTERS_ID }
+                data: { roles: RoutesRestriction.KUBERNETES_CLUSTERS_EDIT }
             },
             {
                 path: 'kubernetes/pods', component: PodListComponent
