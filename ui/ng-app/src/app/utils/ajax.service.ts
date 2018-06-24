@@ -13,7 +13,7 @@ import { Injectable } from '@angular/core';
 import { Http, RequestOptions, Headers, ResponseContentType, Request, URLSearchParams, RequestMethod }
   from '@angular/http';
 import { Subject } from './subject';
-
+import { Utils } from './utils';
 import 'rxjs/add/operator/toPromise';
 
 @Injectable()
@@ -62,7 +62,7 @@ export class Ajax {
     headers.append('Content-Type', 'application/json');
 
     let requestOptions = new RequestOptions({
-      url: this.serviceUrl(url),
+      url: Utils.serviceUrl(url),
       body: data,
       method: method,
       headers: headers,
@@ -137,7 +137,7 @@ export class Ajax {
   }
 
   public ajaxRaw(requestOptions: RequestOptions): Promise<any> {
-    requestOptions.url = this.serviceUrl(requestOptions.url);
+    requestOptions.url = Utils.serviceUrl(requestOptions.url);
 
     return this.http.request(new Request(requestOptions))
       .toPromise()
@@ -193,13 +193,4 @@ export class Ajax {
         interval);
     });
   }
-
-  // It could be set on App level to send calls to a different base.
-  private serviceUrl(path) {
-    let wnd:any = window;
-    if (wnd.getBaseServiceUrl) {
-      return wnd.getBaseServiceUrl(path);
-    }
-    return path;
-  };
 }

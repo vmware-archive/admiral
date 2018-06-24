@@ -134,7 +134,7 @@ export class KubernetesClusterSummaryComponent implements OnInit {
         }
 
         var kubeConfigLink = Links.KUBE_CONFIG_CONTENT + '?hostLink=' + hostLink;
-        window.location.href = kubeConfigLink;
+        window.location.href = Utils.serviceUrl(kubeConfigLink);
     }
 
     formatNumber(number) {

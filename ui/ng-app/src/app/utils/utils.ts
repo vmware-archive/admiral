@@ -379,6 +379,14 @@ export class Utils {
 
       return path;
   }
+
+  public static serviceUrl(path) {
+    let wnd:any = window;
+    if (wnd.getBaseServiceUrl) {
+      return wnd.getBaseServiceUrl(path);
+    }
+    return path;
+  }
 }
 
 export class CancelablePromise<T> {

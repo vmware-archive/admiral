@@ -39,7 +39,7 @@ public class KubeConfigContentService extends StatelessService {
     public static final String KUBERNETES_HOST_LINK_PARAM_NAME = "hostLink";
 
     private static final String CONTENT_DISPOSITION_HEADER = "Content-Disposition";
-    private static final String CONTENT_DISPOSITION_ATTACHMENT = "attachment";
+    private static final String CONTENT_DISPOSITION_ATTACHMENT = "attachment; filename=\"kubeconfig\"";
 
     @Override
     public void handleRequest(Operation op) {
