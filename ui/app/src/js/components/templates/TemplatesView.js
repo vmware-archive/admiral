@@ -247,7 +247,8 @@ var TemplatesViewVueComponent = Vue.extend({
         },
         isFavorite: function() {
           var favoriteImages = this.parentListView.favoriteImages;
-          return this.model.isFavorite || favoriteImages.includes(this.model.documentId);
+          return ft.areFavoriteImagesEnabled() && this.model.isFavorite ||
+              favoriteImages.includes(this.model.documentId);
         },
         addToFavoriteSupported: function() {
           return ft.areFavoriteImagesEnabled() &&
