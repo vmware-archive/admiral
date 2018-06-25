@@ -105,15 +105,20 @@ export class EndpointCreateComponent {
         });
     }
 
-    create() {
+    create(certificateAccepted: boolean = false) {
         if (this.endpointDetailsForm.valid) {
             this.isSavingEndpoint = true;
+            let createEndpointRequest = this.getEndpointData(certificateAccepted);
 
-            this.documentService.put(Links.PKS_ENDPOINT_CREATE, this.getEndpointData())
+            this.documentService.put(Links.PKS_ENDPOINT_CREATE, createEndpointRequest)
                 .then((response) => {
-                this.isSavingEndpoint = false;
-
-                this.goBack();
+                    if (response && response.certificate) {
+                        this.promptAcceptCertificate(response);
+                    } else {
+                        // creation is successful
+                        this.isSavingEndpoint = false;
+                        this.goBack();
+                    }
             }).catch(error => {
                 this.isSavingEndpoint = false;
 
@@ -129,9 +134,8 @@ export class EndpointCreateComponent {
 
             this.documentService.patch(this.entity.documentSelfLink, this.getEndpointDataRaw())
                 .then(() => {
-                this.isSavingEndpoint = false;
-
-                this.goBack();
+                    this.isSavingEndpoint = false;
+                    this.goBack();
             }).catch(error => {
                 this.isSavingEndpoint = false;
 
@@ -147,15 +151,28 @@ export class EndpointCreateComponent {
         }
     }
 
+    private promptAcceptCertificate(response) {
+        this.certificate = response;
+        this.showCertificateWarning = true;
+        this.certificateOrigin = this.certificate.origin;
+    }
+
     acceptCertificate() {
         this.showCertificateWarning = false;
 
         // continue secondary request
-        this.testEndpointConnection(true);
+        if (this.isSavingEndpoint) {
+            this.create(true);
+        } else if (this.isTestingConnection) {
+            this.testEndpointConnection(true);
+        }
     }
 
     cancelAcceptCertificate() {
         this.showCertificateWarning = false;
+
+        this.isSavingEndpoint = false;
+        this.isTestingConnection = false;
 
         this.showAlertMessage(Constants.alert.type.WARNING,
                                 I18n.t('endpoints.details.certificateNotAccepted'));
@@ -169,7 +186,7 @@ export class EndpointCreateComponent {
         this.router.navigate(['..'], {relativeTo: this.route});
     }
 
-    getEndpointData() {
+    getEndpointData(certificateAccepted:boolean) {
         let endpointData;
 
         let endpointDataRaw = this.getEndpointDataRaw();
@@ -177,6 +194,11 @@ export class EndpointCreateComponent {
             endpointData = {
                 endpoint: endpointDataRaw
             };
+
+            if (certificateAccepted && this.certificateOrigin) {
+                endpointData["acceptCertificate"] = true;
+                endpointData["acceptCertificateForHost"] = this.certificateOrigin;
+            }
         }
 
         return endpointData;
@@ -203,22 +225,15 @@ export class EndpointCreateComponent {
 
     testEndpointConnection(certificateAccepted: boolean = false) {
         this.isTestingConnection = true;
-
-        let testConnectionRequest = this.getEndpointData();
-        if (certificateAccepted && this.certificateOrigin) {
-            testConnectionRequest["acceptCertificate"] = true;
-            testConnectionRequest["acceptCertificateForHost"] = this.certificateOrigin;
-        }
+        let testConnectionRequest = this.getEndpointData(certificateAccepted);
 
         this.documentService.put(Links.PKS_ENDPOINT_TEST_CONNECTION, testConnectionRequest)
             .then((response) => {
-            this.isTestingConnection = false;
-
             if (response && response.certificate) {
-                this.certificate = response;
-                this.showCertificateWarning = true;
-                this.certificateOrigin = this.certificate.origin;
-            } else { // status 204
+                this.promptAcceptCertificate(response);
+            } else {
+                // Test is successful (status 204)
+                this.isTestingConnection = false;
                 this.showAlertMessage(Constants.alert.type.SUCCESS,
                                         I18n.t('endpoints.details.connectionVerified'));
             }
