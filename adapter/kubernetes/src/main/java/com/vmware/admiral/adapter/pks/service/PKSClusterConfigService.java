@@ -15,13 +15,13 @@ import static com.vmware.admiral.adapter.pks.PKSConstants.CLUSTER_NAME_PROP_NAME
 import static com.vmware.admiral.adapter.pks.PKSConstants.KUBERNETES_MASTER_HOST_PROP_NAME;
 import static com.vmware.admiral.adapter.pks.PKSConstants.KUBERNETES_MASTER_PORT_PROP_NAME;
 import static com.vmware.admiral.adapter.pks.PKSConstants.KUBE_CONFIG_PROP_NAME;
+import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_ENDPOINT_PROP_NAME;
 import static com.vmware.admiral.common.util.OperationUtil.PROJECT_ADMIRAL_HEADER;
 import static com.vmware.admiral.compute.ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME;
 import static com.vmware.admiral.compute.ContainerHostService.CONTAINER_HOST_TYPE_PROP_NAME;
 import static com.vmware.admiral.compute.ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME;
 import static com.vmware.admiral.compute.ContainerHostService.PKS_CLUSTER_PLAN_NAME_PROP_NAME;
 import static com.vmware.admiral.compute.ContainerHostService.PKS_CLUSTER_UUID_PROP_NAME;
-import static com.vmware.admiral.compute.ContainerHostService.PKS_ENDPOINT_PROP_NAME;
 import static com.vmware.admiral.compute.cluster.ClusterService.CLUSTER_NAME_CUSTOM_PROP;
 
 import java.util.ArrayList;
@@ -31,7 +31,6 @@ import java.util.function.Consumer;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.pks.PKSOperationType;
-import com.vmware.admiral.adapter.pks.entities.KubeConfig;
 import com.vmware.admiral.adapter.pks.entities.PKSCluster;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
@@ -40,6 +39,7 @@ import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
 import com.vmware.admiral.compute.cluster.ClusterService;
+import com.vmware.admiral.compute.kubernetes.entities.config.KubeConfig;
 import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;

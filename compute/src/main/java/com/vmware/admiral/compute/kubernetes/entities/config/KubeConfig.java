@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.adapter.pks.entities;
+package com.vmware.admiral.compute.kubernetes.entities.config;
 
 import java.util.List;
 
@@ -28,6 +28,9 @@ public class KubeConfig extends BaseKubernetesObject {
 
         @SerializedName("certificate-authority-data")
         public String certificateAuthorityData;
+
+        @SerializedName("insecure-skip-tls-verify")
+        public Boolean insecureSkipTlsVerify;
     }
 
     public static class ClusterEntry {
@@ -54,6 +57,12 @@ public class KubeConfig extends BaseKubernetesObject {
     public static class AuthInfo {
 
         public String token;
+
+        @SerializedName("client-certificate-data")
+        public String clientCertificateData;
+
+        @SerializedName("client-key-data")
+        public String clientKeyData;
     }
 
     public static class UserEntry {

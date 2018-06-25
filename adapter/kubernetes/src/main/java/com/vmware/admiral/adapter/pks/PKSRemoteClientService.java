@@ -21,7 +21,6 @@ import java.util.Map;
 import java.util.logging.Logger;
 import javax.net.ssl.TrustManager;
 
-import com.vmware.admiral.adapter.pks.entities.KubeConfig;
 import com.vmware.admiral.adapter.pks.entities.PKSCluster;
 import com.vmware.admiral.adapter.pks.entities.PKSPlan;
 import com.vmware.admiral.adapter.pks.entities.UAATokenResponse;
@@ -29,6 +28,7 @@ import com.vmware.admiral.common.util.DeferredUtils;
 import com.vmware.admiral.common.util.DelegatingX509KeyManager;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.common.util.ServiceClientFactory;
+import com.vmware.admiral.compute.kubernetes.entities.config.KubeConfig;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;

@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.compute.content.kubernetes;
 
+import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_ENDPOINT_PROP_NAME;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.filterComponentTemplates;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.isNullOrEmpty;
@@ -18,11 +19,14 @@ import static com.vmware.admiral.compute.content.kubernetes.KubernetesConverter.
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesConverter.fromContainerDescriptionToService;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -42,6 +46,7 @@ import com.vmware.admiral.compute.content.CompositeTemplate;
 import com.vmware.admiral.compute.kubernetes.KubernetesEntityDataCollection.KubernetesEntityData;
 import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
 import com.vmware.admiral.compute.kubernetes.entities.common.ObjectMeta;
+import com.vmware.admiral.compute.kubernetes.entities.config.KubeConfig;
 import com.vmware.admiral.compute.kubernetes.entities.deployments.Deployment;
 import com.vmware.admiral.compute.kubernetes.entities.pods.Pod;
 import com.vmware.admiral.compute.kubernetes.entities.pods.PodTemplate;
@@ -412,5 +417,47 @@ public class KubernetesUtil {
             number *= units.getOrDefault(unit, 1D);
         }
         return number;
+    }
+
+    public static boolean isPKSManagedHost(ComputeState host) {
+        if (host == null || host.customProperties == null) {
+            return false;
+        }
+        return host.customProperties.containsKey(PKS_ENDPOINT_PROP_NAME);
+    }
+
+    public static KubeConfig constructKubeConfig(String clusterAddress, String certificate,
+            String privateKey) {
+
+        KubeConfig config = new KubeConfig();
+        config.apiVersion = KUBERNETES_API_VERSION_V1;
+        config.kind = CONFIG_TYPE;
+        config.currentContext = UUID.randomUUID().toString();
+
+        KubeConfig.ContextEntry contextEntry = new KubeConfig.ContextEntry();
+        contextEntry.name = config.currentContext;
+        contextEntry.context = new KubeConfig.Context();
+        contextEntry.context.cluster = config.currentContext;
+        contextEntry.context.user = UUID.randomUUID().toString();
+        config.contexts = Arrays.asList(contextEntry);
+
+        KubeConfig.ClusterEntry clusterEntry = new KubeConfig.ClusterEntry();
+        clusterEntry.name = config.currentContext;
+        clusterEntry.cluster = new KubeConfig.Cluster();
+        clusterEntry.cluster.server = clusterAddress;
+        clusterEntry.cluster.insecureSkipTlsVerify = true;
+        config.clusters = Arrays.asList(clusterEntry);
+
+        KubeConfig.UserEntry userEntry = new KubeConfig.UserEntry();
+        userEntry.name = contextEntry.context.user;
+        userEntry.user = new KubeConfig.AuthInfo();
+        // TODO base64 encode
+        userEntry.user.clientCertificateData = new String(
+                Base64.getEncoder().encode(certificate.getBytes()));
+        userEntry.user.clientKeyData = new String(
+                Base64.getEncoder().encode(privateKey.getBytes()));
+        config.users = Arrays.asList(userEntry);
+
+        return config;
     }
 }

@@ -16,6 +16,7 @@ import static com.vmware.admiral.compute.ComputeConstants.HOST_AUTH_CREDENTIALS_
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import com.vmware.admiral.adapter.pks.PKSConstants;
@@ -23,10 +24,14 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.ContainerHostUtil;
+import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
+import com.vmware.admiral.compute.kubernetes.entities.config.KubeConfig;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
 /**
@@ -59,21 +64,35 @@ public class KubeConfigContentService extends StatelessService {
             String hostLink = queryParams.get(KUBERNETES_HOST_LINK_PARAM_NAME);
             AssertUtil.assertNotNullOrEmpty(hostLink, KUBERNETES_HOST_LINK_PARAM_NAME);
 
-            getCredentials(op, hostLink, (credentials) -> constructKubeConfig(op, credentials));
+            getHostAndCredentials(op, hostLink,
+                    (compute, credentials) -> constructKubeConfig(op, compute, credentials));
         } catch (Exception x) {
             logSevere(x);
             op.fail(x);
         }
     }
 
-    private void constructKubeConfig(Operation op, AuthCredentialsServiceState credentials) {
-        if (credentials.customProperties == null
-                || !credentials.customProperties.containsKey(PKSConstants.KUBE_CONFIG_PROP_NAME)) {
-            op.fail(new IllegalStateException("KubeConfig cannot be retrieved"));
+    private void constructKubeConfig(Operation op, ComputeState kubernetesHost,
+            AuthCredentialsServiceState credentials) {
+
+        String kubeConfig = null;
+
+        if (KubernetesUtil.isPKSManagedHost(kubernetesHost)) {
+            if (credentials.customProperties == null
+                    || !credentials.customProperties.containsKey(PKSConstants.KUBE_CONFIG_PROP_NAME)) {
+                op.fail(new IllegalStateException("KubeConfig cannot be retrieved"));
+                return;
+            }
+
+            kubeConfig = credentials.customProperties.get(PKSConstants.KUBE_CONFIG_PROP_NAME);
+        } else if (AuthCredentialsType.PublicKey.toString().equals(credentials.type)) {
+            KubeConfig config = KubernetesUtil.constructKubeConfig(kubernetesHost.address,
+                    credentials.publicKey, credentials.privateKey);
+            kubeConfig = Utils.toJson(config);
+        } else {
+            op.fail(new Exception("Host authentication type not supported!"));
             return;
         }
-
-        String kubeConfig = credentials.customProperties.get(PKSConstants.KUBE_CONFIG_PROP_NAME);
 
         try {
 
@@ -92,8 +111,8 @@ public class KubeConfigContentService extends StatelessService {
         return YamlMapper.fromJsonToYaml(kubeConfig);
     }
 
-    private void getCredentials(Operation op, String hostLink,
-            Consumer<AuthCredentialsServiceState> consumer) {
+    private void getHostAndCredentials(Operation op, String hostLink,
+            BiConsumer<ComputeState, AuthCredentialsServiceState> consumer) {
 
         getCompute(op, hostLink, (host) -> {
             if (!ContainerHostUtil.isKubernetesHost(host)) {
@@ -114,7 +133,10 @@ public class KubeConfigContentService extends StatelessService {
                     return;
                 }
 
-                consumer.accept(o.getBody(AuthCredentialsServiceState.class));
+                AuthCredentialsServiceState credentials = o
+                        .getBody(AuthCredentialsServiceState.class);
+
+                consumer.accept(host, credentials);
             }).sendWith(this);
         });
     }

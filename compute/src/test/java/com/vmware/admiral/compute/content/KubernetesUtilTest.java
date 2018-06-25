@@ -11,13 +11,16 @@
 
 package com.vmware.admiral.compute.content;
 
-import static junit.framework.TestCase.assertNull;
-
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+
+import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_ENDPOINT_PROP_NAME;
 
 import static com.vmware.admiral.common.util.FileUtil.switchToUnixLineEnds;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.deserializeCompositeTemplate;
@@ -60,6 +63,7 @@ import com.vmware.admiral.compute.content.kubernetes.KubernetesTemplate;
 import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
 import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
 import com.vmware.admiral.compute.kubernetes.entities.common.ResourceRequirements;
+import com.vmware.admiral.compute.kubernetes.entities.config.KubeConfig;
 import com.vmware.admiral.compute.kubernetes.entities.deployments.Deployment;
 import com.vmware.admiral.compute.kubernetes.entities.pods.Container;
 import com.vmware.admiral.compute.kubernetes.entities.pods.ExecAction;
@@ -80,6 +84,7 @@ import com.vmware.admiral.compute.kubernetes.service.ReplicaSetService.ReplicaSe
 import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerService.ReplicationControllerState;
 import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler.ServiceState;
 import com.vmware.admiral.host.HostInitComputeServicesConfig;
+import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Service.Action;
 
@@ -752,5 +757,44 @@ public class KubernetesUtilTest {
         assertEquals(new Double(624), KubernetesUtil.parseBytes("624"));
         assertEquals(new Double(638976), KubernetesUtil.parseBytes("624Ki"));
         assertEquals(new Double(2.34881024E8), KubernetesUtil.parseBytes("224Mi"));
+    }
+
+    @Test
+    public void testIsPKSManagedHost() {
+        assertFalse(KubernetesUtil.isPKSManagedHost(null));
+        assertFalse(KubernetesUtil.isPKSManagedHost(new ComputeState()));
+        ComputeState noProperties = new ComputeState();
+        noProperties.customProperties = new HashMap<>();
+        assertFalse(KubernetesUtil.isPKSManagedHost(noProperties));
+        ComputeState pksManagedHost = new ComputeState();
+        pksManagedHost.customProperties = new HashMap<>();
+        pksManagedHost.customProperties.put(PKS_ENDPOINT_PROP_NAME,
+                "/resources/pks/endpoints/8d50dc9a46ed487556f736eb0c8f8");
+        assertTrue(KubernetesUtil.isPKSManagedHost(pksManagedHost));
+    }
+
+    @Test
+    public void testConstructKubeConfig() {
+        String clusterAddress = "https://testhost:8443";
+
+        KubeConfig config = KubernetesUtil.constructKubeConfig(clusterAddress,
+                "certificate", "private_key");
+
+        assertEquals("v1", config.apiVersion);
+        assertEquals("Config", config.kind);
+        assertNotNull(config.currentContext);
+        assertNotNull(config.clusters);
+        assertNotNull(config.contexts);
+        assertNotNull(config.users);
+        assertEquals(1, config.users.size());
+        assertEquals(1, config.contexts.size());
+        assertEquals(1, config.clusters.size());
+        assertEquals(config.contexts.get(0).context.user, config.users.get(0).name);
+        assertEquals("Y2VydGlmaWNhdGU=", config.users.get(0).user.clientCertificateData);
+        assertEquals("cHJpdmF0ZV9rZXk=", config.users.get(0).user.clientKeyData);
+        assertEquals(config.clusters.get(0).name, config.contexts.get(0).context.cluster);
+        assertEquals(config.currentContext, config.contexts.get(0).name);
+        assertEquals(clusterAddress, config.clusters.get(0).cluster.server);
+        assertTrue(config.clusters.get(0).cluster.insecureSkipTlsVerify);
     }
 }

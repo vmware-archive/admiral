@@ -20,6 +20,7 @@ public interface PKSConstants {
     String VALIDATE_CONNECTION = "validate_connection";
     String CREDENTIALS_LINK = "credentials";
     String KUBE_CONFIG_PROP_NAME = "__kubeConfig";
+    String PKS_ENDPOINT_PROP_NAME = "__pksEndpoint";
     String KUBERNETES_MASTER_HOST_PROP_NAME = "kubernetes_master_host";
     String KUBERNETES_MASTER_PORT_PROP_NAME = "kubernetes_master_port";
 }

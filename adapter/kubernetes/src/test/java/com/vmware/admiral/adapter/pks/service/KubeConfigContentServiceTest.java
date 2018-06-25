@@ -12,13 +12,16 @@
 package com.vmware.admiral.adapter.pks.service;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_ENDPOINT_PROP_NAME;
 import static com.vmware.admiral.compute.ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME;
 import static com.vmware.admiral.compute.ContainerHostService.CONTAINER_HOST_TYPE_PROP_NAME;
 
 import java.net.URI;
 import java.util.HashMap;
+import java.util.UUID;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -28,6 +31,7 @@ import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.UriUtils;
@@ -50,25 +54,42 @@ public class KubeConfigContentServiceTest extends ComputeBaseTest {
     }
 
     @Test
-    public void testGetKubeConfig() throws Throwable {
-        String authCredentialsLink = createCredentials(true).documentSelfLink;
-        String hostLink = createCompute(authCredentialsLink,
-                ContainerHostType.KUBERNETES.name()).documentSelfLink;
+    public void testGetKubeConfigWithBearerToken() throws Throwable {
+        String authCredentialsLink = createCredentials(AuthUtils.BEARER_TOKEN_AUTH_TYPE,
+                true).documentSelfLink;
+        String hostLink = createCompute(authCredentialsLink, true, true).documentSelfLink;
 
         URI serviceUri = UriUtils.buildUri(host, KubeConfigContentService.SELF_LINK,
                 UriUtils.buildUriQuery("hostLink", hostLink));
 
         verifyOperation(Operation.createGet(serviceUri), o -> {
-            assertEquals("attachment; filename=\"kubeconfig\"", o.getResponseHeader("Content-Disposition"));
+            assertEquals("attachment; filename=\"kubeconfig\"",
+                    o.getResponseHeader("Content-Disposition"));
             assertEquals(KUBE_CONFIG_YAML, o.getBody(String.class));
         });
     }
 
     @Test
+    public void testGetKubeConfigWithCertificateAndKey() throws Throwable {
+        assertTrue(UUID.randomUUID().toString().matches("[-a-z0-9]+"));
+        String authCredentialsLink = createCredentials(AuthCredentialsType.PublicKey.toString(),
+                false).documentSelfLink;
+        String hostLink = createCompute(authCredentialsLink, true, false).documentSelfLink;
+
+        URI serviceUri = UriUtils.buildUri(host, KubeConfigContentService.SELF_LINK,
+                UriUtils.buildUriQuery("hostLink", hostLink));
+
+        verifyOperation(Operation.createGet(serviceUri), o -> {
+            assertEquals("attachment; filename=\"kubeconfig\"",
+                    o.getResponseHeader("Content-Disposition"));
+        });
+    }
+
+    @Test
     public void testShouldFailWhenHostTypeNotKubernetes() throws Throwable {
-        String authCredentialsLink = createCredentials(true).documentSelfLink;
-        String hostLink = createCompute(authCredentialsLink,
-                ContainerHostType.DOCKER.name()).documentSelfLink;
+        String authCredentialsLink = createCredentials(AuthUtils.BEARER_TOKEN_AUTH_TYPE,
+                true).documentSelfLink;
+        String hostLink = createCompute(authCredentialsLink, false, true).documentSelfLink;
         URI serviceUri = UriUtils.buildUri(host, KubeConfigContentService.SELF_LINK,
                 UriUtils.buildUriQuery("hostLink", hostLink));
         try {
@@ -81,9 +102,9 @@ public class KubeConfigContentServiceTest extends ComputeBaseTest {
 
     @Test
     public void testShouldFailWhenKubeConfigContentIsMissing() throws Throwable {
-        String authCredentialsLink = createCredentials(false).documentSelfLink;
-        String hostLink = createCompute(authCredentialsLink,
-                ContainerHostType.KUBERNETES.name()).documentSelfLink;
+        String authCredentialsLink = createCredentials(AuthUtils.BEARER_TOKEN_AUTH_TYPE,
+                false).documentSelfLink;
+        String hostLink = createCompute(authCredentialsLink, true, true).documentSelfLink;
         URI serviceUri = UriUtils.buildUri(host, KubeConfigContentService.SELF_LINK,
                 UriUtils.buildUriQuery("hostLink", hostLink));
         try {
@@ -105,27 +126,64 @@ public class KubeConfigContentServiceTest extends ComputeBaseTest {
         }
     }
 
-    private AuthCredentialsServiceState createCredentials(boolean setKubeConfig) throws Throwable {
+    @Test
+    public void testShouldFailWhenHostAuthTypeNotSupported() throws Throwable {
+        String authCredentialsLink = createCredentials(AuthCredentialsType.Password.toString(),
+                false).documentSelfLink;
+        String hostLink = createCompute(authCredentialsLink, true, false).documentSelfLink;
+        URI serviceUri = UriUtils.buildUri(host, KubeConfigContentService.SELF_LINK,
+                UriUtils.buildUriQuery("hostLink", hostLink));
+        try {
+            doOperation(null, serviceUri, true, Action.GET);
+            fail("Operation should have failed: host auth type not supported");
+        } catch (Exception e) {
+            assertEquals("Host authentication type not supported!", e.getMessage());
+        }
+    }
+
+    private AuthCredentialsServiceState createCredentials(String type, boolean setKubeConfig)
+            throws Throwable {
+
         AuthCredentialsServiceState credentials = new AuthCredentialsServiceState();
-        credentials.type = AuthUtils.BEARER_TOKEN_AUTH_TYPE;
-        credentials.publicKey = "token";
-        credentials.customProperties = new HashMap<>();
+        if (AuthUtils.BEARER_TOKEN_AUTH_TYPE.equals(type)) {
+            credentials.type = AuthUtils.BEARER_TOKEN_AUTH_TYPE;
+            credentials.publicKey = "token";
+        } else if (AuthCredentialsType.PublicKey.toString().equals(type)) {
+            credentials.type = AuthCredentialsType.PublicKey.toString();
+            credentials.publicKey = "certificate";
+            credentials.privateKey = "privateKey";
+        } else {
+            credentials.type = AuthCredentialsType.Password.toString();
+        }
+
         if (setKubeConfig) {
+            credentials.customProperties = new HashMap<>();
             credentials.customProperties.put("__kubeConfig", KUBE_CONFIG_JSON);
         }
 
         return doPost(credentials, AuthCredentialsService.FACTORY_LINK);
     }
 
-    private ComputeState createCompute(String authCredentialsLink, String hostType) throws Throwable {
+    private ComputeState createCompute(String authCredentialsLink, boolean isKubernetesHost,
+            boolean pksManaged) throws Throwable {
+
         ComputeState kubernetesHost = new ComputeState();
         kubernetesHost.address = "hostname";
         kubernetesHost.descriptionLink = "description";
         kubernetesHost.customProperties = new HashMap<>();
-        kubernetesHost.customProperties.put(CONTAINER_HOST_TYPE_PROP_NAME,
-                hostType);
         kubernetesHost.customProperties.put(HOST_AUTH_CREDENTIALS_PROP_NAME,
                 authCredentialsLink);
+        if (isKubernetesHost) {
+            kubernetesHost.customProperties.put(CONTAINER_HOST_TYPE_PROP_NAME,
+                    ContainerHostType.KUBERNETES.name());
+        } else {
+            kubernetesHost.customProperties.put(CONTAINER_HOST_TYPE_PROP_NAME,
+                    ContainerHostType.DOCKER.name());
+        }
+        if (pksManaged) {
+            kubernetesHost.customProperties.put(PKS_ENDPOINT_PROP_NAME,
+                    "/endpoint/link");
+        }
         return doPost(kubernetesHost, ComputeService.FACTORY_LINK);
     }
 }

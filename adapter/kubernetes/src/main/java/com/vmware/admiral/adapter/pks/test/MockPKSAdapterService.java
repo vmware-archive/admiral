@@ -20,9 +20,9 @@ import java.util.UUID;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.pks.PKSOperationType;
-import com.vmware.admiral.adapter.pks.entities.KubeConfig;
 import com.vmware.admiral.adapter.pks.entities.PKSCluster;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.compute.kubernetes.entities.config.KubeConfig;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatelessService;
 
