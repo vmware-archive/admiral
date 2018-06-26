@@ -154,7 +154,7 @@
       </context-sidepanel-toolbar-item>
 
       <context-sidepanel-toolbar-item
-        v-if="isApplicationEmbedded()"
+        v-if="isApplicationEmbedded() && isDeploymentPoliciesAllowed()"
         :active="activeContextItem === 'deploymentPolicies'"
         :label="i18n('app.deploymentPolicy.contextPanelTooltip')"
         @open="openToolbarDeploymentPolicies()" @close="closeToolbar()">

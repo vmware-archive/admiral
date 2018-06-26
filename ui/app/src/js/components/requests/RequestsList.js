@@ -276,7 +276,7 @@ var RequestsListVueComponent = Vue.extend({
     },
 
     actionAllowed: function() {
-      return utils.actionAllowed();
+      return utils.actionAllowed(window.routesRestrictions.REQUESTS_DELETE);
     }
   },
   events: {

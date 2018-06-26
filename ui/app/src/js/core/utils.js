@@ -1477,9 +1477,9 @@ var utils = {
     return constants.CONTAINERS.DEFAULT_REFRESH_INTERVAL;
   },
 
-  actionAllowed() {
+  actionAllowed(roles) {
     return window.isAccessAllowed(window.authSession, null,
-        window.routesRestrictions.REQUESTS_DELETE);
+        roles);
   },
 
   isContainersTabOpened() {
@@ -1489,32 +1489,6 @@ var utils = {
 
     return window.frameElement.topLocation &&
         window.frameElement.topLocation.startsWith('#/home/');
-  },
-
-  isAccessAllowed(roles) {
-    if (this.isApplicationEmbedded()) {
-      return true;
-    }
-
-    if (!roles) {
-      console.warn('Roles not provided!');
-      return false;
-    }
-
-    let securityContext = window.authSession;
-    if (!securityContext) {
-      return false;
-    }
-
-    if (securityContext.roles) {
-      for (let i = 0; i < securityContext.roles.length; i++) {
-        let role = securityContext.roles[i];
-        if (roles.includes(role)) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 };
 

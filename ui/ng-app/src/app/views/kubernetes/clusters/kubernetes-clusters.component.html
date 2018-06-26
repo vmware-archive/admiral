@@ -25,7 +25,8 @@
         <button type="button" class="btn btn-link" [routerLink]="['../new']">
           <i class="fa fa-plus"></i>{{"kubernetes.clusters.newBtn" | i18n}}
         </button>
-        <button type="button" class="btn btn-link" [routerLink]="['../add']">
+        <button type="button" class="btn btn-link" [routerLink]="['../add']"
+                allowNavigation [roles]="addClusterRouteRestriction">
           <i class="fa fa-plus"></i>{{"kubernetes.clusters.addBtn" | i18n}}
         </button>
       </div>

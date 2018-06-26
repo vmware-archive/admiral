@@ -22,8 +22,8 @@ import { DocumentService } from './../utils/document.service';
 @Injectable()
 export class AdminAuthGuard implements CanActivate {
 
-  constructor(private router: Router, 
-    private authService: AuthService, 
+  constructor(private router: Router,
+    private authService: AuthService,
     private ps: ProjectService,
     private ds: DocumentService) {
   }
@@ -37,19 +37,20 @@ export class AdminAuthGuard implements CanActivate {
       let roles = route.data["roles"] as Array<string>;
       let path = route.url[0].path;
 
+      // currently there are no need to check the VRA security context,
+      // because this guard service is only used in VIC
       if (FT.isApplicationEmbedded()) {
         return resolve(true);
       }
-      
+
       // First check for system roles.
       this.authService.getCachedSecurityContext().then((securityContext) => {
-        if (securityContext && securityContext.roles) {
-          for (var index = 0; index < securityContext.roles.length; index++) {
-            var role = securityContext.roles[index];
-            if (roles.indexOf(role) != -1) {
-              return resolve(true);
-            }
-          }
+
+        // check for system roles
+        let hasSystemRole = Utils.hasSystemRole(securityContext, roles);
+
+        if (hasSystemRole) {
+          return resolve(true);
         }
 
         if (!securityContext || !securityContext.projects) {
@@ -71,7 +72,7 @@ export class AdminAuthGuard implements CanActivate {
             }
           }
         }
-        
+
         let authorized = false;
         for (var index = 0; index < securityContext.projects.length; index++) {
           var project = securityContext.projects[index];

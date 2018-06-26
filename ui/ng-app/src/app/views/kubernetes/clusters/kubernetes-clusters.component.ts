@@ -15,6 +15,7 @@ import { DocumentService } from '../../../utils/document.service';
 import { Constants } from '../../../utils/constants';
 import { GridViewComponent } from '../../../components/grid-view/grid-view.component';
 import { ProjectService } from "../../../utils/project.service";
+import { RoutesRestriction } from './../../../utils/routes-restriction';
 import { AutoRefreshComponent } from '../../../components/base/auto-refresh.component';
 import { FT } from '../../../utils/ft';
 import { Utils } from '../../../utils/utils';
@@ -238,5 +239,9 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
         } else {
             this.selectedItem = item;
         }
+    }
+
+    get addClusterRouteRestriction() {
+        return RoutesRestriction.KUBERNETES_CLUSTERS_ADD;
     }
 }

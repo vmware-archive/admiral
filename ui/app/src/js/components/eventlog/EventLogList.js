@@ -166,7 +166,7 @@ var EventLogListVueComponent = Vue.extend({
       this.$dispatch('close');
     },
     actionAllowed: function() {
-      return utils.actionAllowed();
+      return utils.actionAllowed(window.routesRestrictions.REQUESTS_DELETE);
     }
   },
   events: {

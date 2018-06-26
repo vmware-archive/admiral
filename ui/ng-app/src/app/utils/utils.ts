@@ -13,6 +13,7 @@ import * as I18n from 'i18next';
 import { Constants } from './constants';
 import { ConfigUtils } from './config-utils';
 import { FT } from './ft';
+import { Roles } from './roles';
 
 const LOGIN_PATH="/login/";
 
@@ -283,16 +284,11 @@ export class Utils {
         return false;
     }
 
-    let securityContextRoles = FT.isApplicationEmbedded() ? securityContext : securityContext.roles;
-
     // check for system roles
-    if (securityContextRoles) {
-      for (var i = 0; i < securityContextRoles.length; i += 1) {
-        let role = securityContextRoles[i];
-        if (roles.indexOf(role) > -1) {
-          return true;
-        }
-      };
+    let hasSystemRole = Utils.hasSystemRole(securityContext, roles);
+
+    if (hasSystemRole) {
+      return true;
     }
 
     // check for project roles
@@ -386,6 +382,28 @@ export class Utils {
       return wnd.getBaseServiceUrl(path);
     }
     return path;
+  }
+
+  public static isContainerDeveloper(securityContext) {
+    return securityContext && securityContext.indexOf(Roles.VRA_CONTAINER_DEVELOPER) > -1 &&
+                securityContext.indexOf(Roles.VRA_CONTAINER_ADMIN) == -1;
+  }
+
+  public static hasSystemRole(securityContext, roles) {
+    let securityContextRoles = FT.isApplicationEmbedded() ? securityContext : securityContext.roles;
+
+    if (!securityContextRoles || !roles) {
+      return false;
+    }
+
+    for (var i = 0; i < roles.length; i += 1) {
+      let role = roles[i];
+      if (securityContextRoles && securityContextRoles.indexOf(role) > -1) {
+          return true;
+      }
+    }
+
+    return false;
   }
 }
 

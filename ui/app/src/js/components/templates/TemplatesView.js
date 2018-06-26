@@ -17,7 +17,6 @@ import TemplateDetailsView from 'components/templates/TemplateDetailsView'; // e
 import RegistryView from 'components/registries/RegistryView'; // eslint-disable-line
 import TemplateImporterView from 'components/templates/TemplateImporterView'; // eslint-disable-line
 import ContainerRequestForm from 'components/containers/ContainerRequestForm'; // eslint-disable-line
-import KuberneterDeploymentRequestForm from 'components/kubernetes/KubernetesDeploymentRequestForm'; // eslint-disable-line
 import ClosureRequestForm from 'components/closures/ClosureRequestForm'; // eslint-disable-line
 import RequestsList from 'components/requests/RequestsList'; //eslint-disable-line
 import EventLogList from 'components/eventlog/EventLogList'; //eslint-disable-line
@@ -254,11 +253,13 @@ var TemplatesViewVueComponent = Vue.extend({
           return this.model.isFavorite || favoriteImages.includes(this.model.documentId);
         },
         addToFavoriteSupported: function() {
-          return ft.areFavoriteImagesEnabled() && utils.isAccessAllowed(['CLOUD_ADMIN']) &&
+          return ft.areFavoriteImagesEnabled() &&
+              utils.actionAllowed(window.routesRestrictions.FAVORITE_IMAGES) &&
               this.isRegistryGlobal && !this.isFavorite;
         },
         removeFromFavoriteSupported: function() {
-          return ft.areFavoriteImagesEnabled() && utils.isAccessAllowed(['CLOUD_ADMIN']) &&
+          return ft.areFavoriteImagesEnabled() &&
+              utils.actionAllowed(window.routesRestrictions.FAVORITE_IMAGES) &&
               this.model.isFavorite;
         },
         isPksEnabled: function() {
@@ -433,6 +434,10 @@ var TemplatesViewVueComponent = Vue.extend({
   methods: {
     isApplicationEmbedded: function() {
       return utils.isApplicationEmbedded();
+    },
+
+    isDeploymentPoliciesAllowed: function() {
+      return utils.actionAllowed(window.routesRestrictions.DEPLOYMENT_POLICIES);
     },
 
     backToApplications: function() {

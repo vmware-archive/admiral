@@ -138,7 +138,7 @@ export const ROUTES: Routes = [
             },
             {
                 path: 'kubernetes/add', component: KubernetesClusterAddComponent,
-                data: { roles: RoutesRestriction.KUBERNETES_CLUSTERS_NEW },
+                data: { roles: RoutesRestriction.KUBERNETES_CLUSTERS_ADD },
                 canActivate: [HomeAuthGuard]
             },
             {

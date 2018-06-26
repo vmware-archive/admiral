@@ -107,7 +107,7 @@
                     routerLinkActive="active">{{ "navigation.kubernetesClusters" | i18n }}</a></li>
           </ul>
       </section>
-      <section *ngIf="isPksEnabled" class="nav-group collapsible">
+      <section *ngIf="isPksEnabled" allowNavigation [roles]="endpointsRouteRestriction" class="nav-group collapsible">
           <input id="endpointsCollapse" type="checkbox">
           <label for="endpointsCollapse">{{ "navigation.endpoints" | i18n }}</label>
           <ul class="nav-list">

@@ -71,14 +71,12 @@ export class FormerViewComponent {
       this.frameLoading = true;
 
       iframeEl.onload = () => {
-        if (!FT.isApplicationEmbedded()) {
-          this.authService.getCachedSecurityContext().then((securityContext) => {
-            iframeEl.contentWindow.authSession = securityContext;
-          });
+        this.authService.getCachedSecurityContext().then((securityContext) => {
+          iframeEl.contentWindow.authSession = securityContext;
+        });
 
-          iframeEl.contentWindow.isAccessAllowed = Utils.isAccessAllowed;
-          iframeEl.contentWindow.routesRestrictions = RoutesRestriction;
-        }
+        iframeEl.contentWindow.isAccessAllowed = Utils.isAccessAllowed;
+        iframeEl.contentWindow.routesRestrictions = RoutesRestriction;
 
         this.frameLoading = false;
         iframeEl.src = this.url;
