@@ -33,8 +33,8 @@
               <li *ngIf="areClosuresAllowed"><a class="nav-link" routerLink="closures" routerLinkActive="active">{{ "navigation.closures" | i18n }}</a></li>
               <li *ngIf="isPksEnabled">
                   <section class="nav-group collapsible">
-                      <input id="deploymentsCollapse" type="checkbox">
-                        <label for="deploymentsCollapse">{{ "navigation.kubernetes.title" | i18n }}</label>
+                      <input id="kubernetesCollapse" type="checkbox">
+                        <label for="kubernetesCollapse">{{ "navigation.kubernetes.title" | i18n }}</label>
                         <ul class="nav-list">
                             <li><a class="nav-link" routerLink="kubernetes/deployments"
                                 routerLinkActive="active">{{ "navigation.kubernetes.deployments" | i18n }}</a></li>
@@ -52,8 +52,8 @@
       </section>
 
       <section *ngIf="showKubernetes" class="nav-group collapsible">
-        <input id="deploymentsCollapse" type="checkbox">
-        <label for="deploymentsCollapse">{{ "navigation.kubernetes.title" | i18n }}</label>
+        <input id="kubernetesCollapse" type="checkbox">
+        <label for="kubernetesCollapse">{{ "navigation.kubernetes.title" | i18n }}</label>
         <ul class="nav-list">
             <li><a class="nav-link" routerLink="kubernetes/deployments"
                 routerLinkActive="active">{{ "navigation.kubernetes.deployments" | i18n }}</a></li>
