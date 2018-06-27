@@ -288,6 +288,7 @@
       "details": {
         "summary": {
           "kubeConfigBtn": "KubeConfig",
+          "kubeConfigTooltip": "Download a configuration file for the kubectl command-line tool to gain access to this cluster.",
           "title": "Summary",
           "nodeCount": "Nodes:",
           "dashboard": "Dashboard:",

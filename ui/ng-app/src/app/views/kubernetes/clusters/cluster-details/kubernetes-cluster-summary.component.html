@@ -14,7 +14,8 @@
           <clr-icon shape="edit" size="12"></clr-icon>
           <span class="btn-spaced-text">{{ "edit" | i18n }}</span>
         </button>
-        <button class="btn btn-link" (click)="downloadKubeConfig()">
+        <button class="btn btn-link" (click)="downloadKubeConfig()"
+                title="{{ 'kubernetes.clusters.details.summary.kubeConfigTooltip' | i18n }}">
             <clr-icon shape="download" size="12"></clr-icon>
             <span class="btn-spaced-text">{{ "kubernetes.clusters.details.summary.kubeConfigBtn" | i18n }}</span>
         </button>
