@@ -16,6 +16,7 @@ import ListItemClosureVue from 'components/templates/ListItemClosureVue.html';
 import TemplateDetailsView from 'components/templates/TemplateDetailsView'; // eslint-disable-line
 import RegistryView from 'components/registries/RegistryView'; // eslint-disable-line
 import TemplateImporterView from 'components/templates/TemplateImporterView'; // eslint-disable-line
+import KuberneterDeploymentRequestForm from 'components/kubernetes/KubernetesDeploymentRequestForm'; // eslint-disable-line
 import ContainerRequestForm from 'components/containers/ContainerRequestForm'; // eslint-disable-line
 import ClosureRequestForm from 'components/closures/ClosureRequestForm'; // eslint-disable-line
 import RequestsList from 'components/requests/RequestsList'; //eslint-disable-line
@@ -262,6 +263,12 @@ var TemplatesViewVueComponent = Vue.extend({
         },
         isPksEnabled: function() {
           return ft.isPksEnabled();
+        },
+        isContainerDeveloper: function() {
+          return utils.isContainerDeveloper();
+        },
+        isAdditionalInfoAllowed: function() {
+          return utils.actionAllowed(window.routesRestrictions.PROVISIONING_ADDITIONAL_INFO_BUTTON);
         }
       },
       methods: {
@@ -269,19 +276,18 @@ var TemplatesViewVueComponent = Vue.extend({
           $event.stopPropagation();
           $event.preventDefault();
 
-          TemplateActions.createContainer(this.model.type, this.model.documentId);
+          if (!this.isContainerDeveloper) {
+            TemplateActions.createContainer(this.model.type, this.model.documentId);
+          } else if (this.isPksEnabled && this.isContainerDeveloper) {
+            NavigationActions.openKubernetesDeploymentRequest(this.model.type,
+              this.model.documentId);
+          }
         },
         provisionContainerAdditionalInfo: function($event) {
           $event.stopPropagation();
           $event.preventDefault();
 
           NavigationActions.openContainerRequest(this.model.type, this.model.documentId);
-        },
-        provisionKubernetesDeployment: function($event) {
-          $event.stopPropagation();
-          $event.preventDefault();
-
-          NavigationActions.openKubernetesDeploymentRequest(this.model.type, this.model.documentId);
         },
         addImageToFavorites: function($event) {
           $event.stopPropagation();
@@ -436,6 +442,10 @@ var TemplatesViewVueComponent = Vue.extend({
 
     isDeploymentPoliciesAllowed: function() {
       return utils.actionAllowed(window.routesRestrictions.DEPLOYMENT_POLICIES);
+    },
+
+    isTemplatesActionsAllowed: function() {
+      return utils.actionAllowed(window.routesRestrictions.TEMPLATES_NEW_IMPORT);
     },
 
     backToApplications: function() {

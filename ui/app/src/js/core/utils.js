@@ -1482,6 +1482,10 @@ var utils = {
         roles);
   },
 
+  isContainerDeveloper() {
+    return window.isContainerDeveloper(window.authSession);
+  },
+
   isContainersTabOpened() {
     if (!this.isApplicationEmbedded()) {
       return true;

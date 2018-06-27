@@ -24,7 +24,7 @@
         <div class="toolbar">
           <div class="row">
             <div class="col-sm-6 toolbar-primary">
-              <span v-if="selectedCategory === constants.TEMPLATES.SEARCH_CATEGORY.TEMPLATES">
+              <span v-if="selectedCategory === constants.TEMPLATES.SEARCH_CATEGORY.TEMPLATES && isTemplatesActionsAllowed()">
                 <a class="btn btn-link create-resource-btn" @click="openCreateTemplate($event)">
                   <i class="fa fa-plus"></i>{{i18n("app.template.list.createTemplate")}}
                 </a>

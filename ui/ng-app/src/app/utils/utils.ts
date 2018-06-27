@@ -280,8 +280,9 @@ export class Utils {
       throw new Error("Roles not provided!");
     }
 
+    // allow access to everything when no auth
     if (!securityContext) {
-        return false;
+        return true;
     }
 
     // check for system roles

@@ -76,6 +76,7 @@ export class FormerViewComponent {
         });
 
         iframeEl.contentWindow.isAccessAllowed = Utils.isAccessAllowed;
+        iframeEl.contentWindow.isContainerDeveloper = Utils.isContainerDeveloper;
         iframeEl.contentWindow.routesRestrictions = RoutesRestriction;
 
         this.frameLoading = false;
