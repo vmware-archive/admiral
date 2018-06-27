@@ -483,7 +483,18 @@ var TemplatesViewVueComponent = Vue.extend({
     },
 
     search: function(queryOptions) {
-      this.doSearchAndFilter(queryOptions, this.selectedCategory);
+      let searchTerm = queryOptions.any;
+
+      if (queryOptions.registry && (!searchTerm || validator.trim(searchTerm).length === 0)) {
+        // show warning - the search logic needs a search term
+        this.alert.show = true;
+        this.alert.message = i18n.t('app.template.list.repositoriesSearchWarning');
+        this.alert.type = constants.ALERTS.TYPE.WARNING;
+      } else {
+        this.alertClosed();
+
+        this.doSearchAndFilter(queryOptions, this.selectedCategory);
+      }
     },
 
     changeSearchTagSelection: function($eventData) {
@@ -563,6 +574,7 @@ var TemplatesViewVueComponent = Vue.extend({
     alertClosed: function() {
       this.alert.show = false;
       this.alert.message = '';
+      this.alert.type = undefined;
     },
 
     exportTemplate: function(templateDocumentId) {

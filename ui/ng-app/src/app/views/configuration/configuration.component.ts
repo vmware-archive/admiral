@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -9,10 +9,11 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Roles } from './../../utils/roles';
-import { AuthService } from './../../utils/auth.service';
 import { Component } from '@angular/core';
-import { Utils } from './../../utils/utils';
+import { AuthService } from '../../utils/auth.service';
+import { ErrorService } from "../../utils/error.service";
+import { Roles } from '../../utils/roles';
+import { Utils } from '../../utils/utils';
 
 @Component({
   selector: 'app-configuration',
@@ -20,18 +21,19 @@ import { Utils } from './../../utils/utils';
   styleUrls: ['./configuration.component.scss']
 })
 export class ConfigurationComponent {
+    private userSecurityContext: any;
 
-  private userSecurityContext: any;
+    constructor(authService: AuthService, errorService: ErrorService) {
 
-  constructor(authService: AuthService) {
-    authService.getCachedSecurityContext().then((securityContext) => {
-      this.userSecurityContext = securityContext;
-    }).catch((ex) => {
-      console.log(ex);
-    });
-  }
+        authService.getCachedSecurityContext().then((securityContext) => {
+            this.userSecurityContext = securityContext;
+        }).catch((error) => {
+            console.error(error);
+            errorService.error(Utils.getErrorMessage(error)._generic);
+        });
+    }
 
-  get hasAdminRole(): boolean {
-    return Utils.isAccessAllowed(this.userSecurityContext, null, [Roles.CLOUD_ADMIN]);
-  }
+    get hasAdminRole(): boolean {
+        return Utils.isAccessAllowed(this.userSecurityContext, null, [Roles.CLOUD_ADMIN]);
+    }
 }
