@@ -32,6 +32,6 @@ export class ConfigurationComponent {
   }
 
   get hasAdminRole(): boolean {
-    return Utils.isAccessAllowed(this.userSecurityContext, null, Roles.CLOUD_ADMIN);
+    return Utils.isAccessAllowed(this.userSecurityContext, null, [Roles.CLOUD_ADMIN]);
   }
 }
