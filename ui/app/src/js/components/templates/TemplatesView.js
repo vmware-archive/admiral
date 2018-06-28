@@ -27,15 +27,13 @@ import GridHolderMixin from 'components/common/GridHolderMixin';
 import constants from 'core/constants';
 import utils from 'core/utils';
 import ft from 'core/ft';
-import {
-  NavigationActions,
-  RequestsActions,
-  NotificationsActions,
-  TemplateActions,
-  TemplatesContextToolbarActions,
-  HostContextToolbarActions
-} from 'actions/Actions';
 
+import { NavigationActions, RequestsActions, NotificationsActions, TemplateActions,
+         TemplatesContextToolbarActions, HostContextToolbarActions } from 'actions/Actions';
+
+/**
+ * Templates, Repositories view.
+ */
 var TemplatesViewVueComponent = Vue.extend({
   template: TemplatesViewVue,
   props: {
@@ -63,7 +61,8 @@ var TemplatesViewVueComponent = Vue.extend({
       alert: alertData,
       createTemplateName: null,
       showTemplateExport: false,
-      exportTemplateDocumentId: null
+      exportTemplateDocumentId: null,
+      selectedRegistryOption: null
     };
   },
   computed: {
@@ -103,8 +102,7 @@ var TemplatesViewVueComponent = Vue.extend({
     selectedCategory: function() {
       var queryOpts = this.queryOptions || {};
 
-      return queryOpts[constants.SEARCH_CATEGORY_PARAM]
-                || constants.CONTAINERS.SEARCH_CATEGORY.ALL;
+      return queryOpts[constants.SEARCH_CATEGORY_PARAM] || constants.CONTAINERS.SEARCH_CATEGORY.ALL;
     },
     requestsCount: function() {
       var contextView = this.model.contextView;
@@ -192,8 +190,7 @@ var TemplatesViewVueComponent = Vue.extend({
       });
     });
 
-    this.unwatchIsPartialResult = this.$watch('isPartialResult',
-                                              (isPartialResult) => {
+    this.unwatchIsPartialResult = this.$watch('isPartialResult', (isPartialResult) => {
       if (isPartialResult) {
         var errorMessage = i18n.t('app.template.list.partialResultWarning');
         this.$dispatch('container-form-alert', errorMessage, constants.ALERTS.TYPE.WARNING);
@@ -482,44 +479,34 @@ var TemplatesViewVueComponent = Vue.extend({
       }
     },
 
+    changeSearchTagSelection: function($eventData) {
+      this.selectedRegistryOption = $eventData;
+
+      this.search(this.queryOptions);
+    },
+
     search: function(queryOptions) {
+      this.alertClosed();
+
       let searchTerm = queryOptions.any;
 
-      if (queryOptions.registry && (!searchTerm || validator.trim(searchTerm).length === 0)) {
+      if (this.selectedRegistryOption && !searchTerm) {
         // show warning - the search logic needs a search term
-        this.alert.show = true;
-        this.alert.message = i18n.t('app.template.list.repositoriesSearchWarning');
-        this.alert.type = constants.ALERTS.TYPE.WARNING;
+        this.showAlertMessage(constants.ALERTS.TYPE.WARNING,
+                                i18n.t('app.template.list.repositoriesSearchWarning'));
       } else {
-        this.alertClosed();
+        // perform the search
+        var queryOptionsToSend = $.extend({}, queryOptions);
+        queryOptionsToSend[constants.SEARCH_CATEGORY_PARAM] = this.selectedCategory;
+        // tag
+        if (this.selectedRegistryOption) {
+          queryOptionsToSend[this.searchTag] = this.selectedRegistryOption.value;
+        } else {
+          delete queryOptionsToSend[this.searchTag];
+        }
 
-        this.doSearchAndFilter(queryOptions, this.selectedCategory);
+        NavigationActions.openTemplates(queryOptionsToSend);
       }
-    },
-
-    changeSearchTagSelection: function($eventData) {
-      var qo = $.extend({}, this.queryOptions);
-
-      if ($eventData) {
-        qo[$eventData.name] = $eventData.value;
-      } else if (!$eventData) {
-        delete qo[this.searchTag];
-      }
-
-      this.search(qo);
-    },
-
-    selectCategory(categoryName, $event) {
-      this.doSearchAndFilter(this.queryOptions, categoryName);
-      $event.stopPropagation();
-      $event.preventDefault();
-    },
-
-    doSearchAndFilter: function(queryOptions, categoryName) {
-      var queryOptionsToSend = $.extend({}, queryOptions);
-      queryOptionsToSend[constants.SEARCH_CATEGORY_PARAM] = categoryName;
-
-      NavigationActions.openTemplates(queryOptionsToSend);
     },
 
     refresh: function() {
@@ -565,10 +552,14 @@ var TemplatesViewVueComponent = Vue.extend({
       return alert && alert.type;
     },
 
-    showErrorAlert: function(alertMessage) {
-      this.alert.show = true;
+    showAlertMessage: function(alertType, alertMessage) {
       this.alert.message = alertMessage;
-      this.alert.type = constants.ALERTS.TYPE.FAIL;
+      this.alert.type = alertType;
+      this.alert.show = true;
+    },
+
+    showErrorAlert: function(alertMessage) {
+      return this.showAlertMessage(constants.ALERTS.TYPE.FAIL, alertMessage);
     },
 
     alertClosed: function() {

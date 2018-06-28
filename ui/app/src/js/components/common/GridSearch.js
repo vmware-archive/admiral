@@ -28,6 +28,14 @@ var GridSearch = Vue.extend({
     placeholder: {
       type: String,
       required: false
+    },
+    filterTagName: {
+      type: String,
+      required: false
+    },
+    filterTagValue: {
+      type: String,
+      required: false
     }
   },
 
@@ -45,6 +53,10 @@ var GridSearch = Vue.extend({
         let oldOccurrenceSelection = uiCommonLib.searchUtils.getOccurrence(oldQueryOptions);
 
         this.searchString = uiCommonLib.searchUtils.getSearchString(newQueryOptions);
+        if (this.filterTagName && this.filterTagValue) {
+          this.searchString = this.stripTagString(this.searchString);
+        }
+
         this.occurrenceSelection = uiCommonLib.searchUtils.getOccurrence(newQueryOptions);
         if (!this.occurrenceSelection) {
           this.occurrenceSelection = constants.SEARCH_OCCURRENCE.ALL;
@@ -79,6 +91,19 @@ var GridSearch = Vue.extend({
         uiCommonLib.searchUtils.getQueryOptions(this.searchString, this.occurrenceSelection);
 
       this.$dispatch('search-grid-action', searchQueryOptions);
+    },
+
+    stripTagString: function() {
+      let resultSearchString = this.searchString;
+
+      if (resultSearchString.indexOf(this.filterTagName) > -1) {
+        // remove search tag name
+        let stringToRemove = this.filterTagName + ': ' + this.filterTagValue;
+        resultSearchString = resultSearchString.replace(stringToRemove, '');
+        resultSearchString = resultSearchString.trim();
+      }
+
+      return resultSearchString;
     }
   }
 });

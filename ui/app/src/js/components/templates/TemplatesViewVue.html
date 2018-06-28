@@ -44,8 +44,9 @@
             </div>
             <div class="col-sm-6 toolbar-secondary">
               <grid-search :query-options="queryOptions"
-                           :search-tag-name="searchTag"
                            :placeholder="searchPlaceholder"
+                           :filter-tag-name="searchTag"
+                           :filter-tag-value="selectedRegistryOption && selectedRegistryOption.value"
                            @search-grid-action="search"></grid-search>
             </div>
           </div>

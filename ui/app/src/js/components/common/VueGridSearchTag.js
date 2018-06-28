@@ -9,6 +9,8 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
+import utils from 'core/utils';
+
 import uiCommonLib from 'admiral-ui-common';
 
 /**
@@ -43,10 +45,15 @@ var VueGridSearchTag = Vue.extend({
     this.unwatchTagOptions = this.$watch('searchTagOptions', () => {
       this.initSearchTagSelection();
     }, { immediate: true });
+
+    this.unwatchQueryOptions = this.$watch('queryOptions', (newQueryOptions) => {
+      this.preselectOption(newQueryOptions);
+    }, { immediate: true });
   },
 
   detached: function() {
     this.unwatchTagOptions();
+    this.unwatchQueryOptions();
   },
 
   methods: {
@@ -99,6 +106,33 @@ var VueGridSearchTag = Vue.extend({
 
         this.$dispatch('search-option-select', null);
       });
+    },
+
+    preselectOption: function(queryOptions) {
+      if (!this.searchTagInput) {
+        return;
+      }
+
+      let searchTagValue = queryOptions && queryOptions[this.searchTagName];
+
+      if (searchTagValue) {
+        if ($.isArray(searchTagValue) && searchTagValue.length > 0) {
+          searchTagValue = searchTagValue[0];
+        }
+
+        this.searchTagSelection = {
+          name: searchTagValue,
+          value: searchTagValue
+        };
+      } else {
+        this.searchTagSelection = null;
+      }
+
+      let selectedOption = this.searchTagInput.getSelectedOption();
+      if (selectedOption && !utils.equals(selectedOption, this.searchTagSelection)) {
+
+        this.searchTagInput.setSelectedOption(this.searchTagSelection);
+      }
     }
   }
 });
