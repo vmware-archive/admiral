@@ -382,7 +382,8 @@ public class KubernetesUtil {
     }
 
     public static String buildLogUriPath(BaseKubernetesState state, String containerName) {
-        return UriUtils.buildUriPath(LogService.FACTORY_LINK, state.documentSelfLink + "-" +
+        return UriUtils.buildUriPath(LogService.FACTORY_LINK,
+                UriUtils.getLastPathSegment(state.documentSelfLink) + "-" +
                 containerName);
     }
 

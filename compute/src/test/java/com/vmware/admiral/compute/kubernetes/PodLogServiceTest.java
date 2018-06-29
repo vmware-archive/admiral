@@ -145,7 +145,8 @@ public class PodLogServiceTest extends ComputeBaseTest {
         for (int i = 0; i < podState.pod.spec.containers.size(); i++) {
             LogServiceState logState = new LogServiceState();
             logState.logs = ("test-log-" + i).getBytes();
-            logState.documentSelfLink = podState.documentSelfLink + "-" + podState.pod.spec
+            logState.documentSelfLink = UriUtils.getLastPathSegment(podState.documentSelfLink) + "-"
+                    + podState.pod.spec
                     .containers.get(i).name;
             logState = doPost(logState, LogService.FACTORY_LINK);
             assertNotNull(logState);

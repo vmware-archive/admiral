@@ -132,7 +132,9 @@ public class KubernetesAdapterServiceTest extends BaseKubernetesMockTest {
 
         for (Container container : podState.pod.spec.containers) {
             LogServiceState logState = getDocument(LogServiceState.class, LogService
-                    .FACTORY_LINK + podState.documentSelfLink + "-" + container.name);
+                    .FACTORY_LINK + "/" + UriUtils.getLastPathSegment(podState.documentSelfLink)
+                    + "-"
+                    + container.name);
             assertEquals(service.containerNamesToLogs.get(container.name), new String(logState
                     .logs, "UTF-8"));
         }
