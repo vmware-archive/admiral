@@ -1123,6 +1123,11 @@ services.loadContainers = function(queryOptions) {
 };
 
 services.rescanContainers = function(queryOptions, numberOfContainers) {
+  if (utils.isApplicationEmbedded()) {
+      // this will build filter 'system ne true'
+      queryOptions.system = 'true';
+  }
+
   var filter = buildResourcesSearchQuery(queryOptions);
   var url = buildPaginationUrl(links.CONTAINERS, filter, true, 'created asc', numberOfContainers);
 
