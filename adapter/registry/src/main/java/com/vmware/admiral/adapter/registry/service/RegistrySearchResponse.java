@@ -86,7 +86,11 @@ public class RegistrySearchResponse {
             return;
         }
         size = Math.min(size, results.size());
-        results = results.subList(0, size);
+        List<Result> resultsWithLimitedSize = new ArrayList<>(size);
+        for (int i = 0; i < size; ++i) {
+            resultsWithLimitedSize.add(results.get(i));
+        }
+        results = resultsWithLimitedSize;
         numResults = results.size();
     }
 }

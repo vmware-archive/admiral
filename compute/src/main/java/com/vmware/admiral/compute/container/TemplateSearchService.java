@@ -36,7 +36,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.logging.Level;
 
 import com.vmware.admiral.adapter.registry.service.RegistryAdapterService;
 import com.vmware.admiral.adapter.registry.service.RegistrySearchResponse;
@@ -46,10 +45,8 @@ import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptio
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.ConfigurationUtil;
-import com.vmware.admiral.common.util.DockerImage;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
-import com.vmware.admiral.common.util.RegistryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.ServiceDocumentQuery.ServiceDocumentQueryElementResult;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
@@ -57,7 +54,6 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService.Containe
 import com.vmware.admiral.compute.container.TemplateSpec.TemplateType;
 import com.vmware.admiral.image.service.ContainerImageService;
 import com.vmware.admiral.service.common.MultiTenantDocument;
-import com.vmware.admiral.service.common.RegistryService.RegistryState;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
@@ -412,12 +408,6 @@ public class TemplateSearchService extends StatelessService {
             queryParams.put(REGISTRY_FILTER_QUERY_PARAM_NAME, registryFilter);
         }
 
-        String tenantLink = queryParams.get(TENANT_LINKS_PARAM_NAME);
-        List<String> tenantLinks = new ArrayList<>();
-        if (tenantLink != null) {
-            tenantLinks.add(tenantLink);
-        }
-
         // pass on the query parameters to the image search service
         imageSearchUri = UriUtils.extendUriWithQuery(imageSearchUri, flattenQueryParams(
                 queryParams));
@@ -429,57 +419,15 @@ public class TemplateSearchService extends StatelessService {
                     } else {
                         RegistrySearchResponse response = o.getBody(RegistrySearchResponse.class);
                         if (response.results != null) {
-                            filterResultsByRegistryPath(response.results, tenantLinks, (res, t) -> {
-                                if (t != null && !t.isEmpty()) {
-                                    resultConsumer.accept(error(t.iterator().next()), null);
-                                    return;
-                                }
-
-                                for (Result result : res) {
-                                    resultConsumer.accept(result(createTemplateFromImageResult(
-                                            result), res.size()), null);
-                                }
-
-                                resultConsumer.accept(noResult(), response.isPartialResult);
-                            });
+                            List<Result> results = response.results;
+                            for (Result result : results) {
+                                resultConsumer.accept(result(createTemplateFromImageResult(
+                                        result), results.size()), null);
+                            }
+                            resultConsumer.accept(noResult(), response.isPartialResult);
                         }
                     }
                 }));
-    }
-
-    private void filterResultsByRegistryPath(List<Result> results, List<String> tenantLinks,
-            BiConsumer<Collection<Result>, Collection<Throwable>> consumer) {
-        RegistryUtil.findRegistries(getHost(), tenantLinks, null, (registries, failures) -> {
-            if (failures != null) {
-                consumer.accept(null, failures);
-                return;
-            }
-
-            ArrayList<Result> filteredResults = new ArrayList<>();
-            results.stream().forEach(res -> {
-                String imageName = res.name;
-                DockerImage parsedImage;
-                try {
-                    parsedImage = DockerImage.fromImageName(imageName);
-                } catch (Throwable ex) {
-                    log(Level.SEVERE, "Failed to parse docker image from String '%s': %s",
-                            imageName, Utils.toString(ex));
-                    consumer.accept(null, Arrays.asList(ex));
-                    return;
-                }
-
-                List<RegistryState> filteredRegistryStates = RegistryUtil
-                        .filterRegistriesByPath(getHost(), registries, parsedImage);
-
-                log(Level.FINE, "Found %s matching registries.",
-                        filteredRegistryStates == null ? 0 : filteredRegistryStates.size());
-                if (filteredRegistryStates.size() > 0) {
-                    filteredResults.add(res);
-                }
-            });
-
-            consumer.accept(filteredResults, null);
-        });
     }
 
     private TemplateSpec createTemplateFromImageResult(Result result) {

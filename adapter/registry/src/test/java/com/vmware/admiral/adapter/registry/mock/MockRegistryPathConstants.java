@@ -18,6 +18,13 @@ public interface MockRegistryPathConstants {
     public static final String BASE_V1_PATH = "/mock/registry.v1";
     public static final String BASE_V2_PATH = "/mock/registry.v2";
 
+    public static final String MOCK_REGISTRY_ADAPTER_PATH = "/mock/registry-adapter";
+    public static final String MOCK_REGISTRY_PATH_HOSTNAME_AND_PORT = "http://hostname:5000";
+    public static final String MOCK_REGISTRY_HOSTNAME_AND_PORT = "hostname:5000";
+
+    public static final String REGISTRY_NAMESPACE_PATH = "/namespace";
+    public static final String REGISTRY_NAMESPACE_NAME = "namespace";
+
     public static final String V1_PING_PATH = BASE_V1_PATH + "/v1/_ping";
 
     public static final String V1_SEARCH_PATH = BASE_V1_PATH + "/v1/search";

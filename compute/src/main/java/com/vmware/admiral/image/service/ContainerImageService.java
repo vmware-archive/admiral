@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
+import java.util.logging.Level;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ImageOperationType;
@@ -118,18 +119,9 @@ public class ContainerImageService extends StatelessService {
                         .next());
                 return;
             }
-            Map<String, String> registryLinks = new HashMap<>();
-            if (registries != null) {
-                // if same registry is repeated, return it only once
-                registries.stream()
-                        .forEach(registryState -> {
-                            String address = UriUtilsExtended.buildDockerRegistryUri(registryState.address).toString();
-                            if (!registryLinks.containsKey(address)) {
-                                registryLinks.put(address, registryState.documentSelfLink);
-                            }
-                        });
 
-                handleSearchRequest(op, registryAdapterUri, queryParams, registryLinks.values(), rawTenantLinks);
+            if (registries != null) {
+                handleSearchRequest(op, registryAdapterUri, queryParams, registries, rawTenantLinks);
             }
         };
 
@@ -161,9 +153,20 @@ public class ContainerImageService extends StatelessService {
     }
 
     private void handleSearchRequest(Operation op, URI registryAdapterUri,
-            Map<String, String> queryParams, Collection<String> searchRegistryLinks,
+            Map<String, String> queryParams, Collection<RegistryState> registries,
             String tenantLink) {
 
+        Map<String, String> registryLinks = new HashMap<>();
+        // if same registry is repeated, return it only once
+        registries.stream()
+                .forEach(registryState -> {
+                    String address = UriUtilsExtended.buildDockerRegistryUri(registryState.address).toString();
+                    if (!registryLinks.containsKey(address)) {
+                        registryLinks.put(address, registryState.documentSelfLink);
+                    }
+                });
+
+        Collection<String> searchRegistryLinks = registryLinks.values();
         if (searchRegistryLinks.isEmpty()) {
             op.fail(new LocalizableValidationException("No registries found", "compute.registries.not.found"));
             return;
@@ -173,6 +176,7 @@ public class ContainerImageService extends StatelessService {
         try {
             parsedLimit = Integer.parseInt(queryParams.get(RegistryAdapterService.LIMIT_PROP_NAME));
         } catch (Exception e) {
+            logSevere(e);
         }
 
         final int limit = parsedLimit != null ? parsedLimit : 0;
@@ -211,6 +215,9 @@ public class ContainerImageService extends StatelessService {
 
             logFailures(failures, tenantLink);
 
+            mergedResponse.results = filterResultsByRegistryPath(mergedResponse.results,
+                    registries, failures);
+
             if (failures != null && !failures.isEmpty()) {
                 mergedResponse.isPartialResult = true;
             }
@@ -223,6 +230,7 @@ public class ContainerImageService extends StatelessService {
             mergedResponse.page = -1;
             mergedResponse.pageSize = -1;
             mergedResponse.numPages = -1;
+
             op.setBody(mergedResponse);
 
             logFine("Search result: %s", Utils.toJsonHtml(mergedResponse));
@@ -231,6 +239,36 @@ public class ContainerImageService extends StatelessService {
         });
 
         join.sendWith(this);
+    }
+
+    private List<Result> filterResultsByRegistryPath(Collection<Result> results,
+            Collection<RegistryState> registries, Map<Long, Throwable> failures) {
+
+        List<Result> filteredResults = new ArrayList<>();
+        results.stream().forEach(res -> {
+            String imageName = res.name;
+            DockerImage parsedImage;
+            try {
+                parsedImage = DockerImage.fromImageName(imageName);
+            } catch (Throwable ex) {
+                log(Level.SEVERE, "Failed to parse docker image from String '%s': %s",
+                        imageName, Utils.toString(ex));
+                long nextFailureNumber = failures.keySet().iterator().next();
+                failures.put(nextFailureNumber, ex);
+                return;
+            }
+
+            List<RegistryState> filteredRegistryStates = RegistryUtil
+                    .filterRegistriesByPath(getHost(), registries, parsedImage);
+
+            log(Level.FINE, "Found %s matching registries.",
+                    filteredRegistryStates == null ? 0 : filteredRegistryStates.size());
+            if (filteredRegistryStates.size() > 0) {
+                filteredResults.add(res);
+            }
+        });
+
+        return filteredResults;
     }
 
     private Operation createSearchOperation(URI registryAdapterUri,
