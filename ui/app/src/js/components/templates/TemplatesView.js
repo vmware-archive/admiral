@@ -516,6 +516,10 @@ var TemplatesViewVueComponent = Vue.extend({
           delete queryOptionsToSend[this.searchTag];
         }
 
+        if (utils.equals(queryOptionsToSend, this.queryOptions)) {
+          return;
+        }
+
         NavigationActions.openTemplates(queryOptionsToSend);
       }
     },

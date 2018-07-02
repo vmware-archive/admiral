@@ -22,7 +22,7 @@
     <div class="search-form-input">
       <input type="text" class="form-control" name="searchGridInput"
              v-model="searchString" :placeholder="placeholder"
-                 @keyup.enter="onSearch($event)" />
+             @keyup.enter="onSearch($event)" @blur="onSearch($event)"/>
     </div>
   </div>
 </div>

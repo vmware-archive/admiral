@@ -55,6 +55,7 @@ var GridSearch = Vue.extend({
         this.searchString = uiCommonLib.searchUtils.getSearchString(newQueryOptions);
         if (this.filterTagName && this.filterTagValue) {
           this.searchString = this.stripTagString(this.searchString);
+          oldSearchString = this.stripTagString(oldSearchString);
         }
 
         this.occurrenceSelection = uiCommonLib.searchUtils.getOccurrence(newQueryOptions);
@@ -87,8 +88,12 @@ var GridSearch = Vue.extend({
     },
 
     search: function() {
+      if (this.filterTagName && this.filterTagValue) {
+        this.searchString = this.stripTagString(this.searchString);
+      }
+
       let searchQueryOptions =
-        uiCommonLib.searchUtils.getQueryOptions(this.searchString, this.occurrenceSelection);
+              uiCommonLib.searchUtils.getQueryOptions(this.searchString, this.occurrenceSelection);
 
       this.$dispatch('search-grid-action', searchQueryOptions);
     },
