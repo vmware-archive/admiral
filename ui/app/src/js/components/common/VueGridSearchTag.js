@@ -42,8 +42,11 @@ var VueGridSearchTag = Vue.extend({
   },
 
   attached: function() {
-    this.unwatchTagOptions = this.$watch('searchTagOptions', () => {
-      this.initSearchTagSelection();
+    this.unwatchTagOptions = this.$watch('searchTagOptions',
+      (searchTagOptions, oldSearchTagOptions) => {
+        if (!utils.equals(searchTagOptions, oldSearchTagOptions)) {
+          this.initSearchTagSelection();
+        }
     }, { immediate: true });
 
     this.unwatchQueryOptions = this.$watch('queryOptions', (newQueryOptions) => {

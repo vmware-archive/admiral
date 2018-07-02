@@ -80,14 +80,11 @@ var TemplatesViewVueComponent = Vue.extend({
     queryOptions: function() {
       return this.model.listView && this.model.listView.queryOptions;
     },
+    isRepositoriesView: function() {
+      return this.selectedCategory === constants.TEMPLATES.SEARCH_CATEGORY.IMAGES;
+    },
     searchTag: function() {
-      let searchTag;
-      if (this.selectedCategory === constants.TEMPLATES.SEARCH_CATEGORY.IMAGES
-            && this.model.listView.availableRepositories) {
-        searchTag = 'registry';
-      }
-
-      return searchTag;
+      return this.isRepositoriesView && 'registry';
     },
     searchTagOptions: function() {
       var searchTagOptions;
@@ -200,6 +197,12 @@ var TemplatesViewVueComponent = Vue.extend({
       }
     });
 
+    this.unwatchIsRepositoriesView = this.$watch('isRepositoriesView', (isRepositoriesView) => {
+      if (!isRepositoriesView) {
+        this.selectedRegistryOption = undefined;
+      }
+    }, { immediate: true });
+
     this.refreshRequestsInterval = setInterval(() => {
       if (this.activeContextItem === constants.CONTEXT_PANEL.REQUESTS) {
         RequestsActions.refreshRequests();
@@ -215,6 +218,7 @@ var TemplatesViewVueComponent = Vue.extend({
   detached: function() {
     this.unwatchExpanded();
     this.unwatchIsPartialResult();
+    this.unwatchIsRepositoriesView();
 
     var $mainPanel = $(this.$el).children('.list-holder').children('.main-panel');
     $mainPanel.off('transitionend MSTransitionEnd webkitTransitionEnd oTransitionEnd');
@@ -247,9 +251,9 @@ var TemplatesViewVueComponent = Vue.extend({
           return globalRepositories ? globalRepositories.includes(this.model.registry) : false;
         },
         isFavorite: function() {
-          var favoriteImages = this.parentListView.favoriteImages;
-          return ft.areFavoriteImagesEnabled() && this.model.isFavorite ||
-              favoriteImages.includes(this.model.documentId);
+          let favoriteImages = this.parentListView.favoriteImages;
+          return ft.areFavoriteImagesEnabled() && this.model.isFavorite
+                    || favoriteImages && favoriteImages.includes(this.model.documentId);
         },
         addToFavoriteSupported: function() {
           return ft.areFavoriteImagesEnabled() &&

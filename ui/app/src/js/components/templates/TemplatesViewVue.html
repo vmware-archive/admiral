@@ -10,8 +10,8 @@
   -->
 
 <div class="images-view" :class="{'right-context-expanded':  contextExpanded}">
-  <alert :alert-type="alert.type" :show-alert="alert.show" :alert-message="alert.message"
-         @alert-closed="alertClosed()"></alert>
+  <alert v-if="alert.message" :alert-type="alert.type" :show-alert="alert.show"
+         :alert-message="alert.message" @alert-closed="alertClosed()"></alert>
 
   <div class="list-holder">
     <div class="main-panel">

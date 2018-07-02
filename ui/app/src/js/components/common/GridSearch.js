@@ -53,7 +53,10 @@ var GridSearch = Vue.extend({
         let oldOccurrenceSelection = uiCommonLib.searchUtils.getOccurrence(oldQueryOptions);
 
         this.searchString = uiCommonLib.searchUtils.getSearchString(newQueryOptions);
-        if (this.filterTagName && this.filterTagValue) {
+        if (this.filterTagName) {
+          if (!this.filterTagValue) {
+            this.filterTagValue = newQueryOptions[this.filterTagName];
+          }
           this.searchString = this.stripTagString(this.searchString);
           oldSearchString = this.stripTagString(oldSearchString);
         }
