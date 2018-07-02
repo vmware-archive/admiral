@@ -13,9 +13,13 @@ package com.vmware.admiral.compute.cluster;
 
 import static java.util.EnumSet.of;
 
+import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_CLUSTER_NAME_PROP_NAME;
+
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.time.Instant;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -60,6 +64,7 @@ import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
+import com.vmware.xenon.common.ServiceStateMapUpdateRequest;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
@@ -98,6 +103,8 @@ public class ClusterService extends StatelessService {
     public static final String CLUSTER_NAME_CUSTOM_PROP = "__clusterName";
     public static final String CLUSTER_CREATION_TIME_MICROS_CUSTOM_PROP = "__clusterCreationTimeMicros";
     public static final String CLUSTER_TYPE_CUSTOM_PROP = "__clusterType";
+    public static final String CREATE_EMPTY_CLUSTER_PROP = "__createEmptyCluster";
+    public static final String INITIAL_CLUSTER_STATUS_PROP = "__initialClusterState";
 
     public static final String HOSTS_FILTER_QUERY_PARAM = "$hostsFilter";
     public static final String CUSTOM_OPTIONS_QUERY_PARAM = "customOptions";
@@ -113,7 +120,7 @@ public class ClusterService extends StatelessService {
     }
 
     public enum ClusterStatus {
-        ON, OFF, DISABLED, WARNING
+        ON, OFF, DISABLED, WARNING, PROVISIONING
     }
 
     @SuppressWarnings("serial")
@@ -230,9 +237,9 @@ public class ClusterService extends StatelessService {
         ClusterDto patchDto = patch.getBody(ClusterDto.class);
 
         patchUnderlyingPlacementZone(clusterId, patchDto)
-                .thenCompose(epzConfigState -> getInfoFromHostsWihtinOnePlacementZone(projectLink,
+                .thenCompose(epzConfigState -> getInfoFromHostsWithinOnePlacementZone(projectLink,
                         epzConfigState))
-                .thenAccept(clusterDtom -> propagatePublicAddressIfNeeded(patchDto, clusterDtom))
+                .thenAccept(clusterDto -> propagatePublicAddressIfNeeded(patchDto, clusterDto))
                 .thenAccept(clusterDto -> {
                     if (clusterDto != null) {
                         patch.setBody(clusterDto);
@@ -410,10 +417,10 @@ public class ClusterService extends StatelessService {
         }
 
         sendWithDeferredResult(getPlacementZone, ServiceDocumentQueryResult.class)
-                .thenCompose(queryResult -> getInfoFromHostsWihtinPlacementZone(projectLink,
+                .thenCompose(queryResult -> getInfoFromHostsWithinPlacementZone(projectLink,
                         queryResult, get))
                 .thenAccept(clusterDtoList -> {
-                    Map<String, Object> ClusterDtoMap = clusterDtoList.stream()
+                    Map<String, Object> clusterDtoMap = clusterDtoList.stream()
                             .filter(c -> ClusterUtils.filterByType(c, typeFilter))
                             .collect(Collectors.toMap(
                                     clusterDto -> clusterDto.documentSelfLink,
@@ -421,10 +428,10 @@ public class ClusterService extends StatelessService {
 
                     ServiceDocumentQueryResult queryResult = new ServiceDocumentQueryResult();
                     queryResult.documentLinks = new LinkedList<>(
-                            ClusterDtoMap.keySet());
-                    queryResult.documentCount = Long.valueOf(ClusterDtoMap.size());
+                            clusterDtoMap.keySet());
+                    queryResult.documentCount = (long) clusterDtoMap.size();
                     if (expand) {
-                        queryResult.documents = ClusterDtoMap;
+                        queryResult.documents = clusterDtoMap;
                     }
                     get.setBody(queryResult);
                 })
@@ -446,7 +453,7 @@ public class ClusterService extends StatelessService {
                         UriUtils.buildExpandLinksQueryUri(elasticPlacementZoneConfigurationUri))
                 .setReferer(getUri()),
                 ElasticPlacementZoneConfigurationState.class)
-                        .thenCompose(epzConfigState -> getInfoFromHostsWihtinOnePlacementZone(
+                        .thenCompose(epzConfigState -> getInfoFromHostsWithinOnePlacementZone(
                                 projectLink, epzConfigState))
                         .thenAccept(clusterDto -> {
                             if (clusterDto != null) {
@@ -487,7 +494,7 @@ public class ClusterService extends StatelessService {
 
     }
 
-    private DeferredResult<List<ClusterDto>> getInfoFromHostsWihtinPlacementZone(String projectLink,
+    private DeferredResult<List<ClusterDto>> getInfoFromHostsWithinPlacementZone(String projectLink,
             ServiceDocumentQueryResult queryResult, Operation get) {
         Map<String, ElasticPlacementZoneConfigurationState> ePZstates = QueryUtil
                 .extractQueryResult(
@@ -503,7 +510,7 @@ public class ClusterService extends StatelessService {
         return DeferredResult.allOf(clusterDtoList);
     }
 
-    private DeferredResult<ClusterDto> getInfoFromHostsWihtinOnePlacementZone(
+    private DeferredResult<ClusterDto> getInfoFromHostsWithinOnePlacementZone(
             String projectLink, ElasticPlacementZoneConfigurationState queryResult) {
 
         // if nothing was updated, the resource pool will be null
@@ -521,7 +528,7 @@ public class ClusterService extends StatelessService {
                 });
     }
 
-    private DeferredResult<Operation> deleteHostsWihtinOnePlacementZone(ServiceHost host,
+    private DeferredResult<Operation> deleteHostsWithinOnePlacementZone(ServiceHost host,
             String resourcePoolLink, String projectLink) {
 
         DeferredResult<Operation> deleteNodesDR = ClusterUtils.getHostsWithinPlacementZone(
@@ -563,13 +570,23 @@ public class ClusterService extends StatelessService {
 
         generatePlacementZoneAndPlacement(hostSpec, generatedResourcesIds)
                 .thenCompose((zoneAndPlacement) -> {
+                    if (isCreateEmptyCluster(hostSpec)) {
+                        DeferredResult<Pair<ResourcePoolState, ComputeState>> dr =
+                                new DeferredResult<>();
+                        dr.complete(new Pair<>(zoneAndPlacement.left, null));
+                        return dr;
+                    }
                     return addContainerHost(post, hostSpec)
                             .thenApply((hostState) -> new Pair<>(zoneAndPlacement.left, hostState));
                 })
                 .thenAccept((zoneAndHost) -> {
+                    zoneAndHost.left.customProperties.put(INITIAL_CLUSTER_STATUS_PROP,
+                            hostSpec.hostState.customProperties.get(INITIAL_CLUSTER_STATUS_PROP));
                     LinkedList<ComputeState> a = new LinkedList<>();
-                    a.add(zoneAndHost.right);
-                    post.setBody(
+                    if (zoneAndHost.right != null) {
+                        a.add(zoneAndHost.right);
+                    }
+                    post.setBodyNoCloning(
                             ClusterUtils.placementZoneAndItsHostsToClusterDto(zoneAndHost.left, a));
                     post.complete();
                 }).exceptionally((ex) -> {
@@ -606,52 +623,61 @@ public class ClusterService extends StatelessService {
         hs.hostState.id = hostSpec.hostState.id;
         hs.hostState.address = hostSpec.hostState.address;
         hs.hostState.tenantLinks = hostSpec.getHostTenantLinks();
-        //        hs.hostState.id = hostSpec.hostState.address;
         hs.hostState.resourcePoolLink = resourcePoolDocumentSelfLink;
         hs.acceptCertificate = hostSpec.acceptCertificate;
-        hs.hostState.customProperties = new HashMap<>();
-        hs.hostState.customProperties.put(ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME,
+        hs.acceptHostAddress = hostSpec.acceptHostAddress;
+
+        HashMap<String, String> map = new HashMap<>();
+        hs.hostState.customProperties = map;
+        map.put(ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME,
                 ContainerHostService.DockerAdapterType.API.name());
-        hs.hostState.customProperties.put(ContainerHostService.CONTAINER_HOST_TYPE_PROP_NAME,
-                ContainerHostType.DOCKER.name());
-        hs.hostState.customProperties.put(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME,
+
+        ContainerHostType hostType = ContainerHostUtil.getDeclaredContainerHostType(
+                hostSpec.hostState);
+        map.put(ContainerHostService.CONTAINER_HOST_TYPE_PROP_NAME, hostType.name());
+        map.put(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME,
                 PropertyUtils.getPropertyString(hostSpec.hostState.customProperties,
                         ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME)
                         .orElse(null));
-        hs.hostState.customProperties.put(ContainerHostService.HOST_PUBLIC_ADDRESS_PROP_NAME,
+        map.put(ContainerHostService.HOST_PUBLIC_ADDRESS_PROP_NAME,
                 PropertyUtils.getPropertyString(hostSpec.hostState.customProperties,
                         ContainerHostService.HOST_PUBLIC_ADDRESS_PROP_NAME)
                         .orElse(null));
-        hs.hostState.customProperties.put(ContainerHostService.CUSTOM_PROPERTY_DEPLOYMENT_POLICY,
+        map.put(ContainerHostService.CUSTOM_PROPERTY_DEPLOYMENT_POLICY,
                 PropertyUtils.getPropertyString(hostSpec.hostState.customProperties,
                         ContainerHostService.CUSTOM_PROPERTY_DEPLOYMENT_POLICY)
                         .orElse(null));
-        hs.hostState.customProperties.put(ContainerHostService.CUSTOM_PROPERTY_HOST_ALIAS,
+        map.put(ContainerHostService.CUSTOM_PROPERTY_HOST_ALIAS,
                 PropertyUtils.getPropertyString(hostSpec.hostState.customProperties,
                         ContainerHostService.CUSTOM_PROPERTY_HOST_ALIAS)
                         .orElse(null));
+        map.put(PKS_CLUSTER_NAME_PROP_NAME,
+                PropertyUtils.getPropertyString(hostSpec.hostState.customProperties,
+                        PKS_CLUSTER_NAME_PROP_NAME)
+                        .orElse(null));
 
-        sendWithDeferredResult(Operation
-                .createPut(UriUtils.buildUri(getHost(),
-                        ContainerHostService.SELF_LINK))
-                .setReferer(getUri())
-                .setBody(hs))
-                        .thenAccept(cs -> {
-                            post.setBody(cs.getBodyRaw());
-                        }).exceptionally(ex -> {
-                            if (ex.getCause() instanceof CertificateNotTrustedException) {
-                                post.setBody(
-                                        ((CertificateNotTrustedException) ex
-                                                .getCause()).certificate);
-                                post.complete();
-                            } else {
-                                logWarning("Create host in cluster %s failed: %s", clusterId,
-                                        Utils.toString(ex));
-                                post.fail(ex.getCause());
-                            }
-                            return null;
-                        }).whenCompleteNotify(post);
-
+        sendWithDeferredResult(
+                Operation.createPut(UriUtils.buildUri(getHost(), ContainerHostService.SELF_LINK))
+                        .setReferer(getUri())
+                        .setBodyNoCloning(hs))
+                .thenAccept(cs -> {
+                    post.setBody(cs.getBodyRaw());
+                    // special case to clear initial cluster status when a host is added
+                    clearInitialClusterStatus(resourcePoolDocumentSelfLink);
+                })
+                .exceptionally(ex -> {
+                    if (ex.getCause() instanceof CertificateNotTrustedException) {
+                        post.setBody(
+                                ((CertificateNotTrustedException) ex.getCause()).certificate);
+                        post.complete();
+                    } else {
+                        logWarning("Create host in cluster %s failed: %s", clusterId,
+                                Utils.toString(ex));
+                        post.fail(ex.getCause());
+                    }
+                    return null;
+                })
+                .whenCompleteNotify(post);
     }
 
     private void validateCreateClusterPost(Operation post) {
@@ -760,7 +786,7 @@ public class ClusterService extends StatelessService {
         String resourcePoolLink = UriUtils.buildUriPath(
                 ResourcePoolService.FACTORY_LINK, clusterId);
         String projectLink = OperationUtil.extractProjectFromHeader(delete);
-        deleteHostsWihtinOnePlacementZone(getHost(), resourcePoolLink, projectLink)
+        deleteHostsWithinOnePlacementZone(getHost(), resourcePoolLink, projectLink)
                 .thenAccept(operation -> {
                     if (operation == null || DeploymentProfileConfig.getInstance().isTest()) {
                         //TODO if MockRequestBrokerService behaves as Task service we can remove the
@@ -854,6 +880,22 @@ public class ClusterService extends StatelessService {
 
                             }
                         });
+    }
+
+
+    private void clearInitialClusterStatus(String resourcePoolLink) {
+        Map<String, Collection<Object>> keysToRemove = new HashMap<>();
+        keysToRemove.put(ResourcePoolState.FIELD_NAME_CUSTOM_PROPERTIES,
+                Collections.singleton(INITIAL_CLUSTER_STATUS_PROP));
+        ServiceStateMapUpdateRequest x = ServiceStateMapUpdateRequest.create(null, keysToRemove);
+        Operation.createPatch(this, resourcePoolLink)
+                .setBodyNoCloning(x)
+                .sendWith(this);
+    }
+
+    private boolean isCreateEmptyCluster(ContainerHostSpec h) {
+        return h.hostState.customProperties != null &&
+                Boolean.valueOf(h.hostState.customProperties.get(CREATE_EMPTY_CLUSTER_PROP));
     }
 
 }

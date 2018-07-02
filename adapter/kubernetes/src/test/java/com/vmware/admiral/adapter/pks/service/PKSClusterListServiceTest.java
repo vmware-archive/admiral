@@ -14,10 +14,10 @@ package com.vmware.admiral.adapter.pks.service;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_CLUSTER_EXISTS_PROP_NAME;
+import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_CLUSTER_UUID_PROP_NAME;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_ENDPOINT_PROP_NAME;
 import static com.vmware.admiral.adapter.pks.service.PKSClusterListService.PKS_ENDPOINT_PARAM_NAME;
-import static com.vmware.admiral.compute.ContainerHostService.PKS_CLUSTER_EXISTS_PROP_NAME;
-import static com.vmware.admiral.compute.ContainerHostService.PKS_CLUSTER_UUID_PROP_NAME;
 
 import java.net.URI;
 import java.util.ArrayList;

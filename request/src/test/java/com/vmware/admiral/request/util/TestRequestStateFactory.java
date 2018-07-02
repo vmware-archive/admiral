@@ -271,6 +271,11 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         return createRequestState(ResourceType.COMPUTE_TYPE.getName(), COMPUTE_DESC_ID);
     }
 
+    public static RequestBrokerState createPKSClusterRequestState(HashMap<String, String> customProperties) {
+        return createRequestState(ResourceType.PKS_CLUSTER_TYPE.getName(), null, null,
+                customProperties);
+    }
+
     public static RequestBrokerState createRequestState(String resourceType,
             String resourceDescriptionLink) {
         return createRequestState(resourceType, resourceDescriptionLink, null, new HashMap<>());

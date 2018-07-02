@@ -12,6 +12,7 @@
 package com.vmware.admiral.adapter.pks;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -25,8 +26,10 @@ import static org.mockito.Mockito.verify;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import org.junit.Assert;
@@ -383,6 +386,120 @@ public class PKSRemoteClientServiceTest {
             result.toCompletionStage().toCompletableFuture().get();
             fail("should not reach here");
         } catch (ExecutionException ignored) {
+        }
+        assertTrue(result.toCompletionStage().toCompletableFuture().isCompletedExceptionally());
+    }
+
+    @Test
+    public void testDeleteCluster() throws Throwable {
+        PKSRemoteClientService client = new PKSRemoteClientService(null, host);
+        assertNotNull(client);
+
+        PKSContext ctx = new PKSContext();
+        ctx.pksAPIUri = URI.create("http://some.host");
+
+        ServiceClient mockClient = mockClient(client);
+        ArgumentCaptor<Operation> valueCapture = ArgumentCaptor.forClass(Operation.class);
+        doNothing().when(mockClient).send(valueCapture.capture());
+
+        // test casual exception
+        DeferredResult<Void> result = client.deleteCluster(null, null);
+        try {
+            result.toCompletionStage().toCompletableFuture().get();
+            fail("should not reach here");
+        } catch (ExecutionException e) {
+            assertTrue(e.getCause() instanceof NullPointerException);
+        }
+        assertTrue(result.toCompletionStage().toCompletableFuture().isCompletedExceptionally());
+        verify(mockClient, never()).send(any(Operation.class));
+
+        // test straight forward case
+        result = client.deleteCluster(ctx, "some-cluster");
+        Operation op = valueCapture.getValue();
+        op.setStatusCode(HttpURLConnection.HTTP_NO_CONTENT);
+        op.complete();
+
+        CompletableFuture<Void> future = result.toCompletionStage().toCompletableFuture();
+        future.get();
+        assertTrue(future.isDone());
+        assertFalse(future.isCancelled());
+
+        result = client.deleteCluster(ctx, "some-cluster");
+        op = valueCapture.getValue();
+        op.setStatusCode(Operation.STATUS_CODE_OK).complete();
+        try {
+            result.toCompletionStage().toCompletableFuture().get();
+            fail("should not reach here");
+        } catch (ExecutionException ignored) {
+        }
+        assertTrue(result.toCompletionStage().toCompletableFuture().isCompletedExceptionally());
+
+        result = client.deleteCluster(ctx, "some-cluster");
+        op = valueCapture.getValue();
+        op.fail(Operation.STATUS_CODE_BAD_REQUEST);
+        try {
+            result.toCompletionStage().toCompletableFuture().get();
+            fail("should not reach here");
+        } catch (ExecutionException ignored) {
+        }
+        assertTrue(result.toCompletionStage().toCompletableFuture().isCompletedExceptionally());
+
+        result = client.deleteCluster(ctx, "some-cluster");
+        op = valueCapture.getValue();
+        op.fail(new Exception("custom-err"));
+        try {
+            result.toCompletionStage().toCompletableFuture().get();
+            fail("should not reach here");
+        } catch (ExecutionException e) {
+            assertEquals("custom-err", e.getCause().getMessage());
+        }
+        assertTrue(result.toCompletionStage().toCompletableFuture().isCompletedExceptionally());
+    }
+
+    @Test
+    public void testCreateCluster() throws Throwable {
+        PKSRemoteClientService client = new PKSRemoteClientService(null, host);
+        assertNotNull(client);
+
+        PKSContext ctx = new PKSContext();
+        ctx.pksAPIUri = URI.create("http://some.host");
+
+        ServiceClient mockClient = mockClient(client);
+        ArgumentCaptor<Operation> valueCapture = ArgumentCaptor.forClass(Operation.class);
+        doNothing().when(mockClient).send(valueCapture.capture());
+
+        // test casual exception
+        DeferredResult<PKSCluster> result = client.createCluster(null, null);
+        try {
+            result.toCompletionStage().toCompletableFuture().get();
+            fail("should not reach here");
+        } catch (ExecutionException e) {
+            assertTrue(e.getCause() instanceof NullPointerException);
+        }
+        assertTrue(result.toCompletionStage().toCompletableFuture().isCompletedExceptionally());
+        verify(mockClient, never()).send(any(Operation.class));
+
+        // test straight forward case
+        PKSCluster cluster = new PKSCluster();
+        result = client.createCluster(ctx, cluster);
+        Operation op = valueCapture.getValue();
+        op.setBodyNoCloning(cluster).setStatusCode(Operation.STATUS_CODE_ACCEPTED).complete();
+
+        CompletableFuture<PKSCluster> future = result.toCompletionStage().toCompletableFuture();
+        future.get();
+        assertTrue(future.isDone());
+        assertFalse(future.isCancelled());
+        assertFalse(future.isCompletedExceptionally());
+
+        result = client.createCluster(ctx, cluster);
+        op = valueCapture.getValue();
+        op.setStatusCode(Operation.STATUS_CODE_BAD_REQUEST).complete();
+        try {
+            result.toCompletionStage().toCompletableFuture().get();
+            fail("should not reach here");
+        } catch (ExecutionException e) {
+            PKSException pe = (PKSException) e.getCause();
+            assertEquals(Operation.STATUS_CODE_BAD_REQUEST, pe.getErrorCode());
         }
         assertTrue(result.toCompletionStage().toCompletableFuture().isCompletedExceptionally());
     }

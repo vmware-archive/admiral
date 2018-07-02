@@ -11,9 +11,9 @@
 
 package com.vmware.admiral.adapter.pks.service;
 
+import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_CLUSTER_EXISTS_PROP_NAME;
+import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_CLUSTER_UUID_PROP_NAME;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_ENDPOINT_PROP_NAME;
-import static com.vmware.admiral.compute.ContainerHostService.PKS_CLUSTER_EXISTS_PROP_NAME;
-import static com.vmware.admiral.compute.ContainerHostService.PKS_CLUSTER_UUID_PROP_NAME;
 
 import java.util.HashMap;
 import java.util.HashSet;

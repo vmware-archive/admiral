@@ -452,7 +452,6 @@ public class KubernetesUtil {
         KubeConfig.UserEntry userEntry = new KubeConfig.UserEntry();
         userEntry.name = contextEntry.context.user;
         userEntry.user = new KubeConfig.AuthInfo();
-        // TODO base64 encode
         userEntry.user.clientCertificateData = new String(
                 Base64.getEncoder().encode(certificate.getBytes()));
         userEntry.user.clientKeyData = new String(
@@ -461,4 +460,15 @@ public class KubernetesUtil {
 
         return config;
     }
+
+    public static String extractTokenFromKubeConfig(KubeConfig kubeConfig) {
+        if (kubeConfig.users == null
+                || kubeConfig.users.isEmpty()
+                || kubeConfig.users.get(0).user == null
+                || kubeConfig.users.get(0).user.token == null) {
+            return null;
+        }
+        return kubeConfig.users.get(0).user.token;
+    }
+
 }

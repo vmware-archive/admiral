@@ -189,7 +189,8 @@
       "ON": "ON",
       "OFF": "OFF",
       "DISABLED": "DISABLED",
-      "WARNING": "WARNING"
+      "WARNING": "WARNING",
+      "PROVISIONING": "PROVISIONING"
     },
     "search": {
       "placeholder": "Search for clusters"

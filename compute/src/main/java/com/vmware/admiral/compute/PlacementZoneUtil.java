@@ -12,6 +12,7 @@
 package com.vmware.admiral.compute;
 
 import static com.vmware.admiral.compute.cluster.ClusterService.CLUSTER_TYPE_CUSTOM_PROP;
+import static com.vmware.admiral.compute.cluster.ClusterService.INITIAL_CLUSTER_STATUS_PROP;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -113,8 +114,13 @@ public class PlacementZoneUtil {
             resourcePool.customProperties.put(
                     PlacementZoneConstants.PLACEMENT_ZONE_TYPE_CUSTOM_PROP_NAME,
                     PlacementZoneType.SCHEDULER.toString());
-
         }
+
+        String s;
+        if ((s = hostState.customProperties.get(INITIAL_CLUSTER_STATUS_PROP)) != null) {
+            resourcePool.customProperties.put(INITIAL_CLUSTER_STATUS_PROP, s);
+        }
+
         if (hostState.tenantLinks != null) {
             resourcePool.tenantLinks = new ArrayList<>(hostState.tenantLinks);
         }

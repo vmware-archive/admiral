@@ -11,7 +11,7 @@
 
 package com.vmware.admiral.adapter.pks.service;
 
-import static com.vmware.admiral.adapter.pks.PKSConstants.CLUSTER_NAME_PROP_NAME;
+import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_CLUSTER_NAME_PROP_NAME;
 import static com.vmware.admiral.adapter.pks.PKSConstants.VALIDATE_CONNECTION;
 
 import java.util.HashMap;
@@ -32,15 +32,16 @@ import com.vmware.admiral.adapter.pks.PKSContext;
 import com.vmware.admiral.adapter.pks.PKSException;
 import com.vmware.admiral.adapter.pks.PKSOperationType;
 import com.vmware.admiral.adapter.pks.PKSRemoteClientService;
+import com.vmware.admiral.adapter.pks.entities.PKSCluster;
+import com.vmware.admiral.adapter.pks.util.PKSClusterMapper;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.task.RetriableTask;
 import com.vmware.admiral.common.task.RetriableTaskBuilder;
+import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.DeferredUtils;
-import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.compute.pks.PKSEndpointService.Endpoint;
-import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
 import com.vmware.photon.controller.model.security.util.EncryptionUtils;
 import com.vmware.xenon.common.DeferredResult;
@@ -64,11 +65,10 @@ public class PKSAdapterService extends StatelessService {
 
     private static final long REMOVE_TOKEN_BEFORE_EXPIRE_MILLIS = 2 * MAINTENANCE_INTERVAL_MICROS;
 
-    private static class RequestContext {
+    static class RequestContext {
         public Operation operation;
         public AdapterRequest request;
         public Endpoint endpoint;
-        public ComputeState computeState;
     }
 
     public PKSAdapterService() {
@@ -97,6 +97,8 @@ public class PKSAdapterService extends StatelessService {
         RequestContext ctx = new RequestContext();
         ctx.request = getRequest(op);
         ctx.operation = op;
+
+        validate(ctx);
 
         getEndpoint(ctx)
                 .thenAccept(e -> ctx.endpoint = e)
@@ -173,6 +175,7 @@ public class PKSAdapterService extends StatelessService {
                 result.exceptionally(t -> {
                     // if status code is 401 (UNAUTHORIZED) invalidate the token and retry,
                     // else prevent retries
+                    boolean shouldRetry = false;
                     if (t instanceof PKSException) {
                         PKSException p = (PKSException) t;
                         if (p.getErrorCode() == Operation.STATUS_CODE_UNAUTHORIZED) {
@@ -181,10 +184,10 @@ public class PKSAdapterService extends StatelessService {
                             if (ctx.endpoint.documentSelfLink != null) {
                                 pksContextCache.invalidate(ctx.endpoint.documentSelfLink);
                             }
-                        } else {
-                            task.preventRetries();
+                            shouldRetry = true;
                         }
-                    } else {
+                    }
+                    if (!shouldRetry) {
                         task.preventRetries();
                     }
                     throw DeferredUtils.wrap(t);
@@ -210,14 +213,12 @@ public class PKSAdapterService extends StatelessService {
         case CREATE_USER:
             result = pksCreateUser(ctx);
             break;
-        /*
         case CREATE_CLUSTER:
-            //TODO implementation
+            result = pksCreateCluster(ctx);
             break;
         case DELETE_CLUSTER:
-            //TODO implementation
+            result = pksDeleteCluster(ctx);
             break;
-        */
         case LIST_PLANS:
             result = pksListPlans(ctx);
             break;
@@ -228,19 +229,10 @@ public class PKSAdapterService extends StatelessService {
     }
 
     private DeferredResult<Void> pksCreateUser(RequestContext ctx) {
-        String cluster = PropertyUtils
-                .getPropertyString(ctx.request.customProperties, CLUSTER_NAME_PROP_NAME)
-                .orElse(null);
-
-        if (cluster == null) {
-            //TODO proper localizable exception
-            DeferredResult<Void> result = new DeferredResult<>();
-            result.fail(new IllegalArgumentException("cluster name is required"));
-            return result;
-        }
+        PKSCluster cluster = PKSClusterMapper.fromMap(ctx.request.customProperties);
 
         return getPKSContext(ctx.endpoint)
-                .thenCompose(pksContext -> getClient().createUser(pksContext, cluster))
+                .thenCompose(pksContext -> getClient().createUser(pksContext, cluster.name))
                 .thenAccept(kubeConfig -> ctx.operation.setBodyNoCloning(kubeConfig).complete());
     }
 
@@ -251,15 +243,27 @@ public class PKSAdapterService extends StatelessService {
     }
 
     private DeferredResult<Void> pksGetCluster(RequestContext ctx) {
-        if (ctx.computeState == null || ctx.computeState.id == null) {
-            //TODO proper localizable exception
-            DeferredResult<Void> result = new DeferredResult<>();
-            result.fail(new IllegalArgumentException("empty compute state"));
-            return result;
-        }
         return getPKSContext(ctx.endpoint)
-                .thenCompose(pksContext -> getClient().getCluster(pksContext, ctx.computeState.id))
+                .thenCompose(pksContext -> {
+                    String clusterName = ctx.request.customProperties.get(
+                            PKS_CLUSTER_NAME_PROP_NAME);
+                    return getClient().getCluster(pksContext, clusterName);
+                })
                 .thenAccept(pksCluster -> ctx.operation.setBodyNoCloning(pksCluster).complete());
+    }
+
+    private DeferredResult<Void> pksCreateCluster(RequestContext ctx) {
+        PKSCluster cluster = PKSClusterMapper.fromMap(ctx.request.customProperties);
+        return getPKSContext(ctx.endpoint)
+                .thenCompose(pksContext -> getClient().createCluster(pksContext, cluster))
+                .thenAccept(pksCluster -> ctx.operation.setBodyNoCloning(pksCluster).complete());
+    }
+
+    private DeferredResult<Void> pksDeleteCluster(RequestContext ctx) {
+        String clusterName = ctx.request.customProperties.get(PKS_CLUSTER_NAME_PROP_NAME);
+        return getPKSContext(ctx.endpoint)
+                .thenCompose(pksContext -> getClient().deleteCluster(pksContext, clusterName))
+                .thenAccept(aVoid -> ctx.operation.complete());
     }
 
     private DeferredResult<Void> pksListPlans(RequestContext ctx) {
@@ -372,6 +376,38 @@ public class PKSAdapterService extends StatelessService {
 
         throw new IllegalArgumentException("Credential type " + authCredentialsType.name()
                 + " is not supported");
+    }
+
+    private void validate(RequestContext ctx) {
+        AssertUtil.assertNotNull(ctx, "request context");
+        AssertUtil.assertNotNull(ctx.request, "context request");
+        AssertUtil.assertNotNull(ctx.request.customProperties, "context request properties");
+        if (!ctx.request.customProperties.containsKey(VALIDATE_CONNECTION)) {
+            AssertUtil.assertNotNull(ctx.request.resourceReference, "resource reference endpoint");
+            String path = ctx.request.resourceReference.getPath();
+            AssertUtil.assertNotNullOrEmpty(path, "resource reference endpoint");
+        }
+
+        PKSOperationType ot = PKSOperationType.instanceById(ctx.request.operationTypeId);
+        AssertUtil.assertNotNull(ot, "operation type");
+
+        PKSCluster cluster;
+        switch (ot) {
+        case CREATE_CLUSTER:
+            cluster = PKSClusterMapper.fromMap(ctx.request.customProperties);
+            AssertUtil.assertNotEmpty(cluster.name, "cluster name");
+            AssertUtil.assertNotEmpty(cluster.planName, "plan name");
+            break;
+        case GET_CLUSTER:
+            cluster = PKSClusterMapper.fromMap(ctx.request.customProperties);
+            AssertUtil.assertNotEmpty(cluster.name, "cluster name");
+            break;
+        case CREATE_USER:
+            cluster = PKSClusterMapper.fromMap(ctx.request.customProperties);
+            AssertUtil.assertNotEmpty(cluster.name, "cluster name");
+            break;
+        default:
+        }
     }
 
     private AdapterRequest getRequest(Operation op) {

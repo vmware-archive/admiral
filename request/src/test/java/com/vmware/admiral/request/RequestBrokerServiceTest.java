@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -23,6 +23,8 @@ import static com.vmware.admiral.compute.container.CompositeDescriptionCloneServ
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_ALLOCATION_REQUEST;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -37,6 +39,8 @@ import java.util.logging.Level;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
+import com.vmware.admiral.auth.idm.AuthRole;
+import com.vmware.admiral.auth.idm.SecurityContext;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.test.CommonTestStateFactory;
@@ -94,6 +98,7 @@ import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.Service.Action;
@@ -2596,6 +2601,52 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
                 clonedCompositeDesc.documentSelfLink);
         assertNotNull(clonedCompositeDesc);
     }
+
+    @Test
+    public void testValidateOnStart() throws Throwable {
+        RequestBrokerState request = TestRequestStateFactory.createRequestState();
+        request.resourceType = "-";
+        request.resourceDescriptionLink = "-";
+        RequestBrokerService r = new RequestBrokerService();
+        Method m = r.getClass().getDeclaredMethod("validateStateOnStart", RequestBrokerState.class);
+        m.setAccessible(true);
+
+        validateLocalizableException(() -> {
+            try {
+                m.invoke(r, request);
+            } catch (InvocationTargetException e) {
+                throw e.getCause();
+            }
+        }, "resource type should not be supported");
+    }
+
+    @Test
+    public void testIsUserAuthorized() throws Throwable {
+        RequestBrokerService r = new RequestBrokerService();
+        Method m = r.getClass().getDeclaredMethod("isUserAuthorized",
+                SecurityContext.ProjectEntry.class, SecurityContext.class);
+        m.setAccessible(true);
+
+        SecurityContext context = new SecurityContext();
+        context.projects = new ArrayList<>();
+
+        SecurityContext.ProjectEntry project = new SecurityContext.ProjectEntry();
+        project.documentSelfLink = "link";
+        project.roles = new HashSet<>();
+        project.roles.add(AuthRole.PROJECT_ADMIN);
+
+        DeferredResult<Void> deferred = (DeferredResult<Void>) m.invoke(r, project, context);
+        assertNotNull(deferred);
+        assertTrue(deferred.toCompletionStage().toCompletableFuture().isCompletedExceptionally());
+
+        context.projects.add(project);
+        deferred = (DeferredResult<Void>) m.invoke(r, project, context);
+        assertNotNull(deferred);
+        assertTrue(deferred.toCompletionStage().toCompletableFuture().isDone());
+        assertFalse(deferred.toCompletionStage().toCompletableFuture().isCancelled());
+        assertFalse(deferred.toCompletionStage().toCompletableFuture().isCompletedExceptionally());
+    }
+
 
     private List<ContainerState> getAllContainers(String computeSelfLink) {
         host.testStart(1);

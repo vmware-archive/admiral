@@ -13,6 +13,7 @@ package com.vmware.admiral.compute.cluster;
 
 import static com.vmware.admiral.compute.ContainerHostUtil.isKubernetesHost;
 import static com.vmware.admiral.compute.ContainerHostUtil.isVicHost;
+import static com.vmware.admiral.compute.cluster.ClusterService.INITIAL_CLUSTER_STATUS_PROP;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -114,7 +115,8 @@ public class ClusterUtils {
                 if (!Strings.isNullOrEmpty(rawCustomOptions)) {
                     rawCustomOptions = rawCustomOptions.replaceAll("[{}]", " ").trim();
                     if (!Strings.isNullOrEmpty(rawCustomOptions)) {
-                        Map<String, String> properties = Splitter.on(",").withKeyValueSeparator("=").split(rawCustomOptions);
+                        Map<String, String> properties = Splitter.on(",").withKeyValueSeparator("=")
+                                .split(rawCustomOptions);
                         hostsFilter = properties.get(ClusterService.HOSTS_FILTER_QUERY_PARAM);
                     }
                 }
@@ -190,7 +192,8 @@ public class ClusterUtils {
                     if (limit != null && limit > 0) {
                         queryTask.querySpec.resultLimit = limit;
                     } else {
-                        queryTask.querySpec.resultLimit = ServiceDocumentQuery.DEFAULT_QUERY_RESULT_LIMIT;
+                        queryTask.querySpec.resultLimit =
+                                ServiceDocumentQuery.DEFAULT_QUERY_RESULT_LIMIT;
                     }
                     queryTask.documentExpirationTimeMicros = ServiceDocumentQuery
                             .getDefaultQueryExpiration();
@@ -249,7 +252,7 @@ public class ClusterUtils {
                 .setBody(queryTask)
                 .setReferer(host.getUri()), QueryTask.class)
                 .thenCompose(qr -> {
-                    if (qr == null || qr.results == null || qr.results == null
+                    if (qr == null || qr.results == null
                             || qr.results.documentLinks == null
                             || qr.results.documentLinks.size() != 1) {
                         throw new ServiceNotFoundException(
@@ -297,7 +300,10 @@ public class ClusterUtils {
                         ClusterService.CLUSTER_TYPE_CUSTOM_PROP)
                         .orElse(type.toString()));
         if (computeStates == null || computeStates.isEmpty()) {
-            ePZClusterDto.status = ClusterStatus.DISABLED;
+            ePZClusterDto.status = getInitialStatus(resourcePoolState);
+            if (ePZClusterDto.status == null) {
+                ePZClusterDto.status = ClusterStatus.DISABLED;
+            }
             ePZClusterDto.containerCount = 0;
             ePZClusterDto.systemContainersCount = 0;
             ePZClusterDto.totalCpu = 0.0;
@@ -323,7 +329,7 @@ public class ClusterUtils {
             int systemContainerCounter = 0;
             ePZClusterDto.nodes = new HashMap<>();
             for (ComputeState computeState : computeStates) {
-                if (!computeState.powerState.equals(computeStates.get(0).powerState)) {
+                if (computeState.powerState != computeStates.get(0).powerState) {
                     ePZClusterDto.status = ClusterStatus.WARNING;
                 }
                 ePZClusterDto.nodeLinks.add(computeState.documentSelfLink);
@@ -415,6 +421,16 @@ public class ClusterUtils {
         }
         ClusterType filter = ClusterType.valueOf(typeFilter);
 
-        return isFilterExclusive ^ cluster.type.equals(filter);
+        return isFilterExclusive ^ cluster.type == filter;
     }
+
+    private static ClusterStatus getInitialStatus(ResourcePoolState resourcePoolState) {
+        try {
+            String s = resourcePoolState.customProperties.get(INITIAL_CLUSTER_STATUS_PROP);
+            return ClusterStatus.valueOf(s);
+        } catch (Exception ignored) {
+        }
+        return null;
+    }
+
 }

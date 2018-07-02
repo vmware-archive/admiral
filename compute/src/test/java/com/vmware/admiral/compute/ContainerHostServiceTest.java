@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -13,8 +13,11 @@ package com.vmware.admiral.compute;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.lang.reflect.Method;
+import java.net.ProtocolException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,8 +25,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
+import io.netty.channel.ConnectTimeoutException;
+
 import org.junit.Before;
 import org.junit.Test;
+
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
@@ -382,6 +388,44 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
         createContainerHostSpec(hostSpec);
 
         assertComputeStateExists(hostSpec);
+    }
+
+    @Test
+    public void testToReadableErrorMessage() throws Throwable {
+        ContainerHostService service = new ContainerHostService();
+        Method m = service.getClass().getDeclaredMethod("toReadableErrorMessage", Throwable.class,
+                Operation.class);
+        m.setAccessible(true);
+
+        Exception e = new Exception();
+        String result = (String) m.invoke(service, e, null);
+        assertNotNull(result);
+        assertTrue(result.contains("Unexpected error:"));
+
+        e = new io.netty.handler.codec.DecoderException("Received fatal alert: bad_certificate");
+        result = (String) m.invoke(service, e, null);
+        assertNotNull(result);
+        assertTrue(result.contains("Check login credentials"));
+
+        e = new IllegalStateException("Socket channel closed:");
+        result = (String) m.invoke(service, e, null);
+        assertNotNull(result);
+        assertTrue(result.contains("Check login credentials"));
+
+        e = new Exception(new ConnectTimeoutException());
+        result = (String) m.invoke(service, e, null);
+        assertNotNull(result);
+        assertTrue(result.contains("Connection timeout"));
+
+        e = new Exception(new ProtocolException());
+        result = (String) m.invoke(service, e, null);
+        assertNotNull(result);
+        assertTrue(result.contains("Protocol exception"));
+
+        e = new IllegalArgumentException();
+        result = (String) m.invoke(service, e, null);
+        assertNotNull(result);
+        assertTrue(result.contains("Illegal argument exception:"));
     }
 
     static ResourcePoolState createResourcePoolState() {

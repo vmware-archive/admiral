@@ -41,6 +41,8 @@ import com.vmware.admiral.adapter.common.ClosureOperationType;
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.adapter.common.NetworkOperationType;
 import com.vmware.admiral.adapter.common.VolumeOperationType;
+import com.vmware.admiral.adapter.pks.PKSConstants;
+import com.vmware.admiral.adapter.pks.PKSOperationType;
 import com.vmware.admiral.auth.idm.AuthRole;
 import com.vmware.admiral.auth.idm.SecurityContext;
 import com.vmware.admiral.auth.idm.SecurityContext.ProjectEntry;
@@ -88,6 +90,10 @@ import com.vmware.admiral.request.compute.ComputeOperationType;
 import com.vmware.admiral.request.compute.ComputeRemovalTaskService;
 import com.vmware.admiral.request.compute.ComputeRemovalTaskService.ComputeRemovalTaskState;
 import com.vmware.admiral.request.kubernetes.CompositeKubernetesProvisioningTaskService;
+import com.vmware.admiral.request.pks.PKSClusterProvisioningTaskService;
+import com.vmware.admiral.request.pks.PKSClusterProvisioningTaskService.PKSProvisioningTaskState;
+import com.vmware.admiral.request.pks.PKSClusterRemovalTaskService;
+import com.vmware.admiral.request.pks.PKSClusterRemovalTaskService.PKSClusterRemovalTaskState;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
@@ -189,7 +195,9 @@ public class RequestBrokerService extends
         }
 
         if (isProvisionOperation(state) || isClusteringOperation(state)) {
-            assertNotEmpty(state.resourceDescriptionLink, "resourceDescriptionLink");
+            if (!isPKSClusterType(state)) {
+                assertNotEmpty(state.resourceDescriptionLink, "resourceDescriptionLink");
+            }
         } else {
             assertNotEmpty(state.resourceLinks, "resourceLinks");
         }
@@ -198,7 +206,8 @@ public class RequestBrokerService extends
                 || isContainerVolumeType(state)
                 || isComputeType(state)
                 || isCompositeComponentType(state) || isClosureType(state)
-                || isContainerLoadBalancerType(state))) {
+                || isContainerLoadBalancerType(state)
+                || isPKSClusterType(state))) {
             throw new LocalizableValidationException(
                     String.format("Only [ %s ] resource types are supported.",
                             ResourceType.getAllTypesAsString()),
@@ -295,6 +304,8 @@ public class RequestBrokerService extends
                 createContainerVolumeRemovalTask(state, true);
             } else if (isClosureType(state)) {
                 createClosureRemovalTasks(state);
+            } else if (isPKSClusterType(state)) {
+                createPKSClusterRemovalTasks(state, true);
             } else {
                 createContainerRemovalTasks(state, true);
             }
@@ -303,9 +314,13 @@ public class RequestBrokerService extends
             completeWithError();
 
             if (isCompositeComponentType(state)) {
-                ResourceDescriptionUtil.deleteClonedCompositeDescription(getHost(), state.resourceDescriptionLink);
+                ResourceDescriptionUtil.deleteClonedCompositeDescription(getHost(),
+                        state.resourceDescriptionLink);
             } else {
-                ResourceDescriptionUtil.deleteResourceDescription(getHost(), state.resourceDescriptionLink);
+                if (!isPKSClusterType(state)) {
+                    ResourceDescriptionUtil
+                            .deleteResourceDescription(getHost(), state.resourceDescriptionLink);
+                }
             }
 
             break;
@@ -500,6 +515,13 @@ public class RequestBrokerService extends
                                 + state.operation,
                         "request.closure.operation.not.supported",
                         state.operation));
+            }
+        } else if (isPKSClusterType(state)) {
+            if (isRemoveOperation(state)) {
+                createPKSClusterRemovalTasks(state, false);
+            } else {
+                failTask(null, new LocalizableValidationException("Not supported operation: "
+                        + state.operation, "request.operation.not.supported", state.operation));
             }
         } else {
             failTask(null, new LocalizableValidationException("Not supported resourceType: "
@@ -800,6 +822,9 @@ public class RequestBrokerService extends
         } else if (isClosureType(state)) {
             // No reservation needed here, moving on...
             proceedTo(SubStage.RESERVED);
+        } else if (isPKSClusterType(state)) {
+            // No reservation needed here, moving on.directly to allocated
+            proceedTo(SubStage.ALLOCATED);
         } else {
             getContainerDescription(state, (cd) -> createReservationTasks(state, cd));
         }
@@ -1169,6 +1194,8 @@ public class RequestBrokerService extends
             } else {
                 createClosureProvisionTask(state);
             }
+        } else if (isPKSClusterType(state)) {
+            createPKSClusterProvisioningTask(state);
         } else {
             failTask(null, new LocalizableValidationException("Not supported resourceType: "
                     + state.resourceType, "request.resource-type.not.supported",
@@ -1320,6 +1347,62 @@ public class RequestBrokerService extends
         sendRequest(post);
     }
 
+    private void createPKSClusterProvisioningTask(RequestBrokerState state) {
+        PKSProvisioningTaskState task = new PKSProvisioningTaskState();
+        task.documentSelfLink = getSelfId();
+        task.serviceTaskCallback = ServiceTaskCallback.create(
+                state.documentSelfLink, TaskStage.STARTED, SubStage.COMPLETED,
+                TaskStage.STARTED, SubStage.REQUEST_FAILED);
+        task.customProperties = state.customProperties;
+        task.endpointLink = state.getCustomProperty(PKSConstants.PKS_ENDPOINT_PROP_NAME);
+        task.tenantLinks = state.tenantLinks;
+        task.requestTrackerLink = state.requestTrackerLink;
+
+        sendRequest(Operation
+                .createPost(this, PKSClusterProvisioningTaskService.FACTORY_LINK)
+                .setBodyNoCloning(task)
+                .setContextId(getSelfId())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Failure creating resource provisioning task", e);
+                        return;
+                    }
+                }));
+    }
+
+    private void createPKSClusterRemovalTasks(RequestBrokerState state, boolean cleanupRemoval) {
+        boolean errorState = state.taskSubStage == SubStage.REQUEST_FAILED
+                || state.taskSubStage == SubStage.RESERVATION_CLEANED_UP;
+
+        if (state.resourceLinks == null || state.resourceLinks.size() == 0) {
+            SubStage stage = errorState ? SubStage.ERROR : SubStage.COMPLETED;
+            proceedTo(stage);
+            return;
+        }
+
+        PKSClusterRemovalTaskState task = new PKSClusterRemovalTaskState();
+        task.documentSelfLink = getSelfId();
+        task.serviceTaskCallback = ServiceTaskCallback.create(
+                state.documentSelfLink, TaskStage.STARTED, SubStage.COMPLETED,
+                TaskStage.STARTED, SubStage.REQUEST_FAILED);
+        task.customProperties = state.customProperties;
+        task.endpointLink = state.getCustomProperty(PKSConstants.PKS_ENDPOINT_PROP_NAME);
+        task.resourceLink = state.resourceLinks.iterator().next();
+        task.tenantLinks = state.tenantLinks;
+        task.requestTrackerLink = state.requestTrackerLink;
+
+        sendRequest(Operation
+                .createPost(this, PKSClusterRemovalTaskService.FACTORY_LINK)
+                .setBodyNoCloning(task)
+                .setContextId(getSelfId())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Failure in removing resource task", e);
+                        return;
+                    }
+                }));
+    }
+
     private boolean isProvisionOperation(RequestBrokerState state) {
         return RequestBrokerState.PROVISION_RESOURCE_OPERATION.equals(state.operation);
     }
@@ -1361,6 +1444,8 @@ public class RequestBrokerService extends
             return VolumeOperationType.CREATE.id;
         } else if (isContainerLoadBalancerType(state)) {
             return ContainerLoadBalancerOperationType.CREATE.id;
+        } else if (isPKSClusterType(state)) {
+            return PKSOperationType.CREATE_CLUSTER.id;
         } else {
             // No ContainerType here since its "unified" ContainerAllocationTaskService handles it!
             return null;
@@ -1437,6 +1522,10 @@ public class RequestBrokerService extends
         return ResourceType.CLOSURE_TYPE.getName().equals(state.resourceType);
     }
 
+    private boolean isPKSClusterType(RequestBrokerState state) {
+        return ResourceType.PKS_CLUSTER_TYPE.getName().equals(state.resourceType);
+    }
+
     private static final Map<ResourceType, List<String>> SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE;
 
     static {
@@ -1460,6 +1549,9 @@ public class RequestBrokerService extends
         SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE.put(ResourceType.JOIN_COMPOSITE_COMPONENT_TYPE,
                 new ArrayList<>(
                         Arrays.asList(CompositeKubernetesProvisioningTaskService.DISPLAY_NAME)));
+
+        SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE.put(ResourceType.PKS_CLUSTER_TYPE,
+                new ArrayList<>(Arrays.asList(PKSClusterProvisioningTaskService.DISPLAY_NAME)));
     }
 
     private static final Map<ResourceType, List<String>> SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE;
@@ -1495,7 +1587,6 @@ public class RequestBrokerService extends
             logFine("Request tracker link provided: %s", state.requestTrackerLink);
             return false;
         }
-
         RequestStatus requestStatus = fromTask(new RequestStatus(), state);
 
         // add tracked leaf tasks depending on the request type
@@ -1544,6 +1635,9 @@ public class RequestBrokerService extends
                     trackedTasks.addAll(SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE
                             .get(ResourceType.CLOSURE_TYPE));
                 }
+            } else if (isPKSClusterType(state)) {
+                trackedTasks.addAll(SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE
+                        .get(ResourceType.PKS_CLUSTER_TYPE));
             } else {
                 for (List<String> vals : SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.values()) {
                     trackedTasks.addAll(vals);
@@ -1577,6 +1671,8 @@ public class RequestBrokerService extends
                     requestStatus.addTrackedTasks(ClosureRemovalTaskService.DISPLAY_NAME);
                 } else if (isComputeType(state)) {
                     requestStatus.addTrackedTasks(ComputeRemovalTaskService.DISPLAY_NAME);
+                } else if (isPKSClusterType(state)) {
+                    requestStatus.addTrackedTasks(PKSClusterRemovalTaskService.DISPLAY_NAME);
                 } else {
                     requestStatus.addTrackedTasks(ContainerRemovalTaskService.DISPLAY_NAME);
                 }

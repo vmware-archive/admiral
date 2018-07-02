@@ -49,6 +49,8 @@ import com.vmware.admiral.request.compute.ComputeRemovalTaskService;
 import com.vmware.admiral.request.kubernetes.CompositeKubernetesProvisioningTaskService;
 import com.vmware.admiral.request.kubernetes.CompositeKubernetesRemovalTaskService;
 import com.vmware.admiral.request.notification.NotificationsService;
+import com.vmware.admiral.request.pks.PKSClusterProvisioningTaskService;
+import com.vmware.admiral.request.pks.PKSClusterRemovalTaskService;
 import com.vmware.admiral.service.common.TagAssignmentService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
@@ -100,7 +102,9 @@ public class HostInitRequestServicesConfig extends HostInitServiceHelper {
                 ContainerPortsAllocationTaskService.class,
                 ContainerControlLoopService.class,
                 CompositeKubernetesProvisioningTaskService.class,
-                CompositeKubernetesRemovalTaskService.class);
+                CompositeKubernetesRemovalTaskService.class,
+                PKSClusterProvisioningTaskService.class,
+                PKSClusterRemovalTaskService.class);
 
         // start initialization of system documents
         host.sendRequest(Operation.createPost(

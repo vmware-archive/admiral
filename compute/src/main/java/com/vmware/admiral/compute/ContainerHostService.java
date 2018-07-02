@@ -131,10 +131,6 @@ public class ContainerHostService extends StatelessService {
 
     public static final String DOCKER_HOST_PLUGINS_PROP_NAME = "__Plugins";
 
-    public static final String PKS_CLUSTER_UUID_PROP_NAME = "__pksClusterUUID";
-    public static final String PKS_CLUSTER_PLAN_NAME_PROP_NAME = "__pksPlanName";
-    public static final String PKS_CLUSTER_EXISTS_PROP_NAME = "__clusterExists";
-
     public static final String DOCKER_HOST_PLUGINS_VOLUME_PROP_NAME = "Volume";
     public static final String DOCKER_HOST_PLUGINS_NETWORK_PROP_NAME = "Network";
 
@@ -860,7 +856,8 @@ public class ContainerHostService extends StatelessService {
                     "Illegal argument exception: " + e.getMessage(), "compute.illegal.argument",
                     e.getMessage());
         }
-        {
+
+        if (localizedEx == null) {
             localizedEx = new LocalizableValidationException(e,
                     String.format("Unexpected error: %s", e.getMessage()),
                     "compute.unexpected.error", e.getMessage());
