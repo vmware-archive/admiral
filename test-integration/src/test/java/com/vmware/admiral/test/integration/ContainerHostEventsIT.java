@@ -24,6 +24,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
@@ -158,6 +159,7 @@ public class ContainerHostEventsIT extends BaseProvisioningOnCoreOsIT {
         });
     }
 
+    @Ignore("VBV-2046")
     @Test
     public void testHostDies() throws Exception {
         compositeDescriptionLink = importTemplate(serviceClient, TEMPLATE_FILE);
