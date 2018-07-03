@@ -245,6 +245,9 @@ let loadRecommended = function(forContainerDefinition) {
     listViewPath = ['listView'];
   }
 
+  this.setInData(listViewPath.concat(['itemsLoading']), true);
+  this.emitChange();
+
   if (ft.areFavoriteImagesEnabled()) {
     recommendedImages.loadImages().then(() => {
       var globalRepositories = this.data.listView.globalRepositories;
@@ -252,12 +255,14 @@ let loadRecommended = function(forContainerDefinition) {
         recommendedImages.images.filter(i => globalRepositories.includes(i.registry)) :
         recommendedImages.images;
       this.setInData(listViewPath.concat(['items']), images);
+      this.setInData(listViewPath.concat(['itemsLoading']), false);
       this.setInData(listViewPath.concat(['favoriteImages']), images.map(i => i.documentId));
       this.setInData(listViewPath.concat(['searchedItems']), false);
       this.emitChange();
     });
   } else {
     this.setInData(listViewPath.concat(['items']), recommendedImages.images);
+    this.setInData(listViewPath.concat(['itemsLoading']), false);
     this.setInData(listViewPath.concat(['searchedItems']), false);
     this.emitChange();
   }
