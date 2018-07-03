@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -645,6 +646,10 @@ public class ContainerDescriptionService extends StatefulService {
         }
         if (patchBody.networks != null) {
             currentState.networks = patchBody.networks;
+        }
+        if (patchBody.volumes != null) {
+            Set<String> uniqueVolumes = new HashSet<>(Arrays.asList(patchBody.volumes));
+            currentState.volumes = uniqueVolumes.toArray(new String[uniqueVolumes.size()]);
         }
 
         validateState(currentState);

@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.compute.container;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.net.URI;
@@ -18,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.junit.Assert;
@@ -395,6 +397,19 @@ public class ContainerDescriptionServiceTest extends ComputeBaseTest {
         });
     }
 
+    @Test
+    public void testCannotAddSameVolumeMoreThanOnce() {
+        String volumeToAdd = "volume:/var/storage";
+        ContainerDescription createdContDesc = postContainerDescription(createContainerDescription());
+
+        createdContDesc.volumes = new String[] {volumeToAdd, volumeToAdd};
+
+        createdContDesc = patchContainerDescription(createdContDesc);
+
+        assertEquals(1, createdContDesc.volumes.length);
+        assertEquals(volumeToAdd, createdContDesc.volumes[0]);
+    }
+
     private URI getContainerDescriptionUri() {
         return UriUtils.buildUri(host, ContainerDescriptionService.FACTORY_LINK);
     }
@@ -404,6 +419,44 @@ public class ContainerDescriptionServiceTest extends ComputeBaseTest {
         containerDesc.image = "image:latest";
 
         return containerDesc;
+    }
+
+    private ContainerDescription postContainerDescription(ContainerDescription containerDescription) {
+        List<ContainerDescription> result = new LinkedList<>();
+        Operation op = Operation.createPost(getContainerDescriptionUri())
+                .setBody(containerDescription)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        host.failIteration(e);
+                    }
+                    result.add(o.getBody(ContainerDescription.class));
+                    host.completeIteration();
+                });
+
+        host.testStart(1);
+        host.send(op);
+        host.testWait();
+
+        return result.get(0);
+    }
+
+    private ContainerDescription patchContainerDescription(ContainerDescription containerDescription) {
+        List<ContainerDescription> result = new LinkedList<>();
+        Operation op = Operation.createPatch(UriUtils.buildUri(host,containerDescription.documentSelfLink))
+                .setBody(containerDescription)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        host.failIteration(e);
+                    }
+                    result.add(o.getBody(ContainerDescription.class));
+                    host.completeIteration();
+                });
+
+        host.testStart(1);
+        host.send(op);
+        host.testWait();
+
+        return result.get(0);
     }
 
     private class InvalidDescription {
