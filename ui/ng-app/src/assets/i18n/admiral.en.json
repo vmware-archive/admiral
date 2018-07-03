@@ -190,7 +190,8 @@
       "OFF": "OFF",
       "DISABLED": "DISABLED",
       "WARNING": "WARNING",
-      "PROVISIONING": "PROVISIONING"
+      "PROVISIONING": "PROVISIONING",
+      "RESIZING": "RESIZING"
     },
     "search": {
       "placeholder": "Search for clusters"

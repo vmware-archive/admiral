@@ -203,7 +203,7 @@ public interface ManagementUriParts {
     String REQUEST_CONTAINER_PORTS_ALLOCATION_TASKS = REQUEST + "/container-ports-allocation-tasks";
     String REQUEST_PROVISION_PKS_CLUSTER_TASK = REQUEST + "/provision-pks-cluster-task";
     String REQUEST_REMOVE_PKS_CLUSTER_TASK = REQUEST + "/remove-pks-cluster-task";
-
+    String REQUEST_RESIZE_PKS_CLUSTER_TASK = REQUEST + "/resize-pks-cluster-task";
 
     String CONFIGURE_HOST = REQUEST + "/configure-host/";
 

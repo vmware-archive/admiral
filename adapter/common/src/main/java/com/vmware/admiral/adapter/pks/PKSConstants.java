@@ -41,4 +41,6 @@ public interface PKSConstants {
     String PKS_CLUSTER_UUID_PROP_NAME = "__pksClusterUUID";
     String PKS_CLUSTER_PLAN_NAME_PROP_NAME = "__pksPlanName";
     String PKS_CLUSTER_EXISTS_PROP_NAME = "__clusterExists";
+
+    String PKS_CLUSTER_STATUS_RESIZING_PROP_NAME = "__pksClusterStatusResizing";
 }

@@ -273,12 +273,37 @@ public class PKSRemoteClientService {
         }
     }
 
-    /*
-    // TODO implement necessary methods: resize
+    public DeferredResult<Void> resizeCluster(PKSContext ctx, PKSCluster cluster) {
+        try {
+            URI uri = UriUtils.buildUri(ctx.pksAPIUri, "v1/clusters", cluster.name);
+            Operation op = buildPatchOperation(uri, ctx)
+                    .setBody(cluster.parameters);
 
-    public void resizeCluster() {
+            return sendWithDeferredResult(op)
+                    .thenAccept(o -> {
+                        if (o.getStatusCode() == HttpURLConnection.HTTP_ACCEPTED) {
+                            return;
+                        } else {
+                            String msg = String.format(
+                                    "Failed to resize PKS cluster, status code: %d",
+                                    o.getStatusCode());
+                            PKSException e = new PKSException(msg, null, o.getStatusCode());
+                            throw DeferredUtils.logErrorAndThrow(e, t -> msg, getClass());
+                        }
+                    })
+                    .exceptionally(t -> {
+                        throw DeferredUtils.logErrorAndThrow(t,
+                                e -> String.format("Error resizing PKS cluster '%s' from %s,"
+                                                + " reason: %s",
+                                        cluster, ctx.pksAPIUri, e.getMessage()),
+                                getClass());
+                    });
+        } catch (Exception e) {
+            logger.severe(String.format("Error resizing PKS cluster from %s, reason: %s",
+                    ctx != null ? ctx.pksAPIUri : "null-context", e.getMessage()));
+            return DeferredResult.failed(e);
+        }
     }
-    */
 
     /**
      * Obtains token from UAA service.
@@ -381,6 +406,17 @@ public class PKSRemoteClientService {
      */
     private Operation buildDeleteOperation(URI uri, PKSContext ctx) {
         return buildOperation(Operation.createDelete(uri), ctx);
+    }
+
+    /**
+     * Creates <code>PATCH</code> operation initialized with authorization header.
+     *
+     * @param uri operation uri
+     * @param ctx PKS context with the token
+     * @return operation instance
+     */
+    private Operation buildPatchOperation(URI uri, PKSContext ctx) {
+        return buildOperation(Operation.createPatch(uri), ctx);
     }
 
     /**

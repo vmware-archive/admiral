@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.compute.cluster;
 
+import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_CLUSTER_STATUS_RESIZING_PROP_NAME;
 import static com.vmware.admiral.compute.ContainerHostUtil.isKubernetesHost;
 import static com.vmware.admiral.compute.ContainerHostUtil.isVicHost;
 import static com.vmware.admiral.compute.cluster.ClusterService.INITIAL_CLUSTER_STATUS_PROP;
@@ -40,6 +41,7 @@ import com.vmware.admiral.compute.cluster.ClusterService.ClusterStatus;
 import com.vmware.admiral.compute.cluster.ClusterService.ClusterType;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
+import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
@@ -345,7 +347,11 @@ public class ClusterUtils {
                         .orElse(0);
             }
             if (ePZClusterDto.status == null) {
-                ePZClusterDto.status = ClusterUtils.computeToClusterStatus(computeStates.get(0));
+                if (isPKSClusterBeingResized(computeStates.get(0))) {
+                    ePZClusterDto.status = ClusterStatus.RESIZING;
+                } else {
+                    ePZClusterDto.status = ClusterUtils.computeToClusterStatus(computeStates.get(0));
+                }
             }
 
             ePZClusterDto.containerCount = containerCounter;
@@ -433,4 +439,9 @@ public class ClusterUtils {
         return null;
     }
 
+    private static boolean isPKSClusterBeingResized(ComputeState host) {
+        return KubernetesUtil.isPKSManagedHost(host)
+                && host.customProperties != null
+                && host.customProperties.containsKey(PKS_CLUSTER_STATUS_RESIZING_PROP_NAME);
+    }
 }

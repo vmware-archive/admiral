@@ -12,6 +12,9 @@
 package com.vmware.admiral.adapter.pks.service;
 
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_CLUSTER_NAME_PROP_NAME;
+import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_MASTER_HOST_FIELD;
+import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_MASTER_PORT_FIELD;
+import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_WORKER_INSTANCES_FIELD;
 import static com.vmware.admiral.adapter.pks.PKSConstants.VALIDATE_CONNECTION;
 
 import java.util.HashMap;
@@ -219,6 +222,9 @@ public class PKSAdapterService extends StatelessService {
         case DELETE_CLUSTER:
             result = pksDeleteCluster(ctx);
             break;
+        case RESIZE_CLUSTER:
+            result = pksResizeCluster(ctx);
+            break;
         case LIST_PLANS:
             result = pksListPlans(ctx);
             break;
@@ -263,6 +269,13 @@ public class PKSAdapterService extends StatelessService {
         String clusterName = ctx.request.customProperties.get(PKS_CLUSTER_NAME_PROP_NAME);
         return getPKSContext(ctx.endpoint)
                 .thenCompose(pksContext -> getClient().deleteCluster(pksContext, clusterName))
+                .thenAccept(aVoid -> ctx.operation.complete());
+    }
+
+    private DeferredResult<Void> pksResizeCluster(RequestContext ctx) {
+        PKSCluster cluster = PKSClusterMapper.fromMap(ctx.request.customProperties);
+        return getPKSContext(ctx.endpoint)
+                .thenCompose(pksContext -> getClient().resizeCluster(pksContext, cluster))
                 .thenAccept(aVoid -> ctx.operation.complete());
     }
 
@@ -397,6 +410,20 @@ public class PKSAdapterService extends StatelessService {
             cluster = PKSClusterMapper.fromMap(ctx.request.customProperties);
             AssertUtil.assertNotEmpty(cluster.name, "cluster name");
             AssertUtil.assertNotEmpty(cluster.planName, "plan name");
+            AssertUtil.assertNotNull(cluster.parameters, "cluster parameters");
+            AssertUtil.assertNotEmpty((String) cluster.parameters.get(PKS_MASTER_HOST_FIELD),
+                    "master host address");
+            AssertUtil.assertNotEmpty((String) cluster.parameters.get(PKS_MASTER_PORT_FIELD),
+                    "master host port");
+            AssertUtil.assertNotEmpty((String) cluster.parameters.get(PKS_WORKER_INSTANCES_FIELD),
+                    "worker instances");
+            break;
+        case RESIZE_CLUSTER:
+            cluster = PKSClusterMapper.fromMap(ctx.request.customProperties);
+            AssertUtil.assertNotEmpty(cluster.name, "cluster name");
+            AssertUtil.assertNotNull(cluster.parameters, "cluster parameters");
+            AssertUtil.assertNotNull(cluster.parameters.get(PKS_WORKER_INSTANCES_FIELD),
+                    "worker instances");
             break;
         case GET_CLUSTER:
             cluster = PKSClusterMapper.fromMap(ctx.request.customProperties);

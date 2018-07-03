@@ -505,6 +505,62 @@ public class PKSRemoteClientServiceTest {
     }
 
     @Test
+    public void testResizeCluster() throws Throwable {
+        PKSRemoteClientService client = new PKSRemoteClientService(null, host);
+        assertNotNull(client);
+
+        PKSContext ctx = new PKSContext();
+        ctx.pksAPIUri = URI.create("http://some.host");
+
+        ServiceClient mockClient = mockClient(client);
+        ArgumentCaptor<Operation> valueCapture = ArgumentCaptor.forClass(Operation.class);
+        doNothing().when(mockClient).send(valueCapture.capture());
+
+        // test casual exception
+        DeferredResult<Void> result = client.resizeCluster(null, null);
+        try {
+            result.toCompletionStage().toCompletableFuture().get();
+            fail("should not reach here");
+        } catch (ExecutionException e) {
+            assertTrue(e.getCause() instanceof NullPointerException);
+        }
+        assertTrue(result.toCompletionStage().toCompletableFuture().isCompletedExceptionally());
+        verify(mockClient, never()).send(any(Operation.class));
+
+        // test straight forward case
+        PKSCluster cluster = new PKSCluster();
+        result = client.resizeCluster(ctx, cluster);
+        Operation op = valueCapture.getValue();
+        op.setBodyNoCloning(cluster).setStatusCode(Operation.STATUS_CODE_ACCEPTED).complete();
+
+        CompletableFuture<Void> future = result.toCompletionStage().toCompletableFuture();
+        future.get();
+        assertTrue(future.isDone());
+        assertFalse(future.isCancelled());
+
+        result = client.resizeCluster(ctx, cluster);
+        op = valueCapture.getValue();
+        op.setStatusCode(Operation.STATUS_CODE_OK).complete();
+        try {
+            result.toCompletionStage().toCompletableFuture().get();
+            fail("should not reach here");
+        } catch (ExecutionException ignored) {
+        }
+        assertTrue(result.toCompletionStage().toCompletableFuture().isCompletedExceptionally());
+
+        result = client.resizeCluster(ctx, cluster);
+        op = valueCapture.getValue();
+        op.fail(new Exception("custom-err"));
+        try {
+            result.toCompletionStage().toCompletableFuture().get();
+            fail("should not reach here");
+        } catch (ExecutionException e) {
+            assertEquals("custom-err", e.getCause().getMessage());
+        }
+        assertTrue(result.toCompletionStage().toCompletableFuture().isCompletedExceptionally());
+    }
+
+    @Test
     public void logout() {
     }
 

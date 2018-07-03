@@ -94,6 +94,8 @@ import com.vmware.admiral.request.pks.PKSClusterProvisioningTaskService;
 import com.vmware.admiral.request.pks.PKSClusterProvisioningTaskService.PKSProvisioningTaskState;
 import com.vmware.admiral.request.pks.PKSClusterRemovalTaskService;
 import com.vmware.admiral.request.pks.PKSClusterRemovalTaskService.PKSClusterRemovalTaskState;
+import com.vmware.admiral.request.pks.PKSClusterResizeTaskService;
+import com.vmware.admiral.request.pks.PKSClusterResizeTaskService.PKSClusterResizeTaskState;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
@@ -127,6 +129,7 @@ public class RequestBrokerService extends
         public static final String REMOVE_RESOURCE_OPERATION = "REMOVE_RESOURCE";
         public static final String CLUSTER_RESOURCE_OPERATION = "CLUSTER_RESOURCE";
         public static final String CONFIGURE_HOST_OPERATION = "CONFIGURE_HOST";
+        public static final String RESIZE_RESOURCE = "RESIZE_RESOURCE";
 
         public enum SubStage {
             CREATED, RESOURCE_COUNTED, RESERVING, RESERVED, ALLOCATING, ALLOCATED, REQUEST_FAILED,
@@ -519,6 +522,8 @@ public class RequestBrokerService extends
         } else if (isPKSClusterType(state)) {
             if (isRemoveOperation(state)) {
                 createPKSClusterRemovalTasks(state, false);
+            } else if (isResizeOperation(state)) {
+                createPKSClusterResizeOperation(state);
             } else {
                 failTask(null, new LocalizableValidationException("Not supported operation: "
                         + state.operation, "request.operation.not.supported", state.operation));
@@ -1403,6 +1408,30 @@ public class RequestBrokerService extends
                 }));
     }
 
+    private void createPKSClusterResizeOperation(RequestBrokerState state) {
+        PKSClusterResizeTaskState task = new PKSClusterResizeTaskState();
+        task.documentSelfLink = getSelfId();
+        task.serviceTaskCallback = ServiceTaskCallback.create(
+                state.documentSelfLink, TaskStage.STARTED, SubStage.COMPLETED,
+                TaskStage.STARTED, SubStage.REQUEST_FAILED);
+        task.customProperties = state.customProperties;
+        task.endpointLink = state.getCustomProperty(PKSConstants.PKS_ENDPOINT_PROP_NAME);
+        task.resourceLink = state.resourceLinks.iterator().next();
+        task.tenantLinks = state.tenantLinks;
+        task.requestTrackerLink = state.requestTrackerLink;
+
+        sendRequest(Operation
+                .createPost(this, PKSClusterResizeTaskService.FACTORY_LINK)
+                .setBodyNoCloning(task)
+                .setContextId(getSelfId())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Failure creating resource resize task", e);
+                        return;
+                    }
+                }));
+    }
+
     private boolean isProvisionOperation(RequestBrokerState state) {
         return RequestBrokerState.PROVISION_RESOURCE_OPERATION.equals(state.operation);
     }
@@ -1483,6 +1512,10 @@ public class RequestBrokerService extends
         }
 
         return false;
+    }
+
+    private boolean isResizeOperation(RequestBrokerState state) {
+        return RequestBrokerState.RESIZE_RESOURCE.equals(state.operation);
     }
 
     private boolean isContainerType(RequestBrokerState state) {
@@ -1675,6 +1708,10 @@ public class RequestBrokerService extends
                     requestStatus.addTrackedTasks(PKSClusterRemovalTaskService.DISPLAY_NAME);
                 } else {
                     requestStatus.addTrackedTasks(ContainerRemovalTaskService.DISPLAY_NAME);
+                }
+            } else if (isResizeOperation(state)) {
+                if (isPKSClusterType(state)) {
+                    requestStatus.addTrackedTasks(PKSClusterResizeTaskService.DISPLAY_NAME);
                 }
             } else if (isClusteringOperation(state)) {
                 requestStatus.addTrackedTasks(ClusteringTaskService.DISPLAY_NAME);
