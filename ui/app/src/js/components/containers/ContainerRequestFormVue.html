@@ -10,7 +10,9 @@
   -->
 
 <div class="container-form">
-  <div class="title">{{i18n('app.container.request.title')}}</div>
+  <div class="title" v-if="!isKubernetesDeployment">{{i18n('app.container.request.title')}}</div>
+  <div class="title" v-if="isKubernetesDeployment">{{i18n('app.container.request.kubernetesDeploymentTitle')}}</div>
+
   <div class="container-defintion-form">
     <!-- Dynamic form content will be inserted here -->
   </div>

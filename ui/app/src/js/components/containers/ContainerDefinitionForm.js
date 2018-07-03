@@ -22,8 +22,9 @@ import constants from 'core/constants';
 import { TemplateActions } from 'actions/Actions';
 
 class ContainerDefinitionForm extends Component {
-  constructor() {
+  constructor(kubernetes) {
     super();
+    this.kubernetes = kubernetes;
 
     this.$el = $(ContainerDefinitionFormTemplate());
 
@@ -58,6 +59,25 @@ class ContainerDefinitionForm extends Component {
       }
     );
 
+    if (this.kubernetes) {
+      this.$el.find('.container-links-input').hide();
+      this.$el.find('.container-networks-input').hide();
+      this.$el.find('.container-volumes-input').hide();
+      this.$el.find('.container-affinity-constraints-input').hide();
+      this.$el.find('.container-custom-properties-input').hide();
+      this.$el.find('.container-ports-publish-input').hide();
+      this.$el.find('.container-max-restarts-input').hide();
+      this.$el.find('.container-network-mode-input').hide();
+      this.$el.find('.container-memory-swap-input').hide();
+      this.$el.find('.container-hostname-input').hide();
+      this.$el.find('.log-config-nav').hide();
+      this.$el.find('.storage-nav').hide();
+      this.$el.find('.health-nav').hide();
+
+      this.$el.find('.container-restart-policy-input .form-control').val('always');
+      this.commandsEditor.hideButtons();
+    }
+
     this.linksEditor = new MulticolumnInputs(
       this.$el.find('.container-links-input .form-control'), {
         container: enhanceLabels('app.container.request.inputs.linksInputs.service', {
@@ -67,18 +87,30 @@ class ContainerDefinitionForm extends Component {
       }
     );
 
-    this.portsEditor = new MulticolumnInputs(
-      this.$el.find('.container-ports-input .form-control'), {
-        hostPort: enhanceLabels('app.container.request.inputs.portBindingsInputs.hostPort', {
-          type: 'number'
-        }),
-        containerPort: enhanceLabels(
-          'app.container.request.inputs.portBindingsInputs.containerPort', {
+    if (this.kubernetes) {
+      this.portsEditor = new MulticolumnInputs(
+        this.$el.find('.container-ports-input .form-control'), {
+          containerPort: enhanceLabels(
+            'app.container.request.inputs.portBindingsInputs.containerPort', {
+              type: 'number'
+            }
+          )
+        }
+      );
+    } else {
+      this.portsEditor = new MulticolumnInputs(
+        this.$el.find('.container-ports-input .form-control'), {
+          hostPort: enhanceLabels('app.container.request.inputs.portBindingsInputs.hostPort', {
             type: 'number'
-          }
-        )
-      }
-    );
+          }),
+          containerPort: enhanceLabels(
+            'app.container.request.inputs.portBindingsInputs.containerPort', {
+              type: 'number'
+            }
+          )
+        }
+      );
+    }
 
     this.networksEditor = new MulticolumnInputs(
       this.$el.find('.container-networks-input .form-control'), {

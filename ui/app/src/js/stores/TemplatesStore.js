@@ -922,8 +922,8 @@ let TemplatesStore = Reflux.createStore({
     var containerRequest = {
       documentId: itemId,
       selectedForEdit: false,
-      selectedForRequest: false,
-      selectForKubernetesDeployment: true
+      selectedForRequest: true,
+      selectedForKubernetesDeployment: true
     };
 
     containerRequest.definitionInstance = {

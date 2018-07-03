@@ -300,6 +300,10 @@ MulticolumnInputs.prototype.removeEmptyProperties = function() {
   }
 };
 
+MulticolumnInputs.prototype.hideButtons = function() {
+  this.$el.find('.multicolumn-input-toolbar').hide();
+};
+
 var insertEmptyProperty = function($listBody, model, focus) {
   var $emptyPropertyElement = createItem(null, model);
   let props = $listBody.children();

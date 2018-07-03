@@ -23,6 +23,9 @@ var ContainerRequestForm = Vue.extend({
     },
     useResourceAction: {
       type: Boolean
+    },
+    kubernetes: {
+      type: Boolean
     }
   },
   data: function() {
@@ -34,6 +37,9 @@ var ContainerRequestForm = Vue.extend({
   computed: {
     buttonsDisabled: function() {
       return this.creatingContainer || this.savingTemplate;
+    },
+    isKubernetesDeployment: function() {
+      return this.kubernetes;
     }
   },
   methods: {
@@ -43,6 +49,10 @@ var ContainerRequestForm = Vue.extend({
       if (!validationErrors) {
         this.creatingContainer = true;
         var containerDescription = this.definitionForm.getContainerDescription();
+
+        if (this.kubernetes) {
+          return TemplateActions.provisionKubernetesDeploymentTemplate(containerDescription);
+        }
 
         if (this.useResourceAction) {
           ContainerActions.createContainer(containerDescription);
@@ -57,12 +67,17 @@ var ContainerRequestForm = Vue.extend({
       if (!validationErrors) {
         this.savingTemplate = true;
         var containerDescription = this.definitionForm.getContainerDescription();
-        TemplateActions.createContainerTemplate(containerDescription);
+
+        if (this.kubernetes) {
+          TemplateActions.createKubernetesDeploymentTemplate(containerDescription);
+        } else {
+          TemplateActions.createContainerTemplate(containerDescription);
+        }
       }
     }
   },
   attached: function() {
-    this.definitionForm = new ContainerDefinitionForm();
+    this.definitionForm = new ContainerDefinitionForm(this.kubernetes);
     $(this.$el).find('.container-defintion-form').replaceWith(this.definitionForm.getEl());
 
     this.unwatchModel = this.$watch('model.definitionInstance', (data) => {

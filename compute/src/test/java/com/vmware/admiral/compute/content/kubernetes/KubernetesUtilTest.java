@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.compute.content;
+package com.vmware.admiral.compute.content.kubernetes;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -59,8 +59,7 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig.HttpVersion;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig.RequestProtocol;
-import com.vmware.admiral.compute.content.kubernetes.KubernetesTemplate;
-import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
+import com.vmware.admiral.compute.content.CompositeTemplate;
 import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
 import com.vmware.admiral.compute.kubernetes.entities.common.ResourceRequirements;
 import com.vmware.admiral.compute.kubernetes.entities.config.KubeConfig;

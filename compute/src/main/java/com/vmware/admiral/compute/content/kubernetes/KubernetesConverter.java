@@ -208,15 +208,17 @@ public class KubernetesConverter {
     public static void setPodContainerResourcesToContainerDescriptionResources(Container
             podContainer, ContainerDescription containerDescription) {
 
-        String podContainerMemoryLimit = (String) podContainer.resources.limits.get("memory");
-        String podContainerCpuShares = (String) podContainer.resources.limits.get("cpu");
-        try {
-            containerDescription.memoryLimit = Long.parseLong(podContainerMemoryLimit);
-            containerDescription.cpuShares = Integer.parseInt(podContainerCpuShares);
-        } catch (NumberFormatException nfe) {
-            containerDescription.memoryLimit = parsePodContainerMemoryLimit
-                    (podContainerMemoryLimit);
-            containerDescription.cpuShares = parsePodContainerCpuShares(podContainerCpuShares);
+        if (podContainer != null && podContainer.resources != null && podContainer.resources.limits != null) {
+            String podContainerMemoryLimit = (String) podContainer.resources.limits.get("memory");
+            String podContainerCpuShares = (String) podContainer.resources.limits.get("cpu");
+            try {
+                containerDescription.memoryLimit = Long.parseLong(podContainerMemoryLimit);
+                containerDescription.cpuShares = Integer.parseInt(podContainerCpuShares);
+            } catch (NumberFormatException nfe) {
+                containerDescription.memoryLimit = parsePodContainerMemoryLimit
+                        (podContainerMemoryLimit);
+                containerDescription.cpuShares = parsePodContainerCpuShares(podContainerCpuShares);
+            }
         }
     }
 
@@ -303,8 +305,9 @@ public class KubernetesConverter {
             // Container hold it's command as 2 separate string arrays - one for command
             // and one for it's args. In this approach we assume that the command is the first
             // element and rest elements are it's args, for ContainerDescription's command.
-            podContainer.command = Collections.singletonList(description.command[0]);
-            podContainer.args = Arrays.stream(description.command).skip(1)
+            String[] splittedCommand = description.command[0].split(" ");
+            podContainer.command = Collections.singletonList(splittedCommand[0]);
+            podContainer.args = Arrays.stream(splittedCommand).skip(1)
                     .collect(Collectors.toList());
         }
         if (description.privileged != null) {
