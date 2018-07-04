@@ -34,7 +34,7 @@
     "signals": "1.0.0",
     "tablesort": "3.0.2",
     "tether": "^1.4.0",
-    "validator": "3.43.0",
+    "validator": "9.4.1",
     "vue": "1.0.24",
     "vue-infinite-scroll": "0.2.2",
     "wamda-typeahead": "0.11.1"
