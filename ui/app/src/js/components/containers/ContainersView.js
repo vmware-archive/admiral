@@ -649,7 +649,7 @@ var ContainersViewVueComponent = Vue.extend({
 
       if (fromViewName === 'container-details' || isFromAppDetails) {
         let queryOptions = this.queryOptions;
-        if (this.model.selectedItemDetails.templateLink) {
+        if (this.model.selectedItemDetails.templateLink && isFromAppDetails) {
           var compositeLink = this.model.selectedItemDetails.instance.compositeComponentLink;
           var compositeId = compositeLink.substring(compositeLink.lastIndexOf('/') + 1);
           NavigationActions.openCompositeContainerDetails(compositeId);
