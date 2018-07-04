@@ -26,6 +26,7 @@
 
     <properties>
         <buildDirectory>${project.basedir}/target</buildDirectory>
+        <testBrowser>PhantomJS</testBrowser>
     </properties>
 
     <build>
@@ -78,7 +79,7 @@
                         </goals>
                         <configuration>
                             <skip>${skipITs}</skip>
-                            <arguments>it-tests --test.dcp.url=${test.dcp.url} --test.integration.properties=${test.integration.properties}</arguments>
+                            <arguments>it-tests --test.dcp.url=${test.dcp.url} --test.integraton.properties=${test.integration.properties} --test.browser=${testBrowser}</arguments>
                         </configuration>
                     </execution>
                 </executions>

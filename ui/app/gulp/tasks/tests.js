@@ -63,7 +63,11 @@ var createCommonTestsConfig =  function(files, reporters, reportOutputFile, sing
     ],
     proxies: config.tests.proxies,
     singleRun: singleRun,
-    globals: config.INTEGRATION_TEST_PROPERTIES
+    globals: config.INTEGRATION_TEST_PROPERTIES,
+    captureTimeout: 60000,
+    browserDisconnectTimeout : 10000,
+    browserDisconnectTolerance : 1,
+    browserNoActivityTimeout : 60000,
   }
 };
 
