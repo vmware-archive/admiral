@@ -20,6 +20,19 @@
     <artifactId>admiral-tiller</artifactId>
     <packaging>pom</packaging>
 
+    <build>
+        <plugins>
+            <plugin>
+                <!-- needed to resolve the classifiers of microbean-helm dependencies -->
+                <groupId>kr.motd.maven</groupId>
+                <artifactId>os-maven-plugin</artifactId>
+                <version>1.6.0</version>
+                <extensions>true</extensions>
+                <inherited>true</inherited>
+            </plugin>
+        </plugins>
+    </build>
+
     <modules>
         <module>services</module>
         <module>adapter</module>

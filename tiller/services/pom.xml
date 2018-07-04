@@ -28,6 +28,14 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- Microbrean tiller code is loaded via java SPI and is needed only runtime -->
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>admiral-tiller-adapter-microbean</artifactId>
+            <version>${project.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+
         <!-- TEST -->
         <dependency>
             <groupId>${project.groupId}</groupId>

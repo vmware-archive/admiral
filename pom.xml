@@ -97,7 +97,7 @@
 
         <!-- TEST -->
         <junit.version>4.12</junit.version>
-        <mockito.version>2.0.36-beta</mockito.version>
+        <mockito.version>2.19.0</mockito.version>
         <jacoco.version>0.7.5.201505241946</jacoco.version>
 
         <!-- Jacoco -->

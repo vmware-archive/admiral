@@ -34,6 +34,8 @@ public class TillerConfig {
 
     private String k8sClientKeyPassphrase = EMPTY_PASSPHRASE;
 
+    private boolean k8sTrustCertificateAuthority;
+
     private String tillerNamespace;
 
     private Integer tillerPort;
@@ -78,6 +80,10 @@ public class TillerConfig {
 
     public String getK8sClientKeyPassphrase() {
         return k8sClientKeyPassphrase;
+    }
+
+    public boolean getK8sTrustCertificateAuthority() {
+        return k8sTrustCertificateAuthority;
     }
 
     public String getTillerNamespace() {
@@ -159,6 +165,11 @@ public class TillerConfig {
             // skip null checks
             configuration.k8sClientKeyPassphrase = k8sClientKeyPassphrase != null
                     ? k8sClientKeyPassphrase : EMPTY_PASSPHRASE;
+            return this;
+        }
+
+        public Builder setK8sTrustCertificateAuthority(boolean k8sTrustCertificateAuthority) {
+            configuration.k8sTrustCertificateAuthority = k8sTrustCertificateAuthority;
             return this;
         }
 
