@@ -27,7 +27,7 @@
     "iframe-resizer": "^3.5.14",
     "jquery": "3.3.1",
     "jsplumb": "2.1.5",
-    "moment": "2.15.2",
+    "moment": "2.21.0",
     "reflux": "0.3.1",
     "requirejs": "2.1.22",
     "seamless-immutable": "2.4.2",
