@@ -261,6 +261,7 @@
         "title": "常用範本",
         "titleSearch": "找到的範本",
         "popularRepositories": "常用存放庫",
+        "repositoriesSearchWarning": "Please, specify term to search for. The search cannot proceed.",
         "searchImagesTemplatesPlaceholder": "搜尋映像、範本",
         "searchImagesPlaceholder": "搜尋映像",
         "searchRepositoriesPlaceholder": "搜尋存放庫",

@@ -287,18 +287,26 @@
       },
       "details": {
         "summary": {
+          "kubeConfigBtn": "KubeConfig",
+          "kubeConfigTooltip": "Download a configuration file for the kubectl command-line tool to gain access to this cluster.",
           "title": "Сводка",
           "nodeCount": "Узлы:",
           "dashboard": "Панель мониторинга:",
+          "planName": "План:",
           "dashboardInstalled": "УСТАНОВЛЕНО",
-          "dashboardNotInstalled": "НЕ УСТАНОВЛЕНО"
+          "dashboardNotInstalled": "НЕ УСТАНОВЛЕНО",
+          "totalMemory": "Общий объем памяти:"
         },
         "nodes": {
           "title": "Узлы",
           "searchPlaceholder": "Искать узлы",
           "nameColumn": "Имя",
-          "cpuColumn": "ЦП",
-          "memoryColumn": "Память",
+          "cpuCountColumn": "Количество ЦП",
+          "totalMemoryColumn": "Общий объем памяти",
+          "powerState": {
+            "ON": "Включено",
+            "OFF": "Отключено"
+          },
           "count": "Узлы"
         }
       }
@@ -354,6 +362,19 @@
             },
             "logsTitle": "Журналы"
         }
+    },
+    "services": {
+      "title": "Службы",
+      "search": {
+        "placeholder": "Поиск служб"
+      },
+      "item": {
+        "summaryTitle": "Сводка",
+        "creation": "Создано:",
+        "namespace": "Пространство имен
+:",
+        "ports": "Порты:"
+      }
     }
   },
   "pks": {
@@ -381,15 +402,20 @@
         "workerFieldRequired": "Поле рабочего процесса является обязательным. Можно ввести только целое число больше 0."
       }
     },
+    "edit": {
+      "title": "Изменить кластер"
+    },
     "add": {
       "title": "Добавить кластер",
       "existingClusters": {
         "descriptionText": "Выберите конечную точку, а затем выберите один или несколько существующих, неназначенных кластеров Kubernetes для добавления к текущей бизнес-группе.",
         "fieldTitleEndpoint": "Конечная точка:",
         "columnTitleName": "Имя",
+        "columnTitleHostname": "Имя узла",
         "columnTitleMastersCount": "Количество основных узлов",
         "columnTitleWorkersCount": "Количество рабочих процессов",
         "columnTitlePlan": " План",
+        "columnTitleInAdmiral": "Зарегистрирован",
         "yes": "Да",
         "no": "Нет",
         "count": "Кластеры"
@@ -478,7 +504,9 @@
       "pksAddressFieldTitle": "PKS-адрес",
       "pksAddressRequired": "Необходимо указать PKS-адрес.",
       "testConnectionBtn": "Проверить подключение",
-      "clustersTabTitle": "Кластеры"
+      "clustersTabTitle": "Кластеры",
+      "connectionVerified": "Подключение к конечной точке успешно установлено.",
+      "certificateNotAccepted": "Сертификат не будет принят. Невозможно продолжить."
     }
   },
   "configuration": {
@@ -538,7 +566,8 @@
     "kubernetes": {
       "title": "Kubernetes",
       "deployments": "Развертывания",
-      "pods": "Элементы Pod"
+      "pods": "Элементы Pod",
+      "services": "Службы"
     },
     "library": "Библиотека",
     "templates": "Шаблоны",

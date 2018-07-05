@@ -287,18 +287,26 @@
       },
       "details": {
         "summary": {
+          "kubeConfigBtn": "KubeConfig",
+          "kubeConfigTooltip": "Download a configuration file for the kubectl command-line tool to gain access to this cluster.",
           "title": "요약",
           "nodeCount": "노드:",
           "dashboard": "대시보드:",
+          "planName": "계획:",
           "dashboardInstalled": "설치됨",
-          "dashboardNotInstalled": "설치되지 않음"
+          "dashboardNotInstalled": "설치되지 않음",
+          "totalMemory": "총 메모리:"
         },
         "nodes": {
           "title": "노드",
           "searchPlaceholder": "노드 검색",
           "nameColumn": "이름",
-          "cpuColumn": "CPU",
-          "memoryColumn": "메모리",
+          "cpuCountColumn": "CPU 수",
+          "totalMemoryColumn": "총 메모리",
+          "powerState": {
+            "ON": "켜짐",
+            "OFF": "꺼짐"
+          },
           "count": "노드"
         }
       }
@@ -351,6 +359,18 @@
             },
             "logsTitle": "로그"
         }
+    },
+    "services": {
+      "title": "서비스",
+      "search": {
+        "placeholder": "서비스 검색"
+      },
+      "item": {
+        "summaryTitle": "요약",
+        "creation": "생성 시간:",
+        "namespace": "네임스페이스:",
+        "ports": "포트:"
+      }
     }
   },
   "pks": {
@@ -378,15 +398,20 @@
         "workerFieldRequired": "작업자 필드는 필수입니다. 0보다 큰 정수 값만 입력할 수 있습니다."
       }
     },
+    "edit": {
+      "title": "클러스터 편집"
+    },
     "add": {
       "title": "클러스터 추가",
       "existingClusters": {
         "descriptionText": "끝점을 선택하고 현재 비즈니스 그룹에 추가할 하나 이상의 할당되지 않은 기존 Kubernetes 클러스터를 선택합니다.",
         "fieldTitleEndpoint": "끝점:",
         "columnTitleName": "이름",
+        "columnTitleHostname": "호스트 이름",
         "columnTitleMastersCount": "마스터 수",
         "columnTitleWorkersCount": "작업자 수",
         "columnTitlePlan": "계획",
+        "columnTitleInAdmiral": "등록됨",
         "yes": "예",
         "no": "아니요",
         "count": "클러스터"
@@ -475,7 +500,9 @@
       "pksAddressFieldTitle": "PKS 주소",
       "pksAddressRequired": "PKS 주소는 필수입니다.",
       "testConnectionBtn": "연결 테스트",
-      "clustersTabTitle": "클러스터"
+      "clustersTabTitle": "클러스터",
+      "connectionVerified": "끝점에 연결되었습니다.",
+      "certificateNotAccepted": "인증서가 수락되지 않았습니다. 계속할 수 없습니다."
     }
   },
   "configuration": {
@@ -535,7 +562,8 @@
     "kubernetes": {
       "title": "Kubernetes",
       "deployments": "배포",
-      "pods": "포드"
+      "pods": "포드",
+      "services": "서비스"
     },
     "library": "라이브러리",
     "templates": "템플릿",

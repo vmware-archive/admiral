@@ -261,6 +261,7 @@
         "title": "Популярные шаблоны",
         "titleSearch": "Найденные шаблоны",
         "popularRepositories": "Часто используемые репозитории",
+        "repositoriesSearchWarning": "Please, specify term to search for. The search cannot proceed.",
         "searchImagesTemplatesPlaceholder": "Поиск образов, шаблонов",
         "searchImagesPlaceholder": "Поиск образов",
         "searchRepositoriesPlaceholder": "Поиск репозиториев",
@@ -1360,7 +1361,7 @@
     "failure": "Ошибка проверки подлинности"
   },
   "dropdownSearchMenu": {
-    "title": "Выберите из списка: {{entity}}",
+    "title": "Выбор из списка {{entity}}",
     "searchPlaceholder": "Поиск: {{entity}}",
     "clear": "Очистить выбор",
     "showingCount": "Показано: {{count}} из {{totalCount}}",

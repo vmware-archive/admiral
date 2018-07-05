@@ -287,18 +287,26 @@
       },
       "details": {
         "summary": {
+          "kubeConfigBtn": "KubeConfig",
+          "kubeConfigTooltip": "Download a configuration file for the kubectl command-line tool to gain access to this cluster.",
           "title": "Résumé",
           "nodeCount": "Nœuds :",
           "dashboard": "Tableau de bord :",
+          "planName": "Plan :",
           "dashboardInstalled": "INSTALLÉ",
-          "dashboardNotInstalled": "NON INSTALLÉ"
+          "dashboardNotInstalled": "NON INSTALLÉ",
+          "totalMemory": "Mémoire totale :"
         },
         "nodes": {
           "title": "Nœuds",
           "searchPlaceholder": "Rechercher des nœuds",
           "nameColumn": "Nom",
-          "cpuColumn": "CPU",
-          "memoryColumn": "Mémoire",
+          "cpuCountColumn": "Nombre de CPU",
+          "totalMemoryColumn": "Mémoire totale",
+          "powerState": {
+            "ON": "Activé",
+            "OFF": "Désactivé"
+          },
           "count": "Nœuds"
         }
       }
@@ -351,6 +359,18 @@
             },
             "logsTitle": "Journaux"
         }
+    },
+    "services": {
+      "title": "Services",
+      "search": {
+        "placeholder": "Rechercher des services"
+      },
+      "item": {
+        "summaryTitle": "Résumé",
+        "creation": "Créé le :",
+        "namespace": "Espace de noms :",
+        "ports": "Ports :"
+      }
     }
   },
   "pks": {
@@ -378,15 +398,20 @@
         "workerFieldRequired": "Le champ Travailleur est obligatoire. Vous pouvez uniquement entrer des nombres entiers supérieurs à 0."
       }
     },
+    "edit": {
+      "title": "Modifier le cluster"
+    },
     "add": {
       "title": "Ajouter un cluster",
       "existingClusters": {
         "descriptionText": "Sélectionnez un point de terminaison, puis un ou plusieurs clusters Kubernetes non attribués existants à ajouter au groupe d'activité en cours.",
         "fieldTitleEndpoint": "Point de terminaison :",
         "columnTitleName": "Nom",
+        "columnTitleHostname": "Nom d'hôte",
         "columnTitleMastersCount": "Nombre de maîtres",
         "columnTitleWorkersCount": "Nombre de travailleurs",
         "columnTitlePlan": " Plan",
+        "columnTitleInAdmiral": "Enregistré",
         "yes": "Oui",
         "no": "Non",
         "count": "Clusters"
@@ -475,7 +500,9 @@
       "pksAddressFieldTitle": "Adresse PKS",
       "pksAddressRequired": "L'adresse PKS est requise.",
       "testConnectionBtn": "Tester la connexion",
-      "clustersTabTitle": "Clusters"
+      "clustersTabTitle": "Clusters",
+      "connectionVerified": "La connexion au point de terminaison a été établie.",
+      "certificateNotAccepted": "Impossible de continuer, car le certificat n'est pas accepté."
     }
   },
   "configuration": {
@@ -535,7 +562,8 @@
     "kubernetes": {
       "title": "Kubernetes",
       "deployments": "Déploiements",
-      "pods": "Espaces"
+      "pods": "Espaces",
+      "services": "Services"
     },
     "library": "Bibliothèque",
     "templates": "Modèles",

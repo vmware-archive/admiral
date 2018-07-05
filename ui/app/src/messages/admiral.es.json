@@ -261,6 +261,7 @@
         "title": "Plantillas populares",
         "titleSearch": "Plantillas encontradas",
         "popularRepositories": "Repositorios populares",
+        "repositoriesSearchWarning": "Please, specify term to search for. The search cannot proceed.",
         "searchImagesTemplatesPlaceholder": "Buscar imágenes, plantillas",
         "searchImagesPlaceholder": "Buscar imágenes",
         "searchRepositoriesPlaceholder": "Buscar repositorios",

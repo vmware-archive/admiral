@@ -287,18 +287,26 @@
       },
       "details": {
         "summary": {
+          "kubeConfigBtn": "KubeConfig",
+          "kubeConfigTooltip": "Download a configuration file for the kubectl command-line tool to gain access to this cluster.",
           "title": "摘要",
           "nodeCount": "节点:",
           "dashboard": "仪表板:",
+          "planName": "计划:",
           "dashboardInstalled": "已安装",
-          "dashboardNotInstalled": "未安装"
+          "dashboardNotInstalled": "未安装",
+          "totalMemory": "总内存:"
         },
         "nodes": {
           "title": "节点",
           "searchPlaceholder": "搜索节点",
           "nameColumn": "名称",
-          "cpuColumn": "CPU",
-          "memoryColumn": "内存",
+          "cpuCountColumn": "CPU 数",
+          "totalMemoryColumn": "总内存",
+          "powerState": {
+            "ON": "开启",
+            "OFF": "关闭"
+          },
           "count": "节点"
         }
       }
@@ -351,6 +359,18 @@
             },
             "logsTitle": "日志"
         }
+    },
+    "services": {
+      "title": "服务",
+      "search": {
+        "placeholder": "搜索服务"
+      },
+      "item": {
+        "summaryTitle": "摘要",
+        "creation": "创建时间:",
+        "namespace": "命名空间:",
+        "ports": "端口:"
+      }
     }
   },
   "pks": {
@@ -378,15 +398,20 @@
         "workerFieldRequired": "“工作线程”字段是必填字段。只能输入大于 0 的整数值。"
       }
     },
+    "edit": {
+      "title": "编辑群集"
+    },
     "add": {
       "title": "添加群集",
       "existingClusters": {
         "descriptionText": "选择一个端点，然后选择一个或多个现有未分配的 Kubernetes 群集以添加到当前业务组。",
         "fieldTitleEndpoint": "端点:",
         "columnTitleName": "名称",
+        "columnTitleHostname": "主机名",
         "columnTitleMastersCount": "主节点数",
         "columnTitleWorkersCount": "工作线程数",
         "columnTitlePlan": "计划",
+        "columnTitleInAdmiral": "已注册",
         "yes": "是",
         "no": "否",
         "count": "群集数"
@@ -475,7 +500,9 @@
       "pksAddressFieldTitle": "PKS 地址",
       "pksAddressRequired": "“PKS 地址”是必填字段。",
       "testConnectionBtn": "测试连接",
-      "clustersTabTitle": "群集"
+      "clustersTabTitle": "群集",
+      "connectionVerified": "已成功连接到端点。",
+      "certificateNotAccepted": "未接受证书。无法继续。"
     }
   },
   "configuration": {
@@ -535,7 +562,8 @@
     "kubernetes": {
       "title": "Kubernetes",
       "deployments": "部署",
-      "pods": "容器"
+      "pods": "容器",
+      "services": "服务"
     },
     "library": "库",
     "templates": "模板",

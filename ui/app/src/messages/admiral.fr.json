@@ -261,6 +261,7 @@
         "title": "Modèles répandus",
         "titleSearch": "Modèles trouvés",
         "popularRepositories": "Référentiels populaires",
+        "repositoriesSearchWarning": "Please, specify term to search for. The search cannot proceed.",
         "searchImagesTemplatesPlaceholder": "Rechercher des images, des modèles",
         "searchImagesPlaceholder": "Rechercher des images",
         "searchRepositoriesPlaceholder": "Rechercher des référentiels",

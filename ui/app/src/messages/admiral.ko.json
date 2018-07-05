@@ -261,6 +261,7 @@
         "title": "인기 템플릿",
         "titleSearch": "찾은 템플릿",
         "popularRepositories": "인기 저장소",
+        "repositoriesSearchWarning": "Please, specify term to search for. The search cannot proceed.",
         "searchImagesTemplatesPlaceholder": "이미지, 템플릿 검색",
         "searchImagesPlaceholder": "이미지 검색",
         "searchRepositoriesPlaceholder": "저장소 검색",

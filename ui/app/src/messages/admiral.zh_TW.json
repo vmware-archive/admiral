@@ -261,6 +261,7 @@
         "title": "常用範本",
         "titleSearch": "找到的範本",
         "popularRepositories": "常用存放庫",
+        "repositoriesSearchWarning": "Please, specify term to search for. The search cannot proceed.",
         "searchImagesTemplatesPlaceholder": "搜尋映像、範本",
         "searchImagesPlaceholder": "搜尋映像",
         "searchRepositoriesPlaceholder": "搜尋存放庫",
@@ -269,6 +270,7 @@
         "manageRegistry": "管理登錄",
         "provision": "佈建",
         "provisionAdditionalInfo": "輸入其他資訊",
+        "provisionKubernetesDeployment": "在 Kubernetes 上佈建",
         "editTemplate": "編輯/檢視詳細資料",
         "official": "正版",
         "trusted": "受信任",
@@ -289,7 +291,10 @@
           "closures": "閉包",
           "repositories": "存放庫"
         },
-        "createTemplate": "範本"
+        "createTemplate": "範本",
+        "addToFavorites": "將映像新增至 [我的最愛]",
+        "removeFromFavorites": "從 [我的最愛] 中移除映像",
+        "addedImageToFavoritesMessage": "映像已新增至 [我的最愛]"
       },
       "details": {
         "create": "建立範本",
@@ -474,7 +479,7 @@
         "addButton": "登錄",
         "addressColumn": "位址",
         "nameColumn": "名稱",
-        "statusColumn": "狀態"
+        "statusColumn": "已啟用"
       },
       "edit": {
         "createNew": "新增登錄",
@@ -1011,6 +1016,7 @@
       },
       "request": {
         "title": "佈建容器",
+        "kubernetesDeploymentTitle": "佈建 Kubernetes 部署",
         "provision": "佈建",
         "saveTemplate": "另存為範本",
         "tabs": {
@@ -1100,6 +1106,7 @@
           "workingDirectoryDescription": "可供在其中執行命令的工作目錄",
           "clusterSize": "叢集大小",
           "clusterSizeDescription": "要佈建的節點數目",
+          "kubernetesReplicas": "複本",
           "restartPolicy": "重新啟動原則",
           "restartPolicyDescription": "容器結束時要套用的行為。值「一律」為一律重新啟動或「出現錯誤時」為僅在容器結束程式碼為非零時重新啟動。如果使用「出現錯誤時」，重新啟動計數上限會控制放棄之前重試的次數。預設值為不重新啟動",
           "restartPolicyType": {
@@ -1365,6 +1372,12 @@
     "nameHint": "範例: speedchecker",
     "value": "值",
     "valueHint": "範例: slow"
+  },
+  "search": {
+    "occurrence": {
+      "all": "符合全部項目",
+      "any": "符合任意項目"
+    }
   },
   "yes": "是",
   "no": "否",

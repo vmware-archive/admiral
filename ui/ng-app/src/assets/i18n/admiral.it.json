@@ -287,18 +287,26 @@
       },
       "details": {
         "summary": {
+          "kubeConfigBtn": "KubeConfig",
+          "kubeConfigTooltip": "Download a configuration file for the kubectl command-line tool to gain access to this cluster.",
           "title": "Riepilogo",
           "nodeCount": "Nodi:",
           "dashboard": "Dashboard:",
+          "planName": "Piano:",
           "dashboardInstalled": "INSTALLATO",
-          "dashboardNotInstalled": "NON INSTALLATO"
+          "dashboardNotInstalled": "NON INSTALLATO",
+          "totalMemory": "Memoria totale:"
         },
         "nodes": {
           "title": "Nodi",
           "searchPlaceholder": "Cerca nodi",
           "nameColumn": "Nome",
-          "cpuColumn": "CPU",
-          "memoryColumn": "Memoria",
+          "cpuCountColumn": "N. CPU",
+          "totalMemoryColumn": "Memoria totale",
+          "powerState": {
+            "ON": "Il giorno",
+            "OFF": "Disattivato"
+          },
           "count": "Nodi"
         }
       }
@@ -351,6 +359,18 @@
             },
             "logsTitle": "Registri"
         }
+    },
+    "services": {
+      "title": "Servizi",
+      "search": {
+        "placeholder": "Cerca servizi"
+      },
+      "item": {
+        "summaryTitle": "Riepilogo",
+        "creation": "Data creazione:",
+        "namespace": "Spazio dei nomi:",
+        "ports": "Porte:"
+      }
     }
   },
   "pks": {
@@ -378,15 +398,20 @@
         "workerFieldRequired": "Il campo Worker è obbligatorio. È possibile immettere solo valori interi maggiori di 0."
       }
     },
+    "edit": {
+      "title": "Modifica cluster"
+    },
     "add": {
       "title": "Aggiungi cluster",
       "existingClusters": {
         "descriptionText": "Selezionare un endpoint, quindi uno o più cluster Kubernetes esistenti non assegnati da aggiungere al gruppo di business corrente.",
         "fieldTitleEndpoint": "Endpoint:",
         "columnTitleName": "Nome",
+        "columnTitleHostname": "Nome host",
         "columnTitleMastersCount": "N. master",
         "columnTitleWorkersCount": "N. Worker",
         "columnTitlePlan": " Piano",
+        "columnTitleInAdmiral": "Registrato",
         "yes": "Sì",
         "no": "No",
         "count": "Cluster"
@@ -475,7 +500,9 @@
       "pksAddressFieldTitle": "Indirizzo PKS",
       "pksAddressRequired": "L'indirizzo PKS è obbligatorio.",
       "testConnectionBtn": "Prova connessione",
-      "clustersTabTitle": "Cluster"
+      "clustersTabTitle": "Cluster",
+      "connectionVerified": "Connessione a endpoint riuscita.",
+      "certificateNotAccepted": "Il certificato non è stato accettato. Impossibile continuare."
     }
   },
   "configuration": {
@@ -535,7 +562,8 @@
     "kubernetes": {
       "title": "Kubernetes",
       "deployments": "Distribuzioni",
-      "pods": "POD"
+      "pods": "POD",
+      "services": "Servizi"
     },
     "library": "Libreria",
     "templates": "Modelli",

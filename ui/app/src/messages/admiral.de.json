@@ -261,6 +261,7 @@
         "title": "Beliebte Vorlagen",
         "titleSearch": "Gefundene Vorlagen",
         "popularRepositories": "Beliebte Repositorys",
+        "repositoriesSearchWarning": "Please, specify term to search for. The search cannot proceed.",
         "searchImagesTemplatesPlaceholder": "Images und Vorlagen suchen",
         "searchImagesPlaceholder": "Images suchen",
         "searchRepositoriesPlaceholder": "Repositorys suchen",

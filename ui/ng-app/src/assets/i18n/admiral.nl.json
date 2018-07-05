@@ -287,18 +287,26 @@
       },
       "details": {
         "summary": {
+          "kubeConfigBtn": "KubeConfig",
+          "kubeConfigTooltip": "Download a configuration file for the kubectl command-line tool to gain access to this cluster.",
           "title": "Samenvatting",
           "nodeCount": "Knooppunten:",
           "dashboard": "Dashboard:",
+          "planName": "Plan:",
           "dashboardInstalled": "GEÏNSTALLEERD",
-          "dashboardNotInstalled": "NIET GEÏNSTALLEERD"
+          "dashboardNotInstalled": "NIET GEÏNSTALLEERD",
+          "totalMemory": "Totaal geheugen:"
         },
         "nodes": {
           "title": "Knooppunten",
           "searchPlaceholder": "Zoeken naar knooppunten",
           "nameColumn": "Naam",
-          "cpuColumn": "CPU",
-          "memoryColumn": "Geheugen",
+          "cpuCountColumn": "Aantal CPU's",
+          "totalMemoryColumn": "Totaal geheugen",
+          "powerState": {
+            "ON": "Aan",
+            "OFF": "Uit"
+          },
           "count": "knooppunten"
         }
       }
@@ -351,6 +359,18 @@
             },
             "logsTitle": "Logboeken"
         }
+    },
+    "services": {
+      "title": "Services",
+      "search": {
+        "placeholder": "Zoeken naar services"
+      },
+      "item": {
+        "summaryTitle": "Samenvatting",
+        "creation": "Gemaakt:",
+        "namespace": "Naamruimte:",
+        "ports": "Poorten:"
+      }
     }
   },
   "pks": {
@@ -378,15 +398,20 @@
         "workerFieldRequired": "Het veld Werker is verplicht. Alleen gehele getallen groter dan 0 kunnen worden ingevoerd."
       }
     },
+    "edit": {
+      "title": "Cluster bewerken"
+    },
     "add": {
       "title": "Cluster toevoegen",
       "existingClusters": {
         "descriptionText": "Selecteer een endpoint en selecteer vervolgens een of meer bestaande, niet-toegewezen Kubernetes-clusters die u wilt toevoegen aan de huidige bedrijfsgroep.",
         "fieldTitleEndpoint": "Endpoint:",
         "columnTitleName": "Naam",
+        "columnTitleHostname": "Hostnaam",
         "columnTitleMastersCount": "Aantal masters",
         "columnTitleWorkersCount": "Aantal werkers",
         "columnTitlePlan": " Plan",
+        "columnTitleInAdmiral": "Geregistreerd",
         "yes": "Ja",
         "no": "Nee",
         "count": "clusters"
@@ -475,7 +500,9 @@
       "pksAddressFieldTitle": "PKS-adres",
       "pksAddressRequired": "Het PKS-adres is verplicht.",
       "testConnectionBtn": "Testverbinding",
-      "clustersTabTitle": "Clusters"
+      "clustersTabTitle": "Clusters",
+      "connectionVerified": "Verbinding met eindpunt is geslaagd.",
+      "certificateNotAccepted": "Het certificaat wordt niet geaccepteerd. Kan niet doorgaan."
     }
   },
   "configuration": {
@@ -535,7 +562,8 @@
     "kubernetes": {
       "title": "Kubernetes",
       "deployments": "Implementaties",
-      "pods": "Pods"
+      "pods": "Pods",
+      "services": "Services"
     },
     "library": "Bibliotheek",
     "templates": "Sjablonen",

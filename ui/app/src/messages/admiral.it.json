@@ -261,6 +261,7 @@
         "title": "Modelli popolari",
         "titleSearch": "Modelli trovati",
         "popularRepositories": "Repository popolari",
+        "repositoriesSearchWarning": "Please, specify term to search for. The search cannot proceed.",
         "searchImagesTemplatesPlaceholder": "Cerca immagini, modelli",
         "searchImagesPlaceholder": "Cerca immagini",
         "searchRepositoriesPlaceholder": "Cerca repository",

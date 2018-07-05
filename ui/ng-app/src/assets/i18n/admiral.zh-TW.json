@@ -287,18 +287,26 @@
       },
       "details": {
         "summary": {
+          "kubeConfigBtn": "KubeConfig",
+          "kubeConfigTooltip": "Download a configuration file for the kubectl command-line tool to gain access to this cluster.",
           "title": "摘要",
           "nodeCount": "節點:",
           "dashboard": "儀表板:",
+          "planName": "計劃:",
           "dashboardInstalled": "已安裝",
-          "dashboardNotInstalled": "未安裝"
+          "dashboardNotInstalled": "未安裝",
+          "totalMemory": "記憶體總計:"
         },
         "nodes": {
           "title": "節點",
           "searchPlaceholder": "搜尋節點",
           "nameColumn": "名稱",
-          "cpuColumn": "CPU",
-          "memoryColumn": "記憶體",
+          "cpuCountColumn": "CPU 數目",
+          "totalMemoryColumn": "記憶體總計",
+          "powerState": {
+            "ON": "開啟",
+            "OFF": "關閉"
+          },
           "count": "節點"
         }
       }
@@ -351,6 +359,18 @@
             },
             "logsTitle": "記錄"
         }
+    },
+    "services": {
+      "title": "服務",
+      "search": {
+        "placeholder": "搜尋服務"
+      },
+      "item": {
+        "summaryTitle": "摘要",
+        "creation": "建立時間:",
+        "namespace": "命名空間:",
+        "ports": "連接埠:"
+      }
     }
   },
   "pks": {
@@ -378,15 +398,20 @@
         "workerFieldRequired": "Worker 欄位為必填。僅可以輸入大於 0 的整數值。"
       }
     },
+    "edit": {
+      "title": "編輯叢集"
+    },
     "add": {
       "title": "新增叢集",
       "existingClusters": {
         "descriptionText": "選取端點，然後選取一或多個現有未指派的 Kubernetes 叢集，以新增至目前的業務群組。",
         "fieldTitleEndpoint": "端點:",
         "columnTitleName": "名稱",
+        "columnTitleHostname": "主機名稱",
         "columnTitleMastersCount": "主節點數",
         "columnTitleWorkersCount": "Worker 數",
         "columnTitlePlan": " 計劃",
+        "columnTitleInAdmiral": "已登錄",
         "yes": "是",
         "no": "否",
         "count": "叢集"
@@ -475,7 +500,9 @@
       "pksAddressFieldTitle": "PKS 位址",
       "pksAddressRequired": "PKS 位址為必填。",
       "testConnectionBtn": "測試連線",
-      "clustersTabTitle": "叢集"
+      "clustersTabTitle": "叢集",
+      "connectionVerified": "已成功連線到端點。",
+      "certificateNotAccepted": "不接受憑證。無法繼續。"
     }
   },
   "configuration": {
@@ -535,7 +562,8 @@
     "kubernetes": {
       "title": "Kubernetes",
       "deployments": "部署",
-      "pods": "網繭"
+      "pods": "網繭",
+      "services": "服務"
     },
     "library": "程式庫",
     "templates": "範本",

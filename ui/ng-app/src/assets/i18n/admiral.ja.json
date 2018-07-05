@@ -287,18 +287,26 @@
       },
       "details": {
         "summary": {
+          "kubeConfigBtn": "KubeConfig",
+          "kubeConfigTooltip": "Download a configuration file for the kubectl command-line tool to gain access to this cluster.",
           "title": "概要",
           "nodeCount": "ノード:",
           "dashboard": "ダッシュボード:",
+          "planName": "プラン:",
           "dashboardInstalled": "インストール済み",
-          "dashboardNotInstalled": "未インストール"
+          "dashboardNotInstalled": "未インストール",
+          "totalMemory": "合計メモリ:"
         },
         "nodes": {
           "title": "ノード",
           "searchPlaceholder": "ノードの検索",
           "nameColumn": "名前",
-          "cpuColumn": "CPU",
-          "memoryColumn": "メモリ",
+          "cpuCountColumn": "CPU 数",
+          "totalMemoryColumn": "メモリの合計",
+          "powerState": {
+            "ON": "オン",
+            "OFF": "オフ"
+          },
           "count": "ノード"
         }
       }
@@ -351,6 +359,18 @@
             },
             "logsTitle": "ログ"
         }
+    },
+    "services": {
+      "title": "サービス",
+      "search": {
+        "placeholder": "サービスの検索"
+      },
+      "item": {
+        "summaryTitle": "概要",
+        "creation": "作成日時:",
+        "namespace": "名前空間:",
+        "ports": "ポート:"
+      }
     }
   },
   "pks": {
@@ -378,15 +398,20 @@
         "workerFieldRequired": "ワーカー フィールドは必須です。0 よりも大きい整数のみを入力できます。"
       }
     },
+    "edit": {
+      "title": "クラスタの編集"
+    },
     "add": {
       "title": "クラスタの追加",
       "existingClusters": {
         "descriptionText": "エンドポイントを選択し、割り当てられていない既存の Kubernetes クラスタを 1 つ以上選択して、現在のビジネス グループに追加します。",
         "fieldTitleEndpoint": "エンドポイント:",
         "columnTitleName": "名前",
+        "columnTitleHostname": "ホスト名",
         "columnTitleMastersCount": "マスター数",
         "columnTitleWorkersCount": "ワーカー数",
         "columnTitlePlan": " プラン",
+        "columnTitleInAdmiral": "登録済み",
         "yes": "はい",
         "no": "いいえ",
         "count": "クラスタ"
@@ -475,7 +500,9 @@
       "pksAddressFieldTitle": "PKS アドレス",
       "pksAddressRequired": "PKS アドレスは必須です。",
       "testConnectionBtn": "接続をテスト",
-      "clustersTabTitle": "クラスタ"
+      "clustersTabTitle": "クラスタ",
+      "connectionVerified": "エンドポイントへの接続に成功しました。",
+      "certificateNotAccepted": "証明書が承認されません。続行できません。"
     }
   },
   "configuration": {
@@ -535,7 +562,8 @@
     "kubernetes": {
       "title": "Kubernetes",
       "deployments": "展開",
-      "pods": "ポッド"
+      "pods": "ポッド",
+      "services": "サービス"
     },
     "library": "ライブラリ",
     "templates": "テンプレート",

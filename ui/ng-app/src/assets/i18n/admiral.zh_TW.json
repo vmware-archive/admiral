@@ -26,6 +26,7 @@
     "clusters": "叢集",
     "clustersVic": "容器主機",
     "repositories": "存放庫",
+    "internalRepositories": "內部存放庫",
     "infrastructure": "基礎結構",
     "registryReplication": "登錄複寫",
     "configuration": "組態",
@@ -55,7 +56,7 @@
         "users": "使用者"
       },
       "repositories": {
-        "title": "專案存放庫",
+        "title": "內部存放庫",
         "repositories": "存放庫:"
       },
       "resources": {
@@ -94,10 +95,45 @@
         "local": "本機",
         "ldap": "LDAP"
       },
-      "deleteMember": {
+      "deleteMembers": {
         "title": "從專案移除成員",
-        "confirmation": "確定要從此專案移除成員嗎?"
+        "confirmation": "確定要從此專案移除所選成員嗎?"
       }
+    },
+    "projectRegistries": {
+        "title": "專案登錄",
+        "new": "新增專案登錄",
+        "delete": "刪除",
+        "nameTitle": "名稱",
+        "statusTitle": "狀態",
+        "scopeTitle": "範圍",
+        "addressTitle": "位址",
+        "searchPlaceholder": "搜尋登錄",
+        "scope": {
+          "global": "全域",
+          "project": "專案"
+        },
+        "status": {
+          "active": "作用中",
+          "disabled": "已停用"
+        },
+        "deleteConfirmation": {
+          "title": "移除專案登錄",
+          "description": "確認移除所選的專案登錄。請注意，無法從此視圖中移除全域登錄。此作業無法復原。"
+        },
+        "globalRegistriesDeletionSkipped": {
+          "warningMessage": "您選取的全域登錄並未刪除。無法從此視圖中刪除全域登錄。"
+        },
+        "registryDetails": {
+          "title": "新增專案登錄",
+          "editTitle": "編輯專案登錄",
+          "descriptions": "新增登錄至專案",
+          "fieldAddress": "位址",
+          "fieldName": "名稱",
+          "fieldCredentials": "登入認證"
+        },
+        "count": "登錄",
+        "insecureRegistryHint": "偵測到普通 HTTP 登錄! 與此登錄的連線不安全。請確保您的主機已正確設定並且可以連線到此登錄。<a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">更多資訊</a>"
     },
     "config": {
       "title": "組態",
@@ -110,6 +146,11 @@
       "preventVulnerableImagesFromRunning": "防止執行有弱點的映像",
       "preventVulnerableImagesFromRunningDescription_part1": "防止部署弱點嚴重性層級為",
       "preventVulnerableImagesFromRunningDescription_part2": "及以上的映像。",
+      "preventRunSeverity": {
+        "low": "低",
+        "medium": "中等",
+        "high": "高"
+      },
       "vulnerabilityScanning": "弱點掃描",
       "automaticallyScanImagesOnPush": "自動掃描推送的映像",
       "automaticallyScanImagesOnPushDescription": "在將映像推送至專案登錄時自動掃描映像。"
@@ -128,17 +169,21 @@
     }
   },
   "registries": {
-    "title": "登錄",
+    "title": "全域登錄",
     "sourceRegistries": "來源登錄",
     "replicationEndpoints": "複寫端點",
     "replicationRules": "複寫規則"
+  },
+  "projectRepositories": {
+      "containerDeploymentStarted": "容器部署已開始。請查看申請取得更多詳細資料。"
   },
   "clusters": {
     "title": "叢集",
     "titleVic": "容器主機",
     "cluster": "叢集",
     "clusterVic": "容器主機",
-    "new": "新增",
+    "new": "叢集",
+    "newVic": "容器主機",
     "status": "狀態",
     "state": {
       "ON": "開啟",
@@ -146,8 +191,13 @@
       "DISABLED": "已停用",
       "WARNING": "警告"
     },
+    "search": {
+      "placeholder": "搜尋叢集"
+    },
     "actions": {
-      "rescan": "重新掃描"
+      "rescan": "重新掃描",
+      "disable": "停用",
+      "enable": "啟用"
     },
     "type": "類型",
     "containers": "容器",
@@ -196,6 +246,8 @@
       "nameRequired": "名稱為必填。",
       "description": "說明",
       "type": "類型",
+      "typeDocker": "DOCKER",
+      "typeVch": "VCH",
       "url": "URL",
       "urlRequired": "叢集 URL 為必填。",
       "urlRequiredVic": "容器主機 URL 為必填。",
@@ -209,6 +261,161 @@
       "titleVic": "移除容器主機",
       "confirmation": "確認移除叢集 {{clusterName}}。與此叢集相關聯的已部署實體也將移除。此作業無法復原。",
       "confirmationVic": "確認移除容器主機 {{clusterName}}。與此容器主機相關聯的已部署實體也將移除。此作業無法復原。"
+    }
+  },
+  "kubernetes": {
+    "clusters": {
+      "title": "PKS 叢集",
+      "addBtn": "新增叢集",
+      "newBtn": "新增叢集",
+      "nodeCount": "節點",
+      "dashboard": "儀表板",
+      "edit": {
+        "name": "名稱",
+        "nameRequired": "名稱為必填。",
+        "description": "說明",
+        "url": "URL",
+        "urlRequired": "叢集 URL 為必填。",
+        "credentials": "認證"
+      },
+      "search": {
+        "placeholder": "搜尋叢集"
+      },
+      "add": {
+        "existing": "現有 PKS 叢集",
+        "external": "外部叢集"
+      },
+      "details": {
+        "summary": {
+          "kubeConfigBtn": "KubeConfig",
+          "kubeConfigTooltip": "Download a configuration file for the kubectl command-line tool to gain access to this cluster.",
+          "title": "摘要",
+          "nodeCount": "節點:",
+          "dashboard": "儀表板:",
+          "planName": "計劃:",
+          "dashboardInstalled": "已安裝",
+          "dashboardNotInstalled": "未安裝",
+          "totalMemory": "記憶體總計:"
+        },
+        "nodes": {
+          "title": "節點",
+          "searchPlaceholder": "搜尋節點",
+          "nameColumn": "名稱",
+          "cpuCountColumn": "CPU 數目",
+          "totalMemoryColumn": "記憶體總計",
+          "powerState": {
+            "ON": "開啟",
+            "OFF": "關閉"
+          },
+          "count": "節點"
+        }
+      }
+    },
+    "deployments": {
+      "title": "部署",
+      "search": {
+        "placeholder": "搜尋部署"
+      },
+      "item": {
+        "creation": "建立時間:",
+        "namespace": "命名空間:",
+        "containersNumber": "容器:",
+        "restartPolicy": "重新啟動原則:",
+        "strategy": "策略:",
+        "replicas": "複本:",
+        "terminationGracePeriodSeconds": "終止寬限期 (秒):",
+        "dnsPolicy": "DNS 原則:",
+        "summaryTitle": "摘要",
+        "containersTitle": "容器",
+        "containers": {
+          "name": "名稱",
+          "image": "映像",
+          "env": "環境"
+        }
+      }
+    },
+    "pods": {
+        "title": "網繭",
+        "search": {
+            "placeholder": "搜尋網繭"
+        },
+        "item": {
+            "creation": "建立時間:",
+            "namespace": "命名空間:",
+            "containersNumber": "容器:",
+            "status": "狀態:",
+            "startTime": "已開始:",
+            "ip": "IP:",
+            "summaryTitle": "摘要",
+            "containerStatuses": {
+              "title": "容器",
+              "name": "容器名稱",
+              "state": "狀態"
+            },
+            "volumes": {
+              "title": "磁碟區",
+              "name": "磁碟區名稱",
+              "hostPath": "主機上的路徑"
+            },
+            "logsTitle": "記錄"
+        }
+    },
+    "services": {
+      "title": "服務",
+      "search": {
+        "placeholder": "搜尋服務"
+      },
+      "item": {
+        "summaryTitle": "摘要",
+        "creation": "建立時間:",
+        "namespace": "命名空間:",
+        "ports": "連接埠:"
+      }
+    }
+  },
+  "pks": {
+    "new": {
+      "title": "新增叢集",
+      "settings": {
+        "title": "設定",
+        "fieldRowTitleEndpoint": "PKS",
+        "fieldTitleEndpoint": "PKS 端點",
+        "fieldTitleName": "叢集名稱",
+        "nameFieldRequired": "叢集名稱為必填。",
+        "fieldTitlePlan": " 計劃",
+        "plan": {
+          "small": "小",
+          "medium": "中等",
+          "large": "大"
+        },
+        "fieldTitleNumberNodes": "節點數",
+        "fieldTitleMaster": "主要",
+        "masterFieldRequired": "主節點欄位為必填。僅可以輸入大於 0 的整數值。",
+        "masterFieldDescription": "單一主節點可能適用於開發/測試叢集，但對於生產部署，3 或 5 個主節點更合適。",
+        "masterFieldDescription3Nodes": "- 3 個主節點: 單一主節點可能會失敗，但叢集將無法進入狀態。需要加入新的主節點，叢集才能進入狀態。",
+        "masterFieldDescription5Nodes": "- 5 個主節點: 單一主節點可能會失敗，且叢集將可以進入狀態。",
+        "fieldTitleWorker": "Worker",
+        "workerFieldRequired": "Worker 欄位為必填。僅可以輸入大於 0 的整數值。"
+      }
+    },
+    "edit": {
+      "title": "編輯叢集"
+    },
+    "add": {
+      "title": "新增叢集",
+      "existingClusters": {
+        "descriptionText": "選取端點，然後選取一或多個現有未指派的 Kubernetes 叢集，以新增至目前的業務群組。",
+        "fieldTitleEndpoint": "端點:",
+        "columnTitleName": "名稱",
+        "columnTitleHostname": "主機名稱",
+        "columnTitleMastersCount": "主節點數",
+        "columnTitleWorkersCount": "Worker 數",
+        "columnTitlePlan": " 計劃",
+        "columnTitleInAdmiral": "已登錄",
+        "yes": "是",
+        "no": "否",
+        "count": "叢集"
+      }
     }
   },
   "hosts": {
@@ -268,6 +475,36 @@
       }
     }
   },
+  "endpoints": {
+    "title": "端點",
+    "searchPlaceholder": "搜尋端點",
+    "new": "新增端點",
+    "delete": "移除",
+    "deleteConfirmation": {
+      "title": "移除端點",
+      "description": "確認移除所選端點。此作業無法復原。"
+    },
+    "name": "名稱",
+    "status": "狀態",
+    "address": "位址",
+    "count": "端點",
+    "details": {
+      "titleCreate": "建立端點",
+      "generalTabTitle": "一般",
+      "nameFieldTitle": "名稱",
+      "nameRequired": "端點名稱為必填。",
+      "descriptionFieldTitle": "說明",
+      "uaaAddressFieldTitle": "UAA 位址",
+      "uaaAddressRequired": "UAA 位址為必填。",
+      "credentials": "認證",
+      "pksAddressFieldTitle": "PKS 位址",
+      "pksAddressRequired": "PKS 位址為必填。",
+      "testConnectionBtn": "測試連線",
+      "clustersTabTitle": "叢集",
+      "connectionVerified": "已成功連線到端點。",
+      "certificateNotAccepted": "不接受憑證。無法繼續。"
+    }
+  },
   "configuration": {
     "title": "組態",
     "registry": "登錄"
@@ -294,10 +531,12 @@
   },
   "edit": "編輯",
   "save": "儲存",
+  "create": "建立",
   "add": "新增",
   "yes": "是",
   "remove": "移除",
   "delete": "刪除",
+  "details": "詳細資料",
   "verify": "驗證",
   "update": "更新",
   "cancel": "取消",
@@ -309,6 +548,7 @@
   "unmakeAdmin": "取消指派管理員角色",
   "noItems": "沒有項目",
   "reload": "重新載入",
+  "notAvailable": "N/A",
   "sessionExpired": "您的工作階段不再有效，請重新登入!",
   "navigation": {
     "home": "首頁",
@@ -319,20 +559,35 @@
     "networks": "網路",
     "volumes": "磁碟區",
     "closures": "閉包",
+    "kubernetes": {
+      "title": "Kubernetes",
+      "deployments": "部署",
+      "pods": "網繭",
+      "services": "服務"
+    },
     "library": "程式庫",
     "templates": "範本",
-    "projectRepositories": "專案存放庫",
-    "publicRepositories": "公用存放庫",
+    "repositories": "所有存放庫",
+    "internalRepositories": "內建存放庫",
+    "publicRepositories": "存放庫",
     "infrastructure": "基礎結構",
     "clusters": "叢集",
     "clustersVic": "容器主機",
+    "kubernetesClusters": "PKS 叢集",
     "hosts": "主機",
     "placements": "放置",
     "identityManagement": "身分識別管理",
     "projects": "專案",
-    "registries": "登錄",
+    "registries": "全域登錄",
     "configuration": "組態",
-    "logs": "記錄"
+    "logs": "記錄",
+    "endpoints": "端點",
+    "pksEndpoints": "PKS 端點"
+  },
+  "search": {
+    "occurrence": {
+      "all": "符合全部項目"
+    }
   },
   "compute": {
     "resources": "資源",

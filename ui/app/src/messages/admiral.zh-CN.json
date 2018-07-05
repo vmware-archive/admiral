@@ -261,6 +261,7 @@
         "title": "常用模板",
         "titleSearch": "找到的模板",
         "popularRepositories": "常用存储库",
+        "repositoriesSearchWarning": "Please, specify term to search for. The search cannot proceed.",
         "searchImagesTemplatesPlaceholder": "搜索映像、模板",
         "searchImagesPlaceholder": "搜索映像",
         "searchRepositoriesPlaceholder": "搜索存储库",
