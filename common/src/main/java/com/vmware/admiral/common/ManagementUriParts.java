@@ -70,6 +70,7 @@ public interface ManagementUriParts {
     String TAG_ASSIGNMENT = RESOURCES + "/tag-assignment";
     String CLUSTERS = RESOURCES + "/clusters";
     String FAVORITE_IMAGES = RESOURCES + "/favorite-images";
+    String FAVORITE_IMAGES_POPULATE_EMBEDDED = FAVORITE_IMAGES + "/populate-embedded";
 
     // Projects
     String PROJECTS = "/projects";
