@@ -100,7 +100,7 @@ public class ContainerUtil {
 
                     Map<String, Object> logConfigProperty = Utils.getJsonMapValue(v,
                             ContainerDescriptionHelper.LOG_CONFIG_PROPERTY, Map.class);
-                    if (!logConfigProperty.isEmpty()) {
+                    if (logConfigProperty != null && !logConfigProperty.isEmpty()) {
                         try {
                             LogConfig logConfig = new LogConfig();
                             logConfig.type = (String) logConfigProperty
