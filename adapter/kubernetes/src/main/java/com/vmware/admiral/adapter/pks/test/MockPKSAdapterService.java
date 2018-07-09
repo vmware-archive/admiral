@@ -25,8 +25,10 @@ import java.util.HashMap;
 import java.util.UUID;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
+import com.vmware.admiral.adapter.pks.PKSException;
 import com.vmware.admiral.adapter.pks.PKSOperationType;
 import com.vmware.admiral.adapter.pks.entities.PKSCluster;
+import com.vmware.admiral.adapter.pks.entities.PKSPlan;
 import com.vmware.admiral.adapter.pks.util.PKSClusterMapper;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.kubernetes.entities.config.KubeConfig;
@@ -110,7 +112,9 @@ public class MockPKSAdapterService extends StatelessService {
 
                 if (PKS_LAST_ACTION_DELETE.equals(lastActionState)) {
                     if (counter >= 2) {
-                        op.fail(Operation.STATUS_CODE_NOT_FOUND);
+                        PKSException pe = new PKSException("not found", new Exception(),
+                                Operation.STATUS_CODE_NOT_FOUND);
+                        op.fail(Operation.STATUS_CODE_NOT_FOUND, new Exception(pe), null);
                         return;
                     }
                     c.lastActionState = PKS_LAST_ACTION_DELETE;
@@ -144,6 +148,21 @@ public class MockPKSAdapterService extends StatelessService {
             cluster.lastActionState = PKS_LAST_ACTION_STATE_IN_PROGRESS;
             cluster.uuid = "-";
             op.setBodyNoCloning(cluster).complete();
+            return;
+        }
+
+        if (PKSOperationType.LIST_PLANS.id.equals(request.operationTypeId)) {
+            PKSPlan plan1 = new PKSPlan();
+            plan1.id = "1";
+            plan1.name = "tiny";
+            plan1.description = "small plan";
+
+            PKSPlan plan2 = new PKSPlan();
+            plan2.id = "2";
+            plan2.name = "huge";
+            plan2.description = "big plan";
+
+            op.setBodyNoCloning(Arrays.asList(plan1, plan2)).complete();
             return;
         }
 

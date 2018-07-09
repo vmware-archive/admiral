@@ -47,6 +47,7 @@ import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.DefaultSubStage;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
+import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
@@ -137,6 +138,13 @@ public class PKSClusterProvisioningTaskService extends
     }
 
     @Override
+    protected TaskStatusState fromTask(TaskServiceDocument<DefaultSubStage> state) {
+        TaskStatusState statusTask = super.fromTask(state);
+        statusTask.name = state.getCustomProperty(PKS_CLUSTER_NAME_PROP_NAME);
+        return statusTask;
+    }
+
+    @Override
     public void handlePeriodicMaintenance(Operation post) {
         sendRequest(Operation.createGet(getUri())
                 .setCompletion((op, ex) -> {
@@ -173,7 +181,7 @@ public class PKSClusterProvisioningTaskService extends
 
     private void process(PKSProvisioningTaskState task) {
         assertNotNull(task, "task");
-        sendCreateClusterRequest(task, pksCluster -> createClusterState(task, pksCluster));
+        sendCreateClusterRequest(task, pksCluster -> createInitialClusterState(task, pksCluster));
     }
 
     private void sendCreateClusterRequest(PKSProvisioningTaskState task,
@@ -194,7 +202,7 @@ public class PKSClusterProvisioningTaskService extends
                 .sendWith(this);
     }
 
-    private void createClusterState(PKSProvisioningTaskState task, PKSCluster pksCluster) {
+    private void createInitialClusterState(PKSProvisioningTaskState task, PKSCluster pksCluster) {
         ContainerHostSpec clusterSpec = new ContainerHostSpec();
         ComputeService.ComputeState computeState = new ComputeService.ComputeState();
         computeState.tenantLinks = task.tenantLinks;
@@ -255,7 +263,12 @@ public class PKSClusterProvisioningTaskService extends
                         return;
                     }
                     PKSCluster pksCluster = o.getBody(PKSCluster.class);
-                    checkProvisioningStatus(task, pksCluster);
+                    if (pksCluster != null) {
+                        checkProvisioningStatus(task, pksCluster);
+                        if (task.failureCounter > 0) {
+                            proceedTo(PROCESSING, t -> t.failureCounter = 0);
+                        }
+                    }
                 })
                 .sendWith(this);
     }

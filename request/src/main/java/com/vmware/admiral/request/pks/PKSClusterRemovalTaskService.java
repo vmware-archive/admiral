@@ -12,6 +12,7 @@
 package com.vmware.admiral.request.pks;
 
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_CLUSTER_NAME_PROP_NAME;
+import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_ENDPOINT_PROP_NAME;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_LAST_ACTION_DELETE;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_LAST_ACTION_STATE_FAILED;
 import static com.vmware.admiral.request.pks.PKSClusterRemovalTaskService.PKSClusterRemovalTaskState.SubStage;
@@ -30,6 +31,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
+import com.vmware.admiral.adapter.pks.PKSException;
 import com.vmware.admiral.adapter.pks.PKSOperationType;
 import com.vmware.admiral.adapter.pks.entities.PKSCluster;
 import com.vmware.admiral.common.ManagementUriParts;
@@ -117,7 +119,6 @@ public class PKSClusterRemovalTaskService extends
     protected void validateStateOnStart(PKSClusterRemovalTaskState task)
             throws IllegalArgumentException {
         AssertUtil.assertNotNull(task, "task");
-        AssertUtil.assertNotEmpty(task.endpointLink, "endpointLink");
         AssertUtil.assertNotEmpty(task.resourceLink, "resourceLink");
     }
 
@@ -146,13 +147,9 @@ public class PKSClusterRemovalTaskService extends
     }
 
     @Override
-    protected TaskStatusState fromTask(TaskServiceDocument<SubStage> state) {
-        TaskStatusState statusTask = super.fromTask(state);
-        if (INSTANCES_REMOVED == state.taskSubStage
-                || SubStage.COMPLETED == state.taskSubStage) {
-            // statusTask.name = VolumeOperationType
-            //         .extractDisplayName(VolumeOperationType.DELETE.id);
-        }
+    protected TaskStatusState fromTask(TaskServiceDocument<SubStage> task) {
+        TaskStatusState statusTask = super.fromTask(task);
+        statusTask.name = ((PKSClusterRemovalTaskState) task).clusterName;
         return statusTask;
     }
 
@@ -177,16 +174,15 @@ public class PKSClusterRemovalTaskService extends
 
     private void destroyPKSClusterInstance(PKSClusterRemovalTaskState task) {
         if (task.removeOnly) {
-            logFine("Skipping actual PKS cluster removal by the adapter since the removeOnly "
-                    + "flag was set: %s", task.documentSelfLink);
+            logInfo("Skip destroy PKS cluster since the removeOnly flag is set");
 
             // skip the actual removal of pks cluster through the adapter
             proceedTo(INSTANCES_REMOVED);
             return;
         }
 
-        if (task.clusterName == null) {
-            fetchPKSClusterName(task);
+        if (task.clusterName == null || task.endpointLink == null) {
+            fetchClusterAndUpdateTask(task);
             return;
         }
 
@@ -215,13 +211,13 @@ public class PKSClusterRemovalTaskService extends
                 .sendWith(this);
     }
 
-    private void removeResources(PKSClusterRemovalTaskState state) {
+    private void removeResources(PKSClusterRemovalTaskState task) {
         try {
             sendRequest(Operation
-                    .createDelete(this, state.resourceLink)
+                    .createDelete(this, task.resourceLink)
                     .setCompletion((o, e) -> {
                         if (e != null) {
-                            failTask("Failed deleting PKS cluster: " + state.resourceLink, e);
+                            failTask("Failed deleting PKS cluster: " + task.resourceLink, e);
                             return;
                         }
                         proceedTo(SubStage.COMPLETED);
@@ -274,12 +270,13 @@ public class PKSClusterRemovalTaskService extends
                 .setBodyNoCloning(adapterRequest)
                 .setContextId(getSelfId())
                 .setCompletion((o, e) -> {
-                    if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
-                        logInfo("PKS cluster %s has been deleted, get status code is 404",
-                                task.clusterName);
-                        proceedTo(INSTANCES_REMOVED);
-                        return;
-                    } else if (e != null) {
+                    if (e != null) {
+                        if (checkForNotFoundException(e)) {
+                            logInfo("PKS cluster %s has been deleted, GET status code is 404",
+                                    task.clusterName);
+                            proceedTo(INSTANCES_REMOVED);
+                            return;
+                        }
                         logWarning("failed getting pks cluster %s from %s", task.clusterName,
                                 task.endpointLink);
                         if (task.failureCounter++ >= MAX_POLL_FAILURES) {
@@ -294,16 +291,30 @@ public class PKSClusterRemovalTaskService extends
                         return;
                     }
                     PKSCluster pksCluster = o.getBody(PKSCluster.class);
-                    checkDeletionStatus(task, pksCluster);
+                    if (pksCluster != null) {
+                        checkDeletionStatus(task, pksCluster);
+                        if (task.failureCounter > 0) {
+                            // reset the failure counter
+                            proceedTo(INSTANCES_REMOVING, t -> t.failureCounter = 0);
+                        }
+                    }
                 })
                 .sendWith(this);
     }
 
-    private void fetchPKSClusterName(PKSClusterRemovalTaskState task) {
+    private boolean checkForNotFoundException(Throwable e) {
+        if (e != null && e.getCause() instanceof PKSException) {
+            PKSException pksException = (PKSException) e.getCause();
+            return pksException.getErrorCode() == Operation.STATUS_CODE_NOT_FOUND;
+        }
+        return false;
+    }
+
+    private void fetchClusterAndUpdateTask(PKSClusterRemovalTaskState task) {
         getClusterDto(task.resourceLink, clusterDto -> {
             if (clusterDto == null || clusterDto.nodes == null || clusterDto.nodes.size() < 1) {
                 // nothing to delete from PKS
-                logInfo("Cluster %s does not contain any hosts, skipping adapter request",
+                logInfo("Cluster %s does not contain PKS cluster name, skipping adapter request",
                         task.resourceLink);
                 proceedTo(INSTANCES_REMOVED);
                 return;
@@ -312,15 +323,19 @@ public class PKSClusterRemovalTaskService extends
 
             if (host.customProperties != null) {
                 task.clusterName = host.customProperties.get(PKS_CLUSTER_NAME_PROP_NAME);
+                task.endpointLink = host.customProperties.get(PKS_ENDPOINT_PROP_NAME);
             }
 
-            if (task.clusterName == null) {
-                logWarning("Cannot get PKS cluster name for %s, skipping destroying PKS cluster"
-                        + " and proceed to remove states", task.resourceLink);
+            if (task.clusterName == null || task.endpointLink == null) {
+                logWarning("Cannot get PKS cluster name / endpoint for %s, skipping destroying PKS"
+                        + " cluster and proceed to remove states", task.resourceLink);
                 proceedTo(INSTANCES_REMOVED);
                 return;
             }
-            proceedTo(SubStage.CREATED, t -> t.clusterName = task.clusterName);
+            proceedTo(SubStage.CREATED, t -> {
+                t.clusterName = task.clusterName;
+                t.endpointLink = task.endpointLink;
+            });
         });
     }
 

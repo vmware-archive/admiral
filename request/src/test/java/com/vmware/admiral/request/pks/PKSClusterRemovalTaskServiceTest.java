@@ -47,6 +47,13 @@ public class PKSClusterRemovalTaskServiceTest extends RequestBaseTest {
     @Before
     @Override
     public void setUp() throws Throwable {
+        Field f = PKSClusterProvisioningTaskService.class
+                .getDeclaredField("POLL_PKS_ENDPOINT_INTERVAL_MICROS");
+        setFinalStatic(f, 3_000_000);
+        f = PKSClusterRemovalTaskService.class
+                .getDeclaredField("POLL_PKS_ENDPOINT_INTERVAL_MICROS");
+        setFinalStatic(f, 3_000_000);
+
         super.setUp();
 
         host.startService(Operation.createPost(UriUtils.buildUri(host,
@@ -67,13 +74,6 @@ public class PKSClusterRemovalTaskServiceTest extends RequestBaseTest {
         request.tenantLinks = groupPlacementState.tenantLinks;
         request.tenantLinks.add(TENANT1);
         request.operation = RequestBrokerState.PROVISION_RESOURCE_OPERATION;
-
-        Field f = PKSClusterProvisioningTaskService.class
-                .getDeclaredField("POLL_PKS_ENDPOINT_INTERVAL_MICROS");
-        setFinalStatic(f, 5_000_000);
-        f = PKSClusterRemovalTaskService.class
-                .getDeclaredField("POLL_PKS_ENDPOINT_INTERVAL_MICROS");
-        setFinalStatic(f, 5_000_000);
     }
 
     @After

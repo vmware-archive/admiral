@@ -295,9 +295,6 @@ public class RequestBrokerService extends
                 proceedTo(SubStage.ERROR);
             }
             break;
-        case COMPLETED:
-            complete();
-            break;
         case RESERVATION_CLEANUP:
             break;
         case RESERVATION_CLEANED_UP:
@@ -312,6 +309,9 @@ public class RequestBrokerService extends
             } else {
                 createContainerRemovalTasks(state, true);
             }
+            break;
+        case COMPLETED:
+            complete();
             break;
         case ERROR:
             completeWithError();
@@ -1357,7 +1357,7 @@ public class RequestBrokerService extends
         task.documentSelfLink = getSelfId();
         task.serviceTaskCallback = ServiceTaskCallback.create(
                 state.documentSelfLink, TaskStage.STARTED, SubStage.COMPLETED,
-                TaskStage.STARTED, SubStage.REQUEST_FAILED);
+                TaskStage.FAILED, SubStage.REQUEST_FAILED);
         task.customProperties = state.customProperties;
         task.endpointLink = state.getCustomProperty(PKSConstants.PKS_ENDPOINT_PROP_NAME);
         task.tenantLinks = state.tenantLinks;
@@ -1387,11 +1387,13 @@ public class RequestBrokerService extends
 
         PKSClusterRemovalTaskState task = new PKSClusterRemovalTaskState();
         task.documentSelfLink = getSelfId();
-        task.serviceTaskCallback = ServiceTaskCallback.create(
-                state.documentSelfLink, TaskStage.STARTED, SubStage.COMPLETED,
-                TaskStage.STARTED, SubStage.REQUEST_FAILED);
+        task.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+                TaskStage.STARTED, errorState ? SubStage.ERROR : SubStage.COMPLETED,
+                TaskStage.FAILED, SubStage.ERROR);
+
         task.customProperties = state.customProperties;
         task.endpointLink = state.getCustomProperty(PKSConstants.PKS_ENDPOINT_PROP_NAME);
+        task.clusterName = state.getCustomProperty(PKSConstants.PKS_CLUSTER_NAME_PROP_NAME);
         task.resourceLink = state.resourceLinks.iterator().next();
         task.tenantLinks = state.tenantLinks;
         task.requestTrackerLink = state.requestTrackerLink;

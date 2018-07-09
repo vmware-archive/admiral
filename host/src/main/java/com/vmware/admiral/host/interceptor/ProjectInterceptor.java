@@ -87,12 +87,20 @@ public class ProjectInterceptor {
             return DeferredResult.completed(null);
         }
 
+        if (op.getAuthorizationContext() != null && op.getAuthorizationContext().isSystemUser()) {
+            return DeferredResult.completed(null);
+        }
+
         return handleClusterServiceOp(service, op)
                 .thenCompose(ignore -> setProjectLinkAsTenantLink(service, op));
     }
 
     public static DeferredResult<Void> handleServiceOp(Service service, Operation op) {
         if (op.getAction() == Action.GET) {
+            return DeferredResult.completed(null);
+        }
+
+        if (op.getAuthorizationContext() != null && op.getAuthorizationContext().isSystemUser()) {
             return DeferredResult.completed(null);
         }
 
