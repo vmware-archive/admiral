@@ -12,14 +12,14 @@
 import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
-import { BaseDetailsComponent } from "../../../../components/base/base-details.component";
 import { DocumentService } from "../../../../utils/document.service";
 import { ErrorService } from "../../../../utils/error.service";
+import { ProjectService } from "../../../../utils/project.service";
+import { Constants } from "../../../../utils/constants";
 import { Links } from "../../../../utils/links";
 import { Utils}  from "../../../../utils/utils";
 
 import * as I18n from 'i18next';
-
 
 @Component({
     selector: 'app-kubernetes-cluster-new-settings',
@@ -28,22 +28,22 @@ import * as I18n from 'i18next';
 /**
  * New kubernetes cluster view - settings tab.
  */
-export class KubernetesClusterNewSettingsComponent extends BaseDetailsComponent
-                                                    implements OnInit {
-    editMode: boolean = false;
-
+export class KubernetesClusterNewSettingsComponent implements OnInit {
     endpoints: any[];
 
     isCreatingCluster: boolean = false;
+
+    // alert
+    alertMessage: string;
+    alertType: string;
 
     newClusterSettingsForm = new FormGroup({
         endpoint: new FormControl(''),
         name: new FormControl('', Validators.required),
         plan: new FormControl(''),
-        master: new FormControl( 1, Validators.compose(
-                                        [ Validators.min(1),
-                                            Validators.pattern('[\\d]+'), Validators.required ])),
-        worker: new FormControl(1, Validators.compose(
+        masterHostName: new FormControl(''),
+        masterHostPort: new FormControl('', Validators.pattern('[\\d]+')),
+        workerInstances: new FormControl(1, Validators.compose(
                                         [ Validators.min(1),
                                             Validators.pattern('[\\d]+'), Validators.required ]))
     });
@@ -60,15 +60,13 @@ export class KubernetesClusterNewSettingsComponent extends BaseDetailsComponent
         entity: I18n.t('app.endpoint.entity', {ns: 'base'})
     } as I18n.TranslationOptions );
 
-    constructor(protected route: ActivatedRoute, protected service: DocumentService,
-                protected router: Router, protected errorService: ErrorService) {
-
-        super(Links.CLUSTERS, route, router, service, errorService);
+    constructor(protected route: ActivatedRoute, protected router: Router,
+                protected documentService: DocumentService,
+                protected projectService: ProjectService, protected errorService: ErrorService) {
+        //
     }
 
     ngOnInit(): void {
-        super.ngOnInit();
-
         this.populateEndpoints();
     }
 
@@ -77,7 +75,7 @@ export class KubernetesClusterNewSettingsComponent extends BaseDetailsComponent
             return;
         }
 
-        this.service.list(Links.PKS_ENDPOINTS, {}).then(result => {
+        this.documentService.list(Links.PKS_ENDPOINTS, {}).then(result => {
             this.endpoints = result.documents;
         }).catch((error) => {
             console.log(error);
@@ -85,33 +83,42 @@ export class KubernetesClusterNewSettingsComponent extends BaseDetailsComponent
         });
     }
 
-    entityInitialized() {
-        if (this.entity) {
-            this.editMode = true;
-
-            let entityEndpoint = this.entity.nodes && this.entity.nodes.length > 0
-                && this.entity.nodes[0] && this.entity.nodes[0].customProperties
-                && this.entity.nodes[0].customProperties['__pksEndpoint'];
-            this.newClusterSettingsForm.get('endpoint').setValue(entityEndpoint);
-            this.newClusterSettingsForm.get('endpoint').disable();
-
-            this.newClusterSettingsForm.get('name').setValue(this.entity.name);
-            this.newClusterSettingsForm.get('name').disable();
-
-            this.newClusterSettingsForm.get('plan').disable();
-            this.newClusterSettingsForm.get('master').disable();
-            // TODO finish prepopulation
-        }
+    endpointSelected(endpoint) {
+        // TODO Retrieve available plans
     }
 
     create() {
-        // TODO Implement
-        this.goBack();
-    }
+        if (this.newClusterSettingsForm.valid) {
+            this.isCreatingCluster = true;
 
-    update() {
-        // TODO Update Cluster
-        this.goBack();
+            let formValues = this.newClusterSettingsForm.value;
+
+            let clusterSpec = {
+                "resourceType": "PKS_CLUSTER",
+                "operation": "PROVISION_RESOURCE",
+                "customProperties": {
+                    "__pksEndpoint": formValues.endpoint.documentSelfLink,
+                    "__pksClusterName": formValues.name,
+                    "plan_name": formValues.plan,
+                    "kubernetes_master_host": formValues.masterHostName,
+                    "kubernetes_master_port": formValues.masterHostPort,
+                    "kubernetes_worker_instances": formValues.workerInstances
+                }
+            };
+
+            this.documentService.post(Links.REQUESTS, clusterSpec,
+                                        this.projectService.getSelectedProject().documentSelfLink)
+                .then((response) => {
+
+                    this.isCreatingCluster = false;
+                    this.goBack();
+            }).catch(error => {
+                this.isCreatingCluster = false;
+
+                console.error(error);
+                this.showErrorMessage(error);
+            });
+        }
     }
 
     cancel() {
@@ -119,8 +126,17 @@ export class KubernetesClusterNewSettingsComponent extends BaseDetailsComponent
     }
 
     goBack() {
-        let path = (this.editMode) ? '..' : '../clusters';
+        this.router.navigate(['../clusters'], {relativeTo: this.route});
+    }
 
-        this.router.navigate([path], {relativeTo: this.route});
+
+    private showErrorMessage(error) {
+        this.alertType = Constants.alert.type.DANGER;
+        this.alertMessage = Utils.getErrorMessage(error)._generic;
+    }
+
+    resetAlert() {
+        this.alertType = null;
+        this.alertMessage = null;
     }
 }

@@ -19,7 +19,7 @@ import { Utils } from "../../../../utils/utils";
     styleUrls: ['./kubernetes-cluster-nodes.component.scss']
 })
 /**
-*  A k8s cluster nodes view.
+*  A kubernetes/pks cluster nodes view.
 */
 export class KubernetesClusterNodesComponent implements OnChanges {
     @Input() cluster: any;
@@ -30,15 +30,17 @@ export class KubernetesClusterNodesComponent implements OnChanges {
     }
 
     ngOnChanges(changes: SimpleChanges) {
-        if (!this.cluster) {
+        if (!this.cluster || !this.cluster.nodeLinks || !this.cluster.nodes) {
             return;
         }
-        var nodeLink = this.cluster.nodeLinks[0];
-        var nodesJson = Utils.getCustomPropertyValue(this.cluster.nodes[nodeLink].customProperties, '__nodes');
+
+        let firstNode = this.cluster.nodes[this.cluster.nodeLinks[0]];
+        let nodesJson = Utils.getCustomPropertyValue(firstNode.customProperties, '__nodes');
         if (!nodesJson) {
             return;
         }
-        var nodes = JSON.parse(nodesJson);
+
+        let nodes = JSON.parse(nodesJson);
         this.nodes = nodes.map(n => ({
             name: n.name,
             cpuCores: n.cpuCores,
@@ -51,6 +53,7 @@ export class KubernetesClusterNodesComponent implements OnChanges {
             return '0';
         }
         let m = Utils.getMagnitude(number);
+
         return Utils.formatBytes(number, m) + ' ' + Utils.magnitudes[m];
     }
 }

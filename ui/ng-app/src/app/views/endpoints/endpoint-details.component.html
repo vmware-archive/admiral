@@ -45,7 +45,7 @@
                                 <clr-dg-cell>{{cluster.name}}</clr-dg-cell>
                                 <clr-dg-cell>{{cluster.masterNodesCount}}</clr-dg-cell>
                                 <clr-dg-cell>{{cluster.workerNodesCount}}</clr-dg-cell>
-                                <clr-dg-cell>{{(cluster.plan ? "pks.new.settings.plan." + cluster.plan : "notAvailable") | i18n}}</clr-dg-cell>
+                                <clr-dg-cell>{{(cluster.plan ? cluster.plan : "notAvailable") | i18n}}</clr-dg-cell>
                                 <clr-dg-cell>{{(cluster.addedInAdmiral ? "pks.add.existingClusters.yes" : "pks.add.existingClusters.no") | i18n}}</clr-dg-cell>
                             </clr-dg-row>
 
