@@ -1417,7 +1417,6 @@ public class RequestBrokerService extends
                 state.documentSelfLink, TaskStage.STARTED, SubStage.COMPLETED,
                 TaskStage.STARTED, SubStage.REQUEST_FAILED);
         task.customProperties = state.customProperties;
-        task.endpointLink = state.getCustomProperty(PKSConstants.PKS_ENDPOINT_PROP_NAME);
         task.resourceLink = state.resourceLinks.iterator().next();
         task.tenantLinks = state.tenantLinks;
         task.requestTrackerLink = state.requestTrackerLink;

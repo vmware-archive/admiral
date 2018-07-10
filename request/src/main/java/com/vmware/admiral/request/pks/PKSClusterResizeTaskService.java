@@ -13,6 +13,7 @@ package com.vmware.admiral.request.pks;
 
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_CLUSTER_NAME_PROP_NAME;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_CLUSTER_STATUS_RESIZING_PROP_NAME;
+import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_ENDPOINT_PROP_NAME;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_LAST_ACTION_STATE_FAILED;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_LAST_ACTION_STATE_SUCCEEDED;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_LAST_ACTION_UPDATE;
@@ -23,7 +24,6 @@ import static com.vmware.admiral.service.common.DefaultSubStage.PROCESSING;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
-import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
 
 import java.net.URI;
 import java.util.Collection;
@@ -42,6 +42,7 @@ import com.vmware.admiral.compute.cluster.ClusterService.ClusterDto;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.DefaultSubStage;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
+import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
@@ -67,16 +68,16 @@ public class PKSClusterResizeTaskService extends
             com.vmware.admiral.service.common.TaskServiceDocument<DefaultSubStage> {
 
         /**
-         * (Required) PKS endpoint self link.
-         */
-        @PropertyOptions(usage = { REQUIRED, SINGLE_ASSIGNMENT, AUTO_MERGE_IF_NOT_NULL },
-                indexing = STORE_ONLY)
-        public String endpointLink;
-        /**
          * (Required) The resource on which the given operation will be applied
          */
         @PropertyOptions(usage = { REQUIRED, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public String resourceLink;
+
+        /**
+         * PKS endpoint self link.
+         */
+        @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
+        public String endpointLink;
 
         @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public String clusterName;
@@ -103,11 +104,8 @@ public class PKSClusterResizeTaskService extends
     protected void validateStateOnStart(PKSClusterResizeTaskState task)
             throws IllegalArgumentException {
         AssertUtil.assertNotNull(task, "task");
-        AssertUtil.assertNotEmpty(task.endpointLink, "endpointLink");
         AssertUtil.assertNotEmpty(task.resourceLink, "resourceLink");
         AssertUtil.assertNotNull(task.customProperties, "customProperties");
-        AssertUtil.assertNotEmpty(task.getCustomProperty(PKS_CLUSTER_NAME_PROP_NAME),
-                "customProperties [" + PKS_CLUSTER_NAME_PROP_NAME + "]");
         AssertUtil.assertNotEmpty(task.getCustomProperty(PKS_WORKER_INSTANCES_FIELD),
                 "customProperties [" + PKS_WORKER_INSTANCES_FIELD + "]");
     }
@@ -129,6 +127,13 @@ public class PKSClusterResizeTaskService extends
         default:
             break;
         }
+    }
+
+    @Override
+    protected TaskStatusState fromTask(TaskServiceDocument<DefaultSubStage> task) {
+        TaskStatusState statusTask = super.fromTask(task);
+        statusTask.name = ((PKSClusterResizeTaskState) task).clusterName;
+        return statusTask;
     }
 
     @Override
@@ -274,6 +279,11 @@ public class PKSClusterResizeTaskService extends
         adapterRequest.resourceReference = URI.create(task.endpointLink);
         adapterRequest.serviceTaskCallback = ServiceTaskCallback.createEmpty();
         adapterRequest.customProperties = task.customProperties;
+        if (adapterRequest.customProperties == null) {
+            adapterRequest.customProperties = new HashMap<>();
+        }
+        adapterRequest.customProperties.put(PKS_CLUSTER_NAME_PROP_NAME, task.clusterName);
+
         return adapterRequest;
     }
 
@@ -284,19 +294,26 @@ public class PKSClusterResizeTaskService extends
 
             if (host.customProperties != null) {
                 task.clusterName = host.customProperties.get(PKS_CLUSTER_NAME_PROP_NAME);
+                task.endpointLink = host.customProperties.get(PKS_ENDPOINT_PROP_NAME);
             }
             task.hostLink = host.documentSelfLink;
 
-            if (task.clusterName == null) {
-                Exception err = new Exception("Cannot get PKS cluster name");
-                logWarning("Cannot get PKS cluster name for %s, skipping resizing PKS cluster",
-                        task.resourceLink);
-                failTask(err.getMessage(), err);
+            try {
+                AssertUtil.assertNotNull(task.clusterName, "custom property [cluster name]");
+                AssertUtil.assertNotNull(task.endpointLink, "custom property [endpoint link]");
+                AssertUtil.assertNotNull(task.hostLink, "host link");
+            } catch (Exception e) {
+                String msg = String.format(
+                        "Cannot get PKS property [%s], skip resizing PKS cluster [%s]",
+                        e.getMessage(), task.resourceLink);
+                failTask(msg, e);
                 return;
             }
+
             proceedTo(CREATED, t -> {
                 t.clusterName = task.clusterName;
                 t.hostLink = task.hostLink;
+                t.endpointLink = task.endpointLink;
             });
         });
     }
