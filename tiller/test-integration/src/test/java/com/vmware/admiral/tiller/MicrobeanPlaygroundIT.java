@@ -41,7 +41,7 @@ public class MicrobeanPlaygroundIT extends BaseTillerIntegrationSupportIT {
     public void testGetPods() {
         try (DefaultKubernetesClient client = new DefaultKubernetesClient()) {
             client.pods().list().getItems().forEach(p -> {
-                System.out.println("Found pod " + p.getMetadata().getName());
+                logger.info("Found pod %s", p.getMetadata().getName());
             });
         }
     }
@@ -86,7 +86,7 @@ public class MicrobeanPlaygroundIT extends BaseTillerIntegrationSupportIT {
 
         releases.forEachRemaining(lrp -> {
             lrp.getReleasesList().forEach(r -> {
-                System.out.println("Found release " + r.getName());
+                logger.info("Found release %s", r.getName());
             });
         });
     }

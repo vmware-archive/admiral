@@ -12,7 +12,7 @@
 package com.vmware.admiral.adapter.tiller.client;
 
 /**
- * A utility that can creates {@link TillerClient} insntaces. Implementations can be registered by
+ * A utility that can creates {@link TillerClient} instances. Implementations can be registered by
  * the means of standard java service provider interfaces and then loaded by calls to
  * {@link TillerClientProviderUtil#getTillerClientProvider()}.
  */

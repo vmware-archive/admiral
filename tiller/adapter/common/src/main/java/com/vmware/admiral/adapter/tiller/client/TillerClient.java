@@ -14,9 +14,11 @@ package com.vmware.admiral.adapter.tiller.client;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * A client for execution of commands on a remote Tiller instance. Instances are automatically
- * opened. They can be closed by calling {@link #close()}. A closed client should throw
- * {@link TillerClientException} on any command after the client has been closed.
+ * A client for execution of commands on a remote Tiller instance. Creating an instance should
+ * results in the creation of an opened (connected) channel for communication between this client
+ * and the Tiller server. In order to prevent resource leaks, this channel needs to be closed when
+ * it is no longer needed. Closing the channel can be done by closing the client by invoking the
+ * {@link #close()} method. A closed client will throw {@link TillerClientException} on any command.
  */
 public interface TillerClient extends AutoCloseable {
 
