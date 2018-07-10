@@ -26,7 +26,7 @@ export class KubernetesClusterNodesComponent implements OnChanges {
 
     nodes: any[];
 
-    constructor(service: DocumentService) {
+    constructor(documentService: DocumentService) {
     }
 
     ngOnChanges(changes: SimpleChanges) {

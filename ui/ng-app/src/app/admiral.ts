@@ -82,6 +82,7 @@ import { MaximizableBehaviourComponent } from "./components/maximizable-behaviou
 import { BackButtonComponent } from "./components/back-button/back-button.component";
 import { SimpleSearchComponent } from './components/search/simple-search.component';
 import { DropdownComponent } from './components/dropdown/dropdown.component';
+import { MultiCheckboxSelectorComponent } from "./components/multi-checkbox-selector/multi-checkbox-selector.component";
 import { NavigationContainerComponent } from "./components/navigation-container/navigation-container.component";
 import { LoginComponent } from './components/login/login.component';
 
@@ -170,6 +171,7 @@ export const ADMIRAL_DECLARATIONS = [
   MaximizableBehaviourComponent,
   BackButtonComponent,
   DropdownComponent,
+  MultiCheckboxSelectorComponent,
   NavigationContainerComponent,
   LoginComponent,
 

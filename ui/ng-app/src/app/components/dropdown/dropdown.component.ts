@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -9,9 +9,11 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, OnInit, OnChanges, Input, Output, EventEmitter, ViewEncapsulation, ViewChild, ElementRef, forwardRef } from '@angular/core';
+import { Component, OnInit, Input, ViewEncapsulation, ViewChild,
+         ElementRef, forwardRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { DropdownSearchMenu } from 'admiral-ui-common';
+
 import * as I18n from 'i18next';
 
 const NA = 'N/A';
@@ -43,29 +45,30 @@ DropdownSearchMenu.configureCustomHooks();
     }
   ]
 })
+/**
+ * Drop down option selector with search and 'clear selection' capabilities.
+ */
 export class DropdownComponent implements OnInit, ControlValueAccessor {
 
-  @ViewChild('holder')
-  elHolder: ElementRef;
+  @ViewChild('holder') elHolder: ElementRef;
 
-  @Input()
-  title;
-  @Input()
-  searchPlaceholder;
-  @Input()
-  ddClass;
+  @Input() title;
+  @Input() searchPlaceholder;
+  @Input() ddClass;
 
   private _options;
   private _value;
   private _disabled;
 
   private credentialInput: DropdownSearchMenu;
+
   private propagateChange = (_: any) => {};
 
   constructor() { }
 
   public ngOnInit() {
     var el = this.elHolder.nativeElement;
+
     this.credentialInput = new DropdownSearchMenu(el, {
       title: this.title,
       searchPlaceholder: this.searchPlaceholder
@@ -97,6 +100,7 @@ export class DropdownComponent implements OnInit, ControlValueAccessor {
   @Input()
   public set options(options: Array<any>) {
     this._options = options;
+
     if (this.credentialInput) {
       this.credentialInput.setOptions(options);
     }
@@ -107,9 +111,11 @@ export class DropdownComponent implements OnInit, ControlValueAccessor {
       if (!this._options) {
         return;
       }
+
       var option = this._options.filter(option => {
         return value === option.documentSelfLink;
       })[0];
+
       if (this.credentialInput && option) {
         this._value = option;
         this.credentialInput.setSelectedOption(option);
@@ -121,20 +127,19 @@ export class DropdownComponent implements OnInit, ControlValueAccessor {
       }
     }
   }
+
   registerOnChange(fn: any){
     this.propagateChange = fn;
   }
-  registerOnTouched(fn: any) {
 
+  registerOnTouched(fn: any) {
+    //
   }
+
   setDisabledState(isDisabled: boolean) {
     this._disabled = isDisabled;
     if (this.credentialInput) {
       this.credentialInput.setDisabled(isDisabled);
     }
   }
-
-
 }
-
-
