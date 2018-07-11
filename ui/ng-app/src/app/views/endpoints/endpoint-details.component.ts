@@ -45,7 +45,8 @@ export class EndpointDetailsComponent extends BaseDetailsComponent {
             this.editMode = true;
             // Load clusters for the endpoint
             this.loadingClusters = true;
-            this.service.listPksClusters({ endpointLink: this.entity.documentSelfLink})
+
+            this.service.listWithParams(Links.PKS_CLUSTERS, { endpointLink: this.entity.documentSelfLink})
                 .then((result) => {
                 this.loadingClusters = false;
 

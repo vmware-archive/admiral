@@ -381,16 +381,13 @@
       "title": "New Cluster",
       "settings": {
         "title": "Settings",
-        "fieldRowTitleEndpoint": "PKS",
         "fieldTitleEndpoint": "PKS Endpoint",
         "fieldTitleName": "Cluster Name",
         "nameFieldRequired": "Cluster name is required.",
         "fieldTitlePlan": "Plan",
-        "fieldTitleMaster": "Master",
-        "fieldTitleMasterHostName": "Host Name",
-        "fieldTitleMasterHostPort": "Host Port",
-        "fieldTitleWorker": "Worker",
-        "fieldTitleNumberNodes": "Number of Nodes",
+        "fieldTitleMasterHostName": "Master Host Name",
+        "fieldTitleMasterHostPort": "Master Host Port",
+        "fieldTitleNumberNodes": "Worker Nodes",
         "workerFieldRequired": "Worker field is required. Only integer values bigger than 0 can be entered."
       }
     },

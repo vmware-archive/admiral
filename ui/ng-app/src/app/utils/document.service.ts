@@ -98,7 +98,7 @@ export class DocumentService {
 
     if (queryOptions) {
       let filter = getFilter(queryOptions);
-      if(filter){
+      if (filter){
         params.set('$filter', filter);
       }
     }
@@ -167,7 +167,6 @@ export class DocumentService {
     return this.ajax.get(factoryLink, searchParams);
   }
 
-
   public getLogs(logsServiceLink, id, sinceMs) {
     return new Promise((resolve, reject) => {
       let logRequestUriPath = 'id=' + id;
@@ -226,8 +225,9 @@ export class DocumentService {
     }
   }
 
-  public listPksClusters(params) {
-      return this.ajax.get(Links.PKS_CLUSTERS, params).then(result => {
+  public listWithParams(factoryLink, params, projectLink?: string) {
+      return this.ajax.get(factoryLink, params, undefined, this.buildHeaders(projectLink))
+        .then(result => {
           let documents = result || [];
 
           return new DocumentListResult(documents, result.nextPageLink, result.totalCount);

@@ -27,11 +27,13 @@ export class Links {
   public static GROUPS = '/groups';
   public static PROJECTS = '/projects';
   public static EVENT_LOGS = Links.RESOURCES + '/event-logs';
-  public static PKS_ENDPOINTS = Links.RESOURCES + '/pks/endpoints';
-  public static PKS_ENDPOINT_CREATE = Links.RESOURCES + '/pks/create-endpoint';
-  public static PKS_ENDPOINT_TEST_CONNECTION = Links.RESOURCES + '/pks/create-endpoint?validate=true';
-  public static PKS_CLUSTERS = Links.RESOURCES + '/pks/clusters';
-  public static PKS_CLUSTERS_ADD = Links.RESOURCES + '/pks/clusters-config';
+  public static PKS_RESOURCES = Links.RESOURCES + '/pks';
+  public static PKS_ENDPOINTS = Links.PKS_RESOURCES + '/endpoints';
+  public static PKS_ENDPOINT_CREATE = Links.PKS_RESOURCES + '/create-endpoint';
+  public static PKS_ENDPOINT_TEST_CONNECTION = Links.PKS_RESOURCES + '/create-endpoint?validate=true';
+  public static PKS_CLUSTERS = Links.PKS_RESOURCES + '/clusters';
+  public static PKS_CLUSTERS_ADD = Links.PKS_RESOURCES + '/clusters-config';
+  public static PKS_PLANS = Links.PKS_RESOURCES + '/plans';
   public static KUBE_CONFIG_CONTENT = Links.RESOURCES + '/kube-config';
   public static DEPLOYMENT_POLICIES = Links.RESOURCES + '/deployment-policies';
 
@@ -57,6 +59,7 @@ export class Links {
   public static CREDENTIALS = '/core/auth/credentials';
 
   public static REQUESTS = '/requests';
+  public static REQUEST_RESIZE_CLUSTER = Links.REQUESTS + '/resize-pks-cluster-task';
 
   public static HOST_DATA_COLLECTION =
                             Links.RESOURCES + '/hosts-data-collections/host-info-data-collection';

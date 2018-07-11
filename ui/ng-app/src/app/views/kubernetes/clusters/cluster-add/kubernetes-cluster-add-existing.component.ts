@@ -93,7 +93,7 @@ export class KubernetesClusterAddExistingComponent implements OnInit {
 
         this.loading = true;
 
-        this.service.listPksClusters({ endpointLink: endpoint.documentSelfLink})
+        this.service.listWithParams(Links.PKS_CLUSTERS, { endpointLink: endpoint.documentSelfLink})
             .then((result) => {
                 this.loading = false;
 
