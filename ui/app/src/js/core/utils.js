@@ -1377,7 +1377,7 @@ var utils = {
 
     let searchIn = allValues.filter(a => a.name.indexOf(stringToBeMatched) > -1);
 
-    if (!searchIn) {
+    if (!searchIn || searchIn.length === 0) {
       return null;
     }
 
