@@ -413,9 +413,9 @@ public class PKSAdapterService extends StatelessService {
             AssertUtil.assertNotNull(cluster.parameters, "cluster parameters");
             AssertUtil.assertNotEmpty((String) cluster.parameters.get(PKS_MASTER_HOST_FIELD),
                     "master host address");
-            AssertUtil.assertNotEmpty((String) cluster.parameters.get(PKS_MASTER_PORT_FIELD),
+            AssertUtil.assertNotNull(cluster.parameters.get(PKS_MASTER_PORT_FIELD),
                     "master host port");
-            AssertUtil.assertNotEmpty((String) cluster.parameters.get(PKS_WORKER_INSTANCES_FIELD),
+            AssertUtil.assertNotNull(cluster.parameters.get(PKS_WORKER_INSTANCES_FIELD),
                     "worker instances");
             break;
         case RESIZE_CLUSTER:

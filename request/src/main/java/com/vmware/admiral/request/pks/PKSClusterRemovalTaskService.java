@@ -21,7 +21,6 @@ import static com.vmware.admiral.request.pks.PKSClusterRemovalTaskService.PKSClu
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
-import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
 
 import java.net.URI;
 import java.util.Arrays;
@@ -63,10 +62,9 @@ public class PKSClusterRemovalTaskService extends
             com.vmware.admiral.service.common.TaskServiceDocument<PKSClusterRemovalTaskState.SubStage> {
 
         /**
-         * (Required) PKS endpoint self link.
+         * PKS endpoint self link.
          */
-        @PropertyOptions(usage = { REQUIRED, SINGLE_ASSIGNMENT, AUTO_MERGE_IF_NOT_NULL },
-                indexing = STORE_ONLY)
+        @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public String endpointLink;
         /**
          * (Required) The resource on which the given operation will be applied

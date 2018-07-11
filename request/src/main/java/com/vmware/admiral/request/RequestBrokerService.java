@@ -1357,7 +1357,7 @@ public class RequestBrokerService extends
         task.documentSelfLink = getSelfId();
         task.serviceTaskCallback = ServiceTaskCallback.create(
                 state.documentSelfLink, TaskStage.STARTED, SubStage.COMPLETED,
-                TaskStage.FAILED, SubStage.REQUEST_FAILED);
+                TaskStage.STARTED, SubStage.REQUEST_FAILED);
         task.customProperties = state.customProperties;
         task.endpointLink = state.getCustomProperty(PKSConstants.PKS_ENDPOINT_PROP_NAME);
         task.tenantLinks = state.tenantLinks;
@@ -1389,7 +1389,7 @@ public class RequestBrokerService extends
         task.documentSelfLink = getSelfId();
         task.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
                 TaskStage.STARTED, errorState ? SubStage.ERROR : SubStage.COMPLETED,
-                TaskStage.FAILED, SubStage.ERROR);
+                TaskStage.STARTED, SubStage.ERROR);
 
         task.customProperties = state.customProperties;
         task.endpointLink = state.getCustomProperty(PKSConstants.PKS_ENDPOINT_PROP_NAME);
