@@ -43,6 +43,7 @@ public interface PKSConstants {
     String PKS_CLUSTER_EXISTS_PROP_NAME = "__clusterExists";
 
     String PKS_CLUSTER_STATUS_RESIZING_PROP_NAME = "__pksClusterStatusResizing";
+    String PKS_CLUSTER_STATUS_REMOVING_PROP_NAME = "__pksClusterStatusRemoving";
 
     String PKS_ENDPOINT_QUERY_PARAM_NAME = "endpointLink";
     String PKS_CLUSTER_QUERY_PARAM_NAME = "cluster";

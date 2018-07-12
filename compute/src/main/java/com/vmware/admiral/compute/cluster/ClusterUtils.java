@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.compute.cluster;
 
+import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_CLUSTER_STATUS_REMOVING_PROP_NAME;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_CLUSTER_STATUS_RESIZING_PROP_NAME;
 import static com.vmware.admiral.compute.ContainerHostUtil.isKubernetesHost;
 import static com.vmware.admiral.compute.ContainerHostUtil.isVicHost;
@@ -349,6 +350,8 @@ public class ClusterUtils {
             if (ePZClusterDto.status == null) {
                 if (isPKSClusterBeingResized(computeStates.get(0))) {
                     ePZClusterDto.status = ClusterStatus.RESIZING;
+                } else if (isPKSClusterBeingRemoved(computeStates.get(0))) {
+                    ePZClusterDto.status = ClusterStatus.REMOVING;
                 } else {
                     ePZClusterDto.status = ClusterUtils.computeToClusterStatus(computeStates.get(0));
                 }
@@ -443,5 +446,11 @@ public class ClusterUtils {
         return KubernetesUtil.isPKSManagedHost(host)
                 && host.customProperties != null
                 && host.customProperties.containsKey(PKS_CLUSTER_STATUS_RESIZING_PROP_NAME);
+    }
+
+    private static boolean isPKSClusterBeingRemoved(ComputeState host) {
+        return KubernetesUtil.isPKSManagedHost(host)
+                && host.customProperties != null
+                && host.customProperties.containsKey(PKS_CLUSTER_STATUS_REMOVING_PROP_NAME);
     }
 }

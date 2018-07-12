@@ -123,7 +123,7 @@ public class ClusterService extends StatelessService {
     }
 
     public enum ClusterStatus {
-        ON, OFF, DISABLED, WARNING, PROVISIONING, RESIZING
+        ON, OFF, DISABLED, WARNING, PROVISIONING, RESIZING, REMOVING
     }
 
     @SuppressWarnings("serial")

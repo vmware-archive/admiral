@@ -12,6 +12,7 @@
 package com.vmware.admiral.request.pks;
 
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_CLUSTER_NAME_PROP_NAME;
+import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_CLUSTER_STATUS_REMOVING_PROP_NAME;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_ENDPOINT_PROP_NAME;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_LAST_ACTION_DELETE;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_LAST_ACTION_STATE_FAILED;
@@ -40,6 +41,8 @@ import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.photon.controller.model.resources.ComputeService;
+import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 
@@ -71,6 +74,9 @@ public class PKSClusterRemovalTaskService extends
          */
         @PropertyOptions(usage = { REQUIRED, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public String resourceLink;
+
+        @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
+        public String hostLink;
 
         @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public String clusterName;
@@ -204,9 +210,26 @@ public class PKSClusterRemovalTaskService extends
                         return;
                     }
                     logInfo("PKS cluster delete started on %s", task.endpointLink);
-                    proceedTo(SubStage.INSTANCES_REMOVING);
+                    suspendHost(task.hostLink, () -> proceedTo(SubStage.INSTANCES_REMOVING));
                 })
                 .sendWith(this);
+    }
+
+    private void suspendHost(String hostLink, Runnable callback) {
+        ComputeState patch = new ComputeState();
+        patch.powerState = PowerState.SUSPEND;
+        patch.customProperties = new HashMap<>();
+        patch.customProperties.put(PKS_CLUSTER_STATUS_REMOVING_PROP_NAME, Boolean.TRUE.toString());
+
+        Operation.createPatch(this, hostLink)
+        .setBody(patch)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Error suspending host " + hostLink, e);
+                        return;
+                    }
+                    callback.run();
+                }).sendWith(this);
     }
 
     private void removeResources(PKSClusterRemovalTaskState task) {
@@ -323,9 +346,10 @@ public class PKSClusterRemovalTaskService extends
                 task.clusterName = host.customProperties.get(PKS_CLUSTER_NAME_PROP_NAME);
                 task.endpointLink = host.customProperties.get(PKS_ENDPOINT_PROP_NAME);
             }
+            task.hostLink = host.documentSelfLink;
 
-            if (task.clusterName == null || task.endpointLink == null) {
-                logWarning("Cannot get PKS cluster name / endpoint for %s, skipping destroying PKS"
+            if (task.clusterName == null || task.endpointLink == null || task.hostLink == null) {
+                logWarning("Cannot get PKS cluster name / endpoint / host link for %s, skipping destroying PKS"
                         + " cluster and proceed to remove states", task.resourceLink);
                 proceedTo(INSTANCES_REMOVED);
                 return;
@@ -333,6 +357,7 @@ public class PKSClusterRemovalTaskService extends
             proceedTo(SubStage.CREATED, t -> {
                 t.clusterName = task.clusterName;
                 t.endpointLink = task.endpointLink;
+                t.hostLink = task.hostLink;
             });
         });
     }
