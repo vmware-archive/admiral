@@ -159,6 +159,10 @@ let searchImages = function(queryOptions, searchOnlyImages, forContainerDefiniti
       }
     }
 
+    if (queryOptions.any) {
+      resultTemplates = utils.sortByName(queryOptions.any, resultTemplates);
+    }
+
     this.setInData(listViewPath.concat(['items']), resultTemplates);
     this.setInData(listViewPath.concat(['itemsLoading']), false);
     this.setInData(listViewPath.concat(['searchedItems']), true);

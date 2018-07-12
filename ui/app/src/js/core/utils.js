@@ -1385,6 +1385,25 @@ var utils = {
     return searchIn.reduce((a, b) => a.name.length <= b.name.length ? a : b);
   },
 
+  sortByName: function(stringToBeMatched, allValues) {
+    let sortedResults = [];
+    let coppiedValues = allValues.slice();
+
+    //on each iteration find the one whose name is most close to the searched string
+    //if no good match is found the rest of the result are simply concatenated
+    while (coppiedValues.length !== 0) {
+      let exact = utils.findBestMatch(stringToBeMatched, coppiedValues);
+      if (!exact) {
+        sortedResults = sortedResults.concat(coppiedValues);
+        break;
+      }
+      sortedResults.push(exact);
+      coppiedValues.splice(coppiedValues.indexOf(exact), 1);
+    }
+
+    return sortedResults;
+  },
+
   createTagAssignmentRequest: function(resourceLink, originalTags, newTags) {
     var tagInArray = function(tag, array) {
       return array.find(item => item.key === tag.key && item.value === tag.value) !== undefined;
