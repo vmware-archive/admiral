@@ -19,6 +19,7 @@ import { DocumentService } from './../../utils/document.service';
 import { ErrorService } from '../../utils/error.service';
 import { ProjectService } from './../../utils/project.service';
 import { Roles } from './../../utils/roles';
+import { Utils } from './../../utils/utils';
 import { FT } from './../../utils/ft';
 
 @Component({
@@ -172,17 +173,8 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
     }
 
     sortProjects() {
-      this.projects.sort((project1, project2) => {
-        if (project1.name > project2.name) {
-          return 1;
-        }
-
-        if (project1.name < project2.name) {
-          return -1;
-        }
-
-        return 0;
-      });
+      let sortField = FT.isApplicationEmbedded() ? "label" : "name";
+      Utils.sortObjectArrayByField(this.projects, sortField);
     }
 
     checkShowKubernetes() {

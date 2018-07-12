@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, Input, OnChanges, SimpleChanges, ViewEncapsulation } from '@angular/core';
+import { Component, Input, ViewEncapsulation } from '@angular/core';
 
 @Component({
     selector: 'multi-checkbox-selector',
@@ -20,7 +20,7 @@ import { Component, Input, OnChanges, SimpleChanges, ViewEncapsulation } from '@
 /**
  * Component allowing multiple selection of items, using checkboxes.
  */
-export class MultiCheckboxSelectorComponent implements OnChanges {
+export class MultiCheckboxSelectorComponent {
     /**
      * An option's data is in format:
      * {
@@ -30,14 +30,6 @@ export class MultiCheckboxSelectorComponent implements OnChanges {
      * }.
      */
     @Input() options: any[];
-
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes.options) {
-            if (!this.options.find(option => !option.checked)) {
-                this.allSelected = true;
-            }
-        }
-    }
 
     // all options selection
     private _isAllSelected: boolean = false;

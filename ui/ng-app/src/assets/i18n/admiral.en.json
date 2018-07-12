@@ -495,7 +495,9 @@
       "testConnectionBtn": "Test Connection",
       "clustersTabTitle": "Clusters",
       "connectionVerified": "Connection to endpoint is successful.",
-      "certificateNotAccepted": "The certificate is not accepted. Cannot proceed."
+      "certificateNotAccepted": "The certificate is not accepted. Cannot proceed.",
+      "assignToProjects": "Assign to Projects",
+      "assignToGroups": "Assign to Groups"
     }
   },
   "configuration": {
@@ -542,6 +544,7 @@
   "noItems": "No items",
   "reload": "Reload",
   "notAvailable": "N/A",
+  "selectAll": "Select All",
   "sessionExpired": "Your session is no longer valid, please log in again!",
   "navigation": {
     "home": "Home",

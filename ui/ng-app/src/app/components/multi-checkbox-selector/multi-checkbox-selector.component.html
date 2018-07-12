@@ -12,7 +12,7 @@
 <div class="multi-checkbox-selector">
     <div class="inner">
         <clr-checkbox *ngIf="options && options.length > 0" name="ALL"
-                      [(clrChecked)]="allSelected">Select All</clr-checkbox>
+                      [(clrChecked)]="allSelected">{{ "selectAll" | i18n }}</clr-checkbox>
         <clr-checkbox *ngFor="let option of options" [name]="option.name"
                       [(clrChecked)]="option.checked"
                       [clrDisabled]="allSelected">{{ option.name }}</clr-checkbox>
