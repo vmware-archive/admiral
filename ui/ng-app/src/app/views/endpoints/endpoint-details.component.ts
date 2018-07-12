@@ -61,9 +61,12 @@ export class EndpointDetailsComponent extends BaseDetailsComponent {
 
                     return {
                         name: resultDoc.name,
+                        hostname: resultDoc.parameters.kubernetes_master_host,
                         plan: planName || '',
                         masterNodesCount: masterNodesCount || 1,
                         workerNodesCount: resultDoc.parameters.kubernetes_worker_instances,
+                        lastAction: resultDoc.last_action,
+                        lastActionStatus: resultDoc.last_action_state,
                         addedInAdmiral: resultDoc.parameters.__clusterExists
                     };
                 })

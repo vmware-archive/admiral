@@ -21,6 +21,7 @@ import { Utils } from "../../../../utils/utils";
 
 import * as I18n from 'i18next';
 
+const OPERATION_IN_PROGRESS = Constants.clusters.pks.lastActionState.inProgress;
 
 @Component({
     selector: 'app-kubernetes-cluster-add-existing',
@@ -102,20 +103,15 @@ export class KubernetesClusterAddExistingComponent implements OnInit {
                 this.originalClusters = result.documents;
 
                 this.clusters = this.originalClusters.map(resultDoc => {
-                    // cafe uses different data format
-                    let masterNodesCount = resultDoc.kubernetes_master_ips
-                        ? resultDoc.kubernetes_master_ips.length
-                        : resultDoc.masterIPs && resultDoc.masterIPs.length;
-                    let planName = resultDoc.plan_name
-                        ? resultDoc.plan_name : resultDoc.planName;
-
                     return {
                         uuid: resultDoc.uuid,
                         name: resultDoc.name,
                         hostname: resultDoc.parameters.kubernetes_master_host,
-                        plan: planName || '',
-                        masterNodesCount: masterNodesCount || 1,
+                        plan: resultDoc.plan_name || '',
+                        masterNodesCount: resultDoc.kubernetes_master_ips.length || 1,
                         workerNodesCount: resultDoc.parameters.kubernetes_worker_instances,
+                        lastAction: resultDoc.last_action,
+                        lastActionStatus: resultDoc.last_action_state,
                         addedInAdmiral: resultDoc.parameters.__clusterExists
                     };
                 })
@@ -127,14 +123,24 @@ export class KubernetesClusterAddExistingComponent implements OnInit {
     }
 
     add() {
-        let suitableForAddClusters = this.getSelectedClustersSuitableForAdd();
-        if (suitableForAddClusters.length !== 1) {
+        if (this.selectedClusters.length !== 1) {
             // Currently only single cluster can be added
             this.alertType = Constants.alert.type.WARNING;
-            this.alertMessage = 'Cannot add selected clusters. '
-                                    + (suitableForAddClusters.length > 1
-                                        ? "Cannot add more than one cluster at a time."
-                                        : "Check if they are already added.");
+            this.alertMessage = I18n.t('pks.add.existingClusters.multipleSelectedClustersWarning')
+            return;
+        }
+
+        var selectedCluster = this.selectedClusters[0];
+
+        if (selectedCluster.addedInAdmiral) {
+            this.alertType = Constants.alert.type.WARNING;
+            this.alertMessage = I18n.t('pks.add.existingClusters.clusterAlreadyRegisteredWarning');
+            return;
+        }
+
+        if (selectedCluster.lastActionStatus === OPERATION_IN_PROGRESS) {
+            this.alertType = Constants.alert.type.WARNING;
+            this.alertMessage = I18n.t('pks.add.existingClusters.operationInProgressWarning');
             return;
         }
 
@@ -142,7 +148,7 @@ export class KubernetesClusterAddExistingComponent implements OnInit {
 
         this.isAdding = true;
         let clusterToAdd = this.originalClusters.find(originalCluster => {
-                return originalCluster.uuid === suitableForAddClusters[0].uuid;
+                return originalCluster.uuid === selectedCluster.uuid;
         });
 
         let addClusterRequest = {
@@ -178,9 +184,5 @@ export class KubernetesClusterAddExistingComponent implements OnInit {
     resetAlert() {
         this.alertType = null;
         this.alertMessage = null;
-    }
-
-    getSelectedClustersSuitableForAdd() {
-        return this.selectedClusters.filter(cluster => !cluster.addedInAdmiral);
     }
 }
