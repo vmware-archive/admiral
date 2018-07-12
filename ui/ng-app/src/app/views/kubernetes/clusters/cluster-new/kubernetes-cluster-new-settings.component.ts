@@ -182,7 +182,7 @@ export class KubernetesClusterNewSettingsComponent implements OnInit, OnChanges 
                 "customProperties": {
                     "__pksEndpoint": formValues.endpoint.documentSelfLink,
                     "__pksClusterName": formValues.name,
-                    "plan_name": formValues.plan,
+                    "plan_name": this.selectedPlan.name,
                     "kubernetes_master_host": formValues.masterHostName,
                     "kubernetes_master_port": formValues.masterHostPort,
                     "kubernetes_worker_instances": formValues.workerInstances
