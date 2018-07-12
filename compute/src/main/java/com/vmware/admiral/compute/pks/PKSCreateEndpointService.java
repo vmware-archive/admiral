@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.pks.PKSConstants;
@@ -26,6 +27,7 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.admiral.common.util.TenantLinksUtil;
 import com.vmware.admiral.compute.EndpointCertificateUtil;
 import com.vmware.admiral.compute.HostSpec;
 import com.vmware.admiral.compute.pks.PKSEndpointService.Endpoint;
@@ -95,6 +97,12 @@ public class PKSCreateEndpointService extends StatelessService {
 
             List<String> tenantLinks = endpointSpec.getHostTenantLinks();
             if (tenantLinks != null) {
+                tenantLinks = tenantLinks.stream()
+                        .filter(TenantLinksUtil::isTenantLink)
+                        .collect(Collectors.toList());
+            }
+
+            if (tenantLinks != null && !tenantLinks.isEmpty()) {
                 q.querySpec.query
                         .addBooleanClause(QueryUtil.addTenantGroupAndUserClause(tenantLinks));
             }

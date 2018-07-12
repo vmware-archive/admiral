@@ -15,6 +15,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Collections;
 import java.util.function.Consumer;
 
 import org.junit.AfterClass;
@@ -23,6 +24,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
+import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.admiral.compute.pks.PKSCreateEndpointService.EndpointSpec;
 import com.vmware.admiral.compute.pks.PKSEndpointService.Endpoint;
@@ -68,9 +70,92 @@ public class PKSCreateEndpointServiceTest extends ComputeBaseTest {
         endpoint = new Endpoint();
         endpoint.apiEndpoint = "https://localhost";
         endpoint.uaaEndpoint = "https://localhost";
+        endpointSpec.endpoint = endpoint;
+
         createEndpointExpectFailure(endpointSpec, e -> {
             e.getErrorCode();
         });
+    }
+
+    @Test
+    public void testCreateTheSameEndpointInDifferentProjectFails() throws Throwable {
+        Endpoint endpoint = new Endpoint();
+        endpoint.apiEndpoint = "https://localhost";
+        endpoint.uaaEndpoint = "https://localhost";
+        endpoint.tenantLinks = Collections
+                .singletonList(QueryUtil.PROJECT_IDENTIFIER + "some-project");
+
+        EndpointSpec endpointSpec = new EndpointSpec();
+        endpointSpec.acceptHostAddress = true;
+        endpointSpec.acceptCertificate = true;
+        endpointSpec.endpoint = endpoint;
+
+        createEndpoint(endpointSpec);
+
+        endpoint = new Endpoint();
+        endpoint.apiEndpoint = "https://localhost";
+        endpoint.uaaEndpoint = "https://localhost";
+        endpoint.tenantLinks = Collections
+                .singletonList(QueryUtil.PROJECT_IDENTIFIER + "another-project");
+        endpointSpec.endpoint = endpoint;
+
+        createEndpointExpectFailure(endpointSpec, e -> {
+            e.getErrorCode();
+        });
+    }
+
+    @Test
+    public void testCreateTheSameEndpointInDifferentGroupFails() throws Throwable {
+        final String tenantLink = QueryUtil.TENANT_IDENTIFIER + "some-tenant";
+
+        Endpoint endpoint = new Endpoint();
+        endpoint.apiEndpoint = "https://localhost";
+        endpoint.uaaEndpoint = "https://localhost";
+        endpoint.tenantLinks = Collections
+                .singletonList(tenantLink + QueryUtil.GROUP_IDENTIFIER + "some-group");
+
+        EndpointSpec endpointSpec = new EndpointSpec();
+        endpointSpec.acceptHostAddress = true;
+        endpointSpec.acceptCertificate = true;
+        endpointSpec.endpoint = endpoint;
+
+        createEndpoint(endpointSpec);
+
+        endpoint = new Endpoint();
+        endpoint.apiEndpoint = "https://localhost";
+        endpoint.uaaEndpoint = "https://localhost";
+        endpoint.tenantLinks = Collections
+                .singletonList(tenantLink + QueryUtil.GROUP_IDENTIFIER + "another-group");
+        endpointSpec.endpoint = endpoint;
+
+        createEndpointExpectFailure(endpointSpec, e -> {
+            e.getErrorCode();
+        });
+    }
+
+    @Test
+    public void testCreateTheSameEndpointInDifferentTenantPasses() throws Throwable {
+        Endpoint endpoint = new Endpoint();
+        endpoint.apiEndpoint = "https://localhost";
+        endpoint.uaaEndpoint = "https://localhost";
+        endpoint.tenantLinks = Collections
+                .singletonList(QueryUtil.TENANT_IDENTIFIER + "some-tenant");
+
+        EndpointSpec endpointSpec = new EndpointSpec();
+        endpointSpec.acceptHostAddress = true;
+        endpointSpec.acceptCertificate = true;
+        endpointSpec.endpoint = endpoint;
+
+        createEndpoint(endpointSpec);
+
+        endpoint = new Endpoint();
+        endpoint.apiEndpoint = "https://localhost";
+        endpoint.uaaEndpoint = "https://localhost";
+        endpoint.tenantLinks = Collections
+                .singletonList(QueryUtil.TENANT_IDENTIFIER + "another-tenant");
+        endpointSpec.endpoint = endpoint;
+
+        createEndpoint(endpointSpec);
     }
 
     @Test
