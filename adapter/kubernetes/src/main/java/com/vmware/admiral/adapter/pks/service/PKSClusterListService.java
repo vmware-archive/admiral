@@ -12,8 +12,11 @@
 package com.vmware.admiral.adapter.pks.service;
 
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_CLUSTER_EXISTS_PROP_NAME;
+import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_CLUSTER_NAME_PROP_NAME;
+import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_CLUSTER_QUERY_PARAM_NAME;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_CLUSTER_UUID_PROP_NAME;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_ENDPOINT_PROP_NAME;
+import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_ENDPOINT_QUERY_PARAM_NAME;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -46,8 +49,6 @@ public class PKSClusterListService extends StatelessService {
 
     public static final String SELF_LINK = ManagementUriParts.PKS_CLUSTERS;
 
-    public static final String PKS_ENDPOINT_PARAM_NAME = "endpointLink";
-
     @Override
     public void handleRequest(Operation op) {
         if (op.getAction() != Action.GET) {
@@ -63,19 +64,48 @@ public class PKSClusterListService extends StatelessService {
         try {
             Map<String, String> queryParams = UriUtils.parseUriQueryParams(op.getUri());
 
-            String endpointLink = queryParams.get(PKS_ENDPOINT_PARAM_NAME);
-            AssertUtil.assertNotNullOrEmpty(endpointLink, PKS_ENDPOINT_PARAM_NAME);
+            String endpointLink = queryParams.get(PKS_ENDPOINT_QUERY_PARAM_NAME);
+            AssertUtil.assertNotNullOrEmpty(endpointLink, PKS_ENDPOINT_QUERY_PARAM_NAME);
 
-            handleListRequest(op, endpointLink);
+            String clusterName = queryParams.get(PKS_CLUSTER_QUERY_PARAM_NAME);
+
+            if (clusterName != null && !clusterName.isEmpty()) {
+                handleGetRequest(op, endpointLink, clusterName);
+            } else {
+                handleListRequest(op, endpointLink);
+            }
         } catch (Exception x) {
             logSevere(x);
             op.fail(x);
         }
     }
 
+    private void handleGetRequest(Operation op, String endpointLink, String clusterName) {
+        AdapterRequest request = new AdapterRequest();
+        request.operationTypeId = PKSOperationType.GET_CLUSTER.id;
+        request.serviceTaskCallback = ServiceTaskCallback.createEmpty();
+        request.resourceReference = UriUtils.buildUri(getHost(), endpointLink);
+        request.customProperties = new HashMap<>(2);
+        request.customProperties.put(PKS_CLUSTER_NAME_PROP_NAME, clusterName);
+
+        sendRequest(Operation.createPatch(getHost(), ManagementUriParts.ADAPTER_PKS)
+                .setBodyNoCloning(request)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        logSevere("Adapter request for get PKS cluster failed. Error: %s",
+                                Utils.toString(ex));
+                        op.fail(ex);
+                    } else {
+                        PKSCluster pksCluster = o.getBody(PKSCluster.class);
+                        PKSCluster[] pksClusters = new PKSCluster[] { pksCluster };
+                        queryComputes(op, pksClusters, endpointLink);
+                    }
+                }));
+    }
+
     private void handleListRequest(Operation op, String endpointLink) {
         AdapterRequest request = new AdapterRequest();
-        request.operationTypeId = PKSOperationType.LIST_CLUSTERS.toString();
+        request.operationTypeId = PKSOperationType.LIST_CLUSTERS.id;
         request.serviceTaskCallback = ServiceTaskCallback.createEmpty();
         request.resourceReference = UriUtils.buildUri(getHost(), endpointLink);
 
@@ -135,4 +165,5 @@ public class PKSClusterListService extends StatelessService {
         op.setBody(pksClusters);
         op.complete();
     }
+
 }

@@ -137,6 +137,8 @@ public class MockPKSAdapterService extends StatelessService {
                         PKS_LAST_ACTION_DELETE, PKS_LAST_ACTION_STATE_IN_PROGRESS);
                 op.setBodyNoCloning(c);
                 op.complete();
+            } else {
+                op.fail(Operation.STATUS_CODE_NOT_FOUND);
             }
 
             return;

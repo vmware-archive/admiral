@@ -13,15 +13,19 @@ package com.vmware.admiral.adapter.pks.service;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_CLUSTER_EXISTS_PROP_NAME;
+import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_CLUSTER_QUERY_PARAM_NAME;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_CLUSTER_UUID_PROP_NAME;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_ENDPOINT_PROP_NAME;
-import static com.vmware.admiral.adapter.pks.service.PKSClusterListService.PKS_ENDPOINT_PARAM_NAME;
+import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_ENDPOINT_QUERY_PARAM_NAME;
 
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -39,7 +43,6 @@ import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
-import com.vmware.xenon.common.test.TestContext;
 import com.vmware.xenon.common.test.TestRequestSender;
 
 public class PKSClusterListServiceTest extends ComputeBaseTest {
@@ -64,7 +67,7 @@ public class PKSClusterListServiceTest extends ComputeBaseTest {
     public void testListPKSClusters() {
         String endpointLink = createEndpoint().documentSelfLink;
         createComputeState(endpointLink, MockPKSAdapterService.CLUSTER1_UUID);
-        List<PKSCluster> discoveredClusters = sendListRequest(endpointLink);
+        List<PKSCluster> discoveredClusters = sendListRequest(endpointLink, null, false);
 
         assertNotNull(discoveredClusters);
         assertEquals(2, discoveredClusters.size());
@@ -76,27 +79,37 @@ public class PKSClusterListServiceTest extends ComputeBaseTest {
         assertEquals(MockPKSAdapterService.CLUSTER1_UUID, markedAdded.get(0).uuid);
     }
 
-    private List<PKSCluster> sendListRequest(String endpointLink) {
-        URI serviceUri = UriUtils.buildUri(host, PKSClusterListService.SELF_LINK,
-                UriUtils.buildUriQuery(PKS_ENDPOINT_PARAM_NAME, endpointLink));
+    @Test
+    public void testGetPKSCluster() {
+        String endpoint = createEndpoint().documentSelfLink;
+        List<PKSCluster> clusters = sendListRequest(endpoint, "unit-test-create-success", false);
 
-        TestContext ctx = testCreate(1);
+        assertNotNull(clusters);
+        assertEquals(1, clusters.size());
 
-        List<PKSCluster> clusters = new ArrayList<>();
-        Operation get = Operation.createGet(serviceUri)
-                .setCompletion((op, ex) -> {
-                    if (ex != null) {
-                        ctx.fail(ex);
-                        return;
-                    }
+        clusters = sendListRequest(endpoint, "non-existing-cluster", true);
+        assertNull(clusters);
+    }
 
-                    clusters.addAll(Arrays.asList(op.getBody(PKSCluster[].class)));
-                    ctx.complete();
-                });
+    private List<PKSCluster> sendListRequest(String endpoint, String cluster, boolean expectFail) {
+        String query = cluster == null
+                ? UriUtils.buildUriQuery(PKS_ENDPOINT_QUERY_PARAM_NAME, endpoint)
+                : UriUtils.buildUriQuery(PKS_ENDPOINT_QUERY_PARAM_NAME, endpoint,
+                PKS_CLUSTER_QUERY_PARAM_NAME, cluster);
+        URI serviceUri = UriUtils.buildUri(host, PKSClusterListService.SELF_LINK, query);
 
-        sender.sendRequest(get);
-        ctx.await();
-        return clusters;
+        Operation result = sender.sendAndWait(
+                Collections.singletonList(Operation.createGet(serviceUri)), false).get(0);
+
+        if (!expectFail) {
+            return new ArrayList<>(Arrays.asList(result.getBody(PKSCluster[].class)));
+        } else {
+            if (result.getStatusCode() >= Operation.STATUS_CODE_BAD_REQUEST) {
+                return null;
+            }
+        }
+        fail("should have failed");
+        return null;
     }
 
     private Endpoint createEndpoint() {
