@@ -107,25 +107,41 @@ export class KubernetesClusterNewSettingsComponent implements OnInit, OnChanges 
             this.endpointDocumentSelfLink =
                 Utils.getCustomPropertyValue(clusterProperties, '__pksEndpoint');
             // Name
-            this.newClusterSettingsForm.get('name').setValue(
-                Utils.getCustomPropertyValue(clusterProperties, '__pksClusterName'));
+            let clusterName = Utils.getCustomPropertyValue(clusterProperties, '__pksClusterName');
+            this.newClusterSettingsForm.get('name').setValue(clusterName);
             this.newClusterSettingsForm.get('name').disable(true);
             // Plan
             this.newClusterSettingsForm.get('plan').setValue(
                 Utils.getCustomPropertyValue(clusterProperties, 'plan_name'));
             this.newClusterSettingsForm.get('plan').disable(true);
-            // Master Host Name
-            this.newClusterSettingsForm.get('masterHostName').setValue(
-                Utils.getCustomPropertyValue(clusterProperties, 'kubernetes_master_host'));
-            this.newClusterSettingsForm.get('masterHostName').disable(true);
-            // Master Host Port
-            this.newClusterSettingsForm.get('masterHostPort').setValue(
-                Utils.getCustomPropertyValue(clusterProperties, 'kubernetes_master_port'));
-            this.newClusterSettingsForm.get('masterHostPort').disable(true);
 
-            // Number of workers - editable
-            this.newClusterSettingsForm.get('workerInstances').setValue(
-                Utils.getCustomPropertyValue(clusterProperties, 'kubernetes_worker_instances'));
+            this.documentService.listWithParams(Links.PKS_CLUSTERS,
+                    { endpointLink: this.endpointDocumentSelfLink, cluster: clusterName })
+                .then((result) => {
+                    let clusters = result.documents;
+                    let theCluster = clusters.find((cluster) => {
+                        return cluster.name === clusterName;
+                    });
+
+                    let params = theCluster && theCluster.parameters;
+                    if (params) {
+                        // Master Host Name
+                        this.newClusterSettingsForm.get('masterHostName')
+                                                        .setValue(params.kubernetes_master_host);
+                        this.newClusterSettingsForm.get('masterHostName').disable(true);
+                        // Master Host Port
+                        this.newClusterSettingsForm.get('masterHostPort')
+                                                        .setValue(params.kubernetes_master_port);
+                        this.newClusterSettingsForm.get('masterHostPort').disable(true);
+
+                        // Number of workers - editable
+                        this.newClusterSettingsForm.get('workerInstances')
+                                                    .setValue(params.kubernetes_worker_instances);
+                    }
+            }).catch(error => {
+                console.log('Failed to retrieve PKS cluster information', error);
+                this.errorService.error(Utils.getErrorMessage(error)._generic);
+            });
         }
     }
 
@@ -212,15 +228,13 @@ export class KubernetesClusterNewSettingsComponent implements OnInit, OnChanges 
             let clusterUpdateSpec = {
                 "resourceType": "PKS_CLUSTER",
                 "operation": "RESIZE_RESOURCE",
-                "resourceLinks": ["/resources/clusters/4c488e0b0c255e75570a4c9fa6110"],
+                "resourceLinks": [this.cluster.documentSelfLink],
                 "customProperties": {
-                    "__pksEndpoint": formValues.endpoint.documentSelfLink, // todo rm this
-                    "__pksClusterName": formValues.name, // todo rm this
                     "kubernetes_worker_instances": formValues.workerInstances
                 }
             };
 
-            this.documentService.post(Links.REQUEST_RESIZE_CLUSTER, clusterUpdateSpec)
+            this.documentService.post(Links.REQUESTS, clusterUpdateSpec)
                 .then((response) => {
 
                 this.isCreatingCluster = false;

@@ -9,9 +9,9 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<delete-confirmation [title]="deleteTitle" [description]="deleteConfirmationDescription"
-                     [(alert)]="deleteConfirmationAlert" [visible]="clusterToDelete"
-                     (onDelete)="deleteConfirmed()" (onCancel)="deleteCanceled()">
+<delete-confirmation [title]="deleteOpTitle" [description]="deleteOpConfirmationDescription"
+                     [(alert)]="deleteConfirmationError" [visible]="deleteOpCluster"
+                     (onDelete)="deleteOpConfirmed()" (onCancel)="deleteOpCanceled()">
 </delete-confirmation>
 
 <grid-view #gridView [serviceEndpoint]="serviceEndpoint" [projectLink]="projectLink"
@@ -61,10 +61,16 @@
                     class="dropdown-item enableHost" (click)="enableHost($event, item)"><clr-icon
                 shape="play" size="20" class="card-drop-down-actions"
                 ></clr-icon>{{"hosts.actions.enable" | i18n}}</button>
-            <button type="button" class="dropdown-item remove-cluster"
-                    (click)="deleteCluster($event, item)"><clr-icon
+            <button *ngIf="operationSupported('REMOVE', item)" type="button"
+                    class="dropdown-item remove-cluster"
+                    (click)="removeCluster($event, item)"><clr-icon
                 shape="trash" size="20" class="card-drop-down-actions"
                 ></clr-icon>{{"remove" | i18n}}</button>
+              <button *ngIf="operationSupported('DESTROY', item)" type="button"
+                      class="dropdown-item remove-cluster"
+                      (click)="destroyCluster($event, item)"><clr-icon
+                  shape="trash" size="20" class="card-drop-down-actions"
+              ></clr-icon>{{"destroy" | i18n}}</button>
           </clr-dropdown-menu>
         </clr-dropdown>
       </div>

@@ -313,6 +313,14 @@
           },
           "count": "nodes"
         }
+      },
+      "remove": {
+        "title": "Remove Cluster",
+        "confirmation": "Confirm removing of cluster {{clusterName}}. The deployed entities associated to this cluster will be removed as well."
+      },
+      "destroy": {
+        "title": "Destroy Cluster",
+        "confirmation": "Confirm destroying cluster {{clusterName}}. The deployed entities associated to this cluster will be destroyed as well. The operation cannot be undone."
       }
     },
     "deployments": {
@@ -532,6 +540,7 @@
   "yes": "Yes",
   "remove": "Remove",
   "delete": "Delete",
+  "destroy": "Destroy",
   "details": "Details",
   "verify": "Verify",
   "update": "Update",

@@ -59,7 +59,6 @@ export class Links {
   public static CREDENTIALS = '/core/auth/credentials';
 
   public static REQUESTS = '/requests';
-  public static REQUEST_RESIZE_CLUSTER = Links.REQUESTS + '/resize-pks-cluster-task';
 
   public static HOST_DATA_COLLECTION =
                             Links.RESOURCES + '/hosts-data-collections/host-info-data-collection';
