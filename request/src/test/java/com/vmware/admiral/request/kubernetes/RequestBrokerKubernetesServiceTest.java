@@ -13,6 +13,7 @@ package com.vmware.admiral.request.kubernetes;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import static com.vmware.admiral.common.util.UriUtilsExtended.MEDIA_TYPE_APPLICATION_YAML;
 
@@ -144,9 +145,9 @@ public class RequestBrokerKubernetesServiceTest extends RequestBaseTest {
         assertNotNull("ResourceLinks null for requestSelfLink: " + requestSelfLink,
                 request.resourceLinks);
         assertEquals(1, request.resourceLinks.size());
-        CompositeComponent state = getDocument(CompositeComponent.class,
+        CompositeComponent state = getDocumentNoWait(CompositeComponent.class,
                 request.resourceLinks.iterator().next());
-        assertNotNull(state);
+        assertNull(state);
 
         // Verify request status
         RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);

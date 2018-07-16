@@ -77,7 +77,7 @@ public class CompositeKubernetesProvisioningTaskService extends
             com.vmware.admiral.service.common.TaskServiceDocument<KubernetesProvisioningTaskState.SubStage> {
 
         public static enum SubStage {
-            CREATED, CONTEXT_PREPARED, RESERVING, RESERVED, PLACEMENT_HOST_SELECTED, COMPLETED, ERROR
+            CREATED, CONTEXT_PREPARED, RESERVING, RESERVED, PLACEMENT_HOST_SELECTED, CLEAN_COMPOSITE_COMPONENT, COMPLETED, ERROR
         }
 
         /**
@@ -158,6 +158,9 @@ public class CompositeKubernetesProvisioningTaskService extends
             break;
         case PLACEMENT_HOST_SELECTED:
             patchCompositeComponentWithHostLink(state, null);
+            break;
+        case CLEAN_COMPOSITE_COMPONENT:
+            deleteCompositeComponent(state);
             break;
         case COMPLETED:
             complete();
@@ -309,7 +312,7 @@ public class CompositeKubernetesProvisioningTaskService extends
         adapterRequest.resourceReference = UriUtils.buildUri(getHost(),
                 state.compositeComponentLink);
         adapterRequest.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
-                TaskStage.STARTED, SubStage.COMPLETED,
+                TaskStage.STARTED, SubStage.CLEAN_COMPOSITE_COMPONENT,
                 TaskStage.STARTED, SubStage.ERROR);
         adapterRequest.operationTypeId = ApplicationOperationType.CREATE.id;
         adapterRequest.customProperties = state.customProperties;
@@ -329,6 +332,20 @@ public class CompositeKubernetesProvisioningTaskService extends
                             logInfo("Kubernetes provisioning started for: %s",
                                     state.compositeComponentLink);
                         }));
+    }
+
+
+    private void deleteCompositeComponent(KubernetesProvisioningTaskState state) {
+        sendRequest(Operation
+                .createDelete(this, state.compositeComponentLink)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        failTask("Failure when patching composite component", ex);
+                        return;
+                    }
+
+                    proceedTo(SubStage.COMPLETED);
+                }));
     }
 
     private void patchCompositeComponentWithHostLink(KubernetesProvisioningTaskState state,
