@@ -36,7 +36,7 @@ import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.cluster.ClusterService;
 import com.vmware.admiral.compute.cluster.ClusterService.ClusterDto;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
-import com.vmware.admiral.compute.pks.PKSEndpointService;
+import com.vmware.admiral.compute.pks.PKSEndpointFactoryService;
 import com.vmware.admiral.compute.pks.PKSEndpointService.Endpoint;
 import com.vmware.admiral.host.HostInitKubernetesAdapterServiceConfig;
 import com.vmware.admiral.service.test.MockKubernetesHostAdapterService;
@@ -109,7 +109,7 @@ public class PKSClusterConfigServiceTest extends ComputeBaseTest {
         endpoint.uaaEndpoint = "https://localhost";
 
         Operation o = Operation
-                .createPost(host, PKSEndpointService.FACTORY_LINK)
+                .createPost(host, PKSEndpointFactoryService.SELF_LINK)
                 .setBodyNoCloning(endpoint);
         Endpoint result = sender.sendAndWait(o, Endpoint.class);
 

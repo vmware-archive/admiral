@@ -49,7 +49,7 @@ public class PKSCreateEndpointServiceTest extends ComputeBaseTest {
 
     @Before
     public void setUp() throws Throwable {
-        waitForServiceAvailability(PKSEndpointService.FACTORY_LINK,
+        waitForServiceAvailability(PKSEndpointFactoryService.SELF_LINK,
                 PKSCreateEndpointService.SELF_LINK);
         sender = host.getTestRequestSender();
     }

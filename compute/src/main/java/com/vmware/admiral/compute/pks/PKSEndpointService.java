@@ -13,7 +13,6 @@ package com.vmware.admiral.compute.pks;
 
 import java.net.URI;
 
-import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.photon.controller.model.resources.ResourceState;
@@ -26,8 +25,6 @@ import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
 public class PKSEndpointService extends StatefulService {
-
-    public static final String FACTORY_LINK = ManagementUriParts.PKS_ENDPOINTS;
 
     public static class Endpoint extends ResourceState {
         public static final String FIELD_NAME_UAA_ENDPOINT = "uaaEndpoint";

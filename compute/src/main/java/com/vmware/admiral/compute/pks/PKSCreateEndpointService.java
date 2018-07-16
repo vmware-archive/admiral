@@ -227,9 +227,9 @@ public class PKSCreateEndpointService extends StatelessService {
 
         Operation store;
         if (e.documentSelfLink == null
-                || !e.documentSelfLink.startsWith(PKSEndpointService.FACTORY_LINK)) {
+                || !e.documentSelfLink.startsWith(PKSEndpointFactoryService.SELF_LINK)) {
             store = Operation
-                    .createPost(getHost(), PKSEndpointService.FACTORY_LINK)
+                    .createPost(getHost(), PKSEndpointFactoryService.SELF_LINK)
                     .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE);
         } else {
             store = Operation.createPut(getHost(), e.documentSelfLink);
@@ -246,9 +246,9 @@ public class PKSCreateEndpointService extends StatelessService {
                     }
                     Endpoint endpoint = o.getBody(Endpoint.class);
                     String documentSelfLink = endpoint.documentSelfLink;
-                    if (!documentSelfLink.startsWith(PKSEndpointService.FACTORY_LINK)) {
+                    if (!documentSelfLink.startsWith(PKSEndpointFactoryService.SELF_LINK)) {
                         documentSelfLink = UriUtils.buildUriPath(
-                                PKSEndpointService.FACTORY_LINK, documentSelfLink);
+                                PKSEndpointFactoryService.SELF_LINK, documentSelfLink);
                     }
 
                     op.addResponseHeader(Operation.LOCATION_HEADER, documentSelfLink);

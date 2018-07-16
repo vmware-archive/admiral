@@ -27,7 +27,7 @@ import org.junit.Test;
 import com.vmware.admiral.adapter.pks.entities.PKSPlan;
 import com.vmware.admiral.adapter.pks.test.MockPKSAdapterService;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
-import com.vmware.admiral.compute.pks.PKSEndpointService;
+import com.vmware.admiral.compute.pks.PKSEndpointFactoryService;
 import com.vmware.admiral.compute.pks.PKSEndpointService.Endpoint;
 import com.vmware.admiral.host.HostInitKubernetesAdapterServiceConfig;
 import com.vmware.photon.controller.model.resources.ComputeService;
@@ -48,7 +48,7 @@ public class PKSPlanListServiceTest extends ComputeBaseTest {
 
         waitForServiceAvailability(MockPKSAdapterService.SELF_LINK);
         waitForServiceAvailability(PKSPlanListService.SELF_LINK);
-        waitForServiceAvailability(PKSEndpointService.FACTORY_LINK);
+        waitForServiceAvailability(PKSEndpointFactoryService.SELF_LINK);
         waitForServiceAvailability(ComputeService.FACTORY_LINK);
 
         sender = host.getTestRequestSender();
@@ -134,7 +134,7 @@ public class PKSPlanListServiceTest extends ComputeBaseTest {
         endpoint.uaaEndpoint = "https://localhost";
 
         Operation o = Operation
-                .createPost(host, PKSEndpointService.FACTORY_LINK)
+                .createPost(host, PKSEndpointFactoryService.SELF_LINK)
                 .setBodyNoCloning(endpoint);
 
         return sender.sendAndWait(o, Endpoint.class);
