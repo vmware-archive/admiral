@@ -241,6 +241,29 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         super.sendRequest(op);
     }
 
+    @Override
+    public void handleStop(Operation delete) {
+        try {
+            T task = getBody(delete);
+            if (ServiceUtils.isExpired(task)) {
+                handleExpiration(task);
+            }
+        } catch (Throwable t) {
+            logWarning("Error while stopping task service [%s]: %s", getSelfLink(),
+                    Utils.toString(t));
+        } finally {
+            super.handleStop(delete);
+        }
+    }
+
+    /**
+     * Invoked when the task has expired and the document was marked deleted in the index,
+     * but before the running service instance is stopped. Provides a hook for custom
+     * procedures executed when the task expires.
+     */
+    public void handleExpiration(T state) {
+    }
+
     private boolean validateNewState(T state, Operation startPost) {
         if (state.documentVersion > 0) {
             logWarning("Document version on create is : %s", state.documentVersion);

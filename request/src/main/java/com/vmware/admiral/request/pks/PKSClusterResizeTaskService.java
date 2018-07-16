@@ -51,6 +51,7 @@ import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.ServiceStateMapUpdateRequest;
+import com.vmware.xenon.common.Utils;
 
 public class PKSClusterResizeTaskService extends
         AbstractTaskStatefulService<PKSClusterResizeTaskService.PKSClusterResizeTaskState, DefaultSubStage> {
@@ -137,6 +138,12 @@ public class PKSClusterResizeTaskService extends
     }
 
     @Override
+    protected void handleFailedStagePatch(PKSClusterResizeTaskState state) {
+        super.handleFailedStagePatch(state);
+        resumeHost(state, () -> { });
+    }
+
+    @Override
     public void handlePeriodicMaintenance(Operation post) {
         sendRequest(Operation.createGet(getUri())
                 .setCompletion((op, ex) -> {
@@ -155,6 +162,13 @@ public class PKSClusterResizeTaskService extends
                 }));
     }
 
+    @Override
+    public void handleExpiration(PKSClusterResizeTaskState task) {
+        if (task.taskSubStage == PROCESSING) {
+            resumeHost(task, () -> { });
+        }
+    }
+
     private void checkResizeStatus(PKSClusterResizeTaskState task, PKSCluster cluster) {
         // get PKS cluster, verify status and proceed to COMPLETED or FAILED if resizing
         // completed or failed. If it is still resizing do nothing.
@@ -166,7 +180,7 @@ public class PKSClusterResizeTaskService extends
 
         if (PKS_LAST_ACTION_UPDATE.equals(cluster.lastAction)) {
             if (PKS_LAST_ACTION_STATE_SUCCEEDED.equals(cluster.lastActionState)) {
-                resumeHost(task);
+                resumeHost(task, () -> proceedTo(COMPLETED));
             } else if (PKS_LAST_ACTION_STATE_FAILED.equals(cluster.lastActionState)) {
                 failTask("PKS cluster update failed", new Exception("Update PKS cluster failed: " +
                         cluster.lastActionDescription));
@@ -177,7 +191,11 @@ public class PKSClusterResizeTaskService extends
         }
     }
 
-    private void resumeHost(PKSClusterResizeTaskState task) {
+    private void resumeHost(PKSClusterResizeTaskState task, Runnable completion) {
+        if (task.hostLink == null) {
+            return;
+        }
+
         ComputeState patch = new ComputeState();
         patch.powerState = PowerState.ON;
         Operation powerStatePatch = Operation.createPatch(this, task.hostLink)
@@ -195,10 +213,10 @@ public class PKSClusterResizeTaskService extends
         OperationJoin.create(powerStatePatch, removeResizingFlag)
                 .setCompletion((ops, failures) -> {
                     if (failures != null && !failures.isEmpty()) {
-                        failTask("Failed to resume cluster host", failures.values().iterator().next());
-                        return;
+                        logWarning("Failed to resume cluster host: %s",
+                                Utils.toString(failures.values().iterator().next()));
                     }
-                    proceedTo(COMPLETED);
+                    completion.run();
                 }).sendWith(getHost());
     }
 
@@ -224,7 +242,13 @@ public class PKSClusterResizeTaskService extends
                         return;
                     }
                     PKSCluster pksCluster = o.getBody(PKSCluster.class);
-                    checkResizeStatus(task, pksCluster);
+                    if (pksCluster != null) {
+                        checkResizeStatus(task, pksCluster);
+                        if (task.failureCounter > 0) {
+                            // reset the failure counter
+                            proceedTo(PROCESSING, t -> t.failureCounter = 0);
+                        }
+                    }
                 })
                 .sendWith(this);
     }

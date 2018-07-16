@@ -12,10 +12,12 @@
 package com.vmware.admiral.common.util;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.net.URI;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
@@ -24,6 +26,7 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.StatelessService;
+import com.vmware.xenon.common.Utils;
 
 public class ServiceUtilsTest {
 
@@ -119,4 +122,20 @@ public class ServiceUtilsTest {
         assertEquals(-1, flag.get());
     }
 
+    @Test
+    public void testIsExpired() {
+        assertFalse(ServiceUtils.isExpired(null));
+
+        ServiceDocument sd = new ServiceDocument();
+        sd.documentExpirationTimeMicros = 0;
+        assertFalse(ServiceUtils.isExpired(new ServiceDocument()));
+
+        sd.documentExpirationTimeMicros = Utils.getSystemNowMicrosUtc()
+                - TimeUnit.MINUTES.toMicros(1);
+        assertTrue(ServiceUtils.isExpired(sd));
+
+        sd.documentExpirationTimeMicros = Utils.getSystemNowMicrosUtc()
+                + TimeUnit.MINUTES.toMicros(1);
+        assertFalse(ServiceUtils.isExpired(sd));
+    }
 }

@@ -97,4 +97,9 @@ public final class ServiceUtils {
         }
     }
 
+    public static boolean isExpired(ServiceDocument serviceDocument) {
+        return serviceDocument != null
+                && serviceDocument.documentExpirationTimeMicros != 0
+                && serviceDocument.documentExpirationTimeMicros < Utils.getSystemNowMicrosUtc();
+    }
 }
