@@ -73,6 +73,7 @@ class ContainerDefinitionForm extends Component {
       this.$el.find('.log-config-nav').hide();
       this.$el.find('.storage-nav').hide();
       this.$el.find('.health-nav').hide();
+      this.$el.find('.deployment-policy-input').hide();
 
       this.$el.find('.container-restart-policy-input .form-control').val('always');
       this.commandsEditor.hideButtons();
