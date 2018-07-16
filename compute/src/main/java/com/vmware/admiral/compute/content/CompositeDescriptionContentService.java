@@ -329,6 +329,8 @@ public class CompositeDescriptionContentService extends StatelessService {
     private void processKubernetesTemplate(String yamlContent, Operation post) {
         assertNotNullOrEmpty(yamlContent, "yamlContent");
 
+        String projectLink = ConfigurationUtil.isEmbedded() ? null : extractProjectFromHeader(post);
+
         sendRequest(Operation.createPost(this, KubernetesDescriptionContentService.SELF_LINK)
                 .setBody(yamlContent)
                 .setCompletion((o, ex) -> {
@@ -342,6 +344,7 @@ public class CompositeDescriptionContentService extends StatelessService {
                         description.descriptionLinks = Arrays.asList(resourceLinks);
                         description.name = KUBERNETES_APPLICATION_TEMPLATE_PREFIX + ZonedDateTime
                                 .now(ZoneOffset.UTC).format(FORMATTER);
+
                         Operation createCompositeDescription = Operation
                                 .createPost(this, CompositeDescriptionFactoryService.SELF_LINK)
                                 .setBody(description)
@@ -356,6 +359,10 @@ public class CompositeDescriptionContentService extends StatelessService {
                                         post.complete();
                                     }
                                 });
+
+                        if (projectLink != null && !projectLink.isEmpty()) {
+                            createCompositeDescription.addRequestHeader(OperationUtil.PROJECT_ADMIRAL_HEADER, projectLink);
+                        }
 
                         sendRequest(createCompositeDescription);
                     }
