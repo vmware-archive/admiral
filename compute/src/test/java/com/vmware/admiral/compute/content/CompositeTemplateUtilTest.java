@@ -36,6 +36,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.common.util.FileUtil;
@@ -57,6 +58,7 @@ public class CompositeTemplateUtilTest {
         HostInitComputeServicesConfig.initCompositeComponentRegistry();
     }
 
+    @Ignore("VBV-2087")
     @Test
     public void testConvertDockerComposeToCompositeTemplate() throws IOException {
         CompositeTemplate expectedTemplate = deserializeCompositeTemplate(
@@ -106,6 +108,7 @@ public class CompositeTemplateUtilTest {
         assertEqualsYamls(expectedTemplateYaml, template2Yaml);
     }
 
+    @Ignore("VBV-2087")
     @Test
     public void testConvertDockerComposeToCompositeTemplateWithNetwork() throws IOException {
 
@@ -164,6 +167,7 @@ public class CompositeTemplateUtilTest {
                 toUnixLineEnding(template2Yaml));
     }
 
+    @Ignore("VBV-2087")
     @Test
     public void testConvertDockerComposeToCompositeTemplateWithVolume() throws IOException {
         // Docker Compose with simple volume entities
@@ -467,6 +471,7 @@ public class CompositeTemplateUtilTest {
         }
     }
 
+    @Ignore("VBV-2087")
     @Test
     public void testDeserializeSerializeComplexCompositeTemplate() throws IOException {
 
@@ -525,6 +530,7 @@ public class CompositeTemplateUtilTest {
         assertFalse(content.contains("health_config"));
     }
 
+    @Ignore("VBV-2087")
     @Test
     public void testDeserializeSerializeComplexCompositeTemplateWithNetwork() throws IOException {
 
@@ -554,6 +560,7 @@ public class CompositeTemplateUtilTest {
         assertTrue((contentCompose != null) && (!contentCompose.isEmpty()));
     }
 
+    @Ignore("VBV-2087")
     @Test
     public void testDeserializeSerializeComplexCompositeTemplateWithVolume() throws IOException {
 
