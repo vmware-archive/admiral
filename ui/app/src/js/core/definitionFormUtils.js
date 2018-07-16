@@ -248,8 +248,10 @@ var definitionFormUtils = {
   },
 
   typeaheadTagsLoader($tagsHolder) {
+    var $this = this;
+
     return function(event, selection) {
-      this.loadTags($tagsHolder, selection, null);
+      $this.loadTags($tagsHolder, selection, null);
     };
   },
 
