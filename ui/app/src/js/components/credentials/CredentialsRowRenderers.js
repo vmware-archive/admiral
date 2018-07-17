@@ -74,6 +74,11 @@ Handlebars.registerHelper('displayableCredentials', function(credentialObject) {
       formatUtils.escapeHtml(credentialObject.publicKey) +
       '</div>';
 
+  } else if (credentialObject.type === constants.CREDENTIALS_TYPE.BEARER_TOKEN) {
+    return '<div class="truncateText">' +
+      formatUtils.escapeHtml(utils.maskValueIfEncrypted(credentialObject.privateKey)) +
+      '</div>';
+
   } else {
     return 'Unknown [' + formatUtils.escapeHtml(credentialObject.type) + ']';
   }
@@ -100,6 +105,11 @@ Handlebars.registerHelper('displayableTitleCredentials', function(credentialObje
 
     return publicKey;
 
+  } else if (credentialObject.type === constants.CREDENTIALS_TYPE.BEARER_TOKEN) {
+    let privateKey = truncateContent(utils.maskValueIfEncrypted(credentialObject.privateKey));
+
+    return privateKey;
+
   } else {
     return 'Unknown [' + credentialObject.type + ']';
   }
@@ -116,6 +126,9 @@ Handlebars.registerHelper('displayableCredentialsType', function(credentialObjec
 
   } else if (credentialObjectType === constants.CREDENTIALS_TYPE.PUBLIC) {
     return i18n.t('app.credential.edit.publicTitle');
+
+  } else if (credentialObjectType === constants.CREDENTIALS_TYPE.BEARER_TOKEN) {
+    return i18n.t('app.credential.edit.bearerTokenTitle');
 
   } else {
     return 'Unknown [' + credentialObjectType + ']';

@@ -108,10 +108,15 @@ CredentialsRowEditor.prototype.setData = function(data) {
       this.$el.find('.public-certificate-input').val(this.credentialsObject.publicKey);
       this.$el.find('.private-certificate-input').val(
                           utils.maskValueIfEncrypted(this.credentialsObject.privateKey));
-    } else {
+    } else if (this.credentialsObject.type === constants.CREDENTIALS_TYPE.PUBLIC) {
       this.$el.find('#credentialTypePublic')[0].checked = true;
       this.$el.find('#credentialTypePassword')[0].checked = false;
       this.$el.find('.public-input').val(this.credentialsObject.publicKey);
+    } else {
+      this.$el.find('#credentialTypeBearerToken')[0].checked = true;
+      this.$el.find('#credentialTypePassword')[0].checked = false;
+      this.$el.find('.bearer-token-input').val(
+                          utils.maskValueIfEncrypted(this.credentialsObject.privateKey));
     }
 
     handleCredentialsTypeInputs(this.$el, this.credentialsObject.type);
@@ -175,9 +180,15 @@ var addEventListeners = function() {
                                       validator.trim(
                                         _this.$el.find('.private-certificate-input').val()),
                                       toReturn.privateKey);
-    } else {
+    } else if (credentialsType === constants.CREDENTIALS_TYPE.PUBLIC) {
       toReturn.type = constants.CREDENTIALS_TYPE.PUBLIC;
       toReturn.publicKey = validator.trim(_this.$el.find('.public-input').val());
+    } else {
+      toReturn.type = constants.CREDENTIALS_TYPE.BEARER_TOKEN;
+      toReturn.privateKey = utils.unmaskValueIfEncrypted(
+                                      validator.trim(
+                                          _this.$el.find('.bearer-token-input').val()),
+                                      toReturn.privateKey);
     }
 
     toReturn.customProperties = utils.arrayToObject(_this.customProperties.getData());
@@ -255,7 +266,7 @@ var addEventListeners = function() {
   this.$el.on('change input', '.name-input, .username-input, ' +
               '.private-key-input, ' +
               '.public-certificate-input, .private-certificate-input, ' +
-              '.public-input',
+              '.public-input, .bearer-token-input',
     function() {
       toggleButtonsState(_this.$el);
   });
@@ -271,6 +282,9 @@ var handleCredentialsTypeInputs = function($el, type) {
 
   $el.find('.inline-edit-publicInputs')
     .toggleClass('hide', type !== constants.CREDENTIALS_TYPE.PUBLIC);
+
+  $el.find('.inline-edit-bearerTokenInputs')
+    .toggleClass('hide', type !== constants.CREDENTIALS_TYPE.BEARER_TOKEN);
 };
 
 var applyValidationErrors = function($el, errors) {
@@ -305,10 +319,14 @@ var toggleButtonsState = function($el) {
     let privateKey = $el.find('.private-certificate-input').val();
 
     toggleSaveButtonState($el, publicKey && privateKey);
-  } else {
+  } else if (credentialsType === constants.CREDENTIALS_TYPE.PUBLIC) {
     let publicKey = $el.find('.public-input').val();
 
     toggleSaveButtonState($el, publicKey);
+  } else {
+    let bearerToken = $el.find('.bearer-token-input').val();
+
+    toggleSaveButtonState($el, bearerToken);
   }
 };
 

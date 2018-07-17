@@ -175,6 +175,9 @@ var toViewModel = function(dto) {
   } else if (dto.type === constants.CREDENTIALS_TYPE.PUBLIC) {
     viewModel.publicKey = dto.publicKey;
 
+  } else if (dto.type === constants.CREDENTIALS_TYPE.BEARER_TOKEN) {
+    viewModel.privateKey = dto.privateKey;
+
   } else {
     throw 'Unknown type ' + dto.type;
   }
@@ -206,6 +209,9 @@ var toDto = function(viewModel) {
 
   } else if (dto.type === constants.CREDENTIALS_TYPE.PUBLIC) {
     dto.publicKey = viewModel.publicKey;
+
+  } else if (dto.type === constants.CREDENTIALS_TYPE.BEARER_TOKEN) {
+    dto.privateKey = viewModel.privateKey;
 
   } else {
     throw 'Unknown type ' + dto.type;

@@ -130,7 +130,8 @@ var constants = Immutable({
     PUBLIC: 'Public',
     PUBLIC_KEY: 'PublicKey',
     PRIVATE_KEY: 'PrivateKey',
-    PASSWORD: 'Password'
+    PASSWORD: 'Password',
+    BEARER_TOKEN: 'Bearer'
   },
   CREDENTIALS_SCOPE_TYPE: {
     SYSTEM: 'SYSTEM'

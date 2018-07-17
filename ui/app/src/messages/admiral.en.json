@@ -200,6 +200,7 @@
         "publicTitle": "Public key",
         "publicCertificateTitle": "Public certificate",
         "privateCertificateTitle": "Private certificate",
+        "bearerTokenTitle": "Bearer token",
         "customProperties": "Custom properties"
       }
     },
