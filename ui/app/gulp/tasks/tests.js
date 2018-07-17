@@ -65,9 +65,9 @@ var createCommonTestsConfig =  function(files, reporters, reportOutputFile, sing
     singleRun: singleRun,
     globals: config.INTEGRATION_TEST_PROPERTIES,
     captureTimeout: 60000,
-    browserDisconnectTimeout : 10000,
-    browserDisconnectTolerance : 1,
-    browserNoActivityTimeout : 60000,
+    browserDisconnectTimeout : 60000,
+    browserDisconnectTolerance : 3,
+    browserNoActivityTimeout : 60000
   }
 };
 
