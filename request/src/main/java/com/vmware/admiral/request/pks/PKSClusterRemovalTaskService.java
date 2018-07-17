@@ -210,25 +210,28 @@ public class PKSClusterRemovalTaskService extends
                         return;
                     }
                     logInfo("PKS cluster delete started on %s", task.endpointLink);
-                    suspendHost(task.hostLink, () -> proceedTo(SubStage.INSTANCES_REMOVING));
+                    suspendHost(task.hostLink);
+                    proceedTo(SubStage.INSTANCES_REMOVING);
                 })
                 .sendWith(this);
     }
 
-    private void suspendHost(String hostLink, Runnable callback) {
+    private void suspendHost(String hostLink) {
+        if (hostLink == null || hostLink.isEmpty()) {
+            return;
+        }
         ComputeState patch = new ComputeState();
         patch.powerState = PowerState.SUSPEND;
         patch.customProperties = new HashMap<>();
         patch.customProperties.put(PKS_CLUSTER_STATUS_REMOVING_PROP_NAME, Boolean.TRUE.toString());
 
         Operation.createPatch(this, hostLink)
-        .setBody(patch)
+                .setBodyNoCloning(patch)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        failTask("Error suspending host " + hostLink, e);
-                        return;
+                        logWarning("Failed to suspend host %s, reason: %s", hostLink,
+                                e.getMessage());
                     }
-                    callback.run();
                 }).sendWith(this);
     }
 
