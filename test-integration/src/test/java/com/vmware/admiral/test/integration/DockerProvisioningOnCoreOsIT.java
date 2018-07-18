@@ -53,7 +53,6 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
@@ -100,7 +99,6 @@ public class DockerProvisioningOnCoreOsIT extends BaseProvisioningOnCoreOsIT {
     private static final String TEST_WORKING_DIR = "/tmp";
     private static final boolean TEST_PRIVILEGED = true;
 
-    @Ignore("VBV-2097")
     @Test
     public void testProvisionDockerContainerOnCoreOSWithImageDownloadAPI()
             throws Exception {
