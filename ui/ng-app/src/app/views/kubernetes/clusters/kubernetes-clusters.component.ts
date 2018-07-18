@@ -115,31 +115,18 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
         return properties;
     }
 
-    isDashboardInstalled(cluster): boolean {
-        let clusterCustomProperties = this.getClusterCustomProperties(cluster);
-        if (!clusterCustomProperties) {
-            return false;
-        }
-
-        let nodeLink = cluster.nodeLinks[0];
-        let installed =
-            Utils.getCustomPropertyValue(cluster.nodes[nodeLink].customProperties, '__dashboardInstalled');
-
-        return installed === "true";
-    }
-
-    openDashboard(cluster) {
+    downloadKubeConfig($event, cluster) {
         event.stopPropagation();
 
-        if (!this.isDashboardInstalled(cluster)) {
+        var hostLink = cluster.nodeLinks && cluster.nodeLinks[0];
+
+        if (!hostLink) {
+            console.log('cannot download kubeconfig: no hosts found');
             return;
         }
 
-        let properties = cluster.nodes[cluster.nodeLinks[0]].customProperties;
-        let dashboardLink = Utils.getCustomPropertyValue(properties, '__dashboardLink');
-        if (dashboardLink) {
-            window.open(dashboardLink);
-        }
+        var kubeConfigLink = Links.KUBE_CONFIG_CONTENT + '?hostLink=' + hostLink;
+        window.location.href = Utils.serviceUrl(kubeConfigLink);
     }
 
     setDeleteOperation(deleteOperation, cluster) {

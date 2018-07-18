@@ -93,8 +93,11 @@
         </div>
       </div>
       <div card-footer>
-        <button class="btn btn-sm btn-link" (click)="openDashboard(item)"
-                [disabled]="!isDashboardInstalled(item)">{{"kubernetes.clusters.dashboard" | i18n}}</button>
+        <button class="btn btn-sm btn-link" (click)="downloadKubeConfig($event, item)"
+                title="{{ 'kubernetes.clusters.details.summary.kubeConfigTooltip' | i18n }}">
+          <clr-icon shape="download" size="12"></clr-icon>
+          <span class="btn-spaced-text">{{ "kubernetes.clusters.details.summary.kubeConfigBtn" | i18n }}</span>
+        </button>
       </div>
     </card>
   </ng-template>
