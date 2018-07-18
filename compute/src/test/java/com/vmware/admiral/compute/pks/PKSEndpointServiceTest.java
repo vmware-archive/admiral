@@ -18,10 +18,13 @@ import static org.junit.Assert.assertTrue;
 
 import java.net.URI;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -76,6 +79,35 @@ public class PKSEndpointServiceTest extends ComputeBaseTest {
             assertEquals(Operation.STATUS_CODE_BAD_REQUEST, ser.statusCode);
             assertTrue(ser.message.startsWith("Unsupported scheme, must be http or https"));
         });
+    }
+
+    @Test
+    public void testCreateWithPlanAssignments() {
+        final String project1 = QueryUtil.PROJECT_IDENTIFIER + "project1";
+        final String project2 = QueryUtil.PROJECT_IDENTIFIER + "project2";
+        final String plan1InProject1 = "plan1";
+        final String plan2InProject1 = "plan2";
+        final String plan1InProject2 = "plan1";
+        final Set<String> project1Plans = Stream.of(plan1InProject1, plan2InProject1)
+                .collect(Collectors.toSet());
+        final Set<String> project2Plans = Stream.of(plan1InProject2)
+                .collect(Collectors.toSet());
+
+        Endpoint endpoint = new Endpoint();
+        endpoint.apiEndpoint = "http://localhost";
+        endpoint.uaaEndpoint = "https://localhost";
+        endpoint.planAssignments = new HashMap<>();
+        endpoint.planAssignments.put(project1, project1Plans);
+        endpoint.planAssignments.put(project2, project2Plans);
+
+        Endpoint createdEndpoint = createEndpoint(endpoint);
+        assertNotNull(createdEndpoint);
+        assertNotNull(createdEndpoint.planAssignments);
+        assertEquals(2, createdEndpoint.planAssignments.size());
+        assertPlanAssignmentEntryEquals(project1Plans,
+                createdEndpoint.planAssignments.get(project1));
+        assertPlanAssignmentEntryEquals(project2Plans,
+                createdEndpoint.planAssignments.get(project2));
     }
 
     @Test
@@ -194,6 +226,38 @@ public class PKSEndpointServiceTest extends ComputeBaseTest {
     }
 
     @Test
+    public void testUpdatePlanAssignments() {
+        final String project = QueryUtil.PROJECT_IDENTIFIER + "some-project";
+        Set<String> initialPlans = Stream.of("some-plan", "another-plan")
+                .collect(Collectors.toSet());
+        Set<String> updatedPlans = Collections.singleton("best-plan");
+        Endpoint endpoint = new Endpoint();
+        endpoint.apiEndpoint = "http://localhost";
+        endpoint.uaaEndpoint = "https://localhost";
+        endpoint.planAssignments = new HashMap<>();
+        endpoint.planAssignments.put(project, initialPlans);
+
+        final Endpoint createdEndpoint = createEndpoint(endpoint);
+        assertNotNull(createdEndpoint);
+        assertNotNull(createdEndpoint.planAssignments);
+        assertEquals(1, createdEndpoint.planAssignments.size());
+        assertPlanAssignmentEntryEquals(initialPlans, createdEndpoint.planAssignments.get(project));
+
+        Endpoint patchEndpoint = new Endpoint();
+        patchEndpoint.documentSelfLink = createdEndpoint.documentSelfLink;
+        patchEndpoint.planAssignments = new HashMap<>();
+        patchEndpoint.planAssignments.put(project, updatedPlans);
+
+        updateEndpoint(patchEndpoint, (op, updatedEndpoint) -> {
+            assertNotNull(updatedEndpoint);
+            assertNotNull(updatedEndpoint.planAssignments);
+            assertEquals(1, updatedEndpoint.planAssignments.size());
+            assertPlanAssignmentEntryEquals(updatedPlans,
+                    updatedEndpoint.planAssignments.get(project));
+        });
+    }
+
+    @Test
     public void testDelete() throws Throwable {
         Endpoint endpoint = new Endpoint();
         endpoint.apiEndpoint = "http://localhost";
@@ -246,4 +310,18 @@ public class PKSEndpointServiceTest extends ComputeBaseTest {
         consumer.accept(o, e);
     }
 
+    private void assertPlanAssignmentEntryEquals(Set<String> expectedPlans,
+            Set<String> actualPlans) {
+        if (expectedPlans == null || expectedPlans.isEmpty()) {
+            assertTrue("there are no expected plans but some plans were actually returned",
+                    actualPlans == null || actualPlans.isEmpty());
+        }
+
+        assertNotNull("actual plans are null but plans are expected", actualPlans);
+        assertEquals("unexpected number of plans", expectedPlans.size(), actualPlans.size());
+        expectedPlans.forEach(expectedPlan -> {
+            assertTrue("expected plan was not found: " + expectedPlan,
+                    actualPlans.stream().anyMatch(plan -> expectedPlan.equals(plan)));
+        });
+    }
 }

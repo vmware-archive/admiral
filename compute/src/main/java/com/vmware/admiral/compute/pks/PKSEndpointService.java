@@ -12,6 +12,8 @@
 package com.vmware.admiral.compute.pks;
 
 import java.net.URI;
+import java.util.Map;
+import java.util.Set;
 
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.PropertyUtils;
@@ -43,6 +45,10 @@ public class PKSEndpointService extends StatefulService {
         @Documentation(description = "Link to associated authentication credentials")
         public String authCredentialsLink;
 
+        @Documentation(description = "Maps project to available plans")
+        @UsageOption(option = PropertyUsageOption.OPTIONAL)
+        @UsageOption(option = PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL)
+        public Map<String, Set<String>> planAssignments;
     }
 
     public PKSEndpointService() {
