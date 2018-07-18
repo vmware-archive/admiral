@@ -36,6 +36,7 @@
     <modules>
         <module>services</module>
         <module>adapter</module>
+		<module>client</module>
     </modules>
 
 </project>

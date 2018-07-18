@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ~ Copyright (c) 2018 VMware, Inc. All Rights Reserved. ~ ~ This product
+    is licensed to you under the Apache License, Version 2.0 (the "License").
+    ~ You may not use this product except in compliance with the License. ~ ~
+    This product may include a number of subcomponents with separate copyright
+    notices ~ and license terms. Your use of these subcomponents is subject to
+    the terms and ~ conditions of the subcomponent's license, as noted in the
+    LICENSE file. -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.vmware.admiral</groupId>
+        <artifactId>admiral-tiller-client</artifactId>
+        <version>1.4.2-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>admiral-tiller-client-microbean</artifactId>
+    <packaging>jar</packaging>
+
+    <properties>
+        <microbean.helm.version>2.8.2.1.1.0</microbean.helm.version>
+        <!-- Override microbean-helm dependency version as a workaround for https://github.com/grpc/grpc-java/issues/3989. -->
+        <override.netty.tcnative.boringssl.static.version>2.0.7.Final</override.netty.tcnative.boringssl.static.version>
+        <!-- This corresponds to the version of kubernetes-client that comes with
+            microbean-helm -->
+        <kubernetes.server.mock.version>3.1.8</kubernetes.server.mock.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.microbean</groupId>
+                <artifactId>microbean-helm</artifactId>
+                <version>${microbean.helm.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.fabric8</groupId>
+                <artifactId>kubernetes-server-mock</artifactId>
+                <version>${kubernetes.server.mock.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>admiral-tiller-client-common</artifactId>
+                <version>${project.version}</version>
+                <exclusions>
+                    <!-- Avoids conflicts caused by different netty versions that come as
+                        microbean-helm and xenon dependencies. -->
+                    <exclusion>
+                        <groupId>io.netty</groupId>
+                        <artifactId>netty-all</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>admiral-tiller-client-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.microbean</groupId>
+            <artifactId>microbean-helm</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-tcnative-boringssl-static</artifactId>
+            <version>${override.netty.tcnative.boringssl.static.version}</version>
+            <classifier>${os.detected.classifier}</classifier>
+        </dependency>
+
+        <!-- TEST -->
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.fabric8</groupId>
+            <artifactId>kubernetes-server-mock</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

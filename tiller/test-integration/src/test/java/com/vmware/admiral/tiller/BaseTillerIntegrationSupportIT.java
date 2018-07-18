@@ -19,11 +19,11 @@ import java.nio.file.Files;
 import org.junit.Before;
 import org.microbean.helm.Tiller;
 
-import com.vmware.admiral.adapter.tiller.client.TillerConfig;
-import com.vmware.admiral.adapter.tiller.client.TillerConfig.Builder;
-import com.vmware.admiral.adapter.tiller.client.TillerConfig.TillerConnectionType;
 import com.vmware.admiral.test.integration.BaseIntegrationSupportIT;
 import com.vmware.admiral.test.integration.TestPropertiesUtil;
+import com.vmware.admiral.tiller.client.TillerConfig;
+import com.vmware.admiral.tiller.client.TillerConfig.Builder;
+import com.vmware.admiral.tiller.client.TillerConfig.TillerConnectionType;
 
 public class BaseTillerIntegrationSupportIT extends BaseIntegrationSupportIT {
 

@@ -13,29 +13,11 @@
 
     <parent>
         <groupId>com.vmware.admiral</groupId>
-        <artifactId>admiral-tiller</artifactId>
+        <artifactId>admiral-tiller-client</artifactId>
         <version>1.4.2-SNAPSHOT</version>
     </parent>
 
-    <artifactId>admiral-tiller-services</artifactId>
+    <artifactId>admiral-tiller-client-common</artifactId>
     <packaging>jar</packaging>
 
-    <dependencies>
-
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>admiral-common</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <!-- TEST -->
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>admiral-common-test</artifactId>
-            <version>${project.version}</version>
-            <classifier>tests</classifier>
-            <scope>test</scope>
-        </dependency>
-
-    </dependencies>
 </project>

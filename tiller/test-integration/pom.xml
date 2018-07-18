@@ -24,7 +24,7 @@
 
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>admiral-tiller-adapter-microbean</artifactId>
+            <artifactId>admiral-tiller-client-microbean</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
@@ -33,6 +33,16 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>admiral-test-integration</artifactId>
             <version>${project.version}</version>
+                <!-- Avoids conflicts caused by different netty versions that come as
+                    microbean-helm and xenon dependencies. -->
+                    <!--
+            <exclusions>
+                <exclusion>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-all</artifactId>
+                </exclusion>
+            </exclusions>
+                    -->
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>

@@ -17,25 +17,11 @@
         <version>1.4.2-SNAPSHOT</version>
     </parent>
 
-    <artifactId>admiral-tiller-services</artifactId>
-    <packaging>jar</packaging>
+    <artifactId>admiral-tiller-client</artifactId>
+    <packaging>pom</packaging>
 
-    <dependencies>
-
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>admiral-common</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <!-- TEST -->
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>admiral-common-test</artifactId>
-            <version>${project.version}</version>
-            <classifier>tests</classifier>
-            <scope>test</scope>
-        </dependency>
-
-    </dependencies>
+    <modules>
+        <module>common</module>
+        <module>microbean</module>
+    </modules>
 </project>

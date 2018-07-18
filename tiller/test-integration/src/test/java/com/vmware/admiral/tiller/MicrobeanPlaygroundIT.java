@@ -29,10 +29,9 @@ import io.grpc.health.v1.HealthCheckResponse.ServingStatus;
 import org.junit.Test;
 import org.microbean.helm.Tiller;
 
-import com.vmware.admiral.adapter.tiller.TillerFactory;
-import com.vmware.admiral.adapter.tiller.client.MicrobeanTillerClientProvider;
-import com.vmware.admiral.adapter.tiller.client.TillerClientProvider;
-import com.vmware.admiral.adapter.tiller.client.TillerClientProviderUtil;
+import com.vmware.admiral.tiller.client.MicrobeanTillerClientProvider;
+import com.vmware.admiral.tiller.client.TillerClientProvider;
+import com.vmware.admiral.tiller.client.TillerClientProviderUtil;
 
 // TODO execute ITs as part of the pipeline
 public class MicrobeanPlaygroundIT extends BaseTillerIntegrationSupportIT {
