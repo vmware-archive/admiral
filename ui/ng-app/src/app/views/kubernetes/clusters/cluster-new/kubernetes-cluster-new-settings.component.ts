@@ -150,7 +150,8 @@ export class KubernetesClusterNewSettingsComponent implements OnInit, OnChanges 
             return;
         }
 
-        this.documentService.list(Links.PKS_ENDPOINTS, {}).then(result => {
+        this.documentService.list(Links.PKS_ENDPOINTS, {}, undefined, true)
+        .then(result => {
             this.endpoints = result.documents;
 
             if (this.endpointDocumentSelfLink) {

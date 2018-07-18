@@ -74,7 +74,8 @@ export class KubernetesClusterAddExistingComponent implements OnInit {
             return;
         }
 
-        this.service.list(Links.PKS_ENDPOINTS, {}).then(result => {
+        this.service.list(Links.PKS_ENDPOINTS, {}, undefined, true)
+        .then(result => {
             this.endpoints = result.documents;
         }).catch((error) => {
             console.error('PKS Endpoints listing failed', error);
@@ -125,22 +126,22 @@ export class KubernetesClusterAddExistingComponent implements OnInit {
     add() {
         if (this.selectedClusters.length !== 1) {
             // Currently only single cluster can be added
-            this.alertType = Constants.alert.type.WARNING;
-            this.alertMessage = I18n.t('pks.add.existingClusters.multipleSelectedClustersWarning')
+            this.showAlertMessage(Constants.alert.type.WARNING,
+                I18n.t('pks.add.existingClusters.multipleSelectedClustersWarning'));
             return;
         }
 
         var selectedCluster = this.selectedClusters[0];
 
         if (selectedCluster.addedInAdmiral) {
-            this.alertType = Constants.alert.type.WARNING;
-            this.alertMessage = I18n.t('pks.add.existingClusters.clusterAlreadyRegisteredWarning');
+            this.showAlertMessage(Constants.alert.type.WARNING,
+                I18n.t('pks.add.existingClusters.clusterAlreadyRegisteredWarning'));
             return;
         }
 
         if (selectedCluster.lastActionStatus === OPERATION_IN_PROGRESS) {
-            this.alertType = Constants.alert.type.WARNING;
-            this.alertMessage = I18n.t('pks.add.existingClusters.operationInProgressWarning');
+            this.showAlertMessage(Constants.alert.type.WARNING,
+                I18n.t('pks.add.existingClusters.operationInProgressWarning'));
             return;
         }
 
@@ -177,8 +178,12 @@ export class KubernetesClusterAddExistingComponent implements OnInit {
     }
 
     private showErrorMessage(error) {
-        this.alertType = Constants.alert.type.DANGER;
-        this.alertMessage = Utils.getErrorMessage(error)._generic;
+        this.showAlertMessage(Constants.alert.type.DANGER, Utils.getErrorMessage(error)._generic);
+    }
+
+    private showAlertMessage(messageType, message) {
+        this.alertType = messageType;
+        this.alertMessage = message;
     }
 
     resetAlert() {

@@ -85,10 +85,12 @@ const PAGE_LIMIT : string = '50';
 export class DocumentService {
 
   constructor(public ajax: Ajax, private projectService: ProjectService) {
+      //
   }
 
-  public list(factoryLink: string, queryOptions: any,
-              projectLink?: string): Promise<DocumentListResult> {
+  public list(factoryLink: string, queryOptions: any, projectLink?: string,
+              skipProjectHeader: boolean = false) : Promise<DocumentListResult> {
+
     let params = new URLSearchParams();
     // params.set('$limit', serviceUtils.calculateLimit().toString());
     params.set('$limit', PAGE_LIMIT);
@@ -111,9 +113,10 @@ export class DocumentService {
       };
       factoryLink = Links.LONG_URI_GET;
 
-      op = this.post(factoryLink, data);
+      op = this.post(factoryLink, data, undefined, skipProjectHeader);
     } else {
-      op = this.ajax.get(factoryLink, params, undefined, this.buildHeaders(projectLink));
+      op = this.ajax.get(factoryLink, params, undefined,
+          !skipProjectHeader && this.buildProjectHeader(projectLink) || new Headers());
     }
 
     return op.then(result => {
@@ -131,8 +134,9 @@ export class DocumentService {
 
   public loadNextPage(nextPageLink, projectLink?: string): Promise<DocumentListResult> {
 
-    return this.ajax.get(nextPageLink, undefined, undefined, this.buildHeaders(projectLink))
-      .then(result => {
+    return this.ajax.get(nextPageLink, undefined, undefined,
+                            this.buildProjectHeader(projectLink))
+    .then(result => {
 
         let documents = result.documentLinks.map(link => {
           let document = result.documents[link];
@@ -151,10 +155,12 @@ export class DocumentService {
       let params = new URLSearchParams();
       params.set('expand', 'true');
 
-      return this.ajax.get(documentSelfLink, params, undefined, this.buildHeaders(projectLink));
+      return this.ajax.get(documentSelfLink, params, undefined,
+          this.buildProjectHeader(projectLink));
     }
 
-    return this.ajax.get(documentSelfLink, undefined, undefined, this.buildHeaders(projectLink));
+    return this.ajax.get(documentSelfLink, undefined, undefined,
+        this.buildProjectHeader(projectLink));
   }
 
    public getById(factoryLink: string, documentId: string, projectLink?: string): Promise<any> {
@@ -175,7 +181,8 @@ export class DocumentService {
         logRequestUriPath += '&since=' + sinceSeconds;
       }
 
-      this.ajax.get(logsServiceLink, new URLSearchParams(logRequestUriPath), undefined, this.buildHeaders())
+      this.ajax.get(logsServiceLink, new URLSearchParams(logRequestUriPath),
+          undefined, this.buildProjectHeader())
         .then((logServiceState) => {
           if (logServiceState) {
             if (logServiceState.logs) {
@@ -195,11 +202,14 @@ export class DocumentService {
   }
 
   public patch(documentSelfLink, patchBody, projectLink?: string): Promise<any> {
-    return this.ajax.patch(documentSelfLink, undefined, patchBody, this.buildHeaders(projectLink));
+    return this.ajax.patch(documentSelfLink, undefined, patchBody,
+        this.buildProjectHeader(projectLink));
   }
 
-  public post(factoryLink, postBody, projectLink?: string): Promise<any> {
-    return this.ajax.post(factoryLink, undefined, postBody, this.buildHeaders(projectLink));
+  public post(factoryLink, postBody, projectLink?: string,
+              skipProjectHeader: boolean = false): Promise<any> {
+    return this.ajax.post(factoryLink, undefined, postBody,
+        !skipProjectHeader && this.buildProjectHeader(projectLink) || new Headers());
   }
 
   public postWithHeader(factoryLink, postBody, headers: Headers): Promise<any> {
@@ -207,11 +217,13 @@ export class DocumentService {
   }
 
   public put(documentSelfLink, putBody, projectLink?: string): Promise<any> {
-    return this.ajax.put(documentSelfLink, undefined, putBody, this.buildHeaders(projectLink));
+    return this.ajax.put(documentSelfLink, undefined, putBody,
+        this.buildProjectHeader(projectLink));
   }
 
   public delete(documentSelfLink, projectLink?: string): Promise<any> {
-    return this.ajax.delete(documentSelfLink, undefined, undefined, this.buildHeaders(projectLink));
+    return this.ajax.delete(documentSelfLink, undefined, undefined,
+        this.buildProjectHeader(projectLink));
   }
 
   public listProjects() {
@@ -226,7 +238,8 @@ export class DocumentService {
   }
 
   public listWithParams(factoryLink, params, projectLink?: string) {
-      return this.ajax.get(factoryLink, params, undefined, this.buildHeaders(projectLink))
+      return this.ajax.get(factoryLink, params, undefined,
+            this.buildProjectHeader(projectLink))
         .then(result => {
           let documents = result || [];
 
@@ -234,7 +247,7 @@ export class DocumentService {
       });
   }
 
-  private buildHeaders(projectLink?: string): Headers {
+  private buildProjectHeader(projectLink?: string): Headers {
     if (!this.projectService && !projectLink) {
       return undefined;
     }

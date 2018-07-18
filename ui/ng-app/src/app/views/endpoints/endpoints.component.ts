@@ -55,8 +55,8 @@ export class EndpointsComponent implements OnInit {
 
         this.loading = true;
 
-        this.loadingPromise =
-                        new CancelablePromise(this.service.list(Links.PKS_ENDPOINTS, queryOptions));
+        this.loadingPromise = new CancelablePromise(this.service.list(
+            Links.PKS_ENDPOINTS, queryOptions, undefined, true));
         this.loadingPromise.getPromise().then(result => {
             this.loading = false;
 
