@@ -45,11 +45,18 @@ public class PKSEndpointService extends StatefulService {
         @Documentation(description = "Link to associated authentication credentials")
         public String authCredentialsLink;
 
-        @Documentation(description = "Maps project to available plans")
+        @Documentation(description = "Maps a project to a set of available plans")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         @UsageOption(option = PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL)
-        public Map<String, Set<String>> planAssignments;
+        public Map<String, PlanSet> planAssignments;
+
+        // this composition is needed to make it possible for jaxb
+        // to serialize plan assignments in the cafe code
+        public static class PlanSet {
+            public Set<String> plans;
+        }
     }
+
 
     public PKSEndpointService() {
         super(Endpoint.class);

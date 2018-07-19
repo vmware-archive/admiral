@@ -33,6 +33,7 @@ import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.admiral.compute.pks.PKSEndpointService.Endpoint;
+import com.vmware.admiral.compute.pks.PKSEndpointService.Endpoint.PlanSet;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
@@ -92,13 +93,17 @@ public class PKSEndpointServiceTest extends ComputeBaseTest {
                 .collect(Collectors.toSet());
         final Set<String> project2Plans = Stream.of(plan1InProject2)
                 .collect(Collectors.toSet());
+        final PlanSet project1PlanSet = new PlanSet();
+        project1PlanSet.plans = project1Plans;
+        final PlanSet project2PlanSet = new PlanSet();
+        project2PlanSet.plans = project2Plans;
 
         Endpoint endpoint = new Endpoint();
         endpoint.apiEndpoint = "http://localhost";
         endpoint.uaaEndpoint = "https://localhost";
         endpoint.planAssignments = new HashMap<>();
-        endpoint.planAssignments.put(project1, project1Plans);
-        endpoint.planAssignments.put(project2, project2Plans);
+        endpoint.planAssignments.put(project1, project1PlanSet);
+        endpoint.planAssignments.put(project2, project2PlanSet);
 
         Endpoint createdEndpoint = createEndpoint(endpoint);
         assertNotNull(createdEndpoint);
@@ -231,11 +236,17 @@ public class PKSEndpointServiceTest extends ComputeBaseTest {
         Set<String> initialPlans = Stream.of("some-plan", "another-plan")
                 .collect(Collectors.toSet());
         Set<String> updatedPlans = Collections.singleton("best-plan");
+
+        PlanSet initialPlanSet = new PlanSet();
+        initialPlanSet.plans = initialPlans;
+        PlanSet updatedPlanSet = new PlanSet();
+        updatedPlanSet.plans = updatedPlans;
+
         Endpoint endpoint = new Endpoint();
         endpoint.apiEndpoint = "http://localhost";
         endpoint.uaaEndpoint = "https://localhost";
         endpoint.planAssignments = new HashMap<>();
-        endpoint.planAssignments.put(project, initialPlans);
+        endpoint.planAssignments.put(project, initialPlanSet);
 
         final Endpoint createdEndpoint = createEndpoint(endpoint);
         assertNotNull(createdEndpoint);
@@ -246,7 +257,7 @@ public class PKSEndpointServiceTest extends ComputeBaseTest {
         Endpoint patchEndpoint = new Endpoint();
         patchEndpoint.documentSelfLink = createdEndpoint.documentSelfLink;
         patchEndpoint.planAssignments = new HashMap<>();
-        patchEndpoint.planAssignments.put(project, updatedPlans);
+        patchEndpoint.planAssignments.put(project, updatedPlanSet);
 
         updateEndpoint(patchEndpoint, (op, updatedEndpoint) -> {
             assertNotNull(updatedEndpoint);
@@ -311,17 +322,19 @@ public class PKSEndpointServiceTest extends ComputeBaseTest {
     }
 
     private void assertPlanAssignmentEntryEquals(Set<String> expectedPlans,
-            Set<String> actualPlans) {
+            PlanSet actualPlans) {
         if (expectedPlans == null || expectedPlans.isEmpty()) {
             assertTrue("there are no expected plans but some plans were actually returned",
-                    actualPlans == null || actualPlans.isEmpty());
+                    actualPlans == null || actualPlans.plans == null
+                            || actualPlans.plans.isEmpty());
         }
 
-        assertNotNull("actual plans are null but plans are expected", actualPlans);
-        assertEquals("unexpected number of plans", expectedPlans.size(), actualPlans.size());
+        assertNotNull("actualPlans are null but plans are expected", actualPlans);
+        assertNotNull("actualPlans.plans are null but plans are expected", actualPlans.plans);
+        assertEquals("unexpected number of plans", expectedPlans.size(), actualPlans.plans.size());
         expectedPlans.forEach(expectedPlan -> {
             assertTrue("expected plan was not found: " + expectedPlan,
-                    actualPlans.stream().anyMatch(plan -> expectedPlan.equals(plan)));
+                    actualPlans.plans.stream().anyMatch(plan -> expectedPlan.equals(plan)));
         });
     }
 }
