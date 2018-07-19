@@ -85,7 +85,7 @@ var ft = {
   },
 
   areFavoriteImagesEnabled: function() {
-    return utils.getConfigurationPropertyBoolean('allow.ft.favorite-images');
+    return !utils.isVic() && utils.getConfigurationPropertyBoolean('allow.ft.favorite-images');
   }
 };
 
