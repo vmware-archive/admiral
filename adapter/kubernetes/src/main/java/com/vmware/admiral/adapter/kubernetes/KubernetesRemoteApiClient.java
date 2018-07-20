@@ -64,6 +64,7 @@ import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
 public class KubernetesRemoteApiClient {
     /*
@@ -155,6 +156,8 @@ public class KubernetesRemoteApiClient {
 
         op.setReferer(URI.create("/"));
         op.forceRemote();
+
+        setConnectionTag(context.credentials, op);
 
         if (op.getExpirationMicrosUtc() == 0) {
             long timeout = TimeUnit.SECONDS.toMicros(REQUEST_TIMEOUT_SECONDS);
@@ -391,4 +394,11 @@ public class KubernetesRemoteApiClient {
         return UriUtils.HTTPS_SCHEME.equalsIgnoreCase(uri.getScheme());
     }
 
+    private void setConnectionTag(AuthCredentialsServiceState credentials, Operation op) {
+        // Avoid reusing an open channel to this host to ensure certs validation.
+        if (credentials != null) {
+            op.setConnectionTag(credentials.documentSelfLink +
+                    String.valueOf(credentials.documentUpdateTimeMicros));
+        }
+    }
 }
