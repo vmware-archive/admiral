@@ -1,0 +1,60 @@
+<!--
+  ~ Copyright (c) 2018 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<clr-alert *ngIf="alertMessage" [clrAlertType]="alertType" [(clrAlertClosed)]="!alertMessage"
+           (clrAlertClosedChange)="resetAlert()">
+    <div class="alert-item">
+        <span class="alert-text">{{ alertMessage }}</span>
+    </div>
+</clr-alert>
+
+<form [formGroup]="assignmentsForm">
+    <div class="form-group row">
+        <div class="col-lg-4">{{groupsTitle}} <span *ngIf="groupsLoading" class="spinner spinner-inline"></span></div>
+        <div class="col-lg-4">{{'endpoints.details.assignmentsPlansTitle' | i18n}} <span
+                                    *ngIf="plansLoading" class="spinner spinner-inline"></span></div>
+        <div class="col-lg-2"></div>
+    </div>
+
+    <div formArrayName="assignments"
+         *ngFor="let assignment of assignments.controls; let i = index; let lastRow = last;">
+        <div [formGroupName]="i">
+            <div class="form-group row">
+                <div class="col-lg-4">
+                    <dropdown formControlName="group" [options]="groups" [title]="groupsSelectorTitle"
+                              [searchPlaceholder]="groupsSearchPlaceholder"
+                              ddClass="bottom-left">
+                    </dropdown>
+                </div>
+                <div class="col-lg-4">
+                    <dropdown formControlName="plan" [options]="plans" [title]="plansSelectorTitle"
+                              [searchPlaceholder]="plansSearchPlaceholder"
+                              ddClass="bottom-left">
+                    </dropdown>
+                </div>
+                <div class="col-lg-2">
+                    <a href="..." (click)="removeAssignment($event, i)"
+                    ><clr-icon shape="minus-circle" size="18" class="is-highlight is-solid"></clr-icon></a>
+                    <a href="..." *ngIf="lastRow" (click)="addEmptyAssignment($event)"
+                    ><clr-icon shape="plus-circle" size="18" class="is-highlight is-solid"></clr-icon></a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button type="button" class="btn btn-secondary"
+            [disabled]="isSavingEndpoint"
+            (click)="cancel()">{{ "cancel" | i18n }}</button>
+    <button type="button" class="btn btn-primary"
+            [clrLoading]="isSavingEndpoint"
+            [disabled]="isSavingEndpoint || groupsLoading || plansLoading"
+            (click)="save()">{{ "save" | i18n }}</button>
+</form>

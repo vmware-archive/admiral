@@ -59,7 +59,7 @@
                 </div>
             </div>
         </div>
-        <div *ngIf="selectedPlan && selectedPlan.description" class="form-group row col-lg-8">
+        <div *ngIf="!editMode && selectedPlan && selectedPlan.description" class="form-group row col-lg-8">
             <div col-lg-4><clr-icon shape="info-circle" size="20"></clr-icon><span>{{selectedPlan.description}}</span></div>
         </div>
         <div class="form-group row col-lg-8">

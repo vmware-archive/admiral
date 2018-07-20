@@ -14,6 +14,7 @@ import { FormControl, FormGroup, Validators } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { DocumentService } from "../../../../utils/document.service";
 import { ErrorService } from "../../../../utils/error.service";
+import { ProjectService } from "../../../../utils/project.service";
 import { Constants } from "../../../../utils/constants";
 import { Links } from "../../../../utils/links";
 import { Utils}  from "../../../../utils/utils";
@@ -29,6 +30,8 @@ import * as I18n from 'i18next';
  */
 export class KubernetesClusterNewSettingsComponent implements OnInit, OnChanges {
     @Input() cluster: any;
+
+    projectLink: string;
 
     editMode: boolean = false;
     endpoints: any[];
@@ -60,10 +63,13 @@ export class KubernetesClusterNewSettingsComponent implements OnInit, OnChanges 
 
     set planSelection(value: string) {
         this._selectedPlanId = value;
+        let formFieldWorkers = this.newClusterSettingsForm.get('workerInstances');
         if (this._selectedPlanId) {
             this.selectedPlan = this.plans.find(plan => plan.id === this.planSelection);
+            formFieldWorkers.setValue(this.selectedPlan.worker_instances);
         } else {
             this.selectedPlan = undefined;
+            formFieldWorkers.setValue(1);
         }
     }
 
@@ -86,8 +92,22 @@ export class KubernetesClusterNewSettingsComponent implements OnInit, OnChanges 
     } as I18n.TranslationOptions );
 
     constructor(protected route: ActivatedRoute, protected router: Router,
-                protected documentService: DocumentService, protected errorService: ErrorService) {
-        //
+                protected documentService: DocumentService,
+                protected projectService: ProjectService,
+                protected errorService: ErrorService) {
+
+        projectService.activeProject.subscribe((value) => {
+            if (value && value.documentSelfLink) {
+                this.projectLink = value.documentSelfLink;
+            } else if (value && value.id) {
+                this.projectLink = value.id;
+            } else {
+                this.projectLink = undefined;
+            }
+
+            this.clearView();
+            this.populateEndpoints();
+        });
     }
 
     ngOnInit(): void {
@@ -95,7 +115,6 @@ export class KubernetesClusterNewSettingsComponent implements OnInit, OnChanges 
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-
         if (this.cluster) {
             this.editMode = true;
 
@@ -106,6 +125,9 @@ export class KubernetesClusterNewSettingsComponent implements OnInit, OnChanges 
             // Endpoint
             this.endpointDocumentSelfLink =
                 Utils.getCustomPropertyValue(clusterProperties, '__pksEndpoint');
+            if (this.endpoints) {
+                this.preselectEndpointOption();
+            }
             // Name
             let clusterName = Utils.getCustomPropertyValue(clusterProperties, '__pksClusterName');
             this.newClusterSettingsForm.get('name').setValue(clusterName);
@@ -145,37 +167,47 @@ export class KubernetesClusterNewSettingsComponent implements OnInit, OnChanges 
         }
     }
 
-    populateEndpoints() {
-        if (this.endpoints) {
-            return;
-        }
+    clearView() {
+        this.newClusterSettingsForm.reset();
+        this.newClusterSettingsForm.markAsPristine();
+    }
 
-        this.documentService.list(Links.PKS_ENDPOINTS, {}, undefined, true)
+    populateEndpoints() {
+        this.documentService.list(Links.PKS_ENDPOINTS, {}, this.projectLink)
         .then(result => {
             this.endpoints = result.documents;
-
-            if (this.endpointDocumentSelfLink) {
-                let endpointOption = this.endpoints.find(endpoint =>
-                                    endpoint.documentSelfLink === this.endpointDocumentSelfLink);
-                this.newClusterSettingsForm.get('endpoint').setValue(endpointOption);
-                this.newClusterSettingsForm.get('endpoint').disable(true);
-            }
+            this.preselectEndpointOption();
         }).catch((error) => {
             console.log(error);
-            this.errorService.error(Utils.getErrorMessage(error)._generic);
+            this.showErrorMessage(error);
         });
     }
 
+    private preselectEndpointOption() {
+        if (this.endpointDocumentSelfLink) {
+            let endpointOption = this.endpoints.find(endpoint =>
+                endpoint.documentSelfLink === this.endpointDocumentSelfLink);
+            this.newClusterSettingsForm.get('endpoint').setValue(endpointOption);
+            this.newClusterSettingsForm.get('endpoint').disable(true);
+        }
+    }
+
     endpointSelected(endpoint) {
-        if (endpoint) {
+        if (endpoint && endpoint.planAssignments) {
+            let assignedPlans = endpoint.planAssignments[this.projectLink].plans;
+
             this.plansLoading = true;
 
             this.documentService.listWithParams(Links.PKS_PLANS,
                             {endpointLink: endpoint.documentSelfLink || endpoint})
             .then((result) => {
                 this.plansLoading = false;
-                this.plans = result.documents;
-                this.planSelection = this.plans.length > 0 && this.plans[0].id;
+                // show only plans for the currently selected group/project
+                this.plans = result.documents.filter(resultDoc =>
+                                                    assignedPlans.indexOf(resultDoc.name) !== -1);
+                if (!this.editMode) {
+                    this.planSelection = (this.plans.length > 0 && this.plans[0]).id;
+                }
             }).catch(error => {
                 console.error('PKS Plans listing failed', error);
                 this.plansLoading = false;
@@ -206,11 +238,9 @@ export class KubernetesClusterNewSettingsComponent implements OnInit, OnChanges 
                 }
             };
 
-            this.documentService.post(Links.REQUESTS, clusterSpec)
-                .then((response) => {
-
-                    this.isCreatingCluster = false;
-                    this.goBack();
+            this.documentService.post(Links.REQUESTS, clusterSpec).then((response) => {
+                this.isCreatingCluster = false;
+                this.goBack();
             }).catch(error => {
                 this.isCreatingCluster = false;
 
@@ -235,8 +265,7 @@ export class KubernetesClusterNewSettingsComponent implements OnInit, OnChanges 
                 }
             };
 
-            this.documentService.post(Links.REQUESTS, clusterUpdateSpec)
-                .then((response) => {
+            this.documentService.post(Links.REQUESTS, clusterUpdateSpec).then((response) => {
 
                 this.isCreatingCluster = false;
                 this.goBack();
@@ -254,7 +283,7 @@ export class KubernetesClusterNewSettingsComponent implements OnInit, OnChanges 
     }
 
     goBack() {
-        let pathBack = this.editMode ? '../../../' : '../clusters';
+        let pathBack = this.editMode ? '../' : '../clusters';
         this.router.navigate([pathBack], {relativeTo: this.route});
     }
 

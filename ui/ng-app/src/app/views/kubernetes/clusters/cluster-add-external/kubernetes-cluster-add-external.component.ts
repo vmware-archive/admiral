@@ -118,9 +118,7 @@ export class KubernetesClusterAddExternalComponent implements OnInit {
 
             this.isSaving = true;
 
-            this.service.post(Links.CLUSTERS, clusterSpec,
-                                this.projectService.getSelectedProject().documentSelfLink)
-                .then((response) => {
+            this.service.post(Links.CLUSTERS, clusterSpec).then((response) => {
 
                 if (response.certificate) {
                     // certificate has to be accepted by the user

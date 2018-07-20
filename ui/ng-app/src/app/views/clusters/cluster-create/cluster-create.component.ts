@@ -139,9 +139,7 @@ export class ClusterCreateComponent implements OnInit {
                 'acceptCertificate': certificateAccepted
             };
 
-            this.documentService.post(Links.CLUSTERS, hostSpec,
-                                      this.projectService.getSelectedProject().documentSelfLink)
-                .then((response) => {
+            this.documentService.post(Links.CLUSTERS, hostSpec).then((response) => {
 
                 if (response.certificate) {
                     // certificate to be accepted by the user

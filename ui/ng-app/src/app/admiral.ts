@@ -47,6 +47,7 @@ import { EndpointCreateComponent } from './views/endpoints/endpoint-create.compo
 import { EndpointDetailsComponent } from './views/endpoints/endpoint-details.component';
 import { RequestsComponent } from "./views/requests/requests.component";
 import { EventLogsComponent } from "./views/event-logs/event-logs.component";
+import { EndpointAssignmentsComponent } from "./views/endpoints/endpoint-assignments.component";
 
 import { DashboardComponent } from './views/dashboard/dashboard.component';
 import { FormerViewComponent, FormerPlaceholderViewComponent } from './views/former-view/former-view.component';
@@ -154,6 +155,7 @@ export const ADMIRAL_DECLARATIONS = [
   EndpointsComponent,
   EndpointCreateComponent,
   EndpointDetailsComponent,
+  EndpointAssignmentsComponent,
   KubernetesClustersComponent,
   KubernetesClusterNewComponent,
   KubernetesClusterNewSettingsComponent,

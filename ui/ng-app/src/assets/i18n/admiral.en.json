@@ -507,6 +507,8 @@
       "pksAddressFieldTitle": "PKS Address",
       "pksAddressRequired": "The PKS Address is required.",
       "testConnectionBtn": "Test Connection",
+      "assignmentsTabTitle": "Plan Assignments",
+      "assignmentsPlansTitle": "Plans",
       "clustersTabTitle": "Clusters",
       "connectionVerified": "Connection to endpoint is successful.",
       "certificateNotAccepted": "The certificate is not accepted. Cannot proceed.",

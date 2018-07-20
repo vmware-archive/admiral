@@ -29,6 +29,12 @@
             </clr-tab-content>
         </clr-tab>
         <clr-tab *ngIf="editMode">
+            <button clrTabLink id="assignmentsTab">{{"endpoints.details.assignmentsTabTitle" | i18n}}</button>
+            <clr-tab-content id="assignmentsTab" *clrIfActive>
+                <app-endpoint-assignments [entity]="entity"></app-endpoint-assignments>
+            </clr-tab-content>
+        </clr-tab>
+        <clr-tab *ngIf="editMode">
             <button clrTabLink id="clustersTab">{{"endpoints.details.clustersTabTitle" | i18n}}</button>
             <clr-tab-content id="clustersContent" *clrIfActive>
 

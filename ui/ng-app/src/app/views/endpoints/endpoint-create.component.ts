@@ -17,8 +17,6 @@ import { ErrorService } from "../../utils/error.service";
 import { Constants } from "../../utils/constants";
 import { Links } from "../../utils/links";
 import { Utils } from "../../utils/utils";
-import { FT } from "../../utils/ft";
-import { MultiCheckboxSelectorComponent } from "../../components/multi-checkbox-selector/multi-checkbox-selector.component";
 
 import * as I18n from 'i18next';
 
@@ -32,10 +30,6 @@ import * as I18n from 'i18next';
  */
 export class EndpointCreateComponent {
     @Input() entity: any;
-
-    @ViewChild(MultiCheckboxSelectorComponent) projectsSelector: MultiCheckboxSelectorComponent;
-
-    projectEntries: any[] = [];
 
     editMode: boolean = false;
 
@@ -73,16 +67,7 @@ export class EndpointCreateComponent {
                 protected documentService: DocumentService, protected errorService: ErrorService) {
     }
 
-    get projectsSelectorLabel(): string {
-        if (FT.isApplicationEmbedded()) {
-            return I18n.t('endpoints.details.assignToGroups');
-        } else {
-            return I18n.t('endpoints.details.assignToProjects');
-        }
-    }
-
     ngOnInit() {
-        this.populateProjectEntries();
         this.populateCredentials();
     }
 
@@ -93,7 +78,6 @@ export class EndpointCreateComponent {
             this.endpointDetailsForm.get('description').setValue(this.entity.desc);
             this.endpointDetailsForm.get("uaaAddress").setValue(this.entity.uaaEndpoint);
             this.endpointDetailsForm.get("pksAddress").setValue(this.entity.apiEndpoint);
-            this.markSelectedProjects();
         }
     }
 
@@ -119,41 +103,6 @@ export class EndpointCreateComponent {
             console.error('Credentials retrieval failed', error);
             this.showErrorMessage(error);
         });
-    }
-
-    private populateProjectEntries(): void {
-        this.projectEntries = [];
-        let embedded = FT.isApplicationEmbedded();
-
-        this.documentService.listProjects().then((result) => {
-            let sortField = embedded ? "label" : "name";
-            this.projectEntries = Utils.sortObjectArrayByField(result.documents, sortField)
-                .map(project => {
-                    return {
-                        name: embedded ? project.label : project.name,
-                        value: project,
-                        checked: false
-                    };
-                });
-            this.markSelectedProjects();
-        }).catch(error => {
-            console.error('Failed to list projects ', error);
-            this.errorService.error(Utils.getErrorMessage(error)._generic);
-        });
-    }
-
-    private markSelectedProjects(): void {
-        let selectedProjects = this.entity && this.entity.tenantLinks || [];
-        if (this.projectEntries && selectedProjects.length > 0) {
-            this.projectEntries.forEach(entry => {
-                let projectOrGroupLink = FT.isApplicationEmbedded()
-                    ? entry.value.id
-                    : entry.value.documentSelfLink;
-                if (selectedProjects.indexOf(projectOrGroupLink) >= 0) {
-                    entry.checked = true;
-                }
-            });
-        }
     }
 
     create(certificateAccepted: boolean = false) {
@@ -262,22 +211,12 @@ export class EndpointCreateComponent {
             let uaaCredentialsLink = this.endpointDetailsForm.get("uaaCredentials").value
                 && this.endpointDetailsForm.get("uaaCredentials").value.documentSelfLink;
 
-            let selectedOptions = this.projectsSelector && this.projectsSelector.selectedOptions || [];
-            let projectLinks = selectedOptions.map((option) => {
-                if (FT.isApplicationEmbedded()) {
-                    return option.value.id;
-                } else {
-                    return option.value.documentSelfLink;
-                }
-            });
-
             endpointDataRaw = {
                 name: this.endpointDetailsForm.get("name").value,
                 desc: this.endpointDetailsForm.get("description").value,
                 uaaEndpoint: this.endpointDetailsForm.get("uaaAddress").value,
                 apiEndpoint: this.endpointDetailsForm.get("pksAddress").value,
-                authCredentialsLink: uaaCredentialsLink,
-                tenantLinks: projectLinks
+                authCredentialsLink: uaaCredentialsLink
             };
         }
 
