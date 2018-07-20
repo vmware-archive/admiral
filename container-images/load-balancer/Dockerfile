@@ -8,7 +8,7 @@
 # and license terms. Your use of these subcomponents is subject to the terms and
 # conditions of the subcomponent's license, as noted in the LICENSE file.
 #
-FROM vmware/photon:1.0
+FROM photon:1.0
 
 MAINTAINER Admiral Team, https://vmware.github.io/admiral/
 

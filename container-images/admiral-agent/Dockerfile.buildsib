@@ -12,7 +12,7 @@
 # This docker image uses a custom .patch in order to compile shellinabox under # alpine linux. The original implementation can be seen here:
 # https://github.com/gerco/shellinabox-alpine/blob/master/Dockerfile.build
 
-FROM vmware/photon:1.0
+FROM photon:1.0
 
 RUN tdnf distro-sync --refresh -y && \
     tdnf install git linux-dev-4.4.8-6.ph1 gcc glibc-devel openssl-devel zlib-devel autoconf automake make libtool tar sed binutils gawk diffutils -y && \

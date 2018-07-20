@@ -9,7 +9,7 @@
 # conditions of the subcomponent's license, as noted in the LICENSE file.
 #
 
-FROM vmware/photon:1.0
+FROM photon:1.0
 
 RUN tdnf distro-sync --refresh -y && \
     tdnf install gawk procps-ng -y && \
