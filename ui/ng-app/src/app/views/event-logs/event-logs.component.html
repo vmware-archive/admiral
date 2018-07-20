@@ -1,0 +1,63 @@
+<!--
+  ~ Copyright (c) 2018 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<delete-confirmation [title]="'eventLogs.deleteEventLog.title' | i18n"
+                     [description]="'eventLogs.deleteEventLog.description' | i18n"
+                     [(alert)]="deleteConfirmationAlert"
+                     [visible]="showDeleteEventLogConfirmation"
+                     (onDelete)="deleteConfirmed()"
+                     (onCancel)="deleteCanceled()"></delete-confirmation>
+
+<div class="main-view">
+    <table-view [showSearch]="false">
+        <div title class="title">
+            <span>{{ "eventLogs.title" | i18n }}</span>
+        </div>
+
+        <div toolbar>
+            <clr-dg-action-bar>
+                <div class="btn-group" role="group" aria-label="Available Actions">
+                    <button type="button" class="btn btn-sm btn-secondary" (click)="refreshEventLogs($event)">
+                        <clr-icon shape="refresh"></clr-icon>
+                        <span class="btn-spaced-text">{{ "refresh" | i18n }}</span>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-secondary" [disabled]="selectedEventLogs.length == 0"
+                            (click)="onRemove()">
+                        <clr-icon shape="close"></clr-icon>
+                        <span class="btn-spaced-text">{{ "delete" | i18n }}</span>
+                    </button>
+                </div>
+            </clr-dg-action-bar>
+        </div>
+
+        <div table-content-view>
+            <clr-datagrid [clrDgLoading]="loading" [clDgRowSelection]="true" [(clrDgSelected)]="selectedEventLogs">
+                <clr-dg-placeholder>{{ "noItems" | i18n }}</clr-dg-placeholder>
+
+                <clr-dg-column class="description">{{ "eventLogs.columnDescription" | i18n }}</clr-dg-column>
+                <clr-dg-column>{{ "eventLogs.columnTimestamp" | i18n }}</clr-dg-column>
+
+                <clr-dg-row *clrDgItems="let eventLog of eventLogs" [clrDgItem]="eventLog" [(clrDgSelected)]="eventLog.selected">
+                    <clr-dg-cell class="description">
+                        <clr-icon *ngIf="isEventLogTypeInfo(eventLog)" class="is-info" shape="info-standard"></clr-icon>
+                        <clr-icon *ngIf="isEventLogTypeWarning(eventLog)" class="is-warning" shape="warning-standard"></clr-icon>
+                        <clr-icon *ngIf="isEventLogTypeError(eventLog)" class="is-error" shape="error-standard"></clr-icon>
+                        {{ eventLog.description }}
+                    </clr-dg-cell>
+                    <clr-dg-cell> {{ getTimeFromNow(eventLog) }}</clr-dg-cell>
+                </clr-dg-row>
+
+                <clr-dg-footer>{{ footerMessage() }}</clr-dg-footer>
+            </clr-datagrid>
+        </div>
+
+    </table-view>
+</div>

@@ -57,6 +57,8 @@ import { NavigationContainerType } from './components/navigation-container/navig
 import { AdminAuthGuard } from 'app/services/admin-auth-guard.service';
 import { HomeAuthGuard } from 'app/services/home-auth-guard.service';
 import { TagDetailsComponent } from './views/tag-details/tag-details.component';
+import { RequestsComponent } from "./views/requests/requests.component";
+import { EventLogsComponent } from "./views/event-logs/event-logs.component";
 
 export const ROUTES: Routes = [
     {
@@ -181,6 +183,15 @@ export const ROUTES: Routes = [
             },
             {
                 path: 'endpoints/:id', component: EndpointDetailsComponent
+            },
+            {
+                path: 'requests', component: RequestsComponent
+            },
+            {
+                path: 'event-logs', component: EventLogsComponent
+            },
+            {
+                path: 'event-logs/:id', component: EventLogsComponent
             },
             {
                  path: '**', component: FormerPlaceholderViewComponent

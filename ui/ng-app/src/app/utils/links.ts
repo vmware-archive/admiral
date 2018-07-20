@@ -59,6 +59,7 @@ export class Links {
   public static CREDENTIALS = '/core/auth/credentials';
 
   public static REQUESTS = '/requests';
+  public static REQUEST_STATUS = '/request-status';
 
   public static HOST_DATA_COLLECTION =
                             Links.RESOURCES + '/hosts-data-collections/host-info-data-collection';

@@ -514,6 +514,30 @@
       "assignToGroups": "Assign to Groups"
     }
   },
+  "requests": {
+    "title": "Requests",
+    "columnContextId": "Context ID",
+    "columnPhase": "Phase",
+    "columnRequest": "Request",
+    "columnDetails": "Details",
+    "count": "Showing latest {{number}} requests",
+    "error": "Error",
+    "eventLogLink": "Go to event logs",
+    "deleteRequest": {
+      "title": "Remove request",
+      "description": "Confirm the removal of the selected requests. The operation cannot be undone."
+    }
+  },
+  "eventLogs": {
+    "title": "Event Logs",
+    "columnDescription": "Description",
+    "columnTimestamp": "Time",
+    "count": "Showing latest {{number}} event logs",
+    "deleteEventLog": {
+      "title": "Remove event log",
+      "description": "Confirm the removal of the selected event logs. The operation cannot be undone."
+    }
+  },
   "configuration": {
     "title": "Configuration",
     "registry": "Registry"
@@ -593,7 +617,10 @@
     "configuration": "Configuration",
     "logs": "Logs",
     "endpoints": "Endpoints",
-    "pksEndpoints": "PKS Endpoints"
+    "pksEndpoints": "PKS Endpoints",
+    "recentActivity": "Recent Activity",
+    "requests": "Requests",
+    "eventLogs": "Event Logs"
   },
   "search": {
     "occurrence": {

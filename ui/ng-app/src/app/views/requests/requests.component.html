@@ -1,0 +1,74 @@
+<!--
+  ~ Copyright (c) 2018 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<delete-confirmation [title]="'requests.deleteRequest.title' | i18n"
+                     [description]="'requests.deleteRequest.description' | i18n"
+                     [(alert)]="deleteConfirmationAlert"
+                     [visible]="showDeleteRequestConfirmation"
+                     (onDelete)="deleteConfirmed()"
+                     (onCancel)="deleteCanceled()"></delete-confirmation>
+
+<div class="main-view">
+    <table-view [showSearch]="false">
+        <div title class="title">
+            <span>{{ "requests.title" | i18n }}</span>
+        </div>
+
+        <div toolbar>
+            <clr-dg-action-bar>
+                <div class="btn-group" role="group" aria-label="Available Actions">
+                    <button type="button" class="btn btn-sm btn-secondary" (click)="refreshRequests($event)">
+                        <clr-icon shape="refresh"></clr-icon>
+                        <span class="btn-spaced-text">{{ "refresh" | i18n }}</span>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-secondary" [disabled]="selectedRequests.length == 0"
+                            (click)="onRemove()">
+                        <clr-icon shape="close"></clr-icon>
+                        <span class="btn-spaced-text">{{ "delete" | i18n }}</span>
+                    </button>
+                </div>
+            </clr-dg-action-bar>
+        </div>
+
+        <div table-content-view>
+            <clr-datagrid [clrDgLoading]="loading" [clDgRowSelection]="true" [(clrDgSelected)]="selectedRequests">
+                <clr-dg-placeholder>{{ "noItems" | i18n }}</clr-dg-placeholder>
+
+                <clr-dg-column class="context-id">{{"requests.columnContextId" | i18n }}</clr-dg-column>
+                <clr-dg-column>{{ "requests.columnPhase" | i18n }}</clr-dg-column>
+                <clr-dg-column>{{ "requests.columnRequest" | i18n }}</clr-dg-column>
+                <clr-dg-column>{{ "requests.columnDetails" | i18n }}</clr-dg-column>
+
+                <clr-dg-row *clrDgItems="let request of requests" [clrDgItem]="request">
+                    <clr-dg-cell class="context-id" *ngIf="hasResourceIds(request)">{{ requestTitleText(request) }}</clr-dg-cell>
+                    <clr-dg-cell class="context-id" *ngIf="!hasResourceIds(request) && request.name"> {{ request.name }}</clr-dg-cell>
+                    <clr-dg-cell class="context-id" *ngIf="!hasResourceIds(request) && !request.name">{{ "requests.error" | i18n }}</clr-dg-cell>
+
+                    <clr-dg-cell>
+                        <span *ngIf="isRunning(request)" class="spinner spinner-inline"></span>
+                        <clr-icon *ngIf="isSuccessfull(request)" shape="success-standard" class="is-success"></clr-icon>
+                        <clr-icon *ngIf="isFailed(request)" shape="error-standard" class="is-error"></clr-icon>
+                        {{ request.taskInfo.stage }} ({{request.subStage}})
+                    </clr-dg-cell>
+                    <clr-dg-cell>{{ request.phase }} -- {{ request.name }}</clr-dg-cell>
+                    <clr-dg-cell>
+                        <a *ngIf="request.eventLogLink" routerLink="../event-logs/{{getEventLogId(request)}}"
+                           routerLinkActive="active">{{ "requests.eventLogLink" | i18n }}</a>
+                    </clr-dg-cell>
+                </clr-dg-row>
+
+                <clr-dg-footer>{{ footerMessage() }}</clr-dg-footer>
+
+            </clr-datagrid>
+        </div>
+
+    </table-view>
+</div>

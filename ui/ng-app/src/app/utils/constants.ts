@@ -55,5 +55,20 @@ export const Constants = {
             SUCCESS: 'alert-success',
             WARNING: 'alert-warning'
         }
+    },
+    recentActivities: {
+        requests: {
+            FAILED: "FAILED",
+            CANCELLED: "CANCELLED",
+            CREATED: "CREATED",
+            STARTED: "STARTED"
+        },
+        eventLogs: {
+            INFO: 'INFO',
+            WARNING: 'WARNING',
+            ERROR: 'ERROR'
+        },
+        MAX_ACTIVITIES_COUNT: 100,
+        REFRESH_INTERVAL: 30000
     }
 };

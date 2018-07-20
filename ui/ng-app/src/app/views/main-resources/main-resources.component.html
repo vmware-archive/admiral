@@ -114,6 +114,16 @@
               <li><a class="nav-link" routerLink="endpoints" routerLinkActive="active">{{ "navigation.pksEndpoints" | i18n }}</a></li>
           </ul>
       </section>
+      <section class="nav-group collapsible">
+          <input id="recentActivityCollapse" type="checkbox">
+          <label for="recentActivityCollapse">{{ "navigation.recentActivity" | i18n }}</label>
+          <ul class="nav-list">
+              <li><a class="nav-link" routerLink="requests" routerLinkActive="active">{{
+                  "navigation.requests" | i18n }}</a></li>
+              <li><a class="nav-link" routerLink="event-logs" routerLinkActive="active">{{
+                  "navigation.eventLogs" | i18n }}</a></li>
+          </ul>
+      </section>
       <a *ngIf="embeddedMode" class="nav-link" allowNavigation [roles]="identityManagementRouteRestriction" routerLink="identity-management" routerLinkActive="active">{{ "navigation.identityManagement" | i18n }}</a>
   </section>
 </nav>
