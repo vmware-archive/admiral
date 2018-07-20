@@ -36,6 +36,7 @@ import com.vmware.xenon.services.common.authn.BasicAuthenticationUtils;
 public class AuthUtils {
 
     public static final String BEARER_TOKEN_AUTH_TYPE = "Bearer";
+    public static final String AUTH_CREDENTIALS_NAME_PROP_NAME = "__authCredentialsName";
 
     /*
      * Cache of cleaned up sessions (i.e. sessions whose user has been logged out).

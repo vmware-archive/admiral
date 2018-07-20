@@ -30,6 +30,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.pks.PKSConstants;
 import com.vmware.admiral.adapter.pks.PKSOperationType;
@@ -212,6 +215,13 @@ public class PKSClusterConfigService extends StatelessService {
         credentials.tenantLinks = tenantLinks;
         credentials.customProperties = new HashMap<>();
         credentials.customProperties.put(KUBE_CONFIG_PROP_NAME, Utils.toJson(kubeConfig));
+
+        //Set the display name of the credential to the cluster name, if it exists
+        if (!CollectionUtils.isEmpty(kubeConfig.clusters) &&
+                !StringUtils.isEmpty(kubeConfig.clusters.get(0).name)) {
+            credentials.customProperties.put(AuthUtils.AUTH_CREDENTIALS_NAME_PROP_NAME,
+                    kubeConfig.clusters.get(0).name);
+        }
 
         Operation.createPost(getHost(), AuthCredentialsService.FACTORY_LINK)
                 .setBody(credentials)
