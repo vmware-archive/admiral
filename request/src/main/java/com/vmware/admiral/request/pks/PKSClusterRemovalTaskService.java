@@ -282,7 +282,8 @@ public class PKSClusterRemovalTaskService extends
                     return;
                 }
                 Exception e = new IllegalStateException(cluster.lastActionDescription);
-                failTask("PKS cluster delete failed, endpoint: " + task.endpointLink, e);
+                failTask("PKS delete cluster failed for: " + task.clusterName + " endpoint: "
+                        + task.endpointLink, e);
             }
         }
     }
@@ -307,8 +308,7 @@ public class PKSClusterRemovalTaskService extends
                             LocalizableValidationException le = new LocalizableValidationException(
                                     "max failures reached connecting to " + task.endpointLink,
                                     "compute.add.host.connection.error", "pks", e.getMessage());
-                            failTask("pks adapter request failed for: " + task.endpointLink
-                                    + " cluster: ", le);
+                            failTask("PKS adapter request failed for: " + task.clusterName, le);
                             return;
                         }
                         proceedTo(INSTANCES_REMOVING, t -> t.failureCounter = task.failureCounter);

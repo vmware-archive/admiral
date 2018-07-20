@@ -28,6 +28,7 @@ import static com.vmware.admiral.service.common.DefaultSubStage.PROCESSING;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -212,7 +213,6 @@ public class PKSClusterProvisioningTaskService extends
         computeState.customProperties.put(CONTAINER_HOST_TYPE_PROP_NAME,
                 ClusterService.ClusterType.KUBERNETES.name());
 
-
         computeState.customProperties.put(HOST_DOCKER_ADAPTER_TYPE_PROP_NAME,
                 DockerAdapterType.API.name());
         computeState.customProperties.put(PKS_ENDPOINT_PROP_NAME, task.endpointLink);
@@ -250,7 +250,8 @@ public class PKSClusterProvisioningTaskService extends
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         logWarning("failed getting pks cluster %s from %s",
-                                task.getCustomProperty(PKS_CLUSTER_NAME_PROP_NAME), task.endpointLink);
+                                task.getCustomProperty(PKS_CLUSTER_NAME_PROP_NAME),
+                                task.endpointLink);
                         if (task.failureCounter++ >= MAX_POLL_FAILURES) {
                             LocalizableValidationException le = new LocalizableValidationException(
                                     "max failures reached connecting to " + task.endpointLink,
@@ -307,8 +308,9 @@ public class PKSClusterProvisioningTaskService extends
     }
 
     private void updateProvisionedCluster(PKSProvisioningTaskState task, PKSCluster cluster) {
+        logInfo("Cluster %s is provisioned on endpoint %s, registering it", cluster.name,
+                task.endpointLink);
         String clusterSelfLink = task.resourceLinks.iterator().next();
-
 
         PKSClusterConfigService.AddClusterRequest request =
                 new PKSClusterConfigService.AddClusterRequest();
@@ -320,14 +322,28 @@ public class PKSClusterProvisioningTaskService extends
         Operation
                 .createPost(this, PKSClusterConfigService.SELF_LINK)
                 .setBodyNoCloning(request)
-                .setCompletion((o,e) -> {
+                .setCompletion((o, e) -> {
                     if (e != null) {
-                        failTask("Failed to add PKS cluster: " + e.getMessage(), e);
+                        // in case of connection exception do nothing, will try to contact the
+                        // cluster later, else fail the provision request
+                        if (!isConnectionException(e)) {
+                            failTask("Failed to add PKS cluster: " + e.getMessage(), e);
+                        }
                         return;
                     }
                     proceedTo(COMPLETED);
                 })
                 .sendWith(this);
+    }
+
+    /**
+     * Check if exception is about unable to connect to remote server - e.g. UnknownHostException,
+     * ConnectException, NoRouteToHostException, etc.
+     *
+     * @param e exception
+     */
+    private boolean isConnectionException(Throwable e) {
+        return e instanceof IOException || e.getCause() instanceof IOException;
     }
 
 }

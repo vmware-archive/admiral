@@ -1397,6 +1397,7 @@ public class RequestBrokerService extends
         task.resourceLink = state.resourceLinks.iterator().next();
         task.tenantLinks = state.tenantLinks;
         task.requestTrackerLink = state.requestTrackerLink;
+        task.cleanupRemoval = cleanupRemoval;
 
         sendRequest(Operation
                 .createPost(this, PKSClusterRemovalTaskService.FACTORY_LINK)
@@ -1405,7 +1406,6 @@ public class RequestBrokerService extends
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         failTask("Failure in removing resource task", e);
-                        return;
                     }
                 }));
     }
