@@ -189,7 +189,10 @@
       "ON": "Включено",
       "OFF": "ВЫКЛ.",
       "DISABLED": "ОТКЛЮЧЕНО",
-      "WARNING": "ПРЕДУПРЕЖДЕНИЕ"
+      "WARNING": "ПРЕДУПРЕЖДЕНИЕ",
+      "PROVISIONING": "ПОДГОТОВКА",
+      "RESIZING": "ИЗМЕНЕНИЕ РАЗМЕРА",
+      "REMOVING": "УДАЛЕНИЕ"
     },
     "search": {
       "placeholder": "Найти кластеры"
@@ -261,7 +264,8 @@
       "titleVic": "Удалить узел контейнера",
       "confirmation": "Подтвердите удаление кластера {{clusterName}}. Развернутые объекты, связанные с этим кластером, будут также удалены. Это действие невозможно отменить.",
       "confirmationVic": "Подтвердите удаление узла контейнера {{clusterName}}. Развернутые объекты, связанные с этим узлом контейнера, будут также удалены. Это действие невозможно отменить."
-    }
+    },
+    "backLinkTextProject": "Проект"
   },
   "kubernetes": {
     "clusters": {
@@ -288,7 +292,7 @@
       "details": {
         "summary": {
           "kubeConfigBtn": "KubeConfig",
-          "kubeConfigTooltip": "Download a configuration file for the kubectl command-line tool to gain access to this cluster.",
+          "kubeConfigTooltip": "Загрузите файл конфигурации для программы командной строки kubectl, чтобы получить доступ к этому кластеру.",
           "title": "Сводка",
           "nodeCount": "Узлы:",
           "dashboard": "Панель мониторинга:",
@@ -309,6 +313,14 @@
           },
           "count": "Узлы"
         }
+      },
+      "remove": {
+        "title": "Удалить кластер",
+        "confirmation": "Подтвердите удаление кластера {{clusterName}}. Развернутые объекты, связанные с этим кластером, будут также удалены."
+      },
+      "destroy": {
+        "title": "Уничтожение кластера",
+        "confirmation": "Подтвердите уничтожение кластера {{clusterName}}. Развернутые объекты, связанные с этим кластером, будут также уничтожены. Это действие невозможно отменить."
       }
     },
     "deployments": {
@@ -382,23 +394,13 @@
       "title": "Создать кластер",
       "settings": {
         "title": "Параметры",
-        "fieldRowTitleEndpoint": "PKS",
         "fieldTitleEndpoint": "Конечная точка PKS",
         "fieldTitleName": "Имя кластера",
         "nameFieldRequired": "Требуется указать имя кластера.",
         "fieldTitlePlan": " План",
-        "plan": {
-          "small": "Небольшой",
-          "medium": "Средний",
-          "large": "Большой"
-        },
-        "fieldTitleNumberNodes": "Количество узлов",
-        "fieldTitleMaster": "Образец",
-        "masterFieldRequired": "Основное поле является обязательным. Можно ввести только целое число больше 0.",
-        "masterFieldDescription": "Один основной узел может подойти для кластеров тестирования или разработки, но для производственных кластеров лучше использовать 3 или 5 основных узлов.",
-        "masterFieldDescription3Nodes": "-3 основных диска: может произойти сбой одного главного узла, но кластер не сможет улучшить состояние. Необходимо присоединить новый основной узел, прежде чем кластер сможет улучшить состояние.",
-        "masterFieldDescription5Nodes": "-5 образцов: может произойти сбой одного главного узла, но кластер сможет улучшить состояние.",
-        "fieldTitleWorker": "Рабочий процесс",
+        "fieldTitleMasterHostName": "Имя ведущего узла",
+        "fieldTitleMasterHostPort": "Порт ведущего узла",
+        "fieldTitleNumberNodes": "Узлы рабочих процессов",
         "workerFieldRequired": "Поле рабочего процесса является обязательным. Можно ввести только целое число больше 0."
       }
     },
@@ -408,14 +410,19 @@
     "add": {
       "title": "Добавить кластер",
       "existingClusters": {
-        "descriptionText": "Выберите конечную точку, а затем выберите один или несколько существующих, неназначенных кластеров Kubernetes для добавления к текущей бизнес-группе.",
+        "descriptionText": "Select an endpoint and then select one existing, unassigned Kubernetes cluster to add to the current business group.",
         "fieldTitleEndpoint": "Конечная точка:",
         "columnTitleName": "Имя",
         "columnTitleHostname": "Имя узла",
         "columnTitleMastersCount": "Количество основных узлов",
         "columnTitleWorkersCount": "Количество рабочих процессов",
         "columnTitlePlan": " План",
+        "columnTitleLastAction": "Action",
+        "columnTitleLastActionStatus": "Status",
         "columnTitleInAdmiral": "Зарегистрирован",
+        "multipleSelectedClustersWarning": "Cannot add more than one cluster at a time.",
+        "clusterAlreadyRegisteredWarning": "Cannot add selected cluster. It is already added.",
+        "operationInProgressWarning": "Cannot add selected cluster. There is an operation in progress.",
         "yes": "Да",
         "no": "Нет",
         "count": "Кластеры"
@@ -506,7 +513,9 @@
       "testConnectionBtn": "Проверить подключение",
       "clustersTabTitle": "Кластеры",
       "connectionVerified": "Подключение к конечной точке успешно установлено.",
-      "certificateNotAccepted": "Сертификат не будет принят. Невозможно продолжить."
+      "certificateNotAccepted": "Сертификат не будет принят. Невозможно продолжить.",
+      "assignToProjects": "Назначить проектам",
+      "assignToGroups": "Назначить группам"
     }
   },
   "configuration": {
@@ -540,6 +549,7 @@
   "yes": "Да",
   "remove": "Удалить",
   "delete": "Удалить",
+  "destroy": "Удалить",
   "details": "Сведения",
   "verify": "Проверить",
   "update": "Обновить",
@@ -553,6 +563,7 @@
   "noItems": "Нет элементов",
   "reload": "Перезагрузить",
   "notAvailable": "Н/д",
+  "selectAll": "Выбрать все",
   "sessionExpired": "Ваш сеанс прекращен. Выполните вход повторно.",
   "navigation": {
     "home": "Главная страница",

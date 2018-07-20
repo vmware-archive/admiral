@@ -200,6 +200,7 @@
         "publicTitle": "Openbare sleutel",
         "publicCertificateTitle": "Openbaar certificaat",
         "privateCertificateTitle": "Persoonlijk certificaat",
+        "bearerTokenTitle": "Bearer token",
         "customProperties": "Aangepaste eigenschappen"
       }
     },
@@ -261,7 +262,7 @@
         "title": "Populaire sjablonen",
         "titleSearch": "Sjablonen gevonden",
         "popularRepositories": "Populaire opslagplaatsen",
-        "repositoriesSearchWarning": "Please, specify term to search for. The search cannot proceed.",
+        "repositoriesSearchWarning": "Geef term om te zoeken. De zoekopdracht kan niet doorgaan.",
         "searchImagesTemplatesPlaceholder": "Zoeken naar images, sjablonen",
         "searchImagesPlaceholder": "Zoeken naar images",
         "searchRepositoriesPlaceholder": "Zoeken naar opslagplaatsen",

@@ -200,6 +200,7 @@
         "publicTitle": "Clave pública",
         "publicCertificateTitle": "Certificado público",
         "privateCertificateTitle": "Certificado privado",
+        "bearerTokenTitle": "Bearer token",
         "customProperties": "Propiedades personalizadas"
       }
     },
@@ -261,7 +262,7 @@
         "title": "Plantillas populares",
         "titleSearch": "Plantillas encontradas",
         "popularRepositories": "Repositorios populares",
-        "repositoriesSearchWarning": "Please, specify term to search for. The search cannot proceed.",
+        "repositoriesSearchWarning": "Especifique el término que desea buscar. La búsqueda no puede continuar.",
         "searchImagesTemplatesPlaceholder": "Buscar imágenes, plantillas",
         "searchImagesPlaceholder": "Buscar imágenes",
         "searchRepositoriesPlaceholder": "Buscar repositorios",

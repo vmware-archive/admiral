@@ -200,6 +200,7 @@
         "publicTitle": "Öffentlicher Schlüssel",
         "publicCertificateTitle": "Öffentliches Zertifikat",
         "privateCertificateTitle": "Privates Zertifikat",
+        "bearerTokenTitle": "Bearer token",
         "customProperties": "Benutzerdefinierte Eigenschaften"
       }
     },
@@ -261,7 +262,7 @@
         "title": "Beliebte Vorlagen",
         "titleSearch": "Gefundene Vorlagen",
         "popularRepositories": "Beliebte Repositorys",
-        "repositoriesSearchWarning": "Please, specify term to search for. The search cannot proceed.",
+        "repositoriesSearchWarning": "Geben Sie den Suchbegriff an. Die Suche kann nicht fortgesetzt werden.",
         "searchImagesTemplatesPlaceholder": "Images und Vorlagen suchen",
         "searchImagesPlaceholder": "Images suchen",
         "searchRepositoriesPlaceholder": "Repositorys suchen",

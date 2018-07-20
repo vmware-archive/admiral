@@ -189,7 +189,10 @@
       "ON": "开启",
       "OFF": "关闭",
       "DISABLED": "已禁用",
-      "WARNING": "警告"
+      "WARNING": "警告",
+      "PROVISIONING": "正在置备",
+      "RESIZING": "调整大小",
+      "REMOVING": "移除"
     },
     "search": {
       "placeholder": "搜索群集"
@@ -261,7 +264,8 @@
       "titleVic": "移除容器主机",
       "confirmation": "确认移除群集 {{clusterName}}。与此群集关联的已部署实体也将被移除。此操作不可撤消。",
       "confirmationVic": "确认移除容器主机 {{clusterName}}。与此容器主机相关联的已部署实体也将被删除。此操作不可撤消。"
-    }
+    },
+    "backLinkTextProject": "项目"
   },
   "kubernetes": {
     "clusters": {
@@ -288,7 +292,7 @@
       "details": {
         "summary": {
           "kubeConfigBtn": "KubeConfig",
-          "kubeConfigTooltip": "Download a configuration file for the kubectl command-line tool to gain access to this cluster.",
+          "kubeConfigTooltip": "下载 kubectl 命令行工具的配置文件以访问此群集。",
           "title": "摘要",
           "nodeCount": "节点:",
           "dashboard": "仪表板:",
@@ -309,6 +313,14 @@
           },
           "count": "节点"
         }
+      },
+      "remove": {
+        "title": "移除群集",
+        "confirmation": "确认移除群集 {{clusterName}}。与此群集关联的已部署实体也将被移除。"
+      },
+      "destroy": {
+        "title": "销毁群集",
+        "confirmation": "确认销毁群集 {{clusterName}}。与此群集关联的已部署实体也将被销毁。此操作不可撤消。"
       }
     },
     "deployments": {
@@ -378,23 +390,13 @@
       "title": "新建群集",
       "settings": {
         "title": "设置",
-        "fieldRowTitleEndpoint": "PKS",
         "fieldTitleEndpoint": "PKS 端点",
         "fieldTitleName": "群集名称",
         "nameFieldRequired": "“群集名称”是必填字段。",
         "fieldTitlePlan": "计划",
-        "plan": {
-          "small": "小",
-          "medium": "中",
-          "large": "大"
-        },
-        "fieldTitleNumberNodes": "节点数",
-        "fieldTitleMaster": "主节点",
-        "masterFieldRequired": "“主节点”字段是必填字段。只能输入大于 0 的整数值。",
-        "masterFieldDescription": "单个主节点可能适用于开发/测试群集，但在生产部署中，3 个或 5 个主节点更为合适。",
-        "masterFieldDescription3Nodes": "- 3 个主节点：单个主节点可能会失败，群集无法推进状态。需要加入一个新的主节点，群集才能推进状态。",
-        "masterFieldDescription5Nodes": "- 5 个主节点：单个主节点可能会失败，群集能够推进状态。",
-        "fieldTitleWorker": "工作线程",
+        "fieldTitleMasterHostName": "主节点主机名",
+        "fieldTitleMasterHostPort": "主节点主机端口",
+        "fieldTitleNumberNodes": "工作线程节点",
         "workerFieldRequired": "“工作线程”字段是必填字段。只能输入大于 0 的整数值。"
       }
     },
@@ -404,14 +406,19 @@
     "add": {
       "title": "添加群集",
       "existingClusters": {
-        "descriptionText": "选择一个端点，然后选择一个或多个现有未分配的 Kubernetes 群集以添加到当前业务组。",
+        "descriptionText": "Select an endpoint and then select one existing, unassigned Kubernetes cluster to add to the current business group.",
         "fieldTitleEndpoint": "端点:",
         "columnTitleName": "名称",
         "columnTitleHostname": "主机名",
         "columnTitleMastersCount": "主节点数",
         "columnTitleWorkersCount": "工作线程数",
         "columnTitlePlan": "计划",
+        "columnTitleLastAction": "Action",
+        "columnTitleLastActionStatus": "Status",
         "columnTitleInAdmiral": "已注册",
+        "multipleSelectedClustersWarning": "Cannot add more than one cluster at a time.",
+        "clusterAlreadyRegisteredWarning": "Cannot add selected cluster. It is already added.",
+        "operationInProgressWarning": "Cannot add selected cluster. There is an operation in progress.",
         "yes": "是",
         "no": "否",
         "count": "群集数"
@@ -502,7 +509,9 @@
       "testConnectionBtn": "测试连接",
       "clustersTabTitle": "群集",
       "connectionVerified": "已成功连接到端点。",
-      "certificateNotAccepted": "未接受证书。无法继续。"
+      "certificateNotAccepted": "未接受证书。无法继续。",
+      "assignToProjects": "分配给项目",
+      "assignToGroups": "分配给组"
     }
   },
   "configuration": {
@@ -536,6 +545,7 @@
   "yes": "是",
   "remove": "移除",
   "delete": "删除",
+  "destroy": "销毁",
   "details": "详细信息",
   "verify": "验证",
   "update": "更新",
@@ -549,6 +559,7 @@
   "noItems": "无任何项",
   "reload": "重新加载",
   "notAvailable": "不适用",
+  "selectAll": "全选",
   "sessionExpired": "您的会话不再有效，请重新登录!",
   "navigation": {
     "home": "主页",

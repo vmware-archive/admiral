@@ -200,6 +200,7 @@
         "publicTitle": "パブリック キー",
         "publicCertificateTitle": "パブリック証明書",
         "privateCertificateTitle": "プライベート証明書",
+        "bearerTokenTitle": "Bearer token",
         "customProperties": "カスタム プロパティ"
       }
     },
@@ -261,7 +262,7 @@
         "title": "よく使われるテンプレート",
         "titleSearch": "見つかったテンプレート",
         "popularRepositories": "よく使われるリポジトリ",
-        "repositoriesSearchWarning": "Please, specify term to search for. The search cannot proceed.",
+        "repositoriesSearchWarning": "検索語を指定してください。検索を続行できません。",
         "searchImagesTemplatesPlaceholder": "イメージ、テンプレートの検索",
         "searchImagesPlaceholder": "イメージの検索",
         "searchRepositoriesPlaceholder": "リポジトリの検索",

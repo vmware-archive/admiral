@@ -189,7 +189,10 @@
       "ON": "ATIVADO",
       "OFF": "DESATIVADO",
       "DISABLED": "DESABILITADO",
-      "WARNING": "AVISO"
+      "WARNING": "AVISO",
+      "PROVISIONING": "PROVISIONAMENTO",
+      "RESIZING": "REDIMENSIONANDO",
+      "REMOVING": "REMOVENDO"
     },
     "search": {
       "placeholder": "Procurar clusters"
@@ -261,7 +264,8 @@
       "titleVic": "Remover Host de Contêiner",
       "confirmation": "Confirme a remoção do cluster {{clusterName}}. As entidades implantadas associadas a esse cluster também serão removidas. A operação não pode ser desfeita.",
       "confirmationVic": "Confirme a remoção do host do contêiner {{clusterName}}. As entidades implantadas associadas a esse host do contêiner também serão removidas. A operação não pode ser desfeita."
-    }
+    },
+    "backLinkTextProject": "Projeto"
   },
   "kubernetes": {
     "clusters": {
@@ -288,7 +292,7 @@
       "details": {
         "summary": {
           "kubeConfigBtn": "KubeConfig",
-          "kubeConfigTooltip": "Download a configuration file for the kubectl command-line tool to gain access to this cluster.",
+          "kubeConfigTooltip": "Baixe um arquivo de configuração para a ferramenta de linha de comando kubectl para obter acesso a este cluster.",
           "title": "Resumo",
           "nodeCount": "Nós:",
           "dashboard": "Painel:",
@@ -309,6 +313,14 @@
           },
           "count": "Nós"
         }
+      },
+      "remove": {
+        "title": "Remover cluster",
+        "confirmation": "Confirme a remoção do cluster {{clusterName}}. As entidades implantadas associadas a esse cluster também serão removidas."
+      },
+      "destroy": {
+        "title": "Destruir Cluster",
+        "confirmation": "Confirme a destruição do cluster {{clusterName}}. As entidades implantadas associadas a esse cluster também serão destruídas. A operação não pode ser desfeita."
       }
     },
     "deployments": {
@@ -378,23 +390,13 @@
       "title": "Novo cluster",
       "settings": {
         "title": "Configurações",
-        "fieldRowTitleEndpoint": "PKS",
         "fieldTitleEndpoint": "Endpoint PKS",
         "fieldTitleName": "Nome do cluster",
         "nameFieldRequired": "O nome do cluster é necessário.",
         "fieldTitlePlan": "Plano",
-        "plan": {
-          "small": "Pequeno",
-          "medium": "Médio",
-          "large": "Grande"
-        },
-        "fieldTitleNumberNodes": "Número de Nós",
-        "fieldTitleMaster": "Mestre",
-        "masterFieldRequired": "O campo mestre é obrigatório. Apenas valores de número inteiro maiores que 0 podem ser inseridos.",
-        "masterFieldDescription": "Um único mestre pode ser adequado para clusters de teste/desenvolvimento, mas para implantações de produção, 3 ou 5 mestres são mais adequados.",
-        "masterFieldDescription3Nodes": "- 3 mestres: um único mestre pode falhar, mas o cluster não poderá avançar o estado. Um novo mestre precisa ingressar antes que o cluster possa avançar o estado.",
-        "masterFieldDescription5Nodes": "- 5 mestres: um único mestre pode falhar e o cluster poderá avançar o estado.",
-        "fieldTitleWorker": "Trabalhador",
+        "fieldTitleMasterHostName": "Nome do Host Mestre",
+        "fieldTitleMasterHostPort": "Porta do Host Mestre",
+        "fieldTitleNumberNodes": "Nós de Trabalhador",
         "workerFieldRequired": "O campo de trabalhador é obrigatório. Apenas valores de número inteiro maiores que 0 podem ser inseridos."
       }
     },
@@ -404,14 +406,19 @@
     "add": {
       "title": "Adicionar Cluster",
       "existingClusters": {
-        "descriptionText": "Selecione um endpoint e, em seguida, selecione um ou mais clusters Kubernetes existentes e não atribuídos para adicionar ao grupo de negócios atual.",
+        "descriptionText": "Select an endpoint and then select one existing, unassigned Kubernetes cluster to add to the current business group.",
         "fieldTitleEndpoint": "Endpoint:",
         "columnTitleName": "Nome",
         "columnTitleHostname": "Nome do Host",
         "columnTitleMastersCount": "Nº de Mestres",
         "columnTitleWorkersCount": "Nº de Trabalhadores",
         "columnTitlePlan": "Plano",
+        "columnTitleLastAction": "Action",
+        "columnTitleLastActionStatus": "Status",
         "columnTitleInAdmiral": "Registrado",
+        "multipleSelectedClustersWarning": "Cannot add more than one cluster at a time.",
+        "clusterAlreadyRegisteredWarning": "Cannot add selected cluster. It is already added.",
+        "operationInProgressWarning": "Cannot add selected cluster. There is an operation in progress.",
         "yes": "Sim",
         "no": "Não",
         "count": "clusters"
@@ -502,7 +509,9 @@
       "testConnectionBtn": "Testar conexão",
       "clustersTabTitle": "Clusters",
       "connectionVerified": "Conexão ao endpoint realizada com êxito.",
-      "certificateNotAccepted": "O certificado não é aceito. Não é possível continuar."
+      "certificateNotAccepted": "O certificado não é aceito. Não é possível continuar.",
+      "assignToProjects": "Atribuir a Projetos",
+      "assignToGroups": "Atribuir a Grupos"
     }
   },
   "configuration": {
@@ -536,6 +545,7 @@
   "yes": "Sim",
   "remove": "Remover",
   "delete": "Excluir",
+  "destroy": "Destruir",
   "details": "Detalhes",
   "verify": "Verificar",
   "update": "Atualizar",
@@ -549,6 +559,7 @@
   "noItems": "Nenhum item",
   "reload": "Recarregar",
   "notAvailable": "N/D",
+  "selectAll": "Selecionar tudo",
   "sessionExpired": "Sua sessão não é mais válida, faça login novamente!",
   "navigation": {
     "home": "Início",

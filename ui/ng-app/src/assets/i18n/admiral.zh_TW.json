@@ -189,7 +189,10 @@
       "ON": "開啟",
       "OFF": "關閉",
       "DISABLED": "已停用",
-      "WARNING": "警告"
+      "WARNING": "警告",
+      "PROVISIONING": "佈建中",
+      "RESIZING": "調整大小",
+      "REMOVING": "移除"
     },
     "search": {
       "placeholder": "搜尋叢集"
@@ -261,7 +264,8 @@
       "titleVic": "移除容器主機",
       "confirmation": "確認移除叢集 {{clusterName}}。與此叢集相關聯的已部署實體也將移除。此作業無法復原。",
       "confirmationVic": "確認移除容器主機 {{clusterName}}。與此容器主機相關聯的已部署實體也將移除。此作業無法復原。"
-    }
+    },
+    "backLinkTextProject": "專案"
   },
   "kubernetes": {
     "clusters": {
@@ -288,7 +292,7 @@
       "details": {
         "summary": {
           "kubeConfigBtn": "KubeConfig",
-          "kubeConfigTooltip": "Download a configuration file for the kubectl command-line tool to gain access to this cluster.",
+          "kubeConfigTooltip": "下載 kubectl 命令列工具的組態檔來存取此叢集。",
           "title": "摘要",
           "nodeCount": "節點:",
           "dashboard": "儀表板:",
@@ -309,6 +313,14 @@
           },
           "count": "節點"
         }
+      },
+      "remove": {
+        "title": "移除叢集",
+        "confirmation": "確認移除叢集 {{clusterName}}。與此叢集相關聯的已部署實體也將移除。"
+      },
+      "destroy": {
+        "title": "銷毀叢集",
+        "confirmation": "確認銷毀叢集 {{clusterName}}。與此叢集相關聯的已部署實體也將銷毀。此作業無法復原。"
       }
     },
     "deployments": {
@@ -378,23 +390,13 @@
       "title": "新增叢集",
       "settings": {
         "title": "設定",
-        "fieldRowTitleEndpoint": "PKS",
         "fieldTitleEndpoint": "PKS 端點",
         "fieldTitleName": "叢集名稱",
         "nameFieldRequired": "叢集名稱為必填。",
         "fieldTitlePlan": " 計劃",
-        "plan": {
-          "small": "小",
-          "medium": "中等",
-          "large": "大"
-        },
-        "fieldTitleNumberNodes": "節點數",
-        "fieldTitleMaster": "主要",
-        "masterFieldRequired": "主節點欄位為必填。僅可以輸入大於 0 的整數值。",
-        "masterFieldDescription": "單一主節點可能適用於開發/測試叢集，但對於生產部署，3 或 5 個主節點更合適。",
-        "masterFieldDescription3Nodes": "- 3 個主節點: 單一主節點可能會失敗，但叢集將無法進入狀態。需要加入新的主節點，叢集才能進入狀態。",
-        "masterFieldDescription5Nodes": "- 5 個主節點: 單一主節點可能會失敗，且叢集將可以進入狀態。",
-        "fieldTitleWorker": "Worker",
+        "fieldTitleMasterHostName": "主控主機名稱",
+        "fieldTitleMasterHostPort": "主控主機連接埠",
+        "fieldTitleNumberNodes": "Worker 節點",
         "workerFieldRequired": "Worker 欄位為必填。僅可以輸入大於 0 的整數值。"
       }
     },
@@ -404,14 +406,19 @@
     "add": {
       "title": "新增叢集",
       "existingClusters": {
-        "descriptionText": "選取端點，然後選取一或多個現有未指派的 Kubernetes 叢集，以新增至目前的業務群組。",
+        "descriptionText": "Select an endpoint and then select one existing, unassigned Kubernetes cluster to add to the current business group.",
         "fieldTitleEndpoint": "端點:",
         "columnTitleName": "名稱",
         "columnTitleHostname": "主機名稱",
         "columnTitleMastersCount": "主節點數",
         "columnTitleWorkersCount": "Worker 數",
         "columnTitlePlan": " 計劃",
+        "columnTitleLastAction": "Action",
+        "columnTitleLastActionStatus": "Status",
         "columnTitleInAdmiral": "已登錄",
+        "multipleSelectedClustersWarning": "Cannot add more than one cluster at a time.",
+        "clusterAlreadyRegisteredWarning": "Cannot add selected cluster. It is already added.",
+        "operationInProgressWarning": "Cannot add selected cluster. There is an operation in progress.",
         "yes": "是",
         "no": "否",
         "count": "叢集"
@@ -502,7 +509,9 @@
       "testConnectionBtn": "測試連線",
       "clustersTabTitle": "叢集",
       "connectionVerified": "已成功連線到端點。",
-      "certificateNotAccepted": "不接受憑證。無法繼續。"
+      "certificateNotAccepted": "不接受憑證。無法繼續。",
+      "assignToProjects": "指派給專案",
+      "assignToGroups": "指派給群組"
     }
   },
   "configuration": {
@@ -536,6 +545,7 @@
   "yes": "是",
   "remove": "移除",
   "delete": "刪除",
+  "destroy": "銷毀",
   "details": "詳細資料",
   "verify": "驗證",
   "update": "更新",
@@ -549,6 +559,7 @@
   "noItems": "沒有項目",
   "reload": "重新載入",
   "notAvailable": "N/A",
+  "selectAll": "全選",
   "sessionExpired": "您的工作階段不再有效，請重新登入!",
   "navigation": {
     "home": "首頁",

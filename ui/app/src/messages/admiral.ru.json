@@ -200,6 +200,7 @@
         "publicTitle": "Общедоступный ключ",
         "publicCertificateTitle": "Общедоступный сертификат",
         "privateCertificateTitle": "Закрытый сертификат",
+        "bearerTokenTitle": "Bearer token",
         "customProperties": "Настраиваемые свойства"
       }
     },
@@ -261,7 +262,7 @@
         "title": "Популярные шаблоны",
         "titleSearch": "Найденные шаблоны",
         "popularRepositories": "Часто используемые репозитории",
-        "repositoriesSearchWarning": "Please, specify term to search for. The search cannot proceed.",
+        "repositoriesSearchWarning": "Укажите условие поиска. Невозможно продолжить поиск.",
         "searchImagesTemplatesPlaceholder": "Поиск образов, шаблонов",
         "searchImagesPlaceholder": "Поиск образов",
         "searchRepositoriesPlaceholder": "Поиск репозиториев",

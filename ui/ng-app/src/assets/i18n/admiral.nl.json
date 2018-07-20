@@ -189,7 +189,10 @@
       "ON": "AAN",
       "OFF": "UIT",
       "DISABLED": "UITGESCHAKELD",
-      "WARNING": "WAARSCHUWING"
+      "WARNING": "WAARSCHUWING",
+      "PROVISIONING": "INRICHTING",
+      "RESIZING": "GROOTTE WIJZIGEN",
+      "REMOVING": "VERWIJDEREN"
     },
     "search": {
       "placeholder": "Zoeken naar clusters"
@@ -261,7 +264,8 @@
       "titleVic": "Containerhost verwijderen",
       "confirmation": "Bevestig het verwijderen van het cluster {{clusterName}}. De geïmplementeerde entiteiten die zijn gekoppeld aan dit cluster, worden ook verwijderd. De bewerking kan niet ongedaan worden gemaakt.",
       "confirmationVic": "Bevestig het verwijderen van de containerhost {{clusterName}}. De geïmplementeerde entiteiten die zijn gekoppeld aan deze containerhost, worden ook verwijderd. De bewerking kan niet ongedaan worden gemaakt."
-    }
+    },
+    "backLinkTextProject": "Project"
   },
   "kubernetes": {
     "clusters": {
@@ -288,7 +292,7 @@
       "details": {
         "summary": {
           "kubeConfigBtn": "KubeConfig",
-          "kubeConfigTooltip": "Download a configuration file for the kubectl command-line tool to gain access to this cluster.",
+          "kubeConfigTooltip": "Download een configuratiebestand voor het opdrachtregelprogramma kubectl om toegang te krijgen tot dit cluster.",
           "title": "Samenvatting",
           "nodeCount": "Knooppunten:",
           "dashboard": "Dashboard:",
@@ -309,6 +313,14 @@
           },
           "count": "knooppunten"
         }
+      },
+      "remove": {
+        "title": "Cluster verwijderen",
+        "confirmation": "Bevestig het verwijderen van het cluster {{clusterName}}. De geïmplementeerde entiteiten die zijn gekoppeld aan dit cluster, worden ook verwijderd."
+      },
+      "destroy": {
+        "title": "Cluster vernietigen",
+        "confirmation": "Bevestig het vernietigen van het cluster {{clusterName}}. De geïmplementeerde entiteiten die zijn gekoppeld aan dit cluster, worden ook vernietigd. De bewerking kan niet ongedaan worden gemaakt."
       }
     },
     "deployments": {
@@ -378,23 +390,13 @@
       "title": "Nieuw cluster",
       "settings": {
         "title": "Instellingen",
-        "fieldRowTitleEndpoint": "PKS",
         "fieldTitleEndpoint": "PKS-endpoint",
         "fieldTitleName": "Clusternaam",
         "nameFieldRequired": "Clusternaam is verplicht.",
         "fieldTitlePlan": " Plan",
-        "plan": {
-          "small": "Klein",
-          "medium": "Normaal",
-          "large": "Groot"
-        },
-        "fieldTitleNumberNodes": "Aantal knooppunten",
-        "fieldTitleMaster": "Master",
-        "masterFieldRequired": "Het veld Master is verplicht. Alleen gehele getallen groter dan 0 kunnen worden ingevoerd.",
-        "masterFieldDescription": "Eén master is mogelijk geschikt voor ontwikkelings- of testclusters, maar voor productie-implementaties zijn 3 of 5 masters beter.",
-        "masterFieldDescription3Nodes": "- 3 masters: één master kan mislukken, maar het cluster kan niet verdergaan vanuit deze status. Er moet een nieuwe master worden toegevoegd, voordat het cluster kan verdergaan vanuit deze status.",
-        "masterFieldDescription5Nodes": "- 5 masters: één master kan mislukken en het cluster kan verdergaan vanuit deze status.",
-        "fieldTitleWorker": "Werker",
+        "fieldTitleMasterHostName": "Naam van meesterhost",
+        "fieldTitleMasterHostPort": "Poort van meesterhost",
+        "fieldTitleNumberNodes": "Werkerknooppunten",
         "workerFieldRequired": "Het veld Werker is verplicht. Alleen gehele getallen groter dan 0 kunnen worden ingevoerd."
       }
     },
@@ -404,14 +406,19 @@
     "add": {
       "title": "Cluster toevoegen",
       "existingClusters": {
-        "descriptionText": "Selecteer een endpoint en selecteer vervolgens een of meer bestaande, niet-toegewezen Kubernetes-clusters die u wilt toevoegen aan de huidige bedrijfsgroep.",
+        "descriptionText": "Select an endpoint and then select one existing, unassigned Kubernetes cluster to add to the current business group.",
         "fieldTitleEndpoint": "Endpoint:",
         "columnTitleName": "Naam",
         "columnTitleHostname": "Hostnaam",
         "columnTitleMastersCount": "Aantal masters",
         "columnTitleWorkersCount": "Aantal werkers",
         "columnTitlePlan": " Plan",
+        "columnTitleLastAction": "Action",
+        "columnTitleLastActionStatus": "Status",
         "columnTitleInAdmiral": "Geregistreerd",
+        "multipleSelectedClustersWarning": "Cannot add more than one cluster at a time.",
+        "clusterAlreadyRegisteredWarning": "Cannot add selected cluster. It is already added.",
+        "operationInProgressWarning": "Cannot add selected cluster. There is an operation in progress.",
         "yes": "Ja",
         "no": "Nee",
         "count": "clusters"
@@ -502,7 +509,9 @@
       "testConnectionBtn": "Testverbinding",
       "clustersTabTitle": "Clusters",
       "connectionVerified": "Verbinding met eindpunt is geslaagd.",
-      "certificateNotAccepted": "Het certificaat wordt niet geaccepteerd. Kan niet doorgaan."
+      "certificateNotAccepted": "Het certificaat wordt niet geaccepteerd. Kan niet doorgaan.",
+      "assignToProjects": "Toewijzen aan projecten",
+      "assignToGroups": "Toewijzen aan groepen"
     }
   },
   "configuration": {
@@ -536,6 +545,7 @@
   "yes": "Ja",
   "remove": "Verwijderen",
   "delete": "Verwijderen",
+  "destroy": "Vernietigen",
   "details": "Details",
   "verify": "Verifiëren",
   "update": "Bijwerken",
@@ -549,6 +559,7 @@
   "noItems": "Geen items",
   "reload": "Herladen",
   "notAvailable": "N.v.t.",
+  "selectAll": "Alles selecteren",
   "sessionExpired": "Uw sessie is niet meer geldig. U moet zich opnieuw aanmelden.",
   "navigation": {
     "home": "Home",

@@ -200,6 +200,7 @@
         "publicTitle": "Chave pública",
         "publicCertificateTitle": "Certificado público",
         "privateCertificateTitle": "Certificado privado",
+        "bearerTokenTitle": "Bearer token",
         "customProperties": "Propriedades personalizadas"
       }
     },
@@ -261,7 +262,7 @@
         "title": "Modelos Populares",
         "titleSearch": "Modelos Encontrados",
         "popularRepositories": "Repositórios populares",
-        "repositoriesSearchWarning": "Please, specify term to search for. The search cannot proceed.",
+        "repositoriesSearchWarning": "Especifique o termo a ser pesquisado. A pesquisa não pode continuar.",
         "searchImagesTemplatesPlaceholder": "Procurar imagens, modelos",
         "searchImagesPlaceholder": "Procurar imagens",
         "searchRepositoriesPlaceholder": "Pesquisar repositórios",

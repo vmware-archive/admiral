@@ -189,7 +189,10 @@
       "ON": "켜짐",
       "OFF": "꺼짐",
       "DISABLED": "사용 안 함",
-      "WARNING": "주의"
+      "WARNING": "주의",
+      "PROVISIONING": "프로비저닝",
+      "RESIZING": "크기 조정",
+      "REMOVING": "제거"
     },
     "search": {
       "placeholder": "클러스터 검색"
@@ -261,7 +264,8 @@
       "titleVic": "컨테이너 호스트 제거",
       "confirmation": "{{clusterName}} 클러스터 제거 확인. 이 클러스터에 연결된 배포된 엔티티도 제거됩니다. 이 작업은 실행 취소할 수 없습니다.",
       "confirmationVic": "{{clusterName}} 컨테이너 호스트 제거 확인. 이 컨테이너 호스트에 연결된 배포된 엔티티도 제거됩니다. 이 작업은 실행 취소할 수 없습니다."
-    }
+    },
+    "backLinkTextProject": "프로젝트"
   },
   "kubernetes": {
     "clusters": {
@@ -288,7 +292,7 @@
       "details": {
         "summary": {
           "kubeConfigBtn": "KubeConfig",
-          "kubeConfigTooltip": "Download a configuration file for the kubectl command-line tool to gain access to this cluster.",
+          "kubeConfigTooltip": "이 클러스터에 대한 액세스 권한을 얻으려면 kubectl 명령줄 도구에 대한 구성 파일을 다운로드하십시오.",
           "title": "요약",
           "nodeCount": "노드:",
           "dashboard": "대시보드:",
@@ -309,6 +313,14 @@
           },
           "count": "노드"
         }
+      },
+      "remove": {
+        "title": "클러스터 제거",
+        "confirmation": "{{clusterName}} 클러스터 제거 확인. 이 클러스터에 연결된 배포된 엔티티도 제거됩니다."
+      },
+      "destroy": {
+        "title": "클러스터 삭제",
+        "confirmation": "{{clusterName}} 클러스터 삭제 확인. 이 클러스터에 연결된 배포된 엔티티도 삭제됩니다. 이 작업은 실행 취소할 수 없습니다."
       }
     },
     "deployments": {
@@ -378,23 +390,13 @@
       "title": "새 클러스터",
       "settings": {
         "title": "설정",
-        "fieldRowTitleEndpoint": "PKS",
         "fieldTitleEndpoint": "PKS 끝점",
         "fieldTitleName": "클러스터 이름",
         "nameFieldRequired": "클러스터 이름은 필수입니다.",
         "fieldTitlePlan": "계획",
-        "plan": {
-          "small": "작음",
-          "medium": "중간",
-          "large": "큼"
-        },
-        "fieldTitleNumberNodes": "노드 수",
-        "fieldTitleMaster": "마스터",
-        "masterFieldRequired": "마스터 필드는 필수입니다. 0보다 큰 정수 값만 입력할 수 있습니다.",
-        "masterFieldDescription": "개발/테스트 클러스터에는 단일 마스터가 적합할 수 있지만 운영 배포에는 3 또는 5개 마스터가 더 적합합니다.",
-        "masterFieldDescription3Nodes": "- 3개 마스터: 단일 마스터의 실패는 허용되지만 클러스터가 상태를 진행할 수 없습니다. 클러스터가 상태를 진행하려면 새 마스터를 가입해야 합니다.",
-        "masterFieldDescription5Nodes": "- 5개 마스터: 단일 마스터의 실패가 허용되며 클러스터가 상태를 진행할 수 있습니다.",
-        "fieldTitleWorker": "작업자",
+        "fieldTitleMasterHostName": "마스터 호스트 이름",
+        "fieldTitleMasterHostPort": "마스터 호스트 포트",
+        "fieldTitleNumberNodes": "작업자 노드",
         "workerFieldRequired": "작업자 필드는 필수입니다. 0보다 큰 정수 값만 입력할 수 있습니다."
       }
     },
@@ -404,14 +406,19 @@
     "add": {
       "title": "클러스터 추가",
       "existingClusters": {
-        "descriptionText": "끝점을 선택하고 현재 비즈니스 그룹에 추가할 하나 이상의 할당되지 않은 기존 Kubernetes 클러스터를 선택합니다.",
+        "descriptionText": "Select an endpoint and then select one existing, unassigned Kubernetes cluster to add to the current business group.",
         "fieldTitleEndpoint": "끝점:",
         "columnTitleName": "이름",
         "columnTitleHostname": "호스트 이름",
         "columnTitleMastersCount": "마스터 수",
         "columnTitleWorkersCount": "작업자 수",
         "columnTitlePlan": "계획",
+        "columnTitleLastAction": "Action",
+        "columnTitleLastActionStatus": "Status",
         "columnTitleInAdmiral": "등록됨",
+        "multipleSelectedClustersWarning": "Cannot add more than one cluster at a time.",
+        "clusterAlreadyRegisteredWarning": "Cannot add selected cluster. It is already added.",
+        "operationInProgressWarning": "Cannot add selected cluster. There is an operation in progress.",
         "yes": "예",
         "no": "아니요",
         "count": "클러스터"
@@ -502,7 +509,9 @@
       "testConnectionBtn": "연결 테스트",
       "clustersTabTitle": "클러스터",
       "connectionVerified": "끝점에 연결되었습니다.",
-      "certificateNotAccepted": "인증서가 수락되지 않았습니다. 계속할 수 없습니다."
+      "certificateNotAccepted": "인증서가 수락되지 않았습니다. 계속할 수 없습니다.",
+      "assignToProjects": "프로젝트에 할당",
+      "assignToGroups": "그룹에 할당"
     }
   },
   "configuration": {
@@ -536,6 +545,7 @@
   "yes": "예",
   "remove": "제거",
   "delete": "삭제",
+  "destroy": "제거",
   "details": "세부 정보",
   "verify": "확인",
   "update": "업데이트",
@@ -549,6 +559,7 @@
   "noItems": "항목 없음",
   "reload": "다시 로드",
   "notAvailable": "해당 없음",
+  "selectAll": "모두 선택",
   "sessionExpired": "세션이 더 이상 유효하지 않습니다. 다시 로그인하십시오!",
   "navigation": {
     "home": "홈",

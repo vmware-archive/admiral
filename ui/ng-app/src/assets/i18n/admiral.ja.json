@@ -189,7 +189,10 @@
       "ON": "有効",
       "OFF": "無効",
       "DISABLED": "無効",
-      "WARNING": "警告"
+      "WARNING": "警告",
+      "PROVISIONING": "プロビジョニング",
+      "RESIZING": "サイズ変更",
+      "REMOVING": "削除"
     },
     "search": {
       "placeholder": "クラスタの検索"
@@ -261,7 +264,8 @@
       "titleVic": "コンテナ ホストの削除",
       "confirmation": "クラスタ「{{clusterName}}」を本当に削除しますか? このクラスタに関連する展開されたエンティティも同様に削除されます。この操作は元に戻せません。",
       "confirmationVic": "コンテナ ホスト 「{{clusterName}}」 を本当に削除しますか? このコンテナ ホストに関連する展開されたエンティティも同様に削除されます。この操作は元に戻せません。"
-    }
+    },
+    "backLinkTextProject": "プロジェクト"
   },
   "kubernetes": {
     "clusters": {
@@ -288,7 +292,7 @@
       "details": {
         "summary": {
           "kubeConfigBtn": "KubeConfig",
-          "kubeConfigTooltip": "Download a configuration file for the kubectl command-line tool to gain access to this cluster.",
+          "kubeConfigTooltip": "このクラスタにアクセスするための kubectl コマンドライン ツールの構成ファイルをダウンロードします。",
           "title": "概要",
           "nodeCount": "ノード:",
           "dashboard": "ダッシュボード:",
@@ -309,6 +313,14 @@
           },
           "count": "ノード"
         }
+      },
+      "remove": {
+        "title": "クラスタの削除",
+        "confirmation": "クラスタ {{clusterName}} の削除の確認。このクラスタに関連付けられた展開済みエンティティも削除されます。"
+      },
+      "destroy": {
+        "title": "クラスタの破棄",
+        "confirmation": "クラスタ {{clusterName}} の破棄の確認。このクラスタに関連付けられた展開済みエンティティも削除されます。この操作は元に戻すことができません。"
       }
     },
     "deployments": {
@@ -378,23 +390,13 @@
       "title": "新規クラスタ",
       "settings": {
         "title": "設定",
-        "fieldRowTitleEndpoint": "PKS",
         "fieldTitleEndpoint": "PKS エンドポイント",
         "fieldTitleName": "クラスタ名",
         "nameFieldRequired": "クラスタ名は必須です。",
         "fieldTitlePlan": " プラン",
-        "plan": {
-          "small": "小",
-          "medium": "中",
-          "large": "大"
-        },
-        "fieldTitleNumberNodes": "ノード数",
-        "fieldTitleMaster": "マスター",
-        "masterFieldRequired": "マスター フィールドは必須です。0 よりも大きい整数のみを入力できます。",
-        "masterFieldDescription": "開発/テスト クラスタではマスターの数を 1 台とする場合がありますが、本番環境では 3 台または 5 台のマスターを使用したほうが安全です。",
-        "masterFieldDescription3Nodes": "-マスター数が 3 台の場合： 1 台のマスターに障害が発生しても問題はありませんが、クラスタは高度に安全な状態ではありません。クラスタを高度な状態にするには、新しいマスターを追加する必要があります。",
-        "masterFieldDescription5Nodes": "-マスター数が 5 台の場合： 1 台のマスターに障害が発生しても、クラスタは高度に安全な状態を維持することができます。",
-        "fieldTitleWorker": "ワーカー",
+        "fieldTitleMasterHostName": "マスター ホスト名",
+        "fieldTitleMasterHostPort": "マスター ホスト ポート",
+        "fieldTitleNumberNodes": "ワーカー ノード",
         "workerFieldRequired": "ワーカー フィールドは必須です。0 よりも大きい整数のみを入力できます。"
       }
     },
@@ -404,14 +406,19 @@
     "add": {
       "title": "クラスタの追加",
       "existingClusters": {
-        "descriptionText": "エンドポイントを選択し、割り当てられていない既存の Kubernetes クラスタを 1 つ以上選択して、現在のビジネス グループに追加します。",
+        "descriptionText": "Select an endpoint and then select one existing, unassigned Kubernetes cluster to add to the current business group.",
         "fieldTitleEndpoint": "エンドポイント:",
         "columnTitleName": "名前",
         "columnTitleHostname": "ホスト名",
         "columnTitleMastersCount": "マスター数",
         "columnTitleWorkersCount": "ワーカー数",
         "columnTitlePlan": " プラン",
+        "columnTitleLastAction": "Action",
+        "columnTitleLastActionStatus": "Status",
         "columnTitleInAdmiral": "登録済み",
+        "multipleSelectedClustersWarning": "Cannot add more than one cluster at a time.",
+        "clusterAlreadyRegisteredWarning": "Cannot add selected cluster. It is already added.",
+        "operationInProgressWarning": "Cannot add selected cluster. There is an operation in progress.",
         "yes": "はい",
         "no": "いいえ",
         "count": "クラスタ"
@@ -502,7 +509,9 @@
       "testConnectionBtn": "接続をテスト",
       "clustersTabTitle": "クラスタ",
       "connectionVerified": "エンドポイントへの接続に成功しました。",
-      "certificateNotAccepted": "証明書が承認されません。続行できません。"
+      "certificateNotAccepted": "証明書が承認されません。続行できません。",
+      "assignToProjects": "プロジェクトに割り当て",
+      "assignToGroups": "グループに割り当て"
     }
   },
   "configuration": {
@@ -536,6 +545,7 @@
   "yes": "はい",
   "remove": "削除",
   "delete": "削除",
+  "destroy": "破棄",
   "details": "詳細",
   "verify": "検証",
   "update": "更新",
@@ -549,6 +559,7 @@
   "noItems": "アイテムがありません",
   "reload": "再ロード",
   "notAvailable": "N/A",
+  "selectAll": "すべて選択",
   "sessionExpired": "セッションが無効になりました。ログインし直してください。",
   "navigation": {
     "home": "ホーム",

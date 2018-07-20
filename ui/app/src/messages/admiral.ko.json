@@ -200,6 +200,7 @@
         "publicTitle": "공용 키",
         "publicCertificateTitle": "공용 인증서",
         "privateCertificateTitle": "개인 인증서",
+        "bearerTokenTitle": "Bearer token",
         "customProperties": "사용자 지정 속성"
       }
     },
@@ -261,7 +262,7 @@
         "title": "인기 템플릿",
         "titleSearch": "찾은 템플릿",
         "popularRepositories": "인기 저장소",
-        "repositoriesSearchWarning": "Please, specify term to search for. The search cannot proceed.",
+        "repositoriesSearchWarning": "검색 용어를 지정하십시오. 검색을 계속할 수 없습니다.",
         "searchImagesTemplatesPlaceholder": "이미지, 템플릿 검색",
         "searchImagesPlaceholder": "이미지 검색",
         "searchRepositoriesPlaceholder": "저장소 검색",

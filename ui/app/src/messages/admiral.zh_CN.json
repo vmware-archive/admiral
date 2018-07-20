@@ -200,6 +200,7 @@
         "publicTitle": "公钥",
         "publicCertificateTitle": "公用证书",
         "privateCertificateTitle": "私有证书",
+        "bearerTokenTitle": "Bearer token",
         "customProperties": "自定义属性"
       }
     },
@@ -261,7 +262,7 @@
         "title": "常用模板",
         "titleSearch": "找到的模板",
         "popularRepositories": "常用存储库",
-        "repositoriesSearchWarning": "Please, specify term to search for. The search cannot proceed.",
+        "repositoriesSearchWarning": "请指定要搜索的术语。搜索无法继续。",
         "searchImagesTemplatesPlaceholder": "搜索映像、模板",
         "searchImagesPlaceholder": "搜索映像",
         "searchRepositoriesPlaceholder": "搜索存储库",
