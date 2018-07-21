@@ -22,12 +22,14 @@ import java.util.function.Consumer;
 import com.vmware.admiral.adapter.pks.PKSConstants;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.common.util.AuthUtils;
 import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.ContainerHostUtil;
 import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
 import com.vmware.admiral.compute.kubernetes.entities.config.KubeConfig;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
+import com.vmware.photon.controller.model.security.util.EncryptionUtils;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
@@ -85,9 +87,13 @@ public class KubeConfigContentService extends StatelessService {
             }
 
             kubeConfig = credentials.customProperties.get(PKSConstants.KUBE_CONFIG_PROP_NAME);
+        } else if (AuthUtils.BEARER_TOKEN_AUTH_TYPE.equals(credentials.type)) {
+            KubeConfig config = KubernetesUtil.constructKubeConfig(kubernetesHost.address,
+                    EncryptionUtils.decrypt(credentials.privateKey));
+            kubeConfig = Utils.toJson(config);
         } else if (AuthCredentialsType.PublicKey.toString().equals(credentials.type)) {
             KubeConfig config = KubernetesUtil.constructKubeConfig(kubernetesHost.address,
-                    credentials.publicKey, credentials.privateKey);
+                    credentials.publicKey, EncryptionUtils.decrypt(credentials.privateKey));
             kubeConfig = Utils.toJson(config);
         } else {
             op.fail(new Exception("Host authentication type not supported!"));

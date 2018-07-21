@@ -430,6 +430,34 @@ public class KubernetesUtil {
     public static KubeConfig constructKubeConfig(String clusterAddress, String certificate,
             String privateKey) {
 
+        KubeConfig config = createKubeConfig(clusterAddress);
+
+        KubeConfig.UserEntry userEntry = new KubeConfig.UserEntry();
+        userEntry.name = config.contexts.get(0).context.user;
+        userEntry.user = new KubeConfig.AuthInfo();
+        userEntry.user.clientCertificateData = new String(
+                Base64.getEncoder().encode(certificate.getBytes()));
+        userEntry.user.clientKeyData = new String(
+                Base64.getEncoder().encode(privateKey.getBytes()));
+        config.users = Arrays.asList(userEntry);
+
+        return config;
+    }
+
+    public static KubeConfig constructKubeConfig(String clusterAddress, String token) {
+
+        KubeConfig config = createKubeConfig(clusterAddress);
+
+        KubeConfig.UserEntry userEntry = new KubeConfig.UserEntry();
+        userEntry.name = config.contexts.get(0).context.user;
+        userEntry.user = new KubeConfig.AuthInfo();
+        userEntry.user.token = token;
+        config.users = Arrays.asList(userEntry);
+
+        return config;
+    }
+
+    private static KubeConfig createKubeConfig(String clusterAddress) {
         KubeConfig config = new KubeConfig();
         config.apiVersion = KUBERNETES_API_VERSION_V1;
         config.kind = CONFIG_TYPE;
@@ -448,15 +476,6 @@ public class KubernetesUtil {
         clusterEntry.cluster.server = clusterAddress;
         clusterEntry.cluster.insecureSkipTlsVerify = true;
         config.clusters = Arrays.asList(clusterEntry);
-
-        KubeConfig.UserEntry userEntry = new KubeConfig.UserEntry();
-        userEntry.name = contextEntry.context.user;
-        userEntry.user = new KubeConfig.AuthInfo();
-        userEntry.user.clientCertificateData = new String(
-                Base64.getEncoder().encode(certificate.getBytes()));
-        userEntry.user.clientKeyData = new String(
-                Base64.getEncoder().encode(privateKey.getBytes()));
-        config.users = Arrays.asList(userEntry);
 
         return config;
     }
