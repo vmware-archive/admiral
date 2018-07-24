@@ -236,10 +236,12 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
             // Disable
             return clusterStatus === Constants.clusters.status.ON;
         } else if (op === 'DESTROY') {
+            var properties = this.getClusterCustomProperties(cluster);
             // Destroy
             return clusterStatus !== Constants.clusters.status.PROVISIONING
                 && clusterStatus !== Constants.clusters.status.RESIZING
-                && clusterStatus !== Constants.clusters.status.REMOVING;
+                && clusterStatus !== Constants.clusters.status.REMOVING
+                && properties.__pksEndpoint;
         }
 
         return true;
