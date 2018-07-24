@@ -176,6 +176,15 @@ public class PKSClusterRemovalTaskService extends
                 }));
     }
 
+    @Override
+    public void handleExpiration(PKSClusterRemovalTaskState task) {
+        super.handleExpiration(task);
+        if (task.taskSubStage.ordinal() < SubStage.COMPLETED.ordinal() ) {
+            logWarning("Task %s has expired, notifying parent task.", task.documentSelfLink);
+            notifyCallerService(task);
+        }
+    }
+
     private void destroyPKSClusterInstance(PKSClusterRemovalTaskState task) {
         if (task.removeOnly) {
             logInfo("Skip destroy PKS cluster since the removeOnly flag is set");

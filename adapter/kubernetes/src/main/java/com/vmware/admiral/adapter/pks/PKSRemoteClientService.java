@@ -335,7 +335,8 @@ public class PKSRemoteClientService {
                     .setCompletion((o, e) -> {
                         if (e != null) {
                             logger.severe(() -> String.format("Error getting token for %s from %s,"
-                                    + " reason: %s", user, uaaEndpoint, e.getMessage()));
+                                    + " reason: %s - %s", user, uaaEndpoint,
+                                    e.getClass().getSimpleName(), e.getMessage()));
                             deferredResult.fail(e);
                             return;
                         }

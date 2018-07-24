@@ -19,6 +19,8 @@ public class TestTaskService extends AbstractTaskStatefulService<TestTaskService
 
     public static final String FACTORY_LINK = "/requests/test";
 
+    public long expiration;
+
     public static class TestTaskServiceDocument extends TaskServiceDocument<DefaultSubStage> {
 
     }
@@ -30,4 +32,15 @@ public class TestTaskService extends AbstractTaskStatefulService<TestTaskService
     @Override
     protected void handleStartedStagePatch(TestTaskServiceDocument state) {
     }
+
+    @Override
+    public void notifyCallerService(TestTaskServiceDocument state) {
+        super.notifyCallerService(state);
+    }
+
+    @Override
+    public void handleExpiration(TestTaskServiceDocument state) {
+        expiration = state.documentExpirationTimeMicros;
+    }
+
 }

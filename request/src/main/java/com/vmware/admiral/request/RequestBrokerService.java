@@ -30,6 +30,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -1363,6 +1364,9 @@ public class RequestBrokerService extends
         task.endpointLink = state.getCustomProperty(PKSConstants.PKS_ENDPOINT_PROP_NAME);
         task.tenantLinks = state.tenantLinks;
         task.requestTrackerLink = state.requestTrackerLink;
+        // calculate task expiration to be shortly before parent task expiration
+        task.documentExpirationTimeMicros = state.documentExpirationTimeMicros
+                - TimeUnit.MINUTES.toMicros(5);
 
         sendRequest(Operation
                 .createPost(this, PKSClusterProvisioningTaskService.FACTORY_LINK)
@@ -1399,6 +1403,9 @@ public class RequestBrokerService extends
         task.tenantLinks = state.tenantLinks;
         task.requestTrackerLink = state.requestTrackerLink;
         task.cleanupRemoval = cleanupRemoval;
+        // calculate task expiration to be shortly before parent task expiration
+        task.documentExpirationTimeMicros = state.documentExpirationTimeMicros
+                - TimeUnit.MINUTES.toMicros(5);
 
         sendRequest(Operation
                 .createPost(this, PKSClusterRemovalTaskService.FACTORY_LINK)
@@ -1421,6 +1428,9 @@ public class RequestBrokerService extends
         task.resourceLink = state.resourceLinks.iterator().next();
         task.tenantLinks = state.tenantLinks;
         task.requestTrackerLink = state.requestTrackerLink;
+        // calculate task expiration to be shortly before parent task expiration
+        task.documentExpirationTimeMicros = state.documentExpirationTimeMicros
+                - TimeUnit.MINUTES.toMicros(5);
 
         sendRequest(Operation
                 .createPost(this, PKSClusterResizeTaskService.FACTORY_LINK)

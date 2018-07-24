@@ -11,8 +11,10 @@
 
 package com.vmware.admiral.request;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -21,6 +23,7 @@ import com.vmware.admiral.request.TestTaskService.TestTaskServiceDocument;
 import com.vmware.admiral.service.common.DefaultSubStage;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.TaskState;
 
 // AbstractTaskService validations test
@@ -125,7 +128,39 @@ public class AbstractTaskServiceTest extends RequestBaseTest {
         testService.setState(delete, serviceState);
         testService.handleDelete(delete);
         assertNull(delete.getErrorResponseBody());
+    }
 
+    @Test
+    public void testHandleExpired() {
+        TestTaskService testService = new TestTaskService();
+
+        try {
+            testService.handleStop(null);
+            fail("should not reach here");
+        } catch (NullPointerException ignored) {
+        }
+
+        ServiceDocument doc = new ServiceDocument();
+        doc.documentExpirationTimeMicros = 13L;
+        Operation o = Operation.createDelete(host, "/")
+                .setBody(doc);
+
+        testService.handleStop(o);
+        assertEquals(13L, testService.expiration);
+    }
+
+    @Test
+    public void testSendRequestStateToExternalUrl() {
+        TestTaskService testService = new TestTaskService();
+        testService.setHost(host);
+        TestTaskServiceDocument state = new TestTaskServiceDocument();
+        state.taskInfo = new TaskState();
+        state.taskInfo.stage = TaskState.TaskStage.STARTED;
+        state.serviceTaskCallback = ServiceTaskCallback.create("http://%%:ww/@!");
+        testService.notifyCallerService(state);
+
+        state.serviceTaskCallback = ServiceTaskCallback.create("http://s");
+        testService.notifyCallerService(state);
     }
 
 }

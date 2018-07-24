@@ -244,9 +244,11 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
     @Override
     public void handleStop(Operation delete) {
         try {
-            T task = getBody(delete);
-            if (ServiceUtils.isExpired(task)) {
-                handleExpiration(task);
+            if (delete.hasBody()) {
+                T task = getBody(delete);
+                if (ServiceUtils.isExpired(task)) {
+                    handleExpiration(task);
+                }
             }
         } catch (Throwable t) {
             logWarning("Error while stopping task service [%s]: %s", getSelfLink(),

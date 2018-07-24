@@ -164,8 +164,11 @@ public class PKSClusterResizeTaskService extends
 
     @Override
     public void handleExpiration(PKSClusterResizeTaskState task) {
+        super.handleExpiration(task);
         if (task.taskSubStage == PROCESSING) {
+            logWarning("Task %s has expired, notifying parent task.", task.documentSelfLink);
             resumeHost(task, () -> { });
+            notifyCallerService(task);
         }
     }
 

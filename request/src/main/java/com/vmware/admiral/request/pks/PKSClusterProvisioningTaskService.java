@@ -53,6 +53,7 @@ import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
+import com.vmware.xenon.common.ServiceErrorResponse;
 import com.vmware.xenon.common.Utils;
 
 /**
@@ -180,6 +181,18 @@ public class PKSClusterProvisioningTaskService extends
         return finishedResponse;
     }
 
+    @Override
+    public void handleExpiration(PKSProvisioningTaskState task) {
+        super.handleExpiration(task);
+        if (task.taskSubStage == PROCESSING) {
+            logWarning("Task %s has expired, notifying parent task.", task.documentSelfLink);
+            Exception e = new Exception("PKS cluster was provisioned, but is not reachable. Check"
+                    + " network connectivity.");
+            task.taskInfo.failure = ServiceErrorResponse.create(e, 0);
+            notifyCallerService(task);
+        }
+    }
+
     private void process(PKSProvisioningTaskState task) {
         assertNotNull(task, "task");
         sendCreateClusterRequest(task, pksCluster -> createInitialClusterState(task, pksCluster));
@@ -249,14 +262,14 @@ public class PKSClusterProvisioningTaskService extends
                 .setContextId(getSelfId())
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        logWarning("failed getting pks cluster %s from %s",
+                        logWarning("failed getting PKS cluster %s from %s",
                                 task.getCustomProperty(PKS_CLUSTER_NAME_PROP_NAME),
                                 task.endpointLink);
                         if (task.failureCounter++ >= MAX_POLL_FAILURES) {
                             LocalizableValidationException le = new LocalizableValidationException(
                                     "max failures reached connecting to " + task.endpointLink,
-                                    "compute.add.host.connection.error", "pks", e.getMessage());
-                            failTask("pks adapter request failed for: " + task.endpointLink
+                                    "compute.add.host.connection.error", "PKS", e.getMessage());
+                            failTask("PKS adapter request failed for: " + task.endpointLink
                                     + " cluster: ", le);
                             return;
                         }
