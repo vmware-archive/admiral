@@ -139,7 +139,10 @@ public class NetworkUtils {
      * Same regex that docker uses to do validation
      */
     public static final String REGEXP_NAME = "^[\\w]+[\\w. -]*[\\w]+$";
-    public static final String BAD_NETWORK_NAME = "Network name should not contain any special characters other than underscores, hyphens and spaces";
+    public static final String SHORT_NETWORK_NAME = "Network name should be at least 2 characters.";
+    public static final String BAD_NETWORK_NAME = "Network name should start and end with a letter, number or" +
+            " underscore. Network name should not contain any special characters other than underscores, hyphens, " +
+            "dots and spaces.";
 
     public static void validateIpRangeNotation(String subnet, boolean rangeFormatAllowed) {
         if (rangeFormatAllowed && !StringUtil.isNullOrEmpty(subnet)
@@ -171,6 +174,11 @@ public class NetworkUtils {
         if (name == null || name.trim().isEmpty()) {
             throw new LocalizableValidationException(ERROR_NETWORK_NAME_IS_REQUIRED,
                     "compute.network.validate.name");
+        }
+
+        if (name.trim().length() < 2) {
+            throw new LocalizableValidationException(SHORT_NETWORK_NAME,
+                    "compute.network.validate.name.length");
         }
 
         // Docker now validates the network name based on the REGEXP_NAME regex
