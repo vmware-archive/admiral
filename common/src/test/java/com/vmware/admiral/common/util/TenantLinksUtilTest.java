@@ -12,7 +12,11 @@
 package com.vmware.admiral.common.util;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
+import java.util.Arrays;
+import java.util.Set;
 import java.util.function.Function;
 
 import org.junit.Test;
@@ -192,6 +196,34 @@ public class TenantLinksUtilTest {
                 SAMPLE_RANDOM_LINK,
                 SAMPLE_RANDOM_LINK_TRAILING_SLASH,
                 null);
+    }
+
+    @Test
+    public void testGetProjectAndGroupLinks() {
+        Set<String> set = TenantLinksUtil.getProjectAndGroupLinks(null);
+        assertNotNull(set);
+        assertTrue(set.isEmpty());
+
+
+        set = TenantLinksUtil.getProjectAndGroupLinks(
+                Arrays.asList(SAMPLE_GROUP_LINK, SAMPLE_RANDOM_LINK));
+        assertNotNull(set);
+        assertEquals(1, set.size());
+        assertTrue(set.contains(SAMPLE_GROUP_LINK));
+
+        set = TenantLinksUtil.getProjectAndGroupLinks(
+                Arrays.asList(SAMPLE_PROJECT_LINK, SAMPLE_RANDOM_LINK));
+        assertNotNull(set);
+        assertEquals(1, set.size());
+        assertTrue(set.contains(SAMPLE_PROJECT_LINK));
+
+        set = TenantLinksUtil.getProjectAndGroupLinks(
+                Arrays.asList(SAMPLE_PROJECT_LINK, SAMPLE_GROUP_LINK, SAMPLE_USER_LINK,
+                        SAMPLE_TENANT_LINK, SAMPLE_RANDOM_LINK));
+        assertNotNull(set);
+        assertEquals(2, set.size());
+        assertTrue(set.contains(SAMPLE_PROJECT_LINK));
+        assertTrue(set.contains(SAMPLE_GROUP_LINK));
     }
 
     private void assertBooleanOutput(boolean expectedOutput, String functionName,

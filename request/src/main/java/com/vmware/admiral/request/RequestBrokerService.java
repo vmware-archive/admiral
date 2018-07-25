@@ -53,6 +53,7 @@ import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.RegistryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.admiral.common.util.TenantLinksUtil;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
@@ -1780,12 +1781,18 @@ public class RequestBrokerService extends
             return DeferredResult.completed(null);
         }
 
-        String link = null;
-        if (state.tenantLinks != null && !state.tenantLinks.isEmpty()) {
-            link = state.tenantLinks.get(0);
+        if (startOp.getAuthorizationContext() != null
+                && startOp.getAuthorizationContext().isSystemUser()) {
+            return DeferredResult.completed(null);
         }
 
-        String projectLink = link == null ? OperationUtil.extractProjectFromHeader(startOp) : link;
+        Set<String> projectLinks = TenantLinksUtil.getProjectAndGroupLinks(state.tenantLinks);
+        if (projectLinks.isEmpty()) {
+            String projectHeader = OperationUtil.extractProjectFromHeader(startOp);
+            if (projectHeader != null) {
+                projectLinks.add(projectHeader);
+            }
+        }
 
         Operation getSecurityContext = Operation.createGet(this, ManagementUriParts.AUTH_SESSION)
                 .setReferer(startOp.getUri());
@@ -1795,13 +1802,10 @@ public class RequestBrokerService extends
                     if (securityContext.roles.contains(AuthRole.CLOUD_ADMIN)) {
                         return DeferredResult.completed(null);
                     }
-                    ProjectEntry foundEntry = null;
-                    for (ProjectEntry entry : securityContext.projects) {
-                        if (entry.documentSelfLink.equalsIgnoreCase(projectLink)) {
-                            foundEntry = entry;
-                            break;
-                        }
-                    }
+                    ProjectEntry foundEntry = securityContext.projects.stream()
+                            .filter(entry -> projectLinks.contains(entry.documentSelfLink))
+                            .findFirst()
+                            .orElse(null);
                     if (foundEntry == null) {
                         return DeferredResult.failed(new IllegalAccessError("Principal does "
                                 + "not belong to selected project."));
@@ -1811,7 +1815,6 @@ public class RequestBrokerService extends
     }
 
     private DeferredResult<Void> isUserAuthorized(ProjectEntry entry, SecurityContext context) {
-
         if (context.isProjectAdmin(entry.documentSelfLink)
                 || context.isProjectMember(entry.documentSelfLink)) {
             return DeferredResult.completed(null);
@@ -1819,6 +1822,6 @@ public class RequestBrokerService extends
 
         return DeferredResult.failed(new IllegalAccessError("Project Viewer cannot request "
                 + "operations over resources."));
-
     }
+
 }

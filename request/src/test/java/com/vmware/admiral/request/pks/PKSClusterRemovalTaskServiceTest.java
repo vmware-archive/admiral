@@ -18,6 +18,7 @@ import static org.junit.Assert.assertNull;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_CLUSTER_NAME_PROP_NAME;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_LAST_ACTION_CREATE;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_LAST_ACTION_DELETE;
+import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_LAST_ACTION_UPDATE;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_MASTER_HOST_FIELD;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_MASTER_PORT_FIELD;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_PLAN_NAME_FIELD;
@@ -53,6 +54,9 @@ public class PKSClusterRemovalTaskServiceTest extends RequestBaseTest {
         f = PKSClusterRemovalTaskService.class
                 .getDeclaredField("POLL_PKS_ENDPOINT_INTERVAL_MICROS");
         setFinalStatic(f, 3_000_000);
+        f = PKSClusterResizeTaskService.class
+                .getDeclaredField("POLL_PKS_ENDPOINT_INTERVAL_MICROS");
+        setFinalStatic(f, 3_000_000);
 
         super.setUp();
 
@@ -84,6 +88,9 @@ public class PKSClusterRemovalTaskServiceTest extends RequestBaseTest {
         f = PKSClusterRemovalTaskService.class
                 .getDeclaredField("POLL_PKS_ENDPOINT_INTERVAL_MICROS");
         setFinalStatic(f, 60_000_000);
+        f = PKSClusterResizeTaskService.class
+                .getDeclaredField("POLL_PKS_ENDPOINT_INTERVAL_MICROS");
+        setFinalStatic(f, 60_000_000);
     }
 
     @Test
@@ -100,6 +107,20 @@ public class PKSClusterRemovalTaskServiceTest extends RequestBaseTest {
         assertEquals(request.resourceCount, request.resourceLinks.size());
 
         HashMap<String, String> map = new HashMap<>();
+        map.put(PKSConstants.PKS_ENDPOINT_PROP_NAME, "pks-endpoint-link");
+        RequestBrokerState resizeReq = TestRequestStateFactory.createPKSClusterRequestState(map);
+        resizeReq.tenantLinks = groupPlacementState.tenantLinks;
+        resizeReq.operation = RequestBrokerState.RESIZE_RESOURCE;
+        resizeReq.resourceLinks = request.resourceLinks;
+        resizeReq.customProperties = new HashMap<>();
+        resizeReq.customProperties.put(PKS_WORKER_INSTANCES_FIELD, "1");
+
+        MockPKSAdapterService.setLastActionState(PKS_LAST_ACTION_UPDATE);
+        MockPKSAdapterService.resetCounter();
+        resizeReq = startRequest(resizeReq);
+        waitForRequestToComplete(resizeReq);
+
+        map = new HashMap<>();
         map.put(PKSConstants.PKS_ENDPOINT_PROP_NAME, "pks-endpoint-link");
         RequestBrokerState removalReq = TestRequestStateFactory.createPKSClusterRequestState(map);
         removalReq.tenantLinks = groupPlacementState.tenantLinks;

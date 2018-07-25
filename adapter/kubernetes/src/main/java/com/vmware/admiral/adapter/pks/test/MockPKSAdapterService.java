@@ -17,6 +17,7 @@ import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_LAST_ACTION_DELETE
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_LAST_ACTION_STATE_FAILED;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_LAST_ACTION_STATE_IN_PROGRESS;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_LAST_ACTION_STATE_SUCCEEDED;
+import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_LAST_ACTION_UPDATE;
 import static com.vmware.admiral.adapter.pks.entities.PKSCluster.PARAMETER_MASTER_HOST;
 import static com.vmware.admiral.adapter.pks.entities.PKSCluster.PARAMETER_MASTER_PORT;
 
@@ -117,7 +118,9 @@ public class MockPKSAdapterService extends StatelessService {
                         op.fail(Operation.STATUS_CODE_NOT_FOUND, new Exception(pe), null);
                         return;
                     }
-                    c.lastActionState = PKS_LAST_ACTION_DELETE;
+                    c.lastAction = PKS_LAST_ACTION_DELETE;
+                } else if (PKS_LAST_ACTION_UPDATE.equals(lastActionState)) {
+                    c.lastAction = PKS_LAST_ACTION_UPDATE;
                 }
 
                 op.setBodyNoCloning(c).complete();
@@ -167,6 +170,16 @@ public class MockPKSAdapterService extends StatelessService {
             op.setBodyNoCloning(Arrays.asList(plan1, plan2)).complete();
             return;
         }
+
+        if (PKSOperationType.RESIZE_CLUSTER.id.equals(request.operationTypeId)) {
+            PKSCluster cluster = PKSClusterMapper.fromMap(request.customProperties);
+            cluster.lastAction = PKS_LAST_ACTION_UPDATE;
+            cluster.lastActionState = PKS_LAST_ACTION_STATE_SUCCEEDED;
+            cluster.uuid = "-";
+            op.setBodyNoCloning(cluster).complete();
+            return;
+        }
+
 
         op.fail(new IllegalArgumentException("operation not supported"));
     }

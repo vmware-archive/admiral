@@ -11,7 +11,11 @@
 
 package com.vmware.admiral.common.util;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class TenantLinksUtil {
 
@@ -57,6 +61,16 @@ public class TenantLinksUtil {
 
     public static boolean isNotUserLink(String link) {
         return !isUserLink(link);
+    }
+
+    public static Set<String> getProjectAndGroupLinks(Collection<String> tenantLinks) {
+        if (tenantLinks == null) {
+            return new HashSet<>();
+        }
+
+        return tenantLinks.stream()
+                .filter(link -> isProjectLink(link) || isGroupLink(link))
+                .collect(Collectors.toSet());
     }
 
 }
