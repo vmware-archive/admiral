@@ -17,11 +17,25 @@ import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_CLUSTER_QUERY_PARA
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_CLUSTER_UUID_PROP_NAME;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_ENDPOINT_PROP_NAME;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_ENDPOINT_QUERY_PARAM_NAME;
+import static com.vmware.admiral.common.SwaggerDocumentation.BASE_PATH;
+import static com.vmware.admiral.common.SwaggerDocumentation.LINE_BREAK;
+import static com.vmware.admiral.common.SwaggerDocumentation.PARAM_TYPE_QUERY;
+import static com.vmware.admiral.common.SwaggerDocumentation.Tags.PKS_CLUSTER_LIST_TAG;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.pks.PKSOperationType;
@@ -45,6 +59,8 @@ import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
  * Help service to retrieve existing Kubernetes clusters for a given PKS endpoint.
  * A flag indicates whether each cluster has been added to Admiral.
  */
+@Api(tags = {PKS_CLUSTER_LIST_TAG})
+@Path(PKSClusterListService.SELF_LINK)
 public class PKSClusterListService extends StatelessService {
 
     public static final String SELF_LINK = ManagementUriParts.PKS_CLUSTERS;
@@ -60,6 +76,23 @@ public class PKSClusterListService extends StatelessService {
     }
 
     @Override
+    @GET
+    @Path(BASE_PATH)
+    @ApiOperation(
+            value = "List one or all PKS clusters",
+            notes = "Retrieves all PKS clusters if no endpoint link is supplied." + LINE_BREAK + LINE_BREAK +
+                    "Retrieves a single PKS cluster when an enpoint link is supplied.",
+            response = PKSCluster.class,
+            responseContainer = "List")
+    @ApiResponses({
+            @ApiResponse(code = Operation.STATUS_CODE_OK, message = ""),
+            @ApiResponse(code = Operation.STATUS_CODE_NOT_FOUND, message = "")})
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = PKS_ENDPOINT_QUERY_PARAM_NAME,
+                    value = "The endpoint link from which to retrieve the PKS cluster/s.", required = true,
+                    paramType = PARAM_TYPE_QUERY),
+            @ApiImplicitParam(name = PKS_CLUSTER_QUERY_PARAM_NAME, value = "The name of the cluster to retrieve. " +
+                    "If supplied, retrieves only the specified cluster.", paramType = PARAM_TYPE_QUERY)})
     public void handleGet(Operation op) {
         try {
             Map<String, String> queryParams = UriUtils.parseUriQueryParams(op.getUri());

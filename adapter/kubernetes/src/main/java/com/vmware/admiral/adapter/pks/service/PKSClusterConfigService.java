@@ -19,6 +19,10 @@ import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_ENDPOINT_PROP_NAME
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_MASTER_HOST_FIELD;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_MASTER_NODES_IPS_PROP_NAME;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_MASTER_PORT_FIELD;
+import static com.vmware.admiral.common.SwaggerDocumentation.BASE_PATH;
+import static com.vmware.admiral.common.SwaggerDocumentation.LINE_BREAK;
+import static com.vmware.admiral.common.SwaggerDocumentation.PARAM_TYPE_BODY;
+import static com.vmware.admiral.common.SwaggerDocumentation.Tags.PKS_CLUSTER_CONFIG_TAG;
 import static com.vmware.admiral.common.util.OperationUtil.PROJECT_ADMIRAL_HEADER;
 import static com.vmware.admiral.compute.ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME;
 import static com.vmware.admiral.compute.ContainerHostService.CONTAINER_HOST_TYPE_PROP_NAME;
@@ -30,6 +34,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
+
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -59,18 +75,31 @@ import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
+@Api(tags = {PKS_CLUSTER_CONFIG_TAG})
+@Path(PKSClusterConfigService.SELF_LINK)
 public class PKSClusterConfigService extends StatelessService {
 
     public static final String SELF_LINK = ManagementUriParts.PKS_CLUSTERS_CONFIG;
 
+    @ApiModel
     public static class AddClusterRequest extends MultiTenantDocument {
 
         public static final String FIELD_NAME_ENDPOINT_LINK = "endpointLink";
         public static final String FIELD_NAME_CLUSTER = "cluster";
 
+        @ApiModelProperty(
+                value = "The link of the existing PKS cluster.")
         public String existingClusterLink;
+        @ApiModelProperty(
+                value = "The link of the endpoint.",
+                required = true)
         public String endpointLink;
+        @ApiModelProperty(
+                value = "The PKS cluster, returned from the PKS API.",
+                required = true)
         public PKSCluster cluster;
+        @ApiModelProperty(
+                value = "Indicates whether to connect to the cluster by master IP or hostname.")
         public boolean preferMasterIP;
 
         public void validate() {
@@ -118,6 +147,18 @@ public class PKSClusterConfigService extends StatelessService {
     }
 
     @Override
+    @POST
+    @Path(BASE_PATH)
+    @ApiOperation(
+            value = "Add a PKS host to either a new PKS cluster or to an existing one.",
+            notes = "Adds a PKS host to an existing cluster when existing PKS cluster endpoint link is " +
+                    "supplied in the body." + LINE_BREAK + LINE_BREAK + "Adds a new PKS host to a new cluster " +
+                    "when the cluster information is supplied in the body")
+    @ApiResponses({
+            @ApiResponse(code = Operation.STATUS_CODE_OK, message = "PKS host successfully added.")})
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "Add Cluster Request", value = "The type of add cluster request.", required = true,
+                    paramType = PARAM_TYPE_BODY, dataType = "AddClusterRequest")})
     public void handlePost(Operation op) {
         try {
             AddClusterRequest request = op.getBody(AddClusterRequest.class);

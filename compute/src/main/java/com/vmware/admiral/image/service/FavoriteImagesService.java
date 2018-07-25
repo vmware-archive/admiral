@@ -11,6 +11,10 @@
 
 package com.vmware.admiral.image.service;
 
+import static com.vmware.admiral.common.SwaggerDocumentation.INSTANCE_PATH;
+import static com.vmware.admiral.common.SwaggerDocumentation.PARAM_TYPE_PATH;
+import static com.vmware.admiral.common.SwaggerDocumentation.Tags.FAVORITE_IMAGES_TAG;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -19,16 +23,31 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.logging.Level;
 
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+
 import com.google.gson.JsonSyntaxException;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiModelProperty;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.FileUtil;
 import com.vmware.admiral.service.common.MultiTenantDocument;
+import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
+@Api(tags = {FAVORITE_IMAGES_TAG})
+@Path(FavoriteImagesService.FACTORY_LINK)
 public class FavoriteImagesService extends StatefulService {
     public static final String FACTORY_LINK = ManagementUriParts.FAVORITE_IMAGES;
     private static final String POPULAR_IMAGES_FILE = "/popular-images.json";
@@ -75,14 +94,26 @@ public class FavoriteImagesService extends StatefulService {
         return images;
     }
 
+//    @ApiModel
     public static class FavoriteImage extends MultiTenantDocument {
 
         public static final String FIELD_NAME_NAME = "name";
         public static final String FIELD_NAME_DESCRIPTION = "description";
         public static final String FIELD_NAME_REGISTRY = "registry";
 
+        @ApiModelProperty(
+                value = "The name of the favorite image.",
+                example = "libarary/nginx",
+                required = true)
         public String name;
+        @ApiModelProperty(
+                value = "A description of the favorite image.",
+                example = "Official build of Nginx.")
         public String description;
+        @ApiModelProperty(
+                value = "The registry to which the favorite image belongs.",
+                example = "https://registry.hub.docker.com",
+                required = true)
         public String registry;
 
         @Override
@@ -106,5 +137,37 @@ public class FavoriteImagesService extends StatefulService {
                     i.registry.equals(this.registry) &&
                     tenantLinkClause;
         }
+    }
+
+    @Override
+    @GET
+    @Path(INSTANCE_PATH)
+    @ApiOperation(
+            value = "Get specific favorite image.",
+            notes = "Retrieve a specific favorite image instance based on the provided id.",
+            response = FavoriteImage.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = Operation.STATUS_CODE_OK, message = "Successfully retrieved image."),
+            @ApiResponse(code = Operation.STATUS_CODE_NOT_FOUND, message = "Image with specified id not in favorites.")})
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "id", value = "The id of the image", required = true, dataType = "string",
+                    paramType = PARAM_TYPE_PATH)})
+    public void handleGet(Operation get) {
+        super.handleGet(get);
+    }
+
+    @Override
+    @DELETE
+    @Path(INSTANCE_PATH)
+    @ApiOperation(
+            value = "Remove specific image from favorites.",
+            notes = "Removes a specific image from favorites based on the provided id.")
+    @ApiResponses(value = {
+            @ApiResponse(code = Operation.STATUS_CODE_OK, message = "Successfully removed image from favorites.")})
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "id", value = "The id of the image", required = true, dataType = "string",
+                    paramType = PARAM_TYPE_PATH)})
+    public void handleDelete(Operation delete) {
+        super.handleDelete(delete);
     }
 }

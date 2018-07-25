@@ -43,6 +43,7 @@ import com.vmware.admiral.host.interceptor.InUsePlacementZoneInterceptor;
 import com.vmware.admiral.host.interceptor.OperationInterceptorRegistry;
 import com.vmware.admiral.host.interceptor.ProjectInterceptor;
 import com.vmware.admiral.host.interceptor.SchedulerPlacementZoneInterceptor;
+import com.vmware.admiral.host.swagger.SwaggerDocumentationService;
 import com.vmware.admiral.request.ContainerLoadBalancerBootstrapService;
 import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.admiral.service.common.ConfigurationService;
@@ -171,6 +172,7 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
         startClosureServices(this, startMockHostAdapterInstance);
         startLoadBalancerServices(this);
         startSwaggerService();
+        startCustomSwaggerService();
 
         log(Level.INFO, "**** Management host started. ****");
 
@@ -290,6 +292,7 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
      * Start Swagger service.
      */
     protected void startSwaggerService() {
+
         this.log(Level.INFO, "Swagger service starting ...");
 
         // Serve Swagger 2.0 compatible API description
@@ -331,8 +334,15 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
 
         // Serve swagger on default uri
         this.startService(swagger);
+
         this.log(Level.INFO, "Swagger service started. Checkout Swagger UI at: %s%s/ui",
                 this.getUri(), ServiceUriPaths.SWAGGER);
+
+    }
+
+    protected void startCustomSwaggerService() {
+        SwaggerDocumentationService newSwagger = new SwaggerDocumentationService();
+        this.startService(newSwagger);
     }
 
     private void startExtensibilityRegistry() {

@@ -11,8 +11,24 @@
 
 package com.vmware.admiral.image.service;
 
+import static com.vmware.admiral.common.SwaggerDocumentation.BASE_PATH;
+import static com.vmware.admiral.common.SwaggerDocumentation.PARAM_TYPE_BODY;
+import static com.vmware.admiral.common.SwaggerDocumentation.PARAM_TYPE_QUERY;
+import static com.vmware.admiral.common.SwaggerDocumentation.Tags.FAVORITE_IMAGES_TAG;
+
 import java.util.LinkedList;
 import java.util.List;
+
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
@@ -30,6 +46,8 @@ import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 
+@Api(tags = {FAVORITE_IMAGES_TAG})
+@Path(FavoriteImageFactoryService.SELF_LINK)
 public class FavoriteImageFactoryService extends AbstractSecuredFactoryService {
     public static final String SELF_LINK = ManagementUriParts.FAVORITE_IMAGES;
 
@@ -53,12 +71,36 @@ public class FavoriteImageFactoryService extends AbstractSecuredFactoryService {
     }
 
     @Override
+    @GET
+    @Path(BASE_PATH)
+    @ApiOperation(
+            value = "Get all favorite images.",
+            notes = "Retrieves all favorite images from the database. Images are project global, " +
+                    "which means that all projects have the same favorites")
+    @ApiResponses({@ApiResponse(code = Operation.STATUS_CODE_OK,
+            message = "Successfully retrieved all favorite images.")})
+    @ApiImplicitParams({@ApiImplicitParam(name = "expand", value = "Expand option to view details of the instances",
+                    required = false, dataType = "boolean", paramType = PARAM_TYPE_QUERY)})
     public void handleGet(Operation get) {
         OperationUtil.transformProjectHeaderToFilterQuery(get);
         super.handleGet(get);
     }
 
     @Override
+    @POST
+    @Path(BASE_PATH)
+    @ApiOperation(
+            value = "Create a new favorite image.",
+            notes = "Adds the specified image to favorites. " +
+                    "An image which already exists as favorite will not be added. " +
+                    "An image whose registry is either disabled or not present will not be added.")
+    @ApiResponses(value = {
+            @ApiResponse(code = Operation.STATUS_CODE_OK, message = "Image successfully added to favorites."),
+            @ApiResponse(code = Operation.STATUS_CODE_NOT_MODIFIED, message = "Image already exists as favorite."),
+            @ApiResponse(code = Operation.STATUS_CODE_BAD_REQUEST, message = "Image registry non existent or disabled.")})
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "Container Image", value = "The container image to add to favorites.",
+                    paramType = PARAM_TYPE_BODY, dataType = "FavoriteImage", dataTypeClass = FavoriteImage.class)})
     public void handlePost(Operation op) {
         /**
          * If it is an internal xenon request, proceed with the operation.

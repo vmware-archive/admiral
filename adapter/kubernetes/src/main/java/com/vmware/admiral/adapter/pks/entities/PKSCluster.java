@@ -15,6 +15,10 @@ import java.util.Map;
 
 import com.google.gson.annotations.SerializedName;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+
+@ApiModel(description = "Returned from the PKS API.")
 public class PKSCluster {
 
     public static final String PARAMETER_MASTER_HOST = "kubernetes_master_host";
@@ -24,27 +28,43 @@ public class PKSCluster {
     public static final String PARAMETER_AUTHORIZATION_MODE = "authorization_mode";
 
     @SerializedName("name")
+    @ApiModelProperty(
+            value = "The name of the PKS Cluster.")
     public String name;
 
     @SerializedName("uuid")
     public String uuid;
 
     @SerializedName("plan_name")
+    @ApiModelProperty(
+            value = "The name of the plan, which defines the set of worker and master nodes.")
     public String planName;
 
     @SerializedName("last_action")
+    @ApiModelProperty(
+            value = "The last action performed over the cluster.",
+            example = "CREATE")
     public String lastAction;
 
     @SerializedName("last_action_state")
+    @ApiModelProperty(
+            value = "The state of the last action performed over the cluster, which is either succeeded, " +
+                    "failed or in progress.")
     public String lastActionState;
 
     @SerializedName("last_action_description")
+    @ApiModelProperty(
+            value = "Additional details for the last action performed over the cluster. (e.g. reason for failure)")
     public String lastActionDescription;
 
     @SerializedName("kubernetes_master_ips")
+    @ApiModelProperty(
+            value = "List of the master node IPs.")
     public String[] masterIPs;
 
     @SerializedName("parameters")
+    @ApiModelProperty(
+            value = "Contains the master host name, master port and other cluster information.")
     public Map<String, Object> parameters;
 
 }

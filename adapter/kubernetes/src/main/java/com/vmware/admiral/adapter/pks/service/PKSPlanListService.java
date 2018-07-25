@@ -12,8 +12,21 @@
 package com.vmware.admiral.adapter.pks.service;
 
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_ENDPOINT_QUERY_PARAM_NAME;
+import static com.vmware.admiral.common.SwaggerDocumentation.BASE_PATH;
+import static com.vmware.admiral.common.SwaggerDocumentation.PARAM_TYPE_QUERY;
+import static com.vmware.admiral.common.SwaggerDocumentation.Tags.PKS_PLAN_LIST_TAG;
 
 import java.util.Map;
+
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.pks.PKSOperationType;
@@ -30,6 +43,8 @@ import com.vmware.xenon.common.Utils;
  * Help service to retrieve existing Kubernetes clusters for a given PKS endpoint.
  * A flag indicates whether each cluster has been added to Admiral.
  */
+@Api(tags = {PKS_PLAN_LIST_TAG})
+@Path(PKSPlanListService.SELF_LINK)
 public class PKSPlanListService extends StatelessService {
 
     public static final String SELF_LINK = ManagementUriParts.PKS_PLANS;
@@ -45,6 +60,18 @@ public class PKSPlanListService extends StatelessService {
     }
 
     @Override
+    @GET
+    @Path(BASE_PATH)
+    @ApiOperation(
+            value = "List all endpoint plans.",
+            notes = "Retrueves all plans for the specified endpoint.",
+            response = PKSPlan.class,
+            responseContainer = "List")
+    @ApiResponses({
+            @ApiResponse(code = Operation.STATUS_CODE_OK, message = "Successfully retrieved all endpoint plans.")})
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = PKS_ENDPOINT_QUERY_PARAM_NAME, value = "The self link to the endpoint state.",
+                    paramType = PARAM_TYPE_QUERY, required = true)})
     public void handleGet(Operation op) {
         try {
             Map<String, String> queryParams = UriUtils.parseUriQueryParams(op.getUri());

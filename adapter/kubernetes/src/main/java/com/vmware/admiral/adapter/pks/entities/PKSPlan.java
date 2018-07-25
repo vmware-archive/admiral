@@ -12,19 +12,30 @@
 package com.vmware.admiral.adapter.pks.entities;
 
 import com.google.gson.annotations.SerializedName;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 
+@ApiModel
 public class PKSPlan {
 
     @SerializedName("id")
+    @ApiModelProperty(
+            value = "The id of the plan.")
     public String id;
 
     @SerializedName("name")
+    @ApiModelProperty(
+            value = "The name of the plan.")
     public String name;
 
     @SerializedName("description")
+    @ApiModelProperty(
+            value = "The description of the plan")
     public String description;
 
     @SerializedName("worker_instances")
+    @ApiModelProperty(
+            value = "The number of worker nodes")
     public String workerInstances;
 
 }
