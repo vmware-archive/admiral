@@ -395,7 +395,9 @@
         "nameFieldRequired": "Cluster name is required.",
         "fieldTitlePlan": "Plan",
         "fieldTitleMasterHostName": "Master Host Name",
+        "masterHostNameFieldRequired": "Master host name is required",
         "fieldTitleMasterHostPort": "Master Host Port",
+        "masterHostPortFieldRequired": "Master host port is required",
         "fieldTitleNumberNodes": "Worker Nodes",
         "workerFieldRequired": "Worker field is required. Only integer values bigger than 0 can be entered."
       }
