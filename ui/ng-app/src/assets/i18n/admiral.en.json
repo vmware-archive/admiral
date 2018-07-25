@@ -527,7 +527,11 @@
     "columnDetails": "Details",
     "count": "Showing latest {{number}} requests",
     "error": "Error",
-    "eventLogLink": "Go to event logs",
+    "eventLogLink": "Go to event log",
+    "containerLink": "Go to container",
+    "compositeComponentLink": "Go to application",
+    "containerNetworkLink": "Go to network",
+    "containerVolumeLink": "Go to volume",
     "deleteRequest": {
       "title": "Remove request",
       "description": "Confirm the removal of the selected requests. The operation cannot be undone."

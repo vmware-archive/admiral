@@ -36,7 +36,7 @@
           <div class="request-status-actions" v-if="isEnabled(model)">
             <div v-if="model.errorMessage" class="btn"
                  v-on:click="redirect($event)" :title="i18n('app.request.actions.details.show')"><i class="fa fa-warning"></i></div>
-            <div v-else class="btn"
+            <div v-if="!model.errorMessage && isRedirectionAllowed()" class="btn"
                  v-on:click="redirect($event)" :title="i18n('app.request.actions.open')"><i class="fa fa-eye"></i></div>
             <div v-if="isRequestGraphEnabled" class="btn"
                  v-on:click="openRequestGraph($event)" :title="i18n('app.request.actions.details.show')"><i class="fa fa-bug"></i></div>

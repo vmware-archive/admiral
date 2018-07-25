@@ -18,6 +18,7 @@ import { TableViewComponent } from "../table-view/table-view.component";
 import { Constants } from "../../utils/constants";
 import { Links } from "../../utils/links";
 import { CancelablePromise, Utils } from "../../utils/utils";
+import { RoutesRestriction } from "../../utils/routes-restriction";
 
 import * as I18n from 'i18next';
 
@@ -107,6 +108,74 @@ export class RequestsComponent {
             number: this.requests.length,
             interpolation: { escapeValue: false }
         } as I18n.TranslationOptions);
+    }
+
+    getDocumentId(request: any) {
+        if(!request || !request.resourceLinks) {
+            return;
+        }
+        //redirects to the last one in order to be consistent with the old ui
+        return Utils.getDocumentId(request.resourceLinks[request.resourceLinks.length - 1]);
+    }
+
+    deploymentsRouteRestriction(){
+        return RoutesRestriction.DEPLOYMENTS;
+    }
+
+    isContainer(request: any) {
+        if (!request || !request.resourceLinks) {
+            return false;
+        }
+
+        return request.resourceLinks.some(resourceLink => resourceLink.indexOf(Links.CONTAINERS) !== -1);
+    }
+
+    isCompositeComponent(request: any) {
+        if (!request || !request.resourceLinks) {
+            return false;
+        }
+
+        return request.resourceLinks.some(resourceLink => resourceLink.indexOf(Links.COMPOSITE_COMPONENTS) !== -1);
+    }
+
+    isContainerNetwork(request: any) {
+        if (!request || !request.resourceLinks) {
+            return false;
+        }
+
+        return request.resourceLinks.some(resourceLink => resourceLink.indexOf(Links.CONTAINER_NETWORKS) !== -1);
+    }
+
+    isContainerVolume(request: any) {
+        if (!request || !request.resourceLinks) {
+            return false;
+        }
+
+        return request.resourceLinks.some(resourceLink => resourceLink.indexOf(Links.CONTAINER_VOLUMES) !== -1);
+    }
+
+    canNavigateTo(direction: string, request: any) {
+        if (request.eventLogLink || this.isRunning(request)) {
+            return false;
+        }
+
+        switch (direction) {
+            case Constants.recentActivities.requests.navigation.container:
+                return this.isContainer(request);
+            case Constants.recentActivities.requests.navigation.compositeComponent:
+                return this.isCompositeComponent(request);
+            case Constants.recentActivities.requests.navigation.network:
+                return this.isContainerNetwork(request);
+            case Constants.recentActivities.requests.navigation.volume:
+                return this.isContainerVolume(request);
+            default:
+                return false;
+        }
+    }
+
+    deploymentsRouterLink(deploymentsSubTab: string, request: string) {
+        let documentId = this.getDocumentId(request);
+        return `../${deploymentsSubTab}?$occurrence=any&documentId=${documentId}`;
     }
 
     private listRequests(showLoadingIndicator?: boolean) {

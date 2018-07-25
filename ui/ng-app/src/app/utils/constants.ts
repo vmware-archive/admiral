@@ -62,7 +62,13 @@ export const Constants = {
             FAILED: "FAILED",
             CANCELLED: "CANCELLED",
             CREATED: "CREATED",
-            STARTED: "STARTED"
+            STARTED: "STARTED",
+            navigation: {
+                compositeComponent: "composite-component",
+                container: "container",
+                network: "network",
+                volume: "volume"
+            }
         },
         eventLogs: {
             INFO: 'INFO',

@@ -125,10 +125,14 @@ var RequestsListVueComponent = Vue.extend({
           }
         },
 
+        isRedirectionAllowed() {
+            return utils.actionAllowed(window.routesRestrictions.DEPLOYMENTS);
+        },
+
         redirect($e) {
           $e.preventDefault();
 
-          if (this.isRequestFinished(this.model)) {
+          if (this.isRequestFinished(this.model) && this.isRedirectionAllowed()) {
 
             let isHostsRequest = false;
             let hostsQuery;

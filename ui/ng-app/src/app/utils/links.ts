@@ -24,6 +24,8 @@ export class Links {
   public static CLUSTERS = Links.RESOURCES + '/clusters';
   public static CONTAINERS = Links.RESOURCES + '/containers';
   public static CONTAINER_DESCRIPTIONS = Links.RESOURCES + '/container-descriptions';
+  public static CONTAINER_NETWORKS = Links.RESOURCES + '/container-networks';
+  public static CONTAINER_VOLUMES =  Links.RESOURCES + '/container-volumes';
   public static GROUPS = '/groups';
   public static PROJECTS = '/projects';
   public static EVENT_LOGS = Links.RESOURCES + '/event-logs';

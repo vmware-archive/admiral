@@ -62,6 +62,22 @@
                     <clr-dg-cell>
                         <a *ngIf="request.eventLogLink" routerLink="../event-logs/{{getEventLogId(request)}}"
                            routerLinkActive="active">{{ "requests.eventLogLink" | i18n }}</a>
+                        <a *ngIf="canNavigateTo('container',request)"
+                           allowNavigation [roles]="deploymentsRouteRestriction()"
+                           routerLink="{{deploymentsRouterLink('containers',request)}}"
+                           routerLinkActive="active">{{ "requests.containerLink" | i18n }}</a>
+                        <a *ngIf="canNavigateTo('composite-component',request)"
+                           allowNavigation [roles]="deploymentsRouteRestriction()"
+                           routerLink="{{deploymentsRouterLink('applications',request)}}"
+                           routerLinkActive="active">{{ "requests.compositeComponentLink" | i18n }}</a>
+                        <a *ngIf="canNavigateTo('network',request)"
+                           allowNavigation [roles]="deploymentsRouteRestriction()"
+                           routerLink="{{deploymentsRouterLink('networks',request)}}"
+                           routerLinkActive="active">{{ "requests.containerNetworkLink" | i18n }}</a>
+                        <a *ngIf="canNavigateTo('volume',request)"
+                           allowNavigation [roles]="deploymentsRouteRestriction()"
+                           routerLink="{{deploymentsRouterLink('volumes',request)}}"
+                           routerLinkActive="active">{{ "requests.containerVolumeLink" | i18n }}</a>
                     </clr-dg-cell>
                 </clr-dg-row>
 
