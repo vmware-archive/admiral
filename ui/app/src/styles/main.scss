@@ -305,13 +305,11 @@ textarea {
     margin-right: 0;
   }
   .btn:not(.dropdown-toggle) {
-    border-right: none;
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
   }
   > .btn.dropdown-toggle {
     padding: 0 10px;
-    border-left-style: dotted;
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
     // Fixes Bootstraps hover of the other part of the button z-index
