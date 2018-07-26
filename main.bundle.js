@@ -1,6 +1,6 @@
-webpackJsonp([1,4],{
+webpackJsonp([1],{
 
-/***/ 144:
+/***/ "./src async recursive":
 /***/ (function(module, exports) {
 
 function webpackEmptyContext(req) {
@@ -9,31 +9,81 @@ function webpackEmptyContext(req) {
 webpackEmptyContext.keys = function() { return []; };
 webpackEmptyContext.resolve = webpackEmptyContext;
 module.exports = webpackEmptyContext;
-webpackEmptyContext.id = 144;
-
+webpackEmptyContext.id = "./src async recursive";
 
 /***/ }),
 
-/***/ 145:
+/***/ "./src/app/app.component.html":
+/***/ (function(module, exports) {
+
+module.exports = "<clr-main-container>\n    <header class=\"header header-6\">\n        <div class=\"branding\">\n            <a href=\"https://vmware.github.io/\" class=\"nav-link\">\n                <span class=\"clr-icon vmware-logo\"></span>\n                <span class=\"title\">Open Source Program Office</span>\n            </a>\n        </div>\n    </header>\n    <div class=\"content-container\">\n        <div id=\"content-area\" class=\"content-area\" hash-listener #scrollable>\n            <div class=\"hero\">\n                <div class=\"hero-image\"><img src=\"images/admiral.png\" alt=\"\"></div>\n                <h3>Highly Scalable Container Management Platform</h3>\n                <p><a href=\"https://github.com/vmware/admiral\" class=\"btn btn-primary\"><i class=\"icon icon-github\"></i> Fork Admiral&trade;</a></p>\n            </div>\n            <div id=\"overview\" class=\"section\">\n                <h2>What is Admiral&trade;</h2>\n\n                <p>Admiral&trade; is a highly scalable and very lightweight Container Management platform for deploying and managing container based applications. It is designed to have a small footprint and boot extremely quickly. Admiral&trade; is intended to provide automated deployment and lifecycle management of containers.</p>\n\n                <br>\n\n                <ul>\n                    <li><strong>Rule-based resource management</strong> - Setup your deployment preferences to let Admiral&trade; manage container placement.</li>\n                    <li><strong>Live state updates</strong> - Provides a live view of your system.</li>\n                    <li><strong>Efficient multi-container template management</strong> - Enables logical multi-container application deployments.</li>\n                </ul>\n            </div>\n\n            <div id=\"gettingAdmiral\" class=\"section\">\n                <h2>Getting Admiral&trade;</h2>\n\n                <p>Open source license information may be found in Admiral&trade; <a href=\"https://github.com/vmware/admiral/blob/master/LICENSE\">Open Source License</a> file.</p>\n                <p>Admiral&trade; source code is available on the VMware <a href=\"https://github.com/vmware/admiral\">Admiral&trade; GitHub source repository</a>. You can build your own Admiral&trade; jar by cloning the repo and following the instructions in <a href=\"https://github.com/vmware/admiral/blob/master/README.md\">README.md</a>.</p>\n                <p>Admiral&trade; container image is available on <a href=\"https://hub.docker.com/r/vmware/admiral/\">Docker Hub</a>. Run:</p>\n\n                <pre><code clr-code-highlight=\"language-bash\">docker run -d -p 8282:8282 --name admiral vmware/admiral</code></pre>\n                <pre><code clr-code-highlight=\"language-bash\">Access at: http://&lt;docker_host_ip&gt;:8282 ... --> Configure Docker Host</code></pre>\n            </div>\n\n            <div id=\"gettingStarted\" class=\"section\">\n                <h2>Getting Started</h2>\n                <p>We've provided a guide to help get you started:</p>\n\n                <a href=\"https://github.com/vmware/admiral/wiki/Developer-Guide\" class=\"btn btn-outline\">Developer guide for Admiral™</a>\n                <a href=\"https://github.com/vmware/admiral/wiki/User-Guide\" class=\"btn btn-outline\">User guide for Admiral™</a>\n            </div>\n\n            <div id=\"support\" class=\"section\">\n                <h2>Support</h2>\n                <p>Admiral&trade; is released as open source software and, presently, provides community support through our GitHub project page. If you encounter an issue or have a question, feel free to reach out via <a href=\"https://github.com/vmware/admiral/issues\">GitHub issues for Admiral&trade;</a>.</p>\n            </div>\n            <div id=\"contributors\" class=\"section\">\n                <h2>Contributors</h2>\n\n                <br>\n\n                <ul class=\"list-unstyled row\">\n                    <li *ngFor=\"let contributor of contributors\"><a [href]=\"contributor.html_url\"><img [src]=\"contributor.avatar_url\" alt=\"\" class=\"contributor\"></a></li>\n                </ul>\n            </div>\n\n            <div id=\"contributing\" class=\"section\">\n                <h2>Contributing</h2>\n\n                <p>You are invited to contribute new features, fixes, or updates, large or small; we are always thrilled to receive <a href=\"https://help.github.com/articles/creating-a-pull-request\">pull requests</a>, and do our best to process them as fast as we can. If you wish to contribute code, you should sign <a href=\"https://vmware.github.io/admiral/files/vmware_cla.pdf\">Contributor License Agreement</a> and return a copy to <a href=\"mailto:osscontributions@vmware.com\">osscontributions@vmware.com</a> before we can merge your contribution. For any questions about the CLA process, please refer to our <a href=\"https://cla.vmware.com/faq\">FAQ</a>.</p>\n\n                <p>Before you start to code, we recommend discussing your plans through a <a href=\"https://github.com/vmware/admiral/issues\">GitHub issue</a> or discuss it first with the official project maintainers via the <a href=\"https://gitter.im/project-admiral/Lobby\">gitter.im chat</a>, especially for more ambitious contributions. This gives other contributors a chance to point you in the right direction, give you feedback on your design, and help you find out if someone else is working on the same thing.</p>\n\n                <p>You can also join our Google groups at <a href=\"https://groups.google.com/forum/#%21forum/project-admiral\">project-admiral</a></p>\n            </div>\n\n            <div id=\"license\" class=\"section\">\n                <h2>License</h2>\n\n                <p>Admiral&trade; is licensed under Apache License Version 2.0 as documented in the <a href=\"https://github.com/vmware/admiral/blob/master/LICENSE\">open source license file</a> accompanying the Admiral&trade; distribution.</p>\n            </div>\n        </div>\n        <nav class=\"sidenav\" [clr-nav-level]=\"2\">\n            <section class=\"sidenav-content\">\n                <section class=\"nav-group\" [scrollspy]=\"scrollable\">\n                    <label><a class=\"nav-link active\" routerLink=\".\" routerLinkActive=\"active\" fragment=\"overview\">Overview</a></label>\n                    <label class=\"bump-down\"><a class=\"nav-link\" routerLink=\".\" fragment=\"gettingAdmiral\">Getting Admiral&trade;</a></label>\n                    <label class=\"bump-down\"><a class=\"nav-link\" routerLink=\".\" fragment=\"gettingStarted\">Getting Started</a></label>\n                    <label class=\"bump-down\"><a class=\"nav-link\" routerLink=\".\" fragment=\"support\">Support</a></label>\n                    <label class=\"bump-down\"><a class=\"nav-link\" routerLink=\".\" fragment=\"contributors\">Contributors</a></label>\n                    <label class=\"bump-down\"><a class=\"nav-link\" routerLink=\".\" fragment=\"contributing\">Contributing</a></label>\n                    <label class=\"bump-down\"><a class=\"nav-link\" routerLink=\".\" fragment=\"license\">License</a></label>\n                </section>\n            </section>\n        </nav>\n    </div>\n</clr-main-container>\n"
+
+/***/ }),
+
+/***/ "./src/app/app.component.scss":
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__("./node_modules/css-loader/lib/css-base.js")(false);
+// imports
+
+
+// module
+exports.push([module.i, ".clr-icon.vmware-logo {\n  background: url(/admiral/images/vmware.svg) no-repeat left 9px;\n  width: 108px; }\n\n.hero {\n  background-color: #ddd;\n  left: -24px;\n  padding-bottom: 2em;\n  padding-top: 2em;\n  overflow-x: hidden;\n  position: relative;\n  text-align: center;\n  top: -24px; }\n  .hero .btn-custom {\n    display: inline-block;\n    text-align: center;\n    margin: auto; }\n\n.content-area {\n  overflow-x: hidden; }\n\n.hero-image img {\n  max-width: 360px; }\n\n.icon {\n  display: inline-block;\n  height: 32px;\n  vertical-align: middle;\n  width: 32px; }\n  .icon.icon-github {\n    background: url(/admiral/images/github_icon.svg) no-repeat left -2px; }\n\n.nav-group label {\n  display: block;\n  margin-bottom: 1em; }\n\n.sidenav .nav-link {\n  padding: 3px 6px; }\n  .sidenav .nav-link:hover {\n    background: #eee; }\n  .sidenav .nav-link.active {\n    background: #d9e4ea;\n    color: #000; }\n\n.section {\n  padding: .5em 0; }\n\n.contributor {\n  border-radius: 50%;\n  border: 1px solid #ccc;\n  margin-bottom: 1.5em;\n  margin-right: 1em;\n  max-width: 64px;\n  text-decoration: none; }\n\n@media (min-width: 320px) {\n  .title {\n    display: none; }\n  .hero {\n    width: 100vw; }\n  #license {\n    padding-bottom: 20vh; } }\n\n@media (min-width: 768px) {\n  .title {\n    display: block; }\n  .hero {\n    width: 110%; }\n  #license {\n    padding-bottom: 78vh; } }\n\n.row:after {\n  clear: both;\n  content: \"\";\n  display: table; }\n", ""]);
+
+// exports
+
+
+/*** EXPORTS FROM exports-loader ***/
+module.exports = module.exports.toString();
+
+/***/ }),
+
+/***/ "./src/app/app.component.ts":
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-__webpack_require__(164);
-var platform_browser_dynamic_1 = __webpack_require__(159);
-var core_1 = __webpack_require__(9);
-var environment_1 = __webpack_require__(163);
-var _1 = __webpack_require__(162);
-if (environment_1.environment.production) {
-    core_1.enableProdMode();
-}
-platform_browser_dynamic_1.platformBrowserDynamic().bootstrapModule(_1.AppModule);
-//# sourceMappingURL=/Users/mborisov/Documents/MyData/Repos/gh-page-template/admiral/src/src/src/main.js.map
+var core_1 = __webpack_require__("./node_modules/@angular/core/@angular/core.es5.js");
+var contributors_service_1 = __webpack_require__("./src/services/contributors.service.ts");
+var AppComponent = (function () {
+    function AppComponent(contributorSvc) {
+        this.contributorSvc = contributorSvc;
+        this.contributors = [];
+    }
+    AppComponent.prototype.ngOnInit = function () {
+        var _this = this;
+        this.contributorSvc.getContributors().subscribe(function (results) {
+            _this.contributors = results;
+            // console.log("Contribs: ", results);
+        });
+    };
+    return AppComponent;
+}());
+AppComponent = __decorate([
+    core_1.Component({
+        selector: 'my-app',
+        template: __webpack_require__("./src/app/app.component.html"),
+        styles: [__webpack_require__("./src/app/app.component.scss")]
+    }),
+    __metadata("design:paramtypes", [typeof (_a = typeof contributors_service_1.ContributorService !== "undefined" && contributors_service_1.ContributorService) === "function" && _a || Object])
+], AppComponent);
+exports.AppComponent = AppComponent;
+var _a;
+//# sourceMappingURL=/Users/druk/ID&D Assets/Open Source Software/admiral/src/src/src/app/app.component.js.map
 
 /***/ }),
 
-/***/ 160:
+/***/ "./src/app/app.module.ts":
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -45,15 +95,15 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var platform_browser_1 = __webpack_require__(33);
-var core_1 = __webpack_require__(9);
-var forms_1 = __webpack_require__(89);
-var http_1 = __webpack_require__(90);
-var clarity_angular_1 = __webpack_require__(93);
-var app_component_1 = __webpack_require__(91);
-var utils_module_1 = __webpack_require__(167);
-var app_routing_1 = __webpack_require__(161);
-var contributors_service_1 = __webpack_require__(92);
+var platform_browser_1 = __webpack_require__("./node_modules/@angular/platform-browser/@angular/platform-browser.es5.js");
+var core_1 = __webpack_require__("./node_modules/@angular/core/@angular/core.es5.js");
+var forms_1 = __webpack_require__("./node_modules/@angular/forms/@angular/forms.es5.js");
+var http_1 = __webpack_require__("./node_modules/@angular/http/@angular/http.es5.js");
+var clarity_angular_1 = __webpack_require__("./node_modules/clarity-angular/index.js");
+var app_component_1 = __webpack_require__("./src/app/app.component.ts");
+var utils_module_1 = __webpack_require__("./src/utils/utils.module.ts");
+var app_routing_1 = __webpack_require__("./src/app/app.routing.ts");
+var contributors_service_1 = __webpack_require__("./src/services/contributors.service.ts");
 var AppModule = (function () {
     function AppModule() {
     }
@@ -77,26 +127,26 @@ AppModule = __decorate([
     })
 ], AppModule);
 exports.AppModule = AppModule;
-//# sourceMappingURL=/Users/mborisov/Documents/MyData/Repos/gh-page-template/admiral/src/src/src/app/app.module.js.map
+//# sourceMappingURL=/Users/druk/ID&D Assets/Open Source Software/admiral/src/src/src/app/app.module.js.map
 
 /***/ }),
 
-/***/ 161:
+/***/ "./src/app/app.routing.ts":
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var router_1 = __webpack_require__(60);
+var router_1 = __webpack_require__("./node_modules/@angular/router/@angular/router.es5.js");
 exports.ROUTES = [
     { path: '', redirectTo: 'home', pathMatch: 'full' }
 ];
 exports.ROUTING = router_1.RouterModule.forRoot(exports.ROUTES);
-//# sourceMappingURL=/Users/mborisov/Documents/MyData/Repos/gh-page-template/admiral/src/src/src/app/app.routing.js.map
+//# sourceMappingURL=/Users/druk/ID&D Assets/Open Source Software/admiral/src/src/src/app/app.routing.js.map
 
 /***/ }),
 
-/***/ 162:
+/***/ "./src/app/index.ts":
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -105,13 +155,13 @@ function __export(m) {
     for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
 }
 Object.defineProperty(exports, "__esModule", { value: true });
-__export(__webpack_require__(91));
-__export(__webpack_require__(160));
-//# sourceMappingURL=/Users/mborisov/Documents/MyData/Repos/gh-page-template/admiral/src/src/src/app/index.js.map
+__export(__webpack_require__("./src/app/app.component.ts"));
+__export(__webpack_require__("./src/app/app.module.ts"));
+//# sourceMappingURL=/Users/druk/ID&D Assets/Open Source Software/admiral/src/src/src/app/index.js.map
 
 /***/ }),
 
-/***/ 163:
+/***/ "./src/environments/environment.ts":
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -124,11 +174,30 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.environment = {
     production: true
 };
-//# sourceMappingURL=/Users/mborisov/Documents/MyData/Repos/gh-page-template/admiral/src/src/src/environments/environment.js.map
+//# sourceMappingURL=/Users/druk/ID&D Assets/Open Source Software/admiral/src/src/src/environments/environment.js.map
 
 /***/ }),
 
-/***/ 164:
+/***/ "./src/main.ts":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+__webpack_require__("./src/polyfills.ts");
+var platform_browser_dynamic_1 = __webpack_require__("./node_modules/@angular/platform-browser-dynamic/@angular/platform-browser-dynamic.es5.js");
+var core_1 = __webpack_require__("./node_modules/@angular/core/@angular/core.es5.js");
+var environment_1 = __webpack_require__("./src/environments/environment.ts");
+var _1 = __webpack_require__("./src/app/index.ts");
+if (environment_1.environment.production) {
+    core_1.enableProdMode();
+}
+platform_browser_dynamic_1.platformBrowserDynamic().bootstrapModule(_1.AppModule);
+//# sourceMappingURL=/Users/druk/ID&D Assets/Open Source Software/admiral/src/src/src/main.js.map
+
+/***/ }),
+
+/***/ "./src/polyfills.ts":
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -136,27 +205,90 @@ exports.environment = {
 Object.defineProperty(exports, "__esModule", { value: true });
 // This file includes polyfills needed by Angular 2 and is loaded before
 // the app. You can add your own extra polyfills to this file.
-__webpack_require__(181);
-__webpack_require__(174);
-__webpack_require__(170);
-__webpack_require__(176);
-__webpack_require__(175);
-__webpack_require__(173);
-__webpack_require__(172);
-__webpack_require__(180);
-__webpack_require__(169);
-__webpack_require__(168);
-__webpack_require__(178);
-__webpack_require__(171);
-__webpack_require__(179);
-__webpack_require__(177);
-__webpack_require__(182);
-__webpack_require__(361);
-//# sourceMappingURL=/Users/mborisov/Documents/MyData/Repos/gh-page-template/admiral/src/src/src/polyfills.js.map
+__webpack_require__("./node_modules/core-js/es6/symbol.js");
+__webpack_require__("./node_modules/core-js/es6/object.js");
+__webpack_require__("./node_modules/core-js/es6/function.js");
+__webpack_require__("./node_modules/core-js/es6/parse-int.js");
+__webpack_require__("./node_modules/core-js/es6/parse-float.js");
+__webpack_require__("./node_modules/core-js/es6/number.js");
+__webpack_require__("./node_modules/core-js/es6/math.js");
+__webpack_require__("./node_modules/core-js/es6/string.js");
+__webpack_require__("./node_modules/core-js/es6/date.js");
+__webpack_require__("./node_modules/core-js/es6/array.js");
+__webpack_require__("./node_modules/core-js/es6/regexp.js");
+__webpack_require__("./node_modules/core-js/es6/map.js");
+__webpack_require__("./node_modules/core-js/es6/set.js");
+__webpack_require__("./node_modules/core-js/es6/reflect.js");
+__webpack_require__("./node_modules/core-js/es7/reflect.js");
+__webpack_require__("./node_modules/zone.js/dist/zone.js");
+//# sourceMappingURL=/Users/druk/ID&D Assets/Open Source Software/admiral/src/src/src/polyfills.js.map
 
 /***/ }),
 
-/***/ 165:
+/***/ "./src/services/contributors.service.ts":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var core_1 = __webpack_require__("./node_modules/@angular/core/@angular/core.es5.js");
+var http_1 = __webpack_require__("./node_modules/@angular/http/@angular/http.es5.js");
+var Observable_1 = __webpack_require__("./node_modules/rxjs/Observable.js");
+__webpack_require__("./node_modules/rxjs/add/observable/forkJoin.js");
+__webpack_require__("./node_modules/rxjs/add/operator/map.js");
+var ContributorService = (function () {
+    function ContributorService(http) {
+        this.http = http;
+    }
+    ContributorService.prototype.getContributors = function () {
+        // do work to merge three http calls into one observable.
+        return Observable_1.Observable.forkJoin([
+            this.http.get('https://api.github.com/repos/vmware/admiral/contributors')
+                .map(function (res) { return res.json(); })
+        ])
+            .map(function (data) {
+            var contributors = [];
+            // console.logco("observable data", data); // make sure we are getting datas from github.
+            // concat all the data into one array
+            contributors = contributors.concat(data[0]);
+            // create a uniqueContributors array
+            var uniqueContributors = [];
+            // filteredContributors filters contributors array, add it to uniqueContributors if its not already there.
+            var filteredContributors = contributors.filter(function (el) {
+                if (uniqueContributors.indexOf(el.id) === -1) {
+                    uniqueContributors.push(el.id);
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            });
+            contributors = filteredContributors;
+            return contributors;
+        });
+    };
+    return ContributorService;
+}());
+ContributorService = __decorate([
+    core_1.Injectable(),
+    __metadata("design:paramtypes", [typeof (_a = typeof http_1.Http !== "undefined" && http_1.Http) === "function" && _a || Object])
+], ContributorService);
+exports.ContributorService = ContributorService;
+var _a;
+//# sourceMappingURL=/Users/druk/ID&D Assets/Open Source Software/admiral/src/src/src/services/contributors.service.js.map
+
+/***/ }),
+
+/***/ "./src/utils/hash-listener.directive.ts":
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -174,8 +306,8 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var core_1 = __webpack_require__(9);
-var router_1 = __webpack_require__(60);
+var core_1 = __webpack_require__("./node_modules/@angular/core/@angular/core.es5.js");
+var router_1 = __webpack_require__("./node_modules/@angular/router/@angular/router.es5.js");
 var HashListener = (function () {
     function HashListener(route) {
         var _this = this;
@@ -215,11 +347,11 @@ HashListener = __decorate([
 ], HashListener);
 exports.HashListener = HashListener;
 var _a;
-//# sourceMappingURL=/Users/mborisov/Documents/MyData/Repos/gh-page-template/admiral/src/src/src/utils/hash-listener.directive.js.map
+//# sourceMappingURL=/Users/druk/ID&D Assets/Open Source Software/admiral/src/src/src/utils/hash-listener.directive.js.map
 
 /***/ }),
 
-/***/ 166:
+/***/ "./src/utils/scrollspy.directive.ts":
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -237,8 +369,8 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var core_1 = __webpack_require__(9);
-var router_1 = __webpack_require__(60);
+var core_1 = __webpack_require__("./node_modules/@angular/core/@angular/core.es5.js");
+var router_1 = __webpack_require__("./node_modules/@angular/router/@angular/router.es5.js");
 var ScrollSpy = (function () {
     function ScrollSpy(renderer) {
         this.renderer = renderer;
@@ -310,11 +442,11 @@ ScrollSpy = __decorate([
 ], ScrollSpy);
 exports.ScrollSpy = ScrollSpy;
 var _a, _b, _c, _d;
-//# sourceMappingURL=/Users/mborisov/Documents/MyData/Repos/gh-page-template/admiral/src/src/src/utils/scrollspy.directive.js.map
+//# sourceMappingURL=/Users/druk/ID&D Assets/Open Source Software/admiral/src/src/src/utils/scrollspy.directive.js.map
 
 /***/ }),
 
-/***/ 167:
+/***/ "./src/utils/utils.module.ts":
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -326,11 +458,11 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var core_1 = __webpack_require__(9);
-var hash_listener_directive_1 = __webpack_require__(165);
-var scrollspy_directive_1 = __webpack_require__(166);
-var clarity_angular_1 = __webpack_require__(93);
-var common_1 = __webpack_require__(40);
+var core_1 = __webpack_require__("./node_modules/@angular/core/@angular/core.es5.js");
+var hash_listener_directive_1 = __webpack_require__("./src/utils/hash-listener.directive.ts");
+var scrollspy_directive_1 = __webpack_require__("./src/utils/scrollspy.directive.ts");
+var clarity_angular_1 = __webpack_require__("./node_modules/clarity-angular/index.js");
+var common_1 = __webpack_require__("./node_modules/@angular/common/@angular/common.es5.js");
 var UtilsModule = (function () {
     function UtilsModule() {
     }
@@ -353,150 +485,17 @@ UtilsModule = __decorate([
     })
 ], UtilsModule);
 exports.UtilsModule = UtilsModule;
-//# sourceMappingURL=/Users/mborisov/Documents/MyData/Repos/gh-page-template/admiral/src/src/src/utils/utils.module.js.map
+//# sourceMappingURL=/Users/druk/ID&D Assets/Open Source Software/admiral/src/src/src/utils/utils.module.js.map
 
 /***/ }),
 
-/***/ 322:
+/***/ 1:
 /***/ (function(module, exports, __webpack_require__) {
 
-exports = module.exports = __webpack_require__(38)(false);
-// imports
+module.exports = __webpack_require__("./src/main.ts");
 
-
-// module
-exports.push([module.i, ".clr-icon.vmware-logo {\n  background: url(/admiral/images/vmware.svg) no-repeat left 9px;\n  width: 108px; }\n\n.hero {\n  background-color: #ddd;\n  left: -24px;\n  padding-bottom: 2em;\n  padding-top: 2em;\n  overflow-x: hidden;\n  position: relative;\n  text-align: center;\n  top: -24px; }\n  .hero .btn-custom {\n    display: inline-block;\n    text-align: center;\n    margin: auto; }\n\n.content-area {\n  overflow-x: hidden; }\n\n.hero-image img {\n  max-width: 360px; }\n\n.icon {\n  display: inline-block;\n  height: 32px;\n  vertical-align: middle;\n  width: 32px; }\n  .icon.icon-github {\n    background: url(/admiral/images/github_icon.svg) no-repeat left -2px; }\n\n.nav-group label {\n  display: block;\n  margin-bottom: 1em; }\n\n.sidenav .nav-link {\n  padding: 3px 6px; }\n  .sidenav .nav-link:hover {\n    background: #eee; }\n  .sidenav .nav-link.active {\n    background: #d9e4ea;\n    color: #000; }\n\n.section {\n  padding: .5em 0; }\n\n.contributor {\n  border-radius: 50%;\n  border: 1px solid #ccc;\n  margin-bottom: 1.5em;\n  margin-right: 1em;\n  max-width: 64px;\n  text-decoration: none; }\n\n@media (min-width: 320px) {\n  .title {\n    display: none; }\n  .hero {\n    width: 100vw; }\n  #license {\n    padding-bottom: 20vh; } }\n\n@media (min-width: 768px) {\n  .title {\n    display: block; }\n  .hero {\n    width: 110%; }\n  #license {\n    padding-bottom: 78vh; } }\n\n.row:after {\n  clear: both;\n  content: \"\";\n  display: table; }\n", ""]);
-
-// exports
-
-
-/*** EXPORTS FROM exports-loader ***/
-module.exports = module.exports.toString();
-
-/***/ }),
-
-/***/ 331:
-/***/ (function(module, exports) {
-
-module.exports = "<clr-main-container>\n    <header class=\"header header-6\">\n        <div class=\"branding\">\n            <a href=\"https://vmware.github.io/\" class=\"nav-link\">\n                <span class=\"clr-icon vmware-logo\"></span>\n                <span class=\"title\">Open Source Program Office</span>\n            </a>\n        </div>\n    </header>\n    <div class=\"content-container\">\n        <div id=\"content-area\" class=\"content-area\" hash-listener #scrollable>\n            <div class=\"hero\">\n                <div class=\"hero-image\"><img src=\"images/admiral.png\" alt=\"\"></div>\n                <h3>Highly Scalable Container Management Platform</h3>\n                <p><a href=\"https://github.com/vmware/admiral\" class=\"btn btn-primary\"><i class=\"icon icon-github\"></i> Fork Admiral&trade;</a></p>\n            </div>\n            <div id=\"overview\" class=\"section\">\n                <h2>What is Admiral&trade;</h2>\n\n                <p>Admiral&trade; is a highly scalable and very lightweight Container Management platform for deploying and managing container based applications. It is designed to have a small footprint and boot extremely quickly. Admiral&trade; is intended to provide automated deployment and lifecycle management of containers.</p>\n\n                <br>\n\n                <ul>\n                    <li><strong>Rule-based resource management</strong> - Setup your deployment preferences to let Admiral&trade; manage container placement.</li>\n                    <li><strong>Live state updates</strong> - Provides a live view of your system.</li>\n                    <li><strong>Efficient multi-container template management</strong> - Enables logical multi-container application deployments.</li>\n                </ul>\n            </div>\n\n            <div id=\"gettingAdmiral\" class=\"section\">\n                <h2>Getting Admiral&trade;</h2>\n\n                <p>Open source license information may be found in Admiral&trade; <a href=\"https://github.com/vmware/admiral/blob/master/LICENSE\">Open Source License</a> file.</p>\n                <p>Admiral&trade; source code is available on the VMware <a href=\"https://github.com/vmware/admiral\">Admiral&trade; GitHub source repository</a>. You can build your own Admiral&trade; jar by cloning the repo and following the instructions in <a href=\"https://github.com/vmware/admiral/blob/master/README.md\">README.md</a>.</p>\n                <p>Admiral&trade; container image is available on <a href=\"https://hub.docker.com/r/vmware/admiral/\">Docker Hub</a>.</p>\n                \n                <p>To get the latest stable release run:</p>\n                <pre><code clr-code-highlight=\"language-bash\">docker run -d -p 8282:8282 --name admiral vmware/admiral</code></pre>\n                \n                <p>To get the latest development release with all beta features run:</p>\n                <pre><code clr-code-highlight=\"language-bash\">docker run -d -p 8282:8282 --name admiral vmware/admiral:dev</code></pre>\n                \n                <p>Admiral can also be started as a standalone Java\n                application. Download the latest development release\n                <a href=\"https://bintray.com/vmware/admiral/download_file?file_path=com%2Fvmware%2Fadmiral%2Fadmiral-host%2F1.4.2-SNAPSHOT%2Fadmiral-host-1.4.2-20180723.130833-1-uber-jar-with-agent.jar\">admiral-host-1.4.2-20180723.130833-1-uber-jar-with-agent.jar</a> and\n                run it with:</p>\n                <pre><code clr-code-highlight=\"language-bash\">java -jar admiral-host-1.4.2-20180723.130833-1-uber-jar-with-agent.jar --bindAddress=127.0.0.1 --port=8282</code></pre>\n                \n                <p>To access the UI when deployed on docker or as a standalone process, point your browser respectively to:</p>\n                \n                <pre><code clr-code-highlight=\"language-bash\">http://&lt;docker_host_ip&gt;:8282 or http://localhost:8282</code></pre>\n                \n                <p>Note that authentication is disabled by default and can be enabled through the configuration.</p>\n            </div>\n\n            <div id=\"gettingStarted\" class=\"section\">\n                <h2>Getting Started</h2>\n                <p>We've provided a guide to help get you started:</p>\n\n                <a href=\"https://github.com/vmware/admiral/wiki/User-Guide\" class=\"btn btn-outline\">User guide for Admiral™</a>\n                <a href=\"https://github.com/vmware/admiral/wiki/Developer-Guide\" class=\"btn btn-outline\">Developer guide for Admiral™</a>\n            </div>\n\n            <div id=\"support\" class=\"section\">\n                <h2>Support</h2>\n                <p>Admiral&trade; is released as open source software and, presently, provides community support through our GitHub project page. If you encounter an issue or have a question, feel free to reach out via <a href=\"https://github.com/vmware/admiral/issues\">GitHub issues for Admiral&trade;</a>.</p>\n            </div>\n            <div id=\"contributors\" class=\"section\">\n                <h2>Contributors</h2>\n\n                <br>\n\n                <ul class=\"list-unstyled row\">\n                    <li *ngFor=\"let contributor of contributors\"><a [href]=\"contributor.html_url\"><img [src]=\"contributor.avatar_url\" alt=\"\" class=\"contributor\"></a></li>\n                </ul>\n            </div>\n\n            <div id=\"contributing\" class=\"section\">\n                <h2>Contributing</h2>\n\n                <p>You are invited to contribute new features, fixes, or updates, large or small; we are always thrilled to receive <a href=\"https://help.github.com/articles/creating-a-pull-request\">pull requests</a>, and do our best to process them as fast as we can. If you wish to contribute code, you should sign <a href=\"https://vmware.github.io/admiral/files/vmware_cla.pdf\">Contributor License Agreement</a> and return a copy to <a href=\"mailto:osscontributions@vmware.com\">osscontributions@vmware.com</a> before we can merge your contribution. For any questions about the CLA process, please refer to our <a href=\"https://cla.vmware.com/faq\">FAQ</a>.</p>\n\n                <p>Before you start to code, we recommend discussing your plans through a <a href=\"https://github.com/vmware/admiral/issues\">GitHub issue</a> or discuss it first with the official project maintainers via the <a href=\"https://vmware.slack.com/messages/C27L2FUN4\">Slack chat</a>, especially for more ambitious contributions. This gives other contributors a chance to point you in the right direction, give you feedback on your design, and help you find out if someone else is working on the same thing.</p>\n            </div>\n\n            <div id=\"license\" class=\"section\">\n                <h2>License</h2>\n\n                <p>Admiral&trade; is licensed under Apache License Version 2.0 as documented in the <a href=\"https://github.com/vmware/admiral/blob/master/LICENSE\">open source license file</a> accompanying the Admiral&trade; distribution.</p>\n            </div>\n        </div>\n        <nav class=\"sidenav\" [clr-nav-level]=\"2\">\n            <section class=\"sidenav-content\">\n                <section class=\"nav-group\" [scrollspy]=\"scrollable\">\n                    <label><a class=\"nav-link active\" routerLink=\".\" routerLinkActive=\"active\" fragment=\"overview\">Overview</a></label>\n                    <label class=\"bump-down\"><a class=\"nav-link\" routerLink=\".\" fragment=\"gettingAdmiral\">Getting Admiral&trade;</a></label>\n                    <label class=\"bump-down\"><a class=\"nav-link\" routerLink=\".\" fragment=\"gettingStarted\">Getting Started</a></label>\n                    <label class=\"bump-down\"><a class=\"nav-link\" routerLink=\".\" fragment=\"support\">Support</a></label>\n                    <label class=\"bump-down\"><a class=\"nav-link\" routerLink=\".\" fragment=\"contributors\">Contributors</a></label>\n                    <label class=\"bump-down\"><a class=\"nav-link\" routerLink=\".\" fragment=\"contributing\">Contributing</a></label>\n                    <label class=\"bump-down\"><a class=\"nav-link\" routerLink=\".\" fragment=\"license\">License</a></label>\n                </section>\n            </section>\n        </nav>\n    </div>\n</clr-main-container>\n"
-
-/***/ }),
-
-/***/ 363:
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__(145);
-
-
-/***/ }),
-
-/***/ 91:
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-var core_1 = __webpack_require__(9);
-var contributors_service_1 = __webpack_require__(92);
-var AppComponent = (function () {
-    function AppComponent(contributorSvc) {
-        this.contributorSvc = contributorSvc;
-        this.contributors = [];
-    }
-    AppComponent.prototype.ngOnInit = function () {
-        var _this = this;
-        this.contributorSvc.getContributors().subscribe(function (results) {
-            _this.contributors = results;
-            // console.log("Contribs: ", results);
-        });
-    };
-    return AppComponent;
-}());
-AppComponent = __decorate([
-    core_1.Component({
-        selector: 'my-app',
-        template: __webpack_require__(331),
-        styles: [__webpack_require__(322)]
-    }),
-    __metadata("design:paramtypes", [typeof (_a = typeof contributors_service_1.ContributorService !== "undefined" && contributors_service_1.ContributorService) === "function" && _a || Object])
-], AppComponent);
-exports.AppComponent = AppComponent;
-var _a;
-//# sourceMappingURL=/Users/mborisov/Documents/MyData/Repos/gh-page-template/admiral/src/src/src/app/app.component.js.map
-
-/***/ }),
-
-/***/ 92:
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-var core_1 = __webpack_require__(9);
-var http_1 = __webpack_require__(90);
-var Observable_1 = __webpack_require__(7);
-__webpack_require__(336);
-__webpack_require__(337);
-var ContributorService = (function () {
-    function ContributorService(http) {
-        this.http = http;
-    }
-    ContributorService.prototype.getContributors = function () {
-        // do work to merge three http calls into one observable.
-        return Observable_1.Observable.forkJoin([
-            this.http.get('https://api.github.com/repos/vmware/admiral/contributors')
-                .map(function (res) { return res.json(); })
-        ])
-            .map(function (data) {
-            var contributors = [];
-            // console.logco("observable data", data); // make sure we are getting datas from github.
-            // concat all the data into one array
-            contributors = contributors.concat(data[0]);
-            // create a uniqueContributors array
-            var uniqueContributors = [];
-            // filteredContributors filters contributors array, add it to uniqueContributors if its not already there.
-            var filteredContributors = contributors.filter(function (el) {
-                if (uniqueContributors.indexOf(el.id) === -1) {
-                    uniqueContributors.push(el.id);
-                    return true;
-                }
-                else {
-                    return false;
-                }
-            });
-            contributors = filteredContributors;
-            return contributors;
-        });
-    };
-    return ContributorService;
-}());
-ContributorService = __decorate([
-    core_1.Injectable(),
-    __metadata("design:paramtypes", [typeof (_a = typeof http_1.Http !== "undefined" && http_1.Http) === "function" && _a || Object])
-], ContributorService);
-exports.ContributorService = ContributorService;
-var _a;
-//# sourceMappingURL=/Users/mborisov/Documents/MyData/Repos/gh-page-template/admiral/src/src/src/services/contributors.service.js.map
 
 /***/ })
 
-},[363]);
+},[1]);
 //# sourceMappingURL=main.bundle.js.map
