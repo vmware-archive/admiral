@@ -82,7 +82,8 @@ public class PKSClusterListServiceTest extends ComputeBaseTest {
     @Test
     public void testGetPKSCluster() {
         String endpoint = createEndpoint().documentSelfLink;
-        List<PKSCluster> clusters = sendListRequest(endpoint, "unit-test-create-success", false);
+        List<PKSCluster> clusters = sendListRequest(endpoint,
+                MockPKSAdapterService.CLUSTER_NAME_CREATE_SUCCESS, false);
 
         assertNotNull(clusters);
         assertEquals(1, clusters.size());

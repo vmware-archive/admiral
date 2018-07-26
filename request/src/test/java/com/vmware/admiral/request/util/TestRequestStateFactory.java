@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -14,8 +14,10 @@ package com.vmware.admiral.request.util;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -40,6 +42,8 @@ import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionS
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
+import com.vmware.admiral.compute.pks.PKSEndpointService.Endpoint;
+import com.vmware.admiral.compute.pks.PKSEndpointService.Endpoint.PlanSet;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
@@ -54,6 +58,10 @@ import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.AuthCredentialsService;
 
 public class TestRequestStateFactory extends CommonTestStateFactory {
+    public static final String DEFAULT_PKS_ENDPOINT_NAME = "pks-endpoint";
+    public static final String DEFAULT_PKS_ENDPOINT_API_ADDRESS = "https://localhost:9000";
+    public static final String DEFAULT_PKS_ENDPOINT_UAA_ADDRESS = "https://localhost:9001";
+
     public static final String COMPUTE_DESC_ID = "test-compute-desc-id";
     public static final String COMPUTE_ADDRESS = "somehost";
     public static final String COMPOSITE_DESC_PARENT_LINK = "test-parent-desc-link";
@@ -263,6 +271,32 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         return poolState;
     }
 
+    public static Endpoint createPksEndpoint(String projectLink, String planName) {
+        return createPksEndpoint(DEFAULT_PKS_ENDPOINT_NAME, projectLink, planName);
+    }
+
+    public static Endpoint createPksEndpoint(String name, String projectLink, String planName) {
+        PlanSet planSet = new PlanSet();
+        planSet.plans = Collections.singleton(planName);
+        return createPksEndpoint(
+                name,
+                DEFAULT_PKS_ENDPOINT_API_ADDRESS,
+                DEFAULT_PKS_ENDPOINT_UAA_ADDRESS,
+                Collections.singletonList(projectLink),
+                Collections.singletonMap(projectLink, planSet));
+    }
+
+    public static Endpoint createPksEndpoint(String name, String apiEndpoint, String uaaEndpoint,
+            List<String> tenantLinks, Map<String, PlanSet> planAssignments) {
+        Endpoint endpoint = new Endpoint();
+        endpoint.name = name;
+        endpoint.apiEndpoint = apiEndpoint;
+        endpoint.uaaEndpoint = uaaEndpoint;
+        endpoint.planAssignments = planAssignments;
+        endpoint.tenantLinks = tenantLinks;
+        return endpoint;
+    }
+
     public static RequestBrokerState createRequestState() {
         return createRequestState(ResourceType.CONTAINER_TYPE.getName(), CONTAINER_DESC_LINK);
     }
@@ -271,7 +305,8 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         return createRequestState(ResourceType.COMPUTE_TYPE.getName(), COMPUTE_DESC_ID);
     }
 
-    public static RequestBrokerState createPKSClusterRequestState(HashMap<String, String> customProperties) {
+    public static RequestBrokerState createPKSClusterRequestState(
+            Map<String, String> customProperties) {
         return createRequestState(ResourceType.PKS_CLUSTER_TYPE.getName(), null, null,
                 customProperties);
     }
@@ -283,7 +318,7 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
 
     public static RequestBrokerState createRequestState(String resourceType,
             String resourceDescriptionLink, String operation,
-            HashMap<String, String> customProperties) {
+            Map<String, String> customProperties) {
         RequestBrokerState request = new RequestBrokerState();
         request.resourceType = resourceType;
         request.resourceDescriptionLink = resourceDescriptionLink;

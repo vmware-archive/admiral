@@ -31,6 +31,7 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOp
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -42,11 +43,13 @@ import com.vmware.admiral.adapter.pks.entities.PKSCluster;
 import com.vmware.admiral.adapter.pks.service.PKSClusterConfigService;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.common.util.TenantLinksUtil;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
 import com.vmware.admiral.compute.cluster.ClusterService;
 import com.vmware.admiral.compute.cluster.ClusterService.ClusterDto;
 import com.vmware.admiral.compute.cluster.ClusterService.ClusterStatus;
+import com.vmware.admiral.compute.pks.PKSEndpointService.Endpoint;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.DefaultSubStage;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
@@ -74,6 +77,8 @@ public class PKSClusterProvisioningTaskService extends
             "com.vmware.admiral.request.pks.poll.interval.sec", 60) * 1000 * 1000;
     private static final int MAX_POLL_FAILURES = Integer.getInteger(
             "com.vmware.admiral.request.pks.poll.max.failures", 10);
+
+    static final String INVALID_PLAN_SELECTION_MESSAGE_FORMAT = "Plan selection [%s] is not valid in the context of PKS cluster provisioning task [%s]";
 
     protected static class CallbackCompleteResponse extends ServiceTaskCallbackResponse {
         Set<String> resourceLinks;
@@ -128,13 +133,19 @@ public class PKSClusterProvisioningTaskService extends
 
         AssertUtil.assertNotEmpty(task.getCustomProperty(PKS_MASTER_HOST_FIELD),
                 "customProperties [" + PKS_MASTER_HOST_FIELD + "]");
+
+        AssertUtil.assertNotNullOrEmpty(task.endpointLink, "endpointLink");
+
+        AssertUtil.assertNotNull(task.tenantLinks, "tenantLinks");
+        AssertUtil.assertNotEmpty(TenantLinksUtil.getProjectAndGroupLinks(task.tenantLinks),
+                "tenantLinks(project/group links only)");
     }
 
     @Override
     protected void handleStartedStagePatch(PKSProvisioningTaskState task) {
         switch (task.taskSubStage) {
         case CREATED:
-            process(task);
+            validatePlanSelection(task, () -> process(task));
             break;
         case PROCESSING:
             break;
@@ -147,6 +158,40 @@ public class PKSClusterProvisioningTaskService extends
         default:
             break;
         }
+    }
+
+    private void validatePlanSelection(PKSProvisioningTaskState taskState, Runnable nextAction) {
+        final String planName = taskState.getCustomProperty(PKS_PLAN_NAME_FIELD);
+        Operation getEndpoint = Operation.createGet(getHost(), taskState.endpointLink);
+
+        getHost().sendWithDeferredResult(getEndpoint, Endpoint.class)
+                .thenAccept(endpoint -> doValidatePlanSelection(planName, taskState.tenantLinks,
+                        endpoint))
+                .thenAccept(v -> nextAction.run())
+                .exceptionally(ex -> {
+                    failTask(String.format("Plan selection validation failed: %s",
+                            Utils.toString(ex)), ex);
+                    return null;
+                });
+    }
+
+    void doValidatePlanSelection(String planName, Collection<String> taskTenantLinks,
+            Endpoint endpoint) {
+        Set<String> projectLinks = TenantLinksUtil.getProjectAndGroupLinks(taskTenantLinks);
+
+        boolean validSelection = projectLinks.stream()
+                .anyMatch(projectLink -> {
+                    return endpoint.planAssignments.get(projectLink).plans.contains(planName);
+                });
+
+        if (!validSelection) {
+            throw new IllegalArgumentException(String.format(
+                    INVALID_PLAN_SELECTION_MESSAGE_FORMAT,
+                    planName, getSelfId()));
+        }
+
+        logFine("Valid plan selection [%s] for PKS cluster provisioning task [%s]", planName,
+                getSelfId());
     }
 
     @Override

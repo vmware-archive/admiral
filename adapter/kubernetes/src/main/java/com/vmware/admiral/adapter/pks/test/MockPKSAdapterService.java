@@ -38,20 +38,23 @@ import com.vmware.xenon.common.StatelessService;
 
 public class MockPKSAdapterService extends StatelessService {
 
+    public static final String CLUSTER_NAME_CREATE_SUCCESS = "unit-test-create-success";
+    public static final String CLUSTER_NAME_CREATE_FAIL = "unit-test-create-fail";
+
     public static final String SELF_LINK = ManagementUriParts.ADAPTER_PKS;
 
     public static final String CLUSTER1_UUID = UUID.randomUUID().toString();
     public static final String CLUSTER2_UUID = UUID.randomUUID().toString();
 
-    private static String lastActionState;
+    private static String lastAction;
     private static int counter = 0;
 
     public static void resetCounter() {
         counter = 0;
     }
 
-    public static void setLastActionState(String lastActionState) {
-        MockPKSAdapterService.lastActionState = lastActionState;
+    public static void setLastAction(String lastAction) {
+        MockPKSAdapterService.lastAction = lastAction;
     }
 
     @Override
@@ -99,21 +102,25 @@ public class MockPKSAdapterService extends StatelessService {
         }
 
         if (PKSOperationType.DELETE_CLUSTER.id.equals(request.operationTypeId)) {
-            op.complete();
+            PKSCluster cluster = PKSClusterMapper.fromMap(request.customProperties);
+            cluster.lastAction = PKS_LAST_ACTION_DELETE;
+            cluster.lastActionState = PKS_LAST_ACTION_STATE_IN_PROGRESS;
+            op.setBodyNoCloning(cluster).complete();
+            setLastAction(PKS_LAST_ACTION_DELETE);
             return;
         }
 
         if (PKSOperationType.GET_CLUSTER.id.equals(request.operationTypeId)) {
             String clusterName = request.customProperties.get(PKS_CLUSTER_NAME_PROP_NAME);
-            if (clusterName.equals("unit-test-create-success")) {
-                PKSCluster c = constructPKSCluster("unit-test-create-success",
+            if (clusterName.equals(CLUSTER_NAME_CREATE_SUCCESS)) {
+                PKSCluster c = constructPKSCluster(CLUSTER_NAME_CREATE_SUCCESS,
                         PKS_LAST_ACTION_CREATE, PKS_LAST_ACTION_STATE_IN_PROGRESS);
 
                 if (counter++ >= 1) {
                     c.lastActionState = PKS_LAST_ACTION_STATE_SUCCEEDED;
                 }
 
-                if (PKS_LAST_ACTION_DELETE.equals(lastActionState)) {
+                if (PKS_LAST_ACTION_DELETE.equals(lastAction)) {
                     if (counter >= 2) {
                         PKSException pe = new PKSException("not found", new Exception(),
                                 Operation.STATUS_CODE_NOT_FOUND);
@@ -121,27 +128,20 @@ public class MockPKSAdapterService extends StatelessService {
                         return;
                     }
                     c.lastAction = PKS_LAST_ACTION_DELETE;
-                } else if (PKS_LAST_ACTION_UPDATE.equals(lastActionState)) {
+                } else if (PKS_LAST_ACTION_UPDATE.equals(lastAction)) {
                     c.lastAction = PKS_LAST_ACTION_UPDATE;
                 }
 
                 op.setBodyNoCloning(c).complete();
-            } else if (clusterName.equals("unit-test-delete-failed")) {
-                PKSCluster c = constructPKSCluster("unit-test-delete-failed",
-                        PKS_LAST_ACTION_DELETE, PKS_LAST_ACTION_STATE_IN_PROGRESS);
+            } else if (clusterName.equals(CLUSTER_NAME_CREATE_FAIL)) {
+                PKSCluster c = constructPKSCluster(
+                        CLUSTER_NAME_CREATE_FAIL,
+                        lastAction != null ? lastAction : PKS_LAST_ACTION_CREATE,
+                        PKS_LAST_ACTION_STATE_IN_PROGRESS);
                 if (counter++ >= 1) {
                     c.lastActionState = PKS_LAST_ACTION_STATE_FAILED;
                 }
                 op.setBodyNoCloning(c).complete();
-            } else if (clusterName.equals("unit-test-delete-success")) {
-                if (counter++ >= 1) {
-                    op.fail(Operation.STATUS_CODE_NOT_FOUND);
-                    return;
-                }
-                PKSCluster c = constructPKSCluster("unit-test-delete-success",
-                        PKS_LAST_ACTION_DELETE, PKS_LAST_ACTION_STATE_IN_PROGRESS);
-                op.setBodyNoCloning(c);
-                op.complete();
             } else {
                 op.fail(Operation.STATUS_CODE_NOT_FOUND);
             }
@@ -155,6 +155,7 @@ public class MockPKSAdapterService extends StatelessService {
             cluster.lastActionState = PKS_LAST_ACTION_STATE_IN_PROGRESS;
             cluster.uuid = "-";
             op.setBodyNoCloning(cluster).complete();
+            setLastAction(PKS_LAST_ACTION_CREATE);
             return;
         }
 
@@ -179,6 +180,7 @@ public class MockPKSAdapterService extends StatelessService {
             cluster.lastActionState = PKS_LAST_ACTION_STATE_SUCCEEDED;
             cluster.uuid = "-";
             op.setBodyNoCloning(cluster).complete();
+            setLastAction(PKS_LAST_ACTION_UPDATE);
             return;
         }
 
