@@ -107,7 +107,7 @@ public class ClusterService extends StatelessService {
             "__clusterCreationTimeMicros";
     public static final String CLUSTER_TYPE_CUSTOM_PROP = "__clusterType";
     public static final String CREATE_EMPTY_CLUSTER_PROP = "__createEmptyCluster";
-    public static final String INITIAL_CLUSTER_STATUS_PROP = "__initialClusterState";
+    public static final String ENFORCED_CLUSTER_STATUS_PROP = "__enforcedClusterState";
 
     public static final String HOSTS_FILTER_QUERY_PARAM = "$hostsFilter";
     public static final String CUSTOM_OPTIONS_QUERY_PARAM = "customOptions";
@@ -123,7 +123,7 @@ public class ClusterService extends StatelessService {
     }
 
     public enum ClusterStatus {
-        ON, OFF, DISABLED, WARNING, PROVISIONING, RESIZING, REMOVING
+        ON, OFF, DISABLED, WARNING, PROVISIONING, RESIZING, REMOVING, UNREACHABLE
     }
 
     @SuppressWarnings("serial")
@@ -308,6 +308,10 @@ public class ClusterService extends StatelessService {
         resourcePool.customProperties.put(
                 ClusterService.CLUSTER_DETAILS_CUSTOM_PROP,
                 patchDto.details);
+        if (patchDto.status != null) {
+            resourcePool.customProperties.put(ClusterService.ENFORCED_CLUSTER_STATUS_PROP,
+                    patchDto.status.toString());
+        }
 
         ElasticPlacementZoneConfigurationState placementZone =
                 new ElasticPlacementZoneConfigurationState();
@@ -582,8 +586,8 @@ public class ClusterService extends StatelessService {
                             .thenApply((hostState) -> new Pair<>(zoneAndPlacement.left, hostState));
                 })
                 .thenAccept((zoneAndHost) -> {
-                    zoneAndHost.left.customProperties.put(INITIAL_CLUSTER_STATUS_PROP,
-                            hostSpec.hostState.customProperties.get(INITIAL_CLUSTER_STATUS_PROP));
+                    zoneAndHost.left.customProperties.put(ENFORCED_CLUSTER_STATUS_PROP,
+                            hostSpec.hostState.customProperties.get(ENFORCED_CLUSTER_STATUS_PROP));
                     LinkedList<ComputeState> a = new LinkedList<>();
                     if (zoneAndHost.right != null) {
                         a.add(zoneAndHost.right);
@@ -672,8 +676,8 @@ public class ClusterService extends StatelessService {
                         .setBodyNoCloning(hs))
                 .thenAccept(cs -> {
                     post.setBody(cs.getBodyRaw());
-                    // special case to clear initial cluster status when a host is added
-                    clearInitialClusterStatus(resourcePoolDocumentSelfLink);
+                    // special case to clear enforced cluster status when a host is added
+                    clearEnforcedClusterStatus(resourcePoolDocumentSelfLink);
                 })
                 .exceptionally(ex -> {
                     if (ex.getCause() instanceof CertificateNotTrustedException) {
@@ -887,10 +891,10 @@ public class ClusterService extends StatelessService {
     }
 
 
-    private void clearInitialClusterStatus(String resourcePoolLink) {
+    private void clearEnforcedClusterStatus(String resourcePoolLink) {
         Map<String, Collection<Object>> keysToRemove = new HashMap<>();
         keysToRemove.put(ResourcePoolState.FIELD_NAME_CUSTOM_PROPERTIES,
-                Collections.singleton(INITIAL_CLUSTER_STATUS_PROP));
+                Collections.singleton(ENFORCED_CLUSTER_STATUS_PROP));
         ServiceStateMapUpdateRequest x = ServiceStateMapUpdateRequest.create(null, keysToRemove);
         Operation.createPatch(this, resourcePoolLink)
                 .setBodyNoCloning(x)

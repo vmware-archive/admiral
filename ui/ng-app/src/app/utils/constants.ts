@@ -36,7 +36,8 @@ export const Constants = {
             WARNING: "WARNING",
             PROVISIONING: "PROVISIONING",
             RESIZING: "RESIZING",
-            REMOVING: "REMOVING"
+            REMOVING: "REMOVING",
+            UNREACHABLE: "UNREACHABLE"
         },
         pks: {
             lastActionState: {

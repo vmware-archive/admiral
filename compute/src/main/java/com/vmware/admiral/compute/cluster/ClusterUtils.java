@@ -15,7 +15,7 @@ import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_CLUSTER_STATUS_REM
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_CLUSTER_STATUS_RESIZING_PROP_NAME;
 import static com.vmware.admiral.compute.ContainerHostUtil.isKubernetesHost;
 import static com.vmware.admiral.compute.ContainerHostUtil.isVicHost;
-import static com.vmware.admiral.compute.cluster.ClusterService.INITIAL_CLUSTER_STATUS_PROP;
+import static com.vmware.admiral.compute.cluster.ClusterService.ENFORCED_CLUSTER_STATUS_PROP;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -303,7 +303,7 @@ public class ClusterUtils {
                         ClusterService.CLUSTER_TYPE_CUSTOM_PROP)
                         .orElse(type.toString()));
         if (computeStates == null || computeStates.isEmpty()) {
-            ePZClusterDto.status = getInitialStatus(resourcePoolState);
+            ePZClusterDto.status = getEnforcedStatus(resourcePoolState);
             if (ePZClusterDto.status == null) {
                 ePZClusterDto.status = ClusterStatus.DISABLED;
             }
@@ -433,9 +433,9 @@ public class ClusterUtils {
         return isFilterExclusive ^ cluster.type == filter;
     }
 
-    private static ClusterStatus getInitialStatus(ResourcePoolState resourcePoolState) {
+    private static ClusterStatus getEnforcedStatus(ResourcePoolState resourcePoolState) {
         try {
-            String s = resourcePoolState.customProperties.get(INITIAL_CLUSTER_STATUS_PROP);
+            String s = resourcePoolState.customProperties.get(ENFORCED_CLUSTER_STATUS_PROP);
             return ClusterStatus.valueOf(s);
         } catch (Exception ignored) {
         }

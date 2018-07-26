@@ -44,6 +44,8 @@ import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
 import com.vmware.admiral.compute.cluster.ClusterService;
+import com.vmware.admiral.compute.cluster.ClusterService.ClusterDto;
+import com.vmware.admiral.compute.cluster.ClusterService.ClusterStatus;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.DefaultSubStage;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
@@ -233,7 +235,7 @@ public class PKSClusterProvisioningTaskService extends
         computeState.customProperties.put(PKS_PLAN_NAME_FIELD,
                 task.getCustomProperty(PKS_PLAN_NAME_FIELD));
         computeState.customProperties.put(ClusterService.CREATE_EMPTY_CLUSTER_PROP, "true");
-        computeState.customProperties.put(ClusterService.INITIAL_CLUSTER_STATUS_PROP,
+        computeState.customProperties.put(ClusterService.ENFORCED_CLUSTER_STATUS_PROP,
                 ClusterService.ClusterStatus.PROVISIONING.name());
 
         clusterSpec.hostState = computeState;
@@ -342,11 +344,29 @@ public class PKSClusterProvisioningTaskService extends
                         if (!isConnectionException(e)) {
                             failTask("Failed to add PKS cluster: " + e.getMessage(), e);
                         }
+                        markClusterUnreachable(task);
                         return;
                     }
                     proceedTo(COMPLETED);
                 })
                 .sendWith(this);
+    }
+
+    private void markClusterUnreachable(PKSProvisioningTaskState task) {
+        String clusterLink = task.resourceLinks.iterator().next();
+
+        ClusterDto patch = new ClusterDto();
+        patch.status = ClusterStatus.UNREACHABLE;
+
+        Operation.createPatch(this, clusterLink)
+        .setBody(patch)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        logWarning("Error setting cluster status for [%s] to [%s]: %s",
+                                clusterLink, ClusterStatus.UNREACHABLE.toString(),
+                                Utils.toString(e));
+                    }
+                }).sendWith(this);
     }
 
     /**

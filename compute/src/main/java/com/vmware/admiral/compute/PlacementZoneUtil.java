@@ -12,7 +12,7 @@
 package com.vmware.admiral.compute;
 
 import static com.vmware.admiral.compute.cluster.ClusterService.CLUSTER_TYPE_CUSTOM_PROP;
-import static com.vmware.admiral.compute.cluster.ClusterService.INITIAL_CLUSTER_STATUS_PROP;
+import static com.vmware.admiral.compute.cluster.ClusterService.ENFORCED_CLUSTER_STATUS_PROP;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -117,8 +117,8 @@ public class PlacementZoneUtil {
         }
 
         String s;
-        if ((s = hostState.customProperties.get(INITIAL_CLUSTER_STATUS_PROP)) != null) {
-            resourcePool.customProperties.put(INITIAL_CLUSTER_STATUS_PROP, s);
+        if ((s = hostState.customProperties.get(ENFORCED_CLUSTER_STATUS_PROP)) != null) {
+            resourcePool.customProperties.put(ENFORCED_CLUSTER_STATUS_PROP, s);
         }
 
         if (hostState.tenantLinks != null) {
