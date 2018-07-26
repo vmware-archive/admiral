@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.compute;
 
+import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_ENDPOINT_PROP_NAME;
 import static com.vmware.admiral.compute.cluster.ClusterService.CLUSTER_TYPE_CUSTOM_PROP;
 import static com.vmware.admiral.compute.cluster.ClusterService.ENFORCED_CLUSTER_STATUS_PROP;
 
@@ -119,6 +120,10 @@ public class PlacementZoneUtil {
         String s;
         if ((s = hostState.customProperties.get(ENFORCED_CLUSTER_STATUS_PROP)) != null) {
             resourcePool.customProperties.put(ENFORCED_CLUSTER_STATUS_PROP, s);
+        }
+
+        if ((s = hostState.customProperties.get(PKS_ENDPOINT_PROP_NAME)) != null) {
+            resourcePool.customProperties.put(PKS_ENDPOINT_PROP_NAME, s);
         }
 
         if (hostState.tenantLinks != null) {

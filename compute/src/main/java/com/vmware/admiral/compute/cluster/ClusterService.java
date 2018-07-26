@@ -142,6 +142,8 @@ public class ClusterService extends StatelessService {
 
     public static class ClusterDto extends ServiceDocument {
 
+        public static final String FIELD_NAME_CUSTOM_PROPERTIES = "customProperties";
+
         public ClusterDto() {
             nodeLinks = new LinkedList<>();
         }
@@ -686,7 +688,7 @@ public class ClusterService extends StatelessService {
                         post.complete();
                     } else {
                         logWarning("Create host in cluster %s failed: %s", clusterId,
-                                Utils.toString(ex));
+                                ex.getCause().getMessage());
                         post.fail(ex.getCause());
                     }
                     return null;

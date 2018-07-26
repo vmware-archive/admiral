@@ -11,17 +11,24 @@
 
 package com.vmware.admiral.compute.pks;
 
+import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_ENDPOINT_PROP_NAME;
+import static com.vmware.photon.controller.model.query.QueryUtils.DEFAULT_MAX_RESULT_LIMIT;
+import static com.vmware.xenon.common.UriUtils.URI_PARAM_ODATA_FILTER;
+import static com.vmware.xenon.common.UriUtils.URI_PARAM_ODATA_LIMIT;
+
 import java.net.URI;
 import java.util.Map;
 import java.util.Set;
 
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.PropertyUtils;
+import com.vmware.admiral.compute.cluster.ClusterService;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentDescription;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
+import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -107,6 +114,43 @@ public class PKSEndpointService extends StatefulService {
         }
 
         op.setBody(currentState).complete();
+    }
+
+    @Override
+    public void handleDelete(Operation delete) {
+        deleteClustersForEndpoint(delete);
+    }
+
+    /**
+     * Deletes from xenon all clusters for that endpoint. Uses OData query to find the clusters,
+     * because that information (the endpoint) is not directly exposed in the cluster DTO.
+     */
+    private void deleteClustersForEndpoint(Operation delete) {
+        String endpointLink = getSelfLink();
+        logInfo("deleting clusters for PKS endpoint %s", endpointLink);
+        String query = String.format("%s=%s.%s eq '%s'&%s=%d", URI_PARAM_ODATA_FILTER,
+                ClusterService.ClusterDto.FIELD_NAME_CUSTOM_PROPERTIES, PKS_ENDPOINT_PROP_NAME,
+                endpointLink, URI_PARAM_ODATA_LIMIT, DEFAULT_MAX_RESULT_LIMIT);
+        URI uri = UriUtils.buildUri(this.getHost(), ClusterService.SELF_LINK, query);
+        Operation.createGet(uri)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        logSevere("Error getting PKS clusters for endpoint %s, reason: %s",
+                                endpointLink, e.getMessage());
+                        delete.fail(e);
+                        return;
+                    }
+                    ServiceDocumentQueryResult result = o.getBody(ServiceDocumentQueryResult.class);
+                    if (result != null && result.documentLinks != null) {
+                        result.documentLinks.forEach(cluster -> {
+                            logInfo("Removing PKS cluster %s for %s", cluster, endpointLink);
+                            Operation.createDelete(this, cluster)
+                                    .sendWith(this);
+                        });
+                    }
+                    delete.complete();
+                })
+                .sendWith(this);
     }
 
     private void validate(Endpoint endpoint) {

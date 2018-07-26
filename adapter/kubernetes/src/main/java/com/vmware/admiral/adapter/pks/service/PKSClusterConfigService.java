@@ -165,7 +165,7 @@ public class PKSClusterConfigService extends StatelessService {
                 .setBody(clusterSpec)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        logWarning("Error creating/updating cluster state: %s", Utils.toString(e));
+                        logWarning("Error creating/updating cluster state: %s", e.getMessage());
                         op.fail(e);
                         return;
                     }

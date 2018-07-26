@@ -207,9 +207,11 @@ public class SslCertificateResolver {
         }
 
         if (connectionCertificates.size() == 0) {
-            String errorMsg = validationError[0] != null ? validationError[0].getMessage() : "-";
+            String errorMsg = validationError[0] != null
+                    ? ", error: " + validationError[0].getMessage()
+                    : "";
             LocalizableValidationException e = new LocalizableValidationException(
-                    "Importing ssl certificate failed for server: " + uri + ", error: " + errorMsg,
+                    "Importing ssl certificate failed for server: " + uri + errorMsg,
                     "common.certificate.import.failed", uri, errorMsg);
 
             logger.throwing(logger.getName(), "connect", e);
