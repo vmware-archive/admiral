@@ -16,6 +16,7 @@ import { ErrorService } from "../../../../utils/error.service";
 import { Utils } from '../../../../utils/utils';
 import { Links } from '../../../../utils/links';
 import { FT } from '../../../../utils/ft';
+import { RoutesRestriction } from './../../../../utils/routes-restriction';
 
 import * as I18n from 'i18next';
 
@@ -103,6 +104,10 @@ export class KubernetesClusterSummaryComponent implements OnInit {
             }
         }
         return I18n.t('notAvailable');
+    }
+
+    get clustersEditRouteRestrictions() {
+        return RoutesRestriction.KUBERNETES_CLUSTERS_EDIT;
     }
 
     ngOnInit() {
