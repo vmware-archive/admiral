@@ -173,11 +173,8 @@ public class ContainerRemovalTaskService
     @Override
     protected TaskStatusState fromTask(TaskServiceDocument<SubStage> state) {
         TaskStatusState statusTask = super.fromTask(state);
-        if (SubStage.INSTANCES_REMOVED == state.taskSubStage
-                || SubStage.COMPLETED == state.taskSubStage) {
-            statusTask.name = ContainerOperationType
-                    .extractDisplayName(ContainerOperationType.DELETE.id);
-        }
+        statusTask.name = ContainerOperationType
+                .extractDisplayName(ContainerOperationType.DELETE.id);
         return statusTask;
     }
 

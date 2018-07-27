@@ -128,11 +128,8 @@ public class ContainerNetworkRemovalTaskService extends
     @Override
     protected TaskStatusState fromTask(TaskServiceDocument<SubStage> state) {
         TaskStatusState statusTask = super.fromTask(state);
-        if (SubStage.INSTANCES_REMOVED == state.taskSubStage
-                || SubStage.COMPLETED == state.taskSubStage) {
-            statusTask.name = NetworkOperationType
-                    .extractDisplayName(NetworkOperationType.DELETE.id);
-        }
+        statusTask.name = NetworkOperationType
+                .extractDisplayName(NetworkOperationType.DELETE.id);
         return statusTask;
     }
 

@@ -110,6 +110,7 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceErrorResponse;
 import com.vmware.xenon.common.ServiceHost.ServiceAlreadyStartedException;
+import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
@@ -339,8 +340,10 @@ public class RequestBrokerService extends
         if (isProvisionOperation(state)) {
             if (isContainerType(state)) {
                 getContainerDescription(state, (cd) -> {
-                    proceedTo(next, s -> s.actualResourceCount =
-                            getRequestContainerResourceCount(state, cd));
+                    proceedTo(next, s -> {
+                        s.actualResourceCount = getRequestContainerResourceCount(state, cd);
+                        updateRequestTrackerName(state, cd.name);
+                    });
                 });
             } else {
                 proceedTo(next, s -> s.actualResourceCount = state.resourceCount);
@@ -348,6 +351,21 @@ public class RequestBrokerService extends
         } else {
             proceedTo(next, s -> s.actualResourceCount = state.resourceCount);
         }
+    }
+
+    private void updateRequestTrackerName(RequestBrokerState state, String name) {
+        RequestStatus requestStatus = new RequestStatus();
+        requestStatus.name = name;
+        requestStatus.documentSelfLink = state.requestTrackerLink;
+        requestStatus.taskInfo = new TaskState();
+        Operation.createPatch(getHost(), state.requestTrackerLink)
+                .setBodyNoCloning(requestStatus)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        logFine("Couldn't set name to the request status because of: %s", e.getMessage());
+                    }
+                }).sendWith(this);
+
     }
 
     @Override

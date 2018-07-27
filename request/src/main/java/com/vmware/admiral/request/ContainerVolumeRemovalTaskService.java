@@ -128,11 +128,8 @@ public class ContainerVolumeRemovalTaskService extends
     @Override
     protected TaskStatusState fromTask(TaskServiceDocument<SubStage> state) {
         TaskStatusState statusTask = super.fromTask(state);
-        if (SubStage.INSTANCES_REMOVED == state.taskSubStage
-                || SubStage.COMPLETED == state.taskSubStage) {
-            statusTask.name = VolumeOperationType
-                    .extractDisplayName(VolumeOperationType.DELETE.id);
-        }
+        statusTask.name = VolumeOperationType
+                .extractDisplayName(VolumeOperationType.DELETE.id);
         return statusTask;
     }
 
