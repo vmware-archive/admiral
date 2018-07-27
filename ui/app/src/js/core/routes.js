@@ -15,16 +15,8 @@ import constants from 'core/constants';
 import utils from 'core/utils';
 import docs from 'core/docs';
 
-var _isFirstTimeUser = true;
-
-var silenced = false;
-
 crossroads.addRoute('/', function() {
-  if (_isFirstTimeUser) {
     hasher.setHash('home');
-  } else {
-    hasher.setHash('hosts');
-  }
 });
 
 crossroads.addRoute('/home', function() {
@@ -37,34 +29,6 @@ crossroads.addRoute('/closures/new', function() {
     '$category': 'closures'
   }, true);
   actions.ContainerActions.openCreateClosure();
-});
-
-crossroads.addRoute('/home/newHost', function() {
-  actions.AppActions.openHome();
-  actions.HostActions.openAddHost();
-});
-
-crossroads.addRoute('/hosts:?query:', function(query) {
-  if (silenced) {
-    return;
-  }
-  actions.AppActions.openView(constants.VIEWS.HOSTS.name);
-  actions.HostActions.openHosts(query);
-});
-
-crossroads.addRoute('/hosts/new', function() {
-  actions.AppActions.openView(constants.VIEWS.HOSTS.name);
-  actions.HostActions.openAddHost();
-});
-
-crossroads.addRoute('/hosts/{hostId*}', function(hostId) {
-  actions.AppActions.openView(constants.VIEWS.HOSTS.name);
-  actions.HostActions.editHost(hostId);
-});
-
-crossroads.addRoute('/placements', function() {
-  actions.AppActions.openView(constants.VIEWS.PLACEMENTS.name);
-  actions.PlacementActions.openPlacements();
 });
 
 crossroads.addRoute('/projects:?query:', function(query) {
@@ -286,26 +250,8 @@ actions.NavigationActions.openHome.listen(function() {
   hasher.setHash('home');
 });
 
-actions.NavigationActions.openHomeAddHost.listen(function() {
-  hasher.setHash('home/newHost');
-});
-
 actions.NavigationActions.openHosts.listen(function(queryOptions) {
   hasher.setHash(getHashWithQuery('hosts', queryOptions));
-});
-
-actions.NavigationActions.openHostsSilently.listen(function() {
-  silenced = true;
-  hasher.setHash('hosts');
-  silenced = false;
-});
-
-actions.NavigationActions.openAddHost.listen(function() {
-  hasher.setHash('hosts/new');
-});
-
-actions.NavigationActions.editHost.listen(function(hostId) {
-  hasher.setHash('hosts/' + hostId);
 });
 
 actions.NavigationActions.openTemplates.listen(function(queryOptions) {
@@ -485,8 +431,7 @@ function getHashWithQuery(hash, queryOptions) {
 }
 
 var routes = {
-  initialize: function(isFirstTimeUser) {
-    _isFirstTimeUser = isFirstTimeUser;
+  initialize: function() {
     hasher.stop();
     hasher.initialized.add(parseHash); // Parse initial hash
     hasher.changed.add(parseHash); // Parse hash changes

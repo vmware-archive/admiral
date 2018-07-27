@@ -22,10 +22,6 @@
     <div class="side-view">
       <sidenav :model="model.sideView" application="admiral"></sidenav>
     </div>
-    <div v-if="model.centerView.name === constants.VIEWS.HOME.name"
-         class="center-view" transition="fade">
-      <home-view v-bind:model="model.centerView.data"></home-view>
-    </div>
     <div v-else class="center-view" transition="fade">
       <hosts-view v-if="model.centerView.name === constants.VIEWS.HOSTS.name"
                   v-bind:model="model.centerView.data"

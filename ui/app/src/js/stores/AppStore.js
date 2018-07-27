@@ -158,7 +158,7 @@ AppStore = Reflux.createStore({
     }
 
     Promise.all(promises).then(() => {
-      routes.initialize(true);
+      routes.initialize();
     });
 
     if (ft.isContextAwareHelpEnabled()) {
