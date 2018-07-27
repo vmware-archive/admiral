@@ -69,6 +69,7 @@ public class PKSClusterConfigService extends StatelessService {
         public String existingClusterLink;
         public String endpointLink;
         public PKSCluster cluster;
+        public boolean preferMasterIP;
 
         public void validate() {
             AssertUtil.assertNotNullOrEmpty(endpointLink, FIELD_NAME_ENDPOINT_LINK);
@@ -85,7 +86,14 @@ public class PKSClusterConfigService extends StatelessService {
                 return null;
             }
 
-            String hostname = (String) cluster.parameters.get(PKS_MASTER_HOST_FIELD);
+            String hostname = null;
+            if (preferMasterIP) {
+                if (cluster.masterIPs != null && cluster.masterIPs.length > 0) {
+                    hostname = cluster.masterIPs[0];
+                }
+            } else {
+                hostname = (String) cluster.parameters.get(PKS_MASTER_HOST_FIELD);
+            }
             if (hostname == null) {
                 return null;
             }

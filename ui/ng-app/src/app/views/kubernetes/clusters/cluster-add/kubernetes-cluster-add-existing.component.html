@@ -60,13 +60,29 @@
             </div>
         </table-view>
 
+        <div class="form-group row col-lg-8 connectByFormGroup">
+            <div class="col-lg-2">
+                <label for="worker" class="required">{{"pks.new.settings.fieldConnectBy" | i18n}}</label>
+            </div>
+            <div class="col-lg-6">
+                <div class="radio-inline">
+                    <input type="radio" name="connectBy" id="connectByMasterHostName" formControlName="connectBy" value="hostname">
+                    <label for="connectByMasterHostName">{{"pks.new.settings.labelConnectByHostname" | i18n}}</label>
+                </div>
+                <div class="radio-inline">
+                    <input type="radio" name="connectBy" id="connectByMasterIP" formControlName="connectBy" value="ip">
+                    <label for="connectByMasterIP">{{"pks.new.settings.labelConnectByIP" | i18n}}</label>
+                </div>
+            </div>
+        </div>
+
         <div class="add-existing-cluster-buttons">
             <button type="button" class="btn btn-outline"
                     [disabled]="isAdding"
                     (click)="cancel()">{{"cancel" | i18n}}</button>
             <button type="button" class="btn btn-primary addClusters-btn"
                     [clrLoading]="isAdding"
-                    [disabled]="isAdding || (selectedClusters.length !== 1)"
+                    [disabled]="isAdding || (selectedClusters.length !== 1) || addExistingClustersForm.invalid"
                     (click)="add()">{{"add" | i18n}}</button>
         </div>
     </section>

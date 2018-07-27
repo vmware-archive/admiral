@@ -10,7 +10,7 @@
  */
 
 import { Component, OnInit } from "@angular/core";
-import { FormControl, FormGroup } from "@angular/forms";
+import { FormControl, FormGroup, Validators } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { DocumentService } from "../../../../utils/document.service";
 import { ErrorService } from "../../../../utils/error.service";
@@ -47,7 +47,8 @@ export class KubernetesClusterAddExistingComponent implements OnInit {
     alertType: string;
 
     addExistingClustersForm = new FormGroup({
-        endpoint: new FormControl('')
+        endpoint: new FormControl(''),
+        connectBy: new FormControl('', Validators.required)
     });
 
     endpointsTitle = I18n.t('dropdownSearchMenu.title', {
@@ -156,6 +157,12 @@ export class KubernetesClusterAddExistingComponent implements OnInit {
             'endpointLink': this.selectedEndpoint.documentSelfLink,
             'cluster': clusterToAdd
         };
+
+        let formValues = this.addExistingClustersForm.value;
+
+        if (formValues.connectBy === 'ip') {
+            addClusterRequest['preferMasterIP'] = "true";
+        }
 
         this.service.post(Links.PKS_CLUSTERS_ADD, addClusterRequest).then((result) => {
                 this.isAdding = false;

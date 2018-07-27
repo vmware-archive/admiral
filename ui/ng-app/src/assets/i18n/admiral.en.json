@@ -400,7 +400,10 @@
         "fieldTitleMasterHostPort": "Master Host Port",
         "masterHostPortFieldRequired": "Master host port is required",
         "fieldTitleNumberNodes": "Worker Nodes",
-        "workerFieldRequired": "Worker field is required. Only integer values bigger than 0 can be entered."
+        "workerFieldRequired": "Worker field is required. Only integer values bigger than 0 can be entered.",
+        "fieldConnectBy": "Connect By",
+        "labelConnectByHostname": "Master Host Name",
+        "labelConnectByIP": "Master Node IP"
       }
     },
     "edit": {

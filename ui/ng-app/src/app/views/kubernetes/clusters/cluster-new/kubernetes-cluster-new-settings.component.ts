@@ -52,7 +52,8 @@ export class KubernetesClusterNewSettingsComponent implements OnInit, OnChanges 
             Validators.compose([ Validators.pattern('[\\d]+'), Validators.required ])),
         workerInstances: new FormControl(1,
             Validators.compose([ Validators.min(1),
-                Validators.pattern('[\\d]+'), Validators.required ]))
+                Validators.pattern('[\\d]+'), Validators.required ])),
+        connectBy: new FormControl('')
     });
 
     plansLoading: boolean = false;
@@ -237,6 +238,10 @@ export class KubernetesClusterNewSettingsComponent implements OnInit, OnChanges 
                     "kubernetes_worker_instances": formValues.workerInstances
                 }
             };
+
+            if (formValues.connectBy === 'ip') {
+                clusterSpec.customProperties['__preferMasterIP'] = "true";
+            }
 
             this.documentService.post(Links.REQUESTS, clusterSpec).then((response) => {
                 this.isCreatingCluster = false;

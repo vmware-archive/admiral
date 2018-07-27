@@ -1364,6 +1364,8 @@ public class RequestBrokerService extends
                     state.documentSelfLink, TaskStage.STARTED, SubStage.COMPLETED,
                     TaskStage.STARTED, SubStage.REQUEST_FAILED);
             task.customProperties = state.customProperties;
+            task.preferMasterIP = Boolean.parseBoolean(task
+                    .removeCustomProperty(PKSConstants.PKS_PREFER_MASTER_IP_PROP_NAME));
             task.endpointLink = state.getCustomProperty(PKSConstants.PKS_ENDPOINT_PROP_NAME);
             task.tenantLinks = state.tenantLinks;
             task.requestTrackerLink = state.requestTrackerLink;

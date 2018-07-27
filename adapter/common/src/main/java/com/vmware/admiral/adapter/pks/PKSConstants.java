@@ -48,4 +48,5 @@ public interface PKSConstants {
     String PKS_ENDPOINT_QUERY_PARAM_NAME = "endpointLink";
     String PKS_CLUSTER_QUERY_PARAM_NAME = "cluster";
 
+    String PKS_PREFER_MASTER_IP_PROP_NAME = "__preferMasterIP";
 }

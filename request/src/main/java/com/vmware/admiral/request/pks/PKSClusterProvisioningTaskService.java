@@ -27,6 +27,7 @@ import static com.vmware.admiral.service.common.DefaultSubStage.COMPLETED;
 import static com.vmware.admiral.service.common.DefaultSubStage.PROCESSING;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
 
 import java.io.IOException;
 import java.net.URI;
@@ -90,6 +91,13 @@ public class PKSClusterProvisioningTaskService extends
 
         @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public Set<String> resourceLinks;
+
+        /**
+         * If set to true, use kubernetes master IP instead of master hostname to
+         * connect to cluster.
+         */
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT }, indexing = STORE_ONLY)
+        public boolean preferMasterIP;
 
         @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public int failureCounter = 0;
@@ -332,6 +340,7 @@ public class PKSClusterProvisioningTaskService extends
         request.existingClusterLink = clusterSelfLink;
         request.endpointLink = task.endpointLink;
         request.cluster = cluster;
+        request.preferMasterIP = task.preferMasterIP;
         request.tenantLinks = task.tenantLinks;
 
         Operation
