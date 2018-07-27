@@ -14,6 +14,7 @@ import { Constants } from './constants';
 import { ConfigUtils } from './config-utils';
 import { FT } from './ft';
 import { Roles } from './roles';
+import { ProjectService } from './project.service';
 
 const LOGIN_PATH="/login/";
 
@@ -423,6 +424,22 @@ export class Utils {
     }
 
     return false;
+  }
+
+  public static subscribeForProjectChange(projectService: ProjectService, callback) {
+      let changedProjectLink;
+
+      projectService.activeProject.subscribe((value) => {
+        if (value && value.documentSelfLink) {
+            changedProjectLink = value.documentSelfLink;
+        } else if (value && value.id) {
+            changedProjectLink = value.id;
+        } else {
+            changedProjectLink = undefined;
+        }
+
+        callback(changedProjectLink);
+      });
   }
 }
 

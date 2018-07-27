@@ -39,14 +39,8 @@ export class DeploymentListComponent extends AutoRefreshComponent {
         super(router, route, FT.allowHostEventsSubscription(),
             Utils.getClustersViewRefreshInterval(), true);
 
-        projectService.activeProject.subscribe((value) => {
-            if (value && value.documentSelfLink) {
-                this.projectLink = value.documentSelfLink;
-            } else if (value && value.id) {
-                this.projectLink = value.id;
-            } else {
-                this.projectLink = undefined;
-            }
+        Utils.subscribeForProjectChange(projectService, (changedProjectLink) => {
+            this.projectLink = changedProjectLink;
         });
     }
 

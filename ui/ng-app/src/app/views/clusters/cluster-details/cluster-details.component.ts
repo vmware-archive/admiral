@@ -15,7 +15,9 @@ import 'rxjs/add/operator/switchMap';
 import { BaseDetailsComponent } from '../../../components/base/base-details.component';
 import { DocumentService } from '../../../utils/document.service';
 import { ErrorService } from "../../../utils/error.service";
+import { ProjectService } from '../../../utils/project.service';
 import { Links } from '../../../utils/links';
+import { Utils } from '../../../utils/utils';
 
 @Component({
   selector: 'app-cluster-details',
@@ -29,8 +31,17 @@ export class ClusterDetailsComponent extends BaseDetailsComponent
   private resourceTabSelected:boolean = false;
 
   constructor(route: ActivatedRoute, router: Router, service: DocumentService,
-              errorService: ErrorService) {
+              errorService: ErrorService, protected projectService: ProjectService) {
     super(Links.CLUSTERS, route, router, service, errorService);
+
+    Utils.subscribeForProjectChange(projectService, (changedProjectLink) => {
+      let currentProjectLink = this.projectLink;
+      this.projectLink = changedProjectLink;
+
+      if (currentProjectLink && currentProjectLink !== this.projectLink) {
+        this.router.navigate(['../../'], {relativeTo: this.route});
+      }
+    });
   }
 
   ngOnInit() {
@@ -73,11 +84,12 @@ export class ClusterDetailsComponent extends BaseDetailsComponent
       this.entity = cluster;
     });
   }
-    clickedSummaryTab() {
-        this.resourceTabSelected = false;
-    }
 
-    clickedResourcesTab() {
-        this.resourceTabSelected = true;
-    }
+  clickedSummaryTab() {
+      this.resourceTabSelected = false;
+  }
+
+  clickedResourcesTab() {
+      this.resourceTabSelected = true;
+  }
 }
