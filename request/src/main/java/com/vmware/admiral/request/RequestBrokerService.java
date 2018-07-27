@@ -21,6 +21,7 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOp
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SERVICE_USE;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
+import static com.vmware.xenon.common.UriUtils.buildUriPath;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1355,29 +1356,32 @@ public class RequestBrokerService extends
     }
 
     private void createPKSClusterProvisioningTask(RequestBrokerState state) {
-        PKSProvisioningTaskState task = new PKSProvisioningTaskState();
-        task.documentSelfLink = getSelfId();
-        task.serviceTaskCallback = ServiceTaskCallback.create(
-                state.documentSelfLink, TaskStage.STARTED, SubStage.COMPLETED,
-                TaskStage.STARTED, SubStage.REQUEST_FAILED);
-        task.customProperties = state.customProperties;
-        task.endpointLink = state.getCustomProperty(PKSConstants.PKS_ENDPOINT_PROP_NAME);
-        task.tenantLinks = state.tenantLinks;
-        task.requestTrackerLink = state.requestTrackerLink;
-        // calculate task expiration to be shortly before parent task expiration
-        task.documentExpirationTimeMicros = state.documentExpirationTimeMicros
-                - TimeUnit.MINUTES.toMicros(5);
+        String link = buildUriPath(PKSClusterProvisioningTaskService.FACTORY_LINK, getSelfId());
+        createNewIfNotExist(link, () -> {
+            PKSProvisioningTaskState task = new PKSProvisioningTaskState();
+            task.documentSelfLink = getSelfId();
+            task.serviceTaskCallback = ServiceTaskCallback.create(
+                    state.documentSelfLink, TaskStage.STARTED, SubStage.COMPLETED,
+                    TaskStage.STARTED, SubStage.REQUEST_FAILED);
+            task.customProperties = state.customProperties;
+            task.endpointLink = state.getCustomProperty(PKSConstants.PKS_ENDPOINT_PROP_NAME);
+            task.tenantLinks = state.tenantLinks;
+            task.requestTrackerLink = state.requestTrackerLink;
+            // calculate task expiration to be shortly before parent task expiration
+            task.documentExpirationTimeMicros = state.documentExpirationTimeMicros
+                    - TimeUnit.MINUTES.toMicros(5);
 
-        sendRequest(Operation
-                .createPost(this, PKSClusterProvisioningTaskService.FACTORY_LINK)
-                .setBodyNoCloning(task)
-                .setContextId(getSelfId())
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        failTask("Failure creating resource provisioning task", e);
-                        return;
-                    }
-                }));
+            sendRequest(Operation
+                    .createPost(this, PKSClusterProvisioningTaskService.FACTORY_LINK)
+                    .setBodyNoCloning(task)
+                    .setContextId(getSelfId())
+                    .setCompletion((o, e) -> {
+                        if (e != null) {
+                            failTask("Failure in creating PKS resource provision task", e);
+                            return;
+                        }
+                    }));
+        });
     }
 
     private void createPKSClusterRemovalTasks(RequestBrokerState state, boolean cleanupRemoval) {
@@ -1390,57 +1394,83 @@ public class RequestBrokerService extends
             return;
         }
 
-        PKSClusterRemovalTaskState task = new PKSClusterRemovalTaskState();
-        task.documentSelfLink = getSelfId();
-        task.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
-                TaskStage.STARTED, errorState ? SubStage.ERROR : SubStage.COMPLETED,
-                TaskStage.STARTED, SubStage.ERROR);
+        String link = buildUriPath(PKSClusterRemovalTaskService.FACTORY_LINK, getSelfId());
+        createNewIfNotExist(link, () -> {
+            PKSClusterRemovalTaskState task = new PKSClusterRemovalTaskState();
+            task.documentSelfLink = getSelfId();
+            task.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+                    TaskStage.STARTED, errorState ? SubStage.ERROR : SubStage.COMPLETED,
+                    TaskStage.STARTED, SubStage.ERROR);
 
-        task.customProperties = state.customProperties;
-        task.endpointLink = state.getCustomProperty(PKSConstants.PKS_ENDPOINT_PROP_NAME);
-        task.clusterName = state.getCustomProperty(PKSConstants.PKS_CLUSTER_NAME_PROP_NAME);
-        task.resourceLink = state.resourceLinks.iterator().next();
-        task.tenantLinks = state.tenantLinks;
-        task.requestTrackerLink = state.requestTrackerLink;
-        task.cleanupRemoval = cleanupRemoval;
-        // calculate task expiration to be shortly before parent task expiration
-        task.documentExpirationTimeMicros = state.documentExpirationTimeMicros
-                - TimeUnit.MINUTES.toMicros(5);
+            task.customProperties = state.customProperties;
+            task.endpointLink = state.getCustomProperty(PKSConstants.PKS_ENDPOINT_PROP_NAME);
+            task.clusterName = state.getCustomProperty(PKSConstants.PKS_CLUSTER_NAME_PROP_NAME);
+            task.resourceLink = state.resourceLinks.iterator().next();
+            task.tenantLinks = state.tenantLinks;
+            task.requestTrackerLink = state.requestTrackerLink;
+            task.cleanupRemoval = cleanupRemoval;
+            // calculate task expiration to be shortly before parent task expiration
+            task.documentExpirationTimeMicros = state.documentExpirationTimeMicros
+                    - TimeUnit.MINUTES.toMicros(5);
 
-        sendRequest(Operation
-                .createPost(this, PKSClusterRemovalTaskService.FACTORY_LINK)
-                .setBodyNoCloning(task)
-                .setContextId(getSelfId())
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        failTask("Failure in removing resource task", e);
-                    }
-                }));
+            sendRequest(Operation
+                    .createPost(this, PKSClusterRemovalTaskService.FACTORY_LINK)
+                    .setBodyNoCloning(task)
+                    .setContextId(getSelfId())
+                    .setCompletion((o, e) -> {
+                        if (e != null) {
+                            failTask("Failure in removing PKS resource task", e);
+                        }
+                    }));
+        });
     }
 
     private void createPKSClusterResizeOperation(RequestBrokerState state) {
-        PKSClusterResizeTaskState task = new PKSClusterResizeTaskState();
-        task.documentSelfLink = getSelfId();
-        task.serviceTaskCallback = ServiceTaskCallback.create(
-                state.documentSelfLink, TaskStage.STARTED, SubStage.COMPLETED,
-                TaskStage.STARTED, SubStage.REQUEST_FAILED);
-        task.customProperties = state.customProperties;
-        task.resourceLink = state.resourceLinks.iterator().next();
-        task.tenantLinks = state.tenantLinks;
-        task.requestTrackerLink = state.requestTrackerLink;
-        // calculate task expiration to be shortly before parent task expiration
-        task.documentExpirationTimeMicros = state.documentExpirationTimeMicros
-                - TimeUnit.MINUTES.toMicros(5);
+        String link = buildUriPath(PKSClusterResizeTaskService.FACTORY_LINK, getSelfId());
+        createNewIfNotExist(link, () -> {
+            PKSClusterResizeTaskState task = new PKSClusterResizeTaskState();
+            task.documentSelfLink = getSelfId();
+            task.serviceTaskCallback = ServiceTaskCallback.create(
+                    state.documentSelfLink, TaskStage.STARTED, SubStage.COMPLETED,
+                    TaskStage.STARTED, SubStage.REQUEST_FAILED);
+            task.customProperties = state.customProperties;
+            task.resourceLink = state.resourceLinks.iterator().next();
+            task.tenantLinks = state.tenantLinks;
+            task.requestTrackerLink = state.requestTrackerLink;
+            // calculate task expiration to be shortly before parent task expiration
+            task.documentExpirationTimeMicros = state.documentExpirationTimeMicros
+                    - TimeUnit.MINUTES.toMicros(5);
 
+            sendRequest(Operation
+                    .createPost(this, PKSClusterResizeTaskService.FACTORY_LINK)
+                    .setBodyNoCloning(task)
+                    .setContextId(getSelfId())
+                    .setCompletion((o, e) -> {
+                        if (e != null) {
+                            failTask("Failure in creating PKS resource resize task", e);
+                            return;
+                        }
+                    }));
+        });
+    }
+
+    /**
+     * Calls given callback if document does not exist. This utility method is used to create new
+     * task only if it has not been created yet.
+     */
+    private void createNewIfNotExist(String taskLink, Runnable callback) {
         sendRequest(Operation
-                .createPost(this, PKSClusterResizeTaskService.FACTORY_LINK)
-                .setBodyNoCloning(task)
-                .setContextId(getSelfId())
+                .createGet(this, taskLink)
                 .setCompletion((o, e) -> {
-                    if (e != null) {
-                        failTask("Failure creating resource resize task", e);
+                    if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
+                        callback.run();
                         return;
                     }
+                    if (e != null) {
+                        failTask("Fail: " + e.getMessage(), e);
+                        return;
+                    }
+                    logInfo("Task %s is already started.", taskLink);
                 }));
     }
 
