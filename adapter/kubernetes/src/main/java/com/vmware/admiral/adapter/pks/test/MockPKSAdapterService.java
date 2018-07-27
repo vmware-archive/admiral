@@ -71,6 +71,8 @@ public class MockPKSAdapterService extends StatelessService {
             userEntry.user.token = "token";
             KubeConfig result = new KubeConfig();
             result.users = Arrays.asList(userEntry);
+            result.clusters = Arrays.asList(new KubeConfig.ClusterEntry());
+            result.clusters.get(0).name = "cluster-name";
             op.setBodyNoCloning(result).complete();
             return;
         }

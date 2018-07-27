@@ -145,8 +145,7 @@ public class PKSClusterConfigService extends StatelessService {
                             return;
                         }
 
-                        createCredentials(op, token,
-                                kubeConfig, clusterRequest.tenantLinks,
+                        createCredentialsIfNotExist(op, token, kubeConfig, clusterRequest,
                                 (credentialsLink) -> {
                                     addCluster(op, clusterRequest, credentialsLink);
                                 });
@@ -206,33 +205,57 @@ public class PKSClusterConfigService extends StatelessService {
         return clusterSpec;
     }
 
-    private void createCredentials(Operation op, String token, KubeConfig kubeConfig,
-            List<String> tenantLinks, Consumer<String> consumer) {
+    private void createCredentialsIfNotExist(Operation op, String token, KubeConfig kubeConfig,
+            AddClusterRequest clusterRequest, Consumer<String> consumer) {
+        String credentialsLink = UriUtils.buildUriPath(AuthCredentialsService.FACTORY_LINK,
+                "pks-" + clusterRequest.cluster.uuid);
 
+        Operation.createGet(this, credentialsLink)
+                .setCompletion((o, e) -> {
+                    if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
+                        createCredentials(op, credentialsLink, token, kubeConfig,
+                                clusterRequest.tenantLinks, consumer);
+                        return;
+                    }
+                    if (e != null) {
+                        logSevere("Error getting credentials %s, reason: %s", credentialsLink,
+                                e.getMessage());
+                        op.fail(e);
+                        return;
+                    }
+                    consumer.accept(credentialsLink);
+                })
+                .sendWith(this);
+    }
+
+    private void createCredentials(Operation op, String link, String token, KubeConfig kubeConfig,
+            List<String> tenantLinks, Consumer<String> consumer) {
         AuthCredentialsServiceState credentials = new AuthCredentialsServiceState();
+        credentials.documentSelfLink = link;
         credentials.privateKey = token;
         credentials.type = AuthUtils.BEARER_TOKEN_AUTH_TYPE;
         credentials.tenantLinks = tenantLinks;
-        credentials.customProperties = new HashMap<>();
+        credentials.customProperties = new HashMap<>(4);
         credentials.customProperties.put(KUBE_CONFIG_PROP_NAME, Utils.toJson(kubeConfig));
 
         //Set the display name of the credential to the cluster name, if it exists
-        if (!CollectionUtils.isEmpty(kubeConfig.clusters) &&
-                !StringUtils.isEmpty(kubeConfig.clusters.get(0).name)) {
+        if (CollectionUtils.isNotEmpty(kubeConfig.clusters) &&
+                StringUtils.isNotEmpty(kubeConfig.clusters.get(0).name)) {
             credentials.customProperties.put(AuthUtils.AUTH_CREDENTIALS_NAME_PROP_NAME,
                     kubeConfig.clusters.get(0).name);
         }
 
         Operation.createPost(getHost(), AuthCredentialsService.FACTORY_LINK)
-                .setBody(credentials)
+                .setBodyNoCloning(credentials)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        logWarning("Error creating PKS credentials state: %s", Utils.toString(e));
+                        logWarning("Error creating PKS credentials state: %s", e.getMessage());
                         op.fail(e);
                         return;
                     }
-                    consumer.accept(o.getBody(AuthCredentialsServiceState.class).documentSelfLink);
-                }).sendWith(this);
+                    consumer.accept(link);
+                })
+                .sendWith(this);
     }
 
     private void setProjectLinkAsTenantLink(Operation op, AddClusterRequest request) {
