@@ -162,7 +162,8 @@ public class PKSClusterProvisioningTaskService extends
 
     private void validatePlanSelection(PKSProvisioningTaskState taskState, Runnable nextAction) {
         final String planName = taskState.getCustomProperty(PKS_PLAN_NAME_FIELD);
-        Operation getEndpoint = Operation.createGet(getHost(), taskState.endpointLink);
+        Operation getEndpoint = Operation.createGet(getHost(), taskState.endpointLink)
+                .setReferer(getSelfLink());
 
         getHost().sendWithDeferredResult(getEndpoint, Endpoint.class)
                 .thenAccept(endpoint -> doValidatePlanSelection(planName, taskState.tenantLinks,
