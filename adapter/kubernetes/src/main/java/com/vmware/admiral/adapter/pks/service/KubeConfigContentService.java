@@ -76,32 +76,9 @@ public class KubeConfigContentService extends StatelessService {
     private void constructKubeConfig(Operation op, ComputeState kubernetesHost,
             AuthCredentialsServiceState credentials) {
 
-        String kubeConfig = null;
-
-        if (KubernetesUtil.isPKSManagedHost(kubernetesHost)) {
-            if (credentials.customProperties == null
-                    || !credentials.customProperties.containsKey(PKSConstants.KUBE_CONFIG_PROP_NAME)) {
-                op.fail(new IllegalStateException("KubeConfig cannot be retrieved"));
-                return;
-            }
-
-            kubeConfig = credentials.customProperties.get(PKSConstants.KUBE_CONFIG_PROP_NAME);
-        } else if (AuthCredentialsType.Bearer.toString().equals(credentials.type)) {
-            KubeConfig config = KubernetesUtil.constructKubeConfig(kubernetesHost.address,
-                    EncryptionUtils.decrypt(credentials.privateKey));
-            kubeConfig = Utils.toJson(config);
-        } else if (AuthCredentialsType.PublicKey.toString().equals(credentials.type)) {
-            KubeConfig config = KubernetesUtil.constructKubeConfig(kubernetesHost.address,
-                    credentials.publicKey, EncryptionUtils.decrypt(credentials.privateKey));
-            kubeConfig = Utils.toJson(config);
-        } else {
-            op.fail(new Exception("Host authentication type not supported!"));
-            return;
-        }
-
         try {
-
-            String kubeConfigYaml = serializeContent(kubeConfig);
+            String kubeConfigJson = constructKubeConfigJson(kubernetesHost, credentials);
+            String kubeConfigYaml = serializeContent(kubeConfigJson);
             op.setBody(kubeConfigYaml);
             op.setContentType(MEDIA_TYPE_APPLICATION_YAML);
             op.addResponseHeader(CONTENT_DISPOSITION_HEADER, CONTENT_DISPOSITION_ATTACHMENT);
@@ -110,6 +87,39 @@ public class KubeConfigContentService extends StatelessService {
         } catch (Exception e) {
             op.fail(e);
         }
+    }
+
+
+    private String constructKubeConfigJson(ComputeState kubernetesHost,
+            AuthCredentialsServiceState credentials) throws Exception {
+
+        String kubeConfigJson = null;
+
+        if (KubernetesUtil.isPKSManagedHost(kubernetesHost)) {
+            if (credentials.customProperties == null
+                    || !credentials.customProperties.containsKey(PKSConstants.KUBE_CONFIG_PROP_NAME)) {
+                throw new IllegalStateException("KubeConfig cannot be retrieved");
+            }
+
+            kubeConfigJson = credentials.customProperties.get(PKSConstants.KUBE_CONFIG_PROP_NAME);
+            KubeConfig kubeConfig = Utils.fromJson(kubeConfigJson, KubeConfig.class);
+            // overwrite cluster address to cover the case when the cluster was added by
+            // master IP instead of master host name
+            kubeConfig.clusters.get(0).cluster.server = kubernetesHost.address;
+            kubeConfigJson = Utils.toJson(kubeConfig);
+        } else if (AuthCredentialsType.Bearer.toString().equals(credentials.type)) {
+            KubeConfig config = KubernetesUtil.constructKubeConfig(kubernetesHost.address,
+                    EncryptionUtils.decrypt(credentials.privateKey));
+            kubeConfigJson = Utils.toJson(config);
+        } else if (AuthCredentialsType.PublicKey.toString().equals(credentials.type)) {
+            KubeConfig config = KubernetesUtil.constructKubeConfig(kubernetesHost.address,
+                    credentials.publicKey, EncryptionUtils.decrypt(credentials.privateKey));
+            kubeConfigJson = Utils.toJson(config);
+        } else {
+            throw new Exception("Host authentication type not supported!");
+        }
+
+        return kubeConfigJson;
     }
 
     private String serializeContent(String kubeConfig) throws IOException {

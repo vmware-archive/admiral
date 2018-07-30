@@ -40,7 +40,7 @@ import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsSe
 public class KubeConfigContentServiceTest extends ComputeBaseTest {
 
     private static final String KUBE_CONFIG_JSON = "{\"clusters\":[{\"name\":\"cluster2\",\"cluster\":{\"server\":\"https://mshipkovenski-test:8443\",\"certificate-authority-data\":\"cert\"}}],\"contexts\":[{\"name\":\"cluster2\",\"context\":{\"cluster\":\"cluster2\",\"user\":\"bdf17412-f7ee-4df0-bf74-161d8b663d3c\"}}],\"users\":[{\"name\":\"bdf17412-f7ee-4df0-bf74-161d8b663d3c\",\"user\":{\"token\":\"token\"}}],\"current-context\":\"cluster2\",\"apiVersion\":\"v1\",\"kind\":\"Config\"}";
-    private static final String KUBE_CONFIG_YAML = "---\nclusters:\n- name: \"cluster2\"\n  cluster:\n    server: \"https://mshipkovenski-test:8443\"\n    certificate-authority-data: \"cert\"\ncontexts:\n- name: \"cluster2\"\n  context:\n    cluster: \"cluster2\"\n    user: \"bdf17412-f7ee-4df0-bf74-161d8b663d3c\"\nusers:\n- name: \"bdf17412-f7ee-4df0-bf74-161d8b663d3c\"\n  user:\n    token: \"token\"\ncurrent-context: \"cluster2\"\napiVersion: \"v1\"\nkind: \"Config\"\n";
+    private static final String KUBE_CONFIG_YAML = "---\nclusters:\n- name: \"cluster2\"\n  cluster:\n    server: \"hostname\"\n    certificate-authority-data: \"cert\"\ncontexts:\n- name: \"cluster2\"\n  context:\n    cluster: \"cluster2\"\n    user: \"bdf17412-f7ee-4df0-bf74-161d8b663d3c\"\nusers:\n- name: \"bdf17412-f7ee-4df0-bf74-161d8b663d3c\"\n  user:\n    token: \"token\"\ncurrent-context: \"cluster2\"\napiVersion: \"v1\"\nkind: \"Config\"\n";
 
     @Before
     public void setUp() throws Throwable {
