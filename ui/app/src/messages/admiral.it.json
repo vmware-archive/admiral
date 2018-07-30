@@ -200,7 +200,7 @@
         "publicTitle": "Chiave pubblica",
         "publicCertificateTitle": "Certificato pubblico",
         "privateCertificateTitle": "Certificato privato",
-        "bearerTokenTitle": "Bearer token",
+        "bearerTokenTitle": "Token di connessione",
         "customProperties": "Proprietà personalizzate"
       }
     },

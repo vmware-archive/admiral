@@ -200,7 +200,7 @@
         "publicTitle": "パブリック キー",
         "publicCertificateTitle": "パブリック証明書",
         "privateCertificateTitle": "プライベート証明書",
-        "bearerTokenTitle": "Bearer token",
+        "bearerTokenTitle": "ベアラー トークン",
         "customProperties": "カスタム プロパティ"
       }
     },

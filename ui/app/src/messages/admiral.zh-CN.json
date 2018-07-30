@@ -200,7 +200,7 @@
         "publicTitle": "公钥",
         "publicCertificateTitle": "公用证书",
         "privateCertificateTitle": "私有证书",
-        "bearerTokenTitle": "Bearer token",
+        "bearerTokenTitle": "持有者令牌",
         "customProperties": "自定义属性"
       }
     },

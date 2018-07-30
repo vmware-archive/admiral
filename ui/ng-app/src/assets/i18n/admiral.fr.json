@@ -192,7 +192,8 @@
       "WARNING": "AVERTISSEMENT",
       "PROVISIONING": "PROVISIONNEMENT",
       "RESIZING": "REDIMENSIONNEMENT",
-      "REMOVING": "SUPPRESSION"
+      "REMOVING": "SUPPRESSION",
+      "UNREACHABLE": "UNREACHABLE"
     },
     "search": {
       "placeholder": "Rechercher des clusters"
@@ -395,7 +396,9 @@
         "nameFieldRequired": "Le nom du cluster est requis.",
         "fieldTitlePlan": " Plan",
         "fieldTitleMasterHostName": "Nom d'hôte maître",
+        "masterHostNameFieldRequired": "Master host name is required",
         "fieldTitleMasterHostPort": "Port de l'hôte maître",
+        "masterHostPortFieldRequired": "Master host port is required",
         "fieldTitleNumberNodes": "Nœuds de travailleur",
         "workerFieldRequired": "Le champ Travailleur est obligatoire. Vous pouvez uniquement entrer des nombres entiers supérieurs à 0."
       }
@@ -406,19 +409,19 @@
     "add": {
       "title": "Ajouter un cluster",
       "existingClusters": {
-        "descriptionText": "Select an endpoint and then select one existing, unassigned Kubernetes cluster to add to the current business group.",
+        "descriptionText": "Sélectionnez un point de terminaison, puis un cluster Kubernetes non attribué existant à ajouter au groupe d'activité actuel.",
         "fieldTitleEndpoint": "Point de terminaison :",
         "columnTitleName": "Nom",
         "columnTitleHostname": "Nom d'hôte",
         "columnTitleMastersCount": "Nombre de maîtres",
         "columnTitleWorkersCount": "Nombre de travailleurs",
         "columnTitlePlan": " Plan",
-        "columnTitleLastAction": "Action",
-        "columnTitleLastActionStatus": "Status",
+        "columnTitleLastAction": "Last Action",
+        "columnTitleLastActionStatus": "Last Action Status",
         "columnTitleInAdmiral": "Enregistré",
-        "multipleSelectedClustersWarning": "Cannot add more than one cluster at a time.",
-        "clusterAlreadyRegisteredWarning": "Cannot add selected cluster. It is already added.",
-        "operationInProgressWarning": "Cannot add selected cluster. There is an operation in progress.",
+        "multipleSelectedClustersWarning": "Impossible d'ajouter plusieurs clusters à la fois.",
+        "clusterAlreadyRegisteredWarning": "Impossible d'ajouter le cluster sélectionné, car il a déjà été ajouté.",
+        "operationInProgressWarning": "Impossible d'ajouter le cluster sélectionné, car une opération est en cours.",
         "yes": "Oui",
         "no": "Non",
         "count": "Clusters"
@@ -507,11 +510,41 @@
       "pksAddressFieldTitle": "Adresse PKS",
       "pksAddressRequired": "L'adresse PKS est requise.",
       "testConnectionBtn": "Tester la connexion",
+      "assignmentsTabTitle": "Attributions de plan",
+      "assignmentsPlansTitle": "Plans",
       "clustersTabTitle": "Clusters",
       "connectionVerified": "La connexion au point de terminaison a été établie.",
       "certificateNotAccepted": "Impossible de continuer, car le certificat n'est pas accepté.",
       "assignToProjects": "Attribuer à des projets",
       "assignToGroups": "Attribuer à des groupes"
+    }
+  },
+  "requests": {
+    "title": "Demandes",
+    "columnContextId": "ID de contexte",
+    "columnPhase": "Phase",
+    "columnRequest": "Demande",
+    "columnDetails": "Détails",
+    "count": "Affichage des {{number}} dernières demandes",
+    "error": "Erreur",
+    "eventLogLink": "Go to event log",
+    "containerLink": "Go to container",
+    "compositeComponentLink": "Go to application",
+    "containerNetworkLink": "Go to network",
+    "containerVolumeLink": "Go to volume",
+    "deleteRequest": {
+      "title": "Supprimer la demande",
+      "description": "Confirmez la suppression des demandes sélectionnées. Cette opération ne peut pas être annulée."
+    }
+  },
+  "eventLogs": {
+    "title": "Journaux des événements",
+    "columnDescription": "Description",
+    "columnTimestamp": "Heure",
+    "count": "Affichage des {{number}} derniers journaux des événements",
+    "deleteEventLog": {
+      "title": "Supprimer le journal des événements",
+      "description": "Confirmez la suppression des journaux des événements sélectionnés. Cette opération ne peut pas être annulée."
     }
   },
   "configuration": {
@@ -593,7 +626,10 @@
     "configuration": "Configuration",
     "logs": "Journaux",
     "endpoints": "Points de terminaison",
-    "pksEndpoints": "Points de terminaison PKS"
+    "pksEndpoints": "Points de terminaison PKS",
+    "recentActivity": "Activité récente",
+    "requests": "Demandes",
+    "eventLogs": "Journaux des événements"
   },
   "search": {
     "occurrence": {

@@ -200,7 +200,7 @@
         "publicTitle": "Общедоступный ключ",
         "publicCertificateTitle": "Общедоступный сертификат",
         "privateCertificateTitle": "Закрытый сертификат",
-        "bearerTokenTitle": "Bearer token",
+        "bearerTokenTitle": "Маркер предъявителя",
         "customProperties": "Настраиваемые свойства"
       }
     },

@@ -200,7 +200,7 @@
         "publicTitle": "공용 키",
         "publicCertificateTitle": "공용 인증서",
         "privateCertificateTitle": "개인 인증서",
-        "bearerTokenTitle": "Bearer token",
+        "bearerTokenTitle": "전달자 토큰",
         "customProperties": "사용자 지정 속성"
       }
     },

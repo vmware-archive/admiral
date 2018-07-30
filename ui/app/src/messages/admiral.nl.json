@@ -200,7 +200,7 @@
         "publicTitle": "Openbare sleutel",
         "publicCertificateTitle": "Openbaar certificaat",
         "privateCertificateTitle": "Persoonlijk certificaat",
-        "bearerTokenTitle": "Bearer token",
+        "bearerTokenTitle": "Bearer-token",
         "customProperties": "Aangepaste eigenschappen"
       }
     },

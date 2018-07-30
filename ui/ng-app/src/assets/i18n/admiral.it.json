@@ -192,7 +192,8 @@
       "WARNING": "AVVISO",
       "PROVISIONING": "PROVISIONING",
       "RESIZING": "RIDIMENSIONAMENTO",
-      "REMOVING": "RIMOZIONE"
+      "REMOVING": "RIMOZIONE",
+      "UNREACHABLE": "UNREACHABLE"
     },
     "search": {
       "placeholder": "Cerca cluster"
@@ -395,7 +396,9 @@
         "nameFieldRequired": "Il nome del cluster è obbligatorio.",
         "fieldTitlePlan": " Piano",
         "fieldTitleMasterHostName": "Nome host master",
+        "masterHostNameFieldRequired": "Master host name is required",
         "fieldTitleMasterHostPort": "Porta host master",
+        "masterHostPortFieldRequired": "Master host port is required",
         "fieldTitleNumberNodes": "Nodi worker",
         "workerFieldRequired": "Il campo Worker è obbligatorio. È possibile immettere solo valori interi maggiori di 0."
       }
@@ -406,19 +409,19 @@
     "add": {
       "title": "Aggiungi cluster",
       "existingClusters": {
-        "descriptionText": "Select an endpoint and then select one existing, unassigned Kubernetes cluster to add to the current business group.",
+        "descriptionText": "Selezionare un endpoint, quindi selezionare un cluster Kubernetes non assegnato esistente da aggiungere al gruppo di business corrente.",
         "fieldTitleEndpoint": "Endpoint:",
         "columnTitleName": "Nome",
         "columnTitleHostname": "Nome host",
         "columnTitleMastersCount": "N. master",
         "columnTitleWorkersCount": "N. Worker",
         "columnTitlePlan": " Piano",
-        "columnTitleLastAction": "Action",
-        "columnTitleLastActionStatus": "Status",
+        "columnTitleLastAction": "Last Action",
+        "columnTitleLastActionStatus": "Last Action Status",
         "columnTitleInAdmiral": "Registrato",
-        "multipleSelectedClustersWarning": "Cannot add more than one cluster at a time.",
-        "clusterAlreadyRegisteredWarning": "Cannot add selected cluster. It is already added.",
-        "operationInProgressWarning": "Cannot add selected cluster. There is an operation in progress.",
+        "multipleSelectedClustersWarning": "Impossibile aggiungere più di un cluster alla volta.",
+        "clusterAlreadyRegisteredWarning": "Impossibile aggiungere il cluster selezionato. È già stato aggiunto.",
+        "operationInProgressWarning": "Impossibile aggiungere il cluster selezionato. È in corso un'operazione.",
         "yes": "Sì",
         "no": "No",
         "count": "Cluster"
@@ -507,11 +510,41 @@
       "pksAddressFieldTitle": "Indirizzo PKS",
       "pksAddressRequired": "L'indirizzo PKS è obbligatorio.",
       "testConnectionBtn": "Prova connessione",
+      "assignmentsTabTitle": "Assegnazioni piano",
+      "assignmentsPlansTitle": "Piani",
       "clustersTabTitle": "Cluster",
       "connectionVerified": "Connessione a endpoint riuscita.",
       "certificateNotAccepted": "Il certificato non è stato accettato. Impossibile continuare.",
       "assignToProjects": "Assegna a progetti",
       "assignToGroups": "Assegna a gruppi"
+    }
+  },
+  "requests": {
+    "title": "Richieste",
+    "columnContextId": "ID contesto",
+    "columnPhase": "Fase",
+    "columnRequest": "Richiesta",
+    "columnDetails": "Dettagli",
+    "count": "Visualizzazione delle ultime {{number}} richieste",
+    "error": "Errore",
+    "eventLogLink": "Go to event log",
+    "containerLink": "Go to container",
+    "compositeComponentLink": "Go to application",
+    "containerNetworkLink": "Go to network",
+    "containerVolumeLink": "Go to volume",
+    "deleteRequest": {
+      "title": "Rimuovi richiesta",
+      "description": "Confermare la rimozione delle richieste selezionate. L'operazione non può essere annullata."
+    }
+  },
+  "eventLogs": {
+    "title": "Registri eventi",
+    "columnDescription": "Descrizione",
+    "columnTimestamp": "Ora",
+    "count": "Visualizzazione degli ultimi {{number}} registri eventi",
+    "deleteEventLog": {
+      "title": "Rimuovi registro eventi",
+      "description": "Confermare la rimozione dei registri eventi selezionati. L'operazione non può essere annullata."
     }
   },
   "configuration": {
@@ -593,7 +626,10 @@
     "configuration": "Configurazione",
     "logs": "Registri",
     "endpoints": "Endpoint",
-    "pksEndpoints": "Endpoint PKS"
+    "pksEndpoints": "Endpoint PKS",
+    "recentActivity": "Attività recente",
+    "requests": "Richieste",
+    "eventLogs": "Registri eventi"
   },
   "search": {
     "occurrence": {

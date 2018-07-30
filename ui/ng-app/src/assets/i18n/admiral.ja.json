@@ -192,7 +192,8 @@
       "WARNING": "警告",
       "PROVISIONING": "プロビジョニング",
       "RESIZING": "サイズ変更",
-      "REMOVING": "削除"
+      "REMOVING": "削除",
+      "UNREACHABLE": "UNREACHABLE"
     },
     "search": {
       "placeholder": "クラスタの検索"
@@ -395,7 +396,9 @@
         "nameFieldRequired": "クラスタ名は必須です。",
         "fieldTitlePlan": " プラン",
         "fieldTitleMasterHostName": "マスター ホスト名",
+        "masterHostNameFieldRequired": "Master host name is required",
         "fieldTitleMasterHostPort": "マスター ホスト ポート",
+        "masterHostPortFieldRequired": "Master host port is required",
         "fieldTitleNumberNodes": "ワーカー ノード",
         "workerFieldRequired": "ワーカー フィールドは必須です。0 よりも大きい整数のみを入力できます。"
       }
@@ -406,19 +409,19 @@
     "add": {
       "title": "クラスタの追加",
       "existingClusters": {
-        "descriptionText": "Select an endpoint and then select one existing, unassigned Kubernetes cluster to add to the current business group.",
+        "descriptionText": "エンドポイントを選択し、割り当てられていない既存の Kubernetes クラスタを 1 つ選択して、現在のビジネス グループに追加します。",
         "fieldTitleEndpoint": "エンドポイント:",
         "columnTitleName": "名前",
         "columnTitleHostname": "ホスト名",
         "columnTitleMastersCount": "マスター数",
         "columnTitleWorkersCount": "ワーカー数",
         "columnTitlePlan": " プラン",
-        "columnTitleLastAction": "Action",
-        "columnTitleLastActionStatus": "Status",
+        "columnTitleLastAction": "Last Action",
+        "columnTitleLastActionStatus": "Last Action Status",
         "columnTitleInAdmiral": "登録済み",
-        "multipleSelectedClustersWarning": "Cannot add more than one cluster at a time.",
-        "clusterAlreadyRegisteredWarning": "Cannot add selected cluster. It is already added.",
-        "operationInProgressWarning": "Cannot add selected cluster. There is an operation in progress.",
+        "multipleSelectedClustersWarning": "複数のクラスタを同時に追加することはできません。",
+        "clusterAlreadyRegisteredWarning": "選択したクラスタを追加できません。すでに追加されています。",
+        "operationInProgressWarning": "選択したクラスタを追加できません。進行中の操作があります。",
         "yes": "はい",
         "no": "いいえ",
         "count": "クラスタ"
@@ -507,11 +510,41 @@
       "pksAddressFieldTitle": "PKS アドレス",
       "pksAddressRequired": "PKS アドレスは必須です。",
       "testConnectionBtn": "接続をテスト",
+      "assignmentsTabTitle": "プラン割り当て",
+      "assignmentsPlansTitle": "プラン",
       "clustersTabTitle": "クラスタ",
       "connectionVerified": "エンドポイントへの接続に成功しました。",
       "certificateNotAccepted": "証明書が承認されません。続行できません。",
       "assignToProjects": "プロジェクトに割り当て",
       "assignToGroups": "グループに割り当て"
+    }
+  },
+  "requests": {
+    "title": "申請",
+    "columnContextId": "コンテキスト ID",
+    "columnPhase": "段階",
+    "columnRequest": "申請",
+    "columnDetails": "詳細",
+    "count": "最新の申請 {{number}} 件を表示中",
+    "error": "エラー",
+    "eventLogLink": "Go to event log",
+    "containerLink": "Go to container",
+    "compositeComponentLink": "Go to application",
+    "containerNetworkLink": "Go to network",
+    "containerVolumeLink": "Go to volume",
+    "deleteRequest": {
+      "title": "申請の削除",
+      "description": "選択した申請を削除するか確認してください。この操作は元に戻すことができません。"
+    }
+  },
+  "eventLogs": {
+    "title": "イベント ログ",
+    "columnDescription": "説明",
+    "columnTimestamp": "時刻",
+    "count": "最新のイベント ログ {{number}} 件を表示中",
+    "deleteEventLog": {
+      "title": "イベント ログの削除",
+      "description": "選択したイベント ログを削除するか確認してください。この操作は元に戻すことができません。"
     }
   },
   "configuration": {
@@ -593,7 +626,10 @@
     "configuration": "構成",
     "logs": "ログ",
     "endpoints": "エンドポイント",
-    "pksEndpoints": "PKS エンドポイント"
+    "pksEndpoints": "PKS エンドポイント",
+    "recentActivity": "最近のアクティビティ",
+    "requests": "申請",
+    "eventLogs": "イベント ログ"
   },
   "search": {
     "occurrence": {

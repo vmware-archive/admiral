@@ -192,7 +192,8 @@
       "WARNING": "警告",
       "PROVISIONING": "正在置备",
       "RESIZING": "调整大小",
-      "REMOVING": "移除"
+      "REMOVING": "移除",
+      "UNREACHABLE": "UNREACHABLE"
     },
     "search": {
       "placeholder": "搜索群集"
@@ -395,7 +396,9 @@
         "nameFieldRequired": "“群集名称”是必填字段。",
         "fieldTitlePlan": "计划",
         "fieldTitleMasterHostName": "主节点主机名",
+        "masterHostNameFieldRequired": "Master host name is required",
         "fieldTitleMasterHostPort": "主节点主机端口",
+        "masterHostPortFieldRequired": "Master host port is required",
         "fieldTitleNumberNodes": "工作线程节点",
         "workerFieldRequired": "“工作线程”字段是必填字段。只能输入大于 0 的整数值。"
       }
@@ -406,19 +409,19 @@
     "add": {
       "title": "添加群集",
       "existingClusters": {
-        "descriptionText": "Select an endpoint and then select one existing, unassigned Kubernetes cluster to add to the current business group.",
+        "descriptionText": "选择一个端点，然后选择一个现有未分配的 Kubernetes 群集以添加到当前业务组。",
         "fieldTitleEndpoint": "端点:",
         "columnTitleName": "名称",
         "columnTitleHostname": "主机名",
         "columnTitleMastersCount": "主节点数",
         "columnTitleWorkersCount": "工作线程数",
         "columnTitlePlan": "计划",
-        "columnTitleLastAction": "Action",
-        "columnTitleLastActionStatus": "Status",
+        "columnTitleLastAction": "Last Action",
+        "columnTitleLastActionStatus": "Last Action Status",
         "columnTitleInAdmiral": "已注册",
-        "multipleSelectedClustersWarning": "Cannot add more than one cluster at a time.",
-        "clusterAlreadyRegisteredWarning": "Cannot add selected cluster. It is already added.",
-        "operationInProgressWarning": "Cannot add selected cluster. There is an operation in progress.",
+        "multipleSelectedClustersWarning": "无法同时添加多个群集。",
+        "clusterAlreadyRegisteredWarning": "无法添加选定群集。选定群集已添加。",
+        "operationInProgressWarning": "无法添加选定群集。已有操作正在进行中。",
         "yes": "是",
         "no": "否",
         "count": "群集数"
@@ -507,11 +510,41 @@
       "pksAddressFieldTitle": "PKS 地址",
       "pksAddressRequired": "“PKS 地址”是必填字段。",
       "testConnectionBtn": "测试连接",
+      "assignmentsTabTitle": "计划分配",
+      "assignmentsPlansTitle": "计划",
       "clustersTabTitle": "群集",
       "connectionVerified": "已成功连接到端点。",
       "certificateNotAccepted": "未接受证书。无法继续。",
       "assignToProjects": "分配给项目",
       "assignToGroups": "分配给组"
+    }
+  },
+  "requests": {
+    "title": "请求",
+    "columnContextId": "上下文 ID",
+    "columnPhase": "阶段",
+    "columnRequest": "请求",
+    "columnDetails": "详细信息",
+    "count": "显示最近的 {{number}} 个请求",
+    "error": "错误",
+    "eventLogLink": "Go to event log",
+    "containerLink": "Go to container",
+    "compositeComponentLink": "Go to application",
+    "containerNetworkLink": "Go to network",
+    "containerVolumeLink": "Go to volume",
+    "deleteRequest": {
+      "title": "移除请求",
+      "description": "确认移除所选请求。此操作无法撤消。"
+    }
+  },
+  "eventLogs": {
+    "title": "事件日志",
+    "columnDescription": "描述",
+    "columnTimestamp": "时间",
+    "count": "显示最近的 {{number}} 条事件日志",
+    "deleteEventLog": {
+      "title": "移除事件日志",
+      "description": "确认移除所选事件日志。此操作无法撤消。"
     }
   },
   "configuration": {
@@ -593,7 +626,10 @@
     "configuration": "配置",
     "logs": "日志",
     "endpoints": "端点",
-    "pksEndpoints": "PKS 端点"
+    "pksEndpoints": "PKS 端点",
+    "recentActivity": "最近的活动",
+    "requests": "请求",
+    "eventLogs": "事件日志"
   },
   "search": {
     "occurrence": {

@@ -192,7 +192,8 @@
       "WARNING": "警告",
       "PROVISIONING": "佈建中",
       "RESIZING": "調整大小",
-      "REMOVING": "移除"
+      "REMOVING": "移除",
+      "UNREACHABLE": "UNREACHABLE"
     },
     "search": {
       "placeholder": "搜尋叢集"
@@ -395,7 +396,9 @@
         "nameFieldRequired": "叢集名稱為必填。",
         "fieldTitlePlan": " 計劃",
         "fieldTitleMasterHostName": "主控主機名稱",
+        "masterHostNameFieldRequired": "Master host name is required",
         "fieldTitleMasterHostPort": "主控主機連接埠",
+        "masterHostPortFieldRequired": "Master host port is required",
         "fieldTitleNumberNodes": "Worker 節點",
         "workerFieldRequired": "Worker 欄位為必填。僅可以輸入大於 0 的整數值。"
       }
@@ -406,19 +409,19 @@
     "add": {
       "title": "新增叢集",
       "existingClusters": {
-        "descriptionText": "Select an endpoint and then select one existing, unassigned Kubernetes cluster to add to the current business group.",
+        "descriptionText": "選取端點，然後選取一個現有取消指派的 Kubernetes 叢集，以新增至目前的業務群組。",
         "fieldTitleEndpoint": "端點:",
         "columnTitleName": "名稱",
         "columnTitleHostname": "主機名稱",
         "columnTitleMastersCount": "主節點數",
         "columnTitleWorkersCount": "Worker 數",
         "columnTitlePlan": " 計劃",
-        "columnTitleLastAction": "Action",
-        "columnTitleLastActionStatus": "Status",
+        "columnTitleLastAction": "Last Action",
+        "columnTitleLastActionStatus": "Last Action Status",
         "columnTitleInAdmiral": "已登錄",
-        "multipleSelectedClustersWarning": "Cannot add more than one cluster at a time.",
-        "clusterAlreadyRegisteredWarning": "Cannot add selected cluster. It is already added.",
-        "operationInProgressWarning": "Cannot add selected cluster. There is an operation in progress.",
+        "multipleSelectedClustersWarning": "無法一次新增多個叢集。",
+        "clusterAlreadyRegisteredWarning": "無法新增選取的叢集。已將其新增。",
+        "operationInProgressWarning": "無法新增選取的叢集。有作業正在進行中。",
         "yes": "是",
         "no": "否",
         "count": "叢集"
@@ -507,11 +510,41 @@
       "pksAddressFieldTitle": "PKS 位址",
       "pksAddressRequired": "PKS 位址為必填。",
       "testConnectionBtn": "測試連線",
+      "assignmentsTabTitle": "計劃指派",
+      "assignmentsPlansTitle": "計劃",
       "clustersTabTitle": "叢集",
       "connectionVerified": "已成功連線到端點。",
       "certificateNotAccepted": "不接受憑證。無法繼續。",
       "assignToProjects": "指派給專案",
       "assignToGroups": "指派給群組"
+    }
+  },
+  "requests": {
+    "title": "要求",
+    "columnContextId": "內容識別碼",
+    "columnPhase": "階段",
+    "columnRequest": "要求",
+    "columnDetails": "詳細資料",
+    "count": "顯示最新的 {{number}} 個要求",
+    "error": "錯誤",
+    "eventLogLink": "Go to event log",
+    "containerLink": "Go to container",
+    "compositeComponentLink": "Go to application",
+    "containerNetworkLink": "Go to network",
+    "containerVolumeLink": "Go to volume",
+    "deleteRequest": {
+      "title": "移除要求",
+      "description": "確認移除所選要求。此作業無法復原。"
+    }
+  },
+  "eventLogs": {
+    "title": "事件記錄",
+    "columnDescription": "說明",
+    "columnTimestamp": "時間",
+    "count": "顯示最新的 {{number}} 個事件記錄",
+    "deleteEventLog": {
+      "title": "移除事件記錄",
+      "description": "確認移除所選事件記錄。此作業無法復原。"
     }
   },
   "configuration": {
@@ -593,7 +626,10 @@
     "configuration": "組態",
     "logs": "記錄",
     "endpoints": "端點",
-    "pksEndpoints": "PKS 端點"
+    "pksEndpoints": "PKS 端點",
+    "recentActivity": "最近的活動",
+    "requests": "要求",
+    "eventLogs": "事件記錄"
   },
   "search": {
     "occurrence": {

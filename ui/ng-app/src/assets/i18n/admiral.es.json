@@ -192,7 +192,8 @@
       "WARNING": "ADVERTENCIA",
       "PROVISIONING": "APROVISIONAMIENTO",
       "RESIZING": "CAMBIO DE TAMAÑO",
-      "REMOVING": "ELIMINACIÓN"
+      "REMOVING": "ELIMINACIÓN",
+      "UNREACHABLE": "UNREACHABLE"
     },
     "search": {
       "placeholder": "Buscar clústeres"
@@ -395,7 +396,9 @@
         "nameFieldRequired": "Se requiere el nombre del clúster.",
         "fieldTitlePlan": "Plan",
         "fieldTitleMasterHostName": "Nombre de host principal",
+        "masterHostNameFieldRequired": "Master host name is required",
         "fieldTitleMasterHostPort": "Puerto de host principal",
+        "masterHostPortFieldRequired": "Master host port is required",
         "fieldTitleNumberNodes": "Nodos de trabajo",
         "workerFieldRequired": "Se requiere el campo de trabajo. Únicamente se pueden introducir valores enteros superiores a 0."
       }
@@ -406,19 +409,19 @@
     "add": {
       "title": "Agregar clúster",
       "existingClusters": {
-        "descriptionText": "Select an endpoint and then select one existing, unassigned Kubernetes cluster to add to the current business group.",
+        "descriptionText": "Seleccione un endpoint y, a continuación, seleccione un clúster de Kubernetes existente sin asignar para agregarlo al grupo empresarial actual.",
         "fieldTitleEndpoint": "Endpoint:",
         "columnTitleName": "Nombre",
         "columnTitleHostname": "Nombre de host",
         "columnTitleMastersCount": "Número de maestros",
         "columnTitleWorkersCount": "Número de trabajadores",
         "columnTitlePlan": "Plan",
-        "columnTitleLastAction": "Action",
-        "columnTitleLastActionStatus": "Status",
+        "columnTitleLastAction": "Last Action",
+        "columnTitleLastActionStatus": "Last Action Status",
         "columnTitleInAdmiral": "Registrado",
-        "multipleSelectedClustersWarning": "Cannot add more than one cluster at a time.",
-        "clusterAlreadyRegisteredWarning": "Cannot add selected cluster. It is already added.",
-        "operationInProgressWarning": "Cannot add selected cluster. There is an operation in progress.",
+        "multipleSelectedClustersWarning": "No se puede agregar más de un clúster a la vez.",
+        "clusterAlreadyRegisteredWarning": "No se puede agregar el clúster seleccionado debido a que ya se ha agregado.",
+        "operationInProgressWarning": "No se puede agregar el clúster seleccionado debido a que hay una operación en curso.",
         "yes": "Sí",
         "no": "No",
         "count": "Clústeres"
@@ -507,11 +510,41 @@
       "pksAddressFieldTitle": "Dirección PKS",
       "pksAddressRequired": "La dirección PKS es obligatoria.",
       "testConnectionBtn": "Probar conexión",
+      "assignmentsTabTitle": "Asignaciones de plan",
+      "assignmentsPlansTitle": "Planes",
       "clustersTabTitle": "Clústeres",
       "connectionVerified": "La conexión con el endpoint se ha realizado correctamente.",
       "certificateNotAccepted": "No se acepta el certificado. No se puede continuar.",
       "assignToProjects": "Asignar a proyectos",
       "assignToGroups": "Asignar a grupos"
+    }
+  },
+  "requests": {
+    "title": "Solicitudes",
+    "columnContextId": "Identificador contextual",
+    "columnPhase": "Fase",
+    "columnRequest": "Solicitud",
+    "columnDetails": "Detalles",
+    "count": "Mostrando las {{number}} solicitudes más recientes",
+    "error": "Error",
+    "eventLogLink": "Go to event log",
+    "containerLink": "Go to container",
+    "compositeComponentLink": "Go to application",
+    "containerNetworkLink": "Go to network",
+    "containerVolumeLink": "Go to volume",
+    "deleteRequest": {
+      "title": "Quitar solicitud",
+      "description": "Confirme la eliminación de las solicitudes seleccionadas. La operación no se puede deshacer."
+    }
+  },
+  "eventLogs": {
+    "title": "Logs de eventos",
+    "columnDescription": "Descripción",
+    "columnTimestamp": "Hora",
+    "count": "Mostrando los {{number}} logs de eventos más recientes",
+    "deleteEventLog": {
+      "title": "Quitar log de eventos",
+      "description": "Confirme la eliminación de los logs de eventos seleccionados. La operación no se puede deshacer."
     }
   },
   "configuration": {
@@ -593,7 +626,10 @@
     "configuration": "Configuración",
     "logs": "Logs",
     "endpoints": "Endpoints",
-    "pksEndpoints": "Endpoints PKS"
+    "pksEndpoints": "Endpoints PKS",
+    "recentActivity": "Actividad reciente",
+    "requests": "Solicitudes",
+    "eventLogs": "Logs de eventos"
   },
   "search": {
     "occurrence": {

@@ -200,7 +200,7 @@
         "publicTitle": "公開金鑰",
         "publicCertificateTitle": "公開憑證",
         "privateCertificateTitle": "私密憑證",
-        "bearerTokenTitle": "Bearer token",
+        "bearerTokenTitle": "Bearer Token",
         "customProperties": "自訂內容"
       }
     },

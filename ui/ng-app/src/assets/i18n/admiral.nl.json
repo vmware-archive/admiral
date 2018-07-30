@@ -192,7 +192,8 @@
       "WARNING": "WAARSCHUWING",
       "PROVISIONING": "INRICHTING",
       "RESIZING": "GROOTTE WIJZIGEN",
-      "REMOVING": "VERWIJDEREN"
+      "REMOVING": "VERWIJDEREN",
+      "UNREACHABLE": "UNREACHABLE"
     },
     "search": {
       "placeholder": "Zoeken naar clusters"
@@ -395,7 +396,9 @@
         "nameFieldRequired": "Clusternaam is verplicht.",
         "fieldTitlePlan": " Plan",
         "fieldTitleMasterHostName": "Naam van meesterhost",
+        "masterHostNameFieldRequired": "Master host name is required",
         "fieldTitleMasterHostPort": "Poort van meesterhost",
+        "masterHostPortFieldRequired": "Master host port is required",
         "fieldTitleNumberNodes": "Werkerknooppunten",
         "workerFieldRequired": "Het veld Werker is verplicht. Alleen gehele getallen groter dan 0 kunnen worden ingevoerd."
       }
@@ -406,19 +409,19 @@
     "add": {
       "title": "Cluster toevoegen",
       "existingClusters": {
-        "descriptionText": "Select an endpoint and then select one existing, unassigned Kubernetes cluster to add to the current business group.",
+        "descriptionText": "Selecteer een endpoint en selecteer vervolgens een bestaande, niet-toegewezen Kubernetes-cluster die u wilt toevoegen aan de huidige beddrijfsgroep.",
         "fieldTitleEndpoint": "Endpoint:",
         "columnTitleName": "Naam",
         "columnTitleHostname": "Hostnaam",
         "columnTitleMastersCount": "Aantal masters",
         "columnTitleWorkersCount": "Aantal werkers",
         "columnTitlePlan": " Plan",
-        "columnTitleLastAction": "Action",
-        "columnTitleLastActionStatus": "Status",
+        "columnTitleLastAction": "Last Action",
+        "columnTitleLastActionStatus": "Last Action Status",
         "columnTitleInAdmiral": "Geregistreerd",
-        "multipleSelectedClustersWarning": "Cannot add more than one cluster at a time.",
-        "clusterAlreadyRegisteredWarning": "Cannot add selected cluster. It is already added.",
-        "operationInProgressWarning": "Cannot add selected cluster. There is an operation in progress.",
+        "multipleSelectedClustersWarning": "Kan niet meer dan één cluster tegelijk toevoegen.",
+        "clusterAlreadyRegisteredWarning": "Kan geselecteerde cluster niet toevoegen. Deze is al toegevoegd.",
+        "operationInProgressWarning": "Kan geselecteerde cluster niet toevoegen. Er wordt al een bewerking uitgevoerd.",
         "yes": "Ja",
         "no": "Nee",
         "count": "clusters"
@@ -507,11 +510,41 @@
       "pksAddressFieldTitle": "PKS-adres",
       "pksAddressRequired": "Het PKS-adres is verplicht.",
       "testConnectionBtn": "Testverbinding",
+      "assignmentsTabTitle": "Toewijzingen plannen",
+      "assignmentsPlansTitle": "Plannen",
       "clustersTabTitle": "Clusters",
       "connectionVerified": "Verbinding met eindpunt is geslaagd.",
       "certificateNotAccepted": "Het certificaat wordt niet geaccepteerd. Kan niet doorgaan.",
       "assignToProjects": "Toewijzen aan projecten",
       "assignToGroups": "Toewijzen aan groepen"
+    }
+  },
+  "requests": {
+    "title": "Aanvragen",
+    "columnContextId": "Context-ID",
+    "columnPhase": "Fase",
+    "columnRequest": "Aanvragen",
+    "columnDetails": "Details",
+    "count": "Laatste {{number}} aanvragen weergeven",
+    "error": "Fout",
+    "eventLogLink": "Go to event log",
+    "containerLink": "Go to container",
+    "compositeComponentLink": "Go to application",
+    "containerNetworkLink": "Go to network",
+    "containerVolumeLink": "Go to volume",
+    "deleteRequest": {
+      "title": "Aanvraag verwijderen",
+      "description": "Bevestig de verwijdering van de geselecteerde aanvragen. De bewerking kan niet ongedaan worden gemaakt."
+    }
+  },
+  "eventLogs": {
+    "title": "Gebeurtenislogboeken",
+    "columnDescription": "Beschrijving",
+    "columnTimestamp": "Tijd",
+    "count": "Laatste {{number}} gebeurtenislogboeken weergeven",
+    "deleteEventLog": {
+      "title": "Gebeurtenislogboek verwijderen",
+      "description": "Bevestig de verwijdering van de geselecteerde gebeurtenislogboeken. De bewerking kan niet ongedaan worden gemaakt."
     }
   },
   "configuration": {
@@ -593,7 +626,10 @@
     "configuration": "Configuratie",
     "logs": "Logboeken",
     "endpoints": "Endpoints",
-    "pksEndpoints": "PKS-endpoints"
+    "pksEndpoints": "PKS-endpoints",
+    "recentActivity": "Recente activiteit",
+    "requests": "Aanvragen",
+    "eventLogs": "Gebeurtenislogboeken"
   },
   "search": {
     "occurrence": {

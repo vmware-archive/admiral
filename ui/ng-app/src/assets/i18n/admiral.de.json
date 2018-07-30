@@ -192,7 +192,8 @@
       "WARNING": "WARNUNG",
       "PROVISIONING": "BEREITSTELLUNG",
       "RESIZING": "ÄNDERN DER GRÖSSE",
-      "REMOVING": "ENTFERNEN"
+      "REMOVING": "ENTFERNEN",
+      "UNREACHABLE": "UNREACHABLE"
     },
     "search": {
       "placeholder": "Nach Clustern suchen"
@@ -395,7 +396,9 @@
         "nameFieldRequired": "Clustername ist erforderlich.",
         "fieldTitlePlan": "Plan",
         "fieldTitleMasterHostName": "Master-Hostname",
+        "masterHostNameFieldRequired": "Master host name is required",
         "fieldTitleMasterHostPort": "Master-Hostport",
+        "masterHostPortFieldRequired": "Master host port is required",
         "fieldTitleNumberNodes": "Worker-Knoten",
         "workerFieldRequired": "Worker-Feld ist erforderlich. Nur Ganzzahlwerte größer 0 können eingegeben werden."
       }
@@ -406,19 +409,19 @@
     "add": {
       "title": "Cluster hinzufügen",
       "existingClusters": {
-        "descriptionText": "Select an endpoint and then select one existing, unassigned Kubernetes cluster to add to the current business group.",
+        "descriptionText": "Wählen Sie einen Endpoint und dann einen vorhandenen, nicht zugewiesenen Kubernetes-Cluster aus, der zur aktuellen Business-Gruppe hinzugefügt wird.",
         "fieldTitleEndpoint": "Endpoint:",
         "columnTitleName": "Name",
         "columnTitleHostname": "Hostname",
         "columnTitleMastersCount": "Anz. Master",
         "columnTitleWorkersCount": "Anz. Worker",
         "columnTitlePlan": "Plan",
-        "columnTitleLastAction": "Action",
-        "columnTitleLastActionStatus": "Status",
+        "columnTitleLastAction": "Last Action",
+        "columnTitleLastActionStatus": "Last Action Status",
         "columnTitleInAdmiral": "Registriert",
-        "multipleSelectedClustersWarning": "Cannot add more than one cluster at a time.",
-        "clusterAlreadyRegisteredWarning": "Cannot add selected cluster. It is already added.",
-        "operationInProgressWarning": "Cannot add selected cluster. There is an operation in progress.",
+        "multipleSelectedClustersWarning": "Es kann nicht mehr als ein Cluster gleichzeitig hinzugefügt werden.",
+        "clusterAlreadyRegisteredWarning": "Der ausgewählte Cluster kann nicht hinzugefügt werden. Er wurde bereits hinzugefügt.",
+        "operationInProgressWarning": "Der ausgewählte Cluster kann nicht hinzugefügt werden. Ein Vorgang ist in Bearbeitung.",
         "yes": "Ja",
         "no": "Nein",
         "count": "Cluster"
@@ -507,11 +510,41 @@
       "pksAddressFieldTitle": "PKS-Adresse",
       "pksAddressRequired": "Die PKS-Adresse ist erforderlich.",
       "testConnectionBtn": "Verbindung testen",
+      "assignmentsTabTitle": "Planzuweisungen",
+      "assignmentsPlansTitle": "Pläne",
       "clustersTabTitle": "Cluster",
       "connectionVerified": "Verbindung zu Endpoint war erfolgreich.",
       "certificateNotAccepted": "Das Zertifikat wurde nicht akzeptiert. Fortfahren nicht möglich.",
       "assignToProjects": "Zu Projekten zuweisen",
       "assignToGroups": "Zu Gruppen zuweisen"
+    }
+  },
+  "requests": {
+    "title": "Anforderungen",
+    "columnContextId": "Kontext-ID",
+    "columnPhase": "Phase",
+    "columnRequest": "Anfordern",
+    "columnDetails": "Details",
+    "count": "Die letzten {{number}} Anforderungen werden angezeigt",
+    "error": "Fehler",
+    "eventLogLink": "Go to event log",
+    "containerLink": "Go to container",
+    "compositeComponentLink": "Go to application",
+    "containerNetworkLink": "Go to network",
+    "containerVolumeLink": "Go to volume",
+    "deleteRequest": {
+      "title": "Anforderung entfernen",
+      "description": "Bestätigen Sie die Entfernung der ausgewählten Anforderungen. Der Vorgang kann nicht rückgängig gemacht werden."
+    }
+  },
+  "eventLogs": {
+    "title": "Ereignisprotokolle",
+    "columnDescription": "Beschreibung",
+    "columnTimestamp": "Uhrzeit",
+    "count": "Die letzten {{number}} Ereignisprotokolle werden angezeigt",
+    "deleteEventLog": {
+      "title": "Ereignisprotokoll entfernen",
+      "description": "Bestätigen Sie die Entfernung der ausgewählten Ereignisprotokolle. Der Vorgang kann nicht rückgängig gemacht werden."
     }
   },
   "configuration": {
@@ -593,7 +626,10 @@
     "configuration": "Konfiguration",
     "logs": "Protokolle",
     "endpoints": "Endpoints",
-    "pksEndpoints": "PKS-Endpoints"
+    "pksEndpoints": "PKS-Endpoints",
+    "recentActivity": "Letzte Aktivität",
+    "requests": "Anforderungen",
+    "eventLogs": "Ereignisprotokolle"
   },
   "search": {
     "occurrence": {

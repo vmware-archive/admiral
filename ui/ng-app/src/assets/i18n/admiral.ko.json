@@ -192,7 +192,8 @@
       "WARNING": "주의",
       "PROVISIONING": "프로비저닝",
       "RESIZING": "크기 조정",
-      "REMOVING": "제거"
+      "REMOVING": "제거",
+      "UNREACHABLE": "UNREACHABLE"
     },
     "search": {
       "placeholder": "클러스터 검색"
@@ -395,7 +396,9 @@
         "nameFieldRequired": "클러스터 이름은 필수입니다.",
         "fieldTitlePlan": "계획",
         "fieldTitleMasterHostName": "마스터 호스트 이름",
+        "masterHostNameFieldRequired": "Master host name is required",
         "fieldTitleMasterHostPort": "마스터 호스트 포트",
+        "masterHostPortFieldRequired": "Master host port is required",
         "fieldTitleNumberNodes": "작업자 노드",
         "workerFieldRequired": "작업자 필드는 필수입니다. 0보다 큰 정수 값만 입력할 수 있습니다."
       }
@@ -406,19 +409,19 @@
     "add": {
       "title": "클러스터 추가",
       "existingClusters": {
-        "descriptionText": "Select an endpoint and then select one existing, unassigned Kubernetes cluster to add to the current business group.",
+        "descriptionText": "끝점을 선택하고 현재 비즈니스 그룹에 추가할 하나의 할당되지 않은 기존 Kubernetes 클러스터를 선택합니다.",
         "fieldTitleEndpoint": "끝점:",
         "columnTitleName": "이름",
         "columnTitleHostname": "호스트 이름",
         "columnTitleMastersCount": "마스터 수",
         "columnTitleWorkersCount": "작업자 수",
         "columnTitlePlan": "계획",
-        "columnTitleLastAction": "Action",
-        "columnTitleLastActionStatus": "Status",
+        "columnTitleLastAction": "Last Action",
+        "columnTitleLastActionStatus": "Last Action Status",
         "columnTitleInAdmiral": "등록됨",
-        "multipleSelectedClustersWarning": "Cannot add more than one cluster at a time.",
-        "clusterAlreadyRegisteredWarning": "Cannot add selected cluster. It is already added.",
-        "operationInProgressWarning": "Cannot add selected cluster. There is an operation in progress.",
+        "multipleSelectedClustersWarning": "한 번에 둘 이상의 클러스터를 추가할 수 없습니다.",
+        "clusterAlreadyRegisteredWarning": "선택한 클러스터를 추가할 수 없습니다. 이미 추가되어 있습니다.",
+        "operationInProgressWarning": "선택한 클러스터를 추가할 수 없습니다. 진행 중인 작업이 있습니다.",
         "yes": "예",
         "no": "아니요",
         "count": "클러스터"
@@ -507,11 +510,41 @@
       "pksAddressFieldTitle": "PKS 주소",
       "pksAddressRequired": "PKS 주소는 필수입니다.",
       "testConnectionBtn": "연결 테스트",
+      "assignmentsTabTitle": "계획 할당",
+      "assignmentsPlansTitle": "계획",
       "clustersTabTitle": "클러스터",
       "connectionVerified": "끝점에 연결되었습니다.",
       "certificateNotAccepted": "인증서가 수락되지 않았습니다. 계속할 수 없습니다.",
       "assignToProjects": "프로젝트에 할당",
       "assignToGroups": "그룹에 할당"
+    }
+  },
+  "requests": {
+    "title": "요청",
+    "columnContextId": "컨텍스트 ID",
+    "columnPhase": "단계",
+    "columnRequest": "요청",
+    "columnDetails": "세부 정보",
+    "count": "최신 {{number}}개 요청 표시 중",
+    "error": "오류",
+    "eventLogLink": "Go to event log",
+    "containerLink": "Go to container",
+    "compositeComponentLink": "Go to application",
+    "containerNetworkLink": "Go to network",
+    "containerVolumeLink": "Go to volume",
+    "deleteRequest": {
+      "title": "요청 제거",
+      "description": "선택한 요청 제거를 확인합니다. 이 작업은 실행 취소할 수 없습니다."
+    }
+  },
+  "eventLogs": {
+    "title": "이벤트 로그",
+    "columnDescription": "설명",
+    "columnTimestamp": "시간",
+    "count": "최신 {{number}}개 이벤트 로그 표시 중",
+    "deleteEventLog": {
+      "title": "이벤트 로그 제거",
+      "description": "선택한 이벤트 로그 제거를 확인합니다. 이 작업은 실행 취소할 수 없습니다."
     }
   },
   "configuration": {
@@ -593,7 +626,10 @@
     "configuration": "구성",
     "logs": "로그",
     "endpoints": "끝점",
-    "pksEndpoints": "PKS 끝점"
+    "pksEndpoints": "PKS 끝점",
+    "recentActivity": "최근 활동",
+    "requests": "요청",
+    "eventLogs": "이벤트 로그"
   },
   "search": {
     "occurrence": {

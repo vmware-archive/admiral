@@ -192,7 +192,8 @@
       "WARNING": "ПРЕДУПРЕЖДЕНИЕ",
       "PROVISIONING": "ПОДГОТОВКА",
       "RESIZING": "ИЗМЕНЕНИЕ РАЗМЕРА",
-      "REMOVING": "УДАЛЕНИЕ"
+      "REMOVING": "УДАЛЕНИЕ",
+      "UNREACHABLE": "UNREACHABLE"
     },
     "search": {
       "placeholder": "Найти кластеры"
@@ -399,7 +400,9 @@
         "nameFieldRequired": "Требуется указать имя кластера.",
         "fieldTitlePlan": " План",
         "fieldTitleMasterHostName": "Имя ведущего узла",
+        "masterHostNameFieldRequired": "Master host name is required",
         "fieldTitleMasterHostPort": "Порт ведущего узла",
+        "masterHostPortFieldRequired": "Master host port is required",
         "fieldTitleNumberNodes": "Узлы рабочих процессов",
         "workerFieldRequired": "Поле рабочего процесса является обязательным. Можно ввести только целое число больше 0."
       }
@@ -410,19 +413,19 @@
     "add": {
       "title": "Добавить кластер",
       "existingClusters": {
-        "descriptionText": "Select an endpoint and then select one existing, unassigned Kubernetes cluster to add to the current business group.",
+        "descriptionText": "Выберите конечную точку, а затем укажите один существующий, неназначенный кластер Kubernetes для добавления к текущей бизнес-группе.",
         "fieldTitleEndpoint": "Конечная точка:",
         "columnTitleName": "Имя",
         "columnTitleHostname": "Имя узла",
         "columnTitleMastersCount": "Количество основных узлов",
         "columnTitleWorkersCount": "Количество рабочих процессов",
         "columnTitlePlan": " План",
-        "columnTitleLastAction": "Action",
-        "columnTitleLastActionStatus": "Status",
+        "columnTitleLastAction": "Last Action",
+        "columnTitleLastActionStatus": "Last Action Status",
         "columnTitleInAdmiral": "Зарегистрирован",
-        "multipleSelectedClustersWarning": "Cannot add more than one cluster at a time.",
-        "clusterAlreadyRegisteredWarning": "Cannot add selected cluster. It is already added.",
-        "operationInProgressWarning": "Cannot add selected cluster. There is an operation in progress.",
+        "multipleSelectedClustersWarning": "Не удается добавить одновременно несколько кластеров.",
+        "clusterAlreadyRegisteredWarning": "Не удается добавить выбранный кластер, поскольку он уже добавлен.",
+        "operationInProgressWarning": "Не удается добавить выбранный кластер, поскольку в настоящее время выполняется операция.",
         "yes": "Да",
         "no": "Нет",
         "count": "Кластеры"
@@ -511,11 +514,41 @@
       "pksAddressFieldTitle": "PKS-адрес",
       "pksAddressRequired": "Необходимо указать PKS-адрес.",
       "testConnectionBtn": "Проверить подключение",
+      "assignmentsTabTitle": "Назначения планов",
+      "assignmentsPlansTitle": "Планы",
       "clustersTabTitle": "Кластеры",
       "connectionVerified": "Подключение к конечной точке успешно установлено.",
       "certificateNotAccepted": "Сертификат не будет принят. Невозможно продолжить.",
       "assignToProjects": "Назначить проектам",
       "assignToGroups": "Назначить группам"
+    }
+  },
+  "requests": {
+    "title": "Запросы",
+    "columnContextId": "Контекстный идентификатор",
+    "columnPhase": "Этап",
+    "columnRequest": "Запрос",
+    "columnDetails": "Сведения",
+    "count": "Отображение последних запросов ({{number}})",
+    "error": "Ошибка",
+    "eventLogLink": "Go to event log",
+    "containerLink": "Go to container",
+    "compositeComponentLink": "Go to application",
+    "containerNetworkLink": "Go to network",
+    "containerVolumeLink": "Go to volume",
+    "deleteRequest": {
+      "title": "Удалить запрос",
+      "description": "Подтвердите удаление выбранных запросов. Это действие невозможно отменить."
+    }
+  },
+  "eventLogs": {
+    "title": "Журналы событий",
+    "columnDescription": "Описание",
+    "columnTimestamp": "Время",
+    "count": "Отображение последних журналов событий ({{number}})",
+    "deleteEventLog": {
+      "title": "Удалить журнал событий",
+      "description": "Подтвердите удаление выбранных журналов событий. Это действие невозможно отменить."
     }
   },
   "configuration": {
@@ -597,7 +630,10 @@
     "configuration": "Конфигурация",
     "logs": "Журналы",
     "endpoints": "Конечные точки",
-    "pksEndpoints": "Конечные точки PKS"
+    "pksEndpoints": "Конечные точки PKS",
+    "recentActivity": "Последние действия",
+    "requests": "Запросы",
+    "eventLogs": "Журналы событий"
   },
   "search": {
     "occurrence": {
