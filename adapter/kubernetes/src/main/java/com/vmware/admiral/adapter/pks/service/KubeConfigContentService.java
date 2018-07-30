@@ -22,7 +22,6 @@ import java.util.function.Consumer;
 import com.vmware.admiral.adapter.pks.PKSConstants;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
-import com.vmware.admiral.common.util.AuthUtils;
 import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.ContainerHostUtil;
 import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
@@ -87,7 +86,7 @@ public class KubeConfigContentService extends StatelessService {
             }
 
             kubeConfig = credentials.customProperties.get(PKSConstants.KUBE_CONFIG_PROP_NAME);
-        } else if (AuthUtils.BEARER_TOKEN_AUTH_TYPE.equals(credentials.type)) {
+        } else if (AuthCredentialsType.Bearer.toString().equals(credentials.type)) {
             KubeConfig config = KubernetesUtil.constructKubeConfig(kubernetesHost.address,
                     EncryptionUtils.decrypt(credentials.privateKey));
             kubeConfig = Utils.toJson(config);

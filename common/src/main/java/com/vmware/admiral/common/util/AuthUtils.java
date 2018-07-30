@@ -35,7 +35,6 @@ import com.vmware.xenon.services.common.authn.BasicAuthenticationUtils;
 
 public class AuthUtils {
 
-    public static final String BEARER_TOKEN_AUTH_TYPE = "Bearer";
     public static final String AUTH_CREDENTIALS_NAME_PROP_NAME = "__authCredentialsName";
 
     /*
@@ -59,7 +58,7 @@ public class AuthUtils {
             return null;
         }
 
-        if (BEARER_TOKEN_AUTH_TYPE.equals(authState.type)) {
+        if (AuthCredentialsType.Bearer.toString().equals(authState.type)) {
             String token = EncryptionUtils.decrypt(authState.privateKey);
             return "Bearer " + token;
         }

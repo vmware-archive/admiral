@@ -19,5 +19,6 @@ public enum AuthCredentialsType {
     Public,
     PublicKey,
     Password,
-    PublicKeyCA
+    PublicKeyCA,
+    Bearer
 }

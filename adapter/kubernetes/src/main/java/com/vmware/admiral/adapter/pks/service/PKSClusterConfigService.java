@@ -50,6 +50,7 @@ import com.vmware.admiral.compute.kubernetes.entities.config.KubeConfig;
 import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
@@ -241,7 +242,7 @@ public class PKSClusterConfigService extends StatelessService {
         AuthCredentialsServiceState credentials = new AuthCredentialsServiceState();
         credentials.documentSelfLink = link;
         credentials.privateKey = token;
-        credentials.type = AuthUtils.BEARER_TOKEN_AUTH_TYPE;
+        credentials.type = AuthCredentialsType.Bearer.toString();
         credentials.tenantLinks = tenantLinks;
         credentials.customProperties = new HashMap<>(4);
         credentials.customProperties.put(KUBE_CONFIG_PROP_NAME, Utils.toJson(kubeConfig));

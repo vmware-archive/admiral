@@ -26,7 +26,6 @@ import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.vmware.admiral.common.util.AuthUtils;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.photon.controller.model.resources.ComputeService;
@@ -55,8 +54,8 @@ public class KubeConfigContentServiceTest extends ComputeBaseTest {
 
     @Test
     public void testGetKubeConfigWithBearerToken() throws Throwable {
-        String authCredentialsLink = createCredentials(AuthUtils.BEARER_TOKEN_AUTH_TYPE,
-                true).documentSelfLink;
+        String authCredentialsLink = createCredentials(AuthCredentialsType.Bearer, true)
+                .documentSelfLink;
         String hostLink = createCompute(authCredentialsLink, true, true).documentSelfLink;
 
         URI serviceUri = UriUtils.buildUri(host, KubeConfigContentService.SELF_LINK,
@@ -72,8 +71,8 @@ public class KubeConfigContentServiceTest extends ComputeBaseTest {
     @Test
     public void testGetKubeConfigWithCertificateAndKey() throws Throwable {
         assertTrue(UUID.randomUUID().toString().matches("[-a-z0-9]+"));
-        String authCredentialsLink = createCredentials(AuthCredentialsType.PublicKey.toString(),
-                false).documentSelfLink;
+        String authCredentialsLink = createCredentials(AuthCredentialsType.PublicKey, false)
+                .documentSelfLink;
         String hostLink = createCompute(authCredentialsLink, true, false).documentSelfLink;
 
         URI serviceUri = UriUtils.buildUri(host, KubeConfigContentService.SELF_LINK,
@@ -87,8 +86,8 @@ public class KubeConfigContentServiceTest extends ComputeBaseTest {
 
     @Test
     public void testShouldFailWhenHostTypeNotKubernetes() throws Throwable {
-        String authCredentialsLink = createCredentials(AuthUtils.BEARER_TOKEN_AUTH_TYPE,
-                true).documentSelfLink;
+        String authCredentialsLink = createCredentials(AuthCredentialsType.Bearer, true)
+                .documentSelfLink;
         String hostLink = createCompute(authCredentialsLink, false, true).documentSelfLink;
         URI serviceUri = UriUtils.buildUri(host, KubeConfigContentService.SELF_LINK,
                 UriUtils.buildUriQuery("hostLink", hostLink));
@@ -102,8 +101,8 @@ public class KubeConfigContentServiceTest extends ComputeBaseTest {
 
     @Test
     public void testShouldFailWhenKubeConfigContentIsMissing() throws Throwable {
-        String authCredentialsLink = createCredentials(AuthUtils.BEARER_TOKEN_AUTH_TYPE,
-                false).documentSelfLink;
+        String authCredentialsLink = createCredentials(AuthCredentialsType.Bearer, false)
+                .documentSelfLink;
         String hostLink = createCompute(authCredentialsLink, true, true).documentSelfLink;
         URI serviceUri = UriUtils.buildUri(host, KubeConfigContentService.SELF_LINK,
                 UriUtils.buildUriQuery("hostLink", hostLink));
@@ -128,8 +127,8 @@ public class KubeConfigContentServiceTest extends ComputeBaseTest {
 
     @Test
     public void testShouldFailWhenHostAuthTypeNotSupported() throws Throwable {
-        String authCredentialsLink = createCredentials(AuthCredentialsType.Password.toString(),
-                false).documentSelfLink;
+        String authCredentialsLink = createCredentials(AuthCredentialsType.Password, false)
+                .documentSelfLink;
         String hostLink = createCompute(authCredentialsLink, true, false).documentSelfLink;
         URI serviceUri = UriUtils.buildUri(host, KubeConfigContentService.SELF_LINK,
                 UriUtils.buildUriQuery("hostLink", hostLink));
@@ -141,14 +140,14 @@ public class KubeConfigContentServiceTest extends ComputeBaseTest {
         }
     }
 
-    private AuthCredentialsServiceState createCredentials(String type, boolean setKubeConfig)
-            throws Throwable {
+    private AuthCredentialsServiceState createCredentials(AuthCredentialsType type,
+            boolean setKubeConfig) throws Throwable {
 
         AuthCredentialsServiceState credentials = new AuthCredentialsServiceState();
-        if (AuthUtils.BEARER_TOKEN_AUTH_TYPE.equals(type)) {
-            credentials.type = AuthUtils.BEARER_TOKEN_AUTH_TYPE;
+        if (AuthCredentialsType.Bearer == type) {
+            credentials.type = AuthCredentialsType.Bearer.toString();
             credentials.publicKey = "token";
-        } else if (AuthCredentialsType.PublicKey.toString().equals(type)) {
+        } else if (AuthCredentialsType.PublicKey == type) {
             credentials.type = AuthCredentialsType.PublicKey.toString();
             credentials.publicKey = "certificate";
             credentials.privateKey = "privateKey";
