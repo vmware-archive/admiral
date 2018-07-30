@@ -64,6 +64,13 @@ export class KubernetesClusterSummaryComponent implements OnInit {
         return I18n.t('notAvailable');
     }
 
+    get masterNodesIPs() {
+        if (this.cluster) {
+            return Utils.getCustomPropertyValue(this.clusterCustomProperties, '__masterNodesIPs');
+        }
+        return '';
+    }
+
     get clusterCustomProperties() {
         let properties;
         if (this.cluster && this.cluster.nodes && this.cluster.nodeLinks

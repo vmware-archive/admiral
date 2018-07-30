@@ -53,17 +53,11 @@ export class EndpointDetailsComponent extends BaseDetailsComponent {
                 // TODO clusters in provisioning (in process of adding to admiral)
                 // state should not be selectable
                 this.clusters = result.documents.map(resultDoc => {
-                    // cafe uses different data format
-                    let masterNodesCount = resultDoc.kubernetes_master_ips
-                        ? resultDoc.kubernetes_master_ips.length
-                        : resultDoc.masterIPs && resultDoc.masterIPs.length;
-                    let planName = resultDoc.plan_name ? resultDoc.plan_name : resultDoc.planName;
-
                     return {
                         name: resultDoc.name,
                         hostname: resultDoc.parameters.kubernetes_master_host,
-                        plan: planName || '',
-                        masterNodesCount: masterNodesCount || 1,
+                        plan: resultDoc.plan_name || '',
+                        masterNodesIPs: (resultDoc.kubernetes_master_ips || []).join(', '),
                         workerNodesCount: resultDoc.parameters.kubernetes_worker_instances,
                         lastAction: resultDoc.last_action,
                         lastActionStatus: resultDoc.last_action_state,

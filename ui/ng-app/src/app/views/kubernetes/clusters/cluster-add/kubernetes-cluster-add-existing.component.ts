@@ -110,7 +110,7 @@ export class KubernetesClusterAddExistingComponent implements OnInit {
                         name: resultDoc.name,
                         hostname: resultDoc.parameters.kubernetes_master_host,
                         plan: resultDoc.plan_name || '',
-                        masterNodesCount: resultDoc.kubernetes_master_ips.length || 1,
+                        masterNodesIPs: (resultDoc.kubernetes_master_ips || []).join(', '),
                         workerNodesCount: resultDoc.parameters.kubernetes_worker_instances,
                         lastAction: resultDoc.last_action,
                         lastActionStatus: resultDoc.last_action_state,

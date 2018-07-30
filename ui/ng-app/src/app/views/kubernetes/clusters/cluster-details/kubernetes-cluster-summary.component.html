@@ -51,6 +51,11 @@
                 <div class="right-column">{{ planName }}</div>
                 <div class="clear"></div>
               </div>
+              <div *ngIf="isPKSCluster" class="summary-subsection-content-row">
+                <div class="left-column">{{ "kubernetes.clusters.details.summary.masterNodesIPs" | i18n }}</div>
+                <div class="right-column">{{ masterNodesIPs }}</div>
+                <div class="clear"></div>
+              </div>
           </div>
 
           <div class="summary-subsection">

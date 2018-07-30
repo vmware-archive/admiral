@@ -298,6 +298,7 @@
           "nodeCount": "Nodes:",
           "dashboard": "Dashboard:",
           "planName": "Plan:",
+          "masterNodesIPs": "Master IPs:",
           "dashboardInstalled": "INSTALLED",
           "dashboardNotInstalled": "NOT INSTALLED",
           "totalMemory": "Total Memory:"
@@ -416,6 +417,7 @@
         "fieldTitleEndpoint": "Endpoint:",
         "columnTitleName": "Name",
         "columnTitleHostname": "Hostname",
+        "columnTitleMasterNodesIPs": "Master IPs",
         "columnTitleMastersCount": "# Masters",
         "columnTitleWorkersCount": "# Workers",
         "columnTitlePlan": "Plan",

@@ -49,4 +49,5 @@ public interface PKSConstants {
     String PKS_CLUSTER_QUERY_PARAM_NAME = "cluster";
 
     String PKS_PREFER_MASTER_IP_PROP_NAME = "__preferMasterIP";
+    String PKS_MASTER_NODES_IPS_PROP_NAME = "__masterNodesIPs";
 }
