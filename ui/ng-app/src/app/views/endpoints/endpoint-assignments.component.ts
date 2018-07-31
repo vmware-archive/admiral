@@ -52,8 +52,8 @@ export class EndpointAssignmentsComponent implements OnInit, OnChanges {
 
     get groupsTitle(): string {
         return FT.isApplicationEmbedded()
-                ? I18n.t('projects.globalSelectLabelEmbedded')
-                : I18n.t('projects.globalSelectLabel');
+            ? I18n.t('projects.globalSelectLabelEmbedded')
+            : I18n.t('projects.globalSelectLabel');
     }
 
     get groupsSelectorTitle(): string {
@@ -61,7 +61,7 @@ export class EndpointAssignmentsComponent implements OnInit, OnChanges {
 
         return I18n.t('dropdownSearchMenu.title', {
             ns: 'base',
-            entity: I18n.t(key, {ns: 'base'})
+            entity: I18n.t(key, { ns: 'base' })
         } as I18n.TranslationOptions);
     }
 
@@ -70,36 +70,34 @@ export class EndpointAssignmentsComponent implements OnInit, OnChanges {
 
         return I18n.t('dropdownSearchMenu.searchPlaceholder', {
             ns: 'base',
-            entity: I18n.t(key, {ns: 'base'})
+            entity: I18n.t(key, { ns: 'base' })
         } as I18n.TranslationOptions);
     }
 
     get plansSelectorTitle(): string {
         return I18n.t('dropdownSearchMenu.title', {
             ns: 'base',
-            entity: I18n.t('plans', {ns: 'base'})
+            entity: I18n.t('plans', { ns: 'base' })
         } as I18n.TranslationOptions);
     }
 
     get plansSearchPlaceholder(): string {
         return I18n.t('dropdownSearchMenu.searchPlaceholder', {
             ns: 'base',
-            entity: I18n.t('plan', {ns: 'base'})
+            entity: I18n.t('plan', { ns: 'base' })
         } as I18n.TranslationOptions);
     }
 
-    get isApplicationEmbedded() : boolean {
+    get isApplicationEmbedded(): boolean {
         return FT.isApplicationEmbedded();
     }
 
     constructor(protected route: ActivatedRoute, protected router: Router,
-                protected documentService: DocumentService, protected errorService: ErrorService) {
+        protected documentService: DocumentService, protected errorService: ErrorService) {
         //
     }
 
     ngOnInit() {
-        this.populateGroups();
-
         this.assignmentsForm = this.formBuilder.group({
             assignments: this.formBuilder.array([])
         });
@@ -107,59 +105,61 @@ export class EndpointAssignmentsComponent implements OnInit, OnChanges {
 
     ngOnChanges(changes: SimpleChanges) {
         if (this.entity) {
-            this.populatePlans();
+            Promise.all([this.populatePlans(), this.populateGroups()]).then(results => {
+                this.generateAssignmentRows();
+
+            }).catch(error => {
+                console.error('Failed to list pks plans or groups', error);
+                this.showErrorMessage(error);
+            });
         }
     }
 
-    private populateGroups(): void {
+    private populateGroups() {
         this.groups = [];
         this.groupsLoading = true;
         let isEmbedded = this.isApplicationEmbedded;
 
-        this.documentService.listProjects().then((result) => {
+        return this.documentService.listProjects().then(result => {
             this.groupsLoading = false;
 
             let sortField = isEmbedded ? "label" : "name";
             this.groups = Utils.sortObjectArrayByField(result.documents, sortField)
-                            .map(group => {
-                                return {
-                                    name: isEmbedded ? group.label : group.name,
-                                    value: group
-                                }
-                            });
+                .map(group => {
+                    return {
+                        name: isEmbedded ? group.label : group.name,
+                        value: group
+                    }
+                });
         }).catch(error => {
             console.error('Failed to list groups ', error);
 
             this.groupsLoading = false;
-            this.showErrorMessage(error);
+            return Promise.reject(error);
         });
     }
 
-    private populatePlans(): void {
+    private populatePlans() {
         this.plans = [];
         this.plansLoading = true;
 
-        this.documentService.listWithParams(Links.PKS_PLANS,
-                                        {endpointLink: this.entity.documentSelfLink})
-        .then((result) => {
-            this.plansLoading = false;
+        let queryParams = { endpointLink: this.entity.documentSelfLink };
+        return this.documentService.listWithParams(Links.PKS_PLANS, queryParams).then(result => {
+                this.plansLoading = false;
 
-            this.plans = Utils.sortObjectArrayByField(result.documents, 'name')
-                .map(plan => {
-                    return {
-                        name: plan.name,
-                        value: plan.name
-                    }
-                });
+                this.plans = Utils.sortObjectArrayByField(result.documents, 'name')
+                    .map(plan => {
+                        return {
+                            name: plan.name,
+                            value: plan.name
+                        }
+                    });
+            }).catch(error => {
+                console.error('Failed to list pks plans', error);
 
-            this.generateAssignmentRows();
-
-        }).catch(error => {
-            console.error('Failed to list pks plans', error);
-
-            this.plansLoading = false;
-            this.showErrorMessage(error);
-        });
+                this.plansLoading = false;
+                return Promise.reject(error);
+            });
     }
 
     generateAssignmentRows() {
@@ -249,12 +249,12 @@ export class EndpointAssignmentsComponent implements OnInit, OnChanges {
             .then(() => {
                 this.isSavingEndpoint = false;
                 this.goBack();
-        }).catch(error => {
-            this.isSavingEndpoint = false;
+            }).catch(error => {
+                this.isSavingEndpoint = false;
 
-            console.error('Failed to save endpoint', error);
-            this.showErrorMessage(error);
-        });
+                console.error('Failed to save endpoint', error);
+                this.showErrorMessage(error);
+            });
     }
 
     private hasChanges(endpointData): boolean {
@@ -295,8 +295,8 @@ export class EndpointAssignmentsComponent implements OnInit, OnChanges {
         let planAssignments = {};
 
         // Remove duplicate entries
-        let assignmentValues = this.assignments.value.filter(function(item, index, self) {
-            return index === self.findIndex(function(otherItem) {
+        let assignmentValues = this.assignments.value.filter(function (item, index, self) {
+            return index === self.findIndex(function (otherItem) {
                 return otherItem['group'] === item['group'] && otherItem['plan'] === item['plan']
             });
         });
@@ -355,6 +355,6 @@ export class EndpointAssignmentsComponent implements OnInit, OnChanges {
     }
 
     goBack() {
-        this.router.navigate(['..'], {relativeTo: this.route});
+        this.router.navigate(['..'], { relativeTo: this.route });
     }
 }
