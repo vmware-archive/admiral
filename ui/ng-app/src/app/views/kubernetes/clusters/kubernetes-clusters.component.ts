@@ -97,7 +97,7 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
     }
 
     hasNodes(cluster) {
-        return cluster && cluster.nodes && cluster.nodeLinks && cluster.nodeLinks.length > 0;
+        return cluster && cluster.nodeLinks && cluster.nodeLinks.length > 0;
     }
 
     getClusterCustomProperties(cluster) {

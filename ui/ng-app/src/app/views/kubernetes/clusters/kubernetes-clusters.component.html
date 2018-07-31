@@ -93,7 +93,8 @@
         </div>
       </div>
       <div card-footer>
-        <button class="btn btn-sm btn-link" (click)="downloadKubeConfig($event, item)"
+        <button class="btn btn-sm btn-link" [disabled]="!hasNodes(item)"
+                (click)="downloadKubeConfig($event, item)"
                 title="{{ 'kubernetes.clusters.details.summary.kubeConfigTooltip' | i18n }}">
           <clr-icon shape="download" size="12"></clr-icon>
           <span class="btn-spaced-text">{{ "kubernetes.clusters.details.summary.kubeConfigBtn" | i18n }}</span>

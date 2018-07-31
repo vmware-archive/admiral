@@ -117,6 +117,10 @@ export class KubernetesClusterSummaryComponent implements OnInit {
         return RoutesRestriction.KUBERNETES_CLUSTERS_EDIT;
     }
 
+    get hasNodes() {
+        return this.cluster && this.cluster.nodeLinks && this.cluster.nodeLinks.length > 0;
+    }
+
     ngOnInit() {
         // DOM init
     }
