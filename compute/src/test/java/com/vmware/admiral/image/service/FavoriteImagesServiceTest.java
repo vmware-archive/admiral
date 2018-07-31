@@ -12,59 +12,114 @@
 package com.vmware.admiral.image.service;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
+import com.vmware.admiral.image.service.FavoriteImageFactoryService.RegistryNotValidException;
 import com.vmware.admiral.image.service.FavoriteImagesService.FavoriteImage;
 import com.vmware.admiral.service.common.RegistryFactoryService;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
 
 public class FavoriteImagesServiceTest extends ComputeBaseTest {
 
+    public static final String GENERIC_IMAGE_NAME = "library/name";
+    public static final String GENERIC_IMAGE_DESCRIPTION = "generic description";
+
     public static final String DEFAULT_REGISTRY = "https://registry.hub.docker.com";
-    FavoriteImage nginxImage;
-    FavoriteImage photonImage;
-    FavoriteImage alpineImage;
+    public static final String TENANTED_REGISTRY = "https://bellevue-ci.eng.vmware.com:5005";
+    public static final String PROJECT_REGISTRY = "https://bellevue-ci.eng.vmware.com:5001";
+    public static final String BUSINESS_GROUP_REGISTRY = "https://bellevue-ci.eng.vmware.com:5002";
 
-    @Before
-    public void setUp() throws Throwable {
-        waitForServiceAvailability(FavoriteImageFactoryService.SELF_LINK);
-        waitForServiceAvailability(RegistryFactoryService.SELF_LINK);
-    }
+    public static final List<String> TENANT_LINKS = Collections.singletonList(QueryUtil.TENANT_IDENTIFIER + "ten1");
+    public static final List<String> PROJECT_LINKS = Collections.singletonList(QueryUtil.PROJECT_IDENTIFIER + "prj1");
+    public static final List<String> BUSINESS_GROUP_LINKS = Collections.singletonList(TENANT_LINKS.get(0) + QueryUtil.GROUP_IDENTIFIER + "grp1");
 
-    @Before
-    public void initObjects() throws Throwable {
+    public static final FavoriteImage nginxImage = new FavoriteImage();
+    public static final FavoriteImage photonImage = new FavoriteImage();
+    public static final FavoriteImage alpineImage = new FavoriteImage();
+    public static final FavoriteImage nginxWithTenantLink = new FavoriteImage();
 
-        cleanUpFavoriteImages();
+    public static final RegistryState disabledRegistry = new RegistryState();
+    public static final RegistryState tenantedRegistry = new RegistryState();
+    public static final RegistryState projectRegistry = new RegistryState();
+    public static final RegistryState businessGroupRegistry = new RegistryState();
 
-        nginxImage = new FavoriteImage();
+    public static final FavoriteImage tenantedRegistryImage = new FavoriteImage();
+    public static final FavoriteImage projectRegistryImage = new FavoriteImage();
+    public static final FavoriteImage bgRegistryImage = new FavoriteImage();
+
+    @BeforeClass
+    public static void initObjects() {
         nginxImage.name = "library/nginx";
         nginxImage.description = "Official build of Nginx.";
         nginxImage.registry = DEFAULT_REGISTRY;
 
-        photonImage = new FavoriteImage();
         photonImage.name = "library/photon";
         photonImage.description = "Photon OS is a technology preview of a minimal Linux container host.";
         photonImage.registry = DEFAULT_REGISTRY;
 
-        alpineImage = new FavoriteImage();
         alpineImage.name = "library/alpine";
         alpineImage.description = "A minimal Docker image based on Alpine Linux with a complete "
                 + "package index and only 5 MB in size!";
         alpineImage.registry = DEFAULT_REGISTRY;
 
+        nginxWithTenantLink.name = nginxImage.name;
+        nginxWithTenantLink.description = nginxImage.description;
+        nginxWithTenantLink.registry = nginxImage.registry;
+        nginxWithTenantLink.tenantLinks = TENANT_LINKS;
+
+        disabledRegistry.address = "https://disabled-registry.com";
+        disabledRegistry.name = "disabled reg";
+        disabledRegistry.disabled = Boolean.TRUE;
+
+        tenantedRegistry.address = TENANTED_REGISTRY;
+        tenantedRegistry.name = "tenantedRegistry";
+        tenantedRegistry.tenantLinks = TENANT_LINKS;
+
+        projectRegistry.address = PROJECT_REGISTRY;
+        projectRegistry.name = "projectRegistry";
+        projectRegistry.tenantLinks = PROJECT_LINKS;
+
+        businessGroupRegistry.address = BUSINESS_GROUP_REGISTRY;
+        businessGroupRegistry.name = "businessGroupRegistry";
+        businessGroupRegistry.tenantLinks = BUSINESS_GROUP_LINKS;
+
+        tenantedRegistryImage.name = GENERIC_IMAGE_NAME;
+        tenantedRegistryImage.description = GENERIC_IMAGE_DESCRIPTION;
+        tenantedRegistryImage.registry = TENANTED_REGISTRY;
+
+        projectRegistryImage.name = GENERIC_IMAGE_NAME;
+        projectRegistryImage.description = GENERIC_IMAGE_DESCRIPTION;
+        projectRegistryImage.registry = PROJECT_REGISTRY;
+
+        bgRegistryImage.name = GENERIC_IMAGE_NAME;
+        bgRegistryImage.description = GENERIC_IMAGE_DESCRIPTION;
+        bgRegistryImage.registry = BUSINESS_GROUP_REGISTRY;
+    }
+
+    @Before
+    public void setUp() throws Throwable {
+        waitForServiceAvailability(FavoriteImageFactoryService.SELF_LINK);
+        waitForServiceAvailability(RegistryFactoryService.SELF_LINK);
+
+        cleanUpFavoriteImages();
     }
 
     @Test
@@ -81,6 +136,20 @@ public class FavoriteImagesServiceTest extends ComputeBaseTest {
 
         removeImageFromFavorites(imageState);
 
+        checkImages();
+    }
+
+    @Test
+    public void testAddRemoveImageFromFavoritesWithTenantLinks() throws Throwable {
+        FavoriteImage nginxImageState = addImageToFavorites(nginxImage).getBody(FavoriteImage.class);
+        FavoriteImage nginxWithTenantLinkState = addImageToFavorites(nginxWithTenantLink).getBody(FavoriteImage.class);
+
+        checkImages(nginxImage, nginxWithTenantLink);
+
+        removeImageFromFavorites(nginxWithTenantLinkState);
+        checkImages(nginxImage);
+
+        removeImageFromFavorites(nginxImageState);
         checkImages();
     }
 
@@ -108,29 +177,53 @@ public class FavoriteImagesServiceTest extends ComputeBaseTest {
         checkImages();
     }
 
-    @Test(expected = Exception.class)
+    @Test
     public void testAddImageToFavoritesNonexistentRegistry() throws Throwable {
         FavoriteImage fictionalRegistryImage = new FavoriteImage();
         fictionalRegistryImage.name = "library/photon";
         fictionalRegistryImage.description = "This is a non-existing image";
         fictionalRegistryImage.registry = "non-existing registry";
 
-        Operation operationResponse = addImageToFavorites(fictionalRegistryImage);
-
-        assertEquals(Operation.STATUS_CODE_BAD_REQUEST, operationResponse.getStatusCode());
+        assertAddImageThrowsRegistryNotValidException(fictionalRegistryImage);
         checkImages();
     }
 
-    @Test(expected = Exception.class)
+    @Test
     public void testAddImageToFavoritesDisabledRegistry() throws Throwable {
-        RegistryState registryState = disableDefaultRegistry().getBody(RegistryState.class);
+        RegistryState registryState = addRegistry(disabledRegistry).getBody(RegistryState.class);
 
         assertTrue(registryState.disabled);
 
-        Operation operationResponse = addImageToFavorites(nginxImage);
+        FavoriteImage imageToAdd = new FavoriteImage();
+        imageToAdd.name = GENERIC_IMAGE_NAME;
+        imageToAdd.description = GENERIC_IMAGE_DESCRIPTION;
+        imageToAdd.registry = disabledRegistry.address;
 
-        assertEquals(Operation.STATUS_CODE_BAD_REQUEST, operationResponse.getStatusCode());
+        assertAddImageThrowsRegistryNotValidException(imageToAdd);
         checkImages();
+    }
+
+    @Test
+    public void testAddImageToFavoritesTenantedRegistry() throws Throwable {
+        RegistryState tenantedRegistryState = addRegistry(tenantedRegistry).getBody(RegistryState.class);
+        RegistryState projectRegistryState = addRegistry(projectRegistry).getBody(RegistryState.class);
+        RegistryState businessGroupRegistryState = addRegistry(businessGroupRegistry).getBody(RegistryState.class);
+
+        assertEquals(TENANT_LINKS, tenantedRegistryState.tenantLinks);
+        assertEquals(PROJECT_LINKS, projectRegistryState.tenantLinks);
+        assertEquals(BUSINESS_GROUP_LINKS, businessGroupRegistryState.tenantLinks);
+
+        Operation tenantedRegistryImageOp = addImageToFavorites(tenantedRegistryImage);
+        FavoriteImage addedImageState = tenantedRegistryImageOp.getBody(FavoriteImage.class);
+        assertEquals(Operation.STATUS_CODE_OK, tenantedRegistryImageOp.getStatusCode());
+        assertEquals(tenantedRegistryImage, tenantedRegistryImageOp.getBody(FavoriteImage.class));
+        checkImages(addedImageState);
+
+        assertAddImageThrowsRegistryNotValidException(projectRegistryImage);
+        checkImages(addedImageState);
+
+        assertAddImageThrowsRegistryNotValidException(bgRegistryImage);
+        checkImages(addedImageState);
     }
 
     @Test
@@ -152,55 +245,26 @@ public class FavoriteImagesServiceTest extends ComputeBaseTest {
     }
 
     @Test
-    public void testAddRemoveImageFromFavoritesWithTenantLinks() throws Throwable {
-        List<String> tenantLinks = new LinkedList<>();
-        tenantLinks.add("/projects/qe");
-
-        FavoriteImage nginxWithTenantLink = new FavoriteImage();
-        nginxWithTenantLink.name = nginxImage.name;
-        nginxWithTenantLink.description = nginxImage.description;
-        nginxWithTenantLink.registry = nginxImage.registry;
-        nginxWithTenantLink.tenantLinks = tenantLinks;
-
-        FavoriteImage nginxImageState = addImageToFavorites(nginxImage).getBody(FavoriteImage.class);
-        FavoriteImage nginxWithTenantLinkState = addImageToFavorites(nginxWithTenantLink).getBody(FavoriteImage.class);
-
-        checkImages(nginxImage, nginxWithTenantLink);
-
-        removeImageFromFavorites(nginxWithTenantLinkState);
-        checkImages(nginxImage);
-
-        removeImageFromFavorites(nginxImageState);
-        checkImages();
-    }
-
-    @Test
     public void testFavoriteImageEquals() {
-        FavoriteImage img1 = new FavoriteImage();
-        img1.name = "genericName";
-        img1.description = "genericDescription";
-        img1.registry = "genericRegistry";
-        FavoriteImage img2 = new FavoriteImage();
-        img2.name = "genericName";
-        img2.description = "genericDescription";
-        img2.registry = "genericRegistry";
-        FavoriteImage img3 = new FavoriteImage();
-        img3.name = "genericName2";
-        img3.description = "genericDescription2";
-        img3.registry = "genericRegistry2";
-        FavoriteImage img4 = null;
+        FavoriteImage nginxImageCopy = new FavoriteImage();
+        nginxImageCopy.name = nginxImage.name;
+        nginxImageCopy.description = nginxImage.description;
+        nginxImageCopy.registry = nginxImage.registry;
 
-        assertNotSame(img1, img2);
-        assertNotSame(img1, img3);
-        assertNotSame(img1, img4);
+        FavoriteImage nullImage = null;
 
-        assertFalse(img1.equals(new Object()));
-        assertTrue(img1.equals(img1));
-        assertTrue(img1.equals(img2));
-        assertFalse(img1.equals(img3));
-        assertFalse(img1.equals(img4));
+        assertNotSame(nginxImage, nginxImageCopy);
+        assertNotSame(nginxImage, photonImage);
+        assertNotSame(nginxImage, nullImage);
 
-        assertEquals(img1.hashCode(), img2.hashCode());
+        assertEquals(nginxImage, nginxImage);
+        assertEquals(nginxImage, nginxImageCopy);
+        assertEquals(nginxImageCopy, nginxImage);
+        assertNotEquals(nginxImage, new Object());
+        assertNotEquals(nginxImage, photonImage);
+        assertNotEquals(nginxImage, nullImage);
+
+        assertEquals(nginxImageCopy.hashCode(), nginxImage.hashCode());
     }
 
     private void cleanUpFavoriteImages() throws Throwable {
@@ -251,7 +315,29 @@ public class FavoriteImagesServiceTest extends ComputeBaseTest {
         return result.get(0);
     }
 
-    private void removeImageFromFavorites(FavoriteImage imageToRemove) throws Throwable {
+    private Operation addRegistry(RegistryState registry) {
+        List<Operation> result = new LinkedList<>();
+        Operation addRegistry = Operation.createPost(
+                UriUtils.buildUri(host, RegistryFactoryService.SELF_LINK))
+                .setBody(registry)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        host.log(Level.SEVERE, "Can't add registry");
+                        host.failIteration(e);
+                    } else {
+                        result.add(o);
+                        host.completeIteration();
+                    }
+                });
+
+        host.testStart(1);
+        host.send(addRegistry);
+        host.testWait();
+
+        return result.get(0);
+    }
+
+    private void removeImageFromFavorites(FavoriteImage imageToRemove) {
         Operation removeFromFavorites = Operation.createDelete(
                 UriUtils.buildUri(host, imageToRemove.documentSelfLink))
                 .setCompletion((o, e) -> {
@@ -268,31 +354,20 @@ public class FavoriteImagesServiceTest extends ComputeBaseTest {
         host.testWait();
     }
 
+    private void assertAddImageThrowsRegistryNotValidException(FavoriteImage imageToAdd) {
+        try {
+            addImageToFavorites(imageToAdd);
+            fail("Expected RegistryNotValidException");
+        } catch (Exception e) {
+            if (!(e instanceof RegistryNotValidException)) {
+                fail(String.format("Expected RegistryNotValidException, but got %s", Utils.toString(e)));
+            }
+        }
+    }
+
     private void validateImage(FavoriteImage expected, FavoriteImage actual) {
         assertEquals(expected.name, actual.name);
         assertEquals(expected.description, actual.description);
         assertEquals(expected.registry, actual.registry);
-    }
-
-    private Operation disableDefaultRegistry() {
-        List<Operation> result = new LinkedList<>();
-        Operation disableRegistry = Operation.createPatch(UriUtils.buildUri(host,
-                ManagementUriParts.REGISTRIES, "default-registries"))
-                .setBody(new RegistryState().disabled = Boolean.TRUE)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        host.log(Level.SEVERE, "Unable to disable registry");
-                        host.failIteration(e);
-                    } else {
-                        result.add(o);
-                        host.completeIteration();
-                    }
-                });
-
-        host.testStart(1);
-        host.send(disableRegistry);
-        host.testWait();
-
-        return result.get(0);
     }
 }

@@ -19,6 +19,7 @@ import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.admiral.common.util.TenantLinksUtil;
 import com.vmware.admiral.image.service.FavoriteImagesService.FavoriteImage;
 import com.vmware.admiral.service.common.AbstractSecuredFactoryService;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
@@ -147,8 +148,14 @@ public class FavoriteImageFactoryService extends AbstractSecuredFactoryService {
                         post.fail(r.getException());
                     } else if (r.hasResult()) {
                         RegistryState registry = r.getResult();
-                        if (registry.tenantLinks != null || (registry.disabled != null &&
-                                registry.disabled.equals(Boolean.TRUE))) {
+
+                        boolean registryInvalid = (Boolean.TRUE.equals(registry.disabled)) ||
+                                (registry.tenantLinks != null &&
+                                registry.tenantLinks
+                                        .stream()
+                                        .anyMatch(tenantLink -> TenantLinksUtil.isProjectLink(tenantLink) ||
+                                                TenantLinksUtil.isGroupLink(tenantLink)));
+                        if (registryInvalid) {
                             post.setStatusCode(Operation.STATUS_CODE_BAD_REQUEST);
                             post.fail(new RegistryNotValidException("The registry of the image "
                                     + "is either project-specific or disabled."));
