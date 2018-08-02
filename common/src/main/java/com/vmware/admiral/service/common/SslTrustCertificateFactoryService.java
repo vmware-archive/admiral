@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -16,6 +16,7 @@ import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCert
 import com.vmware.photon.controller.model.security.util.CertificateUtil;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
+import com.vmware.xenon.common.UriUtils;
 
 public class SslTrustCertificateFactoryService extends AbstractSecuredFactoryService {
 
@@ -54,7 +55,7 @@ public class SslTrustCertificateFactoryService extends AbstractSecuredFactorySer
                 return;
             }
 
-            body.documentSelfLink = generateSelfLink(body);
+            body.documentSelfLink = generateSelfLlink(body);
             op.setBody(body);
             op.complete();
         } else {
@@ -62,11 +63,13 @@ public class SslTrustCertificateFactoryService extends AbstractSecuredFactorySer
         }
     }
 
-    public static String generateSelfLink(SslTrustCertificateState body) {
+    public static String generateFingerprint(SslTrustCertificateState body) {
         AssertUtil.assertNotEmpty(body.certificate, "certificate");
-
-        return CertificateUtil.generatePureFingerPrint(
-                CertificateUtil.createCertificateChain(body.certificate));
+        return CertificateUtil
+                .generatePureFingerPrint(CertificateUtil.createCertificateChain(body.certificate));
     }
 
+    public static String generateSelfLlink(SslTrustCertificateState body) {
+        return UriUtils.buildUriPath(SELF_LINK, generateFingerprint(body));
+    }
 }

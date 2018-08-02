@@ -756,7 +756,7 @@ public class ContainerHostService extends StatelessService {
         if (sslTrust != null) {
             request.customProperties.put(SSL_TRUST_CERT_PROP_NAME, sslTrust.certificate);
             request.customProperties.put(SSL_TRUST_ALIAS_PROP_NAME,
-                    SslTrustCertificateFactoryService.generateSelfLink(sslTrust));
+                    SslTrustCertificateFactoryService.generateFingerprint(sslTrust));
         }
 
         return request;

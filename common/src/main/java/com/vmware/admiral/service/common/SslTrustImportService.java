@@ -193,7 +193,7 @@ public class SslTrustImportService extends StatelessService {
         SslTrustCertificateState.populateCertificateProperties(sslTrustState, certChain[0]);
         sslTrustState.tenantLinks = request.tenantLinks;
         sslTrustState.documentSelfLink = SslTrustCertificateFactoryService
-                .generateSelfLink(sslTrustState);
+                .generateSelfLlink(sslTrustState);
         sslTrustState.origin = request.hostUri.toString();
 
         return sslTrustState;

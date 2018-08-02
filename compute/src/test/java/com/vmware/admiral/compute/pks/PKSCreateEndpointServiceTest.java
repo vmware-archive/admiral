@@ -13,6 +13,7 @@ package com.vmware.admiral.compute.pks;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Collections;
@@ -176,6 +177,21 @@ public class PKSCreateEndpointServiceTest extends ComputeBaseTest {
 
         Endpoint updatedEndpoint = createEndpoint(endpointSpec);
         assertEquals(endpoint.uaaEndpoint, updatedEndpoint.uaaEndpoint);
+    }
+
+    @Test
+    public void testStoreCertLinkInEndpoint() {
+        EndpointSpec spec = new EndpointSpec();
+        Endpoint endpoint = new Endpoint();
+        spec.endpoint = endpoint;
+        assertNull(endpoint.customProperties);
+
+        final String testProp = "test-property";
+        final String testValue = "test-value";
+
+        PKSCreateEndpointService.storeCertLinkInEndpoint(spec, testProp, testValue);
+        assertNotNull(endpoint.customProperties);
+        assertEquals(testValue, endpoint.customProperties.get(testProp));
     }
 
     private Endpoint createEndpoint(EndpointSpec endpointSpec) throws Throwable {

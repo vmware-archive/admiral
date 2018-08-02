@@ -90,7 +90,14 @@ public class ContainerHostServiceIT extends RequestBaseTest {
         waitForServiceAvailability(ContainerHostService.SELF_LINK);
         waitForServiceAvailability(HostPortProfileService.FACTORY_LINK);
         waitForServiceAvailability(SslTrustCertificateService.FACTORY_LINK);
-        ServerX509TrustManager.init(host);
+
+        // Make sure the trust manager will start monitoring certificates and will therefore
+        // acknowledge cert additions and deletions. ServerX509TrustManager.create does the same as
+        // ServerX509TrustManager.init but also starts a subsctiption manager that monitors the
+        // certificates. The invalidate method is called to ensure that the subscription manager
+        // will be started even if somebody else has already called the init method.
+        ServerX509TrustManager.invalidate();
+        ServerX509TrustManager.create(host);
 
         schedulerPlacementZone = createSchedulerPlacementZone();
 
@@ -383,6 +390,11 @@ public class ContainerHostServiceIT extends RequestBaseTest {
                                 host.failIteration(e);
                                 return;
                             }
+                            if (!o.hasBody()) {
+                                host.failIteration(new IllegalStateException(
+                                        "Expected certificate to be returned in body"));
+                            }
+
                             SslTrustCertificateState body = o
                                     .getBody(SslTrustCertificateState.class);
                             Operation storeCertOperation = Operation

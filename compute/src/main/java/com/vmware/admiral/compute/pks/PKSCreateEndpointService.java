@@ -15,6 +15,7 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -25,6 +26,7 @@ import com.vmware.admiral.adapter.pks.PKSConstants;
 import com.vmware.admiral.adapter.pks.PKSOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.common.util.CertificateUtilExtended;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.TenantLinksUtil;
@@ -130,12 +132,35 @@ public class PKSCreateEndpointService extends StatelessService {
         String uaaUri = spec.uaaUri.toString();
         spec.acceptCertificate = uaaUri.equals(spec.acceptCertificateForHost) || acceptAll;
         EndpointCertificateUtil.validateSslTrust(this, spec, op, () -> {
+            if (spec.sslTrust != null && spec.sslTrust.documentSelfLink != null) {
+                storeCertLinkInEndpoint(spec,
+                        CertificateUtilExtended.CUSTOM_PROPERTY_PKS_UAA_TRUST_CERT_LINK,
+                        spec.sslTrust.documentSelfLink);
+            }
             spec.uri = spec.apiUri;
             String apiUri = spec.apiUri.toString();
             spec.acceptCertificate = apiUri.equals(spec.acceptCertificateForHost) || acceptAll;
             spec.sslTrust = null;
-            EndpointCertificateUtil.validateSslTrust(this, spec, op, callback);
+            EndpointCertificateUtil.validateSslTrust(this, spec, op, () -> {
+                if (spec.sslTrust != null && spec.sslTrust.documentSelfLink != null) {
+                    storeCertLinkInEndpoint(spec,
+                            CertificateUtilExtended.CUSTOM_PROPERTY_PKS_API_TRUST_CERT_LINK,
+                            spec.sslTrust.documentSelfLink);
+                }
+                callback.run();
+            });
         });
+    }
+
+    static void storeCertLinkInEndpoint(EndpointSpec spec, String customPropName,
+            String certLink) {
+        Map<String, String> customProperties = spec.endpoint.customProperties;
+        if (customProperties == null) {
+            customProperties = new HashMap<>();
+            spec.endpoint.customProperties = customProperties;
+        }
+
+        customProperties.put(customPropName, certLink);
     }
 
     private void validateConnection(EndpointSpec endpointSpec, Operation op) {
