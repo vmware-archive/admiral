@@ -37,6 +37,8 @@ import org.junit.Test;
 
 import com.vmware.admiral.adapter.pks.PKSConstants;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.test.CommonTestStateFactory;
+import com.vmware.admiral.common.util.CertificateUtilExtended;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
@@ -46,6 +48,8 @@ import com.vmware.admiral.compute.cluster.ClusterService.ClusterDto;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.admiral.compute.pks.PKSEndpointService.Endpoint;
 import com.vmware.admiral.compute.pks.PKSEndpointService.Endpoint.PlanSet;
+import com.vmware.admiral.service.common.SslTrustCertificateService;
+import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
 import com.vmware.admiral.service.test.MockKubernetesHostAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.xenon.common.LocalizableValidationException;
@@ -175,6 +179,33 @@ public class PKSEndpointServiceTest extends ComputeBaseTest {
         assertListConsistsOfEndpointsByName(listEndpoints(projectLink2), epName2);
         assertListConsistsOfEndpointsByName(
                 listEndpoints(QueryUtil.PROJECT_IDENTIFIER + "wrong-project"), (String[]) null);
+    }
+
+    @Test
+    public void testTrustCertificateIsDeletedOnEndpointDeletion() throws Throwable {
+        SslTrustCertificateState trustCert = createSslTrustCert();
+        long initialCerts = getTrustCertsCount();
+
+        Endpoint endpoint = new Endpoint();
+        endpoint.name = "some-endpoint";
+        endpoint.apiEndpoint = "https://localhost:9000";
+        endpoint.uaaEndpoint = "https://localhost:9001";
+        endpoint.tenantLinks = null;
+        endpoint.customProperties = Collections.singletonMap(
+                CertificateUtilExtended.CUSTOM_PROPERTY_PKS_UAA_TRUST_CERT_LINK,
+                trustCert.documentSelfLink);
+        endpoint = createEndpoint(endpoint);
+
+        assertEquals(initialCerts, getTrustCertsCount());
+
+        delete(endpoint.documentSelfLink);
+        assertEquals(initialCerts - 1, getTrustCertsCount());
+
+        try {
+            delete(trustCert.documentSelfLink);
+        } catch (Throwable ex) {
+            host.log(Level.WARNING, "Failed to cleanup trust cert: [%s]", Utils.toString(ex));
+        }
     }
 
     private List<Endpoint> listEndpoints(String projectHeader) {
@@ -429,4 +460,24 @@ public class PKSEndpointServiceTest extends ComputeBaseTest {
         assertNotNull(dto);
         return dto;
     }
+
+    private SslTrustCertificateState createSslTrustCert() throws Throwable {
+        String sslTrustPem = CommonTestStateFactory.getFileContent("certs/ca.pem").trim();
+        SslTrustCertificateState sslTrustCert = new SslTrustCertificateState();
+        sslTrustCert.certificate = sslTrustPem;
+
+        sslTrustCert = doPost(sslTrustCert, SslTrustCertificateService.FACTORY_LINK);
+        return sslTrustCert;
+    }
+
+    private long getTrustCertsCount() throws Throwable {
+        Operation get = Operation.createGet(host, SslTrustCertificateService.FACTORY_LINK)
+                .setReferer(host.getUri());
+
+        return host.sendWithDeferredResult(get, ServiceDocumentQueryResult.class)
+                .toCompletionStage()
+                .toCompletableFuture()
+                .get().documentCount;
+    }
+
 }

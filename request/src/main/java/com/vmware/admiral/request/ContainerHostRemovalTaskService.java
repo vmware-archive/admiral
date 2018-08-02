@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -34,6 +35,7 @@ import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerHostOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.serialization.ReleaseConstants;
+import com.vmware.admiral.common.util.CertificateCleanupUtil;
 import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
@@ -636,48 +638,21 @@ public class ContainerHostRemovalTaskService extends
     private void doRemoveTrustCerts(ContainerHostRemovalTaskState state) {
 
         collectTrustCert(state)
-                .thenAccept(trustCertSelfLinks -> {
-                    List l = trustCertSelfLinks.stream().map(trustCertSelfLink -> {
-
-                        if (trustCertSelfLink == null || !trustCertSelfLink.startsWith
-                                (SslTrustCertificateService.FACTORY_LINK)) {
-                            return DeferredResult.completed(null);
-                        }
-
-                        Query.Builder queryBuilder = Query.Builder.create()
-                                .addCompositeFieldClause(ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
-                                        ComputeConstants.HOST_TRUST_CERTS_PROP_NAME,
-                                        trustCertSelfLink);
-
-                        Query query = queryBuilder.build();
-                        QueryTask queryTask = QueryUtil.buildQuery(ComputeState.class, true, query);
-                        QueryUtil.addExpandOption(queryTask);
-
-                        return sendWithDeferredResult(Operation
-                                .createPost(UriUtils.buildUri(getHost(),
-                                        ServiceUriPaths.CORE_QUERY_TASKS))
-                                .setBody(queryTask)
-                                .setReferer(getHost().getUri()), QueryTask.class)
-                                .thenCompose(qrt -> {
-                                    if (qrt.results.documentCount == 0 || state.resourceLinks
-                                            .containsAll(qrt.results.documentLinks)) {
-                                        return sendWithDeferredResult(Operation
-                                                .createDelete(UriUtils.buildUri(getHost(),
-                                                        trustCertSelfLink))
-                                                .setReferer(getHost().getUri()), QueryTask.class);
-                                    }
-                                    return DeferredResult.completed(qrt);
-                                }).exceptionally(e -> {
-                                    logWarning("Failed to remove unused trust certificate.", e);
-                                    proceedTo(SubStage.REMOVED_CERTIFICATES);
-                                    return null;
-                                });
-                    }).collect(Collectors.toList());
-
-                    DeferredResult.allOf(l)
-                            .thenAccept(oo -> {
-                                proceedTo(SubStage.REMOVED_CERTIFICATES);
-                            });
+                .thenApply(trustCertSelfLinks -> {
+                    return trustCertSelfLinks.stream()
+                            .filter(Objects::nonNull)
+                            .filter(link -> link.startsWith(SslTrustCertificateService.FACTORY_LINK))
+                            .collect(Collectors.toSet());
+                })
+                .thenCompose(trustCertSelfLinks -> {
+                    return CertificateCleanupUtil.removeTrustCertsIfUnused(getHost(),
+                            trustCertSelfLinks, state.resourceLinks);
+                })
+                .whenComplete((ignore, ex) -> {
+                    if (ex != null) {
+                        logWarning("Failed to remove unused trust certificates.", ex);
+                    }
+                    proceedTo(SubStage.REMOVED_CERTIFICATES);
                 });
 
     }

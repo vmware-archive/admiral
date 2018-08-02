@@ -17,18 +17,25 @@ import static com.vmware.xenon.common.UriUtils.URI_PARAM_ODATA_FILTER;
 import static com.vmware.xenon.common.UriUtils.URI_PARAM_ODATA_LIMIT;
 
 import java.net.URI;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.common.util.CertificateCleanupUtil;
+import com.vmware.admiral.common.util.CertificateUtilExtended;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.compute.cluster.ClusterService;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.ServiceDocumentDescription;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
@@ -66,7 +73,6 @@ public class PKSEndpointService extends StatefulService {
             public Set<String> plans;
         }
     }
-
 
     public PKSEndpointService() {
         super(Endpoint.class);
@@ -121,47 +127,106 @@ public class PKSEndpointService extends StatefulService {
 
     @Override
     public void handleDelete(Operation delete) {
-        deleteClustersForEndpoint(delete);
+        Endpoint currentState = getState(delete);
+        DeferredResult.completed(null)
+                // first delete the clusters for this endpoint
+                .thenCompose(ignore -> deleteClustersForEndpoint())
+                // then delete all certificates that will be no longer used by any endpoint
+                .thenCompose(ignore -> cleanupUnusedEndpointCertificates(currentState))
+                .whenComplete((ignore, ex) -> {
+                    if (ex != null) {
+                        logSevere("Failed to delete endpoint [%s]: %s",
+                                getSelfLink(), Utils.toString(ex));
+                        delete.fail(ex);
+                    } else {
+                        delete.complete();
+                    }
+                });
+    }
+
+    private DeferredResult<Void> cleanupUnusedEndpointCertificates(Endpoint removedEndpoint) {
+        final String failedMessageFormat = "Failed to cleanup unused certificates when deleting endpoint [%s]: %s";
+
+        if (removedEndpoint == null || removedEndpoint.customProperties == null) {
+            logWarning(failedMessageFormat, getSelfLink(), "endpoint or custom properties is null");
+            return DeferredResult.completed(null);
+        }
+
+        String pksUaaCertLink = removedEndpoint.customProperties
+                .get(CertificateUtilExtended.CUSTOM_PROPERTY_PKS_UAA_TRUST_CERT_LINK);
+        String pksApiCertLink = removedEndpoint.customProperties
+                .get(CertificateUtilExtended.CUSTOM_PROPERTY_PKS_API_TRUST_CERT_LINK);
+
+        if (StringUtils.isEmpty(pksUaaCertLink) && StringUtils.isEmpty(pksApiCertLink)) {
+            logWarning(failedMessageFormat, getSelfLink(), "certificate links are not set");
+            return DeferredResult.completed(null);
+        }
+
+        return CertificateCleanupUtil.removeTrustCertsIfUnused(getHost(),
+                Arrays.asList(pksUaaCertLink, pksApiCertLink),
+                Collections.singleton(getSelfLink()))
+                .exceptionally(ex -> {
+                    logWarning(failedMessageFormat, getSelfLink(), Utils.toString(ex));
+                    // stop the propagation of the error so the endpoint can be
+                    // successfully deleted
+                    return null;
+                });
     }
 
     /**
      * Deletes from xenon all clusters for that endpoint. Uses OData query to find the clusters,
      * because that information (the endpoint) is not directly exposed in the cluster DTO.
      */
-    private void deleteClustersForEndpoint(Operation delete) {
+    private DeferredResult<Void> deleteClustersForEndpoint() {
         String endpointLink = getSelfLink();
         logInfo("deleting clusters for PKS endpoint %s", endpointLink);
         String query = String.format("%s=%s.%s eq '%s'&%s=%d", URI_PARAM_ODATA_FILTER,
                 ClusterService.ClusterDto.FIELD_NAME_CUSTOM_PROPERTIES, PKS_ENDPOINT_PROP_NAME,
                 endpointLink, URI_PARAM_ODATA_LIMIT, DEFAULT_MAX_RESULT_LIMIT);
         URI uri = UriUtils.buildUri(this.getHost(), ClusterService.SELF_LINK, query);
-        Operation.createGet(uri)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        logSevere("Error getting PKS clusters for endpoint %s, reason: %s",
-                                endpointLink, e.getMessage());
-                        delete.fail(e);
-                        return;
-                    }
-                    ServiceDocumentQueryResult result = o.getBody(ServiceDocumentQueryResult.class);
-                    if (result != null && result.documentLinks != null && !result.documentLinks.isEmpty()) {
-                        List<Operation> deleteOperations = result.documentLinks.stream().map(cluster -> {
-                            logInfo("Removing PKS cluster %s for %s", cluster, endpointLink);
-                            return Operation.createDelete(this, cluster);
-                        }).collect(Collectors.toList());
-                        OperationJoin.create(deleteOperations)
-                                .setCompletion((ignore, failures) -> {
-                                    if (failures != null && !failures.isEmpty()) {
-                                        logWarning("Failed to delete one or more clusters: %s",
-                                                failures.values().iterator().next().getMessage());
-                                    }
-                                    delete.complete();
-                                }).sendWith(this);
-                    } else {
-                        delete.complete();
-                    }
+
+        Operation getClusters = Operation.createGet(uri).setReferer(getSelfLink());
+        return getHost()
+                // get all PKS clusters for this Endpoint
+                .sendWithDeferredResult(getClusters, ServiceDocumentQueryResult.class)
+                .exceptionally(ex -> {
+                    logSevere("Error getting PKS clusters for endpoint %s, reason: %s",
+                            getSelfLink(), Utils.toString(ex));
+                    throw ex instanceof CompletionException
+                            ? (CompletionException) ex
+                            : new CompletionException(ex);
                 })
-                .sendWith(this);
+                // then delete all found clusters. Wait for the deletion operations to complete
+                // or fail. Ignore failures
+                .thenCompose(foundClusters -> {
+                    if (foundClusters == null
+                            || foundClusters.documentLinks == null
+                            || foundClusters.documentLinks.isEmpty()) {
+                        return DeferredResult.completed(null);
+                    }
+
+                    // Create and send a delete operation for each found cluster
+                    List<DeferredResult<Operation>> deleteOps = foundClusters.documentLinks.stream()
+                            .map(clusterLink -> {
+                                logInfo("Removing PKS cluster %s for %s", clusterLink, endpointLink);
+                                Operation deleteCluser = Operation.createDelete(this, clusterLink)
+                                        .setReferer(getSelfLink());
+                                return getHost().sendWithDeferredResult(deleteCluser)
+                                        // ignore failures
+                                        .exceptionally(ex -> {
+                                            logWarning(
+                                                    "Failed to cleanup cluster [%s] while deleting PKS endpoint [%s]: %s",
+                                                    clusterLink, getSelfLink(), Utils.toString(ex));
+                                            // Stop propagation of the error so the endpoint can be
+                                            // successfully deleted
+                                            return null;
+                                        });
+                            }).collect(Collectors.toList());
+
+                    return DeferredResult.allOf(deleteOps);
+                }).thenAccept(ignore -> {
+                    // convert to DeferredResult<Void>
+                });
     }
 
     private void validate(Endpoint endpoint) {

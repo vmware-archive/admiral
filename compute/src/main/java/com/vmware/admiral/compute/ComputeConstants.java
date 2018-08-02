@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,11 +11,13 @@
 
 package com.vmware.admiral.compute;
 
+import com.vmware.admiral.common.util.CertificateUtilExtended;
+
 public class ComputeConstants {
 
     public static final String HOST_AUTH_CREDENTIALS_PROP_NAME = "__authCredentialsLink";
 
-    public static final String HOST_TRUST_CERTS_PROP_NAME = "__trustCertLink";
+    public static final String HOST_TRUST_CERTS_PROP_NAME = CertificateUtilExtended.CUSTOM_PROPERTY_TRUST_CERT_LINK;
 
     public static final String ENDPOINT_AUTH_CREDENTIALS_PROP_NAME = "__endpointAuthCredentialsLink";
 

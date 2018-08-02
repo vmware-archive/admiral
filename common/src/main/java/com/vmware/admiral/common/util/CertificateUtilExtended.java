@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -31,6 +31,10 @@ import com.vmware.xenon.common.ServiceHost;
 
 @SuppressWarnings("deprecation")
 public class CertificateUtilExtended {
+
+    public static final String CUSTOM_PROPERTY_TRUST_CERT_LINK = "__trustCertLink";
+    public static final String CUSTOM_PROPERTY_PKS_UAA_TRUST_CERT_LINK = "__pksUaaTrustCertLink";
+    public static final String CUSTOM_PROPERTY_PKS_API_TRUST_CERT_LINK = "__pksApiTrustCertLink";
 
     public static boolean isSelfSignedCertificate(String certPEM) {
         try {
