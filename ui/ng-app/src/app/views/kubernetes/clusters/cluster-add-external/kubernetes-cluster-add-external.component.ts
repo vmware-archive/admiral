@@ -11,12 +11,13 @@
 
 import { Component, OnInit } from "@angular/core";
 import { Router, ActivatedRoute } from '@angular/router';
-import { FormGroup, FormControl, Validators } from "@angular/forms";
+import { FormGroup, FormControl, Validators, AbstractControl } from "@angular/forms";
 import { DocumentService } from "../../../../utils/document.service";
 import { ErrorService } from "../../../../utils/error.service";
 import { ProjectService } from "../../../../utils/project.service";
 import { Links } from "../../../../utils/links";
 import { Utils } from "../../../../utils/utils";
+import { CustomValidators } from "../../../../utils/validators";
 
 import * as I18n from 'i18next';
 import { formatUtils } from "admiral-ui-common";
@@ -39,7 +40,7 @@ export class KubernetesClusterAddExternalComponent implements OnInit {
 
     clusterForm = new FormGroup({
         name: new FormControl('', Validators.required),
-        url: new FormControl('', Validators.required),
+        url: new FormControl('', CustomValidators.validateUrl),
         credentials: new FormControl(''),
         description: new FormControl('')
     });

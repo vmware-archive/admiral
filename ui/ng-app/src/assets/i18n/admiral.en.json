@@ -280,7 +280,7 @@
         "nameRequired": "Name is required.",
         "description": "Description",
         "url": "URL",
-        "urlRequired": "Cluster URL is required.",
+        "invalidUrl": "URL must contain a valid scheme and hostname.",
         "credentials": "Credentials"
       },
       "search": {
