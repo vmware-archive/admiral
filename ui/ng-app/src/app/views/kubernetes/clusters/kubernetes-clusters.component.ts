@@ -109,6 +109,13 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
         return properties;
     }
 
+    totalMemory(cluster) {
+        if (cluster && cluster.totalMemory) {
+            return this.formatNumber(cluster.totalMemory) + 'B';
+        }
+        return I18n.t('notAvailable');
+    }
+
     downloadKubeConfig($event, cluster) {
         event.stopPropagation();
 

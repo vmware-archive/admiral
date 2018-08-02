@@ -92,6 +92,13 @@ export class KubernetesClusterSummaryComponent implements OnInit {
         return I18n.t('notAvailable');
     }
 
+    get totalMemory() {
+        if (this.cluster && this.cluster.totalMemory) {
+            return this.formatNumber(this.cluster.totalMemory) + 'B';
+        }
+        return I18n.t('notAvailable');
+    }
+
     get dashboard() {
         if (this.clusterCustomProperties) {
 

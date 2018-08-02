@@ -217,7 +217,7 @@
       "clusterResources": "Cluster Resources",
       "clusterResourcesVic": "Container Host Resources",
       "status": "Status:",
-      "creationDate": "Created:",
+      "creationDate": "Added:",
       "containersCount": "Containers:",
       "cpu": "vCPU:",
       "memory": "Memory:"
