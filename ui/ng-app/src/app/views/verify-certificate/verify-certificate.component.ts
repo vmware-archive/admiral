@@ -34,7 +34,7 @@ export class VerifyCertificateComponent {
   warningMessage() {
     if (this.certificate) {
       return I18n.t("certificate.certificateWarning", {
-        address: this.hostAddress,
+        address: this.certificate.origin ? this.certificate.origin : this.hostAddress,
         interpolation: { escapeValue: false }
       } as I18n.TranslationOptions);
     }
