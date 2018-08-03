@@ -59,6 +59,7 @@ class ContainerDefinitionForm extends Component {
       }
     );
 
+
     if (this.kubernetes) {
       this.$el.find('.container-links-input').hide();
       this.$el.find('.container-networks-input').hide();
@@ -75,6 +76,8 @@ class ContainerDefinitionForm extends Component {
       this.$el.find('.health-nav').hide();
       this.$el.find('.deployment-policy-input').hide();
 
+      this.$el.find('.container-cluster-size-input > label')
+          .text(i18n.t('app.container.request.inputs.replicas'));
       this.$el.find('.container-restart-policy-input .form-control').val('always');
       this.commandsEditor.hideButtons();
     }

@@ -750,6 +750,10 @@ var TemplateDetailsView = Vue.extend({
         }
       }
 
+      if (op === 'PUBLISH' && hasKubernetes) {
+        return false;
+      }
+
       return utils.operationSupportedTemplate(op);
     },
 

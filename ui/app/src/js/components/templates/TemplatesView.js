@@ -361,10 +361,15 @@ var TemplatesViewVueComponent = Vue.extend({
 
           this.$dispatch('export-template', this.model.documentId);
         },
+        isKubernetesTemplate: function() {
+          let descriptionLinks = this.model && this.model.descriptionLinks;
+          return descriptionLinks ?
+                descriptionLinks.some(l => l.indexOf('kubernetes-descriptions') !== -1) : false;
+        },
         operationSupported: function(op) {
-          return utils.operationSupportedTemplate(op);
+          return utils.operationSupportedTemplate(op) && !this.isKubernetesTemplate();
         }
-      }
+       }
     },
     'closure-template-item': {
       template: ListItemClosureVue,

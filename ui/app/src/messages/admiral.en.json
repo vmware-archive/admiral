@@ -1106,6 +1106,7 @@
           "workingDirectory": "Working Directory",
           "workingDirectoryDescription": "The working directory for commands to run in",
           "clusterSize": "Cluster Size",
+          "replicas": "Replicas",
           "clusterSizeDescription": "The number of nodes to be provisioned",
           "kubernetesReplicas": "Replicas",
           "restartPolicy": "Restart Policy",
