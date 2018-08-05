@@ -1,0 +1,18 @@
+{
+    "name": "Demo",
+    "plan_name": "Plan 1",
+    "last_action": "CREATE",
+    "last_action_state": "succeeded",
+    "last_action_description": "Instance provisioning completed",
+    "uuid": "91f6dfa3-b3de-4ce4-afd1-706a64b88a7a",
+    "kubernetes_master_ips": [
+        "192.168.150.122"
+    ],
+    "parameters": {
+        "kubernetes_master_host": "pks-cluster",
+        "kubernetes_master_port": 8383,
+        "worker_haproxy_ip_addresses": null,
+        "kubernetes_worker_instances": 1,
+        "authorization_mode": null
+    }
+}

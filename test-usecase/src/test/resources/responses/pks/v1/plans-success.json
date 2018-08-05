@@ -1,0 +1,14 @@
+[
+   {
+      "id": "8A0E21A8-8072-4D80-B365-D1F502085560",
+      "name": "Plan 1",
+      "description": "Example: This plan will configure a lightweight kubernetes cluster. Not recommended for production workloads.",
+      "worker_instances": 3
+   },
+   {
+      "id": "58375a45-17f7-4291-acf1-455bfdc8e371",
+      "name": "multi-master",
+      "description": "Example: This plan will configure a medium sized kubernetes cluster, suitable for more pods.",
+      "worker_instances": 5
+   }
+]

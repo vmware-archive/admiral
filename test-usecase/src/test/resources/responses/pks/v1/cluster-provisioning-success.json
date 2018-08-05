@@ -1,0 +1,16 @@
+{
+   "name": "my-cluster",
+   "plan_name": "Plan 1",
+   "last_action": "CREATE",
+   "last_action_state": "in progress",
+   "last_action_description": "Instance provisioning in progress",
+   "uuid": "b6a0c2a5-55cf-415c-9b21-f7d5fa823f87",
+   "kubernetes_master_ips": [
+      "In Progress"
+   ],
+   "parameters": {
+      "kubernetes_master_host": "mycluster.com",
+      "kubernetes_master_port": 8443,
+      "kubernetes_worker_instances": 3
+   }
+}

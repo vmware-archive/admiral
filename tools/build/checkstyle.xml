@@ -20,7 +20,12 @@
     </module>
 
     <module name="TreeWalker">
+
+        <!-- Ignored to allow hamcrest style matchers in unit tests -->
+        <!--
         <module name="AvoidStarImport"/>
+        -->
+
         <module name="UnusedImports">
             <property name="processJavadoc" value="true"/>
         </module>
@@ -34,14 +39,24 @@
         <module name="OuterTypeFilename"/>
         <module name="LeftCurly"/>
         <module name="RightCurly"/>
+    
         <module name="WhitespaceAround">
             <property name="allowEmptyConstructors" value="true"/>
             <property name="allowEmptyMethods" value="true"/>
             <property name="allowEmptyTypes" value="true"/>
             <property name="allowEmptyLoops" value="true"/>
+            <property name="tokens" value="ASSIGN,DIV_ASSIGN,PLUS_ASSIGN,MINUS_ASSIGN,STAR_ASSIGN,
+                      MOD_ASSIGN,SR_ASSIGN,BSR_ASSIGN,SL_ASSIGN,BXOR_ASSIGN,
+                      BOR_ASSIGN,BAND_ASSIGN,LCURLY,RCURLY"/>
         </module>
+
         <module name="OneStatementPerLine"/>
+
+        <!-- Ignored to allow for less lines of code mainly in model classes -->
+        <!--
         <module name="MultipleVariableDeclarations"/>
+        -->
+
         <module name="ArrayTypeStyle"/>
         <module name="MissingSwitchDefault"/>
         <module name="FallThrough"/>
@@ -49,6 +64,9 @@
         <module name="ModifierOrder"/>
         <module name="EmptyLineSeparator">
             <property name="allowNoEmptyLineBetweenFields" value="true"/>
+            <property name="tokens" value="PACKAGE_DEF,IMPORT,
+                CLASS_DEF,INTERFACE_DEF,ENUM_DEF,STATIC_INIT,
+                INSTANCE_INIT,METHOD_DEF,CTOR_DEF"/>
         </module>
         <module name="SeparatorWrap">
             <property name="tokens" value="DOT"/>
@@ -79,6 +97,7 @@
         </module>
 
         <!-- Additional to xenon. Needed for SuppressionCommentFilter -->
+        <!-- NB: This module is removed in checkstyle 8.2 -->
         <module name="FileContentsHolder"/>
     </module>
 
