@@ -1,0 +1,74 @@
+[
+    {
+        "name": "demo-cluster",
+        "plan_name": "Plan 1",
+        "last_action": "CREATE",
+        "last_action_state": "succeeded",
+        "last_action_description": "Instance provisioning completed",
+        "uuid": "88d3a538-b49a-4c16-8e86-2d691c28dc75",
+        "kubernetes_master_ips": [
+            "192.168.150.108"
+        ],
+        "parameters": {
+            "kubernetes_master_host": "demo-cluster",
+            "kubernetes_master_port": 8443,
+            "worker_haproxy_ip_addresses": null,
+            "kubernetes_worker_instances": 1,
+            "authorization_mode": null
+        }
+    },
+    {
+        "name": "Demo",
+        "plan_name": "Plan 1",
+        "last_action": "CREATE",
+        "last_action_state": "succeeded",
+        "last_action_description": "Instance provisioning completed",
+        "uuid": "91f6dfa3-b3de-4ce4-afd1-706a64b88a7a",
+        "kubernetes_master_ips": [
+            "192.168.150.122"
+        ],
+        "parameters": {
+            "kubernetes_master_host": "pks-cluster",
+            "kubernetes_master_port": 8383,
+            "worker_haproxy_ip_addresses": null,
+            "kubernetes_worker_instances": 1,
+            "authorization_mode": null
+        }
+    },
+    {
+        "name": "aadad",
+        "plan_name": "Plan 1",
+        "last_action": "CREATE",
+        "last_action_state": "succeeded",
+        "last_action_description": "Instance provisioning completed",
+        "uuid": "aa2142e4-930d-402b-b4b1-f7af11d8eb5c",
+        "kubernetes_master_ips": [
+            "192.168.150.103"
+        ],
+        "parameters": {
+            "kubernetes_master_host": "fa",
+            "kubernetes_master_port": 9393,
+            "worker_haproxy_ip_addresses": null,
+            "kubernetes_worker_instances": 1,
+            "authorization_mode": null
+        }
+    },
+    {
+        "name": "DEQ",
+        "plan_name": "Plan 1",
+        "last_action": "CREATE",
+        "last_action_state": "succeeded",
+        "last_action_description": "Instance provisioning completed",
+        "uuid": "c64de8b9-5703-4c3c-b632-93f01bcf9b18",
+        "kubernetes_master_ips": [
+            "192.168.150.101"
+        ],
+        "parameters": {
+            "kubernetes_master_host": "qrwer",
+            "kubernetes_master_port": 9393,
+            "worker_haproxy_ip_addresses": null,
+            "kubernetes_worker_instances": 1,
+            "authorization_mode": null
+        }
+    }
+]
