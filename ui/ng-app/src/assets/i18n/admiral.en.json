@@ -414,7 +414,7 @@
       "title": "Add Cluster",
       "existingClusters": {
         "descriptionText": "Select an endpoint and then select one existing, unassigned Kubernetes cluster to add to the current business group.",
-        "fieldTitleEndpoint": "Endpoint:",
+        "fieldTitleEndpoint": "PKS Endpoint",
         "columnTitleName": "Name",
         "columnTitleHostname": "Hostname",
         "columnTitleMasterNodesIPs": "Master IPs",

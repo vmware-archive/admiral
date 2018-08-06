@@ -20,14 +20,18 @@
 
 <form class="form" [formGroup]="addExistingClustersForm">
     <section class="form-block">
-        <div class="form-group add-existing-cluster-endpoint-selection">
-            <label for="endpoint">{{"pks.add.existingClusters.fieldTitleEndpoint" | i18n}}</label>
-            <dropdown formControlName="endpoint" [options]="endpoints"
+        <div class="form-group row col-lg-8 add-existing-cluster-endpoint-selection">
+            <div class="col-lg-2">
+                <label for="endpoint" class="required">{{"pks.add.existingClusters.fieldTitleEndpoint" | i18n}}</label>
+            </div>
+            <div class="col-lg-6">
+                <dropdown formControlName="endpoint" [options]="endpoints"
                       [title]="endpointsTitle"
                       [searchPlaceholder]="endpointsSearchPlaceholder"
                       (ngModelChange)="onChangeEndpoint($event)"
                       ddClass="top-left">
-            </dropdown>
+                </dropdown>
+            </div>
         </div>
 
         <table-view [showSearch]="false" [showToolbar]="false">
@@ -60,16 +64,16 @@
             </div>
         </table-view>
 
-        <div class="form-group row col-lg-8 connectByFormGroup">
+        <div class="form-group row col-lg-8 add-existing-cluster-connectBy">
             <div class="col-lg-2">
-                <label for="worker" class="required">{{"pks.new.settings.fieldConnectBy" | i18n}}</label>
+                <label for="connectBy" class="required">{{"pks.new.settings.fieldConnectBy" | i18n}}</label>
             </div>
             <div class="col-lg-6">
-                <div class="radio-inline">
+                <div class="radio">
                     <input type="radio" name="connectBy" id="connectByMasterHostName" formControlName="connectBy" value="hostname">
                     <label for="connectByMasterHostName">{{"pks.new.settings.labelConnectByHostname" | i18n}}</label>
                 </div>
-                <div class="radio-inline">
+                <div class="radio">
                     <input type="radio" name="connectBy" id="connectByMasterIP" formControlName="connectBy" value="ip">
                     <label for="connectByMasterIP">{{"pks.new.settings.labelConnectByIP" | i18n}}</label>
                 </div>
