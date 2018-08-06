@@ -132,7 +132,7 @@
                 (click)="create()">{{"create" | i18n}}</button>
         <button *ngIf="editMode" type="button" class="btn btn-primary"
                 [clrLoading]="isCreatingCluster"
-                [disabled]="newClusterSettingsForm.invalid"
+                [disabled]="!newClusterSettingsForm.dirty || newClusterSettingsForm.invalid"
                 (click)="update()">{{"update" | i18n}}</button>
     </section>
 </form>
