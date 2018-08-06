@@ -11,8 +11,9 @@
 
 package com.vmware.admiral.image.service;
 
+import static com.vmware.admiral.common.SwaggerDocumentation.DataTypes.DATA_TYPE_STRING;
 import static com.vmware.admiral.common.SwaggerDocumentation.INSTANCE_PATH;
-import static com.vmware.admiral.common.SwaggerDocumentation.PARAM_TYPE_PATH;
+import static com.vmware.admiral.common.SwaggerDocumentation.ParamTypes.PARAM_TYPE_PATH;
 import static com.vmware.admiral.common.SwaggerDocumentation.Tags.FAVORITE_IMAGES_TAG;
 
 import java.util.ArrayList;
@@ -32,6 +33,7 @@ import com.google.gson.JsonSyntaxException;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -93,7 +95,7 @@ public class FavoriteImagesService extends StatefulService {
         return images;
     }
 
-//    @ApiModel
+    @ApiModel
     public static class FavoriteImage extends MultiTenantDocument {
 
         public static final String FIELD_NAME_NAME = "name";
@@ -150,8 +152,12 @@ public class FavoriteImagesService extends StatefulService {
             @ApiResponse(code = Operation.STATUS_CODE_OK, message = "Successfully retrieved image."),
             @ApiResponse(code = Operation.STATUS_CODE_NOT_FOUND, message = "Image with specified id not in favorites.")})
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "id", value = "The id of the image", required = true, dataType = "string",
-                    paramType = PARAM_TYPE_PATH)})
+            @ApiImplicitParam(
+                    name = "id",
+                    value = "The id of the image",
+                    dataType = DATA_TYPE_STRING,
+                    paramType = PARAM_TYPE_PATH,
+                    required = true)})
     public void handleGet(Operation get) {
         super.handleGet(get);
     }
@@ -166,8 +172,12 @@ public class FavoriteImagesService extends StatefulService {
     @ApiResponses(value = {
             @ApiResponse(code = Operation.STATUS_CODE_OK, message = "Successfully removed image from favorites.")})
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "id", value = "The id of the image", required = true, dataType = "string",
-                    paramType = PARAM_TYPE_PATH)})
+            @ApiImplicitParam(
+                    name = "id",
+                    value = "The id of the image",
+                    dataType = DATA_TYPE_STRING,
+                    paramType = PARAM_TYPE_PATH,
+                    required = true)})
     public void handleDelete(Operation delete) {
         super.handleDelete(delete);
     }

@@ -12,8 +12,10 @@
 package com.vmware.admiral.image.service;
 
 import static com.vmware.admiral.common.SwaggerDocumentation.BASE_PATH;
-import static com.vmware.admiral.common.SwaggerDocumentation.PARAM_TYPE_BODY;
-import static com.vmware.admiral.common.SwaggerDocumentation.PARAM_TYPE_QUERY;
+import static com.vmware.admiral.common.SwaggerDocumentation.DataTypes.DATA_TYPE_BOOLEAN;
+import static com.vmware.admiral.common.SwaggerDocumentation.DataTypes.DATA_TYPE_OBJECT;
+import static com.vmware.admiral.common.SwaggerDocumentation.ParamTypes.PARAM_TYPE_BODY;
+import static com.vmware.admiral.common.SwaggerDocumentation.ParamTypes.PARAM_TYPE_QUERY;
 import static com.vmware.admiral.common.SwaggerDocumentation.Tags.FAVORITE_IMAGES_TAG;
 
 import java.util.LinkedList;
@@ -80,8 +82,12 @@ public class FavoriteImageFactoryService extends AbstractSecuredFactoryService {
             nickname = "getAll")
     @ApiResponses({@ApiResponse(code = Operation.STATUS_CODE_OK,
             message = "Successfully retrieved all favorite images.")})
-    @ApiImplicitParams({@ApiImplicitParam(name = "expand", value = "Expand option to view details of the instances",
-                    required = false, dataType = "boolean", paramType = PARAM_TYPE_QUERY)})
+    @ApiImplicitParams({
+            @ApiImplicitParam(
+                    name = "expand",
+                    value = "Expand option to view details of the instances",
+                    dataType = DATA_TYPE_BOOLEAN,
+                    paramType = PARAM_TYPE_QUERY)})
     public void handleGet(Operation get) {
         OperationUtil.transformProjectHeaderToFilterQuery(get);
         super.handleGet(get);
@@ -101,8 +107,13 @@ public class FavoriteImageFactoryService extends AbstractSecuredFactoryService {
             @ApiResponse(code = Operation.STATUS_CODE_NOT_MODIFIED, message = "Image already exists as favorite."),
             @ApiResponse(code = Operation.STATUS_CODE_BAD_REQUEST, message = "Image registry non existent or disabled.")})
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "Container Image", value = "The container image to add to favorites.",
-                    paramType = PARAM_TYPE_BODY, dataType = "FavoriteImage", dataTypeClass = FavoriteImage.class)})
+            @ApiImplicitParam(
+                    name = "Container Image",
+                    value = "The container image to add to favorites.",
+                    dataType = DATA_TYPE_OBJECT,
+                    dataTypeClass = FavoriteImage.class,
+                    paramType = PARAM_TYPE_BODY,
+                    required = true)})
     public void handlePost(Operation op) {
         /**
          * If it is an internal xenon request, proceed with the operation.

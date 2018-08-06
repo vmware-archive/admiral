@@ -23,6 +23,12 @@
     <artifactId>admiral-host</artifactId>
     <packaging>jar</packaging>
 
+    <properties>
+        <swagger.spec.dir>${project.build.outputDirectory}</swagger.spec.dir>
+        <swagger.template.dir>${basedir}/swagger-resources/templates</swagger.template.dir>
+        <swagger.html.dir>${project.build.directory}/swagger</swagger.html.dir>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
@@ -138,6 +144,15 @@
         </dependency>
 
     </dependencies>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>jcenter-snapshots</id>
+            <name>jcenter</name>
+            <url>http://repo.spring.io/plugins-release/</url>
+        </pluginRepository>
+    </pluginRepositories>
+
     <profiles>
         <profile>
             <id>vic</id>
@@ -222,7 +237,7 @@
                             <basePath>/</basePath>
                             <descriptionFile>${basedir}/swagger-resources/swaggerDescription.txt</descriptionFile>
                             <info>
-                                <title>Admiral Open API</title>
+                                <title>Admiral REST API</title>
                                 <version>${project.version}</version>
                                 <contact>
                                     <name>VMware Admiral</name>
@@ -233,10 +248,10 @@
                                     <name>Apache 2 license</name>
                                 </license>
                             </info>
-                            <swaggerDirectory>${project.build.outputDirectory}</swaggerDirectory>
+                            <swaggerDirectory>${swagger.spec.dir}</swaggerDirectory>
                             <swaggerFileName>swagger-ui</swaggerFileName>
-                            <templatePath>${basedir}/swagger-resources/templates/strapdown.html.hbs</templatePath>
-                            <outputPath>${project.build.directory}/swagger/swagger-ui.html</outputPath>
+                            <templatePath>${swagger.template.dir}/strapdown.html.hbs</templatePath>
+                            <outputPath>${swagger.html.dir}/swagger-ui.html</outputPath>
                             <outputFormats>json,yaml</outputFormats>
                         </apiSource>
                     </apiSources>
@@ -250,7 +265,26 @@
                     </execution>
                 </executions>
             </plugin>
-
+            <plugin>
+                <groupId>io.github.swagger2markup</groupId>
+                <artifactId>swagger2markup-maven-plugin</artifactId>
+                <version>1.3.7</version>
+                <configuration>
+                    <swaggerInput>${swagger.spec.dir}/swagger-ui.yaml</swaggerInput>
+                    <outputFile>${swagger.spec.dir}/github</outputFile>
+                    <config>
+                        <swagger2markup.markupLanguage>MARKDOWN</swagger2markup.markupLanguage>
+                    </config>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>convertSwagger2markup</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>

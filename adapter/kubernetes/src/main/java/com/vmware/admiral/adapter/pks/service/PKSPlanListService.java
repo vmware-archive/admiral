@@ -13,7 +13,8 @@ package com.vmware.admiral.adapter.pks.service;
 
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_ENDPOINT_QUERY_PARAM_NAME;
 import static com.vmware.admiral.common.SwaggerDocumentation.BASE_PATH;
-import static com.vmware.admiral.common.SwaggerDocumentation.PARAM_TYPE_QUERY;
+import static com.vmware.admiral.common.SwaggerDocumentation.DataTypes.DATA_TYPE_STRING;
+import static com.vmware.admiral.common.SwaggerDocumentation.ParamTypes.PARAM_TYPE_QUERY;
 import static com.vmware.admiral.common.SwaggerDocumentation.Tags.PKS_PLAN_LIST_TAG;
 
 import java.util.Map;
@@ -71,8 +72,12 @@ public class PKSPlanListService extends StatelessService {
     @ApiResponses({
             @ApiResponse(code = Operation.STATUS_CODE_OK, message = "Successfully retrieved all endpoint plans.")})
     @ApiImplicitParams({
-            @ApiImplicitParam(name = PKS_ENDPOINT_QUERY_PARAM_NAME, value = "The self link to the endpoint state.",
-                    paramType = PARAM_TYPE_QUERY, required = true)})
+            @ApiImplicitParam(
+                    name = PKS_ENDPOINT_QUERY_PARAM_NAME,
+                    value = "The self link to the endpoint state.",
+                    dataType = DATA_TYPE_STRING,
+                    paramType = PARAM_TYPE_QUERY,
+                    required = true)})
     public void handleGet(Operation op) {
         try {
             Map<String, String> queryParams = UriUtils.parseUriQueryParams(op.getUri());

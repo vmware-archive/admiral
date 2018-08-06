@@ -20,8 +20,9 @@ import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_MASTER_HOST_FIELD;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_MASTER_NODES_IPS_PROP_NAME;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_MASTER_PORT_FIELD;
 import static com.vmware.admiral.common.SwaggerDocumentation.BASE_PATH;
+import static com.vmware.admiral.common.SwaggerDocumentation.DataTypes.DATA_TYPE_OBJECT;
 import static com.vmware.admiral.common.SwaggerDocumentation.LINE_BREAK;
-import static com.vmware.admiral.common.SwaggerDocumentation.PARAM_TYPE_BODY;
+import static com.vmware.admiral.common.SwaggerDocumentation.ParamTypes.PARAM_TYPE_BODY;
 import static com.vmware.admiral.common.SwaggerDocumentation.Tags.PKS_CLUSTER_CONFIG_TAG;
 import static com.vmware.admiral.common.util.OperationUtil.PROJECT_ADMIRAL_HEADER;
 import static com.vmware.admiral.compute.ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME;
@@ -158,8 +159,13 @@ public class PKSClusterConfigService extends StatelessService {
     @ApiResponses({
             @ApiResponse(code = Operation.STATUS_CODE_OK, message = "PKS host successfully added.")})
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "Add Cluster Request", value = "The type of add cluster request.", required = true,
-                    paramType = PARAM_TYPE_BODY, dataType = "AddClusterRequest")})
+            @ApiImplicitParam(
+                    name = "Add Cluster Request",
+                    value = "The type of add cluster request.",
+                    dataType = DATA_TYPE_OBJECT,
+                    dataTypeClass = AddClusterRequest.class,
+                    paramType = PARAM_TYPE_BODY,
+                    required = true)})
     public void handlePost(Operation op) {
         try {
             AddClusterRequest request = op.getBody(AddClusterRequest.class);
