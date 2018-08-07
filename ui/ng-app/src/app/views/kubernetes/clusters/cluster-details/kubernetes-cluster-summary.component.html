@@ -9,72 +9,72 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-      <div toolbar>
-        <button class="btn btn-link" (click)="editCluster()" allowNavigation [roles]="clustersEditRouteRestrictions">
-          <clr-icon shape="edit" size="12"></clr-icon>
-          <span class="btn-spaced-text">{{ "edit" | i18n }}</span>
-        </button>
-        <button class="btn btn-link" [disabled]="!hasNodes"
-                (click)="downloadKubeConfig()"
-                title="{{ 'kubernetes.clusters.details.summary.kubeConfigTooltip' | i18n }}">
-            <clr-icon shape="download" size="12"></clr-icon>
-            <span class="btn-spaced-text">{{ "kubernetes.clusters.details.summary.kubeConfigBtn" | i18n }}</span>
-        </button>
+<div toolbar>
+    <button [disabled]="!operationSupported('EDIT')" class="btn btn-link"
+            (click)="editCluster()" allowNavigation [roles]="clustersEditRouteRestrictions">
+      <clr-icon shape="edit" size="12"></clr-icon>
+      <span class="btn-spaced-text">{{ "edit" | i18n }}</span>
+    </button>
+    <button class="btn btn-link" [disabled]="!hasNodes" (click)="downloadKubeConfig()"
+            title="{{ 'kubernetes.clusters.details.summary.kubeConfigTooltip' | i18n }}">
+        <clr-icon shape="download" size="12"></clr-icon>
+        <span class="btn-spaced-text">{{ "kubernetes.clusters.details.summary.kubeConfigBtn" | i18n }}</span>
+    </button>
+    </div>
+
+<div class="cluster-summary">
+  <div class="summary-description">{{ cluster?.details }}</div>
+
+  <div class="summary-subsection">
+      <div class="summary-subsection-title">{{ "clusters.summary.clusterOverview" | i18n }}</div>
+      <div *ngIf="cluster && cluster.address" class="summary-subsection-content-row">
+          <div class="left-column">{{ "clusters.summary.address" | i18n }}</div>
+          <div class="right-column">{{ cluster?.address }}</div>
+          <div class="clear"></div>
       </div>
-
-      <div class="cluster-summary">
-          <div class="summary-description">{{ cluster?.details }}</div>
-
-          <div class="summary-subsection">
-              <div class="summary-subsection-title">{{ "clusters.summary.clusterOverview" | i18n }}</div>
-              <div *ngIf="cluster && cluster.address" class="summary-subsection-content-row">
-                  <div class="left-column">{{ "clusters.summary.address" | i18n }}</div>
-                  <div class="right-column">{{ cluster?.address }}</div>
-                  <div class="clear"></div>
-              </div>
-              <div class="summary-subsection-content-row">
-                  <div class="left-column">{{ "clusters.summary.status" | i18n }}</div>
-                  <div class="right-column"><span class="status {{ cluster?.status }}">{{ clusterState }}</span></div>
-                  <div class="clear"></div>
-              </div>
-              <div class="summary-subsection-content-row">
-                  <div class="left-column">{{ "clusters.summary.creationDate" | i18n }}</div>
-                  <div class="right-column">{{ cluster?.clusterCreationTimeMicros | localeDate }}</div>
-                  <div class="clear"></div>
-              </div>
-              <div *ngIf="dashboard" class="summary-subsection-content-row">
-                <div class="left-column">{{ "kubernetes.clusters.details.summary.dashboard" | i18n }}</div>
-                <div class="right-column"><span [innerHTML]="dashboard"></span></div>
-                <div class="clear"></div>
-              </div>
-              <div *ngIf="isPKSCluster" class="summary-subsection-content-row">
-                <div class="left-column">{{ "kubernetes.clusters.details.summary.planName" | i18n }}</div>
-                <div class="right-column">{{ planName }}</div>
-                <div class="clear"></div>
-              </div>
-              <div *ngIf="isPKSCluster" class="summary-subsection-content-row">
-                <div class="left-column">{{ "kubernetes.clusters.details.summary.masterNodesIPs" | i18n }}</div>
-                <div class="right-column">{{ masterNodesIPs }}</div>
-                <div class="clear"></div>
-              </div>
-          </div>
-
-          <div class="summary-subsection">
-              <div class="summary-subsection-title">{{ clusterResourcesTextKey | i18n }}</div>
-              <div class="summary-subsection-content-row">
-                  <div class="left-column">{{ "kubernetes.clusters.details.summary.nodeCount" | i18n }}</div>
-                  <div class="right-column">{{ nodeCount }}</div>
-                  <div class="clear"></div>
-              </div>
-              <div class="summary-subsection-content-row">
-                  <div class="left-column">{{ "kubernetes.clusters.details.summary.totalMemory" | i18n }}</div>
-                  <div class="right-column">{{ totalMemory }}</div>
-                  <div class="clear"></div>
-              </div>
-          </div>
+      <div class="summary-subsection-content-row">
+          <div class="left-column">{{ "clusters.summary.status" | i18n }}</div>
+          <div class="right-column"><span class="status {{ cluster?.status }}">{{ clusterState }}</span></div>
+          <div class="clear"></div>
       </div>
+      <div class="summary-subsection-content-row">
+          <div class="left-column">{{ "clusters.summary.creationDate" | i18n }}</div>
+          <div class="right-column">{{ cluster?.clusterCreationTimeMicros | localeDate }}</div>
+          <div class="clear"></div>
+      </div>
+      <div *ngIf="dashboard" class="summary-subsection-content-row">
+        <div class="left-column">{{ "kubernetes.clusters.details.summary.dashboard" | i18n }}</div>
+        <div class="right-column"><span [innerHTML]="dashboard"></span></div>
+        <div class="clear"></div>
+      </div>
+      <div *ngIf="isPksCluster" class="summary-subsection-content-row">
+        <div class="left-column">{{ "kubernetes.clusters.details.summary.planName" | i18n }}</div>
+        <div class="right-column">{{ planName }}</div>
+        <div class="clear"></div>
+      </div>
+      <div *ngIf="isPksCluster" class="summary-subsection-content-row">
+        <div class="left-column">{{ "kubernetes.clusters.details.summary.masterNodesIPs" | i18n }}</div>
+        <div class="right-column">{{ masterNodesIPs }}</div>
+        <div class="clear"></div>
+      </div>
+  </div>
 
-      <navigation-container>
-          <router-outlet></router-outlet>
-      </navigation-container>
+  <div class="summary-subsection">
+      <div class="summary-subsection-title">{{ clusterResourcesTextKey | i18n }}</div>
+      <div class="summary-subsection-content-row">
+          <div class="left-column">{{ "kubernetes.clusters.details.summary.nodeCount" | i18n }}</div>
+          <div class="right-column">{{ nodeCount }}</div>
+          <div class="clear"></div>
+      </div>
+      <div class="summary-subsection-content-row">
+          <div class="left-column">{{ "kubernetes.clusters.details.summary.totalMemory" | i18n }}</div>
+          <div class="right-column">{{ totalMemory }}</div>
+          <div class="clear"></div>
+      </div>
+  </div>
+</div>
+
+<navigation-container>
+  <router-outlet></router-outlet>
+</navigation-container>
 

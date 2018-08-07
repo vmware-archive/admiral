@@ -11,12 +11,13 @@
 
 import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from "@angular/router";
-import { DocumentService } from "../../../../utils/document.service";
-import { ErrorService } from "../../../../utils/error.service";
-import { Utils } from '../../../../utils/utils';
-import { Links } from '../../../../utils/links';
+import { DocumentService } from '../../../../utils/document.service';
+import { ErrorService } from '../../../../utils/error.service';
+import { Constants } from '../../../../utils/constants';
 import { FT } from '../../../../utils/ft';
-import { RoutesRestriction } from './../../../../utils/routes-restriction';
+import { Links } from '../../../../utils/links';
+import { RoutesRestriction } from '../../../../utils/routes-restriction';
+import { Utils } from '../../../../utils/utils';
 
 import * as I18n from 'i18next';
 
@@ -50,11 +51,8 @@ export class KubernetesClusterSummaryComponent implements OnInit {
         return '';
     }
 
-    get isPKSCluster(): boolean {
-        if (this.cluster) {
-            return Utils.getCustomPropertyValue(this.clusterCustomProperties, '__pksClusterUUID');
-        }
-        return false;
+    get isPksCluster(): boolean {
+        return Utils.isPksCluster(this.cluster);
     }
 
     get planName() {
@@ -132,9 +130,17 @@ export class KubernetesClusterSummaryComponent implements OnInit {
         // DOM init
     }
 
+    operationSupported(op) {
+        if (this.isPksCluster && op === 'EDIT') {
+            return this.cluster.status === Constants.clusters.status.ON;
+        }
+
+        return true;
+    }
+
     editCluster() {
         let editNavLink;
-        if (this.isPKSCluster) {
+        if (this.isPksCluster) {
             editNavLink = ['./edit'];
         } else {
             // external

@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~ Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
   ~
   ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
   ~ You may not use this product except in compliance with the License.
@@ -10,24 +10,22 @@
   -->
 
 <clr-modal *ngIf="visible" [clrModalStaticBackdrop]="isDeleting"
-           [clrModalClosable]="!isDeleting"
-           [clrModalOpen]="visible"
-           (clrModalOpenChange)="deleteCanceled()">
-  <h3 class="modal-title">{{ title }}</h3>
+                           [clrModalClosable]="!isDeleting"
+                           [clrModalOpen]="visible"
+                           (clrModalOpenChange)="deleteCanceled()">
+  <h3 class="modal-title">{{title}}</h3>
   <div class="modal-body">
-    <clr-alert [clrAlertType]="'alert-danger'" [(clrAlertClosed)]="!alertMessage"  (clrAlertClosedChange)="resetAlert()">
-      <div class="alert-item">
-        <span class="alert-text">
-          {{ alertMessage }}
-        </span>
-      </div>
+    <clr-alert [clrAlertType]="'alert-danger'" [(clrAlertClosed)]="!alertMessage"
+               (clrAlertClosedChange)="resetAlert()">
+      <div class="alert-item"><span class="alert-text">{{alertMessage}}</span></div>
     </clr-alert>
-    <p>
-      {{ description }}
-    </p>
+    <p>{{description}}</p>
   </div>
   <div class="modal-footer">
-    <button type="button" [disabled]="isDeleting" class="btn btn-outline" (click)="deleteCanceled()">{{ "cancel" | i18n }}</button>
-    <button [clrLoading]="isDeleting" type="button" [disabled]="isDeleting" class="btn btn-danger" (click)="deleteConfirmed()">{{ "remove" | i18n }}</button>
+    <button type="button" [disabled]="isDeleting" class="btn btn-outline"
+            (click)="deleteCanceled()">{{"cancel" | i18n}}</button>
+    <button [clrLoading]="isDeleting" type="button" [disabled]="isDeleting"
+            class="btn btn-danger" (click)="deleteConfirmed()"
+                >{{deleteButtonTextKey ? deleteButtonTextKey : "remove" | i18n}}</button>
   </div>
 </clr-modal>

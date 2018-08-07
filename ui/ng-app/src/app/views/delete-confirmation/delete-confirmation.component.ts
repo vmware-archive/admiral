@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -17,12 +17,13 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
   styleUrls: ['./delete-confirmation.component.scss']
 })
 /**
- * Modal delete confirmation
+ * Delete/Remove/Destroy confirmation modal dialog.
  */
 export class DeleteConfirmationComponent {
-
   @Input() title: string;
   @Input() description: string;
+  /* custom confirmation button text */
+  @Input() deleteButtonTextKey: string;
 
   show: boolean = false;
   @Input() get visible() : boolean {

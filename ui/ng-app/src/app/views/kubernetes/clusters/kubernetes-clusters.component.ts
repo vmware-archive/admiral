@@ -32,7 +32,6 @@ import * as I18n from 'i18next';
  * PKS/Kubernetes Clusters main grid view.
  */
 export class KubernetesClustersComponent extends AutoRefreshComponent {
-
     @ViewChild('gridView') gridView: GridViewComponent;
 
     projectLink: string;
@@ -83,7 +82,7 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
         if (this.deleteOp === 'REMOVE') {
             description = I18n.t('kubernetes.clusters.remove.confirmation', {
                 clusterName: this.deleteOpClusterName,
-                interpolation: {escapeValue: false}
+                interpolation: { escapeValue: false }
             } as I18n.TranslationOptions)
 
         } else if (this.deleteOp === 'DESTROY') {
@@ -94,6 +93,10 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
         }
 
         return description;
+    }
+
+    get deleteOpConfirmationBtnTextKey(): string {
+        return (this.deleteOp === 'DESTROY') && 'destroy';
     }
 
     hasNodes(cluster) {
@@ -237,12 +240,12 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
             // Disable
             return clusterStatus === Constants.clusters.status.ON;
         } else if (op === 'DESTROY') {
-            var properties = this.getClusterCustomProperties(cluster);
             // Destroy
-            return clusterStatus !== Constants.clusters.status.PROVISIONING
-                && clusterStatus !== Constants.clusters.status.RESIZING
-                && clusterStatus !== Constants.clusters.status.REMOVING
-                && properties.__pksEndpoint;
+            return Utils.isPksCluster(cluster)
+                    && clusterStatus !== Constants.clusters.status.PROVISIONING
+                    && clusterStatus !== Constants.clusters.status.RESIZING
+                    && clusterStatus !== Constants.clusters.status.REMOVING
+                    && clusterStatus !== Constants.clusters.status.UNREACHABLE;
         }
 
         return true;

@@ -99,6 +99,10 @@ export class Utils {
     return clusterEntity && clusterEntity.type === Constants.hosts.type.VCH;
   }
 
+  public static isPksCluster(cluster) {
+    return cluster && cluster.type === "KUBERNETES";
+  }
+
   public static getErrorMessage(err) {
     let errorMessage;
 
