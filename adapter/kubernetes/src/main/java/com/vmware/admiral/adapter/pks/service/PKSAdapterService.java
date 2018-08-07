@@ -185,7 +185,7 @@ public class PKSAdapterService extends StatelessService {
                             logInfo("Operation for %s returns code 401, invalidate token and retry",
                                     ctx.endpoint.documentSelfLink);
                             if (ctx.endpoint.documentSelfLink != null) {
-                                pksContextCache.invalidate(ctx.endpoint.documentSelfLink);
+                                pksContextCache.invalidate(getCacheKey(ctx.endpoint));
                             }
                             shouldRetry = true;
                         }
@@ -347,7 +347,7 @@ public class PKSAdapterService extends StatelessService {
                         && endpoint.customProperties.get(VALIDATE_CONNECTION) != null) {
                     result.complete(createNewPKSContext(endpoint));
                 } else {
-                    result.complete(pksContextCache.get(endpoint.documentSelfLink,
+                    result.complete(pksContextCache.get(getCacheKey(endpoint),
                             () -> createNewPKSContext(endpoint)));
                 }
             } catch (Exception e) {
@@ -477,6 +477,10 @@ public class PKSAdapterService extends StatelessService {
             }
         });
         expiredKeys.forEach(pksContextCache::invalidate);
+    }
+
+    private String getCacheKey(Endpoint endpoint) {
+        return endpoint.documentSelfLink + String.valueOf(endpoint.documentUpdateTimeMicros);
     }
 
     private void initClient() {
