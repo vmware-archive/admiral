@@ -193,7 +193,7 @@
       "PROVISIONING": "PROVISIONING",
       "RESIZING": "RIDIMENSIONAMENTO",
       "REMOVING": "RIMOZIONE",
-      "UNREACHABLE": "UNREACHABLE"
+      "UNREACHABLE": "NON RAGGIUNGIBILE"
     },
     "search": {
       "placeholder": "Cerca cluster"
@@ -217,7 +217,7 @@
       "clusterResources": "Risorse cluster",
       "clusterResourcesVic": "Risorse host contenitore",
       "status": "Stato:",
-      "creationDate": "Data creazione:",
+      "creationDate": "Added:",
       "containersCount": "Contenitori:",
       "cpu": "vCPU:",
       "memory": "Memoria:"
@@ -280,7 +280,7 @@
         "nameRequired": "Il nome è obbligatorio.",
         "description": "Descrizione",
         "url": "URL",
-        "urlRequired": "L'URL del cluster è obbligatorio.",
+        "invalidUrl": "URL must contain a valid scheme and hostname.",
         "credentials": "Credenziali"
       },
       "search": {
@@ -298,6 +298,7 @@
           "nodeCount": "Nodi:",
           "dashboard": "Dashboard:",
           "planName": "Piano:",
+          "masterNodesIPs": "Indirizzi IP master:",
           "dashboardInstalled": "INSTALLATO",
           "dashboardNotInstalled": "NON INSTALLATO",
           "totalMemory": "Memoria totale:"
@@ -396,11 +397,14 @@
         "nameFieldRequired": "Il nome del cluster è obbligatorio.",
         "fieldTitlePlan": " Piano",
         "fieldTitleMasterHostName": "Nome host master",
-        "masterHostNameFieldRequired": "Master host name is required",
+        "masterHostNameFieldRequired": "Il nome host master è obbligatorio",
         "fieldTitleMasterHostPort": "Porta host master",
-        "masterHostPortFieldRequired": "Master host port is required",
+        "masterHostPortFieldRequired": "La porta host master è obbligatoria",
         "fieldTitleNumberNodes": "Nodi worker",
-        "workerFieldRequired": "Il campo Worker è obbligatorio. È possibile immettere solo valori interi maggiori di 0."
+        "workerFieldRequired": "Il campo Worker è obbligatorio. È possibile immettere solo valori interi maggiori di 0.",
+        "fieldConnectBy": "Connetti con",
+        "labelConnectByHostname": "Nome host master",
+        "labelConnectByIP": "IP nodo master"
       }
     },
     "edit": {
@@ -413,11 +417,12 @@
         "fieldTitleEndpoint": "Endpoint:",
         "columnTitleName": "Nome",
         "columnTitleHostname": "Nome host",
+        "columnTitleMasterNodesIPs": "Indirizzi IP master",
         "columnTitleMastersCount": "N. master",
         "columnTitleWorkersCount": "N. Worker",
         "columnTitlePlan": " Piano",
-        "columnTitleLastAction": "Last Action",
-        "columnTitleLastActionStatus": "Last Action Status",
+        "columnTitleLastAction": "Ultima azione",
+        "columnTitleLastActionStatus": "Stato ultima azione",
         "columnTitleInAdmiral": "Registrato",
         "multipleSelectedClustersWarning": "Impossibile aggiungere più di un cluster alla volta.",
         "clusterAlreadyRegisteredWarning": "Impossibile aggiungere il cluster selezionato. È già stato aggiunto.",
@@ -527,11 +532,11 @@
     "columnDetails": "Dettagli",
     "count": "Visualizzazione delle ultime {{number}} richieste",
     "error": "Errore",
-    "eventLogLink": "Go to event log",
-    "containerLink": "Go to container",
-    "compositeComponentLink": "Go to application",
-    "containerNetworkLink": "Go to network",
-    "containerVolumeLink": "Go to volume",
+    "eventLogLink": "Vai al registro eventi",
+    "containerLink": "Vai al contenitore",
+    "compositeComponentLink": "Vai all'applicazione",
+    "containerNetworkLink": "Vai alla rete",
+    "containerVolumeLink": "Vai al volume",
     "deleteRequest": {
       "title": "Rimuovi richiesta",
       "description": "Confermare la rimozione delle richieste selezionate. L'operazione non può essere annullata."

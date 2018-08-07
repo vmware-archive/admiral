@@ -193,7 +193,7 @@
       "PROVISIONING": "PROVISIONAMENTO",
       "RESIZING": "REDIMENSIONANDO",
       "REMOVING": "REMOVENDO",
-      "UNREACHABLE": "UNREACHABLE"
+      "UNREACHABLE": "INACESSÍVEL"
     },
     "search": {
       "placeholder": "Procurar clusters"
@@ -217,7 +217,7 @@
       "clusterResources": "Recursos do cluster",
       "clusterResourcesVic": "Recursos do Host de Contêiner",
       "status": "Status:",
-      "creationDate": "Criado:",
+      "creationDate": "Added:",
       "containersCount": "Contêineres:",
       "cpu": "vCPU:",
       "memory": "Memória:"
@@ -280,7 +280,7 @@
         "nameRequired": "O nome é obrigatório.",
         "description": "Descrição",
         "url": "URL",
-        "urlRequired": "A URL do cluster é obrigatória.",
+        "invalidUrl": "URL must contain a valid scheme and hostname.",
         "credentials": "Credenciais"
       },
       "search": {
@@ -298,6 +298,7 @@
           "nodeCount": "Nós:",
           "dashboard": "Painel:",
           "planName": "Plano:",
+          "masterNodesIPs": "IPs Mestre:",
           "dashboardInstalled": "INSTALADO",
           "dashboardNotInstalled": "NÃO INSTALADO",
           "totalMemory": "Memória Total:"
@@ -396,11 +397,14 @@
         "nameFieldRequired": "O nome do cluster é necessário.",
         "fieldTitlePlan": "Plano",
         "fieldTitleMasterHostName": "Nome do Host Mestre",
-        "masterHostNameFieldRequired": "Master host name is required",
+        "masterHostNameFieldRequired": "O nome do host mestre é obrigatório",
         "fieldTitleMasterHostPort": "Porta do Host Mestre",
-        "masterHostPortFieldRequired": "Master host port is required",
+        "masterHostPortFieldRequired": "A porta do host mestre é obrigatória",
         "fieldTitleNumberNodes": "Nós de Trabalhador",
-        "workerFieldRequired": "O campo de trabalhador é obrigatório. Apenas valores de número inteiro maiores que 0 podem ser inseridos."
+        "workerFieldRequired": "O campo de trabalhador é obrigatório. Apenas valores de número inteiro maiores que 0 podem ser inseridos.",
+        "fieldConnectBy": "Conectar-se por",
+        "labelConnectByHostname": "Nome do Host Mestre",
+        "labelConnectByIP": "IP do Nó Mestre"
       }
     },
     "edit": {
@@ -413,11 +417,12 @@
         "fieldTitleEndpoint": "Endpoint:",
         "columnTitleName": "Nome",
         "columnTitleHostname": "Nome do Host",
+        "columnTitleMasterNodesIPs": "IPs Mestre",
         "columnTitleMastersCount": "Nº de Mestres",
         "columnTitleWorkersCount": "Nº de Trabalhadores",
         "columnTitlePlan": "Plano",
-        "columnTitleLastAction": "Last Action",
-        "columnTitleLastActionStatus": "Last Action Status",
+        "columnTitleLastAction": "Última Ação",
+        "columnTitleLastActionStatus": "Status da Última Ação",
         "columnTitleInAdmiral": "Registrado",
         "multipleSelectedClustersWarning": "Não é possível adicionar mais de um cluster por vez.",
         "clusterAlreadyRegisteredWarning": "Não é possível adicionar o cluster selecionado. Ele já foi adicionado.",
@@ -527,11 +532,11 @@
     "columnDetails": "Detalhes",
     "count": "Mostrando as {{number}} solicitações mais recentes",
     "error": "Erro",
-    "eventLogLink": "Go to event log",
-    "containerLink": "Go to container",
-    "compositeComponentLink": "Go to application",
-    "containerNetworkLink": "Go to network",
-    "containerVolumeLink": "Go to volume",
+    "eventLogLink": "Ir para log de evento",
+    "containerLink": "Ir para contêiner",
+    "compositeComponentLink": "Ir para aplicativo",
+    "containerNetworkLink": "Ir para rede",
+    "containerVolumeLink": "Ir para volume",
     "deleteRequest": {
       "title": "Remover solicitação",
       "description": "Confirme a remoção das solicitações selecionadas. A operação não pode ser desfeita."

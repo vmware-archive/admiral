@@ -193,7 +193,7 @@
       "PROVISIONING": "正在置备",
       "RESIZING": "调整大小",
       "REMOVING": "移除",
-      "UNREACHABLE": "UNREACHABLE"
+      "UNREACHABLE": "无法访问"
     },
     "search": {
       "placeholder": "搜索群集"
@@ -217,7 +217,7 @@
       "clusterResources": "群集资源",
       "clusterResourcesVic": "容器主机资源",
       "status": "状态:",
-      "creationDate": "创建时间:",
+      "creationDate": "Added:",
       "containersCount": "容器:",
       "cpu": "vCPU:",
       "memory": "内存:"
@@ -280,7 +280,7 @@
         "nameRequired": "“名称”是必填字段。",
         "description": "描述",
         "url": "URL",
-        "urlRequired": "“群集 URL”是必填字段。",
+        "invalidUrl": "URL must contain a valid scheme and hostname.",
         "credentials": "凭据"
       },
       "search": {
@@ -298,6 +298,7 @@
           "nodeCount": "节点:",
           "dashboard": "仪表板:",
           "planName": "计划:",
+          "masterNodesIPs": "主节点 IP:",
           "dashboardInstalled": "已安装",
           "dashboardNotInstalled": "未安装",
           "totalMemory": "总内存:"
@@ -396,11 +397,14 @@
         "nameFieldRequired": "“群集名称”是必填字段。",
         "fieldTitlePlan": "计划",
         "fieldTitleMasterHostName": "主节点主机名",
-        "masterHostNameFieldRequired": "Master host name is required",
+        "masterHostNameFieldRequired": "“主节点主机名称”是必填字段",
         "fieldTitleMasterHostPort": "主节点主机端口",
-        "masterHostPortFieldRequired": "Master host port is required",
+        "masterHostPortFieldRequired": "“主节点主机端口”是必填字段",
         "fieldTitleNumberNodes": "工作线程节点",
-        "workerFieldRequired": "“工作线程”字段是必填字段。只能输入大于 0 的整数值。"
+        "workerFieldRequired": "“工作线程”字段是必填字段。只能输入大于 0 的整数值。",
+        "fieldConnectBy": "连接方式",
+        "labelConnectByHostname": "主节点主机名",
+        "labelConnectByIP": "主节点 IP"
       }
     },
     "edit": {
@@ -413,11 +417,12 @@
         "fieldTitleEndpoint": "端点:",
         "columnTitleName": "名称",
         "columnTitleHostname": "主机名",
+        "columnTitleMasterNodesIPs": "主节点 IP",
         "columnTitleMastersCount": "主节点数",
         "columnTitleWorkersCount": "工作线程数",
         "columnTitlePlan": "计划",
-        "columnTitleLastAction": "Last Action",
-        "columnTitleLastActionStatus": "Last Action Status",
+        "columnTitleLastAction": "上次执行操作的时间",
+        "columnTitleLastActionStatus": "上次操作状态",
         "columnTitleInAdmiral": "已注册",
         "multipleSelectedClustersWarning": "无法同时添加多个群集。",
         "clusterAlreadyRegisteredWarning": "无法添加选定群集。选定群集已添加。",
@@ -527,11 +532,11 @@
     "columnDetails": "详细信息",
     "count": "显示最近的 {{number}} 个请求",
     "error": "错误",
-    "eventLogLink": "Go to event log",
-    "containerLink": "Go to container",
-    "compositeComponentLink": "Go to application",
-    "containerNetworkLink": "Go to network",
-    "containerVolumeLink": "Go to volume",
+    "eventLogLink": "转到事件日志",
+    "containerLink": "转到容器",
+    "compositeComponentLink": "转到应用程序",
+    "containerNetworkLink": "转到网络",
+    "containerVolumeLink": "转到卷",
     "deleteRequest": {
       "title": "移除请求",
       "description": "确认移除所选请求。此操作无法撤消。"

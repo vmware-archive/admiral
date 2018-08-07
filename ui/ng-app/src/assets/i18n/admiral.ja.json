@@ -193,7 +193,7 @@
       "PROVISIONING": "プロビジョニング",
       "RESIZING": "サイズ変更",
       "REMOVING": "削除",
-      "UNREACHABLE": "UNREACHABLE"
+      "UNREACHABLE": "アクセスできません"
     },
     "search": {
       "placeholder": "クラスタの検索"
@@ -217,7 +217,7 @@
       "clusterResources": "クラスタ リソース",
       "clusterResourcesVic": "コンテナ ホスト リソース",
       "status": "ステータス:",
-      "creationDate": "作成日時:",
+      "creationDate": "Added:",
       "containersCount": "コンテナ:",
       "cpu": "vCPU:",
       "memory": "メモリ:"
@@ -280,7 +280,7 @@
         "nameRequired": "名前は必須です。",
         "description": "説明",
         "url": "URL",
-        "urlRequired": "クラスタの URL は必須です。",
+        "invalidUrl": "URL must contain a valid scheme and hostname.",
         "credentials": "認証情報"
       },
       "search": {
@@ -298,6 +298,7 @@
           "nodeCount": "ノード:",
           "dashboard": "ダッシュボード:",
           "planName": "プラン:",
+          "masterNodesIPs": "マスター IP アドレス:",
           "dashboardInstalled": "インストール済み",
           "dashboardNotInstalled": "未インストール",
           "totalMemory": "合計メモリ:"
@@ -396,11 +397,14 @@
         "nameFieldRequired": "クラスタ名は必須です。",
         "fieldTitlePlan": " プラン",
         "fieldTitleMasterHostName": "マスター ホスト名",
-        "masterHostNameFieldRequired": "Master host name is required",
+        "masterHostNameFieldRequired": "マスター ホスト名は必須です",
         "fieldTitleMasterHostPort": "マスター ホスト ポート",
-        "masterHostPortFieldRequired": "Master host port is required",
+        "masterHostPortFieldRequired": "マスター ホストのポートは必須です",
         "fieldTitleNumberNodes": "ワーカー ノード",
-        "workerFieldRequired": "ワーカー フィールドは必須です。0 よりも大きい整数のみを入力できます。"
+        "workerFieldRequired": "ワーカー フィールドは必須です。0 よりも大きい整数のみを入力できます。",
+        "fieldConnectBy": "使用する接続",
+        "labelConnectByHostname": "マスター ホスト名",
+        "labelConnectByIP": "マスター ノードの IP アドレス"
       }
     },
     "edit": {
@@ -413,11 +417,12 @@
         "fieldTitleEndpoint": "エンドポイント:",
         "columnTitleName": "名前",
         "columnTitleHostname": "ホスト名",
+        "columnTitleMasterNodesIPs": "マスター IP アドレス",
         "columnTitleMastersCount": "マスター数",
         "columnTitleWorkersCount": "ワーカー数",
         "columnTitlePlan": " プラン",
-        "columnTitleLastAction": "Last Action",
-        "columnTitleLastActionStatus": "Last Action Status",
+        "columnTitleLastAction": "前回のアクション",
+        "columnTitleLastActionStatus": "前回のアクションのステータス",
         "columnTitleInAdmiral": "登録済み",
         "multipleSelectedClustersWarning": "複数のクラスタを同時に追加することはできません。",
         "clusterAlreadyRegisteredWarning": "選択したクラスタを追加できません。すでに追加されています。",
@@ -527,11 +532,11 @@
     "columnDetails": "詳細",
     "count": "最新の申請 {{number}} 件を表示中",
     "error": "エラー",
-    "eventLogLink": "Go to event log",
-    "containerLink": "Go to container",
-    "compositeComponentLink": "Go to application",
-    "containerNetworkLink": "Go to network",
-    "containerVolumeLink": "Go to volume",
+    "eventLogLink": "イベント ログに移動",
+    "containerLink": "コンテナに移動",
+    "compositeComponentLink": "アプリケーションに移動",
+    "containerNetworkLink": "ネットワークに移動",
+    "containerVolumeLink": "ボリュームに移動",
     "deleteRequest": {
       "title": "申請の削除",
       "description": "選択した申請を削除するか確認してください。この操作は元に戻すことができません。"

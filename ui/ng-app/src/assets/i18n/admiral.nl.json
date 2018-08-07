@@ -193,7 +193,7 @@
       "PROVISIONING": "INRICHTING",
       "RESIZING": "GROOTTE WIJZIGEN",
       "REMOVING": "VERWIJDEREN",
-      "UNREACHABLE": "UNREACHABLE"
+      "UNREACHABLE": "NIET BEREIKBAAR"
     },
     "search": {
       "placeholder": "Zoeken naar clusters"
@@ -217,7 +217,7 @@
       "clusterResources": "Clusterbronnen",
       "clusterResourcesVic": "Containerhostbronnen",
       "status": "Status:",
-      "creationDate": "Gemaakt:",
+      "creationDate": "Added:",
       "containersCount": "Containers:",
       "cpu": "vCPU:",
       "memory": "Geheugen:"
@@ -280,7 +280,7 @@
         "nameRequired": "Naam is vereist.",
         "description": "Beschrijving",
         "url": "URL",
-        "urlRequired": "Cluster-URL is vereist.",
+        "invalidUrl": "URL must contain a valid scheme and hostname.",
         "credentials": "Verificatiegegevens"
       },
       "search": {
@@ -298,6 +298,7 @@
           "nodeCount": "Knooppunten:",
           "dashboard": "Dashboard:",
           "planName": "Plan:",
+          "masterNodesIPs": "Primaire IP-adressen:",
           "dashboardInstalled": "GEÏNSTALLEERD",
           "dashboardNotInstalled": "NIET GEÏNSTALLEERD",
           "totalMemory": "Totaal geheugen:"
@@ -396,11 +397,14 @@
         "nameFieldRequired": "Clusternaam is verplicht.",
         "fieldTitlePlan": " Plan",
         "fieldTitleMasterHostName": "Naam van meesterhost",
-        "masterHostNameFieldRequired": "Master host name is required",
+        "masterHostNameFieldRequired": "Naam van meesterhost is vereist",
         "fieldTitleMasterHostPort": "Poort van meesterhost",
-        "masterHostPortFieldRequired": "Master host port is required",
+        "masterHostPortFieldRequired": "Poort van meesterhost is vereist",
         "fieldTitleNumberNodes": "Werkerknooppunten",
-        "workerFieldRequired": "Het veld Werker is verplicht. Alleen gehele getallen groter dan 0 kunnen worden ingevoerd."
+        "workerFieldRequired": "Het veld Werker is verplicht. Alleen gehele getallen groter dan 0 kunnen worden ingevoerd.",
+        "fieldConnectBy": "Verbinding maken via",
+        "labelConnectByHostname": "Naam van meesterhost",
+        "labelConnectByIP": "IP van masterknooppunt"
       }
     },
     "edit": {
@@ -413,11 +417,12 @@
         "fieldTitleEndpoint": "Endpoint:",
         "columnTitleName": "Naam",
         "columnTitleHostname": "Hostnaam",
+        "columnTitleMasterNodesIPs": "Primaire IP-adressen",
         "columnTitleMastersCount": "Aantal masters",
         "columnTitleWorkersCount": "Aantal werkers",
         "columnTitlePlan": " Plan",
-        "columnTitleLastAction": "Last Action",
-        "columnTitleLastActionStatus": "Last Action Status",
+        "columnTitleLastAction": "Laatste actie",
+        "columnTitleLastActionStatus": "Status van laatste actie",
         "columnTitleInAdmiral": "Geregistreerd",
         "multipleSelectedClustersWarning": "Kan niet meer dan één cluster tegelijk toevoegen.",
         "clusterAlreadyRegisteredWarning": "Kan geselecteerde cluster niet toevoegen. Deze is al toegevoegd.",
@@ -527,11 +532,11 @@
     "columnDetails": "Details",
     "count": "Laatste {{number}} aanvragen weergeven",
     "error": "Fout",
-    "eventLogLink": "Go to event log",
-    "containerLink": "Go to container",
-    "compositeComponentLink": "Go to application",
-    "containerNetworkLink": "Go to network",
-    "containerVolumeLink": "Go to volume",
+    "eventLogLink": "Ga naar gebeurtenislogboek",
+    "containerLink": "Ga naar container",
+    "compositeComponentLink": "Ga naar toepassing",
+    "containerNetworkLink": "Ga naar netwerk",
+    "containerVolumeLink": "Ga naar volume",
     "deleteRequest": {
       "title": "Aanvraag verwijderen",
       "description": "Bevestig de verwijdering van de geselecteerde aanvragen. De bewerking kan niet ongedaan worden gemaakt."

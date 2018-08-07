@@ -193,7 +193,7 @@
       "PROVISIONING": "BEREITSTELLUNG",
       "RESIZING": "ÄNDERN DER GRÖSSE",
       "REMOVING": "ENTFERNEN",
-      "UNREACHABLE": "UNREACHABLE"
+      "UNREACHABLE": "UNERREICHBAR"
     },
     "search": {
       "placeholder": "Nach Clustern suchen"
@@ -217,7 +217,7 @@
       "clusterResources": "Clusterressourcen",
       "clusterResourcesVic": "Container-Host-Ressourcen",
       "status": "Status:",
-      "creationDate": "Erstellt:",
+      "creationDate": "Added:",
       "containersCount": "Container:",
       "cpu": "vCPU:",
       "memory": "Arbeitsspeicher:"
@@ -280,7 +280,7 @@
         "nameRequired": "Der Name ist erforderlich.",
         "description": "Beschreibung",
         "url": "URL",
-        "urlRequired": "Die Cluster-URL ist erforderlich.",
+        "invalidUrl": "URL must contain a valid scheme and hostname.",
         "credentials": "Anmeldedaten"
       },
       "search": {
@@ -298,6 +298,7 @@
           "nodeCount": "Knoten:",
           "dashboard": "Dashboard:",
           "planName": "Plan:",
+          "masterNodesIPs": "Master-IPs:",
           "dashboardInstalled": "INSTALLIERT",
           "dashboardNotInstalled": "NICHT INSTALLIERT",
           "totalMemory": "Arbeitsspeicher insgesamt:"
@@ -396,11 +397,14 @@
         "nameFieldRequired": "Clustername ist erforderlich.",
         "fieldTitlePlan": "Plan",
         "fieldTitleMasterHostName": "Master-Hostname",
-        "masterHostNameFieldRequired": "Master host name is required",
+        "masterHostNameFieldRequired": "Master-Hostname ist erforderlich",
         "fieldTitleMasterHostPort": "Master-Hostport",
-        "masterHostPortFieldRequired": "Master host port is required",
+        "masterHostPortFieldRequired": "Master-Hostport ist erforderlich",
         "fieldTitleNumberNodes": "Worker-Knoten",
-        "workerFieldRequired": "Worker-Feld ist erforderlich. Nur Ganzzahlwerte größer 0 können eingegeben werden."
+        "workerFieldRequired": "Worker-Feld ist erforderlich. Nur Ganzzahlwerte größer 0 können eingegeben werden.",
+        "fieldConnectBy": "Verbinden via",
+        "labelConnectByHostname": "Master-Hostname",
+        "labelConnectByIP": "Masterknoten-IP"
       }
     },
     "edit": {
@@ -413,11 +417,12 @@
         "fieldTitleEndpoint": "Endpoint:",
         "columnTitleName": "Name",
         "columnTitleHostname": "Hostname",
+        "columnTitleMasterNodesIPs": "Master-IPs",
         "columnTitleMastersCount": "Anz. Master",
         "columnTitleWorkersCount": "Anz. Worker",
         "columnTitlePlan": "Plan",
-        "columnTitleLastAction": "Last Action",
-        "columnTitleLastActionStatus": "Last Action Status",
+        "columnTitleLastAction": "Letzte Aktion",
+        "columnTitleLastActionStatus": "Letzter Aktionsstatus",
         "columnTitleInAdmiral": "Registriert",
         "multipleSelectedClustersWarning": "Es kann nicht mehr als ein Cluster gleichzeitig hinzugefügt werden.",
         "clusterAlreadyRegisteredWarning": "Der ausgewählte Cluster kann nicht hinzugefügt werden. Er wurde bereits hinzugefügt.",
@@ -527,11 +532,11 @@
     "columnDetails": "Details",
     "count": "Die letzten {{number}} Anforderungen werden angezeigt",
     "error": "Fehler",
-    "eventLogLink": "Go to event log",
-    "containerLink": "Go to container",
-    "compositeComponentLink": "Go to application",
-    "containerNetworkLink": "Go to network",
-    "containerVolumeLink": "Go to volume",
+    "eventLogLink": "Zu Ereignisprotokoll wechseln",
+    "containerLink": "Zu Container wechseln",
+    "compositeComponentLink": "Zu Anwendung wechseln",
+    "containerNetworkLink": "Zu Netzwerk wechseln",
+    "containerVolumeLink": "Zu Volume wechseln",
     "deleteRequest": {
       "title": "Anforderung entfernen",
       "description": "Bestätigen Sie die Entfernung der ausgewählten Anforderungen. Der Vorgang kann nicht rückgängig gemacht werden."

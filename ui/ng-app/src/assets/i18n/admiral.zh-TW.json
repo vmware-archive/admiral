@@ -193,7 +193,7 @@
       "PROVISIONING": "佈建中",
       "RESIZING": "調整大小",
       "REMOVING": "移除",
-      "UNREACHABLE": "UNREACHABLE"
+      "UNREACHABLE": "無法連線"
     },
     "search": {
       "placeholder": "搜尋叢集"
@@ -217,7 +217,7 @@
       "clusterResources": "叢集資源",
       "clusterResourcesVic": "容器主機資源",
       "status": "狀態:",
-      "creationDate": "建立時間:",
+      "creationDate": "Added:",
       "containersCount": "容器:",
       "cpu": "vCPU:",
       "memory": "記憶體:"
@@ -280,7 +280,7 @@
         "nameRequired": "名稱為必填。",
         "description": "說明",
         "url": "URL",
-        "urlRequired": "叢集 URL 為必填。",
+        "invalidUrl": "URL must contain a valid scheme and hostname.",
         "credentials": "認證"
       },
       "search": {
@@ -298,6 +298,7 @@
           "nodeCount": "節點:",
           "dashboard": "儀表板:",
           "planName": "計劃:",
+          "masterNodesIPs": "主要 IP:",
           "dashboardInstalled": "已安裝",
           "dashboardNotInstalled": "未安裝",
           "totalMemory": "記憶體總計:"
@@ -396,11 +397,14 @@
         "nameFieldRequired": "叢集名稱為必填。",
         "fieldTitlePlan": " 計劃",
         "fieldTitleMasterHostName": "主控主機名稱",
-        "masterHostNameFieldRequired": "Master host name is required",
+        "masterHostNameFieldRequired": "主控主機名稱為必填",
         "fieldTitleMasterHostPort": "主控主機連接埠",
-        "masterHostPortFieldRequired": "Master host port is required",
+        "masterHostPortFieldRequired": "主控主機連接埠為必填",
         "fieldTitleNumberNodes": "Worker 節點",
-        "workerFieldRequired": "Worker 欄位為必填。僅可以輸入大於 0 的整數值。"
+        "workerFieldRequired": "Worker 欄位為必填。僅可以輸入大於 0 的整數值。",
+        "fieldConnectBy": "連線方式",
+        "labelConnectByHostname": "主控主機名稱",
+        "labelConnectByIP": "主節點 IP"
       }
     },
     "edit": {
@@ -413,11 +417,12 @@
         "fieldTitleEndpoint": "端點:",
         "columnTitleName": "名稱",
         "columnTitleHostname": "主機名稱",
+        "columnTitleMasterNodesIPs": "主要 IP",
         "columnTitleMastersCount": "主節點數",
         "columnTitleWorkersCount": "Worker 數",
         "columnTitlePlan": " 計劃",
-        "columnTitleLastAction": "Last Action",
-        "columnTitleLastActionStatus": "Last Action Status",
+        "columnTitleLastAction": "上次動作",
+        "columnTitleLastActionStatus": "上次動作狀態",
         "columnTitleInAdmiral": "已登錄",
         "multipleSelectedClustersWarning": "無法一次新增多個叢集。",
         "clusterAlreadyRegisteredWarning": "無法新增選取的叢集。已將其新增。",
@@ -527,11 +532,11 @@
     "columnDetails": "詳細資料",
     "count": "顯示最新的 {{number}} 個要求",
     "error": "錯誤",
-    "eventLogLink": "Go to event log",
-    "containerLink": "Go to container",
-    "compositeComponentLink": "Go to application",
-    "containerNetworkLink": "Go to network",
-    "containerVolumeLink": "Go to volume",
+    "eventLogLink": "移至事件記錄",
+    "containerLink": "移至容器",
+    "compositeComponentLink": "移至應用程式",
+    "containerNetworkLink": "移至網路",
+    "containerVolumeLink": "移至磁碟區",
     "deleteRequest": {
       "title": "移除要求",
       "description": "確認移除所選要求。此作業無法復原。"
