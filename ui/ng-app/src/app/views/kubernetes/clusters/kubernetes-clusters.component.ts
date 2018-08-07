@@ -120,7 +120,7 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
     }
 
     downloadKubeConfig($event, cluster) {
-        event.stopPropagation();
+        $event.stopPropagation();
 
         var hostLink = cluster.nodeLinks && cluster.nodeLinks[0];
 
