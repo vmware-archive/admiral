@@ -39,6 +39,7 @@ import { ClusterEditComponent } from './views/clusters/cluster-edit/cluster-edit
 
 import { KubernetesClustersComponent } from './views/kubernetes/clusters/kubernetes-clusters.component';
 import { KubernetesClusterNewComponent } from './views/kubernetes/clusters/cluster-new/kubernetes-cluster-new.component';
+import { KubernetesClusterEditComponent } from './views/kubernetes/clusters/cluster-edit/kubernetes-cluster-edit.component';
 import { KubernetesClusterAddComponent } from './views/kubernetes/clusters/cluster-add/kubernetes-cluster-add.component';
 import { KubernetesClusterDetailsComponent } from './views/kubernetes/clusters/cluster-details/kubernetes-cluster-details.component';
 import { KubernetesClusterEditExternalComponent } from "./views/kubernetes/clusters/cluster-edit/kubernetes-cluster-edit-external.component";
@@ -147,7 +148,7 @@ export const ROUTES: Routes = [
             },
             {
                 path: 'kubernetes/clusters/cluster/:id/edit',
-                canActivate: [HomeAuthGuard], component: KubernetesClusterNewComponent,
+                canActivate: [HomeAuthGuard], component: KubernetesClusterEditComponent,
                 data: { roles: RoutesRestriction.KUBERNETES_CLUSTERS_EDIT }
             },
             {

@@ -10,14 +10,13 @@
   -->
 
 <div class="main-view">
-    <div class="title">{{(editMode ? "pks.edit.title": "pks.new.title") | i18n}}</div>
+    <div class="title">{{"pks.new.title" | i18n}}</div>
 
     <clr-tabs>
         <clr-tab>
             <button clrTabLink id="settingsTab">{{"pks.new.settings.title" | i18n}}</button>
             <clr-tab-content id="settingsContent" *clrIfActive>
-                <app-kubernetes-cluster-new-settings
-                                        [cluster]="entity"></app-kubernetes-cluster-new-settings>
+                <app-kubernetes-cluster-new-settings></app-kubernetes-cluster-new-settings>
             </clr-tab-content>
         </clr-tab>
     </clr-tabs>

@@ -51,15 +51,15 @@
             <div class="col-lg-4">
                 <div class="select plan">
                     <select id="plan" formControlName="plan" [(ngModel)]="planSelection">
-                        <option *ngIf="plansLoading">Loading...</option>
-                        <option *ngIf="!plansLoading && (!plans || plans.length === 0)">No items</option>
+                        <option *ngIf="plansLoading">{{"loading" | i18n}}</option>
+                        <option *ngIf="!plansLoading && (!plans || plans.length === 0)">{{"noItems" | i18n}}</option>
                         <option *ngFor="let planOption of plans"
                                     value="{{planOption.id}}">{{planOption.name}}</option>
                     </select>
                 </div>
             </div>
         </div>
-        <div *ngIf="!editMode && selectedPlan && selectedPlan.description" class="form-group row col-lg-8">
+        <div *ngIf="selectedPlan && selectedPlan.description" class="form-group row col-lg-8">
             <div col-lg-4><clr-icon shape="info-circle" size="20"></clr-icon><span>{{selectedPlan.description}}</span></div>
         </div>
         <div class="form-group row col-lg-8">
@@ -107,7 +107,7 @@
                 </label>
             </div>
         </div>
-        <div *ngIf="!editMode" class="form-group row col-lg-8">
+        <div class="form-group row col-lg-8">
             <div class="col-lg-4">
                 <label for="connectBy" class="required">{{"pks.new.settings.fieldConnectBy" | i18n}}</label>
             </div>
@@ -126,13 +126,9 @@
         <button type="button" class="btn btn-secondary"
                 [disabled]="isCreatingCluster"
                 (click)="cancel()">{{ "cancel" | i18n }}</button>
-        <button *ngIf="!editMode" type="button" class="btn btn-primary"
+        <button type="button" class="btn btn-primary"
                 [clrLoading]="isCreatingCluster"
                 [disabled]="newClusterSettingsForm.invalid"
                 (click)="create()">{{"create" | i18n}}</button>
-        <button *ngIf="editMode" type="button" class="btn btn-primary"
-                [clrLoading]="isCreatingCluster"
-                [disabled]="!newClusterSettingsForm.dirty || newClusterSettingsForm.invalid"
-                (click)="update()">{{"update" | i18n}}</button>
     </section>
 </form>

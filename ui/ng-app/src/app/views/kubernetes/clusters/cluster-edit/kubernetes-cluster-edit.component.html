@@ -1,0 +1,110 @@
+<!--
+  ~ Copyright (c) 2018 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="main-view">
+    <clr-alert *ngIf="alertMessage" [clrAlertType]="alertType" [(clrAlertClosed)]="!alertMessage"
+               (clrAlertClosedChange)="resetAlert()">
+        <div class="alert-item"><span class="alert-text">{{ alertMessage }}</span></div>
+    </clr-alert>
+
+    <div class="title">{{"pks.edit.title" | i18n}}</div>
+
+    <form [formGroup]="editClusterForm">
+        <section class="form-block">
+            <div class="form-group row col-lg-8">
+                <div class="col-lg-4">
+                    <label for="endpoint" class="required">{{ "pks.new.settings.fieldTitleEndpoint" | i18n }}</label>
+                </div>
+                <div class="col-lg-4">
+                    <dropdown formControlName="endpoint" [options]="endpoints"
+                              [title]="endpointsTitle"
+                              [searchPlaceholder]="endpointsSearchPlaceholder"
+                              ddClass="bottom-right">
+                    </dropdown>
+                </div>
+            </div>
+            <div class="form-group row col-lg-8">
+                <div class="col-lg-4">
+                    <label for="clusterName" class="required">{{"pks.new.settings.fieldTitleName" | i18n}}</label>
+                </div>
+                <div class="col-lg-4">
+                    <label for="clusterName" aria-haspopup="true" role="tooltip"
+                           class="tooltip tooltip-validation tooltip-right">
+                        <input id="clusterName" type="text" formControlName="name" size="45">
+                        <span class="tooltip-content">{{"pks.new.settings.nameFieldRequired" | i18n}}</span>
+                    </label>
+                </div>
+            </div>
+            <div class="form-group row col-lg-8">
+                <div class="col-lg-4">
+                    <label for="plan" class="required">{{"pks.new.settings.fieldTitlePlan" | i18n}}</label>
+                </div>
+                <div class="col-lg-4">
+                    <div class="select plan">
+                        <select id="plan" formControlName="plan" [(ngModel)]="selectedPlanId">
+                            <option *ngIf="plansLoading">{{"loading" | i18n}}</option>
+                            <option *ngIf="!plansLoading && (!plans || plans.length === 0)">{{"noItems" | i18n}}</option>
+                            <option *ngFor="let planOption of plans"
+                                    value="{{planOption.id}}">{{planOption.name}}</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group row col-lg-8">
+                <div class="col-lg-4">
+                    <label for="masterHostName" class="required">{{"pks.new.settings.fieldTitleMasterHostName" | i18n}}</label>
+                </div>
+                <div class="col-lg-4">
+                    <label for="masterHostName" aria-haspopup="true" role="tooltip"
+                           class="tooltip tooltip-validation tooltip-right">
+                        <input id="masterHostName" type="text" formControlName="masterHostName"
+                               size="45">
+                        <span class="tooltip-content">{{"pks.new.settings.masterHostNameFieldRequired" | i18n}}</span>
+                    </label>
+                </div>
+            </div>
+            <div class="form-group row col-lg-8">
+                <div class="col-lg-4">
+                    <label for="masterHostName" class="required">{{"pks.new.settings.fieldTitleMasterHostPort" | i18n}}</label>
+                </div>
+                <div class="col-lg-4">
+                    <label for="masterHostPort" aria-haspopup="true" role="tooltip"
+                           class="tooltip tooltip-validation tooltip-right">
+                        <input id="masterHostPort" type="text" formControlName="masterHostPort" size="45">
+                        <span class="tooltip-content">{{"pks.new.settings.masterHostPortFieldRequired" | i18n}}</span>
+                    </label>
+                </div>
+            </div>
+            <div class="form-group row col-lg-8">
+                <div class="col-lg-4">
+                    <label for="worker" class="required">{{"pks.new.settings.fieldTitleNumberNodes" | i18n}}</label>
+                </div>
+                <div class="col-lg-4">
+                    <label for="worker" aria-haspopup="true" role="tooltip"
+                           class="tooltip tooltip-validation tooltip-right">
+                        <input id="worker" type="number" formControlName="workerInstances" min="1">
+                        <span class="tooltip-content">{{"pks.new.settings.workerFieldRequired" | i18n}}</span>
+                    </label>
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-secondary"
+                    [disabled]="isUpdatingCluster"
+                    (click)="cancel()">{{ "cancel" | i18n }}</button>
+            <button type="button" class="btn btn-primary"
+                    [clrLoading]="isUpdatingCluster"
+                    [disabled]="!editClusterForm.dirty || editClusterForm.invalid"
+                    (click)="update()">{{"update" | i18n}}</button>
+        </section>
+    </form>
+
+
+</div>

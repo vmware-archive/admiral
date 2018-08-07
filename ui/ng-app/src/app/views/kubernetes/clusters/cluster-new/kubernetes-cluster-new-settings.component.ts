@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { DocumentService } from "../../../../utils/document.service";
@@ -28,12 +28,9 @@ import * as I18n from 'i18next';
 /**
  * New kubernetes cluster view - settings tab.
  */
-export class KubernetesClusterNewSettingsComponent implements OnInit, OnChanges {
-    @Input() cluster: any;
-
+export class KubernetesClusterNewSettingsComponent implements OnInit {
     projectLink: string;
 
-    editMode: boolean = false;
     endpoints: any[];
     endpointDocumentSelfLink: string;
 
@@ -109,59 +106,6 @@ export class KubernetesClusterNewSettingsComponent implements OnInit, OnChanges 
         this.populateEndpoints();
     }
 
-    ngOnChanges(changes: SimpleChanges): void {
-        if (this.cluster) {
-            this.editMode = true;
-
-            let clusterData = this.cluster.nodeLinks && this.cluster.nodeLinks.length > 0
-                && this.cluster.nodes && this.cluster.nodes[this.cluster.nodeLinks[0]];
-            let clusterProperties = clusterData && clusterData.customProperties;
-
-            // Endpoint
-            this.endpointDocumentSelfLink =
-                Utils.getCustomPropertyValue(clusterProperties, '__pksEndpoint');
-            if (this.endpoints) {
-                this.preselectEndpointOption();
-            }
-            // Name
-            let clusterName = Utils.getCustomPropertyValue(clusterProperties, '__pksClusterName');
-            this.newClusterSettingsForm.get('name').setValue(clusterName);
-            this.newClusterSettingsForm.get('name').disable(true);
-            // Plan
-            this.newClusterSettingsForm.get('plan').setValue(
-                Utils.getCustomPropertyValue(clusterProperties, 'plan_name'));
-            this.newClusterSettingsForm.get('plan').disable(true);
-
-            this.documentService.listWithParams(Links.PKS_CLUSTERS,
-                    { endpointLink: this.endpointDocumentSelfLink, cluster: clusterName })
-                .then((result) => {
-                    let clusters = result.documents;
-                    let theCluster = clusters.find((cluster) => {
-                        return cluster.name === clusterName;
-                    });
-
-                    let params = theCluster && theCluster.parameters;
-                    if (params) {
-                        // Master Host Name
-                        this.newClusterSettingsForm.get('masterHostName')
-                                                        .setValue(params.kubernetes_master_host);
-                        this.newClusterSettingsForm.get('masterHostName').disable(true);
-                        // Master Host Port
-                        this.newClusterSettingsForm.get('masterHostPort')
-                                                        .setValue(params.kubernetes_master_port);
-                        this.newClusterSettingsForm.get('masterHostPort').disable(true);
-
-                        // Number of workers - editable
-                        this.newClusterSettingsForm.get('workerInstances')
-                                                    .setValue(params.kubernetes_worker_instances);
-                    }
-            }).catch(error => {
-                console.log('Failed to retrieve PKS cluster information', error);
-                this.errorService.error(Utils.getErrorMessage(error)._generic);
-            });
-        }
-    }
-
     clearView() {
         this.newClusterSettingsForm.reset();
         this.newClusterSettingsForm.markAsPristine();
@@ -200,9 +144,7 @@ export class KubernetesClusterNewSettingsComponent implements OnInit, OnChanges 
                 // show only plans for the currently selected group/project
                 this.plans = result.documents.filter(resultDoc =>
                                                     assignedPlans.indexOf(resultDoc.name) !== -1);
-                if (!this.editMode) {
-                    this.planSelection = (this.plans.length > 0 && this.plans[0]).id;
-                }
+                this.planSelection = this.plans && this.plans.length > 0 && this.plans[0].id;
             }).catch(error => {
                 console.error('PKS Plans listing failed', error);
                 this.plansLoading = false;
@@ -249,41 +191,12 @@ export class KubernetesClusterNewSettingsComponent implements OnInit, OnChanges 
         }
     }
 
-    update() {
-        if (this.newClusterSettingsForm.valid) {
-            this.isCreatingCluster = true;
-
-            let formValues = this.newClusterSettingsForm.value;
-
-            let clusterUpdateSpec = {
-                "resourceType": "PKS_CLUSTER",
-                "operation": "RESIZE_RESOURCE",
-                "resourceLinks": [this.cluster.documentSelfLink],
-                "customProperties": {
-                    "kubernetes_worker_instances": formValues.workerInstances
-                }
-            };
-
-            this.documentService.post(Links.REQUESTS, clusterUpdateSpec).then((response) => {
-
-                this.isCreatingCluster = false;
-                this.goBack();
-            }).catch(error => {
-                this.isCreatingCluster = false;
-
-                console.error(error);
-                this.showErrorMessage(error);
-            });
-        }
-    }
-
     cancel() {
         this.goBack();
     }
 
     goBack() {
-        let pathBack = this.editMode ? '../' : '../clusters';
-        this.router.navigate([pathBack], {relativeTo: this.route});
+        this.router.navigate(['../clusters'], {relativeTo: this.route});
     }
 
     private showErrorMessage(error) {
