@@ -351,7 +351,7 @@ public class ClusterUtils {
                 if (isPKSClusterBeingResized(computeStates.get(0))) {
                     ePZClusterDto.status = ClusterStatus.RESIZING;
                 } else if (isPKSClusterBeingRemoved(computeStates.get(0))) {
-                    ePZClusterDto.status = ClusterStatus.REMOVING;
+                    ePZClusterDto.status = ClusterStatus.DESTROYING;
                 } else {
                     ePZClusterDto.status = ClusterUtils.computeToClusterStatus(computeStates.get(0));
                 }

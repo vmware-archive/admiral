@@ -244,7 +244,7 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
             return Utils.isPksCluster(cluster)
                     && clusterStatus !== Constants.clusters.status.PROVISIONING
                     && clusterStatus !== Constants.clusters.status.RESIZING
-                    && clusterStatus !== Constants.clusters.status.REMOVING
+                    && clusterStatus !== Constants.clusters.status.DESTROYING
                     && clusterStatus !== Constants.clusters.status.UNREACHABLE;
         }
 

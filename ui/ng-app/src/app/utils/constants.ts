@@ -36,7 +36,7 @@ export const Constants = {
             WARNING: "WARNING",
             PROVISIONING: "PROVISIONING",
             RESIZING: "RESIZING",
-            REMOVING: "REMOVING",
+            DESTROYING: "DESTROYING",
             UNREACHABLE: "UNREACHABLE"
         },
         pks: {
