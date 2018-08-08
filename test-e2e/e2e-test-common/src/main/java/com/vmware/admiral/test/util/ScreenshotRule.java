@@ -17,14 +17,14 @@ import java.util.logging.Logger;
 
 import org.junit.runner.Description;
 
-public class ScreenshotRule extends BaseRule {
+public class ScreenshotRule extends BaseReportRule {
 
     private final Logger LOG = Logger.getLogger(getClass().getName());
 
     @Override
     protected void failed(Throwable e, Description description) {
         String path = getPathFromClassAndMethodName(description.getClassName(),
-                description.getMethodName()) + "screenshot";
+                description.getMethodName()) + description.getMethodName();
         String resultingFile = screenshot(path);
         LOG.info("Screenshot: " + resultingFile);
     }

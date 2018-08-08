@@ -18,6 +18,7 @@ import static com.codeborne.selenide.Selenide.switchTo;
 import java.util.Objects;
 
 import com.codeborne.selenide.ElementsCollection;
+import com.codeborne.selenide.SelenideElement;
 
 import org.openqa.selenium.By;
 
@@ -35,6 +36,19 @@ public class Action {
 
     protected ElementsCollection getElements(By selector) {
         return $$(selector);
+    }
+
+    protected SelenideElement getElement(By selector) {
+        ElementsCollection elements = getElements(selector);
+        if (elements.size() > 1) {
+            throw new IllegalArgumentException(String.format(
+                    "Multiple elements found with selector: [%s], modify the selector to locate only a single element",
+                    selector));
+        }
+        if (elements.size() == 1) {
+            return elements.get(0);
+        }
+        return $(selector);
     }
 
     protected void switchToFrame() {

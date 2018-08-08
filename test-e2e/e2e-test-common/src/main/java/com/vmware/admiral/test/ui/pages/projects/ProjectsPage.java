@@ -27,11 +27,12 @@ public class ProjectsPage extends BasicPage<ProjectsPageValidator, ProjectsPageL
         pageActions().click(locators().addProjectButton());
     }
 
-    public void clickProjectCard(String name) {
-        LOG.info(String.format("Configuring project with name: [%s]", name));
-        By card = locators().projectCardByName(name);
+    public void clickProjectDetailsButton(String projectName) {
+        LOG.info(String.format("Configuring project with name: [%s]", projectName));
+        By card = locators().projectCardByName(projectName);
         waitForElementToSettle(card);
-        pageActions().click(card);
+        pageActions().click(locators().projectContextMenuButtonByName(projectName));
+        pageActions().click(locators().projectDetailsButtonByName(projectName));
     }
 
     public void clickProjectDeleteButton(String projectName) {

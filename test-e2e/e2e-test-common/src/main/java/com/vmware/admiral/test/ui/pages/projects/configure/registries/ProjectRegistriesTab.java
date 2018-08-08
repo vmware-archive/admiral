@@ -28,4 +28,24 @@ public class ProjectRegistriesTab
         validate().validateIsCurrentPage();
     }
 
+    public void clickAddRegistryButton() {
+        LOG.info("Adding a project registry");
+        pageActions().click(locators().addRegistryButton());
+    }
+
+    public void selectRegistryByName(String name) {
+        LOG.info(String.format("Selecting registry with name [%s]", name));
+        pageActions().click(locators().registryCheckboxByName(name));
+    }
+
+    public void clickDeleteButton() {
+        LOG.info("Clicking the delete button");
+        pageActions().click(locators().deleteButton());
+    }
+
+    public void editRegistry(String name) {
+        LOG.info(String.format("Editing registry with name [%s]", name));
+        pageActions().click(locators().registryEditButtonByName(name));
+    }
+
 }

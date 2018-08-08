@@ -15,16 +15,17 @@ import org.openqa.selenium.By;
 
 public class CardPageLocators extends PageLocators {
 
-    private final String CARD_TITLE_SELECTOR_XPATH = "//div[contains(concat(' ', @class, ' '), ' title ')]";
+    private final String CARD_TITLE_SELECTOR_XPATH = "//div[contains(concat(' ', @class, ' '), ' grid-item ')]//div[contains(concat(' ', @class, ' '), ' title ')]";
     private final String ANCESTOR_CARD_LOCATOR_XPATH = "/ancestor::div[contains(concat(' ', @class, ' '), ' grid-item ')]";
     private final String CARD_SELECTOR_BY_EXACT_TITLE_XPATH = CARD_TITLE_SELECTOR_XPATH
             + "[./@title='%s']" + ANCESTOR_CARD_LOCATOR_XPATH;
     private final String CARD_SELECTOR_BY_TITLE_PREFIX_XPATH = CARD_TITLE_SELECTOR_XPATH
-            + "[starts-with(@title, '%s-mcm')]" + ANCESTOR_CARD_LOCATOR_XPATH;
+            + "[starts-with(@title, '%s-')]" + ANCESTOR_CARD_LOCATOR_XPATH;
     private final String CARD_HEADER_XPATH = "//div[contains(concat(' ', @class, ' '), ' status ')]";
     private final String CARD_TITLE_XPATH = "//div[contains(concat(' ', @class, ' '), ' title ')]";
     private final String CARD_DELETE_BUTTON_XPATH = "//a[contains(concat(' ', @class, ' '), ' container-action-remove ')]";
     private final String CARD_DELETE_CONFIRM_XPATH = "//div[contains(concat(' ', @class, ' '), ' delete-inline-item-confirmation-confirm ')]";
+    private final String CARD_DELETE_CONFIRMATION_HOLDER_XPATH = "//div[contains(concat(' ', @class, ' '), ' delete-inline-item-confirmation-holder')]";
 
     public String cardByExactTitleXpath(String title) {
         return String.format(CARD_SELECTOR_BY_EXACT_TITLE_XPATH, title);
@@ -72,6 +73,15 @@ public class CardPageLocators extends PageLocators {
 
     public By cardDeleteConfirmButtonByTitlePrefix(String titlePrefix) {
         return By.xpath(cardByTitlePrefixXpath(titlePrefix) + CARD_DELETE_CONFIRM_XPATH);
+    }
+
+    public By cardDeleteConfirmationHolderByExactTitle(String exactTitle) {
+        return By.xpath(cardByExactTitleXpath(exactTitle) + CARD_DELETE_CONFIRMATION_HOLDER_XPATH);
+    }
+
+    public By cardDeleteConfirmationHolderByTitlePrefix(String titlePrefix) {
+        return By
+                .xpath(cardByTitlePrefixXpath(titlePrefix) + CARD_DELETE_CONFIRMATION_HOLDER_XPATH);
     }
 
 }

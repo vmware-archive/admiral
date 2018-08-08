@@ -13,6 +13,8 @@ package com.vmware.admiral.test.ui.pages.containers;
 
 import java.util.Objects;
 
+import org.openqa.selenium.By;
+
 import com.vmware.admiral.test.ui.pages.common.ResourcePageLibrary;
 import com.vmware.admiral.test.ui.pages.containers.create.BasicTab;
 import com.vmware.admiral.test.ui.pages.containers.create.BasicTabLocators;
@@ -46,6 +48,10 @@ import com.vmware.admiral.test.ui.pages.containers.create.TcpHealthConfigSubTab;
 import com.vmware.admiral.test.ui.pages.containers.create.TcpHealthConfigSubTabLocators;
 
 public class ContainersPageLibrary extends ResourcePageLibrary {
+
+    public ContainersPageLibrary(By[] iframeLocators) {
+        super(iframeLocators);
+    }
 
     private ContainersPage containersPage;
     private ContainerStatsPage containerStatsPage;

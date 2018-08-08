@@ -13,9 +13,15 @@ package com.vmware.admiral.test.ui.pages.volumes;
 
 import java.util.Objects;
 
+import org.openqa.selenium.By;
+
 import com.vmware.admiral.test.ui.pages.common.ResourcePageLibrary;
 
 public class VolumesPageLibrary extends ResourcePageLibrary {
+
+    public VolumesPageLibrary(By[] iframeLocators) {
+        super(iframeLocators);
+    }
 
     private VolumesPage volumesPage;
     private CreateVolumePage createVolumePage;

@@ -48,6 +48,13 @@ public class SourceRegistriesTab
         pageActions().click(locators().registryEditButtonByAddress(address));
     }
 
+    public void deleteRegistryByAddress(String address) {
+        LOG.info(String.format("Deleting registry with address [%s]", address));
+        pageActions().hover(locators().registryRowByAddress(address));
+        pageActions().click(locators().registryDeleteButtonByAddress(address));
+        pageActions().click(locators().registryDeleteConfirmationButtonByAddress(address));
+    }
+
     @Override
     public void waitToLoad() {
         validate().validateIsCurrentPage();

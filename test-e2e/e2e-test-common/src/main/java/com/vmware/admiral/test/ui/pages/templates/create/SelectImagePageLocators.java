@@ -18,8 +18,12 @@ import com.vmware.admiral.test.ui.pages.common.CardPageLocators;
 public class SelectImagePageLocators extends CardPageLocators {
 
     private final By PAGE_TITLE = By.cssSelector(
-            ".new-container-definition-view.closable-view.slide-and-fade-transition .title");
+            ".new-container-definition-view.closable-view.slide-and-fade-transition > .title");
+    private final By CHILD_PAGE_SLIDE = By
+            .cssSelector(".new-container-definition-view.closable-view.slide-and-fade-transition");
     private final String SELECT_IMAGE_BUTTON_XPATH = "//button[contains(concat(' ', @class, ' '), ' select-image-btn ')]";
+    private final By IMAGE_SEARCH_INPUT = By
+            .cssSelector(".select-image-view .form-control[name='searchGridInput']");
 
     public By pageTitle() {
         return PAGE_TITLE;
@@ -27,6 +31,15 @@ public class SelectImagePageLocators extends CardPageLocators {
 
     public By selectImageButtonByName(String name) {
         return By.xpath(cardByExactTitleXpath(name) + SELECT_IMAGE_BUTTON_XPATH);
+    }
+
+    public By searchImageInput() {
+        return IMAGE_SEARCH_INPUT;
+    }
+
+    @Override
+    public By childPageSlide() {
+        return CHILD_PAGE_SLIDE;
     }
 
 }

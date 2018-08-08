@@ -11,14 +11,16 @@
 
 package com.vmware.admiral.vic.test.ui.scenarios;
 
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
-
-import com.vmware.admiral.vic.test.ui.BaseSuite;
 
 @SuiteClasses({
         RBACAndItemsProjectAwareness.class,
         CreateAndProvisionVotingApp.class,
-        PushImageToHarborAndProvision.class })
-public class ScenariosSuite extends BaseSuite {
+        PushImageToHarborAndProvision.class,
+        GlobalAndProjectRegistries.class })
+@RunWith(Suite.class)
+public class ScenariosSuite {
 
 }

@@ -19,6 +19,10 @@ import com.vmware.admiral.test.ui.pages.common.PageLibrary;
 
 public class ConfigurationPageLibrary extends PageLibrary {
 
+    public ConfigurationPageLibrary(By[] iframeLocators) {
+        super(iframeLocators);
+    }
+
     private ConfigurationPage configurationPage;
 
     public ConfigurationPage configurationPage() {
@@ -29,11 +33,6 @@ public class ConfigurationPageLibrary extends PageLibrary {
             configurationPage = new ConfigurationPage(getFrameLocators(), validator, locators);
         }
         return configurationPage;
-    }
-
-    @Override
-    protected By[] getFrameLocators() {
-        return null;
     }
 
 }

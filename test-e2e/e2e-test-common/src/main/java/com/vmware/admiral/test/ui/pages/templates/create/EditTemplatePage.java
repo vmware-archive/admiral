@@ -11,7 +11,14 @@
 
 package com.vmware.admiral.test.ui.pages.templates.create;
 
+import static com.codeborne.selenide.Selenide.Wait;
+
+import java.util.concurrent.TimeUnit;
+
+import com.codeborne.selenide.Condition;
+
 import org.openqa.selenium.By;
+import org.openqa.selenium.TimeoutException;
 
 import com.vmware.admiral.test.ui.pages.common.BasicPage;
 
@@ -26,7 +33,17 @@ public class EditTemplatePage
     public void navigateBack() {
         LOG.info("Navigating back...");
         waitForElementToSettle(locators().backButton());
-        pageActions().click(locators().backButton());
+        int retriesCount = 3;
+        do {
+            try {
+                pageActions().click(locators().backButton());
+                Wait().withTimeout(5, TimeUnit.SECONDS)
+                        .until(d -> element(locators().backButton()).is(Condition.hidden));
+                return;
+            } catch (TimeoutException e) {
+                retriesCount--;
+            }
+        } while (retriesCount > 0);
     }
 
     public void connectContainerToVolume(String containerName, String volumeName) {
@@ -55,27 +72,53 @@ public class EditTemplatePage
 
     public void clickAddContainerButton() {
         LOG.info("Adding a container");
-        int canvasWidth = getCanvasWidth();
-        int canvasHeight = getCanvasHeight();
-        pageActions().hover(locators().newItemMenu());
-        pageActions().click(locators().newItemMenu(), canvasWidth / 2, canvasHeight / 4);
+        validateCanvasClickAction(() -> {
+            int canvasWidth = getCanvasWidth();
+            int canvasHeight = getCanvasHeight();
+            pageActions().hover(locators().pageTitle());
+            pageActions().hover(locators().newItemMenu());
+            pageActions().click(locators().newItemMenu(), canvasWidth / 2, canvasHeight / 4);
+        }, locators().selectImagePageTitle());
     }
 
     public void clickAddVolumeButton() {
         LOG.info("Adding a volume");
-        int canvasWidth = getCanvasWidth();
-        int canvasHeight = getCanvasHeight();
-        pageActions().hover(locators().newItemMenu());
-        pageActions().click(locators().newItemMenu(), canvasWidth / 4, (canvasHeight / 4) * 3);
+        validateCanvasClickAction(() -> {
+            int canvasWidth = getCanvasWidth();
+            int canvasHeight = getCanvasHeight();
+            pageActions().hover(locators().pageTitle());
+            pageActions().hover(locators().newItemMenu());
+            pageActions().click(locators().newItemMenu(), canvasWidth / 4, (canvasHeight / 4) * 3);
+        }, locators().addVolumePageTitle());
     }
 
     public void clickAddNetworkButton() {
         LOG.info("Adding a network");
-        int canvasWidth = getCanvasWidth();
-        int canvasHeight = getCanvasHeight();
-        pageActions().hover(locators().newItemMenu());
-        pageActions().click(locators().newItemMenu(), (canvasWidth / 4) * 3,
-                (canvasHeight / 4) * 3);
+        validateCanvasClickAction(() -> {
+            int canvasWidth = getCanvasWidth();
+            int canvasHeight = getCanvasHeight();
+            pageActions().hover(locators().pageTitle());
+            pageActions().hover(locators().newItemMenu());
+            pageActions().click(locators().newItemMenu(), (canvasWidth / 4) * 3,
+                    (canvasHeight / 4) * 3);
+        }, locators().addNetworkPageTitle());
+    }
+
+    private void validateCanvasClickAction(Runnable clickAction, By expectedElement) {
+        int retries = 3;
+        do {
+            clickAction.run();
+            try {
+                Wait().withTimeout(3, TimeUnit.SECONDS)
+                        .until(d -> element(expectedElement).is(Condition.visible));
+                return;
+            } catch (TimeoutException e) {
+                LOG.info("Clicking on the canvas failed, retrying...");
+                retries--;
+            }
+        } while (retries > 0);
+        throw new RuntimeException(
+                "Could not click on the desired add component button from the canvas");
     }
 
     private int getCanvasWidth() {

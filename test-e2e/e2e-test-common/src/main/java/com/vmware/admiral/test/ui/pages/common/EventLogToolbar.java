@@ -23,4 +23,9 @@ public class EventLogToolbar extends BasicClass<EventLogToolbarLocators> {
         return pageActions().getText(locators().lastLogMessage());
     }
 
+    public void clickEventLogButton() {
+        waitForElementToSettle(locators().eventLogButton());
+        pageActions().click(locators().eventLogButton());
+    }
+
 }

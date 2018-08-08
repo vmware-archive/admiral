@@ -15,6 +15,8 @@ import static com.codeborne.selenide.Selenide.Wait;
 
 import java.util.concurrent.TimeUnit;
 
+import com.codeborne.selenide.Condition;
+
 import org.openqa.selenium.By;
 import org.openqa.selenium.TimeoutException;
 
@@ -25,52 +27,46 @@ public abstract class ResourcePage<V extends PageValidator<L>, L extends Resourc
         super(iFrameLocators, validator, pageLocators);
     }
 
-    protected void deleteItemByTitlePrefix(String namePrefix) {
-        By card = locators().cardByTitlePrefix(namePrefix);
-        waitForElementToSettle(card);
-        // Sometimes clicking the trash icon fails so we retry
-        int retries = 3;
-        while (retries >= 0) {
-            pageActions().hover(card);
-            pageActions().click(locators().cardDeleteButtonByTitlePrefix(namePrefix));
-            try {
-                By confirmButton = locators().cardDeleteConfirmButtonByTitlePrefix(namePrefix);
-                Wait().withTimeout(5, TimeUnit.SECONDS)
-                        .until(d -> pageActions().isDisplayed(confirmButton));
-                pageActions().click(confirmButton);
-                break;
-            } catch (TimeoutException e) {
-                if (--retries == 0) {
-                    throw new RuntimeException(String.format(
-                            "Could not delete item with with title prefix: [%s]",
-                            namePrefix));
-                }
-            }
-        }
+    protected void deleteItemByExactTitle(String title) {
+        deleteItem(locators().cardByExactTitle(title),
+                locators().cardDeleteButtonByExactTitle(title),
+                locators().cardDeleteConfirmationHolderByExactTitle(title),
+                locators().cardDeleteConfirmButtonByExactTitle(title), String.format(
+                        "Could not delete item with with title: [%s]",
+                        title));
     }
 
-    protected void deleteItemByExactTitle(String title) {
-        By card = locators().cardByExactTitle(title);
+    protected void deleteItemByTitlePrefix(String titlePrefix) {
+        deleteItem(locators().cardByTitlePrefix(titlePrefix),
+                locators().cardDeleteButtonByTitlePrefix(titlePrefix),
+                locators().cardDeleteConfirmationHolderByTitlePrefix(titlePrefix),
+                locators().cardDeleteConfirmButtonByTitlePrefix(titlePrefix), String.format(
+                        "Could not delete item with with title prefix: [%s]",
+                        titlePrefix));
+    }
+
+    private void deleteItem(By card, By cardDeleteButton, By deleteConfirmHolder, By deleteConfirm,
+            String errorMessage) {
         waitForElementToSettle(card);
         // Sometimes clicking the trash icon fails so we retry
         int retries = 3;
-        while (retries >= 0) {
+        do {
             pageActions().hover(card);
-            pageActions().click(locators().cardDeleteButtonByExactTitle(title));
+            pageActions().click(cardDeleteButton);
             try {
-                By confirmButton = locators().cardDeleteConfirmButtonByExactTitle(title);
                 Wait().withTimeout(5, TimeUnit.SECONDS)
-                        .until(d -> pageActions().isDisplayed(confirmButton));
-                pageActions().click(confirmButton);
-                break;
+                        .until(d -> !element(deleteConfirmHolder).has(Condition.cssClass("hide")));
+                pageActions().click(deleteConfirm);
+                return;
             } catch (TimeoutException e) {
-                if (--retries == 0) {
-                    throw new RuntimeException(String.format(
-                            "Could not delete item with with title: [%s]",
-                            title));
-                }
+                retries--;
             }
-        }
+        } while (retries > 0);
+        throw new RuntimeException(errorMessage);
+    }
+
+    public void expandRequestsToolbar() {
+        pageActions().click(locators().requestsButton());
     }
 
     @Override

@@ -30,10 +30,6 @@
             <artifactId>e2e-test-common</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <dependency>
-            <groupId>com.vmware.admiral</groupId>
-            <artifactId>admiral-common</artifactId>
-            <version>${project.version}</version>
-        </dependency>
     </dependencies>
+
 </project>

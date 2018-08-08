@@ -19,10 +19,17 @@ public class AddNetworkPageLocators extends CreateNetworkPageLocators {
 
     private final By PAGE_TITLE = By
             .cssSelector(".edit-network.closable-view.slide-and-fade-transition .title");
+    private final By CHILD_PAGE_SLIDE = By
+            .cssSelector(".edit-network.closable-view.slide-and-fade-transition");
 
     @Override
     public By pageTitle() {
         return PAGE_TITLE;
+    }
+
+    @Override
+    public By childPageSlide() {
+        return CHILD_PAGE_SLIDE;
     }
 
 }

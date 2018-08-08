@@ -18,9 +18,11 @@ public class ResourcePageLocators extends CardPageLocators {
     private final By PAGE_TITLE = By.cssSelector(".list-holder .title>span:first-child");
     private final By ITEMS_COUNT_FIELD = By.cssSelector(".title .total-items");
     private final By CREATE_RESOURCE_BUTTON = By.cssSelector(".btn.btn-link.create-resource-btn");
-    private final By REFRESH_BUTTON = By.cssSelector(".fa.fa-refresh");
+    private final By REFRESH_BUTTON = By.cssSelector(".refresh-button .fa.fa-refresh");
     private final By CHILD_PAGE_SLIDE = By
             .cssSelector(".closable-view.slide-and-fade-transition");
+    private final By REQUESTS_BUTTON = By
+            .cssSelector(".toolbar .toolbar-item:nth-child(1) .btn");
 
     public By pageTitle() {
         return PAGE_TITLE;
@@ -41,6 +43,10 @@ public class ResourcePageLocators extends CardPageLocators {
     @Override
     public By childPageSlide() {
         return CHILD_PAGE_SLIDE;
+    }
+
+    public By requestsButton() {
+        return REQUESTS_BUTTON;
     }
 
 }

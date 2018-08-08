@@ -21,6 +21,7 @@ public class SourceRegistriesTabLocators extends GlobalRegistriesPageLocators {
     private final String ROW_RELATIVE_ENABLE_BUTTON_XPATH = "//td[@class='table-actions']//a[@title='Enable']";
     private final String ROW_RELATIVE_EDIT_BUTTON_XPATH = "//a[contains(concat(' ', @class, ' '), ' item-edit ')]";
     private final String ROW_RELATIVE_DELETE_BUTTON_XPATH = "//a[contains(concat(' ', @class, ' '), ' item-delete ')]";
+    private final String ROW_RELATIVE_DELETE_CONFIRM_BUTTON_XPATH = "//a[@data-cmd='inline-delete-confirm']";
 
     public By addRegistryButton() {
         return ADD_REGISTRY_BUTTON;
@@ -48,6 +49,11 @@ public class SourceRegistriesTabLocators extends GlobalRegistriesPageLocators {
     public By registryDeleteButtonByAddress(String address) {
         return By.xpath(String.format(ROW_SELECTOR_BY_ADDRESS_BASE_XPATH, address)
                 + ROW_RELATIVE_DELETE_BUTTON_XPATH);
+    }
+
+    public By registryDeleteConfirmationButtonByAddress(String address) {
+        return By.xpath(String.format(ROW_SELECTOR_BY_ADDRESS_BASE_XPATH, address)
+                + ROW_RELATIVE_DELETE_CONFIRM_BUTTON_XPATH);
     }
 
 }

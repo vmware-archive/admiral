@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.test.ui.pages.clusters;
 
+import com.codeborne.selenide.Condition;
+
 import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.common.ModalDialog;
@@ -26,7 +28,9 @@ public class DeleteClusterModalDialog
 
     @Override
     public void submit() {
+        LOG.info("Submitting");
         pageActions().click(locators().submitButton());
+        element(locators().modalBackdrop()).should(Condition.disappear);
     }
 
     @Override

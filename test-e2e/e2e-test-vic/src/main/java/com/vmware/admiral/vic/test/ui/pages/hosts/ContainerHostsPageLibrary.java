@@ -13,15 +13,21 @@ package com.vmware.admiral.vic.test.ui.pages.hosts;
 
 import java.util.Objects;
 
-import com.vmware.admiral.test.ui.pages.clusters.AddClusterModalDialogLocators;
+import org.openqa.selenium.By;
+
+import com.vmware.admiral.test.ui.pages.clusters.AddClusterPageLocators;
 import com.vmware.admiral.test.ui.pages.clusters.ClustersPageLibrary;
 import com.vmware.admiral.test.ui.pages.clusters.ClustersPageLocators;
 import com.vmware.admiral.test.ui.pages.clusters.DeleteClusterModalDialogLocators;
 
 public class ContainerHostsPageLibrary extends ClustersPageLibrary {
 
+    public ContainerHostsPageLibrary(By[] iframeLocators) {
+        super(iframeLocators);
+    }
+
     private ContainerHostsPage containerHosts;
-    private AddContainerHostModalDialog addHostModalDialog;
+    private AddContainerHostPage addHostPage;
     private DeleteContainerHostModalDialog deleteHostModalDialog;
 
     @Override
@@ -36,15 +42,15 @@ public class ContainerHostsPageLibrary extends ClustersPageLibrary {
     }
 
     @Override
-    public AddContainerHostModalDialog addHostDialog() {
-        if (Objects.isNull(addHostModalDialog)) {
-            AddClusterModalDialogLocators locators = new AddClusterModalDialogLocators();
-            AddContainerHostModalDialogValidator validator = new AddContainerHostModalDialogValidator(
+    public AddContainerHostPage addClusterPage() {
+        if (Objects.isNull(addHostPage)) {
+            AddClusterPageLocators locators = new AddClusterPageLocators();
+            AddContainerHostPageValidator validator = new AddContainerHostPageValidator(
                     getFrameLocators(), locators);
-            addHostModalDialog = new AddContainerHostModalDialog(getFrameLocators(), validator,
+            addHostPage = new AddContainerHostPage(getFrameLocators(), validator,
                     locators);
         }
-        return addHostModalDialog;
+        return addHostPage;
     }
 
     @Override

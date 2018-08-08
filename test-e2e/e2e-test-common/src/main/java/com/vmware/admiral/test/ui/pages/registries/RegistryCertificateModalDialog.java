@@ -15,8 +15,7 @@ import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.common.ModalDialog;
 
-public class RegistryCertificateModalDialog
-        extends
+public class RegistryCertificateModalDialog extends
         ModalDialog<RegistryCertificateModalDialogValidator, RegistryCertificateModalDialogLocators> {
 
     public RegistryCertificateModalDialog(By[] iFrameLocators,

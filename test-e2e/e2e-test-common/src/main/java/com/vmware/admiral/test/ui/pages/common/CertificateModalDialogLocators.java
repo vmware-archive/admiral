@@ -15,30 +15,11 @@ import org.openqa.selenium.By;
 
 public class CertificateModalDialogLocators extends ModalDialogLocators {
 
-    private By ACCEPTC_CERTIFICATE_BITTON = By.cssSelector("verify-certificate .btn.btn-primary");
-    private By CANCEL_CERTIFICATE_BITTON = By
-            .cssSelector("verify-certificate .btn.btn-outline:not(.show-certificate-btn)");
-    private By MODAL_TITLE = By.cssSelector(".modal-content .modal-content .modal-title");
-    private By MODAL_CONTENT = By.cssSelector(".modal-content .modal-content");
+    private By ACCEPTC_CERTIFICATE_BITTON = By.cssSelector(".modal-content .save-certificate-btn");
 
     @Override
     public By submitButton() {
         return ACCEPTC_CERTIFICATE_BITTON;
-    }
-
-    @Override
-    public By cancelButton() {
-        return CANCEL_CERTIFICATE_BITTON;
-    }
-
-    @Override
-    public By modalTitle() {
-        return MODAL_TITLE;
-    }
-
-    @Override
-    public By modalContent() {
-        return MODAL_CONTENT;
     }
 
 }

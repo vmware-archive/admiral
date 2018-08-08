@@ -19,7 +19,8 @@ import com.vmware.admiral.test.ui.pages.common.PageValidator;
 
 public class GlobalRegistriesPageValidator extends PageValidator<GlobalRegistriesPageLocators> {
 
-    public GlobalRegistriesPageValidator(By[] iFrameLocators, GlobalRegistriesPageLocators pageLocators) {
+    public GlobalRegistriesPageValidator(By[] iFrameLocators,
+            GlobalRegistriesPageLocators pageLocators) {
         super(iFrameLocators, pageLocators);
     }
 

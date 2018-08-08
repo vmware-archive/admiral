@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.test.ui.pages.projects;
 
+import com.codeborne.selenide.Condition;
+
 import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.common.ModalDialog;
@@ -22,6 +24,12 @@ public class DeleteProjectModalDialog
             DeleteProjectModalDialogValidator validator,
             DeleteProjectModalDialogLocators pageLocators) {
         super(iFrameLocators, validator, pageLocators);
+    }
+
+    @Override
+    public void submit() {
+        super.submit();
+        element(locators().modalContent()).should(Condition.disappear);
     }
 
 }

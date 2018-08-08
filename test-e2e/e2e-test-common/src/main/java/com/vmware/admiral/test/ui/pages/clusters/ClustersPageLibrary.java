@@ -22,8 +22,12 @@ import com.vmware.admiral.test.ui.pages.common.PageLibrary;
 
 public class ClustersPageLibrary extends PageLibrary {
 
+    public ClustersPageLibrary(By[] iframeLocators) {
+        super(iframeLocators);
+    }
+
     private ClustersPage clustersPage;
-    private AddClusterModalDialog addHostDialog;
+    private AddClusterPage addClusterPage;
     private DeleteClusterModalDialog deleteHostDialog;
     private CertificateModalDialog certificateModalDialog;
     private ClusterDetailsPage clusterDetailsPage;
@@ -39,14 +43,14 @@ public class ClustersPageLibrary extends PageLibrary {
         return clustersPage;
     }
 
-    public AddClusterModalDialog addHostDialog() {
-        if (Objects.isNull(addHostDialog)) {
-            AddClusterModalDialogLocators locators = new AddClusterModalDialogLocators();
-            AddClusterModalDialogValidator validator = new AddClusterModalDialogValidator(
+    public AddClusterPage addClusterPage() {
+        if (Objects.isNull(addClusterPage)) {
+            AddClusterPageLocators locators = new AddClusterPageLocators();
+            AddClusterPageValidator validator = new AddClusterPageValidator(
                     getFrameLocators(), locators);
-            addHostDialog = new AddClusterModalDialog(getFrameLocators(), validator, locators);
+            addClusterPage = new AddClusterPage(getFrameLocators(), validator, locators);
         }
-        return addHostDialog;
+        return addClusterPage;
     }
 
     public DeleteClusterModalDialog deleteHostDialog() {
@@ -89,11 +93,6 @@ public class ClustersPageLibrary extends PageLibrary {
             resourcesTab = new ResourcesTab(getFrameLocators(), validator, locators);
         }
         return resourcesTab;
-    }
-
-    @Override
-    protected By[] getFrameLocators() {
-        return null;
     }
 
 }

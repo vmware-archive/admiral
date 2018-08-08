@@ -15,7 +15,8 @@ import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.common.BasicPage;
 
-public class GlobalRegistriesPage extends BasicPage<GlobalRegistriesPageValidator, GlobalRegistriesPageLocators> {
+public class GlobalRegistriesPage
+        extends BasicPage<GlobalRegistriesPageValidator, GlobalRegistriesPageLocators> {
 
     public GlobalRegistriesPage(By[] iFrameLocators, GlobalRegistriesPageValidator validator,
             GlobalRegistriesPageLocators pageLocators) {

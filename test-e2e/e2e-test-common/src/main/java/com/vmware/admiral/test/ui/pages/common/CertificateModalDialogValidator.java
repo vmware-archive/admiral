@@ -15,8 +15,7 @@ import com.codeborne.selenide.Condition;
 
 import org.openqa.selenium.By;
 
-public class CertificateModalDialogValidator
-        extends PageValidator<CertificateModalDialogLocators> {
+public class CertificateModalDialogValidator extends PageValidator<CertificateModalDialogLocators> {
 
     public CertificateModalDialogValidator(By[] iFrameLocators,
             CertificateModalDialogLocators pageLocators) {

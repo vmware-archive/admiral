@@ -18,10 +18,17 @@ import com.vmware.admiral.test.ui.pages.containers.create.CreateContainerPageLoc
 public class AddContainerPageLocators extends CreateContainerPageLocators {
 
     private final By PAGE_TITLE = By.cssSelector(
-            ".new-container-definition-view.closable-view.slide-and-fade-transition .title");
+            ".new-container-definition-view.closable-view.slide-and-fade-transition > .title");
+    private final By CHILD_PAGE_SLIDE = By
+            .cssSelector(".new-container-definition-view.closable-view.slide-and-fade-transition");
 
     @Override
     public By pageTitle() {
         return PAGE_TITLE;
+    }
+
+    @Override
+    public By childPageSlide() {
+        return CHILD_PAGE_SLIDE;
     }
 }

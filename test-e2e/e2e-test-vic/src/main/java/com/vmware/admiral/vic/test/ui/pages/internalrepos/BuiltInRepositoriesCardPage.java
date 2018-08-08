@@ -11,7 +11,14 @@
 
 package com.vmware.admiral.vic.test.ui.pages.internalrepos;
 
+import static com.codeborne.selenide.Selenide.Wait;
+
+import java.util.concurrent.TimeUnit;
+
+import com.codeborne.selenide.Condition;
+
 import org.openqa.selenium.By;
+import org.openqa.selenium.TimeoutException;
 
 public class BuiltInRepositoriesCardPage extends
         BuiltInRepositoriesCommonPage<BuiltInRepositoriesCardPageValidator, BuiltInRepositoriesCardPageLocators> {
@@ -36,8 +43,21 @@ public class BuiltInRepositoriesCardPage extends
 
     public void deleteRepository(String name) {
         LOG.info(String.format("Deleting repository [%s]", name));
-        pageActions().click(locators().cardContextMenuByName(name));
-        pageActions().click(locators().cardDeleteButtonByName(name));
+        int retries = 3;
+        do {
+            pageActions().click(locators().cardContextMenuByName(name));
+            try {
+                Wait().withTimeout(5, TimeUnit.SECONDS)
+                        .until(d -> element(locators().cardDeleteButtonByName(name))
+                                .is(Condition.visible));
+                pageActions().click(locators().cardDeleteButtonByName(name));
+                return;
+            } catch (TimeoutException e) {
+                retries--;
+            }
+        } while (retries > 0);
+        throw new RuntimeException(String
+                .format("Cloud not delete repository [%s], the dropdown menu did not show", name));
     }
 
 }

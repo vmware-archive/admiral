@@ -15,15 +15,13 @@ import static com.codeborne.selenide.Selenide.Wait;
 
 import java.util.concurrent.TimeUnit;
 
-import com.codeborne.selenide.Condition;
-
 import org.openqa.selenium.By;
 import org.openqa.selenium.TimeoutException;
 
 public class RequestsToolbar extends BasicClass<RequestsToolbarLocators> {
 
-    public RequestsToolbar(By[] iframeLocators, RequestsToolbarLocators pageLocators) {
-        super(iframeLocators, pageLocators);
+    public RequestsToolbar(By[] iFrameLocators, RequestsToolbarLocators pageLocators) {
+        super(iFrameLocators, pageLocators);
     }
 
     private final int WAIT_AFTER_REFRESH_ON_FAIL_SECONDS = 5;
@@ -45,11 +43,7 @@ public class RequestsToolbar extends BasicClass<RequestsToolbarLocators> {
         LOG.info(
                 String.format("Waiting for [%d] seconds for the last request to %s", timeout,
                         expectedState));
-        // Wait a little in case the request is not yet visible
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-        }
+        waitForSpinner();
         try {
             if (shouldSucceed) {
                 waitForLastToSucceed(timeout);
@@ -83,7 +77,6 @@ public class RequestsToolbar extends BasicClass<RequestsToolbarLocators> {
         Wait().withTimeout(timeout, TimeUnit.SECONDS)
                 .pollingEvery(1, TimeUnit.SECONDS)
                 .until(f -> {
-                    expandRequestsIfNotExpanded();
                     String text = pageActions().getText(locators().lastRequestProgress());
                     if (text.contains("FAILED")) {
                         throw new AssertionError(
@@ -98,7 +91,6 @@ public class RequestsToolbar extends BasicClass<RequestsToolbarLocators> {
         Wait().withTimeout(timeout, TimeUnit.SECONDS)
                 .pollingEvery(1, TimeUnit.SECONDS)
                 .until(f -> {
-                    expandRequestsIfNotExpanded();
                     String text = pageActions().getText(locators().lastRequestProgress());
                     if (text.contains("FINISHED") && text.contains("COMPLETED")) {
                         throw new AssertionError(
@@ -109,13 +101,9 @@ public class RequestsToolbar extends BasicClass<RequestsToolbarLocators> {
                 });
     }
 
-    private void expandRequestsIfNotExpanded() {
-        if (!element(locators().lastRequestProgress()).is(Condition.visible)) {
-            waitForElementToSettle(locators().requestsButton());
-            if (!element(locators().lastRequestProgress()).is(Condition.visible)) {
-                pageActions().click(locators().requestsButton());
-            }
-        }
+    public void clickRequestsButton() {
+        waitForElementToSettle(locators().requestsButton());
+        pageActions().click(locators().requestsButton());
     }
 
 }

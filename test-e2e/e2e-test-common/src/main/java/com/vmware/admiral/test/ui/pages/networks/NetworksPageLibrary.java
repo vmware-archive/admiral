@@ -13,9 +13,15 @@ package com.vmware.admiral.test.ui.pages.networks;
 
 import java.util.Objects;
 
+import org.openqa.selenium.By;
+
 import com.vmware.admiral.test.ui.pages.common.ResourcePageLibrary;
 
 public class NetworksPageLibrary extends ResourcePageLibrary {
+
+    public NetworksPageLibrary(By[] iframeLocators) {
+        super(iframeLocators);
+    }
 
     private NetworksPage networksPage;
     private CreateNetworkPage createNetwork;

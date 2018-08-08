@@ -12,10 +12,8 @@
 package com.vmware.admiral.test.ui.pages;
 
 import static com.codeborne.selenide.Selenide.Wait;
-import static com.codeborne.selenide.Selenide.open;
 
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 import com.codeborne.selenide.Condition;
 
@@ -39,8 +37,8 @@ import com.vmware.admiral.test.ui.pages.main.MainPageLocators;
 import com.vmware.admiral.test.ui.pages.main.MainPageValidator;
 import com.vmware.admiral.test.ui.pages.networks.NetworksPageLibrary;
 import com.vmware.admiral.test.ui.pages.projects.ProjectsPageLibrary;
-import com.vmware.admiral.test.ui.pages.publicrepos.RepositoriesPageLibrary;
 import com.vmware.admiral.test.ui.pages.registries.GlobalRegistriesPageLibrary;
+import com.vmware.admiral.test.ui.pages.repositories.RepositoriesPageLibrary;
 import com.vmware.admiral.test.ui.pages.templates.TemplatesPageLibrary;
 import com.vmware.admiral.test.ui.pages.volumes.VolumesPageLibrary;
 
@@ -60,6 +58,8 @@ public abstract class CommonWebClient<L extends CommonWebClientLocators> extends
         loginTimeout = seconds;
     }
 
+    private final By[] ADMIRAL_INNER_FRAME_LOCATORS = new By[] { By.cssSelector("iframe") };
+
     private MainPage main;
     private HomeTab home;
     private AdministrationTab administration;
@@ -76,17 +76,13 @@ public abstract class CommonWebClient<L extends CommonWebClientLocators> extends
     private TemplatesPageLibrary templates;
     private VolumesPageLibrary volumes;
 
-    public void logIn(String url, String username, String password) {
-        Objects.requireNonNull(url, "url parameter cannot be null");
-        Objects.requireNonNull(username, "username parameter cannot be null");
-        open(url);
-        LOG.info(String.format("Logging in to [%s] with user: [%s]", url, username));
+    protected void logInCommon(String username, String password) {
         pageActions().sendKeys(username, locators().loginUsernameInput());
         pageActions().sendKeys(password, locators().loginPasswordInput());
         pageActions().click(locators().loginSubmitButton());
         Wait().until(ExpectedConditions.or(
                 d -> {
-                    return element(locators().spinner()).is(Condition.visible);
+                    return didLoginSucceed();
                 },
                 d -> {
                     if (pageActions().isDisplayed(locators().errorResponse())) {
@@ -94,10 +90,10 @@ public abstract class CommonWebClient<L extends CommonWebClientLocators> extends
                     }
                     return false;
                 }));
-        Wait().withTimeout(getLoginTimeoutSeconds(), TimeUnit.SECONDS)
-                .until(d -> element(locators().spinner()).is(Condition.hidden));
         waitForLandingPage();
     }
+
+    protected abstract boolean didLoginSucceed();
 
     protected abstract void waitForLandingPage();
 
@@ -117,8 +113,8 @@ public abstract class CommonWebClient<L extends CommonWebClientLocators> extends
     public HomeTab home() {
         if (Objects.isNull(home)) {
             HomeTabLocators locators = new HomeTabLocators();
-            HomeTabValidator validator = new HomeTabValidator(null, locators);
-            home = new HomeTab(null, validator, locators);
+            HomeTabValidator validator = new HomeTabValidator(admiralTopFrameLocators(), locators);
+            home = new HomeTab(admiralTopFrameLocators(), validator, locators);
         }
         return home;
     }
@@ -126,87 +122,97 @@ public abstract class CommonWebClient<L extends CommonWebClientLocators> extends
     public AdministrationTab administration() {
         if (Objects.isNull(administration)) {
             AdministrationTabLocators locators = new AdministrationTabLocators();
-            AdministrationTabValidator validator = new AdministrationTabValidator(null, locators);
-            administration = new AdministrationTab(null, validator, locators);
+            AdministrationTabValidator validator = new AdministrationTabValidator(
+                    admiralTopFrameLocators(), locators);
+            administration = new AdministrationTab(admiralTopFrameLocators(), validator, locators);
         }
         return administration;
     }
 
     public ApplicationsPageLibrary applications() {
         if (Objects.isNull(applications)) {
-            applications = new ApplicationsPageLibrary();
+            applications = new ApplicationsPageLibrary(admiralInnerFrameLocators());
         }
         return applications;
     }
 
     public ContainersPageLibrary containers() {
         if (Objects.isNull(containers)) {
-            containers = new ContainersPageLibrary();
+            containers = new ContainersPageLibrary(admiralInnerFrameLocators());
         }
         return containers;
     }
 
     public NetworksPageLibrary networks() {
         if (Objects.isNull(networks)) {
-            networks = new NetworksPageLibrary();
+            networks = new NetworksPageLibrary(admiralInnerFrameLocators());
         }
         return networks;
     }
 
     public ClustersPageLibrary clusters() {
         if (Objects.isNull(clusters)) {
-            clusters = new ClustersPageLibrary();
+            clusters = new ClustersPageLibrary(admiralTopFrameLocators());
         }
         return clusters;
     }
 
     public IdentityManagementPageLibrary identity() {
         if (Objects.isNull(identity)) {
-            identity = new IdentityManagementPageLibrary();
+            identity = new IdentityManagementPageLibrary(admiralTopFrameLocators(),
+                    admiralInnerFrameLocators());
         }
         return identity;
     }
 
     public LogsPageLibrary logs() {
         if (Objects.isNull(logs)) {
-            logs = new LogsPageLibrary();
+            logs = new LogsPageLibrary(admiralTopFrameLocators());
         }
         return logs;
     }
 
     public ProjectsPageLibrary projects() {
         if (Objects.isNull(projects)) {
-            projects = new ProjectsPageLibrary();
+            projects = new ProjectsPageLibrary(admiralTopFrameLocators());
         }
         return projects;
     }
 
     public RepositoriesPageLibrary repositories() {
         if (Objects.isNull(publicRepositories)) {
-            publicRepositories = new RepositoriesPageLibrary();
+            publicRepositories = new RepositoriesPageLibrary(admiralInnerFrameLocators());
         }
         return publicRepositories;
     }
 
     public GlobalRegistriesPageLibrary registries() {
         if (Objects.isNull(registries)) {
-            registries = new GlobalRegistriesPageLibrary();
+            registries = new GlobalRegistriesPageLibrary(admiralInnerFrameLocators());
         }
         return registries;
     }
 
     public TemplatesPageLibrary templates() {
         if (Objects.isNull(templates)) {
-            templates = new TemplatesPageLibrary();
+            templates = new TemplatesPageLibrary(admiralInnerFrameLocators());
         }
         return templates;
     }
 
     public VolumesPageLibrary volumes() {
         if (Objects.isNull(volumes)) {
-            volumes = new VolumesPageLibrary();
+            volumes = new VolumesPageLibrary(admiralInnerFrameLocators());
         }
         return volumes;
+    }
+
+    protected By[] admiralTopFrameLocators() {
+        return null;
+    }
+
+    protected By[] admiralInnerFrameLocators() {
+        return ADMIRAL_INNER_FRAME_LOCATORS;
     }
 
 }

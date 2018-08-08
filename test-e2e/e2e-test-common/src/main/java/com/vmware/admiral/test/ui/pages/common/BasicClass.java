@@ -22,6 +22,7 @@ import java.util.logging.Logger;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.StaleElementReferenceException;
+import org.openqa.selenium.TimeoutException;
 
 public abstract class BasicClass<L extends PageLocators> {
 
@@ -65,26 +66,30 @@ public abstract class BasicClass<L extends PageLocators> {
     protected void waitForElementToSettle(By locator) {
         final int TOTAL_COUNT = 3;
         AtomicInteger count = new AtomicInteger(TOTAL_COUNT);
-        Wait().pollingEvery(100, TimeUnit.MILLISECONDS)
-                .withTimeout(10, TimeUnit.SECONDS)
-                .ignoring(StaleElementReferenceException.class)
-                .until((f) -> {
-                    Point initialPos = pageActions().getCoordinates(locator);
-                    Dimension initialSize = pageActions().getDimension(locator);
-                    try {
-                        Thread.sleep(WAIT_FOR_MOVING_ELEMENT_CHECK_INTERVAL_MILISECONDS);
-                    } catch (InterruptedException e) {
-                    }
-                    if (pageActions().getCoordinates(locator).equals(initialPos)
-                            && pageActions().getDimension(locator).equals(initialSize)) {
-                        if (count.decrementAndGet() == 0) {
-                            return true;
+        try {
+            Wait().pollingEvery(100, TimeUnit.MILLISECONDS)
+                    .withTimeout(30, TimeUnit.SECONDS)
+                    .ignoring(StaleElementReferenceException.class)
+                    .until((f) -> {
+                        Point initialPos = pageActions().getCoordinates(locator);
+                        Dimension initialSize = pageActions().getDimension(locator);
+                        try {
+                            Thread.sleep(WAIT_FOR_MOVING_ELEMENT_CHECK_INTERVAL_MILISECONDS);
+                        } catch (InterruptedException e) {
                         }
-                    } else {
-                        count.set(TOTAL_COUNT);
-                    }
-                    return false;
-                });
+                        if (pageActions().getCoordinates(locator).equals(initialPos)
+                                && pageActions().getDimension(locator).equals(initialSize)) {
+                            if (count.decrementAndGet() == 0) {
+                                return true;
+                            }
+                        } else {
+                            count.set(TOTAL_COUNT);
+                        }
+                        return false;
+                    });
+        } catch (TimeoutException e) {
+            // TODO Sometimes times out on coordinates or size check, investigate
+        }
     }
 
 }

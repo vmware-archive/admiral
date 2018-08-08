@@ -19,6 +19,10 @@ import com.vmware.admiral.test.ui.pages.common.PageLibrary;
 
 public class GlobalRegistriesPageLibrary extends PageLibrary {
 
+    public GlobalRegistriesPageLibrary(By[] iframeLocators) {
+        super(iframeLocators);
+    }
+
     private GlobalRegistriesPage globalRegistriesPage;
     private SourceRegistriesTab sourceRegistriesTab;
     private RegistryCertificateModalDialog registryCertificateModalDialog;
@@ -70,10 +74,5 @@ public class GlobalRegistriesPageLibrary extends PageLibrary {
                     locators);
         }
         return addGlobalRegistryForm;
-    }
-
-    @Override
-    protected By[] getFrameLocators() {
-        return new By[] { By.cssSelector("iframe") };
     }
 }

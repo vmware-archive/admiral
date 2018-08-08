@@ -17,9 +17,15 @@ public class EventLogToolbarLocators extends PageLocators {
 
     private final By LAST_LOG_MESSAGE = By
             .cssSelector(".eventlog-list #all .eventlog-item:first-child .description");
+    private final By EVENT_LOG_BUTTON = By
+            .cssSelector(".right-context-panel .toolbar-item:nth-child(2) .toolbar-item-title");
 
     public By lastLogMessage() {
         return LAST_LOG_MESSAGE;
+    }
+
+    public By eventLogButton() {
+        return EVENT_LOG_BUTTON;
     }
 
 }

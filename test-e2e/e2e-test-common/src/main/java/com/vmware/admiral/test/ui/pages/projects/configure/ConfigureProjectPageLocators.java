@@ -18,17 +18,11 @@ import com.vmware.admiral.test.ui.pages.common.PageLocators;
 public class ConfigureProjectPageLocators extends PageLocators {
 
     private static final By PAGE_TITLE = By.cssSelector(".projects-details-header-title");
-    private final By BACK_BUTTON = By
-            .cssSelector(".full-screen.with-back-button>back-button .close-button");
     private final By MEMBERS_BUTTON = By.cssSelector("#membersTab");
     private final By PROJECT_REGISTRIES_BUTTON = By.cssSelector("#registryTab");
 
     public By pageTitle() {
         return PAGE_TITLE;
-    }
-
-    public By backButton() {
-        return BACK_BUTTON;
     }
 
     public By membersTabButton() {

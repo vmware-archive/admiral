@@ -26,7 +26,15 @@ public class ProjectRegistriesTabValidator extends PageValidator<ProjectRegistri
 
     @Override
     public void validateIsCurrentPage() {
-        element(locators().membersTabButton()).shouldHave(Condition.cssClass("active"));
+        element(locators().projectRegistriesTabButton()).shouldHave(Condition.cssClass("active"));
+    }
+
+    public void validateRegistryExistsWithName(String name) {
+        element(locators().registryRowByName(name)).should(Condition.exist);
+    }
+
+    public void validateRegistryDoesNotExistWithName(String name) {
+        element(locators().registryRowByName(name)).shouldNot(Condition.exist);
     }
 
 }

@@ -19,11 +19,15 @@ import com.vmware.admiral.test.ui.pages.common.PageLibrary;
 
 public class BuiltInRepositoriesPageLibrary extends PageLibrary {
 
+    public BuiltInRepositoriesPageLibrary(By[] iframeLocators) {
+        super(iframeLocators);
+    }
+
     private BuiltInRepositoriesListPage builtInRepositoriesListPage;
     private DeleteRepositoryModalDialog deleteRepositoryModalDialog;
     private BuiltInRepositoriesCardPage builtInRepositoriesCardPage;
 
-    public BuiltInRepositoriesListPage internalRepositoriesListPage() {
+    public BuiltInRepositoriesListPage builtInRepositoriesListPage() {
         if (Objects.isNull(builtInRepositoriesListPage)) {
             BuiltInRepositoriesListPageLocators locators = new BuiltInRepositoriesListPageLocators();
             BuiltInRepositoriesListPageValidator validator = new BuiltInRepositoriesListPageValidator(
@@ -35,7 +39,7 @@ public class BuiltInRepositoriesPageLibrary extends PageLibrary {
         return builtInRepositoriesListPage;
     }
 
-    public BuiltInRepositoriesCardPage internalRepositoriesCardPage() {
+    public BuiltInRepositoriesCardPage builtInRepositoriesCardPage() {
         if (Objects.isNull(builtInRepositoriesCardPage)) {
             BuiltInRepositoriesCardPageLocators locators = new BuiltInRepositoriesCardPageLocators();
             BuiltInRepositoriesCardPageValidator validator = new BuiltInRepositoriesCardPageValidator(
@@ -56,11 +60,6 @@ public class BuiltInRepositoriesPageLibrary extends PageLibrary {
                     validator, locators);
         }
         return deleteRepositoryModalDialog;
-    }
-
-    @Override
-    protected By[] getFrameLocators() {
-        return null;
     }
 
 }

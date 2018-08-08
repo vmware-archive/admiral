@@ -11,7 +11,6 @@
 
 package com.vmware.admiral.test.ui.pages.common;
 
-import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.Wait;
 import static com.codeborne.selenide.Selenide.actions;
 
@@ -36,52 +35,52 @@ public class PageActions extends Action {
 
     public void click(By locator) {
         switchToFrame();
-        $(locator).click();
+        getElement(locator).click();
     }
 
     public void click(By locator, int xOffsetFromTopLeft, int yOffsetFromTopLeft) {
         switchToFrame();
-        $(locator).click(xOffsetFromTopLeft, yOffsetFromTopLeft);
+        getElement(locator).click(xOffsetFromTopLeft, yOffsetFromTopLeft);
     }
 
     public void hover(By locator) {
         switchToFrame();
-        $(locator).hover();
+        getElement(locator).hover();
     }
 
     public boolean isDisplayed(By locator) {
         switchToFrame();
-        return $(locator).isDisplayed();
+        return getElement(locator).isDisplayed();
     }
 
     public String getAttribute(String attribute, By locator) {
         switchToFrame();
-        return $(locator).getAttribute(attribute);
+        return getElement(locator).getAttribute(attribute);
     }
 
     public String getText(By locator) {
         switchToFrame();
-        return $(locator).getText();
+        return getElement(locator).getText();
     }
 
     public void sendKeys(String keys, By locator) {
         switchToFrame();
-        $(locator).sendKeys(keys);
+        getElement(locator).sendKeys(keys);
     }
 
     public void clear(By locator) {
         switchToFrame();
-        $(locator).clear();
+        getElement(locator).clear();
     }
 
     public void selectOptionByValue(String value, By locator) {
         switchToFrame();
-        $(locator).selectOptionByValue(value);
+        getElement(locator).selectOptionByValue(value);
     }
 
     public void selectOptionByText(String text, By locator) {
         switchToFrame();
-        $(locator).selectOption(text);
+        getElement(locator).selectOption(text);
     }
 
     public int getElementCount(By locator) {
@@ -91,17 +90,17 @@ public class PageActions extends Action {
 
     public void uploadFile(File file, By locator) {
         switchToFrame();
-        $(locator).uploadFile(file);
+        getElement(locator).uploadFile(file);
     }
 
     public void setCheckbox(boolean checked, By locator) {
         switchToFrame();
-        $(locator).setSelected(checked);
+        getElement(locator).setSelected(checked);
     }
 
     public void dragAndDrop(By from, By to) {
         switchToFrame();
-        actions().dragAndDrop($(from), $(to)).build().perform();
+        actions().dragAndDrop(getElement(from), getElement(to)).build().perform();
     }
 
     public File donwload(String localFilePath, By locator) {
@@ -115,7 +114,7 @@ public class PageActions extends Action {
         }
         File remoteFile;
         try {
-            remoteFile = $(locator).download();
+            remoteFile = getElement(locator).download();
             File localFile = new File(localFilePath);
             Files.move(remoteFile, localFile);
             return localFile;
@@ -129,7 +128,7 @@ public class PageActions extends Action {
 
     public Point getCoordinates(By locator) {
         switchToFrame();
-        org.openqa.selenium.Point seleniumPoint = $(locator).getCoordinates().inViewPort();
+        org.openqa.selenium.Point seleniumPoint = getElement(locator).getLocation();
         Point point = new Point();
         point.setLocation(seleniumPoint.getX(), seleniumPoint.getY());
         return point;
@@ -137,7 +136,7 @@ public class PageActions extends Action {
 
     public Dimension getDimension(By locator) {
         switchToFrame();
-        org.openqa.selenium.Dimension seleniumDimension = $(locator).getSize();
+        org.openqa.selenium.Dimension seleniumDimension = getElement(locator).getSize();
         Dimension dimension = new Dimension();
         dimension.setSize(seleniumDimension.getWidth(), seleniumDimension.getHeight());
         return dimension;
@@ -147,11 +146,11 @@ public class PageActions extends Action {
         switchToFrame();
         try {
             Wait().withTimeout(3, TimeUnit.SECONDS)
-                    .until(d -> $(element).is(Condition.visible));
+                    .until(d -> getElement(element).is(Condition.visible));
         } catch (TimeoutException e) {
             // element is not going to appear
         }
-        Wait().until(d -> $(element).is(Condition.hidden));
+        Wait().until(d -> getElement(element).is(Condition.hidden));
     }
 
 }

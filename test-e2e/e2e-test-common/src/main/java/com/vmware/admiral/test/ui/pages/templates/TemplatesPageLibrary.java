@@ -13,6 +13,8 @@ package com.vmware.admiral.test.ui.pages.templates;
 
 import java.util.Objects;
 
+import org.openqa.selenium.By;
+
 import com.vmware.admiral.test.ui.pages.common.ResourcePageLibrary;
 import com.vmware.admiral.test.ui.pages.containers.create.BasicTab;
 import com.vmware.admiral.test.ui.pages.containers.create.BasicTabLocators;
@@ -61,6 +63,10 @@ import com.vmware.admiral.test.ui.pages.templates.create.SelectImagePageLocators
 import com.vmware.admiral.test.ui.pages.templates.create.SelectImagePageValidator;
 
 public class TemplatesPageLibrary extends ResourcePageLibrary {
+
+    public TemplatesPageLibrary(By[] iframeLocators) {
+        super(iframeLocators);
+    }
 
     private TemplatesPage templatesPage;
     private EditTemplatePage editTemplatePage;

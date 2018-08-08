@@ -19,6 +19,10 @@ import com.vmware.admiral.test.ui.pages.common.PageLibrary;
 
 public class LogsPageLibrary extends PageLibrary {
 
+    public LogsPageLibrary(By[] iframeLocators) {
+        super(iframeLocators);
+    }
+
     private LogsPage logsPage;
 
     public LogsPage logsPage() {
@@ -28,11 +32,6 @@ public class LogsPageLibrary extends PageLibrary {
             logsPage = new LogsPage(getFrameLocators(), validator, locators);
         }
         return logsPage;
-    }
-
-    @Override
-    protected By[] getFrameLocators() {
-        return null;
     }
 
 }

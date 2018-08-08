@@ -11,10 +11,24 @@
 
 package com.vmware.admiral.test.ui.pages.common;
 
+import java.util.Objects;
+
 import org.openqa.selenium.By;
 
 public abstract class PageLibrary {
 
-    protected abstract By[] getFrameLocators();
+    private final By[] IFRAME_LOCATORS;
+
+    public PageLibrary(By[] iframeLocators) {
+        if (Objects.nonNull(iframeLocators)) {
+            this.IFRAME_LOCATORS = iframeLocators.clone();
+        } else {
+            this.IFRAME_LOCATORS = null;
+        }
+    }
+
+    protected By[] getFrameLocators() {
+        return IFRAME_LOCATORS;
+    }
 
 }

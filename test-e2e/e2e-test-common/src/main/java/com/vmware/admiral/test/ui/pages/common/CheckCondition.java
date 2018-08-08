@@ -11,7 +11,6 @@
 
 package com.vmware.admiral.test.ui.pages.common;
 
-import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.switchTo;
 
 import com.codeborne.selenide.Condition;
@@ -29,7 +28,7 @@ public class CheckCondition extends Action {
 
     public CheckCondition should(Condition... conditions) {
         switchToFrame();
-        $(selector).should(conditions);
+        getElement(selector).should(conditions);
         switchTo().defaultContent();
         return this;
     }
@@ -44,7 +43,7 @@ public class CheckCondition extends Action {
 
     public CheckCondition shouldNot(Condition... conditions) {
         switchToFrame();
-        $(selector).shouldNot(conditions);
+        getElement(selector).shouldNot(conditions);
         switchTo().defaultContent();
         return this;
     }
@@ -59,14 +58,14 @@ public class CheckCondition extends Action {
 
     public boolean has(Condition condition) {
         switchToFrame();
-        boolean has = $(selector).has(condition);
+        boolean has = getElement(selector).has(condition);
         switchTo().defaultContent();
         return has;
     }
 
     public boolean is(Condition condition) {
         switchToFrame();
-        boolean is = $(selector).is(condition);
+        boolean is = getElement(selector).is(condition);
         switchTo().defaultContent();
         return is;
     }

@@ -21,6 +21,11 @@
         <relativePath>../pom-e2e.xml</relativePath>
     </parent>
 
+    <properties>
+        <!-- Avoid platform dependent build warnings: set encoding to UTF8 -->
+        <junit.version>4.12</junit.version>
+    </properties>
+
     <artifactId>test-e2e</artifactId>
     <packaging>pom</packaging>
 
@@ -33,6 +38,7 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>

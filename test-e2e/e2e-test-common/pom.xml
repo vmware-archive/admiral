@@ -26,9 +26,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.vmware.admiral</groupId>
-            <artifactId>admiral-common</artifactId>
-            <version>${project.version}</version>
+            <groupId>com.vmware</groupId>
+            <artifactId>vijava</artifactId>
+            <version>5.1</version>
         </dependency>
     </dependencies>
 

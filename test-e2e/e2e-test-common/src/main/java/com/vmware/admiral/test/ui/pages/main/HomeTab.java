@@ -53,9 +53,14 @@ public class HomeTab extends BasicPage<HomeTabValidator, HomeTabLocators> {
         pageActions().click(locators().templatesButton());
     }
 
-    public void clickPublicRepositoriesButton() {
+    public void clickRepositoriesButton() {
         LOG.info("Navigating to Public Repositories page");
         pageActions().click(locators().publicRepositoriesButton());
+    }
+
+    public void clickClustersButton() {
+        LOG.info("Navigating to Clusters page");
+        pageActions().click(locators().clustersButton());
     }
 
     public void switchToProject(String projectName) {

@@ -28,6 +28,10 @@ public class SourceRegistriesTabValidator extends PageValidator<SourceRegistries
         element(locators().registryRowByAddress(address)).should(Condition.exist);
     }
 
+    public void validateRegistryDoesNotExistWithAddress(String address) {
+        element(locators().registryRowByAddress(address)).shouldNot(Condition.exist);
+    }
+
     @Override
     public void validateIsCurrentPage() {
         element(locators().sourceRegistriesButton()).shouldHave(Condition.cssClass("active"));

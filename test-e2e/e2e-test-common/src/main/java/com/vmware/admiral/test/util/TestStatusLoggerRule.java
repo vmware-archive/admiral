@@ -13,10 +13,9 @@ package com.vmware.admiral.test.util;
 
 import java.util.logging.Logger;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
-
-import com.vmware.xenon.common.Utils;
 
 public class TestStatusLoggerRule extends TestWatcher {
 
@@ -32,7 +31,7 @@ public class TestStatusLoggerRule extends TestWatcher {
     protected void failed(Throwable e, Description description) {
         LOG.warning(getMessage(
                 "Failure: " + description.getClassName() + "::" + description.getMethodName()));
-        LOG.warning(Utils.toString(e));
+        LOG.severe(ExceptionUtils.getStackTrace(e));
     }
 
     @Override

@@ -26,18 +26,13 @@ public class ConfigureProjectPage
     }
 
     public void clickMembersTabButton() {
-        LOG.info("Clicking on members tab");
+        LOG.info("Clicking on Members tab");
         pageActions().click(locators().membersTabButton());
     }
 
     public void clickProjectRegistriesTabButton() {
-        LOG.info("Clicking on members tab");
+        LOG.info("Clicking on Project Registries tab");
         pageActions().click(locators().projectRegistriesTabButton());
-    }
-
-    public void navigateBack() {
-        LOG.info("Navigating back...");
-        pageActions().click(locators().backButton());
     }
 
     @Override

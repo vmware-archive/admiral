@@ -28,13 +28,32 @@ import com.vmware.admiral.test.ui.pages.projects.configure.members.AddMemberModa
 import com.vmware.admiral.test.ui.pages.projects.configure.members.MembersTab;
 import com.vmware.admiral.test.ui.pages.projects.configure.members.MembersTabLocators;
 import com.vmware.admiral.test.ui.pages.projects.configure.members.MembersTabValidator;
+import com.vmware.admiral.test.ui.pages.projects.configure.registries.AddProjectRegistryForm;
+import com.vmware.admiral.test.ui.pages.projects.configure.registries.AddProjectRegistryFormLocators;
+import com.vmware.admiral.test.ui.pages.projects.configure.registries.AddProjectRegistryFormValidator;
+import com.vmware.admiral.test.ui.pages.projects.configure.registries.DeleteRegistryModalDialog;
+import com.vmware.admiral.test.ui.pages.projects.configure.registries.DeleteRegistryModalDialogLocators;
+import com.vmware.admiral.test.ui.pages.projects.configure.registries.DeleteRegistryModalDialogValidator;
+import com.vmware.admiral.test.ui.pages.projects.configure.registries.EditProjectRegistryForm;
+import com.vmware.admiral.test.ui.pages.projects.configure.registries.EditProjectRegistryFormValidator;
+import com.vmware.admiral.test.ui.pages.projects.configure.registries.ProjectRegistriesTab;
+import com.vmware.admiral.test.ui.pages.projects.configure.registries.ProjectRegistriesTabLocators;
+import com.vmware.admiral.test.ui.pages.projects.configure.registries.ProjectRegistriesTabValidator;
 
 public class ProjectsPageLibrary extends PageLibrary {
+
+    public ProjectsPageLibrary(By[] iframeLocators) {
+        super(iframeLocators);
+    }
 
     private ProjectsPage projectsPage;
     private AddProjectModalDialog addProjectDialog;
     private DeleteProjectModalDialog deleteProjectDialog;
     private CertificateModalDialog certificateModalDialog;
+    private ProjectRegistriesTab registriesTab;
+    private AddProjectRegistryForm addRegistryForm;
+    private EditProjectRegistryForm editRegistryForm;
+    private DeleteRegistryModalDialog deleteRegistryDialog;
 
     private ConfigureProjectPage configureProject;
     private MembersTab membersTab;
@@ -90,6 +109,16 @@ public class ProjectsPageLibrary extends PageLibrary {
         return membersTab;
     }
 
+    public ProjectRegistriesTab projectRegistriesTab() {
+        if (Objects.isNull(registriesTab)) {
+            ProjectRegistriesTabLocators locators = new ProjectRegistriesTabLocators();
+            ProjectRegistriesTabValidator validator = new ProjectRegistriesTabValidator(
+                    getFrameLocators(), locators);
+            registriesTab = new ProjectRegistriesTab(getFrameLocators(), validator, locators);
+        }
+        return registriesTab;
+    }
+
     public AddMemberModalDialog addMemberDialog() {
         if (Objects.isNull(addMemberDialog)) {
             AddMemberModalDialogLocators locators = new AddMemberModalDialogLocators();
@@ -111,9 +140,35 @@ public class ProjectsPageLibrary extends PageLibrary {
         return certificateModalDialog;
     }
 
-    @Override
-    protected By[] getFrameLocators() {
-        return null;
+    public AddProjectRegistryForm addRegistryForm() {
+        if (Objects.isNull(addRegistryForm)) {
+            AddProjectRegistryFormLocators locators = new AddProjectRegistryFormLocators();
+            AddProjectRegistryFormValidator validator = new AddProjectRegistryFormValidator(
+                    getFrameLocators(), locators);
+            addRegistryForm = new AddProjectRegistryForm(getFrameLocators(), validator, locators);
+        }
+        return addRegistryForm;
+    }
+
+    public EditProjectRegistryForm editRegistryForm() {
+        if (Objects.isNull(editRegistryForm)) {
+            AddProjectRegistryFormLocators locators = new AddProjectRegistryFormLocators();
+            EditProjectRegistryFormValidator validator = new EditProjectRegistryFormValidator(
+                    getFrameLocators(), locators);
+            editRegistryForm = new EditProjectRegistryForm(getFrameLocators(), validator, locators);
+        }
+        return editRegistryForm;
+    }
+
+    public DeleteRegistryModalDialog deleteRegistryDialog() {
+        if (Objects.isNull(deleteRegistryDialog)) {
+            DeleteRegistryModalDialogLocators locators = new DeleteRegistryModalDialogLocators();
+            DeleteRegistryModalDialogValidator validator = new DeleteRegistryModalDialogValidator(
+                    getFrameLocators(), locators);
+            deleteRegistryDialog = new DeleteRegistryModalDialog(getFrameLocators(), validator,
+                    locators);
+        }
+        return deleteRegistryDialog;
     }
 
 }

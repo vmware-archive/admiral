@@ -19,7 +19,16 @@ import com.vmware.admiral.test.ui.pages.common.PageLibrary;
 
 public class IdentityManagementPageLibrary extends PageLibrary {
 
-    private By[] credentialsFrameLocators;
+    private final By[] INNER_FRAME_LOCATORS;
+
+    public IdentityManagementPageLibrary(By[] iframeLocators, By[] innerFrameLocators) {
+        super(iframeLocators);
+        if (Objects.nonNull(iframeLocators)) {
+            this.INNER_FRAME_LOCATORS = innerFrameLocators.clone();
+        } else {
+            this.INNER_FRAME_LOCATORS = null;
+        }
+    }
 
     private IdentityManagementPage identityPage;
     private UsersAndGroupsTab usersTab;
@@ -46,8 +55,8 @@ public class IdentityManagementPageLibrary extends PageLibrary {
         if (Objects.isNull(credentialsTab)) {
             CredentialsTabLocators locators = new CredentialsTabLocators();
             CredentialsTabValidator validator = new CredentialsTabValidator(
-                    credentialsFrameLocators(), locators);
-            credentialsTab = new CredentialsTab(credentialsFrameLocators(), validator, locators);
+                    INNER_FRAME_LOCATORS, locators);
+            credentialsTab = new CredentialsTab(INNER_FRAME_LOCATORS, validator, locators);
         }
         return credentialsTab;
     }
@@ -55,7 +64,7 @@ public class IdentityManagementPageLibrary extends PageLibrary {
     public NewCredentialForm newCredentialForm() {
         if (Objects.isNull(newCredentialForm)) {
             NewCredentialFormLocators locators = new NewCredentialFormLocators();
-            newCredentialForm = new NewCredentialForm(credentialsFrameLocators(), locators);
+            newCredentialForm = new NewCredentialForm(INNER_FRAME_LOCATORS, locators);
         }
         return newCredentialForm;
     }
@@ -63,8 +72,7 @@ public class IdentityManagementPageLibrary extends PageLibrary {
     public UsernameCredentialForm usernameCredentialForm() {
         if (Objects.isNull(usernameCredentialForm)) {
             UsernameCredentialFormLocators locators = new UsernameCredentialFormLocators();
-            usernameCredentialForm = new UsernameCredentialForm(credentialsFrameLocators(),
-                    locators);
+            usernameCredentialForm = new UsernameCredentialForm(INNER_FRAME_LOCATORS, locators);
         }
         return usernameCredentialForm;
     }
@@ -72,7 +80,7 @@ public class IdentityManagementPageLibrary extends PageLibrary {
     public CertificateCredentialForm certificateCredentialForm() {
         if (Objects.isNull(certificateCredentialForm)) {
             CertificateCredentialFormLocators locators = new CertificateCredentialFormLocators();
-            certificateCredentialForm = new CertificateCredentialForm(credentialsFrameLocators(),
+            certificateCredentialForm = new CertificateCredentialForm(INNER_FRAME_LOCATORS,
                     locators);
         }
         return certificateCredentialForm;
@@ -91,9 +99,9 @@ public class IdentityManagementPageLibrary extends PageLibrary {
     public CertificatesTab certificatesTab() {
         if (Objects.isNull(certificatesTab)) {
             CertificatesTabLocators locators = new CertificatesTabLocators();
-            CertificatesTabValidator validator = new CertificatesTabValidator(
-                    certificatesFrameLocators(), locators);
-            certificatesTab = new CertificatesTab(certificatesFrameLocators(), validator, locators);
+            CertificatesTabValidator validator = new CertificatesTabValidator(INNER_FRAME_LOCATORS,
+                    locators);
+            certificatesTab = new CertificatesTab(INNER_FRAME_LOCATORS, validator, locators);
         }
         return certificatesTab;
     }
@@ -101,30 +109,9 @@ public class IdentityManagementPageLibrary extends PageLibrary {
     public AddCertificateForm addCertificateForm() {
         if (Objects.isNull(addCertificateForm)) {
             AddCertificateFormLocators locators = new AddCertificateFormLocators();
-            addCertificateForm = new AddCertificateForm(certificatesFrameLocators(), locators);
+            addCertificateForm = new AddCertificateForm(INNER_FRAME_LOCATORS, locators);
         }
         return addCertificateForm;
-    }
-
-    @Override
-    protected By[] getFrameLocators() {
-        return null;
-    }
-
-    protected By[] credentialsFrameLocators() {
-        if (Objects.isNull(credentialsFrameLocators)) {
-            credentialsFrameLocators = new By[] {
-                    By.cssSelector("iframe[src^='/ogui/index-no-navigation.html']") };
-        }
-        return credentialsFrameLocators;
-    }
-
-    protected By[] certificatesFrameLocators() {
-        if (Objects.isNull(credentialsFrameLocators)) {
-            credentialsFrameLocators = new By[] {
-                    By.cssSelector("iframe[src^='/ogui/index-no-navigation.html']") };
-        }
-        return credentialsFrameLocators;
     }
 
 }

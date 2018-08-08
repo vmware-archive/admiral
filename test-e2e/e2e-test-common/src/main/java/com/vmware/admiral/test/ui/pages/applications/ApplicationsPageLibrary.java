@@ -13,11 +13,17 @@ package com.vmware.admiral.test.ui.pages.applications;
 
 import java.util.Objects;
 
+import org.openqa.selenium.By;
+
 import com.vmware.admiral.test.ui.pages.common.ResourcePageLibrary;
 import com.vmware.admiral.test.ui.pages.templates.create.CreateTemplatePageLocators;
 import com.vmware.admiral.test.ui.pages.templates.create.CreateTemplatePageValidator;
 
 public class ApplicationsPageLibrary extends ResourcePageLibrary {
+
+    public ApplicationsPageLibrary(By[] iframeLocators) {
+        super(iframeLocators);
+    }
 
     private ApplicationsPage applicationsPage;
     private CreateApplicationPage createApplicationPage;

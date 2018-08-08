@@ -14,22 +14,31 @@ package com.vmware.admiral.vic.test.ui.scenarios;
 import java.util.Arrays;
 import java.util.List;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 
-import com.vmware.admiral.test.ui.pages.clusters.AddClusterModalDialog;
-import com.vmware.admiral.test.ui.pages.clusters.AddClusterModalDialog.HostType;
+import com.vmware.admiral.test.ui.commons.HostCommons;
+import com.vmware.admiral.test.ui.commons.ProjectCommons;
 import com.vmware.admiral.test.ui.pages.containers.ContainersPage;
 import com.vmware.admiral.test.ui.pages.containers.create.BasicTab;
 import com.vmware.admiral.test.ui.pages.networks.CreateNetworkPage;
 import com.vmware.admiral.test.ui.pages.networks.NetworksPage;
-import com.vmware.admiral.test.ui.pages.projects.AddProjectModalDialog;
 import com.vmware.admiral.test.ui.pages.projects.configure.members.AddMemberModalDialog;
 import com.vmware.admiral.test.ui.pages.projects.configure.members.AddMemberModalDialog.ProjectMemberRole;
 import com.vmware.admiral.test.ui.pages.templates.TemplatesPage;
 import com.vmware.admiral.test.ui.pages.templates.create.CreateTemplatePage;
 import com.vmware.admiral.test.ui.pages.volumes.CreateVolumePage;
 import com.vmware.admiral.test.ui.pages.volumes.VolumesPage;
-import com.vmware.admiral.vic.test.ui.BaseTest;
+import com.vmware.admiral.test.util.AdmiralEventLogRule;
+import com.vmware.admiral.test.util.HostType;
+import com.vmware.admiral.test.util.ScreenshotRule;
+import com.vmware.admiral.test.util.TestStatusLoggerRule;
+import com.vmware.admiral.test.util.host.ContainerHostProviderRule;
+import com.vmware.admiral.vic.test.VicTestProperties;
+import com.vmware.admiral.vic.test.ui.BaseTestVic;
+import com.vmware.admiral.vic.test.util.VICAuthTokenGetter;
 
 /**
  * This test creates two projects, adds users with different roles to the projects, adds non-default
@@ -59,10 +68,10 @@ import com.vmware.admiral.vic.test.ui.BaseTest;
  * 7. Login with default system administrator, remove all the projects and unassign the cloud admin
  * role
  */
-public class RBACAndItemsProjectAwareness extends BaseTest {
+public class RBACAndItemsProjectAwareness extends BaseTestVic {
 
-    private final String PROJECT_NAME_ADMIRAL = "admiral";
-    private final String PROJECT_NAME_QE = "quality-engineering";
+    private static final String FIRST_PROJECT_NAME = "rbac-project-one";
+    private static final String SECOND_PROJECT_NAME = "rbac-project-two";
     private final String PROJECT_NAME_DEFAULT = "default-project";
 
     private final String HOST_SUFFIX = "_host";
@@ -85,10 +94,20 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
 
     private final int REQUEST_TIMEOUT = 120;
 
-    private final List<String> ALL_PROJECTS = Arrays.asList(new String[] {
-            PROJECT_NAME_ADMIRAL,
-            PROJECT_NAME_QE
-    });
+    public ContainerHostProviderRule firstProjectProvider = new ContainerHostProviderRule(true, false);
+
+    public ContainerHostProviderRule secondProjectProvider = new ContainerHostProviderRule(true, false);
+
+    @Rule
+    public TestRule rules = RuleChain
+            .outerRule(new TestStatusLoggerRule())
+            .around(firstProjectProvider)
+            .around(secondProjectProvider)
+            .around(new AdmiralEventLogRule(getVicTarget(), getProjectNames(),
+                    () -> VICAuthTokenGetter.getVICAuthToken(getVicTarget(),
+                            VicTestProperties.defaultAdminUsername(),
+                            VicTestProperties.defaultAdminPassword())))
+            .around(new ScreenshotRule());
 
     @Test
     public void testRbacAndItemProjectAwareness() {
@@ -98,7 +117,11 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
         logOut();
 
         loginAs(CLOUD_ADMIN_JASON);
-        createProjects();
+        main().clickAdministrationTabButton();
+        ProjectCommons.addProject(getClient(), FIRST_PROJECT_NAME, "This is the first project.",
+                false);
+        ProjectCommons.addProject(getClient(), SECOND_PROJECT_NAME, "This is the second project.",
+                false);
         configureProjects();
         validateWithCloudAdminRoleView();
         addContentToProjects();
@@ -130,32 +153,32 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
     private void validateWithCloudAdminRoleView() {
         main().clickHomeTabButton();
         home().validate().validateAllHomeTabsAreAvailable();
-        home().validate().validateProjectsAreAvailable(ALL_PROJECTS);
+        home().validate().validateProjectsAreAvailable(getProjectNames());
         home().validate().validateProjectIsAvailable(PROJECT_NAME_DEFAULT);
 
         main().clickAdministrationTabButton();
         administration().validate().validateAllAdministrationTabsAreAvailable();
         projects().projectsPage().validate()
                 .validateProjectsAreVisible(
-                        PROJECT_NAME_ADMIRAL,
-                        PROJECT_NAME_QE,
+                        FIRST_PROJECT_NAME,
+                        SECOND_PROJECT_NAME,
                         PROJECT_NAME_DEFAULT);
     }
 
     private void validateWithProjectAdminRole() {
 
         home().validate().validateAllHomeTabsAreAvailable();
-        home().validate().validateProjectsAreAvailable(ALL_PROJECTS);
+        home().validate().validateProjectsAreAvailable(getProjectNames());
         home().validate().validateProjectIsNotAvailable(PROJECT_NAME_DEFAULT);
-        home().switchToProject(PROJECT_NAME_ADMIRAL);
+        home().switchToProject(FIRST_PROJECT_NAME);
         home().clickContainerHostsButton();
         clusters().clustersPage().waitToLoad();
         clusters().clustersPage().validate().validateAddHostButtonNotAvailable();
         clusters().clustersPage().validate()
-                .validateHostActionsNotAvailable(PROJECT_NAME_ADMIRAL + HOST_SUFFIX);
+                .validateHostActionsNotAvailable(FIRST_PROJECT_NAME + HOST_SUFFIX);
 
         String resourcePrefix = USER_SHAUNA.split("@")[0];
-        createAndDeleteResourcesInAdmiralProject(resourcePrefix);
+        createAndDeleteResourcesInFirstProject(resourcePrefix);
 
         main().clickAdministrationTabButton();
         projects().projectsPage().waitToLoad();
@@ -166,16 +189,16 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
         administration().validate().validateConfigurationNotAvailable();
 
         projects().projectsPage().validate().validateProjectsAreVisible(
-                PROJECT_NAME_ADMIRAL,
-                PROJECT_NAME_QE);
+                FIRST_PROJECT_NAME,
+                SECOND_PROJECT_NAME);
         projects().projectsPage().validate().validateProjectIsNotVisible(PROJECT_NAME_DEFAULT);
         projects().projectsPage().validate().validateAddProjectButtonNotAvailable();
         projects().projectsPage().validate()
-                .validateProjectDeleteButtonNotAvailable(PROJECT_NAME_ADMIRAL);
+                .validateProjectDeleteButtonNotAvailable(FIRST_PROJECT_NAME);
     }
 
-    private void createAndDeleteResourcesInAdmiralProject(String resourcePrefix) {
-        home().switchToProject(PROJECT_NAME_ADMIRAL);
+    private void createAndDeleteResourcesInFirstProject(String resourcePrefix) {
+        home().switchToProject(FIRST_PROJECT_NAME);
         home().clickContainersButton();
         ContainersPage containersPage = containers().containersPage();
         containersPage.clickCreateContainer();
@@ -201,7 +224,7 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
         CreateNetworkPage createNetwork = networks().createNetworkPage();
         createNetwork.waitToLoad();
         createNetwork.setName(resourcePrefix + NETWORK_SUFFIX);
-        createNetwork.addHostByName(PROJECT_NAME_ADMIRAL + HOST_SUFFIX);
+        createNetwork.addHostByName(FIRST_PROJECT_NAME + HOST_SUFFIX);
         createNetwork.submit();
         networks().requests().waitForLastRequestToSucceed(REQUEST_TIMEOUT);
         networksPage.refresh();
@@ -217,7 +240,7 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
         volumesPage.clickCreateVolumeButton();
         CreateVolumePage createVolume = volumes().createVolumePage();
         createVolume.setName(resourcePrefix + VOLUME_SUFFIX);
-        createVolume.selectHostByName(PROJECT_NAME_ADMIRAL + HOST_SUFFIX);
+        createVolume.selectHostByName(FIRST_PROJECT_NAME + HOST_SUFFIX);
         createVolume.submit();
         volumes().requests().waitForLastRequestToSucceed(REQUEST_TIMEOUT);
         volumesPage.refresh();
@@ -234,20 +257,30 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
         createTemplate.waitToLoad();
         createTemplate.setName(resourcePrefix + TEMPLATE_SUFFIX);
         createTemplate.clickProceedButton();
-        templates().editTemplatePage().waitToLoad();
-        templates().editTemplatePage().clickAddContainerButton();
-        templates().selectImagePage().waitToLoad();
-        templates().selectImagePage().selectImageByName(IMAGE_NAME);
-        templates().basicTab().setName(resourcePrefix + CONTAINER_SUFFIX);
-        templates().addContainerPage().submit();
 
         templates().editTemplatePage().waitToLoad();
         templates().editTemplatePage().clickAddVolumeButton();
         templates().addVolumePage().setName(resourcePrefix + VOLUME_SUFFIX);
         templates().addVolumePage().submit();
-        templates().editTemplatePage().connectContainerToVolume(resourcePrefix +
-                CONTAINER_SUFFIX,
-                resourcePrefix + VOLUME_SUFFIX);
+
+        templates().editTemplatePage().waitToLoad();
+        templates().editTemplatePage().clickAddNetworkButton();
+        templates().addNetworkPage().setName(resourcePrefix + NETWORK_SUFFIX);
+        templates().addNetworkPage().submit();
+
+        templates().editTemplatePage().waitToLoad();
+        templates().editTemplatePage().clickAddContainerButton();
+        templates().selectImagePage().waitToLoad();
+        templates().selectImagePage().selectImageByName(IMAGE_NAME);
+        templates().basicTab().setName(resourcePrefix + CONTAINER_SUFFIX);
+        templates().addContainerPage().clickNetworkTab();
+        templates().networkTab().linkNetwork(resourcePrefix + NETWORK_SUFFIX, null, null, null);
+        templates().addContainerPage().clickStorageTab();
+        templates().storageTab().addVolume(resourcePrefix + VOLUME_SUFFIX, "/container/path",
+                false);
+        templates().addContainerPage().submit();
+
+        templates().editTemplatePage().waitToLoad();
         templates().editTemplatePage().navigateBack();
         templates().templatesPage().waitToLoad();
         templates().templatesPage().provisionTemplate(resourcePrefix + TEMPLATE_SUFFIX);
@@ -255,7 +288,8 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
         home().clickApplicationsButton();
         applications().applicationsPage().deleteApplication(resourcePrefix + TEMPLATE_SUFFIX);
         applications().requests().waitForLastRequestToSucceed(REQUEST_TIMEOUT);
-        applications().applicationsPage().refresh();
+        home().clickContainersButton();
+        home().clickApplicationsButton();
         applications().applicationsPage().validate()
                 .validateApplicationDoesNotExistWithName(resourcePrefix + TEMPLATE_SUFFIX);
         home().clickTemplatesButton();
@@ -268,16 +302,16 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
 
     private void validateWithProjectMember() {
         home().validate().validateAllHomeTabsAreAvailable();
-        home().validate().validateProjectsAreAvailable(ALL_PROJECTS);
+        home().validate().validateProjectsAreAvailable(getProjectNames());
         home().validate().validateProjectIsNotAvailable(PROJECT_NAME_DEFAULT);
         main().validate().validateAdministrationTabIsNotVisible();
         home().clickContainerHostsButton();
         clusters().clustersPage().waitToLoad();
         clusters().clustersPage().validate().validateAddHostButtonNotAvailable();
         clusters().clustersPage().validate()
-                .validateHostActionsNotAvailable(PROJECT_NAME_ADMIRAL + HOST_SUFFIX);
+                .validateHostActionsNotAvailable(FIRST_PROJECT_NAME + HOST_SUFFIX);
         String resourcePrefix = USER_SCOTT.split("@")[0];
-        createAndDeleteResourcesInAdmiralProject(resourcePrefix);
+        createAndDeleteResourcesInFirstProject(resourcePrefix);
     }
 
     private void validateWithProjectViewer() {
@@ -290,10 +324,10 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
         home().validate().validateProjectRepositoriesAvailable();
         home().validate().validatePublicRepositoriesNotAvailable();
         home().validate().validateContainerHostsNotAvailable();
-        home().validate().validateProjectIsAvailable(PROJECT_NAME_ADMIRAL);
+        home().validate().validateProjectIsAvailable(FIRST_PROJECT_NAME);
         home().validate().validateProjectsAreNotAvailable(
                 PROJECT_NAME_DEFAULT,
-                PROJECT_NAME_QE);
+                SECOND_PROJECT_NAME);
     }
 
     private void configureCloudAdminRoles() {
@@ -312,21 +346,28 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
 
     private void addContentToProjects() {
         main().clickHomeTabButton();
-        for (int i = 0; i < ALL_PROJECTS.size(); i++) {
-            String projectName = ALL_PROJECTS.get(i);
-            home().switchToProject(projectName);
-            String vchIp = POOL.getHostFromThePool();
-            String vchUrl = getVchUrl(vchIp);
-            addVchHostToProject(projectName, vchUrl);
-            provisionContainerInProject(projectName);
-            addNetworkToProject(projectName);
-            addVolumeToProject(projectName);
-            addTemplateToProject(projectName);
-        }
+        home().switchToProject(FIRST_PROJECT_NAME);
+        home().clickContainerHostsButton();
+        HostCommons.addHost(getClient(), FIRST_PROJECT_NAME + HOST_SUFFIX, null,
+                firstProjectProvider.getHost().getHostType(),
+                getHostAddress(firstProjectProvider.getHost()), true);
+        provisionContainerInProject(FIRST_PROJECT_NAME, firstProjectProvider.getHost().getHostType());
+        addNetworkToProject(FIRST_PROJECT_NAME);
+        addVolumeToProject(FIRST_PROJECT_NAME);
+        addTemplateToProject(FIRST_PROJECT_NAME);
+        home().switchToProject(SECOND_PROJECT_NAME);
+        home().clickContainerHostsButton();
+        HostCommons.addHost(getClient(), SECOND_PROJECT_NAME + HOST_SUFFIX, null,
+                secondProjectProvider.getHost().getHostType(),
+                getHostAddress(secondProjectProvider.getHost()), true);
+        provisionContainerInProject(SECOND_PROJECT_NAME, secondProjectProvider.getHost().getHostType());
+        addNetworkToProject(SECOND_PROJECT_NAME);
+        addVolumeToProject(SECOND_PROJECT_NAME);
+        addTemplateToProject(SECOND_PROJECT_NAME);
     }
 
     private void removeContentFromProjects() {
-        for (String projectName : ALL_PROJECTS) {
+        for (String projectName : getProjectNames()) {
             home().switchToProject(projectName);
             home().clickApplicationsButton();
             applications().applicationsPage().deleteApplication(projectName + TEMPLATE_SUFFIX);
@@ -352,29 +393,11 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
             templates().templatesPage().deleteTemplate(projectName + TEMPLATE_SUFFIX);
 
             home().clickContainerHostsButton();
-            clusters().clustersPage().clickHostDeleteButton(projectName + HOST_SUFFIX);
-            clusters().deleteHostDialog().waitToLoad();
-            clusters().deleteHostDialog().submit();
+            HostCommons.deleteHost(getClient(), projectName + HOST_SUFFIX);
         }
     }
 
-    private void addVchHostToProject(String hostName, String hostUrl) {
-        home().clickContainerHostsButton();
-        clusters().clustersPage().clickAddClusterButton();
-        AddClusterModalDialog addHostDialog = clusters().addHostDialog();
-        addHostDialog.waitToLoad();
-        addHostDialog.setName(hostName + HOST_SUFFIX);
-        addHostDialog.setHostType(HostType.VCH);
-        addHostDialog.setUrl(hostUrl);
-        clusters().addHostDialog().submit();
-        clusters().certificateModalDialog().waitToLoad();
-        clusters().certificateModalDialog().submit();
-        clusters().clustersPage().refresh();
-        clusters().clustersPage().validate().validateHostExistsWithName(hostName + HOST_SUFFIX);
-        clusters().clustersPage().validate().validateHostsCount(1);
-    }
-
-    private void provisionContainerInProject(String containerName) {
+    private void provisionContainerInProject(String containerName, HostType hostType) {
         home().clickContainersButton();
         containers().containersPage().clickCreateContainer();
         containers().createContainerPage().waitToLoad();
@@ -387,7 +410,11 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
         containers().containersPage().refresh();
         containers().containersPage().validate()
                 .validateContainerExistsWithName(containerName + CONTAINER_SUFFIX);
-        containers().containersPage().validate().validateContainersCount(1);
+        if (hostType == HostType.VCH) {
+            containers().containersPage().validate().validateContainersCount(1);
+        } else {
+            containers().containersPage().validate().validateContainersCount(2);
+        }
     }
 
     private void addTemplateToProject(String namePrefix) {
@@ -401,12 +428,7 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
         templates().createTemplatePage().waitToLoad();
         templates().createTemplatePage().setName(templateName);
         templates().createTemplatePage().clickProceedButton();
-        templates().editTemplatePage().waitToLoad();
-        templates().editTemplatePage().clickAddContainerButton();
-        templates().selectImagePage().waitToLoad();
-        templates().selectImagePage().selectImageByName(IMAGE_NAME);
-        templates().basicTab().setName(containerName);
-        templates().addContainerPage().submit();
+
         templates().editTemplatePage().waitToLoad();
         templates().editTemplatePage().clickAddNetworkButton();
         templates().addNetworkPage().setName(networkName);
@@ -415,9 +437,19 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
         templates().editTemplatePage().clickAddVolumeButton();
         templates().addVolumePage().setName(volumeName);
         templates().addVolumePage().submit();
+
         templates().editTemplatePage().waitToLoad();
-        templates().editTemplatePage().connectContainerToNetwork(containerName, networkName);
-        templates().editTemplatePage().connectContainerToVolume(containerName, volumeName);
+        templates().editTemplatePage().clickAddContainerButton();
+        templates().selectImagePage().waitToLoad();
+        templates().selectImagePage().selectImageByName(IMAGE_NAME);
+        templates().basicTab().setName(containerName);
+        templates().addContainerPage().clickNetworkTab();
+        templates().networkTab().linkNetwork(networkName, null, null, null);
+        templates().addContainerPage().clickStorageTab();
+        templates().storageTab().addVolume(volumeName, "/container/path", false);
+        templates().addContainerPage().submit();
+
+        templates().editTemplatePage().waitToLoad();
         templates().editTemplatePage().navigateBack();
         templates().templatesPage().provisionTemplate(templateName);
         templates().requests().waitForLastRequestToSucceed(REQUEST_TIMEOUT);
@@ -462,7 +494,7 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
     }
 
     private void configureProjects() {
-        projects().projectsPage().clickProjectCard(PROJECT_NAME_ADMIRAL);
+        projects().projectsPage().clickProjectDetailsButton(FIRST_PROJECT_NAME);
         projects().configureProjectPage().waitToLoad();
         projects().configureProjectPage().clickMembersTabButton();
         projects().membersTab().clickAddMemebersButton();
@@ -481,10 +513,10 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
         addMemberDialogue.addMember(USER_GROUP_COKE);
         addMemberDialogue.setRole(ProjectMemberRole.VIEWER);
         addMemberDialogue.submit();
-        projects().configureProjectPage().navigateBack();
+        administration().clickProjectsButton();
         projects().projectsPage().waitToLoad();
 
-        projects().projectsPage().clickProjectCard(PROJECT_NAME_QE);
+        projects().projectsPage().clickProjectDetailsButton(SECOND_PROJECT_NAME);
         projects().configureProjectPage().waitToLoad();
         projects().configureProjectPage().clickMembersTabButton();
         projects().membersTab().clickAddMemebersButton();
@@ -497,24 +529,8 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
         addMemberDialogue.addMember(USER_SCOTT);
         addMemberDialogue.setRole(ProjectMemberRole.MEMBER);
         addMemberDialogue.submit();
-        projects().configureProjectPage().navigateBack();
+        administration().clickProjectsButton();
         projects().projectsPage().waitToLoad();
-    }
-
-    private void createProjects() {
-        main().clickAdministrationTabButton();
-        projects().projectsPage().clickAddProjectButton();
-        AddProjectModalDialog addProjectDialog = projects().addProjectDialog();
-        addProjectDialog.waitToLoad();
-        addProjectDialog.setName(PROJECT_NAME_ADMIRAL);
-        addProjectDialog.setDescription("This is the Admiral project.");
-        addProjectDialog.setIsPublic(true);
-        addProjectDialog.submit();
-        projects().projectsPage().clickAddProjectButton();
-        addProjectDialog.waitToLoad();
-        addProjectDialog.setName(PROJECT_NAME_QE);
-        addProjectDialog.setDescription("This is the Quality Engineering project.");
-        addProjectDialog.submit();
     }
 
     private void loginAs(String username) {
@@ -524,12 +540,17 @@ public class RBACAndItemsProjectAwareness extends BaseTest {
     private void deleteProjects() {
         main().clickAdministrationTabButton();
         projects().projectsPage().waitToLoad();
-        for (String project : ALL_PROJECTS) {
-            projects().projectsPage().clickProjectDeleteButton(project);
-            projects().deleteProjectDialog().waitToLoad();
-            projects().deleteProjectDialog().submit();
-            projects().projectsPage().waitToLoad();
+        for (String project : getProjectNames()) {
+            ProjectCommons.deleteProject(getClient(), project);
         }
+    }
+
+    @Override
+    protected List<String> getProjectNames() {
+        return Arrays.asList(new String[] {
+                FIRST_PROJECT_NAME,
+                SECOND_PROJECT_NAME
+        });
     }
 
 }
