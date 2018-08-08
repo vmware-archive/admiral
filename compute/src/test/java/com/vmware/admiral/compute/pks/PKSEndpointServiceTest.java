@@ -16,24 +16,38 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import static com.vmware.admiral.compute.ContainerHostService.CONTAINER_HOST_TYPE_PROP_NAME;
+import static com.vmware.admiral.compute.ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME;
+import static com.vmware.admiral.compute.cluster.ClusterService.CLUSTER_NAME_CUSTOM_PROP;
+
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.junit.Before;
 import org.junit.Test;
 
+import com.vmware.admiral.adapter.pks.PKSConstants;
+import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
+import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
+import com.vmware.admiral.compute.cluster.ClusterService;
+import com.vmware.admiral.compute.cluster.ClusterService.ClusterDto;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.admiral.compute.pks.PKSEndpointService.Endpoint;
 import com.vmware.admiral.compute.pks.PKSEndpointService.Endpoint.PlanSet;
+import com.vmware.admiral.service.test.MockKubernetesHostAdapterService;
+import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
@@ -50,6 +64,10 @@ public class PKSEndpointServiceTest extends ComputeBaseTest {
     public void setUp() throws Throwable {
         waitForServiceAvailability(PKSEndpointFactoryService.SELF_LINK);
         sender = host.getTestRequestSender();
+
+        host.startService(Operation.createPost(UriUtils.buildUri(host,
+                MockKubernetesHostAdapterService.class)), new MockKubernetesHostAdapterService());
+        waitForServiceAvailability(MockKubernetesHostAdapterService.SELF_LINK);
     }
 
     @Test
@@ -281,6 +299,23 @@ public class PKSEndpointServiceTest extends ComputeBaseTest {
         assertNull(endpoint);
     }
 
+    @Test
+    public void testDeleteEndpointAndClusters() throws Throwable {
+        Endpoint endpoint = new Endpoint();
+        endpoint.apiEndpoint = "http://localhost";
+        endpoint.uaaEndpoint = "https://localhost";
+
+        endpoint = createEndpoint(endpoint);
+        ClusterDto clusterDto = createCluster(endpoint.documentSelfLink);
+
+        delete(endpoint.documentSelfLink);
+        endpoint = getDocumentNoWait(Endpoint.class, endpoint.documentSelfLink);
+        assertNull(endpoint);
+
+        clusterDto = getDocumentNoWait(ClusterDto.class, clusterDto.documentSelfLink);
+        assertNull(endpoint);
+    }
+
     private Endpoint createEndpoint(Endpoint endpoint) {
         Operation o = Operation
                 .createPost(host, PKSEndpointFactoryService.SELF_LINK)
@@ -336,5 +371,62 @@ public class PKSEndpointServiceTest extends ComputeBaseTest {
             assertTrue("expected plan was not found: " + expectedPlan,
                     actualPlans.plans.stream().anyMatch(plan -> expectedPlan.equals(plan)));
         });
+    }
+
+    private ContainerHostSpec createContainerHostSpec(final String endpointLink) {
+        ContainerHostSpec clusterSpec = new ContainerHostSpec();
+        ComputeService.ComputeState computeState = new ComputeService.ComputeState();
+        computeState.tenantLinks = Collections
+                .singletonList(UriUtils.buildUriPath(ManagementUriParts.PROJECTS, "test"));
+        computeState.customProperties = new HashMap<>();
+        computeState.customProperties.put(CLUSTER_NAME_CUSTOM_PROP, "test-cluster");
+        computeState.customProperties.put(CONTAINER_HOST_TYPE_PROP_NAME,
+                ClusterService.ClusterType.KUBERNETES.name());
+        computeState.customProperties.put(HOST_DOCKER_ADAPTER_TYPE_PROP_NAME,
+                DockerAdapterType.API.name());
+        computeState.customProperties.put(ClusterService.CREATE_EMPTY_CLUSTER_PROP, "true");
+        computeState.customProperties.put(ClusterService.ENFORCED_CLUSTER_STATUS_PROP,
+                ClusterService.ClusterStatus.PROVISIONING.name());
+        computeState.customProperties.put(PKSConstants.PKS_ENDPOINT_PROP_NAME,
+                endpointLink);
+
+        clusterSpec.hostState = computeState;
+
+        return clusterSpec;
+    }
+
+    private ClusterDto createCluster(String endpointLink) {
+        ContainerHostSpec hostSpec = createContainerHostSpec(endpointLink);
+
+        ArrayList<ClusterDto> result = new ArrayList<>(1);
+
+        Operation create = Operation.createPost(host, ClusterService.SELF_LINK)
+                .setReferer(host.getUri())
+                .setBody(hostSpec)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        host.log(Level.SEVERE, "Failed to create cluster: %s", Utils.toString(ex));
+                        host.failIteration(ex);
+                    } else {
+                        try {
+                            result.add(o.getBody(ClusterDto.class));
+                            host.completeIteration();
+                        } catch (Throwable er) {
+                            host.log(Level.SEVERE,
+                                    "Failed to retrieve created cluster DTO from response: %s",
+                                    Utils.toString(er));
+                            host.failIteration(er);
+                        }
+                    }
+                });
+
+        host.testStart(1);
+        host.send(create);
+        host.testWait();
+
+        assertEquals(1, result.size());
+        ClusterDto dto = result.iterator().next();
+        assertNotNull(dto);
+        return dto;
     }
 }
