@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -436,7 +436,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
                         notificationPayload))
                 .whenComplete((resources, err) -> {
                     if (err != null) {
-                        failTask("Failed during notification payload enhancment",
+                        failTask("Failed during notification payload enhancement",
                                 err);
                     } else {
                         this.fillCommonFields(state, notificationPayload,
