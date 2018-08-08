@@ -50,7 +50,7 @@ export class KubernetesClusterNewSettingsComponent implements OnInit {
         workerInstances: new FormControl(1,
             Validators.compose([ Validators.min(1),
                 Validators.pattern('[\\d]+'), Validators.required ])),
-        connectBy: new FormControl('')
+        connectBy: new FormControl('', Validators.required)
     });
 
     plansLoading: boolean = false;
