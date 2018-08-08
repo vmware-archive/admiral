@@ -180,6 +180,7 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
     checkShowKubernetes() {
       if (FT.isApplicationEmbedded() && FT.isPksEnabled()) {
         this.authService.getCachedSecurityContext().then(securityContext => {
+
           // check if the user is only container developer
           this.showKubernetes = Utils.isContainerDeveloper(securityContext);
         });
