@@ -17,8 +17,10 @@ import static com.vmware.xenon.common.UriUtils.URI_PARAM_ODATA_FILTER;
 import static com.vmware.xenon.common.UriUtils.URI_PARAM_ODATA_LIMIT;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.PropertyUtils;
@@ -26,6 +28,7 @@ import com.vmware.admiral.compute.cluster.ClusterService;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.ServiceDocumentDescription;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
@@ -141,14 +144,22 @@ public class PKSEndpointService extends StatefulService {
                         return;
                     }
                     ServiceDocumentQueryResult result = o.getBody(ServiceDocumentQueryResult.class);
-                    if (result != null && result.documentLinks != null) {
-                        result.documentLinks.forEach(cluster -> {
+                    if (result != null && result.documentLinks != null && !result.documentLinks.isEmpty()) {
+                        List<Operation> deleteOperations = result.documentLinks.stream().map(cluster -> {
                             logInfo("Removing PKS cluster %s for %s", cluster, endpointLink);
-                            Operation.createDelete(this, cluster)
-                                    .sendWith(this);
-                        });
+                            return Operation.createDelete(this, cluster);
+                        }).collect(Collectors.toList());
+                        OperationJoin.create(deleteOperations)
+                                .setCompletion((ignore, failures) -> {
+                                    if (failures != null && !failures.isEmpty()) {
+                                        logWarning("Failed to delete one or more clusters: %s",
+                                                failures.values().iterator().next().getMessage());
+                                    }
+                                    delete.complete();
+                                }).sendWith(this);
+                    } else {
+                        delete.complete();
                     }
-                    delete.complete();
                 })
                 .sendWith(this);
     }
