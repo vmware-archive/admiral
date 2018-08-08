@@ -430,7 +430,7 @@ public class PKSRemoteClientService {
     private Operation buildOperation(Operation op, PKSContext ctx) {
         return op.addRequestHeader(Operation.ACCEPT_HEADER, Operation.MEDIA_TYPE_APPLICATION_JSON)
                 .addRequestHeader(Operation.AUTHORIZATION_HEADER, "Bearer " + ctx.accessToken)
-                .setAuthorizationContext(null)
+                .addRequestHeader(Operation.REQUEST_AUTH_TOKEN_HEADER, "")
                 .setReferer(host.getUri())
                 .forceRemote();
     }
@@ -459,7 +459,7 @@ public class PKSRemoteClientService {
                 .setAction(Service.Action.POST)
                 .setContentType(Operation.MEDIA_TYPE_APPLICATION_X_WWW_FORM_ENCODED)
                 .addRequestHeader(Operation.ACCEPT_HEADER, Operation.MEDIA_TYPE_APPLICATION_JSON)
-                .setAuthorizationContext(null)
+                .addRequestHeader(Operation.REQUEST_AUTH_TOKEN_HEADER, "")
                 .setReferer(host.getUri())
                 .forceRemote();
 
