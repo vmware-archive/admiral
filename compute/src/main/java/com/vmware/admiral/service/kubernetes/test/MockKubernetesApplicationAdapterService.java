@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -16,23 +16,33 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import com.vmware.admiral.adapter.common.ApplicationOperationType;
 import com.vmware.admiral.adapter.common.ApplicationRequest;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
+import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
+import com.vmware.admiral.compute.kubernetes.entities.deployments.Deployment;
+import com.vmware.admiral.compute.kubernetes.service.DeploymentService;
+import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService;
 import com.vmware.admiral.service.test.BaseMockAdapterService;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
 public class MockKubernetesApplicationAdapterService extends BaseMockAdapterService {
     public static final String SELF_LINK = ManagementUriParts.ADAPTER_KUBERNETES_APPLICATION;
 
     private static final List<CompositeComponent> PROVISIONED_COMPONENTS = Collections
+            .synchronizedList(new ArrayList<>());
+    private static final List<DeploymentService.DeploymentState> CREATED_DEPLOYMENT_STATES = Collections
             .synchronizedList(new ArrayList<>());
 
     private static class MockAdapterRequest extends ApplicationRequest {
@@ -149,22 +159,121 @@ public class MockKubernetesApplicationAdapterService extends BaseMockAdapterServ
     }
 
     private void provisionCompositeComponent(MockAdapterRequest state, CompositeComponent cc) {
+        PROVISIONED_COMPONENTS.add(cc);
         CompositeComponent toPatch = new CompositeComponent();
         toPatch.created = Utils.getSystemNowMicrosUtc();
-
-        PROVISIONED_COMPONENTS.add(cc);
-
         sendRequest(Operation.createPatch(state.resourceReference)
                 .setBody(toPatch)
                 .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
                 .setCompletion((o, e) -> {
-                    Throwable patchException = null;
                     if (e != null) {
                         logSevere(e);
-                        patchException = e;
+                        patchTaskStage(state, e);
+                    } else {
+                        createDeploymentStates(state, cc);
                     }
-                    patchTaskStage(state, patchException);
                 }));
+    }
+
+    private void createDeploymentStates(MockAdapterRequest state, CompositeComponent compositeComponent) {
+        URI uri = UriUtils.buildUri(getHost(), compositeComponent.compositeDescriptionLink);
+        sendRequest(Operation
+                .createGet(uri)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        logWarning("Failed getting composite component.", e);
+                        patchTaskStage(state, e);
+                    } else {
+                        CompositeDescription compositeDescription = o.getBody(CompositeDescription.class);
+                        List<String> descriptionLinks = compositeDescription.descriptionLinks;
+                        getKubernetesDescriptions(state, compositeComponent, descriptionLinks);
+                    }
+                }));
+    }
+
+    private void getKubernetesDescriptions(MockAdapterRequest state, CompositeComponent compositeComponent,
+                                           List<String> descriptionLinks) {
+
+        List<Operation> getCompositeDescriptions = descriptionLinks.stream()
+                .map(link -> Operation.createGet(this, link))
+                .collect(Collectors.toList());
+        OperationJoin.create(getCompositeDescriptions)
+                .setCompletion((ops, errors) -> {
+                    if (errors != null) {
+                        // Filter not null exceptions, fail the request with first one,
+                        // log all others.
+                        List<Throwable> throwables = errors.values().stream()
+                                .filter(Objects::nonNull)
+                                .collect(Collectors.toList());
+                        patchTaskStage(state, throwables.get(0));
+                        throwables.stream().skip(1)
+                                .forEach(e -> logWarning("%s", e.getMessage()));
+                    } else {
+                        List<KubernetesDescriptionService.KubernetesDescription> descriptions = ops.entrySet().stream()
+                                .map(desc -> desc.getValue().getBody(KubernetesDescriptionService.KubernetesDescription.class))
+                                .collect(Collectors.toList());
+
+                        validateKubernetesDescriptionTypes(state, compositeComponent, descriptions);
+
+                    }
+                }).sendWith(this);
+    }
+
+    private void validateKubernetesDescriptionTypes(MockAdapterRequest state, CompositeComponent compositeComponent,
+                                                    List<KubernetesDescriptionService.KubernetesDescription> descriptions) {
+
+        String compositeComponentId = UriUtils.getLastPathSegment(compositeComponent.documentSelfLink);
+
+        descriptions = descriptions.stream()
+                .map(desc -> KubernetesUtil.setApplicationLabel(desc, compositeComponentId))
+                .collect(Collectors.toList());
+
+        processDescriptions(state, compositeComponent, descriptions);
+    }
+
+    private void processDescriptions(MockAdapterRequest state, CompositeComponent compositeComponent,
+                                          List<KubernetesDescriptionService.KubernetesDescription> descriptions) {
+
+        List<Operation> operations = descriptions.stream()
+                .map(description -> createOperationForKubernetesState(compositeComponent, description))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        OperationJoin.create(operations)
+                .setCompletion((ops, errors) -> {
+                    if (errors != null) {
+                        // Filter not null exceptions, fail the request with first one,
+                        // log all others.
+                        List<Throwable> throwables = errors.values().stream()
+                                .filter(Objects::nonNull)
+                                .collect(Collectors.toList());
+                        patchTaskStage(state, throwables.get(0));
+                        throwables.stream().skip(1)
+                                .forEach(e -> logWarning("%s", e.getMessage()));
+                    } else {
+                        patchTaskStage(state, null, null);
+                    }
+                }).sendWith(this);
+    }
+
+    private Operation createOperationForKubernetesState(CompositeComponent compositeComponent,
+                                               KubernetesDescriptionService.KubernetesDescription description) {
+
+        if (!description.type.equals(KubernetesUtil.DEPLOYMENT_TYPE)) {
+            return null;
+        }
+
+        Deployment deployment = new Deployment();
+        DeploymentService.DeploymentState deploymentState = new DeploymentService.DeploymentState();
+        deploymentState.deployment = deployment;
+        deploymentState.name = compositeComponent.name;
+        deploymentState.compositeComponentLink = compositeComponent.documentSelfLink;
+        deploymentState.tenantLinks = compositeComponent.tenantLinks;
+        CREATED_DEPLOYMENT_STATES.add(deploymentState);
+
+        return Operation.createPost(this, ManagementUriParts.KUBERNETES_DEPLOYMENTS)
+                .setBody(deploymentState);
+
     }
 
     private synchronized void deprovisionCompositeComponent(MockAdapterRequest state) {
@@ -189,8 +298,16 @@ public class MockKubernetesApplicationAdapterService extends BaseMockAdapterServ
         return new ArrayList<>(PROVISIONED_COMPONENTS);
     }
 
-    public static synchronized void addCompositeComponent(CompositeComponent component) {
+    public static void addCompositeComponent(CompositeComponent component) {
         PROVISIONED_COMPONENTS.add(component);
+    }
+
+    public static List<DeploymentService.DeploymentState> getCreatedDeploymentStates() {
+        return new ArrayList<>(CREATED_DEPLOYMENT_STATES);
+    }
+
+    public static void addDeploymentState(DeploymentService.DeploymentState state) {
+        CREATED_DEPLOYMENT_STATES.add(state);
     }
 
     public static void clear() {

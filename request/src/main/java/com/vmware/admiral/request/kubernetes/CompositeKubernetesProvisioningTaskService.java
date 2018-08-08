@@ -21,6 +21,7 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOp
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.function.Consumer;
@@ -33,7 +34,9 @@ import com.vmware.admiral.compute.container.CompositeComponentRegistry;
 import com.vmware.admiral.compute.container.CompositeComponentRegistry.ComponentMeta;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
+import com.vmware.admiral.compute.container.ContainerService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
+import com.vmware.admiral.compute.kubernetes.service.DeploymentService;
 import com.vmware.admiral.request.PlacementHostSelectionTaskService;
 import com.vmware.admiral.request.PlacementHostSelectionTaskService.PlacementHostSelectionTaskState;
 import com.vmware.admiral.request.ReservationTaskFactoryService;
@@ -45,12 +48,14 @@ import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.admiral.service.common.TaskServiceDocument;
+import com.vmware.photon.controller.model.query.QueryUtils;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.services.common.QueryTask;
 
 /**
  * Task implementing the provisioning of a kubernetes composite component.
@@ -77,7 +82,15 @@ public class CompositeKubernetesProvisioningTaskService extends
             com.vmware.admiral.service.common.TaskServiceDocument<KubernetesProvisioningTaskState.SubStage> {
 
         public static enum SubStage {
-            CREATED, CONTEXT_PREPARED, RESERVING, RESERVED, PLACEMENT_HOST_SELECTED, CLEAN_COMPOSITE_COMPONENT, COMPLETED, ERROR
+            CREATED,
+            CONTEXT_PREPARED,
+            RESERVING,
+            RESERVED,
+            PLACEMENT_HOST_SELECTED,
+            CLEAN_COMPOSITE_COMPONENT,
+            UPDATE_RESOURCE_LINKS,
+            COMPLETED,
+            ERROR
         }
 
         /**
@@ -161,6 +174,9 @@ public class CompositeKubernetesProvisioningTaskService extends
         case CLEAN_COMPOSITE_COMPONENT:
             deleteCompositeComponent(state);
             break;
+        case UPDATE_RESOURCE_LINKS:
+            updateResourceLinksWithK8sInfo(state);
+            break;
         case COMPLETED:
             complete();
             break;
@@ -194,6 +210,46 @@ public class CompositeKubernetesProvisioningTaskService extends
         statusTask.name = ((KubernetesProvisioningTaskState) state).descName;
 
         return statusTask;
+    }
+
+    // In the status state of the task resource links should not contain a link to the composite component
+    // because it was deleted in the previous step and the link doesn't point to a real resource.
+    // Instead are added links to the deployments that were created.
+    private void updateResourceLinksWithK8sInfo(TaskServiceDocument<SubStage> state) {
+        TaskStatusState statusTask = super.fromTask(state);
+
+        // reset resource links if they contain a link to the composite component or create a brand new if null
+        if (statusTask.resourceLinks == null
+                || (statusTask.resourceLinks.size() == 1
+                && statusTask.resourceLinks.iterator().next().contains(ManagementUriParts.COMPOSITE_COMPONENT))) {
+            statusTask.resourceLinks = new HashSet<>();
+        }
+
+        // build query to get all deployment states that were created from that composite component
+        QueryTask.Query query = QueryTask.Query.Builder.create()
+                .addKindFieldClause(DeploymentService.DeploymentState.class)
+                .addFieldClause(ContainerService.ContainerState.FIELD_NAME_COMPOSITE_COMPONENT_LINK,
+                        ((KubernetesProvisioningTaskState) state).compositeComponentLink)
+                .build();
+
+        // 1. add the links of the found deployment states to the resource links of the status task
+        // 2. then patch the state and if everything is successful proceed to stage COMPLETED
+        // note: this action is done per tenant link
+        new QueryUtils.QueryByPages<>(getHost(), query, DeploymentService.DeploymentState.class, state.tenantLinks)
+                .queryLinks((link) -> statusTask.resourceLinks.add(link))
+                .thenCompose((ignore) -> {
+                    Operation patch = Operation.createPatch(this, state.requestTrackerLink)
+                            .setBodyNoCloning(statusTask);
+
+                    return sendWithDeferredResult(patch);
+                })
+                .whenComplete((operation, exception) -> {
+                    if (exception != null) {
+                        failTask("Failed updating resource links.", exception);
+                    } else {
+                        proceedTo(SubStage.COMPLETED);
+                    }
+                });
     }
 
     private void createReservationTasks(KubernetesProvisioningTaskState state,
@@ -343,7 +399,7 @@ public class CompositeKubernetesProvisioningTaskService extends
                         return;
                     }
 
-                    proceedTo(SubStage.COMPLETED);
+                    proceedTo(SubStage.UPDATE_RESOURCE_LINKS);
                 }));
     }
 

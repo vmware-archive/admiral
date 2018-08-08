@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.yaml.snakeyaml.util.UriEncoder;
 
+import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.request.composition.CompositionGraph.ResourceNode;
 import com.vmware.admiral.request.composition.CompositionSubTaskService;
@@ -109,14 +110,22 @@ public class RequestStatusService extends StatefulService {
             state.name = body.name;
         }
 
-        if (state.resourceLinks == null
+        if ((state.resourceLinks == null
                 && body.resourceLinks != null
-                && !body.resourceLinks.isEmpty()) {
+                && !body.resourceLinks.isEmpty())
+                || willChangeToK8s(state, body)) {
             state.resourceLinks = body.resourceLinks;
         }
 
         setState(patch, state);
         patch.complete();
+    }
+
+    private boolean willChangeToK8s(RequestStatus state, RequestStatus body) {
+        return state.resourceLinks != null
+                && state.resourceLinks.stream().anyMatch( l -> l.contains(ManagementUriParts.COMPOSITE_COMPONENT))
+                && body.resourceLinks != null
+                && body.resourceLinks.stream().anyMatch(l -> l.contains(ManagementUriParts.KUBERNETES_DEPLOYMENTS));
     }
 
     private void handleUpdateProgress(RequestStatus state, RequestStatus body) {
