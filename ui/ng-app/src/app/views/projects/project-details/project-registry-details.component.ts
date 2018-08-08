@@ -9,18 +9,19 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, AfterViewInit, OnInit } from '@angular/core';
-import { Router, ActivatedRoute } from "@angular/router";
-
+import { Component, OnInit } from '@angular/core';
+import { Router, ActivatedRoute } from '@angular/router';
+import { FormControl, FormGroup } from '@angular/forms';
 import { BaseDetailsComponent } from '../../../components/base/base-details.component';
-import { DocumentService } from "../../../utils/document.service";
-import { ErrorService } from "../../../utils/error.service";
-import { Links } from "../../../utils/links";
-import { FormControl, FormGroup } from "@angular/forms";
-import { Utils } from "../../../utils/utils";
+import { DocumentService } from '../../../utils/document.service';
+import { ErrorService } from '../../../utils/error.service';
+import { ProjectService } from '../../../utils/project.service';
+import { Constants } from '../../../utils/constants';
+import { Links } from '../../../utils/links';
+import { Utils } from '../../../utils/utils';
+
 import { formatUtils } from 'admiral-ui-common';
 import * as I18n from 'i18next';
-import { Constants } from '../../../utils/constants';
 
 @Component({
     selector: 'app-project-registry-details',
@@ -34,16 +35,13 @@ import { Constants } from '../../../utils/constants';
 export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implements OnInit {
     editMode: boolean = false;
     credentials: any[];
-    projectLink: string;
-    projectId: string;
-    registryLink: string;
+    selectedProjectLink: string;
 
     showCertificateWarning: boolean;
     certificate: any;
 
     alertType: string;
 
-    private sub: any;
     isSaving: boolean;
 
     projectRegistryDetailsForm = new FormGroup({
@@ -70,7 +68,7 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
 
     constructor(router: Router, route: ActivatedRoute, documentService: DocumentService,
                 errorService: ErrorService) {
-        super(Links.REGISTRIES, route, router, documentService, errorService);
+        super(Links.REGISTRIES, route, router, documentService, null, errorService);
 
         this.projectRegistryDetailsForm.valueChanges.subscribe(data => {
             this.checkForInsecureRegistry(data);
@@ -85,7 +83,7 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
         this.populateCredentials(null);
     }
 
-    toggleButtonsState = function(projectRegistryDetailsForm) {
+    toggleButtonsState(projectRegistryDetailsForm) {
         let address = projectRegistryDetailsForm.address;
         let name = projectRegistryDetailsForm.name;
 
@@ -139,8 +137,8 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
     }
 
     protected routeParamsReceived(params) {
-        this.projectId = params && params['projectId'];
-        this.projectLink = this.projectId && [Links.PROJECTS, this.projectId].join('/');
+        let projectId = params && params['projectId'];
+        this.selectedProjectLink = projectId && [Links.PROJECTS, projectId].join('/');
     }
 
     protected entityInitialized() {
@@ -156,22 +154,18 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
         this.populateCredentials(authCredentialsLink);
     }
 
-    resetAlert() {
-        this.alertMessage = null;
-    }
-
     private save(acceptCert: boolean = false) {
         this.isSavingRegistry = true;
         let registrySpec = this.getRegistrySpec(acceptCert);
 
-        this.service.put(Links.REGISTRY_SPEC, registrySpec, this.projectLink).then((response) => {
+        this.service.put(Links.REGISTRY_SPEC, registrySpec, this.selectedProjectLink).then((response) => {
             if (!this.isCertificateResponse(response)) {
                 this.isSavingRegistry = false;
                 this.goBack();
             }
         }).catch(error => {
             this.isSavingRegistry = false;
-            this.showAlertMessage(Utils.getErrorMessage(error)._generic, Constants.alert.type.DANGER);
+            this.showErrorMessage(error);
         });
     }
 
@@ -192,14 +186,15 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
             'acceptCertificate': acceptCert
         };
 
-        this.service.put(Links.REGISTRY_SPEC, registrySpec, this.projectLink).then((response) => {
-            if (!this.isCertificateResponse(response)) {
-                this.isSavingRegistry = false;
-                this.goBack();
-            }
+        this.service.put(Links.REGISTRY_SPEC, registrySpec, this.selectedProjectLink)
+            .then((response) => {
+                if (!this.isCertificateResponse(response)) {
+                    this.isSavingRegistry = false;
+                    this.goBack();
+                }
         }).catch(error => {
             this.isSavingRegistry = false;
-            this.showAlertMessage(Utils.getErrorMessage(error)._generic, Constants.alert.type.DANGER);
+            this.showErrorMessage(error);
         });
     }
 
@@ -217,15 +212,16 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
         this.isTestingConnection = true;
         let registrySpec = this.getRegistrySpec(acceptCert);
 
-        this.service.put(Links.REGISTRY_SPEC + '?validate=true', registrySpec).then((response) => {
-            if (!this.isCertificateResponse(response)) {
-                this.isTestingConnection = false;
-                this.alertType = Constants.alert.type.SUCCESS;
-                this.alertMessage = I18n.t('hosts.verified');
-            }
+        this.service.put(Links.REGISTRY_SPEC + '?validate=true', registrySpec,
+            this.selectedProjectLink).then((response) => {
+                if (!this.isCertificateResponse(response)) {
+                    this.isTestingConnection = false;
+                    this.alertType = Constants.alert.type.SUCCESS;
+                    this.alertMessage = I18n.t('hosts.verified');
+                }
         }).catch(error => {
             this.isTestingConnection = false;
-            this.showAlertMessage(Utils.getErrorMessage(error)._generic, Constants.alert.type.DANGER);
+            this.showErrorMessage(error);
         });
     }
 
@@ -239,16 +235,27 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
             'authCredentialsLink': formInput.credentials.documentSelfLink
         };
         registryState.authCredentialsLink = formInput.credentials.documentSelfLink;
+
         let registrySpec = {
             'hostState': registryState,
             'acceptCertificate': acceptCert
         };
+
         return registrySpec;
+    }
+
+    private showErrorMessage(error) {
+        this.showAlertMessage(Utils.getErrorMessage(error)._generic, Constants.alert.type.DANGER);
     }
 
     private showAlertMessage(message: string, alertType) {
         this.alertType = alertType;
         this.alertMessage = message;
+    }
+
+    private resetAlert() {
+        this.alertType = null;
+        this.alertMessage = null;
     }
 
     declineCertificate() {

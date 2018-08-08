@@ -42,7 +42,7 @@ export class ProjectCreateComponent extends BaseDetailsComponent implements Afte
 
   constructor(router: Router, route: ActivatedRoute, service: DocumentService,
               errorService: ErrorService) {
-    super(Links.PROJECTS, route, router, service, errorService);
+    super(Links.PROJECTS, route, router, service, null, errorService);
   }
 
   get title() {

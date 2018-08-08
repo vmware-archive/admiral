@@ -155,8 +155,7 @@ export class DocumentService {
       let params = new URLSearchParams();
       params.set('expand', 'true');
 
-      return this.ajax.get(documentSelfLink, params, undefined,
-          this.buildProjectHeader(projectLink));
+      return this.ajax.get(documentSelfLink, params, undefined, this.buildProjectHeader(projectLink));
     }
 
     return this.ajax.get(documentSelfLink, undefined, undefined,

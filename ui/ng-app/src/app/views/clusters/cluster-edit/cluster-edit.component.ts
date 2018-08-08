@@ -9,30 +9,29 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, OnInit, OnDestroy, AfterViewInit, ViewEncapsulation } from '@angular/core';
+import { Component } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormGroup, FormControl, Validators } from "@angular/forms";
 import { BaseDetailsComponent } from '../../../components/base/base-details.component';
-import { Constants } from '../../../utils/constants';
 import { DocumentService } from '../../../utils/document.service';
-import { ErrorService } from "../../../utils/error.service";
+import { ErrorService } from '../../../utils/error.service';
+import { ProjectService } from '../../../utils/project.service';
+import { Constants } from '../../../utils/constants';
 import { FT } from "../../../utils/ft";
 import { Links } from '../../../utils/links';
 import { Utils } from "../../../utils/utils";
+
 import * as I18n from 'i18next';
 
 @Component({
   selector: 'app-cluster-edit',
   templateUrl: './cluster-edit.component.html',
-  styleUrls: ['./cluster-edit.component.scss'],
-  encapsulation: ViewEncapsulation.None,
+  styleUrls: ['./cluster-edit.component.scss']
 })
 /**
- * Modal for editing clusters.
+ * Edit (Docker, VCH) cluster view.
  */
-export class ClusterEditComponent extends BaseDetailsComponent
-                                    implements AfterViewInit, OnInit, OnDestroy {
-    opened: boolean = false;
+export class ClusterEditComponent extends BaseDetailsComponent {
     credentials: any[];
     // certificate
     showCertificateWarning: boolean;
@@ -41,11 +40,10 @@ export class ClusterEditComponent extends BaseDetailsComponent
     alertMessage: string;
     alertType: string;
     // actions
-    isVerifyingHost: boolean;
-    isHostVerified: boolean;
-    isSavingHost: boolean;
+    isVerifying: boolean;
+    isVerified: boolean;
+    isUpdating: boolean;
     // private
-    private sub: any;
     private isSingleHostCluster: boolean = false;
 
     clusterForm = new FormGroup({
@@ -65,9 +63,12 @@ export class ClusterEditComponent extends BaseDetailsComponent
         entity: I18n.t('app.credential.entity', {ns: 'base'})
     } as I18n.TranslationOptions );
 
-    constructor(router: Router, route: ActivatedRoute, service: DocumentService,
-                errorService: ErrorService) {
-        super(Links.CLUSTERS, route, router, service, errorService);
+    constructor(router: Router, route: ActivatedRoute, documentService: DocumentService,
+                projectService: ProjectService, errorService: ErrorService) {
+
+        super(Links.CLUSTERS, route, router, documentService, projectService, errorService);
+
+        this.populateCredentials();
     }
 
     get title() {
@@ -116,31 +117,15 @@ export class ClusterEditComponent extends BaseDetailsComponent
         }
     }
 
-    ngOnInit() {
-        this.sub = this.route.params.subscribe(params => {
-            let projectId = params['projectId'];
-            if (projectId) {
-                this.projectLink = Links.PROJECTS + '/' + projectId;
-            }
-            super.ngOnInit();
-        });
-
-        this.populateCredentials();
-    }
-
-    ngOnDestroy() {
-        this.sub.unsubscribe();
-    }
-
-    ngAfterViewInit() {
-        this.opened = true;
-        this.showCertificateWarning = false;
+    onProjectChange() {
+        // show clusters view, if project/business group selection has been changed.
+        this.router.navigate(['../../../'], {relativeTo: this.route});
     }
 
     verifyCluster() {
         if (this.clusterForm.valid) {
-            this.isVerifyingHost = true;
-            this.isHostVerified = false;
+            this.isVerifying = true;
+            this.isVerified = false;
 
             let host = this.getVchClusterInputData();
             let hostSpec = {
@@ -149,13 +134,12 @@ export class ClusterEditComponent extends BaseDetailsComponent
 
             this.service.put(Links.CONTAINER_HOSTS + '?validate=true', hostSpec)
                 .then((response) => {
-                this.isVerifyingHost = false;
-                this.isHostVerified = true;
+                this.isVerifying = false;
+                this.isVerified = true;
 
-                this.alertType = Constants.alert.type.SUCCESS;
-                this.alertMessage = I18n.t('hosts.verified');
+                this.showAlertMessage(Constants.alert.type.SUCCESS, I18n.t('hosts.verified'));
             }).catch(error => {
-                this.isVerifyingHost = false;
+                this.isVerifying = false;
 
                 this.showErrorMessage(error);
             });
@@ -175,17 +159,17 @@ export class ClusterEditComponent extends BaseDetailsComponent
             // TODO check if the backend will handle this
             if (this.isSingleHostCluster) {
                 // allow overwriting with empty value
-                let publicAddress = this.clusterForm.value.publicAddress || '';
-                clusterDtoPatch[Constants.clusters.properties.publicAddress] = publicAddress;
+                clusterDtoPatch[Constants.clusters.properties.publicAddress] =
+                                                        this.clusterForm.value.publicAddress || '';
             }
 
-            this.isSavingHost = true;
-            this.service.patch(this.entity.documentSelfLink, clusterDtoPatch, this.projectLink)
-                .then(() => {
-                this.onClusterUpdateSuccess();
-
+            this.isUpdating = true;
+            this.service.patch(this.entity.documentSelfLink, clusterDtoPatch).then(() => {
+                this.isUpdating = false;
+                this.goBack();
             }).catch(error => {
-                this.onClusterUpdateError(error);
+                this.isUpdating = false;
+                this.showErrorMessage(error);
             });
         }
     }
@@ -200,24 +184,34 @@ export class ClusterEditComponent extends BaseDetailsComponent
                 'details':  description
             };
 
-            this.isSavingHost = true;
-            this.service.patch(this.entity.documentSelfLink, clusterDtoPatch, this.projectLink)
-                .then(() => {
+            this.isUpdating = true;
+            this.service.patch(this.entity.documentSelfLink, clusterDtoPatch).then(() => {
                 this.updateVchClusterCredentials();
-
             }).catch(error => {
-                this.onClusterUpdateError(error);
+                this.isUpdating = false;
+                this.showErrorMessage(error);
             });
         }
     }
 
-    cancelCreateCluster() {
-        this.showCertificateWarning = false;
-        this.isSavingHost = false;
-    }
-
     acceptCertificate() {
         this.showCertificateWarning = false;
+    }
+
+    declineCertificate() {
+        this.showCertificateWarning = false;
+        this.isUpdating = false;
+    }
+
+    cancel() {
+        this.showCertificateWarning = false;
+        this.isUpdating = false;
+
+        this.goBack();
+    }
+
+    goBack() {
+        this.router.navigate(['..'], { relativeTo: this.route });
     }
 
     populateCredentials() {
@@ -232,42 +226,6 @@ export class ClusterEditComponent extends BaseDetailsComponent
         }).catch((e) => {
             console.log('Credentials retrieval failed', e);
         });
-    }
-
-    toggleModal(open) {
-        this.opened = open;
-
-        if (!open) {
-            const PATH_UP = '../../';
-
-            let path: any[] = [PATH_UP];
-            path = [PATH_UP + Utils.getDocumentId(this.entity.documentSelfLink)];
-
-            this.router.navigate(path, { relativeTo: this.route });
-        }
-    }
-
-    onClusterUpdateSuccess() {
-        this.clearView();
-
-        this.toggleModal(false);
-    }
-
-    onClusterUpdateError(error) {
-        this.isSavingHost = false;
-
-        this.showErrorMessage(error);
-    }
-
-    clearView() {
-        this.resetAlert();
-
-        this.isSavingHost = false;
-        this.isVerifyingHost = false;
-        this.isHostVerified = true;
-
-        this.clusterForm.reset();
-        this.clusterForm.markAsPristine();
     }
 
     getVchClusterInputData() {
@@ -305,37 +263,45 @@ export class ClusterEditComponent extends BaseDetailsComponent
         return hostCopy;
     }
 
-    private showErrorMessage(error) {
-        this.alertType = Constants.alert.type.DANGER;
-        this.alertMessage = Utils.getErrorMessage(error)._generic;
-    }
-
     private updateVchClusterCredentials() {
-        let persistedCredsLink =
+        let credentialsLink =
             this.entity.nodes[this.entity.nodeLinks[0]].customProperties['__authCredentialsLink'];
-        let formCredentials = this.clusterForm.value.credentials
+        let updatedCredentialsLink = this.clusterForm.value.credentials
                                 ? this.clusterForm.value.credentials.documentSelfLink : "";
-        if (persistedCredsLink !== formCredentials) {
-            var hostState = this.getVchClusterInputData();
+
+        if (credentialsLink !== updatedCredentialsLink) {
+            // credentials have been changed
+            let hostState = this.getVchClusterInputData();
 
             let hostSpec = {
                 'hostState': hostState,
                 'isUpdateOperation': true
             };
 
-            this.isSavingHost = true;
             this.service.put(Links.CONTAINER_HOSTS, hostSpec).then((response) => {
-                this.onClusterUpdateSuccess();
-
+                this.isUpdating = false;
+                this.goBack();
             }).catch(error => {
-                this.onClusterUpdateError(error);
+                this.isUpdating = false;
+                this.showErrorMessage(error);
             });
         } else {
-            this.onClusterUpdateSuccess();
+            this.isUpdating = false;
+            this.goBack();
         }
     }
 
+    private showErrorMessage(error) {
+        this.showAlertMessage(Constants.alert.type.DANGER, Utils.getErrorMessage(error)._generic);
+    }
+
+    private showAlertMessage(type, text) {
+        this.alertType = type;
+        this.alertMessage = text;
+    }
+
     resetAlert() {
+        this.alertType = null;
         this.alertMessage = null;
     }
 }
