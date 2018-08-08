@@ -39,7 +39,7 @@ export class ProjectAddMemberComponent extends BaseDetailsComponent implements A
 
     constructor(router: Router, route: ActivatedRoute, service: DocumentService,
                 errorService: ErrorService) {
-        super(Links.PROJECTS, route, router, service, errorService);
+        super(Links.PROJECTS, route, router, service, null, errorService);
     }
 
     ngAfterViewInit() {

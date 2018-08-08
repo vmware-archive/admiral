@@ -10,15 +10,16 @@
  */
 
 import { Component } from '@angular/core';
-import { FormControl, FormGroup, Validators } from "@angular/forms";
-import { ActivatedRoute, Router } from "@angular/router";
-import { BaseDetailsComponent } from "../../../../components/base/base-details.component";
-import { DocumentService } from "../../../../utils/document.service";
-import { ErrorService } from "../../../../utils/error.service";
-import { Links } from "../../../../utils/links";
-import { Utils } from "../../../../utils/utils";
+import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { BaseDetailsComponent } from '../../../../components/base/base-details.component';
+import { DocumentService } from '../../../../utils/document.service';
+import { ErrorService } from '../../../../utils/error.service';
+import { ProjectService } from '../../../../utils/project.service';
+import { Links } from '../../../../utils/links';
+import { Utils } from '../../../../utils/utils';
 
-import { formatUtils } from "admiral-ui-common";
+import { formatUtils } from 'admiral-ui-common';
 
 @Component({
     selector: 'app-kubernetes-cluster-edit-external',
@@ -32,31 +33,16 @@ export class KubernetesClusterEditExternalComponent extends BaseDetailsComponent
     // action
     isUpdating: boolean;
 
-    private sub: any;
-
     clusterForm = new FormGroup({
         name: new FormControl('', Validators.required),
         description: new FormControl('')
     });
 
     constructor(protected route: ActivatedRoute, protected service: DocumentService,
-                protected router: Router, protected errorService: ErrorService) {
+                protected router: Router, protected projectService: ProjectService,
+                protected errorService: ErrorService) {
 
-        super(Links.CLUSTERS, route, router, service, errorService);
-    }
-
-    ngOnInit() {
-        this.sub = this.route.params.subscribe(params => {
-            let projectId = params['projectId'];
-            if (projectId) {
-                this.projectLink = Links.PROJECTS + '/' + projectId;
-            }
-            super.ngOnInit();
-        });
-    }
-
-    ngOnDestroy() {
-        this.sub.unsubscribe();
+        super(Links.CLUSTERS, route, router, service, projectService, errorService);
     }
 
     entityInitialized() {
@@ -66,6 +52,10 @@ export class KubernetesClusterEditExternalComponent extends BaseDetailsComponent
         if (this.entity.details) {
             this.clusterForm.get('description').setValue(this.entity.details);
         }
+    }
+
+    onProjectChange() {
+        this.router.navigate(['../../'], {relativeTo: this.route});
     }
 
     update() {
@@ -78,8 +68,7 @@ export class KubernetesClusterEditExternalComponent extends BaseDetailsComponent
             };
 
             this.isUpdating = true;
-            this.service.patch(this.entity.documentSelfLink, clusterPatch, this.projectLink)
-                .then(() => {
+            this.service.patch(this.entity.documentSelfLink, clusterPatch).then(() => {
                 this.isUpdating = false;
 
                 this.goBack();

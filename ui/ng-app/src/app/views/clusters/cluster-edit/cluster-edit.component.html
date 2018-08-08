@@ -9,25 +9,25 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-  <clr-modal [clrModalOpen]="opened" [clrModalClosable]="!isSavingHost"
-             (clrModalOpenChange)="toggleModal($event)">
-    <h3 class="modal-title">{{title | i18n}}</h3>
-
-    <div class="modal-body">
-      <clr-alert [clrAlertType]="alertType" [(clrAlertClosed)]="!alertMessage"
-                 (clrAlertClosedChange)="resetAlert()">
+<div class="main-view">
+    <clr-alert [clrAlertType]="alertType" [(clrAlertClosed)]="!alertMessage"
+               (clrAlertClosedChange)="resetAlert()">
         <div class="alert-item">
-          <span class="alert-text">{{ alertMessage }}</span>
+            <span class="alert-text">{{ alertMessage }}</span>
         </div>
-      </clr-alert>
+    </clr-alert>
 
-      <form class="form" [formGroup]="clusterForm">
+    <div class="title">{{title | i18n}}</div>
+
+    <form class="form" [formGroup]="clusterForm">
         <section class="form-block">
           <div class="form-group">
             <label for="name" class="required">{{ "clusters.edit.name" | i18n }}</label>
             <label for="name" aria-haspopup="true" role="tooltip"
                    class="tooltip tooltip-validation tooltip-sm tooltip-bottom-left"
-                   [class.invalid]="clusterForm.get('name').invalid && (clusterForm.get('name').dirty || clusterForm.get('name').touched)">
+                   [class.invalid]="clusterForm.get('name').invalid
+                                    && (clusterForm.get('name').dirty
+                                    || clusterForm.get('name').touched)">
               <input id="name" type="text" formControlName="name">
               <span class="tooltip-content">{{ "clusters.edit.nameRequired" | i18n }}</span>
             </label>
@@ -59,26 +59,28 @@
             </dropdown>
           </div>
         </section>
-      </form>
-      <!-- Untrusted certificate prompt -->
-      <verify-certificate [visible]="showCertificateWarning"
-                          [hostAddress]="clusterUrl"
-                          [certificate]="certificate"
-                          (onAccept)="acceptCertificate()"
-                          (onDecline)="cancelCreateCluster()"></verify-certificate>
+    </form>
+    <div>
+        <button type="button" class="btn btn-outline"
+                [disabled]="isUpdating"
+                (click)="cancel()">{{ "cancel" | i18n }}</button>
+        <button *ngIf="!isVch" [clrLoading]="isUpdating" type="button"
+                class="btn btn-primary saveCluster-btn"
+                [disabled]="isUpdating || clusterForm.invalid"
+                (click)="updateDockerCluster()">{{ "update" | i18n }}</button>
+        <button *ngIf="isVch" [clrLoading]="isUpdating" type="button"
+                class="btn btn-primary"
+                [disabled]="isUpdating || isVerifying || !isVerified"
+                (click)="updateVchCluster()">{{ "update" | i18n }}</button>
+        <button *ngIf="isVch" [clrLoading]="isVerifying" type="button"
+                class="btn btn-outline"
+                [disabled]="isUpdating || isVerifying"
+                (click)="verifyCluster()">{{"verify" | i18n}}</button>
     </div>
-    <div class="modal-footer">
-      <button type="button" class="btn btn-outline"
-              [disabled]="isSavingHost"
-              (click)="toggleModal(false)">{{ "cancel" | i18n }}</button>
-      <button *ngIf="!isVch" [clrLoading]="isSavingHost" type="button" class="btn btn-primary saveCluster-btn"
-              [disabled]="isSavingHost || clusterForm.invalid"
-              (click)="updateDockerCluster()">{{ "save" | i18n }}</button>
-      <button *ngIf="isVch" [clrLoading]="isSavingHost" type="button" class="btn btn-primary"
-              [disabled]="isSavingHost || isVerifyingHost || !isHostVerified"
-              (click)="updateVchCluster()">{{ "update" | i18n }}</button>
-      <button *ngIf="isVch" [clrLoading]="isVerifyingHost" type="button" class="btn btn-outline"
-              [disabled]="isSavingHost || isVerifyingHost"
-              (click)="verifyCluster()">{{"verify" | i18n}}</button>
-    </div>
-  </clr-modal>
+    <!-- Untrusted certificate prompt -->
+    <verify-certificate [visible]="showCertificateWarning"
+                        [hostAddress]="clusterUrl"
+                        [certificate]="certificate"
+                        (onAccept)="acceptCertificate()"
+                        (onDecline)="declineCertificate()"></verify-certificate>
+</div>

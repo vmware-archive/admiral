@@ -14,6 +14,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { BaseDetailsComponent } from '../../../components/base/base-details.component';
 import { DocumentService } from '../../../utils/document.service';
 import { ErrorService } from "../../../utils/error.service";
+import { ProjectService } from "../../../utils/project.service";
 import { Links } from '../../../utils/links';
 
 @Component({
@@ -28,8 +29,13 @@ import { Links } from '../../../utils/links';
 export class DeploymentDetailsComponent extends BaseDetailsComponent {
 
   constructor(route: ActivatedRoute, router: Router, service: DocumentService,
-              errorService: ErrorService) {
-    super(Links.DEPLOYMENTS, route, router, service, errorService);
+              projectService: ProjectService, errorService: ErrorService) {
+
+      super(Links.DEPLOYMENTS, route, router, service, projectService, errorService);
+  }
+
+  protected onProjectChange() {
+      this.router.navigate(['../'], {relativeTo: this.route});
   }
 
   get deploymentSpecification() {

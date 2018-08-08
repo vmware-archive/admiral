@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { FormControl, FormGroup, Validators } from "@angular/forms";
 import { ActivatedRoute, Router } from '@angular/router';
 import { BaseDetailsComponent } from '../../../../components/base/base-details.component';
@@ -30,10 +30,7 @@ import * as I18n from 'i18next';
 /**
  * Edit a kubernetes cluster.
  */
-export class KubernetesClusterEditComponent extends BaseDetailsComponent
-                                            implements OnInit {
-    projectLink: string;
-
+export class KubernetesClusterEditComponent extends BaseDetailsComponent {
     endpoints: any[];
     endpointDocumentSelfLink: string;
 
@@ -75,18 +72,7 @@ export class KubernetesClusterEditComponent extends BaseDetailsComponent
                 protected projectService: ProjectService,
                 protected errorService: ErrorService) {
 
-        super(Links.CLUSTERS, route, router, documentService, errorService);
-
-        Utils.subscribeForProjectChange(projectService, (changedProjectLink) => {
-            this.projectLink = changedProjectLink;
-
-            this.clearView();
-            this.populateEndpoints();
-        });
-    }
-
-    ngOnInit(): void {
-        super.ngOnInit();
+        super(Links.CLUSTERS, route, router, documentService, projectService, errorService);
 
         this.populateEndpoints();
     }
@@ -142,14 +128,17 @@ export class KubernetesClusterEditComponent extends BaseDetailsComponent
         }
     }
 
+    onProjectChange() {
+        this.router.navigate(['../../../'], {relativeTo: this.route});
+    }
+
     clearView() {
         this.editClusterForm.reset();
         this.editClusterForm.markAsPristine();
     }
 
     populateEndpoints() {
-        this.documentService.list(Links.PKS_ENDPOINTS, {}, this.projectLink)
-        .then(result => {
+        this.documentService.list(Links.PKS_ENDPOINTS, {}).then(result => {
             this.endpoints = result.documents;
             this.preselectEndpointOption();
         }).catch((error) => {
@@ -169,27 +158,40 @@ export class KubernetesClusterEditComponent extends BaseDetailsComponent
         }
     }
 
-    populatePlans(endpoint) {
+    private getAssignedPlans(endpoint) {
+        let assignedPlans;
         if (endpoint && endpoint.planAssignments) {
-            let assignedPlans = endpoint.planAssignments[this.projectLink].plans;
+            let selectedProject = this.projectService.getSelectedProject();
+            let projectLink = selectedProject
+                                && (selectedProject.documentSelfLink || selectedProject.id);
 
-            this.plansLoading = true;
-
-            this.documentService.listWithParams(Links.PKS_PLANS,
-                {endpointLink: endpoint.documentSelfLink || endpoint})
-            .then((result) => {
-                this.plansLoading = false;
-                // show only plans for the currently selected group/project
-                this.plans = result.documents.filter(resultDoc =>
-                    assignedPlans.indexOf(resultDoc.name) !== -1);
-            }).catch(error => {
-                console.error('PKS Plans listing failed', error);
-                this.plansLoading = false;
-                this.showErrorMessage(error);
-            });
-        } else {
-            this.plans = [];
+            assignedPlans = endpoint.planAssignments[projectLink]
+                                && endpoint.planAssignments[projectLink].plans;
         }
+
+        return assignedPlans;
+    }
+
+    populatePlans(endpoint) {
+        let assignedPlans = this.getAssignedPlans(endpoint);
+        if (!assignedPlans) {
+            this.plans = [];
+            return;
+        }
+
+        this.plansLoading = true;
+        this.documentService.listWithParams(Links.PKS_PLANS,
+            {endpointLink: endpoint.documentSelfLink || endpoint})
+        .then((result) => {
+            this.plansLoading = false;
+            // show only plans for the currently selected group/project
+            this.plans = result.documents.filter(resultDoc =>
+                assignedPlans.indexOf(resultDoc.name) !== -1);
+        }).catch(error => {
+            console.error('PKS Plans listing failed', error);
+            this.plansLoading = false;
+            this.showErrorMessage(error);
+        });
     }
 
     update() {

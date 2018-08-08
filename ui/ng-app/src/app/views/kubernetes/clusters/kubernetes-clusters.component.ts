@@ -260,7 +260,7 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
 
         var hostLink = cluster.nodeLinks[0];
 
-        this.service.patch(hostLink, {'powerState': Constants.hosts.state.ON}, this.projectLink)
+        this.service.patch(hostLink, {'powerState': Constants.hosts.state.ON})
             .then(() => {
 
                 this.gridView.refresh();
@@ -280,7 +280,7 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
 
         var hostLink = cluster.nodeLinks[0];
 
-        this.service.patch(hostLink, {'powerState': Constants.hosts.state.SUSPEND}, this.projectLink)
+        this.service.patch(hostLink, {'powerState': Constants.hosts.state.SUSPEND})
             .then(() => {
 
                 this.gridView.refresh();

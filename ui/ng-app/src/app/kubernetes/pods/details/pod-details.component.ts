@@ -13,10 +13,11 @@ import { Component } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { BaseDetailsComponent } from '../../../components/base/base-details.component';
 import { DocumentService } from '../../../utils/document.service';
-import { ErrorService } from "../../../utils/error.service";
+import { ErrorService } from '../../../utils/error.service';
+import { ProjectService } from '../../../utils/project.service';
 import { Links } from '../../../utils/links';
 
-import * as I18n from "i18next";
+import * as I18n from 'i18next';
 
 @Component({
     selector: 'pod-details',
@@ -29,12 +30,13 @@ import * as I18n from "i18next";
 export class PodDetailsComponent extends BaseDetailsComponent {
     logs: any;
     loadingLogs = true;
+
     private logsTimeout;
 
+    constructor(route: ActivatedRoute, router: Router, documentService: DocumentService,
+                projectService: ProjectService, errorService: ErrorService) {
 
-    constructor(route: ActivatedRoute, router: Router, service: DocumentService,
-                errorService: ErrorService) {
-        super(Links.PODS, route, router, service, errorService);
+        super(Links.PODS, route, router, documentService, projectService, errorService);
     }
 
     protected entityInitialized() {
@@ -47,6 +49,10 @@ export class PodDetailsComponent extends BaseDetailsComponent {
                 this.getLogs();
             }, 10000);
         }, 500);
+    }
+
+    protected onProjectChange() {
+        this.router.navigate(['../'], {relativeTo: this.route});
     }
 
     ngOnDestroy() {

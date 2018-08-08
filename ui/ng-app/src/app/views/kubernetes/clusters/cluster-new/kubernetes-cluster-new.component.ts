@@ -10,11 +10,10 @@
  */
 
 import { Component } from '@angular/core';
-import { ActivatedRoute, Router } from "@angular/router";
-import { BaseDetailsComponent } from "../../../../components/base/base-details.component";
-import { DocumentService } from "../../../../utils/document.service";
-import { ErrorService } from "../../../../utils/error.service";
-import { Links } from "../../../../utils/links";
+import { ActivatedRoute, Router } from '@angular/router';
+import { DocumentService } from '../../../../utils/document.service';
+import { ErrorService } from '../../../../utils/error.service';
+import { ProjectService } from '../../../../utils/project.service';
 
 @Component({
     selector: 'app-kubernetes-cluster-new',
@@ -22,20 +21,12 @@ import { Links } from "../../../../utils/links";
     styleUrls: ['./kubernetes-cluster-new.component.scss']
 })
 /**
- * New/Edit kubernetes cluster view.
+ * New kubernetes cluster view.
  */
-export class KubernetesClusterNewComponent extends BaseDetailsComponent {
-    editMode: boolean = false;
+export class KubernetesClusterNewComponent {
 
-    constructor(protected route: ActivatedRoute, protected service: DocumentService,
-                protected router: Router, protected errorService: ErrorService) {
-
-        super(Links.CLUSTERS, route, router, service, errorService);
-    }
-
-    entityInitialized() {
-        if (this.entity) {
-            this.editMode = true;
-        }
+    constructor(protected route: ActivatedRoute, protected documentService: DocumentService,
+                protected router: Router, protected projectService: ProjectService,
+                protected errorService: ErrorService) {
     }
 }

@@ -37,7 +37,7 @@ export class EndpointDetailsComponent extends BaseDetailsComponent {
 
     constructor(route: ActivatedRoute, documentService: DocumentService, router: Router,
                 errorService: ErrorService) {
-        super(Links.PKS_ENDPOINTS, route, router, documentService, errorService);
+        super(Links.PKS_ENDPOINTS, route, router, documentService, null, errorService);
     }
 
     protected entityInitialized() {
