@@ -15,11 +15,14 @@ import { AutoRefreshComponent } from '../../../components/base/auto-refresh.comp
 import { GridViewComponent } from '../../../components/grid-view/grid-view.component';
 import { DocumentService } from '../../../utils/document.service';
 import { ProjectService } from "../../../utils/project.service";
+import { AuthService } from '../../../utils/auth.service';
+import { ErrorService } from '../../../utils/error.service';
 import { RoutesRestriction } from '../../../utils/routes-restriction';
 import { Constants } from '../../../utils/constants';
 import { FT } from '../../../utils/ft';
 import { Utils } from '../../../utils/utils';
 import { Links } from '../../../utils/links';
+
 
 import * as I18n from 'i18next';
 
@@ -34,6 +37,8 @@ import * as I18n from 'i18next';
 export class KubernetesClustersComponent extends AutoRefreshComponent {
     @ViewChild('gridView') gridView: GridViewComponent;
 
+    private userSecurityContext: any;
+
     projectLink: string;
 
     serviceEndpoint = Links.CLUSTERS + '?type=KUBERNETES';
@@ -45,13 +50,21 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
     deleteConfirmationError: string;
 
     constructor(protected service: DocumentService, protected projectService: ProjectService,
-                protected router: Router, protected route: ActivatedRoute) {
+                protected router: Router, protected route: ActivatedRoute, authService: AuthService,
+                private errorService: ErrorService) {
 
         super(router, route, FT.allowHostEventsSubscription(),
                 Utils.getClustersViewRefreshInterval(), true);
 
         Utils.subscribeForProjectChange(projectService, (changedProjectLink) => {
             this.projectLink = changedProjectLink;
+        });
+
+        authService.getCachedSecurityContext().then((securityContext) => {
+            this.userSecurityContext = securityContext;
+        }).catch((error) => {
+            console.log(error);
+            this.errorService.error(Utils.getErrorMessage(error)._generic);
         });
     }
 
@@ -70,6 +83,10 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
                 }
                 if (me.operationSupported('DESTROY', itemVal)) {
                     itemVal.supportsOperationDestroy = true;
+                }
+
+                if (me.operationSupported('REMOVE', itemVal)) {
+                    itemVal.supportsOperationRemove = true;
                 }
 
                 return itemVal;
@@ -164,7 +181,6 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
 
     removeCluster(event, cluster) {
         this.setDeleteOperation('REMOVE', cluster);
-
         event.stopPropagation();
         // clear selection
         this.selectedItem = null;
@@ -252,19 +268,41 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
     operationSupported(op, cluster) {
         let clusterStatus = cluster.status;
 
+        let isClusterOwnedByCurrentUser = this.isClusterOwnedByCurrentUser(cluster);
+
         if (op === 'ENABLE') {
             // Enable
-            return clusterStatus === Constants.clusters.status.DISABLED;
+            return clusterStatus === Constants.clusters.status.DISABLED && isClusterOwnedByCurrentUser;
         } else if (op === 'DISABLE') {
             // Disable
-            return clusterStatus === Constants.clusters.status.ON;
+            return clusterStatus === Constants.clusters.status.ON && isClusterOwnedByCurrentUser;
         } else if (op === 'DESTROY') {
             // Destroy
             return Utils.isPksCluster(cluster)
                     && clusterStatus !== Constants.clusters.status.PROVISIONING
                     && clusterStatus !== Constants.clusters.status.RESIZING
                     && clusterStatus !== Constants.clusters.status.DESTROYING
-                    && clusterStatus !== Constants.clusters.status.UNREACHABLE;
+                    && clusterStatus !== Constants.clusters.status.UNREACHABLE
+                    && isClusterOwnedByCurrentUser;
+        } else if (op === 'REMOVE') {
+            return isClusterOwnedByCurrentUser;
+        }
+
+        return true;
+    }
+
+    isClusterOwnedByCurrentUser(cluster) {
+        let nodes = cluster.nodes;
+        if (nodes && Utils.isContainerDeveloper(this.userSecurityContext)) {
+            let user = this.userSecurityContext.user;
+
+            for (var key in nodes) {
+                let tenantLinks = nodes[key] && nodes[key].tenantLinks;
+
+                if (tenantLinks.indexOf(user) === -1) {
+                    return false;
+                }
+            }
         }
 
         return true;
