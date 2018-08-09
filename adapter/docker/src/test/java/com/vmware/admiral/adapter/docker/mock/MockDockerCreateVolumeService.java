@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -60,7 +60,7 @@ public class MockDockerCreateVolumeService extends StatelessService {
             }
 
             VolumeItem volumeItem = new VolumeItem();
-            volumeItem.Id = request.get(VOLUME_NAME_KEY).toString();
+            volumeItem.Name = request.get(VOLUME_NAME_KEY).toString();
             volumeItem.Driver = VOLUME_DRIVER_KEY;
             volumeItem.Mountpoint = VOLUME_DIRECTORY_KEY;
 

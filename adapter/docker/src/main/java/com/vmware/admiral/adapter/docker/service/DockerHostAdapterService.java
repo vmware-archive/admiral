@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -46,6 +46,7 @@ import com.vmware.admiral.compute.container.ShellContainerExecutorService.ShellC
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.CompletionHandler;
 import com.vmware.xenon.common.TaskState.TaskStage;
@@ -538,6 +539,12 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
                         (currentOpr, currentEx) -> {
                             if (currentEx != null) {
                                 op.fail(fail(request, currentOpr, currentEx));
+                            } else if (currentOpr.getStatusCode() != Operation.STATUS_CODE_OK) {
+                                URI uri = currentOpr.getUri();
+                                String url = String.format("%s://%s", uri.getScheme(), uri.getHost());
+                                String errorMsg = String.format("Invalid docker URL: %s.", url);
+                                op.fail(new LocalizableValidationException(errorMsg,
+                                        "adapter.docker.invalid.url", currentOpr.getUri()));
                             } else {
                                 op.complete();
                             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -54,11 +54,6 @@ import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.FileContentService;
 
-/**
- * Test should be enabled once build is stabilized. Jira task:
- * https://jira-hzn.eng.vmware.com/browse/VBV-671
- *
- */
 public class DockerVolumeAdapterServiceTest extends BaseMockDockerTestCase {
 
     private static final String TEST_CUSTOM_PROP_NAME = "Hostname";
@@ -171,7 +166,7 @@ public class DockerVolumeAdapterServiceTest extends BaseMockDockerTestCase {
                 Map<String, String> body = o.getBody(Map.class);
 
                 try {
-                    assertEquals(body.get(TEST_VOLUME_ID_KEY), TEST_VOLUME_NAME);
+                    assertEquals(body.get(TEST_VOLUME_NAME_KEY), TEST_VOLUME_NAME);
                     assertEquals(body.get(TEST_VOLUME_DRIVER_KEY), TEST_VOLUME_DRIVER);
                     assertEquals(body.get(TEST_VOLUME_MOUNTPOINT_KEY), TEST_VOLUME_MOUNTPOINT);
 
@@ -381,7 +376,7 @@ public class DockerVolumeAdapterServiceTest extends BaseMockDockerTestCase {
                 List<Map<String, Object>> body = o.getBody(List.class);
                 host.log(Level.INFO, "Retrieved volumes list: %s", body);
 
-                Set<Object> volumeNames = body.stream().map((item) -> item.get("Id"))
+                Set<Object> volumeNames = body.stream().map((item) -> item.get("Name"))
                         .collect(Collectors.toSet());
 
                 try {

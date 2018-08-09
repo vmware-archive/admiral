@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -15,6 +15,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.Collections;
 import java.util.List;
@@ -282,6 +283,29 @@ public class ClusterServiceIT extends BaseProvisioningOnCoreOsIT {
         assertEquals(getDockerHostAddressWithPort1, dtoGet.nodes.get(dtoCreated.nodeLinks.get(0))
                 .address);
 
+    }
+
+    @Test
+    public void testAddDockerHostWithInvalidUrlShouldFail() throws Throwable {
+        ClusterDto dtoCreated = createCluster();
+
+        ContainerHostSpec hostSpec = createContainerHostSpec(
+                Collections.singletonList(projectLink),
+                ContainerHostType.DOCKER, true);
+
+        hostSpec.hostState.address = "https://vmware.com";
+
+        String pathHostsInCluster = UriUtils.buildUriPath(ClusterService.SELF_LINK,
+                Service.getId(dtoCreated.documentSelfLink), "hosts");
+
+        try {
+            sendRequest(HttpMethod.POST, pathHostsInCluster, Utils.toJson(hostSpec));
+            fail();
+        } catch (Exception e) {
+            assertTrue(e.getMessage()
+                    .contains("Error connecting to https://vmware.com: " +
+                            "Unexpected error: Invalid docker URL: https://vmware.com."));
+        }
     }
 
     @Override
