@@ -19,69 +19,75 @@
 <div class="main-view">
     <table-view [showSearch]="false">
         <div title class="title">
-            <span>{{ "requests.title" | i18n }}</span>
+            <span>{{"requests.title" | i18n}}</span>
         </div>
 
         <div toolbar>
             <clr-dg-action-bar>
                 <div class="btn-group" role="group" aria-label="Available Actions">
-                    <button type="button" class="btn btn-sm btn-secondary" (click)="refreshRequests($event)">
+                    <button type="button" class="btn btn-sm btn-secondary"
+                            (click)="refreshRequests($event)">
                         <clr-icon shape="refresh"></clr-icon>
-                        <span class="btn-spaced-text">{{ "refresh" | i18n }}</span>
+                        <span class="btn-spaced-text">{{"refresh" | i18n}}</span>
                     </button>
-                    <button type="button" class="btn btn-sm btn-secondary" [disabled]="selectedRequests.length == 0"
+                    <button *ngIf="!isContainerDeveloper" type="button" class="btn btn-sm btn-secondary"
+                            [disabled]="selectedRequests.length == 0"
                             (click)="onRemove()">
                         <clr-icon shape="close"></clr-icon>
-                        <span class="btn-spaced-text">{{ "delete" | i18n }}</span>
+                        <span class="btn-spaced-text">{{"delete" | i18n}}</span>
                     </button>
                 </div>
             </clr-dg-action-bar>
         </div>
 
         <div table-content-view>
-            <clr-datagrid [clrDgLoading]="loading" [clDgRowSelection]="true" [(clrDgSelected)]="selectedRequests">
-                <clr-dg-placeholder>{{ "noItems" | i18n }}</clr-dg-placeholder>
+            <clr-datagrid [clrDgLoading]="loading" [clDgRowSelection]="true"
+                          [(clrDgSelected)]="selectedRequests">
+                <clr-dg-placeholder>{{"noItems" | i18n}}</clr-dg-placeholder>
 
-                <clr-dg-column class="context-id">{{"requests.columnContextId" | i18n }}</clr-dg-column>
-                <clr-dg-column>{{ "requests.columnPhase" | i18n }}</clr-dg-column>
-                <clr-dg-column>{{ "requests.columnRequest" | i18n }}</clr-dg-column>
-                <clr-dg-column>{{ "requests.columnDetails" | i18n }}</clr-dg-column>
+                <clr-dg-column class="context-id">{{"requests.columnContextId" | i18n}}</clr-dg-column>
+                <clr-dg-column>{{"requests.columnPhase" | i18n}}</clr-dg-column>
+                <clr-dg-column>{{"requests.columnRequest" | i18n}}</clr-dg-column>
+                <clr-dg-column>{{"requests.columnDetails" | i18n}}</clr-dg-column>
 
                 <clr-dg-row *clrDgItems="let request of requests" [clrDgItem]="request">
-                    <clr-dg-cell class="context-id" *ngIf="hasResourceIds(request)">{{ requestTitleText(request) }}</clr-dg-cell>
-                    <clr-dg-cell class="context-id" *ngIf="!hasResourceIds(request) && request.name"> {{ request.name }}</clr-dg-cell>
-                    <clr-dg-cell class="context-id" *ngIf="!hasResourceIds(request) && !request.name">{{ "requests.error" | i18n }}</clr-dg-cell>
+                    <clr-dg-cell class="context-id" *ngIf="hasResourceIds(request)"
+                        >{{requestTitleText(request)}}</clr-dg-cell>
+                    <clr-dg-cell class="context-id" *ngIf="!hasResourceIds(request) && request.name"
+                        >{{request.name}}</clr-dg-cell>
+                    <clr-dg-cell class="context-id" *ngIf="!hasResourceIds(request) && !request.name"
+                        >{{"requests.error" | i18n}}</clr-dg-cell>
 
                     <clr-dg-cell>
                         <span *ngIf="isRunning(request)" class="spinner spinner-inline"></span>
                         <clr-icon *ngIf="isSuccessfull(request)" shape="success-standard" class="is-success"></clr-icon>
                         <clr-icon *ngIf="isFailed(request)" shape="error-standard" class="is-error"></clr-icon>
-                        {{ request.taskInfo.stage }} ({{request.subStage}})
+                        {{request.taskInfo.stage}} ({{request.subStage}})
                     </clr-dg-cell>
-                    <clr-dg-cell>{{ request.phase }} -- {{ request.name }}</clr-dg-cell>
+                    <clr-dg-cell>{{request.phase}} -- {{request.name}}</clr-dg-cell>
                     <clr-dg-cell>
                         <a *ngIf="request.eventLogLink" routerLink="../event-logs/{{getEventLogId(request)}}"
-                           routerLinkActive="active">{{ "requests.eventLogLink" | i18n }}</a>
+                           routerLinkActive="active">{{"requests.eventLogLink" | i18n}}</a>
                         <a *ngIf="canNavigateTo('container',request)"
                            allowNavigation [roles]="deploymentsRouteRestriction()"
                            routerLink="{{deploymentsRouterLink('containers',request)}}"
-                           routerLinkActive="active">{{ "requests.containerLink" | i18n }}</a>
+                           routerLinkActive="active">{{"requests.containerLink" | i18n}}</a>
                         <a *ngIf="canNavigateTo('composite-component',request)"
                            allowNavigation [roles]="deploymentsRouteRestriction()"
                            routerLink="{{deploymentsRouterLink('applications',request)}}"
-                           routerLinkActive="active">{{ "requests.compositeComponentLink" | i18n }}</a>
+                           routerLinkActive="active">{{"requests.compositeComponentLink" | i18n}}</a>
                         <a *ngIf="canNavigateTo('network',request)"
                            allowNavigation [roles]="deploymentsRouteRestriction()"
                            routerLink="{{deploymentsRouterLink('networks',request)}}"
-                           routerLinkActive="active">{{ "requests.containerNetworkLink" | i18n }}</a>
+                           routerLinkActive="active">{{"requests.containerNetworkLink" | i18n}}</a>
                         <a *ngIf="canNavigateTo('volume',request)"
                            allowNavigation [roles]="deploymentsRouteRestriction()"
                            routerLink="{{deploymentsRouterLink('volumes',request)}}"
-                           routerLinkActive="active">{{ "requests.containerVolumeLink" | i18n }}</a>
+                           routerLinkActive="active">{{"requests.containerVolumeLink" | i18n}}</a>
                     </clr-dg-cell>
                 </clr-dg-row>
 
-                <clr-dg-footer>{{ footerMessage() }}</clr-dg-footer>
+                <clr-dg-footer>{{footerMessage()}}</clr-dg-footer>
 
             </clr-datagrid>
         </div>

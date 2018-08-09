@@ -9,17 +9,19 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, ViewChild } from "@angular/core";
-import { Router, ActivatedRoute } from "@angular/router";
-import { DocumentListResult, DocumentService } from "../../utils/document.service";
-import { ProjectService } from "../../utils/project.service";
-import { ErrorService } from "../../utils/error.service";
-import { TableViewComponent } from "../table-view/table-view.component";
-import { Constants } from "../../utils/constants";
-import { Links } from "../../utils/links";
-import { CancelablePromise, Utils } from "../../utils/utils";
+import { Component, ViewChild } from '@angular/core';
+import { Router, ActivatedRoute } from '@angular/router';
+import { TableViewComponent } from '../table-view/table-view.component';
+import { AuthService } from '../../utils/auth.service';
+import { DocumentListResult, DocumentService } from '../../utils/document.service';
+import { ProjectService } from '../../utils/project.service';
+import { ErrorService } from '../../utils/error.service';
+import { Constants } from '../../utils/constants';
+import { FT } from '../../utils/ft';
+import { Links } from '../../utils/links';
+import { CancelablePromise, Utils } from '../../utils/utils';
 
-import * as moment from "moment";
+import * as moment from 'moment';
 import * as I18n from 'i18next';
 
 @Component({
@@ -28,7 +30,7 @@ import * as I18n from 'i18next';
     styleUrls: ['./event-logs.component.scss'],
 })
 /**
- * EventLogs main view
+ * Recent events main table view.
  */
 export class EventLogsComponent {
     @ViewChild('tableView') tableView: TableViewComponent;
@@ -39,6 +41,8 @@ export class EventLogsComponent {
     loadingPromise: CancelablePromise<DocumentListResult>;
     loading: boolean = false;
 
+    isContainerDeveloper: boolean;
+
     showDeleteEventLogConfirmation: boolean = false;
     deleteConfirmationAlert: string;
 
@@ -46,8 +50,9 @@ export class EventLogsComponent {
     idForSelection: string;
     refreshInterval: any;
 
-    constructor(protected service: DocumentService, protected projectService: ProjectService,
-                protected router: Router, protected route: ActivatedRoute, private errorService: ErrorService) {
+    constructor(protected router: Router, protected route: ActivatedRoute,
+                protected authService: AuthService, protected errorService: ErrorService,
+                protected service: DocumentService, protected projectService: ProjectService) {
 
         projectService.activeProject.subscribe(() => {
             this.listEventLogs(true);
@@ -64,6 +69,13 @@ export class EventLogsComponent {
         this.refreshInterval = setInterval(() => {
             this.listEventLogs(false);
         }, Constants.recentActivities.REFRESH_INTERVAL);
+
+        if (FT.isApplicationEmbedded() && FT.isPksEnabled()) {
+            this.authService.getCachedSecurityContext().then(securityContext => {
+                // check if the user is only container developer
+                this.isContainerDeveloper = Utils.isContainerDeveloper(securityContext);
+            });
+        }
     }
 
     ngOnDestroy() {

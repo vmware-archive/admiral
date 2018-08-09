@@ -409,8 +409,8 @@ export class Utils {
   }
 
   public static isContainerDeveloper(securityContext) {
-    return securityContext && securityContext.indexOf(Roles.VRA_CONTAINER_DEVELOPER) > -1 &&
-                securityContext.indexOf(Roles.VRA_CONTAINER_ADMIN) == -1;
+    return securityContext && securityContext.indexOf(Roles.VRA_CONTAINER_DEVELOPER) > -1
+                           && securityContext.indexOf(Roles.VRA_CONTAINER_ADMIN) == -1;
   }
 
   public static hasSystemRole(securityContext, roles) {
@@ -420,26 +420,18 @@ export class Utils {
       return false;
     }
 
-    for (var i = 0; i < roles.length; i += 1) {
-      let role = roles[i];
-      if (securityContextRoles && securityContextRoles.indexOf(role) > -1) {
-          return true;
-      }
-    }
+    let match = roles.find(role => securityContextRoles.indexOf(role) > -1);
 
-    return false;
+    return !!match;
   }
 
   public static subscribeForProjectChange(projectService: ProjectService, callback) {
-      let changedProjectLink;
-
       projectService.activeProject.subscribe((value) => {
+        let changedProjectLink;
         if (value && value.documentSelfLink) {
             changedProjectLink = value.documentSelfLink;
         } else if (value && value.id) {
             changedProjectLink = value.id;
-        } else {
-            changedProjectLink = undefined;
         }
 
         callback(changedProjectLink);
