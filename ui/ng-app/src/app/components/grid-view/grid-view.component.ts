@@ -113,6 +113,8 @@ export class GridViewComponent implements OnInit, OnChanges {
     }
   }
 
+  public processItemsFn;
+
   @Input()
   set items(value: any[]) {
     let newCardStyles = value.map((d, index) => {
@@ -125,11 +127,24 @@ export class GridViewComponent implements OnInit, OnChanges {
         };
     });
     this.cardStyles = newCardStyles;
-    this._items = value;
+
+    this._items = this.processItems(value);
   }
 
   get items() {
     return this._items;
+  }
+
+  private processItems(itemsValue) {
+      if (!itemsValue) {
+          return itemsValue;
+      }
+
+      if (this.processItemsFn) {
+          return this.processItemsFn(itemsValue);
+      } else {
+          return itemsValue;
+      }
   }
 
   @HostListener('window:resize')

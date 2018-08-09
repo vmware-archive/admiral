@@ -20,6 +20,7 @@ import { Constants } from '../../utils/constants';
 import { FT } from '../../utils/ft';
 import { Links } from '../../utils/links';
 import { Utils } from '../../utils/utils';
+
 import * as I18n from 'i18next';
 
 @Component({
@@ -43,6 +44,8 @@ export class ClustersComponent extends AutoRefreshComponent {
 
     selectedItem: any;
 
+    hostEventsSubscriptionAllowed: boolean = FT.allowHostEventsSubscription();
+
     constructor(protected service: DocumentService, protected projectService: ProjectService,
                 protected router: Router, protected route: ActivatedRoute) {
 
@@ -57,6 +60,25 @@ export class ClustersComponent extends AutoRefreshComponent {
     ngOnInit(): void {
         this.refreshFnCallScope = this.gridView;
         this.refreshFn = this.gridView.autoRefresh;
+
+        var me = this;
+        this.gridView.processItemsFn = function(itemsValue) {
+            let processedItems = itemsValue.map(itemVal => {
+                if (me.hostEventsSubscriptionAllowed) {
+                    itemVal.supportsOperationRescan = true;
+                }
+                if (me.isVchOperationSupported('ENABLE', itemVal)) {
+                    itemVal.supportsOperationEnable = true;
+                }
+                if (me.isVchOperationSupported('DISABLE', itemVal)) {
+                    itemVal.supportsOperationDisable = true;
+                }
+
+                return itemVal;
+            });
+
+            return processedItems;
+        };
 
         super.ngOnInit();
     }
@@ -121,10 +143,6 @@ export class ClustersComponent extends AutoRefreshComponent {
 
     deleteCanceled() {
         this.clusterToDelete = null;
-    }
-
-    get isSupportedRescan() {
-        return FT.allowHostEventsSubscription();
     }
 
     rescanCluster(event, cluster) {

@@ -39,11 +39,11 @@
                           (click)="editHost($event, item)"><clr-icon shape="pencil" size="20"
                                 class="card-drop-down-actions"></clr-icon>{{ "hosts.actions.edit" | i18n }}</button>
 
-                  <button *ngIf="operationSupported('DISABLE', item)" type="button" class="dropdown-item disableHost"
+                  <button *ngIf="item.supportsOperationDisable" type="button" class="dropdown-item disableHost"
                           (click)="disableHost($event, item)"><clr-icon shape="pause" size="20"
                                 class="card-drop-down-actions"></clr-icon>{{ "hosts.actions.disable" | i18n }}</button>
 
-                  <button *ngIf="operationSupported('ENABLE', item)" type="button" class="dropdown-item enableHost"
+                  <button *ngIf="item.supportsOperationEnable" type="button" class="dropdown-item enableHost"
                           (click)="enableHost($event, item)"><clr-icon shape="play" size="20"
                                 class="card-drop-down-actions"></clr-icon>{{ "hosts.actions.enable" | i18n }}</button>
 
