@@ -190,14 +190,15 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
     @Override
     public void handlePeriodicMaintenance(Operation post) {
         if (attachServiceClient != null) {
-            attachServiceClient.handleMaintenance(post);
+            attachServiceClient.handleMaintenance(Operation.createPost(post.getUri()));
         }
         if (serviceClient != null) {
-            serviceClient.handleMaintenance(post);
+            serviceClient.handleMaintenance(Operation.createPost(post.getUri()));
         }
         if (largeDataClient != null) {
-            largeDataClient.handleMaintenance(post);
+            largeDataClient.handleMaintenance(Operation.createPost(post.getUri()));
         }
+        post.complete();
     }
 
     // image operations ----------------------------------------------------------------------------
@@ -780,8 +781,9 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
      * Common settings on all outgoing requests to the docker server
      */
     protected void prepareRequest(Operation op, boolean longRunningRequest) {
-        op.setReferer(URI.create("/"));
-        op.forceRemote();
+        op.setReferer(URI.create("/"))
+                .addRequestHeader(Operation.REQUEST_AUTH_TOKEN_HEADER, "")
+                .forceRemote();
 
         if (op.getExpirationMicrosUtc() == 0) {
             long timeout = longRunningRequest ?
