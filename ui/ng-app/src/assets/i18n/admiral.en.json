@@ -301,6 +301,7 @@
           "masterNodesIPs": "Master IPs:",
           "dashboardInstalled": "INSTALLED",
           "dashboardNotInstalled": "NOT INSTALLED",
+          "dashboardTooltip": "You may access the Dashboard UI via browser if the Kubernetes API Server is set up to allow authentication with username and password.",
           "totalMemory": "Total Memory:"
         },
         "nodes": {

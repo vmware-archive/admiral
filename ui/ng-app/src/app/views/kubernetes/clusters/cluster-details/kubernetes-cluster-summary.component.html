@@ -44,7 +44,13 @@
       </div>
       <div *ngIf="dashboard" class="summary-subsection-content-row">
         <div class="left-column">{{ "kubernetes.clusters.details.summary.dashboard" | i18n }}</div>
-        <div class="right-column"><span [innerHTML]="dashboard"></span></div>
+        <div class="right-column">
+            <span [innerHTML]="dashboard"></span>
+            <a aria-haspopup="true" role="tooltip" class="tooltip">
+                <clr-icon shape="info-circle" size="20"></clr-icon>
+                <span class="tooltip-content">{{ "kubernetes.clusters.details.summary.dashboardTooltip" | i18n }}</span>
+            </a>
+        </div>
         <div class="clear"></div>
       </div>
       <div *ngIf="isPksCluster" class="summary-subsection-content-row">
