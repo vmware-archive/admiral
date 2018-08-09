@@ -9,16 +9,18 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, ViewChild } from "@angular/core";
-import { Router, ActivatedRoute } from "@angular/router";
-import { DocumentListResult, DocumentService } from "../../utils/document.service";
-import { ProjectService } from "../../utils/project.service";
-import { ErrorService } from "../../utils/error.service";
-import { TableViewComponent } from "../table-view/table-view.component";
-import { Constants } from "../../utils/constants";
-import { Links } from "../../utils/links";
-import { CancelablePromise, Utils } from "../../utils/utils";
-import { RoutesRestriction } from "../../utils/routes-restriction";
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Router, ActivatedRoute } from '@angular/router';
+import { TableViewComponent } from '../table-view/table-view.component';
+import { AuthService } from '../../utils/auth.service';
+import { DocumentListResult, DocumentService } from '../../utils/document.service';
+import { ProjectService } from '../../utils/project.service';
+import { ErrorService } from '../../utils/error.service';
+import { Constants } from '../../utils/constants';
+import { FT } from "../../utils/ft";
+import { Links } from '../../utils/links';
+import { CancelablePromise, Utils } from '../../utils/utils';
+import { RoutesRestriction } from '../../utils/routes-restriction';
 
 import * as I18n from 'i18next';
 
@@ -28,9 +30,9 @@ import * as I18n from 'i18next';
     styleUrls: ['./requests.component.scss'],
 })
 /**
- * Requests main table view
+ * Recent requests main table view.
  */
-export class RequestsComponent {
+export class RequestsComponent implements OnInit, OnDestroy {
     @ViewChild('tableView') tableView: TableViewComponent;
 
     requests: any[] = [];
@@ -40,11 +42,14 @@ export class RequestsComponent {
     loading: boolean = false;
     refreshInterval: any;
 
+    isContainerDeveloper: boolean;
+
     showDeleteRequestConfirmation: boolean = false;
     deleteConfirmationAlert: string;
 
-    constructor(protected service: DocumentService, protected projectService: ProjectService,
-                protected router: Router, protected route: ActivatedRoute, private errorService: ErrorService) {
+    constructor(protected router: Router, protected route: ActivatedRoute,
+                protected authService: AuthService, protected errorService: ErrorService,
+                protected service: DocumentService, protected projectService: ProjectService) {
 
         projectService.activeProject.subscribe(() => {
             this.listRequests(true);
@@ -57,6 +62,13 @@ export class RequestsComponent {
         this.refreshInterval = setInterval(() => {
             this.listRequests(false);
         }, Constants.recentActivities.REFRESH_INTERVAL);
+
+        if (FT.isApplicationEmbedded() && FT.isPksEnabled()) {
+            this.authService.getCachedSecurityContext().then(securityContext => {
+                // check if the user is only container developer
+                this.isContainerDeveloper = Utils.isContainerDeveloper(securityContext);
+            });
+        }
     }
 
     ngOnDestroy() {
@@ -185,9 +197,10 @@ export class RequestsComponent {
 
         this.loading = showLoadingIndicator;
 
-        this.loadingPromise = new CancelablePromise(this.service.list(Links.REQUEST_STATUS, {}));
+        this.loadingPromise = new CancelablePromise(
+                                        this.service.list(Links.REQUEST_STATUS, {}));
 
-        return this.loadingPromise.getPromise().then(result => {
+        this.loadingPromise.getPromise().then(result => {
             this.loading = false;
             this.requests = result.documents;
             this.requests.sort((a, b) => {
