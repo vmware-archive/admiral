@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -14,29 +14,45 @@ package com.vmware.admiral.adapter.docker.service;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
+import static com.vmware.admiral.adapter.docker.mock.MockDockerPathConstants.CREATE;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.logging.Level;
 
 import javax.net.ssl.TrustManager;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.ContainerHostOperationType;
 import com.vmware.admiral.adapter.common.service.mock.MockTaskService.MockTaskState;
 import com.vmware.admiral.adapter.docker.mock.BaseMockDockerTestCase;
+import com.vmware.admiral.adapter.docker.mock.MockDockerContainerListService;
+import com.vmware.admiral.adapter.docker.mock.MockDockerContainerListService.ContainerItem;
+import com.vmware.admiral.adapter.docker.mock.MockDockerCreateContainerService;
+import com.vmware.admiral.adapter.docker.mock.MockDockerCreateVolumeService;
 import com.vmware.admiral.adapter.docker.mock.MockDockerHostService;
+import com.vmware.admiral.adapter.docker.mock.MockDockerNetworkService;
+import com.vmware.admiral.adapter.docker.mock.MockDockerNetworkService.NetworkItem;
 import com.vmware.admiral.adapter.docker.mock.MockDockerPathConstants;
+import com.vmware.admiral.adapter.docker.mock.MockDockerVolumeListService;
+import com.vmware.admiral.adapter.docker.mock.MockDockerVolumeListService.VolumeItem;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.ContainerFactoryService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService.ContainerHostDataCollectionState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
+import com.vmware.admiral.compute.container.HostContainerListDataCollection.ContainerListCallback;
+import com.vmware.admiral.compute.container.HostNetworkListDataCollection.NetworkListCallback;
+import com.vmware.admiral.compute.container.HostVolumeListDataCollection.VolumeListCallback;
 import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
@@ -52,9 +68,10 @@ import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.test.VerificationHost;
 
 /**
- * Test the DockerAdapterService operations (create/delete container)
+ * Test the DockerAdapterService operations (create/delete/list containers/volumes/networks)
  */
 public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
     private ContainerState shellContainerState;
@@ -83,6 +100,13 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
                         mockDockerHost,
                         MockDockerHostService.SELF_LINK + MockDockerPathConstants.INFO)),
                 new MockDockerHostService());
+    }
+
+    @After
+    public void tearDown() throws Throwable {
+        MockDockerVolumeListService.volumesList.clear();
+        MockDockerNetworkService.networksMap.clear();
+        MockDockerContainerListService.containerList.clear();
     }
 
     @Test
@@ -300,6 +324,55 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
         });
     }
 
+    @Test
+    public void testListVolumesWithCallBack() throws Throwable {
+        // Tests the following behaviour:
+        // 1. There are 0 volumes initially
+        // 2. Create one and get the results again. There should be 1.
+        host.log(Level.INFO, "Started listing volumes with callback.");
+        assertListedEntitiesCount(0, ContainerHostOperationType.LIST_VOLUMES, new VolumeItem());
+        createEntity(MockDockerCreateVolumeService.SELF_LINK, () -> {
+            try {
+                assertListedEntitiesCount(1, ContainerHostOperationType.LIST_VOLUMES, new VolumeItem());
+            } catch (Throwable throwable) {
+                throwable.printStackTrace();
+            }
+        });
+    }
+
+    @Test
+    public void testListNetworksWithCallBack() throws Throwable {
+        // Tests the following behaviour:
+        // 1. There are 0 networks initially
+        // 2. Create one and get the results again. There should be 1.
+        host.log(Level.INFO, "Started listing networks with callback.");
+        assertListedEntitiesCount(0, ContainerHostOperationType.LIST_NETWORKS, new NetworkItem());
+        String resourceLink = String.format("%s%s", MockDockerNetworkService.SELF_LINK, CREATE);
+        createEntity(resourceLink, () -> {
+            try {
+                assertListedEntitiesCount(1, ContainerHostOperationType.LIST_NETWORKS, new NetworkItem());
+            } catch (Throwable throwable) {
+                throwable.printStackTrace();
+            }
+        });
+    }
+
+    @Test
+    public void testListContainersWithCallBack() throws Throwable {
+        // Tests the following behaviour:
+        // 1. There are 0 containers initially
+        // 2. Create one and get the results again. There should be 1.
+        host.log(Level.INFO, "Started listing containers with callback.");
+        assertListedEntitiesCount(0, ContainerHostOperationType.LIST_CONTAINERS, new ContainerItem());
+        createEntity(MockDockerCreateContainerService.SELF_LINK, () -> {
+            try {
+                assertListedEntitiesCount(1, ContainerHostOperationType.LIST_CONTAINERS, new ContainerItem());
+            } catch (Throwable throwable) {
+                throwable.printStackTrace();
+            }
+        });
+    }
+
     protected void createDockerHostComputeState() throws Throwable {
         waitForServiceAvailability(ComputeService.FACTORY_LINK);
 
@@ -455,4 +528,108 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
         return commandExecutor;
     }
 
+    private void sendGetOperation (VerificationHost host, String resourceReferrence, Consumer<Operation> handler) {
+        Operation getVolumes = Operation
+                .createGet(UriUtils.buildUri(host, resourceReferrence))
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        host.failIteration(ex);
+                        o.fail(ex);
+                    } else {
+                        host.completeIteration();
+                        handler.accept(o);
+                    }
+                });
+
+        host.testStart(1);
+        host.send(getVolumes);
+        host.testWait();
+    }
+
+    private void createEntity(String resourceReference, Runnable callback) {
+
+        Object entity = null;
+        switch (resourceReference) {
+        case MockDockerCreateVolumeService.SELF_LINK:
+            entity = new VolumeItem();
+            ((VolumeItem) entity).Name = UUID.randomUUID().toString();
+            ((VolumeItem) entity).Driver = "local";
+            break;
+        case MockDockerNetworkService.SELF_LINK + "/create":
+            entity = new NetworkItem();
+            ((NetworkItem) entity).Id = UUID.randomUUID().toString();
+            ((NetworkItem) entity).Name = "testNet";
+            ((NetworkItem) entity).Driver = "local";
+            break;
+        case MockDockerCreateContainerService.SELF_LINK:
+            entity = new ContainerItem();
+            ((ContainerItem) entity).Id = UUID.randomUUID().toString();
+            ((ContainerItem) entity).Cmd = "ping";
+            break;
+        default:
+            break;
+        }
+
+        host.log(Level.INFO, "Trying to post new entity to %s", resourceReference);
+        Operation post = Operation
+                .createPost(UriUtils.buildUri(mockDockerHost, resourceReference))
+                .setBody(entity)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        host.log(Level.WARNING, "Failed creating new entity %s.", e);
+                        host.failIteration(e);
+                    } else {
+                        host.log(Level.INFO, "Entity successfully created.");
+                        host.completeIteration();
+                        callback.run();
+                    }
+                });
+
+        host.testStart(1);
+        host.send(post);
+        host.testWait();
+
+        return;
+    }
+
+    private <T> void assertListedEntitiesCount(int expectedCount, ContainerHostOperationType operationType,
+                                                 T componentType) throws Throwable {
+
+        host.log(Level.INFO, ">>>>>>>>>>>Listing started.<<<<<<<<<<<");
+        sendContainerHostRequest(operationType, UriUtils.buildUri(host, dockerHostState.documentSelfLink));
+        waitForPropertyValue(provisioningTaskLink, MockTaskState.class, TASK_INFO_STAGE,
+                TaskState.TaskStage.FINISHED);
+
+        Map<String, Object> foundEntities;
+        if (componentType instanceof ContainerItem) {
+            foundEntities = new HashMap<>();
+            sendGetOperation(host, provisioningTaskLink, (op) -> {
+                ContainerListCallback callbackResponse =
+                        (ContainerListCallback) op.getBody(MockTaskState.class)
+                                .callbackResponse;
+                op.complete();
+                foundEntities.putAll(callbackResponse.containerIdsAndNames);
+            });
+        } else if (componentType instanceof NetworkItem) {
+            foundEntities = new HashMap<>();
+            sendGetOperation(host, provisioningTaskLink, (op) -> {
+                NetworkListCallback callbackResponse =
+                        (NetworkListCallback) op.getBody(MockTaskState.class)
+                                .callbackResponse;
+                op.complete();
+                foundEntities.putAll(callbackResponse.networkIdsAndNames);
+            });
+        } else {
+            foundEntities = new HashMap<>();
+            sendGetOperation(host, provisioningTaskLink, (op) -> {
+                VolumeListCallback callbackResponse =
+                        (VolumeListCallback) op.getBody(MockTaskState.class)
+                                .callbackResponse;
+                op.complete();
+                foundEntities.putAll(callbackResponse.volumesByName);
+            });
+        }
+        assertEquals(expectedCount, foundEntities.size());
+        host.log(Level.INFO, String.format("%d entities were found.", expectedCount));
+    }
 }

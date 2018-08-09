@@ -45,7 +45,9 @@ import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
 import com.vmware.photon.controller.model.security.util.EncryptionUtils;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceErrorResponse;
 import com.vmware.xenon.common.StatelessService;
+import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -424,6 +426,14 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
 
             callbackResponse.customProperties = PropertyUtils.mergeCustomProperties(
                     callbackResponse.customProperties, request.customProperties);
+            if (callbackResponse.taskInfo == null) {
+                callbackResponse.taskInfo = new TaskState();
+                callbackResponse.taskInfo.stage = taskStage;
+                if (exception != null) {
+                    callbackResponse.taskInfo.failure = ServiceErrorResponse
+                            .create(exception, Operation.STATUS_CODE_INTERNAL_ERROR);
+                }
+            }
 
             URI callbackReference = URI.create(request.serviceTaskCallback.serviceSelfLink);
             if (callbackReference.getScheme() == null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -14,6 +14,7 @@ package com.vmware.admiral.adapter.common.service.mock;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.StatefulService;
@@ -24,6 +25,7 @@ public class MockTaskService extends StatefulService {
     public static class MockTaskState extends ServiceDocument {
         public Map<String, String> customProperties = new HashMap<>();
         public TaskState taskInfo = new TaskState();
+        public Object callbackResponse;
     }
 
     public static interface StateChangeCallback {
@@ -37,6 +39,10 @@ public class MockTaskService extends StatefulService {
     @Override
     public void handlePatch(Operation patch) {
         MockTaskState body = patch.getBody(MockTaskState.class);
+
+        if (patch.getBodyRaw() instanceof ServiceTaskCallbackResponse) {
+            body.callbackResponse = patch.getBodyRaw();
+        }
         setState(patch, body);
         patch.complete();
     }
