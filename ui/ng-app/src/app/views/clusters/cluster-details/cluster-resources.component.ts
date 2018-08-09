@@ -59,6 +59,23 @@ export class ClusterResourcesComponent extends AutoRefreshComponent
         this.refreshFnCallScope = this.gridView;
         this.refreshFn = this.gridView.autoRefresh;
 
+        var me = this;
+        this.gridView.processItemsFn = function(itemsValue) {
+            let processedItems = itemsValue.map(itemVal => {
+                if (me.operationSupported('ENABLE', itemVal)) {
+                    itemVal.supportsOperationEnable = true;
+                }
+                if (me.operationSupported('DISABLE', itemVal)) {
+                    itemVal.supportsOperationDisable = true;
+                }
+
+                return itemVal;
+            });
+
+            return processedItems;
+        };
+
+
         super.ngOnInit();
     }
 
