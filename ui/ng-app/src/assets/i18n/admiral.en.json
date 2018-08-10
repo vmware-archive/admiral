@@ -622,7 +622,7 @@
     "internalRepositories": "Built-in Repositories",
     "publicRepositories": "Repositories",
     "infrastructure": "Infrastructure",
-    "clusters": "Clusters",
+    "clusters": "Container Host Clusters",
     "clustersVic": "Container Hosts",
     "kubernetesClusters": "PKS Clusters",
     "hosts": "Hosts",
