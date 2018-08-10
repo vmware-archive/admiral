@@ -145,19 +145,20 @@ public class PKSClusterResizeTaskService extends
 
     @Override
     public void handlePeriodicMaintenance(Operation post) {
+        // complete the maintenance operation first
+        post.complete();
+
         sendRequest(Operation.createGet(getUri())
                 .setCompletion((op, ex) -> {
                     if (ex != null) {
                         logSevere("Failed to load PKSClusterResizeTask %s, reason: %s",
                                 getSelfLink(), ex.getMessage());
-                        post.fail(new Exception("Failed to load PKSClusterResizeTask state"));
                     } else {
                         PKSClusterResizeTaskState task =
                                 op.getBody(PKSClusterResizeTaskState.class);
                         if (task != null && task.taskSubStage == PROCESSING) {
                             checkResizeStatus(task, null);
                         }
-                        post.complete();
                     }
                 }));
     }

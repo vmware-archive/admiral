@@ -45,6 +45,7 @@ import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Utils;
 
 /**
  * Task implementing removal of PKS clusters.
@@ -158,21 +159,27 @@ public class PKSClusterRemovalTaskService extends
 
     @Override
     public void handlePeriodicMaintenance(Operation post) {
+        // complete the maintenance operation first
+        post.complete();
+
+        logFine("enter handlePeriodicMaintenance for %s", getSelfLink());
         sendRequest(Operation.createGet(getUri())
                 .setCompletion((op, ex) -> {
+                    logFine("handlePeriodicMaintenance task %s fetched", getSelfLink());
                     if (ex != null) {
                         logSevere("Failed to load PKSClusterRemovalTask %s, reason: %s",
                                 getSelfLink(), ex.getMessage());
-                        post.fail(new Exception("Failed to load PKSClusterRemovalTask state"));
                     } else {
                         PKSClusterRemovalTaskState task =
                                 op.getBody(PKSClusterRemovalTaskState.class);
                         if (task != null && task.taskSubStage == SubStage.INSTANCES_REMOVING) {
+                            logFine("calling checkDeleteStatus for %s", getSelfLink());
                             checkDeletionStatus(task, null);
                         }
-                        post.complete();
+                        logFine("completing maintenance operation for %s", getSelfLink());
                     }
                 }));
+        logFine("exit handlePeriodicMaintenance for %s", getSelfLink());
     }
 
     @Override
@@ -274,11 +281,14 @@ public class PKSClusterRemovalTaskService extends
     private void checkDeletionStatus(PKSClusterRemovalTaskState task, PKSCluster cluster) {
         // get pks cluster, verify status and proceed to COMPLETED or FAILED if cluster is
         // deleted or failed. If it is still being deleted do nothing
+        logFine("enter checkDeletionStatus for %s, cluster=%s", getSelfLink(), cluster);
 
         if (cluster == null) {
             checkPKSClusterStatus(task);
             return;
         }
+
+        logFine("checkDeletionStatus for %s, cluster=%s", getSelfLink(), Utils.toJson(cluster));
 
         if (PKS_LAST_ACTION_DELETE.equals(cluster.lastAction)) {
             if (PKS_LAST_ACTION_STATE_FAILED.equals(cluster.lastActionState)) {
@@ -297,12 +307,14 @@ public class PKSClusterRemovalTaskService extends
     }
 
     private void checkPKSClusterStatus(PKSClusterRemovalTaskState task) {
+        logFine("enter checkPKSClusterStatus for %s", getSelfLink());
         AdapterRequest adapterRequest = createAdapterRequest(task, PKSOperationType.GET_CLUSTER);
-
+        logFine("sending patch to pks adapter to get cluster, %s", getSelfLink());
         Operation.createPatch(getHost(), ManagementUriParts.ADAPTER_PKS)
                 .setBodyNoCloning(adapterRequest)
                 .setContextId(getSelfId())
                 .setCompletion((o, e) -> {
+                    logFine("received pks adapter request response, %s", getSelfLink());
                     if (e != null) {
                         if (checkForNotFoundException(e)) {
                             logInfo("PKS cluster %s has been deleted, GET status code is 404",
@@ -319,19 +331,24 @@ public class PKSClusterRemovalTaskService extends
                             failTask("PKS adapter request failed for: " + task.clusterName, le);
                             return;
                         }
+                        logFine("increasing failureCounter to %d, %s", task.failureCounter, getSelfLink());
                         proceedTo(INSTANCES_REMOVING, t -> t.failureCounter = task.failureCounter);
                         return;
                     }
                     PKSCluster pksCluster = o.getBody(PKSCluster.class);
                     if (pksCluster != null) {
+                        logFine("get pks cluster returns non null value, check delete status, %s", getSelfLink());
                         checkDeletionStatus(task, pksCluster);
                         if (task.failureCounter > 0) {
                             // reset the failure counter
                             proceedTo(INSTANCES_REMOVING, t -> t.failureCounter = 0);
                         }
+                    } else {
+                        logWarning("PKS cluster returned for %s is NULL!", getSelfLink());
                     }
                 })
                 .sendWith(this);
+        logFine("exit checkPKSClusterStatus for %s", getSelfLink());
     }
 
     private boolean checkForNotFoundException(Throwable e) {
