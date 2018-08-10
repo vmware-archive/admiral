@@ -204,18 +204,19 @@ public class PKSClusterProvisioningTaskService extends
 
     @Override
     public void handlePeriodicMaintenance(Operation post) {
+        // complete the maintenance operation first
+        post.complete();
+
         sendRequest(Operation.createGet(getUri())
                 .setCompletion((op, ex) -> {
                     if (ex != null) {
                         logSevere("Failed to load PKSClusterProvisioningTask %s, reason: %s",
                                 getSelfLink(), ex.getMessage());
-                        post.fail(new Exception("Failed to load PKSClusterProvisioningTask state"));
                     } else {
                         PKSProvisioningTaskState task = op.getBody(PKSProvisioningTaskState.class);
                         if (task != null && task.taskSubStage == PROCESSING) {
                             checkProvisioningStatus(task, null);
                         }
-                        post.complete();
                     }
                 }));
     }
