@@ -33,7 +33,7 @@ import org.bouncycastle.util.encoders.Base64;
  * Utility class that provides methods for public/private key generation and key conversion.
  */
 public class KeyUtil {
-    public static final int KEY_SIZE = 1024;
+    public static final int KEY_SIZE = 3072;
     public static final String RSA_ALGORITHM = "RSA";
 
     public static KeyPair generateRSAKeyPair() {
