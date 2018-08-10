@@ -128,7 +128,7 @@ public class ContainerImageService extends StatelessService {
         // limit the number of adapter requests if the search term contains a registry hostname
         // otherwise, query for registries and execute an adapter request for each one
         DockerImage image = parseDockerImage(searchTerm);
-        if (image != null && image.getHost() != null) {
+        if (image != null && image.getHost() != null && !image.getHost().isEmpty()) {
             RegistryUtil.findRegistriesByHostname(getHost(), image.getHost(), tenantLinks,
                     (registries, errors) -> {
                         if (errors != null && !errors.isEmpty()) {
