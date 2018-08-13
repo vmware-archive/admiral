@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -594,7 +594,7 @@ class ContainerDefinitionForm extends Component {
 }
 
 var updateForm = function(data, oldData) {
-  if (data.image !== oldData.image) {
+  if (utils.hasChanged(data.image, oldData.image)) {
     var tag = imageUtils.getImageTag(data.image);
     if (tag) {
       this.$imageSearch.typeahead('val', data.image.slice(0, data.image.lastIndexOf(':')));
@@ -606,11 +606,11 @@ var updateForm = function(data, oldData) {
     definitionFormUtils.loadTags(this.$tagsHolder, data.image, tag);
   }
 
-  if (data.name !== oldData.name) {
+  if (utils.hasChanged(data.name, oldData.name)) {
     this.$el.find('.container-name-input .form-control').val(data.name);
   }
 
-  if (data.command !== oldData.command) {
+  if (utils.hasChanged(data.command, oldData.command)) {
     var commands = [];
     if (data.command) {
       data.command.forEach(function(o) {
@@ -623,7 +623,7 @@ var updateForm = function(data, oldData) {
     this.commandsEditor.setData(commands);
   }
 
-  if (data.otherContainers !== oldData.otherContainers) {
+  if (utils.hasChanged(data.otherContainers, oldData.otherContainers)) {
     var options = [];
     if (data.otherContainers) {
       data.otherContainers.forEach(function(o) {
@@ -642,7 +642,7 @@ var updateForm = function(data, oldData) {
     this.affinityConstraintsEditor.setOptions({servicename: options});
   }
 
-  if (data.availableNetworks !== oldData.availableNetworks) {
+  if (utils.hasChanged(data.availableNetworks, oldData.availableNetworks)) {
     var availableNetworks = [];
     if (data.availableNetworks) {
       data.availableNetworks.forEach(function(o) {
@@ -660,7 +660,7 @@ var updateForm = function(data, oldData) {
     this.networksEditor.setOptions({network: availableNetworks});
   }
 
-  if (data.links !== oldData.links) {
+  if (utils.hasChanged(data.links, oldData.links)) {
     var links = [];
     if (data.links) {
       data.links.forEach(function(o) {
@@ -675,7 +675,7 @@ var updateForm = function(data, oldData) {
     this.linksEditor.setData(links);
   }
 
-  if (data.portBindings !== oldData.portBindings) {
+  if (utils.hasChanged(data.portBindings, oldData.portBindings)) {
     var portBindings = [];
     if (data.portBindings) {
       data.portBindings.forEach(function(pb) {
@@ -689,16 +689,16 @@ var updateForm = function(data, oldData) {
     this.portsEditor.setData(portBindings);
   }
 
-  if (data.publishAll !== oldData.publishAll) {
+  if (utils.hasChanged(data.publishAll, oldData.publishAll)) {
     this.$el.find('.container-ports-publish-input .checkbox-control')
       .prop('checked', !!data.publishAll);
   }
 
-  if (data.hostname !== oldData.hostname) {
+  if (utils.hasChanged(data.hostname, oldData.hostname)) {
     this.$el.find('.container-hostname-input .form-control').val(data.hostname);
   }
 
-  if (data.deploymentPolicies !== oldData.deploymentPolicies) {
+  if (utils.hasChanged(data.deploymentPolicies, oldData.deploymentPolicies)) {
     $('.deployment-policy-input .form-control').empty();
     $('.deployment-policy-input .form-control').append(new Option());
     if (data.deploymentPolicies) {
@@ -712,13 +712,13 @@ var updateForm = function(data, oldData) {
     }
   }
 
-  if (data.deploymentPolicyId !== oldData.deploymentPolicyId) {
+  if (utils.hasChanged(data.deploymentPolicyId, oldData.deploymentPolicyId)) {
     this.$el.find('.deployment-policy-input .form-control').val(data.deploymentPolicyId);
   }
 
   var $networkMode = this.$el.find('.container-network-mode-input');
 
-  if (data.availableNetworks !== oldData.availableNetworks) {
+  if (utils.hasChanged(data.availableNetworks, oldData.availableNetworks)) {
     var $networks = this.$el.find('.container-networks-input');
     if (data.availableNetworks) {
       $networks.removeClass('hide');
@@ -727,7 +727,7 @@ var updateForm = function(data, oldData) {
     }
   }
 
-  if (data.networks !== oldData.networks) {
+  if (utils.hasChanged(data.networks, oldData.networks)) {
     var networks = [];
     if (data.networks) {
       for (var key in data.networks) {
@@ -741,13 +741,13 @@ var updateForm = function(data, oldData) {
     this.networksEditor.setData(networks);
   }
 
-  if (data.networkMode !== oldData.networkMode) {
+  if (utils.hasChanged(data.networkMode, oldData.networkMode)) {
     if (data.networkMode === '' || data.networkMode) {
       $networkMode.find('.form-control').val(data.networkMode);
     }
   }
 
-  if (data.volumes !== oldData.volumes) {
+  if (utils.hasChanged(data.volumes, oldData.volumes)) {
     var volumes = [];
     if (data.volumes) {
       data.volumes.forEach(function(vol) {
@@ -781,7 +781,7 @@ var updateForm = function(data, oldData) {
     this.volumesEditor.setData(volumes);
   }
 
-  if (data.volumesFrom !== oldData.volumesFrom) {
+  if (utils.hasChanged(data.volumesFrom, oldData.volumesFrom)) {
     var volumesFrom = [];
     if (data.volumesFrom) {
       data.volumesFrom.forEach(function(v) {
@@ -794,25 +794,25 @@ var updateForm = function(data, oldData) {
     this.volumesFromEditor.setData(volumesFrom);
   }
 
-  if (data.workingDir !== oldData.workingDir) {
+  if (utils.hasChanged(data.workingDir, oldData.workingDir)) {
     this.$el.find('.container-working-directory-input .form-control').val(data.workingDir);
   }
-  if (data._cluster !== oldData._cluster) {
+  if (utils.hasChanged(data._cluster, oldData._cluster)) {
     this.$el.find('.container-cluster-size-input .form-control').val(data._cluster);
   }
-  if (data.restartPolicy !== oldData.restartPolicy) {
+  if (utils.hasChanged(data.restartPolicy, oldData.restartPolicy)) {
     if (data.restartPolicy) {
       this.$el.find('.container-restart-policy-input .form-control').val(data.restartPolicy);
     }
   }
-  if (data.maximumRetryCount !== oldData.maximumRetryCount) {
+  if (utils.hasChanged(data.maximumRetryCount, oldData.maximumRetryCount)) {
     this.$el.find('.container-max-restarts-input .form-control').val(data.maximumRetryCount);
   }
-  if (data.cpuShares !== oldData.cpuShares) {
+  if (utils.hasChanged(data.cpuShares, oldData.cpuShares)) {
     this.$el.find('.container-cpu-shares-input .form-control').val(data.cpuShares);
   }
 
-  if (data.memoryLimit !== oldData.memoryLimit) {
+  if (utils.hasChanged(data.memoryLimit, oldData.memoryLimit)) {
     if ($.isNumeric(data.memoryLimit)) {
       let size = formatUtils.fromBytes(data.memoryLimit);
       normalizeToKB(size);
@@ -824,7 +824,7 @@ var updateForm = function(data, oldData) {
     }
   }
 
-  if (data.memorySwapLimit !== oldData.memorySwapLimit) {
+  if (utils.hasChanged(data.memorySwapLimit, oldData.memorySwapLimit)) {
     if ($.isNumeric(data.memorySwapLimit)) {
       let size = formatUtils.fromBytes(data.memorySwapLimit);
       normalizeToKB(size);
@@ -836,7 +836,7 @@ var updateForm = function(data, oldData) {
     }
   }
 
-  if (data.healthConfig !== oldData.healthConfig) {
+  if (utils.hasChanged(data.healthConfig, oldData.healthConfig)) {
     if (data.healthConfig) {
       let protocol = data.healthConfig.protocol;
 
@@ -871,7 +871,7 @@ var updateForm = function(data, oldData) {
     }
   }
 
-  if (data.affinity !== oldData.affinity) {
+  if (utils.hasChanged(data.affinity, oldData.affinity)) {
     var affinity = [];
     if (data.affinity) {
       data.affinity.forEach(function(c) {
@@ -891,7 +891,7 @@ var updateForm = function(data, oldData) {
     this.affinityConstraintsEditor.setData(affinity);
   }
 
-  if (data.env !== oldData.env) {
+  if (utils.hasChanged(data.env, oldData.env)) {
     var env = [];
     if (data.env) {
       data.env.forEach(function(e) {
@@ -906,13 +906,13 @@ var updateForm = function(data, oldData) {
     this.environmentEditor.setData(env);
   }
 
-  if (data.customProperties !== oldData.customProperties) {
+  if (utils.hasChanged(data.customProperties, oldData.customProperties)) {
     var customProperties = utils.objectToArray(data.customProperties);
 
     this.customPropertiesEditor.setData(customProperties);
   }
 
-  if (data.logConfig !== oldData.logConfig) {
+  if (utils.hasChanged(data.logConfig, oldData.logConfig)) {
     if (data.logConfig) {
       this.$el.find('.container-logconfig-driver-input .form-control').val(data.logConfig.type);
       var logConfigOptions = utils.objectToArray(data.logConfig.config);

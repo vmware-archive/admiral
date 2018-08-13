@@ -35,7 +35,7 @@ var isInteger = function(integer, min, max) {
   var range = {};
   range.min = min !== undefined ? min : -2147483648;
   range.max = max !== undefined ? max : 2147483647;
-  return validator.isInt(integer, range);
+  return validator.isInt(integer + '', range);
 };
 
 var isNgViewFromViews = function(views, viewName, hasNgParent) {
@@ -143,10 +143,10 @@ var utils = {
   },
 
   isValidPort: function(port) {
-    return validator.isInt(port, {
+    return validator.isInt(port + '', {
         min: 0,
         max: 65535
-      }) || validator.trim(port).match(/__null/g);
+      }) || validator.trim(port + '').match(/__null/g);
   },
 
   isValidContainerMemory: function(mem) {
@@ -159,7 +159,7 @@ var utils = {
       max: 9007199254740991 // Number.MAX_SAFE_INTEGER
     };
 
-    return validator.isInt(mem, range);
+    return validator.isInt(mem + '', range);
   },
 
   isInteger: isInteger,
@@ -390,7 +390,7 @@ var utils = {
       max: 9007199254740991 // Number.MAX_SAFE_INTEGER
     };
 
-    return validator.isInt(intValue, limitValueRange);
+    return validator.isInt(intValue + '', limitValueRange);
   },
 
   containerStatusDisplay: function(state, timestamp, status) {
@@ -753,6 +753,12 @@ var utils = {
     }
 
     return obj;
+  },
+
+  hasChanged: function(newValue, oldValue) {
+    // returns true when the new value does not equal the old value
+    // AND any of the new or old values are non-null and defined
+    return (newValue || oldValue) && (newValue !== oldValue);
   },
 
   paramsToURI: function(params) {
