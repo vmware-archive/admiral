@@ -212,10 +212,10 @@ export class EndpointCreateComponent {
                 && this.endpointDetailsForm.get("uaaCredentials").value.documentSelfLink;
 
             endpointDataRaw = {
-                name: this.endpointDetailsForm.get("name").value,
-                desc: this.endpointDetailsForm.get("description").value,
-                uaaEndpoint: this.endpointDetailsForm.get("uaaAddress").value,
-                apiEndpoint: this.endpointDetailsForm.get("pksAddress").value,
+                name: this.endpointDetailsForm.get("name").value.trim(),
+                desc: this.endpointDetailsForm.get("description").value.trim(),
+                uaaEndpoint: this.endpointDetailsForm.get("uaaAddress").value.trim(),
+                apiEndpoint: this.endpointDetailsForm.get("pksAddress").value.trim(),
                 authCredentialsLink: uaaCredentialsLink
             };
         }
