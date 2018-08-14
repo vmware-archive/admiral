@@ -16,7 +16,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Base64;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 import java.util.logging.Level;
 
 import com.google.common.cache.Cache;
@@ -27,6 +26,7 @@ import com.vmware.photon.controller.model.security.util.EncryptionUtils;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.AuthorizationContext;
 import com.vmware.xenon.common.ReflectionUtils;
+import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
@@ -96,20 +96,20 @@ public class AuthUtils {
         if (authCtx == null) {
             try {
                 Method getAuthorizationContext = ServiceHost.class
-                        .getDeclaredMethod("getAuthorizationContext", Operation.class,
-                                Consumer.class);
+                        .getDeclaredMethod("getAuthorizationContext", Service.class,
+                                String.class);
                 getAuthorizationContext.setAccessible(true);
+                String token = BasicAuthenticationUtils.getAuthToken(op);
+                if (token != null) {
+                    AuthorizationContext context = (AuthorizationContext) getAuthorizationContext
+                            .invoke(host, null, token);
 
-                Consumer<AuthorizationContext> con = (authorizationContext) -> {
-                    if (authorizationContext == null || authorizationContext.isSystemUser()) {
-                        return;
+                    if (!(context == null || context.isSystemUser())) {
+                        op.setAuthorizationContext(context);
+                        validateSessionData(host, op, guestCtx, context);
                     }
+                }
 
-                    op.setAuthorizationContext(authorizationContext);
-                    validateSessionData(host, op, guestCtx, authorizationContext);
-                };
-
-                getAuthorizationContext.invoke(host, op, con);
             } catch (NoSuchMethodException | IllegalAccessException
                     | InvocationTargetException e ) {
                 op.fail(e);
