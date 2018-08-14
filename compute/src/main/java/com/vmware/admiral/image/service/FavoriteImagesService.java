@@ -144,6 +144,7 @@ public class FavoriteImagesService extends StatefulService {
     @ApiOperation(
             value = "Get specific favorite image.",
             notes = "Retrieve a specific favorite image instance based on the provided id.",
+            nickname = "getSingle",
             response = FavoriteImage.class)
     @ApiResponses(value = {
             @ApiResponse(code = Operation.STATUS_CODE_OK, message = "Successfully retrieved image."),
@@ -160,7 +161,8 @@ public class FavoriteImagesService extends StatefulService {
     @Path(INSTANCE_PATH)
     @ApiOperation(
             value = "Remove specific image from favorites.",
-            notes = "Removes a specific image from favorites based on the provided id.")
+            notes = "Removes a specific image from favorites based on the provided id.",
+            nickname = "removeFavorite")
     @ApiResponses(value = {
             @ApiResponse(code = Operation.STATUS_CODE_OK, message = "Successfully removed image from favorites.")})
     @ApiImplicitParams({

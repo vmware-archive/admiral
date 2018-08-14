@@ -76,7 +76,8 @@ public class FavoriteImageFactoryService extends AbstractSecuredFactoryService {
     @ApiOperation(
             value = "Get all favorite images.",
             notes = "Retrieves all favorite images from the database. Images are project global, " +
-                    "which means that all projects have the same favorites")
+                    "which means that all projects have the same favorites",
+            nickname = "getAll")
     @ApiResponses({@ApiResponse(code = Operation.STATUS_CODE_OK,
             message = "Successfully retrieved all favorite images.")})
     @ApiImplicitParams({@ApiImplicitParam(name = "expand", value = "Expand option to view details of the instances",
@@ -93,7 +94,8 @@ public class FavoriteImageFactoryService extends AbstractSecuredFactoryService {
             value = "Create a new favorite image.",
             notes = "Adds the specified image to favorites. " +
                     "An image which already exists as favorite will not be added. " +
-                    "An image whose registry is either disabled or not present will not be added.")
+                    "An image whose registry is either disabled or not present will not be added.",
+            nickname = "addFavorite")
     @ApiResponses(value = {
             @ApiResponse(code = Operation.STATUS_CODE_OK, message = "Image successfully added to favorites."),
             @ApiResponse(code = Operation.STATUS_CODE_NOT_MODIFIED, message = "Image already exists as favorite."),

@@ -82,6 +82,7 @@ public class PKSClusterListService extends StatelessService {
             value = "List one or all PKS clusters",
             notes = "Retrieves all PKS clusters if no endpoint link is supplied." + LINE_BREAK + LINE_BREAK +
                     "Retrieves a single PKS cluster when an enpoint link is supplied.",
+            nickname = "getSingleOrAll",
             response = PKSCluster.class,
             responseContainer = "List")
     @ApiResponses({

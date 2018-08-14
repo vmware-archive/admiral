@@ -153,7 +153,8 @@ public class PKSClusterConfigService extends StatelessService {
             value = "Add a PKS host to either a new PKS cluster or to an existing one.",
             notes = "Adds a PKS host to an existing cluster when existing PKS cluster endpoint link is " +
                     "supplied in the body." + LINE_BREAK + LINE_BREAK + "Adds a new PKS host to a new cluster " +
-                    "when the cluster information is supplied in the body")
+                    "when the cluster information is supplied in the body",
+            nickname = "addPKSHost")
     @ApiResponses({
             @ApiResponse(code = Operation.STATUS_CODE_OK, message = "PKS host successfully added.")})
     @ApiImplicitParams({
