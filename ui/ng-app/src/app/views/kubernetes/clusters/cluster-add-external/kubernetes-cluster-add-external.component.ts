@@ -82,15 +82,15 @@ export class KubernetesClusterAddExternalComponent implements OnInit {
         });
     }
 
-    save() {
-        this.createCluster(false);
+    add() {
+        this.addCluster(false);
     }
 
     cancel() {
         this.goBack();
     }
 
-    private createCluster(certificateAccepted: boolean) {
+    private addCluster(certificateAccepted: boolean) {
         if (this.clusterForm.valid) {
             let formValues = this.clusterForm.value;
 
@@ -141,7 +141,7 @@ export class KubernetesClusterAddExternalComponent implements OnInit {
     acceptCertificate() {
         this.showCertificateWarning = false;
 
-        this.createCluster(true);
+        this.addCluster(true);
     }
 
     cancelAcceptCertificate() {
