@@ -12,7 +12,8 @@
 import { Component, ViewChild, Input } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { DocumentService } from '../../utils/document.service';
-import { ProjectService } from "../../utils/project.service";
+import { ErrorService } from '../../utils/error.service';
+import { ProjectService } from '../../utils/project.service';
 import { GridViewComponent } from '../../components/grid-view/grid-view.component';
 import { AutoRefreshComponent } from '../../components/base/auto-refresh.component';
 import { RoutesRestriction } from '../../utils/routes-restriction';
@@ -46,8 +47,9 @@ export class ClustersComponent extends AutoRefreshComponent {
 
     hostEventsSubscriptionAllowed: boolean = FT.allowHostEventsSubscription();
 
-    constructor(protected service: DocumentService, protected projectService: ProjectService,
-                protected router: Router, protected route: ActivatedRoute) {
+    constructor(protected route: ActivatedRoute, protected router: Router,
+                protected service: DocumentService, protected projectService: ProjectService,
+                protected errorService: ErrorService) {
 
         super(router, route, FT.allowHostEventsSubscription(),
               Utils.getClustersViewRefreshInterval(), true);
@@ -152,6 +154,8 @@ export class ClustersComponent extends AutoRefreshComponent {
 
         this.service.get(cluster.documentSelfLink + '/hosts')
         .then((clusterHostsResult) => {
+            this.gridView.refresh();
+
             let computeContainerHostLinks = [];
 
             if (FT.isApplicationEmbedded()) {
@@ -172,11 +176,13 @@ export class ClustersComponent extends AutoRefreshComponent {
                     Utils.getClusterRescanRetriesNumber(), Utils.getClusterRescanInterval());
             }).catch(error => {
                 console.error('Rescan of cluster failed', Utils.getErrorMessage(error)._generic);
+                this.errorService.error(Utils.getErrorMessage(error)._generic);
             });
 
         }).catch(error => {
             console.error('Cannot retrieve cluster resources',
                                                             Utils.getErrorMessage(error)._generic);
+            this.errorService.error(Utils.getErrorMessage(error)._generic);
         });
 
         return false; // prevents navigation
@@ -205,8 +211,9 @@ export class ClustersComponent extends AutoRefreshComponent {
         .then(result => {
             this.gridView.refresh();
         })
-        .catch(err => {
-            console.log(Utils.getErrorMessage(err)._generic);
+        .catch(error => {
+            console.log(Utils.getErrorMessage(error)._generic);
+            this.errorService.error(Utils.getErrorMessage(error)._generic);
         });
     }
 
@@ -239,6 +246,7 @@ export class ClustersComponent extends AutoRefreshComponent {
         }).catch(error => {
             console.error('Cannot refresh cluster information',
                 Utils.getErrorMessage(error)._generic);
+            this.errorService.error(Utils.getErrorMessage(error)._generic);
         });
     }
 
