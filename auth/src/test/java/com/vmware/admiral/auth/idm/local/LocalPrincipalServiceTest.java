@@ -70,6 +70,7 @@ public class LocalPrincipalServiceTest extends AuthBaseTest {
 
         RoleState roleState = getDocumentNoWait(RoleState.class,
                 UriUtils.buildUriPath(RoleService.FACTORY_LINK, encode(fritzEmail)));
+        // test commit
         assertNotNull(roleState);
         assertEquals(userGroupState.documentSelfLink, roleState.userGroupLink);
         assertEquals(resourceGroupState.documentSelfLink, roleState.resourceGroupLink);
