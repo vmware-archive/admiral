@@ -166,6 +166,22 @@ export class RequestsComponent implements OnInit, OnDestroy {
         return request.resourceLinks.some(resourceLink => resourceLink.indexOf(Links.CONTAINER_VOLUMES) !== -1);
     }
 
+    isKubernetesDeployment(request: any) {
+        if (!request || !request.resourceLinks) {
+            return false;
+        }
+
+        return request.resourceLinks.some(resourceLink => resourceLink.indexOf(Links.DEPLOYMENTS) !== -1);
+    }
+
+    isCluster(request: any) {
+        if (!request || !request.resourceLinks) {
+            return false;
+        }
+
+        return request.resourceLinks.some(resourceLink => resourceLink.indexOf(Links.CLUSTERS) !== -1);
+    }
+
     canNavigateTo(direction: string, request: any) {
         if (request.eventLogLink || this.isRunning(request)) {
             return false;
@@ -180,14 +196,13 @@ export class RequestsComponent implements OnInit, OnDestroy {
                 return this.isContainerNetwork(request);
             case Constants.recentActivities.requests.navigation.volume:
                 return this.isContainerVolume(request);
+            case Constants.recentActivities.requests.navigation.kubernetesDeployments:
+                return this.isKubernetesDeployment(request);
+            case Constants.recentActivities.requests.navigation.kubernetesClusters:
+                return this.isCluster(request);
             default:
                 return false;
         }
-    }
-
-    deploymentsRouterLink(deploymentsSubTab: string, request: string) {
-        let documentId = this.getDocumentId(request);
-        return `../${deploymentsSubTab}?$occurrence=any&documentId=${documentId}`;
     }
 
     private listRequests(showLoadingIndicator?: boolean) {
