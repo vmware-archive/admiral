@@ -12,7 +12,6 @@
 package com.vmware.photon.controller.model.tasks;
 
 import static com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata.factoryService;
-import static com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata.service;
 
 import com.vmware.photon.controller.model.tasks.monitoring.SingleResourceStatsAggregationTaskService;
 import com.vmware.photon.controller.model.tasks.monitoring.SingleResourceStatsCollectionTaskService;
@@ -29,7 +28,6 @@ import com.vmware.xenon.services.common.TaskFactoryService;
 public class PhotonModelTaskServices {
 
     public static final ServiceMetadata[] SERVICES_METADATA = {
-            service(IPAddressReleaseTaskService.class),
             factoryService(ResourceAllocationTaskService.class),
             factoryService(ResourceEnumerationTaskService.class),
             factoryService(ImageEnumerationTaskService.class),
@@ -37,7 +35,6 @@ public class PhotonModelTaskServices {
             factoryService(ResourceRemovalTaskService.class),
             factoryService(ProvisionComputeTaskService.class),
             factoryService(ProvisionNetworkTaskService.class),
-            factoryService(IPAddressAllocationTaskService.class),
             factoryService(ProvisionSubnetTaskService.class),
             factoryService(ProvisionLoadBalancerTaskService.class),
             factoryService(SnapshotTaskService.class),
@@ -59,7 +56,6 @@ public class PhotonModelTaskServices {
             ResourceRemovalTaskService.FACTORY_LINK,
             ProvisionComputeTaskService.FACTORY_LINK,
             ProvisionNetworkTaskService.FACTORY_LINK,
-            IPAddressAllocationTaskService.FACTORY_LINK,
             ProvisionSubnetTaskService.FACTORY_LINK,
             ProvisionLoadBalancerTaskService.FACTORY_LINK,
             SnapshotTaskService.FACTORY_LINK,
@@ -91,8 +87,6 @@ public class PhotonModelTaskServices {
                 () -> TaskFactoryService.create(ProvisionComputeTaskService.class));
         host.startFactory(ProvisionNetworkTaskService.class,
                 () -> TaskFactoryService.create(ProvisionNetworkTaskService.class));
-        host.startFactory(IPAddressAllocationTaskService.class,
-                () -> TaskFactoryService.create(IPAddressAllocationTaskService.class));
         host.startFactory(ProvisionSubnetTaskService.class,
                 () -> TaskFactoryService.create(ProvisionSubnetTaskService.class));
         host.startFactory(ProvisionLoadBalancerTaskService.class,
@@ -115,6 +109,5 @@ public class PhotonModelTaskServices {
                 () -> StatsCollectionTaskService.createFactory());
         host.startFactory(SubTaskService.class,
                 () -> TaskFactoryService.create(SubTaskService.class));
-        host.startService(new IPAddressReleaseTaskService());
     }
 }
