@@ -68,22 +68,34 @@
                     <clr-dg-cell>
                         <a *ngIf="request.eventLogLink" routerLink="../event-logs/{{getEventLogId(request)}}"
                            routerLinkActive="active">{{"requests.eventLogLink" | i18n}}</a>
-                        <a *ngIf="canNavigateTo('container',request)"
+                        <a *ngIf="canNavigateTo('container', request)"
                            allowNavigation [roles]="deploymentsRouteRestriction()"
-                           routerLink="{{deploymentsRouterLink('containers',request)}}"
+                           [routerLink]="['../containers']"
+                           [queryParams]="{$occurrence: 'any', documentId: getDocumentId(request)}"
                            routerLinkActive="active">{{"requests.containerLink" | i18n}}</a>
-                        <a *ngIf="canNavigateTo('composite-component',request)"
+                        <a *ngIf="canNavigateTo('composite-component', request)"
                            allowNavigation [roles]="deploymentsRouteRestriction()"
-                           routerLink="{{deploymentsRouterLink('applications',request)}}"
+                           [routerLink]="['../applications']"
+                           [queryParams]="{$occurrence: 'any', documentId: getDocumentId(request)}"
                            routerLinkActive="active">{{"requests.compositeComponentLink" | i18n}}</a>
-                        <a *ngIf="canNavigateTo('network',request)"
+                        <a *ngIf="canNavigateTo('network', request)"
                            allowNavigation [roles]="deploymentsRouteRestriction()"
-                           routerLink="{{deploymentsRouterLink('networks',request)}}"
+                           [routerLink]="['../networks']"
+                           [queryParams]="{$occurrence: 'any', documentId: getDocumentId(request)}"
                            routerLinkActive="active">{{"requests.containerNetworkLink" | i18n}}</a>
-                        <a *ngIf="canNavigateTo('volume',request)"
+                        <a *ngIf="canNavigateTo('volume', request)"
                            allowNavigation [roles]="deploymentsRouteRestriction()"
-                           routerLink="{{deploymentsRouterLink('volumes',request)}}"
+                           [routerLink]="['../volumes']"
+                           [queryParams]="{$occurrence: 'any', documentId: getDocumentId(request)}"
                            routerLinkActive="active">{{"requests.containerVolumeLink" | i18n}}</a>
+                        <a *ngIf="canNavigateTo('kubernetes-deployments', request)"
+                           [routerLink]="['../kubernetes/deployments']"
+                           [queryParams]="{$occurrence: 'all', any: getDocumentId(request)}"
+                           routerLinkActive="active">{{"requests.kubernetesDeploymentLink" | i18n}}</a>
+                        <a *ngIf="canNavigateTo('kubernetes-clusters', request)"
+                           [routerLink]="['../kubernetes/clusters']"
+                           [queryParams]="{$occurrence: 'all', any: request.name}"
+                           routerLinkActive="active">{{"requests.kubernetesClusterLink" | i18n}}</a>
                     </clr-dg-cell>
                 </clr-dg-row>
 

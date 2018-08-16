@@ -67,7 +67,9 @@ export const Constants = {
                 compositeComponent: "composite-component",
                 container: "container",
                 network: "network",
-                volume: "volume"
+                volume: "volume",
+                kubernetesDeployments: "kubernetes-deployments",
+                kubernetesClusters: "kubernetes-clusters"
             }
         },
         eventLogs: {

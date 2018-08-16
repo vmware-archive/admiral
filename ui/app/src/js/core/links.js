@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -52,6 +52,7 @@ var links = Immutable({
   KUBERNETES_ENTITIES: RESOURCES + '/kubernetes',
   KUBERNETES_DESC: RESOURCES + '/kubernetes-descriptions',
   KUBERNETES_DESC_CONTENT: RESOURCES + '/kubernetes-templates',
+  KUBERNETES_DEPLOYMENTS: RESOURCES + '/kubernetes-deployments',
   CONTAINER_DESCRIPTION_TO_KUBERNETES_DESCRIPTION_CONVERTER: RESOURCES +
       '/container-description-to-kubernetes-description-converter',
   FAVORITE_IMAGES: RESOURCES + '/favorite-images',

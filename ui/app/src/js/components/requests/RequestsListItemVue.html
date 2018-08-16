@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~ Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
   ~
   ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
   ~ You may not use this product except in compliance with the License.
@@ -36,7 +36,7 @@
           <div class="request-status-actions" v-if="isEnabled(model)">
             <div v-if="model.errorMessage" class="btn"
                  v-on:click="redirect($event)" :title="i18n('app.request.actions.details.show')"><i class="fa fa-warning"></i></div>
-            <div v-if="!model.errorMessage && isRedirectionAllowed()" class="btn"
+            <div v-if="!model.errorMessage && isRedirectionAllowed() && !isKubernetesDeploymentOrCluster()" class="btn"
                  v-on:click="redirect($event)" :title="i18n('app.request.actions.open')"><i class="fa fa-eye"></i></div>
             <div v-if="isRequestGraphEnabled" class="btn"
                  v-on:click="openRequestGraph($event)" :title="i18n('app.request.actions.details.show')"><i class="fa fa-bug"></i></div>

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -129,10 +129,24 @@ var RequestsListVueComponent = Vue.extend({
             return utils.actionAllowed(window.routesRestrictions.DEPLOYMENTS);
         },
 
+        isKubernetesDeploymentOrCluster() {
+          if (!this.model.resourceLinks || this.model.resourceLinks.length === 0) {
+            return false;
+          }
+
+          let link = this.model.resourceLinks[0];
+          let isKubernetesDeployment = link.indexOf(links.KUBERNETES_DEPLOYMENTS) !== -1;
+          let isCluster = link.indexOf(links.CONTAINER_CLUSTERS) !== -1;
+
+          return isKubernetesDeployment || isCluster;
+        },
+
         redirect($e) {
           $e.preventDefault();
 
-          if (this.isRequestFinished(this.model) && this.isRedirectionAllowed()) {
+          if (this.isRequestFinished(this.model)
+            && this.isRedirectionAllowed()
+            && !this.isKubernetesDeploymentOrCluster()) {
 
             let isHostsRequest = false;
             let hostsQuery;
