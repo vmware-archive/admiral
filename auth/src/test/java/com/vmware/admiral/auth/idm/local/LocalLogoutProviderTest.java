@@ -51,9 +51,6 @@ public class LocalLogoutProviderTest extends AuthBaseTest {
         ctx.await();
 
         assertEquals(Operation.STATUS_CODE_OK, op.getStatusCode());
-        // String cookie = op.getResponseHeader(Operation.SET_COOKIE_HEADER);
-        // assertTrue(cookie != null
-        // && cookie.startsWith(AuthenticationConstants.REQUEST_AUTH_TOKEN_COOKIE));
     }
 
 }
