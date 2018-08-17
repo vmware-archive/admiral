@@ -83,18 +83,18 @@ export class PodDetailsComponent extends BaseDetailsComponent {
         let statuses = this.entity.pod.status.containerStatuses;
 
         let containerStatuses = this.entity.pod.spec.containers.map((container) => {
-            let status = I18n.t('unknown');
+            let containerStatus = "UNKNOWN";
 
             if (statuses) {
                 let s = statuses.find((status) => status.name === container.name);
                 if (s) {
-                    status = Object.keys(s.state)[0];
+                    containerStatus = Object.keys(s.state)[0];
                 }
             }
 
             return {
                 name: container.name,
-                status: status
+                status: containerStatus
             };
         });
 

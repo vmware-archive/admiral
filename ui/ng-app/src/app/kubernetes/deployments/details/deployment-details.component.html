@@ -33,7 +33,8 @@
             </div>
             <div class="summary-subsection-content-row">
                 <div class="left-column">{{"kubernetes.deployments.item.restartPolicy" | i18n}}</div>
-                <div class="right-column">{{deploymentSpecification?.template.spec.restartPolicy}}</div>
+                <div class="right-column">{{"kubernetes.deployments.item.restartPolicyValues."
+                                              + deploymentSpecification?.template.spec.restartPolicy | i18n}}</div>
                 <div class="clear"></div>
             </div>
             <div class="summary-subsection-content-row">
@@ -43,12 +44,14 @@
             </div>
             <div class="summary-subsection-content-row">
                 <div class="left-column">{{"kubernetes.deployments.item.dnsPolicy" | i18n}}</div>
-                <div class="right-column">{{deploymentSpecification?.template.spec.dnsPolicy}}</div>
+                <div class="right-column">{{"kubernetes.deployments.item.dnsPolicyValues."
+                                              + deploymentSpecification?.template.spec.dnsPolicy | i18n}}</div>
                 <div class="clear"></div>
             </div>
             <div class="summary-subsection-content-row">
                 <div class="left-column">{{"kubernetes.deployments.item.strategy" | i18n}}</div>
-                <div class="right-column">{{deploymentSpecification?.strategy.type}}</div>
+                <div class="right-column">{{"kubernetes.deployments.item.strategyValues."
+                                              + deploymentSpecification?.strategy.type | i18n}}</div>
                 <div class="clear"></div>
             </div>
         </div>

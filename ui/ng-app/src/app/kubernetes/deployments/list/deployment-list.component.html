@@ -58,11 +58,13 @@
                     </div>
                     <div class="form-group">
                         <label>{{"kubernetes.deployments.item.restartPolicy" | i18n}}</label>
-                        <div>{{item.deployment?.spec.template.spec.restartPolicy || "--"}}</div>
+                        <div>{{"kubernetes.deployments.item.restartPolicyValues."
+                                + item.deployment?.spec.template.spec.restartPolicy | i18n}}</div>
                     </div>
                     <div class="form-group">
                         <label>{{"kubernetes.deployments.item.strategy" | i18n}}</label>
-                        <div>{{item.deployment?.spec.strategy.type || "--"}}</div>
+                        <div>{{"kubernetes.deployments.item.strategyValues."
+                                + item.deployment?.spec.strategy.type | i18n}}</div>
                     </div>
                 </div>
             </div>

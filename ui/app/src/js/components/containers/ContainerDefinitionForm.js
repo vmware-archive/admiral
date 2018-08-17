@@ -77,7 +77,7 @@ class ContainerDefinitionForm extends Component {
       this.$el.find('.deployment-policy-input').hide();
 
       this.$el.find('.container-cluster-size-input > label')
-          .text(i18n.t('app.container.request.inputs.replicas'));
+                .text(i18n.t('app.container.request.inputs.kubernetesReplicas'));
       this.$el.find('.container-restart-policy-input .form-control').val('always');
       this.commandsEditor.hideButtons();
     }
