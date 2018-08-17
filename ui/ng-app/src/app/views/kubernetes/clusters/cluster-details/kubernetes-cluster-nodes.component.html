@@ -10,9 +10,9 @@
   -->
 
 <div>
-    <table-view [searchPlaceholder]="'kubernetes.clusters.details.nodes.searchPlaceholder' | i18n">
+    <table-view [showSearch]="false" [showToolbar]="false">
         <div table-content-view>
-            <clr-datagrid class="nodesGrid" [clDgRowSelection]="true">
+            <clr-datagrid class="nodesGrid" [clDgRowSelection]="false">
                 <clr-dg-column>{{"kubernetes.clusters.details.nodes.nameColumn" | i18n}}</clr-dg-column>
                 <clr-dg-column>{{"kubernetes.clusters.details.nodes.cpuCountColumn" | i18n}}</clr-dg-column>
                 <clr-dg-column>{{"kubernetes.clusters.details.nodes.totalMemoryColumn" | i18n}}</clr-dg-column>

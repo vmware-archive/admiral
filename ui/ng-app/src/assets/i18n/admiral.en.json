@@ -306,7 +306,6 @@
         },
         "nodes": {
           "title": "Nodes",
-          "searchPlaceholder": "Search for nodes",
           "nameColumn": "Name",
           "cpuCountColumn": "# CPUs",
           "totalMemoryColumn": "Total Memory",
