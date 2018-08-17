@@ -11,7 +11,8 @@
 
 <div class="main-view">
     <img [src]="'./container-image-icons?container-image=' + entity?.documentSelfLink"/>
-    <h3 class="pod-title">{{entity?.name}} - {{entity?.pod?.status.phase}}</h3>
+    <h3 class="pod-title">{{entity?.name}} - {{'kubernetes.pods.state.'
+                                                + entity?.pod?.status.phase.toUpperCase() | i18n}}</h3>
 
     <clr-tabs>
     <clr-tab>
@@ -57,7 +58,8 @@
 
                                 <clr-dg-row *clrDgItems="let containerStatus of containerStatuses" [clrDgItem]="containerStatus">
                                     <clr-dg-cell>{{containerStatus.name}}</clr-dg-cell>
-                                    <clr-dg-cell>{{containerStatus.status}}</clr-dg-cell>
+                                    <clr-dg-cell>{{"kubernetes.pods.item.containerStatuses.status."
+                                                      + containerStatus.status.toUpperCase() | i18n}}</clr-dg-cell>
                                 </clr-dg-row>
                             </clr-datagrid>
                         </div>

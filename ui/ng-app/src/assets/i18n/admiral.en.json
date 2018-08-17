@@ -336,10 +336,25 @@
         "namespace": "Namespace:",
         "containersNumber": "Containers:",
         "restartPolicy": "Restart Policy:",
+        "restartPolicyValues": {
+            "Always": "Always",
+            "OnFailure": "On Failure",
+            "Never": "Never"
+        },
         "strategy": "Strategy:",
+        "strategyValues": {
+            "Recreate": "Recreate",
+            "RollingUpdate": "Rolling Update"
+        },
         "replicas": "Replicas:",
         "terminationGracePeriodSeconds": "Termination Grace Period (seconds):",
         "dnsPolicy": "DNS Policy:",
+        "dnsPolicyValues": {
+            "Default": "Default",
+            "ClusterFirst": "Cluster First",
+            "ClusterFirstWithHostNet": "Cluster First With Host Network",
+            "None": "None"
+        },
         "summaryTitle": "Summary",
         "containersTitle": "Containers",
         "containers": {
@@ -365,7 +380,13 @@
             "containerStatuses": {
               "title": "Containers",
               "name": "Container Name",
-              "state": "Status"
+              "state": "Status",
+              "status": {
+                  "RUNNING": "RUNNING",
+                  "WAITING": "WAITING",
+                  "TERMINATED": "TERMINATED",
+                  "UNKNOWN": "UNKNOWN"
+              }
             },
             "volumes": {
               "title": "Volumes",
@@ -373,6 +394,13 @@
               "hostPath": "Path on Host"
             },
             "logsTitle": "Logs"
+        },
+        "state": {
+            "RUNNING": "RUNNING",
+            "PENDING": "PENDING",
+            "SUCCEEDED": "SUCCEEDED",
+            "FAILED": "FAILED",
+            "UNKNOWN": "UNKNOWN"
         }
     },
     "services": {
