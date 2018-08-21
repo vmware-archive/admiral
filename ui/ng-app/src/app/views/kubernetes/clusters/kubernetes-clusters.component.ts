@@ -50,8 +50,8 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
     deleteConfirmationError: string;
 
     constructor(protected service: DocumentService, protected projectService: ProjectService,
-                protected router: Router, protected route: ActivatedRoute, authService: AuthService,
-                private errorService: ErrorService) {
+                protected router: Router, protected route: ActivatedRoute,
+                protected authService: AuthService, protected errorService: ErrorService) {
 
         super(router, route, FT.allowHostEventsSubscription(),
                 Utils.getClustersViewRefreshInterval(), true);
@@ -83,6 +83,9 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
                 }
                 if (me.operationSupported('DESTROY', itemVal)) {
                     itemVal.supportsOperationDestroy = true;
+                }
+                if (me.operationSupported('RESCAN', itemVal)) {
+                    itemVal.supportsOperationRescan = true;
                 }
 
                 if (me.operationSupported('REMOVE', itemVal)) {
@@ -365,5 +368,44 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
 
     get addClusterRouteRestriction() {
         return RoutesRestriction.KUBERNETES_CLUSTERS_ADD;
+    }
+
+    rescanCluster(event, cluster) {
+        event.stopPropagation();
+        // clear selection
+        this.selectedItem = null;
+
+        this.service.get(cluster.documentSelfLink + '/hosts')
+        .then((clusterHostsResult) => {
+            this.gridView.refresh();
+
+            let computeContainerHostLinks = [];
+
+            if (FT.isApplicationEmbedded()) {
+                clusterHostsResult.content.forEach(element => {
+                    computeContainerHostLinks.push(element.documentSelfLink);
+                });
+            } else {
+                computeContainerHostLinks = clusterHostsResult.documentLinks;
+            }
+
+            let clusterHostsLinks = {
+                computeContainerHostLinks: computeContainerHostLinks
+            };
+            // start hosts data collection
+            this.service.patch(Links.HOST_DATA_COLLECTION, clusterHostsLinks, this.projectLink)
+            .then((response) => {
+            }).catch(error => {
+                console.error('Rescan of cluster failed', Utils.getErrorMessage(error)._generic);
+                this.errorService.error(Utils.getErrorMessage(error)._generic);
+            });
+
+        }).catch(error => {
+            console.error('Cannot retrieve cluster resources',
+                                                            Utils.getErrorMessage(error)._generic);
+            this.errorService.error(Utils.getErrorMessage(error)._generic);
+        });
+
+        return false; // prevents navigation
     }
 }

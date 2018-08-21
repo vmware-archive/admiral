@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -359,6 +359,39 @@ public class KubernetesEntityDataCollectionTest extends ComputeBaseTest {
         // Only service-2 is listed, so service-1 will be deleted
         Assert.assertEquals(1, services.size());
         Assert.assertEquals(1, rcs.size());
+    }
+
+    @Test
+    public void testDataCollectionDeleteMissingState() throws Throwable {
+        BaseKubernetesState pod = new PodState();
+        pod.id = "pod-1";
+        pod.name = "my_prog_1";
+
+        PodState existingPod = new PodState();
+        existingPod.id = pod.id;
+        existingPod.name = pod.name + "_second";
+        existingPod.parentLink = COMPUTE_HOST_LINK;
+        existingPod.documentSelfLink = existingPod.id;
+
+        host.testStart(1);
+        host.sendRequest(
+                Operation.createPost(UriUtils.buildUri(host, PodFactoryService.SELF_LINK))
+                        .setBody(existingPod)
+                        .setReferer(host.getUri())
+                        .setCompletion((o, ex) -> {
+                            if (ex != null) {
+                                host.failIteration(ex);
+                            } else {
+                                addForDelete(o.getBody(ResourceState.class).documentSelfLink);
+                                host.completeIteration();
+                            }
+                        }));
+        host.testWait();
+
+        startDataCollectionAndWait();
+
+        List<PodState> pods = getEntities(PodState.class);
+        Assert.assertEquals(0, pods.size());
     }
 
     @Test
