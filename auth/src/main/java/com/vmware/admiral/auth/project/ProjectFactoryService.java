@@ -79,6 +79,12 @@ public class ProjectFactoryService extends AbstractSecuredFactoryService {
             op.nestCompletion(this::expandGetResults);
         }
 
+        // Latest xenon does not expand the result when there is a query parameter. Harbor rely on
+        // this
+        if (op.getAction() == Action.GET && UriUtils.hasODataQueryParams(op.getUri())) {
+            op.setUri(UriUtils.buildExpandLinksQueryUri(op.getUri()));
+        }
+
         super.handleRequest(op);
     }
 
