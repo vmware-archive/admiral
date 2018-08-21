@@ -129,10 +129,10 @@ public class PKSClusterConfigService extends StatelessService {
                 return null;
             }
 
-            String port = (String) cluster.parameters.get(PKS_MASTER_PORT_FIELD);
+            Object masterPort = cluster.parameters.get(PKS_MASTER_PORT_FIELD);
+            int port = (masterPort != null) ? Integer.parseInt(masterPort.toString()) : -1;
 
-            return UriUtils.buildUri("https", hostname,
-                    port != null ? Integer.parseInt(port) : -1, null, null).toString();
+            return UriUtils.buildUri("https", hostname, port, null, null).toString();
         }
     }
 
