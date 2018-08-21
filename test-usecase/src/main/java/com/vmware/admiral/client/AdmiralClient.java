@@ -394,18 +394,7 @@ public class AdmiralClient {
         Request req = Request.Delete(uri + basePath + path)
                 .addHeader("Content-Type", "application/json; charset=UTF-8");
 
-        switch (kind) {
-        case VRA:
-            req.addHeader("Authorization: ", format("{0} {1}", "Bearer ", token));
-            break;
-
-        case XENON:
-        default:
-            req.addHeader("x-xenon-auth-token", token);
-            break;
-        }
-
-        return execute(req).returnResponse();
+        return execute(addAuthHeader(req)).returnResponse();
     }
 
     private HttpResponse post(String path, String payload, Header... headers) throws Exception {
@@ -420,18 +409,7 @@ public class AdmiralClient {
             }
         }
 
-        switch (kind) {
-        case VRA:
-            req.addHeader("Authorization: ", format("{0} {1}", "Bearer ", token));
-            break;
-
-        case XENON:
-        default:
-            req.addHeader("x-xenon-auth-token", token);
-            break;
-        }
-
-        return execute(req).returnResponse();
+        return execute(addAuthHeader(req)).returnResponse();
     }
 
     private HttpResponse patch(String path, String payload, Header... headers) throws Exception {
@@ -446,18 +424,7 @@ public class AdmiralClient {
             }
         }
 
-        switch (kind) {
-        case VRA:
-            req.addHeader("Authorization: ", format("{0} {1}", "Bearer ", token));
-            break;
-
-        case XENON:
-        default:
-            req.addHeader("x-xenon-auth-token", token);
-            break;
-        }
-
-        return execute(req).returnResponse();
+        return execute(addAuthHeader(req)).returnResponse();
     }
 
     private HttpResponse put(String path, String payload, Header... headers) throws Exception {
@@ -472,18 +439,7 @@ public class AdmiralClient {
             }
         }
 
-        switch (kind) {
-        case VRA:
-            req.addHeader("Authorization: ", format("{0} {1}", "Bearer ", token));
-            break;
-
-        case XENON:
-        default:
-            req.addHeader("x-xenon-auth-token", token);
-            break;
-        }
-
-        return execute(req).returnResponse();
+        return execute(addAuthHeader(req)).returnResponse();
     }
 
     private HttpResponse get(String path, Header... headers) throws Exception {
@@ -497,9 +453,14 @@ public class AdmiralClient {
             }
         }
 
+        return execute(addAuthHeader(req)).returnResponse();
+    }
+
+    private Request addAuthHeader(Request req) {
+
         switch (kind) {
         case VRA:
-            req.addHeader("Authorization", format("{0} {1}", "Bearer", token));
+            req.addHeader("Authorization: ", format("{0} {1}", "Bearer ", token));
             break;
 
         case XENON:
@@ -508,7 +469,7 @@ public class AdmiralClient {
             break;
         }
 
-        return execute(req).returnResponse();
+        return req;
     }
 
     private JsonElement handleResponse(HttpResponse res) throws AdmiralClientException {

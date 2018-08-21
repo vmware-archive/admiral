@@ -20,12 +20,12 @@
     </module>
 
     <module name="TreeWalker">
-    
+
         <!-- Ignored to allow hamcrest style matchers in unit tests -->
         <!--
         <module name="AvoidStarImport"/>
         -->
-        
+
         <module name="UnusedImports">
             <property name="processJavadoc" value="true"/>
         </module>
@@ -49,14 +49,14 @@
                       MOD_ASSIGN,SR_ASSIGN,BSR_ASSIGN,SL_ASSIGN,BXOR_ASSIGN,
                       BOR_ASSIGN,BAND_ASSIGN,LCURLY,RCURLY"/>
         </module>
-        
+
         <module name="OneStatementPerLine"/>
-        
+
         <!-- Ignored to allow for less lines of code mainly in model classes -->
         <!--
         <module name="MultipleVariableDeclarations"/>
         -->
-        
+
         <module name="ArrayTypeStyle"/>
         <module name="MissingSwitchDefault"/>
         <module name="FallThrough"/>
