@@ -33,6 +33,7 @@ import java.util.logging.Logger;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerHostOperationType;
+import com.vmware.admiral.adapter.common.KubernetesOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
@@ -284,6 +285,8 @@ public class KubernetesEntityDataCollection extends StatefulService {
             }
             if (!exists) {
                 handleMissingEntity(entityState);
+            } else {
+                requestEntityInspection(entityState);
             }
         }
 
@@ -333,6 +336,27 @@ public class KubernetesEntityDataCollection extends StatefulService {
                                                     callback.computeHostLink)));
                         });
         sendRequest(operation);
+    }
+
+    private void requestEntityInspection(ResourceState kubernetesState) {
+        AdapterRequest request = new AdapterRequest();
+        request.resourceReference = UriUtils.buildPublicUri(getHost(),
+                kubernetesState.documentSelfLink);
+
+        request.operationTypeId = KubernetesOperationType.INSPECT.id;
+        request.serviceTaskCallback = ServiceTaskCallback.createEmpty();
+        getHost().sendRequest(Operation
+                .createPatch(getHost(), ManagementUriParts.ADAPTER_KUBERNETES)
+                .setBody(request)
+                .setReferer(getHost().getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        Utils.logWarning(
+                                "Exception while inspect request for kubernetes entity: %s. "
+                                        + "Error: %s", kubernetesState.documentSelfLink,
+                                Utils.toString(ex));
+                    }
+                }));
     }
 
     private void createCompositeComponents(Set<String> compositeIds, Runnable callback) {
