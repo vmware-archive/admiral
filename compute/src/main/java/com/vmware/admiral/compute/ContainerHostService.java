@@ -784,7 +784,7 @@ public class ContainerHostService extends StatelessService {
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         String innerMessage = toReadableErrorMessage(ex, op);
-                        String message = String.format("Error connecting to %s : %s",
+                        String message = String.format("Error connecting to %s: %s",
                                 cs.address, innerMessage);
                         LocalizableValidationException validationEx = new LocalizableValidationException(
                                 ex.getCause(),
