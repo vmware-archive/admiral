@@ -545,11 +545,15 @@
       "testConnectionBtn": "Test Connection",
       "assignmentsTabTitle": "Plan Assignments",
       "assignmentsPlansTitle": "Plans",
+      "groupSelectorTitle": "groups",
+      "groupSearchPlaceholder": "group",
+      "projectSelectorTitle": "projects",
+      "projectSearchPlaceholder": "project",
+      "planSelectorTitle": "plans",
+      "planSearchPlaceholder": "plan",
       "clustersTabTitle": "Clusters",
       "connectionVerified": "Connection to endpoint is successful.",
-      "certificateNotAccepted": "The certificate is not accepted. Cannot proceed.",
-      "assignToProjects": "Assign to Projects",
-      "assignToGroups": "Assign to Groups"
+      "certificateNotAccepted": "The certificate is not accepted. Cannot proceed."
     }
   },
   "requests": {
@@ -576,7 +580,7 @@
     "title": "Event Logs",
     "columnDescription": "Description",
     "columnTimestamp": "Time",
-    "count": "Showing latest {{number}} event logs",
+    "count": "Showing last {{number}} event logs",
     "deleteEventLog": {
       "title": "Remove event log",
       "description": "Confirm the removal of the selected event logs. The operation cannot be undone."

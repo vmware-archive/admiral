@@ -57,34 +57,36 @@ export class EndpointAssignmentsComponent implements OnInit, OnChanges {
     }
 
     get groupsSelectorTitle(): string {
-        let key = FT.isApplicationEmbedded() ? 'groups' : 'projects';
+        let key = FT.isApplicationEmbedded()  ? 'endpoints.details.groupSelectorTitle'
+                    : 'endpoints.details.projectSelectorTitle';
 
         return I18n.t('dropdownSearchMenu.title', {
             ns: 'base',
-            entity: I18n.t(key, { ns: 'base' })
+            entity: I18n.t(key)
         } as I18n.TranslationOptions);
     }
 
     get groupsSearchPlaceholder(): string {
-        let key = FT.isApplicationEmbedded() ? 'group' : 'project';
+        let key = FT.isApplicationEmbedded() ? 'endpoints.details.groupSearchPlaceholder'
+                    : 'endpoints.details.projectSearchPlaceholder';
 
         return I18n.t('dropdownSearchMenu.searchPlaceholder', {
             ns: 'base',
-            entity: I18n.t(key, { ns: 'base' })
+            entity: I18n.t(key)
         } as I18n.TranslationOptions);
     }
 
     get plansSelectorTitle(): string {
         return I18n.t('dropdownSearchMenu.title', {
             ns: 'base',
-            entity: I18n.t('plans', { ns: 'base' })
+            entity: I18n.t('endpoints.details.planSelectorTitle')
         } as I18n.TranslationOptions);
     }
 
     get plansSearchPlaceholder(): string {
         return I18n.t('dropdownSearchMenu.searchPlaceholder', {
             ns: 'base',
-            entity: I18n.t('plan', { ns: 'base' })
+            entity: I18n.t('endpoints.details.planSearchPlaceholder')
         } as I18n.TranslationOptions);
     }
 
