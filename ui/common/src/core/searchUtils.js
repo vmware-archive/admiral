@@ -46,6 +46,9 @@ let getQueryOptions = function(searchQueryString, occurrenceSelection) {
         tupleValue = searchToken;
       }
 
+      // remove # from tupleValue
+      tupleValue = tupleValue.replace(/#/g, '');
+
       if (queryOptions[tupleKey]) {
         queryOptions[tupleKey].push(tupleValue);
       } else {
