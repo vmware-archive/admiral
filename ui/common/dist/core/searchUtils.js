@@ -42,6 +42,8 @@ var getQueryOptions = function (searchQueryString, occurrenceSelection) {
                 tupleKey = 'any';
                 tupleValue = searchToken;
             }
+            // remove # from tupleValue
+            tupleValue = tupleValue.replace(/#/g, '');
             if (queryOptions[tupleKey]) {
                 queryOptions[tupleKey].push(tupleValue);
             }
