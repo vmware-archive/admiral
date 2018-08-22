@@ -395,7 +395,7 @@ public class PKSClusterProvisioningTaskService extends
                     if (e != null) {
                         // in case of connection exception do nothing, will try to contact the
                         // cluster later, else fail the provision request
-                        if (!isConnectionException(e)) {
+                        if (!isConnectionException(e) && !isLocalizableValidationException(e)) {
                             failTask("Failed to add PKS cluster: " + e.getMessage(), e);
                         }
                         markClusterUnreachable(task);
@@ -433,4 +433,14 @@ public class PKSClusterProvisioningTaskService extends
         return e instanceof IOException || e.getCause() instanceof IOException;
     }
 
+    /**
+     * Check if exception is about failure to import ssl certificate and not about
+     * core xenon failures
+     *
+     * @param e exception
+     */
+    private boolean isLocalizableValidationException(Throwable e) {
+        return e instanceof LocalizableValidationException
+                || e.getCause() instanceof LocalizableValidationException;
+    }
 }
