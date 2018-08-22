@@ -30,3 +30,5 @@ scripts/xenon*.jar
 container-images/admiral-agent/tocopy/agent
 installer.tar.gz
 Dockerfile-vRA
+**/admiral.git.properties
+**/admiral.properties
