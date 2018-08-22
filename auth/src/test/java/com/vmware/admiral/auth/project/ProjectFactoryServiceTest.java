@@ -189,6 +189,41 @@ public class ProjectFactoryServiceTest extends AuthBaseTest {
         }
     }
 
+    // VBV-2177
+    @Test
+    public void testGetStateWithFilter() {
+        URI uriWithFilter = UriUtils.extendUriWithQuery(
+                UriUtils.buildUri(host, ProjectFactoryService.SELF_LINK),
+                UriUtils.URI_PARAM_ODATA_FILTER, String.format("%s eq '%s'",
+                        ServiceDocument.FIELD_NAME_SELF_LINK, project.documentSelfLink));
+
+        host.testStart(1);
+        Operation.createGet(uriWithFilter)
+                .setReferer(host.getUri())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        host.failIteration(e);
+                    } else {
+                        ServiceDocumentQueryResult result = o
+                                .getBody(ServiceDocumentQueryResult.class);
+                        try {
+                            assertEquals(new Long(1), result.documentCount);
+
+                            assertNotNull(result.documentLinks);
+                            assertEquals(1, result.documentLinks.size());
+                            assertEquals(project.documentSelfLink,
+                                    result.documentLinks.iterator().next());
+
+                            assertNotNull(result.documents);
+                            host.completeIteration();
+                        } catch (Throwable ex) {
+                            host.failIteration(ex);
+                        }
+                    }
+                }).sendWith(host);
+        host.testWait();
+    }
+
     @Test
     public void testDeleteFactoryShouldFail() throws Throwable {
         try {
