@@ -37,8 +37,10 @@ import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.test.integration.BaseIntegrationSupportIT;
 import com.vmware.admiral.test.integration.SimpleHttpsClient;
 import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpResponse;
+import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.xenon.common.ODataFactoryQueryResult;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.authn.BasicAuthenticationService;
@@ -108,6 +110,11 @@ public class UptimeIT extends BaseIntegrationSupportIT {
     }
 
     private void provisionApplications() throws Exception {
+        if (!isHostAvailable()) {
+            logger.info("No hosts are available. Provisioning is not possible. Exiting.");
+            return;
+        }
+
         String templateId = importTemplate(getRandomApplication());
         logger.info("Imported composite description id = %s", templateId);
 
@@ -126,6 +133,15 @@ public class UptimeIT extends BaseIntegrationSupportIT {
             }
             logger.info(sb.toString());
         }
+    }
+
+    private boolean isHostAvailable() throws Exception {
+        HttpResponse response = SimpleHttpsClient.execute(GET, getUri(ComputeService.FACTORY_LINK));
+        assertNotNull(response);
+        ServiceDocumentQueryResult result = Utils.fromJson(response.responseBody,
+                ServiceDocumentQueryResult.class);
+        assertNotNull(result);
+        return result.documentCount != null && result.documentCount > 0;
     }
 
     private void deleteApplications() throws Exception {
