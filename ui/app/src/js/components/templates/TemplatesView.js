@@ -493,7 +493,8 @@ var TemplatesViewVueComponent = Vue.extend({
       if (this.model.selectedItemDetails
           && this.model.selectedItemDetails.origin === 'applications') {
         return this.backToApplications();
-      } else if (this.model.selectedItemDetails.origin) {
+      } else if ((this.model.selectedItemDetails && this.model.selectedItemDetails.origin)
+        || this.model.importTemplate) {
         return this.backToTemplate();
       }
 
