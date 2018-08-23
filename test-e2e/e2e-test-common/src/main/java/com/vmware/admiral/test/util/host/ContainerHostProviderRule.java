@@ -77,7 +77,13 @@ public class ContainerHostProviderRule implements TestRule {
                 } finally {
                     future.get();
                     if (!keepOnFailure) {
-                        PROVIDER.killContainerHost();
+                        try {
+                            PROVIDER.killContainerHost();
+                        } catch (Throwable e) {
+                            LOG.warning(
+                                    String.format("Could not kill VM, error: %s,%s", e.getMessage(),
+                                            ExceptionUtils.getStackTrace(e)));
+                        }
                     }
                 }
             }

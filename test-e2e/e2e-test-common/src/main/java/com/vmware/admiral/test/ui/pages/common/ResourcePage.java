@@ -18,7 +18,6 @@ import java.util.concurrent.TimeUnit;
 import com.codeborne.selenide.Condition;
 
 import org.openqa.selenium.By;
-import org.openqa.selenium.TimeoutException;
 
 public abstract class ResourcePage<V extends PageValidator<L>, L extends ResourcePageLocators>
         extends BasicPage<V, L> {
@@ -51,14 +50,15 @@ public abstract class ResourcePage<V extends PageValidator<L>, L extends Resourc
         // Sometimes clicking the trash icon fails so we retry
         int retries = 3;
         do {
-            pageActions().hover(card);
-            pageActions().click(cardDeleteButton);
             try {
+                pageActions().hover(locators().pageTitle());
+                pageActions().hover(card);
+                pageActions().click(cardDeleteButton);
                 Wait().withTimeout(5, TimeUnit.SECONDS)
                         .until(d -> !element(deleteConfirmHolder).has(Condition.cssClass("hide")));
                 pageActions().click(deleteConfirm);
                 return;
-            } catch (TimeoutException e) {
+            } catch (Throwable e) {
                 retries--;
             }
         } while (retries > 0);

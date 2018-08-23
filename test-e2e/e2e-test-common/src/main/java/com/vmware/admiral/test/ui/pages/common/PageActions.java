@@ -11,7 +11,6 @@
 
 package com.vmware.admiral.test.ui.pages.common;
 
-import static com.codeborne.selenide.Selenide.Wait;
 import static com.codeborne.selenide.Selenide.actions;
 
 import java.awt.Dimension;
@@ -19,13 +18,10 @@ import java.awt.Point;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
-import com.codeborne.selenide.Condition;
 import com.google.common.io.Files;
 
 import org.openqa.selenium.By;
-import org.openqa.selenium.TimeoutException;
 
 public class PageActions extends Action {
 
@@ -140,17 +136,6 @@ public class PageActions extends Action {
         Dimension dimension = new Dimension();
         dimension.setSize(seleniumDimension.getWidth(), seleniumDimension.getHeight());
         return dimension;
-    }
-
-    public void waitForElementToAppearAndDisappear(By element) {
-        switchToFrame();
-        try {
-            Wait().withTimeout(3, TimeUnit.SECONDS)
-                    .until(d -> getElement(element).is(Condition.visible));
-        } catch (TimeoutException e) {
-            // element is not going to appear
-        }
-        Wait().until(d -> getElement(element).is(Condition.hidden));
     }
 
 }

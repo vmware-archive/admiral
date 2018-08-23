@@ -26,10 +26,13 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 import org.openqa.selenium.By;
+import org.openqa.selenium.TimeoutException;
 
 import com.vmware.admiral.test.ui.commons.HostCommons;
 import com.vmware.admiral.test.ui.commons.ProjectCommons;
+import com.vmware.admiral.test.ui.pages.containers.ContainersPage.ContainerState;
 import com.vmware.admiral.test.util.AdmiralEventLogRule;
+import com.vmware.admiral.test.util.HostType;
 import com.vmware.admiral.test.util.ScreenshotRule;
 import com.vmware.admiral.test.util.SshCommandExecutor;
 import com.vmware.admiral.test.util.SshCommandExecutor.CommandResult;
@@ -53,8 +56,9 @@ public class PushImageToHarborAndProvision extends BaseTestVic {
     private final String TAGGED_IMAGE = VicTestProperties.vicIp() + "/" + PROJECT_NAME
             + TAGGED_IMAGE_PATH;
     private final String HOST_NAME = PROJECT_NAME + "_host";
+    private final String CREDENTIALS_NAME = "hbr-project-creds";
 
-    public ContainerHostProviderRule provider = new ContainerHostProviderRule(true, false);
+    public ContainerHostProviderRule provider = new ContainerHostProviderRule(true, true);
 
     @Rule
     public TestRule rules = RuleChain
@@ -71,12 +75,6 @@ public class PushImageToHarborAndProvision extends BaseTestVic {
         loginAsAdmin();
         main().clickAdministrationTabButton();
         ProjectCommons.addProject(getClient(), PROJECT_NAME, "Harbor provisioning project", false);
-        main().clickHomeTabButton();
-        home().switchToProject(PROJECT_NAME);
-
-        home().clickContainerHostsButton();
-        HostCommons.addHost(getClient(), HOST_NAME, null, provider.getHost().getHostType(),
-                getHostAddress(provider.getHost()), true);
 
         main().clickAdministrationTabButton();
         administration().clickConfigurationButton();
@@ -85,7 +83,29 @@ public class PushImageToHarborAndProvision extends BaseTestVic {
 
         pushImageToProject();
 
+        administration().clickIdentityManagementButton();
+        identity().credentialsTab().waitToLoad();
+        identity().credentialsTab().clickAddCredential();
+        identity().newCredentialForm().selectCertificateType();
+        identity().newCredentialForm().setName(CREDENTIALS_NAME);
+        identity().certificateCredentialForm()
+                .setPrivateCertificate(provider.getHost().getClientPrivateKey());
+        identity().certificateCredentialForm()
+                .setPublicCertificate(provider.getHost().getClientPublicKey());
+        identity().newCredentialForm().submit();
+        identity().credentialsTab().validate().validateCredentialsExistWithName(CREDENTIALS_NAME);
+
         main().clickHomeTabButton();
+        home().switchToProject(PROJECT_NAME);
+        home().clickContainerHostsButton();
+        HostCommons.addHost(getClient(), HOST_NAME, null, provider.getHost().getHostType(),
+                getHostAddress(provider.getHost()), CREDENTIALS_NAME, true);
+
+        if (provider.getHost().getHostType() == HostType.DOCKER) {
+            home().clickContainersButton();
+            containers().containersPage().waitForContainerStateByExactName("admiral_agent",
+                    ContainerState.RUNNING, 120);
+        }
         home().clickBuiltInRepositoriesButton();
         builtInRepositories().builtInRepositoriesCardPage().waitToLoad();
         builtInRepositories().builtInRepositoriesCardPage()
@@ -116,14 +136,27 @@ public class PushImageToHarborAndProvision extends BaseTestVic {
         containers().containersPage().deleteContainer(NGINX_IMAGE_NAME);
         containers().requests().waitForLastRequestToSucceed(360);
         home().clickBuiltInRepositoriesButton();
-        builtInRepositories().builtInRepositoriesCardPage().switchToListView();
-        builtInRepositories().builtInRepositoriesListPage()
-                .selectRepositoryByName(PROJECT_NAME + TAGGED_IMAGE_PATH);
-        builtInRepositories().builtInRepositoriesListPage().clickDeleteButton();
-        // builtInRepositories().builtInRepositoriesCardPage().waitToLoad();
-        // builtInRepositories().builtInRepositoriesCardPage()
-        // .deleteRepository(PROJECT_NAME + TAGGED_IMAGE_PATH);
-
+        // sometime after navigating to the internal repos page the repo is not visible so we
+        // refresh the page
+        int retries = 3;
+        while (retries > 0) {
+            try {
+                builtInRepositories().builtInRepositoriesCardPage().waitToLoad();
+                builtInRepositories().builtInRepositoriesCardPage()
+                        .deleteRepository(PROJECT_NAME + TAGGED_IMAGE_PATH);
+                break;
+            } catch (TimeoutException e) {
+                LOG.info(String.format("Repository [%s] was not visible, refreshing...",
+                        PROJECT_NAME + TAGGED_IMAGE_PATH));
+                builtInRepositories().builtInRepositoriesCardPage().refresh();
+                retries--;
+                if (retries == 0) {
+                    throw new RuntimeException(
+                            String.format("Repository [%s] was not visible after %d refreshes",
+                                    PROJECT_NAME + TAGGED_IMAGE_PATH, retries));
+                }
+            }
+        }
         builtInRepositories().deleteRepositoryModalDialog().waitToLoad();
         builtInRepositories().deleteRepositoryModalDialog().submit();
         builtInRepositories().deleteRepositoryModalDialog().waitForDeleteToComplete();
@@ -134,6 +167,9 @@ public class PushImageToHarborAndProvision extends BaseTestVic {
         main().clickAdministrationTabButton();
         projects().projectsPage().waitToLoad();
         ProjectCommons.deleteProject(getClient(), PROJECT_NAME);
+        administration().clickIdentityManagementButton();
+        identity().credentialsTab().waitToLoad();
+        identity().credentialsTab().deleteCredentials(CREDENTIALS_NAME);
         logOut();
     }
 
@@ -171,7 +207,7 @@ public class PushImageToHarborAndProvision extends BaseTestVic {
         String loginCommand = String.format("docker login %s --username %s --password %s",
                 VicTestProperties.vicIp(), VicTestProperties.defaultAdminUsername(),
                 VicTestProperties.defaultAdminPassword());
-        result = executor.execute(loginCommand, 30);
+        result = executor.execute(loginCommand, 120);
         logOutputOrThrow(loginCommand, result);
 
         LOG.info(String.format("Pushing image [%s] to the registry", TAGGED_IMAGE));
@@ -193,7 +229,6 @@ public class PushImageToHarborAndProvision extends BaseTestVic {
         }
     }
 
-    @Override
     protected List<String> getProjectNames() {
         return Arrays.asList(new String[] { PROJECT_NAME });
     }

@@ -20,6 +20,7 @@ public class BuiltInRepositoriesCardPageLocators extends BuiltInRepositoriesComm
     private final String CARD_RELATIVE_CONTEXT_MENU_XPATH = "//button[contains(concat(' ', @class, ' '), ' dropdown-toggle ')]";
     private final String CARD_RELATIVE_DELETE_BUTTON_XPATH = "//clr-dropdown-menu//button[2]";
     private final String CARD_RELATIVE_ADDITIONAL_INFO_BUTTON_XPATH = "//clr-dropdown-menu//button[1]";
+    private final By REFRESH_BUTTON = By.cssSelector(".toolbar .refresh-btn");
 
     public By repositoryCardByName(String name) {
         return By.xpath(String.format(REPOSITORY_CARD_BY_NAME_XPATH, name));
@@ -43,6 +44,10 @@ public class BuiltInRepositoriesCardPageLocators extends BuiltInRepositoriesComm
     public By cardAdditionalInfoButtonByName(String name) {
         return By.xpath(String.format(REPOSITORY_CARD_BY_NAME_XPATH, name)
                 + CARD_RELATIVE_ADDITIONAL_INFO_BUTTON_XPATH);
+    }
+
+    public By refreshButton() {
+        return REFRESH_BUTTON;
     }
 
 }

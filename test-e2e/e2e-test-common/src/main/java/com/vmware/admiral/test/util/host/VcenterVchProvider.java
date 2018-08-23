@@ -143,7 +143,7 @@ public class VcenterVchProvider implements ContainerHostProvider {
         CommandResult result = EXECUTOR.execute(createVchCommand.toString(), SSH_COMMAND_TIMEOUT);
         if (result.getExitStatus() != 0) {
             throw new RuntimeException(
-                    "Could not deploy VCH, error output: " + result.getErrorOutput());
+                    "Could not deploy VCH, error output: " + result.getOutput());
         }
         String ip = getIpFromLogs(result.getOutput());
         host.setIp(ip);
@@ -153,7 +153,8 @@ public class VcenterVchProvider implements ContainerHostProvider {
             result = EXECUTOR.execute(command, 20);
             if (result.getExitStatus() != 0) {
                 throw new RuntimeException(
-                        "Could not read generated vch certificate, error: " + result.getOutput());
+                        "Could not read generated vch certificate, error: "
+                                + result.getErrorOutput());
             }
             host.setServerCertificate(result.getOutput());
             if (useClientCertificate) {
@@ -163,7 +164,7 @@ public class VcenterVchProvider implements ContainerHostProvider {
                 if (result.getExitStatus() != 0) {
                     throw new RuntimeException(
                             "Could not read generated client certificate, error: "
-                                    + result.getOutput());
+                                    + result.getErrorOutput());
                 }
                 String clientCert = result.getOutput();
                 command = "cat /tmp/deployed-hosts/" + vmName + GENERATED_CERTS_RELATIVE_PATH
@@ -172,7 +173,7 @@ public class VcenterVchProvider implements ContainerHostProvider {
                 if (result.getExitStatus() != 0) {
                     throw new RuntimeException(
                             "Could not read generated client key, error: "
-                                    + result.getOutput());
+                                    + result.getErrorOutput());
                 }
                 String clientKey = result.getOutput();
                 host.setClientKeyAndCertificate(clientKey, clientCert);
@@ -204,7 +205,7 @@ public class VcenterVchProvider implements ContainerHostProvider {
         }
         if (result.getExitStatus() != 0) {
             LOG.warning(String.format("Could not kill VM with name '%s', error:%n%s", vmName,
-                    result.getErrorOutput()));
+                    result.getOutput()));
             return;
         }
         LOG.info(String.format("Successfully killed VM with name '%s'", vmName));

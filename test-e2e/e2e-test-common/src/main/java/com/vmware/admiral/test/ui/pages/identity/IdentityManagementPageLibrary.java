@@ -23,7 +23,7 @@ public class IdentityManagementPageLibrary extends PageLibrary {
 
     public IdentityManagementPageLibrary(By[] iframeLocators, By[] innerFrameLocators) {
         super(iframeLocators);
-        if (Objects.nonNull(iframeLocators)) {
+        if (Objects.nonNull(innerFrameLocators)) {
             this.INNER_FRAME_LOCATORS = innerFrameLocators.clone();
         } else {
             this.INNER_FRAME_LOCATORS = null;

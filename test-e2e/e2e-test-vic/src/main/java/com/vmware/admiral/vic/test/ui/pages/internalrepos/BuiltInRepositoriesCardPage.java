@@ -60,4 +60,9 @@ public class BuiltInRepositoriesCardPage extends
                 .format("Cloud not delete repository [%s], the dropdown menu did not show", name));
     }
 
+    public void refresh() {
+        pageActions().click(locators().refreshButton());
+        waitForSpinner();
+    }
+
 }

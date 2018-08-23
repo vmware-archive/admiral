@@ -18,7 +18,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.codeborne.selenide.Condition;
+
 import org.openqa.selenium.By;
+import org.openqa.selenium.TimeoutException;
 
 import com.vmware.admiral.test.ui.pages.common.ResourcePage;
 
@@ -31,7 +34,19 @@ public class ContainersPage extends ResourcePage<ContainersPageValidator, Contai
 
     public void clickCreateContainer() {
         LOG.info("Creating a container");
-        pageActions().click(locators().createResourceButton());
+        int retries = 3;
+        while (retries > 0) {
+            pageActions().click(locators().createResourceButton());
+            try {
+                Wait().withTimeout(5, TimeUnit.SECONDS)
+                        .until(d -> element(locators().childPageSlide()).is(Condition.visible));
+                return;
+            } catch (TimeoutException e) {
+                LOG.info("Clicking on the create container button failed, retrying...");
+                retries--;
+            }
+        }
+        throw new RuntimeException("Could not click on the create contaienr button");
     }
 
     public void stopContainer(String namePrefix) {
@@ -63,20 +78,37 @@ public class ContainersPage extends ResourcePage<ContainersPageValidator, Contai
         pageActions().click(locators().cardInspectButtonByTitlePrefix(namePrefix));
     }
 
-    public void waitForContainerState(String namePrefix, ContainerState state, int timeoutSeconds) {
+    public void waitForContainerStateByNamePrefix(String namePrefix, ContainerState state,
+            int timeoutSeconds) {
         LOG.info(
                 String.format(
                         "Waiting [%d] seconds for container witn name prefix [%s] to become in state [%s]",
                         timeoutSeconds, namePrefix, state.toString()));
+        waitForContainerState(locators().cardHeaderByTitlePrefix(namePrefix), state,
+                timeoutSeconds);
+    }
+
+    public void waitForContainerStateByExactName(String name, ContainerState state,
+            int timeoutSeconds) {
+        LOG.info(
+                String.format(
+                        "Waiting [%d] seconds for container witn name [%s] to become in state [%s]",
+                        timeoutSeconds, name, state.toString()));
+        waitForContainerState(locators().cardHeaderByExactTitle(name), state,
+                timeoutSeconds);
+    }
+
+    private void waitForContainerState(By containerTitleLocator, ContainerState state,
+            int timeoutSeconds) {
         if (state == ContainerState.RUNNING) {
             Wait().withTimeout(timeoutSeconds, TimeUnit.SECONDS)
                     .until(d -> pageActions()
-                            .getText(locators().cardHeaderByTitlePrefix(namePrefix)).trim()
+                            .getText(containerTitleLocator).trim()
                             .startsWith(state.toString()));
         } else {
             Wait().withTimeout(timeoutSeconds, TimeUnit.SECONDS)
                     .until(d -> pageActions()
-                            .getText(locators().cardHeaderByTitlePrefix(namePrefix)).trim()
+                            .getText(containerTitleLocator).trim()
                             .equals(state.toString()));
         }
     }

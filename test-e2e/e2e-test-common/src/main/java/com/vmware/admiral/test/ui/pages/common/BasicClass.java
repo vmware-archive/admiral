@@ -20,6 +20,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
+import com.codeborne.selenide.Condition;
+
 import org.openqa.selenium.By;
 import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.TimeoutException;
@@ -60,7 +62,17 @@ public abstract class BasicClass<L extends PageLocators> {
     }
 
     protected void waitForSpinner() {
-        pageActions().waitForElementToAppearAndDisappear(locators().spinner());
+        waitForElementToAppearAndDisappear(locators().spinner());
+    }
+
+    protected void waitForElementToAppearAndDisappear(By element) {
+        try {
+            Wait().withTimeout(3, TimeUnit.SECONDS)
+                    .until(d -> element(element).is(Condition.visible));
+        } catch (TimeoutException e) {
+            // element is not going to appear
+        }
+        Wait().until(d -> element(element).is(Condition.hidden));
     }
 
     protected void waitForElementToSettle(By locator) {

@@ -23,9 +23,6 @@ import com.vmware.admiral.test.ui.pages.clusters.ClustersPageLibrary;
 import com.vmware.admiral.test.ui.pages.containers.ContainersPageLibrary;
 import com.vmware.admiral.test.ui.pages.identity.IdentityManagementPageLibrary;
 import com.vmware.admiral.test.ui.pages.logs.LogsPageLibrary;
-import com.vmware.admiral.test.ui.pages.main.AdministrationTab;
-import com.vmware.admiral.test.ui.pages.main.HomeTab;
-import com.vmware.admiral.test.ui.pages.main.MainPage;
 import com.vmware.admiral.test.ui.pages.networks.NetworksPageLibrary;
 import com.vmware.admiral.test.ui.pages.projects.ProjectsPageLibrary;
 import com.vmware.admiral.test.ui.pages.registries.GlobalRegistriesPageLibrary;
@@ -38,18 +35,6 @@ public abstract class BaseTest {
     protected final Logger LOG = Logger.getLogger(getClass().getName());
 
     protected abstract CommonWebClient<?> getClient();
-
-    protected MainPage main() {
-        return getClient().main();
-    }
-
-    protected HomeTab home() {
-        return getClient().home();
-    }
-
-    protected AdministrationTab administration() {
-        return getClient().administration();
-    }
 
     protected ApplicationsPageLibrary applications() {
         return getClient().applications();

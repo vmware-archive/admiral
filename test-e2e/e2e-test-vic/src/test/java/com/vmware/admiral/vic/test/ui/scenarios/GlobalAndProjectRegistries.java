@@ -23,8 +23,10 @@ import org.junit.rules.TestRule;
 
 import com.vmware.admiral.test.ui.commons.HostCommons;
 import com.vmware.admiral.test.ui.commons.ProjectCommons;
+import com.vmware.admiral.test.ui.pages.containers.ContainersPage.ContainerState;
 import com.vmware.admiral.test.ui.pages.projects.AddProjectModalDialog;
 import com.vmware.admiral.test.util.AdmiralEventLogRule;
+import com.vmware.admiral.test.util.HostType;
 import com.vmware.admiral.test.util.ScreenshotRule;
 import com.vmware.admiral.test.util.SshCommandExecutor;
 import com.vmware.admiral.test.util.SshCommandExecutor.CommandResult;
@@ -121,9 +123,13 @@ public class GlobalAndProjectRegistries extends BaseTestVic {
         home().clickContainerHostsButton();
         HostCommons.addHost(getClient(), FIRST_PROJECT_HOST_NAME, null,
                 provider.getHost().getHostType(),
-                getHostAddress(provider.getHost()), true);
+                getHostAddress(provider.getHost()), null, true);
 
         home().clickContainersButton();
+        if (provider.getHost().getHostType() == HostType.DOCKER) {
+            containers().containersPage().waitForContainerStateByExactName("admiral_agent",
+                    ContainerState.RUNNING, 120);
+        }
         containers().containersPage().clickCreateContainer();
         containers().basicTab().setImage(registryIpAndPort + "/" + FIRST_IMAGE_PATH);
         containers().basicTab().setName(CONTAINER_NAME);
@@ -254,8 +260,14 @@ public class GlobalAndProjectRegistries extends BaseTestVic {
         containers().basicTab().setImage(registryIpAndPort + "/" + FIRST_IMAGE_PATH);
         containers().basicTab().setName(CONTAINER_NAME);
         containers().createContainerPage().submit();
-        sleep(5000);
-        containers().requests().waitForLastRequestToSucceed(120);
+        // Sometimes the request is not visible initially, instead the last visible request is the
+        // previously failed one
+        try {
+            containers().requests().waitForLastRequestToSucceed(120);
+        } catch (AssertionError e) {
+            sleep(13000);
+            containers().requests().waitForLastRequestToSucceed(120);
+        }
         containers().containersPage().refresh();
         containers().containersPage().deleteContainer(CONTAINER_NAME);
         containers().requests().waitForLastRequestToSucceed(120);
@@ -357,7 +369,7 @@ public class GlobalAndProjectRegistries extends BaseTestVic {
         String taggedImage = registryIpAndPort + "/" + imagePath;
         String command = String.format("docker tag %s %s && docker push %s", IMAGE_NAME,
                 taggedImage, taggedImage);
-        executeAndValidateResult(executor, command, 10);
+        executeAndValidateResult(executor, command, 30);
     }
 
     private static String executeAndValidateResult(SshCommandExecutor executor, String command,
@@ -373,7 +385,6 @@ public class GlobalAndProjectRegistries extends BaseTestVic {
         return result.getOutput();
     }
 
-    @Override
     protected List<String> getProjectNames() {
         return Arrays.asList(new String[] { FIRST_PROJECT_NAME, SECOND_PROJECT_NAME });
     }

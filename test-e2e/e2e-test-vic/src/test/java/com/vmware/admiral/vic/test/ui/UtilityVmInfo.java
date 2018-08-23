@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.vic.test.ui;
 
+import java.util.logging.Logger;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
@@ -30,7 +32,14 @@ public class UtilityVmInfo {
     private static String name;
 
     public static void readInfo() {
-        String vmInfo = ResourceUtil.readFileAsString(INFO_FILE_RELATIVE_PATH);
+        String vmInfo = null;
+        try {
+            vmInfo = ResourceUtil.readFileAsString(INFO_FILE_RELATIVE_PATH);
+        } catch (Throwable e) {
+            Logger.getLogger(UtilityVmInfo.class.getName())
+                    .warning("Cannot open file: " + INFO_FILE_RELATIVE_PATH);
+            return;
+        }
         JsonObject json = new Gson().fromJson(vmInfo, JsonObject.class);
         ip = json.get(IP_FIELD_NAME).getAsString();
         username = json.get(USERNAME_FIELD_NAME).getAsString();

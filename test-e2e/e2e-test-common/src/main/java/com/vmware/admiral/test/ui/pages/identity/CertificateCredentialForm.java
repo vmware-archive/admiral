@@ -23,11 +23,13 @@ public class CertificateCredentialForm extends BasicClass<CertificateCredentialF
     }
 
     public void setPublicCertificate(String publicCertificate) {
+        LOG.info("Setting public certificate...");
         pageActions().clear(locators().publicCertificateInput());
         pageActions().sendKeys(publicCertificate, locators().publicCertificateInput());
     }
 
     public void setPrivateCertificate(String privateCertificate) {
+        LOG.info("Setting private certificate...");
         pageActions().clear(locators().privateCertificateInput());
         pageActions().sendKeys(privateCertificate, locators().privateCertificateInput());
     }

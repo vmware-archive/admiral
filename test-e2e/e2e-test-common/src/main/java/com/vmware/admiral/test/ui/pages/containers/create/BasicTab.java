@@ -24,8 +24,17 @@ public class BasicTab extends BasicPage<BasicTabValidator, BasicTabLocators> {
 
     public void setImage(String image) {
         LOG.info(String.format("Setting image: [%s]", image));
-        pageActions().clear(locators().imageInput());
-        pageActions().sendKeys(image, locators().imageInput());
+        int retries = 5;
+        while (retries > 0) {
+            pageActions().clear(locators().imageInput());
+            pageActions().sendKeys(image, locators().imageInput());
+            if (pageActions().getAttribute("value", locators().imageInput()).equals(image)) {
+                return;
+            }
+            LOG.warning("Setting iamge failed, retrying...");
+            retries--;
+        }
+        throw new RuntimeException("Could not set image: " + image);
     }
 
     public void setTag(String tag) {

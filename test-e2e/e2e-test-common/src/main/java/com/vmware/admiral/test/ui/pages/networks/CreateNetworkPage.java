@@ -32,6 +32,7 @@ public class CreateNetworkPage
 
     public void setName(String name) {
         LOG.info(String.format("Setting name: [%s]", name));
+        pageActions().clear(locators().nameInput());
         pageActions().sendKeys(name, locators().nameInput());
     }
 

@@ -65,6 +65,7 @@ public class NetworkTab extends BasicPage<NetworkTabValidator, NetworkTabLocator
         if (!value.trim().isEmpty()) {
             pageActions().click(locators().addNetworkButton());
         }
+        pageActions().click(locators().lastNetworkSelectOption());
         pageActions().selectOptionByValue(networkName, locators().lastNetworkSelectOption());
         if (Objects.nonNull(aliases) && !aliases.trim().isEmpty()) {
             pageActions().sendKeys(aliases, locators().lastNetworkAliasesInput());

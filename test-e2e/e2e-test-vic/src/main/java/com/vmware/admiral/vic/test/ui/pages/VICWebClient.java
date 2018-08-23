@@ -21,6 +21,9 @@ import java.util.concurrent.TimeUnit;
 import com.codeborne.selenide.Condition;
 
 import com.vmware.admiral.test.ui.pages.CommonWebClient;
+import com.vmware.admiral.test.ui.pages.main.MainPage;
+import com.vmware.admiral.test.ui.pages.main.MainPageLocators;
+import com.vmware.admiral.test.ui.pages.main.MainPageValidator;
 import com.vmware.admiral.vic.test.ui.pages.configuration.ConfigurationPageLibrary;
 import com.vmware.admiral.vic.test.ui.pages.hosts.ContainerHostsPageLibrary;
 import com.vmware.admiral.vic.test.ui.pages.internalrepos.BuiltInRepositoriesPageLibrary;
@@ -43,6 +46,7 @@ public class VICWebClient extends CommonWebClient<VICWebCLientLocators> {
     private ContainerHostsPageLibrary clusters;
     private ConfigurationPageLibrary configuration;
     private BuiltInRepositoriesPageLibrary builtInRepositories;
+    private MainPage mainPage;
 
     public void logIn(String target, String username, String password) {
         Objects.requireNonNull(target, "'target' parameter must not be null");
@@ -72,7 +76,15 @@ public class VICWebClient extends CommonWebClient<VICWebCLientLocators> {
         return element(locators().loggedUserDiv()).is(Condition.visible);
     }
 
-    @Override
+    public MainPage main() {
+        if (Objects.isNull(mainPage)) {
+            MainPageLocators locators = new MainPageLocators();
+            MainPageValidator validator = new MainPageValidator(null, locators);
+            mainPage = new MainPage(null, validator, locators);
+        }
+        return mainPage;
+    }
+
     public VICHomeTab home() {
         if (Objects.isNull(homeTab)) {
             VICHomeTabLocators locators = new VICHomeTabLocators();
@@ -82,7 +94,6 @@ public class VICWebClient extends CommonWebClient<VICWebCLientLocators> {
         return homeTab;
     }
 
-    @Override
     public VICAdministrationTab administration() {
         if (Objects.isNull(administrationTab)) {
             VICAdministrationTabLocators locators = new VICAdministrationTabLocators();

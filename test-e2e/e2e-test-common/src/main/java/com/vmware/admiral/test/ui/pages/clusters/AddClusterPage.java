@@ -48,6 +48,12 @@ public class AddClusterPage extends BasicPage<AddClusterPageValidator, AddCluste
         pageActions().sendKeys(url, locators().urlInput());
     }
 
+    public void selectCredentials(String credentialsName) {
+        LOG.info(String.format("Setting credentials: [%s]", credentialsName));
+        pageActions().click(locators().credentialsSelectDropdown());
+        pageActions().click(locators().credentialsByName(credentialsName));
+    }
+
     public void submit() {
         LOG.info("Submitting...");
         pageActions().click(locators().saveButton());

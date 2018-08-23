@@ -26,15 +26,6 @@ import com.vmware.admiral.test.ui.pages.common.BasicClass;
 import com.vmware.admiral.test.ui.pages.containers.ContainersPageLibrary;
 import com.vmware.admiral.test.ui.pages.identity.IdentityManagementPageLibrary;
 import com.vmware.admiral.test.ui.pages.logs.LogsPageLibrary;
-import com.vmware.admiral.test.ui.pages.main.AdministrationTab;
-import com.vmware.admiral.test.ui.pages.main.AdministrationTabLocators;
-import com.vmware.admiral.test.ui.pages.main.AdministrationTabValidator;
-import com.vmware.admiral.test.ui.pages.main.HomeTab;
-import com.vmware.admiral.test.ui.pages.main.HomeTabLocators;
-import com.vmware.admiral.test.ui.pages.main.HomeTabValidator;
-import com.vmware.admiral.test.ui.pages.main.MainPage;
-import com.vmware.admiral.test.ui.pages.main.MainPageLocators;
-import com.vmware.admiral.test.ui.pages.main.MainPageValidator;
 import com.vmware.admiral.test.ui.pages.networks.NetworksPageLibrary;
 import com.vmware.admiral.test.ui.pages.projects.ProjectsPageLibrary;
 import com.vmware.admiral.test.ui.pages.registries.GlobalRegistriesPageLibrary;
@@ -59,10 +50,6 @@ public abstract class CommonWebClient<L extends CommonWebClientLocators> extends
     }
 
     private final By[] ADMIRAL_INNER_FRAME_LOCATORS = new By[] { By.cssSelector("iframe") };
-
-    private MainPage main;
-    private HomeTab home;
-    private AdministrationTab administration;
 
     private ApplicationsPageLibrary applications;
     private ClustersPageLibrary clusters;
@@ -99,34 +86,6 @@ public abstract class CommonWebClient<L extends CommonWebClientLocators> extends
 
     public void waitToLogout() {
         element(locators().loginUsernameInput()).shouldBe(Condition.visible);
-    }
-
-    public MainPage main() {
-        if (Objects.isNull(main)) {
-            MainPageLocators locators = new MainPageLocators();
-            MainPageValidator validator = new MainPageValidator(null, locators);
-            main = new MainPage(null, validator, locators);
-        }
-        return main;
-    }
-
-    public HomeTab home() {
-        if (Objects.isNull(home)) {
-            HomeTabLocators locators = new HomeTabLocators();
-            HomeTabValidator validator = new HomeTabValidator(admiralTopFrameLocators(), locators);
-            home = new HomeTab(admiralTopFrameLocators(), validator, locators);
-        }
-        return home;
-    }
-
-    public AdministrationTab administration() {
-        if (Objects.isNull(administration)) {
-            AdministrationTabLocators locators = new AdministrationTabLocators();
-            AdministrationTabValidator validator = new AdministrationTabValidator(
-                    admiralTopFrameLocators(), locators);
-            administration = new AdministrationTab(admiralTopFrameLocators(), validator, locators);
-        }
-        return administration;
     }
 
     public ApplicationsPageLibrary applications() {

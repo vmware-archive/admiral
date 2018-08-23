@@ -39,6 +39,8 @@ public class HomeTabLocators extends PageLocators {
     private final By CLUSTERS_BUTTON = By
             .cssSelector(LEFT_MENU_BASE + " .nav-link[href='#/home/clusters']");
     private final String PROJECT_SELECTOR_BY_NAME_XPATH = "//nav//clr-dropdown-menu//a[contains(concat(' ', normalize-space(text()), ' '), ' %s ')]";
+    private final By PROJECT_SELECTOR_DROPDOWN_MENU = By
+            .cssSelector(".project-selector .dropdown-menu");
 
     public By projectSelectorByName(String projectName) {
         return By.xpath(String.format(PROJECT_SELECTOR_BY_NAME_XPATH, projectName));
@@ -82,6 +84,10 @@ public class HomeTabLocators extends PageLocators {
 
     public By clustersButton() {
         return CLUSTERS_BUTTON;
+    }
+
+    public By projectSelectorDropdownMenu() {
+        return PROJECT_SELECTOR_DROPDOWN_MENU;
     }
 
 }

@@ -13,9 +13,12 @@ package com.vmware.admiral.test.ui.pages.projects.configure.members;
 
 import static com.codeborne.selenide.Selenide.Wait;
 
+import java.util.concurrent.TimeUnit;
+
 import com.codeborne.selenide.Condition;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 
 import com.vmware.admiral.test.ui.pages.common.ModalDialog;
@@ -45,11 +48,23 @@ public class AddMemberModalDialog
                 },
                 d -> {
                     if (element(locators().firstResult()).is(Condition.visible)) {
-                        pageActions().click(locators().firstResult());
                         return true;
                     }
                     return false;
                 }));
+        int retries = 3;
+        while (retries > 0) {
+            pageActions().click(locators().firstResult());
+            try {
+                Wait().withTimeout(5, TimeUnit.SECONDS)
+                        .until(d -> element(locators().firstResult()).is(Condition.hidden));
+                return;
+            } catch (TimeoutException e) {
+                LOG.warning("Clicking on found user result failed, retrying...");
+                retries--;
+            }
+        }
+        throw new RuntimeException(String.format("Could not add user '%s' to project", idOrEmail));
     }
 
     public void setRole(ProjectMemberRole role) {

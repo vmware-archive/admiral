@@ -94,9 +94,11 @@ public class RBACAndItemsProjectAwareness extends BaseTestVic {
 
     private final int REQUEST_TIMEOUT = 120;
 
-    public ContainerHostProviderRule firstProjectProvider = new ContainerHostProviderRule(true, false);
+    public ContainerHostProviderRule firstProjectProvider = new ContainerHostProviderRule(true,
+            false);
 
-    public ContainerHostProviderRule secondProjectProvider = new ContainerHostProviderRule(true, false);
+    public ContainerHostProviderRule secondProjectProvider = new ContainerHostProviderRule(true,
+            false);
 
     @Rule
     public TestRule rules = RuleChain
@@ -288,16 +290,16 @@ public class RBACAndItemsProjectAwareness extends BaseTestVic {
         home().clickApplicationsButton();
         applications().applicationsPage().deleteApplication(resourcePrefix + TEMPLATE_SUFFIX);
         applications().requests().waitForLastRequestToSucceed(REQUEST_TIMEOUT);
-        home().clickContainersButton();
-        home().clickApplicationsButton();
-        applications().applicationsPage().validate()
-                .validateApplicationDoesNotExistWithName(resourcePrefix + TEMPLATE_SUFFIX);
+
         home().clickTemplatesButton();
         templatesPage.waitToLoad();
         templatesPage.deleteTemplate(resourcePrefix + TEMPLATE_SUFFIX);
         templatesPage.refresh();
         templatesPage.validate()
                 .validateTemplateDoesNotExistWithName(resourcePrefix + TEMPLATE_SUFFIX);
+        home().clickApplicationsButton();
+        applications().applicationsPage().validate()
+                .validateApplicationDoesNotExistWithName(resourcePrefix + TEMPLATE_SUFFIX);
     }
 
     private void validateWithProjectMember() {
@@ -350,8 +352,9 @@ public class RBACAndItemsProjectAwareness extends BaseTestVic {
         home().clickContainerHostsButton();
         HostCommons.addHost(getClient(), FIRST_PROJECT_NAME + HOST_SUFFIX, null,
                 firstProjectProvider.getHost().getHostType(),
-                getHostAddress(firstProjectProvider.getHost()), true);
-        provisionContainerInProject(FIRST_PROJECT_NAME, firstProjectProvider.getHost().getHostType());
+                getHostAddress(firstProjectProvider.getHost()), null, true);
+        provisionContainerInProject(FIRST_PROJECT_NAME,
+                firstProjectProvider.getHost().getHostType());
         addNetworkToProject(FIRST_PROJECT_NAME);
         addVolumeToProject(FIRST_PROJECT_NAME);
         addTemplateToProject(FIRST_PROJECT_NAME);
@@ -359,8 +362,9 @@ public class RBACAndItemsProjectAwareness extends BaseTestVic {
         home().clickContainerHostsButton();
         HostCommons.addHost(getClient(), SECOND_PROJECT_NAME + HOST_SUFFIX, null,
                 secondProjectProvider.getHost().getHostType(),
-                getHostAddress(secondProjectProvider.getHost()), true);
-        provisionContainerInProject(SECOND_PROJECT_NAME, secondProjectProvider.getHost().getHostType());
+                getHostAddress(secondProjectProvider.getHost()), null, true);
+        provisionContainerInProject(SECOND_PROJECT_NAME,
+                secondProjectProvider.getHost().getHostType());
         addNetworkToProject(SECOND_PROJECT_NAME);
         addVolumeToProject(SECOND_PROJECT_NAME);
         addTemplateToProject(SECOND_PROJECT_NAME);
@@ -456,12 +460,14 @@ public class RBACAndItemsProjectAwareness extends BaseTestVic {
         home().clickApplicationsButton();
         applications().applicationsPage().validate()
                 .validateApplicationExistsWithName(templateName);
-        home().clickContainersButton();
-        containers().containersPage().validate().validateContainerExistsWithName(containerName);
         home().clickNetworksButton();
         networks().networksPage().validate().validateNetworkExistsWithName(networkName);
         home().clickVolumesButton();
         volumes().volumesPage().validate().validateVolumeExistsWithName(volumeName);
+        home().clickContainersButton();
+        containers().containersPage().waitToLoad();
+        containers().containersPage().refresh();
+        containers().containersPage().validate().validateContainerExistsWithName(containerName);
     }
 
     private void addNetworkToProject(String networkName) {
@@ -545,7 +551,6 @@ public class RBACAndItemsProjectAwareness extends BaseTestVic {
         }
     }
 
-    @Override
     protected List<String> getProjectNames() {
         return Arrays.asList(new String[] {
                 FIRST_PROJECT_NAME,

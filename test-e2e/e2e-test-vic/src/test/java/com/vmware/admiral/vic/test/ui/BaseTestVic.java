@@ -12,7 +12,6 @@
 package com.vmware.admiral.vic.test.ui;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 
 import com.codeborne.selenide.Configuration;
@@ -23,6 +22,7 @@ import org.apache.http.message.BasicHeader;
 import org.junit.BeforeClass;
 
 import com.vmware.admiral.test.ui.BaseTest;
+import com.vmware.admiral.test.ui.pages.main.MainPage;
 import com.vmware.admiral.test.util.HttpUtils;
 import com.vmware.admiral.test.util.SshCommandExecutor;
 import com.vmware.admiral.test.util.host.ContainerHost;
@@ -96,12 +96,14 @@ public abstract class BaseTestVic extends BaseTest {
                 VicTestProperties.vicSshUsername(), VicTestProperties.vicSshPassword());
     }
 
-    @Override
+    protected MainPage main() {
+        return getClient().main();
+    }
+
     protected VICHomeTab home() {
         return getClient().home();
     }
 
-    @Override
     protected VICAdministrationTab administration() {
         return getClient().administration();
     }
@@ -151,5 +153,4 @@ public abstract class BaseTestVic extends BaseTest {
         return hostAddress;
     }
 
-    protected abstract List<String> getProjectNames();
 }

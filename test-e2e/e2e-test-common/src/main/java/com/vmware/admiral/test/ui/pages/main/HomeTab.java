@@ -69,7 +69,7 @@ public class HomeTab extends BasicPage<HomeTabValidator, HomeTabLocators> {
             LOG.info(String.format("Current project already is: [%s]", currentProject));
         } else {
             LOG.info(String.format("Switching to project: [%s]", projectName));
-            doSwitchToProject(projectName, 5);
+            doSwitchToProject(projectName, 3);
         }
     }
 
@@ -77,22 +77,45 @@ public class HomeTab extends BasicPage<HomeTabValidator, HomeTabLocators> {
         if (retries == 0) {
             throw new RuntimeException("Could not switch to project: " + projectName);
         }
-        int selectRetries = 5;
-        pageActions().click(locators().projectsDropdownButton());
-        while (selectRetries > 0) {
-            pageActions().click(locators().projectSelectorByName(projectName));
-            try {
-                Wait().withTimeout(5, TimeUnit.SECONDS)
-                        .until(d -> element((locators().projectSelectorByName(projectName)))
-                                .is(Condition.hidden));
-                break;
-            } catch (TimeoutException e) {
-                selectRetries--;
-            }
-        }
+        openProjectSelector();
+        selectProject(projectName);
         if (!getCurrentProject().equals(projectName)) {
             doSwitchToProject(projectName, --retries);
         }
+    }
+
+    private void openProjectSelector() {
+        int retries = 3;
+        while (retries > 0) {
+            pageActions().click(locators().projectsDropdownButton());
+            try {
+                Wait().withTimeout(5, TimeUnit.SECONDS)
+                        .until(d -> element((locators().projectSelectorDropdownMenu()))
+                                .is(Condition.visible));
+                return;
+            } catch (TimeoutException e) {
+                LOG.info("Could not open project selector dropdown, retrying...");
+                retries--;
+            }
+        }
+        throw new RuntimeException("Could not open project selector dropdown");
+    }
+
+    private void selectProject(String projectName) {
+        int retries = 3;
+        while (retries > 0) {
+            pageActions().click(locators().projectSelectorByName(projectName));
+            try {
+                Wait().withTimeout(5, TimeUnit.SECONDS)
+                        .until(d -> element((locators().projectSelectorDropdownMenu()))
+                                .is(Condition.hidden));
+                return;
+            } catch (TimeoutException e) {
+                LOG.info("Could not select project, retrying...");
+                retries--;
+            }
+        }
+        throw new RuntimeException("Could not select project: " + projectName);
     }
 
     public String getCurrentProject() {

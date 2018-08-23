@@ -23,6 +23,10 @@ public class CredentialsTabValidator extends PageValidator<CredentialsTabLocator
         super(iFrameLocators, pageLocators);
     }
 
+    public void validateCredentialsExistWithName(String name) {
+        element(locators().credentialsRowByName(name)).should(Condition.exist);
+    }
+
     @Override
     public void validateIsCurrentPage() {
         element(locators().addCredentialButton()).shouldBe(Condition.visible);

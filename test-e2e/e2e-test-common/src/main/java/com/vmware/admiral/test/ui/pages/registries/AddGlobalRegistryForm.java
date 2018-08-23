@@ -23,8 +23,18 @@ public class AddGlobalRegistryForm extends BasicClass<AddGlobalRegistryFormLocat
 
     public void setAddress(String address) {
         LOG.info(String.format("Setting address [%s]", address));
-        pageActions().clear(locators().addressInput());
-        pageActions().sendKeys(address, locators().addressInput());
+        int retries = 5;
+        while (retries > 0) {
+            pageActions().clear(locators().addressInput());
+            pageActions().sendKeys(address, locators().addressInput());
+            if (pageActions().getAttribute("value", locators().addressInput()).equals(address)) {
+                return;
+            }
+            LOG.warning("Setting address failed, retrying...");
+            retries--;
+        }
+        throw new RuntimeException(
+                String.format("Could not set registry address after %d retries", retries));
     }
 
     public void setName(String name) {

@@ -21,7 +21,7 @@ public class HostCommons {
 
     public static void addHost(CommonWebClient<?> client, String hostName, String description,
             HostType hostType,
-            String hostAddress, boolean acceptCertificate) {
+            String hostAddress, String credentialsName, boolean acceptCertificate) {
         client.clusters().clustersPage().clickAddClusterButton();
 
         AddClusterPage addHostDialog = client.clusters().addClusterPage();
@@ -32,6 +32,9 @@ public class HostCommons {
         }
         addHostDialog.setHostType(hostType);
         addHostDialog.setUrl(hostAddress);
+        if (Objects.nonNull(credentialsName)) {
+            addHostDialog.selectCredentials(credentialsName);
+        }
         addHostDialog.submit();
         if (acceptCertificate) {
             client.clusters().certificateModalDialog().waitToLoad();

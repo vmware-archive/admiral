@@ -15,6 +15,8 @@ import static com.codeborne.selenide.Selenide.Wait;
 
 import java.util.concurrent.TimeUnit;
 
+import com.codeborne.selenide.Condition;
+
 import org.openqa.selenium.By;
 import org.openqa.selenium.TimeoutException;
 
@@ -35,7 +37,20 @@ public class RequestsToolbar extends BasicClass<RequestsToolbarLocators> {
     }
 
     public void clickLastRequest() {
-        pageActions().click(locators().lastRequest());
+        LOG.info("Clicking on the last request");
+        int retries = 3;
+        while (retries > 0) {
+            try {
+                pageActions().click(locators().lastRequest());
+                Wait().withTimeout(3, TimeUnit.SECONDS)
+                        .until(d -> !element(locators().lastRequest()).is(Condition.visible));
+                return;
+            } catch (TimeoutException e) {
+                LOG.info("Clicking on last the last request failed, retrying...");
+                retries--;
+            }
+        }
+        throw new RuntimeException("Could not click on the last request.");
     }
 
     private void waitForLastRequestRequest(int timeout, boolean shouldSucceed) {

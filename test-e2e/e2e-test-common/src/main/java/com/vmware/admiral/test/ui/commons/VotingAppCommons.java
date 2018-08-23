@@ -54,7 +54,6 @@ public class VotingAppCommons {
 
     public static void createVotingAppTemplate(CommonWebClient<?> client, String templateName) {
 
-        client.home().clickTemplatesButton();
         TemplatesPageLibrary templates = client.templates();
         templates.templatesPage().waitToLoad();
         templates.templatesPage().clickCreateTemplateButton();
