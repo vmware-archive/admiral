@@ -65,6 +65,8 @@ import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.common.test.TestRequestSender;
+import com.vmware.xenon.common.test.TestRequestSender.FailureResponse;
 import com.vmware.xenon.services.common.QueryTask;
 
 public class ClusterServiceTest extends ComputeBaseTest {
@@ -361,6 +363,16 @@ public class ClusterServiceTest extends ComputeBaseTest {
         assertNotNull(clusterDocker);
         assertEquals(placementZoneNameDocker,
                 clusterDocker.name);
+    }
+
+    @Test
+    public void testGetInexistentCluster() {
+        Operation get = Operation.createGet(host,
+                UriUtils.buildUriPath(ClusterService.SELF_LINK, "InexistentCluster"));
+
+        TestRequestSender sender = host.getTestRequestSender();
+        FailureResponse failure = sender.sendAndWaitFailure(get);
+        assertEquals(Operation.STATUS_CODE_NOT_FOUND, failure.op.getStatusCode());
     }
 
     @Test

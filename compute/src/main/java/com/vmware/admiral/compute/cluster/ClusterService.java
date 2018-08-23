@@ -462,9 +462,8 @@ public class ClusterService extends StatelessService {
 
         URI elasticPlacementZoneConfigurationUri = UriUtils.buildUri(getHost(),
                 pathPZId, get.getUri().getQuery());
-        sendWithDeferredResult(Operation
-                .createGet(
-                        UriUtils.buildExpandLinksQueryUri(elasticPlacementZoneConfigurationUri))
+        sendWithDeferredResult(Operation.createGet(
+                UriUtils.buildExpandLinksQueryUri(elasticPlacementZoneConfigurationUri))
                 .setReferer(getUri()),
                 ElasticPlacementZoneConfigurationState.class)
                         .thenCompose(epzConfigState -> getInfoFromHostsWithinOnePlacementZone(
@@ -474,8 +473,15 @@ public class ClusterService extends StatelessService {
                                 get.setBody(clusterDto);
                             }
                         })
+                        .exceptionally(t -> {
+                            if (t != null && t.getCause() instanceof ServiceNotFoundException) {
+                                get.fail(Operation.STATUS_CODE_NOT_FOUND, t, null);
+                            } else {
+                                get.fail(t);
+                            }
+                            return null;
+                        })
                         .whenCompleteNotify(get);
-
     }
 
     private void getAllHostsInSingleCluster(Operation get) {
