@@ -115,7 +115,7 @@
           </ul>
       </section>
       <a *ngIf="embeddedMode" class="nav-link" allowNavigation [roles]="identityManagementRouteRestriction" routerLink="identity-management" routerLinkActive="active">{{ "navigation.identityManagement" | i18n }}</a>
-      <section class="nav-group collapsible">
+      <section *ngIf="!isVic" class="nav-group collapsible">
           <input id="recentActivityCollapse" type="checkbox">
           <label for="recentActivityCollapse">{{ "navigation.recentActivity" | i18n }}</label>
           <ul class="nav-list">
