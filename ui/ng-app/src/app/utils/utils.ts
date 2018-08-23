@@ -409,26 +409,14 @@ export class Utils {
   }
 
   public static isContainerDeveloper(securityContext) {
-
-    // uncomment this when https://bellevue-ci.eng.vmware.com:8080/#/c/40972/ is submitted
-    // let roles = securityContext && securityContext.roles;
     let roles = securityContext && securityContext.roles;
-    if (!roles) {
-      roles = securityContext;
-    }
 
     return roles && roles.indexOf(Roles.VRA_CONTAINER_DEVELOPER) > -1
         && roles.indexOf(Roles.VRA_CONTAINER_ADMIN) == -1;
   }
 
   public static hasSystemRole(securityContext, roles) {
-    // uncomment this when https://bellevue-ci.eng.vmware.com:8080/#/c/40972/ is submitted
-    // let securityContextRoles = securityContext.roles;
-
-    let securityContextRoles = securityContext && securityContext.roles;
-    if (!securityContextRoles) {
-      securityContextRoles = securityContext;
-    }
+    let securityContextRoles = securityContext.roles;
 
     if (!securityContextRoles || !roles) {
       return false;
