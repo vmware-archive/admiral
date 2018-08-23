@@ -7,7 +7,7 @@
   ~ This product may include a number of subcomponents with separate copyright notices
   ~ and license terms. Your use of these subcomponents is subject to the terms and
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
-  -->
+  --> 
 
 <nav class="sidenav">
   <section class="sidenav-content">
@@ -115,7 +115,7 @@
           </ul>
       </section>
       <a *ngIf="embeddedMode" class="nav-link" allowNavigation [roles]="identityManagementRouteRestriction" routerLink="identity-management" routerLinkActive="active">{{ "navigation.identityManagement" | i18n }}</a>
-      <section class="nav-group collapsible">
+      <section *ngIf="!isVic" class="nav-group collapsible">
           <input id="recentActivityCollapse" type="checkbox">
           <label for="recentActivityCollapse">{{ "navigation.recentActivity" | i18n }}</label>
           <ul class="nav-list">

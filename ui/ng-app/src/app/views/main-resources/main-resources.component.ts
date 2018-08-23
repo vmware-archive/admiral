@@ -31,6 +31,7 @@ import { FT } from './../../utils/ft';
 export class MainResourcesComponent implements OnInit, OnDestroy {
     // features
     embeddedMode = FT.isApplicationEmbedded();
+    isVic = FT.isVic();
 
     isPksEnabled = FT.isPksEnabled();
     externalKubernetesEnabled = FT.isExternalKubernetesEnabled();
