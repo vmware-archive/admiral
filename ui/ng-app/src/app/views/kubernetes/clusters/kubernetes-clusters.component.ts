@@ -298,11 +298,9 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
         let nodes = cluster.nodes;
         if (nodes && Utils.isContainerDeveloper(this.userSecurityContext)) {
             let user = this.userSecurityContext.user;
-
             for (var key in nodes) {
                 let tenantLinks = nodes[key] && nodes[key].tenantLinks;
-
-                if (tenantLinks.indexOf(user) === -1) {
+                if (tenantLinks.indexOf('/users/' + user) === -1) {
                     return false;
                 }
             }

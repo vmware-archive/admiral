@@ -66,21 +66,21 @@
                                 (click)="enableHost($event, item)">
                             <clr-icon shape="play" size="20" class="card-drop-down-actions">
                             </clr-icon>{{"hosts.actions.enable" | i18n}}</button>
-                        <button *ngIf="item.supportsOperationRemove" type="button" class="dropdown-item remove-cluster"
-                                (click)="removeCluster($event, item)">
-                            <clr-icon shape="trash" size="20" class="card-drop-down-actions">
-                            </clr-icon>{{"remove" | i18n}}</button>
                         <button *ngIf="item.supportsOperationRescan" type="button"
                                 class="dropdown-item rescan-cluster"
                                 (click)="rescanCluster($event, item)">
                             <clr-icon shape="refresh" size="20" class="card-drop-down-actions">
                             </clr-icon>{{"clusters.actions.rescan" | i18n}}</button>
-                        <button type="button" class="dropdown-item remove-cluster"
-                          <button *ngIf="item.supportsOperationDestroy" type="button"
-                                  class="dropdown-item remove-cluster"
-                                  (click)="destroyCluster($event, item)">
-                              <clr-icon shape="trash" size="20" class="card-drop-down-actions">
-                              </clr-icon>{{"destroy" | i18n}}</button>
+                        <button *ngIf="item.supportsOperationRemove" type="button"
+                                class="dropdown-item remove-cluster"
+                                (click)="removeCluster($event, item)">
+                            <clr-icon shape="trash" size="20" class="card-drop-down-actions">
+                            </clr-icon>{{"remove" | i18n}}</button>
+                        <button *ngIf="item.supportsOperationDestroy" type="button"
+                                class="dropdown-item remove-cluster"
+                                (click)="destroyCluster($event, item)">
+                            <clr-icon shape="trash" size="20" class="card-drop-down-actions">
+                            </clr-icon>{{"destroy" | i18n}}</button>
                     </clr-dropdown-menu>
                 </clr-dropdown>
             </div>
