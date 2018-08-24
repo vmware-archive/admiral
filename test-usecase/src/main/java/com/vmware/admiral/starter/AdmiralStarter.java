@@ -26,13 +26,16 @@ public class AdmiralStarter {
     private static final Logger LOG =
             Logger.getLogger(AdmiralStarter.class.getName());
 
-    private String jarFilePath;
+    private String jarFilePath, localUsersFilePath, configPropsFilePath, sandboxPath;
     private int port;
-    private String localUsersFilePath;
-    private String configPropsFilePath;
     private ExecuteWatchdog watchdog;
 
     public AdmiralStarter(String jarFilePath, int port, String configPropsFilePath, String localUsersFilePath) {
+        this(jarFilePath, port, localUsersFilePath, configPropsFilePath, null);
+    }
+
+    public AdmiralStarter(String jarFilePath, int port, String configPropsFilePath,
+            String localUsersFilePath, String sandboxPath) {
 
         if(StringUtils.isBlank(jarFilePath)) {
             throw new IllegalArgumentException("\"jarFilePath\" is mandatory");
@@ -48,6 +51,7 @@ public class AdmiralStarter {
 
         this.configPropsFilePath = configPropsFilePath;
         this.localUsersFilePath = localUsersFilePath;
+        this.sandboxPath = sandboxPath;
     }
 
     public boolean start() {
@@ -55,9 +59,10 @@ public class AdmiralStarter {
 
         if(watchdog == null) {
 
-            // Build command line
             // TODO Add flag fpr debug configuration
             //CommandLine cmd = CommandLine.parse("java -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=8888");
+
+            // Build command line
             CommandLine cmd = CommandLine.parse("java");
             if(configPropsFilePath != null) {
                 cmd.addArgument("-Dconfiguration.properties=" + configPropsFilePath);
@@ -70,6 +75,10 @@ public class AdmiralStarter {
 
             if(localUsersFilePath != null) {
                 cmd.addArgument("--localUsers=" + localUsersFilePath);
+            }
+
+            if(sandboxPath != null) {
+                cmd.addArgument("--sandbox=" + sandboxPath);
             }
 
             LOG.info("Command that will be executed: " + cmd.toString());

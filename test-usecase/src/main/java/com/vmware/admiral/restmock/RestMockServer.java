@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.restmock;
 
+import java.io.InputStream;
 import java.security.KeyStore;
 import java.util.Collections;
 import java.util.HashMap;
@@ -94,10 +95,10 @@ public class RestMockServer {
     private Server setupSecureConnector(int port) {
 
         KeyStore keystore;
-        try {
+        try(InputStream is = RestMockServer.class.getResourceAsStream(
+                "/environment/jetty.pkcs12")) {
             keystore = KeyStore.getInstance("PKCS12");
-            keystore.load(RestMockServer.class.getResourceAsStream(
-                    "/environment/jetty.pkcs12"),"jetty".toCharArray());
+            keystore.load(is, "jetty".toCharArray());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

@@ -11,13 +11,16 @@
 
 package com.vmware.admiral;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Properties;
+import java.util.UUID;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
@@ -34,7 +37,8 @@ import com.vmware.admiral.starter.AdmiralStarter;
 public class AdmiralClientSuite {
 
     private static AdmiralStarter admiral;
-    private static Path admiralJarFilePath, admiralConfigFilePath, localUsersFilePath;
+    private static Path admiralJarFilePath, admiralConfigFilePath,
+            localUsersFilePath, sandboxPath;
 
     @ClassRule
     public static final ExternalResource resource = new ExternalResource() {
@@ -61,7 +65,8 @@ public class AdmiralClientSuite {
 
         // Start an Admiral instance
         admiral = new AdmiralStarter(admiralJarFilePath.toString(),
-                port, admiralConfigFilePath.toString(), localUsersFilePath.toString());
+                port, admiralConfigFilePath.toString(), localUsersFilePath.toString(),
+                sandboxPath.toString());
         admiral.start();
 
         // Make sure the process has started
@@ -144,16 +149,30 @@ public class AdmiralClientSuite {
             throw new RuntimeException("Failed to get the temp directory path");
         }
 
-        admiralConfigFilePath = Paths.get(tempDirPath + "/admiral-config.properties");
+        admiralConfigFilePath = Paths.get(tempDirPath, "admiral-config.properties");
         writeResourceToFile("/environment/admiral-config.properties", admiralConfigFilePath);
 
-        localUsersFilePath = Paths.get(tempDirPath + "/local-users.json");
+        localUsersFilePath = Paths.get(tempDirPath, "local-users.json");
         writeResourceToFile("/environment/local-users.json", localUsersFilePath);
+
+        sandboxPath = Paths.get(tempDirPath, UUID.randomUUID().toString());
+        Files.createDirectory(sandboxPath);
     }
 
     private static void cleanupConfigFiles() throws IOException {
         Files.deleteIfExists(admiralConfigFilePath);
         Files.deleteIfExists(localUsersFilePath);
+
+        // Occasionally the process will still hold file system resources, so retry
+        try {
+            FileUtils.deleteDirectory(new File(sandboxPath.toString()));
+        } catch (IOException e) {
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException ignore) {
+            }
+            FileUtils.deleteDirectory(new File(sandboxPath.toString()));
+        }
     }
 
     private static void writeResourceToFile(String resourcePath, Path filePath) throws Exception {
