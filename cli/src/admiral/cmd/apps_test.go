@@ -1,4 +1,4 @@
-// +build e2e
+// +build ignore
 
 /*
  * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
