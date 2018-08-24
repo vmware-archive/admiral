@@ -123,12 +123,12 @@
             </div>
         </div>
 
-        <button type="button" class="btn btn-secondary"
-                [disabled]="isCreatingCluster"
-                (click)="cancel()">{{ "cancel" | i18n }}</button>
         <button type="button" class="btn btn-primary"
                 [clrLoading]="isCreatingCluster"
                 [disabled]="newClusterSettingsForm.invalid"
                 (click)="create()">{{"create" | i18n}}</button>
+        <button type="button" class="btn btn-secondary"
+                [disabled]="isCreatingCluster"
+                (click)="cancel()">{{ "cancel" | i18n }}</button>
     </section>
 </form>

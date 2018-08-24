@@ -66,6 +66,14 @@
             </label>
         </div>
 
+        <button *ngIf="!editMode" type="button" class="btn btn-primary"
+                [clrLoading]="isSavingEndpoint"
+                [disabled]="endpointDetailsForm.invalid || isTestingConnection"
+        	(click)="create()">{{"create" | i18n}}</button>
+        <button *ngIf="editMode" type="button" class="btn btn-primary"
+                [clrLoading]="isSavingEndpoint"
+                [disabled]="endpointDetailsForm.invalid || isTestingConnection"
+        	(click)="save()">{{ "save" | i18n }}</button>
         <button type="button" class="btn btn-secondary"
                 [clrLoading]="isTestingConnection"
                 [disabled]="isSavingEndpoint || endpointDetailsForm.invalid"
@@ -73,14 +81,6 @@
         <button type="button" class="btn btn-secondary"
                 [disabled]="isSavingEndpoint"
                 (click)="cancel()">{{ "cancel" | i18n }}</button>
-        <button *ngIf="!editMode" type="button" class="btn btn-primary"
-                [clrLoading]="isSavingEndpoint"
-                [disabled]="endpointDetailsForm.invalid || isTestingConnection"
-                (click)="create()">{{"create" | i18n}}</button>
-        <button *ngIf="editMode" type="button" class="btn btn-primary"
-                [clrLoading]="isSavingEndpoint"
-                [disabled]="endpointDetailsForm.invalid || isTestingConnection"
-                (click)="save()">{{ "save" | i18n }}</button>
     </section>
 </form>
 

@@ -50,11 +50,11 @@
         </div>
     </div>
 
-    <button type="button" class="btn btn-secondary"
-            [disabled]="isSavingEndpoint"
-            (click)="cancel()">{{ "cancel" | i18n }}</button>
     <button type="button" class="btn btn-primary"
             [clrLoading]="isSavingEndpoint"
             [disabled]="isSavingEndpoint || groupsLoading || plansLoading"
             (click)="save()">{{ "save" | i18n }}</button>
+    <button type="button" class="btn btn-secondary"
+            [disabled]="isSavingEndpoint"
+            (click)="cancel()">{{ "cancel" | i18n }}</button>
 </form>

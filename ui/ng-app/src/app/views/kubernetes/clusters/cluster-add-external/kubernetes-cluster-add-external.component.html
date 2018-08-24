@@ -45,13 +45,13 @@
         </div>
 
         <div>
-            <button type="button" class="btn btn-outline"
-                    [disabled]="isSaving"
-                    (click)="cancel()">{{"cancel" | i18n}}</button>
             <button type="button" class="btn btn-primary saveCluster-btn"
                     [clrLoading]="isSaving"
                     [disabled]="isSaving || clusterForm.invalid"
                     (click)="add()">{{"add" | i18n}}</button>
+            <button type="button" class="btn btn-outline"
+                    [disabled]="isSaving"
+                    (click)="cancel()">{{"cancel" | i18n}}</button>
         </div>
     </section>
 

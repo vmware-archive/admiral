@@ -96,13 +96,13 @@
                 </div>
             </div>
 
-            <button type="button" class="btn btn-secondary"
-                    [disabled]="isUpdatingCluster"
-                    (click)="cancel()">{{ "cancel" | i18n }}</button>
             <button type="button" class="btn btn-primary"
                     [clrLoading]="isUpdatingCluster"
                     [disabled]="!editClusterForm.dirty || editClusterForm.invalid"
                     (click)="update()">{{"update" | i18n}}</button>
+            <button type="button" class="btn btn-secondary"
+                    [disabled]="isUpdatingCluster"
+                    (click)="cancel()">{{ "cancel" | i18n }}</button>
         </section>
     </form>
 

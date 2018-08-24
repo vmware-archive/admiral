@@ -81,13 +81,13 @@
         </div>
 
         <div class="add-existing-cluster-buttons">
-            <button type="button" class="btn btn-outline"
-                    [disabled]="isAdding"
-                    (click)="cancel()">{{"cancel" | i18n}}</button>
             <button type="button" class="btn btn-primary addClusters-btn"
                     [clrLoading]="isAdding"
                     [disabled]="isAdding || (selectedClusters.length !== 1) || addExistingClustersForm.invalid"
                     (click)="add()">{{"add" | i18n}}</button>
+            <button type="button" class="btn btn-outline"
+                    [disabled]="isAdding"
+                    (click)="cancel()">{{"cancel" | i18n}}</button>
         </div>
     </section>
 </form>
