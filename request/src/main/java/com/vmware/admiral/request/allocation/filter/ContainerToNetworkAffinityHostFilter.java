@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -386,8 +386,9 @@ public class ContainerToNetworkAffinityHostFilter
                 HostSelection hostSelection = filteredHosts.values()
                         .toArray(new HostSelection[1])[0];
                 if (hostSelection.clusterStore == null || hostSelection.clusterStore.isEmpty()) {
-                    Map<String, HostSelection> selected = Collections
-                            .unmodifiableMap(filteredHosts);
+                    // a final copy for the lambda function below. Must be modifiable to ensure
+                    // other filters can amend the host selection as well
+                    final Map<String, HostSelection> selected = filteredHosts;
 
                     updateUserDefinedNetworksWithSelectedHost(state, hostSelection.hostLink,
                             () -> {
@@ -475,7 +476,7 @@ public class ContainerToNetworkAffinityHostFilter
         }
     }
 
-    private void updateUserDefinedNetworksWithSelectedHost(PlacementHostSelectionTaskState state,
+    void updateUserDefinedNetworksWithSelectedHost(PlacementHostSelectionTaskState state,
             String hostLink, Runnable completion) {
         String compositeComponentLink = UriUtils
                 .buildUriPath(CompositeComponentFactoryService.SELF_LINK, state.contextId);
@@ -483,7 +484,7 @@ public class ContainerToNetworkAffinityHostFilter
                 .setReferer(host.getUri())
                 .setCompletion((o, ex) -> {
                     if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
-                        // no composite componet found, just continue without fail
+                        // no composite component found, just continue without fail
                         host.log(Level.FINE,
                                 "Exception while getting CompositeComponent. Error: [%s]",
                                 ex.getMessage());
@@ -529,7 +530,7 @@ public class ContainerToNetworkAffinityHostFilter
 
     }
 
-    private void findNetworkDescriptionsByLinks(PlacementHostSelectionTaskState state,
+    void findNetworkDescriptionsByLinks(PlacementHostSelectionTaskState state,
             List<String> containerNetworkLinks, String hostLink,
             Runnable completion) {
         final QueryTask q = QueryUtil.buildQuery(ContainerNetworkDescription.class, false);

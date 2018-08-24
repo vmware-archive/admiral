@@ -1,0 +1,14 @@
+---
+version: "2"
+services:
+  some-alpine:
+    image: "registry.hub.docker.com/library/alpine"
+    volumes:
+    - "some-volume:/container/project/path"
+    networks:
+    - some-network
+networks:
+  some-network: {}
+volumes:
+  some-volume:
+    external: true

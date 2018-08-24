@@ -62,6 +62,10 @@ import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionS
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionFactoryService;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeFactoryService;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.admiral.request.ContainerHostRemovalTaskFactoryService;
 import com.vmware.admiral.request.ContainerHostRemovalTaskService.ContainerHostRemovalTaskState;
 import com.vmware.admiral.request.RequestStatusFactoryService;
@@ -117,6 +121,10 @@ public abstract class BaseIntegrationSupportIT {
         CompositeComponentRegistry.registerComponent(ResourceType.NETWORK_TYPE.getName(),
                 ContainerNetworkDescriptionService.FACTORY_LINK, ContainerNetworkDescription.class,
                 ContainerNetworkService.FACTORY_LINK, ContainerNetworkState.class);
+        CompositeComponentRegistry.registerComponent(ResourceType.VOLUME_TYPE.getName(),
+                ContainerVolumeDescriptionFactoryService.SELF_LINK,
+                ContainerVolumeDescription.class,
+                ContainerVolumeFactoryService.SELF_LINK, ContainerVolumeState.class);
     }
 
     @AfterClass
