@@ -165,7 +165,7 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
 
         description = postDocument(ContainerNetworkDescriptionService.FACTORY_LINK, description);
 
-        RequestBrokerState request = requestExternalNetwork(description.documentSelfLink);
+        RequestBrokerState request = requestExternalEntity(description.documentSelfLink);
 
         externalNetwork = getDocument(request.resourceLinks.iterator().next(),
                 ContainerNetworkState.class);
@@ -244,7 +244,7 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
                     // leftover networks in the test Docker hosts.
                     logger.info("Found an external network leftover: %s in list components: %s",
                             leftoverNetworkLink, cc.componentLinks);
-                    externalNetworksToDelete.add(leftoverNetworkLink);
+                    externalEntitiesToDelete.add(leftoverNetworkLink);
                 }
             }
 

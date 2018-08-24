@@ -93,6 +93,7 @@ import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
@@ -136,7 +137,7 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
     private SslTrustCertificateState dockerHostSslTrust;
 
     protected final Set<String> containersToDelete = new HashSet<>();
-    protected final Set<String> externalNetworksToDelete = new HashSet<>();
+    protected final Set<String> externalEntitiesToDelete = new HashSet<>();
 
     protected String registryAddress;
 
@@ -181,20 +182,25 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
             }
         }
 
-        // remove the external networks, if any
-        it = externalNetworksToDelete.iterator();
+        // remove the external entities, if any
+        it = externalEntitiesToDelete.iterator();
         while (it.hasNext()) {
-            String networkLink = it.next();
+            String entityLink = it.next();
 
-            ContainerNetworkState network = getDocument(networkLink, ContainerNetworkState.class);
-            assertNotNull(String.format("Unable to find network %s", networkLink), network);
-            assertTrue(network.connectedContainersCount == 0);
+            ResourceState resourceState = getDocument(entityLink, ResourceState.class);
+            assertNotNull(String.format("Unable to find entity %s", entityLink), resourceState);
+
+            if (Utils.buildKind(ContainerNetworkState.class).equals(resourceState.documentKind)) {
+                ContainerNetworkState network = getDocument(entityLink,
+                        ContainerNetworkState.class);
+                assertTrue(network.connectedContainersCount == 0);
+            }
 
             try {
-                logger.info("---------- Clean up: Request Delete the network instance. --------");
-                requestExternalNetworkDelete(networkLink);
+                logger.info("---------- Clean up: Request Delete the external entity. --------");
+                requestExternalEntityDelete(entityLink);
             } catch (Throwable t) {
-                logger.warning(String.format("Unable to remove network %s: %s", networkLink,
+                logger.warning(String.format("Unable to remove entity %s: %s", entityLink,
                         t.getMessage()));
             }
         }
@@ -584,33 +590,37 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
         }
     }
 
-    protected RequestBrokerState requestExternalNetwork(String networkDescLink) throws Exception {
+    protected RequestBrokerState requestExternalEntity(String entitykDescLink) throws Exception {
 
         RequestBrokerState request = new RequestBrokerState();
-        ComponentMeta meta = CompositeComponentRegistry.metaByDescriptionLink(networkDescLink);
+        ComponentMeta meta = CompositeComponentRegistry.metaByDescriptionLink(entitykDescLink);
 
         request.resourceType = meta.resourceType;
-        request.resourceDescriptionLink = networkDescLink;
+        request.resourceDescriptionLink = entitykDescLink;
         request.tenantLinks = TENANT_LINKS;
         request = postDocument(RequestBrokerFactoryService.SELF_LINK, request);
 
         waitForTaskToComplete(request.documentSelfLink);
 
         request = getDocument(request.documentSelfLink, RequestBrokerState.class);
-        for (String networkLink : request.resourceLinks) {
-            externalNetworksToDelete.add(networkLink);
+        for (String entityLink : request.resourceLinks) {
+            externalEntitiesToDelete.add(entityLink);
         }
 
         return request;
     }
 
-    protected void requestExternalNetworkDelete(String resourceLink) throws Exception {
+    protected void requestExternalEntityDelete(String resourceLink) throws Exception {
 
         RequestBrokerState day2DeleteRequest = new RequestBrokerState();
         ComponentMeta metaByStateLink = CompositeComponentRegistry.metaByStateLink(resourceLink);
 
+        if (ResourceType.VOLUME_TYPE.getName().equals(metaByStateLink.resourceType)) {
+            day2DeleteRequest.operation = VolumeOperationType.DELETE.id;
+        } else {
+            day2DeleteRequest.operation = NetworkOperationType.DELETE.id;
+        }
         day2DeleteRequest.resourceType = metaByStateLink.resourceType;
-        day2DeleteRequest.operation = NetworkOperationType.DELETE.id;
         day2DeleteRequest.resourceLinks = new HashSet<>(Arrays.asList(resourceLink));
         day2DeleteRequest = postDocument(RequestBrokerFactoryService.SELF_LINK, day2DeleteRequest);
 
