@@ -47,6 +47,7 @@ public class YamlMapper {
             SERVICE_DOCUMENT_FILTER, createBuiltinFieldFilter());
     private static final ObjectWriter objectWriter = objectMapper.writer(filters);
     private static final String YAML_REGEX_VERIFIER = "(?<!.)---(?!.)";
+    private static final String YAML_COMMENTS_MATCHER = "\\s*#[^\\n]*";
 
     public static ObjectMapper objectMapper() {
         return objectMapper;
@@ -88,6 +89,8 @@ public class YamlMapper {
     public static List<String> splitYaml(String yaml) {
         assertNotNull(yaml, "yaml");
 
+        yaml = removeComments(yaml);
+
         List<String> result = new ArrayList<>();
         if (!yaml.startsWith("---")) {
             result.add(yaml);
@@ -104,6 +107,10 @@ public class YamlMapper {
         }
 
         return result;
+    }
+
+    private static String removeComments(String yaml) {
+        return yaml.replaceAll(YAML_COMMENTS_MATCHER, "").trim();
     }
 
     /**

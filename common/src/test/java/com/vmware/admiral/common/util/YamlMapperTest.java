@@ -107,6 +107,26 @@ public class YamlMapperTest {
     }
 
     @Test
+    public void testSplitYamlWithComments() {
+        String yamlInput = "# comment 1 \n"
+                + "#comment 2 \n"
+                + sampleYamlDefinition
+                + "   #   comment 3\n"
+                + sampleYamlDefinition;
+
+        List<String> expectedOutput = new ArrayList<>();
+        expectedOutput.add(sampleYamlDefinition);
+        expectedOutput.add(sampleYamlDefinition);
+
+        List<String> actualOutput = YamlMapper.splitYaml(yamlInput);
+
+        assertEquals(2, actualOutput.size());
+
+        assertEquals(expectedOutput.get(0), actualOutput.get(0));
+        assertEquals(expectedOutput.get(1), actualOutput.get(1));
+    }
+
+    @Test
     public void testIsValidYaml() {
         String[] inputs = new String[] { sampleYamlDefinition,
                 "invalid\ninput", "{\"person\":{\"name\":\"test-name\",\"age\":14}}" };
