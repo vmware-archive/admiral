@@ -108,7 +108,10 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
     get deleteOpTitle() {
         return this.deleteOpClusterName
             && (this.deleteOp === 'REMOVE'
-                    ? I18n.t('kubernetes.clusters.remove.title')
+                    ? I18n.t('kubernetes.clusters.delete.title', {
+                        clusterName: this.deleteOpClusterName,
+                        interpolation: {escapeValue: false}
+                    } as I18n.TranslationOptions)
                     : I18n.t('kubernetes.clusters.destroy.title'));
     }
 
@@ -119,7 +122,7 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
         }
 
         if (this.deleteOp === 'REMOVE') {
-            description = I18n.t('kubernetes.clusters.remove.confirmation', {
+            description = I18n.t('kubernetes.clusters.delete.confirmation', {
                 clusterName: this.deleteOpClusterName,
                 interpolation: { escapeValue: false }
             } as I18n.TranslationOptions)
@@ -135,7 +138,9 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
     }
 
     get deleteOpConfirmationBtnTextKey(): string {
-        return (this.deleteOp === 'DESTROY') && 'destroy';
+        return this.deleteOp === 'REMOVE'
+            ? I18n.t('delete')
+            : I18n.t('destroy');
     }
 
     hasNodes(cluster) {

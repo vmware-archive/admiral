@@ -13,9 +13,11 @@ import { Component } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { BaseDetailsComponent } from '../../../../components/base/base-details.component';
 import { DocumentService } from '../../../../utils/document.service';
-import { ErrorService } from "../../../../utils/error.service";
+import { ErrorService } from '../../../../utils/error.service';
 import { ProjectService } from '../../../../utils/project.service';
 import { Links } from '../../../../utils/links';
+import { Utils } from '../../../../utils/utils';
+import * as I18n from 'i18next';
 
 @Component({
   selector: 'app-kubernetes-cluster-details',
@@ -27,6 +29,12 @@ import { Links } from '../../../../utils/links';
  */
 export class KubernetesClusterDetailsComponent extends BaseDetailsComponent {
 
+  showDeleteConfirmation: boolean = false;
+  deleteConfirmationAlert: string;
+
+  alertType: any;
+  alertMessage: string;
+
   constructor(route: ActivatedRoute, router: Router, service: DocumentService,
               errorService: ErrorService, projectService: ProjectService) {
 
@@ -34,6 +42,51 @@ export class KubernetesClusterDetailsComponent extends BaseDetailsComponent {
   }
 
   protected onProjectChange() {
-      this.router.navigate(['../../'], {relativeTo: this.route});
+      this.goBack();
   }
+
+    deleteConfirmationTitle() {
+        if (this.entity) {
+            return I18n.t("kubernetes.clusters.delete.title", {
+                clusterName: this.entity.name,
+                interpolation: { escapeValue: false }
+            } as I18n.TranslationOptions);
+        }
+        return '';
+    }
+
+    deleteConfirmationDescription() {
+        if (this.entity) {
+            return I18n.t("kubernetes.clusters.delete.confirmation", {
+                clusterName: this.entity.name,
+                interpolation: { escapeValue: false }
+            } as I18n.TranslationOptions);
+        }
+        return '';
+    }
+
+    deleteCluster($event) {
+        $event.stopPropagation();
+
+        this.showDeleteConfirmation = true;
+    }
+
+    deleteConfirmed() {
+        let deletePromise =  this.service.delete(this.entity.documentSelfLink);
+
+        deletePromise.then(() => {
+            this.showDeleteConfirmation = false;
+            this.goBack();
+        }).catch(err => {
+            this.deleteConfirmationAlert = Utils.getErrorMessage(err)._generic;
+        });
+    }
+
+    deleteCanceled() {
+        this.showDeleteConfirmation = false;
+    }
+
+    goBack() {
+        this.router.navigate(['../../'], { relativeTo: this.route });
+    }
 }

@@ -12,11 +12,12 @@
 import { Component } from '@angular/core';
 import { ActivatedRoute, Router } from "@angular/router";
 import { BaseDetailsComponent } from '../../components/base/base-details.component';
-import { DocumentService } from "../../utils/document.service";
-import { ErrorService } from "../../utils/error.service";
-import { Constants } from "../../utils/constants";
-import { Links } from "../../utils/links";
-import { Utils } from "../../utils/utils";
+import { DocumentService } from '../../utils/document.service';
+import { ErrorService } from '../../utils/error.service';
+import { Constants } from '../../utils/constants';
+import { Links } from '../../utils/links';
+import { Utils } from '../../utils/utils';
+import * as I18n from 'i18next';
 
 @Component({
     selector: 'app-endpoint-details',
@@ -31,6 +32,9 @@ export class EndpointDetailsComponent extends BaseDetailsComponent {
 
     loadingClusters: boolean = false;
     clusters: any[] = [];
+
+    showDeleteConfirmation: boolean = false;
+    deleteConfirmationAlert: string;
 
     alertType: any;
     alertMessage: string;
@@ -82,5 +86,50 @@ export class EndpointDetailsComponent extends BaseDetailsComponent {
     resetAlert() {
         this.alertType = null;
         this.alertMessage = null;
+    }
+
+    deleteConfirmationTitle() {
+        if (this.entity) {
+            return I18n.t("endpoints.deleteConfirmation.titleSingleEndpoint", {
+                endpointName: this.entity.name,
+                interpolation: { escapeValue: false }
+            } as I18n.TranslationOptions);
+        }
+        return '';
+    }
+
+    deleteConfirmationDescription() {
+        if (this.entity) {
+            return I18n.t("endpoints.deleteConfirmation.descriptionSingleEndpoint", {
+                endpointName: this.entity.name,
+                interpolation: { escapeValue: false }
+            } as I18n.TranslationOptions);
+        }
+        return '';
+    }
+
+    deleteEndpoint($event) {
+        $event.stopPropagation();
+
+        this.showDeleteConfirmation = true;
+    }
+
+    deleteConfirmed() {
+        let deletePromise =  this.service.delete(this.entity.documentSelfLink);
+
+        deletePromise.then(() => {
+            this.showDeleteConfirmation = false;
+            this.goBack();
+        }).catch(err => {
+            this.deleteConfirmationAlert = Utils.getErrorMessage(err)._generic;
+        });
+    }
+
+    deleteCanceled() {
+        this.showDeleteConfirmation = false;
+    }
+
+    goBack() {
+        this.router.navigate(['..'], { relativeTo: this.route });
     }
 }

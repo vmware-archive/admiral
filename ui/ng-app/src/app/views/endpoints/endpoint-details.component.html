@@ -9,6 +9,15 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
+<delete-confirmation [title]="deleteConfirmationTitle()"
+                     [description]="deleteConfirmationDescription()"
+                     [deleteButtonTextKey]="'endpoints.delete' | i18n"
+                     [(alert)]="deleteConfirmationAlert"
+                     [visible]="showDeleteConfirmation"
+                     (onDelete)="deleteConfirmed()"
+                     (onCancel)="deleteCanceled()">
+</delete-confirmation>
+
 <div class="main-view">
 
     <clr-alert *ngIf="alertMessage" [clrAlertType]="alertType" [(clrAlertClosed)]="!alertMessage"
@@ -18,7 +27,9 @@
         </div>
     </clr-alert>
 
-    <div *ngIf="editMode" class="title">{{entity?.name}}</div>
+    <div *ngIf="editMode" class="title">{{entity?.name}}<div class="btn-group" role="group" aria-label="Available Actions">
+        <button type="button" class="btn btn-link"
+                (click)="deleteEndpoint($event)">{{"endpoints.delete" | i18n}}</button></div></div>
     <div *ngIf="!editMode" class="title">{{"endpoints.details.titleCreate" | i18n}}</div>
 
     <clr-tabs>

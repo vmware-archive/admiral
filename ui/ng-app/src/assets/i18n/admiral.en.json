@@ -316,10 +316,10 @@
           "count": "nodes"
         }
       },
-      "remove": {
-        "title": "Remove Cluster",
-        "confirmation": "Confirm removing of cluster {{clusterName}}. The deployed entities associated to this cluster will be removed as well."
-      },
+      "delete": {
+        "title": "Delete {{clusterName}}",
+        "confirmation": "Confirm deletion of cluster {{clusterName}}. The deployed entities associated to this cluster will be removed as well."
+        },
       "destroy": {
         "title": "Destroy Cluster",
         "confirmation": "Confirm destroying cluster {{clusterName}}. The deployed entities associated to this cluster will be destroyed as well. The operation cannot be undone."
@@ -522,10 +522,12 @@
     "title": "Endpoints",
     "searchPlaceholder": "Search for endpoints",
     "new": "New Endpoint",
-    "delete": "Remove",
+    "delete": "Delete",
     "deleteConfirmation": {
-      "title": "Remove Endpoints",
-      "description": "Confirm the removal of the selected endpoints. The operation cannot be undone."
+      "title": "Delete Endpoints",
+      "description": "Confirm the deletion of the selected endpoints. The operation cannot be undone.",
+      "titleSingleEndpoint": "Delete {{endpointName}}",
+      "descriptionSingleEndpoint": "Confirm the deletion of {{endpointName}}. The operation cannot be undone."
     },
     "name": "Name",
     "status": "Status",
