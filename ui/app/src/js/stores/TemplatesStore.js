@@ -1517,7 +1517,12 @@ let TemplatesStore = Reflux.createStore({
       var index = template.descriptionLinks.indexOf(networkDescirptionLink);
       template.descriptionLinks.splice(index, 1);
 
-      return services.updateContainerTemplate(template);
+      var updateBody = {
+          documentSelfLink: template.documentSelfLink,
+          descriptionLinks: template.descriptionLinks
+      };
+
+      return services.updateContainerTemplate(updateBody);
 
     }).then(() => {
 
@@ -1777,7 +1782,12 @@ let TemplatesStore = Reflux.createStore({
       var index = template.descriptionLinks.indexOf(volumeDescriptionLink);
       template.descriptionLinks.splice(index, 1);
 
-      return services.updateContainerTemplate(template);
+      var updateBody = {
+          documentSelfLink: template.documentSelfLink,
+          descriptionLinks: template.descriptionLinks
+      };
+
+      return services.updateContainerTemplate(updateBody);
 
     }).then(() => {
 
@@ -1996,7 +2006,12 @@ let TemplatesStore = Reflux.createStore({
       var index = template.descriptionLinks.indexOf(containerDescriptionLink);
       template.descriptionLinks.splice(index, 1);
 
-      return services.updateContainerTemplate(template);
+      var updateBody = {
+        documentSelfLink: template.documentSelfLink,
+        descriptionLinks: template.descriptionLinks
+      };
+
+      return services.updateContainerTemplate(updateBody);
 
     }).then(() => {
 
