@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -109,39 +109,53 @@ describe('Certificates management integration test', function() {
 
   // Note that this test may fail if the Admiral server has no access to SELF_SIGNED_URI
   it('it should create a certificate by importing from URL', function(done) {
+    console.log('START: it should create a certificate by importing from URL');
+    console.log('    .. import from url', SELF_SIGNED_URI);
     CertificatesActions.retrieveCertificates();
 
     lastCertificatesData = null;
     testUtils.waitFor(function() {
+      console.log('    .. opened certificates view');
       return lastCertificatesData && lastCertificatesData.items &&
           lastCertificatesData.items.length >= 0;
     }).then(function() {
       $container.find('.new-item').trigger('click');
+      console.log('    .. click new item');
 
       lastCertificatesData = null;
       return testUtils.waitFor(function() {
+        console.log('    .. new item view');
         return lastCertificatesData && lastCertificatesData.editingItemData;
       });
     }).then(function() {
+      console.log('    .. fill import url data');
       $container.find('.inline-edit .certificate-import-option-toggle').trigger('click');
       $container.find('.uri-input').val(SELF_SIGNED_URI);
 
       $container.find('.inline-edit .certificate-import-button').trigger('click');
 
+      console.log('    .. waiting for import from url to finish', SELF_SIGNED_URI);
+
       return testUtils.waitFor(function() {
         var currentCertificate = $container.find(
             '.inline-edit .inline-edit-properties .certificate-input').val();
+
+        console.log('    .. Loaded certificate from import url', currentCertificate);
+
         return currentCertificate && currentCertificate.indexOf(
             '-----BEGIN CERTIFICATE-----') !== -1;
       });
     }).then(function() {
       $container.find('.inline-edit .inline-edit-save').trigger('click');
 
+      console.log('    .. saving the certificate imported from url');
+
       lastCertificatesData = null;
       return testUtils.waitFor(function() {
         return lastCertificatesData && lastCertificatesData.newItem;
       });
     }).then(function() {
+      console.log('    .. check save success');
       expect(lastCertificatesData.newItem.commonName).toEqual(SELF_SIGNED_CN);
       expect(lastCertificatesData.newItem.issuerName).toEqual(SELF_SIGNED_ISSUER);
 
