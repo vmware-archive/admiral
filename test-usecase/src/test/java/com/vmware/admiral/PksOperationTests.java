@@ -37,6 +37,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 import com.vmware.admiral.client.AdmiralClient;
+import com.vmware.admiral.client.AdmiralClient.PksEndpointOperation;
 import com.vmware.admiral.client.AdmiralClient.UserRole;
 import com.vmware.admiral.client.AdmiralClientException;
 import com.vmware.admiral.restmock.RestMockServer;
@@ -114,16 +115,20 @@ public class PksOperationTests {
         final String epDescr = "This is a mocked PKS endpoint";
 
         String cert = client.validateOrCreatePksEndpoint(epName,
-                uaaAddress, pksAddress, credLink, epDescr, true);
+                uaaAddress, pksAddress, credLink, epDescr, PksEndpointOperation.VALIDATE, null);
         assertThat(cert, is(not(emptyString())));
 
-        // Add certificate
-        String certLink = client.createCertificate(cert);
-        assertThat(certLink, is(not(nullValue())));
+        String empty = client.validateOrCreatePksEndpoint(epName,
+                uaaAddress, pksAddress, credLink, epDescr, PksEndpointOperation.ACCEPT_CERTIFICATE, uaaAddress);
+        assertThat(empty, is(emptyString()));
+
+        empty = client.validateOrCreatePksEndpoint(epName,
+                uaaAddress, pksAddress, credLink, epDescr, PksEndpointOperation.ACCEPT_CERTIFICATE, pksAddress);
+        assertThat(empty, is(emptyString()));
 
         // Create PKS endpoint
         String endpointLink = client.validateOrCreatePksEndpoint(epName,
-                uaaAddress, pksAddress, credLink, epDescr, false);
+                uaaAddress, pksAddress, credLink, epDescr, PksEndpointOperation.CREATE, null);
         assertThat("PKS endpoint created by admin", endpointLink, is(not(emptyString())));
 
         // Retrieve endpoint
@@ -140,10 +145,6 @@ public class PksOperationTests {
         // Delete credentials
         deleted = client.deleteResource(credLink);
         assertThat("Credentials deleted", deleted, is(true));
-
-        // Delete certificate
-        deleted = client.deleteResource(certLink);
-        assertThat("Certificate deleted", deleted, is(true));
     }
 
     @Test
@@ -160,7 +161,7 @@ public class PksOperationTests {
         // Try to add PKS endpoint with regular user
         try {
             regularUserClient.validateOrCreatePksEndpoint("Mocked PKS Endpoint",
-                    uaaAddress, pksAddress, credLink, "This is a mocked PKS endpoint", true);
+                    uaaAddress, pksAddress, credLink, "This is a mocked PKS endpoint", PksEndpointOperation.VALIDATE, null);
         } catch (AdmiralClientException e) {
             assertThat("Status 403 returned on lack of permissions", e.getStatus(), is(equalTo(403)));
         }
@@ -186,16 +187,20 @@ public class PksOperationTests {
         final String epDescr = "This is a mocked PKS endpoint";
 
         String cert = adminClient.validateOrCreatePksEndpoint(epName,
-                uaaAddress, pksAddress, credLink, epDescr, true);
+                uaaAddress, pksAddress, credLink, epDescr, PksEndpointOperation.VALIDATE, null);
         assertThat(cert, is(not(emptyString())));
 
-        // Add certificate
-        String certLink = adminClient.createCertificate(cert);
-        assertThat(certLink, is(not(nullValue())));
+        String empty = adminClient.validateOrCreatePksEndpoint(epName,
+                uaaAddress, pksAddress, credLink, epDescr, PksEndpointOperation.ACCEPT_CERTIFICATE, uaaAddress);
+        assertThat(empty, is(emptyString()));
+
+        empty = adminClient.validateOrCreatePksEndpoint(epName,
+                uaaAddress, pksAddress, credLink, epDescr, PksEndpointOperation.ACCEPT_CERTIFICATE, pksAddress);
+        assertThat(empty, is(emptyString()));
 
         // Create PKS endpoint
         String endpointLink = adminClient.validateOrCreatePksEndpoint(epName,
-                uaaAddress, pksAddress, credLink, epDescr, false);
+                uaaAddress, pksAddress, credLink, epDescr, PksEndpointOperation.CREATE, null);
         assertThat("PKS endpoint created by admin", endpointLink, is(not(emptyString())));
 
         // Try to retrieve endpoint with regular user
@@ -219,10 +224,6 @@ public class PksOperationTests {
         // Delete credentials
         deleted = adminClient.deleteResource(credLink);
         assertThat("Credentials deleted", deleted, is(true));
-
-        // Delete certificate
-        deleted = adminClient.deleteResource(certLink);
-        assertThat("Certificate deleted", deleted, is(true));
     }
 
     @Test
@@ -247,16 +248,20 @@ public class PksOperationTests {
         final String epDescr = "This is a mocked PKS endpoint";
 
         String cert = client.validateOrCreatePksEndpoint(epName,
-                uaaAddress, pksAddress, credLink, epDescr, true);
+                uaaAddress, pksAddress, credLink, epDescr, PksEndpointOperation.VALIDATE, null);
         assertThat(cert, is(not(emptyString())));
 
-        // Add certificate
-        String certLink = client.createCertificate(cert);
-        assertThat(certLink, is(not(nullValue())));
+        String empty = client.validateOrCreatePksEndpoint(epName,
+                uaaAddress, pksAddress, credLink, epDescr, PksEndpointOperation.ACCEPT_CERTIFICATE, uaaAddress);
+        assertThat(empty, is(emptyString()));
+
+        empty = client.validateOrCreatePksEndpoint(epName,
+                uaaAddress, pksAddress, credLink, epDescr, PksEndpointOperation.ACCEPT_CERTIFICATE, pksAddress);
+        assertThat(empty, is(emptyString()));
 
         // Create PKS endpoint
         String endpointLink = client.validateOrCreatePksEndpoint(epName,
-                uaaAddress, pksAddress, credLink, epDescr, false);
+                uaaAddress, pksAddress, credLink, epDescr, PksEndpointOperation.CREATE, null);
         assertThat("PKS endpoint created by admin", endpointLink, is(not(emptyString())));
 
         // Get clusters
@@ -273,10 +278,6 @@ public class PksOperationTests {
         // Delete credentials
         deleted = client.deleteResource(credLink);
         assertThat("Credentials deleted", deleted, is(true));
-
-        // Delete certificate
-        deleted = client.deleteResource(certLink);
-        assertThat("Certificate deleted", deleted, is(true));
 
         // Remove mock
         pks.removeMock(pksClustersPath);
@@ -300,16 +301,20 @@ public class PksOperationTests {
         final String epDescr = "This is a mocked PKS endpoint";
 
         String cert = adminClient.validateOrCreatePksEndpoint(epName,
-                uaaAddress, pksAddress, credLink, epDescr, true);
+                uaaAddress, pksAddress, credLink, epDescr, PksEndpointOperation.VALIDATE, null);
         assertThat(cert, is(not(emptyString())));
 
-        // Add certificate
-        String certLink = adminClient.createCertificate(cert);
-        assertThat(certLink, is(not(nullValue())));
+        String empty = adminClient.validateOrCreatePksEndpoint(epName,
+                uaaAddress, pksAddress, credLink, epDescr, PksEndpointOperation.ACCEPT_CERTIFICATE, uaaAddress);
+        assertThat(empty, is(emptyString()));
+
+        empty = adminClient.validateOrCreatePksEndpoint(epName,
+                uaaAddress, pksAddress, credLink, epDescr, PksEndpointOperation.ACCEPT_CERTIFICATE, pksAddress);
+        assertThat(empty, is(emptyString()));
 
         // Create PKS endpoint
         String endpointLink = adminClient.validateOrCreatePksEndpoint(epName,
-                uaaAddress, pksAddress, credLink, epDescr, false);
+                uaaAddress, pksAddress, credLink, epDescr, PksEndpointOperation.CREATE, null);
         assertThat("PKS endpoint created by admin", endpointLink, is(not(emptyString())));
 
         // Get clusters
@@ -329,10 +334,6 @@ public class PksOperationTests {
         // Delete credentials
         deleted = adminClient.deleteResource(credLink);
         assertThat("Credentials deleted", deleted, is(true));
-
-        // Delete certificate
-        deleted = adminClient.deleteResource(certLink);
-        assertThat("Certificate deleted", deleted, is(true));
     }
 
     @Ignore("Blocked by https://jira.eng.vmware.com/browse/VBV-2178 - "
@@ -376,16 +377,20 @@ public class PksOperationTests {
         final String epDescr = "This is a mocked PKS endpoint";
 
         String cert = adminClient.validateOrCreatePksEndpoint(epName,
-                uaaAddress, pksAddress, credLink, epDescr, true);
+                uaaAddress, pksAddress, credLink, epDescr, PksEndpointOperation.VALIDATE, null);
         assertThat(cert, is(not(emptyString())));
 
-        // Add certificate
-        String certLink = adminClient.createCertificate(cert);
-        assertThat(certLink, is(not(nullValue())));
+        String empty = adminClient.validateOrCreatePksEndpoint(epName,
+                uaaAddress, pksAddress, credLink, epDescr, PksEndpointOperation.ACCEPT_CERTIFICATE, uaaAddress);
+        assertThat(empty, is(emptyString()));
+
+        empty = adminClient.validateOrCreatePksEndpoint(epName,
+                uaaAddress, pksAddress, credLink, epDescr, PksEndpointOperation.ACCEPT_CERTIFICATE, pksAddress);
+        assertThat(empty, is(emptyString()));
 
         // Create PKS endpoint
         String endpointLink = adminClient.validateOrCreatePksEndpoint(epName,
-                uaaAddress, pksAddress, credLink, epDescr, false);
+                uaaAddress, pksAddress, credLink, epDescr, PksEndpointOperation.CREATE, null);
         assertThat("PKS endpoint created by admin", endpointLink, is(not(emptyString())));
 
         // Create project A
@@ -458,10 +463,6 @@ public class PksOperationTests {
 
         deleted = adminClient.deleteResource(projectLinkB);
         assertThat("Project deleted", deleted, is(true));
-
-        // Delete certificate
-        deleted = adminClient.deleteResource(certLink);
-        assertThat("Certificate deleted", deleted, is(true));
 
         // Remove mock
         pks.removeMocks(pksClustersMockPath, demoClusterBindsMockPath,
