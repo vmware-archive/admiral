@@ -46,6 +46,10 @@ public class AdmiralClient {
         MEMBER, ADMINISTRATOR, VIEWER
     }
 
+    public enum PksEndpointOperation {
+        VALIDATE, ACCEPT_CERTIFICATE, CREATE
+    }
+
     private String uri, user, pass, tenant, token, basePath;
     private ClientKind kind;
 
@@ -188,22 +192,21 @@ public class AdmiralClient {
     }
 
     /**
-     * Validates or creates a PKS endpoint, based on the <code>justValidate</code> flag.
+     * Validates or creates a PKS endpoint, based on the <code>op</code> flag.
      *
      * @param name Name of the endpoint
      * @param uaaEndpoint UAA endoint address with schema and port
      * @param pksEndpoint PKS endoint address with schema and port
      * @param credsLink Link to a previously created credential object
      * @param description Description of the endpoint
-     * @param justValidate Just validate or create the endpoint
-     * @return If <code>justValidate</code> is set, the certificate content, which should subsequently
-     * be added explicitly with {@link AdmiralClient#createCertificate(String)}. If the flag is not set,
-     * the link of the created endpoint. If the certificate has
-     * already been validated, and <code>justValidate</code> is set, an empty string.
+     * @param op Endpoint operation
+     * @param acceptForHost The host for which the certificate should be accepted (UUA or PKS API), or <code>null</code>
+     * if the operation is VALIDATE or CREATE
+     * @return If VALIDATE, the certificate content, if ACCEPT_CERTIFICATE, an empty string, if CREATE, the link of the created endpoint.
      * @throws AdmiralClientException
      */
     public String validateOrCreatePksEndpoint(String name, String uaaEndpoint, String pksEndpoint,
-            String credsLink, String description, boolean justValidate) throws AdmiralClientException {
+            String credsLink, String description, PksEndpointOperation op, String acceptForHost) throws AdmiralClientException {
 
         JsonObject endpoint = new JsonObject();
         endpoint.addProperty("name", name);
@@ -215,22 +218,30 @@ public class AdmiralClient {
         JsonObject payload = new JsonObject();
         payload.add("endpoint", endpoint);
 
+        if(op == PksEndpointOperation.ACCEPT_CERTIFICATE) {
+            payload.addProperty("acceptCertificate", true);
+            payload.addProperty("acceptCertificateForHost", acceptForHost);
+        }
+
         HttpResponse res;
         try {
             res = put("/resources/pks/create-endpoint"
-                    + (justValidate ? "?validate=true" : StringUtils.EMPTY),
+                    + (op == PksEndpointOperation.VALIDATE || op == PksEndpointOperation.ACCEPT_CERTIFICATE ?
+                            "?validate=true" : StringUtils.EMPTY),
                     new GsonBuilder().create().toJson(payload));
         } catch (Exception e) {
             throw new AdmiralClientException(e);
         }
 
         String result = StringUtils.EMPTY;
-        if(justValidate) {
+        if(op == PksEndpointOperation.VALIDATE) {
             JsonElement el = handleResponse(res);
             if(el != null) {
                 result = handleResponse(res).getAsJsonObject()
                         .get("certificate").getAsString();
             }
+        } else if(op == PksEndpointOperation.ACCEPT_CERTIFICATE) {
+            handleResponse(res);
         } else {
             Header location = res.getFirstHeader("location");
             if(location != null) {
