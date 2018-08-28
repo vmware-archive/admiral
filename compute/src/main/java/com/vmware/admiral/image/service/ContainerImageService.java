@@ -27,7 +27,6 @@ import java.util.logging.Level;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ImageOperationType;
-import com.vmware.admiral.adapter.registry.service.RegistryAdapterService;
 import com.vmware.admiral.adapter.registry.service.RegistrySearchResponse;
 import com.vmware.admiral.adapter.registry.service.RegistrySearchResponse.Result;
 import com.vmware.admiral.common.ManagementUriParts;
@@ -174,9 +173,8 @@ public class ContainerImageService extends StatelessService {
 
         Integer parsedLimit = null;
         try {
-            parsedLimit = Integer.parseInt(queryParams.get(RegistryAdapterService.LIMIT_PROP_NAME));
+            parsedLimit = Integer.parseInt(queryParams.get(UriUtils.URI_PARAM_ODATA_LIMIT));
         } catch (Exception e) {
-            logSevere(e);
         }
 
         final int limit = parsedLimit != null ? parsedLimit : 0;

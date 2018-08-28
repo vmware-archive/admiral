@@ -60,7 +60,6 @@ public class RegistryAdapterService extends StatelessService {
             "com.vmware.admiral.adapter.registry.service.RegistryAdapterService.default.api.version",
             ApiVersion.V1.toString());
     public static final String SEARCH_QUERY_PROP_NAME = "q";
-    public static final String LIMIT_PROP_NAME = "limit";
 
     public static final String SSL_TRUST_CERT_PROP_NAME = "sslTrustCertificate";
     public static final String SSL_TRUST_ALIAS_PROP_NAME = "sslTrustAlias";
