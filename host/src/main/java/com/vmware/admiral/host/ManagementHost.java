@@ -18,6 +18,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 import javax.net.ssl.SSLContext;
@@ -65,6 +66,7 @@ import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.http.netty.NettyHttpListener;
 import com.vmware.xenon.common.http.netty.NettyHttpServiceClient;
 import com.vmware.xenon.services.common.MigrationTaskService;
@@ -75,6 +77,10 @@ import com.vmware.xenon.swagger.SwaggerDescriptorService;
  * Stand alone process entry point for management of infrastructure and applications.
  */
 public class ManagementHost extends ServiceHost implements IExtensibilityRegistryHost {
+
+    private static final long TIME_DRIFT_THRESHOLD_MICROS = Long.getLong(
+            "com.vmware.admiral.host.ManagementHost.time.drift.threshold.micros",
+            TimeUnit.MINUTES.toMicros(10));
 
     static {
         if (System.getProperty("service.document.version.retention.limit") == null) {
@@ -131,6 +137,8 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
     private OperationInterceptorRegistry interceptors = new OperationInterceptorRegistry();
 
     public static void main(String[] args) throws Throwable {
+        Utils.setTimeDriftThreshold(TIME_DRIFT_THRESHOLD_MICROS);
+
         ManagementHost h = new ManagementHost();
         h.initializeHostAndServices(args);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
