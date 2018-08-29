@@ -19,6 +19,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 import javax.net.ssl.SSLContext;
@@ -83,6 +84,10 @@ import com.vmware.xenon.swagger.SwaggerDescriptorService;
  */
 public class ManagementHost extends PostgresServiceHost implements IExtensibilityRegistryHost {
 
+    private static final long TIME_DRIFT_THRESHOLD_MICROS = Long.getLong(
+            "com.vmware.admiral.host.ManagementHost.time.drift.threshold.micros",
+            TimeUnit.MINUTES.toMicros(10));
+
     static {
         if (System.getProperty("service.document.version.retention.limit") == null) {
             System.setProperty("service.document.version.retention.limit", "10");
@@ -143,6 +148,8 @@ public class ManagementHost extends PostgresServiceHost implements IExtensibilit
     private OperationInterceptorRegistry interceptors = new OperationInterceptorRegistry();
 
     public static void main(String[] args) throws Throwable {
+        Utils.setTimeDriftThreshold(TIME_DRIFT_THRESHOLD_MICROS);
+
         ManagementHost h = new ManagementHost();
         h.initializeHostAndServices(args);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
