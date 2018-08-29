@@ -27,6 +27,7 @@
     </clr-alert>
 
     <table-view [searchPlaceholder]="'endpoints.searchPlaceholder' | i18n"
+                [showOccurrenceSelector]="false"
                 (onRefresh)="refreshEndpoints($event)">
         <span title>{{"endpoints.title" | i18n}}</span>
 

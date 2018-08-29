@@ -23,7 +23,7 @@
                 <form class="form search-form" [formGroup]="searchForm">
                     <div class="search-form-wrapper">
                         <div class="search-form-icon"><clr-icon shape="search" size="20"></clr-icon></div>
-                        <div class="search-form-occurrence select">
+                        <div *ngIf="showOccurrenceSelector" class="search-form-occurrence select">
                             <select id="occurrenceSelector" formControlName="occurrenceSelector"
                                     [(ngModel)]="occurrenceSelection">
                                 <option value="all">{{ 'search.occurrence.all' | i18n }}</option>

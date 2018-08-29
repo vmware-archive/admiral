@@ -31,6 +31,7 @@ import { CancelablePromise } from '../../utils/utils';
 export class GridViewComponent implements OnInit, OnChanges {
   @Input() serviceEndpoint: string;
   @Input() searchPlaceholder: string = '';
+  @Input() showOccurrenceSelector: boolean = true;
   @Input() searchSuggestionProperties: Array<string>;
   @Input() searchQueryOptions: any;
   @Input() projectLink: string;

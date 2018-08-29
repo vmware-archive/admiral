@@ -28,6 +28,7 @@ export class TableViewComponent implements OnInit {
     // In
     @Input() searchPlaceholder: string = '';
     @Input() showSearch: boolean = true;
+    @Input() showOccurrenceSelector: boolean = true;
     @Input() showToolbar: boolean = true;
     // Out
     @Output() onRefresh: EventEmitter<any> = new EventEmitter();

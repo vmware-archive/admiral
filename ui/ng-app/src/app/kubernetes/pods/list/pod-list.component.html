@@ -10,6 +10,7 @@
   -->
 
 <grid-view #gridView [serviceEndpoint]="serviceEndpoint" [projectLink]="projectLink"
+           [showOccurrenceSelector]="false"
            [searchPlaceholder]="'kubernetes.pods.search.placeholder' | i18n"
            [searchSuggestionProperties]="['name', 'ip', 'status']">
 
