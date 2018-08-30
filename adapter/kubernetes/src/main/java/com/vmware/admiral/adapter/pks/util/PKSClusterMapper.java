@@ -38,7 +38,9 @@ public class PKSClusterMapper {
 
         c.parameters = new HashMap<>(8);
         c.parameters.put(PKS_MASTER_HOST_FIELD, map.get(PKS_MASTER_HOST_FIELD));
-        c.parameters.put(PKS_MASTER_PORT_FIELD, getAsInt(map, PKS_MASTER_PORT_FIELD));
+        if (map.containsKey(PKS_MASTER_PORT_FIELD)) {
+            c.parameters.put(PKS_MASTER_PORT_FIELD, getAsInt(map, PKS_MASTER_PORT_FIELD));
+        }
         c.parameters.put(PKS_WORKER_INSTANCES_FIELD, getAsInt(map, PKS_WORKER_INSTANCES_FIELD));
         c.parameters.put(PKS_WORKER_HAPROXY_FIELD, map.get(PKS_WORKER_HAPROXY_FIELD));
         c.parameters.put(PKS_AUTHORIZATION_MODE_FIELD, map.get(PKS_AUTHORIZATION_MODE_FIELD));
