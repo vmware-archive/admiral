@@ -427,7 +427,7 @@
         "fieldTitleMasterHostName": "Master Host Name",
         "masterHostNameFieldRequired": "Master host name is required",
         "fieldTitleMasterHostPort": "Master Host Port",
-        "masterHostPortFieldRequired": "Master host port is required",
+        "masterHostPortFieldNotInteger": "Master host port must be an integer bigger than 0.",
         "fieldTitleNumberNodes": "Worker Nodes",
         "workerFieldRequired": "Worker field is required. Only integer values bigger than 0 can be entered.",
         "fieldConnectBy": "Connect By",

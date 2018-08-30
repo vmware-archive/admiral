@@ -13,7 +13,6 @@ package com.vmware.admiral.adapter.pks.service;
 
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_CLUSTER_NAME_PROP_NAME;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_MASTER_HOST_FIELD;
-import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_MASTER_PORT_FIELD;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_WORKER_INSTANCES_FIELD;
 import static com.vmware.admiral.adapter.pks.PKSConstants.VALIDATE_CONNECTION;
 
@@ -413,8 +412,6 @@ public class PKSAdapterService extends StatelessService {
             AssertUtil.assertNotNull(cluster.parameters, "cluster parameters");
             AssertUtil.assertNotEmpty((String) cluster.parameters.get(PKS_MASTER_HOST_FIELD),
                     "master host address");
-            AssertUtil.assertNotNull(cluster.parameters.get(PKS_MASTER_PORT_FIELD),
-                    "master host port");
             AssertUtil.assertNotNull(cluster.parameters.get(PKS_WORKER_INSTANCES_FIELD),
                     "worker instances");
             break;
