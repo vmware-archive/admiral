@@ -100,7 +100,15 @@ export class Utils {
   }
 
   public static isPksCluster(cluster) {
-    return cluster && cluster.type === "KUBERNETES";
+    return cluster && cluster.type === "KUBERNETES" && this.getEndpointLink(cluster);
+  }
+
+  public static getEndpointLink(cluster) {
+      let clusterData = cluster.nodeLinks && cluster.nodeLinks.length > 0
+          && cluster.nodes && cluster.nodes[cluster.nodeLinks[0]];
+      let clusterProperties = clusterData && clusterData.customProperties;
+
+      return Utils.getCustomPropertyValue(clusterProperties, '__pksEndpoint');
   }
 
   public static getErrorMessage(err) {
