@@ -11,6 +11,7 @@
 
 <delete-confirmation [title]="'eventLogs.deleteEventLog.title' | i18n"
                      [description]="'eventLogs.deleteEventLog.description' | i18n"
+                     [deleteButtonTextKey]="'delete' | i18n"
                      [(alert)]="deleteConfirmationAlert"
                      [visible]="showDeleteEventLogConfirmation"
                      (onDelete)="deleteConfirmed()"

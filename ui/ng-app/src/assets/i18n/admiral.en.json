@@ -317,11 +317,11 @@
         }
       },
       "remove": {
-        "title": "Remove Cluster",
+        "title": "Remove {{clusterName}}",
         "confirmation": "Confirm removing of cluster {{clusterName}}. The deployed entities associated to this cluster will be removed as well."
       },
       "destroy": {
-        "title": "Destroy Cluster",
+        "title": "Destroy {{clusterName}}",
         "confirmation": "Confirm destroying cluster {{clusterName}}. The deployed entities associated to this cluster will be destroyed as well. The operation cannot be undone."
       }
     },

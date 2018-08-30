@@ -106,10 +106,15 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
     }
 
     get deleteOpTitle() {
+        let key = this.deleteOp === 'REMOVE'
+                    ? 'kubernetes.clusters.remove.title'
+                    : 'kubernetes.clusters.destroy.title';
+
         return this.deleteOpClusterName
-            && (this.deleteOp === 'REMOVE'
-                    ? I18n.t('kubernetes.clusters.remove.title')
-                    : I18n.t('kubernetes.clusters.destroy.title'));
+            && I18n.t(key, {
+                clusterName: this.deleteOpClusterName,
+                interpolation: {escapeValue: false}
+            } as I18n.TranslationOptions);
     }
 
     get deleteOpConfirmationDescription(): string {
@@ -118,18 +123,14 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
             return description;
         }
 
-        if (this.deleteOp === 'REMOVE') {
-            description = I18n.t('kubernetes.clusters.remove.confirmation', {
-                clusterName: this.deleteOpClusterName,
-                interpolation: { escapeValue: false }
-            } as I18n.TranslationOptions)
+        let key = this.deleteOp === 'REMOVE'
+                    ? 'kubernetes.clusters.remove.confirmation'
+                    : 'kubernetes.clusters.destroy.confirmation';
 
-        } else if (this.deleteOp === 'DESTROY') {
-            description = I18n.t('kubernetes.clusters.destroy.confirmation', {
-                clusterName: this.deleteOpClusterName,
-                interpolation: { escapeValue: false }
-            } as I18n.TranslationOptions);
-        }
+        description = I18n.t(key, {
+            clusterName: this.deleteOpClusterName,
+            interpolation: { escapeValue: false }
+        } as I18n.TranslationOptions);
 
         return description;
     }
