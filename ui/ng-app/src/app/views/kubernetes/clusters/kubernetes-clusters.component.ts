@@ -389,7 +389,8 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
             }
 
             let clusterHostsLinks = {
-                computeContainerHostLinks: computeContainerHostLinks
+                computeContainerHostLinks: computeContainerHostLinks,
+                noHostOperation: true
             };
             // start hosts data collection
             this.service.patch(Links.HOST_DATA_COLLECTION, clusterHostsLinks, this.projectLink)
