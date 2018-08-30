@@ -204,7 +204,6 @@ public class PKSClusterProvisioningTaskService extends
 
     @Override
     public void handlePeriodicMaintenance(Operation post) {
-        logInfo("*** PKSClusterProvisioningTaskService handlePeriodicMaintenance invoked: %s", post.getUri().toString());
         // complete the maintenance operation first
         post.complete();
 
@@ -215,7 +214,6 @@ public class PKSClusterProvisioningTaskService extends
                                 getSelfLink(), ex.getMessage());
                     } else {
                         PKSProvisioningTaskState task = op.getBody(PKSProvisioningTaskState.class);
-                        logInfo("*** PKSClusterProvisioningTaskService fetched task: %s", Utils.toJson(task));
                         if (task != null && task.taskSubStage == PROCESSING) {
                             checkProvisioningStatus(task, null);
                         }
@@ -316,7 +314,6 @@ public class PKSClusterProvisioningTaskService extends
     private void getClusterAdapterRequest(PKSProvisioningTaskState task) {
         AdapterRequest adapterRequest = createAdapterRequest(task, PKSOperationType.GET_CLUSTER);
 
-        logInfo("*** Initiating adapter request for %s", task.documentSelfLink);
         Operation.createPatch(getHost(), ManagementUriParts.ADAPTER_PKS)
                 .setBodyNoCloning(adapterRequest)
                 .setContextId(getSelfId())
@@ -336,9 +333,7 @@ public class PKSClusterProvisioningTaskService extends
                         proceedTo(PROCESSING, t -> t.failureCounter = task.failureCounter);
                         return;
                     }
-                    logInfo("*** PKSCluster state unmarshalling");
                     PKSCluster pksCluster = o.getBody(PKSCluster.class);
-                    logInfo("*** PKSCluster state fetched");
                     if (pksCluster != null) {
                         checkProvisioningStatus(task, pksCluster);
                         if (task.failureCounter > 0) {
@@ -351,7 +346,6 @@ public class PKSClusterProvisioningTaskService extends
 
     private AdapterRequest createAdapterRequest(PKSProvisioningTaskState task,
             PKSOperationType operation) {
-        logInfo("PKS provision: Creating adapter request with type %s", operation.toString());
         AdapterRequest adapterRequest = new AdapterRequest();
 
         adapterRequest.operationTypeId = operation.id;
@@ -369,8 +363,6 @@ public class PKSClusterProvisioningTaskService extends
             getClusterAdapterRequest(task);
             return;
         }
-
-        logInfo("PKSCluster is %s", Utils.toJson(cluster));
 
         if (PKS_LAST_ACTION_CREATE.equals(cluster.lastAction)) {
             if (PKS_LAST_ACTION_STATE_SUCCEEDED.equals(cluster.lastActionState)) {
@@ -403,7 +395,6 @@ public class PKSClusterProvisioningTaskService extends
                 .setBodyNoCloning(request)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        logInfo("*** ClusterConfig service returned error: %s", Utils.toString(e));
                         // in case of connection exception do nothing, will try to contact the
                         // cluster later, else fail the provision request
                         if (!isConnectionException(e) && !isLocalizableValidationException(e)) {
@@ -412,7 +403,6 @@ public class PKSClusterProvisioningTaskService extends
                         markClusterUnreachable(task);
                         return;
                     }
-                    logInfo("*** ClusterConfig succeeded");
                     proceedTo(COMPLETED);
                 })
                 .sendWith(this);
