@@ -115,9 +115,8 @@ export class EndpointDetailsComponent extends BaseDetailsComponent {
     }
 
     deleteConfirmed() {
-        let deletePromise =  this.service.delete(this.entity.documentSelfLink);
-
-        deletePromise.then(() => {
+        this.service.delete(this.entity.documentSelfLink)
+            .then(() => {
             this.showDeleteConfirmation = false;
             this.goBack();
         }).catch(err => {

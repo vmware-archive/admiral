@@ -11,6 +11,7 @@
 
 <delete-confirmation [title]="'requests.deleteRequest.title' | i18n"
                      [description]="'requests.deleteRequest.description' | i18n"
+                     [deleteButtonTextKey]="'delete' | i18n"
                      [(alert)]="deleteConfirmationAlert"
                      [visible]="showDeleteRequestConfirmation"
                      (onDelete)="deleteConfirmed()"
