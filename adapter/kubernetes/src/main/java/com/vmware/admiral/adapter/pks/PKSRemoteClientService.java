@@ -20,9 +20,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
+
 import javax.net.ssl.TrustManager;
 
 import com.vmware.admiral.adapter.pks.entities.PKSCluster;
+import com.vmware.admiral.adapter.pks.entities.PKSErrorResponse;
 import com.vmware.admiral.adapter.pks.entities.PKSPlan;
 import com.vmware.admiral.adapter.pks.entities.UAATokenResponse;
 import com.vmware.admiral.common.util.DeferredUtils;
@@ -146,7 +148,7 @@ public class PKSRemoteClientService {
                     .exceptionally(t -> {
                         throw DeferredUtils.logErrorAndThrow(t,
                                 e -> String.format("Error getting PKS cluster '%s' from %s,"
-                                                + " reason: %s",
+                                        + " reason: %s",
                                         cluster, ctx.pksAPIUri, e.getMessage()),
                                 getClass());
                     });
@@ -177,7 +179,7 @@ public class PKSRemoteClientService {
                     .exceptionally(t -> {
                         throw DeferredUtils.logErrorAndThrow(t,
                                 e -> String.format("Error deleting PKS cluster '%s' from %s,"
-                                                + " reason: %s",
+                                        + " reason: %s",
                                         cluster, ctx.pksAPIUri, e.getMessage()),
                                 getClass());
                     });
@@ -262,7 +264,7 @@ public class PKSRemoteClientService {
                     .exceptionally(t -> {
                         throw DeferredUtils.logErrorAndThrow(t,
                                 e -> String.format("Error creating PKS cluster '%s' from %s,"
-                                                + " reason: %s",
+                                        + " reason: %s",
                                         cluster.name, ctx.pksAPIUri, e.getMessage()),
                                 getClass());
                     });
@@ -294,7 +296,7 @@ public class PKSRemoteClientService {
                     .exceptionally(t -> {
                         throw DeferredUtils.logErrorAndThrow(t,
                                 e -> String.format("Error resizing PKS cluster '%s' from %s,"
-                                                + " reason: %s",
+                                        + " reason: %s",
                                         cluster, ctx.pksAPIUri, e.getMessage()),
                                 getClass());
                     });
@@ -308,9 +310,12 @@ public class PKSRemoteClientService {
     /**
      * Obtains token from UAA service.
      *
-     * @param uaaEndpoint UAA service address
-     * @param user        username
-     * @param pass        password
+     * @param uaaEndpoint
+     *            UAA service address
+     * @param user
+     *            username
+     * @param pass
+     *            password
      * @return {@link DeferredResult} with {@link UAATokenResponse} instance
      */
     public DeferredResult<UAATokenResponse> login(String uaaEndpoint, String user, String pass) {
@@ -379,8 +384,10 @@ public class PKSRemoteClientService {
     /**
      * Creates <code>GET</code> operation initialized with authorization header.
      *
-     * @param uri operation uri
-     * @param ctx PKS context with the token
+     * @param uri
+     *            operation uri
+     * @param ctx
+     *            PKS context with the token
      * @return operation instance
      */
     private Operation buildGetOperation(URI uri, PKSContext ctx) {
@@ -390,8 +397,10 @@ public class PKSRemoteClientService {
     /**
      * Creates <code>POST</code> operation initialized with authorization header.
      *
-     * @param uri operation uri
-     * @param ctx PKS context with the token
+     * @param uri
+     *            operation uri
+     * @param ctx
+     *            PKS context with the token
      * @return operation instance
      */
     private Operation buildPostOperation(URI uri, PKSContext ctx) {
@@ -401,8 +410,10 @@ public class PKSRemoteClientService {
     /**
      * Creates <code>DELETE</code> operation initialized with authorization header.
      *
-     * @param uri operation uri
-     * @param ctx PKS context with the token
+     * @param uri
+     *            operation uri
+     * @param ctx
+     *            PKS context with the token
      * @return operation instance
      */
     private Operation buildDeleteOperation(URI uri, PKSContext ctx) {
@@ -412,8 +423,10 @@ public class PKSRemoteClientService {
     /**
      * Creates <code>PATCH</code> operation initialized with authorization header.
      *
-     * @param uri operation uri
-     * @param ctx PKS context with the token
+     * @param uri
+     *            operation uri
+     * @param ctx
+     *            PKS context with the token
      * @return operation instance
      */
     private Operation buildPatchOperation(URI uri, PKSContext ctx) {
@@ -423,8 +436,10 @@ public class PKSRemoteClientService {
     /**
      * Creates operation initialized with authorization header.
      *
-     * @param op  operation to modify
-     * @param ctx PKS context with the token
+     * @param op
+     *            operation to modify
+     * @param ctx
+     *            PKS context with the token
      * @return operation instance
      */
     private Operation buildOperation(Operation op, PKSContext ctx) {
@@ -436,12 +451,13 @@ public class PKSRemoteClientService {
     }
 
     /**
-     * Creates operation to obtain UAA token. In case of error (status code >= 400) xenon
-     * overwrites the operation body with own message and this the original response body
-     * is lost. Treat this special case by appending the original response to the message
-     * of the {@link ServiceErrorResponse} object.
+     * Creates operation to obtain UAA token. In case of error (status code >= 400) xenon overwrites
+     * the operation body with own message and this the original response body is lost. Treat this
+     * special case by appending the original response to the message of the
+     * {@link ServiceErrorResponse} object.
      *
-     * @param uri operation uri
+     * @param uri
+     *            operation uri
      * @return operation instance
      */
     private Operation buildLoginOperation(URI uri) {
@@ -470,7 +486,10 @@ public class PKSRemoteClientService {
         DeferredResult<Operation> deferred = new DeferredResult<>();
         op.nestCompletion((response, e) -> {
             if (e != null) {
-                PKSException p = new PKSException(e.getMessage(), e, response.getStatusCode());
+                String errorMessage = response.getBody(PKSErrorResponse.class).message;
+                PKSException p = new PKSException(
+                        String.format("%s,  Error: %s", e.getMessage(), errorMessage), e,
+                        response.getStatusCode());
                 deferred.fail(p);
             } else {
                 deferred.complete(response);
