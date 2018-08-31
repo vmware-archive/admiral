@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Logger;
 
 import javax.net.ssl.TrustManager;
@@ -35,6 +36,7 @@ import com.vmware.admiral.compute.kubernetes.entities.config.KubeConfig;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
+import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.ServiceErrorResponse;
 import com.vmware.xenon.common.ServiceHost;
@@ -391,7 +393,7 @@ public class PKSRemoteClientService {
      * @return operation instance
      */
     private Operation buildGetOperation(URI uri, PKSContext ctx) {
-        return buildOperation(Operation.createGet(uri), ctx);
+        return buildOperation(Action.GET, uri, ctx);
     }
 
     /**
@@ -404,7 +406,7 @@ public class PKSRemoteClientService {
      * @return operation instance
      */
     private Operation buildPostOperation(URI uri, PKSContext ctx) {
-        return buildOperation(Operation.createPost(uri), ctx);
+        return buildOperation(Action.POST, uri, ctx);
     }
 
     /**
@@ -417,7 +419,7 @@ public class PKSRemoteClientService {
      * @return operation instance
      */
     private Operation buildDeleteOperation(URI uri, PKSContext ctx) {
-        return buildOperation(Operation.createDelete(uri), ctx);
+        return buildOperation(Action.DELETE, uri, ctx);
     }
 
     /**
@@ -430,11 +432,14 @@ public class PKSRemoteClientService {
      * @return operation instance
      */
     private Operation buildPatchOperation(URI uri, PKSContext ctx) {
-        return buildOperation(Operation.createPatch(uri), ctx);
+        return buildOperation(Action.PATCH, uri, ctx);
     }
 
     /**
-     * Creates operation initialized with authorization header.
+     * Creates operation initialized with authorization header. In case of error (status code >= 400) xenon overwrites
+     * the operation body with own message and thus the original response body is lost. Treat this
+     * special case by replacing the original response to the message of the
+     * {@link ServiceErrorResponse} object.
      *
      * @param op
      *            operation to modify
@@ -442,8 +447,20 @@ public class PKSRemoteClientService {
      *            PKS context with the token
      * @return operation instance
      */
-    private Operation buildOperation(Operation op, PKSContext ctx) {
-        return op.addRequestHeader(Operation.ACCEPT_HEADER, Operation.MEDIA_TYPE_APPLICATION_JSON)
+    private Operation buildOperation(Action action, URI uri, PKSContext ctx) {
+        Operation o = new Operation() {
+            @Override
+            public Operation setBodyNoCloning(Object b) {
+                if (b instanceof ServiceErrorResponse && Objects.nonNull(super.getBodyRaw())) {
+                    ((ServiceErrorResponse) b).message = Utils.fromJson(super.getBodyRaw(),
+                            PKSErrorResponse.class).message;
+                }
+                return super.setBodyNoCloning(b);
+            }
+        };
+        return o.setAction(action)
+                .setUri(uri)
+                .addRequestHeader(Operation.ACCEPT_HEADER, Operation.MEDIA_TYPE_APPLICATION_JSON)
                 .addRequestHeader(Operation.AUTHORIZATION_HEADER, "Bearer " + ctx.accessToken)
                 .addRequestHeader(Operation.REQUEST_AUTH_TOKEN_HEADER, "")
                 .setReferer(host.getUri())
@@ -486,10 +503,10 @@ public class PKSRemoteClientService {
         DeferredResult<Operation> deferred = new DeferredResult<>();
         op.nestCompletion((response, e) -> {
             if (e != null) {
-                String errorMessage = response.getBody(PKSErrorResponse.class).message;
                 PKSException p = new PKSException(
-                        String.format("%s,  Error: %s", e.getMessage(), errorMessage), e,
-                        response.getStatusCode());
+                        String.format("%s,  Error: %s", e.getMessage(),
+                                response.getErrorResponseBody().message),
+                        e, response.getStatusCode());
                 deferred.fail(p);
             } else {
                 deferred.complete(response);
