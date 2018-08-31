@@ -352,12 +352,38 @@ function isEverythingRemoved(selectedItem, operationType, removedIds) {
 }
 
 function redirectToCatalogItem(catalogItemId) {
-  let currentURL = window.top.location.href;
-  let redirectURL =
-      currentURL.substring(0, currentURL
-                           .indexOf('#') + 1);
-  redirectURL += 'csp.catalog.item.details%5BresourceId:=' + catalogItemId;
-  window.top.location.href = redirectURL;
+  if (catalogItemId) {
+    let currentURL = window.top.location.href;
+    let redirectURL =
+        currentURL.substring(0, currentURL
+            .indexOf('#') + 1);
+    redirectURL += 'csp.cs.ui.deployment.detail[routeParams:=' + catalogItemId;
+    window.top.location.href = encodeURI(redirectURL);
+  }
+}
+
+/**
+ * Produces the routeParams needed to open a specific deployment component.
+ * The routeParams consist of a compositeId, tabId and compositeResourceId.
+ * The compositeId is the UUID of the application deployment.
+ * The tabId is the open tab in the deployment - either 'Components' (0) or 'History (1).
+ * The compositeResourceId represents the UUID of a concrete resource,
+ * which is part of a application deployment.
+ *
+ * @param catalogResource
+ * @returns {*}
+ */
+function buildRedirectParams(catalogResource) {
+  let compositeId = catalogResource && catalogResource.parentResourceRef &&
+      catalogResource.parentResourceRef.id;
+  let compositeResourceId = catalogResource && catalogResource.id;
+
+  if (compositeId) {
+    let redirectParams = compositeResourceId ?
+        compositeId + ',0,' + compositeResourceId :
+        compositeId;
+    return encodeURIComponent(redirectParams);
+  }
 }
 
 let getNetworkLinks = function(containerOrCluster, networks) {
@@ -850,9 +876,8 @@ let ContainersStore = Reflux.createStore({
     if (operation) {
       operation.forPromise(services.manageContainer(containerId))
         .then((catalogResource) => {
-          if (catalogResource && catalogResource.id) {
-            redirectToCatalogItem(catalogResource.id);
-          }
+          let redirectParams = buildRedirectParams(catalogResource);
+          redirectToCatalogItem(redirectParams);
         });
     }
   },
@@ -867,9 +892,8 @@ let ContainersStore = Reflux.createStore({
     if (operation) {
       operation.forPromise(services.manageNetwork(networkId))
         .then((catalogResource) => {
-          if (catalogResource && catalogResource.id) {
-            redirectToCatalogItem(catalogResource.id);
-          }
+          let redirectParams = buildRedirectParams(catalogResource);
+          redirectToCatalogItem(redirectParams);
         });
     }
   },
@@ -880,9 +904,8 @@ let ContainersStore = Reflux.createStore({
     if (operation) {
       operation.forPromise(services.manageVolume(volumeId))
         .then((catalogResource) => {
-          if (catalogResource && catalogResource.id) {
-            redirectToCatalogItem(catalogResource.id);
-          }
+          let redirectParams = buildRedirectParams(catalogResource);
+          redirectToCatalogItem(redirectParams);
         });
     }
   },
