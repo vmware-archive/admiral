@@ -13,6 +13,8 @@ package com.vmware.admiral.request;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeCustomProperties;
+import static com.vmware.admiral.common.util.ServiceUtils.EXPIRATION_MICROS;
+import static com.vmware.admiral.common.util.ServiceUtils.getExpirationTimeFromNowInMicros;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_ALLOCATION_REQUEST;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
@@ -338,6 +340,15 @@ public class RequestBrokerService extends
     }
 
     private void calculateActualRequestedResources(RequestBrokerState state, SubStage next) {
+        if (isPKSClusterType(state)) {
+            proceedTo(next, s -> {
+                s.actualResourceCount = state.resourceCount;
+                s.documentExpirationTimeMicros = getExpirationTimeFromNowInMicros(
+                        EXPIRATION_MICROS * 2);
+            });
+            return;
+        }
+
         if (isProvisionOperation(state)) {
             if (isContainerType(state)) {
                 getContainerDescription(state, (cd) -> {
@@ -1389,7 +1400,7 @@ public class RequestBrokerService extends
             task.tenantLinks = state.tenantLinks;
             task.requestTrackerLink = state.requestTrackerLink;
             // calculate task expiration to be shortly before parent task expiration
-            task.documentExpirationTimeMicros = state.documentExpirationTimeMicros
+            task.documentExpirationTimeMicros = state.documentExpirationTimeMicros / 2
                     - TimeUnit.MINUTES.toMicros(5);
 
             sendRequest(Operation
@@ -1433,7 +1444,7 @@ public class RequestBrokerService extends
             task.cleanupRemoval = cleanupRemoval;
             task.removeOnly = removeOnly;
             // calculate task expiration to be shortly before parent task expiration
-            task.documentExpirationTimeMicros = state.documentExpirationTimeMicros
+            task.documentExpirationTimeMicros = state.documentExpirationTimeMicros / 2
                     - TimeUnit.MINUTES.toMicros(5);
 
             sendRequest(Operation
@@ -1461,7 +1472,7 @@ public class RequestBrokerService extends
             task.tenantLinks = state.tenantLinks;
             task.requestTrackerLink = state.requestTrackerLink;
             // calculate task expiration to be shortly before parent task expiration
-            task.documentExpirationTimeMicros = state.documentExpirationTimeMicros
+            task.documentExpirationTimeMicros = state.documentExpirationTimeMicros / 2
                     - TimeUnit.MINUTES.toMicros(5);
 
             sendRequest(Operation
