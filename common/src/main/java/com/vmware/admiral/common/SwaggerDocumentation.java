@@ -45,6 +45,8 @@ public interface SwaggerDocumentation {
         public static final String PKS_PLAN_LIST_TAG = "PKS Plan List";
         public static final String PKS_CLUSTER_CRUD_TAG = "PKS Cluster Operations";
 
+        public static final String EVENT_LOGS = "Event Logs";
+
     }
 
 }

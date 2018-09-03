@@ -11,10 +11,26 @@
 
 package com.vmware.admiral.log;
 
+import static com.vmware.admiral.common.SwaggerDocumentation.BASE_PATH;
+import static com.vmware.admiral.common.SwaggerDocumentation.DataTypes.DATA_TYPE_OBJECT;
+import static com.vmware.admiral.common.SwaggerDocumentation.ParamTypes.PARAM_TYPE_BODY;
+import static com.vmware.admiral.common.SwaggerDocumentation.Tags.EVENT_LOGS;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.ServiceUtils;
@@ -28,6 +44,8 @@ import com.vmware.xenon.common.StatefulService;
  * Describes a result of some asynchronous operations in the form of event log that usually cannot
  * be propagated to the UI by normal means but still need user attention.
  */
+@Api(tags = {EVENT_LOGS})
+@Path(EventLogService.FACTORY_LINK)
 public class EventLogService extends StatefulService {
     public static final String FACTORY_LINK = ManagementUriParts.EVENT_LOG;
 
@@ -35,6 +53,7 @@ public class EventLogService extends StatefulService {
             "com.vmware.admiral.log.eventlogservice.expiration.interval.hours",
             TimeUnit.HOURS.toMicros(72));
 
+    @ApiModel
     public static class EventLogState extends MultiTenantDocument {
 
         public static final String FIELD_NAME_EVENT_LOG_TYPE = "eventLogType";
@@ -57,24 +76,40 @@ public class EventLogService extends StatefulService {
             ERROR
         }
 
+        //TODO the xenon annotations should be removed in the future
         /**
          * The operation this event originates from. Example: Host config, Registry config, Create
          * container, Maintenance task.
          */
         @Documentation(description = "The operation this event originates from. Example: Host config, Registry config, Create container, Maintenance task.")
+        @ApiModelProperty(
+                value = "The operation this event originates from.",
+                example = "Host config, Registry config, Create container, Maintenance task.",
+                required = true)
         public String resourceType;
 
         /** Severity level type. */
         @Documentation(description = "Severity level type.")
+        @ApiModelProperty(
+                value = "Severity level type.",
+                example = "INFO, WARNING, ERROR",
+                required = true)
         public EventLogType eventLogType;
 
         /** User-friendly description of the event */
         @Documentation(description = "User-friendly description of the event")
+        @ApiModelProperty(
+                value = "User-friendly description of the event.",
+                example = "Host config failed.",
+                required = true)
         public String description;
 
         /** Additional data like operation request/response body, Request IP, etc. */
         @Documentation(description = "Additional data like operation request/response body, Request IP, etc.")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
+        @ApiModelProperty(
+                value = "Additional data.",
+                example = "The body of operation request/response, Request IP")
         public Map<String, String> customProperties;
     }
 
@@ -87,6 +122,23 @@ public class EventLogService extends StatefulService {
     }
 
     @Override
+    @POST
+    @Path(BASE_PATH)
+    @ApiOperation(
+            value = "Create a new event log.",
+            notes = "Creates the new event log and sets it's expiration time.",
+            nickname = "createEventLog")
+    @ApiResponses({
+            @ApiResponse(code = Operation.STATUS_CODE_OK, message = "Event log successfully created.")})
+    @ApiImplicitParams({
+            @ApiImplicitParam(
+                    name = "Event log state",
+                    value = "The new event log to be added.",
+                    dataType = DATA_TYPE_OBJECT,
+                    dataTypeClass = EventLogState.class,
+                    paramType = PARAM_TYPE_BODY,
+                    required = true
+            )})
     public void handleCreate(Operation post) {
         if (!post.hasBody()) {
             post.fail(new IllegalArgumentException("empty body"));

@@ -65,7 +65,7 @@ public class PKSPlanListService extends StatelessService {
     @Path(BASE_PATH)
     @ApiOperation(
             value = "List all endpoint plans.",
-            notes = "Retrueves all plans for the specified endpoint.",
+            notes = "Retrieves all plans for the specified endpoint.",
             nickname = "getSingleOrAll",
             response = PKSPlan.class,
             responseContainer = "List")
