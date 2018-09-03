@@ -27,6 +27,8 @@ import io.swagger.annotations.ApiResponses;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.OperationUtil;
+import com.vmware.admiral.common.util.ReflectionUtils;
+import com.vmware.admiral.common.util.ReflectionUtils.CustomPath;
 import com.vmware.admiral.log.EventLogService.EventLogState;
 import com.vmware.admiral.service.common.AbstractSecuredFactoryService;
 import com.vmware.xenon.common.Operation;
@@ -34,9 +36,14 @@ import com.vmware.xenon.common.Service;
 
 
 @Api(tags = {EVENT_LOGS})
-@Path(EventLogFactoryService.SELF_LINK)
+@Path("")
 public class EventLogFactoryService extends AbstractSecuredFactoryService {
     public static final String SELF_LINK = ManagementUriParts.EVENT_LOG;
+
+    static {
+        ReflectionUtils.setAnnotation(EventLogFactoryService.class, Path.class,
+                new CustomPath(SELF_LINK));
+    }
 
     public EventLogFactoryService() {
         super(EventLogState.class);

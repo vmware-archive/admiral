@@ -34,6 +34,8 @@ import com.vmware.admiral.adapter.pks.PKSOperationType;
 import com.vmware.admiral.adapter.pks.entities.PKSPlan;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.common.util.ReflectionUtils;
+import com.vmware.admiral.common.util.ReflectionUtils.CustomPath;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatelessService;
@@ -45,10 +47,15 @@ import com.vmware.xenon.common.Utils;
  * A flag indicates whether each cluster has been added to Admiral.
  */
 @Api(tags = {PKS_PLAN_LIST_TAG})
-@Path(PKSPlanListService.SELF_LINK)
+@Path("")
 public class PKSPlanListService extends StatelessService {
 
     public static final String SELF_LINK = ManagementUriParts.PKS_PLANS;
+
+    static {
+        ReflectionUtils.setAnnotation(PKSPlanListService.class, Path.class,
+                new CustomPath(SELF_LINK));
+    }
 
     @Override
     public void handleRequest(Operation op) {

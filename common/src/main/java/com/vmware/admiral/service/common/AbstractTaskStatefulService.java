@@ -29,8 +29,6 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceUtils;
@@ -978,10 +976,11 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         return DeferredResult.completed(null);
     }
 
+    @SuppressWarnings("unchecked")
     private DeferredResult<Collection<ResourceState>>getRelatedResourcesForExtensibility(T state) {
         List<DeferredResult<ResourceState>> results = getRelatedResourcesLinks(state).stream()
                 .map(link -> Operation.createGet(this, link))
-                .map(o -> (DeferredResult<ResourceState>)sendWithDeferredResult(o,
+                .map(o -> (DeferredResult<ResourceState>) sendWithDeferredResult(o,
                         getRelatedResourceStateType(state)))
                 .collect(Collectors.toList());
 
@@ -993,11 +992,11 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
     }
 
     protected Collection<String> getRelatedResourcesLinks(T state) {
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException();
     }
 
     protected Class<? extends ResourceState> getRelatedResourceStateType(T state) {
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException();
     }
 
     public<R extends ResourceState> DeferredResult<Map<String, String>> getResourceStatesTags(

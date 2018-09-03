@@ -45,6 +45,8 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.common.util.ReflectionUtils;
+import com.vmware.admiral.common.util.ReflectionUtils.CustomPath;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -61,10 +63,15 @@ import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
  * A flag indicates whether each cluster has been added to Admiral.
  */
 @Api(tags = {PKS_CLUSTER_LIST_TAG})
-@Path(PKSClusterListService.SELF_LINK)
+@Path("")
 public class PKSClusterListService extends StatelessService {
 
     public static final String SELF_LINK = ManagementUriParts.PKS_CLUSTERS;
+
+    static {
+        ReflectionUtils.setAnnotation(PKSClusterListService.class, Path.class,
+                new CustomPath(SELF_LINK));
+    }
 
     @Override
     public void handleRequest(Operation op) {

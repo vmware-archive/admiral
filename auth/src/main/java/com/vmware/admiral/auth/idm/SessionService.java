@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.auth.idm;
 
+import java.util.Collections;
+
 import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.auth.util.SecurityContextUtil;
 import com.vmware.admiral.common.ManagementUriParts;
@@ -22,6 +24,12 @@ import com.vmware.xenon.common.Utils;
 
 public class SessionService extends StatelessService {
     public static final String SELF_LINK = ManagementUriParts.AUTH_SESSION;
+
+    private static final SecurityContext NO_AUTH_SECURITY_CONTEXT = new SecurityContext();
+
+    static {
+        NO_AUTH_SECURITY_CONTEXT.roles = Collections.singleton(AuthRole.CLOUD_ADMIN);
+    }
 
     private LogoutProvider provider;
 
@@ -40,8 +48,15 @@ public class SessionService extends StatelessService {
     @Override
     public void handleGet(Operation get) {
         if (isLogoutRequest(get)) {
+            if (!AuthUtil.isAuthxEnabled(getHost())) {
+                return;
+            }
             provider.doLogout(get);
         } else if (isSessionRequest(get)) {
+            if (!AuthUtil.isAuthxEnabled(getHost())) {
+                get.setBody(NO_AUTH_SECURITY_CONTEXT).complete();
+                return;
+            }
             SecurityContextUtil.getSecurityContext(this, get)
                     .thenAccept((context) -> {
                         get.setBody(context).complete();

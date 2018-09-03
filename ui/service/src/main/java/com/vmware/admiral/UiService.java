@@ -19,8 +19,6 @@ import com.vmware.xenon.common.UriUtils;
 public class UiService extends BaseUiService {
     public static final String SELF_LINK = ManagementUriParts.UI_SERVICE;
 
-    private static final String OLD_COMPUTE_UI_QUERY = "compute";
-
     protected volatile Boolean isEmbedded;
 
     @Override
@@ -75,25 +73,8 @@ public class UiService extends BaseUiService {
         if (redirectToLoginOrIndex(getHost(), get)) {
             return;
         }
-        if (redirectToIaaS(get)) {
-            return;
-        }
+
         super.handleGet(get);
-    }
-
-    private static boolean redirectToIaaS(Operation op) {
-        String query = op.getUri().getQuery();
-        if (query != null && query.contains(OLD_COMPUTE_UI_QUERY)) {
-
-            String location = ManagementUriParts.UI_COMPUTE_SERVICE.replace(SELF_LINK, "");
-
-            op.addResponseHeader(Operation.LOCATION_HEADER, location);
-            op.setStatusCode(Operation.STATUS_CODE_MOVED_TEMP);
-            op.complete();
-            return true;
-        }
-
-        return false;
     }
 
 }

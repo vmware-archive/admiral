@@ -52,6 +52,8 @@ public interface AuthConfigProvider {
 
     Function<Claims, String> getAuthenticationServiceUserLinkBuilder();
 
+    Function<Claims, String> getAuthenticationServiceUserFactoryLinkBuilder();
+
     Collection<FactoryService> createServiceFactories();
 
     Collection<Service> createServices();

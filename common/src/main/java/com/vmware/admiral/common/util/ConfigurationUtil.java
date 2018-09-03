@@ -34,6 +34,7 @@ public class ConfigurationUtil {
 
     public static final String EMBEDDED_MODE_PROPERTY = "embedded";
     public static final String VIC_MODE_PROPERTY = "vic";
+    public static final String VCA_MODE_PROPERTY = "vca";
     public static final String ALLOW_SSH_CONSOLE_PROPERTY = "allow.browser.ssh.console";
     public static final String ALLOW_HOST_EVENTS_SUBSCRIPTIONS = "allow.host.events.subscription";
 
@@ -84,6 +85,10 @@ public class ConfigurationUtil {
      */
     public static boolean isEmbedded() {
         return Boolean.valueOf(ConfigurationUtil.getProperty(EMBEDDED_MODE_PROPERTY));
+    }
+
+    public static boolean isVca() {
+        return Boolean.valueOf(ConfigurationUtil.getProperty(VCA_MODE_PROPERTY));
     }
 
     /**

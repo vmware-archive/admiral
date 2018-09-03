@@ -59,6 +59,8 @@ import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.AuthUtils;
+import com.vmware.admiral.common.util.ReflectionUtils;
+import com.vmware.admiral.common.util.ReflectionUtils.CustomPath;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
@@ -76,11 +78,16 @@ import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
-@Api(tags = {PKS_CLUSTER_CONFIG_TAG})
-@Path(PKSClusterConfigService.SELF_LINK)
+@Api(tags = { PKS_CLUSTER_CONFIG_TAG })
+@Path("")
 public class PKSClusterConfigService extends StatelessService {
 
     public static final String SELF_LINK = ManagementUriParts.PKS_CLUSTERS_CONFIG;
+
+    static {
+        ReflectionUtils.setAnnotation(PKSClusterConfigService.class, Path.class,
+                new CustomPath(SELF_LINK));
+    }
 
     @ApiModel
     public static class AddClusterRequest extends MultiTenantDocument {
@@ -262,7 +269,7 @@ public class PKSClusterConfigService extends StatelessService {
         ContainerHostSpec clusterSpec = new ContainerHostSpec();
         clusterSpec.hostState = kubernetesHost;
         clusterSpec.acceptCertificate = true;
-        clusterSpec.acceptHostAddress =  DeploymentProfileConfig.getInstance().isTest();
+        clusterSpec.acceptHostAddress = DeploymentProfileConfig.getInstance().isTest();
 
         return clusterSpec;
     }
@@ -300,7 +307,7 @@ public class PKSClusterConfigService extends StatelessService {
         credentials.customProperties = new HashMap<>(4);
         credentials.customProperties.put(KUBE_CONFIG_PROP_NAME, Utils.toJson(kubeConfig));
 
-        //Set the display name of the credential to the cluster name, if it exists
+        // Set the display name of the credential to the cluster name, if it exists
         if (CollectionUtils.isNotEmpty(kubeConfig.clusters) &&
                 StringUtils.isNotEmpty(kubeConfig.clusters.get(0).name)) {
             credentials.customProperties.put(AuthUtils.AUTH_CREDENTIALS_NAME_PROP_NAME,

@@ -586,12 +586,11 @@ public class HostContainerListDataCollection extends StatefulService {
     }
 
     private URI getContainerAdapterReference(URI hostAdapter) {
-        switch (hostAdapter.getPath()) {
-        case ManagementUriParts.ADAPTER_DOCKER_HOST:
+        if (ManagementUriParts.ADAPTER_DOCKER_HOST.equals(hostAdapter.getPath())) {
             return UriUtils.buildUri(ManagementUriParts.ADAPTER_DOCKER);
-        case ManagementUriParts.ADAPTER_KUBERNETES_HOST:
+        } else if (ManagementUriParts.ADAPTER_KUBERNETES_HOST.equals(hostAdapter.getPath())) {
             return UriUtils.buildUri(ManagementUriParts.ADAPTER_KUBERNETES);
-        default:
+        } else {
             throw new IllegalArgumentException(
                     String.format("No container adapter for %s", hostAdapter.getPath()));
         }

@@ -36,6 +36,7 @@ import com.vmware.admiral.auth.idm.SessionService;
 import com.vmware.admiral.auth.project.ProjectFactoryService;
 import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.auth.util.AuthUtil;
+import com.vmware.admiral.common.serialization.ReleaseConstants;
 import com.vmware.admiral.common.util.AuthUtils;
 import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.SecurityUtils;
@@ -391,12 +392,14 @@ public class ManagementHost extends PostgresServiceHost implements IExtensibilit
                 "/vendor.",
                 "/scripts.",
                 "/styles.",
+                "/rp",
+                "/subscriptions",
                 "/core/");
         swagger.setExcludeUtilities(true);
 
         // Provide API metainfo
         Info apiInfo = new Info();
-        apiInfo.setVersion("1.3.2");
+        apiInfo.setVersion(ReleaseConstants.CURRENT_API_VERSION);
         apiInfo.setTitle("Admiral");
 
         apiInfo.setLicense(new License().name("Apache 2.0")
@@ -675,7 +678,8 @@ public class ManagementHost extends PostgresServiceHost implements IExtensibilit
     public boolean handleRequest(Service service, Operation inboundOp) {
 
         if (AuthUtil.useAuthConfig(this)) {
-            AuthorizationContext authCtx = inboundOp != null ? inboundOp.getAuthorizationContext() : null;
+            AuthorizationContext authCtx = inboundOp != null ? inboundOp.getAuthorizationContext()
+                    : null;
             AuthUtils.validateSessionData(this, inboundOp, getGuestAuthorizationContext(), authCtx);
         }
 

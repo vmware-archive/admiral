@@ -16,13 +16,16 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.function.Function;
+
 import org.junit.Test;
 
-import com.vmware.admiral.auth.AuthBaseTest;
 import com.vmware.admiral.auth.idm.local.LocalAuthConfigProvider;
+import com.vmware.xenon.common.Claims;
+import com.vmware.xenon.services.common.UserService;
 import com.vmware.xenon.services.common.authn.BasicAuthenticationService;
 
-public class LocalAuthConfigProviderTest extends AuthBaseTest {
+public class LocalAuthConfigProviderTest {
 
     @Test
     public void testInitConfig() {
@@ -31,7 +34,23 @@ public class LocalAuthConfigProviderTest extends AuthBaseTest {
         assertNull(provider.getAuthenticationService());
         assertEquals(BasicAuthenticationService.SELF_LINK,
                 provider.getAuthenticationServiceSelfLink());
-        assertNotNull(provider.getAuthenticationServiceUserLinkBuilder());
+
+        Function<Claims, String> userLinkBuilder = provider
+                .getAuthenticationServiceUserLinkBuilder();
+        assertNotNull(userLinkBuilder);
+
+        Claims claims = new Claims.Builder().setSubject("test@admiral.com").getResult();
+
+        String userLink = userLinkBuilder.apply(claims);
+        assertEquals(UserService.FACTORY_LINK + "/test@admiral.com", userLink);
+
+        Function<Claims, String> userFactoryLinkBuilder = provider
+                .getAuthenticationServiceUserFactoryLinkBuilder();
+        assertNotNull(userFactoryLinkBuilder);
+
+        String userFactoryLink = userFactoryLinkBuilder.apply(claims);
+        assertEquals(UserService.FACTORY_LINK, userFactoryLink);
+
         assertTrue(provider.createServiceFactories().isEmpty());
     }
 }

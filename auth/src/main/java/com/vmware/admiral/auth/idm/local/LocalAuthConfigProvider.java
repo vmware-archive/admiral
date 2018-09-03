@@ -302,8 +302,17 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
         return LocalAuthConfigProvider::buildUserUri;
     }
 
+    @Override
+    public Function<Claims, String> getAuthenticationServiceUserFactoryLinkBuilder() {
+        return LocalAuthConfigProvider::buildUserFactoryUri;
+    }
+
     private static String buildUserUri(Claims claims) {
         return UserService.FACTORY_LINK + "/" + claims.getSubject();
+    }
+
+    private static String buildUserFactoryUri(Claims claims) {
+        return UserService.FACTORY_LINK;
     }
 
     @Override

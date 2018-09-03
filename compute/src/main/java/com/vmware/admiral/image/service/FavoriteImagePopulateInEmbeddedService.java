@@ -33,6 +33,7 @@ public class FavoriteImagePopulateInEmbeddedService extends StatelessService {
         super();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void handlePost(Operation post) {
         logInfo("Population of favorite images for specific tenants triggered.");

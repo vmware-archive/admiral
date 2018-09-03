@@ -36,6 +36,8 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.common.util.ReflectionUtils;
+import com.vmware.admiral.common.util.ReflectionUtils.CustomPath;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.TenantLinksUtil;
 import com.vmware.admiral.image.service.FavoriteImagesService.FavoriteImage;
@@ -49,9 +51,14 @@ import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 
 @Api(tags = {FAVORITE_IMAGES_TAG})
-@Path(FavoriteImageFactoryService.SELF_LINK)
+@Path("")
 public class FavoriteImageFactoryService extends AbstractSecuredFactoryService {
     public static final String SELF_LINK = ManagementUriParts.FAVORITE_IMAGES;
+
+    static {
+        ReflectionUtils.setAnnotation(FavoriteImageFactoryService.class, Path.class,
+                new CustomPath(SELF_LINK));
+    }
 
     public FavoriteImageFactoryService() {
         super(FavoriteImage.class);

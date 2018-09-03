@@ -42,6 +42,10 @@ public class ConfigurationService extends StatefulService {
             .getProperty("configuration.properties");
     public static final String NO_OVERRIDE_PREFIX_MARKER_FOR_PROPERTIES = "__";
 
+    public static final String URI_PREFIX_PROPERTY_NAME = "uri.prefix";
+    public static final String URI_PREFIX = UriUtils
+            .normalizeUriPath(System.getProperty(URI_PREFIX_PROPERTY_NAME, ""));
+
     private static final Map<String, String> propertiesToPrint = new HashMap<>();
 
     static {
@@ -129,7 +133,7 @@ public class ConfigurationService extends StatefulService {
         }
 
         // Override the default values with custom properties.
-        // Properties starting with "core"are protected and cannot be overridden.
+        // Properties starting with "core" are protected and cannot be overridden.
         if (CUSTOM_CONFIGURATION_PROPERTIES_FILE_NAMES != null
                 && !CUSTOM_CONFIGURATION_PROPERTIES_FILE_NAMES.isEmpty()) {
             for (String fileName : CUSTOM_CONFIGURATION_PROPERTIES_FILE_NAMES.split(",")) {
@@ -171,7 +175,7 @@ public class ConfigurationService extends StatefulService {
             }
         }
 
-        LinkedList<ConfigurationState> ls = new LinkedList<ConfigurationState>();
+        LinkedList<ConfigurationState> ls = new LinkedList<>();
         @SuppressWarnings("unchecked")
         Enumeration<String> enums = (Enumeration<String>) props.propertyNames();
         while (enums.hasMoreElements()) {

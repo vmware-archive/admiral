@@ -41,6 +41,8 @@ import io.swagger.annotations.ApiResponses;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.FileUtil;
+import com.vmware.admiral.common.util.ReflectionUtils;
+import com.vmware.admiral.common.util.ReflectionUtils.CustomPath;
 import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
@@ -49,9 +51,15 @@ import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
 @Api(tags = {FAVORITE_IMAGES_TAG})
-@Path(FavoriteImagesService.FACTORY_LINK)
+@Path("")
 public class FavoriteImagesService extends StatefulService {
     public static final String FACTORY_LINK = ManagementUriParts.FAVORITE_IMAGES;
+
+    static {
+        ReflectionUtils.setAnnotation(FavoriteImagesService.class, Path.class,
+                new CustomPath(FACTORY_LINK));
+    }
+
     private static final String POPULAR_IMAGES_FILE = "/popular-images.json";
 
     public FavoriteImagesService() {
@@ -62,10 +70,11 @@ public class FavoriteImagesService extends StatefulService {
         super.toggleOption(ServiceOption.IDEMPOTENT_POST, true);
     }
 
+    @SuppressWarnings("unchecked")
     public static List<FavoriteImage> buildDefaultFavoriteImages(ServiceHost host) {
         List<FavoriteImage> images = new ArrayList<>();
         try {
-            List jsonImages = Utils.fromJson(FileUtil.getClasspathResourceAsString(POPULAR_IMAGES_FILE), List.class);
+            List<?> jsonImages = Utils.fromJson(FileUtil.getClasspathResourceAsString(POPULAR_IMAGES_FILE), List.class);
 
             host.log(Level.INFO, "Default favorite images loaded.");
 

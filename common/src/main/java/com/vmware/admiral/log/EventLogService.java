@@ -33,6 +33,8 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.ReflectionUtils;
+import com.vmware.admiral.common.util.ReflectionUtils.CustomPath;
 import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.xenon.common.Operation;
@@ -45,13 +47,18 @@ import com.vmware.xenon.common.StatefulService;
  * be propagated to the UI by normal means but still need user attention.
  */
 @Api(tags = {EVENT_LOGS})
-@Path(EventLogService.FACTORY_LINK)
+@Path("")
 public class EventLogService extends StatefulService {
     public static final String FACTORY_LINK = ManagementUriParts.EVENT_LOG;
 
     protected static final long EXPIRATION_INTERVAL_HOURS = Long.getLong(
             "com.vmware.admiral.log.eventlogservice.expiration.interval.hours",
             TimeUnit.HOURS.toMicros(72));
+
+    static {
+        ReflectionUtils.setAnnotation(EventLogService.class, Path.class,
+                new CustomPath(FACTORY_LINK));
+    }
 
     @ApiModel
     public static class EventLogState extends MultiTenantDocument {

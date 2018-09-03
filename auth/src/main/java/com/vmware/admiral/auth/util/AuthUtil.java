@@ -426,7 +426,8 @@ public class AuthUtil {
                         buildUriWithWildcard(SslTrustCertificateService.FACTORY_LINK),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
-                        buildUriWithWildcard(RegistryConfigCertificateDistributionService.SELF_LINK),
+                        buildUriWithWildcard(
+                                RegistryConfigCertificateDistributionService.SELF_LINK),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
                 .build();
 
@@ -511,8 +512,8 @@ public class AuthUtil {
         return clauses;
     }
 
-    public static ResourceGroupState buildCommonProjectResourceGroup(String projectId, AuthRole
-            role) {
+    public static ResourceGroupState buildCommonProjectResourceGroup(String projectId,
+            AuthRole role) {
         String projectSelfLink = UriUtils.buildUriPath(ProjectFactoryService.SELF_LINK, projectId);
         Query.Builder queryBuilder = Query.Builder
                 .create()
@@ -675,8 +676,6 @@ public class AuthUtil {
         }
         return resourceGroupState;
     }
-
-
 
     public static RoleState buildProjectAdminsRole(String projectId, String userGroupLink,
             String resourceGroupLink) {
@@ -875,13 +874,22 @@ public class AuthUtil {
         return resultQuery;
     }
 
-    public static final Function<Claims, String> USER_LINK_BUILDER = AuthUtil
+    private static final Function<Claims, String> USER_LINK_BUILDER = AuthUtil
             .getPreferredProvider(AuthConfigProvider.class)
             .getAuthenticationServiceUserLinkBuilder();
+
+    private static final Function<Claims, String> USER_FACTORY_LINK_BUILDER = AuthUtil
+            .getPreferredProvider(AuthConfigProvider.class)
+            .getAuthenticationServiceUserFactoryLinkBuilder();
 
     public static String buildUserServicePathFromPrincipalId(String principalId) {
         Claims claims = new Claims.Builder().setSubject(principalId).getResult();
         return USER_LINK_BUILDER.apply(claims);
+    }
+
+    public static String buildUserServiceFactoryPathFromPrincipalId(String principalId) {
+        Claims claims = new Claims.Builder().setSubject(principalId).getResult();
+        return USER_FACTORY_LINK_BUILDER.apply(claims);
     }
 
     /**

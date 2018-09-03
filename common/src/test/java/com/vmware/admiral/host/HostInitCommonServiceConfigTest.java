@@ -73,8 +73,7 @@ public class HostInitCommonServiceConfigTest {
 
     @Test
     public void testStartServices() throws Throwable {
-        MockCommonInitialBootService mockCommonInitialBootService =
-                new MockCommonInitialBootService();
+        MockCommonInitialBootService mockCommonInitialBootService = new MockCommonInitialBootService();
         host.startServiceAndWait(mockCommonInitialBootService,
                 MockCommonInitialBootService.SELF_LINK,
                 new ServiceDocument());
@@ -85,8 +84,7 @@ public class HostInitCommonServiceConfigTest {
 
     @Test
     public void testStartServicesWithError() throws Throwable {
-        MockCommonInitialBootService mockCommonInitialBootService =
-                new MockCommonInitialBootService();
+        MockCommonInitialBootService mockCommonInitialBootService = new MockCommonInitialBootService();
         host.startServiceAndWait(mockCommonInitialBootService,
                 MockCommonInitialBootService.SELF_LINK,
                 new ServiceDocument());
@@ -102,8 +100,7 @@ public class HostInitCommonServiceConfigTest {
 
     @Test
     public void testStartServicesWithTimeout() throws Throwable {
-        MockCommonInitialBootService mockCommonInitialBootService =
-                new MockCommonInitialBootService();
+        MockCommonInitialBootService mockCommonInitialBootService = new MockCommonInitialBootService();
         host.startServiceAndWait(mockCommonInitialBootService,
                 MockCommonInitialBootService.SELF_LINK,
                 new ServiceDocument());
@@ -147,7 +144,7 @@ public class HostInitCommonServiceConfigTest {
         return o;
     }
 
-    class MockCommonInitialBootService extends StatelessService {
+    static class MockCommonInitialBootService extends StatelessService {
 
         public static final String SELF_LINK = ManagementUriParts.CONFIG + "/common-initial-boot";
         /**

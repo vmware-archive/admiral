@@ -11,13 +11,16 @@
 
 package com.vmware.admiral.common;
 
+import static com.vmware.admiral.service.common.ConfigurationService.URI_PREFIX;
+
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.AuthCredentialsService;
 
 public interface ManagementUriParts {
+
     // Registry/Config/Credentials:
-    String CONFIG = "/config";
-    String UPGRADE_TRANSFORM_PREFIX = "/upgrade-transforms";
+    String CONFIG = URI_PREFIX + "/config";
+    String UPGRADE_TRANSFORM_PREFIX = URI_PREFIX + "/upgrade-transforms";
     String REGISTRIES = CONFIG + "/registries";
     String REGISTRY_HOSTS = CONFIG + "/registry-spec";
     String CONFIG_PROPS = CONFIG + "/props";
@@ -28,7 +31,7 @@ public interface ManagementUriParts {
     String INSTANCE_TYPE_PROFILES = CONFIG + "/instance-types";
     String MIGRATION = CONFIG + "/migration";
     String UNIQUE_PROPERTIES = CONFIG + "/unique-properties";
-    String FAVORITE_IMAGES_FLAG =  CONFIG + "/should-populate-favorites";
+    String FAVORITE_IMAGES_FLAG = CONFIG + "/should-populate-favorites";
 
     String COMPOSITE_DESCRIPTION_UPGRADE_TRANSFORM_PATH = UPGRADE_TRANSFORM_PREFIX
             + "/composite-descriptions";
@@ -40,14 +43,14 @@ public interface ManagementUriParts {
     String RESOURCE_POOL_UPGRADE_TRANSFORM_PATH = UPGRADE_TRANSFORM_PREFIX + "/pools";
     String COMPUTE_UPGRADE_TRANSFORM_PATH = UPGRADE_TRANSFORM_PREFIX + "/computes";
 
-    String UTIL = "/util";
+    String UTIL = URI_PREFIX + "/util";
     String LONG_URI_GET = UTIL + "/long-uri-get";
     String DANGLING_DESCRIPTIONS_CLEANUP = UTIL + "/cleanup-dangling-descriptions";
 
     String CERT_DISTRIBUTION_ADD_REGISTRY = CONFIG + "/cert-dist-add-reg";
     String CERT_DISTRIBUTION_ADD_HOST = CONFIG + "/certs-dist-add-host";
 
-    String EXTENSIBILITY = "/extensibility";
+    String EXTENSIBILITY = URI_PREFIX + "/extensibility";
     String EXTENSIBILITY_SUBSCRIPTION = EXTENSIBILITY + "-subscriptions";
     String EXTENSIBILITY_MANAGER = EXTENSIBILITY + "-manager";
     String EXTENSIBILITY_CALLBACKS = EXTENSIBILITY + "-callbacks";
@@ -59,7 +62,7 @@ public interface ManagementUriParts {
     String CLONE_SUFFIX = "-clone";
     String EXPAND_SUFFIX = "?$expand=true";
 
-    String RESOURCES = "/resources";
+    String RESOURCES = URI_PREFIX + "/resources";
     String RESOURCE_GROUP_PLACEMENTS = RESOURCES + "/group-placements";
     String RESOURCE_NAME_PREFIXES = RESOURCES + "/name-prefixes";
     String DEPLOYMENT_POLICIES = RESOURCES + "/deployment-policies";
@@ -73,10 +76,10 @@ public interface ManagementUriParts {
     String FAVORITE_IMAGES_POPULATE_EMBEDDED = FAVORITE_IMAGES + "/populate-embedded";
 
     // Projects
-    String PROJECTS = "/projects";
+    String PROJECTS = URI_PREFIX + "/projects";
 
     // Auth
-    String AUTH = "/auth";
+    String AUTH = URI_PREFIX + "/auth";
     String AUTH_CONTENT = AUTH + "/content";
     String AUTH_SESSION = AUTH + "/session";
     String AUTH_LOGOUT = AUTH_SESSION + "/logout";
@@ -145,7 +148,7 @@ public interface ManagementUriParts {
             + "/container-description-to-kubernetes-description-converter";
     String KUBERNETES_GENERIC_ENTITIES = RESOURCES + "/kubernetes-generic-entities";
 
-    String PKS_NAMESPACE = "/pks";
+    String PKS_NAMESPACE = URI_PREFIX + "/pks";
     String PKS_ENDPOINTS = RESOURCES + PKS_NAMESPACE + "/endpoints";
     String PKS_CREATE_ENDPOINT = RESOURCES + PKS_NAMESPACE + "/create-endpoint";
     String PKS_CLUSTERS = RESOURCES + PKS_NAMESPACE + "/clusters";
@@ -154,10 +157,10 @@ public interface ManagementUriParts {
     String PKS_KUBE_CONFIG_CONTENT = RESOURCES + "/kube-config";
 
     // Request tasks:
-    String REQUEST = "/request";
-    String REQUESTS = "/requests";
-    String REQUEST_STATUS = "/request-status";
-    String REQUEST_GRAPH = "/request-graph";
+    String REQUEST = URI_PREFIX + "/request";
+    String REQUESTS = URI_PREFIX + "/requests";
+    String REQUEST_STATUS = URI_PREFIX + "/request-status";
+    String REQUEST_GRAPH = URI_PREFIX + "/request-graph";
     String REQUEST_RESOURCE_OPERATIONS = REQUEST + "/resource-operations";
     String REQUEST_REMOVAL_OPERATIONS = REQUEST + "/resource-removal-operations";
     String REQUEST_ALLOCATION_TASKS = REQUEST + "/allocation-tasks";
@@ -209,22 +212,22 @@ public interface ManagementUriParts {
 
     String CONFIGURE_HOST = REQUEST + "/configure-host/";
 
-    String DELETE_SERVICE_DOCUMENTS = "/delete-tasks";
+    String DELETE_SERVICE_DOCUMENTS = URI_PREFIX + "/delete-tasks";
 
-    String COUNTER_SUB_TASKS = "/counter-subtasks";
+    String COUNTER_SUB_TASKS = URI_PREFIX + "/counter-subtasks";
     // Continuous delivery:
-    String CONTINUOUS_DELIVERY = "/continous-delivery";
+    String CONTINUOUS_DELIVERY = URI_PREFIX + "/continous-delivery";
 
     String SELF_PROVISIONING = CONTINUOUS_DELIVERY + "/self-provisioning";
     // Image operations:
-    String IMAGES = "/images";
+    String IMAGES = URI_PREFIX + "/images";
     String IMAGE_TAGS = IMAGES + "/tags";
-    String TEMPLATES = "/templates";
-    String LOGS = "/logs";
+    String TEMPLATES = URI_PREFIX + "/templates";
+    String LOGS = URI_PREFIX + "/logs";
 
-    String POPULAR_IMAGES = "/popular-images";
+    String POPULAR_IMAGES = URI_PREFIX + "/popular-images";
     // Adapters:
-    String ADAPTERS = "/adapters";
+    String ADAPTERS = URI_PREFIX + "/adapters";
     String ADAPTER_DOCKER = ADAPTERS + "/docker-service";
     String ADAPTER_DOCKER_HOST = ADAPTERS + "/host-docker-service";
     String ADAPTER_DOCKER_IMAGE_HOST = ADAPTERS + "/host-docker-image-service";
@@ -240,10 +243,6 @@ public interface ManagementUriParts {
 
     String ADAPTER_PKS = ADAPTERS + "/pks-service";
 
-    String ADAPTER_ETCD_KV = "/v2/keys";
-    String ADAPTER_ETCD_MEMBERS = "/v2/members";
-
-    String KV_STORE = "/kv-store";
     // UI Service:
     String UI_SERVICE = System.getProperty("dcp.management.ui.path", "/");
     String UI_NG_SERVICE = UriUtils.buildUriPath(UI_SERVICE, "ng");
@@ -256,12 +255,12 @@ public interface ManagementUriParts {
             "/container-identicons");
     String CONTAINER_IMAGE_ICONS = UriUtils.buildUriPath(UI_SERVICE, "/container-image-icons");
 
-    String REVERSE_PROXY = "/rp";
-    String HBR_REVERSE_PROXY = "/hbr-api";
+    String REVERSE_PROXY = URI_PREFIX + "/rp";
+    String HBR_REVERSE_PROXY = URI_PREFIX + "/hbr-api";
 
     String REQUEST_PARAM_VALIDATE_OPERATION_NAME = "validate";
 
-    String EXEC = "/exec";
+    String EXEC = URI_PREFIX + "/exec";
     String AUTH_CREDENTIALS_CA_LINK = UriUtils.buildUriPath(
             AuthCredentialsService.FACTORY_LINK, "default-ca-cert");
     String AUTH_CREDENTIALS_CLIENT_LINK = UriUtils.buildUriPath(
