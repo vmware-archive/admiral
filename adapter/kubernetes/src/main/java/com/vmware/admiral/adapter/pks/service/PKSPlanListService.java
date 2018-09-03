@@ -13,7 +13,7 @@ package com.vmware.admiral.adapter.pks.service;
 
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_ENDPOINT_QUERY_PARAM_NAME;
 import static com.vmware.admiral.common.SwaggerDocumentation.BASE_PATH;
-import static com.vmware.admiral.common.SwaggerDocumentation.PARAM_TYPE_QUERY;
+import static com.vmware.admiral.common.SwaggerDocumentation.ParamTypes.PARAM_TYPE_QUERY;
 import static com.vmware.admiral.common.SwaggerDocumentation.Tags.PKS_PLAN_LIST_TAG;
 
 import java.util.Map;
@@ -64,7 +64,7 @@ public class PKSPlanListService extends StatelessService {
     @Path(BASE_PATH)
     @ApiOperation(
             value = "List all endpoint plans.",
-            notes = "Retrueves all plans for the specified endpoint.",
+            notes = "Retrieves all plans for the specified endpoint.",
             response = PKSPlan.class,
             responseContainer = "List")
     @ApiResponses({

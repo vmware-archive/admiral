@@ -12,8 +12,8 @@
 package com.vmware.admiral.image.service;
 
 import static com.vmware.admiral.common.SwaggerDocumentation.BASE_PATH;
-import static com.vmware.admiral.common.SwaggerDocumentation.PARAM_TYPE_BODY;
-import static com.vmware.admiral.common.SwaggerDocumentation.PARAM_TYPE_QUERY;
+import static com.vmware.admiral.common.SwaggerDocumentation.ParamTypes.PARAM_TYPE_BODY;
+import static com.vmware.admiral.common.SwaggerDocumentation.ParamTypes.PARAM_TYPE_QUERY;
 import static com.vmware.admiral.common.SwaggerDocumentation.Tags.FAVORITE_IMAGES_TAG;
 
 import java.util.LinkedList;

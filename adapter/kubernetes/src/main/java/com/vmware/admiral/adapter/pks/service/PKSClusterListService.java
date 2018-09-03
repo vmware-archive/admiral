@@ -19,7 +19,7 @@ import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_ENDPOINT_PROP_NAME
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_ENDPOINT_QUERY_PARAM_NAME;
 import static com.vmware.admiral.common.SwaggerDocumentation.BASE_PATH;
 import static com.vmware.admiral.common.SwaggerDocumentation.LINE_BREAK;
-import static com.vmware.admiral.common.SwaggerDocumentation.PARAM_TYPE_QUERY;
+import static com.vmware.admiral.common.SwaggerDocumentation.ParamTypes.PARAM_TYPE_QUERY;
 import static com.vmware.admiral.common.SwaggerDocumentation.Tags.PKS_CLUSTER_LIST_TAG;
 
 import java.util.HashMap;

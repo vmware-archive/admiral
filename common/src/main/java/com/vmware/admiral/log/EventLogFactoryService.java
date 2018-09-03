@@ -11,6 +11,20 @@
 
 package com.vmware.admiral.log;
 
+import static com.vmware.admiral.common.SwaggerDocumentation.DataTypes.DATA_TYPE_STRING;
+import static com.vmware.admiral.common.SwaggerDocumentation.ParamTypes.PARAM_TYPE_QUERY;
+import static com.vmware.admiral.common.SwaggerDocumentation.Tags.EVENT_LOGS;
+
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.log.EventLogService.EventLogState;
@@ -18,6 +32,9 @@ import com.vmware.admiral.service.common.AbstractSecuredFactoryService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 
+
+@Api(tags = {EVENT_LOGS})
+@Path(EventLogFactoryService.SELF_LINK)
 public class EventLogFactoryService extends AbstractSecuredFactoryService {
     public static final String SELF_LINK = ManagementUriParts.EVENT_LOG;
 
@@ -31,6 +48,19 @@ public class EventLogFactoryService extends AbstractSecuredFactoryService {
     }
 
     @Override
+    @GET
+    @ApiOperation(
+            value = "Get all event logs.",
+            notes = "Retrieves all event logs for the project specified in the operation header.",
+            nickname = "getAll")
+    @ApiResponses({
+            @ApiResponse(code = Operation.STATUS_CODE_OK, message = "Successfully retrieved all event logs.")})
+    @ApiImplicitParams({
+            @ApiImplicitParam(
+                    name = "expand",
+                    value = "Expand option to view details of the instances",
+                    dataType = DATA_TYPE_STRING,
+                    paramType = PARAM_TYPE_QUERY)})
     public void handleGet(Operation get) {
         OperationUtil.transformProjectHeaderToFilterQuery(get);
         super.handleGet(get);

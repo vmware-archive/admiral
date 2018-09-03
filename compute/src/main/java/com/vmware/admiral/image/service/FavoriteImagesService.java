@@ -12,7 +12,7 @@
 package com.vmware.admiral.image.service;
 
 import static com.vmware.admiral.common.SwaggerDocumentation.INSTANCE_PATH;
-import static com.vmware.admiral.common.SwaggerDocumentation.PARAM_TYPE_PATH;
+import static com.vmware.admiral.common.SwaggerDocumentation.ParamTypes.PARAM_TYPE_PATH;
 import static com.vmware.admiral.common.SwaggerDocumentation.Tags.FAVORITE_IMAGES_TAG;
 
 import java.util.ArrayList;
