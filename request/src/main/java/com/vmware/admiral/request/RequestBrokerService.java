@@ -308,7 +308,9 @@ public class RequestBrokerService extends
             } else if (isClosureType(state)) {
                 createClosureRemovalTasks(state);
             } else if (isPKSClusterType(state)) {
-                createPKSClusterRemovalTasks(state, true);
+                createPKSClusterRemovalTasks(state,
+                        !PKSClusterProvisioningTaskService.DESTROY_CLUSTERS_AFTER_FAILED_PROVISION,
+                        true);
             } else {
                 createContainerRemovalTasks(state, true);
             }
@@ -541,7 +543,7 @@ public class RequestBrokerService extends
             }
         } else if (isPKSClusterType(state)) {
             if (isRemoveOperation(state)) {
-                createPKSClusterRemovalTasks(state, false);
+                createPKSClusterRemovalTasks(state, false,false);
             } else if (isResizeOperation(state)) {
                 createPKSClusterResizeOperation(state);
             } else {
@@ -1403,7 +1405,8 @@ public class RequestBrokerService extends
         });
     }
 
-    private void createPKSClusterRemovalTasks(RequestBrokerState state, boolean cleanupRemoval) {
+    private void createPKSClusterRemovalTasks(RequestBrokerState state, boolean removeOnly,
+            boolean cleanupRemoval) {
         boolean errorState = state.taskSubStage == SubStage.REQUEST_FAILED
                 || state.taskSubStage == SubStage.RESERVATION_CLEANED_UP;
 
@@ -1428,6 +1431,7 @@ public class RequestBrokerService extends
             task.tenantLinks = state.tenantLinks;
             task.requestTrackerLink = state.requestTrackerLink;
             task.cleanupRemoval = cleanupRemoval;
+            task.removeOnly = removeOnly;
             // calculate task expiration to be shortly before parent task expiration
             task.documentExpirationTimeMicros = state.documentExpirationTimeMicros
                     - TimeUnit.MINUTES.toMicros(5);
