@@ -46,6 +46,7 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.test.CommonTestStateFactory;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ResourceType;
@@ -514,7 +515,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         request = waitForRequestToComplete(request);
 
         // 2. Reservation stage:
-        String allocationTaskId = requestId + "-" + containerDesc.name
+        String allocationTaskId = requestId + "-"
+                + UriUtilsExtended.getValueEncoded(containerDesc.name)
                 + CompositionSubTaskService.ALLOC_SUFFIX;
         String rsrvSelfLink = UriUtils.buildUriPath(ReservationTaskFactoryService.SELF_LINK,
                 allocationTaskId);

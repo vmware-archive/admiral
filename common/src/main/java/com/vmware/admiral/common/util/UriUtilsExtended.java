@@ -232,7 +232,7 @@ public class UriUtilsExtended {
         if (in == null) {
             return null;
         }
-        String encodedUri = getReverseProxyEncoded(in.toString());
+        String encodedUri = getValueEncoded(in.toString());
         return UriUtils.buildUri(UriUtils.buildUriPath(ReverseProxyService.SELF_LINK, encodedUri));
     }
 
@@ -267,7 +267,7 @@ public class UriUtilsExtended {
                     + (location.endsWith(UriUtils.URI_PATH_CHAR) ? UriUtils.URI_PATH_CHAR : "");
         }
         String newLocation = UriUtils.buildUriPath(ReverseProxyService.SELF_LINK,
-                getReverseProxyEncoded(location));
+                getValueEncoded(location));
         if (originalUri == null) {
             return newLocation;
         }
@@ -368,7 +368,7 @@ public class UriUtilsExtended {
      *            Value to be encoded
      * @return Encoded value
      */
-    public static String getReverseProxyEncoded(String input) {
+    public static String getValueEncoded(String input) {
         return Base64.getUrlEncoder().encodeToString(input.getBytes(UTF_8));
     }
 

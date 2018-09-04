@@ -21,9 +21,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import org.yaml.snakeyaml.util.UriEncoder;
-
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.request.composition.CompositionGraph.ResourceNode;
 import com.vmware.admiral.request.composition.CompositionSubTaskService;
@@ -214,7 +213,8 @@ public class RequestStatusService extends StatefulService {
             if (trackedAllocationTasks == null) {
                 trackedAllocationTasks = new ArrayList<>();
             }
-            String name = UriEncoder.encode(rn.name);
+
+            String name = UriUtilsExtended.getValueEncoded(rn.name);
             String allocName = name + CompositionSubTaskService.ALLOC_SUFFIX;
 
             for (String k : state.requestProgressByComponent.keySet()) {
@@ -240,6 +240,7 @@ public class RequestStatusService extends StatefulService {
 
         for (Map<String, Integer> progress : state.requestProgressByComponent.values()) {
             progress.remove(DEFAULT_COMPONENT_NAME);
+            progress.remove(UriUtilsExtended.getValueEncoded(DEFAULT_COMPONENT_NAME));
         }
     }
 

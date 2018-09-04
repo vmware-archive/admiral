@@ -36,7 +36,7 @@ public class UriUtilsExtendedTest {
     @Test
     public void testReverseProxyEncoding() {
 
-        String encoded = UriUtilsExtended.getReverseProxyEncoded(SAMPLE_URL);
+        String encoded = UriUtilsExtended.getValueEncoded(SAMPLE_URL);
         assertNotEquals(SAMPLE_URL, encoded);
 
         String decoded = UriUtilsExtended.getReverseProxyDecoded(encoded);
@@ -296,7 +296,7 @@ public class UriUtilsExtendedTest {
         assertNull(uri);
 
         opUri = UriUtils.buildUri("http://localhost/rp/"
-                + UriUtilsExtended.getReverseProxyEncoded("%0"));
+                + UriUtilsExtended.getValueEncoded("%0"));
         try {
             uri = UriUtilsExtended.getReverseProxyTargetUri(opUri);
             fail("URI should be invalid!");

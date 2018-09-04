@@ -36,10 +36,9 @@ import java.util.stream.Collectors;
 
 import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
 
-import org.yaml.snakeyaml.util.UriEncoder;
-
 import com.vmware.admiral.common.serialization.ReleaseConstants;
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.BindingEvaluator;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
@@ -567,7 +566,8 @@ public class CompositionTaskService
     }
 
     private String buildCompositionSubTaskLink(String name) {
-        final String compositionSubTaskId = getSelfId() + "-" + UriEncoder.encode(name);
+        final String compositionSubTaskId = getSelfId() + "-"
+                + UriUtilsExtended.getValueEncoded(name);
         return UriUtils.buildUriPath(CompositionSubTaskFactoryService.SELF_LINK,
                 compositionSubTaskId);
     }
