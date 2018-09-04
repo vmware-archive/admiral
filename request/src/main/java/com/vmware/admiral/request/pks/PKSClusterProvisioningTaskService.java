@@ -78,6 +78,9 @@ public class PKSClusterProvisioningTaskService extends
     private static final int MAX_POLL_FAILURES = Integer.getInteger(
             "com.vmware.admiral.request.pks.poll.max.failures", 10);
 
+    public static final boolean DESTROY_CLUSTERS_AFTER_FAILED_PROVISION =
+            Boolean.getBoolean("com.vmware.admiral.request.pks.provision.destroy.failed");
+
     static final String INVALID_PLAN_SELECTION_MESSAGE_FORMAT = "Plan selection [%s] is not valid in the context of PKS cluster provisioning task [%s]";
 
     protected static class CallbackCompleteResponse extends ServiceTaskCallbackResponse {
