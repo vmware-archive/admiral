@@ -71,6 +71,13 @@ public final class ReleaseConstants {
     public static final String API_VERSION_1_4_1 = "1.4.1";
     public static final String VERSION_HEADER_1_4_1 = VERSION_PREFIX + API_VERSION_1_4_1;
 
+    /**
+     * The 1.4.2 release and REST API version.
+     */
+    public static final int RELEASE_VERSION_1_4_2 = 142;
+    public static final String API_VERSION_1_4_2 = "1.4.2";
+    public static final String VERSION_HEADER_1_4_2 = VERSION_PREFIX + API_VERSION_1_4_2;
+
     // Other examples:
     // public static final int RELEASE_VERSION_0_9_6 = 96;
     // public static final int RELEASE_VERSION_1_0_0 = 100;
@@ -81,7 +88,7 @@ public final class ReleaseConstants {
     /**
      * The current REST API version.
      */
-    public static final String CURRENT_API_VERSION = API_VERSION_1_4_1;
+    public static final String CURRENT_API_VERSION = API_VERSION_1_4_2;
     public static final String CURRENT_VERSION_HEADER = VERSION_PREFIX + CURRENT_API_VERSION;
 
 }
