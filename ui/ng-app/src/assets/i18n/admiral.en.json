@@ -576,6 +576,14 @@
     "deleteRequest": {
       "title": "Remove request",
       "description": "Confirm the removal of the selected requests. The operation cannot be undone."
+    },
+    "type": {
+      "ALLOCATION_ONLY": "Allocation",
+      "PROVISIONING_ONLY": "Provisioning",
+      "ALLOCATION_AND_PROVISIONING": "Allocation and Provisioning",
+      "REMOVE": "Deletion",
+      "RESIZE": "Resizing",
+      "CLUSTERING": "Clustering"
     }
   },
   "eventLogs": {

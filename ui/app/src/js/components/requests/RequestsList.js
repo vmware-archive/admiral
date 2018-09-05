@@ -40,6 +40,11 @@ var RequestsListVueComponent = Vue.extend({
             return utils.getDocumentId(resourceLink);
           });
         },
+        requestType: function() {
+          return this.model
+            && this.model.customProperties
+            && this.model.customProperties[constants.REQUESTS.CUSTOM_PROPS.REQUEST_TYPE];
+        },
         hasResourceIds: function() {
           return this.resourceIds && this.resourceIds.length > 0;
         },
