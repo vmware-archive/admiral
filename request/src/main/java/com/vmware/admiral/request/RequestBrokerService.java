@@ -188,6 +188,15 @@ public class RequestBrokerService extends
         public String groupResourcePlacementLink;
     }
 
+    private enum RequestType {
+        ALLOCATION_ONLY,
+        PROVISIONING_ONLY,
+        ALLOCATION_AND_PROVISIONING,
+        REMOVE,
+        RESIZE,
+        CLUSTERING
+    }
+
     public RequestBrokerService() {
         super(RequestBrokerState.class, SubStage.class, DISPLAY_NAME);
         super.toggleOption(ServiceOption.PERSISTENCE, true);
@@ -1700,10 +1709,15 @@ public class RequestBrokerService extends
             return false;
         }
         RequestStatus requestStatus = fromTask(new RequestStatus(), state);
+        requestStatus.customProperties = new HashMap<>();
 
         // add tracked leaf tasks depending on the request type
         if (isProvisionOperation(state)) {
             boolean allocationOnly = isAllocationOperation(state);
+            RequestType reqType = allocationOnly ? RequestType.ALLOCATION_ONLY
+                    : RequestType.ALLOCATION_AND_PROVISIONING;
+            requestStatus.customProperties.put(RequestStatus.CUSTOM_PROP_NAME_REQUEST_TYPE,
+                    reqType.toString());
 
             requestStatus.trackedExecutionTasksByResourceType =
                     SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE;
@@ -1763,6 +1777,8 @@ public class RequestBrokerService extends
             trackedTasks.add(RequestBrokerService.DISPLAY_NAME);
             requestStatus.addTrackedTasks(trackedTasks.toArray(new String[0]));
         } else if (isPostAllocationOperation(state)) {
+            requestStatus.customProperties.put(RequestStatus.CUSTOM_PROP_NAME_REQUEST_TYPE,
+                    RequestType.PROVISIONING_ONLY.toString());
             if (isContainerType(state)) {
                 requestStatus.addTrackedTasks(ContainerAllocationTaskService.DISPLAY_NAME);
             } else if (isContainerNetworkType(state)) {
@@ -1772,6 +1788,9 @@ public class RequestBrokerService extends
             }
         } else {
             if (isRemoveOperation(state)) {
+                requestStatus.customProperties.put(RequestStatus.CUSTOM_PROP_NAME_REQUEST_TYPE,
+                        RequestType.REMOVE.toString());
+
                 if (isContainerHostType(state)) {
                     requestStatus.addTrackedTasks(ContainerHostRemovalTaskService.DISPLAY_NAME);
                     requestStatus.addTrackedTasks(ComputeRemovalTaskService.DISPLAY_NAME);
@@ -1789,10 +1808,16 @@ public class RequestBrokerService extends
                     requestStatus.addTrackedTasks(ContainerRemovalTaskService.DISPLAY_NAME);
                 }
             } else if (isResizeOperation(state)) {
+                requestStatus.customProperties.put(RequestStatus.CUSTOM_PROP_NAME_REQUEST_TYPE,
+                        RequestType.RESIZE.toString());
+
                 if (isPKSClusterType(state)) {
                     requestStatus.addTrackedTasks(PKSClusterResizeTaskService.DISPLAY_NAME);
                 }
             } else if (isClusteringOperation(state)) {
+                requestStatus.customProperties.put(RequestStatus.CUSTOM_PROP_NAME_REQUEST_TYPE,
+                        RequestType.CLUSTERING.toString());
+
                 requestStatus.addTrackedTasks(ClusteringTaskService.DISPLAY_NAME);
             } else {
                 requestStatus.addTrackedTasks(ContainerOperationTaskService.DISPLAY_NAME);

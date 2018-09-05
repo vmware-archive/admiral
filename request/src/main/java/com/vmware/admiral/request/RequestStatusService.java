@@ -21,7 +21,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
+
+import io.swagger.annotations.ApiModelProperty;
+
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.serialization.ReleaseConstants;
 import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.request.composition.CompositionGraph.ResourceNode;
@@ -29,6 +34,8 @@ import com.vmware.admiral.request.composition.CompositionSubTaskService;
 import com.vmware.admiral.service.common.DefaultSubStage;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
+import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
+import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
@@ -54,6 +61,8 @@ public class RequestStatusService extends StatefulService {
                 "requestProgressByComponent";
         public static final String FIELD_NAME_COMPONENTS = "components";
 
+        public static final String CUSTOM_PROP_NAME_REQUEST_TYPE = "__requestType";
+
         /** Request progress (0-100%) */
         @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public Map<String, Map<String, Integer>> requestProgressByComponent;
@@ -69,6 +78,15 @@ public class RequestStatusService extends StatefulService {
         public Map<ResourceType, List<String>> trackedExecutionTasksByResourceType;
         @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public Map<ResourceType, List<String>> trackedAllocationTasksByResourceType;
+
+        /** (Optional) Custom properties that store additional data for the request status. */
+        @Documentation(description = "Custom properties that store additional data for the request status.")
+        @ApiModelProperty(value = "Custom properties that store additional data for the request status.", required = false)
+        @UsageOption(option = PropertyUsageOption.OPTIONAL)
+        @PropertyOptions(indexing = { PropertyIndexingOption.CASE_INSENSITIVE,
+                PropertyIndexingOption.EXPAND })
+        @Since(ReleaseConstants.RELEASE_VERSION_1_4_2)
+        public Map<String, String> customProperties;
 
         public void addTrackedTasks(String... taskNames) {
             if (requestProgressByComponent == null) {
