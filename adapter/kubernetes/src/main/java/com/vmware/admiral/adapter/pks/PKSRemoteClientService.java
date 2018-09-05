@@ -97,15 +97,28 @@ public class PKSRemoteClientService {
     }
 
     private static String encodeQueryParam(Map.Entry<String, String> kv) {
-        String result = "";
+        return encode(kv.getKey())
+                + UriUtils.URI_QUERY_PARAM_KV_CHAR
+                + encode(kv.getValue())
+                + UriUtils.URI_QUERY_PARAM_LINK_CHAR;
+    }
+
+    private static String encode(String s) {
         try {
-            result = URLEncoder.encode(kv.getKey(), Utils.CHARSET)
-                    + UriUtils.URI_QUERY_PARAM_KV_CHAR
-                    + URLEncoder.encode(kv.getValue(), Utils.CHARSET)
-                    + UriUtils.URI_QUERY_PARAM_LINK_CHAR;
-        } catch (UnsupportedEncodingException ignored) {
+            return URLEncoder.encode(s, Utils.CHARSET);
+        } catch (UnsupportedEncodingException e) {
+            // We cannot reach here because we are supplying supported encoding name as parameter.
         }
-        return result;
+        return null;
+    }
+
+    private static String urlEncode(String s) {
+        try {
+            return URLEncoder.encode(s, Utils.CHARSET).replace("+", "%20");
+        } catch (UnsupportedEncodingException e) {
+            // We cannot reach here because we are supplying supported encoding name as parameter.
+        }
+        return null;
     }
 
     public DeferredResult<List<PKSCluster>> getClusters(PKSContext ctx) {
@@ -135,7 +148,7 @@ public class PKSRemoteClientService {
 
     public DeferredResult<PKSCluster> getCluster(PKSContext ctx, String cluster) {
         try {
-            URI uri = UriUtils.buildUri(ctx.pksAPIUri, "v1/clusters", cluster);
+            URI uri = UriUtils.buildUri(ctx.pksAPIUri, "v1/clusters", urlEncode(cluster));
             Operation op = buildGetOperation(uri, ctx);
 
             return sendWithDeferredResult(op)
@@ -161,7 +174,7 @@ public class PKSRemoteClientService {
 
     public DeferredResult<Void> deleteCluster(PKSContext ctx, String cluster) {
         try {
-            URI uri = UriUtils.buildUri(ctx.pksAPIUri, "v1/clusters", cluster);
+            URI uri = UriUtils.buildUri(ctx.pksAPIUri, "v1/clusters", urlEncode(cluster));
             Operation op = buildDeleteOperation(uri, ctx);
 
             return sendWithDeferredResult(op)
@@ -217,7 +230,7 @@ public class PKSRemoteClientService {
 
     public DeferredResult<KubeConfig> createUser(PKSContext ctx, String cluster) {
         try {
-            URI uri = UriUtils.buildUri(ctx.pksAPIUri, "v1/clusters", cluster, "binds");
+            URI uri = UriUtils.buildUri(ctx.pksAPIUri, "v1/clusters", urlEncode(cluster), "binds");
             Operation op = buildPostOperation(uri, ctx);
 
             return sendWithDeferredResult(op)
@@ -277,7 +290,7 @@ public class PKSRemoteClientService {
 
     public DeferredResult<Void> resizeCluster(PKSContext ctx, PKSCluster cluster) {
         try {
-            URI uri = UriUtils.buildUri(ctx.pksAPIUri, "v1/clusters", cluster.name);
+            URI uri = UriUtils.buildUri(ctx.pksAPIUri, "v1/clusters", urlEncode(cluster.name));
             Operation op = buildPatchOperation(uri, ctx)
                     .setBody(cluster.parameters);
 
