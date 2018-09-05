@@ -15,7 +15,11 @@
     <div v-if="hasResourceIds" class="name truncateText" data-toggle="tooltip"
          data-placement="top" :title="requestTitleText">{{requestTitleText}} <i v-if="showHint" class="fa fa-hand-o-left" transition="slide-and-fade"></i></div>
     <div v-if="!hasResourceIds && model.name" class="name">{{model.name}} <i v-if="showHint" class="fa fa-hand-o-left" transition="slide-and-fade"></i></div>
-    <div class="phase">{{model.phase}} -- {{model.name}}</div>
+    <div class="phase">
+      <span>{{model.phase}}</span>
+      <span v-if="requestType"> -- {{i18n("app.request.type." + requestType)}}</span>
+      <span v-if="model.name"> -- {{model.name}}</span>
+    </div>
   </div>
   <div class="request-item-info" :data-name="model.name">
     <table width="100%" cellspacing="0" cellpadding="0">

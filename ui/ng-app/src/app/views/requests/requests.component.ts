@@ -130,6 +130,12 @@ export class RequestsComponent implements OnInit, OnDestroy {
         return Utils.getDocumentId(request.resourceLinks[request.resourceLinks.length - 1]);
     }
 
+    getRequestType(request: any): string {
+        return request
+          && request.customProperties
+          && request.customProperties[Constants.requests.customProperties.requestType];
+    }
+
     deploymentsRouteRestriction(){
         return RoutesRestriction.DEPLOYMENTS;
     }

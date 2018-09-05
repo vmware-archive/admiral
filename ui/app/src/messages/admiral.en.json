@@ -1219,6 +1219,14 @@
         "running": "Running",
         "failed": "Failed"
       },
+      "type": {
+        "ALLOCATION_ONLY": "Allocation",
+        "PROVISIONING_ONLY": "Provisioning",
+        "ALLOCATION_AND_PROVISIONING": "Allocation and Provisioning",
+        "REMOVE": "Deletion",
+        "RESIZE": "Resizing",
+        "CLUSTERING": "Clustering"
+      },
       "actions": {
         "details": {
           "show": "Details",

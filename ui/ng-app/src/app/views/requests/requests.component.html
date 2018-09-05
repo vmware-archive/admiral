@@ -65,7 +65,11 @@
                         <clr-icon *ngIf="isFailed(request)" shape="error-standard" class="is-error"></clr-icon>
                         {{request.taskInfo.stage}} ({{request.subStage}})
                     </clr-dg-cell>
-                    <clr-dg-cell>{{request.phase}} -- {{request.name}}</clr-dg-cell>
+                    <clr-dg-cell>
+                        <span>{{request.phase}}</span>
+                        <span *ngIf="getRequestType(request)"> -- {{"requests.type." + getRequestType(request) | i18n}}</span>
+                        <span *ngIf="request.name"> -- {{request.name}}</span>
+                    </clr-dg-cell>
                     <clr-dg-cell>
                         <a *ngIf="request.eventLogLink" routerLink="../event-logs/{{getEventLogId(request)}}"
                            routerLinkActive="active">{{"requests.eventLogLink" | i18n}}</a>
