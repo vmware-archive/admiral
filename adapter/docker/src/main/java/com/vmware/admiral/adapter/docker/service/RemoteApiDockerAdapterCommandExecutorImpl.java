@@ -1064,9 +1064,11 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
 
         @Override
         public void run() {
-            logger.fine(String.format("Simulation of IOException enabled: [%s]",
+            logger.info(String.format("Simulation of IOException enabled: [%s]",
                     simulatedIOException));
             OperationContext childContext = OperationContext.getOperationContext();
+
+            boolean shouldRestoreContext = true;
 
             try {
                 // set system user context
@@ -1091,13 +1093,19 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
                     logger.info(String.format("IOException when listening [%s]. Error: [%s]",
                             hostName, e.getMessage()));
 
-                    requestComputeState(computeState.documentSelfLink).thenCompose((cs) -> {
-                        cs.powerState = ComputeService.PowerState.UNKNOWN;
-                        return patchComputeState(cs);
-                    }).thenAccept((cs) -> {
-                        // changing the power state of containers to UNKNOWN
-                        queryExistingContainerStates(cs);
-                    });
+                    shouldRestoreContext = false;
+
+                    ComputeState state = new ComputeState();
+                    state.powerState = ComputeService.PowerState.UNKNOWN;
+
+                    patchComputeState(computeState.documentSelfLink, state)
+                            .thenCompose((ignore) -> {
+                                // changing the power state of containers to UNKNOWN
+                                return queryExistingContainerStates(computeState.documentSelfLink);
+                            })
+                            .whenComplete((o, ex) -> {
+                                OperationContext.restoreOperationContext(childContext);
+                            });
                 } catch (Exception e) {
                     logger.warning(String.format("Exception in subscription to [%s]. Error: [%s]",
                             hostName, e.getMessage()));
@@ -1108,14 +1116,15 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
             } catch (Throwable t) {
                 logger.warning(Utils.toString(t));
             } finally {
-                OperationContext.restoreOperationContext(childContext);
+                if (shouldRestoreContext) {
+                    OperationContext.restoreOperationContext(childContext);
+                }
             }
         }
     }
 
     private void makeSubscription(CommandInput input, Operation op, ComputeState computeState, URI uri,
             Boolean simulateIOExceptionPropertyValue) {
-
         boolean maxAllowedNumberOfThreadsExceeded = maxAllowedNumberOfThreadsExceeded();
 
         if (maxAllowedNumberOfThreadsExceeded) {
@@ -1157,20 +1166,22 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
         return host.sendWithDeferredResult(op, ComputeState.class);
     }
 
-    private DeferredResult<ComputeState> patchComputeState(ComputeState computeState) {
-        URI uri = UriUtils.buildUri(host, computeState.documentSelfLink);
+    private DeferredResult patchComputeState(String documentSelfLink, ComputeState computeState) {
+        URI uri = UriUtils.buildUri(host, documentSelfLink);
 
-        Operation op = Operation.createPut(uri)
+        Operation op = Operation.createPatch(uri)
                 .setBody(computeState)
+                .setReferer(host.getUri())
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         logger.warning(String.format("Failed to patch compute state: [%s]", Utils.toString(e)));
+                        return;
                     }
+
+                    logger.info(String.format("Successfully patched compute state [%s]", documentSelfLink));
                 });
 
-        prepareRequest(op, false);
-
-        return host.sendWithDeferredResult(op, ComputeState.class);
+        return host.sendWithDeferredResult(op);
     }
 
     private void readData(BufferedReader in, boolean simulatedIOException) throws IOException, InterruptedException {
@@ -1180,48 +1191,48 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
                 throw new InterruptedException();
             }
 
+            if (simulatedIOException) {
+                throw new IOException("Simulated IOException from an IT test.");
+            }
+
             try {
-                String inputLine;
+                String inputLine  = in.readLine();
 
-                while ((inputLine = in.readLine()) != null) {
-                    ObjectMapper mapper = new ObjectMapper();
-                    Events event = mapper.readValue(inputLine, Events.class);
-                    if (EVENT_TYPE_CONTAINER.equals(event.getType())) {
-                        ContainerState cs = new ContainerState();
-                        if (EVENT_TYPE_CONTAINER_DIE.equals(event.getAction())) {
-                            logger.fine(inputLine);
+                ObjectMapper mapper = new ObjectMapper();
+                Events event = mapper.readValue(inputLine, Events.class);
 
-                            cs.powerState = ContainerState.PowerState.STOPPED;
-                        } else if (EVENT_TYPE_CONTAINER_START.equals(event.getAction())) {
-                            logger.fine(inputLine);
+                if (EVENT_TYPE_CONTAINER.equals(event.getType())) {
+                    ContainerState cs = new ContainerState();
+                    if (EVENT_TYPE_CONTAINER_DIE.equals(event.getAction())) {
+                        logger.fine(inputLine);
 
-                            cs.powerState = ContainerState.PowerState.RUNNING;
-                            cs.started = TimeUnit.NANOSECONDS.toMillis(event.getTimeNano());
-                        } else {
-                            continue;
-                        }
+                        cs.powerState = ContainerState.PowerState.STOPPED;
+                    } else if (EVENT_TYPE_CONTAINER_START.equals(event.getAction())) {
+                        logger.fine(inputLine);
 
-                        String containerId = event.getId();
-
-                        QueryTask queryTask = QueryUtil
-                                .buildPropertyQuery(ContainerState.class, ContainerState.FIELD_NAME_ID, containerId);
-
-                        new ServiceDocumentQuery<ContainerState>(host, ContainerState.class).query(queryTask, (r) -> {
-                            if (r.hasException()) {
-                                logger.warning(String.format("Failed to query resource container state with id [%s]",
-                                        containerId));
-                            } else if (r.hasResult()) {
-                                cs.documentSelfLink = r.getDocumentSelfLink();
-                                patchContainerState(cs);
-                            }
-                        });
+                        cs.powerState = ContainerState.PowerState.RUNNING;
+                        cs.started = TimeUnit.NANOSECONDS.toMillis(event.getTimeNano());
+                    } else {
+                        continue;
                     }
+
+                    String containerId = event.getId();
+
+                    QueryTask queryTask = QueryUtil
+                            .buildPropertyQuery(ContainerState.class, ContainerState.FIELD_NAME_ID, containerId);
+
+                    new ServiceDocumentQuery<ContainerState>(host, ContainerState.class).query(queryTask, (r) -> {
+                        if (r.hasException()) {
+                            logger.warning(String.format("Failed to query resource container state with id [%s]",
+                                    containerId));
+                        } else if (r.hasResult()) {
+                            cs.documentSelfLink = r.getDocumentSelfLink();
+                            patchContainerState(cs);
+                        }
+                    });
                 }
             } catch (SocketTimeoutException e) {
-                logger.fine(String.format("No events have been received for %s ms. Unblocking the reader.", String.valueOf(URL_CONNECTION_READ_TIMEOUT)));
-                if (simulatedIOException) {
-                    throw new IOException("Simulated IOException from an IT test.");
-                }
+                logger.fine("No events have been received. Unblocking the reader.");
             }
         }
     }
@@ -1237,44 +1248,57 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
         return false;
     }
 
-    private void queryExistingContainerStates(ComputeState compute) {
-        String containerHostLink = compute.documentSelfLink;
+    private DeferredResult<Void> queryExistingContainerStates(String containerHostLink) {
         QueryTask queryTask = QueryUtil.buildPropertyQuery(ContainerState.class,
                 ContainerState.FIELD_NAME_PARENT_LINK, containerHostLink);
 
+        DeferredResult<Void> df = new DeferredResult<>();
+
         new ServiceDocumentQuery<ContainerState>(host, ContainerState.class)
-                .query(queryTask, processContainerStatesQueryResults());
+                .query(queryTask, processContainerStatesQueryResults(df));
+
+        return df;
     }
 
-    private Consumer<ServiceDocumentQuery.ServiceDocumentQueryElementResult<ContainerState>> processContainerStatesQueryResults() {
+    private Consumer<ServiceDocumentQuery.ServiceDocumentQueryElementResult<ContainerState>> processContainerStatesQueryResults(DeferredResult<?> df) {
         List<String> existingContainerStateLinks = new ArrayList<>();
 
-        return (r) -> {
+        return (ServiceDocumentQuery.ServiceDocumentQueryElementResult<ContainerState> r) -> {
             if (r.hasException()) {
                 logger.warning(
                         String.format("Failed to query resource container state [%s]", r.getDocumentSelfLink()));
+
+                df.fail(r.getException());
             } else if (r.hasResult()) {
                 existingContainerStateLinks.add(r.getDocumentSelfLink());
             } else {
+                List<DeferredResult<Operation>> dfs = new ArrayList<>();
+
                 for (String csSelfLink : existingContainerStateLinks) {
                     ContainerState cs = new ContainerState();
                     cs.documentSelfLink = csSelfLink;
                     cs.powerState = ContainerState.PowerState.UNKNOWN;
 
-                    patchContainerState(cs);
+                    dfs.add(patchContainerState(cs));
                 }
+
+                DeferredResult.allOf(dfs).whenComplete((o, e) -> {
+                    df.complete(null);
+                });
             }
         };
     }
 
-    private void patchContainerState(ContainerState cs) {
-        Operation.createPatch(host, UriUtils.buildUriPath(cs.documentSelfLink))
+    private DeferredResult<Operation> patchContainerState(ContainerState cs) {
+        Operation operation = Operation.createPatch(host, UriUtils.buildUriPath(cs.documentSelfLink))
                 .setBody(cs)
                 .setReferer(host.getUri())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         logger.warning(String.format("Error patching container state [%s]. Error: [%s]", cs.documentSelfLink, ex.getMessage()));
                     }
-                }).sendWith(host);
+                });
+
+        return host.sendWithDeferredResult(operation);
     }
 }

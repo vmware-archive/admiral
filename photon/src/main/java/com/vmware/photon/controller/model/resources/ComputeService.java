@@ -470,7 +470,6 @@ public class ComputeService extends StatefulService {
             }
 
             if (patchBody.powerState != null
-                    && patchBody.powerState != PowerState.UNKNOWN
                     && patchBody.powerState != currentState.powerState) {
                 currentState.powerState = patchBody.powerState;
                 hasStateChanged = true;
