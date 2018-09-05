@@ -1086,6 +1086,8 @@ public class ContainerHostDataCollectionService extends StatefulService {
         request.resourceReference = UriUtils.buildUri(getHost(), cs.documentSelfLink);
         URI adapterManagementReference = cs.endpointLink == null
                 ? cs.adapterManagementReference : getDefaultHostAdapter(getHost());
+
+        logInfo("Sending request to [%s]", adapterManagementReference.toString());
         sendRequest(Operation.createPatch(adapterManagementReference)
                 .setBodyNoCloning(request)
                 .setCompletion((o, ex) -> {

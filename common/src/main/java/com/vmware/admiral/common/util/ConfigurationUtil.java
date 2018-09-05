@@ -14,6 +14,7 @@ package com.vmware.admiral.common.util;
 import static com.vmware.admiral.common.ManagementUriParts.CONFIG_PROPS;
 
 import java.util.function.Consumer;
+import java.util.logging.Logger;
 
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.xenon.common.Operation;
@@ -24,6 +25,8 @@ import com.vmware.xenon.common.UriUtils;
 // TODO - Remove/refactor this class since it may introduce some inconsistent behavior.
 // See comments below.
 public class ConfigurationUtil {
+    private static final Logger logger = Logger
+            .getLogger(ConfigurationUtil.class.getName());
 
     public static final String UI_PROXY_FORWARD_HEADER = "x-forwarded-for";
     public static final String UI_FRAME_OPTIONS_HEADER = "x-frame-options";
@@ -39,6 +42,8 @@ public class ConfigurationUtil {
 
     // used for IT test in order to simulate this kind of exception
     public static final String THROW_IO_EXCEPTION = "throw.io.exception";
+
+    public static final String URL_CONNECTION_READ_TIMEOUT  = "admiral.adapter.url.connection.read.timeout";
 
     private static ConfigurationState[] configProperties;
 
@@ -90,6 +95,7 @@ public class ConfigurationUtil {
                 .createGet(service, UriUtils.buildUriPath(CONFIG_PROPS, propName))
                 .setCompletion((res, ex) -> {
                     if (ex != null) {
+                        logger.warning(String.format("Unable to get config property: %s", ex.getMessage()));
                         callback.accept(null);
                         return;
                     }
@@ -108,6 +114,7 @@ public class ConfigurationUtil {
                 .setReferer(host.getUri())
                 .setCompletion((res, ex) -> {
                     if (ex != null) {
+                        logger.warning(String.format("Unable to get config property: %s", ex.getMessage()));
                         callback.accept(null);
                         return;
                     }
@@ -115,5 +122,4 @@ public class ConfigurationUtil {
                     callback.accept(body.value);
                 }));
     }
-
 }

@@ -16,21 +16,17 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 import java.net.URI;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerHostOperationType;
 import com.vmware.admiral.adapter.docker.service.DockerHostAdapterService;
-import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.compute.ContainerHostService;
@@ -42,6 +38,7 @@ import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.UriUtils;
 
 public class ContainerHostEventsIT extends BaseProvisioningOnCoreOsIT {
     private static final String TEMPLATE_FILE_WITH_SLEEP_COMMAND = "alpine_with_sleep_command.yaml";
@@ -61,58 +58,45 @@ public class ContainerHostEventsIT extends BaseProvisioningOnCoreOsIT {
 
     @Before
     public void setUp() throws Exception {
-        DeploymentProfileConfig.getInstance().setTest(true);
+        // set URL_CONNECTION_READ_TIMEOUT
+        ConfigurationService.ConfigurationState configTimeout = new ConfigurationService.ConfigurationState();
+        configTimeout.key = ConfigurationUtil.URL_CONNECTION_READ_TIMEOUT;
+        configTimeout.value = "10000";
+        configTimeout.documentSelfLink = UriUtils.buildUriPath(ConfigurationService.ConfigurationFactoryService.SELF_LINK,
+                ConfigurationUtil.URL_CONNECTION_READ_TIMEOUT);
 
-        // enable host events subscription
-        ConfigurationService.ConfigurationState config = new ConfigurationService.ConfigurationState();
-        config.key = ConfigurationUtil.ALLOW_HOST_EVENTS_SUBSCRIPTIONS;
-        config.value = Boolean.TRUE.toString();
-        config.documentSelfLink = config.key;
-
-        config = postDocument(ConfigurationService.ConfigurationFactoryService.SELF_LINK, config);
-        assertEquals(Boolean.TRUE.toString(), config.value);
-
-        // set throw IO exception in order to simulate this kind of exception
-        ConfigurationService.ConfigurationState configState = new ConfigurationService.ConfigurationState();
-        configState.key = ConfigurationUtil.THROW_IO_EXCEPTION;
-        configState.value = Boolean.TRUE.toString();
-        configState.documentSelfLink = configState.key;
-        configState = postDocument(ConfigurationService.ConfigurationFactoryService.SELF_LINK, configState);
-        assertEquals(Boolean.TRUE.toString(), configState.value);
+        ConfigurationService.ConfigurationState updatedConfigTimeout = postDocument(ConfigurationService.ConfigurationFactoryService.SELF_LINK, configTimeout);
+        assertEquals(configTimeout.key, updatedConfigTimeout.key);
+        assertEquals(configTimeout.value, updatedConfigTimeout.value);
     }
 
     @After
     public void cleanUp() throws Exception {
-        DeploymentProfileConfig.getInstance().setTest(false);
-
-        final long timoutInMillis = 20000; // 20sec
-        long startTime = System.currentTimeMillis();
-
-        // currently there is no way for notifying when the host is subscribed/unsubscribed for events
-        unsubscribeHostForEvents(dockerHostCompute);
-
-        waitFor(t -> {
-            logger.info("Waiting for host unsubscription %s",
-                    TimeUnit.MILLISECONDS.toSeconds(timoutInMillis - (System.currentTimeMillis() - startTime)));
-            return System.currentTimeMillis() - startTime > timoutInMillis;
-        });
-
-        // disable host events subscription
+        // disable eventual consistency
         ConfigurationService.ConfigurationState config = new ConfigurationService.ConfigurationState();
         config.key = ConfigurationUtil.ALLOW_HOST_EVENTS_SUBSCRIPTIONS;
         config.value = Boolean.FALSE.toString();
-        config.documentSelfLink = config.key;
+        config.documentSelfLink = UriUtils.buildUriPath(ConfigurationService.ConfigurationFactoryService.SELF_LINK,
+                ConfigurationUtil.ALLOW_HOST_EVENTS_SUBSCRIPTIONS);
 
-        config = postDocument(ConfigurationService.ConfigurationFactoryService.SELF_LINK, config);
-        assertEquals(Boolean.FALSE.toString(), config.value);
+        ConfigurationService.ConfigurationState updatedConfig = postDocument(ConfigurationService.ConfigurationFactoryService.SELF_LINK, config,
+                TestDocumentLifeCycle.NO_DELETE);
+        assertEquals(config.key, updatedConfig.key);
+        assertEquals(config.value, updatedConfig.value);
 
         // disable the simulation of the IOException
         ConfigurationService.ConfigurationState configState = new ConfigurationService.ConfigurationState();
         configState.key = ConfigurationUtil.THROW_IO_EXCEPTION;
         configState.value = Boolean.FALSE.toString();
-        configState.documentSelfLink = configState.key;
-        configState = postDocument(ConfigurationService.ConfigurationFactoryService.SELF_LINK, configState);
-        assertEquals(Boolean.FALSE.toString(), configState.value);
+        configState.documentSelfLink = UriUtils.buildUriPath(ConfigurationService.ConfigurationFactoryService.SELF_LINK,
+                ConfigurationUtil.THROW_IO_EXCEPTION);
+
+        ConfigurationService.ConfigurationState updatedConfigState = postDocument(ConfigurationService.ConfigurationFactoryService.SELF_LINK, configState,
+                TestDocumentLifeCycle.NO_DELETE);
+        assertEquals(configState.key, updatedConfigState.key);
+        assertEquals(configState.value, updatedConfigState.value);
+
+        unsubscribeHostForEvents(dockerHostCompute);
     }
 
     @Override
@@ -124,6 +108,17 @@ public class ContainerHostEventsIT extends BaseProvisioningOnCoreOsIT {
 
     @Test
     public void testContainerDies() throws Exception {
+        // enable eventual consistency
+        ConfigurationService.ConfigurationState config = new ConfigurationService.ConfigurationState();
+        config.key = ConfigurationUtil.ALLOW_HOST_EVENTS_SUBSCRIPTIONS;
+        config.value = Boolean.TRUE.toString();
+        config.documentSelfLink = UriUtils.buildUriPath(ConfigurationService.ConfigurationFactoryService.SELF_LINK,
+                ConfigurationUtil.ALLOW_HOST_EVENTS_SUBSCRIPTIONS);
+
+        ConfigurationService.ConfigurationState updatedConfig = postDocument(ConfigurationService.ConfigurationFactoryService.SELF_LINK, config);
+        assertEquals(config.key, updatedConfig.key);
+        assertEquals(config.value, updatedConfig.value);
+
         compositeDescriptionLink = importTemplate(serviceClient, TEMPLATE_FILE_WITH_SLEEP_COMMAND);
 
         setupCoreOsHost(ContainerHostService.DockerAdapterType.API, false, null);
@@ -139,8 +134,7 @@ public class ContainerHostEventsIT extends BaseProvisioningOnCoreOsIT {
         assertEquals(ContainerState.PowerState.RUNNING, container.powerState);
 
         final long timoutInMillis = 10000; // 10sec
-        long startTime = System.currentTimeMillis();
-
+        final long startTime = System.currentTimeMillis();
         // the provisioned template contains "sleep" command which will make the container to exit
         // and based on the event, the power state will be changed to STOPPED
         waitFor(t -> {
@@ -151,6 +145,7 @@ public class ContainerHostEventsIT extends BaseProvisioningOnCoreOsIT {
 
             try {
                 ContainerState containerState = getDocument(containerSelfLink, ContainerState.class);
+                logger.info("containerState.powerState: " + containerState.powerState.name());
                 return ContainerState.PowerState.STOPPED.equals(containerState.powerState);
             } catch (Exception e) {
                 fail(String.format("Unable to retrieve container: %s", e.getMessage()));
@@ -159,9 +154,19 @@ public class ContainerHostEventsIT extends BaseProvisioningOnCoreOsIT {
         });
     }
 
-    @Ignore("VBV-2046")
     @Test
     public void testHostDies() throws Exception {
+        // set throw IO exception in order to simulate this kind of exception
+        ConfigurationService.ConfigurationState configState = new ConfigurationService.ConfigurationState();
+        configState.key = ConfigurationUtil.THROW_IO_EXCEPTION;
+        configState.value = Boolean.TRUE.toString();
+        configState.documentSelfLink = UriUtils.buildUriPath(ConfigurationService.ConfigurationFactoryService.SELF_LINK,
+                ConfigurationUtil.THROW_IO_EXCEPTION);
+
+        ConfigurationService.ConfigurationState updatedConfigState = postDocument(ConfigurationService.ConfigurationFactoryService.SELF_LINK, configState);
+        assertEquals(configState.key, updatedConfigState.key);
+        assertEquals(configState.value, updatedConfigState.value);
+
         compositeDescriptionLink = importTemplate(serviceClient, TEMPLATE_FILE);
 
         setupCoreOsHost(ContainerHostService.DockerAdapterType.API, false, null);
@@ -176,11 +181,12 @@ public class ContainerHostEventsIT extends BaseProvisioningOnCoreOsIT {
         CompositeComponent cc = getDocument(compositeComponentLink, CompositeComponent.class);
         String containerSelfLink = cc.componentLinks.iterator().next();
         ContainerState container = getDocument(containerSelfLink, ContainerState.class);
-
         assertNotNull(container);
         assertEquals(ContainerState.PowerState.RUNNING, container.powerState);
 
-        final long timoutInMillis = 25000; // 25sec
+        subscribeHostForEvents(dockerHostCompute);
+
+        final long timoutInMillis = 20000; // 20sec
         long startTime = System.currentTimeMillis();
 
         // wait for compute to be in UNKNOWN state
@@ -220,7 +226,7 @@ public class ContainerHostEventsIT extends BaseProvisioningOnCoreOsIT {
         });
     }
 
-    private void unsubscribeHostForEvents(ComputeState cs) throws InterruptedException, ExecutionException, TimeoutException {
+    private void unsubscribeHostForEvents(ComputeState cs) throws Exception {
         URI resourceReferenceUri = URI
                 .create(getBaseUrl() + buildServiceUri(cs.documentSelfLink));
 
@@ -230,6 +236,39 @@ public class ContainerHostEventsIT extends BaseProvisioningOnCoreOsIT {
         request.resourceReference = resourceReferenceUri;
         URI adapterUri = URI
                 .create(getBaseUrl() + buildServiceUri(DockerHostAdapterService.SELF_LINK));
+
+        logger.info(String.format("Sending request to [%s]", adapterUri.toString()));
+        sendRequest(serviceClient, Operation.createPatch(adapterUri)
+                .setBodyNoCloning(request)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        logger.error("Failed to unsubscribe for host events: %s", ex.getMessage());
+                        return;
+                    }
+                }));
+
+        final long timoutInMillis = 10000; // 10sec
+        long startTime = System.currentTimeMillis();
+
+        waitFor(t -> {
+            logger.info("Waiting for host unsubscription %s",
+                    TimeUnit.MILLISECONDS.toSeconds(timoutInMillis - (System.currentTimeMillis() - startTime)));
+            return System.currentTimeMillis() - startTime > timoutInMillis;
+        });
+    }
+
+    private void subscribeHostForEvents(ComputeState cs) throws Exception {
+        URI resourceReferenceUri = URI
+                .create(getBaseUrl() + buildServiceUri(cs.documentSelfLink));
+
+        AdapterRequest request = new AdapterRequest();
+        request.operationTypeId = ContainerHostOperationType.EVENTS_SUBSCRIBE.id;
+        request.serviceTaskCallback = ServiceTaskCallback.createEmpty();
+        request.resourceReference = resourceReferenceUri;
+        URI adapterUri = URI
+                .create(getBaseUrl() + buildServiceUri(DockerHostAdapterService.SELF_LINK));
+
+        logger.info(String.format("Sending request to [%s]", adapterUri.toString()));
         sendRequest(serviceClient, Operation.createPatch(adapterUri)
                 .setBodyNoCloning(request)
                 .setCompletion((o, ex) -> {

@@ -52,6 +52,7 @@ import com.vmware.admiral.adapter.registry.service.RegistrySearchResponse;
 import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.test.CommonTestStateFactory;
+import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
@@ -81,6 +82,7 @@ import com.vmware.admiral.image.service.ContainerImageService;
 import com.vmware.admiral.request.RequestBrokerFactoryService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState.SubStage;
+import com.vmware.admiral.service.common.ConfigurationService;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.SslTrustCertificateService;
@@ -157,6 +159,18 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
                     + " cert.ci.trust.file=%s. Error: %s",
                     getTestRequiredProp("cert.ci.trust.file"), e.getMessage());
         }
+
+        // disable eventual consistency
+        ConfigurationService.ConfigurationState configState = new ConfigurationService.ConfigurationState();
+        configState.key = ConfigurationUtil.ALLOW_HOST_EVENTS_SUBSCRIPTIONS;
+        configState.value = Boolean.FALSE.toString();
+        configState.documentSelfLink = UriUtils.buildUriPath(ConfigurationService.ConfigurationFactoryService.SELF_LINK,
+                ConfigurationUtil.ALLOW_HOST_EVENTS_SUBSCRIPTIONS);
+
+        ConfigurationService.ConfigurationState updatedConfigState = postDocument(ConfigurationService.ConfigurationFactoryService.SELF_LINK, configState,
+                TestDocumentLifeCycle.NO_DELETE);
+        assertEquals(configState.key, updatedConfigState.key);
+        assertEquals(configState.value, updatedConfigState.value);
     }
 
     @After
