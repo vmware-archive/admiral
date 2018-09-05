@@ -200,15 +200,16 @@ public class PKSRemoteClientServiceTest {
         verify(mockClient, never()).send(any(Operation.class));
 
         // test straight forward case
-        result = client.getCluster(ctx, "cluster1");
+        result = client.getCluster(ctx, "clus ter1");
 
         Operation op = valueCapture.getValue();
-        op.setBodyNoCloning("{\"name\":\"cluster1\",\"plan_name\":\"small\",\"last_action\":\"CREATE\",\"last_action_state\":\"succeeded\",\"last_action_description\":\"Instance provisioning completed\",\"uuid\":\"3925786b-4b09-4f63-a1f8-50b706b38ced\",\"kubernetes_master_ips\":[\"30.0.1.2\"],\"parameters\":{\"kubernetes_master_host\":\"192.168.150.100\",\"kubernetes_master_port\":8443,\"worker_haproxy_ip_addresses\":null,\"kubernetes_worker_instances\":2,\"authorization_mode\":null}}");
+        assertTrue(op.getUri().getPath().endsWith("/clus%20ter1"));
+        op.setBodyNoCloning("{\"name\":\"clus ter1\",\"plan_name\":\"small\",\"last_action\":\"CREATE\",\"last_action_state\":\"succeeded\",\"last_action_description\":\"Instance provisioning completed\",\"uuid\":\"3925786b-4b09-4f63-a1f8-50b706b38ced\",\"kubernetes_master_ips\":[\"30.0.1.2\"],\"parameters\":{\"kubernetes_master_host\":\"192.168.150.100\",\"kubernetes_master_port\":8443,\"worker_haproxy_ip_addresses\":null,\"kubernetes_worker_instances\":2,\"authorization_mode\":null}}");
         op.complete();
 
         PKSCluster pksCluster = result.toCompletionStage().toCompletableFuture().get();
         assertNotNull(pksCluster);
-        assertEquals("cluster1", pksCluster.name);
+        assertEquals("clus ter1", pksCluster.name);
 
         // test exceptionally clause
         result = client.getCluster(ctx, "cluster-missing");
@@ -529,6 +530,7 @@ public class PKSRemoteClientServiceTest {
 
         // test straight forward case
         PKSCluster cluster = new PKSCluster();
+        cluster.name = "name";
         result = client.resizeCluster(ctx, cluster);
         Operation op = valueCapture.getValue();
         op.setBodyNoCloning(cluster).setStatusCode(Operation.STATUS_CODE_ACCEPTED).complete();
