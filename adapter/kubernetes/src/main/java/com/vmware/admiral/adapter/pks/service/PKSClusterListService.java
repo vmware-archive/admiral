@@ -30,6 +30,7 @@ import java.util.Set;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 
+import com.google.gson.Gson;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -195,7 +196,11 @@ public class PKSClusterListService extends StatelessService {
                 cluster.parameters.put(PKS_CLUSTER_EXISTS_PROP_NAME, Boolean.TRUE.toString());
             }
         }
-        op.setBody(pksClusters);
+
+        // workaround for Gson bug VBV-2218
+        // TODO remove when xenon is version ^1.6.14
+        Gson gson = new Gson();
+        op.setBodyNoCloning(gson.toJson(pksClusters));
         op.complete();
     }
 

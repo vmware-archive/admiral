@@ -123,7 +123,7 @@ public class PKSRemoteClientService {
         return null;
     }
 
-    public DeferredResult<List<PKSCluster>> getClusters(PKSContext ctx) {
+    public DeferredResult<PKSCluster[]> getClusters(PKSContext ctx) {
         try {
             URI uri = UriUtils.buildUri(ctx.pksAPIUri, "v1/clusters");
             Operation op = buildGetOperation(uri, ctx);
@@ -133,7 +133,7 @@ public class PKSRemoteClientService {
                         PKSCluster[] clusters = o.getBody(PKSCluster[].class);
                         logger.fine(() -> String.format("Got response from %s for clusters : %s",
                                 ctx.pksAPIUri, Utils.toJson(clusters)));
-                        return Arrays.asList(clusters);
+                        return clusters;
                     })
                     .exceptionally(t -> {
                         throw DeferredUtils.logErrorAndThrow(t,

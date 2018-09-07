@@ -141,7 +141,7 @@ public class PKSRemoteClientServiceTest {
         doNothing().when(mockClient).send(valueCapture.capture());
 
         // test casual exception
-        DeferredResult<List<PKSCluster>> result = client.getClusters(null);
+        DeferredResult<PKSCluster[]> result = client.getClusters(null);
         try {
             result.toCompletionStage().toCompletableFuture().get();
             fail("should not reach here");
@@ -158,10 +158,10 @@ public class PKSRemoteClientServiceTest {
         op.setBodyNoCloning("[{\"name\": \"cluster1\",\"plan_name\": \"small\",\"last_action\": \"CREATE\",\"last_action_state\": \"succeeded\",\"last_action_description\": \"Instance provisioning completed\",\"uuid\": \"3925786b-4b09-4f63-a1f8-50b706b38ced\",\"kubernetes_master_ips\": [\"30.0.1.2\"],\"parameters\": {\"kubernetes_master_host\": \"192.168.150.100\",\"kubernetes_master_port\": 8443,\"worker_haproxy_ip_addresses\": null,\"kubernetes_worker_instances\": 2,\"authorization_mode\": null}}]");
         op.complete();
 
-        List<PKSCluster> pksClusters = result.toCompletionStage().toCompletableFuture().get();
+        PKSCluster[] pksClusters = result.toCompletionStage().toCompletableFuture().get();
         assertNotNull(pksClusters);
-        assertEquals(1, pksClusters.size());
-        assertEquals("cluster1", pksClusters.get(0).name);
+        assertEquals(1, pksClusters.length);
+        assertEquals("cluster1", pksClusters[0].name);
 
         result = client.getClusters(ctx);
         op = valueCapture.getValue();
