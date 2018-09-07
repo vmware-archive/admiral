@@ -1401,8 +1401,7 @@ public class RequestBrokerService extends
             task.tenantLinks = state.tenantLinks;
             task.requestTrackerLink = state.requestTrackerLink;
             // calculate task expiration to be shortly before parent task expiration
-            task.documentExpirationTimeMicros = state.documentExpirationTimeMicros / 2
-                    - TimeUnit.MINUTES.toMicros(5);
+            task.documentExpirationTimeMicros = calculatePKSTaskExpirationTime(state);
 
             sendRequest(Operation
                     .createPost(this, PKSClusterProvisioningTaskService.FACTORY_LINK)
@@ -1445,8 +1444,7 @@ public class RequestBrokerService extends
             task.cleanupRemoval = cleanupRemoval;
             task.removeOnly = removeOnly;
             // calculate task expiration to be shortly before parent task expiration
-            task.documentExpirationTimeMicros = state.documentExpirationTimeMicros / 2
-                    - TimeUnit.MINUTES.toMicros(5);
+            task.documentExpirationTimeMicros = calculatePKSTaskExpirationTime(state);
 
             sendRequest(Operation
                     .createPost(this, PKSClusterRemovalTaskService.FACTORY_LINK)
@@ -1473,8 +1471,7 @@ public class RequestBrokerService extends
             task.tenantLinks = state.tenantLinks;
             task.requestTrackerLink = state.requestTrackerLink;
             // calculate task expiration to be shortly before parent task expiration
-            task.documentExpirationTimeMicros = state.documentExpirationTimeMicros / 2
-                    - TimeUnit.MINUTES.toMicros(5);
+            task.documentExpirationTimeMicros = calculatePKSTaskExpirationTime(state);
 
             sendRequest(Operation
                     .createPost(this, PKSClusterResizeTaskService.FACTORY_LINK)
@@ -1487,6 +1484,12 @@ public class RequestBrokerService extends
                         }
                     }));
         });
+    }
+
+    private long calculatePKSTaskExpirationTime(RequestBrokerState state) {
+        long t = (state.documentExpirationTimeMicros - Utils.getSystemNowMicrosUtc()) / 2;
+        t = Utils.fromNowMicrosUtc(t) - TimeUnit.MINUTES.toMicros(5);
+        return Math.max(t, Utils.fromNowMicrosUtc(TimeUnit.MINUTES.toMicros(5)));
     }
 
     /**
