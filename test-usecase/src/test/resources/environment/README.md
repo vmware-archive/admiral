@@ -9,7 +9,7 @@ openssl genrsa -aes128 -out jetty.key
 Generate certificate from the keys.
 
 ```
-openssl req -new -x509 -newkey rsa:2048 -sha256 -key jetty.key -out jetty.crt
+openssl req -new -x509 -newkey rsa:2048 -sha256 -key jetty.key -out jetty.crt -days 3650
 ```
 
 Create a PKCS12 keystore with the private key and certificate.
