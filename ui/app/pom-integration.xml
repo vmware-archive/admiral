@@ -79,7 +79,7 @@
                         </goals>
                         <configuration>
                             <skip>${skipITs}</skip>
-                            <arguments>it-tests --test.dcp.url=${test.dcp.url} --test.integraton.properties=${test.integration.properties} --test.browser=${testBrowser}</arguments>
+                            <arguments>it-tests --test.dcp.url=${test.dcp.url} --test.integration.properties=${test.integration.properties} --test.browser=${testBrowser}</arguments>
                         </configuration>
                     </execution>
                 </executions>
