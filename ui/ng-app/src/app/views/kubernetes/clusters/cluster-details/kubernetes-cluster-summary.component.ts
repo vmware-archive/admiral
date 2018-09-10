@@ -11,11 +11,13 @@
 
 import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from "@angular/router";
+import { AuthService } from '../../../../utils/auth.service';
 import { DocumentService } from '../../../../utils/document.service';
 import { ErrorService } from '../../../../utils/error.service';
 import { Constants } from '../../../../utils/constants';
 import { FT } from '../../../../utils/ft';
 import { Links } from '../../../../utils/links';
+import { ProjectService } from '../../../../utils/project.service';
 import { RoutesRestriction } from '../../../../utils/routes-restriction';
 import { Utils } from '../../../../utils/utils';
 
@@ -33,8 +35,20 @@ import * as I18n from 'i18next';
 export class KubernetesClusterSummaryComponent implements OnInit {
     @Input() cluster: any;
 
-    constructor(protected route: ActivatedRoute, protected service: DocumentService,
-                protected router: Router, protected errorService: ErrorService) {
+    userSecurityContext: any;
+
+    constructor(protected route: ActivatedRoute, protected router: Router,
+                protected service: DocumentService, protected authService: AuthService,
+                protected projectService: ProjectService, protected errorService: ErrorService) {
+
+        if (!FT.isApplicationEmbedded()) {
+            this.authService.getCachedSecurityContext().then((securityContext) => {
+                this.userSecurityContext = securityContext;
+
+            }).catch((ex) => {
+                console.log(ex);
+            });
+        }
     }
 
     get clusterResourcesTextKey() {
@@ -56,74 +70,92 @@ export class KubernetesClusterSummaryComponent implements OnInit {
     }
 
     get planName() {
+        let plan;
+
         if (this.cluster) {
-            return Utils.getCustomPropertyValue(this.clusterCustomProperties, '__pksPlanName');
+            plan = Utils.getCustomPropertyValue(this.clusterCustomProperties, '__pksPlanName');
         }
-        return I18n.t('notAvailable');
+
+        return plan;
     }
 
     get masterNodesIPs() {
         if (this.cluster) {
             return Utils.getCustomPropertyValue(this.clusterCustomProperties, '__masterNodesIPs');
         }
+
         return '';
-    }
-
-    get clusterCustomProperties() {
-        let properties;
-        if (this.cluster && this.cluster.nodes && this.cluster.nodeLinks
-                && this.cluster.nodeLinks.length > 0) {
-            properties = this.cluster.nodes[this.cluster.nodeLinks[0]].customProperties;
-        }
-
-        return properties;
-    }
-
-    get nodeCount() {
-        if (this.cluster) {
-            var nodesString = Utils.getCustomPropertyValue(this.clusterCustomProperties, '__nodes');
-            if (nodesString) {
-                return JSON.parse(nodesString).length;
-            }
-        }
-
-        return I18n.t('notAvailable');
-    }
-
-    get totalMemory() {
-        if (this.cluster && this.cluster.totalMemory) {
-            return this.formatNumber(this.cluster.totalMemory) + 'B';
-        }
-        return I18n.t('notAvailable');
-    }
-
-    get dashboard() {
-        if (this.clusterCustomProperties) {
-
-            var dashboardLink =
-                Utils.getCustomPropertyValue(this.clusterCustomProperties, '__dashboardLink');
-            if (dashboardLink) {
-                var labelInstalled = I18n.t('kubernetes.clusters.details.summary.dashboardInstalled');
-                return `<a href="${dashboardLink}" target="_blank">${labelInstalled}</a>`;
-            }
-            var dashboardInstalled =
-                Utils.getCustomPropertyValue(this.clusterCustomProperties, '__dashboardInstalled');
-            if (dashboardInstalled === 'true') {
-                return I18n.t('kubernetes.clusters.details.summary.dashboardInstalled');
-            }
-            if (dashboardInstalled === 'false') {
-                return I18n.t('kubernetes.clusters.details.summary.dashboardNotInstalled');
-            }
-        }
-        return I18n.t('notAvailable');
-    }
-
-    get clustersEditRouteRestrictions() {
-        return RoutesRestriction.KUBERNETES_CLUSTERS_EDIT;
     }
 
     get hasNodes() {
         return this.cluster && this.cluster.nodeLinks && this.cluster.nodeLinks.length > 0;
+    }
+
+    get clusterFirstNodeLink() {
+        return this.hasNodes && this.cluster.nodeLinks[0];
+    }
+
+    get clusterFirstNode() {
+        return this.cluster && this.cluster.nodes && this.clusterFirstNodeLink
+                    && this.cluster.nodes[this.clusterFirstNodeLink];
+    }
+
+    get clusterCustomProperties() {
+        return this.clusterFirstNode && this.clusterFirstNode.customProperties;
+    }
+
+    get nodeCount() {
+        let count;
+
+        if (this.cluster) {
+            let nodesString = Utils.getCustomPropertyValue(this.clusterCustomProperties, '__nodes');
+            if (nodesString) {
+                count = JSON.parse(nodesString).length;
+            }
+        }
+
+        return count;
+    }
+
+    get totalMemory() {
+        let total;
+
+        if (this.cluster && this.cluster.totalMemory) {
+            total = this.formatNumber(this.cluster.totalMemory) + 'B';
+        }
+
+        return total;
+    }
+
+    get dashboardLink() {
+        return this.clusterCustomProperties
+            && Utils.getCustomPropertyValue(this.clusterCustomProperties, '__dashboardLink');
+    }
+
+    get dashboardText() {
+        let textDashboard;
+
+        if (this.clusterCustomProperties) {
+            let dashboardInstalled =
+                Utils.getCustomPropertyValue(this.clusterCustomProperties, '__dashboardInstalled');
+
+            if (dashboardInstalled === 'true') {
+                textDashboard = I18n.t('kubernetes.clusters.details.summary.dashboardInstalled');
+            }
+            if (dashboardInstalled === 'false') {
+                textDashboard = I18n.t('kubernetes.clusters.details.summary.dashboardNotInstalled');
+            }
+        }
+
+        return textDashboard;
+    }
+
+    get isAllowedEditCluster() {
+        let selectedProject = this.projectService.getSelectedProject();
+        let projectSelfLink = selectedProject && selectedProject.documentSelfLink;
+
+        return Utils.isAccessAllowed(this.userSecurityContext, projectSelfLink,
+                                        RoutesRestriction.KUBERNETES_CLUSTERS_EDIT);
     }
 
     ngOnInit() {
@@ -131,23 +163,11 @@ export class KubernetesClusterSummaryComponent implements OnInit {
     }
 
     operationSupported(op) {
-        if (this.isPksCluster && op === 'EDIT') {
+        if (this.cluster && op === 'EDIT') {
             return this.cluster.status === Constants.clusters.status.ON;
         }
 
         return true;
-    }
-
-    editCluster() {
-        let editNavLink;
-        if (this.isPksCluster) {
-            editNavLink = ['./edit'];
-        } else {
-            // external
-            editNavLink = ['./edit-external'];
-        }
-
-        this.router.navigate(editNavLink, {relativeTo: this.route});
     }
 
     downloadKubeConfig() {
@@ -155,14 +175,12 @@ export class KubernetesClusterSummaryComponent implements OnInit {
             return;
         }
 
-        var hostLink = this.cluster.nodeLinks && this.cluster.nodeLinks[0];
-
-        if (!hostLink) {
+        if (!this.clusterFirstNodeLink) {
             console.log('cannot download kubeconfig: no hosts found');
             return;
         }
 
-        var kubeConfigLink = Links.KUBE_CONFIG_CONTENT + '?hostLink=' + hostLink;
+        var kubeConfigLink = Links.KUBE_CONFIG_CONTENT + '?hostLink=' + this.clusterFirstNodeLink;
         window.location.href = Utils.serviceUrl(kubeConfigLink);
     }
 

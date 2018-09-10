@@ -12,25 +12,22 @@
 <delete-confirmation [title]="deleteConfirmationTitle()"
                      [description]="deleteConfirmationDescription()"
                      [deleteButtonTextKey]="'delete' | i18n"
-                     [(alert)]="deleteConfirmationAlert"
-                     [visible]="showDeleteConfirmation"
-                     (onDelete)="deleteConfirmed()"
-                     (onCancel)="deleteCanceled()">
+                     [(alert)]="deleteConfirmationAlert" [visible]="showDeleteConfirmation"
+                     (onDelete)="deleteConfirmed()" (onCancel)="deleteCanceled()">
 </delete-confirmation>
 
 <div class="main-view">
-
     <clr-alert *ngIf="alertMessage" [clrAlertType]="alertType" [(clrAlertClosed)]="!alertMessage"
-               (clrAlertClosedChange)="resetAlert()">
-        <div class="alert-item">
-            <span class="alert-text">{{ alertMessage }}</span>
-        </div>
+                (clrAlertClosedChange)="resetAlert()">
+        <div class="alert-item"><span class="alert-text">{{ alertMessage }}</span></div>
     </clr-alert>
 
     <clr-icon shape="rack-server" size="36"></clr-icon>
-    <h3 class="cluster-details-header-title">{{entity?.name}}<div class="btn-group" role="group" aria-label="Available Actions">
-        <button type="button" class="btn btn-link"
-                (click)="deleteCluster($event)">{{"delete" | i18n}}</button></div></h3>
+    <h3 class="cluster-details-header-title">{{entity?.name}}
+        <div class="btn-group" role="group" aria-label="Available Actions">
+            <button type="button" class="btn btn-link"
+                    (click)="deleteCluster($event)">{{"delete" | i18n}}</button></div>
+    </h3>
 
     <clr-tabs>
         <clr-tab>

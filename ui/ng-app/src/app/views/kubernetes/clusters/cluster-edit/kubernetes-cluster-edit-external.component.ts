@@ -86,6 +86,6 @@ export class KubernetesClusterEditExternalComponent extends BaseDetailsComponent
     }
 
     goBack() {
-        this.router.navigate(['..'], {relativeTo: this.route});
+        this.router.navigate(['../..'], {relativeTo: this.route});
     }
 }

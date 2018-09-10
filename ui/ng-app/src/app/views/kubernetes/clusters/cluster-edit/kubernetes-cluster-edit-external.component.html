@@ -9,35 +9,31 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<div class="main-view">
-    <div class="title">{{"pks.edit.title" | i18n}}</div>
+<form class="form" [formGroup]="clusterForm">
+    <section class="form-block">
+        <div class="form-group">
+            <label for="name" class="required">{{"kubernetes.clusters.edit.name" | i18n}}</label>
+            <label for="name" aria-haspopup="true" role="tooltip"
+                   class="tooltip tooltip-validation tooltip-sm tooltip-bottom-left"
+                   [class.invalid]="clusterForm.get('name').invalid
+                                    && (clusterForm.get('name').dirty || clusterForm.get('name').touched)">
+                <input id="name" type="text" formControlName="name" size="45">
+                <span class="tooltip-content">{{"kubernetes.clusters.edit.nameRequired" | i18n}}</span>
+            </label>
+        </div>
+        <div class="form-group">
+            <label for="description">{{"kubernetes.clusters.edit.description" | i18n}}</label>
+            <textarea id="description" rows="5" formControlName="description"></textarea>
+        </div>
 
-    <form class="form" [formGroup]="clusterForm">
-        <section class="form-block">
-            <div class="form-group">
-                <label for="name" class="required">{{"kubernetes.clusters.edit.name" | i18n}}</label>
-                <label for="name" aria-haspopup="true" role="tooltip"
-                       class="tooltip tooltip-validation tooltip-sm tooltip-bottom-left"
-                       [class.invalid]="clusterForm.get('name').invalid
-                                        && (clusterForm.get('name').dirty || clusterForm.get('name').touched)">
-                    <input id="name" type="text" formControlName="name" size="45">
-                    <span class="tooltip-content">{{"kubernetes.clusters.edit.nameRequired" | i18n}}</span>
-                </label>
-            </div>
-            <div class="form-group">
-                <label for="description">{{"kubernetes.clusters.edit.description" | i18n}}</label>
-                <textarea id="description" rows="5" formControlName="description"></textarea>
-            </div>
-
-            <div>
-                <button type="button" class="btn btn-outline"
-                        [disabled]="isUpdating"
-                        (click)="cancel()">{{"cancel" | i18n}}</button>
-                <button type="button" class="btn btn-primary updateCluster-btn"
-                        [clrLoading]="isUpdating"
-                        [disabled]="isUpdating || clusterForm.invalid"
-                        (click)="update()">{{"save" | i18n}}</button>
-            </div>
-        </section>
-    </form>
-</div>
+        <div>
+            <button type="button" class="btn btn-outline"
+                    [disabled]="isUpdating"
+                    (click)="cancel()">{{"cancel" | i18n}}</button>
+            <button type="button" class="btn btn-primary updateCluster-btn"
+                    [clrLoading]="isUpdating"
+                    [disabled]="isUpdating || clusterForm.invalid"
+                    (click)="update()">{{"save" | i18n}}</button>
+        </div>
+    </section>
+</form>

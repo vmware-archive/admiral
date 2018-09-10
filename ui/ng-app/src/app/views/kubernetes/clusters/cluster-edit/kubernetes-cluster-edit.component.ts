@@ -128,10 +128,6 @@ export class KubernetesClusterEditComponent extends BaseDetailsComponent {
         }
     }
 
-    onProjectChange() {
-        this.router.navigate(['../../../'], {relativeTo: this.route});
-    }
-
     clearView() {
         this.editClusterForm.reset();
         this.editClusterForm.markAsPristine();
@@ -226,7 +222,7 @@ export class KubernetesClusterEditComponent extends BaseDetailsComponent {
     }
 
     goBack() {
-        this.router.navigate(['../'], {relativeTo: this.route});
+        this.router.navigate(['../..'], {relativeTo: this.route});
     }
 
     private showErrorMessage(error) {
