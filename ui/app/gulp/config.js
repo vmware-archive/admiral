@@ -87,42 +87,33 @@ var jsLibsToCopyNoConcat = [
   './node_modules/iframe-resizer/js/iframeResizer.contentWindow.min.js'
 ];
 
-
-
 var TEST_ENV = gutil.env.test || {};
 
 var DEFAULT_PROPERTIES_FILE = '../../test-integration/src/test/resources/integration-test.properties';
 var propertiesFile = TEST_ENV.integration && TEST_ENV.integration.properties;
-if (!propertiesFile || propertiesFile === "${test.integration.properties}") {
+if (!propertiesFile || propertiesFile === '${test.integration.properties}') {
   propertiesFile = DEFAULT_PROPERTIES_FILE;
 }
 
 /* Parses the properties files for the Java integration tests */
 var readProperties = function(propertiesFile) {
-  gutil.log("Reading Admiral interation test properties from '" + propertiesFile + "'...");
+  gutil.log('Reading Admiral integration test properties from \'' + propertiesFile + '\'...');
+
   var fs = require('fs');
   var propertiesParser = require('properties-parser');
-
   var propertiesContent = fs.readFileSync(propertiesFile);
+
   return propertiesParser.parse(propertiesContent);
 };
 
 var INTEGRATION_TEST_PROPERTIES = readProperties(propertiesFile);
 
-var proxy = function(path) {
-  var options = url.parse(ADMIRAL_URL + path);
-  options.route = path;
-  return proxyMiddleware(options);
-};
-
 var getTestDcpUrl = function() {
-  var url =  TEST_ENV.dcp && TEST_ENV.dcp.url;
+  var url = TEST_ENV.dcp && TEST_ENV.dcp.url;
 
-  // When running maven and the "test.dcp.url" variable is not set it will be evaluated to "${test.dcp.url}"
-  if (!url || url == "${test.dcp.url}") {
-    var providedPropertiesFiles = TEST_ENV.integration && TEST_ENV.integration.properties;
-    var propertiesFile = providedPropertiesFiles || '../../test-integration/src/test/resources/integration-test.properties';
-
+  // When running maven and the "test.dcp.url" variable is not set it will be evaluated
+  // to "${test.dcp.url}"
+  if (!url || url === '${test.dcp.url}') {
     url = INTEGRATION_TEST_PROPERTIES['test.dcp.url'];
   }
 
@@ -140,11 +131,17 @@ if (TEST_ENV.dcp && TEST_ENV.dcp.ngurl) {
 
 gutil.log('Using NG URL: ' + NG_URL);
 
-var pathsToProxy = ["/adapter", "/config", "/core", "/images", "/popular-images", "/requests", "/request-graph", "/delete-tasks", "/request-status", "/resources", "/provisioning", "/templates", "/auth", "/container-image-icons", "/rp", "/projects", "/util" ,"/ng", "/node_modules"];
+var pathsToProxy = ['/adapter', '/config', '/core', '/images', '/popular-images', '/requests',
+  '/request-graph', '/delete-tasks', '/request-status', '/resources', '/provisioning',
+  '/templates', '/auth', '/container-image-icons', '/rp', '/projects', '/util','/ng',
+  '/node_modules'];
 
 /* Utilities to proxy calls from "/path" to "ADMIRAL/path".
-The Karma proxies are needed for integration tests where tests are run on a built in karma server, but are making REST calls to "ADMIRAL".
-Also, useful for development where the UI needs to make actual calls to the backend, while still having the benefit of fast build/reload cycles. */
+The Karma proxies are needed for integration tests where tests are run on a built-in karma server,
+but are making REST calls to "ADMIRAL".
+Also, useful for development where the UI needs to make actual calls to the backend,
+while still having the benefit of fast build/reload cycles.
+*/
 var getDevServerProxies = function() {
   var proxies = [];
 
@@ -225,18 +222,11 @@ module.exports = {
         dest + '/lib/vendor.js',
         './node_modules/jasmine-ajax/lib/mock-ajax.js',
         src + '/test/common/helpers/includeGlobals.js',
-        {pattern: src + '/test/unit/all-tests.js'}
+        {
+          pattern: src + '/test/unit/all-tests.js'
+        }
       ],
       reportOutputFile: 'target/surefire-reports/TEST-results.xml'
-    },
-    it: {
-      src: [
-        dest + '/lib/vendor.js',
-        './node_modules/jasmine-ajax/lib/mock-ajax.js',
-        src + '/test/common/helpers/includeGlobals.js',
-        {pattern: src + '/test/it/all-tests.js'}
-      ],
-      reportOutputFile: 'target/failsafe-reports/TEST-results.xml'
     },
     proxies: getKarmaServerProxies()
   },
