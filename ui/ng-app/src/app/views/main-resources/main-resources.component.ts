@@ -267,4 +267,8 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
     get registriesRouteRestriction() {
         return RoutesRestriction.REGISTRIES;
     }
+
+    get activityRouteRestriction() {
+        return RoutesRestriction.ACTIVITIES;
+    }
 }

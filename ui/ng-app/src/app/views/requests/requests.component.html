@@ -31,7 +31,8 @@
                         <clr-icon shape="refresh"></clr-icon>
                         <span class="btn-spaced-text">{{"refresh" | i18n}}</span>
                     </button>
-                    <button *ngIf="!isContainerDeveloper" type="button" class="btn btn-sm btn-secondary"
+                    <button allowNavigation [roles]="isDeleteEnabled()"
+                            type="button" class="btn btn-sm btn-secondary"
                             [disabled]="selectedRequests.length == 0"
                             (click)="onRemove()">
                         <clr-icon shape="close"></clr-icon>

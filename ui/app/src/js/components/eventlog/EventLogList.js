@@ -123,6 +123,9 @@ var EventLogListVueComponent = Vue.extend({
           });
 
           $(this.$el).children('.eventlog-actions').removeClass('hide');
+        },
+        isDeleteEnabled: function() {
+          return utils.actionAllowed(window.routesRestrictions.REQUESTS_DELETE);
         }
       }
     }
@@ -165,7 +168,7 @@ var EventLogListVueComponent = Vue.extend({
 
       this.$dispatch('close');
     },
-    actionAllowed: function() {
+    isDeleteEnabled: function() {
       return utils.actionAllowed(window.routesRestrictions.REQUESTS_DELETE);
     }
   },

@@ -23,6 +23,7 @@
          v-on:click="toggleExpandDescription($event)"><i class="fa fa-eye-slash"></i></div>
     <div class="btn"
          :title="i18n('delete')"
-         v-on:click="deleteEventLog($event)"><i class="fa fa-trash"></i></div>
+         v-on:click="deleteEventLog($event)"
+         v-if=isDeleteEnabled()><i class="fa fa-trash"></i></div>
   </div>
 </div>

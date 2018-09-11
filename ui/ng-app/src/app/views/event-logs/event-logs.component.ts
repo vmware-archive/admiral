@@ -23,6 +23,7 @@ import { CancelablePromise, Utils } from '../../utils/utils';
 
 import * as moment from 'moment';
 import * as I18n from 'i18next';
+import {RoutesRestriction} from "../../utils/routes-restriction";
 
 @Component({
     selector: 'app-event-logs',
@@ -111,6 +112,10 @@ export class EventLogsComponent {
 
     isEventLogTypeError(event: any) {
         return event.eventLogType === Constants.recentActivities.eventLogs.ERROR;
+    }
+
+    isDeleteEnabled(){
+        return RoutesRestriction.EVENT_LOGS_DELETE;
     }
 
     footerMessage() {

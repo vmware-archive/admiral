@@ -140,6 +140,10 @@ export class RequestsComponent implements OnInit, OnDestroy {
         return RoutesRestriction.DEPLOYMENTS;
     }
 
+    isDeleteEnabled(){
+        return RoutesRestriction.REQUESTS_DELETE;
+    }
+
     isContainer(request: any) {
         if (!request || !request.resourceLinks) {
             return false;

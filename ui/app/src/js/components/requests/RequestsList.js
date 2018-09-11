@@ -117,7 +117,8 @@ var RequestsListVueComponent = Vue.extend({
         },
 
         isDeleteEnabled(item) {
-          return !this.isRequestRunning(item);
+          return utils.actionAllowed(window.routesRestrictions.REQUESTS_DELETE)
+            && !this.isRequestRunning(item);
         },
 
         getProgressClass: function(item) {
@@ -298,7 +299,7 @@ var RequestsListVueComponent = Vue.extend({
       this.$dispatch('close');
     },
 
-    actionAllowed: function() {
+    isDeleteEnabled: function() {
       return utils.actionAllowed(window.routesRestrictions.REQUESTS_DELETE);
     }
   },

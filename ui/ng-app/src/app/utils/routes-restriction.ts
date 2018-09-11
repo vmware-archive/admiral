@@ -68,6 +68,7 @@ export class RoutesRestriction {
   public static KUBERNETES_CLUSTERS_EDIT = [Roles.CLOUD_ADMIN, Roles.VRA_CONTAINER_ADMIN];
 
   public static REQUESTS_DELETE = [Roles.CLOUD_ADMIN, Roles.VRA_CONTAINER_ADMIN];
+  public static EVENT_LOGS_DELETE = [Roles.CLOUD_ADMIN, Roles.VRA_CONTAINER_ADMIN];
 
   public static ENDPOINTS_MENU_VRA = [Roles.CLOUD_ADMIN, Roles.VRA_CONTAINER_ADMIN];
   public static ENDPOINTS_NEW_VRA = [Roles.CLOUD_ADMIN, Roles.VRA_CONTAINER_ADMIN];
@@ -84,4 +85,7 @@ export class RoutesRestriction {
   public static PROVISIONING_ADDITIONAL_INFO_BUTTON = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN,
                                                        Roles.PROJECT_MEMBER,
                                                        Roles.VRA_CONTAINER_ADMIN];
+  public static ACTIVITIES = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN, Roles.PROJECT_MEMBER,
+                              Roles.VRA_CONTAINER_ADMIN,
+                              Roles.VRA_CONTAINER_DEVELOPER];
 }
