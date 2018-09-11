@@ -129,26 +129,12 @@ public abstract class BaseIntegrationSupportIT {
 
     @AfterClass
     public static void baseAfterClass() throws Exception {
-        while (!documentsForDeletionAfterClass.isEmpty()) {
-            try {
-                delete(documentsForDeletionAfterClass.poll());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+        deleteDocuments(documentsForDeletionAfterClass);
     }
 
     @After
     public void baseTearDown() throws Exception {
-        while (!documentsForDeletion.isEmpty()) {
-            try {
-                ServiceDocument docToDelete = documentsForDeletion.poll();
-                logger.info("Deleting document: %s", docToDelete.documentSelfLink);
-                delete(docToDelete);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+        deleteDocuments(documentsForDeletion);
     }
 
     protected static void cleanUpAfterClass(ServiceDocument document) {
@@ -537,6 +523,40 @@ public abstract class BaseIntegrationSupportIT {
             }
 
             return instance;
+        }
+    }
+
+    private static void deleteDocuments(Queue<ServiceDocument> list) {
+        ServiceDocument docToDelete = null;
+        LinkedList<ServiceDocument> deleteAgain = new LinkedList<>();
+        while (!list.isEmpty()) {
+            try {
+                docToDelete = list.poll();
+                logger.info("Deleting document: %s", docToDelete.documentSelfLink);
+                delete(docToDelete);
+            } catch (Exception e) {
+                e.printStackTrace();
+                deleteAgain.add(docToDelete);
+            }
+        }
+        // retry deleting states that failed the first time, so naively try to clean resources with
+        // dependencies, e.g. credentials cannot be deleted if they are used by compute state
+        // sleep for 6 seconds before retrying, as the removal of expired states in xenon is
+        // 5 times the default maintenance interval (1s)
+        if (!deleteAgain.isEmpty()) {
+            try {
+                Thread.sleep(TimeUnit.SECONDS.toMillis(6));
+            } catch (InterruptedException ignore) {
+            }
+            while (!deleteAgain.isEmpty()) {
+                try {
+                    docToDelete = deleteAgain.poll();
+                    logger.info("Retry deleting document: %s", docToDelete.documentSelfLink);
+                    delete(docToDelete);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 

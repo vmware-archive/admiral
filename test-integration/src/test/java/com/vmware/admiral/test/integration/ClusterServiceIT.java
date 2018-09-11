@@ -110,10 +110,10 @@ public class ClusterServiceIT extends BaseProvisioningOnCoreOsIT {
 
         // cluster is not created, certificate is returned to accept / cancel it
         assertNotNull(dto);
-        assertNotNull(dto.documentSelfLink);
-        assertNotNull(dto.certificate);
-        assertNull(dto.name);
-        assertNull(dto.status);
+        assertNotNull("document selflink should not be null", dto.documentSelfLink);
+        assertNotNull("certificate should not be null", dto.certificate);
+        assertNull("name should be null", dto.name);
+        assertNull("status should be null", dto.status);
     }
 
     @Test
