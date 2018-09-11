@@ -1,5 +1,5 @@
 /*
-  Set of tasks for testing. There is task for executing unit tests as well as integration. All test are run inside a browser environment, by default phantomJS.
+  Set of tasks for testing. All tests are run inside a browser environment, by default phantomJS.
 */
 
 var gulp = require('gulp');
@@ -8,8 +8,6 @@ var config = require('../config');
 
 var UNIT_TEST_PORT = 9876;
 var UNIT_TEST_SUITE = 'com.vmware.admiral.ui';
-var IT_TEST_PORT = 9877;
-var IT_TEST_SUITE = 'com.vmware.admiral.ui.integration';
 
 var getPreporcessorts = function() {
   var preprocessors = {};
@@ -18,12 +16,12 @@ var getPreporcessorts = function() {
   return preprocessors;
 };
 
-var createCommonTestsConfig =  function(files, reporters, reportOutputFile, singleRun, port, suite) {
+var createCommonTestsConfig = function(files, reporters, reportOutputFile, singleRun, port, suite) {
   return {
     basePath: '',
     frameworks: ['jasmine'],
     reporters: reporters,
-    junitReporter : {
+    junitReporter: {
       suite: suite,
       outputFile: reportOutputFile
     },
@@ -50,7 +48,7 @@ var createCommonTestsConfig =  function(files, reporters, reportOutputFile, sing
         modules: [
           'test',
           'src/js',
-          "node_modules"
+          'node_modules'
         ]
       }
     },
@@ -65,16 +63,16 @@ var createCommonTestsConfig =  function(files, reporters, reportOutputFile, sing
     singleRun: singleRun,
     globals: config.INTEGRATION_TEST_PROPERTIES,
     captureTimeout: 60000,
-    browserDisconnectTimeout : 60000,
-    browserDisconnectTolerance : 3,
-    browserNoActivityTimeout : 60000
-  }
+    browserDisconnectTimeout: 60000,
+    browserDisconnectTolerance: 3,
+    browserNoActivityTimeout: 60000
+  };
 };
 
-/* Runs unit and integration tests. Called during development and when doing mvn test */
-gulp.task('tests', ['unit-tests', 'it-tests']);
+/* Runs unit tests. Called during development and when doing mvn test */
+gulp.task('tests', ['unit-tests']);
 
-gulp.task('unit-tests', function (done) {
+gulp.task('unit-tests', function(done) {
   var reporters = ['spec'];
   if (!config.tests.continious) {
     reporters.push('junit');
@@ -83,34 +81,21 @@ gulp.task('unit-tests', function (done) {
     reporters.push('html');
   }
 
-  var testConfig = createCommonTestsConfig(config.tests.unit.src, reporters, config.tests.unit.reportOutputFile, !config.tests.continious, UNIT_TEST_PORT, UNIT_TEST_SUITE);
+  var testConfig = createCommonTestsConfig(config.tests.unit.src, reporters,
+    config.tests.unit.reportOutputFile, !config.tests.continious, UNIT_TEST_PORT, UNIT_TEST_SUITE);
 
   karma.start(testConfig, function(exitStatus) {
-    done(exitStatus ? "There are failing unit tests" : undefined);
+    done(exitStatus ? 'There are failing unit tests' : undefined);
   });
 });
 
-gulp.task('it-tests', function (done) {
-  var reporters = ['spec'];
-  if (!config.tests.continious) {
-    reporters.push('junit');
-  }
-  if (config.tests.browser !== 'PhantomJS') {
-    reporters.push('html');
-  }
-
-  var testConfig = createCommonTestsConfig(config.tests.it.src, reporters, config.tests.it.reportOutputFile, !config.tests.continious, IT_TEST_PORT, IT_TEST_SUITE);
+/* Runs only unit tests. Expected to be run as part of continious development run - "gulp",
+  on every file change. Unit tests should be simple and fast and MUST NOT manipulate DOM. */
+gulp.task('unit-tests-continious', function(done) {
+  var testConfig = createCommonTestsConfig(config.tests.unit.src, ['spec'], null,
+    false, UNIT_TEST_PORT);
 
   karma.start(testConfig, function(exitStatus) {
-    done(exitStatus ? "There are failing integration tests" : undefined);
-  });
-});
-
-/* Runs only unit tests. Expected to be run as part of continious development run - "gulp", on every file change. Unit tests should be simple and fast and MUST NOT manipulate DOM. */
-gulp.task('unit-tests-continious', function (done) {
-  var testConfig = createCommonTestsConfig(config.tests.unit.src, ['spec'], null, false, UNIT_TEST_PORT);
-
-  karma.start(testConfig, function(exitStatus) {
-    done(exitStatus ? "There are failing tests" : undefined);
+    done(exitStatus ? 'There are failing tests' : undefined);
   });
 });

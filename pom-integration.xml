@@ -31,6 +31,5 @@
 
     <modules>
         <module>test-integration</module>
-        <module>ui/app/pom-integration.xml</module>
     </modules>
 </project>
