@@ -27,13 +27,13 @@
         </div>
 
         <div>
+            <button type="button" class="btn btn-primary updateCluster-btn"
+                    [clrLoading]="isUpdating"
+                    [disabled]="isUpdating || !clusterForm.dirty || clusterForm.invalid"
+                    (click)="update()">{{"update" | i18n}}</button>
             <button type="button" class="btn btn-outline"
                     [disabled]="isUpdating"
                     (click)="cancel()">{{"cancel" | i18n}}</button>
-            <button type="button" class="btn btn-primary updateCluster-btn"
-                    [clrLoading]="isUpdating"
-                    [disabled]="isUpdating || clusterForm.invalid"
-                    (click)="update()">{{"save" | i18n}}</button>
         </div>
     </section>
 </form>

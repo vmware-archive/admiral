@@ -31,7 +31,7 @@ import { CancelablePromise } from '../../utils/utils';
 export class GridViewComponent implements OnInit, OnChanges {
   @Input() serviceEndpoint: string;
   @Input() searchPlaceholder: string = '';
-  @Input() showOccurrenceSelector: boolean = true;
+  @Input() showOccurrenceSelector: boolean = false;
   @Input() searchSuggestionProperties: Array<string>;
   @Input() searchQueryOptions: any;
   @Input() projectLink: string;
@@ -334,7 +334,7 @@ export class GridViewComponent implements OnInit, OnChanges {
     return this.loadingPromise.getPromise()
     .then(result => {
       this.loading = false;
-      this.totalItemsCount = result.totalCount;
+      this.totalItemsCount = result.totalCount || result.documentCount;
       this.items = result.documents;
       this.nextPageLink = result.nextPageLink;
       this.loadedPages++;

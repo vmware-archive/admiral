@@ -21,10 +21,10 @@
                      [searchPlaceholder]="'clusters.search.placeholder' | i18n">
     <div [hidden]="hideTitle" title>{{title}}</div>
     <div toolbar>
-        <button class="btn btn-link addCluster-btn"
+        <button class="btn btn-sm btn-secondary addCluster-btn"
                 allowNavigation [roles]="clustersNewRouteRestrictions"
-                [routerLink]="['./'+ tabId + '/cluster/new']"><i
-            class="fa fa-plus"></i>{{createButtonText | uppercase}}</button>
+                [routerLink]="['./'+ tabId + '/cluster/new']"
+        ><clr-icon shape="plus"></clr-icon> {{createButtonText | uppercase}}</button>
     </div>
 
     <ng-template let-item="item">

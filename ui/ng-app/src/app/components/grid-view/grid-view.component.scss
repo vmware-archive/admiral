@@ -64,7 +64,14 @@ grid-view {
   }
 
   .title {
-    @include view-title();
+      @include view-title();
+      display: inline-flex;
+
+      .label {
+          margin-left: 0.5rem;
+          margin-top: 0.1rem;
+          color: #004a70;
+      }
   }
 
   .content-empty {
@@ -75,6 +82,8 @@ grid-view {
 
   .toolbar {
     overflow: hidden;
+    margin-top: 15px;
+
     .toolbar-secondary {
       display: flex;
       > .separator {

@@ -11,9 +11,7 @@
 
 <clr-alert *ngIf="alertMessage" [clrAlertType]="alertType" [(clrAlertClosed)]="!alertMessage"
            (clrAlertClosedChange)="resetAlert()">
-    <div class="alert-item">
-        <span class="alert-text">{{ alertMessage }}</span>
-    </div>
+    <div class="alert-item"><span class="alert-text">{{ alertMessage }}</span></div>
 </clr-alert>
 
 <form [formGroup]="endpointDetailsForm">
@@ -69,11 +67,11 @@
         <button *ngIf="!editMode" type="button" class="btn btn-primary"
                 [clrLoading]="isSavingEndpoint"
                 [disabled]="endpointDetailsForm.invalid || isTestingConnection"
-        	(click)="create()">{{"create" | i18n}}</button>
+                (click)="create()">{{"create" | i18n}}</button>
         <button *ngIf="editMode" type="button" class="btn btn-primary"
                 [clrLoading]="isSavingEndpoint"
                 [disabled]="endpointDetailsForm.invalid || isTestingConnection"
-        	(click)="save()">{{ "save" | i18n }}</button>
+                (click)="save()">{{ "save" | i18n }}</button>
         <button type="button" class="btn btn-secondary"
                 [clrLoading]="isTestingConnection"
                 [disabled]="isSavingEndpoint || endpointDetailsForm.invalid"

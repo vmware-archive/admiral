@@ -10,7 +10,7 @@
   -->
 
 <div class="title">
-  <ng-content select="[title]"></ng-content>
+    <ng-content select="[title]"></ng-content> <span class="label label-info">{{totalItemsCount}} items</span>
 </div>
 
 <div class="toolbar">
@@ -35,8 +35,8 @@
           </div>
       </form>
       <span class="separator"></span>
-      <button (click)="refresh()" class="btn btn-link"
-              title="{{ 'refresh' | i18n }}"><i class="fa fa-refresh"></i></button>
+      <button class="btn btn-icon btn-link" title="{{ 'refresh' | i18n }}"
+              (click)="refresh()"><clr-icon shape="refresh" size="16"></clr-icon></button>
     </div>
   </div>
 </div>

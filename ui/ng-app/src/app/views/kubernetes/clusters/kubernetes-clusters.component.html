@@ -16,7 +16,6 @@
 </delete-confirmation>
 
 <grid-view #gridView [serviceEndpoint]="serviceEndpoint" [projectLink]="projectLink"
-                     [showOccurrenceSelector]="false"
                      [searchPlaceholder]="'kubernetes.clusters.search.placeholder' | i18n">
 
     <div title>{{"kubernetes.clusters.title" | i18n}}</div>
@@ -24,12 +23,12 @@
     <div toolbar>
         <clr-dg-action-bar>
             <div class="btn-group" role="group" aria-label="Available Actions">
-                <button type="button" class="btn btn-link" [routerLink]="['../new']">
-                    <i class="fa fa-plus"></i>{{"kubernetes.clusters.newBtn" | i18n}}
+                <button type="button" class="btn btn-sm btn-secondary" [routerLink]="['../new']">
+                    <clr-icon shape="plus"></clr-icon> {{"kubernetes.clusters.newBtn" | i18n}}
                 </button>
-                <button type="button" class="btn btn-link" [routerLink]="['../add']"
+                <button type="button" class="btn btn-sm btn-secondary" [routerLink]="['../add']"
                     allowNavigation [roles]="addClusterRouteRestriction">
-                    <i class="fa fa-plus"></i>{{"kubernetes.clusters.addBtn" | i18n}}
+                <clr-icon shape="plus"></clr-icon> {{"kubernetes.clusters.addBtn" | i18n}}
                 </button>
             </div>
         </clr-dg-action-bar>

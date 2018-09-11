@@ -12,10 +12,8 @@
 <delete-confirmation [title]="deleteConfirmationTitle()"
                      [description]="deleteConfirmationDescription()"
                      [deleteButtonTextKey]="'endpoints.delete' | i18n"
-                     [(alert)]="deleteConfirmationAlert"
-                     [visible]="showDeleteConfirmation"
-                     (onDelete)="deleteConfirmed()"
-                     (onCancel)="deleteCanceled()">
+                     [(alert)]="deleteConfirmationAlert" [visible]="showDeleteConfirmation"
+                     (onDelete)="deleteConfirmed()" (onCancel)="deleteCanceled()">
 </delete-confirmation>
 
 <div class="main-view">

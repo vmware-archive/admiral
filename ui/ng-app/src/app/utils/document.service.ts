@@ -127,7 +127,8 @@ export class DocumentService {
         return document;
       });
 
-      return new DocumentListResult(documents, result.nextPageLink, result.totalCount);
+      return new DocumentListResult(documents, result.nextPageLink, result.totalCount,
+                                        result.documentCount);
 
     }).then(result => slowPromise(result));
   }
@@ -145,7 +146,8 @@ export class DocumentService {
           return document;
         });
 
-        return new DocumentListResult(documents, result.nextPageLink, result.totalCount);
+        return new DocumentListResult(documents, result.nextPageLink, result.totalCount,
+                                        result.documentCount);
 
       }).then(result => slowPromise(result));
   }
@@ -229,7 +231,8 @@ export class DocumentService {
     if (FT.isApplicationEmbedded()) {
       return this.ajax.get(Links.GROUPS, null).then(result => {
         let documents = result || [];
-        return new DocumentListResult(documents, result.nextPageLink, result.totalCount);
+        return new DocumentListResult(documents, result.nextPageLink, result.totalCount,
+                                        result.documentCount);
       });
     } else {
       return this.list(Links.PROJECTS, null);
@@ -242,7 +245,8 @@ export class DocumentService {
         .then(result => {
           let documents = result || [];
 
-          return new DocumentListResult(documents, result.nextPageLink, result.totalCount);
+          return new DocumentListResult(documents, result.nextPageLink, result.totalCount,
+                                            result.documentCount);
       });
   }
 
@@ -287,7 +291,8 @@ export class DocumentListResult {
 
   constructor(public documents : Array<any>,
               public nextPageLink: string,
-              public totalCount: number) {
+              public totalCount: number,
+              public documentCount: number) {
 
   }
 }
