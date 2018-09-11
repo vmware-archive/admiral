@@ -13,7 +13,7 @@ package com.vmware.admiral.test.ui.pages.common;
 
 import static com.codeborne.selenide.Selenide.Wait;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 import com.codeborne.selenide.Condition;
 
@@ -54,7 +54,7 @@ public abstract class ResourcePage<V extends PageValidator<L>, L extends Resourc
                 pageActions().hover(locators().pageTitle());
                 pageActions().hover(card);
                 pageActions().click(cardDeleteButton);
-                Wait().withTimeout(5, TimeUnit.SECONDS)
+                Wait().withTimeout(Duration.ofSeconds(5))
                         .until(d -> !element(deleteConfirmHolder).has(Condition.cssClass("hide")));
                 pageActions().click(deleteConfirm);
                 return;

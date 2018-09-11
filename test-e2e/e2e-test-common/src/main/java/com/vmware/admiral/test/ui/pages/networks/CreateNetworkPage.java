@@ -13,7 +13,7 @@ package com.vmware.admiral.test.ui.pages.networks;
 
 import static com.codeborne.selenide.Selenide.Wait;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 import com.codeborne.selenide.Condition;
 
@@ -49,7 +49,7 @@ public class CreateNetworkPage
         while (retries > 0) {
             try {
                 pageActions().click(host);
-                Wait().withTimeout(2, TimeUnit.SECONDS)
+                Wait().withTimeout(Duration.ofSeconds(2))
                         .until(d -> element(host).is(Condition.hidden));
                 break;
             } catch (TimeoutException e) {

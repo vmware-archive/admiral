@@ -13,7 +13,7 @@ package com.vmware.admiral.test.ui.pages.identity;
 
 import static com.codeborne.selenide.Selenide.Wait;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 import com.codeborne.selenide.Condition;
 
@@ -41,11 +41,11 @@ public class CredentialsTab extends BasicPage<CredentialsTabValidator, Credentia
             pageActions().hover(locators().addCredentialButton());
             pageActions().hover(locators().credentialsRowByName(credentialsName));
             try {
-                Wait().withTimeout(3, TimeUnit.SECONDS).until(d -> element(locators()
+                Wait().withTimeout(Duration.ofSeconds(3)).until(d -> element(locators()
                         .deleteCredentialsButtonByName(credentialsName))
                                 .is(Condition.visible));
                 pageActions().click(locators().deleteCredentialsButtonByName(credentialsName));
-                Wait().withTimeout(3, TimeUnit.SECONDS).until(d -> element(locators()
+                Wait().withTimeout(Duration.ofSeconds(3)).until(d -> element(locators()
                         .deleteCredentialsConfirmationButtonByName(credentialsName))
                                 .is(Condition.visible));
                 pageActions().click(locators()

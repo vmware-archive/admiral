@@ -15,8 +15,8 @@ import static com.codeborne.selenide.Selenide.Wait;
 
 import java.awt.Dimension;
 import java.awt.Point;
+import java.time.Duration;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
@@ -67,7 +67,7 @@ public abstract class BasicClass<L extends PageLocators> {
 
     protected void waitForElementToAppearAndDisappear(By element) {
         try {
-            Wait().withTimeout(3, TimeUnit.SECONDS)
+            Wait().withTimeout(Duration.ofSeconds(3))
                     .until(d -> element(element).is(Condition.visible));
         } catch (TimeoutException e) {
             // element is not going to appear
@@ -79,8 +79,8 @@ public abstract class BasicClass<L extends PageLocators> {
         final int TOTAL_COUNT = 3;
         AtomicInteger count = new AtomicInteger(TOTAL_COUNT);
         try {
-            Wait().pollingEvery(100, TimeUnit.MILLISECONDS)
-                    .withTimeout(30, TimeUnit.SECONDS)
+            Wait().pollingEvery(Duration.ofMillis(100))
+                    .withTimeout(Duration.ofSeconds(30))
                     .ignoring(StaleElementReferenceException.class)
                     .until((f) -> {
                         Point initialPos = pageActions().getCoordinates(locator);

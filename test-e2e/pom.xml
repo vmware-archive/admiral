@@ -44,12 +44,12 @@
         <dependency>
             <groupId>com.codeborne</groupId>
             <artifactId>selenide</artifactId>
-            <version>4.8</version>
+            <version>4.14.1</version>
         </dependency>
         <dependency>
             <groupId>com.hierynomus</groupId>
             <artifactId>sshj</artifactId>
-            <version>0.23.0</version>
+            <version>0.26.0</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>

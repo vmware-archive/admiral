@@ -13,7 +13,7 @@ package com.vmware.admiral.test.ui.pages.common;
 
 import static com.codeborne.selenide.Selenide.Wait;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 import com.codeborne.selenide.Condition;
 
@@ -42,7 +42,7 @@ public class RequestsToolbar extends BasicClass<RequestsToolbarLocators> {
         while (retries > 0) {
             try {
                 pageActions().click(locators().lastRequest());
-                Wait().withTimeout(3, TimeUnit.SECONDS)
+                Wait().withTimeout(Duration.ofSeconds(3))
                         .until(d -> !element(locators().lastRequest()).is(Condition.visible));
                 return;
             } catch (TimeoutException e) {
@@ -89,8 +89,8 @@ public class RequestsToolbar extends BasicClass<RequestsToolbarLocators> {
     }
 
     private void waitForLastToSucceed(int timeout) {
-        Wait().withTimeout(timeout, TimeUnit.SECONDS)
-                .pollingEvery(1, TimeUnit.SECONDS)
+        Wait().withTimeout(Duration.ofSeconds(timeout))
+                .pollingEvery(Duration.ofSeconds(1))
                 .until(f -> {
                     String text = pageActions().getText(locators().lastRequestProgress());
                     if (text.contains("FAILED")) {
@@ -103,8 +103,8 @@ public class RequestsToolbar extends BasicClass<RequestsToolbarLocators> {
     }
 
     private void waitForLastToFail(int timeout) {
-        Wait().withTimeout(timeout, TimeUnit.SECONDS)
-                .pollingEvery(1, TimeUnit.SECONDS)
+        Wait().withTimeout(Duration.ofSeconds(timeout))
+                .pollingEvery(Duration.ofSeconds(1))
                 .until(f -> {
                     String text = pageActions().getText(locators().lastRequestProgress());
                     if (text.contains("FINISHED") && text.contains("COMPLETED")) {

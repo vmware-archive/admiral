@@ -15,8 +15,8 @@ import static com.codeborne.selenide.Selenide.Wait;
 import static com.codeborne.selenide.Selenide.open;
 import static com.codeborne.selenide.WebDriverRunner.url;
 
+import java.time.Duration;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 import com.codeborne.selenide.Condition;
 
@@ -59,7 +59,7 @@ public class VICWebClient extends CommonWebClient<VICWebCLientLocators> {
 
     @Override
     protected void waitForLandingPage() {
-        Wait().withTimeout(getLoginTimeoutSeconds(), TimeUnit.SECONDS)
+        Wait().withTimeout(Duration.ofSeconds(getLoginTimeoutSeconds()))
                 .until(d -> element(locators().spinner()).is(Condition.hidden));
         String landingUrl = url();
         if (landingUrl.endsWith("/applications")) {

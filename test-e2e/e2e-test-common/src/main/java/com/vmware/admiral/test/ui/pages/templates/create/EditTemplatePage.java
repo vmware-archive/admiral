@@ -13,7 +13,7 @@ package com.vmware.admiral.test.ui.pages.templates.create;
 
 import static com.codeborne.selenide.Selenide.Wait;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 import com.codeborne.selenide.Condition;
 
@@ -37,7 +37,7 @@ public class EditTemplatePage
         do {
             try {
                 pageActions().click(locators().backButton());
-                Wait().withTimeout(5, TimeUnit.SECONDS)
+                Wait().withTimeout(Duration.ofSeconds(5))
                         .until(d -> element(locators().backButton()).is(Condition.hidden));
                 return;
             } catch (TimeoutException e) {
@@ -109,7 +109,7 @@ public class EditTemplatePage
         do {
             clickAction.run();
             try {
-                Wait().withTimeout(3, TimeUnit.SECONDS)
+                Wait().withTimeout(Duration.ofSeconds(3))
                         .until(d -> element(expectedElement).is(Condition.visible));
                 return;
             } catch (TimeoutException e) {

@@ -13,7 +13,7 @@ package com.vmware.admiral.vic.test.ui.pages.internalrepos;
 
 import static com.codeborne.selenide.Selenide.Wait;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 import com.codeborne.selenide.Condition;
 
@@ -47,7 +47,7 @@ public class BuiltInRepositoriesCardPage extends
         do {
             pageActions().click(locators().cardContextMenuByName(name));
             try {
-                Wait().withTimeout(5, TimeUnit.SECONDS)
+                Wait().withTimeout(Duration.ofSeconds(5))
                         .until(d -> element(locators().cardDeleteButtonByName(name))
                                 .is(Condition.visible));
                 pageActions().click(locators().cardDeleteButtonByName(name));

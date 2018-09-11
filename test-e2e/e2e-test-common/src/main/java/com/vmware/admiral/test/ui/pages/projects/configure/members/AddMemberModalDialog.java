@@ -13,7 +13,7 @@ package com.vmware.admiral.test.ui.pages.projects.configure.members;
 
 import static com.codeborne.selenide.Selenide.Wait;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 import com.codeborne.selenide.Condition;
 
@@ -56,7 +56,7 @@ public class AddMemberModalDialog
         while (retries > 0) {
             pageActions().click(locators().firstResult());
             try {
-                Wait().withTimeout(5, TimeUnit.SECONDS)
+                Wait().withTimeout(Duration.ofSeconds(5))
                         .until(d -> element(locators().firstResult()).is(Condition.hidden));
                 return;
             } catch (TimeoutException e) {

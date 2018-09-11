@@ -13,7 +13,7 @@ package com.vmware.admiral.test.ui.pages.main;
 
 import static com.codeborne.selenide.Selenide.Wait;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 import com.codeborne.selenide.Condition;
 
@@ -89,7 +89,7 @@ public class HomeTab extends BasicPage<HomeTabValidator, HomeTabLocators> {
         while (retries > 0) {
             pageActions().click(locators().projectsDropdownButton());
             try {
-                Wait().withTimeout(5, TimeUnit.SECONDS)
+                Wait().withTimeout(Duration.ofSeconds(5))
                         .until(d -> element((locators().projectSelectorDropdownMenu()))
                                 .is(Condition.visible));
                 return;
@@ -106,7 +106,7 @@ public class HomeTab extends BasicPage<HomeTabValidator, HomeTabLocators> {
         while (retries > 0) {
             pageActions().click(locators().projectSelectorByName(projectName));
             try {
-                Wait().withTimeout(5, TimeUnit.SECONDS)
+                Wait().withTimeout(Duration.ofSeconds(5))
                         .until(d -> element((locators().projectSelectorDropdownMenu()))
                                 .is(Condition.hidden));
                 return;

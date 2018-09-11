@@ -14,7 +14,7 @@ package com.vmware.admiral.test.ui.commons;
 import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.open;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 import java.util.logging.Logger;
 
 import com.codeborne.selenide.Condition;
@@ -195,7 +195,7 @@ public class VotingAppCommons {
         $(By.cssSelector(".choice.cats .stat.ng-binding")).should(Condition.exist);
         try {
             com.codeborne.selenide.Selenide.Wait()
-                    .withTimeout(10, TimeUnit.SECONDS)
+                    .withTimeout(Duration.ofSeconds(10))
                     .until(d -> {
                         return $(By.cssSelector("#result>span"))
                                 .has(Condition.exactText("1 vote")) &&

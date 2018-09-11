@@ -13,10 +13,10 @@ package com.vmware.admiral.test.ui.pages.containers;
 
 import static com.codeborne.selenide.Selenide.Wait;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import com.codeborne.selenide.Condition;
 
@@ -38,7 +38,7 @@ public class ContainersPage extends ResourcePage<ContainersPageValidator, Contai
         while (retries > 0) {
             pageActions().click(locators().createResourceButton());
             try {
-                Wait().withTimeout(5, TimeUnit.SECONDS)
+                Wait().withTimeout(Duration.ofSeconds(5))
                         .until(d -> element(locators().childPageSlide()).is(Condition.visible));
                 return;
             } catch (TimeoutException e) {
@@ -101,12 +101,12 @@ public class ContainersPage extends ResourcePage<ContainersPageValidator, Contai
     private void waitForContainerState(By containerTitleLocator, ContainerState state,
             int timeoutSeconds) {
         if (state == ContainerState.RUNNING) {
-            Wait().withTimeout(timeoutSeconds, TimeUnit.SECONDS)
+            Wait().withTimeout(Duration.ofSeconds(timeoutSeconds))
                     .until(d -> pageActions()
                             .getText(containerTitleLocator).trim()
                             .startsWith(state.toString()));
         } else {
-            Wait().withTimeout(timeoutSeconds, TimeUnit.SECONDS)
+            Wait().withTimeout(Duration.ofSeconds(timeoutSeconds))
                     .until(d -> pageActions()
                             .getText(containerTitleLocator).trim()
                             .equals(state.toString()));

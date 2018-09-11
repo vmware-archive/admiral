@@ -13,9 +13,9 @@ package com.vmware.admiral.test.ui.pages.clusters;
 
 import static com.codeborne.selenide.Selenide.Wait;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import com.codeborne.selenide.Condition;
@@ -37,7 +37,7 @@ public class ResourcesTabValidator extends PageValidator<ResourcesTabLocators> {
     }
 
     public void validateHostState(String hostUrl, HostState... states) {
-        Wait().withTimeout(10, TimeUnit.SECONDS)
+        Wait().withTimeout(Duration.ofSeconds(10))
                 .until(d -> pageActions().getText(locators().hostStateByUrl(hostUrl))
                         .length() > 0);
         List<String> expectedStates = Arrays.asList(states).stream().map(s -> s.toString())

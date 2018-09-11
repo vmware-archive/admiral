@@ -13,9 +13,9 @@ package com.vmware.admiral.test.ui.pages.clusters;
 
 import static com.codeborne.selenide.Selenide.Wait;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.openqa.selenium.By;
@@ -68,7 +68,7 @@ public class ClustersPage extends BasicPage<ClustersPageValidator, ClustersPageL
         LOG.info(String.format(
                 "Waiting [%d] seconds for host/cluster with name [%s] to become in %s state",
                 timeoutSeconds, name, statusesStrings.toString().replaceAll(", ", " or ")));
-        Wait().withTimeout(timeoutSeconds, TimeUnit.SECONDS)
+        Wait().withTimeout(Duration.ofSeconds(timeoutSeconds))
                 .until(d -> statusesStrings
                         .contains(pageActions().getText(locators().clusterStatusByName(name))));
     }

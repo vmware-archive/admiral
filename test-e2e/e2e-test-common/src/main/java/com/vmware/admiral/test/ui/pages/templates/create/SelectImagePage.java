@@ -13,7 +13,7 @@ package com.vmware.admiral.test.ui.pages.templates.create;
 
 import static com.codeborne.selenide.Selenide.Wait;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 import com.codeborne.selenide.Condition;
 
@@ -48,7 +48,7 @@ public class SelectImagePage extends BasicPage<SelectImagePageValidator, SelectI
         while (retries > 0) {
             pageActions().click(locators().selectImageButtonByName(name));
             try {
-                Wait().withTimeout(3, TimeUnit.SECONDS)
+                Wait().withTimeout(Duration.ofSeconds(3))
                         .until(d -> element(locators().searchImageInput()).is(Condition.hidden));
                 return;
             } catch (TimeoutException e) {
