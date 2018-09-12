@@ -185,7 +185,7 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
     }
 
     private void removeData(ContainerState admiralContainer) throws Exception {
-        changeBaseURI(admiralBranchContainer);
+        changeBaseURI(admiralContainer);
         requestContainerDelete(new ArrayList<>(containersToDelete), false);
         delete(COMPUTE_SELF_LINK);
         delete(CREDENTIALS_SELF_LINK);
