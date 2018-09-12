@@ -24,6 +24,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import com.vmware.admiral.common.KubernetesHostConstants;
 import com.vmware.admiral.service.common.ReverseProxyService;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.UriUtils;
@@ -126,14 +127,12 @@ public class UriUtilsExtended {
             }
         }
 
+        //extract path from address
         if (path == null) {
-            path = matcher.group("path");
+            path = matcher.group("path") != null ? matcher.group("path") : "";
         }
 
-        if (path == null) {
-            path = "";
-        }
-        if (!path.contains("/v")) {
+        if (!path.contains("/v") && !path.contains(KubernetesHostConstants.KUBERNETES_HOST_HEALTH_PATH)) {
             // add docker api version
             String versionedPath = "/v" + MINIMUM_DOCKER_API_VERSION;
             path += versionedPath;

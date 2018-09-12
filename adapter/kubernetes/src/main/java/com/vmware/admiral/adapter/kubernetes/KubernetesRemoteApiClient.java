@@ -38,6 +38,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509ExtendedKeyManager;
 
 import com.vmware.admiral.adapter.kubernetes.service.AbstractKubernetesAdapterService.KubernetesContext;
+import com.vmware.admiral.common.KubernetesHostConstants;
 import com.vmware.admiral.common.util.AuthUtils;
 import com.vmware.admiral.common.util.DelegatingX509KeyManager;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
@@ -45,7 +46,6 @@ import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
-import com.vmware.admiral.compute.kubernetes.KubernetesHostConstants;
 import com.vmware.admiral.compute.kubernetes.entities.common.ObjectMeta;
 import com.vmware.admiral.compute.kubernetes.entities.namespaces.Namespace;
 import com.vmware.admiral.compute.kubernetes.entities.namespaces.NamespaceList;
@@ -71,8 +71,6 @@ public class KubernetesRemoteApiClient {
      * Kubernetes API doesn't support field selectors just yet
      * https://github.com/kubernetes/kubernetes/issues/1362
      */
-
-    public static final String pingPath = "/healthz";
 
     public static final String LABEL_SELECTOR_QUERY = "labelSelector";
 
@@ -166,7 +164,7 @@ public class KubernetesRemoteApiClient {
     }
 
     public void ping(KubernetesContext context, CompletionHandler completionHandler) {
-        URI uri = UriUtils.buildUri(context.host.address + pingPath);
+        URI uri = UriUtils.buildUri(context.host.address + KubernetesHostConstants.KUBERNETES_HOST_HEALTH_PATH);
         Operation op = Operation
                 .createGet(uri)
                 .setCompletion(completionHandler);

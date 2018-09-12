@@ -17,10 +17,10 @@ import static com.vmware.admiral.common.util.AssertUtil.assertNotNullOrEmpty;
 import java.net.URI;
 
 import com.vmware.admiral.adapter.kubernetes.service.AbstractKubernetesAdapterService.KubernetesContext;
+import com.vmware.admiral.common.KubernetesHostConstants;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
-import com.vmware.admiral.compute.kubernetes.KubernetesHostConstants;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
 import com.vmware.xenon.common.UriUtils;
 
