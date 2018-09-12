@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.test.integration;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -134,7 +135,8 @@ public abstract class AdmiralUpgradeBaseIT extends BaseProvisioningOnCoreOsIT {
         com.vmware.admiral.test.integration.client.ComputeState dockerHost = getDocument(
                 COMPUTE_SELF_LINK,
                 com.vmware.admiral.test.integration.client.ComputeState.class);
-        assertTrue(dockerHost != null);
+        assertNotNull("Expected a compute state with selflink " + COMPUTE_SELF_LINK + " to exist",
+                dockerHost);
         // Run the data collection in order to update the host
         ContainerHostDataCollectionState dataCollectionBody = new ContainerHostDataCollectionState();
         sendRequest(HttpMethod.PATCH,
@@ -155,7 +157,8 @@ public abstract class AdmiralUpgradeBaseIT extends BaseProvisioningOnCoreOsIT {
         com.vmware.admiral.test.integration.client.AuthCredentialsServiceState credentials = getDocument(
                 CREDENTIALS_SELF_LINK,
                 com.vmware.admiral.test.integration.client.AuthCredentialsServiceState.class);
-        assertNotNull(credentials);
+        assertNotNull("Expected credentials with selflink " + CREDENTIALS_SELF_LINK + " to exist",
+                credentials);
 
         // container
         logger.info("--- Validate containers. ---");
@@ -291,13 +294,15 @@ public abstract class AdmiralUpgradeBaseIT extends BaseProvisioningOnCoreOsIT {
         URI uri = URI.create(getBaseUrl() + endpoint);
         waitForStatusCode(uri, Operation.STATUS_CODE_OK);
 
-        HttpResponse response = SimpleHttpsClient.execute(HttpMethod.GET,
-                getBaseUrl() + buildServiceUri(endpoint + EXPAND), null, null);
-        assertTrue(response.statusCode == 200);
+        String targetUrl = getBaseUrl() + buildServiceUri(endpoint + EXPAND);
+        HttpResponse response = SimpleHttpsClient.execute(HttpMethod.GET, targetUrl, null, null);
+        assertEquals("Unexpected status code when trying to get " + targetUrl,
+                Operation.STATUS_CODE_OK, response.statusCode);
         JsonElement json = new JsonParser().parse(response.responseBody);
         JsonObject jsonObject = json.getAsJsonObject();
         JsonArray documentLinks =  jsonObject.getAsJsonArray(DOCUMENT_LINKS);
-        assertTrue(documentLinks.size() > 0);
+        assertTrue("No documentLinks found in response of GET " + targetUrl,
+                documentLinks.size() > 0);
         for (int i = 0; i < documentLinks.size(); i++) {
             String selfLink = documentLinks.get(i).getAsString();
             T state = getDocument(selfLink, clazz);
