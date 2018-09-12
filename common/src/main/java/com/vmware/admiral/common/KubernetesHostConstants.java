@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.compute.kubernetes;
+package com.vmware.admiral.common;
 
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.xenon.common.UriUtils;
@@ -20,6 +20,7 @@ public interface KubernetesHostConstants {
             ComputeDescriptionService.FACTORY_LINK, KUBERNETES_COMPUTE_DESC_ID);
     public static final String KUBERNETES_HOST_DEFAULT_NAMESPACE = "default";
     public static final String KUBERNETES_HOST_NAMESPACE_PROP_NAME = "__kubernetesNamespace";
+    public static final String KUBERNETES_HOST_HEALTH_PATH = "/healthz";
 
     // When creating a namespace on kubernetes it matches the name with this regex
     public static final String KUBERNETES_NAMESPACE_REGEX = "[a-z0-9]([-a-z0-9]*[a-z0-9])?";

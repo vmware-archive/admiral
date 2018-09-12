@@ -12,7 +12,7 @@
 package com.vmware.admiral.adapter.kubernetes.mock;
 
 import com.vmware.admiral.adapter.kubernetes.ApiUtil;
-import com.vmware.admiral.adapter.kubernetes.KubernetesRemoteApiClient;
+import com.vmware.admiral.common.KubernetesHostConstants;
 
 /**
  * Constants for stub kubernetes host and services
@@ -20,7 +20,7 @@ import com.vmware.admiral.adapter.kubernetes.KubernetesRemoteApiClient;
 public interface KubernetesPathConstants {
     String BASE_PATH = "/stub/kubernetes";
     String BASE_FAILING_PATH = "/stub/failing-kubernetes";
-    String PING = KubernetesRemoteApiClient.pingPath;
+    String PING = KubernetesHostConstants.KUBERNETES_HOST_HEALTH_PATH;
     String API_V1 = ApiUtil.API_PREFIX_V1;
     String NAMESPACES = API_V1 + "/namespaces";
     String PODS = "/pods";

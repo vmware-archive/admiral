@@ -19,8 +19,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.kubernetes.service.AbstractKubernetesAdapterService.KubernetesContext;
+import com.vmware.admiral.common.KubernetesHostConstants;
 import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
-import com.vmware.admiral.compute.kubernetes.KubernetesHostConstants;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 

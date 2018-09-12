@@ -33,13 +33,13 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
+import com.vmware.admiral.common.KubernetesHostConstants;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
 import com.vmware.admiral.compute.cluster.ClusterService;
 import com.vmware.admiral.compute.cluster.ClusterService.ClusterDto;
-import com.vmware.admiral.compute.kubernetes.KubernetesHostConstants;
 import com.vmware.admiral.test.integration.BaseIntegrationSupportIT;
 import com.vmware.admiral.test.integration.SimpleHttpsClient;
 import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpMethod;

@@ -46,6 +46,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import com.vmware.admiral.adapter.docker.util.DockerPortMapping;
 import com.vmware.admiral.common.DeploymentProfileConfig;
+import com.vmware.admiral.common.KubernetesHostConstants;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.serialization.ReleaseConstants;
 import com.vmware.admiral.common.util.AssertUtil;
@@ -57,6 +58,7 @@ import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
+import com.vmware.admiral.compute.ContainerHostUtil;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig.HttpVersion;
@@ -447,6 +449,10 @@ public class ContainerDescriptionService extends StatefulService {
                                 hostComputeState.documentSelfLink, Utils.toJson(hostComputeState)));
             }
             AssertUtil.assertNotNull(dockerHostAddress, "address");
+
+            if (ContainerHostUtil.isKubernetesHost(hostComputeState)) {
+                dockerHostPath = KubernetesHostConstants.KUBERNETES_HOST_HEALTH_PATH;
+            }
 
             URI uri = UriUtilsExtended.buildDockerUri(dockerHostScheme,
                     dockerHostAddress, dockerHostPort, dockerHostPath);
