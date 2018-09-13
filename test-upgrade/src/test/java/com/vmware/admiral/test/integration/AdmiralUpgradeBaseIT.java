@@ -17,7 +17,10 @@ import static org.junit.Assert.assertTrue;
 
 import static com.vmware.admiral.test.integration.TestPropertiesUtil.getSystemOrTestProp;
 
+import java.io.File;
+import java.io.PrintWriter;
 import java.net.URI;
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -26,6 +29,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import org.apache.commons.io.IOUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -37,7 +41,9 @@ import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService.Elast
 import com.vmware.admiral.compute.container.ContainerDescriptionFactoryService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService.ContainerHostDataCollectionState;
+import com.vmware.admiral.compute.container.ContainerLogService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
+import com.vmware.admiral.service.common.LogService.LogServiceState;
 import com.vmware.admiral.service.common.NodeHealthCheckService;
 import com.vmware.admiral.service.common.NodeMigrationService;
 import com.vmware.admiral.service.common.NodeMigrationService.MigrationRequest;
@@ -47,6 +53,7 @@ import com.vmware.admiral.test.integration.data.IntegratonTestStateFactory;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -66,6 +73,12 @@ public abstract class AdmiralUpgradeBaseIT extends BaseProvisioningOnCoreOsIT {
             + SEPARATOR + IntegratonTestStateFactory.AUTH_CREDENTIALS_ID;
     private static final String COMPUTE_SELF_LINK = ComputeService.FACTORY_LINK + SEPARATOR
             + IntegratonTestStateFactory.DOCKER_COMPUTE_ID;
+
+    private static final String UPGRADE_CONTAINERS_LOGS_RETRIES = "upgrade.containers.logs.retires";
+    private static final String UPGRADE_CONTAINERS_LOGS_RETRY_DELAY_MS = "upgrade.containers.logs.retry.delay.ms";
+
+    private static final Long DEFAULT_CONTAINER_LOGS_RETRIES = 5L;
+    private static final Long DEFAULT_CONTAINER_LOGS_RETRY_DELAY_MS = 1000L;
 
     private Set<String> applicationsToDelete = new HashSet<>();
 
@@ -273,6 +286,74 @@ public abstract class AdmiralUpgradeBaseIT extends BaseProvisioningOnCoreOsIT {
         postDocument(ManagementUriParts.ELASTIC_PLACEMENT_ZONE_CONFIGURATION, epzConfigState);
 
         setBaseURI(null);
+    }
+
+    protected void storeContainerLogs(ContainerState container, String logsDir) throws Throwable {
+        File logFile = new File(logsDir, generateLogNameForContainer(container));
+
+        String containerName = container.names.iterator().next();
+        logger.info("Trying to save logs for container %s in %s", containerName,
+                logFile.getAbsolutePath());
+        String logs = retrieveContainerLogs(container);
+        if (logs == null) {
+            logger.warning("No logs found for container %s. Nothing is saved.", containerName);
+            return;
+        }
+
+        try (PrintWriter writer = new PrintWriter(logFile)) {
+            IOUtils.write(logs, writer);
+        }
+    }
+
+    private String generateLogNameForContainer(ContainerState container) {
+        return String.format("%s-%s-%s.log",
+                getClass().getSimpleName(),
+                container.names.iterator().next(),
+                System.currentTimeMillis());
+    }
+
+    private String retrieveContainerLogs(ContainerState container) throws Throwable {
+        // Calling the API for container logs will trigger a call for the logs to docker. However,
+        // the backend is not waiting for the result to be returned from docker and gets whatever is
+        // currently stored in memory. In our case, since there were no previous calls for logs, no
+        // logs will be returned the first time. If there is some network latency and the logs are
+        // big enough, a few subsequent requests for logs might return nothing as well.
+
+        long retries = Long.valueOf(getSystemOrTestProp(UPGRADE_CONTAINERS_LOGS_RETRIES,
+                "" + DEFAULT_CONTAINER_LOGS_RETRIES));
+        return retrieveContainerLogs(container, retries);
+    }
+
+    private String retrieveContainerLogs(ContainerState container, long retries) throws Throwable {
+        String logs = null;
+
+        long delay = Long.valueOf(getSystemOrTestProp(UPGRADE_CONTAINERS_LOGS_RETRY_DELAY_MS,
+                "" + DEFAULT_CONTAINER_LOGS_RETRY_DELAY_MS));
+
+        while ((logs = doRetrieveContainerLogs(container)) == null && retries-- > 0) {
+            logger.warning("No logs found for container %s. Will retry %d times.",
+                    container.names.iterator().next(), retries);
+            Thread.sleep(delay);
+        }
+
+        return logs;
+    }
+
+    private String doRetrieveContainerLogs(ContainerState container) throws Throwable {
+        String containerId = Service.getId(container.documentSelfLink);
+        String query = UriUtils.buildUriQuery(
+                "id", containerId,
+                "timestamps", Boolean.toString(true),
+                "since", "" + Duration.ofHours(1).getSeconds());
+        String url = ContainerLogService.SELF_LINK + UriUtils.URI_QUERY_CHAR + query;
+
+        LogServiceState logState = getDocument(url, LogServiceState.class);
+        if (logState.logs == null) {
+            return null;
+        }
+
+        String logs = new String(logState.logs);
+        return (logs.isEmpty() || "--".equals(logs)) ? null : logs;
     }
 
     protected void waitForSuccessfulHealthcheck(ContainerState admiralContainer) throws Exception {

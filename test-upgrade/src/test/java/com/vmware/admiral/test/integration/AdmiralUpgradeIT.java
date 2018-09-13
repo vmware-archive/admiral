@@ -18,6 +18,8 @@ import static com.vmware.admiral.test.integration.TestPropertiesUtil.getSystemOr
 import java.net.URI;
 import java.util.stream.Collectors;
 
+import com.google.common.io.Files;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,6 +29,7 @@ import com.vmware.admiral.compute.container.CompositeComponentService.CompositeC
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Utils;
 
 public class AdmiralUpgradeIT extends AdmiralUpgradeBaseIT {
     private static final String TEMPLATE_FILE = "Admiral_master_and_0.9.1_release.yaml";
@@ -35,14 +38,18 @@ public class AdmiralUpgradeIT extends AdmiralUpgradeBaseIT {
 
     private static final String UPGRADE_SKIP_INITIALIZE = "upgrade.skip.initialize";
     private static final String UPGRADE_SKIP_VALIDATE = "upgrade.skip.validate";
+    private static final String UPGRADE_CONTAINERS_LOGS_DIR = "upgrade.containers.logs.dir";
 
     private ContainerState admiralBranchContainer;
     private ContainerState admiralMasterContainer;
 
     private String compositeDescriptionLink;
+    private String containersLogsDir;
 
     @Before
     public void setUp() throws Exception {
+        containersLogsDir = getSystemOrTestProp(UPGRADE_CONTAINERS_LOGS_DIR,
+                Files.createTempDir().getAbsolutePath());
         compositeDescriptionLink = importTemplate(serviceClient, TEMPLATE_FILE);
     }
 
@@ -85,22 +92,40 @@ public class AdmiralUpgradeIT extends AdmiralUpgradeBaseIT {
                 Operation.STATUS_CODE_OK);
         admiralMasterContainer = getDocument(admiralMasterContainerLink, ContainerState.class);
 
-        String skipInit = getSystemOrTestProp(UPGRADE_SKIP_INITIALIZE, "false");
-        if (skipInit.equals(Boolean.FALSE.toString())) {
-            logger.info("---------- Initialize content before upgrade. --------");
-            addContentToTheProvisionedAdmiral(admiralBranchContainer);
-        } else {
-            logger.info("---------- Skipping content initialization. --------");
-        }
+        try {
+            String skipInit = getSystemOrTestProp(UPGRADE_SKIP_INITIALIZE, "false");
+            if (skipInit.equals(Boolean.FALSE.toString())) {
+                logger.info("---------- Initialize content before upgrade. --------");
+                addContentToTheProvisionedAdmiral(admiralBranchContainer);
+            } else {
+                logger.info("---------- Skipping content initialization. --------");
+            }
 
-        String skipValidate = getSystemOrTestProp(UPGRADE_SKIP_VALIDATE, "false");
-        if (skipValidate.equals(Boolean.FALSE.toString())) {
-            logger.info("---------- Migrate data and validate content. --------");
-            migrateData(admiralBranchContainer, admiralMasterContainer);
-            validateContent(admiralMasterContainer);
-            removeData(admiralMasterContainer);
-        } else {
-            logger.info("---------- Skipping content validation. --------");
+            String skipValidate = getSystemOrTestProp(UPGRADE_SKIP_VALIDATE, "false");
+            if (skipValidate.equals(Boolean.FALSE.toString())) {
+                logger.info("---------- Migrate data and validate content. --------");
+                migrateData(admiralBranchContainer, admiralMasterContainer);
+                validateContent(admiralMasterContainer);
+                removeData(admiralMasterContainer);
+            } else {
+                logger.info("---------- Skipping content validation. --------");
+            }
+        } finally {
+            storeContainersLogs();
         }
     }
+
+    private void storeContainersLogs() {
+        try {
+            storeContainerLogs(admiralBranchContainer, containersLogsDir);
+        } catch (Throwable e) {
+            logger.error("Failed to store logs for branch container: %s", Utils.toString(e));
+        }
+        try {
+            storeContainerLogs(admiralMasterContainer, containersLogsDir);
+        } catch (Throwable e) {
+            logger.error("Failed to store logs for master container: %s", Utils.toString(e));
+        }
+    }
+
 }
