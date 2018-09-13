@@ -309,6 +309,7 @@ public class PKSClusterConfigService extends StatelessService {
 
         Operation.createPost(getHost(), AuthCredentialsService.FACTORY_LINK)
                 .setBodyNoCloning(credentials)
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         logWarning("Error creating PKS credentials state: %s", e.getMessage());
