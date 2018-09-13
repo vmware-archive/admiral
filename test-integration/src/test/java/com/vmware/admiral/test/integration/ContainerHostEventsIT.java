@@ -20,7 +20,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -54,20 +53,6 @@ public class ContainerHostEventsIT extends BaseProvisioningOnCoreOsIT {
     @AfterClass
     public static void afterClass() throws Exception {
         serviceClient = ServiceClientFactory.createServiceClient(null);
-    }
-
-    @Before
-    public void setUp() throws Exception {
-        // set URL_CONNECTION_READ_TIMEOUT
-        ConfigurationService.ConfigurationState configTimeout = new ConfigurationService.ConfigurationState();
-        configTimeout.key = ConfigurationUtil.URL_CONNECTION_READ_TIMEOUT;
-        configTimeout.value = "10000";
-        configTimeout.documentSelfLink = UriUtils.buildUriPath(ConfigurationService.ConfigurationFactoryService.SELF_LINK,
-                ConfigurationUtil.URL_CONNECTION_READ_TIMEOUT);
-
-        ConfigurationService.ConfigurationState updatedConfigTimeout = postDocument(ConfigurationService.ConfigurationFactoryService.SELF_LINK, configTimeout);
-        assertEquals(configTimeout.key, updatedConfigTimeout.key);
-        assertEquals(configTimeout.value, updatedConfigTimeout.value);
     }
 
     @After
