@@ -16,18 +16,23 @@ import static org.junit.Assert.assertTrue;
 
 import static com.vmware.admiral.test.integration.TestPropertiesUtil.getSystemOrTestProp;
 
+import java.io.File;
+import java.io.PrintWriter;
 import java.net.ConnectException;
 import java.net.URI;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.google.common.io.Files;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import org.apache.commons.io.IOUtils;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -40,8 +45,10 @@ import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService.ElasticPlacementZoneConfigurationState;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
+import com.vmware.admiral.compute.container.ContainerLogService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
+import com.vmware.admiral.service.common.LogService.LogServiceState;
 import com.vmware.admiral.service.common.NodeHealthCheckService;
 import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpMethod;
 import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpResponse;
@@ -49,7 +56,9 @@ import com.vmware.admiral.test.integration.data.IntegratonTestStateFactory;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceClient;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
@@ -68,6 +77,13 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
 
     private static final String UPGRADE_SKIP_INITIALIZE = "upgrade.skip.initialize";
     private static final String UPGRADE_SKIP_VALIDATE = "upgrade.skip.validate";
+    private static final String UPGRADE_CONTAINERS_LOGS_DIR = "upgrade.containers.logs.dir";
+    private static final String UPGRADE_CONTAINERS_LOGS_RETRIES = "upgrade.containers.logs.retires";
+    private static final String UPGRADE_CONTAINERS_LOGS_RETRY_DELAY_MS = "upgrade.containers.logs.retry.delay.ms";
+
+    private static final Long DEFAULT_CONTAINER_LOGS_RETRIES = 5L;
+    private static final Long DEFAULT_CONTAINER_LOGS_RETRY_DELAY_MS = 1000L;
+
 
     private static final String CREDENTIALS_SELF_LINK = AuthCredentialsService.FACTORY_LINK
             + SEPARATOR +
@@ -84,6 +100,7 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
     private static ServiceClient serviceClient;
 
     private String compositeDescriptionLink;
+    private String containersLogsDir;
 
     @BeforeClass
     public static void beforeClass() {
@@ -97,6 +114,8 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
 
     @Before
     public void setUp() throws Exception {
+        containersLogsDir = getSystemOrTestProp(UPGRADE_CONTAINERS_LOGS_DIR,
+                Files.createTempDir().getAbsolutePath());
         compositeDescriptionLink = importTemplate(serviceClient, TEMPLATE_FILE);
     }
 
@@ -139,25 +158,31 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
                 Operation.STATUS_CODE_OK);
         admiralMasterContainer = getDocument(admiralMasterContainerLink, ContainerState.class);
 
-        String skipInit = getSystemOrTestProp(UPGRADE_SKIP_INITIALIZE, "false");
-        if (skipInit.equals(Boolean.FALSE.toString())) {
-            logger.info("---------- Initialize content before upgrade. --------");
-            addContentToTheProvisionedAdmiral(admiralBranchContainer);
-        } else {
-            logger.info("---------- Skipping content initialization. --------");
+        try {
+            String skipInit = getSystemOrTestProp(UPGRADE_SKIP_INITIALIZE, "false");
+            if (skipInit.equals(Boolean.FALSE.toString())) {
+                logger.info("---------- Initialize content before upgrade. --------");
+                addContentToTheProvisionedAdmiral(admiralBranchContainer);
+            } else {
+                logger.info("---------- Skipping content initialization. --------");
+            }
+
+            String skipValidate = getSystemOrTestProp(UPGRADE_SKIP_VALIDATE, "false");
+            if (skipValidate.equals(Boolean.FALSE.toString())) {
+                logger.info("---------- Migrate data and validate content. --------");
+                migrateData(admiralBranchContainer, admiralMasterContainer);
+                validateCompatibility(admiralMasterContainer);
+                removeData(admiralMasterContainer);
+            } else {
+                logger.info("---------- Skipping content validation. --------");
+                // gracefully shut down Admiral to prevent loss of in-memory data like the
+                // authState;
+                shutDownAdmiral(admiralBranchContainer);
+            }
+        } finally {
+            storeContainersLogs();
         }
 
-        String skipValidate = getSystemOrTestProp(UPGRADE_SKIP_VALIDATE, "false");
-        if (skipValidate.equals(Boolean.FALSE.toString())) {
-            logger.info("---------- Migrate data and validate content. --------");
-            migrateData(admiralBranchContainer, admiralMasterContainer);
-            validateCompatibility(admiralMasterContainer);
-            removeData(admiralMasterContainer);
-        } else {
-            logger.info("---------- Skipping content validation. --------");
-            // gracefully shut down Admiral to prevent loss of in-memory data like the authState;
-            shutDownAdmiral(admiralBranchContainer);
-        }
     }
 
     private void migrateData(ContainerState sourceContainer, ContainerState targetContainer)
@@ -303,6 +328,87 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
         postDocument(ManagementUriParts.ELASTIC_PLACEMENT_ZONE_CONFIGURATION, epzConfigState);
 
         setBaseURI(null);
+    }
+
+    private void storeContainersLogs() {
+        try {
+            storeContainerLogs(admiralBranchContainer, containersLogsDir);
+        } catch (Throwable e) {
+            logger.error("Failed to store logs for branch container: %s", Utils.toString(e));
+        }
+        try {
+            storeContainerLogs(admiralMasterContainer, containersLogsDir);
+        } catch (Throwable e) {
+            logger.error("Failed to store logs for master container: %s", Utils.toString(e));
+        }
+    }
+
+    private void storeContainerLogs(ContainerState container, String logsDir) throws Throwable {
+        File logFile = new File(logsDir, generateLogNameForContainer(container));
+
+        String containerName = container.names.iterator().next();
+        logger.info("Trying to save logs for container %s in %s", containerName,
+                logFile.getAbsolutePath());
+        String logs = retrieveContainerLogs(container);
+        if (logs == null) {
+            logger.warning("No logs found for container %s. Nothing is saved.", containerName);
+            return;
+        }
+
+        try (PrintWriter writer = new PrintWriter(logFile)) {
+            IOUtils.write(logs, writer);
+        }
+    }
+
+    private String generateLogNameForContainer(ContainerState container) {
+        return String.format("%s-%s-%s.log",
+                getClass().getSimpleName(),
+                container.names.iterator().next(),
+                System.currentTimeMillis());
+    }
+
+    private String retrieveContainerLogs(ContainerState container) throws Throwable {
+        // Calling the API for container logs will trigger a call for the logs to docker. However,
+        // the backend is not waiting for the result to be returned from docker and gets whatever is
+        // currently stored in memory. In our case, since there were no previous calls for logs, no
+        // logs will be returned the first time. If there is some network latency and the logs are
+        // big enough, a few subsequent requests for logs might return nothing as well.
+
+        long retries = Long.valueOf(getSystemOrTestProp(UPGRADE_CONTAINERS_LOGS_RETRIES,
+                "" + DEFAULT_CONTAINER_LOGS_RETRIES));
+        return retrieveContainerLogs(container, retries);
+    }
+
+    private String retrieveContainerLogs(ContainerState container, long retries) throws Throwable {
+        String logs = null;
+
+        long delay = Long.valueOf(getSystemOrTestProp(UPGRADE_CONTAINERS_LOGS_RETRY_DELAY_MS,
+                "" + DEFAULT_CONTAINER_LOGS_RETRY_DELAY_MS));
+
+        while ((logs = doRetrieveContainerLogs(container)) == null && retries-- > 0) {
+            logger.warning("No logs found for container %s. Will retry %d times.",
+                    container.names.iterator().next(), retries);
+            Thread.sleep(delay);
+        }
+
+        return logs;
+    }
+
+    private String doRetrieveContainerLogs(ContainerState container) throws Throwable {
+        String containerId = Service.getId(container.documentSelfLink);
+        String query = UriUtils.buildUriQuery(
+                "id", containerId,
+                "timestamps", Boolean.toString(true),
+                "since", "" + Duration.ofHours(1).getSeconds());
+        String url = ContainerLogService.SELF_LINK + UriUtils.URI_QUERY_CHAR + query;
+
+        LogServiceState logState = getDocument(url, LogServiceState.class);
+        if (logState.logs == null) {
+            return null;
+        }
+
+        String logs = new String(logState.logs);
+        return (logs.isEmpty() || "--".equals(logs)) ? null : logs;
     }
 
     private void shutDownAdmiral(ContainerState admiralContainer) throws Exception {
