@@ -19,7 +19,7 @@ public class ProjectsPageLocators extends PageLocators {
 
     private final By PAGE_TITLE = By.cssSelector(".title > div");
     private final By ADD_PROJECT_BUTTON = By
-            .cssSelector(".toolbar button.btn.btn-link[allownavigation]");
+            .cssSelector("app-projects .toolbar .row button.btn-secondary");
     private final String CARD_CONTEXT_MENU_BUTTON = "//*[contains(concat(' ', @class, ' '), ' dropdown-toggle ')]";
     private final String CARD_DETAILS_BUTTON = "//*[contains(concat(' ', @class, ' '), ' dropdown-item ')][1]";
     private final String CARD_DELETE_BUTTON = "//*[contains(concat(' ', @class, ' '), ' dropdown-item ')][2]";
