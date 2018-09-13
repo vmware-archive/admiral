@@ -14,7 +14,7 @@
     <parent>
         <groupId>com.vmware.admiral</groupId>
         <artifactId>admiral-tiller-client</artifactId>
-        <version>1.4.3</version>
+        <version>1.5.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>admiral-tiller-client-microbean</artifactId>
