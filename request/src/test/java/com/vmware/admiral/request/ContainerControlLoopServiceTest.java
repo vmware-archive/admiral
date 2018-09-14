@@ -34,7 +34,6 @@ import org.junit.Test;
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.adapter.docker.service.DockerAdapterService;
-import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
@@ -307,85 +306,6 @@ public class ContainerControlLoopServiceTest extends RequestBaseTest {
                                 redeployedContainersPerContextId.get(contextId);
                         host.log("Redeployed container: %s -> %s",
                                 StringUtils.join(value),
-                                StringUtils.join(redeployedContainers));
-                    });
-                }
-
-                return containerFromDesc2Redeployed.get();
-            });
-        } finally {
-            serverSocket.close();
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    @Test
-    public void periodicMaintenanceTest() throws Throwable {
-        containerDescription2 = createContainerDescription(false);
-        ServerSocket serverSocket = new ServerSocket(0);
-
-        HealthConfig healthConfig = createHealthConfigTcp(serverSocket.getLocalPort());
-        healthConfig.autoredeploy = true;
-
-        containerDescription2.healthConfig = healthConfig;
-        containerDescription2.tenantLinks = resourcePool.tenantLinks;
-        doPut(containerDescription2);
-
-        // starting a listener for the health check
-        try {
-            // provision 3 single containers, 2 of them in ERROR state
-            for (int i = 0; i < SINGLE_CONTAINERS_TO_BE_PROVISIONED; i++) {
-                ContainerState state = provisionContainer(containerDescription2.documentSelfLink);
-
-                if (i < SINGLE_CONTAINERS_TO_BE_PROVISIONED - 1) {
-                    // change the power state of one of them
-                    setContainerPowerState(state, PowerState.ERROR);
-                }
-            }
-
-            Map<String, List<String>> containersPerContextId = new HashMap<>();
-
-            retrieveContainerStates(containerDescription2.documentSelfLink)
-                    .thenAccept(containerStates -> {
-                        containerStates.forEach(cs -> {
-                            containersPerContextId.put(cs.customProperties
-                                            .get(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY),
-                                    Arrays.asList(cs.documentSelfLink));
-                        });
-                    });
-
-            Map<String, List<String>> redeployedContainersPerContextId = new HashMap<>();
-            AtomicBoolean containerFromDesc2Redeployed = new AtomicBoolean(false);
-
-            // Force test periodic maintenance
-            DeploymentProfileConfig.getInstance().setTest(false);
-
-            waitFor(() -> {
-                // get all containers from containerDescription2
-                retrieveContainerStates(containerDescription2.documentSelfLink)
-                        .thenAccept(containerStates -> {
-                            long healthyContainers = containerStates.stream()
-                                    .filter(cs -> PowerState.RUNNING == cs.powerState)
-                                    .count();
-                            host.log("Healthy containers from %s : %d",
-                                    containerDescription2.documentSelfLink, healthyContainers);
-                            containerFromDesc2Redeployed.set(
-                                    SINGLE_CONTAINERS_TO_BE_PROVISIONED == healthyContainers
-                                            && SINGLE_CONTAINERS_TO_BE_PROVISIONED
-                                            == containerStates.size());
-
-                            containerStates.forEach(cs -> {
-                                redeployedContainersPerContextId.put(cs.customProperties
-                                                .get(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY),
-                                        Arrays.asList(cs.documentSelfLink));
-                            });
-                        });
-
-                if (containerFromDesc2Redeployed.get()) {
-                    containersPerContextId.forEach((contextId, value) -> {
-                        List<String> redeployedContainers = redeployedContainersPerContextId
-                                .get(contextId);
-                        host.log("Redeployed container: %s -> %s", StringUtils.join(value),
                                 StringUtils.join(redeployedContainers));
                     });
                 }
