@@ -941,6 +941,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         request.tenantLinks = groupPlacementState.tenantLinks;
         host.log("########  Start of request ######## ");
         request = startRequest(request);
+        host.log(Level.INFO, "### Test request selfLink: [%s]", request.documentSelfLink);
 
         // 2. Wait for reservation removed substage
         waitForRequestToFail(request);
@@ -950,31 +951,12 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
                 groupPlacementState.documentSelfLink);
         assertEquals(groupPlacementState.allocatedInstancesCount, 0);
 
-        String containerLink1 = null;
-        @SuppressWarnings("unused")
-        String containerLink2 = null;
-
-        Iterator<String> iterator = compositeDesc.descriptionLinks.iterator();
-        while (iterator.hasNext()) {
-            String link = iterator.next();
-            if (link.startsWith(ContainerNetworkDescriptionService.FACTORY_LINK)) {
-                continue;
-            } else if (containerLink1 == null) {
-                containerLink1 = link;
-            } else {
-                containerLink2 = link;
-            }
-        }
-
         // and there must be no container network state left
-        waitFor(() -> {
-            ServiceDocumentQueryResult networkStates = getDocument(ServiceDocumentQueryResult.class,
-                    ContainerNetworkService.FACTORY_LINK);
-            if (networkStates.documentCount.intValue() == 0) {
-                return true;
-            }
-            return false;
-        });
+        host.log(Level.INFO, "Checking number of container networks...");
+        ServiceDocumentQueryResult networkStates = getDocument(ServiceDocumentQueryResult.class,
+                ContainerNetworkService.FACTORY_LINK);
+        assertEquals("Unexpected number of container networks.", 0,
+                networkStates.documentCount.intValue());
     }
 
     @Test
