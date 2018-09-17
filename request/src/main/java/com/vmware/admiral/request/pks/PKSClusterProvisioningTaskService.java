@@ -73,7 +73,7 @@ public class PKSClusterProvisioningTaskService extends
 
     public static final String DISPLAY_NAME = "PKS Cluster Provision";
 
-    public static final int POLL_PKS_ENDPOINT_INTERVAL_MICROS = Integer.getInteger(
+    static int POLL_PKS_ENDPOINT_INTERVAL_MICROS = Integer.getInteger(
             "com.vmware.admiral.request.pks.poll.interval.sec", 60) * 1000 * 1000;
     private static final int MAX_POLL_FAILURES = Integer.getInteger(
             "com.vmware.admiral.request.pks.poll.max.failures", 10);

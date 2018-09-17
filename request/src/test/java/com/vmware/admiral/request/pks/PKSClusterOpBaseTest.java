@@ -17,7 +17,6 @@ import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_MASTER_PORT_FIELD;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_PLAN_NAME_FIELD;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_WORKER_INSTANCES_FIELD;
 
-import java.lang.reflect.Field;
 import java.util.HashMap;
 
 import org.junit.After;
@@ -64,27 +63,15 @@ public class PKSClusterOpBaseTest extends RequestBaseTest {
     }
 
     private void tweakConstantsOnStartup() throws Throwable {
-        Field f = PKSClusterProvisioningTaskService.class
-                .getDeclaredField("POLL_PKS_ENDPOINT_INTERVAL_MICROS");
-        setFinalStatic(f, 3_000_000);
-        f = PKSClusterRemovalTaskService.class
-                .getDeclaredField("POLL_PKS_ENDPOINT_INTERVAL_MICROS");
-        setFinalStatic(f, 3_000_000);
-        f = PKSClusterResizeTaskService.class
-                .getDeclaredField("POLL_PKS_ENDPOINT_INTERVAL_MICROS");
-        setFinalStatic(f, 3_000_000);
+        PKSClusterProvisioningTaskService.POLL_PKS_ENDPOINT_INTERVAL_MICROS =  3_000_000;
+        PKSClusterRemovalTaskService.POLL_PKS_ENDPOINT_INTERVAL_MICROS = 3_000_000;
+        PKSClusterResizeTaskService.POLL_PKS_ENDPOINT_INTERVAL_MICROS = 3_000_000;
     }
 
     private void tweakConstantsOnTearDown() throws Throwable {
-        Field f = PKSClusterProvisioningTaskService.class
-                .getDeclaredField("POLL_PKS_ENDPOINT_INTERVAL_MICROS");
-        setFinalStatic(f, 60_000_000);
-        f = PKSClusterRemovalTaskService.class
-                .getDeclaredField("POLL_PKS_ENDPOINT_INTERVAL_MICROS");
-        setFinalStatic(f, 60_000_000);
-        f = PKSClusterResizeTaskService.class
-                .getDeclaredField("POLL_PKS_ENDPOINT_INTERVAL_MICROS");
-        setFinalStatic(f, 60_000_000);
+        PKSClusterProvisioningTaskService.POLL_PKS_ENDPOINT_INTERVAL_MICROS =  60_000_000;
+        PKSClusterRemovalTaskService.POLL_PKS_ENDPOINT_INTERVAL_MICROS = 60_000_000;
+        PKSClusterResizeTaskService.POLL_PKS_ENDPOINT_INTERVAL_MICROS = 60_000_000;
     }
 
     private void startServices() throws Throwable {
