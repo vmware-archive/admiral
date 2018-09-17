@@ -1,5 +1,7 @@
 # Admiral CLI
 
+##WARNING: Admiral CLI is deprecated and no longer actively maintained by VMware.
+
 ![cli logo](cli.png "VMware Admiral CLI")
 
 ## User Guide
