@@ -45,8 +45,11 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService.Containe
 import com.vmware.admiral.compute.container.ContainerFactoryService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
+import com.vmware.admiral.compute.container.ContainerStatsServiceTest.MockAdapterService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
+import com.vmware.admiral.compute.container.HealthChecker.HealthConfig;
+import com.vmware.admiral.compute.container.HealthChecker.HealthConfig.RequestProtocol;
 import com.vmware.admiral.compute.container.HostPortProfileService;
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
 import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState;
@@ -297,6 +300,63 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
     @Test
     public void testSystemContainerRemoveOperation() throws Throwable {
         ContainerState container = TestRequestStateFactory.createContainer();
+        container.descriptionLink = containerDesc.documentSelfLink;
+        container.adapterManagementReference = containerDesc.instanceAdapterReference;
+        container.groupResourcePlacementLink = groupPlacementState.documentSelfLink;
+        container.system = Boolean.TRUE;
+        container = doPost(container, ContainerFactoryService.SELF_LINK);
+
+        // try to delete system container
+        List<String> containerStateLinks = new ArrayList<>(1);
+        containerStateLinks.add(container.documentSelfLink);
+
+        RequestBrokerState removalRequest = new RequestBrokerState();
+        removalRequest.documentSelfLink = extractId(container.documentSelfLink) + "-removal";
+        removalRequest.resourceType = request.resourceType;
+        removalRequest.resourceLinks = new HashSet<>(containerStateLinks);
+        removalRequest.operation = ContainerOperationType.DELETE.id;
+
+        removalRequest = startRequest(removalRequest);
+        waitForRequestToComplete(removalRequest);
+
+        // verify the system container have not been removed:
+        containerStateLinks = findResourceLinks(ContainerState.class, containerStateLinks);
+        assertTrue("System container should not be removed.", !containerStateLinks.isEmpty());
+    }
+
+    @Test
+    public void testContainerRemoveOperationAdapterNotAvailable() throws Throwable {
+        ContainerState container = TestRequestStateFactory.createContainer();
+        container.id = "test";
+        container.descriptionLink = containerDesc.documentSelfLink;
+        container.adapterManagementReference = containerDesc.instanceAdapterReference;
+        container.groupResourcePlacementLink = groupPlacementState.documentSelfLink;
+        container = doPost(container, ContainerFactoryService.SELF_LINK);
+
+        List<String> containerStateLinks = new ArrayList<>(1);
+        containerStateLinks.add(container.documentSelfLink);
+
+        RequestBrokerState removalRequest = new RequestBrokerState();
+        removalRequest.documentSelfLink = extractId(container.documentSelfLink) + "-removal";
+        removalRequest.resourceType = request.resourceType;
+        removalRequest.resourceLinks = new HashSet<>(containerStateLinks);
+        removalRequest.operation = ContainerOperationType.DELETE.id;
+
+        // stop the adapter service
+        // verify the container have not been removed:
+        MockAdapterService mockAdapterService = new MockAdapterService();
+        mockAdapterService.setSelfLink(MockAdapterService.SELF_LINK);
+        stopService(mockAdapterService);
+        removalRequest = startRequest(removalRequest);
+        waitForRequestToFail(removalRequest);
+        containerStateLinks = findResourceLinks(ContainerState.class, containerStateLinks);
+        assertTrue("Container should not be removed.", !containerStateLinks.isEmpty());
+    }
+
+    @Test
+    public void testSystemContainerRemoveOperationWithId() throws Throwable {
+        ContainerState container = TestRequestStateFactory.createContainer();
+        container.id = "systemContainer";
         container.descriptionLink = containerDesc.documentSelfLink;
         container.adapterManagementReference = containerDesc.instanceAdapterReference;
         container.groupResourcePlacementLink = groupPlacementState.documentSelfLink;
@@ -818,6 +878,58 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         assertNull(container2);
 
         assertDescriptionGetsDeleted(CompositeDescription.class, compositeDesc.documentSelfLink);
+
+        compositeComp = searchForDocument(CompositeComponent.class, compositeComp.documentSelfLink);
+        assertNull(compositeComp);
+    }
+
+    @Test
+    public void testRequestWithAutoRedeploymentShouldRemoveDescription()
+            throws Throwable {
+        ContainerDescription desc = TestRequestStateFactory.createContainerDescription("name1",
+                true, true);
+        desc.healthConfig = new HealthConfig();
+        desc.healthConfig.autoredeploy = true;
+        desc.healthConfig.protocol = RequestProtocol.HTTP;
+        CompositeDescription compositeDesc = createCompositeDesc(true, desc);
+
+        RequestBrokerState request = TestRequestStateFactory.createRequestState(
+                ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
+        request.tenantLinks = groupPlacementState.tenantLinks;
+        request = startRequest(request);
+        request = waitForRequestToComplete(request);
+
+        assertEquals(1, request.resourceLinks.size());
+        CompositeComponent cc = getDocument(CompositeComponent.class,
+                request.resourceLinks.iterator().next());
+
+        List<String> containerLinks = cc.componentLinks;
+        ContainerState container = getDocument(ContainerState.class, containerLinks.get(0));
+        assertNotNull(container);
+
+        CompositeComponent compositeComp = getDocument(CompositeComponent.class,
+                container.compositeComponentLink);
+        assertNotNull(compositeComp);
+
+        // Remove Containers
+        request = TestRequestStateFactory.createRequestState();
+        request.tenantLinks = groupPlacementState.tenantLinks;
+        request.resourceLinks = new HashSet<>(containerLinks);
+        request.operation = ContainerOperationType.DELETE.id;
+        request.customProperties = new HashMap<>();
+        request.customProperties.put("test", "test");
+
+        request = startRequest(request);
+
+        waitForRequestToComplete(request);
+
+        List<String> containerDescriptionLinks = new ArrayList<>(1);
+        containerDescriptionLinks.add(container.descriptionLink);
+        containerDescriptionLinks = findResourceLinks(ContainerDescription.class,
+                containerDescriptionLinks);
+        assertTrue("Description should be deleted.", containerDescriptionLinks.isEmpty());
+        container = searchForDocument(ContainerState.class, containerLinks.get(0));
+        assertNull(container);
 
         compositeComp = searchForDocument(CompositeComponent.class, compositeComp.documentSelfLink);
         assertNull(compositeComp);

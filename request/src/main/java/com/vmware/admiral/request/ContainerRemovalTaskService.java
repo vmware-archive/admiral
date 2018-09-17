@@ -37,7 +37,6 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.ServiceUtils;
-import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService.ContainerHostDataCollectionState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
@@ -411,14 +410,12 @@ public class ContainerRemovalTaskService
                                 skipDeleteDescriptionOperationException,
                                 skipHostPortProfileNotFoundException);
 
-                        Operation delContainerOpr = deleteContainer(cs);
                         Operation placementOpr = releaseResourcePlacement(state, cs, subTaskLink);
                         Operation releasePortsOpr = releasePorts(cs,
                                 skipHostPortProfileNotFoundException);
 
                         // list of operations to execute to release container resources
                         List<Operation> operations = new ArrayList<>();
-                        operations.add(delContainerOpr);
                         // add placementOpr only when needed
                         if (placementOpr != null) {
                             operations.add(placementOpr);
@@ -429,42 +426,36 @@ public class ContainerRemovalTaskService
                         if (releasePortsOpr != null) {
                             operations.add(releasePortsOpr);
                         }
-                        // delete container description when deleting all its containers
-                        if (state.resourceLinks.containsAll(resourcesSharingDesc)
-                                && (state.customProperties != null && !state.customProperties
-                                        .containsKey(CONTAINER_REDEPLOYMENT_CUSTOM_PROP))) {
-                            // there could be a race condition when containers are in cluster and
-                            // the same description tries to be deleted multiple times, that's why
-                            // we need to skipOperationException is the description is NOT FOUND
-                            Operation deleteContainerDescription = deleteContainerDescription(cs,
-                                    skipDeleteDescriptionOperationException);
-                            operations.add(deleteContainerDescription);
+
+                        if (operations.size() > 0) {
+                            OperationJoin.create(operations).setCompletion((ops, exs) -> {
+                                // remove skipped exceptions
+                                if (exs != null) {
+                                    skipOperationExceptions
+                                            .stream()
+                                            .filter(p -> p.get() != 0)
+                                            .forEach(p -> exs.remove(p.get()));
+                                }
+                                // fail the task is there are exceptions in the children operations
+                                if (exs != null && !exs.isEmpty()) {
+                                    failTask("Failed deleting container resources: "
+                                            + Utils.toString(exs), null);
+                                    return;
+                                }
+                                deleteContainer(cs, subTaskLink, state, resourcesSharingDesc)
+                                        .sendWith(this);
+                            }).sendWith(this);
+                        } else {
+                            deleteContainer(cs, subTaskLink, state, resourcesSharingDesc)
+                                    .sendWith(this);
                         }
 
-                        OperationJoin.create(operations).setCompletion((ops, exs) -> {
-                            // remove skipped exceptions
-                            if (exs != null) {
-                                skipOperationExceptions
-                                        .stream()
-                                        .filter(p -> p.get() != 0)
-                                        .forEach(p -> exs.remove(p.get()));
-                            }
-                            // fail the task is there are exceptions in the children operations
-                            if (exs != null && !exs.isEmpty()) {
-                                failTask("Failed deleting container resources: "
-                                        + Utils.toString(exs), null);
-                                return;
-                            }
-
-                            // complete the counter task after all remove operations finished
-                            // successfully
-                            completeSubTasksCounter(subTaskLink, null);
-                        }).sendWith(this);
                     }
                 });
     }
 
-    private Operation deleteContainer(ContainerState cs) {
+    private Operation deleteContainer(ContainerState cs, String subTaskLink,
+            ContainerRemovalTaskState state, List<String> resourcesSharingDesc) {
         return Operation
                 .createDelete(this, cs.documentSelfLink)
                 .setBody(new ServiceDocument())
@@ -472,60 +463,43 @@ public class ContainerRemovalTaskService
                     if (ex != null) {
                         logWarning("Failed deleting ContainerState: %s. Error: %s",
                                 cs.documentSelfLink, Utils.toString(ex));
+                        failTask("Failed deleting container resources: "
+                                + Utils.toString(ex), null);
                         return;
+                    } else {
+                        logInfo("Deleted ContainerState: %s", cs.documentSelfLink);
+                        // When removing container state, remove also if there are any logs created.
+                        // This is workaround for:
+                        // https://www.pivotaltracker.com/n/projects/1471320/stories/143794415
+                        sendRequest(Operation.createDelete(this, UriUtils.buildUriPath(
+                                LogService.FACTORY_LINK, Service.getId(cs.documentSelfLink))));
+                        if (state.resourceLinks.containsAll(resourcesSharingDesc)
+                                && (state.customProperties != null && !state.customProperties
+                                        .containsKey(CONTAINER_REDEPLOYMENT_CUSTOM_PROP))) {
+                            deleteContainerDescription(cs, subTaskLink).sendWith(this);
+                        } else {
+                            completeSubTasksCounter(subTaskLink, null);
+                        }
                     }
-                    logInfo("Deleted ContainerState: %s", cs.documentSelfLink);
-                    // When removing container state, remove also if there are any logs created.
-                    // This is workaround for:
-                    //   https://www.pivotaltracker.com/n/projects/1471320/stories/143794415
-                    sendRequest(Operation.createDelete(this, UriUtils.buildUriPath(
-                            LogService.FACTORY_LINK, Service.getId(cs.documentSelfLink))));
                 });
     }
 
-    private Operation deleteContainerDescription(ContainerState cs,
-            AtomicLong skipOperationException) {
+    private Operation deleteContainerDescription(ContainerState cs, String subTaskLink) {
 
         Operation deleteContainerDesc = Operation
-                .createGet(this, cs.descriptionLink)
-                .setCompletion((o, e) -> {
-                    if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND ||
-                            e instanceof CancellationException) {
-                        logFine("Resource [%s] not found, it will not be removed!",
-                                cs.descriptionLink);
-                        skipOperationException.set(o.getId());
+                .createDelete(this, cs.descriptionLink)
+                .setBody(new ServiceDocument())
+                .setCompletion((op, ex) -> {
+                    if (ex != null) {
+                        logWarning("Failed deleting ContainerDescription: %s. Error: %s",
+                                cs.descriptionLink, Utils.toString(ex));
+                        failTask("Failed deleting container resources: "
+                                + Utils.toString(ex), null);
                         return;
                     }
-
-                    if (e != null) {
-                        logWarning("Failed retrieving ContainerDescription: %s. Error: %s",
-                                cs.descriptionLink, Utils.toString(e));
-                        return;
-                    }
-
-                    ContainerDescription cd = o.getBody(ContainerDescription.class);
-
-                    if (cd.parentDescriptionLink == null) {
-                        logFine("Resource [%s] will not be removed because it doesn't contain"
-                                        + " parentDescriptionLink!",
-                                o.getBody(ContainerDescription.class).documentSelfLink);
-                        return;
-                    }
-
-                    sendRequest(Operation
-                            .createDelete(this, cd.documentSelfLink)
-                            .setBody(new ServiceDocument())
-                            .setCompletion((op, ex) -> {
-                                if (ex != null) {
-                                    logWarning("Failed deleting ContainerDescription: %s."
-                                                    + " Error: %s",
-                                            cd.documentSelfLink, Utils.toString(ex));
-                                    return;
-                                }
-                                logInfo("Deleted ContainerDescription: %s", cd.documentSelfLink);
-                            }));
+                    logInfo("Deleted ContainerDescription: %s", cs.descriptionLink);
+                    completeSubTasksCounter(subTaskLink, null);
                 });
-
         return deleteContainerDesc;
     }
 
