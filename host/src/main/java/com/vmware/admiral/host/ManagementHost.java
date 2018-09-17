@@ -45,6 +45,7 @@ import com.vmware.admiral.host.interceptor.InUsePlacementZoneInterceptor;
 import com.vmware.admiral.host.interceptor.OperationInterceptorRegistry;
 import com.vmware.admiral.host.interceptor.ProjectInterceptor;
 import com.vmware.admiral.host.interceptor.SchedulerPlacementZoneInterceptor;
+import com.vmware.admiral.host.interceptor.UnauthorizedDeleteInterceptor;
 import com.vmware.admiral.host.swagger.SwaggerDocumentationService;
 import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.admiral.service.common.ConfigurationService;
@@ -164,6 +165,7 @@ public class ManagementHost extends PostgresServiceHost implements IExtensibilit
         SchedulerPlacementZoneInterceptor.register(interceptors);
         CompositeComponentInterceptor.register(interceptors);
         AuthCredentialsInterceptor.register(interceptors);
+        UnauthorizedDeleteInterceptor.register(interceptors);
         ProjectInterceptor.register(interceptors);
     }
 

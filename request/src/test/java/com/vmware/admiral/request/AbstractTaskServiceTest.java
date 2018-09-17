@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -57,6 +57,7 @@ public class AbstractTaskServiceTest extends RequestBaseTest {
     @Test
     public void testStartWithoutTaskInfo() throws Throwable {
         TestTaskService testService = new TestTaskService();
+        testService.setHost(host);
 
         TestTaskServiceDocument serviceState = new TestTaskServiceDocument();
 

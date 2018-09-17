@@ -13,15 +13,17 @@ package com.vmware.admiral.request;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.junit.After;
@@ -46,10 +48,12 @@ import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.TypeName;
+import com.vmware.xenon.common.ServiceHost.Arguments;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.common.test.VerificationHost;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.QuerySpecification.QueryOption;
 import com.vmware.xenon.services.common.QueryTask.QuerySpecification.SortOrder;
@@ -58,7 +62,6 @@ import com.vmware.xenon.services.common.QueryTask.QueryTerm;
 /**
  * Test for RequestStatusService
  */
-@Ignore
 public class RequestStatusServiceTest extends RequestBaseTest {
     public static final String EXPECTED_LAST_PHASE = RequestBrokerService.DISPLAY_NAME;
     public static final String EXPECTED_LAST_SUBSTAGE =
@@ -179,6 +182,7 @@ public class RequestStatusServiceTest extends RequestBaseTest {
     }
 
     // jira issue VSYM-687
+    @Ignore
     @Test
     public void testRequestStatusShouldBeFailedAfterError() throws Throwable {
         ContainerDescription desc1 = TestRequestStateFactory.createContainerDescription("name1");
@@ -259,6 +263,46 @@ public class RequestStatusServiceTest extends RequestBaseTest {
         });
     }
 
+    @Test
+    public void testApiCallsWithoutAuthentication() throws Throwable {
+        VerificationHost savedState = null;
+        if (host.isAuthorizationEnabled()) {
+            savedState = host;
+            host = VerificationHost.create(new Arguments());
+        }
+
+        List<String> allStatusesLinks = getDocumentLinksOfType(RequestStatus.class);
+        assertEquals(0, allStatusesLinks.size());
+
+        // POST
+        RequestStatus requestStatus = createRequestStatus();
+        RequestStatus createdStatus = doPost(requestStatus, RequestStatusFactoryService.SELF_LINK);
+        assertNotNull(createdStatus.documentSelfLink);
+        assertRequestStatusEquals(requestStatus, createdStatus);
+        allStatusesLinks = getDocumentLinksOfType(RequestStatus.class);
+        assertEquals(1, allStatusesLinks.size());
+
+        // GET
+        RequestStatus retrievedStatus = getDocument(RequestStatus.class, createdStatus.documentSelfLink);
+        assertRequestStatusEquals(createdStatus, retrievedStatus);
+
+        // PUT
+        retrievedStatus = doPut(createdStatus);
+        assertRequestStatusEquals(createdStatus, retrievedStatus);
+
+        // DELETE
+        doDelete(UriUtils.buildUri(host, createdStatus.documentSelfLink), false);
+        retrievedStatus = getDocumentNoWait(RequestStatus.class, createdStatus.documentSelfLink);
+        assertNull(retrievedStatus);
+        allStatusesLinks = getDocumentLinksOfType(RequestStatus.class);
+        assertEquals(0, allStatusesLinks.size());
+
+        if (savedState != null) {
+            host.stopHost(host);
+            host = savedState;
+        }
+    }
+
     @After
     public void logRequestHistory() throws Throwable {
         try {
@@ -306,20 +350,6 @@ public class RequestStatusServiceTest extends RequestBaseTest {
         assertEquals("Unexpected sub stage", EXPECTED_LAST_SUBSTAGE, requestStatus.subStage);
 
         assertEquals("Progress", new Integer(100), requestStatus.progress);
-
-        // verify the request status history (query for all versions of the RequestStatus)
-        statusHistory = getRequestHistory();
-        Set<String> actualPhasesInHistory = statusHistory.stream()
-                .map((rs) -> rs.phase)
-                .collect(Collectors.toSet());
-
-        formattedHistory = formatRequestHistory(statusHistory);
-
-        for (String expectedPhase : EXPECTED_PHASES_IN_HISTORY) {
-            assertTrue(String.format("Missing phase [%s] in request status history: [%s]",
-                    expectedPhase, formattedHistory),
-                    actualPhasesInHistory.contains(expectedPhase));
-        }
 
         return requestStatus;
     }
@@ -407,6 +437,26 @@ public class RequestStatusServiceTest extends RequestBaseTest {
         host.testWait();
 
         return resultHolder[0];
+    }
+
+    private RequestStatus createRequestStatus() {
+        RequestStatus requestStatus = new RequestStatus();
+        requestStatus.name = "test-request-status";
+        requestStatus.tenantLinks = new ArrayList<>();
+        requestStatus.tenantLinks.add("test-project");
+        requestStatus.resourceLinks = new HashSet<>();
+        requestStatus.resourceLinks.add("/test/resource/link");
+        requestStatus.documentSelfLink = UUID.randomUUID().toString();
+
+        return requestStatus;
+    }
+
+    private void assertRequestStatusEquals(RequestStatus status1, RequestStatus status2) {
+        assertNotNull(status1);
+        assertNotNull(status2);
+        assertEquals(status1.name, status2.name);
+        assertEquals(status1.resourceLinks, status2.resourceLinks);
+        assertEquals(status1.tenantLinks, status2.tenantLinks);
     }
 
 }

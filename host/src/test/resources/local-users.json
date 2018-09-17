@@ -21,6 +21,26 @@
     "email": "tony@admiral.com",
     "password": "Password1!",
     "isAdmin": false
+  }, {
+    "name": "Cloud Admin",
+    "email": "cloud-admin@admiral.com",
+    "password": "Password1!",
+    "isAdmin": true
+  }, {
+    "name": "Project Viewer 1",
+    "email": "project-viewer-1@admiral.com",
+    "password": "Password1!",
+    "isAdmin": false
+  }, {
+    "name": "Project Member-1",
+    "email": "project-member-1@admiral.com",
+    "password": "Password1!",
+    "isAdmin": false
+  }, {
+    "name": "Project Admin 1",
+    "email": "project-admin-1@admiral.com",
+    "password": "Password1!",
+    "isAdmin": false
   }],
   "groups": [{
     "name": "superusers@admiral.com",

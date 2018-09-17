@@ -11,7 +11,10 @@
 
 package com.vmware.admiral.auth;
 
+import static org.hamcrest.CoreMatchers.hasItem;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import static com.vmware.admiral.auth.util.PrincipalUtil.encode;
@@ -21,9 +24,12 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -33,6 +39,7 @@ import org.junit.Before;
 
 import com.vmware.admiral.auth.idm.AuthConfigProvider;
 import com.vmware.admiral.auth.idm.Principal;
+import com.vmware.admiral.auth.idm.PrincipalRolesHandler.PrincipalRoleAssignment;
 import com.vmware.admiral.auth.idm.PrincipalService;
 import com.vmware.admiral.auth.idm.SecurityContext;
 import com.vmware.admiral.auth.idm.SecurityContext.SecurityContextPostDto;
@@ -42,6 +49,7 @@ import com.vmware.admiral.auth.idm.content.AuthContentService.AuthContentBody;
 import com.vmware.admiral.auth.idm.local.LocalAuthConfigProvider.Config;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalState;
 import com.vmware.admiral.auth.project.ProjectFactoryService;
+import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles;
 import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.auth.project.ProjectService.ExpandedProjectState;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
@@ -60,6 +68,8 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.AuthorizationContext;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.Service.Action;
+import com.vmware.xenon.common.ServiceDocument;
+import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -240,6 +250,52 @@ public abstract class AuthBaseTest extends BaseTestCase {
         projectState = doPost(projectState, ProjectFactoryService.SELF_LINK);
 
         return projectState;
+    }
+
+    protected ProjectState createProjectWithRoles() throws Throwable {
+        ProjectState project = new ProjectState();
+        project.name = "test";
+
+        // Cloud Admin creates a project
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
+        project = doPost(project, ProjectFactoryService.SELF_LINK);
+        assertNotNull(project);
+        assertNotNull(project.documentSelfLink);
+
+        // Assign basic users to the project as Project Admins, members and viewers
+        ProjectRoles projectRoles = new ProjectRoles();
+        projectRoles.administrators = new PrincipalRoleAssignment();
+        projectRoles.administrators.add = Arrays.asList(USER_EMAIL_GLORIA,
+                USER_EMAIL_PROJECT_ADMIN_1);
+
+        projectRoles.members = new PrincipalRoleAssignment();
+        projectRoles.members.add = Collections.singletonList(USER_EMAIL_PROJECT_MEMBER_1);
+
+        projectRoles.viewers = new PrincipalRoleAssignment();
+        projectRoles.viewers.add = Collections.singletonList(USER_EMAIL_PROJECT_VIEWER_1);
+
+        ExpandedProjectState expandedProjectState = getExpandedProjectState(project.documentSelfLink);
+        doPatch(projectRoles, expandedProjectState.documentSelfLink);
+        expandedProjectState = getExpandedProjectState(project.documentSelfLink);
+
+        // validate users were successfully assigned to the project
+        assertTrue(expandedProjectState.administrators.size() == 2);
+        assertTrue(expandedProjectState.members.size() == 1);
+        assertTrue(expandedProjectState.viewers.size() == 1);
+
+        Set<String> adminsList = expandedProjectState.administrators.stream().map(p -> p.email)
+                .collect(Collectors.toSet());
+        Set<String> membersList = expandedProjectState.members.stream().map(p -> p.email)
+                .collect(Collectors.toSet());
+        Set<String> viewersList = expandedProjectState.viewers.stream().map(p -> p.email)
+                .collect(Collectors.toSet());
+
+        assertThat(adminsList, hasItem(USER_EMAIL_GLORIA));
+        assertThat(adminsList, hasItem(USER_EMAIL_PROJECT_ADMIN_1));
+        assertThat(membersList, hasItem(USER_EMAIL_PROJECT_MEMBER_1));
+        assertThat(viewersList, hasItem(USER_EMAIL_PROJECT_VIEWER_1));
+
+        return project;
     }
 
     protected ProjectState createProjectExpectFailure(String name) throws Throwable {
@@ -571,5 +627,73 @@ public abstract class AuthBaseTest extends BaseTestCase {
 
     protected String buildUserServicePath(String email) {
         return AuthUtil.buildUserServicePathFromPrincipalId(encode(email));
+    }
+
+
+    protected void doPostWithRestrictionVerification(ServiceDocument doc, String selfLink) {
+        host.log("POST to %s", selfLink);
+
+        try {
+            doPost(doc, selfLink);
+            fail(EXPECTED_ILLEGAL_ACCESS_ERROR_MESSAGE);
+        } catch (Throwable t) {
+            assertForbiddenMessage(t);
+        }
+    }
+
+    protected void doGetWithRestrictionVerification(ServiceDocument createdState, String selfLink,
+            String className) throws Throwable {
+        host.log("GET to %s", selfLink);
+
+        // Verify basic user cannot list the documents
+        List<String> docs = getDocument(
+                ServiceDocumentQueryResult.class, selfLink)
+                .documentLinks;
+        assertTrue(docs == null || docs.isEmpty());
+
+        try {
+            getDocument(Class.forName(className), createdState.documentSelfLink);
+            fail(EXPECTED_ILLEGAL_ACCESS_ERROR_MESSAGE);
+        } catch (Throwable t) {
+            assertForbiddenMessage(t);
+        }
+    }
+
+    protected void doPutWithRestrictionVerification(ServiceDocument doc, String selfLink) {
+        host.log("PUT to %s", selfLink);
+
+        try {
+            doPut(doc);
+            fail(EXPECTED_ILLEGAL_ACCESS_ERROR_MESSAGE);
+        } catch (Throwable t) {
+            assertForbiddenMessage(t);
+        }
+    }
+
+    protected void doPatchWithRestrictionVerification(ServiceDocument doc, String selfLink) {
+        host.log("PATCH to %s", selfLink);
+
+        try {
+            doPatch(doc, selfLink);
+            fail(EXPECTED_ILLEGAL_ACCESS_ERROR_MESSAGE);
+        } catch (Throwable t) {
+            assertForbiddenMessage(t);
+        }
+    }
+
+    protected void doDeleteWithRestrictionVerification(ServiceDocument doc, String selfLink) {
+        host.log("DELETE to %s", selfLink);
+
+        try {
+            doDelete(UriUtils.buildUri(host, doc.documentSelfLink), false);
+            fail(EXPECTED_ILLEGAL_ACCESS_ERROR_MESSAGE);
+        } catch (Throwable t) {
+            assertForbiddenMessage(t);
+        }
+    }
+
+    private void assertForbiddenMessage(Throwable t) {
+        assertTrue(t instanceof IllegalAccessError || t.getCause() instanceof IllegalAccessError);
+        assertTrue(t.getMessage().toLowerCase().contains(FORBIDDEN));
     }
 }

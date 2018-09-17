@@ -22,12 +22,8 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
-import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -36,8 +32,6 @@ import org.junit.Test;
 import com.vmware.admiral.auth.AuthBaseTest;
 import com.vmware.admiral.auth.idm.PrincipalRolesHandler.PrincipalRoleAssignment;
 import com.vmware.admiral.auth.project.ProjectFactoryService;
-import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles;
-import com.vmware.admiral.auth.project.ProjectService.ExpandedProjectState;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.admiral.common.test.CommonTestStateFactory;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
@@ -50,14 +44,11 @@ import com.vmware.admiral.service.common.RegistryFactoryService;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
 import com.vmware.admiral.service.common.SslTrustCertificateService;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
-import com.vmware.xenon.common.ServiceDocument;
-import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.AuthCredentialsService;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
 public class RoleRestrictionsTest extends AuthBaseTest {
-    public static final String EXPECTED_ILLEGAL_ACCESS_ERROR_MESSAGE = "Should've thrown IllegalAccessError!";
     public static final String FORBIDDEN = "forbidden";
     public static final String FIRST_CERTIFICATE_PATH = "test_ssl_trust.PEM";
     public static final String SECOND_CERTIFICATE_PATH = "test_ssl_trust2.PEM";
@@ -70,47 +61,7 @@ public class RoleRestrictionsTest extends AuthBaseTest {
             return;
         }
 
-        ProjectState project = new ProjectState();
-        project.name = "test";
-
-        // Cloud Admin creates a project
-        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
-        createdProject = doPost(project, ProjectFactoryService.SELF_LINK);
-        assertNotNull(createdProject);
-        assertNotNull(createdProject.documentSelfLink);
-
-        // Assign basic users to the project as Project Admins, members and viewers
-        ProjectRoles projectRoles = new ProjectRoles();
-        projectRoles.administrators = new PrincipalRoleAssignment();
-        projectRoles.administrators.add = Arrays.asList(USER_EMAIL_GLORIA,
-                USER_EMAIL_PROJECT_ADMIN_1);
-
-        projectRoles.members = new PrincipalRoleAssignment();
-        projectRoles.members.add = Collections.singletonList(USER_EMAIL_PROJECT_MEMBER_1);
-
-        projectRoles.viewers = new PrincipalRoleAssignment();
-        projectRoles.viewers.add = Collections.singletonList(USER_EMAIL_PROJECT_VIEWER_1);
-
-        ExpandedProjectState expandedProjectState = getExpandedProjectState(createdProject.documentSelfLink);
-        doPatch(projectRoles, expandedProjectState.documentSelfLink);
-        expandedProjectState = getExpandedProjectState(createdProject.documentSelfLink);
-
-        // validate users were successfully assigned to the project
-        assertTrue(expandedProjectState.administrators.size() == 2);
-        assertTrue(expandedProjectState.members.size() == 1);
-        assertTrue(expandedProjectState.viewers.size() == 1);
-
-        Set<String> adminsList = expandedProjectState.administrators.stream().map(p -> p.email)
-                .collect(Collectors.toSet());
-        Set<String> membersList = expandedProjectState.members.stream().map(p -> p.email)
-                .collect(Collectors.toSet());
-        Set<String> viewersList = expandedProjectState.viewers.stream().map(p -> p.email)
-                .collect(Collectors.toSet());
-
-        assertThat(adminsList, hasItem(USER_EMAIL_GLORIA));
-        assertThat(adminsList, hasItem(USER_EMAIL_PROJECT_ADMIN_1));
-        assertThat(membersList, hasItem(USER_EMAIL_PROJECT_MEMBER_1));
-        assertThat(viewersList, hasItem(USER_EMAIL_PROJECT_VIEWER_1));
+        createdProject = createProjectWithRoles();
     }
 
     @Test
@@ -299,7 +250,8 @@ public class RoleRestrictionsTest extends AuthBaseTest {
         assertNotNull(createdState.documentSelfLink);
 
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_BASIC_USER));
-        doGetWithRestrictionVerification(createdState, AuthCredentialsService.FACTORY_LINK, AuthCredentialsServiceState.class.getName());
+        doGetWithRestrictionVerification(createdState, AuthCredentialsService.FACTORY_LINK,
+                AuthCredentialsServiceState.class.getName());
 
         // POST
         doPostWithRestrictionVerification(cred, AuthCredentialsService.FACTORY_LINK);
@@ -382,7 +334,8 @@ public class RoleRestrictionsTest extends AuthBaseTest {
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_BASIC_USER));
 
         // GET
-        doGetWithRestrictionVerification(createdState, ProjectFactoryService.SELF_LINK, ProjectState.class.getName());
+        doGetWithRestrictionVerification(createdState, ProjectFactoryService.SELF_LINK,
+                ProjectState.class.getName());
 
         // POST
         project.name = "test1";
@@ -593,7 +546,8 @@ public class RoleRestrictionsTest extends AuthBaseTest {
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_GLORIA));
 
         // GET
-        doGetWithRestrictionVerification(createdState, LogService.FACTORY_LINK, LogServiceState.class.getName());
+        doGetWithRestrictionVerification(createdState, LogService.FACTORY_LINK,
+                LogServiceState.class.getName());
 
         // POST
         doPostWithRestrictionVerification(log, LogService.FACTORY_LINK);
@@ -744,7 +698,7 @@ public class RoleRestrictionsTest extends AuthBaseTest {
 
     }
 
-    private void assignCloudAdminRoleTo(String principalId) throws Throwable {
+    private void assignCloudAdminRoleTo(String principalId) {
         String rolesLink = buildRolesLinkFor(principalId);
 
         PrincipalRoleAssignment body = new PrincipalRoleAssignment();
@@ -763,73 +717,6 @@ public class RoleRestrictionsTest extends AuthBaseTest {
         return UriUtils.buildUriPath(PrincipalService.SELF_LINK,
                 principalId,
                 PrincipalService.ROLES_SUFFIX);
-    }
-
-
-    private void assertForbiddenMessage(IllegalAccessError e) {
-        assertTrue(e.getMessage().toLowerCase().startsWith(FORBIDDEN));
-    }
-
-    private void doPostWithRestrictionVerification(ServiceDocument doc, String selfLink) throws Throwable {
-        host.log("POST to %s", selfLink);
-
-        try {
-            doPost(doc, selfLink);
-            fail(EXPECTED_ILLEGAL_ACCESS_ERROR_MESSAGE);
-        } catch (IllegalAccessError e) {
-            assertForbiddenMessage(e);
-        }
-    }
-
-    private void doGetWithRestrictionVerification(ServiceDocument createdState, String selfLink, String className) throws Throwable {
-        host.log("GET to %s", selfLink);
-
-        // Verify basic user cannot list the documents
-        List<String> docs = getDocument(
-                ServiceDocumentQueryResult.class, selfLink)
-                .documentLinks;
-        assertTrue(docs == null || docs.isEmpty());
-
-        try {
-            getDocument(Class.forName(className), createdState.documentSelfLink);
-            fail(EXPECTED_ILLEGAL_ACCESS_ERROR_MESSAGE);
-        } catch (IllegalAccessError e) {
-            assertForbiddenMessage(e);
-        }
-    }
-
-    private void doPutWithRestrictionVerification(ServiceDocument doc, String selfLink) throws Throwable {
-        host.log("PUT to %s", selfLink);
-
-        try {
-            doPut(doc);
-            fail(EXPECTED_ILLEGAL_ACCESS_ERROR_MESSAGE);
-        } catch (IllegalAccessError e) {
-            assertForbiddenMessage(e);
-        }
-    }
-
-    private void doPatchWithRestrictionVerification(ServiceDocument doc, String selfLink)
-            throws Throwable {
-        host.log("PATCH to %s", selfLink);
-
-        try {
-            doPatch(doc, selfLink);
-            fail(EXPECTED_ILLEGAL_ACCESS_ERROR_MESSAGE);
-        } catch (IllegalAccessError e) {
-            assertForbiddenMessage(e);
-        }
-    }
-
-    private void doDeleteWithRestrictionVerification(ServiceDocument doc, String selfLink) throws Throwable {
-        host.log("DELETE to %s", selfLink);
-
-        try {
-            doDelete(UriUtils.buildUri(host, doc.documentSelfLink), false);
-            fail(EXPECTED_ILLEGAL_ACCESS_ERROR_MESSAGE);
-        } catch (IllegalAccessError e) {
-            assertForbiddenMessage(e);
-        }
     }
 
 }

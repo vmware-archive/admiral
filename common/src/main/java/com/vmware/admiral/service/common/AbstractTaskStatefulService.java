@@ -52,6 +52,9 @@ import com.vmware.xenon.common.Utils;
 public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<E>, E extends Enum<E>>
         extends StatefulService {
 
+    public static final String UNAUTHORIZED_ACCESS_FOR_ACTION_MESSAGE = "Forbidden: Unauthorized "
+            + "access for action '%s'";
+
     private static final int RETRIES_COUNT = Integer.getInteger(
             "com.vmware.admiral.service.tasks.retries", 3);
     protected static final long COMPLETION_POLLING_PERIOD_MILLIS = Long
@@ -174,6 +177,15 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
     @Override
     public void handleStart(Operation startPost) {
         T state = getBody(startPost);
+
+        if (!getHost().isAuthorized(this, state, startPost)) {
+            String errorMessage = String.format(UNAUTHORIZED_ACCESS_FOR_ACTION_MESSAGE, startPost.getAction().name());
+            getHost().log(Level.WARNING, errorMessage);
+            startPost.setStatusCode(Operation.STATUS_CODE_FORBIDDEN);
+            startPost.fail(new IllegalAccessError(errorMessage));
+            return;
+        }
+
         if (state.taskInfo == null) {
             startPost.fail(new IllegalStateException("taskInfo must not be null"));
             return;
