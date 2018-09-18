@@ -25,6 +25,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
+import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.admiral.compute.pks.PKSCreateEndpointService.EndpointSpec;
@@ -32,6 +33,7 @@ import com.vmware.admiral.compute.pks.PKSEndpointService.Endpoint;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceErrorResponse;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.TestRequestSender;
 
 public class PKSCreateEndpointServiceTest extends ComputeBaseTest {
@@ -66,15 +68,25 @@ public class PKSCreateEndpointServiceTest extends ComputeBaseTest {
         endpointSpec.acceptCertificate = true;
         endpointSpec.endpoint = endpoint;
 
-        Endpoint createdEndpoint = createEndpoint(endpointSpec);
+        createEndpoint(endpointSpec);
 
         endpoint = new Endpoint();
         endpoint.apiEndpoint = "https://localhost";
         endpoint.uaaEndpoint = "https://localhost";
         endpointSpec.endpoint = endpoint;
 
-        createEndpointExpectFailure(endpointSpec, e -> {
-            e.getErrorCode();
+        createEndpointExpectFailure(endpointSpec, failure -> {
+            assertTrue(failure.failure instanceof LocalizableValidationException);
+            ServiceErrorResponse errorResponse = failure.op.getBody(ServiceErrorResponse.class);
+            assertNotNull(errorResponse);
+        });
+    }
+
+    @Test
+    public void testCreateEmptyBody() {
+        createEndpointExpectFailure(null, failure -> {
+            assertTrue(failure.failure instanceof IllegalArgumentException);
+            assertEquals("Body is required", failure.failure.getMessage());
         });
     }
 
@@ -100,8 +112,10 @@ public class PKSCreateEndpointServiceTest extends ComputeBaseTest {
                 .singletonList(QueryUtil.PROJECT_IDENTIFIER + "another-project");
         endpointSpec.endpoint = endpoint;
 
-        createEndpointExpectFailure(endpointSpec, e -> {
-            e.getErrorCode();
+        createEndpointExpectFailure(endpointSpec, failure -> {
+            assertTrue(failure.failure instanceof LocalizableValidationException);
+            ServiceErrorResponse errorResponse = failure.op.getBody(ServiceErrorResponse.class);
+            assertNotNull(errorResponse);
         });
     }
 
@@ -129,8 +143,10 @@ public class PKSCreateEndpointServiceTest extends ComputeBaseTest {
                 .singletonList(tenantLink + QueryUtil.GROUP_IDENTIFIER + "another-group");
         endpointSpec.endpoint = endpoint;
 
-        createEndpointExpectFailure(endpointSpec, e -> {
-            e.getErrorCode();
+        createEndpointExpectFailure(endpointSpec, failure -> {
+            assertTrue(failure.failure instanceof LocalizableValidationException);
+            ServiceErrorResponse errorResponse = failure.op.getBody(ServiceErrorResponse.class);
+            assertNotNull(errorResponse);
         });
     }
 
@@ -194,6 +210,73 @@ public class PKSCreateEndpointServiceTest extends ComputeBaseTest {
         assertEquals(testValue, endpoint.customProperties.get(testProp));
     }
 
+    @Test
+    public void testValidate() {
+        Endpoint endpoint = new Endpoint();
+        endpoint.uaaEndpoint = ":-13";
+        endpoint.apiEndpoint = ":-17";
+
+        EndpointSpec endpointSpec = new EndpointSpec();
+        endpointSpec.acceptHostAddress = true;
+        endpointSpec.acceptCertificate = true;
+        endpointSpec.endpoint = endpoint;
+
+        createEndpointExpectFailure(endpointSpec, failure -> {
+            assertTrue(failure.failure instanceof LocalizableValidationException);
+            ServiceErrorResponse errorResponse = failure.op.getBody(ServiceErrorResponse.class);
+            assertNotNull(errorResponse);
+            assertEquals("Invalid host address: :-13", errorResponse.message);
+        });
+
+        endpoint.uaaEndpoint = "file://local.file";
+        createEndpointExpectFailure(endpointSpec, failure -> {
+            assertTrue(failure.failure instanceof LocalizableValidationException);
+            ServiceErrorResponse errorResponse = failure.op.getBody(ServiceErrorResponse.class);
+            assertNotNull(errorResponse);
+            assertEquals("Unsupported scheme, must be http or https: file", errorResponse.message);
+        });
+
+        endpoint.uaaEndpoint = "http://localhost";
+        createEndpointExpectFailure(endpointSpec, failure -> {
+            assertTrue(failure.failure instanceof LocalizableValidationException);
+            ServiceErrorResponse errorResponse = failure.op.getBody(ServiceErrorResponse.class);
+            assertNotNull(errorResponse);
+            assertEquals("Invalid host address: :-17", errorResponse.message);
+        });
+
+        endpoint.uaaEndpoint = "jar://local.file";
+        createEndpointExpectFailure(endpointSpec, failure -> {
+            assertTrue(failure.failure instanceof LocalizableValidationException);
+            ServiceErrorResponse errorResponse = failure.op.getBody(ServiceErrorResponse.class);
+            assertNotNull(errorResponse);
+            assertEquals("Unsupported scheme, must be http or https: jar", errorResponse.message);
+        });
+    }
+
+    @Test
+    public void testValidateConnection() {
+        // validate
+
+        Endpoint endpoint = new Endpoint();
+        endpoint.apiEndpoint = "https://localhost";
+        endpoint.uaaEndpoint = "https://localhost";
+
+        EndpointSpec endpointSpec = new EndpointSpec();
+        endpointSpec.acceptHostAddress = true;
+        endpointSpec.acceptCertificate = true;
+        endpointSpec.endpoint = endpoint;
+
+        Operation o = Operation
+                .createPut(UriUtils.buildUri(host, PKSCreateEndpointService.SELF_LINK,
+                        ManagementUriParts.REQUEST_PARAM_VALIDATE_OPERATION_NAME))
+                .setBodyNoCloning(endpointSpec);
+
+        TestRequestSender.FailureResponse failure = sender.sendAndWaitFailure(o);
+        assertNotNull(failure);
+        assertTrue(failure.failure.getMessage().startsWith("Unexpected error: Service not found:"));
+        assertTrue(failure.failure.getMessage().endsWith("/adapters/pks-service"));
+    }
+
     private Endpoint createEndpoint(EndpointSpec endpointSpec) throws Throwable {
         Operation o = Operation
                 .createPut(host, PKSCreateEndpointService.SELF_LINK)
@@ -214,16 +297,13 @@ public class PKSCreateEndpointServiceTest extends ComputeBaseTest {
         return result;
     }
 
-    private void createEndpointExpectFailure(EndpointSpec e, Consumer<ServiceErrorResponse> consumer) {
+    private void createEndpointExpectFailure(EndpointSpec e,
+            Consumer<TestRequestSender.FailureResponse> consumer) {
         Operation o = Operation
                 .createPut(host, PKSCreateEndpointService.SELF_LINK)
                 .setBodyNoCloning(e);
         TestRequestSender.FailureResponse failure = sender.sendAndWaitFailure(o);
-        assertTrue(failure.failure instanceof LocalizableValidationException);
-        ServiceErrorResponse errorResponse = failure.op.getBody(ServiceErrorResponse.class);
-        assertNotNull(errorResponse);
-
-        consumer.accept(errorResponse);
+        consumer.accept(failure);
     }
 
 }
