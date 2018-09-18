@@ -113,12 +113,15 @@ public class GlobalAndProjectRegistries extends BaseTestVic {
         registries().sourceRegistriesTab().clickAddRegistryButton();
         registries().addRegistryForm().setAddress(REGISTRY_CHEME + registryIpAndPort);
         registries().addRegistryForm().setName(REGISTRY_NAME);
-        registries().addRegistryForm().clickSaveButton();
+        registries().addRegistryForm().clickVerifyButton();
+        registries().registryCertificateModalDialog().waitToLoad();
         registries().registryCertificateModalDialog().submit();
+        registries().addRegistryForm().clickSaveButton();
         registries().sourceRegistriesTab().validate()
                 .validateRegistryExistsWithAddress(REGISTRY_CHEME + registryIpAndPort);
 
         main().clickHomeTabButton();
+        applications().applicationsPage().waitToLoad();
 
         home().clickContainerHostsButton();
         HostCommons.addHost(getClient(), FIRST_PROJECT_HOST_NAME, null,
