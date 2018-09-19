@@ -733,7 +733,7 @@ let TemplatesStore = Reflux.createStore({
       }
     });
 
-    if (utils.isApplicationEmbedded()) {
+    if (utils.isApplicationEmbedded() && !utils.isVca()) {
       services.loadGroups().then((groupsResult) => {
         let groups = Object.values(groupsResult);
 
@@ -820,7 +820,7 @@ let TemplatesStore = Reflux.createStore({
     this.setInData(['selectedItemDetails'], null);
     this.setInData(['contextView'], {});
 
-    if (utils.isApplicationEmbedded()) {
+    if (utils.isApplicationEmbedded() && !utils.isVca()) {
       services.loadGroups().then((groupsResult) => {
         this.setInData(['groups'], Object.values(groupsResult));
         this.emitChange();
@@ -890,7 +890,7 @@ let TemplatesStore = Reflux.createStore({
       let calls = [];
       calls.push(services.loadDeploymentPolicies());
 
-      if (utils.isApplicationEmbedded()) {
+      if (utils.isApplicationEmbedded() && !utils.isVca()) {
         calls.push(services.loadGroups());
       } else {
         actions.ResourceGroupsActions.retrieveGroups();
@@ -957,7 +957,7 @@ let TemplatesStore = Reflux.createStore({
       let calls = [];
       calls.push(services.loadContainerTemplate(itemId));
 
-      if (utils.isApplicationEmbedded()) {
+      if (utils.isApplicationEmbedded() && !utils.isVca()) {
         calls.push(services.loadGroups());
       } else {
         actions.ResourceGroupsActions.retrieveGroups();
@@ -2111,7 +2111,7 @@ let TemplatesStore = Reflux.createStore({
   onSelectImageForContainerDescription: function(imageId) {
     let calls = [];
 
-    if (utils.isApplicationEmbedded()) {
+    if (utils.isApplicationEmbedded() && !utils.isVca()) {
       calls.push(services.loadDeploymentPolicies());
     }
 
@@ -2508,7 +2508,7 @@ let TemplatesStore = Reflux.createStore({
       let selectedProject = utils.getSelectedProject();
       let selectedProjectKey;
       if (selectedProject) {
-        if (utils.isApplicationEmbedded() && selectedProject.id) {
+        if (utils.isApplicationEmbedded() && !utils.isVca() && selectedProject.id) {
           selectedProjectKey = selectedProject.id;
         } else if (selectedProject.documentSelfLink) {
           selectedProjectKey = selectedProject.documentSelfLink;

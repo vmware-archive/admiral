@@ -33,9 +33,11 @@ var appInitializer = function(App, Store) {
 };
 
 var updateHeader = function() {
-  if (utils.isApplicationEmbedded() ||
-    utils.isApplicationSingleView()
-    || utils.isNavigationLess()) {
+  if (utils.isApplicationEmbedded()
+      || utils.isVca()
+      || utils.isApplicationSingleView()
+      || utils.isNavigationLess()) {
+
     return;
   }
 

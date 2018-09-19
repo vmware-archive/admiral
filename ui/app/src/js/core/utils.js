@@ -674,6 +674,10 @@ var utils = {
     return this.getConfigurationPropertyBoolean('embedded');
   },
 
+  isVca: function() {
+    return this.getConfigurationPropertyBoolean('vca');
+  },
+
   isApplicationSingleView: function() {
     return isSingleView;
   },

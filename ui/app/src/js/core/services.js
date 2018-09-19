@@ -139,7 +139,7 @@ var buildHeaders = function(headers, skipProjectHeader) {
   if (!skipProjectHeader) {
     let selectedProject = utils.getSelectedProject();
     if (selectedProject) {
-      if (utils.isApplicationEmbedded() && selectedProject.id) {
+      if (utils.isApplicationEmbedded() && !utils.isVca() && selectedProject.id) {
         headers[HEADER_PROJECT] = selectedProject.id;
       } else if (selectedProject.documentSelfLink) {
         headers[HEADER_PROJECT] = selectedProject.documentSelfLink;

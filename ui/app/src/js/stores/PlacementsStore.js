@@ -182,7 +182,7 @@ let PlacementsStore = Reflux.createStore({
       }
     });
 
-    if (!utils.isApplicationEmbedded()) {
+    if (!utils.isApplicationEmbedded() || utils.isVca()) {
       ResourceGroupsStore.listen((resourceGroupsData) => {
 
         if (this.isContextPanelActive(constants.CONTEXT_PANEL.RESOURCE_GROUPS)) {
@@ -280,7 +280,7 @@ let PlacementsStore = Reflux.createStore({
     this.emitChange();
 
     actions.PlacementZonesActions.retrievePlacementZones();
-    if (!utils.isApplicationEmbedded()) {
+    if (!utils.isApplicationEmbedded() || utils.isVca()) {
       actions.ResourceGroupsActions.retrieveGroups();
     }
     if (ft.isDeploymentPoliciesEnabled()) {
@@ -359,7 +359,7 @@ let PlacementsStore = Reflux.createStore({
       }
     }
 
-    let groups = utils.isApplicationEmbedded()
+    let groups = utils.isApplicationEmbedded() && !utils.isVca()
                     ? this.selectFromData(['placements', 'groups']).get()
                     : ResourceGroupsStore.getData().items;
     if (groups && placement) {

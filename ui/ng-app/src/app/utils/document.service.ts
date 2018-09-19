@@ -228,7 +228,7 @@ export class DocumentService {
   }
 
   public listProjects() {
-    if (FT.isApplicationEmbedded()) {
+    if (FT.isApplicationEmbedded() && !FT.isVca()) {
       return this.ajax.get(Links.GROUPS, null).then(result => {
         let documents = result || [];
         return new DocumentListResult(documents, result.nextPageLink, result.totalCount,

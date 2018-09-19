@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -18,6 +18,6 @@ export class ProjectNamePipe implements PipeTransform {
     if (!project) {
       return '--';
     }
-    return FT.isApplicationEmbedded() ? project.label : project.name;
+    return FT.isApplicationEmbedded() && !FT.isVca() ? project.label : project.name;
   }
 }

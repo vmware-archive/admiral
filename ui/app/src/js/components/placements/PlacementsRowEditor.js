@@ -331,7 +331,7 @@ class GroupInput {
     });
     $containerEl.append($groupEl);
 
-    if (utils.isApplicationEmbedded()) {
+    if (utils.isApplicationEmbedded() && !utils.isVca()) {
 
       this.businessGroupInput = new DropdownSearchMenu($groupEl, {
         title: i18n.t('app.placement.edit.selectBusinessGroup'),

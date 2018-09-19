@@ -13,24 +13,31 @@
   <section class="sidenav-content">
       <clr-dropdown clrPosition="bottom-left" class="project-selector">
         <button class="btn btn-link" clrDropdownToggle (click)="updateProjects()">
-          <div *ngIf="embeddedMode" class="project-caret">{{ "projects.globalSelectLabelEmbedded" | i18n }} <clr-icon shape="caret down"></clr-icon></div>
-          <div *ngIf="!embeddedMode" class="project-caret">{{ "projects.globalSelectLabel" | i18n }} <clr-icon shape="caret down"></clr-icon></div>
+          <div *ngIf="showGroups" class="project-caret"
+                >{{ "projects.globalSelectLabelEmbedded" | i18n }} <clr-icon shape="caret down"></clr-icon></div>
+          <div *ngIf="showProjects" class="project-caret"
+                >{{ "projects.globalSelectLabel" | i18n }} <clr-icon shape="caret down"></clr-icon></div>
           <div class="project-label">{{selectedProject | projectName}}</div>
         </button>
         <clr-dropdown-menu>
           <a *ngFor="let p of projects" (click)="selectProject(p)" clrDropdownItem>{{p | projectName}}</a>
         </clr-dropdown-menu>
       </clr-dropdown>
-      <!--a class="nav-link" routerLink="dashboard" routerLinkActive="active">Dashboard</a-->
-      <section class="nav-group collapsible" allowNavigation [roles]="deploymentsRouteRestriction" [projectSelfLink]="currentProjectLink">
+      <section class="nav-group collapsible" allowNavigation [roles]="deploymentsRouteRestriction"
+               [projectSelfLink]="currentProjectLink">
           <input id="deploymentsCollapse" type="checkbox">
           <label for="deploymentsCollapse">{{ "navigation.deployments" | i18n }}</label>
           <ul class="nav-list">
-              <li><a class="nav-link" routerLink="applications" routerLinkActive="active">{{ "navigation.applications" | i18n }}</a></li>
-              <li><a class="nav-link" routerLink="containers" routerLinkActive="active">{{ "navigation.containers" | i18n }}</a></li>
-              <li><a class="nav-link" routerLink="networks" routerLinkActive="active">{{ "navigation.networks" | i18n }}</a></li>
-              <li><a class="nav-link" routerLink="volumes" routerLinkActive="active">{{ "navigation.volumes" | i18n }}</a></li>
-              <li *ngIf="areClosuresAllowed"><a class="nav-link" routerLink="closures" routerLinkActive="active">{{ "navigation.closures" | i18n }}</a></li>
+              <li><a class="nav-link" routerLink="applications" routerLinkActive="active"
+                    >{{ "navigation.applications" | i18n }}</a></li>
+              <li><a class="nav-link" routerLink="containers" routerLinkActive="active"
+                    >{{ "navigation.containers" | i18n }}</a></li>
+              <li><a class="nav-link" routerLink="networks" routerLinkActive="active"
+                    >{{ "navigation.networks" | i18n }}</a></li>
+              <li><a class="nav-link" routerLink="volumes" routerLinkActive="active"
+                    >{{ "navigation.volumes" | i18n }}</a></li>
+              <li *ngIf="areClosuresAllowed"><a class="nav-link" routerLink="closures"
+                                                routerLinkActive="active">{{ "navigation.closures" | i18n }}</a></li>
               <li *ngIf="isPksEnabled">
                   <section class="nav-group collapsible">
                       <input id="kubernetesCollapse" type="checkbox">
@@ -96,32 +103,40 @@
                     routerLinkActive="active">{{ "navigation.closures" | i18n }}</a></li>
           </ul>
       </section>
-      <section class="nav-group collapsible" allowNavigation [roles]="infrastructureRouteRestriction" [projectSelfLink]="currentProjectLink">
+      <section class="nav-group collapsible" allowNavigation [roles]="infrastructureRouteRestriction"
+               [projectSelfLink]="currentProjectLink">
           <input id="infrastructureCollapse" type="checkbox">
           <label for="infrastructureCollapse">{{ "navigation.infrastructure" | i18n }}</label>
           <ul class="nav-list" allowNavigation [roles]="clustersRouteRestriction">
-              <li><a class="nav-link" routerLink="clusters" routerLinkActive="active">{{ navigationClustersTextKey | i18n }}</a></li>
+              <li><a class="nav-link" routerLink="clusters" routerLinkActive="active"
+              >{{ navigationClustersTextKey | i18n }}</a></li>
           </ul>
           <ul *ngIf="isPksEnabled" class="nav-list">
             <li><a class="nav-link" routerLink="kubernetes/clusters"
                     routerLinkActive="active">{{ "navigation.kubernetesClusters" | i18n }}</a></li>
           </ul>
       </section>
-      <section *ngIf="isPksEnabled" allowNavigation [roles]="endpointsRouteRestriction" class="nav-group collapsible">
+      <section *ngIf="isPksEnabled" allowNavigation [roles]="endpointsRouteRestriction"
+                    class="nav-group collapsible">
           <input id="endpointsCollapse" type="checkbox">
           <label for="endpointsCollapse">{{ "navigation.endpoints" | i18n }}</label>
           <ul class="nav-list">
-              <li><a class="nav-link" routerLink="endpoints" routerLinkActive="active">{{ "navigation.pksEndpoints" | i18n }}</a></li>
+              <li><a class="nav-link" routerLink="endpoints" routerLinkActive="active"
+                    >{{ "navigation.pksEndpoints" | i18n }}</a></li>
           </ul>
       </section>
-      <a *ngIf="embeddedMode" class="nav-link" allowNavigation [roles]="identityManagementRouteRestriction" routerLink="identity-management" routerLinkActive="active">{{ "navigation.identityManagement" | i18n }}</a>
+      <a *ngIf="embeddedMode" class="nav-link" allowNavigation [roles]="identityManagementRouteRestriction"
+            routerLink="identity-management" routerLinkActive="active"
+            >{{ "navigation.identityManagement" | i18n }}</a>
       <section *ngIf="!isVic" allowNavigation [roles]="activityRouteRestriction"
                class="nav-group collapsible">
           <input id="recentActivityCollapse" type="checkbox">
           <label for="recentActivityCollapse">{{ "navigation.recentActivity" | i18n }}</label>
           <ul class="nav-list">
-              <li><a class="nav-link" routerLink="requests" routerLinkActive="active">{{"navigation.requests" | i18n }}</a></li>
-              <li><a class="nav-link" routerLink="event-logs" routerLinkActive="active">{{"navigation.eventLogs" | i18n }}</a></li>
+              <li><a class="nav-link" routerLink="requests" routerLinkActive="active"
+                    >{{"navigation.requests" | i18n }}</a></li>
+              <li><a class="nav-link" routerLink="event-logs" routerLinkActive="active"
+                    >{{"navigation.eventLogs" | i18n }}</a></li>
           </ul>
       </section>
   </section>

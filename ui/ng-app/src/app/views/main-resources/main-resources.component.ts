@@ -12,15 +12,15 @@
 import { Component, OnInit, ViewEncapsulation, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { Router, NavigationEnd } from '@angular/router';
-import { RoutesRestriction } from './../../utils/routes-restriction';
-import { FormerViewPathBridge, RouteUtils } from './../../utils/route-utils';
-import { AuthService } from './../../utils/auth.service';
-import { DocumentService } from './../../utils/document.service';
+import { RoutesRestriction } from '../../utils/routes-restriction';
+import { FormerViewPathBridge, RouteUtils } from '../../utils/route-utils';
+import { AuthService } from '../../utils/auth.service';
+import { DocumentService } from '../../utils/document.service';
 import { ErrorService } from '../../utils/error.service';
-import { ProjectService } from './../../utils/project.service';
-import { Roles } from './../../utils/roles';
-import { Utils } from './../../utils/utils';
-import { FT } from './../../utils/ft';
+import { ProjectService } from '../../utils/project.service';
+import { Roles } from '../../utils/roles';
+import { Utils } from '../../utils/utils';
+import { FT } from '../../utils/ft';
 
 @Component({
   selector: 'app-main-resources',
@@ -31,6 +31,7 @@ import { FT } from './../../utils/ft';
 export class MainResourcesComponent implements OnInit, OnDestroy {
     // features
     embeddedMode = FT.isApplicationEmbedded();
+    isVca = FT.isVca();
     isVic = FT.isVic();
 
     isPksEnabled = FT.isPksEnabled();
@@ -67,6 +68,14 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
     showKubernetes: boolean;
 
     alertMessage: string;
+
+    public get showGroups() {
+        return !this.isVca && this.embeddedMode;
+    }
+
+    public get showProjects() {
+        return this.isVca || !this.embeddedMode;
+    }
 
     constructor(private router: Router, private documentService: DocumentService,
                 private projectService: ProjectService, private errorService: ErrorService,
@@ -174,7 +183,7 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
     }
 
     sortProjects() {
-      let sortField = FT.isApplicationEmbedded() ? "label" : "name";
+      let sortField = FT.isApplicationEmbedded() && !FT.isVca() ? "label" : "name";
       Utils.sortObjectArrayByField(this.projects, sortField);
     }
 

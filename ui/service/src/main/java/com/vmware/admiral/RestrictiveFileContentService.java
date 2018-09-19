@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -23,6 +23,7 @@ public class RestrictiveFileContentService extends FileContentService {
             "com.vmware.admiral.ui.cache.expiration.time", 3600);
 
     protected volatile Boolean isEmbedded;
+    protected volatile Boolean isVca;
 
     public RestrictiveFileContentService(File file) {
         super(file);
@@ -43,12 +44,16 @@ public class RestrictiveFileContentService extends FileContentService {
             isEmbedded = ConfigurationUtil.isEmbedded();
         }
 
+        if (isVca == null) {
+            isVca = ConfigurationUtil.isVca();
+        }
+
         if (!isEmbedded) {
             // Avoid clickjacking attacks, by ensuring that content is not always embedded.
             op.addResponseHeader(ConfigurationUtil.UI_FRAME_OPTIONS_HEADER, "SAMEORIGIN");
         }
 
-        if (op != null && isEmbedded
+        if (op != null && isEmbedded && !isVca
                 && op.getRequestHeader(ConfigurationUtil.UI_PROXY_FORWARD_HEADER) == null) {
             Exception notFound = new ServiceHost.ServiceNotFoundException(op.getUri().toString());
             notFound.setStackTrace(new StackTraceElement[] {});
