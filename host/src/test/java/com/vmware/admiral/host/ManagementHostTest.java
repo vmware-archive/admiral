@@ -12,14 +12,18 @@
 package com.vmware.admiral.host;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import static com.vmware.xenon.common.CommandLineArgumentParser.ARGUMENT_ASSIGNMENT;
 import static com.vmware.xenon.common.CommandLineArgumentParser.ARGUMENT_PREFIX;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -32,6 +36,7 @@ import java.util.logging.Level;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
@@ -49,7 +54,7 @@ import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
-import com.vmware.xenon.common.LoaderFactoryService;
+import com.vmware.photon.controller.model.security.util.EncryptionUtils;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
@@ -62,9 +67,14 @@ public class ManagementHostTest {
     private static final TemporaryFolder SANDBOX = new TemporaryFolder();
     public static final int SCHEDULE_TIME = 5 * 1000;
 
+    @ClassRule
+    public static TemporaryFolder folder = new TemporaryFolder();
+
     @Before
     public void setup() throws Exception {
         SANDBOX.create();
+        System.clearProperty(EncryptionUtils.ENCRYPTION_KEY);
+        System.clearProperty(EncryptionUtils.INIT_KEY_IF_MISSING);
     }
 
     @After
@@ -79,8 +89,8 @@ public class ManagementHostTest {
             List<String> args = new ArrayList<>(Arrays.asList(
                     // start mock host adapter instance
                     ARGUMENT_PREFIX
-                            + HostInitDockerAdapterServiceConfig.FIELD_NAME_START_MOCK_HOST_ADAPTER_INSTANCE
-                            + ARGUMENT_ASSIGNMENT + startMockHostAdapterInstance,
+                    + HostInitDockerAdapterServiceConfig.FIELD_NAME_START_MOCK_HOST_ADAPTER_INSTANCE
+                    + ARGUMENT_ASSIGNMENT + startMockHostAdapterInstance,
                     // generate a random sandbox
                     ARGUMENT_PREFIX + "sandbox" + ARGUMENT_ASSIGNMENT + SANDBOX.getRoot().toPath(),
                     // ask runtime to pick a random port
@@ -111,6 +121,31 @@ public class ManagementHostTest {
     public void testManagementHostInitializationNoErrors() throws Throwable {
         try (TestManagementHost host = new TestManagementHost(false)) {
             // we're just verifying that no exceptions are thrown
+            assertNull(host.getSecureListener());
+        }
+    }
+
+    @Test
+    public void testManagementHostInitializationWithSslNoErrors() throws Throwable {
+        try (TestManagementHost host = new TestManagementHost(false,
+                ARGUMENT_PREFIX + "port" + ARGUMENT_ASSIGNMENT + "-1",
+                ARGUMENT_PREFIX + "securePort" + ARGUMENT_ASSIGNMENT + "8283")) {
+            // we're just verifying that no exceptions are thrown
+            assertNotNull(host.getSecureListener());
+        }
+    }
+
+    @Test
+    public void testManagementHostInitializationWithEncryptionNoErrors() throws Throwable {
+
+        File keyFile = Paths.get(folder.newFolder().getPath(), "encryption.key").toFile();
+        System.setProperty(EncryptionUtils.ENCRYPTION_KEY, keyFile.getPath());
+        System.setProperty(EncryptionUtils.INIT_KEY_IF_MISSING, "true");
+        EncryptionUtils.initEncryptionService();
+
+        try (TestManagementHost host = new TestManagementHost(false)) {
+            // we're just verifying that no exceptions are thrown
+            assertNull(host.getSecureListener());
         }
     }
 
@@ -135,29 +170,6 @@ public class ManagementHostTest {
             host.getTestContext().await();
             assertEquals("The MockHostInteractionService didn't start.", 204, statusCode.get());
             assertTrue(host.isProcessOwner());
-        }
-    }
-
-    @Test
-    public void testManagementHostInitializationEnablesDynamicLoading() throws Throwable {
-        try (TestManagementHost host = new TestManagementHost(false)) {
-            host.start();
-            host.enableDynamicServiceLoading();
-            AtomicInteger statusCode = new AtomicInteger(0);
-            Operation op = Operation
-                    .createGet(UriUtils.buildUri(host, LoaderFactoryService.SELF_LINK))
-                    .setReferer(host.getUri())
-                    .setCompletion((o, e) -> {
-                        if (e == null) {
-                            statusCode.set(o.getStatusCode());
-                            host.getTestContext().completeIteration();
-                        } else {
-                            host.getTestContext().failIteration(e);
-                        }
-                    });
-            host.sendRequest(op);
-            host.getTestContext().await();
-            assertEquals("The loader service didn't start", 200, statusCode.get());
         }
     }
 
@@ -203,7 +215,17 @@ public class ManagementHostTest {
     public void testManagementHostInitializationErrorNoNodeGroupScheme() throws Throwable {
         try (TestManagementHost host = new TestManagementHost(true,
                 ARGUMENT_PREFIX + "publicUri" + ARGUMENT_ASSIGNMENT + "http://127.0.0.1:8282",
-                ARGUMENT_PREFIX + "nodeGroupPublicUri" + ARGUMENT_ASSIGNMENT + "//127.0.0.1:8282",
+                ARGUMENT_PREFIX + "nodeGroupPublicUri" + ARGUMENT_ASSIGNMENT + "//127.0.0.1:8283",
+                ARGUMENT_PREFIX + "peerList" + ARGUMENT_ASSIGNMENT + "http://127.0.0.1:8282")) {
+            // we're just verifying that exception is thrown
+        }
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testManagementHostInitializationErrorNoNodeGroupHost() throws Throwable {
+        try (TestManagementHost host = new TestManagementHost(true,
+                ARGUMENT_PREFIX + "publicUri" + ARGUMENT_ASSIGNMENT + "http://127.0.0.1:8282",
+                ARGUMENT_PREFIX + "nodeGroupPublicUri" + ARGUMENT_ASSIGNMENT + "http//:8283",
                 ARGUMENT_PREFIX + "peerList" + ARGUMENT_ASSIGNMENT + "http://127.0.0.1:8282")) {
             // we're just verifying that exception is thrown
         }
@@ -220,12 +242,36 @@ public class ManagementHostTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
+    public void testManagementHostInitializationErrorBigNodeGroupPort() throws Throwable {
+        try (TestManagementHost host = new TestManagementHost(true,
+                ARGUMENT_PREFIX + "publicUri" + ARGUMENT_ASSIGNMENT + "http://127.0.0.1:8282",
+                ARGUMENT_PREFIX + "nodeGroupPublicUri" + ARGUMENT_ASSIGNMENT
+                        + "http://127.0.0.1:90000",
+                ARGUMENT_PREFIX + "peerList" + ARGUMENT_ASSIGNMENT + "http://127.0.0.1:8282")) {
+            // we're just verifying that exception is thrown
+        }
+    }
+
+    @Test(expected = IllegalArgumentException.class)
     public void testManagementHostInitializationErrorSamePort() throws Throwable {
         try (TestManagementHost host = new TestManagementHost(true,
                 ARGUMENT_PREFIX + "publicUri" + ARGUMENT_ASSIGNMENT + "http://127.0.0.1:8282",
                 ARGUMENT_PREFIX + "nodeGroupPublicUri" + ARGUMENT_ASSIGNMENT
                         + "http://127.0.0.1:8282",
                 ARGUMENT_PREFIX + "peerList" + ARGUMENT_ASSIGNMENT + "http://127.0.0.1:8282")) {
+            // we're just verifying that exception is thrown
+        }
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testManagementHostInitializationErrorSameSecurePort() throws Throwable {
+        try (TestManagementHost host = new TestManagementHost(true,
+                ARGUMENT_PREFIX + "port" + ARGUMENT_ASSIGNMENT + "-1",
+                ARGUMENT_PREFIX + "securePort" + ARGUMENT_ASSIGNMENT + "8283",
+                ARGUMENT_PREFIX + "publicUri" + ARGUMENT_ASSIGNMENT + "https://127.0.0.1:8283",
+                ARGUMENT_PREFIX + "nodeGroupPublicUri" + ARGUMENT_ASSIGNMENT
+                        + "https://127.0.0.1:8283",
+                ARGUMENT_PREFIX + "peerList" + ARGUMENT_ASSIGNMENT + "https://127.0.0.1:8283")) {
             // we're just verifying that exception is thrown
         }
     }
@@ -355,7 +401,7 @@ public class ManagementHostTest {
                     ConfigurationState config = doGet(host, ConfigurationState.class,
                             UriUtils
                             .buildUri(host,
-                            UriUtils.buildUriPath(ConfigurationFactoryService.SELF_LINK, "/key1")));
+                                    UriUtils.buildUriPath(ConfigurationFactoryService.SELF_LINK, "/key1")));
                     assertEquals("key1", config.key);
                     assertEquals("one more", config.value);
                     assertEquals("one more", ConfigurationUtil.getProperty("key1"));
