@@ -47,7 +47,6 @@ import com.vmware.admiral.host.interceptor.OperationInterceptorRegistry;
 import com.vmware.admiral.host.interceptor.ProjectInterceptor;
 import com.vmware.admiral.host.interceptor.SchedulerPlacementZoneInterceptor;
 import com.vmware.admiral.host.swagger.SwaggerDocumentationService;
-import com.vmware.admiral.request.ContainerLoadBalancerBootstrapService;
 import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.admiral.service.common.ConfigurationService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
@@ -190,7 +189,6 @@ public class ManagementHost extends PostgresServiceHost implements IExtensibilit
         startFabricServices();
         startManagementServices();
         startClosureServices(this, startMockHostAdapterInstance);
-        startLoadBalancerServices(this);
         startSwaggerService();
         startCustomSwaggerService();
 
@@ -311,15 +309,6 @@ public class ManagementHost extends PostgresServiceHost implements IExtensibilit
     }
 
     /**
-     * Start all services related to container load balancer support.
-     */
-    protected void startLoadBalancerServices(ServiceHost host) throws Throwable {
-        host.log(Level.INFO, "Container load balancer services starting...");
-        HostInitLoadBalancerServiceConfig.startServices(host);
-        host.log(Level.INFO, "Container load balancer services started.");
-    }
-
-    /**
      * Start all services required to support management of infrastructure and applications.
      */
     protected void startCommonServices() throws Throwable {
@@ -346,8 +335,6 @@ public class ManagementHost extends PostgresServiceHost implements IExtensibilit
 
         registerForServiceAvailability(CaSigningCertService.startTask(this), true,
                 CaSigningCertService.FACTORY_LINK);
-        registerForServiceAvailability(ContainerLoadBalancerBootstrapService.startTask(this), true,
-                ContainerLoadBalancerBootstrapService.FACTORY_LINK);
 
         HostInitComputeServicesConfig.startServices(this, false);
         HostInitComputeBackgroundServicesConfig.startServices(this);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -25,11 +25,6 @@ import com.vmware.admiral.request.ClusteringTaskService;
 import com.vmware.admiral.request.ContainerAllocationTaskFactoryService;
 import com.vmware.admiral.request.ContainerControlLoopService;
 import com.vmware.admiral.request.ContainerHostRemovalTaskFactoryService;
-import com.vmware.admiral.request.ContainerLoadBalancerAllocationTaskService;
-import com.vmware.admiral.request.ContainerLoadBalancerBootstrapService;
-import com.vmware.admiral.request.ContainerLoadBalancerProvisionTaskService;
-import com.vmware.admiral.request.ContainerLoadBalancerReconfigureTaskService;
-import com.vmware.admiral.request.ContainerLoadBalancerRemovalTaskService;
 import com.vmware.admiral.request.ContainerNetworkAllocationTaskService;
 import com.vmware.admiral.request.ContainerNetworkProvisionTaskService;
 import com.vmware.admiral.request.ContainerNetworkRemovalTaskService;
@@ -90,11 +85,6 @@ public class HostInitRequestServicesConfig extends HostInitServiceHelper {
                             factoryService(ContainerRedeploymentTaskService.class),
                             factoryService(ContainerNetworkAllocationTaskService.class),
                             factoryService(ContainerNetworkProvisionTaskService.class),
-                            factoryService(ContainerLoadBalancerAllocationTaskService.class),
-                            factoryService(ContainerLoadBalancerProvisionTaskService.class),
-                            factoryService(ContainerLoadBalancerRemovalTaskService.class),
-                            factoryService(ContainerLoadBalancerReconfigureTaskService.class),
-                            factoryService(ContainerLoadBalancerBootstrapService.class),
                             factoryService(ContainerNetworkRemovalTaskService.class),
                             factoryService(ContainerVolumeAllocationTaskService.class),
                             factoryService(ContainerVolumeProvisionTaskService.class),
@@ -138,11 +128,6 @@ public class HostInitRequestServicesConfig extends HostInitServiceHelper {
                 ContainerRedeploymentTaskService.class,
                 ContainerNetworkAllocationTaskService.class,
                 ContainerNetworkProvisionTaskService.class,
-                ContainerLoadBalancerAllocationTaskService.class,
-                ContainerLoadBalancerProvisionTaskService.class,
-                ContainerLoadBalancerRemovalTaskService.class,
-                ContainerLoadBalancerReconfigureTaskService.class,
-                ContainerLoadBalancerBootstrapService.class,
                 ContainerNetworkRemovalTaskService.class,
                 ContainerVolumeAllocationTaskService.class,
                 ContainerVolumeProvisionTaskService.class,
@@ -168,4 +153,5 @@ public class HostInitRequestServicesConfig extends HostInitServiceHelper {
                 .setReferer(host.getUri())
                 .setBody(new ServiceDocument()));
     }
+
 }

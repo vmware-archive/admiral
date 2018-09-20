@@ -53,10 +53,6 @@ import com.vmware.admiral.compute.container.HostPortProfileService;
 import com.vmware.admiral.compute.container.HostVolumeListDataCollection;
 import com.vmware.admiral.compute.container.ShellContainerExecutorService;
 import com.vmware.admiral.compute.container.TemplateSearchService;
-import com.vmware.admiral.compute.container.loadbalancer.ContainerLoadBalancerDescriptionService;
-import com.vmware.admiral.compute.container.loadbalancer.ContainerLoadBalancerDescriptionService.ContainerLoadBalancerDescription;
-import com.vmware.admiral.compute.container.loadbalancer.ContainerLoadBalancerService;
-import com.vmware.admiral.compute.container.loadbalancer.ContainerLoadBalancerService.ContainerLoadBalancerState;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionFactoryService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
@@ -250,13 +246,6 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
         CompositeComponentRegistry.registerComponent(ResourceType.CLOSURE_TYPE.getName(),
                 ClosureDescriptionFactoryService.FACTORY_LINK, ClosureDescription.class,
                 ClosureFactoryService.FACTORY_LINK, Closure.class);
-
-        CompositeComponentRegistry
-                .registerComponent(ResourceType.CONTAINER_LOAD_BALANCER_TYPE.getName(),
-                        ContainerLoadBalancerDescriptionService.FACTORY_LINK,
-                        ContainerLoadBalancerDescription.class,
-                        ContainerLoadBalancerService.FACTORY_LINK,
-                        ContainerLoadBalancerState.class);
 
         CompositeComponentRegistry.registerComponent(ResourceType.KUBERNETES_GENERIC_TYPE.getName(),
                 KubernetesDescriptionService.FACTORY_LINK, KubernetesDescription.class,

@@ -41,13 +41,11 @@ import com.vmware.admiral.common.test.CommonTestStateFactory;
 import com.vmware.admiral.common.util.FileUtil;
 import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.ComponentDescription;
-import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescriptionExpanded;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
-import com.vmware.admiral.compute.container.loadbalancer.ContainerLoadBalancerDescriptionService.ContainerLoadBalancerDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.content.Binding.ComponentBinding;
@@ -71,7 +69,6 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
             return Arrays.asList(new Object[][] {
                     { "WordPress_with_MySQL_containers.yaml", verifyContainerTemplate },
                     { "WordPress_with_MySQL_bindings.yaml", verifyBindingsTemplate },
-                    { "WordPress_with_MySQL_with_container_load_balancer.yaml", verifyContainerLoadBalancerTemplate },
                     { "WordPress_with_MySQL_kubernetes.yaml", verifyKubernetesTemplate }
             });
         }
@@ -105,25 +102,6 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
             assertEquals(2, componentBinding.bindings.size());
             assertTrue(hasBindingExpression(componentBinding.bindings, "${mysql~restart_policy}"));
             assertTrue(hasBindingExpression(componentBinding.bindings, "${_resource~mysql~address}:3306"));
-
-            descLinks.addAll(cd.descriptionLinks);
-        };
-        private static BiConsumer<Operation, List<String>> verifyContainerLoadBalancerTemplate = (o, descLinks) -> {
-            CompositeDescriptionExpanded cd = o.getBody(CompositeDescriptionExpanded.class);
-            assertEquals("name", "wordPressWithMySqlContainerLoadBalancer", cd.name);
-            assertEquals("descriptionLinks.size", 4, cd.descriptionLinks.size());
-
-            ContainerLoadBalancerDescription containerLoadBalancerDescription = (ContainerLoadBalancerDescription) cd.componentDescriptions
-                    .stream().filter(c -> c.type.equals(ResourceType.CONTAINER_LOAD_BALANCER_TYPE.getName())).findFirst().get().getServiceDocument();
-
-            assertNotNull(containerLoadBalancerDescription.dependsOn);
-            assertNotNull(containerLoadBalancerDescription.portBindings);
-            assertNotNull(
-                    containerLoadBalancerDescription.frontends.stream().filter(health -> health.healthConfig != null).findAny().get());
-            assertFalse(containerLoadBalancerDescription.networks.isEmpty());
-            assertFalse(containerLoadBalancerDescription.frontends.isEmpty());
-            assertFalse(containerLoadBalancerDescription.frontends.get(0).backends.isEmpty());
-            assertEquals(containerLoadBalancerDescription.networks.get(0).name, "wpnet");
 
             descLinks.addAll(cd.descriptionLinks);
         };

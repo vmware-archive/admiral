@@ -62,8 +62,6 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.container.ServiceNetwork;
-import com.vmware.admiral.compute.container.loadbalancer.ContainerLoadBalancerDescriptionService;
-import com.vmware.admiral.compute.container.loadbalancer.ContainerLoadBalancerDescriptionService.ContainerLoadBalancerDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService;
@@ -103,7 +101,6 @@ import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.Service.Action;
-import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
@@ -268,69 +265,6 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         // wait for request completed state:
         request = waitForRequestToFail(request);
-    }
-
-    @Test
-    public void testContainerLoadBalancerLifeCycleMissingBackendContainer() throws Throwable {
-        ResourcePoolState resourcePool = createResourcePool();
-        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(
-                resourcePool);
-        ComputeDescription dockerHostDesc = createDockerHostDescription();
-        createDockerHost(dockerHostDesc, resourcePool);
-
-        ContainerLoadBalancerDescription desc = TestRequestStateFactory
-                .createContainerLoadBalancerDescription("testContainerLoadBalancerDescription");
-        desc.documentSelfLink = UUID.randomUUID().toString();
-
-        ContainerLoadBalancerDescription descPost = doPost(desc,
-                ContainerLoadBalancerDescriptionService
-                        .FACTORY_LINK);
-        assertNotNull(descPost);
-
-        RequestBrokerState request = new RequestBrokerState();
-        request.groupResourcePlacementLink = groupPlacementState.documentSelfLink;
-        request.resourceType = ResourceType.CONTAINER_LOAD_BALANCER_TYPE.getName();
-        request.resourceDescriptionLink = descPost.documentSelfLink;
-        request.tenantLinks = descPost.tenantLinks;
-        request.resourceCount = 1;
-
-        request = startRequest(request);
-        request = waitForRequestToFail(request);
-        assertEquals("Allocation Filter Error: No container descriptions with links [[wp]].",
-                request.taskInfo.failure.message);
-    }
-
-    @Test
-    public void testContainerLoadBalancerLifeCycle() throws Throwable {
-        ResourcePoolState resourcePool = createResourcePool();
-        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(
-                resourcePool);
-        ComputeDescription dockerHostDesc = createDockerHostDescription();
-        createDockerHost(dockerHostDesc, resourcePool);
-
-        ContainerLoadBalancerDescription desc = TestRequestStateFactory
-                .createContainerLoadBalancerDescription("testContainerLoadBalancerDescription");
-        desc.documentSelfLink = UUID.randomUUID().toString();
-
-        ContainerLoadBalancerDescription descPost = doPost(desc,
-                ContainerLoadBalancerDescriptionService
-                        .FACTORY_LINK);
-        assertNotNull(descPost);
-
-        ServiceDocument[] composition = new ServiceDocument[2];
-        composition[0] = descPost;
-        composition[1] = TestRequestStateFactory.createContainerDescription("wp", false, false);
-        CompositeDescription compositeDesc = createCompositeDesc(composition);
-
-        RequestBrokerState request = new RequestBrokerState();
-        request.groupResourcePlacementLink = groupPlacementState.documentSelfLink;
-        request.resourceType = ResourceType.COMPOSITE_COMPONENT_TYPE.getName();
-        request.resourceDescriptionLink = compositeDesc.documentSelfLink;
-        request.tenantLinks = descPost.tenantLinks;
-        request.resourceCount = 1;
-
-        request = startRequest(request);
-        request = waitForRequestToComplete(request);
     }
 
     @Test

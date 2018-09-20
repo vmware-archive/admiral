@@ -52,8 +52,6 @@ import com.vmware.admiral.compute.container.HealthChecker.HealthConfig.RequestPr
 import com.vmware.admiral.compute.container.HostContainerListDataCollection;
 import com.vmware.admiral.compute.container.HostPortProfileService;
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
-import com.vmware.admiral.compute.container.loadbalancer.ContainerLoadBalancerDescriptionService;
-import com.vmware.admiral.compute.container.loadbalancer.ContainerLoadBalancerDescriptionService.ContainerLoadBalancerDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService;
@@ -65,7 +63,6 @@ import com.vmware.admiral.host.HostInitCommonServiceConfig;
 import com.vmware.admiral.host.HostInitComputeServicesConfig;
 import com.vmware.admiral.host.HostInitDockerAdapterServiceConfig;
 import com.vmware.admiral.host.HostInitKubernetesAdapterServiceConfig;
-import com.vmware.admiral.host.HostInitLoadBalancerServiceConfig;
 import com.vmware.admiral.host.HostInitPhotonModelServiceConfig;
 import com.vmware.admiral.host.HostInitRequestServicesConfig;
 import com.vmware.admiral.host.RequestInitialBootService;
@@ -223,7 +220,6 @@ public abstract class RequestBaseTest extends BaseTestCase {
         HostInitRequestServicesConfig.startServices(h);
         HostInitDockerAdapterServiceConfig.startServices(h, true);
         HostInitKubernetesAdapterServiceConfig.startServices(h, true);
-        HostInitLoadBalancerServiceConfig.startServices(h);
 
         for (String factoryLink : getFactoryServiceList()) {
             waitForServiceAvailability(factoryLink);
@@ -594,8 +590,6 @@ public abstract class RequestBaseTest extends BaseTestCase {
                 desc = doPost(desc, ContainerVolumeDescriptionService.FACTORY_LINK);
             } else if (desc instanceof LoadBalancerDescriptionService.LoadBalancerDescription) {
                 desc = doPost(desc, LoadBalancerDescriptionService.FACTORY_LINK);
-            } else if (desc instanceof ContainerLoadBalancerDescription) {
-                desc = doPost(desc, ContainerLoadBalancerDescriptionService.FACTORY_LINK);
             } else {
                 throw new IllegalArgumentException(
                         "Unknown description type: " + desc.getClass().getSimpleName());

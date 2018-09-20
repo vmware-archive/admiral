@@ -111,10 +111,6 @@ public interface ManagementUriParts {
     String CLOSURES_IMAGES = RESOURCES + "/closure-images";
     String CLOSURES_CONTAINER_DESC = CONTAINER_DESC + "/closure-container-desc";
 
-    String CONTAINER_LOAD_BALANCERS = RESOURCES + "/container-load-balancers";
-    String CONTAINER_LOAD_BALANCER_DESC = RESOURCES + "/container-load-balancer"
-            + DESCRIPTION_SUFFIX;
-
     String CONTAINER_HOSTS = RESOURCES + "/hosts";
     String CONTAINER_HOST_DATA_COLLECTION = RESOURCES + "/hosts-data-collections";
     String CONTAINER_CONTROL_LOOP = RESOURCES + "/container-control-loop";
@@ -165,15 +161,6 @@ public interface ManagementUriParts {
     String REQUEST_REMOVAL_OPERATIONS = REQUEST + "/resource-removal-operations";
     String REQUEST_ALLOCATION_TASKS = REQUEST + "/allocation-tasks";
     String REQUEST_CONTAINER_REDEPLOYMENT_TASKS = REQUEST + "/container-redeployment-tasks";
-
-    String REQUEST_CONTAINER_LOAD_BALANCER_ALLOCATION_TASKS = REQUEST +
-            "/container-load-balancer-allocation-tasks";
-    String REQUEST_CONTAINER_LOAD_BALANCER_PROVISION_TASKS = REQUEST +
-            "/container-load-balancer-provision-tasks";
-    String REQUEST_CONTAINER_LOAD_BALANCER_REMOVAL_TASKS = REQUEST +
-            "/container-load-balancer-removal-tasks";
-    String REQUEST_CONTAINER_LOAD_BALANCER_RECONFIG_TASKS = REQUEST +
-            "/container-load-balancer-reconfig-tasks";
 
     String REQUEST_CONTAINER_NETWORK_ALLOCATION_TASKS = REQUEST
             + "/container-network-allocation-tasks";

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -26,7 +26,6 @@ import com.vmware.admiral.compute.BindingUtils;
 import com.vmware.admiral.compute.ComponentDescription;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
-import com.vmware.admiral.compute.container.loadbalancer.ContainerLoadBalancerDescriptionService.ContainerLoadBalancerDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.xenon.common.ServiceHost;
@@ -51,8 +50,6 @@ public final class AffinityFilters {
     private void initialize(ServiceHost host, Object desc) {
         if (ContainerDescription.class.isInstance(desc)) {
             initialize(host, (ContainerDescription) desc);
-        } else if (ContainerLoadBalancerDescription.class.isInstance(desc)) {
-            //TODO initialize(host, (ContainerLoadBalancerDescription) desc);
         } else if (ContainerNetworkDescription.class.isInstance(desc)) {
             initialize(host, (ContainerNetworkDescription) desc);
         } else if (ComponentDescription.class.isInstance(desc)) {
