@@ -15,6 +15,7 @@ import static com.vmware.admiral.service.common.ConfigurationService.URI_PREFIX;
 
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.AuthCredentialsService;
+import com.vmware.xenon.services.common.ServiceUriPaths;
 
 public interface ManagementUriParts {
 
@@ -244,6 +245,7 @@ public interface ManagementUriParts {
 
     String REVERSE_PROXY = URI_PREFIX + "/rp";
     String HBR_REVERSE_PROXY = URI_PREFIX + "/hbr-api";
+    String CREDENTIALS_PROXY = URI_PREFIX + ServiceUriPaths.CORE_CREDENTIALS;
 
     String REQUEST_PARAM_VALIDATE_OPERATION_NAME = "validate";
 

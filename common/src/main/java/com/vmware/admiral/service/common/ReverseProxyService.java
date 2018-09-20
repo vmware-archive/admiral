@@ -21,6 +21,7 @@ import java.util.logging.Level;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.StatelessService;
 
 /**
@@ -40,41 +41,42 @@ public class ReverseProxyService extends StatelessService {
 
     @Override
     public void handleGet(Operation get) {
-        forwardRequest(get, Operation::createGet);
+        checkIfEnabledAndForwardRequest(get, Operation::createGet);
     }
 
     @Override
     public void handlePost(Operation post) {
-        forwardRequest(post, Operation::createPost);
+        checkIfEnabledAndForwardRequest(post, Operation::createPost);
     }
 
     @Override
     public void handlePatch(Operation patch) {
-        forwardRequest(patch, Operation::createPatch);
+        checkIfEnabledAndForwardRequest(patch, Operation::createPatch);
     }
 
     @Override
     public void handlePut(Operation put) {
-        forwardRequest(put, Operation::createPut);
+        checkIfEnabledAndForwardRequest(put, Operation::createPut);
     }
 
     @Override
     public void handleDelete(Operation delete) {
-        forwardRequest(delete, Operation::createDelete);
+        checkIfEnabledAndForwardRequest(delete, Operation::createDelete);
     }
 
     @Override
     public void handleOptions(Operation options) {
-        forwardRequest(options, Operation::createOptions);
+        checkIfEnabledAndForwardRequest(options, Operation::createOptions);
     }
 
-    private void forwardRequest(final Operation op, final Function<URI, Operation> createOp) {
+    private void checkIfEnabledAndForwardRequest(final Operation op,
+                                                    final Function<URI, Operation> createOp) {
 
         if (isEmbedded == null) {
             ConfigurationUtil.getConfigProperty(this, ConfigurationUtil.EMBEDDED_MODE_PROPERTY,
                     (embedded) -> {
                         isEmbedded = Boolean.valueOf(embedded);
-                        forwardRequest(op, createOp);
+                        checkIfEnabledAndForwardRequest(op, createOp);
                     });
             return;
         }
@@ -83,7 +85,7 @@ public class ReverseProxyService extends StatelessService {
             ConfigurationUtil.getConfigProperty(this, ConfigurationUtil.VIC_MODE_PROPERTY,
                     (vic) -> {
                         isVic = Boolean.valueOf(vic);
-                        handleGet(op);
+                        checkIfEnabledAndForwardRequest(op, createOp);
                     });
             return;
         }
@@ -92,7 +94,7 @@ public class ReverseProxyService extends StatelessService {
             ConfigurationUtil.getConfigProperty(this, ConfigurationUtil.ALLOW_SSH_CONSOLE_PROPERTY,
                     (sshConsole) -> {
                         allowSshConsole = Boolean.valueOf(sshConsole);
-                        handleGet(op);
+                        checkIfEnabledAndForwardRequest(op, createOp);
                     });
             return;
         }
@@ -104,6 +106,12 @@ public class ReverseProxyService extends StatelessService {
         }
 
         URI targetUri = getTargetUri(op);
+
+        forwardRequest(targetUri, op, createOp, this);
+    }
+
+    public static void forwardRequest(URI targetUri, final Operation op,
+                                        final Function<URI, Operation> createOp, Service sender) {
         if (targetUri == null) {
             op.fail(new IllegalArgumentException("Invalid target URI provided!"));
             return;
@@ -135,7 +143,7 @@ public class ReverseProxyService extends StatelessService {
                     op.complete();
                 });
 
-        sendRequest(forwardOp);
+        sender.sendRequest(forwardOp);
     }
 
     private URI getTargetUri(final Operation op) {
@@ -155,5 +163,4 @@ public class ReverseProxyService extends StatelessService {
         }
         return targetUri;
     }
-
 }

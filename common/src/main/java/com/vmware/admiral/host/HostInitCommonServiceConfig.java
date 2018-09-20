@@ -26,6 +26,7 @@ import com.vmware.admiral.log.EventLogFactoryService;
 import com.vmware.admiral.service.common.CommonInitialBootService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
 import com.vmware.admiral.service.common.CounterSubTaskService;
+import com.vmware.admiral.service.common.CredentialsProxyService;
 import com.vmware.admiral.service.common.EventTopicService;
 import com.vmware.admiral.service.common.ExtensibilitySubscriptionCallbackService;
 import com.vmware.admiral.service.common.ExtensibilitySubscriptionFactoryService;
@@ -46,6 +47,7 @@ import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.AuthCredentialsService;
 
 public class HostInitCommonServiceConfig extends HostInitServiceHelper {
     public static final int COMMON_SERVICES_AVAILABILITY_TIMEOUT = Integer
@@ -101,6 +103,12 @@ public class HostInitCommonServiceConfig extends HostInitServiceHelper {
         host.log(Level.INFO, "Start initializing common services");
 
         startServices(host, servicesToStart);
+
+        if (!CredentialsProxyService.SELF_LINK.equals(AuthCredentialsService.FACTORY_LINK)) {
+            // Proxy in case a prefix is used for calling the services
+            // if running on same URL no need to proxy
+            startServices(host, CredentialsProxyService.class);
+        }
 
         startServiceFactories(host, serviceFactoriesToStart);
 
