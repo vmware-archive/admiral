@@ -14,8 +14,10 @@ package com.vmware.admiral.compute.cluster;
 import static java.util.EnumSet.of;
 
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_CLUSTER_NAME_PROP_NAME;
+import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_CLUSTER_PLAN_NAME_PROP_NAME;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_CLUSTER_UUID_PROP_NAME;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_ENDPOINT_PROP_NAME;
+import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_MASTER_NODES_IPS_PROP_NAME;
 
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -686,6 +688,14 @@ public class ClusterService extends StatelessService {
         map.put(PKS_CLUSTER_UUID_PROP_NAME,
                 PropertyUtils.getPropertyString(hostSpec.hostState.customProperties,
                         PKS_CLUSTER_UUID_PROP_NAME)
+                        .orElse(null));
+        map.put(PKS_CLUSTER_PLAN_NAME_PROP_NAME,
+                PropertyUtils.getPropertyString(hostSpec.hostState.customProperties,
+                        PKS_CLUSTER_PLAN_NAME_PROP_NAME)
+                        .orElse(null));
+        map.put(PKS_MASTER_NODES_IPS_PROP_NAME,
+                PropertyUtils.getPropertyString(hostSpec.hostState.customProperties,
+                        PKS_MASTER_NODES_IPS_PROP_NAME)
                         .orElse(null));
 
         sendWithDeferredResult(
