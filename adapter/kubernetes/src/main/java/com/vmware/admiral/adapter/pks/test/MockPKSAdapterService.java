@@ -193,6 +193,7 @@ public class MockPKSAdapterService extends StatelessService {
         cluster.name = name;
         cluster.uuid = CLUSTER1_UUID;
         cluster.planName = "small";
+        cluster.masterIPs = new String[] { "127.0.0.1" };
         cluster.parameters = new HashMap<>();
         cluster.parameters.put(PARAMETER_MASTER_HOST, "30.0.1.2");
         cluster.parameters.put(PARAMETER_MASTER_PORT, "8443");

@@ -15,9 +15,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
+import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_CLUSTER_PLAN_NAME_PROP_NAME;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_LAST_ACTION_CREATE;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_LAST_ACTION_DELETE;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_LAST_ACTION_UPDATE;
+import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_MASTER_NODES_IPS_PROP_NAME;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_WORKER_INSTANCES_FIELD;
 
 import java.util.HashMap;
@@ -26,8 +28,10 @@ import org.junit.Test;
 
 import com.vmware.admiral.adapter.pks.PKSConstants;
 import com.vmware.admiral.adapter.pks.test.MockPKSAdapterService;
+import com.vmware.admiral.compute.cluster.ClusterService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
+import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.xenon.common.ServiceDocument;
 
 public class PKSClusterRemovalTaskServiceTest extends PKSClusterOpBaseTest {
@@ -45,6 +49,13 @@ public class PKSClusterRemovalTaskServiceTest extends PKSClusterOpBaseTest {
         // verify the resources are provisioned as expected:
         assertEquals(1, request.resourceCount);
         assertEquals(request.resourceCount, request.resourceLinks.size());
+
+        ClusterService.ClusterDto cluster = getDocumentNoWait(ClusterService.ClusterDto.class,
+                request.resourceLinks.iterator().next());
+        assertEquals("Cluster should have 1 compute state", 1, cluster.nodes.size());
+        ComputeService.ComputeState computeState = cluster.nodes.values().iterator().next();
+        assertEquals(TEST_PLAN, computeState.customProperties.get(PKS_CLUSTER_PLAN_NAME_PROP_NAME));
+        assertNotNull(computeState.customProperties.get(PKS_MASTER_NODES_IPS_PROP_NAME));
 
         HashMap<String, String> map = new HashMap<>();
         map.put(PKSConstants.PKS_ENDPOINT_PROP_NAME, endpoint.documentSelfLink);
