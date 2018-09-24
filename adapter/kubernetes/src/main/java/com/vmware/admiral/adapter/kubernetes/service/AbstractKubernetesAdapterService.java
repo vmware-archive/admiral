@@ -101,7 +101,6 @@ public abstract class AbstractKubernetesAdapterService extends StatelessService 
     protected void getComputeHost(AdapterRequest request, Operation op,
             URI containerHostReference, Consumer<KubernetesContext> callbackFunction) {
         sendRequest(Operation.createGet(containerHostReference)
-                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
                 .setContextId(request.getRequestId())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
