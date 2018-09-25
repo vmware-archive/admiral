@@ -528,8 +528,8 @@
       "description": "Confirm the removal of the selected endpoints. The operation cannot be undone."
     },
     "name": "Name",
-    "status": "Status",
-    "address": "Address",
+    "uaaEndpoint": "UAA Endpoint",
+    "apiEndpoint": "API Endpoint",
     "count": "endpoints",
     "details": {
       "titleCreate": "Create Endpoint",
