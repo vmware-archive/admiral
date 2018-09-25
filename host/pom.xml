@@ -380,6 +380,7 @@
                     </execution>
                 </executions>
                 <configuration>
+                    <useNativeGit>true</useNativeGit>
                     <generateGitPropertiesFile>true</generateGitPropertiesFile>
                     <generateGitPropertiesFilename>src/main/resources/admiral.git.properties</generateGitPropertiesFilename>
                     <gitDescribe>
