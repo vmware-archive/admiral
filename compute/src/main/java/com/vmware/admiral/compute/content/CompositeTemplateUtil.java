@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -973,7 +973,7 @@ public class CompositeTemplateUtil {
             Map<String, ComponentTemplate<?>> components) {
         assertNotEmpty(components, "components");
 
-        Set<String> yamlLiterals = Stream.of(ResourceType.values())
+        Set<String> yamlLiterals = Stream.of(ResourceType.getValues())
                 .map(type -> type.getContentType())
                 .collect(Collectors.toSet());
 

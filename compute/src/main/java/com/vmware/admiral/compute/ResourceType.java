@@ -27,6 +27,9 @@ public enum ResourceType {
     VOLUME_TYPE("CONTAINER_VOLUME", "App.Volume"),
     CLOSURE_TYPE("CLOSURE", "App.Closure"),
     CONFIGURE_HOST_TYPE("CONFIGURE_HOST", ""),
+    // CONTAINER_LOAD_BALANCER_TYPE is DEPRECATED and should not be used!
+    // still having it in the enumeration for proper (de)serialization
+    CONTAINER_LOAD_BALANCER_TYPE("CONTAINER_LOAD_BALANCER", "App.LoadBalancer", true),
     KUBERNETES_GENERIC_TYPE("KUBERNETES_GENERIC", "Kubernetes.Generic"),
     KUBERNETES_POD_TYPE("KUBERNETES_POD", "Kubernetes.Pod"),
     KUBERNETES_DEPLOYMENT_TYPE("KUBERNETES_DEPLOYMENT", "Kubernetes.Deployment"),
@@ -38,38 +41,53 @@ public enum ResourceType {
 
     private final String name;
     private final String contentType;
+    private final boolean deprecated;
 
-    private ResourceType(String name, String contentType) {
+    ResourceType(String name, String contentType) {
+        this(name, contentType, false);
+    }
+
+    ResourceType(String name, String contentType, boolean deprecated) {
         this.name = name;
         this.contentType = contentType;
+        this.deprecated = deprecated;
     }
 
     public String getName() {
+        if (deprecated) {
+            throw new IllegalStateException(this.name() + " is deprecated");
+        }
         return name;
     }
 
     public String getContentType() {
+        if (deprecated) {
+            throw new IllegalStateException(this.name() + " is deprecated");
+        }
         return contentType;
     }
 
     public static ResourceType fromName(String name) {
         if (name == null || "".equals(name)) {
-            throw new LocalizableValidationException("Name cannot be null or empty!", "common.resource-type.name.empty");
+            throw new LocalizableValidationException("Name cannot be null or empty!",
+                    "common.resource-type.name.empty");
         }
         for (ResourceType r : ResourceType.values()) {
-            if (r.name.equals(name)) {
+            if (r.name.equals(name) && !r.deprecated) {
                 return r;
             }
         }
-        throw new LocalizableValidationException("No matching type for:" + name, "common.resource-type.name.mismatch", name);
+        throw new LocalizableValidationException("No matching type for:" + name,
+                "common.resource-type.name.mismatch", name);
     }
 
     public static ResourceType fromContentType(String contentType) {
         if (contentType == null || "".equals(contentType)) {
-            throw new LocalizableValidationException("ContentType cannot be null or empty!", "common.resource-type.content-type.empty");
+            throw new LocalizableValidationException("ContentType cannot be null or empty!",
+                    "common.resource-type.content-type.empty");
         }
         for (ResourceType r : ResourceType.values()) {
-            if (r.contentType.equals(contentType)) {
+            if (r.contentType.equals(contentType) && !r.deprecated) {
                 return r;
             }
         }
@@ -78,7 +96,19 @@ public enum ResourceType {
     }
 
     public static String getAllTypesAsString() {
-        return Arrays.asList(ResourceType.values()).stream().map(Object::toString)
+        return Arrays.stream(ResourceType.values())
+                .filter(r -> !r.deprecated)
+                .map(Object::toString)
                 .collect(Collectors.joining(", "));
     }
+
+    /**
+     * Get all non deprecated values
+     */
+    public static ResourceType[] getValues() {
+        return Arrays.stream(ResourceType.values())
+                .filter(r -> !r.deprecated)
+                .toArray(ResourceType[]::new);
+    }
+
 }
