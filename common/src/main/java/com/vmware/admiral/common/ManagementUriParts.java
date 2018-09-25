@@ -145,7 +145,7 @@ public interface ManagementUriParts {
             + "/container-description-to-kubernetes-description-converter";
     String KUBERNETES_GENERIC_ENTITIES = RESOURCES + "/kubernetes-generic-entities";
 
-    String PKS_NAMESPACE = URI_PREFIX + "/pks";
+    String PKS_NAMESPACE = "/pks";
     String PKS_ENDPOINTS = RESOURCES + PKS_NAMESPACE + "/endpoints";
     String PKS_CREATE_ENDPOINT = RESOURCES + PKS_NAMESPACE + "/create-endpoint";
     String PKS_CLUSTERS = RESOURCES + PKS_NAMESPACE + "/clusters";
