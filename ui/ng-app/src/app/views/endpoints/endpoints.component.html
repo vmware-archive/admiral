@@ -52,14 +52,14 @@
             <clr-datagrid class="endpointsGrid" [clrDgLoading]="loading" [clDgRowSelection]="true"
                           [(clrDgSelected)]="selectedEndpoints">
                 <clr-dg-column>{{"endpoints.name" | i18n}}</clr-dg-column>
-                <clr-dg-column>{{"endpoints.status" | i18n}}</clr-dg-column>
-                <clr-dg-column>{{"endpoints.address" | i18n}}</clr-dg-column>
+                <clr-dg-column>{{"endpoints.uaaEndpoint" | i18n}}</clr-dg-column>
+                <clr-dg-column>{{"endpoints.apiEndpoint" | i18n}}</clr-dg-column>
 
                 <clr-dg-row *clrDgItems="let endpoint of endpoints" [clrDgItem]="endpoint">
                     <clr-dg-cell><div><a [routerLink]="['./' + endpoint.documentId]"
                                             >{{ endpoint.name }}</a></div></clr-dg-cell>
-                    <clr-dg-cell><div>{{ endpoint.status }}</div></clr-dg-cell>
-                    <clr-dg-cell><div>{{ endpoint.address }}</div></clr-dg-cell>
+                    <clr-dg-cell><div>{{ endpoint.uaaEndpoint }}</div></clr-dg-cell>
+                    <clr-dg-cell><div>{{ endpoint.apiEndpoint }}</div></clr-dg-cell>
                 </clr-dg-row>
 
                 <clr-dg-footer>

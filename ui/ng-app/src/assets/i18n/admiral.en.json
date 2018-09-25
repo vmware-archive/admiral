@@ -530,8 +530,8 @@
       "descriptionSingleEndpoint": "Confirm the deletion of {{endpointName}}. The operation cannot be undone."
     },
     "name": "Name",
-    "status": "Status",
-    "address": "Address",
+    "uaaEndpoint": "UAA Endpoint",
+    "apiEndpoint": "API Endpoint",
     "count": "endpoints",
     "details": {
       "titleCreate": "Create Endpoint",
