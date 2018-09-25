@@ -382,6 +382,10 @@
                 <configuration>
                     <generateGitPropertiesFile>true</generateGitPropertiesFile>
                     <generateGitPropertiesFilename>src/main/resources/admiral.git.properties</generateGitPropertiesFilename>
+                    <gitDescribe>
+                        <skip>false</skip>
+                        <always>true</always>
+                    </gitDescribe>
                     <excludeProperties>
                         <excludeProperty>git.branch.*</excludeProperty>
                         <excludeProperty>git.build.*</excludeProperty>
