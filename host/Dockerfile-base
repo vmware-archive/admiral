@@ -1,10 +1,10 @@
-FROM photon:1.0
+FROM photon:2.0
 
 MAINTAINER Admiral Team, https://vmware.github.io/admiral/
 
 RUN tdnf distro-sync --refresh -y && \
     tdnf install -y shadow && \
-    tdnf install -y openjre.x86_64 && \
+    tdnf install -y openjre8 && \
     tdnf clean all && \
     mkdir -p /usr/lib/jvm && \
     export JAVA_HOME="/usr/lib/jvm/default-jvm" && \
