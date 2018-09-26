@@ -17,10 +17,10 @@
                      (onCancel)="deleteCanceled()">
 </delete-confirmation>
 
-<grid-view #gridView [serviceEndpoint]="serviceEndpoint" [projectLink]="projectLink">
+<grid-view #gridView [serviceEndpoint]="serviceEndpoint" [projectLink]="projectLink" [hideTitle]="true">
   <div toolbar>
-    <button class="btn btn-link addHost" (click)="onAddHost()"><i
-        class="fa fa-plus"></i>{{ "clusters.resources.addHostButton" | i18n }}</button>
+      <button class="btn btn-sm btn-secondary addHost" (click)="onAddHost()"
+          ><clr-icon shape="plus"></clr-icon> {{"clusters.resources.addHostButton" | i18n | uppercase}}</button>
   </div>
 
   <ng-template let-item="item">

@@ -35,6 +35,7 @@ export class GridViewComponent implements OnInit, OnChanges {
   @Input() searchSuggestionProperties: Array<string>;
   @Input() searchQueryOptions: any;
   @Input() projectLink: string;
+  @Input() hideTitle: boolean = false;
 
   @ViewChildren('cardItem') cards;
   @ViewChild('itemsHolder') itemsHolder;

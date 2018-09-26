@@ -9,138 +9,108 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<nav class="sidenav">
-  <section class="sidenav-content">
-      <clr-dropdown clrPosition="bottom-left" class="project-selector">
-        <button class="btn btn-link" clrDropdownToggle (click)="updateProjects()">
-          <div *ngIf="showGroups" class="project-caret"
-                >{{ "projects.globalSelectLabelEmbedded" | i18n }} <clr-icon shape="caret down"></clr-icon></div>
-          <div *ngIf="showProjects" class="project-caret"
-                >{{ "projects.globalSelectLabel" | i18n }} <clr-icon shape="caret down"></clr-icon></div>
-          <div class="project-label">{{selectedProject | projectName}}</div>
+<clr-vertical-nav class="main-navigation"><!-- [clrVerticalNavCollapsible]=""-->
+    <clr-dropdown class="project-selector">
+        <button class="btn btn-link" clrDropdownTrigger (click)="updateProjects()">
+            <div *ngIf="showGroups" class="project-caret">{{ "projects.globalSelectLabelEmbedded" | i18n }}
+                <clr-icon shape="caret down"></clr-icon></div>
+            <div *ngIf="showProjects" class="project-caret">{{ "projects.globalSelectLabel" | i18n }}
+                <clr-icon shape="caret down"></clr-icon></div>
+            <div class="project-label">{{selectedProject | projectName}}</div>
         </button>
-        <clr-dropdown-menu>
-          <a *ngFor="let p of projects" (click)="selectProject(p)" clrDropdownItem>{{p | projectName}}</a>
+        <clr-dropdown-menu [clrPosition]="'bottom-right'">
+            <a *ngFor="let project of projects" (click)="selectProject(project)"
+               clrDropdownItem>{{project | projectName}}</a>
         </clr-dropdown-menu>
-      </clr-dropdown>
-      <section class="nav-group collapsible" allowNavigation [roles]="deploymentsRouteRestriction"
-               [projectSelfLink]="currentProjectLink">
-          <input id="deploymentsCollapse" type="checkbox">
-          <label for="deploymentsCollapse">{{ "navigation.deployments" | i18n }}</label>
-          <ul class="nav-list">
-              <li><a class="nav-link" routerLink="applications" routerLinkActive="active"
-                    >{{ "navigation.applications" | i18n }}</a></li>
-              <li><a class="nav-link" routerLink="containers" routerLinkActive="active"
-                    >{{ "navigation.containers" | i18n }}</a></li>
-              <li><a class="nav-link" routerLink="networks" routerLinkActive="active"
-                    >{{ "navigation.networks" | i18n }}</a></li>
-              <li><a class="nav-link" routerLink="volumes" routerLinkActive="active"
-                    >{{ "navigation.volumes" | i18n }}</a></li>
-              <li *ngIf="areClosuresAllowed"><a class="nav-link" routerLink="closures"
-                                                routerLinkActive="active">{{ "navigation.closures" | i18n }}</a></li>
-              <li *ngIf="isPksEnabled">
-                  <section class="nav-group collapsible">
-                      <input id="kubernetesCollapse" type="checkbox">
-                        <label for="kubernetesCollapse">{{ "navigation.kubernetes.title" | i18n }}</label>
-                        <ul class="nav-list">
-                            <li><a class="nav-link" routerLink="kubernetes/deployments"
-                                routerLinkActive="active">{{ "navigation.kubernetes.deployments" | i18n }}</a></li>
-                            <li><a class="nav-link" routerLink="kubernetes/pods"
-                                routerLinkActive="active">{{ "navigation.kubernetes.pods" | i18n }}</a></li>
-                            <!-- k8s services are out of the current scope.
-                                <li *ngIf="externalKubernetesEnabled"><a class="nav-link"
-                                    routerLink="kubernetes/services"
-                                    routerLinkActive="active">{{ "navigation.kubernetes.services" | i18n }}</a></li>
-                            -->
-                        </ul>
-                  </section>
-              </li>
-          </ul>
-      </section>
+    </clr-dropdown>
 
-      <section *ngIf="showKubernetes" class="nav-group collapsible">
-        <input id="kubernetesCollapse" type="checkbox">
-        <label for="kubernetesCollapse">{{ "navigation.kubernetes.title" | i18n }}</label>
-        <ul class="nav-list">
-            <li><a class="nav-link" routerLink="kubernetes/deployments"
-                routerLinkActive="active">{{ "navigation.kubernetes.deployments" | i18n }}</a></li>
-            <li><a class="nav-link" routerLink="kubernetes/pods"
-                routerLinkActive="active">{{ "navigation.kubernetes.pods" | i18n }}</a></li>
-             <!--k8s services are out of the current scope.
-            <li *ngIf="externalKubernetesEnabled"><a class="nav-link"
-                routerLink="kubernetes/services"
-                routerLinkActive="active">{{ "navigation.kubernetes.services" | i18n }}</a></li>
-            -->
-        </ul>
-      </section>
+    <clr-vertical-nav-group [clrVerticalNavGroupExpanded]="true" allowNavigation
+                            [roles]="deploymentsRouteRestriction"
+                            [projectSelfLink]="currentProjectLink">
+        <clr-icon shape="blocks-group" clrVerticalNavIcon></clr-icon> {{ "navigation.deployments" | i18n }}
+        <clr-vertical-nav-group-children>
+            <a clrVerticalNavLink routerLink="applications"
+               routerLinkActive="active">{{ "navigation.applications" | i18n }}</a>
+            <a clrVerticalNavLink routerLink="containers"
+               routerLinkActive="active">{{ "navigation.containers" | i18n }}</a>
+            <a clrVerticalNavLink routerLink="networks"
+               routerLinkActive="active">{{ "navigation.networks" | i18n }}</a>
+            <a clrVerticalNavLink routerLink="volumes"
+               routerLinkActive="active">{{ "navigation.volumes" | i18n }}</a>
+            <a *ngIf="showKubernetes || isPksEnabled" clrVerticalNavLink routerLink="kubernetes/deployments"
+               routerLinkActive="active">{{ "navigation.kubernetes.deployments" | i18n }}</a>
+            <a *ngIf="showKubernetes || isPksEnabled" clrVerticalNavLink routerLink="kubernetes/pods"
+               routerLinkActive="active">{{ "navigation.kubernetes.pods" | i18n }}</a>
+        </clr-vertical-nav-group-children>
+    </clr-vertical-nav-group>
 
-      <section *ngIf="showLibrary" class="nav-group collapsible">
-          <input id="libraryCollapse" type="checkbox">
-          <label for="libraryCollapse">{{ "navigation.library" | i18n }}</label>
-          <ul class="nav-list">
-              <li><a class="nav-link" allowNavigation [roles]="templatesRouteRestriction"
-                     [projectSelfLink]="currentProjectLink" routerLink="templates"
-                     routerLinkActive="active">{{ "navigation.templates" | i18n }}</a></li>
-              <section *ngIf="isHbrEnabled" class="nav-group collapsible">
-                  <input id="repositoriesCollapse" type="checkbox">
-                  <label for="repositoriesCollapse">{{ "navigation.repositories" | i18n }}</label>
-                  <ul class="nav-list">
-                      <li><a class="nav-link" routerLink="project-repositories"
-                             routerLinkActive="active">{{ "navigation.internalRepositories" | i18n }}</a></li>
-                      <li><a class="nav-link" allowNavigation [roles]="publicReposRouteRestriction"
-                             [projectSelfLink]="currentProjectLink" routerLink="public-repositories"
-                             routerLinkActive="active">{{ "navigation.publicRepositories" | i18n }}</a></li>
-                  </ul>
-              </section>
-              <li *ngIf="!isHbrEnabled"><a class="nav-link" allowNavigation
-                    [roles]="publicReposRouteRestriction" [projectSelfLink]="currentProjectLink"
-                    routerLink="public-repositories"
-                    routerLinkActive="active">{{ "navigation.publicRepositories" | i18n }}</a></li>
-              <li *ngIf="embeddedMode"><a class="nav-link" routerLink="registries"
-                    allowNavigation [roles]="registriesRouteRestriction"
-                    routerLinkActive="active">{{ "navigation.registries" | i18n }}</a></li>
-              <li *ngIf="areClosuresAllowed"><a class="nav-link" routerLink="closure-definitions"
-                    routerLinkActive="active">{{ "navigation.closures" | i18n }}</a></li>
-          </ul>
-      </section>
-      <section class="nav-group collapsible" allowNavigation [roles]="infrastructureRouteRestriction"
-               [projectSelfLink]="currentProjectLink">
-          <input id="infrastructureCollapse" type="checkbox">
-          <label for="infrastructureCollapse">{{ "navigation.infrastructure" | i18n }}</label>
-          <ul class="nav-list" allowNavigation [roles]="clustersRouteRestriction">
-              <li><a class="nav-link" routerLink="clusters" routerLinkActive="active"
-              >{{ navigationClustersTextKey | i18n }}</a></li>
-          </ul>
-          <ul *ngIf="isPksEnabled" class="nav-list">
-            <li><a class="nav-link" routerLink="kubernetes/clusters"
-                    routerLinkActive="active">{{ "navigation.kubernetesClusters" | i18n }}</a></li>
-          </ul>
-      </section>
-      <section *ngIf="isPksEnabled" allowNavigation [roles]="endpointsRouteRestriction"
-                    class="nav-group collapsible">
-          <input id="endpointsCollapse" type="checkbox">
-          <label for="endpointsCollapse">{{ "navigation.endpoints" | i18n }}</label>
-          <ul class="nav-list">
-              <li><a class="nav-link" routerLink="endpoints" routerLinkActive="active"
-                    >{{ "navigation.pksEndpoints" | i18n }}</a></li>
-          </ul>
-      </section>
-      <a *ngIf="embeddedMode" class="nav-link" allowNavigation [roles]="identityManagementRouteRestriction"
-            routerLink="identity-management" routerLinkActive="active"
-            >{{ "navigation.identityManagement" | i18n }}</a>
-      <section *ngIf="!isVic" allowNavigation [roles]="activityRouteRestriction"
-               class="nav-group collapsible">
-          <input id="recentActivityCollapse" type="checkbox">
-          <label for="recentActivityCollapse">{{ "navigation.recentActivity" | i18n }}</label>
-          <ul class="nav-list">
-              <li><a class="nav-link" routerLink="requests" routerLinkActive="active"
-                    >{{"navigation.requests" | i18n }}</a></li>
-              <li><a class="nav-link" routerLink="event-logs" routerLinkActive="active"
-                    >{{"navigation.eventLogs" | i18n }}</a></li>
-          </ul>
-      </section>
-  </section>
-</nav>
+    <clr-vertical-nav-group *ngIf="showLibrary" [clrVerticalNavGroupExpanded]="true">
+        <clr-icon shape="library" clrVerticalNavIcon></clr-icon> {{ "navigation.library" | i18n }}
+        <clr-vertical-nav-group-children>
+            <a clrVerticalNavLink allowNavigation [roles]="templatesRouteRestriction"
+               [projectSelfLink]="currentProjectLink" routerLink="templates"
+               routerLinkActive="active">{{ "navigation.templates" | i18n }}</a>
+            <a *ngIf="isHbrEnabled" clrVerticalNavLink routerLink="project-repositories"
+               routerLinkActive="active">{{ "navigation.internalRepositories" | i18n }}</a>
+            <a *ngIf="isHbrEnabled" clrVerticalNavLink allowNavigation [roles]="publicReposRouteRestriction"
+               [projectSelfLink]="currentProjectLink" routerLink="public-repositories"
+               routerLinkActive="active">{{ "navigation.publicRepositories" | i18n }}</a>
+            <a *ngIf="!isHbrEnabled" clrVerticalNavLink allowNavigation
+               [roles]="publicReposRouteRestriction" [projectSelfLink]="currentProjectLink"
+               routerLink="public-repositories"
+               routerLinkActive="active">{{ "navigation.publicRepositories" | i18n }}</a>
+            <a *ngIf="embeddedMode" clrVerticalNavLink routerLink="registries"
+               allowNavigation [roles]="registriesRouteRestriction"
+               routerLinkActive="active">{{ "navigation.registries" | i18n }}</a>
+            <a *ngIf="areClosuresAllowed" clrVerticalNavLink routerLink="closure-definitions"
+               routerLinkActive="active">{{ "navigation.closures" | i18n }}</a>
+        </clr-vertical-nav-group-children>
+    </clr-vertical-nav-group>
+
+    <clr-vertical-nav-group [clrVerticalNavGroupExpanded]="true" allowNavigation
+                            [roles]="infrastructureRouteRestriction"
+                            [projectSelfLink]="currentProjectLink">
+        <clr-icon shape="cluster" clrVerticalNavIcon></clr-icon> {{ "navigation.infrastructure" | i18n }}
+        <clr-vertical-nav-group-children>
+            <a clrVerticalNavLink allowNavigation [roles]="clustersRouteRestriction"
+               [projectSelfLink]="currentProjectLink" routerLink="clusters"
+               routerLinkActive="active">{{ navigationClustersTextKey | i18n }}</a>
+            <a *ngIf="isPksEnabled" clrVerticalNavLink routerLink="kubernetes/clusters"
+            routerLinkActive="active">{{ "navigation.kubernetesClusters" | i18n }}</a>
+        </clr-vertical-nav-group-children>
+    </clr-vertical-nav-group>
+
+    <clr-vertical-nav-group *ngIf="isPksEnabled" [clrVerticalNavGroupExpanded]="true"
+                            allowNavigation [roles]="endpointsRouteRestriction">
+        <clr-icon shape="connect" clrVerticalNavIcon></clr-icon> {{ "navigation.endpoints" | i18n }}
+        <clr-vertical-nav-group-children>
+            <a class="nav-link" routerLink="endpoints"
+               routerLinkActive="active">{{ "navigation.pksEndpoints" | i18n }}</a>
+        </clr-vertical-nav-group-children>
+    </clr-vertical-nav-group>
+
+
+    <clr-vertical-nav-group *ngIf="embeddedMode" [clrVerticalNavGroupExpanded]="true"
+                            allowNavigation [roles]="identityManagementRouteRestriction">
+        <clr-icon shape="ruler-pencil" clrVerticalNavIcon></clr-icon> {{ "navigation.identityManagement" | i18n }}
+        <clr-vertical-nav-group-children>
+            <a class="nav-link" routerLink="identity-management"
+               routerLinkActive="active">{{ "navigation.identityManagement" | i18n }}</a>
+        </clr-vertical-nav-group-children>
+    </clr-vertical-nav-group>
+
+    <clr-vertical-nav-group *ngIf="!isVic" [clrVerticalNavGroupExpanded]="true"
+                            allowNavigation [roles]="activityRouteRestriction">
+        <clr-icon shape="list" clrVerticalNavIcon></clr-icon> {{ "navigation.recentActivity" | i18n }}
+        <clr-vertical-nav-group-children>
+            <a clrVerticalNavLink routerLink="requests"
+               routerLinkActive="active">{{ "navigation.recentActivity" | i18n }}</a>
+            <a clrVerticalNavLink routerLink="event-logs"
+               routerLinkActive="active">{{ "navigation.eventLogs" | i18n }}</a>
+        </clr-vertical-nav-group-children>
+    </clr-vertical-nav-group>
+</clr-vertical-nav>
+
 <!-- Content Area -->
 <div class="content-area" [hidden]="formerViewPath">
     <clr-alert *ngIf="alertMessage"

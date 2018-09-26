@@ -1415,6 +1415,7 @@
   "advanced": "Advanced",
   "noSelection": "No Selection",
   "noItems": "No items",
+  "items": "items",
   "buildNumber": "Build number",
   "errors": {
     "hostIp": "Value must be hostname or IP address.",

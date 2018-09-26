@@ -9,8 +9,8 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<div class="title">
-    <ng-content select="[title]"></ng-content> <span class="label label-info">{{totalItemsCount}} items</span>
+<div class="title" *ngIf="!hideTitle">
+    <ng-content select="[title]"></ng-content> <span class="label label-info">{{totalItemsCount}} {{'items' | i18n}}</span>
 </div>
 
 <div class="toolbar">
@@ -25,17 +25,17 @@
               <div *ngIf="showOccurrenceSelector" class="search-form-occurrence select">
                   <select id="occurrenceSelector" formControlName="occurrenceSelector"
                           [(ngModel)]="occurrenceSelection">
-                      <option value="all">{{ 'search.occurrence.all' | i18n }}</option>
+                      <option value="all">{{'search.occurrence.all' | i18n}}</option>
                   </select>
               </div>
               <div class="search-form-input">
                 <input type="text" formControlName="searchGridInput"
-                     [placeholder]="searchPlaceholder" (keyup.enter)="onSearchGrid($event)" />
+                     [placeholder]="searchPlaceholder" (keyup.enter)="onSearchGrid($event)"/>
               </div>
           </div>
       </form>
       <span class="separator"></span>
-      <button class="btn btn-icon btn-link" title="{{ 'refresh' | i18n }}"
+      <button class="btn btn-icon btn-link" title="{{'refresh' | i18n}}"
               (click)="refresh()"><clr-icon shape="refresh" size="16"></clr-icon></button>
     </div>
   </div>
@@ -52,7 +52,7 @@
       </ng-template>
     </span>
     <span *ngIf="items.length === 0 && !loading" class="content-empty">
-      {{ "noItems" | i18n }}
+      {{"noItems" | i18n}}
     </span>
   </div>
   <div *ngIf="loading" class="central-block-loading">

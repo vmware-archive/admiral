@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -9,24 +9,24 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { AuthService } from './../../utils/auth.service';
-import { Directive, Input, Inject, ElementRef, Renderer } from '@angular/core';
-import { Utils } from './../../utils/utils';
-import { OnChanges } from '@angular/core';
-import { FT } from './../../utils/ft';
+
+import { Directive, Input, ElementRef, Renderer, OnChanges } from '@angular/core';
+import { AuthService } from '../../utils/auth.service';
+import { Utils } from '../../utils/utils';
+
 
 @Directive({
   selector: '[allowNavigation]'
 })
 export class AllowNavigationDirective implements OnChanges {
-
   @Input()
   roles: string[];
 
   @Input()
   projectSelfLink: string;
 
-  constructor(private el: ElementRef, private renderer: Renderer, private authService: AuthService) {
+  constructor(private el: ElementRef, private renderer: Renderer,
+              private authService: AuthService) {
   }
 
   ngOnChanges(changes) {

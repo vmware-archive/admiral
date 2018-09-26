@@ -140,7 +140,8 @@ navigation-container > :not(.with-back-button) > back-button {
     }
   }
 }
-.sidenav .project-selector {
+
+.project-selector {
   width: 100%;
   border-bottom: 1px solid $clr-light-midtone-gray;
 
@@ -164,12 +165,12 @@ navigation-container > :not(.with-back-button) > back-button {
       line-height: 20px;
       color: black;
       text-transform: none;
-      font-size: 20px;
+      font-size: 16px;
     }
   }
 
   .dropdown-menu {
-    margin-left: 20px;
+    margin-left: 5px;
   }
 }
 

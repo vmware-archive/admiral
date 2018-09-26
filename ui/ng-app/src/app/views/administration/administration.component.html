@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~ Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
   ~
   ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
   ~ You may not use this product except in compliance with the License.
@@ -9,15 +9,18 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<nav class="sidenav">
-  <section class="sidenav-content">
-      <a class="nav-link" allowNavigation [roles]="identityManagementRouteRestriction" routerLink="identity-management" routerLinkActive="active">{{ "navigation.identityManagement" | i18n }}</a>
-      <a class="nav-link" allowNavigation [roles]="projectsRouteRestriction" routerLink="projects" routerLinkActive="active">{{ "navigation.projects" | i18n }}</a>
-      <a class="nav-link" allowNavigation [roles]="registriesRouteRestriction" routerLink="registries" routerLinkActive="active">{{ "navigation.registries" | i18n }}</a>
-      <a *ngIf="isHbrEnabled" class="nav-link" allowNavigation [roles]="configurationRouteRestriction" routerLink="configuration" routerLinkActive="active">{{ "navigation.configuration" | i18n }}</a>
-      <a class="nav-link" allowNavigation [roles]="logsRouteRestriction" routerLink="logs" routerLinkActive="active">{{ "navigation.logs" | i18n }}</a>
-  </section>
-</nav>
+<clr-vertical-nav>
+    <a clrVerticalNavLink allowNavigation [roles]="identityManagementRouteRestriction"
+       routerLink="identity-management" routerLinkActive="active">{{ "navigation.identityManagement" | i18n }}</a>
+    <a clrVerticalNavLink allowNavigation [roles]="projectsRouteRestriction"
+       routerLink="projects" routerLinkActive="active">{{ "navigation.projects" | i18n }}</a>
+    <a clrVerticalNavLink allowNavigation [roles]="registriesRouteRestriction"
+       routerLink="registries" routerLinkActive="active">{{ "navigation.registries" | i18n }}</a>
+    <a *ngIf="isHbrEnabled" clrVerticalNavLink allowNavigation [roles]="configurationRouteRestriction"
+       routerLink="configuration" routerLinkActive="active">{{ "navigation.configuration" | i18n }}</a>
+    <a clrVerticalNavLink allowNavigation [roles]="logsRouteRestriction"
+       routerLink="logs" routerLinkActive="active">{{ "navigation.logs" | i18n }}</a>
+</clr-vertical-nav>
 
 <div class="content-area">
     <clr-alert *ngIf="alertMessage"
