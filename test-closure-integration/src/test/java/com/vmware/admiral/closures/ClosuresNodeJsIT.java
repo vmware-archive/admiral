@@ -72,10 +72,10 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
         serviceClient = ServiceClientFactory.createServiceClient(null);
         setupClosureEnv();
         dockerBuildImageLink = getBaseUrl()
-                + createImageBuildRequestUri(IMAGE_NAME + ":1.0", dockerHostCompute
+                + createImageBuildRequestUri(IMAGE_NAME + ":2.0", dockerHostCompute
                 .documentSelfLink);
         dockerBuildBaseImageLink = getBaseUrl()
-                + createImageBuildRequestUri(IMAGE_NAME + "_base:1.0", dockerHostCompute
+                + createImageBuildRequestUri(IMAGE_NAME + "_base:2.0", dockerHostCompute
                 .documentSelfLink);
     }
 

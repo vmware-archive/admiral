@@ -60,8 +60,8 @@ public class ClosuresPerformanceIT extends BaseClosurePerformanceTest {
 
     private static final String IMAGE_NAME = IMAGE_NAME_PREFIX
             + DriverConstants.RUNTIME_NODEJS_4;
-    public static final String BASE_IMAGE = IMAGE_NAME + "_base:1.0";
-    public static final String RUNTIME_IMAGE = IMAGE_NAME + ":1.0";
+    public static final String BASE_IMAGE = IMAGE_NAME + "_base:2.0";
+    public static final String RUNTIME_IMAGE = IMAGE_NAME + ":2.0";
 
     private Pattern createdPattern = Pattern.compile("CREATED");
     private Pattern finishedPattern = Pattern.compile("FINISHED");

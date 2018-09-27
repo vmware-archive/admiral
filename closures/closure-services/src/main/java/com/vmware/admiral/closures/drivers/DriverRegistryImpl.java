@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -24,14 +24,14 @@ public final class DriverRegistryImpl implements DriverRegistry {
     private static final Logger logger = Logger
             .getLogger(DriverRegistryImpl.class.getName());
 
-    private final String NODEJS_IMAGE_VERSION = "1.0";
-    private final String NODEJS_BASE_IMAGE_VERSION = "1.0";
-    private final String PYTHON_IMAGE_VERSION = "1.0";
-    private final String PYTHON_BASE_IMAGE_VERSION = "1.0";
-    private final String POWERSHELL_IMAGE_VERSION = "1.0";
-    private final String POWERSHELL_BASE_IMAGE_VERSION = "1.0";
-    private final String JAVA_IMAGE_VERSION = "1.0";
-    private final String JAVA_BASE_IMAGE_VERSION = "1.0";
+    private final String NODEJS_IMAGE_VERSION = "2.0";
+    private final String NODEJS_BASE_IMAGE_VERSION = "2.0";
+    private final String PYTHON_IMAGE_VERSION = "2.0";
+    private final String PYTHON_BASE_IMAGE_VERSION = "2.0";
+    private final String POWERSHELL_IMAGE_VERSION = "2.0";
+    private final String POWERSHELL_BASE_IMAGE_VERSION = "2.0";
+    private final String JAVA_IMAGE_VERSION = "2.0";
+    private final String JAVA_BASE_IMAGE_VERSION = "2.0";
 
     private final Map<String, String> supportedRuntimes = new HashMap<>();
     private final Map<String, ExecutionDriver> executionDrivers = new HashMap<>();
