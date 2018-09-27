@@ -145,12 +145,12 @@ public interface ManagementUriParts {
             + "/container-description-to-kubernetes-description-converter";
     String KUBERNETES_GENERIC_ENTITIES = RESOURCES + "/kubernetes-generic-entities";
 
-    String PKS_NAMESPACE = "/pks";
-    String PKS_ENDPOINTS = RESOURCES + PKS_NAMESPACE + "/endpoints";
-    String PKS_CREATE_ENDPOINT = RESOURCES + PKS_NAMESPACE + "/create-endpoint";
-    String PKS_CLUSTERS = RESOURCES + PKS_NAMESPACE + "/clusters";
-    String PKS_PLANS = RESOURCES + PKS_NAMESPACE + "/plans";
-    String PKS_CLUSTERS_CONFIG = RESOURCES + PKS_NAMESPACE + "/clusters-config";
+    String PKS_NAMESPACE = RESOURCES + "/pks";
+    String PKS_ENDPOINTS = PKS_NAMESPACE + "/endpoints";
+    String PKS_CREATE_ENDPOINT = PKS_NAMESPACE + "/create-endpoint";
+    String PKS_CLUSTERS = PKS_NAMESPACE + "/clusters";
+    String PKS_PLANS = PKS_NAMESPACE + "/plans";
+    String PKS_CLUSTERS_CONFIG = PKS_NAMESPACE + "/clusters-config";
     String PKS_KUBE_CONFIG_CONTENT = RESOURCES + "/kube-config";
 
     // Request tasks:
