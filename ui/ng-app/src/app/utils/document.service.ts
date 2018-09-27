@@ -268,7 +268,7 @@ export class DocumentService {
       return headers;
     };
 
-    if (FT.isApplicationEmbedded()) {
+    if (FT.isApplicationEmbedded() && !FT.isVca()) {
       if (!selectedProject) {
         return undefined;
       }
