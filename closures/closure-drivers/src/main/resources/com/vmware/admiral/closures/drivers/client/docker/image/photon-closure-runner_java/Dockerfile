@@ -1,4 +1,4 @@
-FROM vmware/photon-closure-runner_java_base:1.0
+FROM vmware/photon-closure-runner_java_base:2.0
 
 ARG TASK_URI
 ARG TOKEN
