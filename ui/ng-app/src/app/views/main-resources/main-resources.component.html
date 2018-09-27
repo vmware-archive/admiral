@@ -18,7 +18,7 @@
                 <clr-icon shape="caret down"></clr-icon></div>
             <div class="project-label">{{selectedProject | projectName}}</div>
         </button>
-        <clr-dropdown-menu [clrPosition]="'bottom-right'">
+        <clr-dropdown-menu [clrPosition]="'bottom-left'">
             <a *ngFor="let project of projects" (click)="selectProject(project)"
                clrDropdownItem>{{project | projectName}}</a>
         </clr-dropdown-menu>
