@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -10,6 +10,8 @@
  */
 
 package com.vmware.admiral.compute.container;
+
+import static com.vmware.admiral.compute.container.ContainerHostDataCollectionService.MAINTENANCE_INTERVAL_MICROS;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -56,6 +58,7 @@ import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
+import com.vmware.xenon.services.common.QueryTask.QuerySpecification.QueryOption;
 import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 
 /**
@@ -423,26 +426,35 @@ public class HostVolumeListDataCollection extends StatefulService {
                 // the docker host could be added in a different project. This will result
                 // in discovering the volumes created in the other project.
                 String possibleVolumeSelfLink = UriUtils.buildUriPath(ContainerVolumeService
-                                .FACTORY_LINK, volumeState.name);
-                Operation operation = Operation
-                        .createGet(this, possibleVolumeSelfLink)
-                        .setCompletion(
-                                (o, ex) -> {
-                                    if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
-                                        createDiscoveredContainerVolume(callback, counter,
-                                                volumeState);
-                                        return;
-                                    }
-                                    if (ex != null) {
-                                        logSevere("Failed to get volume %s : %s", volumeState.name,
-                                                ex.getMessage());
-                                        counter.getAndDecrement();
-                                    } else if (counter.decrementAndGet() == 0) {
+                        .FACTORY_LINK, volumeState.name);
+
+                List<ContainerVolumeState> volumeStatesFound = new ArrayList<>();
+                QueryTask volumeServicesQuery = QueryUtil.buildPropertyQuery(
+                        ContainerVolumeState.class,
+                        ContainerVolumeState.FIELD_NAME_SELF_LINK, possibleVolumeSelfLink);
+                volumeServicesQuery.querySpec.options.add(QueryOption.INCLUDE_DELETED);
+                new ServiceDocumentQuery<>(getHost(), ContainerVolumeState.class)
+                        .query(volumeServicesQuery, (r) -> {
+                            if (r.hasException()) {
+                                logSevere("Failed to get volume %s : %s",
+                                        volumeState.name, r.getException().getMessage());
+                                callback.accept(r.getException());
+                            } else if (r.hasResult()) {
+                                if (r.getResult().documentUpdateTimeMicros < Utils.fromNowMicrosUtc(
+                                        -MAINTENANCE_INTERVAL_MICROS / 2)) {
+                                    volumeStatesFound.add(r.getResult());
+                                }
+                            } else {
+                                if (volumeStatesFound.isEmpty()) {
+                                    createDiscoveredContainerVolume(callback, counter,
+                                            volumeState);
+                                } else {
+                                    if (counter.decrementAndGet() == 0) {
                                         callback.accept(null);
                                     }
-                                });
-
-                sendRequest(operation);
+                                }
+                            }
+                        });
             }
         }
     }

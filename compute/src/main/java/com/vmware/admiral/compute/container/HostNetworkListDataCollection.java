@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -10,6 +10,8 @@
  */
 
 package com.vmware.admiral.compute.container;
+
+import static com.vmware.admiral.compute.container.ContainerHostDataCollectionService.MAINTENANCE_INTERVAL_MICROS;
 
 import java.net.URI;
 import java.time.Instant;
@@ -59,6 +61,7 @@ import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
+import com.vmware.xenon.services.common.QueryTask.QuerySpecification.QueryOption;
 import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 
 /**
@@ -470,6 +473,7 @@ public class HostNetworkListDataCollection extends StatefulService {
                 QueryTask networkServicesQuery = QueryUtil.buildPropertyQuery(
                         ContainerNetworkState.class,
                         ContainerNetworkState.FIELD_NAME_ID, networkState.id);
+                networkServicesQuery.querySpec.options.add(QueryOption.INCLUDE_DELETED);
                 new ServiceDocumentQuery<>(getHost(), ContainerNetworkState.class)
                         .query(networkServicesQuery, (r) -> {
                             if (r.hasException()) {
@@ -477,7 +481,10 @@ public class HostNetworkListDataCollection extends StatefulService {
                                         networkState.name, r.getException().getMessage());
                                 callback.accept(r.getException());
                             } else if (r.hasResult()) {
-                                networkStatesFound.add(r.getResult());
+                                if (r.getResult().documentUpdateTimeMicros < Utils.fromNowMicrosUtc(
+                                        -MAINTENANCE_INTERVAL_MICROS / 2)) {
+                                    networkStatesFound.add(r.getResult());
+                                }
                             } else {
                                 if (networkStatesFound.isEmpty()) {
                                     createDiscoveredContainerNetwork(callback, counter,

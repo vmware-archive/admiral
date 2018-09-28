@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.compute.container;
 
+import static com.vmware.admiral.compute.container.ContainerHostDataCollectionService.MAINTENANCE_INTERVAL_MICROS;
+
 import java.net.URI;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -71,6 +73,7 @@ import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.QueryTask.QuerySpecification.QueryOption;
 
 /**
  * Synchronize the ContainerStates with a list of container IDs
@@ -1041,23 +1044,34 @@ public class HostContainerListDataCollection extends StatefulService {
                 }
                 // check again if the container state already exists by names. This is needed in
                 // cluster mode not to create container states that we already have
-                Operation operation = Operation
-                        .createGet(this, UriUtils.buildUriPath(
-                                ContainerFactoryService.SELF_LINK, containerState.names.get(0)))
-                        .setCompletion((o, ex) -> {
-                            if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
-                                createDiscoveredContainer(callback, counter, containerState);
-                            } else if (ex != null) {
+                String selfLink = UriUtils.buildUriPath(ContainerFactoryService.SELF_LINK,
+                        containerState.names.get(0));
+                List<ContainerState> containerStatesFound = new ArrayList<>();
+                QueryTask containerServicesQuery = QueryUtil.buildPropertyQuery(
+                        ContainerState.class,
+                        ContainerState.FIELD_NAME_SELF_LINK, selfLink);
+                containerServicesQuery.querySpec.options.add(QueryOption.INCLUDE_DELETED);
+                new ServiceDocumentQuery<>(getHost(), ContainerState.class)
+                        .query(containerServicesQuery, (r) -> {
+                            if (r.hasException()) {
                                 logSevere("Failed to get container %s : %s",
-                                        containerState.names, ex.getMessage());
-                                callback.accept(ex);
+                                        containerState.names.get(0), r.getException().getMessage());
+                                callback.accept(r.getException());
+                            } else if (r.hasResult()) {
+                                if (r.getResult().documentUpdateTimeMicros < Utils.fromNowMicrosUtc(
+                                        -MAINTENANCE_INTERVAL_MICROS / 2)) {
+                                    containerStatesFound.add(r.getResult());
+                                }
                             } else {
-                                if (counter.decrementAndGet() == 0) {
-                                    callback.accept(null);
+                                if (containerStatesFound.isEmpty()) {
+                                    createDiscoveredContainer(callback, counter, containerState);
+                                } else {
+                                    if (counter.decrementAndGet() == 0) {
+                                        callback.accept(null);
+                                    }
                                 }
                             }
                         });
-                sendRequest(operation);
             }
         }
     }
