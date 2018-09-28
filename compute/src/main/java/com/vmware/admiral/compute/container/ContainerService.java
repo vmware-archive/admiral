@@ -58,6 +58,8 @@ public class ContainerService extends StatefulService {
 
     private static final long CONTAINER_DESCRIPTION_DELETE_CHECK_WAIT = Long.getLong(
             "com.vmware.admiral.container.description.delete.check.wait", 1000);
+    private static final int DELETE_DESCRIPTION_RETRY_COUNT = Integer.getInteger(
+            "com.vmware.admiral.service.delete.container.description.retries", 1);
 
     public static class ContainerState
             extends com.vmware.photon.controller.model.resources.ResourceState
@@ -363,10 +365,10 @@ public class ContainerService extends StatefulService {
         ContainerState currentState = getState(delete);
         super.handleDelete(delete);
 
-        deleteContainerDescription(currentState);
+        deleteContainerDescription(currentState, DELETE_DESCRIPTION_RETRY_COUNT);
     }
 
-    private void deleteContainerDescription(ContainerState currentState) {
+    private void deleteContainerDescription(ContainerState currentState, int retries) {
         // do no delete THE agent container description
         if ((currentState.descriptionLink == null)
                 || (SystemContainerDescriptions.AGENT_CONTAINER_DESCRIPTION_LINK
@@ -402,11 +404,13 @@ public class ContainerService extends StatefulService {
                         // when deleting multiple containers at once sometimes a container
                         // description is not deleted. schedule another check to make sure that if
                         // needed the description will be deleted
-                        getHost().schedule(() -> {
-                            logInfo("Additional check for containers with description %s will be performed",
-                                    containerDescriptionLink);
-                            deleteContainerDescription(currentState);
-                        }, CONTAINER_DESCRIPTION_DELETE_CHECK_WAIT, TimeUnit.MILLISECONDS);
+                        if (retries > 0) {
+                            getHost().schedule(() -> {
+                                logInfo("Additional check for containers with description %s will be performed",
+                                        containerDescriptionLink);
+                                deleteContainerDescription(currentState, retries - 1);
+                            }, CONTAINER_DESCRIPTION_DELETE_CHECK_WAIT, TimeUnit.MILLISECONDS);
+                        }
                     } else {
                         logInfo("No other child containers found for: %s",
                                 containerDescriptionLink);

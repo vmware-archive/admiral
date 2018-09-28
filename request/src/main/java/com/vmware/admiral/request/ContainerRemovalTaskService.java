@@ -28,6 +28,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -68,6 +69,11 @@ public class ContainerRemovalTaskService
                 ContainerRemovalTaskService.ContainerRemovalTaskState.SubStage> {
 
     public static final String DISPLAY_NAME = "Container Removal";
+    private static final long CONTAINER_DESCRIPTION_DELETE_RETRY_WAIT = Long.getLong(
+            "com.vmware.admiral.service.container.removal.delete.description.wait", 1000);
+    private static final int DELETE_DESCRIPTION_RETRY_COUNT = Integer
+            .getInteger("com.vmware.admiral.service.container.removal.delete.description.retries",
+                    1);
 
     public static class ContainerRemovalTaskState extends
             com.vmware.admiral.service.common.TaskServiceDocument<ContainerRemovalTaskState.SubStage> {
@@ -476,7 +482,8 @@ public class ContainerRemovalTaskService
                         if (state.resourceLinks.containsAll(resourcesSharingDesc)
                                 && (state.customProperties != null && !state.customProperties
                                         .containsKey(CONTAINER_REDEPLOYMENT_CUSTOM_PROP))) {
-                            deleteContainerDescription(cs, subTaskLink).sendWith(this);
+                            deleteContainerDescription(cs, subTaskLink,
+                                    DELETE_DESCRIPTION_RETRY_COUNT);
                         } else {
                             completeSubTasksCounter(subTaskLink, null);
                         }
@@ -484,23 +491,32 @@ public class ContainerRemovalTaskService
                 });
     }
 
-    private Operation deleteContainerDescription(ContainerState cs, String subTaskLink) {
+    private void deleteContainerDescription(ContainerState cs, String subTaskLink,
+            int retries) {
 
-        Operation deleteContainerDesc = Operation
+        Operation
                 .createDelete(this, cs.descriptionLink)
                 .setBody(new ServiceDocument())
                 .setCompletion((op, ex) -> {
                     if (ex != null) {
-                        logWarning("Failed deleting ContainerDescription: %s. Error: %s",
-                                cs.descriptionLink, Utils.toString(ex));
-                        failTask("Failed deleting container resources: "
-                                + Utils.toString(ex), null);
-                        return;
+                        if (ex instanceof CancellationException && retries > 0) {
+                            getHost().schedule(() -> {
+                                logInfo("Additional delete will be sent for description %s",
+                                        cs.descriptionLink);
+                                deleteContainerDescription(cs, subTaskLink, retries - 1);
+                            }, CONTAINER_DESCRIPTION_DELETE_RETRY_WAIT, TimeUnit.MILLISECONDS);
+                            return;
+                        } else {
+                            logWarning("Failed deleting ContainerDescription: %s. Error: %s",
+                                    cs.descriptionLink, Utils.toString(ex));
+                            failTask("Failed deleting container resources: "
+                                    + Utils.toString(ex), null);
+                            return;
+                        }
                     }
                     logInfo("Deleted ContainerDescription: %s", cs.descriptionLink);
                     completeSubTasksCounter(subTaskLink, null);
-                });
-        return deleteContainerDesc;
+                }).sendWith(this);
     }
 
     private Operation releaseResourcePlacement(ContainerRemovalTaskState state, ContainerState cs,
