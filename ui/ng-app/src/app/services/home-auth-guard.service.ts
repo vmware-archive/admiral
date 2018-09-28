@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -9,23 +9,20 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Injectable, Input } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { CanActivate, ActivatedRouteSnapshot, Router, RouterStateSnapshot } from '@angular/router';
-import { Links } from './../utils/links';
-import { AuthService } from './../utils/auth.service';
-import { Utils } from './../utils/utils';
-import { FT } from './../utils/ft';
-import { Roles } from './../utils/roles';
-import { ProjectService } from './../utils/project.service';
-import { DocumentService } from './../utils/document.service';
+import { AuthService } from '../utils/auth.service';
+import { DocumentService } from '../utils/document.service';
+import { ProjectService } from '../utils/project.service';
+import { FT } from '../utils/ft';
+import { Roles } from '../utils/roles';
+import { Utils } from '../utils/utils';
 
 @Injectable()
 export class HomeAuthGuard implements CanActivate {
 
-  constructor(private router: Router,
-    private authService: AuthService,
-    private ps: ProjectService,
-    private ds: DocumentService) {
+  constructor(private router: Router, private authService: AuthService,
+              private projectService: ProjectService, private documentService: DocumentService) {
   }
 
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Promise<boolean> {
@@ -40,7 +37,8 @@ export class HomeAuthGuard implements CanActivate {
       // First check for system roles.
       this.authService.getCachedSecurityContext().then((securityContext) => {
         if (FT.isApplicationEmbedded()) {
-          if (Utils.isContainerDeveloper(securityContext) && this.router.url === '/') {
+          if ((Utils.isContainerDeveloper(securityContext) || FT.isVca())
+              && this.router.url === '/') {
             this.router.navigate(['/home/kubernetes/deployments']);
             return resolve(true);
           }
@@ -57,7 +55,7 @@ export class HomeAuthGuard implements CanActivate {
           return resolve(false);
         }
 
-        let selectedProject = this.ps.getSelectedProject();
+        let selectedProject = this.projectService.getSelectedProject();
         // If there is still no project selected, select and do the check.
         if (!selectedProject) {
           this.selectProjectAndCheckRoles(securityContext, roles, path, resolve);
@@ -102,15 +100,15 @@ export class HomeAuthGuard implements CanActivate {
   }
 
   private selectProjectAndCheckRoles(securityContext: any, roles: any, path: any, resolve: any) {
-    this.ds.listProjects().then(projects => {
+    this.documentService.listProjects().then(projects => {
       if (!projects.documents || projects.documents.length < 1) {
         resolve(false);
         return;
       }
 
-      this.ps.setSelectedProject(projects.documents[0]);
+      this.projectService.setSelectedProject(projects.documents[0]);
 
-      let selectedProject = this.ps.getSelectedProject();
+      let selectedProject = this.projectService.getSelectedProject();
       if (!selectedProject) {
         resolve(false);
         return;
@@ -128,7 +126,8 @@ export class HomeAuthGuard implements CanActivate {
 
   private isProjectViewerOnly(project: any) {
     if (project && project.roles) {
-      if (project.roles.indexOf(Roles.PROJECT_ADMIN) == -1 && project.roles.indexOf(Roles.PROJECT_MEMBER) == -1) {
+      if (project.roles.indexOf(Roles.PROJECT_ADMIN) == -1
+          && project.roles.indexOf(Roles.PROJECT_MEMBER) == -1) {
         return true;
       }
     }
@@ -136,9 +135,9 @@ export class HomeAuthGuard implements CanActivate {
   }
 
   private selectNextAvailableProject() {
-    this.ds.listProjects().then(projects => {
+    this.documentService.listProjects().then(projects => {
       if (projects.documents && projects.documents.length > 0) {
-        this.ps.setSelectedProject(projects.documents[0]);
+        this.projectService.setSelectedProject(projects.documents[0]);
       }
     });
   }

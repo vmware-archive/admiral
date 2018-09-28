@@ -9,8 +9,9 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<clr-vertical-nav class="main-navigation"><!-- [clrVerticalNavCollapsible]=""-->
-    <clr-dropdown class="project-selector">
+<clr-vertical-nav class="main-navigation" [clrVerticalNavCollapsible]="isVca"
+                  [ngClass]="{'hide-top-space': !isVca}">
+    <clr-dropdown *ngIf="!isVca" class="project-selector">
         <button class="btn btn-link" clrDropdownTrigger (click)="updateProjects()">
             <div *ngIf="showGroups" class="project-caret">{{ "projects.globalSelectLabelEmbedded" | i18n }}
                 <clr-icon shape="caret down"></clr-icon></div>
@@ -29,22 +30,24 @@
                             [projectSelfLink]="currentProjectLink">
         <clr-icon shape="blocks-group" clrVerticalNavIcon></clr-icon> {{ "navigation.deployments" | i18n }}
         <clr-vertical-nav-group-children>
-            <a clrVerticalNavLink routerLink="applications"
+            <a *ngIf="!isVca" clrVerticalNavLink routerLink="applications"
                routerLinkActive="active">{{ "navigation.applications" | i18n }}</a>
-            <a clrVerticalNavLink routerLink="containers"
+            <a *ngIf="!isVca" clrVerticalNavLink routerLink="containers"
                routerLinkActive="active">{{ "navigation.containers" | i18n }}</a>
-            <a clrVerticalNavLink routerLink="networks"
+            <a *ngIf="!isVca" clrVerticalNavLink routerLink="networks"
                routerLinkActive="active">{{ "navigation.networks" | i18n }}</a>
-            <a clrVerticalNavLink routerLink="volumes"
+            <a *ngIf="!isVca" clrVerticalNavLink routerLink="volumes"
                routerLinkActive="active">{{ "navigation.volumes" | i18n }}</a>
-            <a *ngIf="showKubernetes || isPksEnabled" clrVerticalNavLink routerLink="kubernetes/deployments"
+            <a *ngIf="showKubernetes || isPksEnabled || isVca" clrVerticalNavLink
+               routerLink="kubernetes/deployments"
                routerLinkActive="active">{{ "navigation.kubernetes.deployments" | i18n }}</a>
-            <a *ngIf="showKubernetes || isPksEnabled" clrVerticalNavLink routerLink="kubernetes/pods"
+            <a *ngIf="showKubernetes || isPksEnabled || isVca" clrVerticalNavLink
+               routerLink="kubernetes/pods"
                routerLinkActive="active">{{ "navigation.kubernetes.pods" | i18n }}</a>
         </clr-vertical-nav-group-children>
     </clr-vertical-nav-group>
 
-    <clr-vertical-nav-group *ngIf="showLibrary" [clrVerticalNavGroupExpanded]="true">
+    <clr-vertical-nav-group *ngIf="showLibrary && !isVca" [clrVerticalNavGroupExpanded]="true">
         <clr-icon shape="library" clrVerticalNavIcon></clr-icon> {{ "navigation.library" | i18n }}
         <clr-vertical-nav-group-children>
             <a clrVerticalNavLink allowNavigation [roles]="templatesRouteRestriction"
@@ -72,7 +75,7 @@
                             [projectSelfLink]="currentProjectLink">
         <clr-icon shape="cluster" clrVerticalNavIcon></clr-icon> {{ "navigation.infrastructure" | i18n }}
         <clr-vertical-nav-group-children>
-            <a clrVerticalNavLink allowNavigation [roles]="clustersRouteRestriction"
+            <a *ngIf="!isVca" clrVerticalNavLink allowNavigation [roles]="clustersRouteRestriction"
                [projectSelfLink]="currentProjectLink" routerLink="clusters"
                routerLinkActive="active">{{ navigationClustersTextKey | i18n }}</a>
             <a *ngIf="isPksEnabled" clrVerticalNavLink routerLink="kubernetes/clusters"
@@ -80,7 +83,7 @@
         </clr-vertical-nav-group-children>
     </clr-vertical-nav-group>
 
-    <clr-vertical-nav-group *ngIf="isPksEnabled" [clrVerticalNavGroupExpanded]="true"
+    <clr-vertical-nav-group *ngIf="isPksEnabled || isVca" [clrVerticalNavGroupExpanded]="true"
                             allowNavigation [roles]="endpointsRouteRestriction">
         <clr-icon shape="connect" clrVerticalNavIcon></clr-icon> {{ "navigation.endpoints" | i18n }}
         <clr-vertical-nav-group-children>
@@ -90,7 +93,7 @@
     </clr-vertical-nav-group>
 
 
-    <clr-vertical-nav-group *ngIf="embeddedMode" [clrVerticalNavGroupExpanded]="true"
+    <clr-vertical-nav-group *ngIf="embeddedMode || isVca" [clrVerticalNavGroupExpanded]="true"
                             allowNavigation [roles]="identityManagementRouteRestriction">
         <clr-icon shape="ruler-pencil" clrVerticalNavIcon></clr-icon> {{ "navigation.identityManagement" | i18n }}
         <clr-vertical-nav-group-children>

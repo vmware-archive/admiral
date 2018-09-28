@@ -3,10 +3,11 @@
 // The full license information can be found in LICENSE in the root directory of this project.
 
 .main-navigation {
-    .nav-content {
-        margin-top: -18px;
-    }
     .project-selector {
         margin-bottom: 10px;
     }
+}
+
+.hide-top-space {
+    padding-top: 0px;
 }
