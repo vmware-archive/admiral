@@ -52,7 +52,7 @@ export class KubernetesClusterNodesComponent implements OnChanges {
         if (!number) {
             return '0';
         }
-        let m = Utils.getMagnitude(number);
+        let m = Utils.getMemoryMagnitude(number);
 
         return Utils.formatBytes(number, m) + ' ' + Utils.magnitudes[m];
     }

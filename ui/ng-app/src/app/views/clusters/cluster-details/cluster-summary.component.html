@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~ Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
   ~
   ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
   ~ You may not use this product except in compliance with the License.
@@ -62,12 +62,14 @@
         </div>
         <div class="summary-subsection-content-row">
             <div class="left-column">{{ "clusters.summary.cpu" | i18n }}</div>
-            <div class="right-column">{{ formatNumber(cluster?.totalCpu) }}Hz</div>
+            <div class="right-column">{{shouldShowCpuInfo() ? (cluster.totalCpu |
+                frequencyMeasurement) : ("notAvailable" | i18n)}}</div>
             <div class="clear"></div>
         </div>
         <div class="summary-subsection-content-row">
             <div class="left-column">{{ "clusters.summary.memory" | i18n }}</div>
-            <div class="right-column">{{ formatNumber(cluster?.totalMemory) }}B</div>
+            <div class="right-column">{{shouldShowMemoryInfo() ? (cluster.totalMemory |
+                memoryMeasurement) : ("notAvailable" | i18n)}}</div>
             <div class="clear"></div>
         </div>
     </div>

@@ -29,23 +29,23 @@ export class ProjectMembersCountPipe implements PipeTransform {
 
     private mergeCollections(collection1: any, collection2: any, collection3: any): any {
         let resultCollection = [];
-        
+
         if (collection1) {
-            this.trasnferPrincipals(collection1, resultCollection);
+            this.transferPrincipals(collection1, resultCollection);
         }
 
         if (collection2) {
-            this.trasnferPrincipals(collection2, resultCollection);
+            this.transferPrincipals(collection2, resultCollection);
         }
 
         if (collection3) {
-            this.trasnferPrincipals(collection3, resultCollection);
+            this.transferPrincipals(collection3, resultCollection);
         }
-        
+
         return resultCollection;
     }
 
-    private trasnferPrincipals(srcCol: any, dstCol: any) {
+    private transferPrincipals(srcCol: any, dstCol: any) {
         if (!srcCol || !dstCol) {
             return;
         }

@@ -45,17 +45,55 @@
                     <div class="truncate">{{item.name}}</div>
                     <div *ngIf="item.address" class="clusterAddress truncate">{{item.address}}</div>
                 </div>
+            </div>
 
-                <clr-dropdown class="card-actions" (click)="toggleItemSelection($event, item)">
-                    <button type="button" class="btn btn-sm btn-link" clrDropdownTrigger>
-                        <clr-icon shape="ellipsis-vertical" size="20"></clr-icon>
-                    </button>
+            <div card-content>
+                <div class="form-group">
+                    <div class="col-xs-6">
+                        <label>{{"clusters.status" | i18n}}</label>
+                    </div>
+                    <div class="col-xs-6">
+                        <div class="status {{item.status}}">{{clusterState(item) | i18n}}</div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-xs-6">
+                        <label>{{"kubernetes.clusters.nodeCount" | i18n}}</label>
+                    </div>
+                    <div class="col-xs-6">
+                        <div [ngClass]="item ? 'badge badge-count' : ''"
+                        >{{(item | nodeCount) || ("notAvailable" | i18n)}}</div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-xs-6">
+                        <label>{{"clusters.memory" | i18n}}</label>
+                    </div>
+                    <div class="col-xs-6">
+                        <div *ngIf="item && item.totalMemory !== 0">{{item.totalMemory | memoryMeasurement}}</div>
+                        <div *ngIf="!item || item.totalMemory === 0">{{"notAvailable" | i18n}}</div>
+                    </div>
+                </div>
+                <div class="progress-static top">
+                    <div class="progress-meter {{item.status}}" data-value="100"></div>
+                </div>
+            </div>
 
-                    <clr-dropdown-menu clrPosition="left-top" *clrIfOpen>
-                        <button type="button" class="dropdown-item cluster-details"
-                                [routerLink]="['./cluster/' + item.documentId]">
-                            <clr-icon shape="eye" size="20" class="card-drop-down-actions">
-                            </clr-icon>{{"projects.actions.details" | i18n}}</button>
+            <div card-footer>
+                <button *ngIf="hasNodes(item)" type="button"
+                        class="btn btn-link downloadKubeconfig"
+                        (click)="downloadKubeConfig($event, item)">
+                    <clr-icon shape="download" size="12">
+                    </clr-icon>{{"kubernetes.clusters.details.summary.kubeConfigBtn" | i18n}}</button>
+                <button class="btn btn-link"
+                        [routerLink]="['./cluster/' + item.documentId]">{{"open" | i18n}}</button>
+
+                <clr-dropdown (click)="toggleItemSelection($event, item)">
+                    <button type="button" class="btn btn-link" clrDropdownTrigger
+                    >{{"moreActions" | i18n}}<clr-icon shape="caret down"></clr-icon></button>
+
+                    <clr-dropdown-menu clrPosition="top-left" *clrIfOpen>
+
                         <button *ngIf="item.supportsOperationDisable" type="button"
                                 class="dropdown-item disableHost"
                                 (click)="disableHost($event, item)">
@@ -72,7 +110,7 @@
                             <clr-icon shape="refresh" size="20" class="card-drop-down-actions">
                             </clr-icon>{{"clusters.actions.rescan" | i18n}}</button>
                         <button *ngIf="item.supportsOperationRemove" type="button"
-                                class="dropdown-item remove-cluster"
+                                class="dropdown-item"
                                 (click)="removeCluster($event, item)">
                             <clr-icon shape="trash" size="20" class="card-drop-down-actions">
                             </clr-icon>{{"delete" | i18n}}</button>
@@ -83,32 +121,6 @@
                             </clr-icon>{{"destroy" | i18n}}</button>
                     </clr-dropdown-menu>
                 </clr-dropdown>
-            </div>
-
-            <div card-content>
-                <div class="form-group">
-                    <label>{{"clusters.status" | i18n}}</label>
-                    <div class="status {{item.status}}">{{clusterState(item)}}</div>
-                </div>
-                <div class="form-group">
-                    <label>{{"kubernetes.clusters.nodeCount" | i18n}}</label>
-                    <div>{{nodeCount(item)}}</div>
-                </div>
-                <div class="form-group">
-                    <label>{{"clusters.memory" | i18n}}</label>
-                    <div>{{totalMemory(item)}}</div>
-                </div>
-                <div class="progress-static top">
-                    <div class="progress-meter {{item.status}}" data-value="100"></div>
-                </div>
-            </div>
-
-            <div card-footer>
-                <button class="btn btn-sm btn-link" [disabled]="!hasNodes(item)"
-                        (click)="downloadKubeConfig($event, item)"
-                        title="{{'kubernetes.clusters.details.summary.kubeConfigTooltip' | i18n}}"
-                    ><clr-icon shape="download" size="12"></clr-icon><span
-                        class="btn-spaced-text">{{"kubernetes.clusters.details.summary.kubeConfigBtn" | i18n}}</span></button>
             </div>
         </card>
     </ng-template>

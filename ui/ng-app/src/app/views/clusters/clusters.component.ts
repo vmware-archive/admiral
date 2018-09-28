@@ -250,6 +250,14 @@ export class ClustersComponent extends AutoRefreshComponent {
         });
     }
 
+    shouldShowCpuInfo(cluster) {
+        return Utils.hasClusterCpuInfo(cluster);
+    }
+
+    shouldShowMemoryInfo(cluster) {
+        return Utils.hasClusterMemoryInfo(cluster);
+    }
+
     cpuPercentageLevel(cluster) {
         if (!cluster) {
             return 0;
@@ -264,18 +272,8 @@ export class ClustersComponent extends AutoRefreshComponent {
         return Math.floor(cluster.memoryUsage / cluster.totalMemory * 100);
     }
 
-    getResourceLabel(b1, b2, unit) {
-        if (b2 == 0) {
-            return 'N/A';
-        }
-
-        let m = Utils.getMagnitude(b2);
-        return Utils.formatBytes(b1, m) + ' of ' + Utils.formatBytes(b2, m)
-                + Utils.magnitudes[m] + unit;
-    }
-
     clusterState(cluster) {
-        return I18n.t('clusters.state.' + cluster.status);
+        return 'clusters.state.' + cluster.status;
     }
 
     isItemSelected(item: any) {

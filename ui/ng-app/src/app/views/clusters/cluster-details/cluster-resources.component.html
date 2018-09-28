@@ -23,82 +23,105 @@
           ><clr-icon shape="plus"></clr-icon> {{"clusters.resources.addHostButton" | i18n | uppercase}}</button>
   </div>
 
-  <ng-template let-item="item">
-    <card class="hostCard" [ngClass]="{'card-actions-selected': isItemSelected(item)}">
+    <ng-template let-item="item">
+        <card class="hostCard" [ngClass]="{'card-actions-selected': isItemSelected(item)}">
 
-      <div card-header>
-        <clr-icon shape="host" size="48"></clr-icon>
-        {{ getHostName(item) }}
-
-          <clr-dropdown class="card-actions" (click)="toggleItemSelection($event, item)">
-              <button type="button" class="btn btn-sm btn-link" clrDropdownTrigger>
-                  <clr-icon shape="ellipsis-vertical" size="20"></clr-icon>
-              </button>
-              <clr-dropdown-menu clrPosition="left-top" *clrIfOpen>
-                  <button type="button" class="dropdown-item editHost"
-                          (click)="editHost($event, item)"><clr-icon shape="pencil" size="20"
-                                class="card-drop-down-actions"></clr-icon>{{ "hosts.actions.edit" | i18n }}</button>
-
-                  <button *ngIf="item.supportsOperationDisable" type="button" class="dropdown-item disableHost"
-                          (click)="disableHost($event, item)"><clr-icon shape="pause" size="20"
-                                class="card-drop-down-actions"></clr-icon>{{ "hosts.actions.disable" | i18n }}</button>
-
-                  <button *ngIf="item.supportsOperationEnable" type="button" class="dropdown-item enableHost"
-                          (click)="enableHost($event, item)"><clr-icon shape="play" size="20"
-                                class="card-drop-down-actions"></clr-icon>{{ "hosts.actions.enable" | i18n }}</button>
-
-                  <button type="button" class="dropdown-item deleteHost"
-                          (click)="deleteHost($event, item)"><clr-icon shape="trash" size="20"
-                                class="card-drop-down-actions"></clr-icon>{{ "delete" | i18n }}</button>
-              </clr-dropdown-menu>
-          </clr-dropdown>
-      </div>
-
-      <div card-content>
-        <div class="form-group">
-          <label>{{ "clusters.resources.address" | i18n }}</label>
-          <div>{{ item.address }}</div>
-        </div>
-        <div *ngIf="getPublicAddress(item)" class="form-group">
-          <label>{{ "clusters.edit.publicAddress" | i18n }}</label>
-          <div>{{ getPublicAddress(item) }}</div>
-        </div>
-        <div class="form-group">
-          <label>{{ "clusters.resources.status" | i18n }}</label>
-          <div class="status {{ hostState(item) }}">{{ hostState(item) }}</div>
-        </div>
-        <div class="form-group">
-          <label>{{ "clusters.resources.containersCount" | i18n }}</label>
-          <div><a [href]="'#/home/containers?parentId=' + getDocumentId(item)">{{ getContainersCount(item, false) }}</a></div>
-        </div>
-        <div class="form-group">
-          <label>{{ "clusters.resources.memory" | i18n }}</label>
-          <div class="row">
-            <div class="progress-block col-sm-4">
-              <div class="progress-static">
-                <div class="progress-meter" attr.data-value="{{ getMemoryPercentage(item, true) }}"></div>
-              </div>
+            <div card-header>
+                <clr-icon shape="host" size="48"></clr-icon>
+                {{ getHostName(item) }}
             </div>
-            <div class="col-sm-8 progress-details p7">{{ getMemoryPercentage(item, false) }}%</div>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>{{ "clusters.resources.cpu" | i18n }}</label>
-          <div class="row">
-            <div class="progress-block col-sm-4">
-              <div class="progress-static">
-                <div class="progress-meter" attr.data-value="{{ getCpuPercentage(item, true) }}"></div>
-              </div>
+
+            <div card-content>
+                <div class="form-group">
+                    <div class="col-xs-6">
+                        <label>{{ "clusters.resources.address" | i18n }}</label>
+                    </div>
+                    <div class="col-xs-6">
+                        <div>{{ item.address }}</div>
+                    </div>
+                </div>
+                <div *ngIf="getPublicAddress(item)" class="form-group">
+                    <label>{{ "clusters.edit.publicAddress" | i18n }}</label>
+                    <div>{{ getPublicAddress(item) }}</div>
+                </div>
+                <div class="form-group">
+                    <div class="col-xs-6">
+                        <label>{{ "clusters.resources.status" | i18n }}</label>
+                    </div>
+                    <div class="col-xs-6">
+                        <div class="status {{ hostState(item) }}">{{ hostState(item) }}</div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-xs-6">
+                        <label>{{ "clusters.resources.containersCount" | i18n }}</label>
+                    </div>
+                    <div class="col-xs-6">
+                        <div class="badge badge-count"><a [href]="'#/home/containers?parentId='
+                        + getDocumentId(item)">{{getContainersCount(item, false) }}</a></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-xs-6">
+                        <label>{{ "clusters.resources.cpu" | i18n }}</label>
+                    </div>
+                    <div class="col-xs-6">
+                        <div class="row">
+                            <div *ngIf="shouldShowCpuInfo(item)" class="progress-block col-sm-4">
+                                <div class="progress-static">
+                                    <div class="progress-meter" attr.data-value="{{ getCpuPercentage(item, true) }}"></div>
+                                </div>
+                            </div>
+                            <div [ngClass]="getPercentageStyle(shouldShowCpuInfo(item))"
+                                 class="col-sm-8 progress-details p7"
+                            >{{ getCpuPercentage(item, false) ? getCpuPercentage(item, false) + '%' : ('notAvailable' | i18n)}}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-xs-6">
+                        <label>{{ "clusters.resources.memory" | i18n }}</label>
+                    </div>
+                    <div class="col-xs-6">
+                        <div class="row">
+                            <div *ngIf="shouldShowMemoryInfo(item)" class="progress-block col-sm-4">
+                                <div class="progress-static">
+                                    <div class="progress-meter" attr.data-value="{{ getMemoryPercentage(item, true) }}"></div>
+                                </div>
+                            </div>
+                            <div [ngClass]="getPercentageStyle(shouldShowMemoryInfo(item))"
+                                 class="col-sm-8 progress-details p7"
+                            >{{getMemoryPercentage(item, false) ? getMemoryPercentage(item, false) + '%' : ('notAvailable' | i18n)}}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="progress-static top">
+                    <div class="progress-meter {{ item.powerState }}" data-value="100"></div>
+                </div>
             </div>
-            <div class="col-sm-8 progress-details p7">{{ getCpuPercentage(item, false) }}%</div>
-          </div>
-        </div>
-        <div class="progress-static top">
-          <div class="progress-meter {{ item.powerState }}" data-value="100"></div>
-        </div>
-      </div>
-    </card>
-  </ng-template>
+
+            <div card-footer>
+                <button type="button" class="btn btn-link editHost"
+                        (click)="editHost($event, item)">{{ "hosts.actions.edit" | i18n }}</button>
+                <button type="button" class="btn btn-link deleteHost"
+                        (click)="deleteHost($event, item)">{{ "delete" | i18n }}</button>
+                <clr-dropdown (click)="toggleItemSelection($event, item)">
+                    <button type="button" class="btn btn-link" clrDropdownTrigger
+                    >{{"moreActions" | i18n}}<clr-icon shape="caret down"></clr-icon></button>
+
+                    <clr-dropdown-menu clrPosition="top-left" *clrIfOpen>
+                        <button *ngIf="item.supportsOperationDisable" type="button" class="dropdown-item disableHost"
+                                (click)="disableHost($event, item)"><clr-icon shape="pause" size="20" class="card-drop-down-actions"
+                        ></clr-icon>{{ "hosts.actions.disable" | i18n }}</button>
+
+                        <button *ngIf="item.supportsOperationEnable" type="button" class="dropdown-item enableHost"
+                                (click)="enableHost($event, item)"><clr-icon shape="play" size="20" class="card-drop-down-actions"
+                        ></clr-icon>{{ "hosts.actions.enable" | i18n }}</button>
+                    </clr-dropdown-menu>
+                </clr-dropdown>
+            </div>
+        </card>
+    </ng-template>
 </grid-view>
 
 <app-cluster-add-host [cluster]="cluster"

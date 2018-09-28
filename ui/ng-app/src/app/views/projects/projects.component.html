@@ -16,68 +16,75 @@
 </delete-confirmation>
 
 <grid-view #gridView [serviceEndpoint]="serviceEndpoint"
-  [searchPlaceholder]="'projects.search.placeholder' | i18n"
-  [searchSuggestionProperties]="['name']">
-
-  <div title>{{"projects.title" | i18n | titlecase}}</div>
-  <div toolbar>
-    <button class="btn btn-sm btn-secondary" allowNavigation [roles]="projectsNewRouteRestriction"
-            [routerLink]="['./new']"
+           [searchPlaceholder]="'projects.search.placeholder' | i18n"
+           [searchSuggestionProperties]="['name']">
+    <div title>{{"projects.title" | i18n | titlecase}}</div>
+    <div toolbar>
+        <button class="btn btn-sm btn-secondary" allowNavigation [roles]="projectsNewRouteRestriction"
+              [routerLink]="['./new']"
         ><clr-icon shape="plus"></clr-icon> {{"projects.project" | i18n}}</button>
-  </div>
+    </div>
 
-  <ng-template let-item="item">
+    <ng-template let-item="item">
 
-    <card [routerLink]="['./' + item.documentId]"
-          [ngClass]="{'card-actions-selected': isItemSelected(item)}">
-      <div card-header>
-        <img [src]="'/container-image-icons?container-image=' + item.documentSelfLink"/>
-        {{item.name}}
-        <clr-dropdown class="card-actions" allowNavigation [projectSelfLink]="item.documentSelfLink"
-                      [roles]="projectsCardViewActions" (click)="toggleItemSelection($event, item)">
-            <button type="button" class="btn btn-sm btn-link" clrDropdownTrigger>
-                <clr-icon shape="ellipsis-vertical" size="20"></clr-icon>
-            </button>
-            <clr-dropdown-menu clrPosition="left-top" *clrIfOpen>
-                <button type="button" class="dropdown-item" [routerLink]="['./' + item.documentId]"
-                    ><clr-icon shape="eye" size="20" class="card-drop-down-actions"
-                        ></clr-icon>{{"projects.actions.details" | i18n}}</button>
+        <card [routerLink]="['./' + item.documentId]"
+              [ngClass]="{'card-actions-selected': isItemSelected(item)}">
+            <div card-header>
+                <img [src]="'/container-image-icons?container-image=' + item.documentSelfLink"/>
+                {{item.name}}
+            </div>
 
-                <button type="button" class="dropdown-item" allowNavigation
+            <div card-content>
+                <div class="form-group">
+                    <div class="col-xs-6">
+                        <label>{{"projects.users" | i18n}}</label>
+                    </div>
+                    <div class="col-xs-6">
+                        <div>{{item | membersCount}}</div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-xs-6">
+                        <label>{{clustersTitle | i18n}}</label>
+                    </div>
+                    <div class="col-xs-6">
+                        <div>{{item.clusterLinks | count}}</div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-xs-6">
+                        <label>{{"projects.repositories" | i18n}}</label>
+                    </div>
+                    <div class="col-xs-6">
+                        <div>{{item.repositories | count}}</div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-xs-6">
+                        <label>{{"projects.projectRegistry" | i18n}}</label>
+                    </div>
+                    <div class="col-xs-6">
+                        <div>{{(item.isPublic ? "projects.public" : "projects.private") | i18n}}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div card-footer>
+                <button type="button" class="btn btn-link"
+                        [routerLink]="['./' + item.documentId]"
+                >{{"open" | i18n}}</button>
+
+                <button type="button" class="btn btn-link" allowNavigation
                         [projectSelfLink]="item.documentSelfLink"
                         [roles]="projectsCardViewRemoveAction"
                         (click)="deleteProject($event, item)"
-                    ><clr-icon shape="trash" size="20" class="card-drop-down-actions"
-                        ></clr-icon>{{"remove" | i18n}}</button>
-            </clr-dropdown-menu>
-        </clr-dropdown>
-      </div>
-
-      <div card-content>
-        <div class="form-group">
-          <label>{{"projects.users" | i18n}}</label>
-          <div>{{item | membersCount}}</div>
-        </div>
-        <div class="form-group">
-          <label>{{clustersTitle | i18n}}</label>
-          <div>{{item.clusterLinks | count}}</div>
-        </div>
-        <div class="form-group">
-          <label>{{"projects.repositories" | i18n}}</label>
-          <div>{{item.repositories | count}}</div>
-        </div>
-        <div class="form-group">
-          <label>{{"projects.projectRegistry" | i18n}}</label>
-          <div>
-            {{(item.isPublic ? "projects.public" : "projects.private") | i18n}}
-          </div>
-        </div>
-      </div>
-    </card>
-  </ng-template>
+                >{{"remove" | i18n}}</button>
+            </div>
+        </card>
+    </ng-template>
 </grid-view>
 
 <navigation-container>
-  <back-button [routerLink]="backButtonLink">{{ backButtonLabel }}</back-button>
-  <router-outlet></router-outlet>
+    <back-button [routerLink]="backButtonLink">{{ backButtonLabel }}</back-button>
+    <router-outlet></router-outlet>
 </navigation-container>

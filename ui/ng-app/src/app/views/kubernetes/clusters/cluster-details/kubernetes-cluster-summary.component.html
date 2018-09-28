@@ -55,11 +55,12 @@
     </div>
     <div class="form-group">
         <label>{{"kubernetes.clusters.details.summary.nodeCount" | i18n}}</label>
-        <label>{{nodeCount ? nodeCount : ("notAvailable" | i18n)}}</label>
+        <label>{{(cluster | nodeCount) || "notAvailable" | i18n}}</label>
     </div>
     <div class="form-group">
         <label>{{"kubernetes.clusters.details.summary.totalMemory" | i18n}}</label>
-        <label>{{totalMemory ? totalMemory : ("notAvailable" | i18n)}}</label>
+        <label *ngIf="cluster && cluster.totalMemory !== 0">{{cluster?.totalMemory | memoryMeasurement}}</label>
+        <label *ngIf="!cluster || cluster.totalMemory === 0">{{"notAvailable" | i18n}}</label>
     </div></form>
 </div>
 

@@ -104,29 +104,6 @@ export class KubernetesClusterSummaryComponent implements OnInit {
         return this.clusterFirstNode && this.clusterFirstNode.customProperties;
     }
 
-    get nodeCount() {
-        let count;
-
-        if (this.cluster) {
-            let nodesString = Utils.getCustomPropertyValue(this.clusterCustomProperties, '__nodes');
-            if (nodesString) {
-                count = JSON.parse(nodesString).length;
-            }
-        }
-
-        return count;
-    }
-
-    get totalMemory() {
-        let total;
-
-        if (this.cluster && this.cluster.totalMemory) {
-            total = this.formatNumber(this.cluster.totalMemory) + 'B';
-        }
-
-        return total;
-    }
-
     get dashboardLink() {
         return this.clusterCustomProperties
             && Utils.getCustomPropertyValue(this.clusterCustomProperties, '__dashboardLink');
@@ -182,13 +159,5 @@ export class KubernetesClusterSummaryComponent implements OnInit {
 
         var kubeConfigLink = Links.KUBE_CONFIG_CONTENT + '?hostLink=' + this.clusterFirstNodeLink;
         window.location.href = Utils.serviceUrl(kubeConfigLink);
-    }
-
-    formatNumber(number) {
-        if (!number) {
-            return '0';
-        }
-        let m = Utils.getMagnitude(number);
-        return Utils.formatBytes(number, m) + ' ' + Utils.magnitudes[m];
     }
 }

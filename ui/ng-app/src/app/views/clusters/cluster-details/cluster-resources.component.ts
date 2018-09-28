@@ -89,6 +89,18 @@ export class ClusterResourcesComponent extends AutoRefreshComponent
         }
     }
 
+    getPercentageStyle(value: number) {
+        return value ? '' : 'no-padding';
+    }
+
+    shouldShowCpuInfo(host) {
+        return Utils.hasHostCpuInfo(host);
+    }
+
+    shouldShowMemoryInfo(host) {
+        return Utils.hasHostMemoryInfo(host);
+    }
+
     ngAfterViewInit() {
         if (FT.isApplicationEmbedded()) {
             this.service.list(Links.DEPLOYMENT_POLICIES, {}).then(policies => {

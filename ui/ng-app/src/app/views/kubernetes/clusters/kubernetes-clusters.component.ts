@@ -142,23 +142,7 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
     }
 
     hasNodes(cluster) {
-        return cluster && cluster.nodeLinks && cluster.nodeLinks.length > 0;
-    }
-
-    getClusterCustomProperties(cluster) {
-        let properties;
-        if (this.hasNodes(cluster)) {
-            properties = cluster.nodes[cluster.nodeLinks[0]].customProperties;
-        }
-
-        return properties;
-    }
-
-    totalMemory(cluster) {
-        if (cluster && cluster.totalMemory) {
-            return this.formatNumber(cluster.totalMemory) + 'B';
-        }
-        return I18n.t('notAvailable');
+        return Utils.hasNodes(cluster);
     }
 
     downloadKubeConfig($event, cluster) {
@@ -237,39 +221,10 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
         this.clearDeleteOpData();
     }
 
-    nodeCount(cluster) {
-        if (cluster) {
-            let nodesString = Utils.getCustomPropertyValue(
-                                    this.getClusterCustomProperties(cluster), '__nodes');
-            if (nodesString) {
-                return JSON.parse(nodesString).length;
-            }
-        }
-
-        return I18n.t('notAvailable');
-    }
-
     clusterState(cluster) {
-        return I18n.t('clusters.state.' + cluster.status);
+        return 'clusters.state.' + cluster.status;
     }
 
-    formatNumber(number) {
-        if (!number) {
-            return '0';
-        }
-        let m = Utils.getMagnitude(number);
-        return Utils.formatBytes(number, m) + ' ' + Utils.magnitudes[m];
-    }
-
-    getResourceLabel(b1, b2, unit) {
-        if (b2 == 0) {
-            return 'N/A';
-        }
-
-        let m = Utils.getMagnitude(b2);
-        return Utils.formatBytes(b1, m) + ' of ' + Utils.formatBytes(b2, m)
-                + Utils.magnitudes[m] + unit;
-    }
 
     operationSupported(op, cluster) {
         let clusterStatus = cluster.status;

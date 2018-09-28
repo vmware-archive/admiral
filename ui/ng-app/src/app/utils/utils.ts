@@ -27,7 +27,7 @@ export class Utils {
     public static CONTAINER_SERVICE_URL_PREFIX = '/container';
 
     public static getHashWithQuery(hash: string, queryOptions: any): string {
-        var queryString;
+        let queryString;
         if (queryOptions) {
             queryString = this.paramsToURI(queryOptions);
         }
@@ -40,14 +40,14 @@ export class Utils {
     }
 
     public static paramsToURI(params) {
-        var str = [];
-        for (var p in params) {
+        let str = [];
+        for (let p in params) {
             if (params.hasOwnProperty(p)) {
-                var v = params[p];
-                var encodedKey = encodeURI(p);
+                let v = params[p];
+                let encodedKey = encodeURI(p);
 
                 if (v instanceof Array) {
-                    for (var i in v) {
+                    for (let i in v) {
                         if (v.hasOwnProperty(i)) {
                             str.push(encodedKey + '=' + encodeURI(v[i]));
                         }
@@ -62,10 +62,10 @@ export class Utils {
     }
 
     public static uriToParams(uri) {
-        var result = {};
+        let result = {};
         uri.split('&').forEach(function (part) {
             if (part) {
-                var item = part.split('=');
+                let item = part.split('=');
                 result[decodeURIComponent(item[0])] = item[1] ? decodeURIComponent(item[1]) : null;
             }
         });
@@ -104,6 +104,35 @@ export class Utils {
 
     public static isPksCluster(cluster) {
         return cluster && cluster.type === 'KUBERNETES' && this.getEndpointLink(cluster);
+    }
+
+    public static hasNodes(cluster) {
+        return cluster && cluster.nodeLinks && cluster.nodeLinks.length > 0;
+    }
+
+    public static getNodesCustomProperties(cluster) {
+        let properties;
+        if (this.hasNodes(cluster)) {
+            properties = cluster.nodes[cluster.nodeLinks[0]].customProperties;
+        }
+
+        return properties;
+    }
+
+    public static hasClusterCpuInfo(cluster) {
+        return cluster && cluster.totalCpu > 0 && cluster.cpuUsage > 0;
+    }
+
+    public static hasClusterMemoryInfo(cluster) {
+        return cluster && cluster.totalMemory > 0 && cluster.memoryUsage > 0;
+    }
+
+    public static hasHostCpuInfo(host) {
+        return host && this.getCpuPercentage(host, false);
+    }
+
+    public static hasHostMemoryInfo(host) {
+        return host && this.getMemoryPercentage(host, false);
     }
 
     public static getEndpointLink(cluster) {
@@ -146,11 +175,18 @@ export class Utils {
         return Math.log(y) / Math.log(x);
     }
 
-    public static getMagnitude(bytes) {
+    public static getMemoryMagnitude(bytes) {
         if (bytes < 1) {
             return 0;
         }
         return Math.floor(this.getBaseLog(1024, bytes));
+    }
+
+    public static getFrequencyMagnitude(hertz) {
+        if (hertz < 1) {
+            return 0;
+        }
+        return Math.floor(this.getBaseLog(1000, hertz));
     }
 
     public static magnitudes = ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
@@ -159,8 +195,16 @@ export class Utils {
         if (bytes == 0) {
             return 0;
         }
-        var decimals = 1;
+        let decimals = 1;
         return parseFloat((bytes / Math.pow(1024, magnitude)).toFixed(decimals));
+    }
+
+    public static formatHertz(hertz, magnitude) {
+        if (hertz == 0) {
+            return 0;
+        }
+        let decimals = 1;
+        return parseFloat((hertz / Math.pow(1000, magnitude)).toFixed(decimals));
     }
 
     public static getObjectPropertyValue(obj, propertyName) {
@@ -202,19 +246,19 @@ export class Utils {
     }
 
     public static getURLParts(url) {
-        var noProtocol = false;
+        let noProtocol = false;
         if (url.search(/.*:\/\//) !== 0) {
             url = 'http://' + url;
             noProtocol = true;
         }
 
-        var parser = document.createElement('a');
+        let parser = document.createElement('a');
         parser.href = url;
 
-        var protocol = noProtocol ? '' : parser.protocol.replace(':', '');
-        var search = parser.search.replace('?', '');
+        let protocol = noProtocol ? '' : parser.protocol.replace(':', '');
+        let search = parser.search.replace('?', '');
 
-        var port = parser.port;
+        let port = parser.port;
         if (port === '0') {
             port = undefined;
         }
@@ -262,7 +306,7 @@ export class Utils {
             }
         }
 
-        var urlParts = this.getURLParts(host.address);
+        let urlParts = this.getURLParts(host.address);
         return urlParts.host;
     }
 
@@ -278,8 +322,8 @@ export class Utils {
         let memTotal = this.getCustomPropertyValue(host.customProperties, '__MemTotal');
         let memAvailable = this.getCustomPropertyValue(host.customProperties, '__MemAvailable');
         if (memTotal && memAvailable) {
-            var memoryUsage = memTotal - memAvailable;
-            var memoryUsagePct = (memoryUsage / memTotal) * 100;
+            let memoryUsage = memTotal - memAvailable;
+            let memoryUsagePct = (memoryUsage / memTotal) * 100;
             return shouldRound ? Math.floor(memoryUsagePct) : Math.round(memoryUsagePct * 100) / 100;
         }
         return 0;

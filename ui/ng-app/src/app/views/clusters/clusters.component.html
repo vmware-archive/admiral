@@ -37,19 +37,85 @@
                 <div class="titleHolder"><div class="truncate">{{item.name}}</div>
                     <div *ngIf="item.address" class="clusterAddress truncate">{{item.address}}</div>
                 </div>
+            </div>
 
-                <clr-dropdown class="card-actions" allowNavigation [roles]="clustersCardViewActions"
-                              (click)="toggleItemSelection($event, item)">
-                    <button type="button" class="btn btn-sm btn-link" clrDropdownTrigger>
-                        <clr-icon shape="ellipsis-vertical" size="20"></clr-icon>
-                    </button>
+            <div card-content>
+                <div class="form-group">
+                    <div class="col-xs-6">
+                        <label>{{"clusters.status" | i18n}}</label>
+                    </div>
+                    <div class="col-xs-6">
+                        <div class="status {{item.status}}">{{clusterState(item) | i18n}}</div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-xs-6">
+                        <label>{{"clusters.type" | i18n}}</label>
+                    </div>
+                    <div class="col-xs-6">
+                        <div>{{item.type}}</div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-xs-6">
+                        <label>{{"clusters.containers" | i18n}}</label>
+                    </div>
+                    <div class="col-xs-6">
+                        <div class="badge badge-count">{{item.containerCount}}</div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-xs-6">
+                        <label>{{"clusters.cpu" | i18n}}</label>
+                    </div>
+                    <div class="col-xs-6">
+                        <div class="row">
+                            <div *ngIf="shouldShowCpuInfo(item)" class="progress-block col-sm-4"
+                            ><div class="progress-static">
+                                <div class="progress-meter"
+                                     attr.data-value="{{cpuPercentageLevel(item)}}"></div>
+                            </div></div>
+                            <div *ngIf="shouldShowCpuInfo(item)" class="col-sm-8 progress-details p7"
+                                >{{item.cpuUsage | frequencyMeasurement}} {{"of" | i18n}} {{item.totalCpu | frequencyMeasurement}}</div>
+                            <div *ngIf="!shouldShowCpuInfo(item)"
+                                 class="col-sm-8 progress-details progress-details-unavailable">{{"notAvailable" | i18n}}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-xs-6">
+                        <label>{{"clusters.memory" | i18n}}</label>
+                    </div>
+                    <div class="col-xs-6">
+                        <div class="row">
+                            <div *ngIf="shouldShowMemoryInfo(item)"
+                                 class="progress-block col-sm-4"><div class="progress-static">
+                                <div class="progress-meter"
+                                     attr.data-value="{{memoryPercentageLevel(item)}}"></div></div>
+                            </div>
+                            <div *ngIf="shouldShowMemoryInfo(item)" class="col-sm-8 progress-details p7"
+                            >{{item.memoryUsage | memoryMeasurement}} {{"of" | i18n}} {{item.totalMemory | memoryMeasurement}}</div>
+                            <div *ngIf="!shouldShowMemoryInfo(item)"
+                                 class="col-sm-8 progress-details progress-details-unavailable">{{"notAvailable" | i18n}}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="progress-static top">
+                    <div class="progress-meter {{item.status}}" data-value="100"></div>
+                </div>
+            </div>
 
-                    <clr-dropdown-menu clrPosition="left-top" *clrIfOpen>
-                        <button type="button" class="dropdown-item cluster-details"
-                                [routerLink]="['./'+ tabId + '/cluster/' + item.documentId]">
-                            <clr-icon shape="eye" size="20" class="card-drop-down-actions">
-                            </clr-icon>{{"projects.actions.details" | i18n}}</button>
+            <div card-footer>
+                <button type="button" class="btn btn-link cluster-details"
+                        [routerLink]="['./'+ tabId + '/cluster/' + item.documentId]">{{"open" | i18n}}</button>
+                <button type="button" class="btn btn-link remove-cluster"
+                        (click)="deleteCluster($event, item)">{{"remove" | i18n}}</button>
 
+                <clr-dropdown (click)="toggleItemSelection($event, item)">
+                    <button type="button" class="btn btn-link" clrDropdownTrigger
+                    >{{"moreActions" | i18n}}<clr-icon shape="caret down"></clr-icon></button>
+
+                    <clr-dropdown-menu clrPosition="top-left" *clrIfOpen>
                         <button *ngIf="item.supportsOperationRescan" type="button"
                                 class="dropdown-item rescan-cluster"
                                 (click)="rescanCluster($event, item)">
@@ -63,58 +129,13 @@
                             </clr-icon>{{"clusters.actions.disable" | i18n}}
                         </button>
                         <button *ngIf="item.supportsOperationEnable" type="button"
-                            class="dropdown-item enable-cluster"
-                            (click)="enableVchCluster($event, item)">
+                                class="dropdown-item enable-cluster"
+                                (click)="enableVchCluster($event, item)">
                             <clr-icon shape="play" size="20" class="card-drop-down-actions">
                             </clr-icon>{{"clusters.actions.enable" | i18n}}
                         </button>
-                        <button type="button" class="dropdown-item remove-cluster"
-                                (click)="deleteCluster($event, item)">
-                            <clr-icon shape="trash" size="20" class="card-drop-down-actions">
-                            </clr-icon>{{"remove" | i18n}}
-                        </button>
                     </clr-dropdown-menu>
                 </clr-dropdown>
-            </div>
-
-            <div card-content>
-                <div class="form-group">
-                    <label>{{"clusters.status" | i18n}}</label>
-                    <div class="status {{item.status}}">{{clusterState(item)}}</div>
-                </div>
-                <div class="form-group">
-                    <label>{{"clusters.type" | i18n}}</label>
-                    <div>{{item.type}}</div>
-                </div>
-                <div class="form-group">
-                    <label>{{"clusters.containers" | i18n}}</label>
-                    <div>{{item.containerCount}}</div>
-                </div>
-                <div class="form-group">
-                    <label>{{"clusters.cpu" | i18n}}</label>
-                    <div class="row">
-                        <div class="progress-block col-sm-4"><div class="progress-static">
-                            <div class="progress-meter"
-                                 attr.data-value="{{cpuPercentageLevel(item)}}"></div>
-                        </div></div>
-                        <div class="col-sm-8 progress-details p7"
-                            >{{getResourceLabel(item.cpuUsage, item.totalCpu, 'Hz')}}</div>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>{{"clusters.memory" | i18n}}</label>
-                    <div class="row">
-                        <div class="progress-block col-sm-4"><div class="progress-static">
-                            <div class="progress-meter"
-                                 attr.data-value="{{memoryPercentageLevel(item)}}"></div></div>
-                        </div>
-                        <div class="col-sm-8 progress-details p7"
-                            >{{getResourceLabel(item.memoryUsage, item.totalMemory, 'B')}}</div>
-                    </div>
-                </div>
-                <div class="progress-static top">
-                    <div class="progress-meter {{item.status}}" data-value="100"></div>
-                </div>
             </div>
         </card>
     </ng-template>

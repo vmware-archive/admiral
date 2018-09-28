@@ -26,47 +26,58 @@
                         <div class="truncate">{{ item.name }}</div>
                     </div>
                 </div>
-                <div class="actionsHolder">
-                    <clr-dropdown class="card-actions" (click)="toggleItemSelection($event, item)">
-                        <button type="button" class="btn btn-sm btn-link" clrDropdownTrigger>
-                            <clr-icon shape="ellipsis-vertical" size="20"></clr-icon>
-                        </button>
-                        <clr-dropdown-menu clrPosition="left-top" *clrIfOpen>
-                            <button type="button" class="dropdown-item cluster-details"
-                                    [routerLink]="['./' + item.documentId]">
-                                <clr-icon shape="eye" size="20" class="card-drop-down-actions">
-                                </clr-icon>{{"details" | i18n}}
-                            </button>
-                        </clr-dropdown-menu>
-                    </clr-dropdown>
-                </div>
             </div>
 
             <div card-content>
                 <div card-content>
                     <div class="form-group">
-                        <label>{{"kubernetes.deployments.item.creation" | i18n}}</label>
-                        <div>{{item.deployment?.metadata.creationTimestamp | date:'yyyy-MM-dd HH:mm:ss' || "--"}}</div>
+                        <div class="col-xs-6">
+                            <label>{{"kubernetes.deployments.item.creation" | i18n}}</label>
+                        </div>
+                        <div class="col-xs-6">
+                            <div>{{item.deployment?.metadata.creationTimestamp | date:'yyyy-MM-dd HH:mm:ss' || "--"}}</div>
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label>{{"kubernetes.deployments.item.namespace" | i18n}}</label>
-                        <div>{{item.deployment?.metadata.namespace || "--"}}</div>
+                        <div class="col-xs-6">
+                            <label>{{"kubernetes.deployments.item.namespace" | i18n}}</label>
+                        </div>
+                        <div class="col-xs-6">
+                            <div>{{item.deployment?.metadata.namespace || "--"}}</div>
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label>{{"kubernetes.deployments.item.containersNumber" | i18n}}</label>
-                        <div>{{item.deployment?.spec.template.spec.containers.length || "--"}}</div>
+                        <div class="col-xs-6">
+                            <label>{{"kubernetes.deployments.item.containersNumber" | i18n}}</label>
+                        </div>
+                        <div class="col-xs-6">
+                            <div class="badge badge-count">{{item.deployment?.spec.template.spec.containers.length || "--"}}</div>
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label>{{"kubernetes.deployments.item.restartPolicy" | i18n}}</label>
-                        <div>{{"kubernetes.deployments.item.restartPolicyValues."
+                        <div class="col-xs-6">
+                            <label>{{"kubernetes.deployments.item.restartPolicy" | i18n}}</label>
+                        </div>
+                        <div class="col-xs-6">
+                            <div>{{"kubernetes.deployments.item.restartPolicyValues."
                                 + item.deployment?.spec.template.spec.restartPolicy | i18n}}</div>
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label>{{"kubernetes.deployments.item.strategy" | i18n}}</label>
-                        <div>{{"kubernetes.deployments.item.strategyValues."
+                        <div class="col-xs-6">
+                            <label>{{"kubernetes.deployments.item.strategy" | i18n}}</label>
+                        </div>
+                        <div class="col-xs-6">
+                            <div>{{"kubernetes.deployments.item.strategyValues."
                                 + item.deployment?.spec.strategy.type | i18n}}</div>
+                        </div>
                     </div>
                 </div>
+            </div>
+
+            <div card-footer>
+                <button class="btn btn-link"
+                        [routerLink]="['./' + item.documentId]">{{"open" | i18n}}</button>
             </div>
         </card>
     </ng-template>

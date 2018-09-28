@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -71,15 +71,15 @@ export class ClusterSummaryComponent implements OnInit {
     return '';
   }
 
-  ngOnInit() {
-    // DOM init
+  shouldShowCpuInfo() {
+      return Utils.hasClusterCpuInfo(this.cluster);
   }
 
-  formatNumber(number) {
-    if (!number){
-      return '0';
-    }
-    let m = Utils.getMagnitude(number);
-    return Utils.formatBytes(number, m) + ' ' + Utils.magnitudes[m];
+  shouldShowMemoryInfo() {
+      return Utils.hasClusterMemoryInfo(this.cluster);
+  }
+
+  ngOnInit() {
+    // DOM init
   }
 }
