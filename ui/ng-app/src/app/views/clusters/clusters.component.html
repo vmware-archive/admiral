@@ -18,7 +18,8 @@
 </delete-confirmation>
 
 <grid-view #gridView [serviceEndpoint]="serviceEndpoint" [projectLink]="projectLink"
-                     [searchPlaceholder]="'clusters.search.placeholder' | i18n">
+                     [searchPlaceholder]="'clusters.search.placeholder' | i18n"
+                     [hideTitle]="hideTitle">
     <div [hidden]="hideTitle" title>{{title}}</div>
     <div toolbar>
         <button class="btn btn-sm btn-secondary addCluster-btn"
