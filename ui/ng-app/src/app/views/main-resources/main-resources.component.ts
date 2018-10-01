@@ -10,24 +10,27 @@
  */
 
 import { Component, OnInit, ViewEncapsulation, OnDestroy } from '@angular/core';
-import { Subscription } from 'rxjs/Subscription';
 import { Router, NavigationEnd } from '@angular/router';
-import { RoutesRestriction } from '../../utils/routes-restriction';
+import { Subscription } from 'rxjs';
 import { FormerViewPathBridge, RouteUtils } from '../../utils/route-utils';
 import { AuthService } from '../../utils/auth.service';
 import { DocumentService } from '../../utils/document.service';
 import { ErrorService } from '../../utils/error.service';
 import { ProjectService } from '../../utils/project.service';
-import { Roles } from '../../utils/roles';
-import { Utils } from '../../utils/utils';
 import { FT } from '../../utils/ft';
+import { Roles } from '../../utils/roles';
+import { RoutesRestriction } from '../../utils/routes-restriction';
+import { Utils } from '../../utils/utils';
 
 @Component({
-  selector: 'app-main-resources',
-  templateUrl: './main-resources.component.html',
-  styleUrls: ['./main-resources.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'app-main-resources',
+    templateUrl: './main-resources.component.html',
+    styleUrls: ['./main-resources.component.scss'],
+    encapsulation: ViewEncapsulation.None
 })
+/**
+ * Main View component.
+ */
 export class MainResourcesComponent implements OnInit, OnDestroy {
     // features
     embeddedMode = FT.isApplicationEmbedded();
@@ -45,19 +48,19 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
     errorObserve: Subscription;
 
     formerViewPaths = [
-      new FormerViewPathBridge('/home/templates/image', '/templates/image'),
-      new FormerViewPathBridge('/home/templates/template', '/templates/template'),
-      new FormerViewPathBridge('/home/templates','/templates','$category=templates'),
-      new FormerViewPathBridge('/home/public-repositories','/templates','$category=images'),
-      new FormerViewPathBridge('/home/closure-definitions','/templates','$category=closures'),
-      new FormerViewPathBridge('/home/closure-definitions','/templates','$category=closures'),
-      new FormerViewPathBridge('/home/placements','/placements'),
-      new FormerViewPathBridge('/home/hosts','/hosts'),
-      new FormerViewPathBridge('/home/applications','/applications'),
-      new FormerViewPathBridge('/home/containers','/containers'),
-      new FormerViewPathBridge('/home/networks','/networks'),
-      new FormerViewPathBridge('/home/volumes','/volumes'),
-      new FormerViewPathBridge('/home/closures','/closures')
+        new FormerViewPathBridge('/home/templates/image', '/templates/image'),
+        new FormerViewPathBridge('/home/templates/template', '/templates/template'),
+        new FormerViewPathBridge('/home/templates', '/templates', '$category=templates'),
+        new FormerViewPathBridge('/home/public-repositories', '/templates', '$category=images'),
+        new FormerViewPathBridge('/home/closure-definitions', '/templates', '$category=closures'),
+        new FormerViewPathBridge('/home/closure-definitions', '/templates', '$category=closures'),
+        new FormerViewPathBridge('/home/placements', '/placements'),
+        new FormerViewPathBridge('/home/hosts', '/hosts'),
+        new FormerViewPathBridge('/home/applications', '/applications'),
+        new FormerViewPathBridge('/home/containers', '/containers'),
+        new FormerViewPathBridge('/home/networks', '/networks'),
+        new FormerViewPathBridge('/home/volumes', '/volumes'),
+        new FormerViewPathBridge('/home/closures', '/closures')
     ];
 
     formerViewPath;
@@ -81,68 +84,68 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
                 private projectService: ProjectService, private errorService: ErrorService,
                 private authService: AuthService) {
 
-      this.routeObserve = this.router.events.subscribe((event) => {
-        if (event instanceof NavigationEnd) {
+        this.routeObserve = this.router.events.subscribe((event) => {
+            if (event instanceof NavigationEnd) {
 
-          this.formerViewPath =
-              RouteUtils.toFormerViewPath(event.urlAfterRedirects, this.formerViewPaths);
-        }
-      });
+                this.formerViewPath =
+                    RouteUtils.toFormerViewPath(event.urlAfterRedirects, this.formerViewPaths);
+            }
+        });
 
-      this.errorObserve = this.errorService.errorMessages.subscribe((event) => {
-          this.alertMessage = event;
-      });
+        this.errorObserve = this.errorService.errorMessages.subscribe((event) => {
+            this.alertMessage = event;
+        });
 
 
-      this.projectService.activeProject.subscribe((value) => {
-        // reload former view iframe
-        var iframeFormerView =
-            document.querySelector(".former-view > iframe:first-of-type");
-        if (iframeFormerView) {
-          var iWindow = (<HTMLIFrameElement> iframeFormerView).contentWindow.location.reload();
-        }
-      });
+        this.projectService.activeProject.subscribe((value) => {
+            // reload former view iframe
+            var iframeFormerView =
+                document.querySelector('.former-view > iframe:first-of-type');
+            if (iframeFormerView) {
+                var iWindow = (<HTMLIFrameElement> iframeFormerView).contentWindow.location.reload();
+            }
+        });
     }
 
     ngOnInit() {
-      this.documentService.listProjects().then((result) => {
-        this.projects = result.documents;
+        this.documentService.listProjects().then((result) => {
+            this.projects = result.documents;
 
-        if (!this.projects || this.projects.length === 0) {
-          return;
-        }
-
-        this.sortProjects();
-
-        this.selectedProject = null;
-        let localProject = this.projectService.getSelectedProject();
-
-        if (localProject) {
-          this.projects.forEach(project => {
-
-            if ((project.documentSelfLink
-                    && project.documentSelfLink === localProject.documentSelfLink)
-                || (project.id && project.id === localProject.id)) {
-
-              this.selectedProject = project;
+            if (!this.projects || this.projects.length === 0) {
+                return;
             }
-          });
-        }
 
-        if (!this.selectedProject) {
-          this.selectedProject = this.projects[0];
-        }
+            this.sortProjects();
 
-        this.projectService.setSelectedProject(this.selectedProject);
+            this.selectedProject = null;
+            let localProject = this.projectService.getSelectedProject();
 
-        this.checkShowLibrary();
-        this.checkShowKubernetes();
-      });
+            if (localProject) {
+                this.projects.forEach(project => {
+
+                    if ((project.documentSelfLink
+                        && project.documentSelfLink === localProject.documentSelfLink)
+                        || (project.id && project.id === localProject.id)) {
+
+                        this.selectedProject = project;
+                    }
+                });
+            }
+
+            if (!this.selectedProject) {
+                this.selectedProject = this.projects[0];
+            }
+
+            this.projectService.setSelectedProject(this.selectedProject);
+
+            this.checkShowLibrary();
+            this.checkShowKubernetes();
+        });
     }
 
     ngOnDestroy() {
-      this.routeObserve.unsubscribe();
-      this.errorObserve.unsubscribe();
+        this.routeObserve.unsubscribe();
+        this.errorObserve.unsubscribe();
     }
 
     updateProjects() {
@@ -160,22 +163,22 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
     }
 
     selectProject(project) {
-      this.selectedProject = project;
-      this.projectService.setSelectedProject(this.selectedProject);
+        this.selectedProject = project;
+        this.projectService.setSelectedProject(this.selectedProject);
 
-      this.checkShowLibrary();
+        this.checkShowLibrary();
     }
 
     onFormerViewRouteChange(newFormerPath: string) {
-      if (!this.formerViewPath) {
-        // not yet initialized
-        return;
-      }
+        if (!this.formerViewPath) {
+            // not yet initialized
+            return;
+        }
 
-      let viewPath = RouteUtils.fromFormerViewPath(newFormerPath, this.formerViewPaths);
-      if (viewPath) {
-        this.router.navigateByUrl(viewPath);
-      }
+        let viewPath = RouteUtils.fromFormerViewPath(newFormerPath, this.formerViewPaths);
+        if (viewPath) {
+            this.router.navigateByUrl(viewPath);
+        }
     }
 
     resetAlert() {
@@ -183,54 +186,66 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
     }
 
     sortProjects() {
-      let sortField = FT.isApplicationEmbedded() && !FT.isVca() ? "label" : "name";
-      Utils.sortObjectArrayByField(this.projects, sortField);
+        let sortField = FT.isApplicationEmbedded() && !FT.isVca() ? 'label' : 'name';
+        Utils.sortObjectArrayByField(this.projects, sortField);
     }
 
     checkShowKubernetes() {
-      if (FT.isApplicationEmbedded() && FT.isPksEnabled()) {
-        this.authService.getCachedSecurityContext().then(securityContext => {
+        if (FT.isApplicationEmbedded() && FT.isPksEnabled()) {
+            this.authService.getCachedSecurityContext().then(securityContext => {
 
-          // check if the user is only container developer
-          this.showKubernetes = Utils.isContainerDeveloper(securityContext);
-        });
-      }
+                // check if the user is only container developer
+                this.showKubernetes = Utils.isContainerDeveloper(securityContext);
+            });
+        }
     }
 
     checkShowLibrary() {
-      if (this.isHbrEnabled || !this.selectedProject || FT.isApplicationEmbedded()) {
-        this.showLibrary = true;
-        return;
-      }
-
-      let selectedProjectLink = this.selectedProject.documentSelfLink;
-      let selectedProjectId = this.selectedProject.id;
-      this.authService.getCachedSecurityContext().then(securityContext => {
-        if (!securityContext) {
-          this.showLibrary = false;
-          return;
+        if (this.isHbrEnabled || !this.selectedProject || FT.isApplicationEmbedded()) {
+            this.showLibrary = true;
+            return;
         }
 
-        // If principal is cloud admin show it.
-        if (securityContext.roles && securityContext.roles.indexOf(Roles.CLOUD_ADMIN) != -1) {
-          this.showLibrary = true;
-          return;
-        }
+        let selectedProjectLink = this.selectedProject.documentSelfLink;
+        let selectedProjectId = this.selectedProject.id;
+        this.authService.getCachedSecurityContext().then(securityContext => {
+            if (!securityContext) {
+                this.showLibrary = false;
+                return;
+            }
 
-        let foundProject = securityContext.projects.find(project => {
-          return project.documentSelfLink === selectedProjectLink
+            // If principal is cloud admin show it.
+            if (securityContext.roles && securityContext.roles.indexOf(Roles.CLOUD_ADMIN) != -1) {
+                this.showLibrary = true;
+                return;
+            }
+
+            let foundProject = securityContext.projects.find(project => {
+                return project.documentSelfLink === selectedProjectLink
                     || project.id === selectedProjectId;
-        });
+            });
 
-        if (foundProject && foundProject.roles) {
-          this.showLibrary = foundProject.roles.indexOf(Roles.PROJECT_ADMIN) > -1
-                                || foundProject.roles.indexOf(Roles.PROJECT_MEMBER) > -1;
-        } else {
-          this.showLibrary = false;
+            if (foundProject && foundProject.roles) {
+                this.showLibrary = foundProject.roles.indexOf(Roles.PROJECT_ADMIN) > -1
+                    || foundProject.roles.indexOf(Roles.PROJECT_MEMBER) > -1;
+            } else {
+                this.showLibrary = false;
+            }
+        }).catch(e => {
+            this.showLibrary = true;
+        })
+    }
+
+    get currentProjectLink() {
+        return (this.selectedProject)
+            && (this.selectedProject.documentSelfLink || this.selectedProject.id);
+    }
+
+    get navigationClustersTextKey() {
+        if (FT.isVic()) {
+            return 'navigation.clustersVic';
         }
-      }).catch(e => {
-        this.showLibrary = true;
-      })
+        return 'navigation.clusters';
     }
 
     get deploymentsRouteRestriction() {
@@ -251,18 +266,6 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
 
     get publicReposRouteRestriction() {
         return RoutesRestriction.PUBLIC_REPOSITORIES;
-    }
-
-    get currentProjectLink() {
-        return (this.selectedProject)
-                    && (this.selectedProject.documentSelfLink || this.selectedProject.id);
-    }
-
-    get navigationClustersTextKey() {
-      if (FT.isVic()) {
-        return "navigation.clustersVic";
-      }
-      return "navigation.clusters";
     }
 
     get endpointsRouteRestriction() {

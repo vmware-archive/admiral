@@ -15,9 +15,6 @@ import { AuthService } from '../../../utils/auth.service';
 import { DocumentService } from "../../../utils/document.service";
 import { Utils } from "../../../utils/utils";
 import * as I18n from 'i18next';
-import { SimpleSearchComponent } from "../../../components/search/simple-search.component";
-
-const SEARCH_TIMEOUT_MILLIS = 1000;
 
 @Component({
     selector: 'app-project-add-members',
@@ -28,8 +25,6 @@ const SEARCH_TIMEOUT_MILLIS = 1000;
  * Modal add members to project.
  */
 export class ProjectAddMembersComponent {
-    @ViewChild('simpleSearch') simpleSearch: SimpleSearchComponent;
-
     @Input() visible: boolean;
     @Input() project: any;
 
@@ -37,9 +32,11 @@ export class ProjectAddMembersComponent {
     @Output() onCancel: EventEmitter<any> = new EventEmitter();
 
     addMembersToProjectForm = new FormGroup({
+        searchField: new FormControl(''),
         memberRole: new FormControl('', Validators.required)
     });
     // form data
+    searchTerm: any;
     selectedMembers: any[] = [];
     memberRoleSelection: string = 'MEMBER';
 
@@ -53,9 +50,6 @@ export class ProjectAddMembersComponent {
     // error
     alertMessage: string;
 
-    searchTimeout: any;
-    searchEventData: any;
-
     constructor(protected service: DocumentService, private authService: AuthService) { }
 
     get description(): string {
@@ -63,27 +57,12 @@ export class ProjectAddMembersComponent {
             { projectName:  this.project && this.project.name } as I18n.TranslationOptions);
     }
 
-    getMembers($eventData: any) {
-        if ($eventData.query === '') {
-            clearTimeout(this.searchTimeout);
-            this.searching = false;
-            return [];
-        }
+    getMembers($event) {
+        $event.preventDefault();
+        $event.stopPropagation();
 
-        this.searchEventData = $eventData;
-
-        // Clear the timeout in case it is already set.
-        if (this.searchTimeout) {
-            clearTimeout(this.searchTimeout);
-        }
-
-        // Schedule the search to begin after 1 second.
         this.searching = true;
-        this.searchTimeout = setTimeout(() => this.getAndPropagatePrincipals(), SEARCH_TIMEOUT_MILLIS);
-    }
-
-    getAndPropagatePrincipals() {
-        this.authService.findPrincipals(this.searchEventData.query, false).then((principalsResult) => {
+        this.authService.findPrincipals(this.searchTerm, false).then((principalsResult) => {
             this.searching = false;
             this.members = principalsResult;
 
@@ -94,25 +73,25 @@ export class ProjectAddMembersComponent {
 
                 return searchResult;
             });
-            // notify search component
-            this.searchEventData.callback(this.membersSuggestions);
+            // Add all suggestions to the selected members, if redundant - the user will remove them.
+            this.membersSuggestions.forEach(memberSuggestion => {
+                let alreadyAddedMember = this.selectedMembers.find((member) => {
+                    return memberSuggestion.id === member.id
+                });
+
+                if (!alreadyAddedMember) {
+                    this.selectedMembers.push(memberSuggestion);
+                }
+            });
+            // clear search input
+            this.searchTerm = '';
 
         }).catch((error) => {
             console.log('Failed to find members', error);
             this.searching = false;
+
+            this.alertMessage = Utils.getErrorMessage(error)._generic;
         });
-    }
-
-    onSearchSelection(selectionData) {
-        let selectedMember = this.members.find((member) => member.id === selectionData.datum.id);
-
-        let alreadyAddedMember = this.selectedMembers.find((member) => {
-            return selectedMember.id === member.id
-        });
-
-        if (!alreadyAddedMember) {
-            this.selectedMembers.push(selectedMember);
-        }
     }
 
     removeMember(selectedUser: any) {
@@ -171,7 +150,8 @@ export class ProjectAddMembersComponent {
         this.membersSuggestions = [];
         this.selectedMembers = [];
         // clear search
-        this.simpleSearch.value = '';
+        this.searchTerm = '';
+        this.resetAlert();
 
         this.addMembersToProjectForm.markAsPristine();
     }

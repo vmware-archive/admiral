@@ -53,8 +53,6 @@ import { DeploymentDetailsComponent } from './kubernetes/deployments/details/dep
 import { ServiceListComponent } from './kubernetes/services/list/service-list.component';
 import { ServiceDetailsComponent } from './kubernetes/services/details/service-details.component';
 
-import { NavigationContainerType } from './components/navigation-container/navigation-container.component';
-
 import { AdminAuthGuard } from 'app/services/admin-auth-guard.service';
 import { HomeAuthGuard } from 'app/services/home-auth-guard.service';
 import { TagDetailsComponent } from './views/tag-details/tag-details.component';

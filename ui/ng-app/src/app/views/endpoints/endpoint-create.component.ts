@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, Input, SimpleChanges, ViewChild } from "@angular/core";
+import { Component, Input, SimpleChanges } from "@angular/core";
 import { FormControl, FormGroup, Validators } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { DocumentService } from "../../utils/document.service";
@@ -33,7 +33,10 @@ export class EndpointCreateComponent {
 
     editMode: boolean = false;
 
+    credentialsLoading: boolean = false;
     credentials: any[];
+    preselectedCredential: any;
+    selectedCredential: any;
 
     certificate: any;
     showCertificateWarning: boolean = false;
@@ -46,22 +49,11 @@ export class EndpointCreateComponent {
         name: new FormControl('', Validators.required),
         description: new FormControl(''),
         uaaAddress: new FormControl('', Validators.required),
-        uaaCredentials: new FormControl(''),
         pksAddress: new FormControl('', Validators.required)
     });
 
     isSavingEndpoint: boolean = false;
     isTestingConnection: boolean = false;
-
-    credentialsTitle = I18n.t('dropdownSearchMenu.title', {
-        ns: 'base',
-        entity: I18n.t('app.credential.entity', {ns: 'base'})
-    } as I18n.TranslationOptions );
-
-    credentialsSearchPlaceholder = I18n.t('dropdownSearchMenu.searchPlaceholder', {
-        ns: 'base',
-        entity: I18n.t('app.credential.entity', {ns: 'base'})
-    } as I18n.TranslationOptions );
 
     constructor(protected route: ActivatedRoute, protected router: Router,
                 protected documentService: DocumentService, protected errorService: ErrorService) {
@@ -86,23 +78,26 @@ export class EndpointCreateComponent {
             return;
         }
 
+        this.credentialsLoading = true;
         this.documentService.list(Links.CREDENTIALS, {}).then(credentials => {
-            this.credentials = credentials.documents
-            .filter(c => !Utils.areSystemScopedCredentials(c))
-            .map(Utils.toCredentialViewModel);
+            this.credentialsLoading = false;
 
-            if (this.entity && this.entity.authCredentialsLink) {
-                let credItem = this.credentials && this.credentials.filter((c) =>
-                    c.documentSelfLink === this.entity.authCredentialsLink
-                );
-                if (credItem && credItem.length > 0) {
-                    this.endpointDetailsForm.get('uaaCredentials').setValue(credItem[0]);
-                }
-            }
+            this.credentials = credentials.documents
+                                    .filter(c => !Utils.areSystemScopedCredentials(c))
+                                    .map(Utils.toCredentialViewModel);
+            // preselect credential
+            this.preselectedCredential = this.entity && this.entity.authCredentialsLink;
+
         }).catch((error) => {
             console.error('Credentials retrieval failed', error);
+            this.credentialsLoading = false;
+
             this.showErrorMessage(error);
         });
+    }
+
+    onCredentialsSelection(selectedCredential) {
+        this.selectedCredential = selectedCredential;
     }
 
     create(certificateAccepted: boolean = false) {
@@ -208,15 +203,12 @@ export class EndpointCreateComponent {
         let endpointDataRaw;
 
         if (this.endpointDetailsForm.valid) {
-            let uaaCredentialsLink = this.endpointDetailsForm.get("uaaCredentials").value
-                && this.endpointDetailsForm.get("uaaCredentials").value.documentSelfLink;
-
             endpointDataRaw = {
                 name: this.endpointDetailsForm.get("name").value.trim(),
                 desc: this.endpointDetailsForm.get("description").value.trim(),
                 uaaEndpoint: this.endpointDetailsForm.get("uaaAddress").value.trim(),
                 apiEndpoint: this.endpointDetailsForm.get("pksAddress").value.trim(),
-                authCredentialsLink: uaaCredentialsLink
+                authCredentialsLink: this.selectedCredential
             };
         }
 

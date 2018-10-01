@@ -5,6 +5,9 @@
 textarea {
     width: 350px;
 }
-dropdown {
-    width: 350px;
+
+.form-group {
+    select, input {
+        width: 350px;
+    }
 }

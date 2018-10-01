@@ -84,5 +84,16 @@ export const Constants = {
         customProperties: {
             requestType: "__requestType"
         }
+    },
+    SEARCH: {
+        CATEGORY: '$category',
+        OCCURRENCE: {
+            PARAM: '$occurrence',
+            ALL: 'all',
+            ANY: 'any'
+            /* Not supported by DCP
+            NONE: 'none'
+            */
+        }
     }
 };

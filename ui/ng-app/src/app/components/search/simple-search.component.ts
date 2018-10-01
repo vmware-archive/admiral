@@ -11,7 +11,6 @@
 
 import { Component, AfterViewInit, OnChanges, Input, Output, EventEmitter, ViewEncapsulation,
     ViewChild, ElementRef } from '@angular/core';
-import { SimpleSearch } from "admiral-ui-common";
 
 @Component({
     selector: 'simple-search',
@@ -31,35 +30,35 @@ export class SimpleSearchComponent implements AfterViewInit, OnChanges {
     @ViewChild('simpleSearchHolder')
     elHolder: ElementRef;
 
-    search: SimpleSearch;
+    // search: SimpleSearch;
 
     constructor() { }
 
     public set value(value:string) {
-        if (this.search) {
-            this.search.setValue(value);
-        }
+        // if (this.search) {
+        //     this.search.setValue(value);
+        // }
     }
 
     public ngAfterViewInit() {
         // NOTE: the results are expected in format:
         // [{displayPropertyName: '', name: '', ...}, {},...]
-        this.search = new SimpleSearch(this.displayPropertyName,
-            (query, callback, asyncCallback) => {
-                this.searchChange.emit({
-                    query: query,
-                    callback: asyncCallback
-                });
-            }, (obj, datum, name) => {
-                this.searchSelectionChange.emit({
-                    object: obj,
-                    datum: datum,
-                    name: name
-                });
-                this.search.setValue('');
-            });
-
-        this.elHolder.nativeElement.appendChild(this.search.getEl());
+        // this.search = new SimpleSearch(this.displayPropertyName,
+        //     (query, callback, asyncCallback) => {
+        //         this.searchChange.emit({
+        //             query: query,
+        //             callback: asyncCallback
+        //         });
+        //     }, (obj, datum, name) => {
+        //         this.searchSelectionChange.emit({
+        //             object: obj,
+        //             datum: datum,
+        //             name: name
+        //         });
+        //         this.search.setValue('');
+        //     });
+        //
+        // this.elHolder.nativeElement.appendChild(this.search.getEl());
     }
 
     public ngOnChanges(changes) {

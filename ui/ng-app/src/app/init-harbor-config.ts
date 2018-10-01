@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { HarborLibraryModule, SERVICE_CONFIG, IServiceConfig } from 'harbor-ui';
+import { HarborLibraryModule, SERVICE_CONFIG, IServiceConfig } from '@harbor/ui';
 import { FT } from './utils/ft';
 
 export function initHarborConfig() {

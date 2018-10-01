@@ -19,8 +19,6 @@ import { ProjectService } from '../../../../utils/project.service';
 import { Links } from '../../../../utils/links';
 import { Utils } from '../../../../utils/utils';
 
-import { formatUtils } from 'admiral-ui-common';
-
 @Component({
     selector: 'app-kubernetes-cluster-edit-external',
     templateUrl: './kubernetes-cluster-edit-external.component.html',
@@ -63,7 +61,7 @@ export class KubernetesClusterEditExternalComponent extends BaseDetailsComponent
             let formValues = this.clusterForm.value;
 
             let clusterPatch = {
-                'name': formValues.name && formatUtils.escapeHtml(formValues.name),
+                'name': Utils.escapeHtml(formValues.name),
                 'details': formValues.description
             };
 

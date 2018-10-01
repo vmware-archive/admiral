@@ -12,9 +12,9 @@
 import { Component, Input, Output, OnChanges, EventEmitter } from '@angular/core';
 import { DocumentService } from "../../../utils/document.service";
 import { ErrorService } from "../../../utils/error.service";
-import * as I18n from 'i18next';
 import { Utils } from "../../../utils/utils";
 
+import * as I18n from 'i18next';
 
 @Component({
     selector: 'app-project-members',

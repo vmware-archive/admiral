@@ -34,6 +34,7 @@ export class EndpointAssignmentsComponent implements OnInit, OnChanges {
 
     groups: any[];
     groupsLoading: boolean = false;
+
     plans: any[];
     plansLoading: boolean = false;
 
@@ -54,40 +55,6 @@ export class EndpointAssignmentsComponent implements OnInit, OnChanges {
         return FT.isApplicationEmbedded()
             ? I18n.t('projects.globalSelectLabelEmbedded')
             : I18n.t('projects.globalSelectLabel');
-    }
-
-    get groupsSelectorTitle(): string {
-        let key = FT.isApplicationEmbedded()  ? 'endpoints.details.groupSelectorTitle'
-                    : 'endpoints.details.projectSelectorTitle';
-
-        return I18n.t('dropdownSearchMenu.title', {
-            ns: 'base',
-            entity: I18n.t(key)
-        } as I18n.TranslationOptions);
-    }
-
-    get groupsSearchPlaceholder(): string {
-        let key = FT.isApplicationEmbedded() ? 'endpoints.details.groupSearchPlaceholder'
-                    : 'endpoints.details.projectSearchPlaceholder';
-
-        return I18n.t('dropdownSearchMenu.searchPlaceholder', {
-            ns: 'base',
-            entity: I18n.t(key)
-        } as I18n.TranslationOptions);
-    }
-
-    get plansSelectorTitle(): string {
-        return I18n.t('dropdownSearchMenu.title', {
-            ns: 'base',
-            entity: I18n.t('endpoints.details.planSelectorTitle')
-        } as I18n.TranslationOptions);
-    }
-
-    get plansSearchPlaceholder(): string {
-        return I18n.t('dropdownSearchMenu.searchPlaceholder', {
-            ns: 'base',
-            entity: I18n.t('endpoints.details.planSearchPlaceholder')
-        } as I18n.TranslationOptions);
     }
 
     get isApplicationEmbedded(): boolean {
@@ -130,7 +97,7 @@ export class EndpointAssignmentsComponent implements OnInit, OnChanges {
                 .map(group => {
                     return {
                         name: isEmbedded ? group.label : group.name,
-                        value: group
+                        value: isEmbedded ? group.id : group.documentSelfLink
                     }
                 });
         }).catch(error => {
@@ -192,17 +159,15 @@ export class EndpointAssignmentsComponent implements OnInit, OnChanges {
 
         if (existing) {
             this.groups.forEach(entry => {
-                let projectOrGroupLink = FT.isApplicationEmbedded()
-                    ? entry.value.id
-                    : entry.value.documentSelfLink;
+                let projectOrGroupLink = entry.value;
 
                 if (groupValue === projectOrGroupLink) {
-                    formGroup.controls.group.setValue(entry);
+                    formGroup.controls.group.setValue(entry.value);
                 }
             });
             this.plans.forEach(entry => {
                 if (planValue === entry.value) {
-                    formGroup.controls.plan.setValue(entry);
+                    formGroup.controls.plan.setValue(entry.value);
                 }
             });
         }
@@ -307,24 +272,22 @@ export class EndpointAssignmentsComponent implements OnInit, OnChanges {
             let groupOption = value.group;
             let planOption = value.plan;
 
-            if (groupOption && groupOption.value && planOption && planOption.value) {
+            if (groupOption && planOption) {
                 // Group
-                let groupLink = this.isApplicationEmbedded
-                    ? groupOption.value.id : groupOption.value.documentSelfLink;
-                if (groupLinks.indexOf(groupLink) === -1) {
-                    groupLinks.push(groupLink);
+                if (groupLinks.indexOf(groupOption) === -1) {
+                    groupLinks.push(groupOption);
                 }
 
-                let plansObj = planAssignments[groupLink];
+                let plansObj = planAssignments[groupOption];
                 if (!plansObj) {
                     plansObj = {
                         plans: []
                     };
-                    planAssignments[groupLink] = plansObj;
+                    planAssignments[groupOption] = plansObj;
                 }
 
-                if (plansObj.plans.indexOf(planOption.value) === -1) {
-                    plansObj.plans.push(planOption.value);
+                if (plansObj.plans.indexOf(planOption) === -1) {
+                    plansObj.plans.push(planOption);
                 }
             }
         });

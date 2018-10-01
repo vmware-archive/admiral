@@ -19,9 +19,6 @@ import { FT } from "../../../utils/ft";
 import { Links } from '../../../utils/links';
 import { Utils } from "../../../utils/utils";
 
-import * as I18n from 'i18next';
-import { formatUtils } from 'admiral-ui-common';
-
 @Component({
   selector: 'app-cluster-create',
   templateUrl: './cluster-create.component.html',
@@ -32,7 +29,9 @@ import { formatUtils } from 'admiral-ui-common';
  * View for cluster creation.
  */
 export class ClusterCreateComponent implements OnInit {
+    credentialsLoading: boolean = false;
     credentials: any[];
+    selectedCredential: any;
 
     showCertificateWarning: boolean;
     certificate: any;
@@ -49,19 +48,8 @@ export class ClusterCreateComponent implements OnInit {
         description: new FormControl(''),
         type: new FormControl('VCH'),
         url: new FormControl('', Validators.required),
-        publicAddress: new FormControl(''),
-        credentials: new FormControl('')
+        publicAddress: new FormControl('')
     });
-
-    credentialsTitle = I18n.t('dropdownSearchMenu.title', {
-        ns: 'base',
-        entity: I18n.t('app.credential.entity', {ns: 'base'})
-    } as I18n.TranslationOptions );
-
-    credentialsSearchPlaceholder = I18n.t('dropdownSearchMenu.searchPlaceholder', {
-        ns: 'base',
-        entity: I18n.t('app.credential.entity', {ns: 'base'})
-    } as I18n.TranslationOptions );
 
     constructor(private router: Router, private route: ActivatedRoute,
                 private documentService: DocumentService, private projectService: ProjectService) {
@@ -89,12 +77,15 @@ export class ClusterCreateComponent implements OnInit {
             return;
         }
 
+        this.credentialsLoading = true;
         this.documentService.list(Links.CREDENTIALS, {}).then(credentials => {
+            this.credentialsLoading = false;
             this.credentials = credentials.documents
                                     .filter(c => !Utils.areSystemScopedCredentials(c))
                                         .map(Utils.toCredentialViewModel);
         }).catch((error) => {
             console.error('Credentials retrieval failed', error);
+            this.credentialsLoading = false;
 
             this.showAlertMessage(Constants.alert.type.DANGER,
                                     Utils.getErrorMessage(error)._generic);
@@ -105,33 +96,36 @@ export class ClusterCreateComponent implements OnInit {
         this.createCluster(false);
     }
 
+    onCredentialsSelection(selectedCredential) {
+        this.selectedCredential = selectedCredential;
+    }
+
     private createCluster(certificateAccepted: boolean) {
         if (this.clusterForm.valid) {
             this.isSaving = true;
 
-            let formInput = this.clusterForm.value;
-            let clusterName = formInput.name && formatUtils.escapeHtml(formInput.name);
+            let formData = this.clusterForm.value;
+            let clusterName = Utils.escapeHtml(formData.name);
             let hostState = {
-                'address': formInput.url,
+                'address': formData.url,
                 'customProperties': {
-                  '__containerHostType': formInput.type,
+                  '__containerHostType': formData.type,
                   '__adapterDockerType': 'API',
                   '__clusterName': clusterName
                 }
             };
 
-            if (formInput.credentials) {
-                hostState.customProperties['__authCredentialsLink']
-                                                        = formInput.credentials.documentSelfLink;
+            if (this.selectedCredential) {
+                hostState.customProperties['__authCredentialsLink'] = this.selectedCredential;
             }
 
-            if (formInput.description) {
-                hostState.customProperties['__clusterDetails'] = formInput.description;
+            if (formData.description) {
+                hostState.customProperties['__clusterDetails'] = formData.description;
             }
 
-            if (formInput.publicAddress) {
+            if (formData.publicAddress) {
                 hostState.customProperties[Constants.hosts.customProperties.publicAddress]
-                                                        = formInput.publicAddress;
+                                                        = formData.publicAddress;
             }
 
             let hostSpec = {
@@ -150,6 +144,7 @@ export class ClusterCreateComponent implements OnInit {
                   this.goBack();
                 }
             }).catch(error => {
+                console.error('Failed to create cluster', error);
                 this.isSaving = false;
 
                 this.showAlertMessage(Constants.alert.type.DANGER,

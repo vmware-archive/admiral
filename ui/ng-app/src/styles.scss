@@ -3,11 +3,9 @@
 // The full license information can be found in LICENSE in the root directory of this project.
 
 /* You can add global styles to this file, and also import other style files */
-@import "node_modules/clarity-ui/src/main";
-@import 'node_modules/admiral-ui-common/css/variables';
-@import "node_modules/admiral-ui-common/css/dropdown";
-@import "node_modules/admiral-ui-common/css/tokenfield-override";
-@import "node_modules/clarity-ui/src/utils/variables.clarity";
+@import "node_modules/@clr/ui/src/main";
+@import "node_modules/@clr/ui/src/utils/_variables.clarity";
+@import "legacy";
 
 
 .main-container {
@@ -117,15 +115,7 @@ navigation-container > :not(.with-back-button) > back-button {
   display: inline-block;
 }
 
-.simple-search-holder .twitter-typeahead {
-  width: 100%;
-  .tt-input {
-    width: 100%;
-  }
-}
-
 /* Clarity Ext */
-
 
 .sidenav .collapsible {
   .nav-group {
@@ -181,7 +171,8 @@ navigation-container > :not(.with-back-button) > back-button {
 .main-view {
   width: 100%;
   .title {
-    @include view-title();
+      font-size: 28px;
+      font-weight: 300;
   }
 }
 

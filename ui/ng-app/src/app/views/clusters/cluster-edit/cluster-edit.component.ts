@@ -32,7 +32,12 @@ import * as I18n from 'i18next';
  * Edit (Docker, VCH) cluster view.
  */
 export class ClusterEditComponent extends BaseDetailsComponent {
+    // credentials
+    credentialsLoading: boolean = false;
     credentials: any[];
+    preselectedCredential: any;
+    selectedCredential: any;
+
     // certificate
     showCertificateWarning: boolean;
     certificate: any;
@@ -49,19 +54,8 @@ export class ClusterEditComponent extends BaseDetailsComponent {
     clusterForm = new FormGroup({
         name: new FormControl('', Validators.required),
         description: new FormControl(''),
-        publicAddress: new FormControl(''),
-        credentials: new FormControl('')
+        publicAddress: new FormControl('')
     });
-
-    credentialsTitle = I18n.t('dropdownSearchMenu.title', {
-        ns: 'base',
-        entity: I18n.t('app.credential.entity', {ns: 'base'})
-    } as I18n.TranslationOptions );
-
-    credentialsSearchPlaceholder = I18n.t('dropdownSearchMenu.searchPlaceholder', {
-        ns: 'base',
-        entity: I18n.t('app.credential.entity', {ns: 'base'})
-    } as I18n.TranslationOptions );
 
     constructor(router: Router, route: ActivatedRoute, documentService: DocumentService,
                 projectService: ProjectService, errorService: ErrorService) {
@@ -98,17 +92,10 @@ export class ClusterEditComponent extends BaseDetailsComponent {
 
         // populate the credentials if the edited cluster is of type VCH
         if (this.isVch && this.entity.nodeLinks && this.entity.nodeLinks.length > 0) {
-            var vchHost = this.entity.nodes[this.entity.nodeLinks[0]];
+            let vchHost = this.entity.nodes[this.entity.nodeLinks[0]];
 
-            let authCredentialsLink =
-                Utils.getCustomPropertyValue(vchHost.customProperties, '__authCredentialsLink');
-            if (authCredentialsLink) {
-                var credItem = this.credentials
-                            .filter((c) => c.documentSelfLink === authCredentialsLink);
-                if (credItem.length > 0) {
-                    this.clusterForm.get('credentials').setValue(credItem[0]);
-                }
-            }
+            this.preselectedCredential = Utils.getCustomPropertyValue(vchHost.customProperties,
+                                            '__authCredentialsLink');
         }
 
         if (this.isSingleHostCluster) {
@@ -120,6 +107,10 @@ export class ClusterEditComponent extends BaseDetailsComponent {
     onProjectChange() {
         // show clusters view, if project/business group selection has been changed.
         this.router.navigate(['../../../'], {relativeTo: this.route});
+    }
+
+    onCredentialsSelection(selectedCredential) {
+        this.selectedCredential = selectedCredential;
     }
 
     verifyCluster() {
@@ -219,12 +210,18 @@ export class ClusterEditComponent extends BaseDetailsComponent {
             return;
         }
 
+        this.credentialsLoading = true;
         this.service.list(Links.CREDENTIALS, {}).then(credentials => {
+            this.credentialsLoading = false;
+
             this.credentials = credentials.documents
             .filter(c => !Utils.areSystemScopedCredentials(c))
             .map(Utils.toCredentialViewModel);
-        }).catch((e) => {
-            console.log('Credentials retrieval failed', e);
+        }).catch((error) => {
+            console.log('Failed to retrieve credentials', error);
+            this.credentialsLoading = false;
+
+            this.showErrorMessage(error);
         });
     }
 
@@ -233,29 +230,29 @@ export class ClusterEditComponent extends BaseDetailsComponent {
         var hostCopy = Object.assign({}, vchHost);
         hostCopy.customProperties = Object.assign({}, vchHost.customProperties);
 
-        let formInput = this.clusterForm.value;
+        let formData = this.clusterForm.value;
 
-        if (formInput.name) {
-            hostCopy.customProperties['__hostAlias'] = formInput.name;
+        if (formData.name) {
+            hostCopy.customProperties['__hostAlias'] = formData.name;
         }
 
-        if (formInput.description) {
+        if (formData.description) {
             // TODO
         }
 
-        if (formInput.credentials) {
-            hostCopy.customProperties['__authCredentialsLink'] =
-                formInput.credentials.documentSelfLink;
+        if (this.selectedCredential) {
+            hostCopy.customProperties['__authCredentialsLink'] = this.selectedCredential;
         }
+
         hostCopy.customProperties['__adapterDockerType'] = 'API';
 
         // allow overwriting with empty value
         hostCopy.customProperties[Constants.hosts.customProperties.publicAddress] =
-            formInput.publicAddress || "";
+            formData.publicAddress || "";
 
-        if (formInput.deploymentPolicy) {
+        if (formData.deploymentPolicy) {
             hostCopy.customProperties[Constants.hosts.customProperties.deploymentPolicyLink] =
-                formInput.deploymentPolicy.documentSelfLink;
+                formData.deploymentPolicy;
         } else {
             delete hostCopy.customProperties[Constants.hosts.customProperties.deploymentPolicyLink];
         }
@@ -266,8 +263,7 @@ export class ClusterEditComponent extends BaseDetailsComponent {
     private updateVchClusterCredentials() {
         let credentialsLink =
             this.entity.nodes[this.entity.nodeLinks[0]].customProperties['__authCredentialsLink'];
-        let updatedCredentialsLink = this.clusterForm.value.credentials
-                                ? this.clusterForm.value.credentials.documentSelfLink : "";
+        let updatedCredentialsLink = this.selectedCredential ? this.selectedCredential : "";
 
         if (credentialsLink !== updatedCredentialsLink) {
             // credentials have been changed

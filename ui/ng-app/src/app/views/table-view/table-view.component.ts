@@ -12,9 +12,9 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormControl, FormGroup } from "@angular/forms";
 import { Router, ActivatedRoute, NavigationEnd } from '@angular/router';
-import { Subscription } from "rxjs/Subscription";
-
-import { searchConstants, searchUtils } from "admiral-ui-common";
+import { Subscription } from "rxjs";
+import { Constants } from '../../utils/constants';
+import { SearchUtils } from '../../utils/search.utils';
 
 @Component({
     selector: 'table-view',
@@ -40,10 +40,10 @@ export class TableViewComponent implements OnInit {
     searchQueryOptions: any;
 
     searchForm = new FormGroup({
-        occurrenceSelector: new FormControl({value: searchConstants.SEARCH_OCCURRENCE.ALL, disabled: true}),
+        occurrenceSelector: new FormControl({ value: Constants.SEARCH.OCCURRENCE.ALL, disabled: true }),
         searchGridInput: new FormControl('')
     });
-    occurrenceSelection: any = searchConstants.SEARCH_OCCURRENCE.ALL;
+    occurrenceSelection: any = Constants.SEARCH.OCCURRENCE.ALL;
 
     // Creation
     constructor(private router: Router, private route: ActivatedRoute) {
@@ -64,7 +64,7 @@ export class TableViewComponent implements OnInit {
 
         this.querySub = this.route.queryParams.subscribe(queryParams => {
             this.searchQueryOptions = queryParams;
-            let searchString = searchUtils.getSearchString(queryParams).trim();
+            let searchString = SearchUtils.getSearchString(queryParams).trim();
             this.searchForm.get('searchGridInput').setValue(searchString);
 
             // reset to initial view (starting page 1)
@@ -76,7 +76,7 @@ export class TableViewComponent implements OnInit {
 
     onSearch($event) {
         let searchString = this.searchForm.get("searchGridInput").value;
-        let queryOptions: any = searchUtils.getQueryOptions(searchString, this.occurrenceSelection);
+        let queryOptions: any = SearchUtils.getQueryOptions(searchString, this.occurrenceSelection);
 
         this.router.navigate(['.'], {
             relativeTo: this.route,

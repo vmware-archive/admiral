@@ -9,6 +9,13 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
+<clr-alert *ngIf="alertMessage" [clrAlertType]="alertType" [(clrAlertClosed)]="!alertMessage"
+           (clrAlertClosedChange)="resetAlert()">
+    <div class="alert-item">
+        <span class="alert-text">{{ alertMessage }}</span>
+    </div>
+</clr-alert>
+
 <form class="form" [formGroup]="clusterForm">
     <section class="form-block">
         <div class="form-group">
@@ -35,14 +42,11 @@
                 <span class="tooltip-content">{{"kubernetes.clusters.edit.invalidUrl" | i18n}}</span>
             </label>
         </div>
-        <div class="form-group">
-            <label for="credentials">{{"kubernetes.clusters.edit.credentials" | i18n}}</label>
-            <dropdown formControlName="credentials" ddClass="bottom-right"
-                      [options]="credentials"
-                      [title]="credentialsTitle"
-                      [searchPlaceholder]="credentialsSearchPlaceholder">
-            </dropdown>
-        </div>
+
+        <credentials-select [credentials]="credentials" [credentialsLoading]="credentialsLoading"
+                            [selectDataName]="'kubernetes-create-add-ext-credentials'"
+                            (onSelect)="onCredentialsSelection($event)"
+        ></credentials-select>
 
         <div>
             <button type="button" class="btn btn-primary saveCluster-btn"

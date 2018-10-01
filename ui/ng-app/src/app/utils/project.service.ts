@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -10,33 +10,36 @@
  */
 
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+import { BehaviorSubject } from 'rxjs';
 
+/**
+ * Service for determining and setting the current project context.
+ */
 @Injectable()
 export class ProjectService {
 
-  private selectedProject;
+    private selectedProject;
 
-  activeProject:BehaviorSubject<any> = new BehaviorSubject(null);
+    activeProject: BehaviorSubject<any> = new BehaviorSubject(null);
 
-  public getSelectedProject() {
-    if (this.selectedProject) {
-      return this.selectedProject;
+    public getSelectedProject() {
+        if (this.selectedProject) {
+            return this.selectedProject;
+        }
+
+        try {
+            let localProject = JSON.parse(localStorage.getItem('selectedProject'));
+            return localProject;
+        } catch (e) {
+            console.log('Failed getting the selected project', e);
+        }
     }
 
-    try {
-      let localProject = JSON.parse(localStorage.getItem('selectedProject'));
-      return localProject;
-    } catch (e) {
-      console.log("Failed getting the selected project", e);
+    public setSelectedProject(project) {
+        this.selectedProject = project;
+        localStorage.setItem('selectedProject', JSON.stringify(project));
+
+        // notify subscribers
+        this.activeProject.next(project);
     }
-  }
-
-  public setSelectedProject(project) {
-    this.selectedProject = project;
-    localStorage.setItem('selectedProject', JSON.stringify(project));
-
-    // notify subscribers
-    this.activeProject.next(project);
-  }
 }

@@ -9,15 +9,15 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, OnInit } from "@angular/core";
-import { FormControl, FormGroup, Validators } from "@angular/forms";
-import { ActivatedRoute, Router } from "@angular/router";
-import { DocumentService } from "../../../../utils/document.service";
-import { ErrorService } from "../../../../utils/error.service";
-import { ProjectService } from "../../../../utils/project.service";
-import { Constants } from "../../../../utils/constants";
-import { Links } from "../../../../utils/links";
-import { Utils } from "../../../../utils/utils";
+import { Component, OnInit } from '@angular/core';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { DocumentService } from '../../../../utils/document.service';
+import { ErrorService } from '../../../../utils/error.service';
+import { ProjectService } from '../../../../utils/project.service';
+import { Constants } from '../../../../utils/constants';
+import { Links } from '../../../../utils/links';
+import { Utils } from '../../../../utils/utils';
 
 import * as I18n from 'i18next';
 
@@ -35,8 +35,9 @@ export class KubernetesClusterAddExistingComponent implements OnInit {
     loading: boolean = false;
     isAdding: boolean = false;
 
+    endpointsLoading: boolean = false;
     endpoints: any[];
-    selectedEndpoint: any;
+    endpointSelection: any;
 
     originalClusters: any[] = [];
     clusters: any[] = [];
@@ -50,16 +51,6 @@ export class KubernetesClusterAddExistingComponent implements OnInit {
         endpoint: new FormControl(''),
         connectBy: new FormControl('', Validators.required)
     });
-
-    endpointsTitle = I18n.t('dropdownSearchMenu.title', {
-        ns: 'base',
-        entity: I18n.t('app.endpoint.entity', {ns: 'base'})
-    } as I18n.TranslationOptions );
-
-    endpointsSearchPlaceholder = I18n.t('dropdownSearchMenu.searchPlaceholder', {
-        ns: 'base',
-        entity: I18n.t('app.endpoint.entity', {ns: 'base'})
-    } as I18n.TranslationOptions );
 
     constructor(protected route: ActivatedRoute, protected router: Router,
                 protected service: DocumentService, protected projectService: ProjectService,
@@ -75,19 +66,24 @@ export class KubernetesClusterAddExistingComponent implements OnInit {
             return;
         }
 
+        this.endpointsLoading = true;
         this.service.list(Links.PKS_ENDPOINTS, {}, undefined, true)
-        .then(result => {
-            this.endpoints = result.documents;
+            .then(result => {
+                this.endpointsLoading = false;
+
+                this.endpoints = result.documents;
         }).catch((error) => {
             console.error('PKS Endpoints listing failed', error);
+            this.endpointsLoading = false;
+
             this.showErrorMessage(error);
         });
     }
 
-    onChangeEndpoint(endpoint) {
-        this.selectedEndpoint = endpoint;
+    onChangeEndpoint($event) {
+        this.endpointSelection = $event.target.value !== '' ? $event.target.value : null;
 
-        if (!this.selectedEndpoint) {
+        if (!this.endpointSelection) {
             this.clusters = [];
             this.selectedClusters = [];
 
@@ -96,7 +92,7 @@ export class KubernetesClusterAddExistingComponent implements OnInit {
 
         this.loading = true;
 
-        this.service.listWithParams(Links.PKS_CLUSTERS, { endpointLink: endpoint.documentSelfLink})
+        this.service.listWithParams(Links.PKS_CLUSTERS, { endpointLink: this.endpointSelection})
             .then((result) => {
                 this.loading = false;
 
@@ -154,14 +150,14 @@ export class KubernetesClusterAddExistingComponent implements OnInit {
         });
 
         let addClusterRequest = {
-            'endpointLink': this.selectedEndpoint.documentSelfLink,
+            'endpointLink': this.endpointSelection,
             'cluster': clusterToAdd
         };
 
         let formValues = this.addExistingClustersForm.value;
 
         if (formValues.connectBy === 'ip') {
-            addClusterRequest['preferMasterIP'] = "true";
+            addClusterRequest['preferMasterIP'] = 'true';
         }
 
         this.service.post(Links.PKS_CLUSTERS_ADD, addClusterRequest).then((result) => {

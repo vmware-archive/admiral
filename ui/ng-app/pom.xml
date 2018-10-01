@@ -39,12 +39,12 @@
                             <goal>install-node-and-npm</goal>
                         </goals>
                         <configuration>
-                            <nodeVersion>${nodejs.version}</nodeVersion>
-                            <npmVersion>${npm.version}</npmVersion>
+                            <nodeVersion>v8.11.3</nodeVersion>
+                            <npmVersion>5.6.0</npmVersion>
                         </configuration>
                     </execution>
 
-                    <execution>
+                    <!--execution>
                         <id>npm preinstall</id>
                         <phase>generate-resources</phase>
                         <goals>
@@ -53,7 +53,7 @@
                         <configuration>
                             <arguments>install node-sass admiral-ui-common</arguments>
                         </configuration>
-                    </execution>
+                    </execution-->
 
                     <execution>
                         <id>npm install</id>

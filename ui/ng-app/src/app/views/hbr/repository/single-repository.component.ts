@@ -9,25 +9,26 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, OnDestroy } from "@angular/core";
+import { Component, OnDestroy } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import { Subscription } from "rxjs/Subscription";
+import { Subscription } from 'rxjs';
 import { AuthService } from '../../../utils/auth.service';
-import { ErrorService } from "../../../utils/error.service";
+import { ErrorService } from '../../../utils/error.service';
 import { ProjectService } from '../../../utils/project.service';
 import { Roles } from '../../../utils/roles';
 import { Utils } from '../../../utils/utils';
-import { TagClickEvent } from 'harbor-ui';
+
+import { TagClickEvent } from '@harbor/ui';
 
 @Component({
     template: `
-    <div class="main-view" data-view-name="project-repository">
-      <hbr-repository [projectId]="projectId" [repoName]="repoName" [hasSignedIn]="true"
-                      [hasProjectAdminRole]="hasProjectAdminRole"
-                      (tagClickEvent)="watchTagClickEvent($event)"
-                      (backEvt)="backToRepoList($event)"
-                      style="display: block;"></hbr-repository>
-    </div>
+        <div class="main-view" data-view-name="project-repository">
+            <hbr-repository [projectId]="projectId" [repoName]="repoName" [hasSignedIn]="true"
+                            [hasProjectAdminRole]="hasProjectAdminRole"
+                            (tagClickEvent)="watchTagClickEvent($event)"
+                            (backEvt)="backToRepoList($event)"
+                            style="display: block;"></hbr-repository>
+        </div>
     `
 })
 /**
@@ -41,8 +42,8 @@ export class SingleRepositoryComponent implements OnDestroy {
 
     sessionInfo = {};
 
-    repoName:string;
-    private sub:Subscription = null;
+    repoName: string;
+    private sub: Subscription = null;
 
 
     constructor(private router: Router, private route: ActivatedRoute,
@@ -95,12 +96,12 @@ export class SingleRepositoryComponent implements OnDestroy {
 
     watchTagClickEvent(tag: TagClickEvent) {
         this.router.navigate(['tags', tag.tag_name],
-                            { relativeTo: this.route });
+            {relativeTo: this.route});
     }
 
     backToRepoList($event) {
         let path: any[] = Utils.getPathUp(this.router.url, 'hbrRepo');
 
-        this.router.navigate(path, { relativeTo: this.route });
+        this.router.navigate(path, {relativeTo: this.route});
     }
 }

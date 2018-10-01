@@ -2,8 +2,6 @@
 // This software is released under MIT license.
 // The full license information can be found in LICENSE in the root directory of this project.
 
-@import 'node_modules/admiral-ui-common/css/mixins';
-
 grid-view {
   position: relative;
   width: 100%;
@@ -64,7 +62,9 @@ grid-view {
   }
 
   .title {
-      @include view-title();
+      font-size: 28px;
+      font-weight: 300;
+
       display: inline-flex;
 
       .label {

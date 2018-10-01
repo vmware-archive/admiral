@@ -12,12 +12,12 @@
 <clr-alert *ngIf="alertMessage" [clrAlertType]="alertType" [(clrAlertClosed)]="!alertMessage"
            (clrAlertClosedChange)="resetAlert()">
     <div class="alert-item">
-        <span class="alert-text">{{ alertMessage }}</span>
+        <span class="alert-text">{{alertMessage}}</span>
     </div>
 </clr-alert>
 
 <form [formGroup]="assignmentsForm">
-    <div class="form-group row">
+    <div class="form-group row assignmentsTitleRow">
         <div class="col-lg-4">{{groupsTitle}} <span *ngIf="groupsLoading" class="spinner spinner-inline"></span></div>
         <div class="col-lg-4">{{'endpoints.details.assignmentsPlansTitle' | i18n}} <span
                                     *ngIf="plansLoading" class="spinner spinner-inline"></span></div>
@@ -29,22 +29,32 @@
         <div [formGroupName]="i">
             <div class="form-group row">
                 <div class="col-lg-4">
-                    <dropdown formControlName="group" [options]="groups" [title]="groupsSelectorTitle"
-                              [searchPlaceholder]="groupsSearchPlaceholder"
-                              ddClass="bottom-left">
-                    </dropdown>
+                    <div class="select">
+                        <select formControlName="group">
+                            <option *ngIf="groupsLoading">{{"loading" | i18n}}</option>
+                            <option *ngIf="!groupsLoading
+                                                && (!groups || groups.length === 0)">{{"noItems" | i18n}}</option>
+                            <option *ngFor="let group of groups"
+                                    value="{{group.value}}">{{group.name}}</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="col-lg-4">
-                    <dropdown formControlName="plan" [options]="plans" [title]="plansSelectorTitle"
-                              [searchPlaceholder]="plansSearchPlaceholder"
-                              ddClass="bottom-left">
-                    </dropdown>
+                    <div class="select">
+                        <select formControlName="plan">
+                            <option *ngIf="plansLoading">{{"loading" | i18n}}</option>
+                            <option *ngIf="!plansLoading
+                                                && (!plans || plans.length === 0)">{{"noItems" | i18n}}</option>
+                            <option *ngFor="let plan of plans"
+                                    value="{{plan.value}}">{{plan.name}}</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="col-lg-2">
                     <a href="..." (click)="removeAssignment($event, i)"
-                    ><clr-icon shape="minus-circle" size="18" class="is-highlight is-solid"></clr-icon></a>
+                    ><clr-icon shape="minus-circle" size="20" class="is-highlight is-solid assignmentAction"></clr-icon></a>
                     <a href="..." *ngIf="lastRow" (click)="addEmptyAssignment($event)"
-                    ><clr-icon shape="plus-circle" size="18" class="is-highlight is-solid"></clr-icon></a>
+                    ><clr-icon shape="plus-circle" size="20" class="is-highlight is-solid assignmentAction"></clr-icon></a>
                 </div>
             </div>
         </div>

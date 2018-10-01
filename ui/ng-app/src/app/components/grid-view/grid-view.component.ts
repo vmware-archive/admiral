@@ -13,11 +13,11 @@ import { Component, Input, OnInit, OnChanges, SimpleChanges, ContentChild, ViewC
          TemplateRef, HostListener, ViewEncapsulation } from '@angular/core';
 import { FormControl, FormGroup } from "@angular/forms";
 import { Router, ActivatedRoute, NavigationEnd } from '@angular/router';
-import { Subscription } from 'rxjs/Subscription';
-import { searchConstants, searchUtils } from 'admiral-ui-common';
+import { Subscription } from 'rxjs';
 import { DocumentService, DocumentListResult } from '../../utils/document.service';
 import { CancelablePromise } from '../../utils/utils';
-
+import { Constants } from '../../utils/constants';
+import { SearchUtils } from '../../utils/search.utils';
 
 @Component({
   selector: 'grid-view',
@@ -62,11 +62,11 @@ export class GridViewComponent implements OnInit, OnChanges {
 
   // Search
   searchForm = new FormGroup({
-    occurrenceSelector: new FormControl({value: searchConstants.SEARCH_OCCURRENCE.ALL, disabled: true}),
+    occurrenceSelector: new FormControl({ value: Constants.SEARCH.OCCURRENCE.ALL, disabled: true }),
     searchGridInput: new FormControl('')
   });
 
-  occurrenceSelection: any = searchConstants.SEARCH_OCCURRENCE.ALL;
+  occurrenceSelection: any = Constants.SEARCH.OCCURRENCE.ALL;
 
   // Creation
   constructor(protected service: DocumentService, private router: Router,
@@ -86,7 +86,7 @@ export class GridViewComponent implements OnInit, OnChanges {
 
     this.querySub = this.route.queryParams.subscribe(queryParams => {
       this.searchQueryOptions = queryParams;
-      let searchString = searchUtils.getSearchString(this.searchQueryOptions).trim();
+      let searchString = SearchUtils.getSearchString(this.searchQueryOptions).trim();
       this.searchForm.get('searchGridInput').setValue(searchString);
 
       this.refresh(true);
@@ -270,7 +270,7 @@ export class GridViewComponent implements OnInit, OnChanges {
 
   onSearchGrid($event) {
     let searchString = this.searchForm.get("searchGridInput").value;
-    let queryOptions: any = searchUtils.getQueryOptions(searchString, this.occurrenceSelection);
+    let queryOptions: any = SearchUtils.getQueryOptions(searchString, this.occurrenceSelection);
 
     this.router.navigate(['.'], {
       relativeTo: this.route,

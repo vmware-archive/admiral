@@ -1,26 +1,29 @@
+// Copyright (c) 2018 VMware, Inc. All Rights Reserved.
+// This software is released under MIT license.
+// The full license information can be found in LICENSE in the root directory of this project.
+
+.form-group {
+    select, input {
+        width: 350px;
+    }
+}
+
 .selected-members-container {
+    margin-top: 10px;
     padding: 4px;
-    width: 100%;
+    width: 450px;
+    height: 200px;
+    overflow-y: auto;
     background-color: #fff;
     border: 1px solid #ccc;
     min-height: 120px;
 }
+
 a.clickable {
     cursor: pointer;
-}
-
-.searching {
-    position: absolute;
-    right: 0px;
-    top: 10px;
 }
 
 .saving {
     display: inline;
     margin-left: 5px;
-}
-
-simple-search {
-    width: 100%;
-    margin-right: 30px;
 }

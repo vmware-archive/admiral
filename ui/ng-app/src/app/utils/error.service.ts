@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -10,8 +10,8 @@
  */
 
 import { Injectable } from "@angular/core";
-import { Subject } from 'rxjs/Subject';
-import { ErrorHandler } from "harbor-ui";
+import { Subject } from 'rxjs';
+import { ErrorHandler } from "@harbor/ui";
 
 /**
  * Service for propagating error messages.

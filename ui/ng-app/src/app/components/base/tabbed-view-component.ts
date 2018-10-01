@@ -11,7 +11,7 @@
 
 import { OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from "rxjs/Subscription";
+import { Subscription } from "rxjs";
 
 const TAB_ID_NONE = "";
 

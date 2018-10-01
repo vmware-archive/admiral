@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -12,11 +12,12 @@
 import './polyfills.ts';
 
 import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
-import { enableProdMode, ReflectiveInjector } from '@angular/core';
+import { enableProdMode } from '@angular/core';
 import { environment } from './environments/environment';
 import { AppModule } from './app/app.module';
 import { Utils } from './app/utils/utils';
 import { Links } from './app/utils/links';
+
 import * as I18n from 'i18next';
 import * as I18nXhrBackend from 'i18next-xhr-backend';
 import * as I18nLanguageDetector from 'i18next-browser-languagedetector';

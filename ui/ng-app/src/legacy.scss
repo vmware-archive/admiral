@@ -1,0 +1,312 @@
+// Copyright (c) 2018 VMware, Inc. All Rights Reserved.
+// This software is released under MIT license.
+// The full license information can be found in LICENSE in the root directory of this project.
+
+// mixins
+
+@mixin container-image-header-icons($size) {
+    $fullIconSize: $size;
+
+    .container-header, .image-header {
+        > img, > .icons {
+            width: $fullIconSize;
+            height: $fullIconSize;
+            float: left;
+        }
+    }
+
+    $partialIconMargin: 2px;
+    $partialIconSize: ($fullIconSize / 2) - $partialIconMargin;
+
+    .container-header, .image-header{
+        > .icons.icons-1 {
+            img:nth-of-type(1) {
+                width: $fullIconSize;
+                height: $fullIconSize;
+            }
+        }
+    }
+
+    .container-header, .image-header {
+        > .icons:not(.icons-1) {
+            img {
+                width: $partialIconSize;
+                height: $partialIconSize;
+            }
+        }
+    }
+
+    .container-header, .image-header {
+        > .icons {
+            img:nth-of-type(1) {
+                margin-right: $partialIconMargin;
+                margin-bottom: $partialIconMargin;
+            }
+
+            img:nth-of-type(2) {
+                margin-left: $partialIconMargin;
+                margin-bottom: $partialIconMargin;
+            }
+
+            img:nth-of-type(3) {
+                margin-top: $partialIconMargin;
+                margin-right: $partialIconMargin;
+            }
+
+            img:nth-of-type(4) {
+                margin-top: $partialIconMargin;
+                margin-left: $partialIconMargin;
+            }
+        }
+    }
+}
+
+@mixin view-title() {
+    font-size: 28px;
+    font-weight: 300;
+}
+
+@keyframes fadein {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* Firefox < 16 */
+@-moz-keyframes fadein {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* Safari, Chrome and Opera > 12.1 */
+@-webkit-keyframes fadein {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* Internet Explorer */
+@-ms-keyframes fadein {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* Opera < 12.1 */
+@-o-keyframes fadein {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@mixin animation ($opts...) {
+    webkit-animation: $opts; /* Safari, Chrome and Opera > 12.1 */
+    -moz-animation: $opts; /* Firefox < 16 */
+    -ms-animation: $opts; /* Internet Explorer */
+    -o-animation: $opts; /* Opera < 12.1 */
+    animation: $opts;
+}
+
+// end mixins
+
+// variables
+
+/* bootstrap mixin feature toggles */
+$enable-shadows: true;
+$enable-gradients: true;
+$enable-transitions: true;
+
+$vmw_blue_top: #3888c5;
+$vmw_blue_bottom: #225277;
+$vmw_lightblue: #3888c5;
+
+$main_color: $action-blues-dark-midtone;
+$main-color-80: rgba(51, 153, 204, 0.80);
+$main-color-semi: rgba(51, 153, 204, 0.50);
+$link_color: $main_color;
+
+$disabled_opacity: 0.5;
+
+$stats_holder_font_size: 10px;
+
+$secondary_hint_title_color: #cccccc;
+$secondary_inactive_button_color: #cccccc;
+
+$main-border-color: #dbdbdb;
+
+$tab-color: #e9e9e9;
+
+$admiral-black: #333;
+$admiral-table-bgcolor: $clr-white;
+// Overriding bootstrap variables
+$progress-bg: #ccc;
+$brand-success: #669900;
+$brand-warning: #FFCC00;
+$brand-danger: #FF0000;
+$brand-info: $main_color;
+$brand-hint-color: #636363;
+$brand-hint-background-color: #fff8be;
+
+$main_background_color: #fafafa;
+$context-view-background-color: #fafafa;
+$modal-with-help-icon-left-padding: 40px;
+
+$status_running_color: #669900;
+$status_rebooting_color: #f8a407;
+$status_stopped_color: #cc0000;
+$status_suspended_color: #f8a407;
+
+$expand-toggle-color: #BABABA;
+$expand-toggle-hover-color: $secondary_hint_title_color;
+
+$inline-edit-top-padding: 10px;
+
+$closable-view-zindex: 100;
+
+$search-result-list-max-height: 260px;
+
+$nav-side-panel-width: 216px;
+
+.position-expand {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.truncateText {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.truncateText2Lines {
+    position: relative;
+
+    line-height: 1.3em;
+    max-height: 2.6em;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.truncateText3Lines {
+    position: relative;
+
+    line-height: 1.3em;
+    max-height: 3.9em;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+}
+
+.gray-filter {
+    -webkit-filter: grayscale(100%);
+    -webkit-transform: translateZ(0); /* Safari blur fix and scroll optimization http://matthewhappen.com/fixing-css3-filter-blur-on-retina-displays/ */
+    -moz-filter: grayscale(100%);
+    -ms-filter: grayscale(100%);
+    -o-filter: grayscale(100%);
+    filter: grayscale(100%);
+    filter: gray; /* IE 6-9 */
+}
+
+.item-hidden-for-collapse-animation {
+    max-height: 0;
+    height: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    overflow: hidden;
+    opacity: 0;
+}
+
+.item-shown-for-collapse-animation {
+    -webkit-transition: all 0.4s;
+    -moz-transition: all 0.4s;
+    -o-transition: all 0.4s;
+    transition: all 0.4s;
+    max-height: 50px;
+    -webkit-transition-delay: 0.1s;
+    transition-delay: 0.1s;
+}
+
+.hint {
+    color: $link_color;
+    font-size: 20px;
+    height: 20px;
+}
+
+.btn-outline-spin {
+    -webkit-animation-duration: 1s;
+    animation-duration: 1s;
+    transform-origin: 46% 46%;
+}
+
+.font-mono {
+    font-family: Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New;
+}
+
+.central-block-loading {
+    @extend .position-expand;
+    @include animation(fadein 0.4s);
+    text-align: center;
+    background-color: rgba(255, 255, 255, 0.5);
+    > .vertical-helper {
+        display: inline-block;
+        height: 100%;
+        vertical-align: middle;
+    }
+    > .spinner {
+        width: 100px;
+        height: 100px;
+        vertical-align: middle;
+    }
+}
+
+.hide {
+    display: none !important;
+}
+
+.search-input {
+    position: relative;
+
+    input, .twitter-typeahead input {
+        padding-left: 30px;
+        width: 100%;
+    }
+
+    input:not(.tt-input) {
+    }
+
+    .search-input span, .image-tags-input span {
+        left: 0;
+    }
+
+    .loader-inline, .search-hint {
+        z-index: 1;
+        left: 5px;
+        bottom: 10px;
+        position: absolute;
+    }
+
+    .loader-inline {
+        display: none;
+    }
+}
+
+.search-input.loading {
+    .loader-inline {
+        display: block;
+    }
+    .search-hint {
+        display: none;
+    }
+}
+
+// end variables

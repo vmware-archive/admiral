@@ -15,12 +15,10 @@ import { FormGroup, FormControl, Validators, AbstractControl } from "@angular/fo
 import { DocumentService } from "../../../../utils/document.service";
 import { ErrorService } from "../../../../utils/error.service";
 import { ProjectService } from "../../../../utils/project.service";
+import { Constants } from '../../../../utils/constants';
 import { Links } from "../../../../utils/links";
 import { Utils } from "../../../../utils/utils";
 import { CustomValidators } from "../../../../utils/validators";
-
-import * as I18n from 'i18next';
-import { formatUtils } from "admiral-ui-common";
 
 @Component({
     selector: 'app-kubernetes-cluster-add-external',
@@ -31,29 +29,25 @@ import { formatUtils } from "admiral-ui-common";
  * View for adding external clusters.
  */
 export class KubernetesClusterAddExternalComponent implements OnInit {
+    // Credentials
+    credentialsLoading: boolean = false;
     credentials: any[];
+    selectedCredential: any;
+
     // actions
     isSaving: boolean;
     // certificate
     showCertificateWarning: boolean;
     certificate: any;
 
+    alertType: string;
+    alertMessage: string;
+
     clusterForm = new FormGroup({
         name: new FormControl('', Validators.required),
         url: new FormControl('', CustomValidators.validateUrl),
-        credentials: new FormControl(''),
         description: new FormControl('')
     });
-
-    credentialsTitle = I18n.t('dropdownSearchMenu.title', {
-        ns: 'base',
-        entity: I18n.t('app.credential.entity', {ns: 'base'})
-    } as I18n.TranslationOptions );
-
-    credentialsSearchPlaceholder = I18n.t('dropdownSearchMenu.searchPlaceholder', {
-        ns: 'base',
-        entity: I18n.t('app.credential.entity', {ns: 'base'})
-    } as I18n.TranslationOptions );
 
     constructor(private router: Router, private route: ActivatedRoute,
                 private service: DocumentService, private projectService: ProjectService,
@@ -73,12 +67,18 @@ export class KubernetesClusterAddExternalComponent implements OnInit {
             return;
         }
 
+        this.credentialsLoading = true;
         this.service.list(Links.CREDENTIALS, {}).then(credentials => {
+            this.credentialsLoading = false;
+
             this.credentials = credentials.documents
-            .filter(c => !Utils.areSystemScopedCredentials(c))
-            .map(Utils.toCredentialViewModel);
-        }).catch((e) => {
-            console.log('Credentials retrieval failed', e);
+                                    .filter(c => !Utils.areSystemScopedCredentials(c))
+                                    .map(Utils.toCredentialViewModel);
+        }).catch((error) => {
+            console.log('Credentials retrieval failed', error);
+            this.credentialsLoading = false;
+
+            this.showErrorMessage(error);
         });
     }
 
@@ -90,26 +90,29 @@ export class KubernetesClusterAddExternalComponent implements OnInit {
         this.goBack();
     }
 
+    onCredentialsSelection(selectedCredential) {
+        this.selectedCredential = selectedCredential;
+    }
+
     private addCluster(certificateAccepted: boolean) {
         if (this.clusterForm.valid) {
-            let formValues = this.clusterForm.value;
+            let formData = this.clusterForm.value;
 
             let hostState = {
-                'address': formValues.url,
+                'address': formData.url,
                 'customProperties': {
                     '__adapterDockerType': 'API',
                     '__containerHostType': 'KUBERNETES',
-                    '__clusterName': formValues.name && formatUtils.escapeHtml(formValues.name)
+                    '__clusterName': Utils.escapeHtml(formData.name)
                 }
             };
 
-            if (formValues.credentials) {
-                hostState.customProperties['__authCredentialsLink'] =
-                                                            formValues.credentials.documentSelfLink;
+            if (this.selectedCredential) {
+                hostState.customProperties['__authCredentialsLink'] = this.selectedCredential;
             }
 
-            if (formValues.description) {
-                hostState.customProperties['__clusterDetails'] = formValues.description;
+            if (formData.description) {
+                hostState.customProperties['__clusterDetails'] = formData.description;
             }
 
             let clusterSpec = {
@@ -130,10 +133,10 @@ export class KubernetesClusterAddExternalComponent implements OnInit {
                     this.goBack();
                 }
             }).catch(error => {
+                console.error('Failed to add cluster', error);
                 this.isSaving = false;
 
-                console.error(error);
-                this.errorService.error(Utils.getErrorMessage(error)._generic);
+                this.showErrorMessage(error);
             });
         }
     }
@@ -153,5 +156,20 @@ export class KubernetesClusterAddExternalComponent implements OnInit {
 
     goBack() {
         this.router.navigate(['../clusters'], {relativeTo: this.route});
+    }
+
+
+    private showErrorMessage(error) {
+        this.showAlertMessage(Constants.alert.type.DANGER, Utils.getErrorMessage(error)._generic);
+    }
+
+    private showAlertMessage(type, text) {
+        this.alertType = type;
+        this.alertMessage = text;
+    }
+
+    resetAlert() {
+        this.alertType = null;
+        this.alertMessage = null;
     }
 }

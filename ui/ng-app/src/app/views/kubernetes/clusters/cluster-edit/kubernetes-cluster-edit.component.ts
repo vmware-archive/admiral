@@ -20,8 +20,6 @@ import { Constants } from '../../../../utils/constants';
 import { Links } from '../../../../utils/links';
 import { Utils}  from '../../../../utils/utils';
 
-import * as I18n from 'i18next';
-
 @Component({
     selector: 'app-kubernetes-cluster-edit',
     templateUrl: './kubernetes-cluster-edit.component.html',
@@ -31,8 +29,9 @@ import * as I18n from 'i18next';
  * Edit a kubernetes cluster.
  */
 export class KubernetesClusterEditComponent extends BaseDetailsComponent {
+    endpointsLoading: boolean = false;
     endpoints: any[];
-    endpointDocumentSelfLink: string;
+    preselectedEndpointLink: string;
 
     plansLoading: boolean = false;
     plans: any[];
@@ -55,16 +54,6 @@ export class KubernetesClusterEditComponent extends BaseDetailsComponent {
     alertMessage: string;
     alertType: string;
 
-    endpointsTitle = I18n.t('dropdownSearchMenu.title', {
-        ns: 'base',
-        entity: I18n.t('app.endpoint.entity', {ns: 'base'})
-    } as I18n.TranslationOptions );
-
-    endpointsSearchPlaceholder = I18n.t('dropdownSearchMenu.searchPlaceholder', {
-        ns: 'base',
-        entity: I18n.t('app.endpoint.entity', {ns: 'base'})
-    } as I18n.TranslationOptions );
-
     selectedPlanId: any;
 
     constructor(protected route: ActivatedRoute, protected router: Router,
@@ -84,7 +73,7 @@ export class KubernetesClusterEditComponent extends BaseDetailsComponent {
             let clusterProperties = clusterData && clusterData.customProperties;
 
             // Endpoint
-            this.endpointDocumentSelfLink =
+            this.preselectedEndpointLink =
                 Utils.getCustomPropertyValue(clusterProperties, '__pksEndpoint');
             if (this.endpoints) {
                 this.preselectEndpointOption();
@@ -92,14 +81,14 @@ export class KubernetesClusterEditComponent extends BaseDetailsComponent {
             // Name
             let clusterName = Utils.getCustomPropertyValue(clusterProperties, '__pksClusterName');
             this.editClusterForm.get('name').setValue(clusterName);
-            this.editClusterForm.get('name').disable(true);
+            this.editClusterForm.get('name').disable();
             // Plan
             this.selectedPlanId =
                 Utils.getCustomPropertyValue(clusterProperties, 'plan_name');
-            this.editClusterForm.get('plan').disable(true);
+            this.editClusterForm.get('plan').disable();
 
             this.documentService.listWithParams(Links.PKS_CLUSTERS,
-                { endpointLink: this.endpointDocumentSelfLink, cluster: clusterName })
+                { endpointLink: this.preselectedEndpointLink, cluster: clusterName })
             .then((result) => {
                 let clusters = result.documents;
                 let theCluster = clusters.find((cluster) => {
@@ -111,11 +100,11 @@ export class KubernetesClusterEditComponent extends BaseDetailsComponent {
                     // Master Host Name
                     this.editClusterForm.get('masterHostName')
                                                 .setValue(params.kubernetes_master_host);
-                    this.editClusterForm.get('masterHostName').disable(true);
+                    this.editClusterForm.get('masterHostName').disable();
                     // Master Host Port
                     this.editClusterForm.get('masterHostPort')
                                                 .setValue(params.kubernetes_master_port);
-                    this.editClusterForm.get('masterHostPort').disable(true);
+                    this.editClusterForm.get('masterHostPort').disable();
 
                     // Number of workers - editable
                     this.editClusterForm.get('workerInstances')
@@ -134,27 +123,31 @@ export class KubernetesClusterEditComponent extends BaseDetailsComponent {
     }
 
     populateEndpoints() {
+        this.endpointsLoading = true;
+
         this.documentService.list(Links.PKS_ENDPOINTS, {}).then(result => {
+            this.endpointsLoading = false;
+
             this.endpoints = result.documents;
             this.preselectEndpointOption();
         }).catch((error) => {
             console.log(error);
+            this.endpointsLoading = false;
+
             this.showErrorMessage(error);
         });
     }
 
     private preselectEndpointOption() {
-        if (this.endpointDocumentSelfLink) {
-            let endpointOption = this.endpoints.find(endpoint =>
-                endpoint.documentSelfLink === this.endpointDocumentSelfLink);
-            this.editClusterForm.get('endpoint').setValue(endpointOption);
-            this.editClusterForm.get('endpoint').disable(true);
-
-            this.populatePlans(endpointOption);
+        if (this.preselectedEndpointLink) {
+            this.editClusterForm.get('endpoint').disable();
+            this.populatePlans();
         }
     }
 
-    private getAssignedPlans(endpoint) {
+    private getAssignedPlans() {
+        let endpoint = this.preselectedEndpointLink
+                        && this.endpoints.find(e => e.documentSelfLink === this.preselectedEndpointLink);
         let assignedPlans;
         if (endpoint && endpoint.planAssignments) {
             let selectedProject = this.projectService.getSelectedProject();
@@ -168,24 +161,26 @@ export class KubernetesClusterEditComponent extends BaseDetailsComponent {
         return assignedPlans;
     }
 
-    populatePlans(endpoint) {
-        let assignedPlans = this.getAssignedPlans(endpoint);
+    populatePlans() {
+        let assignedPlans = this.getAssignedPlans();
         if (!assignedPlans) {
             this.plans = [];
             return;
         }
 
         this.plansLoading = true;
-        this.documentService.listWithParams(Links.PKS_PLANS,
-            {endpointLink: endpoint.documentSelfLink || endpoint})
-        .then((result) => {
+        this.documentService.listWithParams(Links.PKS_PLANS,{
+            endpointLink: this.preselectedEndpointLink
+            }).then((result) => {
             this.plansLoading = false;
+
             // show only plans for the currently selected group/project
             this.plans = result.documents.filter(resultDoc =>
-                assignedPlans.indexOf(resultDoc.name) !== -1);
+                             assignedPlans.indexOf(resultDoc.name) !== -1);
         }).catch(error => {
             console.error('PKS Plans listing failed', error);
             this.plansLoading = false;
+
             this.showErrorMessage(error);
         });
     }

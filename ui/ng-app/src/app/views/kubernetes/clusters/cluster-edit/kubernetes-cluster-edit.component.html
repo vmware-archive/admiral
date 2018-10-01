@@ -18,11 +18,17 @@
     <section class="form-block">
         <div class="form-group">
             <label for="endpoint" class="required">{{ "pks.new.settings.fieldTitleEndpoint" | i18n }}</label>
-            <dropdown formControlName="endpoint" [options]="endpoints"
-                      [title]="endpointsTitle"
-                      [searchPlaceholder]="endpointsSearchPlaceholder"
-                      ddClass="bottom-right">
-            </dropdown>
+            <div class="select" data-name="kubernetes-cluster-edit-endpoints">
+                <select formControlName="endpoint">
+                    <option *ngIf="endpointsLoading">{{"loading" | i18n}}</option>
+                    <option *ngIf="!endpointsLoading
+                                              && (!endpoints || endpoints.length === 0)">{{"noItems" | i18n}}</option>
+                    <option *ngFor="let endpoint of endpoints"
+                            value="{{endpoint.documentSelfLink}}"
+                            [selected]="preselectedEndpointLink
+                                && endpoint.documentSelfLink === preselectedEndpointLink">{{endpoint.name}}</option>
+                </select>
+            </div>
         </div>
         <div class="form-group">
             <label for="clusterName" class="required">{{"pks.new.settings.fieldTitleName" | i18n}}</label>

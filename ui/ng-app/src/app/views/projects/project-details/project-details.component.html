@@ -45,11 +45,11 @@
         <ng-template [clrIfActive]="isActiveTabRepositories"
                      (clrIfActiveChange)="repositoriesTabActivated($event)">
             <clr-tab-content id="repositoriesContent">
-                <hbr-repository-listview [projectId]="hbrProjectId" [projectName]="projectName"
+                <hbr-repository-gridview [projectId]="hbrProjectId" [projectName]="projectName"
                                          [hasSignedIn]="true"
                                          [hasProjectAdminRole]="hasProjectAdminRole"
                                          (repoClickEvent)="watchRepoClickEvent($event)"
-                                            ></hbr-repository-listview>
+                                            ></hbr-repository-gridview>
             </clr-tab-content>
         </ng-template>
     </clr-tab>

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -9,62 +9,58 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, OnInit } from '@angular/core';
-import { Subscription } from 'rxjs/Subscription';
+import { Component, OnDestroy } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { ErrorService } from '../../utils/error.service';
+import { FT } from '../../utils/ft';
 import { RoutesRestriction } from '../../utils/routes-restriction';
-import { FT } from './../../utils/ft';
 
 @Component({
-  selector: 'app-administration',
-  templateUrl: './administration.component.html',
-  styleUrls: ['./administration.component.scss']
+    selector: 'app-administration',
+    templateUrl: './administration.component.html',
+    styleUrls: ['./administration.component.scss']
 })
 /**
  * Administration of the application.
  */
-export class AdministrationComponent implements OnInit {
+export class AdministrationComponent implements OnDestroy {
 
-  errorObserve: Subscription;
+    errorObserve: Subscription;
 
-  alertMessage: string;
-  isHbrEnabled = FT.isHbrEnabled();
+    alertMessage: string;
+    isHbrEnabled = FT.isHbrEnabled();
 
-  constructor(private errorService: ErrorService) {
+    constructor(private errorService: ErrorService) {
+        this.errorObserve = this.errorService.errorMessages.subscribe((event) => {
+            this.alertMessage = event;
+        });
+    }
 
-      this.errorObserve = this.errorService.errorMessages.subscribe((event) => {
-          this.alertMessage = event;
-      });
-  }
+    ngOnDestroy() {
+        this.errorObserve.unsubscribe();
+    }
 
-  ngOnInit() {
-  }
+    get identityManagementRouteRestriction() {
+        return RoutesRestriction.IDENTITY_MANAGEMENT;
+    }
 
-  ngOnDestroy() {
-    this.errorObserve.unsubscribe();
-  }
+    get projectsRouteRestriction() {
+        return RoutesRestriction.PROJECTS;
+    }
 
-  get identityManagementRouteRestriction() {
-    return RoutesRestriction.IDENTITY_MANAGEMENT;
-  }
+    get registriesRouteRestriction() {
+        return RoutesRestriction.REGISTRIES;
+    }
 
-  get projectsRouteRestriction() {
-    return RoutesRestriction.PROJECTS;
-  }
+    get configurationRouteRestriction() {
+        return RoutesRestriction.CONFIGURATION;
+    }
 
-  get registriesRouteRestriction() {
-    return RoutesRestriction.REGISTRIES;
-  }
+    get logsRouteRestriction() {
+        return RoutesRestriction.LOGS;
+    }
 
-  get configurationRouteRestriction() {
-    return RoutesRestriction.CONFIGURATION;
-  }
-
-  get logsRouteRestriction() {
-    return RoutesRestriction.LOGS;
-  }
-
-  resetAlert() {
-    this.alertMessage = null;
-  }
+    resetAlert() {
+        this.alertMessage = null;
+    }
 }

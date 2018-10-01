@@ -31,8 +31,8 @@ import * as I18n from 'i18next';
 export class KubernetesClusterNewSettingsComponent implements OnInit {
     projectLink: string;
 
+    endpointsLoading: boolean = false;
     endpoints: any[];
-    endpointDocumentSelfLink: string;
 
     isCreatingCluster: boolean = false;
 
@@ -79,16 +79,6 @@ export class KubernetesClusterNewSettingsComponent implements OnInit {
         return this._selectedPlanId;
     }
 
-    endpointsTitle = I18n.t('dropdownSearchMenu.title', {
-        ns: 'base',
-        entity: I18n.t('app.endpoint.entity', {ns: 'base'})
-    } as I18n.TranslationOptions );
-
-    endpointsSearchPlaceholder = I18n.t('dropdownSearchMenu.searchPlaceholder', {
-        ns: 'base',
-        entity: I18n.t('app.endpoint.entity', {ns: 'base'})
-    } as I18n.TranslationOptions );
-
     constructor(protected route: ActivatedRoute, protected router: Router,
                 protected documentService: DocumentService,
                 protected projectService: ProjectService,
@@ -112,26 +102,25 @@ export class KubernetesClusterNewSettingsComponent implements OnInit {
     }
 
     populateEndpoints() {
+
+        this.endpointsLoading = true;
         this.documentService.list(Links.PKS_ENDPOINTS, {}, this.projectLink)
-        .then(result => {
-            this.endpoints = result.documents;
-            this.preselectEndpointOption();
+            .then(result => {
+                this.endpointsLoading = false;
+
+                this.endpoints = result.documents;
         }).catch((error) => {
             console.log(error);
+            this.endpointsLoading = false;
+
             this.showErrorMessage(error);
         });
     }
 
-    private preselectEndpointOption() {
-        if (this.endpointDocumentSelfLink) {
-            let endpointOption = this.endpoints.find(endpoint =>
-                endpoint.documentSelfLink === this.endpointDocumentSelfLink);
-            this.newClusterSettingsForm.get('endpoint').setValue(endpointOption);
-            this.newClusterSettingsForm.get('endpoint').disable(true);
-        }
-    }
+    endpointSelected($event) {
+        let endpointSelfLink = $event.target.value !== '' ? $event.target.value : null;
+        let endpoint = this.endpoints.find(e => e.documentSelfLink === endpointSelfLink);
 
-    endpointSelected(endpoint) {
         if (endpoint && endpoint.planAssignments) {
             let assignedPlans = endpoint.planAssignments[this.projectLink].plans;
 
@@ -166,7 +155,7 @@ export class KubernetesClusterNewSettingsComponent implements OnInit {
                 "resourceType": "PKS_CLUSTER",
                 "operation": "PROVISION_RESOURCE",
                 "customProperties": {
-                    "__pksEndpoint": formValues.endpoint.documentSelfLink,
+                    "__pksEndpoint": formValues.endpoint,
                     "__pksClusterName": formValues.name,
                     "plan_name": this.selectedPlan.name,
                     "kubernetes_master_host": formValues.masterHostName,

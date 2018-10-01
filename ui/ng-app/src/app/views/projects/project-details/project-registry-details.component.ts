@@ -15,12 +15,10 @@ import { FormControl, FormGroup } from '@angular/forms';
 import { BaseDetailsComponent } from '../../../components/base/base-details.component';
 import { DocumentService } from '../../../utils/document.service';
 import { ErrorService } from '../../../utils/error.service';
-import { ProjectService } from '../../../utils/project.service';
 import { Constants } from '../../../utils/constants';
 import { Links } from '../../../utils/links';
 import { Utils } from '../../../utils/utils';
 
-import { formatUtils } from 'admiral-ui-common';
 import * as I18n from 'i18next';
 
 @Component({
@@ -34,7 +32,12 @@ import * as I18n from 'i18next';
  */
 export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implements OnInit {
     editMode: boolean = false;
+
+    credentialsLoading: boolean = false;
     credentials: any[];
+    preselectedCredential: any;
+    selectedCredential: any;
+
     selectedProjectLink: string;
 
     showCertificateWarning: boolean;
@@ -46,8 +49,7 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
 
     projectRegistryDetailsForm = new FormGroup({
         name: new FormControl(''),
-        address: new FormControl(''),
-        credentials: new FormControl('')
+        address: new FormControl('')
     });
 
     isSavingRegistry: boolean = false;
@@ -55,16 +57,6 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
     disableButtons: boolean;
 
     alertMessage: string;
-
-    credentialsTitle = I18n.t('dropdownSearchMenu.title', {
-        ns: 'base',
-        entity: I18n.t('app.credential.entity', { ns: 'base' })
-    } as I18n.TranslationOptions);
-
-    credentialsSearchPlaceholder = I18n.t('dropdownSearchMenu.searchPlaceholder', {
-        ns: 'base',
-        entity: I18n.t('app.credential.entity', {ns: 'base'})
-    } as I18n.TranslationOptions );
 
     constructor(router: Router, route: ActivatedRoute, documentService: DocumentService,
                 errorService: ErrorService) {
@@ -101,26 +93,26 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
     };
 
     populateCredentials(authCredentialsLink) {
+        if (this.credentials) {
+            return;
+        }
+
+        this.credentialsLoading = true;
         this.service.list(Links.CREDENTIALS, {}).then(credentials => {
+            this.credentialsLoading = false;
+
             this.credentials = credentials.documents
                 .filter(c => !Utils.areSystemScopedCredentials(c))
                 .map(this.toCredentialViewModel);
-                if (authCredentialsLink) {
-                    this.preselectCredential(authCredentialsLink);
-                }
+
+            // preselect credential
+            this.preselectedCredential = authCredentialsLink;
         }).catch((e) => {
             console.log('Credentials retrieval failed', e);
-        });
-    }
+            this.credentialsLoading = false;
 
-    preselectCredential(authCredentialsLink) {
-        if (authCredentialsLink) {
-            var credItem = this.credentials
-                .filter((c) => c.documentSelfLink === authCredentialsLink);
-            if (credItem.length > 0) {
-                this.projectRegistryDetailsForm.get('credentials').setValue(credItem[0]);
-            }
-        }
+            this.showErrorMessage(e);
+        });
     }
 
     toCredentialViewModel(credential) {
@@ -154,6 +146,10 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
         this.populateCredentials(authCredentialsLink);
     }
 
+    onCredentialsSelection(selectedCredential) {
+        this.selectedCredential = selectedCredential;
+    }
+
     private save(acceptCert: boolean = false) {
         this.isSavingRegistry = true;
         let registrySpec = this.getRegistrySpec(acceptCert);
@@ -173,13 +169,12 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
         this.isSavingRegistry = true;
         this.disableButtons = false;
 
-        let formInput = this.projectRegistryDetailsForm.value;
-        let registryName = formInput.name && formatUtils.escapeHtml(formInput.name);
+        let formData = this.projectRegistryDetailsForm.value;
 
-        this.entity.name = formInput.name && formatUtils.escapeHtml(formInput.name);
-        this.entity.address = formInput.address;
+        this.entity.name = formData.name && Utils.escapeHtml(formData.name);
+        this.entity.address = formData.address;
         this.entity.endpointType = 'container.docker.registry';
-        this.entity.authCredentialsLink = formInput.credentials.documentSelfLink;
+        this.entity.authCredentialsLink = this.selectedCredential;
 
         let registrySpec = {
             'hostState': this.entity,
@@ -213,7 +208,8 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
         let registrySpec = this.getRegistrySpec(acceptCert);
 
         this.service.put(Links.REGISTRY_SPEC + '?validate=true', registrySpec,
-            this.selectedProjectLink).then((response) => {
+                            this.selectedProjectLink)
+            .then((response) => {
                 if (!this.isCertificateResponse(response)) {
                     this.isTestingConnection = false;
                     this.alertType = Constants.alert.type.SUCCESS;
@@ -226,15 +222,14 @@ export class ProjectRegistryDetailsComponent extends BaseDetailsComponent implem
     }
 
     private getRegistrySpec(acceptCert: boolean) {
-        let formInput = this.projectRegistryDetailsForm.value;
-        let registryName = formInput.name && formatUtils.escapeHtml(formInput.name);
+        let formData = this.projectRegistryDetailsForm.value;
+        let registryName = Utils.escapeHtml(formData.name);
         let registryState = {
-            'address': formInput.address,
+            'address': formData.address,
             'name': registryName,
             'endpointType': 'container.docker.registry',
-            'authCredentialsLink': formInput.credentials.documentSelfLink
+            'authCredentialsLink': this.selectedCredential
         };
-        registryState.authCredentialsLink = formInput.credentials.documentSelfLink;
 
         let registrySpec = {
             'hostState': registryState,

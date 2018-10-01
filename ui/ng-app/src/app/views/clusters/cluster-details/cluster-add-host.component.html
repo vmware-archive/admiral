@@ -12,7 +12,7 @@
 <clr-modal [clrModalOpen]="visible" (clrModalOpenChange)="addHostCanceled()">
     <h3 class="modal-title">{{ "clusters.resources.addHost.title" | i18n }}</h3>
     <div class="modal-body">
-        <clr-alert [clrAlertType]="'alert-danger'" [(clrAlertClosed)]="!alertMessage"
+        <clr-alert *ngIf="alertMessage" [clrAlertType]="alertType" [(clrAlertClosed)]="!alertMessage"
                    (clrAlertClosedChange)="resetAlert()">
             <div class="alert-item"><span class="alert-text">{{ alertMessage }}</span></div>
         </clr-alert>
@@ -23,28 +23,28 @@
                     <label for="address" class="required">{{ "clusters.resources.addHost.address" | i18n }}</label>
                     <label for="address" aria-haspopup="true" role="tooltip"
                            class="tooltip tooltip-validation tooltip-sm tooltip-bottom-left"
-                           [class.invalid]="addHostToClusterForm.get('address').invalid && (addHostToClusterForm.get('address').dirty || addHostToClusterForm.get('address').touched)">
-                        <input type="text" placeholder="https://hostname:2376" formControlName="address">
+                           [class.invalid]="addHostToClusterForm.get('address').invalid
+                                                && (addHostToClusterForm.get('address').dirty
+                                                || addHostToClusterForm.get('address').touched)">
+                        <input type="text" placeholder="https://hostname:2376" formControlName="address" size="45">
                         <span class="tooltip-content">{{ "clusters.resources.addHost.addressRequired" | i18n }}</span>
                     </label>
                 </div>
                 <div class="form-group">
                     <label for="name">{{ "clusters.resources.editHost.name" | i18n }}</label>
-                    <input type="text" formControlName="name">
+                    <input type="text" formControlName="name" size="45">
                 </div>
-                <div class="form-group host-credentials">
-                    <label for="credentials">{{ "clusters.edit.credentials" | i18n }}</label>
-                    <dropdown id="credentials" formControlName="credentials" [options]="credentials"
-                              [title]="credentialsTitle"
-                              [searchPlaceholder]="credentialsSearchPlaceholder"
-                              ddClass="top-left">
-                    </dropdown>
-                </div>
+
+                <credentials-select [credentials]="credentials" [credentialsLoading]="credentialsLoading"
+                                    [selectDataName]="'cluster-add-host-credentials'" [styleShort]="true"
+                                    (onSelect)="onCredentialsSelection($event)"
+                ></credentials-select>
+
                 <div class="form-group" *ngIf="showPublicAddressField">
                     <label for="publicAddress">{{ "clusters.edit.publicAddress" | i18n }}</label>
                     <input id="publicAddress" type="text"
                             placeholder="{{ 'clusters.edit.publicAddressPlaceholder' | i18n }}"
-                            formControlName="publicAddress">
+                            formControlName="publicAddress" size="45">
                     <a aria-haspopup="true" role="tooltip" class="tooltip tooltip-top-left">
                         <clr-icon shape="info-circle"></clr-icon>
                         <span class="tooltip-content">{{ "clusters.edit.publicAddressDescription" | i18n }}</span>
@@ -52,11 +52,15 @@
                 </div>
                 <div class="form-group" *ngIf="isApplicationEmbedded">
                     <label for="deploymentPolicy">{{ "clusters.resources.addHost.deploymentPolicy" | i18n }}</label>
-                    <dropdown id="deploymentPolicy" formControlName="deploymentPolicy" [options]="deploymentPolicies"
-                              [title]="deploymentPoliciesTitle"
-                              [searchPlaceholder]="deploymentPoliciesSearchPlaceholder"
-                              ddClass="top-left">
-                    </dropdown>
+                    <div class="select" data-name="cluster-add-host-deploymentPolicy">
+                        <select id="deploymentPolicy" formControlName="deploymentPolicy"
+                                [(ngModel)]="deploymentPolicySelection">
+                            <option *ngIf="!deploymentPolicies
+                                                || deploymentPolicies.length === 0">{{"noItems" | i18n}}</option>
+                            <option *ngFor="let deploymentPolicy of deploymentPolicies"
+                                    value="{{deploymentPolicy.documentSelfLink}}">{{deploymentPolicy.name}}</option>
+                        </select>
+                    </div>
                 </div>
             </section>
         </form>

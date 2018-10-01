@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -13,7 +13,7 @@
 
 import { TestBed, async, ComponentFixture } from '@angular/core/testing';
 import { AppComponent } from './app.component';
-import { ClarityModule } from "clarity-angular";
+import { ClarityModule } from "@clr/angular";
 import { ROUTING } from "./app.routing";
 import { APP_BASE_HREF } from "@angular/common";
 

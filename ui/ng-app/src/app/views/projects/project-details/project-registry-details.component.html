@@ -42,13 +42,12 @@
                     <input id="registryName" type="text" formControlName="name" size="45">
                 </label>
             </div>
-            <div class="form-group">
-                <label for="registryCredentials">{{"projects.projectRegistries.registryDetails.fieldCredentials" | i18n}}</label>
-                <dropdown formControlName="credentials" ddClass="top-left"
-                            [options]="credentials" [title]="credentialsTitle"
-                            [searchPlaceholder]="credentialsSearchPlaceholder">
-                </dropdown>
-            </div>
+
+            <credentials-select [credentials]="credentials" [credentialsLoading]="credentialsLoading"
+                                [selected]="preselectedCredential"
+                                [selectDataName]="'registry-details-credentials'"
+                                (onSelect)="onCredentialsSelection($event)"
+            ></credentials-select>
 
             <button *ngIf="!editMode" type="button" class="btn btn-primary"
                     [clrLoading]="isSavingRegistry || projectRegistryDetailsForm.invalid"

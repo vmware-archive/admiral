@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, AfterViewInit, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
 import { FormGroup, FormControl } from "@angular/forms";
 import { DocumentService } from '../../../utils/document.service';
 import { Constants } from '../../../utils/constants';
@@ -26,13 +26,18 @@ import * as I18n from 'i18next';
 /**
  * Edit Cluster Hosts dialog.
  */
-export class ClusterEditHostComponent implements AfterViewInit, OnChanges {
-
+export class ClusterEditHostComponent implements OnInit, OnChanges {
     @Input() visible: boolean;
     @Input() host: any;
     @Input() deploymentPolicies: any[] = [];
 
+    credentialsLoading: boolean = false;
     credentials: any[] = [];
+    preselectedCredential:any;
+    selectedCredential: any;
+
+    deploymentPolicySelection: any;
+
     isSavingHost: boolean;
     isVerifyingHost: boolean;
     isHostVerified: boolean = true;
@@ -51,39 +56,28 @@ export class ClusterEditHostComponent implements AfterViewInit, OnChanges {
 
     editHostForm = new FormGroup({
         name: new FormControl(''),
-        credentials: new FormControl(''),
         publicAddress: new FormControl(''),
         deploymentPolicy: new FormControl('')
     });
 
-    credentialsTitle = I18n.t('dropdownSearchMenu.title', {
-        ns: 'base',
-        entity: I18n.t('app.credential.entity', {ns: 'base'})
-    } as I18n.TranslationOptions );
-
-    credentialsSearchPlaceholder = I18n.t('dropdownSearchMenu.searchPlaceholder', {
-        ns: 'base',
-        entity: I18n.t('app.credential.entity', {ns: 'base'})
-    } as I18n.TranslationOptions );
-
-    deploymentPoliciesTitle = I18n.t('dropdownSearchMenu.title', {
-        ns: 'base',
-        entity: I18n.t('app.deploymentPolicy.entity', {ns: 'base'})
-    } as I18n.TranslationOptions );
-
-    deploymentPoliciesSearchPlaceholder = I18n.t('dropdownSearchMenu.searchPlaceholder', {
-        ns: 'base',
-        entity: I18n.t('app.deploymentPolicy.entity', {ns: 'base'})
-    } as I18n.TranslationOptions );
-
     constructor(private documentService: DocumentService) { }
 
-    ngAfterViewInit() {
-        // init credentials list
+    ngOnInit() {
+        this.populateCredentials();
+    }
+
+    populateCredentials() {
+        this.credentialsLoading = true;
         this.documentService.list(Links.CREDENTIALS, {}).then(credentials => {
-            this.credentials = credentials.documents
-            .filter(c => !Utils.areSystemScopedCredentials(c))
+            this.credentialsLoading = false;
+
+            this.credentials = credentials.documents.filter(c => !Utils.areSystemScopedCredentials(c))
             .map(Utils.toCredentialViewModel);
+        }).catch((error) => {
+            console.error('Credentials retrieval failed', error);
+            this.credentialsLoading = false;
+
+            this.showAlertMessage(Constants.alert.type.DANGER, Utils.getErrorMessage(error)._generic);
         });
     }
 
@@ -91,22 +85,15 @@ export class ClusterEditHostComponent implements AfterViewInit, OnChanges {
         if (this.host) {
             this.editHostForm.get('name').setValue(Utils.getHostName(this.host));
 
-            let authCredentialsLink =
-                    Utils.getCustomPropertyValue(this.host.customProperties, '__authCredentialsLink');
-            if (authCredentialsLink) {
-                var credItem = this.credentials.filter((c) => c.documentSelfLink === authCredentialsLink);
-                if (credItem.length > 0) {
-                    this.editHostForm.get('credentials').setValue(credItem[0]);
-                }
-            }
+            this.preselectedCredential = Utils.getCustomPropertyValue(this.host.customProperties,
+                                            '__authCredentialsLink');
 
             let publicAddress = Utils.getCustomPropertyValue(this.host.customProperties,
                 Constants.hosts.customProperties.publicAddress) || "";
             this.editHostForm.get('publicAddress').setValue(publicAddress);
 
-            let deploymentPolicyLink = Utils.getCustomPropertyValue(this.host.customProperties,
-                    Constants.hosts.customProperties.deploymentPolicyLink);
-            this.editHostForm.get('deploymentPolicy').setValue(deploymentPolicyLink);
+            this.deploymentPolicySelection = Utils.getCustomPropertyValue(this.host.customProperties,
+                                                        Constants.hosts.customProperties.deploymentPolicyLink)
         }
     }
 
@@ -123,10 +110,6 @@ export class ClusterEditHostComponent implements AfterViewInit, OnChanges {
         this.onCancel.emit(null);
     }
 
-    resetAlert() {
-        this.alertMessage = null;
-    }
-
     clearView() {
         this.resetAlert();
 
@@ -136,37 +119,38 @@ export class ClusterEditHostComponent implements AfterViewInit, OnChanges {
 
         this.editHostForm.reset();
         this.editHostForm.markAsPristine();
+        this.selectedCredential = null;
     }
 
-    onCredentialsChange(creds: any) {
-        let authCredentialsLink =
-            Utils.getCustomPropertyValue(this.host.customProperties, '__authCredentialsLink');
-
-        this.isHostVerified = this.editHostForm.value.credentials === authCredentialsLink;
+    onCredentialsSelection(selectedCredential) {
+        this.selectedCredential = selectedCredential;
     }
 
-    getInputHost() {
+    getHostInputData() {
         var hostCopy = Object.assign({}, this.host);
         hostCopy.customProperties = Object.assign({}, this.host.customProperties);
 
-        let formInput = this.editHostForm.value;
+        let formData = this.editHostForm.value;
 
-        if (formInput.name) {
-            hostCopy.customProperties['__hostAlias'] = formInput.name;
+        if (formData.name) {
+            hostCopy.customProperties['__hostAlias'] = formData.name;
         }
 
-        if (formInput.credentials) {
-            hostCopy.customProperties['__authCredentialsLink'] =
-                                                            formInput.credentials.documentSelfLink;
+        let authCredentialsLink =
+            Utils.getCustomPropertyValue(this.host.customProperties, '__authCredentialsLink');
+        this.isHostVerified = this.selectedCredential === authCredentialsLink;
+
+        if (this.selectedCredential) {
+            hostCopy.customProperties['__authCredentialsLink'] = this.selectedCredential;
         }
 
         // allow overwriting with empty value
         hostCopy.customProperties[Constants.hosts.customProperties.publicAddress] =
-            formInput.publicAddress || "";
+            formData.publicAddress || "";
 
-        if (formInput.deploymentPolicy) {
+        if (this.deploymentPolicySelection) {
             hostCopy.customProperties[Constants.hosts.customProperties.deploymentPolicyLink] =
-                    formInput.deploymentPolicy.documentSelfLink;
+                this.deploymentPolicySelection;
         } else {
             delete hostCopy.customProperties[Constants.hosts.customProperties.deploymentPolicyLink];
         }
@@ -179,7 +163,7 @@ export class ClusterEditHostComponent implements AfterViewInit, OnChanges {
             this.isVerifyingHost = true;
             this.isHostVerified = false;
 
-            let host = this.getInputHost();
+            let host = this.getHostInputData();
             let hostSpec = {
                 'hostState': host
             };
@@ -190,8 +174,7 @@ export class ClusterEditHostComponent implements AfterViewInit, OnChanges {
                     this.isVerifyingHost = false;
                     this.isHostVerified = true;
 
-                    this.alertType = Constants.alert.type.SUCCESS;
-                    this.alertMessage = I18n.t('hosts.verified');
+                    this.showAlertMessage(Constants.alert.type.SUCCESS, I18n.t('hosts.verified'));
                 } else {
                     this.showCertificateWarning = true;
                     this.projectLinks = hostSpec.hostState.tenantLinks;
@@ -204,8 +187,7 @@ export class ClusterEditHostComponent implements AfterViewInit, OnChanges {
             }).catch(error => {
                 this.isVerifyingHost = false;
 
-                this.alertType = Constants.alert.type.DANGER;
-                this.alertMessage = Utils.getErrorMessage(error)._generic;
+                this.showAlertMessage(Constants.alert.type.DANGER, Utils.getErrorMessage(error)._generic);
             });
         }
     }
@@ -214,7 +196,7 @@ export class ClusterEditHostComponent implements AfterViewInit, OnChanges {
         if (this.editHostForm.valid) {
             this.isSavingHost = true;
 
-            var hostState = this.getInputHost();
+            var hostState = this.getHostInputData();
             let hostSpec = {
                 'hostState': hostState,
                 'isUpdateOperation': true
@@ -228,8 +210,7 @@ export class ClusterEditHostComponent implements AfterViewInit, OnChanges {
             }).catch(error => {
                 this.isSavingHost = false;
 
-                this.alertType = Constants.alert.type.DANGER;
-                this.alertMessage = Utils.getErrorMessage(error)._generic;
+                this.showAlertMessage(Constants.alert.type.DANGER, Utils.getErrorMessage(error)._generic);
             });
         }
     }
@@ -258,8 +239,7 @@ export class ClusterEditHostComponent implements AfterViewInit, OnChanges {
             this.documentService.patch(this.trustCertLink, {
                 certificate: this.certificate
             }).then(() => {
-                this.alertType = Constants.alert.type.SUCCESS;
-                this.alertMessage = I18n.t('hosts.verified');
+                this.showAlertMessage(Constants.alert.type.SUCCESS, I18n.t('hosts.verified'));
             });
         }).catch((error) => {
             if (error.status === 404) {
@@ -268,13 +248,21 @@ export class ClusterEditHostComponent implements AfterViewInit, OnChanges {
                     acceptCertificate: true,
                     tenantLinks: this.projectLinks
                 }).then(() => {
-                    this.alertType = Constants.alert.type.SUCCESS;
-                    this.alertMessage = I18n.t('hosts.verified');
+                    this.showAlertMessage(Constants.alert.type.SUCCESS, I18n.t('hosts.verified'));
                 });
             } else {
-                this.alertType = Constants.alert.type.DANGER;
-                this.alertMessage = Utils.getErrorMessage(error)._generic;
+                this.showAlertMessage(Constants.alert.type.DANGER, Utils.getErrorMessage(error)._generic);
             }
         });
+    }
+
+    private showAlertMessage(messageType, message) {
+        this.alertType = messageType;
+        this.alertMessage = message;
+    }
+
+    resetAlert() {
+        this.alertType = null;
+        this.alertMessage = null;
     }
 }

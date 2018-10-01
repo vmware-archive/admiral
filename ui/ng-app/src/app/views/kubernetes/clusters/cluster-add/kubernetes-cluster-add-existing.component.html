@@ -25,12 +25,16 @@
                 <label for="endpoint" class="required">{{"pks.add.existingClusters.fieldTitleEndpoint" | i18n}}</label>
             </div>
             <div class="col-lg-6">
-                <dropdown formControlName="endpoint" [options]="endpoints"
-                      [title]="endpointsTitle"
-                      [searchPlaceholder]="endpointsSearchPlaceholder"
-                      (ngModelChange)="onChangeEndpoint($event)"
-                      ddClass="top-left">
-                </dropdown>
+                <div class="select" data-name="kubernetes-cluster-add-endpoints">
+                    <select formControlName="endpoint" (change)="onChangeEndpoint($event)">
+                        <option *ngIf="endpointsLoading">{{"loading" | i18n}}</option>
+                        <option *ngIf="!endpointsLoading
+                                              && (!endpoints || endpoints.length === 0)">{{"noItems" | i18n}}</option>
+                        <option *ngIf="!endpointSelection" value="">Please select</option>
+                        <option *ngFor="let endpoint of endpoints"
+                                value="{{endpoint.documentSelfLink}}">{{endpoint.name}}</option>
+                    </select>
+                </div>
             </div>
         </div>
 

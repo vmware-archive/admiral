@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -9,14 +9,13 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, Input, Output, EventEmitter, AfterViewInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, AfterViewInit, OnInit } from '@angular/core';
 import { FormGroup, FormControl, Validators } from "@angular/forms";
 import { DocumentService } from '../../../utils/document.service';
 import { Constants } from '../../../utils/constants';
 import { FT } from '../../../utils/ft';
 import { Links } from '../../../utils/links';
 import { Utils } from "../../../utils/utils";
-import * as I18n from 'i18next';
 
 @Component({
     selector: 'app-cluster-add-host',
@@ -26,16 +25,24 @@ import * as I18n from 'i18next';
 /**
  * Add Hosts to Cluster dialog.
  */
-export class ClusterAddHostComponent implements AfterViewInit {
+export class ClusterAddHostComponent implements AfterViewInit, OnInit {
     @Input() cluster: any;
     @Input() visible: boolean;
     @Input() projectLink: string;
     @Input() deploymentPolicies: any[] = [];
 
     isAddingHost: boolean;
+
+    credentialsLoading: boolean = false;
     credentials: any[] = [];
+    selectedCredential: any;
+
+    deploymentPolicySelection: any;
+
     showCertificateWarning: boolean;
     certificate: any;
+
+    alertType: string;
     alertMessage: string;
 
     @Output() onChange: EventEmitter<any> = new EventEmitter();
@@ -44,30 +51,9 @@ export class ClusterAddHostComponent implements AfterViewInit {
     addHostToClusterForm = new FormGroup({
         address: new FormControl('', Validators.required),
         name: new FormControl(''),
-        credentials: new FormControl(''),
         publicAddress: new FormControl(''),
         deploymentPolicy: new FormControl('')
     });
-
-    credentialsTitle = I18n.t('dropdownSearchMenu.title', {
-        ns: 'base',
-        entity: I18n.t('app.credential.entity', {ns: 'base'})
-    } as I18n.TranslationOptions );
-
-    credentialsSearchPlaceholder = I18n.t('dropdownSearchMenu.searchPlaceholder', {
-        ns: 'base',
-        entity: I18n.t('app.credential.entity', {ns: 'base'})
-    } as I18n.TranslationOptions );
-
-    deploymentPoliciesTitle = I18n.t('dropdownSearchMenu.title', {
-        ns: 'base',
-        entity: I18n.t('app.deploymentPolicy.entity', {ns: 'base'})
-    } as I18n.TranslationOptions );
-
-    deploymentPoliciesSearchPlaceholder = I18n.t('dropdownSearchMenu.searchPlaceholder', {
-        ns: 'base',
-        entity: I18n.t('app.deploymentPolicy.entity', {ns: 'base'})
-    } as I18n.TranslationOptions );
 
     constructor(private documentService: DocumentService) { }
 
@@ -75,11 +61,24 @@ export class ClusterAddHostComponent implements AfterViewInit {
         setTimeout(() => {
             this.showCertificateWarning = false;
         });
+    }
 
+    ngOnInit() {
+        this.populateCredentials();
+    }
+
+    populateCredentials() {
+        this.credentialsLoading = true;
         this.documentService.list(Links.CREDENTIALS, {}).then(credentials => {
-            this.credentials = credentials.documents
-                                    .filter(c => !Utils.areSystemScopedCredentials(c))
-                                    .map(Utils.toCredentialViewModel);
+            this.credentialsLoading = false;
+
+            this.credentials = credentials.documents.filter(c => !Utils.areSystemScopedCredentials(c))
+                                                        .map(Utils.toCredentialViewModel);
+        }).catch((error) => {
+            console.error('Credentials retrieval failed', error);
+            this.credentialsLoading = false;
+
+            this.showAlertMessage(Constants.alert.type.DANGER, Utils.getErrorMessage(error)._generic);
         });
     }
 
@@ -96,10 +95,7 @@ export class ClusterAddHostComponent implements AfterViewInit {
         this.isAddingHost = false;
         this.addHostToClusterForm.reset();
         this.addHostToClusterForm.markAsPristine();
-    }
-
-    resetAlert() {
-        this.alertMessage = null;
+        this.selectedCredential = null;
     }
 
     declineCertificate() {
@@ -117,36 +113,39 @@ export class ClusterAddHostComponent implements AfterViewInit {
         this.onCancel.emit(null);
     }
 
+    onCredentialsSelection(selectedCredential) {
+        this.selectedCredential = selectedCredential;
+    }
+
     addHost(certificateAccepted: boolean) {
         if (this.addHostToClusterForm.valid) {
             this.isAddingHost = true;
 
-            let formInput = this.addHostToClusterForm.value;
+            let formData = this.addHostToClusterForm.value;
             let hostState = {
-                'address': formInput.address,
+                'address': formData.address,
                 'customProperties': {
                     '__containerHostType': 'DOCKER',
                     '__adapterDockerType': 'API'
                 }
             };
 
-            if (formInput.name) {
-                hostState.customProperties['__hostAlias'] = formInput.name;
+            if (formData.name) {
+                hostState.customProperties['__hostAlias'] = formData.name;
             }
 
-            if (formInput.credentials) {
-                hostState.customProperties['__authCredentialsLink'] =
-                                                            formInput.credentials.documentSelfLink;
+            if (this.selectedCredential) {
+                hostState.customProperties['__authCredentialsLink'] = this.selectedCredential;
             }
 
-            if (formInput.publicAddress) {
+            if (formData.publicAddress) {
                 hostState.customProperties[Constants.hosts.customProperties.publicAddress] =
-                                                                            formInput.publicAddress;
+                                                                            formData.publicAddress;
             }
 
-            if (formInput.deploymentPolicy) {
+            if (this.deploymentPolicySelection) {
                 hostState.customProperties[Constants.hosts.customProperties.deploymentPolicyLink] =
-                        formInput.deploymentPolicy.documentSelfLink;
+                        this.deploymentPolicySelection;
             }
 
             let hostSpec = {
@@ -168,9 +167,21 @@ export class ClusterAddHostComponent implements AfterViewInit {
                     this.onChange.emit(null);
                 }
             }).catch(error => {
+                console.error('Failed to add host to cluster', error);
                 this.isAddingHost = false;
-                this.alertMessage = Utils.getErrorMessage(error)._generic;
+
+                this.showAlertMessage(Constants.alert.type.DANGER, Utils.getErrorMessage(error)._generic);
             });
         }
+    }
+
+    private showAlertMessage(messageType, message) {
+        this.alertType = messageType;
+        this.alertMessage = message;
+    }
+
+    resetAlert() {
+        this.alertType = null;
+        this.alertMessage = null;
     }
 }

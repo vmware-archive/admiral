@@ -2,23 +2,12 @@
 // This software is released under MIT license.
 // The full license information can be found in LICENSE in the root directory of this project.
 
-.form-group select {
-    margin-top: 6px;
-}
-
-.form-group dropdown {
+textarea {
     width: 350px;
 }
 
-.form-group .dropdown {
-    .dropdown-menu {
-        padding: 4px 0;
-
-        .divider {
-            margin: 4px 0;
-        }
-    }
-    .dropdown-options {
-        max-height: 120px;
+.form-group {
+    select, input {
+        width: 350px;
     }
 }

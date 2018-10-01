@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -15,16 +15,13 @@ import { Subscription } from 'rxjs';
 import { ViewExpandRequestService } from '../../services/view-expand-request.service';
 import { slideAndFade } from '../../utils/transitions';
 
-
 @Component({
-  selector: 'navigation-container',
-  template: `
-    <div [ngStyle]="contentStyle"
-         [ngClass]="{'full-screen': type === 'fullScreenSlide', 'with-back-button': showBackButton }">
-        <ng-content></ng-content>
-    </div>
-  `,
-  animations: [slideAndFade()]
+    selector: 'navigation-container',
+    template: `<div [ngStyle]="contentStyle" 
+                    [ngClass]="{'full-screen': type === 'fullScreenSlide', 'with-back-button': showBackButton }">
+            <ng-content></ng-content>
+        </div>`,
+    animations: [slideAndFade()]
 })
 /**
  * Container allowing navigation, using sliding effect. Has back button support.
@@ -46,7 +43,7 @@ export class NavigationContainerComponent implements OnInit, OnDestroy {
     type: string;
 
     constructor(private router: Router, private route: ActivatedRoute,
-                private viewExpandRequestor: ViewExpandRequestService) {
+                private viewExpandRequester: ViewExpandRequestService) {
 
     }
 
@@ -87,9 +84,9 @@ export class NavigationContainerComponent implements OnInit, OnDestroy {
     handleNewComponent(newRoute) {
         var newComponent: any = newRoute.component;
         var navigationContainerType = newRoute.data && newRoute.data.value
-                                        && newRoute.data.value.navigationContainerType;
+            && newRoute.data.value.navigationContainerType;
         this.hideBackButton = newRoute.data && newRoute.data.value
-                                && newRoute.data.value.hideBackButton;
+            && newRoute.data.value.hideBackButton;
 
         let selectedType;
         if (newComponent != this.oldComponent) {
@@ -112,16 +109,16 @@ export class NavigationContainerComponent implements OnInit, OnDestroy {
         }
 
         let isFullscreen = this.hasFullscreenParent(newRoute);
-        this.viewExpandRequestor.requestFullScreen(isFullscreen);
+        this.viewExpandRequester.requestFullScreen(isFullscreen);
     }
 
     ngOnDestroy() {
         if (this.routeObserve) {
-          this.routeObserve.unsubscribe();
+            this.routeObserve.unsubscribe();
         }
 
         let isFullscreen = this.hasFullscreenParent(this.route);
-        this.viewExpandRequestor.requestFullScreen(isFullscreen);
+        this.viewExpandRequester.requestFullScreen(isFullscreen);
     }
 }
 

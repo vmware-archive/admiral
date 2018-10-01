@@ -11,23 +11,25 @@
 
 <clr-modal [clrModalStaticBackdrop]="true" [clrModalOpen]="visible"
            (clrModalOpenChange)="addCanceled()" [clrModalSize]="'lg'">
+
     <h3 class="modal-title">{{ 'projects.members.addMembers.title' | i18n }}</h3>
+
     <div class="modal-body">
-        <clr-alert [clrAlertType]="'alert-danger'" [(clrAlertClosed)]="!alertMessage"
+        <clr-alert *ngIf="alertMessage" [clrAlertType]="'alert-danger'"
+                   [(clrAlertClosed)]="!alertMessage"
                    (clrAlertClosedChange)="resetAlert()">
-            <div class="alert-item">
-                <span class="alert-text">{{ alertMessage }}</span>
-            </div>
+            <div class="alert-item"><span class="alert-text">{{ alertMessage }}</span></div>
         </clr-alert>
+
         <p>{{ description }}</p>
+
         <form class="form" [formGroup]="addMembersToProjectForm">
             <section class="form-block">
                 <div class="form-group">
-                    <label>{{"projects.members.addMembers.fieldTitleId" | i18n}}</label>
-                    <simple-search #simpleSearch displayPropertyName="id"
-                                   (searchChange)="getMembers($event)"
-                                   (searchSelectionChange)="onSearchSelection($event)"></simple-search><div
-                    *ngIf="searching" class="searching"><i class="fa fa-lg fa-spinner fa-spin"></i></div>
+                    <label for="searchField" class="required">{{"projects.members.addMembers.fieldTitleId" | i18n}}</label>
+                    <input id="searchField" type="text" placeholder="username@domain" size="45"
+                           formControlName="searchField" [(ngModel)]="searchTerm" (keyup.enter)="getMembers($event)"><span
+                                *ngIf="searching" class="searching"><i class="fa fa-lg fa-spinner fa-spin"></i></span>
                 </div>
                 <div class="form-group">
                     <div class="selected-members-container">
