@@ -83,15 +83,17 @@ public class PushImageToHarborAndProvision extends BaseTestVic {
 
         pushImageToProject();
 
+        String clientKey = provider.getHost().getClientPrivateKey();
+        String clientCert = provider.getHost().getClientPublicKey();
         administration().clickIdentityManagementButton();
         identity().credentialsTab().waitToLoad();
         identity().credentialsTab().clickAddCredential();
         identity().newCredentialForm().selectCertificateType();
         identity().newCredentialForm().setName(CREDENTIALS_NAME);
         identity().certificateCredentialForm()
-                .setPrivateCertificate(provider.getHost().getClientPrivateKey());
+                .setPrivateCertificate(clientKey);
         identity().certificateCredentialForm()
-                .setPublicCertificate(provider.getHost().getClientPublicKey());
+                .setPublicCertificate(clientCert);
         identity().newCredentialForm().submit();
         identity().credentialsTab().validate().validateCredentialsExistWithName(CREDENTIALS_NAME);
 

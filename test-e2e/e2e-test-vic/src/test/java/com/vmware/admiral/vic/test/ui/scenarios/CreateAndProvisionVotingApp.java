@@ -219,24 +219,24 @@ public class CreateAndProvisionVotingApp extends BaseTestVic {
     // templates().requests().waitForLastRequestToSucceed(1200);
     private void verifySuccessfulProvisioning() {
         try {
-            templates().requests().waitForLastRequestToSucceed(1200);
+            templates().requests().waitForLastRequestToSucceed(600);
         } catch (Throwable e) {
+            try {
+                Thread.sleep(12000);
+            } catch (InterruptedException e1) {
+            }
+            try {
+                templates().requests().waitForLastRequestToSucceed(600);
+            } catch (Throwable e2) {
+                try {
+                    Thread.sleep(12000);
+                } catch (InterruptedException e3) {
+                }
+                templates().requests().waitForLastRequestToSucceed(1200);
+            }
 
         }
-        try {
-            Thread.sleep(12000);
-        } catch (InterruptedException e) {
-        }
-        try {
-            templates().requests().waitForLastRequestToSucceed(1500);
-        } catch (Throwable e) {
 
-        }
-        try {
-            Thread.sleep(12000);
-        } catch (InterruptedException e) {
-        }
-        templates().requests().waitForLastRequestToSucceed(1200);
     }
 
     protected List<String> getProjectNames() {

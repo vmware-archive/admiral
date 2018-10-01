@@ -18,7 +18,7 @@ import com.vmware.admiral.test.ui.pages.main.AdministrationTabLocators;
 public class VICAdministrationTabLocators extends AdministrationTabLocators {
 
     private static By CONFIGURATION_BUTTON = By
-            .cssSelector(".sidenav-content .nav-link[href='#/administration/configuration']");
+            .cssSelector(".nav-content .nav-link[href='#/administration/configuration']");
 
     public By configurationButton() {
         return CONFIGURATION_BUTTON;

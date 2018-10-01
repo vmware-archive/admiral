@@ -20,13 +20,13 @@ public class AdministrationTabLocators extends PageLocators {
     private final By ADMINISTRATION_TAB_BUTTON = By
             .cssSelector(".nav-link.nav-text[href='#/administration']");
     private final By IDENTITY_MANAGEMENT_BUTTON = By
-            .cssSelector(".sidenav-content .nav-link[href='#/administration/identity-management']");
+            .cssSelector(".nav-content .nav-link[href='#/administration/identity-management']");
     private final By PROJECTS_BUTTON = By
-            .cssSelector(".sidenav-content .nav-link[href='#/administration/projects']");
+            .cssSelector(".nav-content .nav-link[href='#/administration/projects']");
     private final By REGISTRIES_BUTTON = By
-            .cssSelector(".sidenav-content .nav-link[href='#/administration/registries']");
+            .cssSelector(".nav-content .nav-link[href='#/administration/registries']");
     private final By LOGS_BUTTON = By
-            .cssSelector(".sidenav-content .nav-link[href='#/administration/logs']");
+            .cssSelector(".nav-content .nav-link[href='#/administration/logs']");
 
     public By administrationTabButton() {
         return ADMINISTRATION_TAB_BUTTON;

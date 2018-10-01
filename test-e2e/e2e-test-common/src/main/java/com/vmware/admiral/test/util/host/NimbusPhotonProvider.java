@@ -32,7 +32,7 @@ public class NimbusPhotonProvider implements ContainerHostProvider {
 
     private final String SSH_USERNAME = "root";
     private final String SSH_PASSWORD = "VMware1!";
-    private final int DEPLOY_TEMPLATE_TIMEOUT_SECONDS = 360;
+    private final int DEPLOY_TEMPLATE_TIMEOUT_SECONDS = 720;
     private final int KILL_VM_TIMEOUT_SECONDS = 120;
     private final String NIMBUS_TARGET = "nimbus-gateway.eng.vmware.com";
     private final String OVF_PATH = "/templates/admiral-test-photon-v1/admiral-test-photon-v1.ovf";

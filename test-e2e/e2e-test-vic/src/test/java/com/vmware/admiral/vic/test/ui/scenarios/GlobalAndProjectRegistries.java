@@ -232,6 +232,7 @@ public class GlobalAndProjectRegistries extends BaseTestVic {
         projects().editRegistryForm().submit();
         projects().projectRegistriesTab().validate().validateRegistryExistsWithName(REGISTRY_NAME);
         main().clickHomeTabButton();
+        applications().applicationsPage().waitToLoad();
         home().clickRepositoriesButton();
         repositories().repositoriesPage().selectRegistry(REGISTRY_NAME);
         repositories().repositoriesPage().enterSearchCriteria(IMAGE_NAME);

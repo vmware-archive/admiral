@@ -18,7 +18,7 @@ import com.vmware.admiral.test.ui.pages.common.PageLocators;
 public class HomeTabLocators extends PageLocators {
 
     private final By HOME_BUTTON = By.cssSelector(".nav-link.nav-text[href='#/home']");
-    protected final String LEFT_MENU_BASE = ".sidenav-content";
+    protected final String LEFT_MENU_BASE = ".nav-content";
     private final By CURRENT_PROJECT_DIV = By
             .cssSelector(LEFT_MENU_BASE + " .project-label");
     private final By PROJECTS_DROPDOWN_BUTTON = By
@@ -38,7 +38,7 @@ public class HomeTabLocators extends PageLocators {
             .cssSelector(LEFT_MENU_BASE + " .nav-link[href='#/home/public-repositories']");
     private final By CLUSTERS_BUTTON = By
             .cssSelector(LEFT_MENU_BASE + " .nav-link[href='#/home/clusters']");
-    private final String PROJECT_SELECTOR_BY_NAME_XPATH = "//nav//clr-dropdown-menu//a[contains(concat(' ', normalize-space(text()), ' '), ' %s ')]";
+    private final String PROJECT_SELECTOR_BY_NAME_XPATH = "//clr-dropdown-menu//a[contains(concat(' ', normalize-space(text()), ' '), ' %s ')]";
     private final By PROJECT_SELECTOR_DROPDOWN_MENU = By
             .cssSelector(".project-selector .dropdown-menu");
 
