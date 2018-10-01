@@ -21,6 +21,7 @@ import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_MASTER_NODES_IPS_P
 
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.UnknownHostException;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
@@ -35,6 +36,8 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
@@ -622,6 +625,13 @@ public class ClusterService extends StatelessService {
                         logWarning("Create cluster failed: %s", Utils.toString(ex));
                         post.fail(new LocalizableValidationException(ex.getCause(),
                                 "Could not create cluster.", "compute.cluster.create.failed"));
+                    } else if (ExceptionUtils.getRootCause(ex) instanceof UnknownHostException) {
+                        logWarning("Add cluster failed: %s", Utils.toString(ex));
+                        String message = String.format("Could not create cluster %s: unknown host.",
+                                hostSpec.hostState.address);
+                        post.fail(new LocalizableValidationException(ex.getCause(),
+                                message, "compute.cluster.create.failed.unknown.host",
+                                hostSpec.hostState.address));
                     } else {
                         logWarning("Add cluster failed: %s", Utils.toString(ex));
                         post.fail(new LocalizableValidationException(ex.getCause(),
