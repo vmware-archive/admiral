@@ -20,7 +20,7 @@ public interface KubernetesHostConstants {
             ComputeDescriptionService.FACTORY_LINK, KUBERNETES_COMPUTE_DESC_ID);
     public static final String KUBERNETES_HOST_DEFAULT_NAMESPACE = "default";
     public static final String KUBERNETES_HOST_NAMESPACE_PROP_NAME = "__kubernetesNamespace";
-    public static final String KUBERNETES_HOST_HEALTH_PATH = "/healthz";
+    public static final String KUBERNETES_HOST_HEALTH_PATH = "/healthz/ping";
 
     // When creating a namespace on kubernetes it matches the name with this regex
     public static final String KUBERNETES_NAMESPACE_REGEX = "[a-z0-9]([-a-z0-9]*[a-z0-9])?";
