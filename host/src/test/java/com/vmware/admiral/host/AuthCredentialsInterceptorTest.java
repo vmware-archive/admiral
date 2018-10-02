@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -61,6 +61,8 @@ public class AuthCredentialsInterceptorTest extends BaseTestCase {
         // common setup
         System.clearProperty(EncryptionUtils.ENCRYPTION_KEY);
         System.clearProperty(EncryptionUtils.INIT_KEY_IF_MISSING);
+
+        EncryptionUtils.initEncryptionService();
     }
 
     @Override
@@ -145,20 +147,27 @@ public class AuthCredentialsInterceptorTest extends BaseTestCase {
 
         // do NOT init EncryptionUtils
 
+        assertNull("ENCRYPTION_KEY env variable should be null",
+                System.getProperty(EncryptionUtils.ENCRYPTION_KEY));
+        assertNull("INIT_KEY_IF_MISSING env variable should be null",
+                System.getProperty(EncryptionUtils.INIT_KEY_IF_MISSING));
+
         AuthCredentialsServiceState credentials = createCredentials("username", "password", false);
 
-        assertEquals("username", credentials.userEmail);
-        assertNotNull(credentials.privateKey);
-        assertFalse(credentials.privateKey.startsWith(EncryptionUtils.ENCRYPTION_PREFIX));
+        assertEquals("username mismatch", "username", credentials.userEmail);
+        assertNotNull("privateKey should not be null", credentials.privateKey);
+        assertFalse("private key should not be encrypted",
+                credentials.privateKey.startsWith(EncryptionUtils.ENCRYPTION_PREFIX));
 
         String publicKey = "-----BEGIN CERTIFICATE-----\nABC\n-----END CERTIFICATE-----";
 
         credentials = createCredentialsWithKeys(publicKey,
                 "-----BEGIN PRIVATE KEY-----\nDEF\n-----END PRIVATE KEY-----");
 
-        assertEquals(publicKey, credentials.publicKey);
-        assertNotNull(credentials.privateKey);
-        assertFalse(credentials.privateKey.startsWith(EncryptionUtils.ENCRYPTION_PREFIX));
+        assertEquals("public key mismatch", publicKey, credentials.publicKey);
+        assertNotNull("privateKey should not be null", credentials.privateKey);
+        assertFalse("private key should not be encrypted",
+                credentials.privateKey.startsWith(EncryptionUtils.ENCRYPTION_PREFIX));
     }
 
     @Test
