@@ -113,7 +113,7 @@ public class FavoriteImagesService extends StatefulService {
 
         @ApiModelProperty(
                 value = "The name of the favorite image.",
-                example = "libarary/nginx",
+                example = "library/nginx",
                 required = true)
         public String name;
         @ApiModelProperty(

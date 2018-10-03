@@ -11,32 +11,57 @@
 
 package com.vmware.admiral.host.swagger;
 
-import java.io.IOException;
-import java.net.URL;
+import io.swagger.models.Info;
+import io.swagger.models.Scheme;
+import io.swagger.models.Swagger;
+import io.swagger.util.Json;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.Resources;
-
+import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.SwaggerDocumentation;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.Service;
 import com.vmware.xenon.services.common.UiContentService;
 
 public class SwaggerDocumentationService extends UiContentService {
 
-    public static final String SELF_LINK = "/api";
+    public static final String SELF_LINK = ManagementUriParts.SWAGGER_DOCUMENTATION_LINK;
+
+    private Swagger swagger = new Swagger();
+    private Info info;
+    private String[] includePackages;
+    private Scheme[] schemes;
+
 
     public SwaggerDocumentationService() {
-        this.toggleOption(Service.ServiceOption.HTML_USER_INTERFACE, true);
-        this.toggleOption(Service.ServiceOption.CONCURRENT_GET_HANDLING, true);
+        this.toggleOption(ServiceOption.HTML_USER_INTERFACE, true);
+        this.toggleOption(ServiceOption.CONCURRENT_GET_HANDLING, true);
+    }
+
+    public SwaggerDocumentationService setInfo(Info info) {
+        this.info = info;
+        return this;
+    }
+
+    public SwaggerDocumentationService setIncludePackages(String... includePackages) {
+        this.includePackages = includePackages;
+        return this;
+    }
+
+    public SwaggerDocumentationService setSchemes(Scheme... schemes) {
+        this.schemes = schemes;
+        return this;
     }
 
     @Override
     public void handleGet(Operation get) {
-        try {
-            URL swaggerJsonFile = Resources.getResource("swagger-ui.json");
-            get.setBody(Resources.toString(swaggerJsonFile, Charsets.UTF_8)).complete();
-        } catch (IOException e) {
-            get.fail(e);
-        }
+        this.swagger = SwaggerDocumentationAssembler
+                .create()
+                .setHost(get.getReferer().getAuthority())
+                .setBasePath(SwaggerDocumentation.BASE_PATH)
+                .setInfo(this.info)
+                .setIncludePackages(this.includePackages)
+                .setSchemes(this.schemes)
+                .build();
+
+        get.setBody(Json.pretty(swagger)).complete();
     }
 }

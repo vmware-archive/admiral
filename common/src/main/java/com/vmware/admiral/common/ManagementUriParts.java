@@ -254,4 +254,6 @@ public interface ManagementUriParts {
             AuthCredentialsService.FACTORY_LINK, "default-ca-cert");
     String AUTH_CREDENTIALS_CLIENT_LINK = UriUtils.buildUriPath(
             AuthCredentialsService.FACTORY_LINK, "default-client-cert");
+
+    String SWAGGER_DOCUMENTATION_LINK = "/api";
 }

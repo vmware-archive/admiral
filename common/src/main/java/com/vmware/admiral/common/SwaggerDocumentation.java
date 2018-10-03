@@ -20,6 +20,26 @@ public interface SwaggerDocumentation {
     public static final String INSTANCE_PATH = "/{id}";
     public static final String LINE_BREAK = "<br/>";
 
+    public static interface InfoConstants {
+
+        public static final String TITLE = "Admiral API";
+
+        public static final String CONTACT_NAME = "VMware Admiral";
+        public static final String CONTACT_URL = "https://github.com/vmware/admiral";
+
+        public static final String LICENSE_NAME = "Apache 2 License";
+        public static final String LICENSE_URL = "https://github.com/vmware/admiral/blob/master/LICENSE";
+
+        public static final String DESCRIPTION =
+                "Admiral™ is a highly scalable and very lightweight Container Management " +
+                "platform for deploying and managing container\nbased applications. It is designed to have a small " +
+                "footprint and boot extremely quickly. Admiral™ is intended to\nprovide automated deployment and " +
+                "lifecycle management of containers.\n\nThis container management solution can help reduce complexity " +
+                "and achieve advantages including simplified and automated\napplication delivery, optimized resource " +
+                "utilization along with business governance and applying business policies and\noverall data center " +
+                "integration.";
+    }
+
     public static interface DataTypes {
         public static final String DATA_TYPE_STRING = "string";
         public static final String DATA_TYPE_INTEGER = "integer";

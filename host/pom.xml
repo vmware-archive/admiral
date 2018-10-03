@@ -224,54 +224,7 @@
                 </executions>
             </plugin>
 
-            <!--Swagger-->
-            <plugin>
-                <groupId>com.github.kongchen</groupId>
-                <artifactId>swagger-maven-plugin</artifactId>
-                <version>${swagger.mvn.plugin.version}</version>
-                <configuration>
-                    <apiSources>
-                        <apiSource>
-                            <springmvc>false</springmvc>
-                            <schemes>
-                                <scheme>http</scheme>
-                                <scheme>https</scheme>
-                            </schemes>
-                            <locations>
-                                <location>com.vmware.admiral</location>
-                            </locations>
-                            <host></host>
-                            <basePath>/</basePath>
-                            <descriptionFile>${basedir}/swagger-resources/swaggerDescription.txt</descriptionFile>
-                            <info>
-                                <title>Admiral REST API</title>
-                                <version>${project.version}</version>
-                                <contact>
-                                    <name>VMware Admiral</name>
-                                    <url>https://github.com/vmware/admiral</url>
-                                </contact>
-                                <license>
-                                    <url>https://github.com/vmware/admiral/blob/master/LICENSE</url>
-                                    <name>Apache 2 license</name>
-                                </license>
-                            </info>
-                            <swaggerDirectory>${swagger.spec.dir}</swaggerDirectory>
-                            <swaggerFileName>swagger-ui</swaggerFileName>
-                            <templatePath>${swagger.template.dir}/strapdown.html.hbs</templatePath>
-                            <outputPath>${swagger.html.dir}/swagger-ui.html</outputPath>
-                            <outputFormats>json,yaml</outputFormats>
-                        </apiSource>
-                    </apiSources>
-                </configuration>
-                <executions>
-                    <execution>
-                        <phase>process-classes</phase>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+            <!--Markdown Documentation-->
             <plugin>
                 <groupId>io.github.swagger2markup</groupId>
                 <artifactId>swagger2markup-maven-plugin</artifactId>
@@ -284,14 +237,16 @@
                     </config>
                 </configuration>
                 <executions>
-                    <execution>
-                        <phase>install</phase>
-                        <goals>
-                            <goal>convertSwagger2markup</goal>
-                        </goals>
-                    </execution>
+                    <!--Disabled because of VBV-2262-->
+                    <!--<execution>-->
+                        <!--<phase>install</phase>-->
+                        <!--<goals>-->
+                            <!--<goal>convertSwagger2markup</goal>-->
+                        <!--</goals>-->
+                    <!--</execution>-->
                 </executions>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
