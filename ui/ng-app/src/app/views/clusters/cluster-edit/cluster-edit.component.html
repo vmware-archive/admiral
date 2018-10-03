@@ -10,7 +10,7 @@
   -->
 
 <div class="main-view">
-    <clr-alert [clrAlertType]="alertType" [(clrAlertClosed)]="!alertMessage"
+    <clr-alert *ngIf="alertMessage" [clrAlertType]="alertType" [(clrAlertClosed)]="!alertMessage"
                (clrAlertClosedChange)="resetAlert()">
         <div class="alert-item">
             <span class="alert-text">{{ alertMessage }}</span>
@@ -34,7 +34,7 @@
           </div>
           <div class="form-group">
             <label for="description">{{ "clusters.edit.description" | i18n }}</label>
-            <input id="description" type="text" formControlName="description">
+            <textarea id="description" rows="5" formControlName="description"></textarea>
           </div>
           <div class="form-group" *ngIf="isVch">
             <label class="required">{{ "clusters.edit.url" | i18n }}</label>

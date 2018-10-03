@@ -9,103 +9,111 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, AfterViewInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import { FormGroup, FormControl, Validators } from "@angular/forms";
+import { FormGroup, FormControl, Validators } from '@angular/forms';
 import { BaseDetailsComponent } from '../../../components/base/base-details.component';
+import { Constants } from '../../../utils/constants';
 import { DocumentService } from '../../../utils/document.service';
-import { ErrorService } from "../../../utils/error.service";
-import { FT } from "../../../utils/ft";
+import { ErrorService } from '../../../utils/error.service';
+import { FT } from '../../../utils/ft';
 import { Links } from '../../../utils/links';
 import { Utils } from '../../../utils/utils';
 
 @Component({
-  selector: 'app-project-create',
-  templateUrl: './project-create.component.html',
-  styleUrls: ['./project-create.component.scss']
+    selector: 'app-project-create',
+    templateUrl: './project-create.component.html',
+    styleUrls: ['./project-create.component.scss']
 })
 /**
- * Modal for create/edit project.
+ * Create/edit project.
  */
-export class ProjectCreateComponent extends BaseDetailsComponent implements AfterViewInit {
-  opened: boolean;
-  isEdit: boolean;
+export class ProjectCreateComponent extends BaseDetailsComponent {
+    isEdit: boolean;
 
-  projectForm = new FormGroup({
-      name: new FormControl('', Validators.required),
-      description: new FormControl('', Validators.maxLength(2048)),
-      icon: new FormControl(''),
-      isPublic: new FormControl('')
-  });
+    isUpdatingProject: boolean = false;
 
-  alertMessage: string;
+    projectForm = new FormGroup({
+        name: new FormControl('', Validators.required),
+        description: new FormControl('', Validators.maxLength(2048)),
+        icon: new FormControl(''),
+        isPublic: new FormControl('')
+    });
 
-  constructor(router: Router, route: ActivatedRoute, service: DocumentService,
-              errorService: ErrorService) {
-    super(Links.PROJECTS, route, router, service, null, errorService);
-  }
+    alertMessage: string;
+    alertType: string;
 
-  get title() {
-    return this.isEdit ? "projects.edit.titleEdit" : "projects.edit.titleNew";
-  }
-
-  get isNameInputDisabled() {
-    return this.isEdit && FT.isVic() ? '' : null;
-  }
-
-  entityInitialized() {
-    this.isEdit = true;
-
-    this.projectForm.get('name').setValue(this.entity.name);
-
-    if (this.entity.description) {
-      this.projectForm.get('description').setValue(this.entity.description);
+    constructor(router: Router, route: ActivatedRoute, service: DocumentService,
+                errorService: ErrorService) {
+        super(Links.PROJECTS, route, router, service, null, errorService);
     }
 
-    if (this.entity.isPublic) {
-        this.projectForm.get('isPublic').setValue(this.entity.isPublic);
+    get title() {
+        return this.isEdit ? "projects.edit.titleEdit" : "projects.edit.titleNew";
     }
-  }
 
-  ngAfterViewInit() {
-    this.opened = true;
-  }
-
-  toggleModal(open) {
-    this.opened = open;
-
-    if (!open) {
-      let path: any[] = this.isEdit
-                        ? ['../../' + Utils.getDocumentId(this.entity.documentSelfLink)]
-                        : ['../'];
-
-      this.router.navigate(path, { relativeTo: this.route });
+    get isNameInputDisabled() {
+        return this.isEdit && FT.isVic() ? '' : null;
     }
-  }
 
-  saveProject() {
-    if (this.projectForm.valid) {
+    entityInitialized() {
+        this.isEdit = true;
 
-      if (this.isEdit) {
-        this.service.patch(this.entity.documentSelfLink, this.projectForm.value).then(() => {
-          this.toggleModal(false);
+        this.projectForm.get('name').setValue(this.entity.name);
 
-        }).catch((error) => {
-            this.alertMessage = Utils.getErrorMessage(error)._generic;
-        });
-      } else {
+        if (this.entity.description) {
+            this.projectForm.get('description').setValue(this.entity.description);
+        }
 
-        this.service.post(Links.PROJECTS, this.projectForm.value).then(() => {
-          this.toggleModal(false);
-
-        }).catch((error) => {
-            this.alertMessage = Utils.getErrorMessage(error)._generic;
-        });
-      }
+        if (this.entity.isPublic) {
+            this.projectForm.get('isPublic').setValue(this.entity.isPublic);
+        }
     }
-  }
 
-  resetAlert() {
-    this.alertMessage = null;
-  }
+    goBack() {
+        let path: any[] = this.isEdit
+                            ? ['../../' + Utils.getDocumentId(this.entity.documentSelfLink)]
+                            : ['../'];
+
+        this.router.navigate(path, { relativeTo: this.route });
+    }
+
+    update() {
+        if (this.projectForm.valid) {
+            this.isUpdatingProject = true;
+
+            if (this.isEdit) {
+                this.service.patch(this.entity.documentSelfLink, this.projectForm.value)
+                    .then(() => {
+                    this.isUpdatingProject = false;
+                    this.goBack();
+
+                }).catch((error) => {
+                    this.showErrorMessage(error);
+
+                    this.isUpdatingProject = false;
+                });
+            } else {
+
+                this.service.post(Links.PROJECTS, this.projectForm.value).then(() => {
+                    this.isUpdatingProject = false;
+                    this.goBack();
+
+                }).catch((error) => {
+                   this.showErrorMessage(error);
+
+                    this.isUpdatingProject = false;
+                });
+            }
+        }
+    }
+
+    showErrorMessage(error) {
+        this.alertType = Constants.alert.type.DANGER;
+        this.alertMessage = Utils.getErrorMessage(error)._generic;
+    }
+
+    resetAlert() {
+        this.alertMessage = null;
+    }
 }

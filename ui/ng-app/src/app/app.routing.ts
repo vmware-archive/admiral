@@ -215,16 +215,11 @@ export const ROUTES: Routes = [
             {
                 path: 'projects', component: ProjectsComponent,
                 canActivate: [AdminAuthGuard],
-                data: { roles: RoutesRestriction.PROJECTS },
-                children: [
-                    { path: 'new', component: ProjectCreateComponent,
-                        canActivate: [AdminAuthGuard],
-                        data: {
-                            navigationContainerType: NavigationContainerType.Default,
-                            roles: RoutesRestriction.PROJECTS_NEW
-                        }
-                    }
-                ]
+                data: { roles: RoutesRestriction.PROJECTS }
+            },
+            { path: 'projects/new', component: ProjectCreateComponent,
+                canActivate: [AdminAuthGuard],
+                data: { roles: RoutesRestriction.PROJECTS_NEW }
             },
             { path: 'projects/:id', component: ProjectDetailsComponent,
                 canActivate: [AdminAuthGuard],
