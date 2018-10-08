@@ -21,6 +21,8 @@ import { Roles } from '../../../utils/roles';
 import { RoutesRestriction } from '../../../utils/routes-restriction';
 import { Utils } from '../../../utils/utils';
 
+import * as I18n from 'i18next';
+
 const TAB_ID_SUMMARY = "summary";
 const TAB_ID_MEMBERS = "members";
 const TAB_ID_REPOSITORIES = "hbrRepo";
@@ -42,6 +44,9 @@ export class ProjectDetailsComponent extends BaseDetailsComponent {
     hbrSessionInfo = {};
     isHbrEnabled = FT.isHbrEnabled();
     userSecurityContext: any;
+
+    showDeleteConfirmation: boolean = false;
+    deleteConfirmationAlert: string;
 
     constructor(route: ActivatedRoute, service: DocumentService, router: Router,
                 private authService: AuthService, errorService: ErrorService) {
@@ -160,5 +165,43 @@ export class ProjectDetailsComponent extends BaseDetailsComponent {
 
     get embedded(): boolean {
         return FT.isApplicationEmbedded();
+    }
+
+    deleteProject($event) {
+        $event.stopPropagation();
+
+        this.showDeleteConfirmation = true;
+    }
+
+    get deleteConfirmationDescription(): string {
+        let projectName = this.entity && this.entity.name;
+
+        if (projectName) {
+            if (FT.isVic()) {
+                return I18n.t('projects.delete.confirmationVic',
+                    { projectName:  projectName } as I18n.TranslationOptions);
+            } else {
+                return I18n.t('projects.delete.confirmation',
+                    { projectName:  projectName } as I18n.TranslationOptions);
+            }
+        }
+    }
+
+    deleteConfirmed() {
+        this.service.delete(this.entity.documentSelfLink)
+            .then(() => {
+                this.showDeleteConfirmation = false;
+                this.goBack();
+            }).catch(err => {
+            this.deleteConfirmationAlert = Utils.getErrorMessage(err)._generic;
+        });
+    }
+
+    deleteCanceled() {
+        this.showDeleteConfirmation = false;
+    }
+
+    goBack() {
+        this.router.navigate(['..'], { relativeTo: this.route });
     }
 }

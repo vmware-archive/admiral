@@ -29,6 +29,7 @@ import { UsersGroupsAssignRolesComponent } from "./views/identity-management/use
 import { ProjectsComponent } from './views/projects/projects.component';
 import { ProjectDetailsComponent } from './views/projects/project-details/project-details.component';
 import { ProjectSummaryComponent } from "./views/projects/project-details/project-summary.component";
+import { ProjectEditComponent } from "./views/projects/project-details/project-edit.component";
 import { ProjectConfigurationComponent } from './views/projects/project-details/project-configuration.component';
 import { ProjectCreateComponent } from './views/projects/project-create/project-create.component';
 import { ProjectMembersComponent } from "./views/projects/project-details/project-members.component";
@@ -130,6 +131,7 @@ export const ADMIRAL_DECLARATIONS = [
   ProjectAddMemberComponent,
   ProjectAddMembersComponent,
   ProjectEditMemberComponent,
+  ProjectEditComponent,
   ProjectCreateComponent,
   ProjectConfigurationComponent,
   ProjectRegistriesComponent,

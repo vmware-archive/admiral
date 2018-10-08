@@ -10,47 +10,7 @@
   -->
 
 <div class="main-view">
-    <clr-alert *ngIf="alertMessage" [clrAlertType]="alertType" [(clrAlertClosed)]="!alertMessage"
-               (clrAlertClosedChange)="resetAlert()">
-        <div class="alert-item">
-            <span class="alert-text">{{ alertMessage }}</span>
-        </div>
-    </clr-alert>
+    <div class="title">{{"projects.edit.titleNew" | i18n}}</div>
 
-    <div class="title">{{title | i18n}}</div>
-
-    <form [formGroup]="projectForm">
-        <section class="form-block">
-            <div class="form-group">
-                <label for="name" class="required">{{"projects.edit.name" | i18n}}</label>
-                <label for="name" aria-haspopup="true" role="tooltip"
-                       class="tooltip tooltip-validation tooltip-sm tooltip-right"
-                       [class.invalid]="projectForm.get('name').invalid
-                                        && (projectForm.get('name').dirty || projectForm.get('name').touched)">
-                    <input id="name" [attr.disabled]="isNameInputDisabled" type="text" formControlName="name">
-                    <span class="tooltip-content">{{"projects.edit.nameRequired" | i18n}}</span>
-                </label>
-            </div>
-            <div class="form-group">
-                <label for="description">{{"projects.edit.description" | i18n}}</label>
-                <textarea id="description" rows="5" formControlName="description"></textarea>
-            </div>
-            <div class="form-group">
-                <div class="checkbox-inline">
-                    <input type="checkbox" id="isPublic" formControlName="isPublic">
-                    <label for="isPublic" aria-haspopup="true" role="tooltip"
-                           class="tooltip tooltip-validation tooltip-sm"
-                        >{{"projects.publicDescription" | i18n}}</label>
-                </div>
-            </div>
-        </section>
-
-        <button type="button" class="btn btn-primary"
-                [clrLoading]="isUpdatingProject"
-                [disabled]="!projectForm.dirty || projectForm.invalid"
-                (click)="update()">{{(isEdit ? "update" : 'create') | i18n}}</button>
-        <button type="button" class="btn btn-secondary"
-                [disabled]="isUpdatingProject"
-                (click)="goBack()">{{ "cancel" | i18n }}</button>
-    </form>
+    <app-project-edit [editAllowed]="true"></app-project-edit>
 </div>

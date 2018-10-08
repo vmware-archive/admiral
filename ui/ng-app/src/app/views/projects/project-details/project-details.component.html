@@ -9,10 +9,18 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
+<delete-confirmation [title]="'projects.delete.title' | i18n"
+                     [description]="deleteConfirmationDescription"
+                     [(alert)]="deleteConfirmationAlert" [visible]="showDeleteConfirmation"
+                     (onDelete)="deleteConfirmed()" (onCancel)="deleteCanceled()">
+</delete-confirmation>
+
 <div class="main-view">
     <img [src]="'./container-image-icons?container-image=' + entity?.documentSelfLink"/>
-    <h3 class="projects-details-header-title">{{entity?.name}}</h3>
-
+    <h3 class="projects-details-header-title">{{entity?.name}}<div
+            class="btn-group" role="group" aria-label="Available Actions"
+        ><button type="button" class="btn btn-link" (click)="deleteProject($event)"
+            >{{"delete" | i18n}}</button></div></h3>
     <clr-tabs>
     <clr-tab>
         <button clrTabLink id="summaryTab">{{"projects.summary.title" | i18n}}</button>

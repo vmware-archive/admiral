@@ -46,25 +46,26 @@
     },
     "summary": {
       "title": "Summary",
-      "type": "Type:",
-      "creationDate": "Created:",
+      "overviewTitle": "Overview",
+      "type": "Type",
+      "creationDate": "Created",
       "team": {
         "title": "Project Team",
-        "administrators": "Project Admins:",
-        "members": "Developers:",
+        "administrators": "Project Admins",
+        "members": "Developers",
         "viewers": "Viewers",
         "users": "users"
       },
       "repositories": {
         "title": "Internal Repositories",
-        "repositories": "Repositories:"
+        "repositories": "Repositories"
       },
       "resources": {
         "title": "Project Resources",
-        "clusters": "Clusters:",
-        "clustersVic": "Container Hosts:",
-        "templates": "App Templates:",
-        "images": "Images:"
+        "clusters": "Clusters",
+        "clustersVic": "Container Hosts",
+        "templates": "App Templates",
+        "images": "Images"
       }
     },
     "members": {

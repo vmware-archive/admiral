@@ -1,0 +1,21 @@
+// Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
+// This software is released under MIT license.
+// The full license information can be found in LICENSE in the root directory of this project.
+
+.overview {
+    margin-bottom: 1rem;
+
+    .form-group {
+        margin-bottom: 0px;
+        line-height: 1em;
+    }
+
+    .project-description {
+        padding: 10px 0 10px 0;
+    }
+}
+
+.badge.badge-count {
+    background: #e1f1f6;
+    color: #004a70;
+}

@@ -9,65 +9,52 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<div toolbar allowNavigation [roles]="projectSummaryEditRestrictions" [projectSelfLink]="documentSelfLink">
-    <button class="btn btn-link" [routerLink]="['./edit']">
-    <clr-icon shape="edit" size="12"></clr-icon><span class="btn-spaced-text">{{"edit" | i18n}}</span></button>
-</div>
+<app-project-edit [editAllowed]="isAllowedEditProject">
+    <div summary class="overview">
+        <h4 *ngIf="isAllowedEditProject">{{"projects.summary.overviewTitle" | i18n}}</h4>
 
-<div class="project-summary">
-    <div class="summary-description">{{project?.description}}</div>
-    <div class="summary-subsection">
-        <div class="summary-subsection-content-row">
-            <div class="left-column">{{"projects.summary.type" | i18n}}</div>
-            <div class="right-column">{{projectType | i18n}}</div><div class="clear"></div></div>
-        <div class="summary-subsection-content-row">
-            <div class="left-column">{{"projects.summary.creationDate" | i18n}}</div>
-            <div class="right-column">{{ project?.creationTimeMicros | date:'longDate' }}</div><div class="clear"></div></div>
+        <div *ngIf="!isAllowedEditProject" class="project-description">{{project?.description}}</div>
+        <div *ngIf="!isAllowedEditProject" class="form-group">
+            <label>{{"projects.summary.type" | i18n}}</label>
+            <span>{{((project?.isPublic ? "projects.public" : "projects.private") || "unknown") | i18n}}</span>
+        </div>
+        <div class="form-group">
+            <label>{{"projects.summary.creationDate" | i18n}}</label>
+            <span>{{project?.creationTimeMicros | date:'longDate'}}</span>
+        </div>
+
+        <h5>{{"projects.summary.team.title" | i18n}}</h5>
+        <div class="form-group">
+            <label>{{"projects.summary.team.administrators" | i18n}}</label>
+            <span class="badge badge-count">{{project?.administrators | count}}</span>
+        </div>
+        <div class="form-group">
+            <label>{{"projects.summary.team.members" | i18n}}</label>
+            <span class="badge badge-count">{{project?.members | count}}</span>
+        </div>
+        <div class="form-group">
+            <label>{{"projects.summary.team.viewers" | i18n}}</label>
+            <span class="badge badge-count">{{project?.viewers | count}}</span>
+        </div>
+
+        <h5>{{"projects.summary.repositories.title" | i18n}}</h5>
+        <div class="form-group">
+            <label>{{"projects.summary.repositories.title" | i18n}}</label>
+            <span class="badge badge-count">{{project?.repositories | count}}</span>
+        </div>
+
+        <h5>{{"projects.summary.resources.title" | i18n}}</h5>
+        <div class="form-group">
+            <label>{{ clustersTextKey | i18n }}</label>
+            <span class="badge badge-count">{{project?.clusterLinks | count}}</span>
+        </div>
+        <div class="form-group">
+            <label>{{"projects.summary.resources.templates" | i18n}}</label>
+            <span class="badge badge-count">{{ project?.templateLinks | count }}</span>
+        </div>
+        <div class="form-group">
+            <label>{{"projects.summary.resources.images" | i18n}}</label>
+            <span class="badge badge-count">{{ project?.numberOfImages }}</span>
+        </div>
     </div>
-
-    <div class="summary-subsection">
-        <div class="summary-subsection-title">{{"projects.summary.team.title" | i18n}}</div>
-        <div class="summary-subsection-content-row">
-            <div class="left-column">{{"projects.summary.team.administrators" | i18n}}</div>
-            <div class="right-column">{{project?.administrators | count}} {{"projects.summary.team.users" | i18n}}</div>
-            <div class="clear"></div></div>
-        <div class="summary-subsection-content-row">
-            <div class="left-column">{{"projects.summary.team.members" | i18n}}</div>
-            <div class="right-column">{{project?.members | count}} {{"projects.summary.team.users" | i18n}}</div>
-            <div class="clear"></div></div>
-        <div class="summary-subsection-content-row">
-            <div class="left-column">{{"projects.summary.team.viewers" | i18n}}</div>
-            <div class="right-column">{{project?.viewers | count}} {{"projects.summary.team.users" | i18n}}</div>
-            <div class="clear"></div></div>
-    </div>
-
-    <div class="summary-subsection">
-        <div class="summary-subsection-title">{{"projects.summary.repositories.title" | i18n}}</div>
-        <div class="summary-subsection-content-row">
-            <div class="left-column">{{"projects.summary.repositories.repositories" | i18n}}</div>
-            <div class="right-column">{{project?.repositories | count}}</div>
-            <div class="clear"></div></div>
-    </div>
-
-    <div class="summary-subsection">
-        <div class="summary-subsection-title">{{"projects.summary.resources.title" | i18n}}</div>
-        <div class="summary-subsection-content-row">
-            <div class="left-column">{{ clustersTextKey | i18n }}</div>
-            <div class="right-column">{{project?.clusterLinks | count}}</div>
-            <div class="clear"></div></div>
-        <div class="summary-subsection-content-row">
-            <div class="left-column">{{"projects.summary.resources.templates" | i18n}}</div>
-            <div class="right-column">{{ project?.templateLinks | count }}</div>
-            <div class="clear"></div></div>
-        <div class="summary-subsection-content-row">
-            <div class="left-column">{{"projects.summary.resources.images" | i18n}}</div>
-            <div class="right-column">{{ project?.numberOfImages }}</div>
-            <div class="clear"></div></div>
-    </div>
-</div>
-
-<navigation-container>
-    <back-button [routerLink]="['./']">name</back-button>
-    <router-outlet></router-outlet>
-</navigation-container>
-
+</app-project-edit>
