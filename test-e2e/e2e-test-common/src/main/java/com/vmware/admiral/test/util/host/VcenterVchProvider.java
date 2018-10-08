@@ -252,9 +252,4 @@ public class VcenterVchProvider implements ContainerHostProvider {
         return ip;
     }
 
-    @Override
-    public String getVmName() {
-        return vmName;
-    }
-
 }

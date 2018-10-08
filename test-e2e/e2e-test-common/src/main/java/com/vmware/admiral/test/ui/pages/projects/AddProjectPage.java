@@ -13,13 +13,13 @@ package com.vmware.admiral.test.ui.pages.projects;
 
 import org.openqa.selenium.By;
 
-import com.vmware.admiral.test.ui.pages.common.ModalDialog;
+import com.vmware.admiral.test.ui.pages.common.BasicPage;
 
-public class AddProjectModalDialog
-        extends ModalDialog<AddProjectModalDialogValidator, AddProjectModalDialogLocators> {
+public class AddProjectPage
+        extends BasicPage<AddProjectPageValidator, AddProjectPageLocators> {
 
-    public AddProjectModalDialog(By[] iFrameLocators, AddProjectModalDialogValidator validator,
-            AddProjectModalDialogLocators pageLocators) {
+    public AddProjectPage(By[] iFrameLocators, AddProjectPageValidator validator,
+            AddProjectPageLocators pageLocators) {
         super(iFrameLocators, validator, pageLocators);
     }
 
@@ -42,6 +42,15 @@ public class AddProjectModalDialog
 
     public void closeErrorMessage() {
         pageActions().click(locators().alertCloseButton());
+    }
+
+    public void clickCreateButton() {
+        pageActions().click(locators().createButton());
+    }
+
+    @Override
+    public void waitToLoad() {
+        validate().validateIsCurrentPage();
     }
 
 }

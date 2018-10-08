@@ -47,7 +47,7 @@ public class ProjectsPageLibrary extends PageLibrary {
     }
 
     private ProjectsPage projectsPage;
-    private AddProjectModalDialog addProjectDialog;
+    private AddProjectPage addProjectPage;
     private DeleteProjectModalDialog deleteProjectDialog;
     private CertificateModalDialog certificateModalDialog;
     private ProjectRegistriesTab registriesTab;
@@ -69,14 +69,14 @@ public class ProjectsPageLibrary extends PageLibrary {
         return projectsPage;
     }
 
-    public AddProjectModalDialog addProjectDialog() {
-        if (Objects.isNull(addProjectDialog)) {
-            AddProjectModalDialogLocators locators = new AddProjectModalDialogLocators();
-            AddProjectModalDialogValidator validator = new AddProjectModalDialogValidator(
+    public AddProjectPage addProjectPage() {
+        if (Objects.isNull(addProjectPage)) {
+            AddProjectPageLocators locators = new AddProjectPageLocators();
+            AddProjectPageValidator validator = new AddProjectPageValidator(
                     getFrameLocators(), locators);
-            addProjectDialog = new AddProjectModalDialog(getFrameLocators(), validator, locators);
+            addProjectPage = new AddProjectPage(getFrameLocators(), validator, locators);
         }
-        return addProjectDialog;
+        return addProjectPage;
     }
 
     public DeleteProjectModalDialog deleteProjectDialog() {

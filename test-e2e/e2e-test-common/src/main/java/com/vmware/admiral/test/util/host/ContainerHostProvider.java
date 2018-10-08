@@ -20,6 +20,4 @@ public interface ContainerHostProvider {
 
     public void killContainerHost();
 
-    public String getVmName();
-
 }

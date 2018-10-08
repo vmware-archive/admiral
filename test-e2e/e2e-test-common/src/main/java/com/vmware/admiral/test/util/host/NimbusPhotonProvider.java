@@ -30,8 +30,8 @@ public class NimbusPhotonProvider implements ContainerHostProvider {
 
     private final Logger LOG = Logger.getLogger(getClass().getName());
 
-    private final String SSH_USERNAME = "root";
-    private final String SSH_PASSWORD = "VMware1!";
+    public static final String SSH_USERNAME = "root";
+    public static final String SSH_PASSWORD = "VMware1!";
     private final int DEPLOY_TEMPLATE_TIMEOUT_SECONDS = 720;
     private final int KILL_VM_TIMEOUT_SECONDS = 120;
     private final String NIMBUS_TARGET = "nimbus-gateway.eng.vmware.com";
@@ -80,7 +80,6 @@ public class NimbusPhotonProvider implements ContainerHostProvider {
         ContainerHost containerHost = new ContainerHost();
         containerHost.setIp(hostIp);
         containerHost.setHostType(HostType.DOCKER);
-        containerHost.setSshCredentials(SSH_USERNAME, SSH_PASSWORD, AuthKeyType.PASSWORD);
         executor = SshCommandExecutor.createWithPasswordAuthentication(
                 hostIp, SSH_USERNAME, SSH_PASSWORD);
         if (useServerSideSsl) {
@@ -194,7 +193,6 @@ public class NimbusPhotonProvider implements ContainerHostProvider {
         }
     }
 
-    @Override
     public String getVmName() {
         return vmName;
     }

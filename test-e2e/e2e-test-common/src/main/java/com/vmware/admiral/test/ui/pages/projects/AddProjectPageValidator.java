@@ -17,10 +17,10 @@ import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.common.PageValidator;
 
-public class AddProjectModalDialogValidator extends PageValidator<AddProjectModalDialogLocators> {
+public class AddProjectPageValidator extends PageValidator<AddProjectPageLocators> {
 
-    public AddProjectModalDialogValidator(By[] iFrameLocators,
-            AddProjectModalDialogLocators pageLocators) {
+    public AddProjectPageValidator(By[] iFrameLocators,
+            AddProjectPageLocators pageLocators) {
         super(iFrameLocators, pageLocators);
     }
 
@@ -30,7 +30,7 @@ public class AddProjectModalDialogValidator extends PageValidator<AddProjectModa
 
     @Override
     public void validateIsCurrentPage() {
-        element(locators().modalTitle()).shouldHave(Condition.exactText("New Project"));
+        element(locators().pageTitle()).shouldHave(Condition.exactText("New Project"));
     }
 
 }

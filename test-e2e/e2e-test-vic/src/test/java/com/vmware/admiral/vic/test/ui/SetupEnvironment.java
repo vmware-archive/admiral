@@ -81,8 +81,8 @@ public class SetupEnvironment {
         ContainerHost host = provider.provide(false, false);
         JsonObject json = new JsonObject();
         json.addProperty(UtilityVmInfo.IP_FIELD_NAME, host.getIp());
-        json.addProperty(UtilityVmInfo.USERNAME_FIELD_NAME, host.getSshUsername());
-        json.addProperty(UtilityVmInfo.PASSWORD_FIELD_NAME, host.getSshKey());
+        json.addProperty(UtilityVmInfo.USERNAME_FIELD_NAME, NimbusPhotonProvider.SSH_USERNAME);
+        json.addProperty(UtilityVmInfo.PASSWORD_FIELD_NAME, NimbusPhotonProvider.SSH_PASSWORD);
         json.addProperty(UtilityVmInfo.VM_NAME_FIED_NAME, provider.getVmName());
         File resourcesDir = new File(UtilityVmInfo.INFO_FILE_RELATIVE_PATH);
         try {

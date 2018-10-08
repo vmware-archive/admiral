@@ -13,17 +13,21 @@ package com.vmware.admiral.test.ui.pages.projects;
 
 import org.openqa.selenium.By;
 
-import com.vmware.admiral.test.ui.pages.common.ModalDialogLocators;
+import com.vmware.admiral.test.ui.pages.common.PageLocators;
 
-public class AddProjectModalDialogLocators extends ModalDialogLocators {
+public class AddProjectPageLocators extends PageLocators {
+
+    private final String PAGE_BASE = "app-project-create";
 
     private final By NAME_INPUT_FIELD = By.id("name");
+    private final By PAGE_TITLE = By.cssSelector(PAGE_BASE + " .title");
     private final By DESCRIPTION_INPUT_FIELD = By.id("description");
     private final By PUBLIC_CHECKBOX = By
-            .cssSelector(".tooltip.tooltip-validation.tooltip-sm[for='isPublic']");
-    private final By ALERT_TEXT = By.cssSelector(MODAL_BASE + " .alert-text");
+            .cssSelector(PAGE_BASE + " .tooltip-sm[for='isPublic']");
+    private final By ALERT_TEXT = By.cssSelector(PAGE_BASE + " .alert-text");
     private final By ALERT_CLOSE_BUTTON = By
-            .cssSelector(MODAL_BASE + " .alert.alert-danger .close");
+            .cssSelector(PAGE_BASE + " .alert.alert-danger .close");
+    private final By CREATE_BUTTON = By.cssSelector(PAGE_BASE + " .btn-primary");
 
     public By nameInput() {
         return NAME_INPUT_FIELD;
@@ -43,6 +47,14 @@ public class AddProjectModalDialogLocators extends ModalDialogLocators {
 
     public By alertCloseButton() {
         return ALERT_CLOSE_BUTTON;
+    }
+
+    public By createButton() {
+        return CREATE_BUTTON;
+    }
+
+    public By pageTitle() {
+        return PAGE_TITLE;
     }
 
 }

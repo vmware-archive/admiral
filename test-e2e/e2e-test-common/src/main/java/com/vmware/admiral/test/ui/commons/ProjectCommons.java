@@ -14,23 +14,24 @@ package com.vmware.admiral.test.ui.commons;
 import java.util.Objects;
 
 import com.vmware.admiral.test.ui.pages.CommonWebClient;
-import com.vmware.admiral.test.ui.pages.projects.AddProjectModalDialog;
+import com.vmware.admiral.test.ui.pages.projects.AddProjectPage;
 
 public class ProjectCommons {
 
     public static void addProject(CommonWebClient<?> client, String name, String description,
             boolean isPublic) {
         client.projects().projectsPage().clickAddProjectButton();
-        AddProjectModalDialog addProjectDialog = client.projects().addProjectDialog();
-        addProjectDialog.waitToLoad();
-        addProjectDialog.setName(name);
+        AddProjectPage addProjectPage = client.projects().addProjectPage();
+        addProjectPage.waitToLoad();
+        addProjectPage.setName(name);
         if (Objects.nonNull(description)) {
-            addProjectDialog.setDescription(description);
+            addProjectPage.setDescription(description);
         }
         if (isPublic) {
-            addProjectDialog.setIsPublic(true);
+            addProjectPage.setIsPublic(true);
         }
-        addProjectDialog.submit();
+        addProjectPage.clickCreateButton();
+        client.projects().projectsPage().validate().validateProjectIsVisible(name);
     }
 
     public static void deleteProject(CommonWebClient<?> client, String projectName) {

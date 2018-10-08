@@ -81,7 +81,8 @@ public class ContainerHostProviderRule implements TestRule {
                             PROVIDER.killContainerHost();
                         } catch (Throwable e) {
                             LOG.warning(
-                                    String.format("Could not kill VM, error: %s,%s", e.getMessage(),
+                                    String.format("Could not kill container host, error: %s,%s",
+                                            e.getMessage(),
                                             ExceptionUtils.getStackTrace(e)));
                         }
                     }

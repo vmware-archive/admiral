@@ -24,7 +24,6 @@ import org.junit.rules.TestRule;
 import com.vmware.admiral.test.ui.commons.HostCommons;
 import com.vmware.admiral.test.ui.commons.ProjectCommons;
 import com.vmware.admiral.test.ui.pages.containers.ContainersPage.ContainerState;
-import com.vmware.admiral.test.ui.pages.projects.AddProjectModalDialog;
 import com.vmware.admiral.test.util.AdmiralEventLogRule;
 import com.vmware.admiral.test.util.HostType;
 import com.vmware.admiral.test.util.ScreenshotRule;
@@ -81,17 +80,10 @@ public class GlobalAndProjectRegistries extends BaseTestVic {
         loginAsAdmin();
         main().clickAdministrationTabButton();
         administration().clickProjectsButton();
-        projects().projectsPage().clickAddProjectButton();
-        AddProjectModalDialog addProjectDialog = projects().addProjectDialog();
-        addProjectDialog.waitToLoad();
-        addProjectDialog.setName(FIRST_PROJECT_NAME);
-        addProjectDialog.submit();
 
-        projects().projectsPage().clickAddProjectButton();
-        addProjectDialog = projects().addProjectDialog();
-        addProjectDialog.waitToLoad();
-        addProjectDialog.setName(SECOND_PROJECT_NAME);
-        addProjectDialog.submit();
+        ProjectCommons.addProject(getClient(), FIRST_PROJECT_NAME, null, false);
+
+        ProjectCommons.addProject(getClient(), SECOND_PROJECT_NAME, null, false);
 
         main().clickHomeTabButton();
         home().switchToProject(FIRST_PROJECT_NAME);

@@ -23,9 +23,6 @@ public class ContainerHost {
     private String serverCertificate;
     private String clientPrivateKey;
     private String clientPublicKey;
-    private String sshUsername;
-    private String sshKey;
-    private AuthKeyType keyType;
 
     public ContainerHost() {
     }
@@ -74,30 +71,9 @@ public class ContainerHost {
         return clientPublicKey;
     }
 
-    public String getSshUsername() {
-        return sshUsername;
-    }
-
-    public String getSshKey() {
-        return sshKey;
-    }
-
-    public AuthKeyType getKeyType() {
-        return keyType;
-    }
-
     public void setServerCertificate(String serverCertificate) {
         Objects.requireNonNull(serverCertificate, "Parameter 'serverCertificate' cannot be null");
         this.serverCertificate = serverCertificate;
-    }
-
-    public void setSshCredentials(String sshUsername, String sshKey, AuthKeyType keyType) {
-        Objects.requireNonNull(sshUsername, "Parameter sshUsername 'sshUsername' cannot be null");
-        Objects.requireNonNull(sshKey, "Parameter 'sshKey' cannot be null");
-        Objects.requireNonNull(keyType, "Parameter 'keyType' cannot be null");
-        this.sshUsername = sshUsername;
-        this.sshKey = sshKey;
-        this.keyType = keyType;
     }
 
     public void setClientKeyAndCertificate(String clientKey, String clientCertificate) {
