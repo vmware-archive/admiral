@@ -40,7 +40,7 @@ public class SessionService extends StatelessService {
 
     @Override
     public void handleStart(Operation startPost) {
-        provider = AuthUtil.getPreferredProvider(LogoutProvider.class);
+        provider = AuthUtil.getPreferredLogoutProvider();
         provider.init(this);
         startPost.complete();
     }

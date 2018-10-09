@@ -52,7 +52,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import com.vmware.admiral.auth.idm.AuthConfigProvider;
 import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.service.common.RegistryFactoryService;
 import com.vmware.xenon.common.CommandLineArgumentParser;
@@ -108,7 +107,7 @@ public class ManagementHostAuthUsersTest extends ManagementHostBaseTest {
 
         TestContext ctx = new TestContext(1,
                 Duration.ofSeconds(DEFAULT_WAIT_SECONDS_FOR_AUTH_SERVICES));
-        AuthUtil.getPreferredProvider(AuthConfigProvider.class).waitForInitBootConfig(host,
+        AuthUtil.getPreferredAuthConfigProvider().waitForInitBootConfig(host,
                 host.localUsers, ctx::completeIteration, ctx::failIteration);
         ctx.await();
     }

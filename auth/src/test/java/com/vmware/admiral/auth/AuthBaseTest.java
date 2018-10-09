@@ -37,7 +37,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 
-import com.vmware.admiral.auth.idm.AuthConfigProvider;
 import com.vmware.admiral.auth.idm.Principal;
 import com.vmware.admiral.auth.idm.PrincipalRolesHandler.PrincipalRoleAssignment;
 import com.vmware.admiral.auth.idm.PrincipalService;
@@ -134,6 +133,7 @@ public abstract class AuthBaseTest extends BaseTestCase {
 
     @Before
     public void beforeForAuthBase() throws Throwable {
+        AuthUtil.resetProviders();
         host.setSystemAuthorizationContext();
 
         startServices(host);
@@ -144,7 +144,7 @@ public abstract class AuthBaseTest extends BaseTestCase {
         waitForDefaultUsersAndGroups();
         TestContext ctx = new TestContext(1,
                 Duration.ofSeconds(DEFAULT_WAIT_SECONDS_FOR_AUTH_SERVICES));
-        AuthUtil.getPreferredProvider(AuthConfigProvider.class).waitForInitBootConfig(host,
+        AuthUtil.getPreferredAuthConfigProvider().waitForInitBootConfig(host,
                 ((CustomizationVerificationHost) host).localUsers,
                 ctx::completeIteration, ctx::failIteration);
         ctx.await();

@@ -455,7 +455,7 @@ public class ManagementHost extends PostgresServiceHost implements IExtensibilit
                 trustManager, null), 0);
         setClient(serviceClient);
 
-        AuthConfigProvider authProvider = AuthUtil.getPreferredProvider(AuthConfigProvider.class);
+        AuthConfigProvider authProvider = AuthUtil.getPreferredAuthConfigProvider();
         // TODO this should be moved to HostInitAuthServiceConfig once HostInitServiceHelper gets
         // support for privileged services
         addPrivilegedService(SessionService.class);

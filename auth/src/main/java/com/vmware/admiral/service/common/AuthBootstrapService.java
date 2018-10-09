@@ -73,7 +73,7 @@ public class AuthBootstrapService extends StatefulService {
 
     @Override
     public void handleStart(Operation post) {
-        AuthConfigProvider provider = AuthUtil.getPreferredProvider(AuthConfigProvider.class);
+        AuthConfigProvider provider = AuthUtil.getPreferredAuthConfigProvider();
 
         if (!ServiceHost.isServiceCreate(post)) {
             // do not perform bootstrap logic when the post is NOT from direct client, eg: node

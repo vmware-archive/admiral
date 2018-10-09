@@ -92,7 +92,7 @@ public class PrincipalService extends StatelessService {
 
     @Override
     public void handleStart(Operation startPost) {
-        provider = AuthUtil.getPreferredProvider(PrincipalProvider.class);
+        provider = AuthUtil.getPreferredPrincipalProvider();
         provider.init(this);
         startPost.complete();
     }

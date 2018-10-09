@@ -25,6 +25,8 @@ import java.util.logging.Level;
 
 import com.vmware.admiral.auth.idm.AuthConfigProvider;
 import com.vmware.admiral.auth.idm.AuthRole;
+import com.vmware.admiral.auth.idm.LogoutProvider;
+import com.vmware.admiral.auth.idm.PrincipalProvider;
 import com.vmware.admiral.auth.idm.PrincipalService;
 import com.vmware.admiral.auth.idm.SessionService;
 import com.vmware.admiral.auth.project.ProjectFactoryService;
@@ -141,7 +143,9 @@ public class AuthUtil {
     public static final Class<? extends UserState> USER_STATE_CLASS = AuthUtil
             .getPreferredProvider(AuthConfigProvider.class).getUserStateClass();
 
-    private static final String PREFERRED_PROVIDER_PACKAGE = "com.vmware.admiral.auth.idm.psc";
+    private static AuthConfigProvider preferredAuthConfigProvider = null;
+    private static PrincipalProvider preferredPrincipalProvider = null;
+    private static LogoutProvider preferredLogoutProvider = null;
 
     static {
         // map roles to system user groups
@@ -188,28 +192,57 @@ public class AuthUtil {
         return PropertyUtils.getValue(host, AUTH_CONFIG_FILE);
     }
 
-    public static <T> T getPreferredProvider(Class<T> clazz) {
+    public static AuthConfigProvider getPreferredAuthConfigProvider() {
+        if (preferredAuthConfigProvider == null) {
+            preferredAuthConfigProvider = getPreferredProvider(AuthConfigProvider.class);
+        }
+
+        return preferredAuthConfigProvider;
+    }
+
+    public static PrincipalProvider getPreferredPrincipalProvider() {
+        if (preferredPrincipalProvider == null) {
+            preferredPrincipalProvider = getPreferredProvider(PrincipalProvider.class);
+        }
+
+        return preferredPrincipalProvider;
+    }
+
+    public static LogoutProvider getPreferredLogoutProvider() {
+        if (preferredLogoutProvider == null) {
+            preferredLogoutProvider = getPreferredProvider(LogoutProvider.class);
+        }
+
+        return preferredLogoutProvider;
+    }
+
+    public static void resetProviders() {
+        preferredAuthConfigProvider = null;
+        preferredPrincipalProvider = null;
+        preferredLogoutProvider = null;
+    }
+
+    // Try to load a preferred provider in case of multiple instances loaded.
+    // If preferred is not available load the fist from the list
+    private static <T> T getPreferredProvider(Class<T> clazz) {
 
         ServiceLoader<T> loader = ServiceLoader.load(clazz);
-
-        T provider = null;
-
         for (T loaderProvider : loader) {
-            if (provider != null
-                    && provider.getClass().getName().startsWith(PREFERRED_PROVIDER_PACKAGE)) {
-                Utils.logWarning("Ignoring provider '%s'.", loaderProvider.getClass().getName());
-                continue;
+            if (loaderProvider != null && (loaderProvider.getClass().getName()
+                    .startsWith("com.vmware.admiral.auth.idm.psc")
+                    || loaderProvider.getClass().getName()
+                    .startsWith("com.vmware.automation.container.auth.idm.csp"))) {
+                Utils.logWarning("Using provider '%s'.", loaderProvider.getClass().getName());
+                return loaderProvider;
             }
-
-            Utils.logWarning("Using provider '%s'.", loaderProvider.getClass().getName());
-            provider = loaderProvider;
         }
 
-        if (provider == null) {
-            throw new IllegalStateException("No provider found!");
+        if (loader.iterator().hasNext()) {
+            // return first found
+            return loader.iterator().next();
         }
 
-        return provider;
+        throw new IllegalStateException("No provider found!");
     }
 
     public static UserGroupState buildCloudAdminsUserGroup() {
