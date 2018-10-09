@@ -363,17 +363,16 @@ public class ContainerService extends StatefulService {
     @Override
     public void handleDelete(Operation delete) {
         ContainerState currentState = getState(delete);
+        super.handleDelete(delete);
 
-        deleteContainerDescription(currentState, DELETE_DESCRIPTION_RETRY_COUNT, delete);
+        deleteContainerDescription(currentState, DELETE_DESCRIPTION_RETRY_COUNT);
     }
 
-    private void deleteContainerDescription(ContainerState currentState, int retries,
-            Operation delete) {
+    private void deleteContainerDescription(ContainerState currentState, int retries) {
         // do no delete THE agent container description
         if ((currentState.descriptionLink == null)
                 || (SystemContainerDescriptions.AGENT_CONTAINER_DESCRIPTION_LINK
                         .equals(currentState.descriptionLink))) {
-            delete.complete();
             return;
         }
 
@@ -399,7 +398,6 @@ public class ContainerService extends StatefulService {
                     if (r.hasException()) {
                         logSevere("Failed to retrieve child containers for: %s - %s",
                                 containerDescriptionLink, r.getException());
-                        delete.complete();
                     } else if (r.hasResult() && r.getCount() != 0) {
                         logFine("Child containers for: %s = %s",
                                 containerDescriptionLink, r.getCount());
@@ -410,27 +408,23 @@ public class ContainerService extends StatefulService {
                             getHost().schedule(() -> {
                                 logInfo("Additional check for containers with description %s will be performed",
                                         containerDescriptionLink);
-                                deleteContainerDescription(currentState, retries - 1, delete);
+                                deleteContainerDescription(currentState, retries - 1);
                             }, CONTAINER_DESCRIPTION_DELETE_CHECK_WAIT, TimeUnit.MILLISECONDS);
-                            delete.complete();
-                        } else {
-                            delete.complete();
                         }
                     } else {
                         logInfo("No other child containers found for: %s",
                                 containerDescriptionLink);
-                        handleNoOtherContainerStatesFound(containerDescriptionLink, delete);
+                        handleNoOtherContainerStatesFound(containerDescriptionLink);
                     }
                 });
     }
 
-    private void handleNoOtherContainerStatesFound(String containerDescriptionLink, Operation delete) {
+    private void handleNoOtherContainerStatesFound(String containerDescriptionLink) {
         sendRequest(Operation.createGet(this, containerDescriptionLink)
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         logSevere("Failed to retrieve parent container description for: %s - %s",
                                 containerDescriptionLink, e);
-                        delete.complete();
                         return;
                     }
 
@@ -439,23 +433,11 @@ public class ContainerService extends StatefulService {
                     // do no delete the description if it has autoredeploy
                     if ((cd != null) && (cd.healthConfig != null)
                             && Boolean.TRUE.equals(cd.healthConfig.autoredeploy)) {
-                        delete.complete();
                         return;
                     }
 
                     // delete the no longer used description
-                    sendRequest(Operation.createDelete(this, containerDescriptionLink)
-                            .setCompletion((oo, ee) -> {
-                                if (ee != null) {
-                                    logSevere("Failed to delete container description: %s",
-                                            containerDescriptionLink);
-                                    delete.complete();
-                                } else {
-                                    logInfo("Container description %s deleted",
-                                            containerDescriptionLink);
-                                    delete.complete();
-                                }
-                            }));
+                    sendRequest(Operation.createDelete(this, containerDescriptionLink));
                 }));
     }
 
