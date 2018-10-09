@@ -13,12 +13,15 @@ package com.vmware.admiral.request.allocation.filter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -40,6 +43,7 @@ import com.vmware.admiral.request.PlacementHostSelectionTaskService.PlacementHos
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.QueryTask;
@@ -154,7 +158,7 @@ public class ContainerToNetworkAffinityHostFilter
                 .setReferer(host.getUri())
                 .setCompletion((o, ex) -> {
                     if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
-                        // no composite componet found, just continue without fail
+                        // no composite component found, just continue without fail
                         host.log(Level.FINE,
                                 "Exception while getting CompositeComponent. Error: [%s]",
                                 ex.getMessage());
@@ -596,38 +600,66 @@ public class ContainerToNetworkAffinityHostFilter
         QueryUtil.addListValueClause(q,
                 ContainerNetworkState.FIELD_NAME_DESCRIPTION_LINK, descLinkNames);
 
+        final Map<String, ContainerNetworkState> networkStates = new HashMap<>();
         new ServiceDocumentQuery<>(host, ContainerNetworkState.class)
-                .query(q,
-                        (r) -> {
-                            if (r.hasException()) {
-                                host.log(
-                                        Level.WARNING,
-                                        "Exception while selecting container networks with contextId [%s]. Error: [%s]",
-                                        state.contextId, r.getException().getMessage());
-                                completion.run();
-                                return;
-                            } else if (r.hasResult()) {
-                                ContainerNetworkState networkState = r.getResult();
-                                if (networkState.parentLinks == null) {
-                                    networkState.parentLinks = new ArrayList<>();
-                                }
-                                networkState.parentLinks.add(hostLink);
-                                host.sendRequest(
-                                        Operation.createPatch(host, networkState.documentSelfLink)
-                                                .setBody(networkState)
-                                                .setReferer(state.documentSelfLink)
-                                                .setCompletion((o, e) -> {
-                                                    if (e != null) {
-                                                        host.log(Level.SEVERE,
-                                                                "Exception while updating network [%s] with host link [%s]. Error: [%s]",
-                                                                networkState.name, hostLink,
-                                                                e.getMessage());
-                                                    }
-                                                    completion.run();
-                                                }));
-                            }
-                        });
+                .query(q, (r) -> {
+                    if (r.hasException()) {
+                        host.log(Level.WARNING, "Exception while selecting container networks with"
+                                        + " contextId [%s]. Error: [%s]",
+                                state.contextId, r.getException().getMessage());
+                        completion.run();
+                    } else if (r.hasResult()) {
+                        ContainerNetworkState ns = r.getResult();
+                        networkStates.put(ns.documentSelfLink, ns);
+                    } else {
+                        patchNetworkStatesAndCallCompletion(networkStates.values(), state,
+                                hostLink, completion);
+                    }
+                });
+    }
 
+    private void patchNetworkStatesAndCallCompletion(
+            Collection<ContainerNetworkState> networks, PlacementHostSelectionTaskState state,
+            String hostLink, Runnable completion) {
+        List<Operation> ops = new LinkedList<>();
+        for (ContainerNetworkState network : networks) {
+            if (network.parentLinks == null) {
+                network.parentLinks = new ArrayList<>();
+            }
+            if (network.parentLinks.contains(hostLink)) {
+                continue;
+            }
+            network.parentLinks.add(hostLink);
+
+            Operation o = Operation.createPatch(host, network.documentSelfLink)
+                    .setBody(network)
+                    .setReferer(state.documentSelfLink)
+                    .setCompletion((o1, e) -> {
+                        if (e != null) {
+                            host.log(Level.SEVERE,
+                                    "Exception while updating network [%s] with"
+                                            + " host link [%s]. Error: [%s]",
+                                    network.name, hostLink, e.getMessage());
+                        }
+                    });
+            ops.add(o);
+        }
+        if (ops.size() > 0) {
+            OperationJoin
+                    .create(ops)
+                    .setCompletion((ops1, failures) -> {
+                        if (failures != null && failures.size() > 0) {
+                            failures.values().stream()
+                                    .filter(Objects::nonNull)
+                                    .forEach(e -> host.log(Level.WARNING,
+                                            "Patch to network state failed: %s", e.getMessage()));
+                        }
+                        completion.run();
+                    })
+                    .sendWith(host);
+        } else {
+            completion.run();
+        }
     }
 
     private int pickOnePerContext(PlacementHostSelectionTaskState state, int itemsAvailable) {

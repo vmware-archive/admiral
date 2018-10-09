@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -12,6 +12,7 @@
 package com.vmware.admiral.request.allocation.filter;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,6 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.Before;
@@ -157,6 +159,7 @@ public class BaseAffinityHostFilterTest extends RequestBaseTest {
         final Map<String, HostSelection> hostSelectionMap = prepareHostSelectionMap();
         final Map<String, HostSelection> hostSelectedMap = new HashMap<>();
 
+        final AtomicBoolean flag = new AtomicBoolean();
         host.testStart(1);
         filter
                 .filter(
@@ -167,6 +170,9 @@ public class BaseAffinityHostFilterTest extends RequestBaseTest {
                                 error.set(e);
                             } else {
                                 hostSelectedMap.putAll(filteredHostSelectionMap);
+                            }
+                            if (flag.getAndSet(true)) {
+                                fail("filter completion has already been called before!!!");
                             }
                             host.completeIteration();
                         });
