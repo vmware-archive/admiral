@@ -42,7 +42,6 @@ public class HostInitAuthServiceConfig extends HostInitServiceHelper {
         List<ServiceMetadata> services = Arrays.asList(
                 factoryService(AuthBootstrapService.class).requirePrivileged(true),
                 service(AuthInitialBootService.class),
-                service(ProjectFactoryService.class),
                 service(PrincipalService.class),
                 service(LocalPrincipalFactoryService.class),
                 service(AuthContentService.class));
@@ -50,6 +49,7 @@ public class HostInitAuthServiceConfig extends HostInitServiceHelper {
         if (!ConfigurationUtil.isVca()) {
             services = new ArrayList<>(services);
             services.add(service(SessionService.class));
+            services.add(service(ProjectFactoryService.class));
         }
 
         SERVICES_METADATA = Collections.unmodifiableList(services);
@@ -59,13 +59,14 @@ public class HostInitAuthServiceConfig extends HostInitServiceHelper {
 
         startServices(host,
                 AuthInitialBootService.class,
-                ProjectFactoryService.class,
                 PrincipalService.class,
                 LocalPrincipalFactoryService.class,
                 AuthContentService.class);
 
         if (!ConfigurationUtil.isVca()) {
-            startServices(host, SessionService.class);
+            startServices(host,
+                    SessionService.class,
+                    ProjectFactoryService.class);
         }
 
         startServiceFactories(host,

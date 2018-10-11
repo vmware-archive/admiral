@@ -314,9 +314,12 @@ public class ManagementHost extends PostgresServiceHost implements IExtensibilit
 
         registerForServiceAvailability(AuthBootstrapService.startTask(this), true,
                 AuthBootstrapService.FACTORY_LINK);
-        registerForServiceAvailability(ProjectsTransformationBootstrapService.startTask(this), true,
-                ProjectsTransformationBootstrapService.FACTORY_LINK,
-                ProjectFactoryService.SELF_LINK);
+        if (!ConfigurationUtil.isVca()) {
+            registerForServiceAvailability(ProjectsTransformationBootstrapService.startTask(this),
+                    true,
+                    ProjectsTransformationBootstrapService.FACTORY_LINK,
+                    ProjectFactoryService.SELF_LINK);
+        }
 
         this.log(Level.INFO, "Common services started.");
     }
@@ -460,10 +463,10 @@ public class ManagementHost extends PostgresServiceHost implements IExtensibilit
         // support for privileged services
         if (!ConfigurationUtil.isVca()) {
             addPrivilegedService(SessionService.class);
+            addPrivilegedService(ProjectFactoryService.class);
         }
         addPrivilegedService(PrincipalService.class);
         addPrivilegedService(ProjectService.class);
-        addPrivilegedService(ProjectFactoryService.class);
         addPrivilegedService(DockerHostAdapterService.class);
 
         // NodeMigrationService needs to be privileged in order to not get forbidden during the
