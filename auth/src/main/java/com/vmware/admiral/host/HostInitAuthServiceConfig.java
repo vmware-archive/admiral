@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -14,9 +14,11 @@ package com.vmware.admiral.host;
 import static com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata.factoryService;
 import static com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata.service;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 import com.vmware.admiral.auth.AuthInitialBootService;
 import com.vmware.admiral.auth.idm.PrincipalService;
@@ -24,6 +26,7 @@ import com.vmware.admiral.auth.idm.SessionService;
 import com.vmware.admiral.auth.idm.content.AuthContentService;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalFactoryService;
 import com.vmware.admiral.auth.project.ProjectFactoryService;
+import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.photon.controller.model.util.StartServicesHelper.ServiceMetadata;
 import com.vmware.xenon.common.Operation;
@@ -33,25 +36,37 @@ import com.vmware.xenon.common.UriUtils;
 
 public class HostInitAuthServiceConfig extends HostInitServiceHelper {
 
-    public static final Collection<ServiceMetadata> SERVICES_METADATA = Collections
-            .unmodifiableList(Arrays.asList(
-                    factoryService(AuthBootstrapService.class).requirePrivileged(true),
-                    service(AuthInitialBootService.class),
-                    service(SessionService.class),
-                    service(ProjectFactoryService.class),
-                    service(PrincipalService.class),
-                    service(LocalPrincipalFactoryService.class),
-                    service(AuthContentService.class)));
+    public static final Collection<ServiceMetadata> SERVICES_METADATA;
+
+    static {
+        List<ServiceMetadata> services = Arrays.asList(
+                factoryService(AuthBootstrapService.class).requirePrivileged(true),
+                service(AuthInitialBootService.class),
+                service(ProjectFactoryService.class),
+                service(PrincipalService.class),
+                service(LocalPrincipalFactoryService.class),
+                service(AuthContentService.class));
+
+        if (!ConfigurationUtil.isVca()) {
+            services = new ArrayList<>(services);
+            services.add(service(SessionService.class));
+        }
+
+        SERVICES_METADATA = Collections.unmodifiableList(services);
+    }
 
     public static void startServices(ServiceHost host) {
 
         startServices(host,
                 AuthInitialBootService.class,
-                SessionService.class,
                 ProjectFactoryService.class,
                 PrincipalService.class,
                 LocalPrincipalFactoryService.class,
                 AuthContentService.class);
+
+        if (!ConfigurationUtil.isVca()) {
+            startServices(host, SessionService.class);
+        }
 
         startServiceFactories(host,
                 AuthBootstrapService.class);

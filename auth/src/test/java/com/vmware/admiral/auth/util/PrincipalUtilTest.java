@@ -12,16 +12,19 @@
 package com.vmware.admiral.auth.util;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import static com.vmware.admiral.auth.util.PrincipalUtil.copyPrincipalData;
 import static com.vmware.admiral.auth.util.PrincipalUtil.decode;
 import static com.vmware.admiral.auth.util.PrincipalUtil.encode;
 import static com.vmware.admiral.auth.util.PrincipalUtil.fromLocalPrincipalToPrincipal;
 import static com.vmware.admiral.auth.util.PrincipalUtil.fromPrincipalToLocalPrincipal;
 import static com.vmware.admiral.auth.util.PrincipalUtil.fromQueryResultToPrincipalList;
 import static com.vmware.admiral.auth.util.PrincipalUtil.toNameAndDomain;
+import static com.vmware.admiral.auth.util.PrincipalUtil.toPrincipalId;
 import static com.vmware.admiral.auth.util.PrincipalUtil.toPrincipalName;
 
 import java.util.ArrayList;
@@ -36,6 +39,8 @@ import com.vmware.admiral.auth.idm.Principal.PrincipalType;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalFactoryService;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalState;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalType;
+import com.vmware.admiral.common.util.ConfigurationUtil;
+import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.photon.controller.model.adapters.util.Pair;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.UriUtils;
@@ -63,6 +68,8 @@ public class PrincipalUtilTest {
 
     @Test
     public void testFromLocalPrincipalToPrincipalOfTypeUser() {
+        assertEquals(null, fromLocalPrincipalToPrincipal(null));
+
         Principal principal = fromLocalPrincipalToPrincipal(testLocalPrincipal);
         assertEquals(testLocalPrincipal.id, principal.id);
         assertEquals(testLocalPrincipal.email, principal.email);
@@ -107,6 +114,8 @@ public class PrincipalUtilTest {
 
     @Test
     public void testFromPrincipalToLocalPrincipalOfTypeUser() {
+        assertEquals(null, fromPrincipalToLocalPrincipal(null));
+
         LocalPrincipalState localPrincipal = fromPrincipalToLocalPrincipal(testPrincipal);
         assertEquals(testPrincipal.id, localPrincipal.id);
         assertEquals(testPrincipal.email, localPrincipal.email);
@@ -161,8 +170,38 @@ public class PrincipalUtilTest {
     public void testEncodeDecode() {
         String fritzEmail = "fritz@admiral.com";
         String encodedEmail = encode(fritzEmail);
+        assertNotEquals(fritzEmail, encodedEmail);
         String decodedEmail = decode(encodedEmail);
         assertEquals(fritzEmail, decodedEmail);
+    }
+
+    @Test
+    public void testEncodeDecodeNoop() {
+        assertEquals(null, encode(null));
+        assertEquals("", encode(""));
+        assertEquals(null, decode(null));
+        assertEquals("", decode(""));
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void testDecodeException() {
+        decode("1");
+    }
+
+    @Test
+    public void testEncodeDecodeVca() {
+        ConfigurationState config = new ConfigurationState();
+        config.key = ConfigurationUtil.VCA_MODE_PROPERTY;
+        config.value = Boolean.toString(true);
+        ConfigurationUtil.initialize(config);
+
+        String fritzEmail = "fritz@admiral.com";
+        String encodedEmail = encode(fritzEmail);
+        assertEquals(fritzEmail, encodedEmail);
+        String decodedEmail = decode(encodedEmail);
+        assertEquals(fritzEmail, decodedEmail);
+
+        ConfigurationUtil.initialize((ConfigurationState[]) null);
     }
 
     @Test
@@ -232,4 +271,44 @@ public class PrincipalUtilTest {
         }
     }
 
+    @Test
+    public void testToPrincipalId() {
+        String principalId = toPrincipalId("name", null);
+        assertEquals("name", principalId);
+
+        principalId = toPrincipalId("name", "domain");
+        assertEquals("name@domain", principalId);
+    }
+
+    @Test
+    public void testInvalidToPrincipalId() {
+        try {
+            toPrincipalId(null, null);
+            fail("It should have failed!");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().startsWith("Invalid principal name:"));
+        }
+
+        try {
+            toPrincipalId("", null);
+            fail("It should have failed!");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().startsWith("Invalid principal name:"));
+        }
+    }
+
+    @Test
+    public void testCopyPrincipalData() {
+        assertEquals(null, copyPrincipalData(null, new Principal()));
+
+        Principal principal = new Principal();
+        assertEquals(principal, copyPrincipalData(principal, null));
+
+        principal = copyPrincipalData(testPrincipal, principal);
+        assertEquals(testPrincipal.id, principal.id);
+        assertEquals(testPrincipal.email, principal.email);
+        assertEquals(testPrincipal.type, principal.type);
+        assertEquals(testPrincipal.name, principal.name);
+        assertEquals(testPrincipal.password, principal.password);
+    }
 }

@@ -27,6 +27,7 @@ import com.vmware.admiral.auth.idm.Principal.PrincipalType;
 import com.vmware.admiral.auth.idm.PrincipalService;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalState;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalType;
+import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.photon.controller.model.adapters.util.Pair;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
@@ -51,6 +52,9 @@ public class PrincipalUtil {
     // NETBIOS format: DOMAIN\NAME
     private static final Pattern PRINCIPAL_NETBIOS_PATTERN = Pattern.compile("^([^@]*)\\x5c(.*)$");
     // FYI: x5c = \
+
+    private PrincipalUtil() {
+    }
 
     public static Principal fromLocalPrincipalToPrincipal(LocalPrincipalState state) {
 
@@ -310,6 +314,10 @@ public class PrincipalUtil {
     }
 
     public static String encode(String principalId) {
+        if (ConfigurationUtil.isVca()) {
+            return principalId;
+        }
+
         if (principalId == null || principalId.isEmpty()) {
             return principalId;
         }
@@ -323,6 +331,10 @@ public class PrincipalUtil {
     }
 
     public static String decode(String principalId) {
+        if (ConfigurationUtil.isVca()) {
+            return principalId;
+        }
+
         if (principalId == null || principalId.isEmpty()) {
             return principalId;
         }
