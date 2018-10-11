@@ -12,9 +12,11 @@
 package com.vmware.admiral.compute.kubernetes.service;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.logging.Level;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.content.kubernetes.KubernetesConverter;
 import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
@@ -47,6 +49,10 @@ public class ContainerDescriptionToKubernetesDescriptionConverterService extends
             kubernetesDescription.kubernetesEntity = serializeKubernetesEntity;
             kubernetesDescription.type = KubernetesUtil.DEPLOYMENT_TYPE;
 
+            String projectLink = OperationUtil.extractProjectFromHeader(post);
+            kubernetesDescription.tenantLinks = new ArrayList<>();
+            kubernetesDescription.tenantLinks.add(projectLink);
+
             sendRequest(Operation
                     .createPost(UriUtils.buildUri(getHost(), KubernetesDescriptionService.FACTORY_LINK))
                     .setReferer(getHost().getUri())
@@ -54,7 +60,7 @@ public class ContainerDescriptionToKubernetesDescriptionConverterService extends
                     .setCompletion((o, e) -> {
                         if (e != null) {
                             logSevere("Failed to create kubernetes description: [%s]", e.getMessage());
-                            o.fail(e);
+                            post.fail(e);
                             return;
                         }
 

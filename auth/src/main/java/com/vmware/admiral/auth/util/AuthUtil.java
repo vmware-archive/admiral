@@ -51,6 +51,9 @@ import com.vmware.admiral.compute.container.HostVolumeListDataCollection;
 import com.vmware.admiral.compute.container.ShellContainerExecutorService;
 import com.vmware.admiral.compute.container.TemplateSearchService;
 import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
+import com.vmware.admiral.compute.kubernetes.service.ContainerDescriptionToKubernetesDescriptionConverterService;
+import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionContentService;
+import com.vmware.admiral.compute.kubernetes.service.PodLogService;
 import com.vmware.admiral.image.service.ContainerImageService;
 import com.vmware.admiral.image.service.ContainerImageTagsService;
 import com.vmware.admiral.image.service.FavoriteImageFactoryService;
@@ -556,6 +559,16 @@ public class AuthUtil {
                         buildUriWithWildcard(ResourcePoolService.FACTORY_LINK),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
 
+                // Allow POST to converter services and delegate authz to underlying calls to
+                // actual stateful services
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        KubernetesDescriptionContentService.SELF_LINK,
+                        MatchType.TERM, Occurance.SHOULD_OCCUR)
+
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        ContainerDescriptionToKubernetesDescriptionConverterService.SELF_LINK,
+                        MatchType.TERM, Occurance.SHOULD_OCCUR)
+
                 .build();
 
         List<Query> clauses = new ArrayList<>();
@@ -628,7 +641,11 @@ public class AuthUtil {
 
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
                         ManagementUriParts.PKS_KUBE_CONFIG_CONTENT,
-                        MatchType.TERM, Occurance.SHOULD_OCCUR);
+                        MatchType.TERM, Occurance.SHOULD_OCCUR)
+
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(PodLogService.SELF_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR);
 
         for (Query query : fullAccessResourcesForAdminsAndMembers(projectSelfLink)) {
             queryBuilder.addClause(query);

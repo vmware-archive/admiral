@@ -29,11 +29,28 @@ import com.vmware.admiral.compute.RegistryHostConfigService;
 import com.vmware.admiral.compute.RegistryHostConfigService.RegistryHostSpec;
 import com.vmware.admiral.compute.container.ContainerFactoryService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
+import com.vmware.admiral.compute.kubernetes.entities.pods.Container;
+import com.vmware.admiral.compute.kubernetes.entities.pods.Pod;
+import com.vmware.admiral.compute.kubernetes.entities.pods.PodSpec;
+import com.vmware.admiral.compute.kubernetes.service.BaseKubernetesState;
+import com.vmware.admiral.compute.kubernetes.service.DeploymentFactoryService;
+import com.vmware.admiral.compute.kubernetes.service.DeploymentService;
+import com.vmware.admiral.compute.kubernetes.service.GenericKubernetesEntityFactoryService;
+import com.vmware.admiral.compute.kubernetes.service.GenericKubernetesEntityService;
+import com.vmware.admiral.compute.kubernetes.service.PodFactoryService;
+import com.vmware.admiral.compute.kubernetes.service.PodLogService;
+import com.vmware.admiral.compute.kubernetes.service.PodService;
+import com.vmware.admiral.compute.kubernetes.service.ReplicaSetService;
+import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerService;
+import com.vmware.admiral.compute.kubernetes.service.ServiceEntityFactoryHandler;
+import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
+import com.vmware.photon.controller.model.adapters.util.Pair;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
 public class ProjectRoleRestrictionsTest extends AuthBaseTest {
@@ -104,6 +121,69 @@ public class ProjectRoleRestrictionsTest extends AuthBaseTest {
         verifyDocumentAccessible(csProject2.documentSelfLink, USER_EMAIL_GLORIA, true);
         verifyDocumentAccessible(csProject2.documentSelfLink, USER_EMAIL_FRITZ, true);
         verifyDocumentAccessible(csProject2.documentSelfLink, USER_EMAIL_CONNIE, false);
+    }
+
+    @Test
+    public void testK8sResourcesFromOtherProjectsAreNotAccessible() throws Throwable {
+        ArrayList<Pair<String, BaseKubernetesState>> entities = new ArrayList<>();
+        entities.add(new Pair<>(PodFactoryService.SELF_LINK,
+                new PodService.PodState()));
+        entities.add(new Pair<>(DeploymentFactoryService.SELF_LINK,
+                new DeploymentService.DeploymentState()));
+        entities.add(new Pair<>(GenericKubernetesEntityFactoryService.SELF_LINK,
+                new GenericKubernetesEntityService.GenericKubernetesEntityState()));
+        entities.add(new Pair<>(ReplicaSetService.FACTORY_LINK,
+                new ReplicaSetService.ReplicaSetState()));
+        entities.add(new Pair<>(ReplicationControllerService.FACTORY_LINK,
+                new ReplicationControllerService.ReplicationControllerState()));
+        entities.add(new Pair<>(ServiceEntityFactoryHandler.SELF_LINK,
+                new ServiceEntityHandler.ServiceState()));
+
+        for (Pair<String, BaseKubernetesState> pair : entities) {
+
+            host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN2));
+
+            // create k8s resource state in project 1 as a member
+            BaseKubernetesState resourceProject1 = createK8sStateAsUser(
+                    PROJECT_NAME_TEST_PROJECT_1, USER_EMAIL_CONNIE,
+                    pair.left, pair.right);
+            // create k8s resource state in project 2 as another member
+            BaseKubernetesState resourceProject2 = createK8sStateAsUser(
+                    PROJECT_NAME_TEST_PROJECT_2, USER_EMAIL_GLORIA,
+                    pair.left, pair.right);
+
+            // Project members and admins should be able to access the document, other users should not have access
+            verifyDocumentAccessible(resourceProject1.documentSelfLink, USER_EMAIL_CONNIE, true);
+            verifyDocumentAccessible(resourceProject1.documentSelfLink, USER_EMAIL_FRITZ, true);
+            verifyDocumentAccessible(resourceProject1.documentSelfLink, USER_EMAIL_GLORIA, false);
+            verifyDocumentAccessible(resourceProject1.documentSelfLink,
+                    USER_EMAIL_BASIC_UNASSIGNED_USER, false);
+
+            verifyDocumentAccessible(resourceProject2.documentSelfLink, USER_EMAIL_GLORIA, true);
+            verifyDocumentAccessible(resourceProject2.documentSelfLink, USER_EMAIL_FRITZ, true);
+            verifyDocumentAccessible(resourceProject2.documentSelfLink, USER_EMAIL_CONNIE, false);
+            verifyDocumentAccessible(resourceProject2.documentSelfLink,
+                    USER_EMAIL_BASIC_UNASSIGNED_USER, false);
+        }
+
+        // Verify that pod logs are not accessible by users not in the project
+        // create k8s resource state in project 1 as a member
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN2));
+        PodService.PodState state = new PodService.PodState();
+        state.pod = new Pod();
+        state.pod.spec = new PodSpec();
+        state.pod.spec.containers = new ArrayList<>();
+        Container c = new Container();
+        c.name = "fake";
+        state.pod.spec.containers.add(c);
+        BaseKubernetesState podProject1 = createK8sStateAsUser(PROJECT_NAME_TEST_PROJECT_1,
+                USER_EMAIL_CONNIE, PodFactoryService.SELF_LINK, state);
+        String logsLink = PodLogService.SELF_LINK + "?" + PodLogService.POD_ID_QUERY_PARAM + "="
+                + UriUtils.getLastPathSegment(podProject1.documentSelfLink);
+        verifyDocumentAccessible(logsLink, USER_EMAIL_CONNIE, true);
+        verifyDocumentAccessible(logsLink, USER_EMAIL_FRITZ, true);
+        verifyDocumentAccessible(logsLink, USER_EMAIL_GLORIA, false);
+        verifyDocumentAccessible(logsLink, USER_EMAIL_BASIC_UNASSIGNED_USER, false);
     }
 
     @Test
@@ -266,6 +346,26 @@ public class ProjectRoleRestrictionsTest extends AuthBaseTest {
 
         assertNotNull(resultLink[0]);
         RegistryState result = getDocument(RegistryState.class, resultLink[0]);
+
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN2));
+
+        return result;
+    }
+
+    private <T extends BaseKubernetesState> T createK8sStateAsUser(String projectName,
+            String userEmail, String factoryLink, T state) throws Throwable {
+
+        String projectLink = getProjectLinkByName(projectName);
+        String userLink = buildUserServicePath(userEmail);
+
+        host.assumeIdentity(userLink);
+
+        state.name = UUID.randomUUID().toString();
+        state.descriptionLink = "desc-link";
+        state.tenantLinks = new ArrayList<>();
+        state.tenantLinks.add(projectLink);
+
+        T result = doPost(state, factoryLink);
 
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN2));
 

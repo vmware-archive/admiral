@@ -22,6 +22,11 @@
     "password": "Password1!",
     "isAdmin": false
   }, {
+    "name": "Unassigned user",
+    "email": "unassigned@admiral.com",
+    "password": "Password1!",
+    "isAdmin": false
+  }, {
     "name": "Cloud Admin",
     "email": "cloud-admin@admiral.com",
     "password": "Password1!",

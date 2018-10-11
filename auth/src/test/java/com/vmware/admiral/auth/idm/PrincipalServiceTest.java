@@ -117,7 +117,8 @@ public class PrincipalServiceTest extends AuthBaseTest {
         List<String> expectedPrincipals = Arrays.asList(USER_EMAIL_ADMIN, USER_EMAIL_BASIC_USER,
                 USER_EMAIL_GLORIA, USER_EMAIL_CONNIE, USER_EMAIL_ADMIN2, USER_GROUP_SUPERUSERS,
                 USER_GROUP_DEVELOPERS, USER_EMAIL_CLOUD_ADMIN, USER_EMAIL_PROJECT_ADMIN_1,
-                USER_EMAIL_PROJECT_MEMBER_1, USER_EMAIL_PROJECT_VIEWER_1);
+                USER_EMAIL_PROJECT_MEMBER_1, USER_EMAIL_PROJECT_VIEWER_1,
+                USER_EMAIL_BASIC_UNASSIGNED_USER);
         assertEquals(expectedPrincipals.size(), principals.size());
         assertTrue(USER_EMAIL_ADMIN, principals.stream().allMatch((principal) -> {
             return expectedPrincipals.contains(principal.id);

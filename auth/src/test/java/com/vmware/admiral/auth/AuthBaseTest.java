@@ -85,6 +85,7 @@ public abstract class AuthBaseTest extends BaseTestCase {
     protected static final String USER_EMAIL_BASIC_USER = "tony@admiral.com";
     protected static final String USER_EMAIL_GLORIA = "gloria@admiral.com";
     protected static final String USER_EMAIL_CONNIE = "connie@admiral.com";
+    protected static final String USER_EMAIL_BASIC_UNASSIGNED_USER = "unassigned@admiral.com";
 
     protected static final String USER_EMAIL_PROJECT_ADMIN_1 = "project-admin-1@admiral.com";
     protected static final String USER_EMAIL_PROJECT_MEMBER_1 = "project-member-1@admiral.com";
