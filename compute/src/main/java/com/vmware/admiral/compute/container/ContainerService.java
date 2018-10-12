@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -423,16 +423,18 @@ public class ContainerService extends StatefulService {
         sendRequest(Operation.createGet(this, containerDescriptionLink)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        logSevere("Failed to retrieve parent container description for: %s - %s",
-                                containerDescriptionLink, e);
+                        logSevere("Failed to retrieve container description for: %s - %s",
+                                containerDescriptionLink, e.getMessage());
                         return;
                     }
 
                     ContainerDescription cd = o.getBody(ContainerDescription.class);
 
-                    // do no delete the description if it has autoredeploy
+                    // do no delete the description if it has auto-redeploy
                     if ((cd != null) && (cd.healthConfig != null)
                             && Boolean.TRUE.equals(cd.healthConfig.autoredeploy)) {
+                        logInfo("Skip delete container description %s, auto redeploy is True",
+                                containerDescriptionLink);
                         return;
                     }
 

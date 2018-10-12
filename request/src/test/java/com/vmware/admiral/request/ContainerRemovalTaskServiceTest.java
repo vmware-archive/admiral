@@ -993,8 +993,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         boolean isNull = false;
         int retries = 5;
         while (!isNull && retries-- > 0) {
-            ServiceDocument description = getDocumentNoWait(type,
-                    descriptionLink);
+            ServiceDocument description = searchForDocument(type, descriptionLink);
             isNull = (description == null);
             if (!isNull) {
                 Thread.sleep(1000);
