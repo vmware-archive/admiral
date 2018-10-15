@@ -108,7 +108,6 @@ import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceErrorResponse;
-import com.vmware.xenon.common.ServiceHost.ServiceAlreadyStartedException;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.Utils;
@@ -978,7 +977,7 @@ public class RequestBrokerService extends
                     .setContextId(getSelfId())
                     .setCompletion((o, e) -> {
                         if (e != null) {
-                            if (e instanceof ServiceAlreadyStartedException) {
+                            if (OperationUtil.isServiceAlreadyStarted(e, o)) {
                                 getHost().log(Level.WARNING, "Service %s already started.",
                                         allocationTask.documentSelfLink);
                                 return;

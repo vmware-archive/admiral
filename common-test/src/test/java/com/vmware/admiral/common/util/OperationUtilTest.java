@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,11 +11,15 @@
 
 package com.vmware.admiral.common.util;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import org.junit.Assert;
 import org.junit.Test;
 
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceHost.ServiceAlreadyStartedException;
 
 public class OperationUtilTest extends BaseTestCase {
 
@@ -35,5 +39,19 @@ public class OperationUtilTest extends BaseTestCase {
         op.addRequestHeader(OperationUtil.PROJECT_ADMIRAL_HEADER, businessGroup);
         String tenantLink = OperationUtil.extractTenantFromProjectHeader(op);
         Assert.assertTrue(tenantLink == null);
+    }
+
+    @Test
+    public void testIsServiceAlreadyStarted() {
+        assertFalse(OperationUtil.isServiceAlreadyStarted(null, null));
+        assertFalse(OperationUtil.isServiceAlreadyStarted(new Exception(), null));
+        assertFalse(OperationUtil.isServiceAlreadyStarted(new Exception(), new Operation()));
+
+        assertTrue(OperationUtil
+                .isServiceAlreadyStarted(new ServiceAlreadyStartedException("simulated"), null));
+        assertTrue(OperationUtil.isServiceAlreadyStarted(
+                new Exception(new ServiceAlreadyStartedException("simulated")), null));
+        assertTrue(OperationUtil.isServiceAlreadyStarted(null,
+                new Operation().setStatusCode(Operation.STATUS_CODE_CONFLICT)));
     }
 }

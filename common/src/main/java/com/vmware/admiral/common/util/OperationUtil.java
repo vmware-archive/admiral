@@ -25,6 +25,7 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.AuthorizationContext;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
+import com.vmware.xenon.common.ServiceHost.ServiceAlreadyStartedException;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.GuestUserService;
@@ -286,4 +287,21 @@ public class OperationUtil {
         String tenantLink = businessGroup.substring(0, index);
         return tenantLink;
     }
+
+    /**
+     * Validates whether the result of an operation is a HTTP conflict or the exception is a
+     * {@link ServiceAlreadyStartedException} or the exception's cause is
+     * {@link ServiceAlreadyStartedException}.
+     *
+     * @param ex
+     *            The {@link Exception} result from the operation
+     * @param op
+     *            The result {@link Operation} to check HTTP status code
+     */
+    public static boolean isServiceAlreadyStarted(Throwable ex, Operation op) {
+        return ex instanceof ServiceAlreadyStartedException
+                || (ex != null && ex.getCause() instanceof ServiceAlreadyStartedException)
+                || (op != null && op.getStatusCode() == Operation.STATUS_CODE_CONFLICT);
+    }
+
 }
