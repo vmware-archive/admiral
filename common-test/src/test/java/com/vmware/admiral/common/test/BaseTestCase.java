@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -204,7 +204,7 @@ public abstract class BaseTestCase {
 
     protected VerificationHost createHost(ServiceHost.Arguments args, String[] additionalArgs)
             throws Throwable {
-        OperationInterceptorRegistry interceptors = new OperationInterceptorRegistry();
+        OperationInterceptorRegistry interceptors = createInterceptorRegistry();
         registerInterceptors(interceptors);
 
         CustomizationVerificationHost customizationHost = new CustomizationVerificationHost(
@@ -233,7 +233,7 @@ public abstract class BaseTestCase {
             long reloadTime) throws Throwable {
         ServiceHost.Arguments args = getHostArguments();
 
-        OperationInterceptorRegistry interceptors = new OperationInterceptorRegistry();
+        OperationInterceptorRegistry interceptors = createInterceptorRegistry();
         registerInterceptors(interceptors);
 
         VerificationHost h = VerificationHost.initialize(
@@ -278,6 +278,10 @@ public abstract class BaseTestCase {
      */
     protected long getMaintenanceIntervalMillis() {
         return MAINTENANCE_INTERVAL_MILLIS;
+    }
+
+    protected OperationInterceptorRegistry createInterceptorRegistry() {
+        return new OperationInterceptorRegistry();
     }
 
     protected void registerInterceptors(OperationInterceptorRegistry registry) {
