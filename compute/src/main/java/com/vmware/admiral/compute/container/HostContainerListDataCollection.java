@@ -87,6 +87,8 @@ public class HostContainerListDataCollection extends StatefulService {
             .buildUriPath(FACTORY_LINK, DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_ID);
     protected static final long DATA_COLLECTION_LOCK_TIMEOUT_MILLISECONDS = Long.getLong(
             "com.vmware.admiral.data.collection.lock.timeout.milliseconds", 60000 * 5);
+    private static final long RETIRED_CONTAINER_EXPIRE_PERIOD_HOURS = Long.getLong(
+            "com.vmware.admiral.data.collection.retired.container.expiration.hours", 5);
     private static final String SYSTEM_CONTAINER_NAME = "systemContainerName";
     private static final int SYSTEM_CONTAINER_SSL_RETRIES_COUNT = Integer.getInteger(
             "com.vmware.admiral.system.container.ssl.retries", 3);
@@ -1166,6 +1168,10 @@ public class HostContainerListDataCollection extends StatefulService {
             // patch container status to RETIRED
             ContainerState patchContainerState = new ContainerState();
             patchContainerState.powerState = PowerState.RETIRED;
+            if (RETIRED_CONTAINER_EXPIRE_PERIOD_HOURS >= 0) {
+                patchContainerState.documentExpirationTimeMicros = Utils.fromNowMicrosUtc(
+                        TimeUnit.HOURS.toMicros(RETIRED_CONTAINER_EXPIRE_PERIOD_HOURS));
+            }
             sendRequest(Operation
                     .createPatch(this, containerState.documentSelfLink)
                     .setBodyNoCloning(patchContainerState)
@@ -1177,8 +1183,9 @@ public class HostContainerListDataCollection extends StatefulService {
                             logWarning("Failed to mark container %s as missing: %s",
                                     containerState.documentSelfLink, Utils.toString(ex));
                         } else {
-                            logInfo("Marked container as missing: %s",
-                                    containerState.documentSelfLink);
+                            logInfo("Marked container as missing: %s (expiration=%d hours)",
+                                    containerState.documentSelfLink,
+                                    RETIRED_CONTAINER_EXPIRE_PERIOD_HOURS);
                         }
                     }));
         }

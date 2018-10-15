@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -302,6 +302,7 @@ public class HostVolumeListDataCollectionTest extends ComputeBaseTest {
         volume = getDocument(ContainerVolumeState.class, volume.documentSelfLink);
         assertEquals(volume._healthFailureCount, Integer.valueOf(1));
         assertEquals(PowerState.RETIRED, volume.powerState);
+        assertTrue("expiration not set", volume.documentExpirationTimeMicros > 0);
 
         // 2nd data collection
         startAndWaitHostVolumeListDataCollection();

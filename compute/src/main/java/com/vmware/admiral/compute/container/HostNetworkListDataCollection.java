@@ -78,6 +78,8 @@ public class HostNetworkListDataCollection extends StatefulService {
     protected static final long DATA_COLLECTION_LOCK_TIMEOUT_MILLISECONDS = Long.getLong(
             "com.vmware.admiral.compute.container.network.datacollection.lock.timeout.milliseconds",
             TimeUnit.MINUTES.toMillis(5));
+    private static final long RETIRED_NETWORK_EXPIRE_PERIOD_HOURS = Long.getLong(
+            "com.vmware.admiral.data.collection.retired.network.expiration.hours", 5);
 
     private static final int NETWORKS_INSPECT_DELAY_SECONDS = Integer.parseInt(System.getProperty(
             "com.vmware.admiral.compute.container.network.inspect.delay.seconds", "2"));
@@ -555,6 +557,10 @@ public class HostNetworkListDataCollection extends StatefulService {
         // patch network status to RETIRED
         ContainerNetworkState patchNetworkState = new ContainerNetworkState();
         patchNetworkState.powerState = PowerState.RETIRED;
+        if (RETIRED_NETWORK_EXPIRE_PERIOD_HOURS >= 0) {
+            patchNetworkState.documentExpirationTimeMicros = Utils.fromNowMicrosUtc(
+                    TimeUnit.HOURS.toMicros(RETIRED_NETWORK_EXPIRE_PERIOD_HOURS));
+        }
         sendRequest(Operation
                 .createPatch(this, networkState.documentSelfLink)
                 .setBodyNoCloning(patchNetworkState)
@@ -566,8 +572,8 @@ public class HostNetworkListDataCollection extends StatefulService {
                         logWarning("Failed to mark network %s as missing: %s",
                                 networkState.documentSelfLink, Utils.toString(ex));
                     } else {
-                        logInfo("Marked network as missing: %s",
-                                networkState.documentSelfLink);
+                        logInfo("Marked network as missing: %s (expiration=%d hours)",
+                                networkState.documentSelfLink, RETIRED_NETWORK_EXPIRE_PERIOD_HOURS);
                     }
                 }));
     }

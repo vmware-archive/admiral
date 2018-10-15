@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -206,6 +206,7 @@ public class HostNetworkListDataCollectionTest extends ComputeBaseTest {
         assertEquals(containerNetworkProvisioning.name, preexistingNetworkState.name);
         assertEquals(containerNetworkProvisioning.id, preexistingNetworkState.id);
         assertEquals(ContainerNetworkState.PowerState.RETIRED, preexistingNetworkState.powerState);
+        assertTrue("expiration not set", preexistingNetworkState.documentExpirationTimeMicros > 0);
 
         assertEquals(containerNetworkCreated.documentSelfLink, preexistingNetworkState.documentSelfLink);
         assertTrue((preexistingNetworkState.customProperties == null)

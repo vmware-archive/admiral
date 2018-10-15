@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -442,7 +442,8 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
             if (missingContainer.documentVersion == 0) {
                 return false;
             } else if (missingContainer.documentVersion == 1) {
-                return PowerState.RETIRED == missingContainer.powerState;
+                return PowerState.RETIRED == missingContainer.powerState
+                        && missingContainer.documentExpirationTimeMicros > 0;
             } else {
                 AtomicBoolean found = new AtomicBoolean(false);
                 host.testStart(1);
@@ -455,7 +456,8 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
                             if (r.hasException()) {
                                 host.failIteration(r.getException());
                             } else if (r.hasResult()) {
-                                if (PowerState.RETIRED == r.getResult().powerState) {
+                                if (PowerState.RETIRED == r.getResult().powerState
+                                        && r.getResult().documentExpirationTimeMicros > 0) {
                                     found.set(true);
                                 }
                                 host.completeIteration();
@@ -463,8 +465,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
                                 host.completeIteration();
                             }
                         });
-                host.log("Missing container document version: ",
-                        missingContainer.documentVersion);
+                host.log("Missing container document version: ", missingContainer.documentVersion);
                 host.testWait();
 
                 return found.get();

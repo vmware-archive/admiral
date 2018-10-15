@@ -71,6 +71,8 @@ public class HostVolumeListDataCollection extends StatefulService {
             "__default-list-data-collection";
     public static final String DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_LINK = UriUtils
             .buildUriPath(FACTORY_LINK, DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_ID);
+    private static final long RETIRED_VOLUME_EXPIRE_PERIOD_HOURS = Long.getLong(
+            "com.vmware.admiral.data.collection.retired.volume.expiration.hours", 5);
 
     private static final long DATA_COLLECTION_LOCK_TIMEOUT_MILLISECONDS = Long.getLong(
             "com.vmware.admiral.compute.container.volume.datacollection.lock.timeout.milliseconds",
@@ -542,6 +544,11 @@ public class HostVolumeListDataCollection extends StatefulService {
         ContainerVolumeState patchVolumeState = new ContainerVolumeState();
         patchVolumeState.powerState = PowerState.RETIRED;
         patchVolumeState._healthFailureCount = healthFailureCount;
+        if (RETIRED_VOLUME_EXPIRE_PERIOD_HOURS >= 0) {
+            patchVolumeState.documentExpirationTimeMicros = Utils.fromNowMicrosUtc(
+                    TimeUnit.HOURS.toMicros(RETIRED_VOLUME_EXPIRE_PERIOD_HOURS));
+        }
+
         sendRequest(Operation
                 .createPatch(this, volumeState.documentSelfLink)
                 .setBodyNoCloning(patchVolumeState)
@@ -553,7 +560,8 @@ public class HostVolumeListDataCollection extends StatefulService {
                         logWarning("Failed to mark volume %s as missing: %s",
                                 volumeState.documentSelfLink, Utils.toString(ex));
                     } else {
-                        logInfo("Marked volume as missing: %s", volumeState.documentSelfLink);
+                        logInfo("Marked volume as missing: %s (expiration=%d hours)",
+                                volumeState.documentSelfLink, RETIRED_VOLUME_EXPIRE_PERIOD_HOURS);
                     }
                 }));
     }
