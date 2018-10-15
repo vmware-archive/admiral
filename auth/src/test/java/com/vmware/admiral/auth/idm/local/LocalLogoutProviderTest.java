@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -13,6 +13,8 @@ package com.vmware.admiral.auth.idm.local;
 
 import static org.junit.Assert.assertEquals;
 
+import io.netty.handler.codec.http.cookie.ClientCookieDecoder;
+import io.netty.handler.codec.http.cookie.Cookie;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -46,6 +48,13 @@ public class LocalLogoutProviderTest extends AuthBaseTest {
                 ctx.failIteration(ex);
                 return;
             }
+            String cookieHeader = op.getResponseHeader(Operation.SET_COOKIE_HEADER);
+            Cookie cookie = ClientCookieDecoder.LAX.decode(cookieHeader);
+            assertEquals("", cookie.value());
+            assertEquals(0, cookie.maxAge());
+
+            String authHeader = op.getResponseHeader(Operation.REQUEST_AUTH_TOKEN_HEADER);
+            assertEquals("", authHeader);
             ctx.completeIteration();
         });
         ctx.await();

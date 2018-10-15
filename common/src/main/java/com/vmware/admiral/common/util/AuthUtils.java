@@ -147,18 +147,16 @@ public class AuthUtils {
         String sessionId = BasicAuthenticationUtils.getAuthToken(op);
 
         if (sessionId != null && !sessionId.isEmpty()) {
-
             Utils.log(AuthUtils.class, AuthUtils.class.getSimpleName(), Level.FINE,
                     "Cleaning up session '%s'...", sessionId);
 
             cleanedupSessionsCache.put(sessionId, sessionId);
-
-            op.addResponseHeader(Operation.REQUEST_AUTH_TOKEN_HEADER, "");
-
-            String buf = AuthenticationConstants.REQUEST_AUTH_TOKEN_COOKIE + '='
-                    + sessionId + "; Path=/; Max-Age=0";
-            op.addResponseHeader(Operation.SET_COOKIE_HEADER, buf);
         }
+        // return empty auth header
+        op.addResponseHeader(Operation.REQUEST_AUTH_TOKEN_HEADER, "");
+        // delete auth cookie
+        String cookie = AuthenticationConstants.REQUEST_AUTH_TOKEN_COOKIE + "=; Path=/; Max-Age=0";
+        op.addResponseHeader(Operation.SET_COOKIE_HEADER, cookie);
     }
 
 }

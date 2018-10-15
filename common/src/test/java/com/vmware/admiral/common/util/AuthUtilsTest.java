@@ -12,13 +12,13 @@
 package com.vmware.admiral.common.util;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 import java.lang.reflect.Field;
 import java.util.Base64;
 
+import io.netty.handler.codec.http.cookie.ClientCookieDecoder;
+import io.netty.handler.codec.http.cookie.Cookie;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -95,23 +95,21 @@ public class AuthUtilsTest {
         assertNull(getOp.getCookies());
 
         AuthUtils.cleanupSessionData(getOp);
-        assertNull(getOp.getResponseHeader(Operation.REQUEST_AUTH_TOKEN_HEADER));
-        assertNull(getOp.getResponseHeader(Operation.SET_COOKIE_HEADER));
+        assertEquals("", getOp.getResponseHeader(Operation.REQUEST_AUTH_TOKEN_HEADER));
+        assertAuthCookie(getOp);
 
         // Empty authentication
         getOp.addRequestHeader(Operation.REQUEST_AUTH_TOKEN_HEADER, "");
 
         AuthUtils.cleanupSessionData(getOp);
-        assertNull(getOp.getResponseHeader(Operation.REQUEST_AUTH_TOKEN_HEADER));
-        assertNull(getOp.getResponseHeader(Operation.SET_COOKIE_HEADER));
+        assertEquals("", getOp.getResponseHeader(Operation.REQUEST_AUTH_TOKEN_HEADER));
+        assertAuthCookie(getOp);
 
         // Some authentication
         getOp.addRequestHeader(Operation.REQUEST_AUTH_TOKEN_HEADER, "token");
         AuthUtils.cleanupSessionData(getOp);
         assertEquals("", getOp.getResponseHeader(Operation.REQUEST_AUTH_TOKEN_HEADER));
-        String setCookie = getOp.getResponseHeader(Operation.SET_COOKIE_HEADER);
-        assertNotNull(setCookie);
-        assertTrue(setCookie.contains("token") && setCookie.contains("Path=/; Max-Age=0"));
+        assertAuthCookie(getOp);
     }
 
     @Test
@@ -200,6 +198,14 @@ public class AuthUtilsTest {
         AuthUtils.validateSessionData(host, getOp, authCtxGuestUser,
                 getOp.getAuthorizationContext());
         assertEquals(authCtxGuestUser, getOp.getAuthorizationContext());
+    }
+
+    private void assertAuthCookie(Operation op) {
+        String cookieHeader = op.getResponseHeader(Operation.SET_COOKIE_HEADER);
+        Cookie cookie = ClientCookieDecoder.LAX.decode(cookieHeader);
+        assertEquals(AuthenticationConstants.REQUEST_AUTH_TOKEN_COOKIE, cookie.name());
+        assertEquals("", cookie.value());
+        assertEquals(0, cookie.maxAge());
     }
 
 }

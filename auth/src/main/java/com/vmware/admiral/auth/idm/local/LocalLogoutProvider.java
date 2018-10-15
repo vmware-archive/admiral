@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -14,6 +14,7 @@ package com.vmware.admiral.auth.idm.local;
 import java.util.logging.Level;
 
 import com.vmware.admiral.auth.idm.LogoutProvider;
+import com.vmware.admiral.common.util.AuthUtils;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.Utils;
@@ -45,7 +46,9 @@ public class LocalLogoutProvider implements LogoutProvider {
                         op.fail(e);
                         return;
                     }
-                    op.transferResponseHeadersFrom(o).complete();
+                    // clears auth token and cookie
+                    AuthUtils.cleanupSessionData(op);
+                    op.complete();
                 }));
     }
 
