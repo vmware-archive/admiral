@@ -61,7 +61,7 @@ export class RoutesRestriction {
                                        Roles.PROJECT_MEMBER,Roles.VRA_CONTAINER_ADMIN,
                                        Roles.VRA_CONTAINER_DEVELOPER];
   public static KUBERNETES_CLUSTERS_NEW = [Roles.CLOUD_ADMIN, Roles.VRA_CONTAINER_ADMIN,
-                                           Roles.VRA_CONTAINER_DEVELOPER];
+                                           Roles.VRA_CONTAINER_DEVELOPER, Roles.PROJECT_MEMBER];
   public static KUBERNETES_CLUSTERS_ADD = [Roles.CLOUD_ADMIN, Roles.VRA_CONTAINER_ADMIN];
   public static KUBERNETES_CLUSTERS_ID = [Roles.CLOUD_ADMIN, Roles.VRA_CONTAINER_ADMIN,
                                           Roles.VRA_CONTAINER_DEVELOPER];

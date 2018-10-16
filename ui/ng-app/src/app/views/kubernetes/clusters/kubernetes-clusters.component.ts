@@ -373,6 +373,10 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
         return RoutesRestriction.KUBERNETES_CLUSTERS_ADD;
     }
 
+    get newClusterRouteRestriction() {
+        return RoutesRestriction.KUBERNETES_CLUSTERS_NEW;
+    }
+
     rescanCluster(event, cluster) {
         event.stopPropagation();
         // clear selection
