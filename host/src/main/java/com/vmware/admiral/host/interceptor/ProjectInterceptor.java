@@ -11,8 +11,12 @@
 
 package com.vmware.admiral.host.interceptor;
 
+import static com.vmware.admiral.common.util.TenantLinksUtil.isProjectLink;
+
 import java.util.ArrayList;
 
+import com.vmware.admiral.adapter.pks.PKSConstants;
+import com.vmware.admiral.auth.idm.SecurityContext;
 import com.vmware.admiral.auth.util.SecurityContextUtil;
 import com.vmware.admiral.closures.services.closure.ClosureService;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptionService;
@@ -252,10 +256,41 @@ public class ProjectInterceptor {
                         if (op.getAction() == Action.GET && sc.isProjectAdmin(projectLink)) {
                             return DeferredResult.completed(null);
                         }
+
+                        if (isCreatePKSClusterRequest(op, sc, projectLink)) {
+                            return DeferredResult.completed(null);
+                        }
                     }
                     return DeferredResult.failed(new IllegalAccessError("forbidden"));
                 })
                 .thenAccept(ignore -> {
                 });
+    }
+
+    private static boolean isCreatePKSClusterRequest(Operation op, SecurityContext sc, String projectLink) {
+        ContainerHostSpec hostSpec = extractContainerHostSpec(op);
+        boolean isCreatePKSClusterRequest = hostSpec != null
+                && hostSpec.hostState != null
+                && hostSpec.hostState.customProperties != null
+                && hostSpec.hostState.customProperties
+                        .get(PKSConstants.PKS_ENDPOINT_PROP_NAME) != null;
+
+        if (isCreatePKSClusterRequest) {
+            if (projectLink == null && hostSpec.hostState.tenantLinks != null) {
+                projectLink = hostSpec.hostState.tenantLinks.stream()
+                        .filter(tenantLink -> isProjectLink(tenantLink))
+                        .findFirst().orElse(null);
+            }
+
+            return op.getAction() == Action.POST
+                    && isCreatePKSClusterRequest
+                    && isProjectAdminOrProjectMember(projectLink, sc);
+        }
+
+        return false;
+    }
+
+    private static boolean isProjectAdminOrProjectMember(String projectLink, SecurityContext sc) {
+        return sc.isProjectAdmin(projectLink) || sc.isProjectMember(projectLink);
     }
 }
