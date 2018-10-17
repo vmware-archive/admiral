@@ -290,6 +290,8 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
                     && clusterStatus !== Constants.clusters.status.DESTROYING
                     && clusterStatus !== Constants.clusters.status.UNREACHABLE
                     && isClusterOwnedByCurrentUser;
+        } else if (op === 'RESCAN') {
+            return clusterStatus === Constants.clusters.status.ON;
         } else if (op === 'REMOVE') {
             return isClusterOwnedByCurrentUser;
         }
