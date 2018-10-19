@@ -18,9 +18,6 @@ import java.util.Objects;
 import java.util.logging.Logger;
 
 import com.vmware.vim25.DVPortgroupConfigSpec;
-import com.vmware.vim25.DuplicateName;
-import com.vmware.vim25.DvsFault;
-import com.vmware.vim25.InvalidName;
 import com.vmware.vim25.InvalidProperty;
 import com.vmware.vim25.ManagedObjectReference;
 import com.vmware.vim25.RuntimeFault;
@@ -55,25 +52,17 @@ public class DvsPortgroupUtil {
 
     public void createDvsPortgroup(String datacenterName, String dvsName, String portgroupName,
             int portsCount,
-            int vlanId) {
+            int vlanId) throws Exception {
         LOG.info("Creating a dvs portgroup with name: " + portgroupName);
-        try {
-            Datacenter datacenter = findDatacenter(datacenterName);
-            DistributedVirtualSwitch dvs = findDvs(datacenter, dvsName);
-            doCreateDvsPortgroup(dvs, portgroupName, portsCount, vlanId);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        Datacenter datacenter = findDatacenter(datacenterName);
+        DistributedVirtualSwitch dvs = findDvs(datacenter, dvsName);
+        doCreateDvsPortgroup(dvs, portgroupName, portsCount, vlanId);
     }
 
-    public void deleteDvsPortgroup(String datacenterName, String portgroupName) {
+    public void deleteDvsPortgroup(String datacenterName, String portgroupName) throws Exception {
         LOG.info("Deleting dvs portgroup with name: " + portgroupName);
-        try {
-            Datacenter datacenter = findDatacenter(datacenterName);
-            doDeletePortgroup(datacenter, portgroupName);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        Datacenter datacenter = findDatacenter(datacenterName);
+        doDeletePortgroup(datacenter, portgroupName);
     }
 
     private Datacenter findDatacenter(String datacenterName)
@@ -101,8 +90,7 @@ public class DvsPortgroupUtil {
 
     private DistributedVirtualPortgroup doCreateDvsPortgroup(DistributedVirtualSwitch dvs,
             String portgroupName, int portsCount, int vlanId)
-            throws DvsFault, DuplicateName, InvalidName, RuntimeFault, RemoteException,
-            InterruptedException {
+            throws Exception {
         DVPortgroupConfigSpec[] dvpgs = new DVPortgroupConfigSpec[1];
         dvpgs[0] = new DVPortgroupConfigSpec();
         dvpgs[0].setName(portgroupName);
@@ -120,7 +108,7 @@ public class DvsPortgroupUtil {
         TaskInfo taskInfo = waitFor(task_pg);
 
         if (taskInfo.getState() == TaskInfoState.error) {
-            throw new RuntimeException(
+            throw new Exception(
                     "Could not create DVS portgroup, error message: "
                             + taskInfo.getError().getLocalizedMessage());
         }
@@ -131,8 +119,7 @@ public class DvsPortgroupUtil {
         return pg;
     }
 
-    public void doDeletePortgroup(Datacenter datacenter, String portgroupName)
-            throws InvalidProperty, RuntimeFault, RemoteException, InterruptedException {
+    private void doDeletePortgroup(Datacenter datacenter, String portgroupName) throws Exception {
         DistributedVirtualPortgroup pg = (DistributedVirtualPortgroup) Arrays
                 .asList(datacenter.getNetworkFolder().getChildEntity()).stream()
                 .filter(p -> p.getMOR().getType().equals("DistributedVirtualPortgroup")
@@ -144,7 +131,7 @@ public class DvsPortgroupUtil {
         TaskInfo taskInfo = waitFor(task_pg);
 
         if (taskInfo.getState() == TaskInfoState.error) {
-            throw new RuntimeException(
+            throw new Exception(
                     "Could not delete DVS portgroup, error message: "
                             + taskInfo.getError().getLocalizedMessage());
         }
@@ -152,7 +139,7 @@ public class DvsPortgroupUtil {
 
     }
 
-    private static TaskInfo waitFor(Task task) throws RemoteException, InterruptedException {
+    private TaskInfo waitFor(Task task) throws RemoteException, InterruptedException {
         while (true) {
             TaskInfo ti = task.getTaskInfo();
             TaskInfoState state = ti.getState();

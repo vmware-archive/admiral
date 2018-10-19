@@ -38,7 +38,6 @@ import com.vmware.admiral.vic.test.util.VICAuthTokenGetter;
 public abstract class BaseTestVic extends BaseTest {
 
     private final VICWebClient CLIENT = new VICWebClient();
-    private SshCommandExecutor utilityVmExecutor;
 
     private String vicTarget;
 
@@ -65,7 +64,6 @@ public abstract class BaseTestVic extends BaseTest {
         if (!Objects.isNull(loginTimeout) && !loginTimeout.isEmpty()) {
             VICWebClient.setLoginTimeoutSeconds(Integer.parseInt(loginTimeout));
         }
-        UtilityVmInfo.readInfo();
     }
 
     protected void loginAsAdmin() {
@@ -123,15 +121,6 @@ public abstract class BaseTestVic extends BaseTest {
     @Override
     protected VICWebClient getClient() {
         return CLIENT;
-    }
-
-    protected SshCommandExecutor getUtilityVmExecutor() {
-        if (Objects.isNull(utilityVmExecutor)) {
-            utilityVmExecutor = SshCommandExecutor.createWithPasswordAuthentication(
-                    UtilityVmInfo.getIp(), UtilityVmInfo.getUsername(),
-                    UtilityVmInfo.getPassword());
-        }
-        return utilityVmExecutor;
     }
 
     protected HttpClient getAdminHttpClient() {

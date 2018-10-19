@@ -15,7 +15,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
@@ -27,13 +26,13 @@ import com.vmware.admiral.test.ui.pages.containers.ContainersPage.ContainerState
 import com.vmware.admiral.test.util.AdmiralEventLogRule;
 import com.vmware.admiral.test.util.HostType;
 import com.vmware.admiral.test.util.ScreenshotRule;
-import com.vmware.admiral.test.util.SshCommandExecutor;
 import com.vmware.admiral.test.util.SshCommandExecutor.CommandResult;
 import com.vmware.admiral.test.util.TestStatusLoggerRule;
+import com.vmware.admiral.test.util.host.ContainerHost;
 import com.vmware.admiral.test.util.host.ContainerHostProviderRule;
+import com.vmware.admiral.test.util.host.PhotonDindProviderRule;
 import com.vmware.admiral.vic.test.VicTestProperties;
 import com.vmware.admiral.vic.test.ui.BaseTestVic;
-import com.vmware.admiral.vic.test.ui.UtilityVmInfo;
 import com.vmware.admiral.vic.test.util.VICAuthTokenGetter;
 
 public class GlobalAndProjectRegistries extends BaseTestVic {
@@ -42,10 +41,13 @@ public class GlobalAndProjectRegistries extends BaseTestVic {
 
     public ContainerHostProviderRule provider = new ContainerHostProviderRule(true, false);
 
+    public PhotonDindProviderRule registryHostProvider = new PhotonDindProviderRule(false, false);
+
     @Rule
     public TestRule rules = RuleChain
             .outerRule(new TestStatusLoggerRule())
             .around(provider)
+            .around(registryHostProvider)
             .around(new AdmiralEventLogRule(getVicTarget(), getProjectNames(),
                     () -> VICAuthTokenGetter.getVICAuthToken(getVicTarget(),
                             VicTestProperties.defaultAdminUsername(),
@@ -53,9 +55,8 @@ public class GlobalAndProjectRegistries extends BaseTestVic {
             .around(new ScreenshotRule());
 
     private static final String REGISTRY_NAME = "registry";
-    private static final String REGISTRY_CHEME = "https://";
-    private static final String REMOTE_REGISTRY_CERTIFICATE_PATH = "/tmp/temporary_test_files/registry_certificates/";
-    private static final String REGISTRY_CERTIFICATE_FILE_NAME = "ca.crt";
+    private static final String REGISTRY_SCHEME = "https://";
+    private String REGISTRY_PORT = "443";
     private static final String IMAGE_NAME = "alpine";
     private static final String IMAGE_PATH_BASE = "test";
     private static final String FIRST_IMAGE_PATH = IMAGE_PATH_BASE + "/" + IMAGE_NAME;
@@ -67,10 +68,8 @@ public class GlobalAndProjectRegistries extends BaseTestVic {
     private final String FIRST_PROJECT_NAME = "registries-project-1";
     private final String SECOND_PROJECT_NAME = "registries-project-2";
 
-    private final String REGISTRY_IP = UtilityVmInfo.getIp();
     private String registryIpAndPort;
     private String registryAddress;
-    private String registryContainerId;
 
     private final String REGISTRY_WHITELIST_ERROR_MESSAGE_BASE = "Registry whitelist check failed for image ";
 
@@ -103,14 +102,14 @@ public class GlobalAndProjectRegistries extends BaseTestVic {
         main().clickAdministrationTabButton();
         administration().clickGlobalRegistriesButton();
         registries().sourceRegistriesTab().clickAddRegistryButton();
-        registries().addRegistryForm().setAddress(REGISTRY_CHEME + registryIpAndPort);
+        registries().addRegistryForm().setAddress(registryAddress);
         registries().addRegistryForm().setName(REGISTRY_NAME);
         registries().addRegistryForm().clickVerifyButton();
         registries().registryCertificateModalDialog().waitToLoad();
         registries().registryCertificateModalDialog().submit();
         registries().addRegistryForm().clickSaveButton();
         registries().sourceRegistriesTab().validate()
-                .validateRegistryExistsWithAddress(REGISTRY_CHEME + registryIpAndPort);
+                .validateRegistryExistsWithAddress(registryAddress);
 
         main().clickHomeTabButton();
         applications().applicationsPage().waitToLoad();
@@ -256,8 +255,8 @@ public class GlobalAndProjectRegistries extends BaseTestVic {
         containers().basicTab().setImage(registryIpAndPort + "/" + FIRST_IMAGE_PATH);
         containers().basicTab().setName(CONTAINER_NAME);
         containers().createContainerPage().submit();
-        // Sometimes the request is not visible initially, instead the last visible request is the
-        // previously failed one
+        // Sometimes the request is not visible initially, instead the last visible request is
+        // the previously failed one
         try {
             containers().requests().waitForLastRequestToSucceed(120);
         } catch (AssertionError e) {
@@ -287,7 +286,6 @@ public class GlobalAndProjectRegistries extends BaseTestVic {
         ProjectCommons.deleteProject(getClient(), FIRST_PROJECT_NAME);
         ProjectCommons.deleteProject(getClient(), SECOND_PROJECT_NAME);
         logOut();
-        killRegistryContainer();
     }
 
     private void validateErrorMessageMatch(String expectedErrorMessage, String actualErrorMessage) {
@@ -300,85 +298,62 @@ public class GlobalAndProjectRegistries extends BaseTestVic {
 
     public void prepareRegistryContainer() {
         LOGGER.info("Preparing docker registry");
-        SshCommandExecutor executor = getUtilityVmExecutor();
+        ContainerHost registryHost = registryHostProvider.getHost();
+        String registryIp = registryHost.getIp();
+        registryIpAndPort = registryIp + ":" + REGISTRY_PORT;
+        registryAddress = REGISTRY_SCHEME + registryIpAndPort;
         LOGGER.info("Generating certificates for the registry");
-        String command = "mkdir -p " + REMOTE_REGISTRY_CERTIFICATE_PATH;
-        executeAndValidateResult(executor, command, 10);
-        command = "openssl req -newkey rsa:4096 -nodes -sha256"
-                + " -keyout " + REMOTE_REGISTRY_CERTIFICATE_PATH + "ca.key"
-                + " -x509 -days 365"
-                + " -out " + REMOTE_REGISTRY_CERTIFICATE_PATH + REGISTRY_CERTIFICATE_FILE_NAME
-                + " -subj \"/CN=" + UtilityVmInfo.getIp() + "\""
-                + " -extensions SAN"
-                + " -config <(cat /etc/ssl/openssl.cnf; printf \"[SAN]\nsubjectAltName=IP:"
-                + UtilityVmInfo.getIp()
-                + "\")";
-        executeAndValidateResult(executor, command, 20);
-
-        LOGGER.info("Creating registry container");
-        command = "docker run -d"
-                + " --restart=always"
-                + " -v " + REMOTE_REGISTRY_CERTIFICATE_PATH + ":/certs"
-                + " -e REGISTRY_HTTP_ADDR=0.0.0.0:443"
-                + " -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/ca.crt"
-                + " -e REGISTRY_HTTP_TLS_KEY=/certs/ca.key"
-                + " -p :443"
-                + " registry:2";
-        registryContainerId = executeAndValidateResult(executor, command, 120);
-        command = "docker port " + registryContainerId + " | sed -rn 's/(.*0.0.0.0:)//p'";
-        String port = executeAndValidateResult(executor, command, 120);
-        registryIpAndPort = REGISTRY_IP + ":" + port;
-        registryAddress = REGISTRY_CHEME + registryIpAndPort;
-        LOGGER.info("Pushing images to the registry");
-        command = String.format("mkdir -p /etc/docker/certs.d/%s && cp %s /etc/docker/certs.d/%s",
-                registryIpAndPort,
-                REMOTE_REGISTRY_CERTIFICATE_PATH + REGISTRY_CERTIFICATE_FILE_NAME,
-                registryIpAndPort);
-        executeAndValidateResult(executor, command, 10);
-        command = "docker pull alpine";
-        executeAndValidateResult(executor, command, 60);
-        tagImageAndPush(executor, FIRST_IMAGE_PATH);
-        tagImageAndPush(executor, SECOND_IMAGE_PATH);
-        tagImageAndPush(executor, THIRD_IMAGE_PATH);
-        command = String.format("docker rmi %s %s %s %s",
-                registryIpAndPort + "/" + FIRST_IMAGE_PATH,
-                registryIpAndPort + "/" + SECOND_IMAGE_PATH,
-                registryIpAndPort + "/" + THIRD_IMAGE_PATH, IMAGE_NAME);
-        executeAndValidateResult(executor, command, 60);
-        LOGGER.info("Configuring iptables for the registry port");
-        command = "iptables -w -A INPUT -j ACCEPT -p tcp --dport " + port;
-        executeAndValidateResult(executor, command, 10);
-    }
-
-    public void killRegistryContainer() {
-        LOG.info(String.format("Killing registry container with id '%s'", registryContainerId));
-        String command = "docker rm -f " + registryContainerId;
-        try {
-            executeAndValidateResult(getUtilityVmExecutor(), command, 10);
-        } catch (Throwable e) {
-            LOG.warning(String.format("Could not kill registry container with id '%s', error:%n%s",
-                    registryContainerId, ExceptionUtils.getStackTrace(e)));
-        }
-    }
-
-    private void tagImageAndPush(SshCommandExecutor executor, String imagePath) {
-        String taggedImage = registryIpAndPort + "/" + imagePath;
-        String command = String.format("docker tag %s %s && docker push %s", IMAGE_NAME,
-                taggedImage, taggedImage);
-        executeAndValidateResult(executor, command, 30);
-    }
-
-    private static String executeAndValidateResult(SshCommandExecutor executor, String command,
-            int timeout) {
-        CommandResult result = executor.execute(command, timeout);
+        String certificateGenCommand = "export IP=" + registryIp
+                + " && export CERTS_DIR=/etc/docker/registry/certs"
+                + " && mkdir -p $CERTS_DIR"
+                + " && cp /etc/ssl/openssl.cnf $CERTS_DIR/"
+                + " && echo [SAN] >> $CERTS_DIR/openssl.cnf"
+                + " && echo subjectAltName=IP:$IP >> $CERTS_DIR/openssl.cnf"
+                + " && openssl req -newkey rsa:4096 -nodes -sha256 -keyout $CERTS_DIR/ca.key -x509 -days 365 -out $CERTS_DIR/ca.crt -subj /CN=$IP -extensions SAN -config $CERTS_DIR/openssl.cnf &&"
+                + " mkdir -p /etc/docker/certs.d/$IP && cp $CERTS_DIR/ca.crt /etc/docker/certs.d/$IP/";
+        CommandResult result = registryHostProvider.executeCommandInContainer(certificateGenCommand,
+                30);
         if (result.getExitStatus() != 0) {
             String error = String.format(
-                    "Command [%s] failed with exit status [%d], error output:\n%s",
-                    command, result.getExitStatus(), result.getErrorOutput());
+                    "Failed to generate registry certificates, error output:\n%s",
+                    result.getErrorOutput());
             LOGGER.severe(error);
             throw new RuntimeException(error);
         }
-        return result.getOutput();
+        LOGGER.info("Running registry container");
+        String startRegistryCommand = "docker run -d"
+                + " --restart=always"
+                + " -v /etc/docker/registry/certs:/certs"
+                + " -e REGISTRY_HTTP_ADDR=0.0.0.0:443"
+                + " -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/ca.crt"
+                + " -e REGISTRY_HTTP_TLS_KEY=/certs/ca.key"
+                + " -p " + REGISTRY_PORT + ":443"
+                + " registry:2";
+        result = registryHostProvider.executeCommandInContainer(startRegistryCommand,
+                30);
+        if (result.getExitStatus() != 0) {
+            String error = String.format(
+                    "Failed to start registry container, error output:\n%s",
+                    result.getErrorOutput());
+            LOGGER.severe(error);
+            throw new RuntimeException(error);
+        }
+        LOGGER.info("Pushing iamges to the registry");
+        String tagAndPushCommand = "export IP=" + registryIp
+                + " && docker pull alpine && docker tag alpine $IP/" + FIRST_IMAGE_PATH
+                + " && docker tag alpine $IP/" + SECOND_IMAGE_PATH + " && docker tag alpine $IP/"
+                + THIRD_IMAGE_PATH + " && docker push $IP/" + FIRST_IMAGE_PATH
+                + " && docker push $IP/" + SECOND_IMAGE_PATH + " && docker push $IP/"
+                + THIRD_IMAGE_PATH;
+        result = registryHostProvider.executeCommandInContainer(tagAndPushCommand,
+                30);
+        if (result.getExitStatus() != 0) {
+            String error = String.format(
+                    "Failed to push images to the registry, error output:\n%s",
+                    result.getErrorOutput());
+            LOGGER.severe(error);
+            throw new RuntimeException(error);
+        }
     }
 
     protected List<String> getProjectNames() {

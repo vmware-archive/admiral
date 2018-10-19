@@ -11,43 +11,15 @@
 
 package com.vmware.admiral.vic.test.ui;
 
-import java.util.logging.Logger;
-
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.Test;
-
-import com.vmware.admiral.test.util.SshCommandExecutor;
-import com.vmware.admiral.test.util.SshCommandExecutor.CommandResult;
-import com.vmware.admiral.vic.test.VicTestProperties;
 
 public class CleanupEnvironment {
 
-    private final Logger LOG = Logger.getLogger(getClass().getName());
+    // private final Logger LOG = Logger.getLogger(getClass().getName());
 
     @Test
-    public void killUtilityVm() {
-        UtilityVmInfo.readInfo();
-        String vmName = UtilityVmInfo.getVmName();
-        LOG.info("Killing utility vm with name: " + vmName);
-        SshCommandExecutor executor = SshCommandExecutor.createWithPasswordAuthentication(
-                "nimbus-gateway.eng.vmware.com", VicTestProperties.nimbusUsername(),
-                VicTestProperties.nimbusPassword());
-        CommandResult result = null;
-        try {
-            result = executor.execute("nimbus-ctl kill " + UtilityVmInfo.getVmName(),
-                    120);
-        } catch (Throwable e) {
-            LOG.warning(String.format("Could not kill VM with name '%s', error:%n%s", vmName,
-                    ExceptionUtils.getStackTrace(e)));
-            return;
-        }
-        if (result.getExitStatus() == 0) {
-            LOG.info("Successfully killed utility VM with name: " + vmName);
-        } else {
-            LOG.warning(String.format("Could not kill utility VM with name: %s, error: %s", vmName,
-                    result.getErrorOutput()));
-        }
-
+    public void cleanupEnvironment() {
+        // Currently this hook is not needed
     }
 
 }

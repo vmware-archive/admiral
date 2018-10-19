@@ -16,8 +16,9 @@ public interface ContainerHostProvider {
     public final int INSECURE_PORT = 2375;
     public final int SECURE_PORT = 2376;
 
-    public ContainerHost provide(boolean useServerCertificate, boolean useClientCertificate);
+    public ContainerHost provide(boolean useServerCertificate, boolean useClientCertificate)
+            throws Exception;
 
-    public void killContainerHost();
+    public void killContainerHost() throws Exception;
 
 }

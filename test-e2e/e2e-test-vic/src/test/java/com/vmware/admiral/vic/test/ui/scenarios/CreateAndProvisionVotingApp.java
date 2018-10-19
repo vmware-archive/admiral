@@ -81,7 +81,7 @@ public class CreateAndProvisionVotingApp extends BaseTestVic {
         home().clickTemplatesButton();
         templates().templatesPage().provisionTemplate(TEMPLATE_NAME);
 
-        verifySuccessfulProvisioning();
+        templates().requests().waitForLastRequestToSucceed(1500);
 
         home().clickApplicationsButton();
         ApplicationsPage applicationsPage = applications().applicationsPage();
@@ -212,31 +212,6 @@ public class CreateAndProvisionVotingApp extends BaseTestVic {
                         "Could not extract voting app address from port settings: "
                                 + portSettings));
         return portSetting.substring(0, portSetting.lastIndexOf(":"));
-    }
-
-    // TODO remove this after VBV-1928 has been fixed
-    // replace this method call with:
-    // templates().requests().waitForLastRequestToSucceed(1200);
-    private void verifySuccessfulProvisioning() {
-        try {
-            templates().requests().waitForLastRequestToSucceed(600);
-        } catch (Throwable e) {
-            try {
-                Thread.sleep(12000);
-            } catch (InterruptedException e1) {
-            }
-            try {
-                templates().requests().waitForLastRequestToSucceed(600);
-            } catch (Throwable e2) {
-                try {
-                    Thread.sleep(12000);
-                } catch (InterruptedException e3) {
-                }
-                templates().requests().waitForLastRequestToSucceed(1200);
-            }
-
-        }
-
     }
 
     protected List<String> getProjectNames() {

@@ -86,7 +86,8 @@ public class VcenterVchProvider implements ContainerHostProvider {
     }
 
     @Override
-    public ContainerHost provide(boolean useServerCertificate, boolean useClientCertificate) {
+    public ContainerHost provide(boolean useServerCertificate, boolean useClientCertificate)
+            throws Exception {
         if (useServerCertificate == false && useClientCertificate == true) {
             throw new IllegalArgumentException(
                     "The option 'useClientCertificate' can be used only with conjunction with the 'useServerCertificate' option");
@@ -103,12 +104,13 @@ public class VcenterVchProvider implements ContainerHostProvider {
     }
 
     @Override
-    public void killContainerHost() {
+    public void killContainerHost() throws Exception {
         deleteVch();
         deleteDvsPortgroup();
     }
 
-    private ContainerHost deployVch(boolean useServerSideSsl, boolean useClientCertificate) {
+    private ContainerHost deployVch(boolean useServerSideSsl, boolean useClientCertificate)
+            throws Exception {
         LOG.info("Deploying VCH with name: " + vmName);
         StringBuilder createVchCommand = new StringBuilder();
         createVchCommand
@@ -142,7 +144,7 @@ public class VcenterVchProvider implements ContainerHostProvider {
         }
         CommandResult result = EXECUTOR.execute(createVchCommand.toString(), SSH_COMMAND_TIMEOUT);
         if (result.getExitStatus() != 0) {
-            throw new RuntimeException(
+            throw new Exception(
                     "Could not deploy VCH, error output: " + result.getOutput());
         }
         String ip = getIpFromLogs(result.getOutput());
@@ -152,7 +154,7 @@ public class VcenterVchProvider implements ContainerHostProvider {
                     + "server-cert.pem";
             result = EXECUTOR.execute(command, 20);
             if (result.getExitStatus() != 0) {
-                throw new RuntimeException(
+                throw new Exception(
                         "Could not read generated vch certificate, error: "
                                 + result.getErrorOutput());
             }
@@ -162,7 +164,7 @@ public class VcenterVchProvider implements ContainerHostProvider {
                         + "cert.pem";
                 result = EXECUTOR.execute(command, 20);
                 if (result.getExitStatus() != 0) {
-                    throw new RuntimeException(
+                    throw new Exception(
                             "Could not read generated client certificate, error: "
                                     + result.getErrorOutput());
                 }
@@ -171,7 +173,7 @@ public class VcenterVchProvider implements ContainerHostProvider {
                         + "key.pem";
                 result = EXECUTOR.execute(command, 20);
                 if (result.getExitStatus() != 0) {
-                    throw new RuntimeException(
+                    throw new Exception(
                             "Could not read generated client key, error: "
                                     + result.getErrorOutput());
                 }
@@ -179,12 +181,11 @@ public class VcenterVchProvider implements ContainerHostProvider {
                 host.setClientKeyAndCertificate(clientKey, clientCert);
             }
         }
-        // enableSshAccess(vmName);
         LOG.info(String.format("Successfully deployed VCH with name [%s] and ip [%s]", vmName, ip));
         return host;
     }
 
-    private void deleteVch() {
+    private void deleteVch() throws Exception {
         LOG.info("Killing VCH with name: " + vmName);
         StringBuilder deleteVchCommand = new StringBuilder();
         deleteVchCommand.append(VIC_MACHINE_CLI_PATH + " delete")
@@ -199,54 +200,34 @@ public class VcenterVchProvider implements ContainerHostProvider {
             result = EXECUTOR.execute(deleteVchCommand.toString(),
                     SSH_COMMAND_TIMEOUT);
         } catch (Throwable e) {
-            LOG.warning(String.format("Could not kill VM with name '%s', error:%n%s", vmName,
-                    ExceptionUtils.getStackTrace(e)));
-            return;
+            throw new Exception(
+                    String.format("Could not kill VM with name '%s', error:%n%s", vmName,
+                            ExceptionUtils.getStackTrace(e)));
         }
         if (result.getExitStatus() != 0) {
-            LOG.warning(String.format("Could not kill VM with name '%s', error:%n%s", vmName,
-                    result.getOutput()));
-            return;
+            throw new Exception(
+                    String.format("Could not kill VM with name '%s', error:%n%s", vmName,
+                            result.getOutput()));
         }
         LOG.info(String.format("Successfully killed VM with name '%s'", vmName));
     }
 
-    // private void enableSshAccess(String vmName) {
-    // StringBuilder debugVchCommand = new StringBuilder();
-    // debugVchCommand.append(VIC_MACHINE_CLI_PATH + " debug")
-    // .append(" --target " + VCENTER_IP)
-    // .append(" --user " + VCENTER_USERNAME)
-    // .append(" --password " + VCENTER_PASSWORD)
-    // .append(" --enable-ssh")
-    // .append(" --rootpw " + SSH_PASSWORD)
-    // .append(" --name " + vmName);
-    // LOG.info("Enabling ssh access on the VCH");
-    // String thumbprint = EXECUTOR.execute(
-    // debugVchCommand.toString() + " | sed -rn 's/(.*thumbprint=)([^,]+)(\\).*)/\\2/p'",
-    // 20).getOutput();
-    // debugVchCommand.append(" --thumbprint " + thumbprint);
-    // CommandResult result = EXECUTOR.execute(debugVchCommand.toString(), 60);
-    // if (result.getExitStatus() != 0) {
-    // LOG.warning("Could not enable ssh access on the VCH, errror: " + result.getOutput());
-    // }
-    // }
-
     private void createDvsPortGroup(String portgroupName, String datacenterName,
-            String dvsName, int portsCount, int vlanId) {
+            String dvsName, int portsCount, int vlanId) throws Exception {
         PORTGROUP_UTIL.createDvsPortgroup(VCENTER_DATACENTER_NAME, VCENTER_DVS_NAME, portgroupName,
                 portsCount, vlanId);
     }
 
-    private void deleteDvsPortgroup() {
+    private void deleteDvsPortgroup() throws Exception {
         PORTGROUP_UTIL.deleteDvsPortgroup(VCENTER_DATACENTER_NAME, vmName);
     }
 
-    private String getIpFromLogs(String logs) {
+    private String getIpFromLogs(String logs) throws Exception {
         List<String> lines = Arrays.asList(logs.split("\n"));
         String line = lines.stream()
                 .filter(l -> l.contains("Obtained IP address for client interface"))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new Exception(
                         "Could not obtain the machine ip from the logs"));
         String ip = line.substring(line.indexOf("\\\"") + 2, line.lastIndexOf("\\\""));
         return ip;

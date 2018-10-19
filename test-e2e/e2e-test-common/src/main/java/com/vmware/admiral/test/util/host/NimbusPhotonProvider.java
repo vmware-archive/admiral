@@ -56,7 +56,8 @@ public class NimbusPhotonProvider implements ContainerHostProvider {
     }
 
     @Override
-    public ContainerHost provide(boolean useServerCertificate, boolean useClientCertificate) {
+    public ContainerHost provide(boolean useServerCertificate, boolean useClientCertificate)
+            throws Exception {
         if (useServerCertificate == false && useClientCertificate == true) {
             throw new IllegalArgumentException(
                     "The option 'useClientCertificate' can be used only with conjunction with the 'useServerCertificate' option");
@@ -67,8 +68,8 @@ public class NimbusPhotonProvider implements ContainerHostProvider {
         return host;
     }
 
-    protected ContainerHost deployContainerHost(Boolean useServerSideSsl,
-            boolean useClientCertificate) {
+    private ContainerHost deployContainerHost(Boolean useServerSideSsl,
+            boolean useClientCertificate) throws Exception {
         this.vmName = NIMBUS_USERNAME + VM_NAME_PREFIX + UUID.randomUUID();
         LOG.info("Deploying PhotonOs host with name: " + this.vmName);
         String command = String.format("nimbus-ovfdeploy --lease 1 %s %s", this.vmName, OVF_PATH);
@@ -99,26 +100,26 @@ public class NimbusPhotonProvider implements ContainerHostProvider {
     }
 
     @Override
-    public void killContainerHost() {
+    public void killContainerHost() throws Exception {
         LOG.info("Killing PhotonOs host with name: " + vmName);
         CommandResult result = null;
         try {
             result = NIMBUS_EXECUTOR.execute("nimbus-ctl kill " + vmName,
                     KILL_VM_TIMEOUT_SECONDS);
         } catch (Throwable e) {
-            LOG.warning(String.format("Could not kill VM with name '%s', error:%n%s ", vmName,
-                    ExceptionUtils.getStackTrace(e)));
-            return;
+            throw new Exception(
+                    String.format("Could not kill VM with name '%s', error:%n%s ", vmName,
+                            ExceptionUtils.getStackTrace(e)));
         }
         if (result.getExitStatus() != 0) {
-            LOG.warning("Could not kill VM with name: " + vmName + ", error: "
+            throw new Exception("Could not kill VM with name: " + vmName + ", error: "
                     + result.getErrorOutput());
         } else {
             LOG.info("Successfully killed VM with name: " + vmName);
         }
     }
 
-    private void configureServerCertificates(ContainerHost containerHost) {
+    private void configureServerCertificates(ContainerHost containerHost) throws Exception {
         LOG.info("Enabling SSL on the docker rest api");
         executor.execute("mkdir -p /etc/docker/certs", 10);
         StringBuilder commandBuilder = new StringBuilder();
@@ -145,7 +146,7 @@ public class NimbusPhotonProvider implements ContainerHostProvider {
         LOG.info("Successfully enabled SSL on the docker rest api");
     }
 
-    private void configureClientCertificates(ContainerHost host) {
+    private void configureClientCertificates(ContainerHost host) throws Exception {
         LOG.info("Generating and signing client certificate pair");
         StringBuilder commandBuilder = new StringBuilder();
         commandBuilder.append("mkdir -p /etc/docker/certs")
@@ -171,7 +172,7 @@ public class NimbusPhotonProvider implements ContainerHostProvider {
         LOG.info("Successfully generated CA and client certificates");
     }
 
-    private String getIpFromLogs(String logs) {
+    private String getIpFromLogs(String logs) throws Exception {
         Pattern pt = Pattern.compile(
                 "--- start nimbus json results ---(.+?)--- end nimbus json results ---",
                 Pattern.DOTALL);
@@ -182,19 +183,15 @@ public class NimbusPhotonProvider implements ContainerHostProvider {
                     .getAsString();
         } else {
             killContainerHost();
-            throw new RuntimeException(
+            throw new Exception(
                     "Could not extract machine json info from nimbus command log");
         }
     }
 
-    private void validateResult(CommandResult result, String errorMessage) {
+    private void validateResult(CommandResult result, String errorMessage) throws Exception {
         if (result.getExitStatus() != 0) {
-            throw new RuntimeException(errorMessage + ", error output: " + result.getErrorOutput());
+            throw new Exception(errorMessage + ", error output: " + result.getErrorOutput());
         }
-    }
-
-    public String getVmName() {
-        return vmName;
     }
 
 }

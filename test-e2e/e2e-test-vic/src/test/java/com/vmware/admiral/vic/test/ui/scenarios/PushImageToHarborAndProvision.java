@@ -16,11 +16,13 @@ import static com.codeborne.selenide.Selenide.open;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
 import com.codeborne.selenide.Condition;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
@@ -34,10 +36,10 @@ import com.vmware.admiral.test.ui.pages.containers.ContainersPage.ContainerState
 import com.vmware.admiral.test.util.AdmiralEventLogRule;
 import com.vmware.admiral.test.util.HostType;
 import com.vmware.admiral.test.util.ScreenshotRule;
-import com.vmware.admiral.test.util.SshCommandExecutor;
 import com.vmware.admiral.test.util.SshCommandExecutor.CommandResult;
 import com.vmware.admiral.test.util.TestStatusLoggerRule;
 import com.vmware.admiral.test.util.host.ContainerHostProviderRule;
+import com.vmware.admiral.test.util.host.PhotonDindProviderRule;
 import com.vmware.admiral.vic.test.VicTestProperties;
 import com.vmware.admiral.vic.test.ui.BaseTestVic;
 import com.vmware.admiral.vic.test.util.VICAuthTokenGetter;
@@ -60,10 +62,14 @@ public class PushImageToHarborAndProvision extends BaseTestVic {
 
     public ContainerHostProviderRule provider = new ContainerHostProviderRule(true, true);
 
+    public PhotonDindProviderRule dockerClientHostProvider = new PhotonDindProviderRule(false,
+            false);
+
     @Rule
     public TestRule rules = RuleChain
             .outerRule(new TestStatusLoggerRule())
             .around(provider)
+            .around(dockerClientHostProvider)
             .around(new AdmiralEventLogRule(getVicTarget(), getProjectNames(),
                     () -> VICAuthTokenGetter.getVICAuthToken(getVicTarget(),
                             VicTestProperties.defaultAdminUsername(),
@@ -176,45 +182,48 @@ public class PushImageToHarborAndProvision extends BaseTestVic {
     }
 
     private void pushImageToProject() {
-        SshCommandExecutor executor = getUtilityVmExecutor();
-
         LOG.info(String.format("Creating remote folder [%s]", REMOTE_CERTIFICATE_FOLDER_PATH));
         String createDirCommand = String.format("mkdir -p " + REMOTE_CERTIFICATE_FOLDER_PATH);
-        CommandResult result = executor.execute(createDirCommand, 10);
+        CommandResult result = dockerClientHostProvider.executeCommandInContainer(createDirCommand,
+                10);
         logOutputOrThrow(createDirCommand, result);
 
         LOG.info(String.format("Sending certificate to remote path [%s]",
                 REMOTE_CERTIFICATE_FOLDER_PATH));
+        String certificate;
         try {
-            executor.sendFile(new File(LOCAL_CERTIFICATE_PATH), REMOTE_CERTIFICATE_FOLDER_PATH);
+            certificate = FileUtils.readFileToString(new File(LOCAL_CERTIFICATE_PATH),
+                    StandardCharsets.UTF_8);
         } catch (IOException e) {
-            String errorMessage = String.format(
-                    "Could not send the certificate file to remote path [%s]",
-                    REMOTE_CERTIFICATE_FOLDER_PATH);
-            throw new RuntimeException(errorMessage, e);
+            throw new RuntimeException("Could not read local certificate file", e);
         }
+
+        String createCertCommand = "echo -e \"" + certificate + "\" >> "
+                + REMOTE_CERTIFICATE_FOLDER_PATH + "/ca.crt";
+        result = dockerClientHostProvider.executeCommandInContainer(createCertCommand, 10);
+        logOutputOrThrow(createCertCommand, result);
 
         LOG.info(String.format("Pulling image [%s]", NGINX_IMAGE_AND_TAG));
         String pullNginxCommand = "docker pull " + NGINX_IMAGE_AND_TAG;
-        result = executor.execute(pullNginxCommand, 120);
+        result = dockerClientHostProvider.executeCommandInContainer(pullNginxCommand, 120);
         logOutputOrThrow(pullNginxCommand, result);
 
         LOG.info(
                 String.format("Tagging image [%s] with [%s]", NGINX_IMAGE_AND_TAG, TAGGED_IMAGE));
         String tagNginxCommand = "docker tag " + NGINX_IMAGE_AND_TAG + " " + TAGGED_IMAGE;
-        result = executor.execute(tagNginxCommand, 10);
+        result = dockerClientHostProvider.executeCommandInContainer(tagNginxCommand, 10);
         logOutputOrThrow(tagNginxCommand, result);
 
         LOG.info("Logging in to the registry");
         String loginCommand = String.format("docker login %s --username %s --password %s",
                 VicTestProperties.vicIp(), VicTestProperties.defaultAdminUsername(),
                 VicTestProperties.defaultAdminPassword());
-        result = executor.execute(loginCommand, 120);
+        result = dockerClientHostProvider.executeCommandInContainer(loginCommand, 120);
         logOutputOrThrow(loginCommand, result);
 
         LOG.info(String.format("Pushing image [%s] to the registry", TAGGED_IMAGE));
         String pushCommnad = "docker push " + TAGGED_IMAGE;
-        result = executor.execute(pushCommnad, 120);
+        result = dockerClientHostProvider.executeCommandInContainer(pushCommnad, 120);
         logOutputOrThrow(pushCommnad, result);
     }
 

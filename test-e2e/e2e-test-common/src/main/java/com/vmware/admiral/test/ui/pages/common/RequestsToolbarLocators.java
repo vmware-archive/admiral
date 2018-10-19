@@ -18,12 +18,18 @@ public class RequestsToolbarLocators extends PageLocators {
     private final By REQUESTS_BUTTON = By
             .cssSelector(".right-context-panel .toolbar-item:first-child .toolbar-item-title");
     private final String LAST_REQUEST_CSS = ".requests-list #all .request-item-holder:first-child";
-    private final By LAST_REQUEST_PROGRESS = By
+    private final By LAST_REQUEST_STATUS = By
             .cssSelector(LAST_REQUEST_CSS + " .progress-status");
+    private final By LAST_REQUEST_PROGRESS = By
+            .cssSelector(LAST_REQUEST_CSS + " .progress-bar");
     private final By LAST_REQUEST = By
             .cssSelector(LAST_REQUEST_CSS);
     private final By REFRESH_BUTTON = By.cssSelector(".right-context-panel .fa.fa-refresh");
     private final By SPINNER = By.cssSelector(".right-context-panel .spinner");
+
+    public By lastRequestStatus() {
+        return LAST_REQUEST_STATUS;
+    }
 
     public By lastRequestProgress() {
         return LAST_REQUEST_PROGRESS;

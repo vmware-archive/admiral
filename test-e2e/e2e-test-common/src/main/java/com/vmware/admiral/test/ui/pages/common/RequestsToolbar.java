@@ -22,11 +22,13 @@ import org.openqa.selenium.TimeoutException;
 
 public class RequestsToolbar extends BasicClass<RequestsToolbarLocators> {
 
+    private static final String FINISHED_STAGE = "FINISHED";
+    private static final String FAILED_STAGE = "FAILED";
+    private static final String COMPLETED_SUBSTAGE = "(COMPLETED)";
+
     public RequestsToolbar(By[] iFrameLocators, RequestsToolbarLocators pageLocators) {
         super(iFrameLocators, pageLocators);
     }
-
-    private final int WAIT_AFTER_REFRESH_ON_FAIL_SECONDS = 5;
 
     public void waitForLastRequestToSucceed(int timeout) {
         waitForLastRequestRequest(timeout, true);
@@ -59,61 +61,38 @@ public class RequestsToolbar extends BasicClass<RequestsToolbarLocators> {
                 String.format("Waiting for [%d] seconds for the last request to %s", timeout,
                         expectedState));
         waitForSpinner();
-        try {
-            if (shouldSucceed) {
-                waitForLastToSucceed(timeout);
-            } else {
-                waitForLastToFail(timeout);
+        Wait().withTimeout(Duration.ofSeconds(timeout))
+                .pollingEvery(Duration.ofSeconds(1))
+                .until(f -> pageActions()
+                        .getAttribute("aria-valuenow", locators().lastRequestProgress())
+                        .equals("100")
+                        || pageActions().getText(locators().lastRequestStatus())
+                                .startsWith("FAILED"));
+        String fullStatus = pageActions().getText(locators().lastRequestStatus());
+        String stage = fullStatus.split(" ")[0];
+        String substage = fullStatus.split(" ")[1];
+        if (!stage.equals(FINISHED_STAGE) && !stage.equals(FAILED_STAGE)) {
+            throw new AssertionError(
+                    "Unexpected request stage: " + stage);
+        }
+        if (shouldSucceed) {
+            if (stage.equals(FAILED_STAGE)) {
+                throw new AssertionError(
+                        "Last request failed, but was expected to succeed");
             }
-        } catch (TimeoutException e) {
-            // TODO maybe should not be necessary?
-            LOG.warning(
-                    "Timeout expired, refreshing requests to verify the request is not finished...");
-            pageActions().click(locators().refreshButton());
-            LOG.info(String.format(
-                    "Waiting for additional [%s] seconds for the request to finish...",
-                    WAIT_AFTER_REFRESH_ON_FAIL_SECONDS));
-            try {
-                if (shouldSucceed) {
-                    waitForLastToSucceed(WAIT_AFTER_REFRESH_ON_FAIL_SECONDS);
-                    LOG.info("Request has succeeded, proceeding...");
-                } else {
-                    waitForLastToFail(WAIT_AFTER_REFRESH_ON_FAIL_SECONDS);
-                    LOG.info("Request has failed, proceeding...");
-                }
-            } catch (TimeoutException e1) {
-                throw e;
+
+            if (!substage.equals(COMPLETED_SUBSTAGE)) {
+                // TODO uncomment after https://jira.eng.vmware.com/browse/VBV-1757 has been fixed
+                // throw new AssertionError(
+                // "Last request succeeded but did not reach (COMPLETED) substage");
+                LOG.warning("Last request succeeded but did not reach (COMPLETED) substage");
+            }
+        } else {
+            if (stage.equals(FINISHED_STAGE)) {
+                throw new AssertionError(
+                        "Last request succeeded, but was expected to fail");
             }
         }
-
-    }
-
-    private void waitForLastToSucceed(int timeout) {
-        Wait().withTimeout(Duration.ofSeconds(timeout))
-                .pollingEvery(Duration.ofSeconds(1))
-                .until(f -> {
-                    String text = pageActions().getText(locators().lastRequestProgress());
-                    if (text.contains("FAILED")) {
-                        throw new AssertionError(
-                                "Last request failed, but was expected to succeed");
-                    }
-                    return text.contains("FINISHED")
-                            && text.contains("COMPLETED");
-                });
-    }
-
-    private void waitForLastToFail(int timeout) {
-        Wait().withTimeout(Duration.ofSeconds(timeout))
-                .pollingEvery(Duration.ofSeconds(1))
-                .until(f -> {
-                    String text = pageActions().getText(locators().lastRequestProgress());
-                    if (text.contains("FINISHED") && text.contains("COMPLETED")) {
-                        throw new AssertionError(
-                                "Last request succeeded, but was expected to fail");
-                    }
-                    return text.contains("FAILED")
-                            && text.contains("ERROR");
-                });
     }
 
     public void clickRequestsButton() {

@@ -11,21 +11,14 @@
 
 package com.vmware.admiral.vic.test.ui;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Logger;
 
-import com.google.common.io.Files;
-import com.google.gson.JsonObject;
-
 import org.junit.Test;
 
 import com.vmware.admiral.test.util.ResourceUtil;
-import com.vmware.admiral.test.util.host.ContainerHost;
-import com.vmware.admiral.test.util.host.NimbusPhotonProvider;
 import com.vmware.admiral.vic.test.VicTestProperties;
 import com.vmware.admiral.vic.test.util.IdentitySourceConfigurator;
 
@@ -36,7 +29,6 @@ public class SetupEnvironment {
     @Test
     public void setupEnvironment() {
         configureActiveDirectories();
-        deployUtilityVm();
     }
 
     private void configureActiveDirectories() {
@@ -72,25 +64,6 @@ public class SetupEnvironment {
                         fileName));
             }
             identityConfigurator.addIdentitySource(body);
-        }
-    }
-
-    private void deployUtilityVm() {
-        LOG.info("Deploying photon utility VM");
-        NimbusPhotonProvider provider = new NimbusPhotonProvider();
-        ContainerHost host = provider.provide(false, false);
-        JsonObject json = new JsonObject();
-        json.addProperty(UtilityVmInfo.IP_FIELD_NAME, host.getIp());
-        json.addProperty(UtilityVmInfo.USERNAME_FIELD_NAME, NimbusPhotonProvider.SSH_USERNAME);
-        json.addProperty(UtilityVmInfo.PASSWORD_FIELD_NAME, NimbusPhotonProvider.SSH_PASSWORD);
-        json.addProperty(UtilityVmInfo.VM_NAME_FIED_NAME, provider.getVmName());
-        File resourcesDir = new File(UtilityVmInfo.INFO_FILE_RELATIVE_PATH);
-        try {
-            LOG.info("Writing utility VM info to " + resourcesDir.getAbsolutePath());
-            Files.write(json.toString().getBytes(), resourcesDir);
-        } catch (IOException e) {
-            throw new RuntimeException(
-                    "Could not write utility VM info to " + resourcesDir.getAbsolutePath());
         }
     }
 
