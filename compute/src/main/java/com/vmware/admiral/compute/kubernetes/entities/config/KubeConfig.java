@@ -56,6 +56,10 @@ public class KubeConfig extends BaseKubernetesObject {
 
     public static class AuthInfo {
 
+        public String username;
+
+        public String password;
+
         public String token;
 
         @SerializedName("client-certificate-data")

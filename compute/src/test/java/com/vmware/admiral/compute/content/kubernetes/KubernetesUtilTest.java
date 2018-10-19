@@ -19,6 +19,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_ENDPOINT_PROP_NAME;
 
@@ -78,6 +79,7 @@ import com.vmware.admiral.compute.kubernetes.service.BaseKubernetesState;
 import com.vmware.admiral.compute.kubernetes.service.DeploymentService.DeploymentState;
 import com.vmware.admiral.compute.kubernetes.service.GenericKubernetesEntityService.GenericKubernetesEntityState;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
+import com.vmware.admiral.compute.kubernetes.service.PodFactoryService;
 import com.vmware.admiral.compute.kubernetes.service.PodService.PodState;
 import com.vmware.admiral.compute.kubernetes.service.ReplicaSetService.ReplicaSetState;
 import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerService.ReplicationControllerState;
@@ -85,7 +87,10 @@ import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler.Servic
 import com.vmware.admiral.host.HostInitComputeServicesConfig;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Service.Action;
+import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
 public class KubernetesUtilTest {
 
@@ -773,11 +778,25 @@ public class KubernetesUtilTest {
     }
 
     @Test
-    public void testConstructKubeConfig() {
+    public void testBuildLogUriPath() {
+        String uuid = UUID.randomUUID().toString();
+        String containerName = "pod1";
+
+        BaseKubernetesState state = new PodState();
+        state.documentSelfLink = PodFactoryService.SELF_LINK + "/" + uuid;
+        String expectedPath = String.format("/logs/%s-%s", uuid, containerName);
+        assertEquals(expectedPath, KubernetesUtil.buildLogUriPath(state, containerName));
+    }
+
+    @Test
+    public void testConstructKubeConfigWithPublicKey() {
         String clusterAddress = "https://testhost:8443";
 
-        KubeConfig config = KubernetesUtil.constructKubeConfig(clusterAddress,
-                "certificate", "private_key");
+        AuthCredentialsServiceState creds = new AuthCredentialsServiceState();
+        creds.publicKey = "certificate";
+        creds.privateKey = "private_key";
+        creds.type = AuthCredentialsType.PublicKey.toString();
+        KubeConfig config = KubernetesUtil.constructKubeConfig(clusterAddress, creds);
 
         assertEquals("v1", config.apiVersion);
         assertEquals("Config", config.kind);
@@ -795,5 +814,72 @@ public class KubernetesUtilTest {
         assertEquals(config.currentContext, config.contexts.get(0).name);
         assertEquals(clusterAddress, config.clusters.get(0).cluster.server);
         assertTrue(config.clusters.get(0).cluster.insecureSkipTlsVerify);
+    }
+
+    @Test
+    public void testConstructKubeConfigWithBearerToken() {
+        String clusterAddress = "https://testhost:8443";
+        String token = "bearer_token";
+
+        AuthCredentialsServiceState creds = new AuthCredentialsServiceState();
+        creds.privateKey = token;
+        creds.type = AuthCredentialsType.Bearer.toString();
+        KubeConfig config = KubernetesUtil.constructKubeConfig(clusterAddress, creds);
+
+        assertNotNull(config);
+        assertEquals(token, config.users.get(0).user.token);
+    }
+
+    @Test
+    public void testConstructKubeConfigWithPassword() {
+        String clusterAddress = "https://testhost:8443";
+        String username = "user1";
+        String password = "password123";
+
+        AuthCredentialsServiceState creds = new AuthCredentialsServiceState();
+        creds.userEmail = username;
+        creds.privateKey = password;
+        creds.type = AuthCredentialsType.Password.toString();
+        KubeConfig config = KubernetesUtil.constructKubeConfig(clusterAddress, creds);
+
+        assertNotNull(config);
+        assertEquals(username, config.users.get(0).user.username);
+        assertEquals(password, config.users.get(0).user.password);
+    }
+
+    @Test(expected = LocalizableValidationException.class)
+    public void testFailConstructKubeConfigWithUnsupportedCredentials() {
+
+        AuthCredentialsServiceState creds = new AuthCredentialsServiceState();
+        creds.type = AuthCredentialsType.PublicKeyCA.toString();
+        KubernetesUtil.constructKubeConfig("https://localhost:6443", creds);
+        fail("KubeConfig construction should have failed with unsupported credentials");
+    }
+
+    @Test
+    public void testConstructDashboardLink() {
+        ComputeState host = new ComputeState();
+        host.address = "https://localhost:6443";
+
+        assertEquals("Unexpected dashboard link",
+                "https://localhost:6443/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy",
+                KubernetesUtil.constructDashboardLink(host, null));
+    }
+
+    @Test
+    public void testExtractTokenFromKubeConfig() {
+        String token = "token";
+
+        KubeConfig config = new KubeConfig();
+        KubeConfig.UserEntry userEntry = new KubeConfig.UserEntry();
+        userEntry.user = new KubeConfig.AuthInfo();
+
+        assertNull("User token should be null", KubernetesUtil.extractTokenFromKubeConfig(config));
+
+        userEntry.user.token = token;
+        config.users = Arrays.asList(userEntry);
+
+        assertEquals("Unexpected user token", token,
+                KubernetesUtil.extractTokenFromKubeConfig(config));
     }
 }

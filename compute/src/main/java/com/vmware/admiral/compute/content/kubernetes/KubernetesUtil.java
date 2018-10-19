@@ -66,8 +66,12 @@ import com.vmware.admiral.service.common.LogService;
 import com.vmware.admiral.service.common.ResourceNamePrefixService.ResourceNamePrefixState;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
+import com.vmware.photon.controller.model.security.util.EncryptionUtils;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
 public class KubernetesUtil {
 
@@ -427,32 +431,36 @@ public class KubernetesUtil {
         return host.customProperties.containsKey(PKS_ENDPOINT_PROP_NAME);
     }
 
-    public static KubeConfig constructKubeConfig(String clusterAddress, String certificate,
-            String privateKey) {
+    public static KubeConfig constructKubeConfig(String clusterAddress,
+            AuthCredentialsServiceState credentials) {
 
         KubeConfig config = createKubeConfig(clusterAddress);
 
         KubeConfig.UserEntry userEntry = new KubeConfig.UserEntry();
         userEntry.name = config.contexts.get(0).context.user;
         userEntry.user = new KubeConfig.AuthInfo();
-        userEntry.user.clientCertificateData = new String(
-                Base64.getEncoder().encode(certificate.getBytes()));
-        userEntry.user.clientKeyData = new String(
-                Base64.getEncoder().encode(privateKey.getBytes()));
         config.users = Arrays.asList(userEntry);
 
-        return config;
-    }
+        AuthCredentialsType credentialsType = AuthCredentialsType.valueOf(credentials.type);
 
-    public static KubeConfig constructKubeConfig(String clusterAddress, String token) {
-
-        KubeConfig config = createKubeConfig(clusterAddress);
-
-        KubeConfig.UserEntry userEntry = new KubeConfig.UserEntry();
-        userEntry.name = config.contexts.get(0).context.user;
-        userEntry.user = new KubeConfig.AuthInfo();
-        userEntry.user.token = token;
-        config.users = Arrays.asList(userEntry);
+        switch (credentialsType) {
+        case Bearer:
+            userEntry.user.token = EncryptionUtils.decrypt(credentials.privateKey);
+            break;
+        case PublicKey:
+            userEntry.user.clientCertificateData = new String(
+                    Base64.getEncoder().encode(credentials.publicKey.getBytes()));
+            userEntry.user.clientKeyData = new String(Base64.getEncoder()
+                    .encode(EncryptionUtils.decrypt(credentials.privateKey).getBytes()));
+            break;
+        case Password:
+            userEntry.user.username = credentials.userEmail;
+            userEntry.user.password = EncryptionUtils.decrypt(credentials.privateKey);
+            break;
+        default:
+            throw new LocalizableValidationException("Unsupported credentials type",
+                    "adapter.unsuported.auth.credentials.type");
+        }
 
         return config;
     }

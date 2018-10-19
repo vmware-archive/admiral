@@ -27,8 +27,6 @@ import com.vmware.admiral.compute.ContainerHostUtil;
 import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
 import com.vmware.admiral.compute.kubernetes.entities.config.KubeConfig;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
-import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
-import com.vmware.photon.controller.model.security.util.EncryptionUtils;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
@@ -93,7 +91,7 @@ public class KubeConfigContentService extends StatelessService {
     private String constructKubeConfigJson(ComputeState kubernetesHost,
             AuthCredentialsServiceState credentials) throws Exception {
 
-        String kubeConfigJson = null;
+        KubeConfig kubeConfig = null;
 
         if (KubernetesUtil.isPKSManagedHost(kubernetesHost)) {
             if (credentials.customProperties == null
@@ -101,25 +99,17 @@ public class KubeConfigContentService extends StatelessService {
                 throw new IllegalStateException("KubeConfig cannot be retrieved");
             }
 
-            kubeConfigJson = credentials.customProperties.get(PKSConstants.KUBE_CONFIG_PROP_NAME);
-            KubeConfig kubeConfig = Utils.fromJson(kubeConfigJson, KubeConfig.class);
+            String kubeConfigJson = credentials.customProperties
+                    .get(PKSConstants.KUBE_CONFIG_PROP_NAME);
+            kubeConfig = Utils.fromJson(kubeConfigJson, KubeConfig.class);
             // overwrite cluster address to cover the case when the cluster was added by
             // master IP instead of master host name
             kubeConfig.clusters.get(0).cluster.server = kubernetesHost.address;
-            kubeConfigJson = Utils.toJson(kubeConfig);
-        } else if (AuthCredentialsType.Bearer.toString().equals(credentials.type)) {
-            KubeConfig config = KubernetesUtil.constructKubeConfig(kubernetesHost.address,
-                    EncryptionUtils.decrypt(credentials.privateKey));
-            kubeConfigJson = Utils.toJson(config);
-        } else if (AuthCredentialsType.PublicKey.toString().equals(credentials.type)) {
-            KubeConfig config = KubernetesUtil.constructKubeConfig(kubernetesHost.address,
-                    credentials.publicKey, EncryptionUtils.decrypt(credentials.privateKey));
-            kubeConfigJson = Utils.toJson(config);
         } else {
-            throw new Exception("Host authentication type not supported!");
+            kubeConfig = KubernetesUtil.constructKubeConfig(kubernetesHost.address, credentials);
         }
 
-        return kubeConfigJson;
+        return Utils.toJson(kubeConfig);
     }
 
     private String serializeContent(String kubeConfig) throws IOException {

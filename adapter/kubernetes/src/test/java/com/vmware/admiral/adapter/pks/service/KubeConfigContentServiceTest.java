@@ -127,7 +127,7 @@ public class KubeConfigContentServiceTest extends ComputeBaseTest {
 
     @Test
     public void testShouldFailWhenHostAuthTypeNotSupported() throws Throwable {
-        String authCredentialsLink = createCredentials(AuthCredentialsType.Password, false)
+        String authCredentialsLink = createCredentials(AuthCredentialsType.PublicKeyCA, false)
                 .documentSelfLink;
         String hostLink = createCompute(authCredentialsLink, true, false).documentSelfLink;
         URI serviceUri = UriUtils.buildUri(host, KubeConfigContentService.SELF_LINK,
@@ -136,7 +136,7 @@ public class KubeConfigContentServiceTest extends ComputeBaseTest {
             doOperation(null, serviceUri, true, Action.GET);
             fail("Operation should have failed: host auth type not supported");
         } catch (Exception e) {
-            assertEquals("Host authentication type not supported!", e.getMessage());
+            assertEquals("Unsupported credentials type", e.getMessage());
         }
     }
 
@@ -152,7 +152,7 @@ public class KubeConfigContentServiceTest extends ComputeBaseTest {
             credentials.publicKey = "certificate";
             credentials.privateKey = "privateKey";
         } else {
-            credentials.type = AuthCredentialsType.Password.toString();
+            credentials.type = type.toString();
         }
 
         if (setKubeConfig) {
