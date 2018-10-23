@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import com.vmware.admiral.service.common.ConfigurationService;
 import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
@@ -54,7 +55,7 @@ public class QueryUtil {
     /**
      * prefix for projects. e.g. /projects/id
      */
-    public static final String PROJECT_IDENTIFIER = "/projects/";
+    public static final String PROJECT_IDENTIFIER = ConfigurationService.URI_PREFIX + "/projects/";
 
     /**
      * matches groups in  {@code tenantLink}
