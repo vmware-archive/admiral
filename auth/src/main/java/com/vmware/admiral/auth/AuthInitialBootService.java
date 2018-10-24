@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -25,6 +25,7 @@ import static com.vmware.admiral.auth.util.AuthUtil.buildCloudAdminsUserGroup;
 
 import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.service.common.AbstractInitialBootService;
 import com.vmware.xenon.common.Operation;
 
@@ -36,18 +37,24 @@ public class AuthInitialBootService extends AbstractInitialBootService {
 
     @Override
     public void handlePost(Operation post) {
+        if (ConfigurationUtil.isVca()) {
+            logInfo("VCA mode, skipping creation of default user/resource groups and roles.");
+            post.complete();
+            return;
+        }
+
         logInfo("Creating default user/resource groups and roles.");
         initInstances(post,
                 ProjectService.buildDefaultProjectInstance(),
-                //Initialize Cloud Admins global role.
+                // Initialize Cloud Admins global role.
                 buildCloudAdminsUserGroup(),
                 buildCloudAdminsResourceGroup(),
                 buildCloudAdminsRole(DEFAULT_IDENTIFIER, CLOUD_ADMINS_USER_GROUP_LINK),
-                //Initialize Basic Users global role.
+                // Initialize Basic Users global role.
                 buildBasicUsersUserGroup(),
                 buildBasicUsersResourceGroup(),
                 buildBasicUsersRole(DEFAULT_IDENTIFIER, BASIC_USERS_USER_GROUP_LINK),
-                //Initialize Basic Users Extended role.
+                // Initialize Basic Users Extended role.
                 buildBasicUsersExtendedResourceGroup(),
                 buildBasicUsersExtendedRole(DEFAULT_IDENTIFIER, BASIC_USERS_USER_GROUP_LINK));
     }
