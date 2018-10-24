@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -126,13 +126,15 @@ public class PlacementZoneUtil {
             resourcePool.customProperties.put(PKS_ENDPOINT_PROP_NAME, s);
         }
 
-        if (hostState.tenantLinks != null) {
-            resourcePool.tenantLinks = new ArrayList<>(hostState.tenantLinks);
-        }
-
         // create the placement zone
         ElasticPlacementZoneConfigurationState placementZone = new ElasticPlacementZoneConfigurationState();
         placementZone.resourcePoolState = resourcePool;
+
+        if (hostState.tenantLinks != null) {
+            resourcePool.tenantLinks = new ArrayList<>(hostState.tenantLinks);
+            placementZone.tenantLinks = new ArrayList<>(hostState.tenantLinks);
+        }
+
         return serviceHost.sendWithDeferredResult(
                 Operation
                         .createPost(serviceHost, ElasticPlacementZoneConfigurationService.SELF_LINK)
