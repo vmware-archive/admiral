@@ -12,6 +12,7 @@
 package com.vmware.admiral.compute.pks;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -22,6 +23,7 @@ import static com.vmware.admiral.compute.cluster.ClusterService.CLUSTER_NAME_CUS
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -318,6 +320,60 @@ public class PKSEndpointServiceTest extends ComputeBaseTest {
     }
 
     @Test
+    public void testPatchTenantLinksModifiesOnlyProjectLinks() {
+        final String tenantLink = UriUtils.buildUriPath(QueryUtil.TENANT_IDENTIFIER, "test-tenant");
+        final String projectLink1 = UriUtils.buildUriPath(QueryUtil.PROJECT_IDENTIFIER,
+                "test-project-1");
+        final String projectLink2 = UriUtils.buildUriPath(QueryUtil.PROJECT_IDENTIFIER,
+                "test-project-2");
+        final String otherLink = "/other/link";
+
+        Endpoint endpoint = new Endpoint();
+        endpoint.apiEndpoint = "http://localhost";
+        endpoint.uaaEndpoint = "https://localhost";
+        endpoint.tenantLinks = Arrays.asList(tenantLink, projectLink1);
+
+        // first create and endpoint with a tenant and a project link
+        final Endpoint createdEndpoint = createEndpoint(endpoint);
+        assertNotNull(createdEndpoint);
+        assertNotNull(createdEndpoint.tenantLinks);
+        assertEquals(2, createdEndpoint.tenantLinks.size());
+        assertTrue(createdEndpoint.tenantLinks.contains(tenantLink));
+        assertTrue(createdEndpoint.tenantLinks.contains(projectLink1));
+
+        // patch without tenant links. Old tenant links should be preserved
+        Endpoint patchEndpoint = new Endpoint();
+        patchEndpoint.documentSelfLink = createdEndpoint.documentSelfLink;
+        Endpoint updatedEndpoint = updateEndpoint(patchEndpoint, null);
+        assertNotNull(updatedEndpoint);
+        assertNotNull(updatedEndpoint.tenantLinks);
+        assertEquals(2, updatedEndpoint.tenantLinks.size());
+        assertTrue(updatedEndpoint.tenantLinks.contains(tenantLink));
+        assertTrue(updatedEndpoint.tenantLinks.contains(projectLink1));
+
+        // patch the endpoint with a new project link. The tenant link should be unaffected.
+        // The old project should be replaced with the new one.
+        patchEndpoint.tenantLinks = Collections.singletonList(projectLink2);
+        updatedEndpoint = updateEndpoint(patchEndpoint, null);
+        assertNotNull(updatedEndpoint);
+        assertNotNull(updatedEndpoint.tenantLinks);
+        assertEquals(2, updatedEndpoint.tenantLinks.size());
+        assertTrue(updatedEndpoint.tenantLinks.contains(tenantLink));
+        assertTrue(updatedEndpoint.tenantLinks.contains(projectLink2));
+        assertFalse(updatedEndpoint.tenantLinks.contains(projectLink1));
+
+        // patch the endpoint with a new random link. Projects should be discarded.
+        patchEndpoint.tenantLinks = Collections.singletonList(otherLink);
+        updatedEndpoint = updateEndpoint(patchEndpoint, null);
+        assertNotNull(updatedEndpoint);
+        assertNotNull(updatedEndpoint.tenantLinks);
+        assertEquals(1, updatedEndpoint.tenantLinks.size());
+        assertTrue(updatedEndpoint.tenantLinks.contains(tenantLink));
+        assertFalse(updatedEndpoint.tenantLinks.contains(projectLink2));
+        assertFalse(updatedEndpoint.tenantLinks.contains(projectLink1));
+    }
+
+    @Test
     public void testDelete() throws Throwable {
         Endpoint endpoint = new Endpoint();
         endpoint.apiEndpoint = "http://localhost";
@@ -373,7 +429,7 @@ public class PKSEndpointServiceTest extends ComputeBaseTest {
         consumer.accept(errorResponse);
     }
 
-    private void updateEndpoint(Endpoint patch, BiConsumer<Operation, Endpoint> consumer) {
+    private Endpoint updateEndpoint(Endpoint patch, BiConsumer<Operation, Endpoint> consumer) {
         Operation o = Operation
                 .createPatch(host, patch.documentSelfLink)
                 .setBodyNoCloning(patch);
@@ -384,7 +440,11 @@ public class PKSEndpointServiceTest extends ComputeBaseTest {
         Endpoint e = sender.sendAndWait(get, Endpoint.class);
         assertNotNull(e);
 
-        consumer.accept(o, e);
+        if (consumer != null) {
+            consumer.accept(o, e);
+        }
+
+        return e;
     }
 
     private void assertPlanAssignmentEntryEquals(Set<String> expectedPlans,

@@ -31,6 +31,7 @@ import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.CertificateCleanupUtil;
 import com.vmware.admiral.common.util.CertificateUtilExtended;
 import com.vmware.admiral.common.util.PropertyUtils;
+import com.vmware.admiral.common.util.TenantLinksUtil;
 import com.vmware.admiral.compute.cluster.ClusterService;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.DeferredResult;
@@ -110,7 +111,10 @@ public class PKSEndpointService extends StatefulService {
         ServiceDocumentDescription docDesc = getDocumentTemplate().documentDescription;
         String currentSignature = Utils.computeSignature(currentState, docDesc);
 
+        List<String> mergedTenantLinks = mergeTenantLinks(currentState.tenantLinks,
+                patchBody.tenantLinks);
         PropertyUtils.mergeServiceDocuments(currentState, patchBody);
+        currentState.tenantLinks = mergedTenantLinks;
 
         validate(currentState);
 
@@ -123,6 +127,40 @@ public class PKSEndpointService extends StatefulService {
         }
 
         op.setBody(currentState).complete();
+    }
+
+    /**
+     * Takes all non-project links from the old tenant links and all project links from the patched
+     * tenant links, puts them together and returns the result.
+     */
+    List<String> mergeTenantLinks(List<String> oldTenantLinks, List<String> patchTenantLinks) {
+        // no pathed tenant links = keep original tenant links
+        if (patchTenantLinks == null) {
+            return oldTenantLinks;
+        }
+
+        // we are allowed to patch only the project links (i.e. to make group assignments).
+        // Clear all other links from the patch
+        List<String> projectLinks = patchTenantLinks.stream()
+                .filter(link -> {
+                    return TenantLinksUtil.isProjectLink(link)
+                            || TenantLinksUtil.isGroupLink(link);
+                }).collect(Collectors.toList());
+
+        if (oldTenantLinks == null) {
+            // no old tenant links = use patch links
+            return projectLinks;
+        }
+
+        // merge old non-project links with patch project links and return the result
+        List<String> otherLinks = oldTenantLinks.stream()
+                .filter(link -> {
+                    return TenantLinksUtil.isNotProjectLink(link)
+                            && TenantLinksUtil.isNotGroupLink(link);
+                }).collect(Collectors.toList());
+
+        otherLinks.addAll(projectLinks);
+        return otherLinks;
     }
 
     @Override
