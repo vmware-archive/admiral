@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
+import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.upgrade.transformation.CompositeComponentsTransformationService;
 import com.vmware.admiral.upgrade.transformation.CompositeDescriptionTransformationService;
 import com.vmware.admiral.upgrade.transformation.ComputePlacementPoolRelationTransformationService;
@@ -53,7 +54,9 @@ public class HostInitUpgradeServiceConfig extends HostInitServiceHelper {
                 CompositeComponentsTransformationService.class,
                 ResourcePoolTransformationService.class);
 
-        startServiceFactories(host,
-                ProjectsTransformationBootstrapService.class);
+        if (!ConfigurationUtil.isVca()) {
+            startServiceFactories(host,
+                    ProjectsTransformationBootstrapService.class);
+        }
     }
 }
