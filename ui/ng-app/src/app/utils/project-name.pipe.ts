@@ -18,6 +18,6 @@ export class ProjectNamePipe implements PipeTransform {
     if (!project) {
       return '--';
     }
-    return FT.isApplicationEmbedded() && !FT.isVca() ? project.label : project.name;
+    return FT.isVra() ? project.label : project.name;
   }
 }

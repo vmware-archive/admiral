@@ -75,6 +75,10 @@ export class FT {
     return ConfigUtils.getConfigurationPropertyBoolean('vca');
   }
 
+  public static isVra() {
+      return FT.isApplicationEmbedded() && !FT.isVca();
+  }
+
   public static isHbrEnabled() {
     return !this.isApplicationEmbedded()
                 && ConfigUtils.getConfigurationProperty('harbor.tab.url');

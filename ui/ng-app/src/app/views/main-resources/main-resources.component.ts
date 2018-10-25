@@ -36,6 +36,7 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
     embeddedMode = FT.isApplicationEmbedded();
     isVca = FT.isVca();
     isVic = FT.isVic();
+    isVra = FT.isVra();
 
     isPksEnabled = FT.isPksEnabled();
     externalKubernetesEnabled = FT.isExternalKubernetesEnabled();
@@ -73,11 +74,11 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
     alertMessage: string;
 
     public get showGroups() {
-        return !this.isVca && this.embeddedMode;
+        return this.isVra;
     }
 
     public get showProjects() {
-        return this.isVca || !this.embeddedMode;
+        return !this.isVra;
     }
 
     constructor(private router: Router, private documentService: DocumentService,
@@ -186,7 +187,7 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
     }
 
     sortProjects() {
-        let sortField = FT.isApplicationEmbedded() && !FT.isVca() ? 'label' : 'name';
+        let sortField = FT.isVra() ? 'label' : 'name';
         Utils.sortObjectArrayByField(this.projects, sortField);
     }
 

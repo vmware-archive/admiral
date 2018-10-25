@@ -381,6 +381,7 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
         event.stopPropagation();
         // clear selection
         this.selectedItem = null;
+        let isVra = FT.isVra();
 
         this.service.get(cluster.documentSelfLink + '/hosts')
         .then((clusterHostsResult) => {
@@ -388,7 +389,7 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
 
             let computeContainerHostLinks = [];
 
-            if (FT.isApplicationEmbedded()) {
+            if (isVra) {
                 clusterHostsResult.content.forEach(element => {
                     computeContainerHostLinks.push(element.documentSelfLink);
                 });

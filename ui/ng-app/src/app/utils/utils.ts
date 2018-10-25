@@ -24,6 +24,7 @@ const REGISTRY_SCHEME_REG_EXP = /^(https?):\/\//;
  */
 export class Utils {
     public static ERROR_NOT_FOUND = 404;
+    public static CONTAINER_SERVICE_URL_PREFIX = '/container';
 
     public static getHashWithQuery(hash: string, queryOptions: any): string {
         var queryString;
@@ -414,6 +415,11 @@ export class Utils {
     }
 
     public static serviceUrl(path) {
+        if (path.indexOf(Utils.CONTAINER_SERVICE_URL_PREFIX) > -1) {
+            // the prefix is already present, do nothing
+            return path;
+        }
+
         let wnd: any = window;
         if (wnd.getBaseServiceUrl) {
             return wnd.getBaseServiceUrl(path);

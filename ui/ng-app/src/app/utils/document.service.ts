@@ -287,7 +287,7 @@ export class DocumentService {
     }
 
     public listProjects() {
-        if (FT.isApplicationEmbedded() && !FT.isVca()) {
+        if (FT.isVra()) {
             return this.ajax.get(Links.GROUPS, null).then(result => {
                 let documents = result || [];
 
@@ -324,7 +324,7 @@ export class DocumentService {
             return { 'x-project': projectId };
         };
 
-        if (FT.isApplicationEmbedded() && !FT.isVca()) {
+        if (FT.isVra()) {
             if (!selectedProject) {
                 return undefined;
             }

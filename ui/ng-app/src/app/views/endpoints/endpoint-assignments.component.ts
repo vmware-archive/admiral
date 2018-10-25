@@ -87,17 +87,18 @@ export class EndpointAssignmentsComponent implements OnInit, OnChanges {
     private populateGroups() {
         this.groups = [];
         this.groupsLoading = true;
-        let isEmbedded = this.isApplicationEmbedded;
+        let isVra = FT.isVra();
 
         return this.documentService.listProjects().then(result => {
             this.groupsLoading = false;
 
-            let sortField = isEmbedded ? "label" : "name";
+            let sortField = isVra ? "label" : "name";
             this.groups = Utils.sortObjectArrayByField(result.documents, sortField)
                 .map(group => {
+
                     return {
-                        name: isEmbedded ? group.label : group.name,
-                        value: isEmbedded ? group.id : group.documentSelfLink
+                        name: isVra ? group.label : group.name,
+                        value: isVra ? group.id : group.documentSelfLink
                     }
                 });
         }).catch(error => {
