@@ -17,8 +17,12 @@ import com.vmware.xenon.common.UriUtils;
  * Service paths used by the photon model.
  */
 public class UriPaths {
+    public static final String URI_PREFIX_PROPERTY_NAME = "uri.prefix";
+    public static final String URI_PREFIX = UriUtils
+            .normalizeUriPath(System.getProperty(URI_PREFIX_PROPERTY_NAME, ""));
+
     public static final String PROVISIONING = "/provisioning";
-    public static final String RESOURCES = "/resources";
+    public static final String RESOURCES = URI_PREFIX + "/resources";
     public static final String CONFIG = "/config";
     public static final String ADAPTER = "/adapter";
     public static final String TASKS = "/tasks";
