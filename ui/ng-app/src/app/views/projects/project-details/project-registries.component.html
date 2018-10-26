@@ -41,8 +41,7 @@
 
     <div table-content-view>
 
-        <clr-datagrid class="projectRegistriesGrid" [clrDgLoading]="loading"
-                      [clDgRowSelection]="true" [(clrDgSelected)]="selectedProjectRegistries">
+        <clr-datagrid class="projectRegistriesGrid" [clrDgLoading]="loading" [(clrDgSelected)]="selectedProjectRegistries">
             <clr-dg-column>{{"projects.projectRegistries.nameTitle" | i18n}}</clr-dg-column>
             <clr-dg-column>{{"projects.projectRegistries.statusTitle" | i18n}}</clr-dg-column>
             <clr-dg-column>{{"projects.projectRegistries.scopeTitle" | i18n}}</clr-dg-column>

@@ -40,7 +40,7 @@
 
         <table-view [showSearch]="false" [showToolbar]="false">
             <div table-content-view>
-                <clr-datagrid [clrDgLoading]="loading" [clDgRowSelection]="true"
+                <clr-datagrid [clrDgLoading]="loading"
                               [(clrDgSelected)]="selectedClusters">
                     <clr-dg-column>{{"pks.add.existingClusters.columnTitleName" | i18n}}</clr-dg-column>
                     <clr-dg-column>{{"pks.add.existingClusters.columnTitleHostname" | i18n}}</clr-dg-column>
