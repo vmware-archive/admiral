@@ -11,10 +11,6 @@
 
 package com.vmware.admiral.vic.test.ui.pages.internalrepos;
 
-import static com.codeborne.selenide.Selenide.Wait;
-
-import com.codeborne.selenide.Condition;
-
 import org.openqa.selenium.By;
 
 import com.vmware.admiral.test.ui.pages.common.ModalDialog;
@@ -26,12 +22,6 @@ public class DeleteRepositoryModalDialog extends
             DeleteRepositoryModalDialogValidator validator,
             DeleteRepositoryModalDialogLocators pageLocators) {
         super(iFrameLocators, validator, pageLocators);
-    }
-
-    public void waitForDeleteToComplete() {
-        LOG.info("Waiting for delete to complete");
-        Wait().until(d -> !element(locators().closeButton()).has(Condition.attribute("hidden"))
-                && !element(locators().closeButton()).has(Condition.attribute("disabled")));
     }
 
     public void close() {

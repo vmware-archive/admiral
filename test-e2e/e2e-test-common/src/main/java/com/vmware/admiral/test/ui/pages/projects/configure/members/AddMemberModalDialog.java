@@ -18,8 +18,6 @@ import java.time.Duration;
 import com.codeborne.selenide.Condition;
 
 import org.openqa.selenium.By;
-import org.openqa.selenium.TimeoutException;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 
 import com.vmware.admiral.test.ui.pages.common.ModalDialog;
 
@@ -37,34 +35,16 @@ public class AddMemberModalDialog
 
     public void addMember(String idOrEmail) {
         LOG.info(String.format("Adding project member: [%s]", idOrEmail));
-        pageActions().sendKeys(idOrEmail, locators().idOrEmailInputField());
-        Wait().until(ExpectedConditions.or(
-                d -> {
-                    if (element(locators().notFoundIndicator()).is(Condition.visible)) {
-                        throw new IllegalArgumentException(
-                                "Searching for: " + idOrEmail + " did not return any results.");
-                    }
-                    return false;
-                },
-                d -> {
-                    if (element(locators().firstResult()).is(Condition.visible)) {
-                        return true;
-                    }
-                    return false;
-                }));
-        int retries = 3;
-        while (retries > 0) {
-            pageActions().click(locators().firstResult());
-            try {
-                Wait().withTimeout(Duration.ofSeconds(5))
-                        .until(d -> element(locators().firstResult()).is(Condition.hidden));
-                return;
-            } catch (TimeoutException e) {
-                LOG.warning("Clicking on found user result failed, retrying...");
-                retries--;
-            }
+        pageActions().sendKeys(idOrEmail + "\n", locators().idOrEmailInputField());
+        Wait().withMessage(
+                String.format("Searching for user %s did not yield any results", idOrEmail))
+                .withTimeout(Duration.ofSeconds(20))
+                .until(d -> element(locators().firstFoundUserId()).is(Condition.visible));
+        if (element(locators().secondFoundUserId()).is(Condition.visible)) {
+            throw new IllegalArgumentException(String.format(
+                    "Searching for user %s returned multiple results, specify more strict search criteria",
+                    idOrEmail));
         }
-        throw new RuntimeException(String.format("Could not add user '%s' to project", idOrEmail));
     }
 
     public void setRole(ProjectMemberRole role) {

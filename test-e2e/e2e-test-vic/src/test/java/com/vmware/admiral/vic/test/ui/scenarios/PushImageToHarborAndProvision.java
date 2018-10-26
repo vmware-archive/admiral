@@ -167,8 +167,7 @@ public class PushImageToHarborAndProvision extends BaseTestVic {
         }
         builtInRepositories().deleteRepositoryModalDialog().waitToLoad();
         builtInRepositories().deleteRepositoryModalDialog().submit();
-        builtInRepositories().deleteRepositoryModalDialog().waitForDeleteToComplete();
-        builtInRepositories().deleteRepositoryModalDialog().close();
+
         home().clickContainerHostsButton();
         HostCommons.deleteHost(getClient(), HOST_NAME);
 

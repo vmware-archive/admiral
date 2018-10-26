@@ -17,21 +17,23 @@ import com.vmware.admiral.test.ui.pages.common.ModalDialogLocators;
 
 public class AddMemberModalDialogLocators extends ModalDialogLocators {
 
-    private final By EMAIL_ID_FIELD = By.cssSelector(".modal-content .tt-input");
-    private final By FIRST_RESULT = By.cssSelector(".modal-content .search-item");
-    private final By NOT_FOUND_RESULT = By.cssSelector(".modal-content .tt-options-hint");
+    private final By EMAIL_ID_FIELD = By.cssSelector(".modal-content #searchField");
     private final By ROLE_DROPDOWN = By.id("memberRole");
+    private final By FIRST_USER_ID = By
+            .cssSelector(".selected-members-container a.label:first-child");
+    private final By SECOND_USER_ID = By
+            .cssSelector(".selected-members-container a.label:nth-child(2)");
 
     public By idOrEmailInputField() {
         return EMAIL_ID_FIELD;
     }
 
-    public By firstResult() {
-        return FIRST_RESULT;
+    public By firstFoundUserId() {
+        return FIRST_USER_ID;
     }
 
-    public By notFoundIndicator() {
-        return NOT_FOUND_RESULT;
+    public By secondFoundUserId() {
+        return SECOND_USER_ID;
     }
 
     public By roleDropdown() {

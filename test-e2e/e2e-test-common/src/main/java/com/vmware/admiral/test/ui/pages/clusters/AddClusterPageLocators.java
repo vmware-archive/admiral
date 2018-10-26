@@ -24,8 +24,9 @@ public class AddClusterPageLocators extends PageLocators {
             .cssSelector(".select[data-name='create-cluster-type'] select");
     private final By URL_INPUT = By.cssSelector("#url");
     private final By SAVE_BUTTON = By.cssSelector(".saveCluster-btn");
-    private final By CREDENTIALS_DROPDOWN = By.cssSelector(".form .dropdown-toggle");
-    private final String CREDENTIALS_BY_NAME_CSS = ".form .dropdown-menu a[data-name='%s']";
+    private final By CREDENTIALS_DROPDOWN = By
+            .cssSelector("credentials-select select[formcontrolname='credentials']");
+    private final String CREDENTIALS_BY_NAME_CSS = "credentials-select option[value$='/%s']";
 
     public By pageTitle() {
         return PAGE_TITLE;

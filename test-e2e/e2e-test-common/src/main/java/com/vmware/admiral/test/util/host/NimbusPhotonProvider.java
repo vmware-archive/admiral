@@ -35,7 +35,7 @@ public class NimbusPhotonProvider implements ContainerHostProvider {
     private final int DEPLOY_TEMPLATE_TIMEOUT_SECONDS = 720;
     private final int KILL_VM_TIMEOUT_SECONDS = 120;
     private final String NIMBUS_TARGET = "nimbus-gateway.eng.vmware.com";
-    private final String OVF_PATH = "/templates/admiral-test-photon-v1/admiral-test-photon-v1.ovf";
+    private final String OVF_PATH = "/templates/admiral-test-photon-v2/admiral-test-photon-v2.ovf";
     private final String VM_NAME_PREFIX = "-admiral-ui-test-";
     private final SshCommandExecutor NIMBUS_EXECUTOR;
     private final String NIMBUS_USERNAME;
