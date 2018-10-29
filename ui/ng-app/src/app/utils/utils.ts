@@ -459,7 +459,7 @@ export class Utils {
     }
 
     public static serviceUrl(path) {
-        if (path.indexOf(Utils.CONTAINER_SERVICE_URL_PREFIX) > -1) {
+        if (path.startsWith(Utils.CONTAINER_SERVICE_URL_PREFIX)) {
             // the prefix is already present, do nothing
             return path;
         }
