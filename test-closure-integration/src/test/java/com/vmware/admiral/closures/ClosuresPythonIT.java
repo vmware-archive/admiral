@@ -1485,7 +1485,6 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
         cleanResource(closureDescription.documentSelfLink, serviceClient);
     }
 
-    @Ignore("VBV-2251")
     @Test
     public void executePythonWithBilliardDependencyTest() throws Throwable {
         // Create Closure Definition
@@ -1559,7 +1558,6 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
         cleanResource(closureDescription.documentSelfLink, serviceClient);
     }
 
-    @Ignore("VBV-2251")
     @Test
     public void executePythonWithMissingDependencyTest() throws Throwable {
         // Create Closure Definition
@@ -1639,14 +1637,13 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
         verifyRunDuration(closure);
 
         assertTrue("Not expected error: " + closure.errorMsg,
-                closure.errorMsg.contains("ImportError(\"No module named 'keyring'\",)"));
+                closure.errorMsg.contains("ModuleNotFoundError(\"No module named 'keyring'\",)"));
 
         cleanResource(imageRequestLink, serviceClient);
         cleanResource(createdClosure.documentSelfLink, serviceClient);
         cleanResource(closureDescription.documentSelfLink, serviceClient);
     }
 
-    @Ignore("VBV-2251")
     @Test
     public void executePythonWithDependencyUsingSourceURLasZIPTest() throws Throwable {
         // Create Closure Definition
