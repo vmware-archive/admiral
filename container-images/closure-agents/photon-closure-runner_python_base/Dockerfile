@@ -17,7 +17,7 @@ RUN tdnf distro-sync --refresh -y && \
     tdnf install gzip python3-devel openssl-devel libffi dbus-glib python3-pip \
     gcc make binutils glibc-devel linux-api-headers -y && \
     mkdir -p /app && \
-    pip3 install --upgrade pip && \
+    pip3 install --upgrade pip setuptools wheel && \
     pip3 install requests && \
     tdnf remove vim findutils -y  && \
     tdnf clean all && \
