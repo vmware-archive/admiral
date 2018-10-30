@@ -51,24 +51,11 @@ public class ProjectsPageValidator extends PageValidator<ProjectsPageLocators> {
     }
 
     public void validateProjectDeleteButtonAvailable(String projectName) {
-        validateProjectDeleteButton(projectName, true);
+        element(locators().projectDeleteButtonByName(projectName)).shouldBe(Condition.visible);
     }
 
     public void validateProjectDeleteButtonNotAvailable(String projectName) {
-        validateProjectDeleteButton(projectName, false);
-    }
-
-    private void validateProjectDeleteButton(String projectName, boolean available) {
-        By card = locators().projectCardByName(projectName);
-        waitForElementToSettle(card);
-        pageActions().click(locators().projectContextMenuButtonByName(projectName));
-        if (available) {
-            element(locators().projectDeleteButtonByName(projectName)).shouldBe(Condition.visible);
-        } else {
-            element(locators().projectDeleteButtonByName(projectName))
-                    .shouldNotBe(Condition.visible);
-        }
-        pageActions().click(locators().projectContextMenuButtonByName(projectName));
+        element(locators().projectDeleteButtonByName(projectName)).shouldNotBe(Condition.visible);
     }
 
     public void validateProjectsCount(int expectedCount) {

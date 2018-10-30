@@ -38,7 +38,6 @@ public class ClustersPage extends BasicPage<ClustersPageValidator, ClustersPageL
         LOG.info(String.format("Deleting host/cluster with name: [%s]", name));
         By card = locators().clusterCardByName(name);
         waitForElementToSettle(card);
-        pageActions().click(locators().clusterContextMenuButtonByName(name));
         pageActions().click(locators().clusterDeleteButtonByName(name));
     }
 
@@ -46,7 +45,6 @@ public class ClustersPage extends BasicPage<ClustersPageValidator, ClustersPageL
         LOG.info(String.format("Inspecting host/cluster with name: [%s]", name));
         By card = locators().clusterCardByName(name);
         waitForElementToSettle(card);
-        pageActions().click(locators().clusterContextMenuButtonByName(name));
         pageActions().click(locators().clusterDetailsButton(name));
     }
 
@@ -54,8 +52,9 @@ public class ClustersPage extends BasicPage<ClustersPageValidator, ClustersPageL
         LOG.info(String.format("Rescaning host/cluster with name: [%s]", name));
         By card = locators().clusterCardByName(name);
         waitForElementToSettle(card);
-        pageActions().click(locators().clusterContextMenuButtonByName(name));
+        pageActions().click(locators().clusterMoreactionsDropdownByName(name));
         pageActions().click(locators().clusterRescanButtonByName(name));
+        pageActions().click(locators().clusterMoreactionsDropdownByName(name));
     }
 
     public void waitForHostState(String name, int timeoutSeconds, HostState... states) {

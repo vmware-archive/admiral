@@ -23,10 +23,10 @@ public class ClustersPageLocators extends PageLocators {
 
     private final By ALL_HOST_CARDS = By.cssSelector(".items .card-item");
     private final String CLUSTER_CARD_SELECTOR_BY_NAME = "//span[contains(concat(' ', @class, ' '), ' card-item ')]//div[contains(concat(' ', @class, ' '), ' titleHolder ')]/div[1][text()='%s']/ancestor::span[contains(concat(' ', @class, ' '), ' card-item ')]";
-    private final String CONTEXT_MENU_BUTTON = "//button[contains(concat(' ', @class, ' '), ' dropdown-toggle ')]";
-    private final String CLUSTER_DELETE_BUTTON = "//*[contains(concat(' ', @class, ' '), ' remove-cluster ')]";
-    private final String CLUSTER_RESCAN_BUTTON = "//*[contains(concat(' ', @class, ' '), ' rescan-cluster ')]";
-    private final String CLUSTER_DETAILS_BUTTON = "//*[contains(concat(' ', @class, ' '), ' cluster-details ')]";
+    private final String CLUSTER_DELETE_BUTTON = "//button[text()='Remove']";
+    private final String CLUSTER_RESCAN_BUTTON = "//button[text()='Rescan ']";
+    private final String CLUSTER_MORE_ACTIONS_DROPDOWN = "//button[text()='More Actions']";
+    private final String CLUSTER_DETAILS_BUTTON = "//button[text()='Open']";
     private final String CLUSTER_STATUS = "//div[contains(concat(' ', @class, ' '), ' status ')]";
 
     public String clusterCardByNameXpath(String name) {
@@ -37,16 +37,16 @@ public class ClustersPageLocators extends PageLocators {
         return By.xpath(clusterCardByNameXpath(name));
     }
 
-    public By clusterContextMenuButtonByName(String name) {
-        return By.xpath(clusterCardByNameXpath(name) + CONTEXT_MENU_BUTTON);
-    }
-
     public By clusterDeleteButtonByName(String name) {
         return By.xpath(clusterCardByNameXpath(name) + CLUSTER_DELETE_BUTTON);
     }
 
     public By clusterRescanButtonByName(String name) {
         return By.xpath(clusterCardByNameXpath(name) + CLUSTER_RESCAN_BUTTON);
+    }
+
+    public By clusterMoreactionsDropdownByName(String name) {
+        return By.xpath(clusterCardByNameXpath(name) + CLUSTER_MORE_ACTIONS_DROPDOWN);
     }
 
     public By clusterDetailsButton(String name) {

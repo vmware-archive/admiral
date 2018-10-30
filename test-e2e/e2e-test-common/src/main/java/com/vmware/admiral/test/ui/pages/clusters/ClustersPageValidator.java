@@ -45,11 +45,13 @@ public class ClustersPageValidator extends PageValidator<ClustersPageLocators> {
     }
 
     public void validateHostActionsAvailable(String hostName) {
-        element(locators().clusterContextMenuButtonByName(hostName)).shouldBe(Condition.visible);
+        element(locators().clusterDetailsButton(hostName)).shouldBe(Condition.visible);
+        element(locators().clusterDeleteButtonByName(hostName)).shouldBe(Condition.visible);
     }
 
     public void validateHostActionsNotAvailable(String hostName) {
-        element(locators().clusterContextMenuButtonByName(hostName)).shouldNotBe(Condition.visible);
+        element(locators().clusterDetailsButton(hostName)).shouldNotBe(Condition.visible);
+        element(locators().clusterDeleteButtonByName(hostName)).shouldNotBe(Condition.visible);
     }
 
     public void validateHostsCount(int expectedCount) {

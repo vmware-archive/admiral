@@ -31,7 +31,6 @@ public class ProjectsPage extends BasicPage<ProjectsPageValidator, ProjectsPageL
         LOG.info(String.format("Configuring project with name: [%s]", projectName));
         By card = locators().projectCardByName(projectName);
         waitForElementToSettle(card);
-        pageActions().click(locators().projectContextMenuButtonByName(projectName));
         pageActions().click(locators().projectDetailsButtonByName(projectName));
     }
 
@@ -39,7 +38,6 @@ public class ProjectsPage extends BasicPage<ProjectsPageValidator, ProjectsPageL
         LOG.info(String.format("Deleting project with name: [%s]", projectName));
         By card = locators().projectCardByName(projectName);
         waitForElementToSettle(card);
-        pageActions().click(locators().projectContextMenuButtonByName(projectName));
         pageActions().click(locators().projectDeleteButtonByName(projectName));
     }
 
