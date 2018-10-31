@@ -615,9 +615,10 @@ public class ProjectService extends StatefulService {
                 })
                 .whenComplete((v, ex) -> {
                     if (ex != null) {
+                        Throwable error = (ex instanceof CompletionException) ? ex.getCause() : ex;
                         logSevere("Failed to delete project [%s]: %s", state.documentSelfLink,
-                                Utils.toString(ex));
-                        delete.fail(ex);
+                                Utils.toString(error));
+                        delete.fail(error);
                         return;
                     }
                     super.handleDelete(delete);

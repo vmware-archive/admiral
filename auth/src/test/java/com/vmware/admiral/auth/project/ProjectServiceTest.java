@@ -1383,8 +1383,8 @@ public class ProjectServiceTest extends AuthBaseTest {
         try {
             deleteProject(test);
         } catch (Throwable ex) {
-            assertTrue(ex.getCause() instanceof LocalizableValidationException);
-            assertTrue(ex.getCause().getMessage()
+            assertTrue(ex instanceof LocalizableValidationException);
+            assertTrue(ex.getMessage()
                     .contains("Project is not removable: mocked message"));
         }
 

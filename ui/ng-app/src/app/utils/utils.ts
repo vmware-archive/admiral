@@ -150,7 +150,7 @@ export class Utils {
             errorMessage = I18n.t('errors.itemNotFound');
         } else {
 
-            let errorResponse = err._body;
+            let errorResponse = err.error || err._body;
             if (errorResponse) {
                 if (errorResponse.errors && errorResponse.errors.length > 0) {
                     errorMessage = errorResponse.errors[0].systemMessage || errorResponse.errors[0].message;
