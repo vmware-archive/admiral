@@ -47,6 +47,7 @@ public class SslTrustImportServiceIT extends ComputeBaseTest {
         uri = UriUtils.buildUri(host, SslTrustImportService.SELF_LINK);
         request = new SslTrustImportRequest();
         waitForServiceAvailability(SslTrustImportService.SELF_LINK);
+        ServerX509TrustManager.invalidate();
         ServerX509TrustManager.init(host);
     }
 
