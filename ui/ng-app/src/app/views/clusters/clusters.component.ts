@@ -59,6 +59,10 @@ export class ClustersComponent extends AutoRefreshComponent {
         });
     }
 
+    get removeClusterRouteRestriction() {
+        return RoutesRestriction.CLUSTERS_REMOVE;
+    }
+
     ngOnInit(): void {
         this.refreshFnCallScope = this.gridView;
         this.refreshFn = this.gridView.autoRefresh;

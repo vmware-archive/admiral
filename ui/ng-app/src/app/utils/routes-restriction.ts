@@ -55,6 +55,7 @@ export class RoutesRestriction {
                             Roles.VRA_CONTAINER_ADMIN];
   public static CLUSTERS_NEW = [Roles.CLOUD_ADMIN, Roles.VRA_CONTAINER_ADMIN];
   public static CLUSTERS_ID = [Roles.CLOUD_ADMIN, Roles.VRA_CONTAINER_ADMIN];
+  public static CLUSTERS_REMOVE = [Roles.CLOUD_ADMIN, Roles.VRA_CONTAINER_ADMIN];
   public static CLUSTERS_EDIT = [Roles.CLOUD_ADMIN, Roles.VRA_CONTAINER_ADMIN];
 
   public static KUBERNETES_CLUSTERS = [Roles.CLOUD_ADMIN, Roles.PROJECT_ADMIN,
@@ -64,6 +65,7 @@ export class RoutesRestriction {
                                            Roles.PROJECT_ADMIN, Roles.VRA_CONTAINER_DEVELOPER,
                                            Roles.PROJECT_MEMBER];
   public static KUBERNETES_CLUSTERS_ADD = [Roles.CLOUD_ADMIN, Roles.VRA_CONTAINER_ADMIN];
+  public static KUBERNETES_CLUSTERS_REMOVE = [Roles.CLOUD_ADMIN, Roles.VRA_CONTAINER_ADMIN];
   public static KUBERNETES_CLUSTERS_ID = [Roles.CLOUD_ADMIN, Roles.VRA_CONTAINER_ADMIN,
                                           Roles.VRA_CONTAINER_DEVELOPER];
   public static KUBERNETES_CLUSTERS_EDIT = [Roles.CLOUD_ADMIN, Roles.VRA_CONTAINER_ADMIN];

@@ -328,6 +328,14 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
         return RoutesRestriction.KUBERNETES_CLUSTERS_ADD;
     }
 
+    get openClusterDetailsRouteRestriction() {
+        return RoutesRestriction.KUBERNETES_CLUSTERS_ID;
+    }
+
+    get removeClusterRouteRestriction() {
+        return RoutesRestriction.KUBERNETES_CLUSTERS_REMOVE;
+    }
+
     get newClusterRouteRestriction() {
         return RoutesRestriction.KUBERNETES_CLUSTERS_NEW;
     }

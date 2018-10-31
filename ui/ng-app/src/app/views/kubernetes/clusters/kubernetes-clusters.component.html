@@ -85,7 +85,7 @@
                         (click)="downloadKubeConfig($event, item)">
                     <clr-icon shape="download" size="12">
                     </clr-icon>{{"kubernetes.clusters.details.summary.kubeConfigBtn" | i18n}}</button>
-                <button class="btn btn-link"
+                <button class="btn btn-link" allowNavigation [roles]="openClusterDetailsRouteRestriction"
                         [routerLink]="['./cluster/' + item.documentId]">{{"open" | i18n}}</button>
 
                 <clr-dropdown (click)="toggleItemSelection($event, item)">
@@ -111,7 +111,8 @@
                             </clr-icon>{{"clusters.actions.rescan" | i18n}}</button>
                         <button *ngIf="item.supportsOperationRemove" type="button"
                                 class="dropdown-item"
-                                (click)="removeCluster($event, item)">
+                                (click)="removeCluster($event, item)" allowNavigation
+                                [roles]="removeClusterRouteRestriction">
                             <clr-icon shape="trash" size="20" class="card-drop-down-actions">
                             </clr-icon>{{"delete" | i18n}}</button>
                         <button *ngIf="item.supportsOperationDestroy" type="button"

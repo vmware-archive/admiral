@@ -107,8 +107,10 @@
 
             <div card-footer>
                 <button type="button" class="btn btn-link cluster-details"
+                        allowNavigation [roles]="clustersCardViewActions"
                         [routerLink]="['./'+ tabId + '/cluster/' + item.documentId]">{{"open" | i18n}}</button>
                 <button type="button" class="btn btn-link remove-cluster"
+                        allowNavigation [roles]="removeClusterRouteRestriction"
                         (click)="deleteCluster($event, item)">{{"remove" | i18n}}</button>
 
                 <clr-dropdown (click)="toggleItemSelection($event, item)">
