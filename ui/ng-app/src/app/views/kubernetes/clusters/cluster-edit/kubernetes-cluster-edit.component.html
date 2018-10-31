@@ -9,11 +9,6 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<clr-alert *ngIf="alertMessage" [clrAlertType]="alertType" [(clrAlertClosed)]="!alertMessage"
-           (clrAlertClosedChange)="resetAlert()">
-    <div class="alert-item"><span class="alert-text">{{ alertMessage }}</span></div>
-</clr-alert>
-
 <form [formGroup]="editClusterForm">
     <section class="form-block">
         <div class="form-group">

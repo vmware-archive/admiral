@@ -13,6 +13,7 @@ import { Constants } from './constants';
 import { ConfigUtils } from './config-utils';
 import { Roles } from './roles';
 import { ProjectService } from './project.service';
+import { FT } from './ft';
 
 import * as I18n from 'i18next';
 
@@ -469,6 +470,55 @@ export class Utils {
             return wnd.getBaseServiceUrl(path);
         }
         return path;
+    }
+
+    public static isClusterOpSupported(op, cluster, securityContext) {
+        if (!cluster) {
+            return false;
+        }
+
+        let clusterStatus = cluster.status;
+
+        let isClusterOwnedByCurrentUser = Utils.isClusterOwnedByCurrentUser(cluster, securityContext);
+
+        if (op === 'ENABLE') {
+            // Enable
+            return clusterStatus === Constants.clusters.status.DISABLED && isClusterOwnedByCurrentUser;
+        } else if (op === 'DISABLE') {
+            // Disable
+            return clusterStatus === Constants.clusters.status.ON && isClusterOwnedByCurrentUser;
+        } else if (op === 'DESTROY') {
+            // Destroy
+            return Utils.isPksCluster(cluster)
+                && clusterStatus !== Constants.clusters.status.PROVISIONING
+                && clusterStatus !== Constants.clusters.status.RESIZING
+                && clusterStatus !== Constants.clusters.status.DESTROYING
+                && clusterStatus !== Constants.clusters.status.UNREACHABLE
+                && isClusterOwnedByCurrentUser;
+        } else if (op === 'RESCAN') {
+            return clusterStatus === Constants.clusters.status.ON;
+        } else if (op === 'REMOVE') {
+            return isClusterOwnedByCurrentUser;
+        }
+
+        return true;
+    }
+
+    public static isClusterOwnedByCurrentUser(cluster, securityContext) {
+        let nodes = cluster.nodes;
+        if (nodes && Utils.isContainerDeveloper(securityContext)) {
+            let user = securityContext.user || securityContext.id;
+            for (let key in nodes) {
+                if (nodes.hasOwnProperty(key)) {
+                    let tenantLinks = nodes[key] && nodes[key].tenantLinks;
+                    if (tenantLinks.indexOf('/users/' + user) === -1) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
     }
 
     public static isContainerDeveloper(securityContext) {

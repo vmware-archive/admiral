@@ -227,46 +227,7 @@ export class KubernetesClustersComponent extends AutoRefreshComponent {
 
 
     operationSupported(op, cluster) {
-        let clusterStatus = cluster.status;
-
-        let isClusterOwnedByCurrentUser = this.isClusterOwnedByCurrentUser(cluster);
-
-        if (op === 'ENABLE') {
-            // Enable
-            return clusterStatus === Constants.clusters.status.DISABLED && isClusterOwnedByCurrentUser;
-        } else if (op === 'DISABLE') {
-            // Disable
-            return clusterStatus === Constants.clusters.status.ON && isClusterOwnedByCurrentUser;
-        } else if (op === 'DESTROY') {
-            // Destroy
-            return Utils.isPksCluster(cluster)
-                    && clusterStatus !== Constants.clusters.status.PROVISIONING
-                    && clusterStatus !== Constants.clusters.status.RESIZING
-                    && clusterStatus !== Constants.clusters.status.DESTROYING
-                    && clusterStatus !== Constants.clusters.status.UNREACHABLE
-                    && isClusterOwnedByCurrentUser;
-        } else if (op === 'RESCAN') {
-            return clusterStatus === Constants.clusters.status.ON;
-        } else if (op === 'REMOVE') {
-            return isClusterOwnedByCurrentUser;
-        }
-
-        return true;
-    }
-
-    isClusterOwnedByCurrentUser(cluster) {
-        let nodes = cluster.nodes;
-        if (nodes && Utils.isContainerDeveloper(this.userSecurityContext)) {
-            let user = this.userSecurityContext.user;
-            for (var key in nodes) {
-                let tenantLinks = nodes[key] && nodes[key].tenantLinks;
-                if (tenantLinks.indexOf('/users/' + user) === -1) {
-                    return false;
-                }
-            }
-        }
-
-        return true;
+        return Utils.isClusterOpSupported(op, cluster, this.userSecurityContext);
     }
 
     enableHost(event, cluster) {

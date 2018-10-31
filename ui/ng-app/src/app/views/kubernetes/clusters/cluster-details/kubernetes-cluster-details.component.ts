@@ -12,44 +12,54 @@
 import { Component } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { BaseDetailsComponent } from '../../../../components/base/base-details.component';
+import { AuthService } from '../../../../utils/auth.service';
 import { DocumentService } from '../../../../utils/document.service';
 import { ErrorService } from '../../../../utils/error.service';
 import { ProjectService } from '../../../../utils/project.service';
 import { Links } from '../../../../utils/links';
 import { Utils } from '../../../../utils/utils';
+
 import * as I18n from 'i18next';
 
 @Component({
-  selector: 'app-kubernetes-cluster-details',
-  templateUrl: './kubernetes-cluster-details.component.html',
-  styleUrls: ['./kubernetes-cluster-details.component.scss']
+    selector: 'app-kubernetes-cluster-details',
+    templateUrl: './kubernetes-cluster-details.component.html',
+    styleUrls: ['./kubernetes-cluster-details.component.scss']
 })
 /**
  * Kubernetes cluster details view.
  */
 export class KubernetesClusterDetailsComponent extends BaseDetailsComponent {
+    private securityContext: any;
 
-  showDeleteConfirmation: boolean = false;
-  deleteConfirmationAlert: string;
+    showDeleteConfirmation: boolean = false;
+    deleteConfirmationAlert: string;
 
-  alertType: any;
-  alertMessage: string;
+    alertType: any;
+    alertMessage: string;
 
-  constructor(route: ActivatedRoute, router: Router, service: DocumentService,
-              errorService: ErrorService, projectService: ProjectService) {
+    constructor(route: ActivatedRoute, router: Router, authService: AuthService, service: DocumentService,
+                errorService: ErrorService, projectService: ProjectService) {
 
-    super(Links.CLUSTERS, route, router, service, projectService, errorService);
-  }
+        super(Links.CLUSTERS, route, router, service, projectService, errorService);
 
-  protected onProjectChange() {
-      this.goBack();
-  }
+        authService.getCachedSecurityContext().then((securityContext) => {
+            this.securityContext = securityContext;
+        }).catch((error) => {
+            console.log(error);
+            this.errorService.error(Utils.getErrorMessage(error)._generic);
+        });
+    }
+
+    protected onProjectChange() {
+        this.goBack();
+    }
 
     deleteConfirmationTitle() {
         if (this.entity) {
-            return I18n.t("kubernetes.clusters.delete.title", {
+            return I18n.t('kubernetes.clusters.delete.title', {
                 clusterName: this.entity.name,
-                interpolation: { escapeValue: false }
+                interpolation: {escapeValue: false}
             } as I18n.TranslationOptions);
         }
         return '';
@@ -57,12 +67,16 @@ export class KubernetesClusterDetailsComponent extends BaseDetailsComponent {
 
     deleteConfirmationDescription() {
         if (this.entity) {
-            return I18n.t("kubernetes.clusters.delete.confirmation", {
+            return I18n.t('kubernetes.clusters.delete.confirmation', {
                 clusterName: this.entity.name,
-                interpolation: { escapeValue: false }
+                interpolation: {escapeValue: false}
             } as I18n.TranslationOptions);
         }
         return '';
+    }
+
+    operationSupported(op) {
+        return Utils.isClusterOpSupported(op, this.entity, this.securityContext);
     }
 
     deleteCluster($event) {
@@ -73,7 +87,7 @@ export class KubernetesClusterDetailsComponent extends BaseDetailsComponent {
 
     deleteConfirmed() {
         this.service.delete(this.entity.documentSelfLink)
-            .then(() => {
+        .then(() => {
             this.showDeleteConfirmation = false;
             this.goBack();
         }).catch(err => {
@@ -86,6 +100,6 @@ export class KubernetesClusterDetailsComponent extends BaseDetailsComponent {
     }
 
     goBack() {
-        this.router.navigate(['../../'], { relativeTo: this.route });
+        this.router.navigate(['../../'], {relativeTo: this.route});
     }
 }

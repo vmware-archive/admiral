@@ -24,7 +24,7 @@
 
     <clr-icon shape="rack-server" size="36"></clr-icon>
     <h3 class="cluster-details-header-title">{{entity?.name}}
-        <div class="btn-group" role="group" aria-label="Available Actions">
+        <div *ngIf="operationSupported('REMOVE')" class="btn-group" role="group" aria-label="Available Actions">
             <button type="button" class="btn btn-link"
                     (click)="deleteCluster($event)">{{"delete" | i18n}}</button></div>
     </h3>

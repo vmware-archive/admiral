@@ -50,10 +50,6 @@ export class KubernetesClusterEditComponent extends BaseDetailsComponent {
 
     isUpdatingCluster: boolean = false;
 
-    // alert
-    alertMessage: string;
-    alertType: string;
-
     selectedPlanId: any;
 
     constructor(protected route: ActivatedRoute, protected router: Router,
@@ -133,8 +129,6 @@ export class KubernetesClusterEditComponent extends BaseDetailsComponent {
         }).catch((error) => {
             console.log(error);
             this.endpointsLoading = false;
-
-            this.showErrorMessage(error);
         });
     }
 
@@ -180,8 +174,6 @@ export class KubernetesClusterEditComponent extends BaseDetailsComponent {
         }).catch(error => {
             console.error('PKS Plans listing failed', error);
             this.plansLoading = false;
-
-            this.showErrorMessage(error);
         });
     }
 
@@ -204,10 +196,8 @@ export class KubernetesClusterEditComponent extends BaseDetailsComponent {
                 this.isUpdatingCluster = false;
                 this.goBack();
             }).catch(error => {
+                console.error('Update cluster failed', error);
                 this.isUpdatingCluster = false;
-
-                console.error(error);
-                this.showErrorMessage(error);
             });
         }
     }
@@ -218,15 +208,5 @@ export class KubernetesClusterEditComponent extends BaseDetailsComponent {
 
     goBack() {
         this.router.navigate(['../..'], {relativeTo: this.route});
-    }
-
-    private showErrorMessage(error) {
-        this.alertType = Constants.alert.type.DANGER;
-        this.alertMessage = Utils.getErrorMessage(error)._generic;
-    }
-
-    resetAlert() {
-        this.alertType = null;
-        this.alertMessage = null;
     }
 }
