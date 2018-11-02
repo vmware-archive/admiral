@@ -40,7 +40,7 @@
     "jquery": "3.3.1",
     "moment": "2.21.0",
     "mutationobserver-shim": "0.3.2",
-    "ngx-cookie": "^4.0.2",
+    "ngx-cookie": "4.0.2",
     "ngx-infinite-scroll": "6.0.1",
     "ngx-markdown": "^1.5.1",
     "node-sass": "^4.9.3",
