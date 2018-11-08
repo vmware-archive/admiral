@@ -43,6 +43,7 @@ public abstract class ComputeBaseTest extends BaseTestCase {
 
     @Before
     public void beforeForComputeBase() throws Throwable {
+        host.addPrivilegedService(ContainerHostDataCollectionService.class);
         startServices(host);
         waitForInitialBootServiceToBeSelfStopped(ComputeInitialBootService.SELF_LINK);
     }

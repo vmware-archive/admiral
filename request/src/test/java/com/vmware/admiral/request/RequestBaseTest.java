@@ -43,6 +43,7 @@ import com.vmware.admiral.compute.container.CompositeDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerFactoryService;
+import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
@@ -140,6 +141,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
 
     @Before
     public void setUp() throws Throwable {
+        host.addPrivilegedService(ContainerHostDataCollectionService.class);
         startServices(host);
         setUpDockerHostAuthentication();
 

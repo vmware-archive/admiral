@@ -96,12 +96,14 @@
 
                         <button *ngIf="item.supportsOperationDisable" type="button"
                                 class="dropdown-item disableHost"
-                                (click)="disableHost($event, item)">
+                                (click)="disableHost($event, item)" allowNavigation
+                                [roles]="openClusterDetailsRouteRestriction">
                             <clr-icon shape="pause" size="20" class="card-drop-down-actions">
                             </clr-icon>{{"hosts.actions.disable" | i18n}}</button>
                         <button *ngIf="item.supportsOperationEnable" type="button"
                                 class="dropdown-item enableHost"
-                                (click)="enableHost($event, item)">
+                                (click)="enableHost($event, item)" allowNavigation
+                                [roles]="openClusterDetailsRouteRestriction">
                             <clr-icon shape="play" size="20" class="card-drop-down-actions">
                             </clr-icon>{{"hosts.actions.enable" | i18n}}</button>
                         <button *ngIf="item.supportsOperationRescan" type="button"

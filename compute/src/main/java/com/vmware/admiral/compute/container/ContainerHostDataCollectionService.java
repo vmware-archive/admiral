@@ -193,6 +193,8 @@ public class ContainerHostDataCollectionService extends StatefulService {
 
     @Override
     public void handlePatch(Operation patch) {
+        setAuthorizationContext(patch, getSystemAuthorizationContext());
+
         if (!checkForBody(patch)) {
             return;
         }
@@ -358,6 +360,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
         patchState.customProperties = new HashMap<>();
         patchState.customProperties.put(RETRIES_COUNT_PROP_NAME, "0");
         sendRequest(Operation.createPatch(this, computeState.documentSelfLink)
+                .setAuthorizationContext(getSystemAuthorizationContext())
                 .setBodyNoCloning(patchState)
                 .setCompletion((o, e) -> {
                     if (e != null) {
@@ -439,6 +442,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
         };
         sendRequest(Operation
                 .createPatch(this, computeState.documentSelfLink)
+                .setAuthorizationContext(getSystemAuthorizationContext())
                 .setBodyNoCloning(patchState)
                 .setCompletion(cc));
     }
@@ -575,6 +579,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
 
                 for (GroupResourcePlacementState placementToUpdate : placementsToUpdate) {
                     sendRequest(Operation.createPut(this, placementToUpdate.documentSelfLink)
+                            .setAuthorizationContext(getSystemAuthorizationContext())
                             .setBodyNoCloning(placementToUpdate));
                 }
 
@@ -650,6 +655,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
         rpPatchState.maxMemoryBytes = totalMemory;
         rpPatchState.minMemoryBytes = 0L;
         sendRequest(Operation.createPatch(this, rpPatchState.documentSelfLink)
+                .setAuthorizationContext(getSystemAuthorizationContext())
                 .setBodyNoCloning(rpPatchState).setCompletion((op, e) -> {
                     if (e != null) {
                         logSevere("Unable to update the resource pool with link %s : %s",
@@ -667,6 +673,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
         URI adapterManagementReference = computeHost.endpointLink == null
                 ? computeHost.adapterManagementReference : getDefaultHostAdapter(getHost());
         sendRequest(Operation.createPatch(adapterManagementReference)
+                .setAuthorizationContext(getSystemAuthorizationContext())
                 .setBodyNoCloning(request)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
@@ -833,6 +840,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
         spec.hostState = computeState;
         spec.isUpdateOperation = true;
         sendRequest(Operation.createPut(getHost(), ContainerHostService.SELF_LINK)
+                .setAuthorizationContext(getSystemAuthorizationContext())
                 .setBodyNoCloning(spec)
                 .setCompletion((o, e) -> {
                     if (e != null) {
@@ -894,6 +902,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
         request.resourceReference = UriUtils.buildUri(getHost(), documentSelfLink);
         sendRequest(Operation.createPatch(adapterURI)
                 .setBodyNoCloning(request)
+                .setAuthorizationContext(getSystemAuthorizationContext())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         if (ex instanceof ConnectException) {
@@ -933,6 +942,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 .createPatch(this, KubernetesEntityDataCollection
                         .DEFAULT_KUBERNETES_ENTITY_DATA_COLLECTION_LINK)
                 .setBodyNoCloning(body)
+                .setAuthorizationContext(getSystemAuthorizationContext())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         logWarning("Failed request kubernetes dc: %s", Utils.toString(ex));
@@ -950,6 +960,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 .createPatch(this, HostContainerListDataCollection
                         .DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK)
                 .setBodyNoCloning(body)
+                .setAuthorizationContext(getSystemAuthorizationContext())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         logWarning("Failed request host container list dc: %s", Utils.toString(ex));
@@ -966,6 +977,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
         sendRequest(Operation
                 .createPatch(this, HostNetworkListDataCollection
                         .DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK)
+                .setAuthorizationContext(getSystemAuthorizationContext())
                 .setBodyNoCloning(body)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
@@ -982,6 +994,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 .createPatch(
                         this,
                         HostVolumeListDataCollection.DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_LINK)
+                .setAuthorizationContext(getSystemAuthorizationContext())
                 .setBodyNoCloning(body)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
@@ -1005,6 +1018,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
         URI callbackUri = UriUtils.buildUri(getHost(), callbackLink);
         Operation startPost = Operation
                 .createPost(callbackUri)
+                .setAuthorizationContext(getSystemAuthorizationContext())
                 .setBodyNoCloning(body)
                 .setCompletion((o, e) -> {
                     if (e != null) {
@@ -1073,6 +1087,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
                                 r.getDocumentSelfLink(), computeStateSelfLink);
                         sendRequest(Operation
                                 .createPatch(this, r.getDocumentSelfLink())
+                                .setAuthorizationContext(getSystemAuthorizationContext())
                                 .setBodyNoCloning(errorState));
                     }
                 });
@@ -1089,6 +1104,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
         logInfo("Sending request to [%s]", adapterManagementReference.toString());
         sendRequest(Operation.createPatch(adapterManagementReference)
                 .setBodyNoCloning(request)
+                .setAuthorizationContext(getSystemAuthorizationContext())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         logWarning("Failed to subscribe for host events: %s", Utils.toString(ex));

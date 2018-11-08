@@ -42,6 +42,7 @@ import com.vmware.admiral.common.util.AuthUtils;
 import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.SecurityUtils;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
+import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.host.interceptor.AuthCredentialsInterceptor;
 import com.vmware.admiral.host.interceptor.InUsePlacementZoneInterceptor;
 import com.vmware.admiral.host.interceptor.OperationInterceptorRegistry;
@@ -487,6 +488,12 @@ public class ManagementHost extends PostgresServiceHost implements IExtensibilit
         addPrivilegedService(PrincipalService.class);
         addPrivilegedService(ProjectService.class);
         addPrivilegedService(DockerHostAdapterService.class);
+
+        // There exist some principals which have read-only privileges over hosts but can
+        // initiate data collections on them. ContainerHostDataCollectionService needs to
+        // elevate those privileges in order to modify the hosts, otherwise it acts on
+        // behalf of those principals.
+        addPrivilegedService(ContainerHostDataCollectionService.class);
 
         // NodeMigrationService needs to be privileged in order to not get forbidden during the
         // migration process.

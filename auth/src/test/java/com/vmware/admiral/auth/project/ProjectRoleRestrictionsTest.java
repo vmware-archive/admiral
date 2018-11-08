@@ -49,11 +49,35 @@ public class ProjectRoleRestrictionsTest extends AuthBaseTest {
     }
 
     @Test
+    public void testProjectMembersCannotModifyComputes() throws Throwable {
+        // create compute state in project 1 as cloud admin
+        ComputeState csProject1 = createComputeStateAsUser(PROJECT_NAME_TEST_PROJECT_1, USER_EMAIL_ADMIN2);
+
+        // Project members should be able to access the document
+        verifyDocumentAccessible(csProject1.documentSelfLink, USER_EMAIL_CONNIE, true);
+
+        // Verify compute state modification is forbidden
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_CONNIE));
+        // POST
+        ComputeState cs = new ComputeState();
+        cs.name = "test";
+        cs.descriptionLink = "descLink";
+        doPostWithRestrictionVerification(cs, ComputeService.FACTORY_LINK);
+        // PUT
+        csProject1.name = "updated-name";
+        doPutWithRestrictionVerification(csProject1, ComputeService.FACTORY_LINK);
+        // PATCH
+        doPatchWithRestrictionVerification(csProject1, csProject1.documentSelfLink);
+        // DELETE
+        doDeleteWithRestrictionVerification(csProject1, ComputeService.FACTORY_LINK);
+    }
+
+    @Test
     public void testComputesFromOtherProjectsAreNotAccessible() throws Throwable {
-        // create compute state in project 1 as a member
-        ComputeState csProject1 = createComputeStateAsUser(PROJECT_NAME_TEST_PROJECT_1, USER_EMAIL_CONNIE);
-        // create compute state in project 2 as another member
-        ComputeState csProject2 = createComputeStateAsUser(PROJECT_NAME_TEST_PROJECT_2, USER_EMAIL_GLORIA);
+        // create compute state in project 1 as cloud admin
+        ComputeState csProject1 = createComputeStateAsUser(PROJECT_NAME_TEST_PROJECT_1, USER_EMAIL_ADMIN2);
+        // create compute state in project 2 as cloud admin
+        ComputeState csProject2 = createComputeStateAsUser(PROJECT_NAME_TEST_PROJECT_2, USER_EMAIL_ADMIN2);
 
         // Project members and admins should be able to access the document, other users should not have access
         verifyDocumentAccessible(csProject1.documentSelfLink, USER_EMAIL_CONNIE, true);

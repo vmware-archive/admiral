@@ -66,6 +66,7 @@ import com.vmware.admiral.service.common.SslTrustImportService;
 import com.vmware.admiral.service.common.UniquePropertiesService;
 import com.vmware.admiral.service.common.harbor.HarborApiProxyService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
+import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Claims;
@@ -524,10 +525,6 @@ public class AuthUtil {
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
 
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
-                        buildUriWithWildcard(ContainerHostDataCollectionService.FACTORY_LINK),
-                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
-
-                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
                         buildUriWithWildcard(ShellContainerExecutorService.SELF_LINK),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
 
@@ -627,6 +624,10 @@ public class AuthUtil {
 
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
                         ManagementUriParts.PKS_PLANS,
+                        MatchType.TERM, Occurance.SHOULD_OCCUR)
+
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        ManagementUriParts.PKS_KUBE_CONFIG_CONTENT,
                         MatchType.TERM, Occurance.SHOULD_OCCUR);
 
         for (Query query : fullAccessResourcesForAdminsAndMembers(projectSelfLink)) {
@@ -667,6 +668,10 @@ public class AuthUtil {
                 // revoke access to project-specific registries
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
                         buildUriWithWildcard(RegistryFactoryService.SELF_LINK),
+                        MatchType.WILDCARD,
+                        Occurance.MUST_NOT_OCCUR)
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(ComputeService.FACTORY_LINK),
                         MatchType.WILDCARD,
                         Occurance.MUST_NOT_OCCUR)
                 .build();

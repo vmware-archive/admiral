@@ -26,6 +26,7 @@ import com.vmware.admiral.adapter.common.service.mock.MockTaskService.MockTaskSt
 import com.vmware.admiral.adapter.docker.service.ContainerHostRequest;
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.common.test.HostInitTestDcpServicesConfig;
+import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.host.ComputeInitialBootService;
 import com.vmware.admiral.host.HostInitCommonServiceConfig;
 import com.vmware.admiral.host.HostInitComputeServicesConfig;
@@ -72,6 +73,7 @@ public class BaseMockDockerTestCase extends BaseTestCase {
     @Before
     public void setUpMockDockerHost() throws Throwable {
         long initTime = System.nanoTime();
+        host.addPrivilegedService(ContainerHostDataCollectionService.class);
         HostInitTestDcpServicesConfig.startServices(host);
         HostInitPhotonModelServiceConfig.startServices(host);
         HostInitCommonServiceConfig.startServices(host);
