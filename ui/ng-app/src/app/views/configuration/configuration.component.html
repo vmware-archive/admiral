@@ -11,12 +11,5 @@
 
 <div class="main-view">
     <div class="title">{{"configuration.title" | i18n}}</div>
-    <clr-tabs>
-        <clr-tab>
-            <button clrTabLink id="registryConfigTab">{{"configuration.registry" | i18n}}</button>
-            <clr-tab-content id="registryConfigContent" *clrIfActive>
-                <hbr-registry-config [hasAdminRole]="hasAdminRole"></hbr-registry-config>
-            </clr-tab-content>
-        </clr-tab>
-  </clr-tabs>
+    <hbr-registry-config [hasAdminRole]="hasAdminRole"></hbr-registry-config>
 </div>
