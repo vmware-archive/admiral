@@ -102,8 +102,8 @@
         </clr-vertical-nav-group-children>
     </clr-vertical-nav-group>
 
-    <clr-vertical-nav-group *ngIf="!isVic" [clrVerticalNavGroupExpanded]="true"
-                            allowNavigation [roles]="activityRouteRestriction">
+    <clr-vertical-nav-group [clrVerticalNavGroupExpanded]="true" allowNavigation
+                            [roles]="activityRouteRestriction">
         <clr-icon shape="list" clrVerticalNavIcon></clr-icon> {{ "navigation.recentActivity" | i18n }}
         <clr-vertical-nav-group-children>
             <a clrVerticalNavLink routerLink="requests"
