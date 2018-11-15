@@ -111,12 +111,12 @@ public class VolumeUtil {
         String[] hostContainerDir = volume.split(HOST_CONTAINER_DIR_DELIMITER);
 
         if (hostContainerDir.length != 2) {
-            throw new LocalizableValidationException("Invalid volume directory.", "compute.volumes.invalid.directory");
+            Utils.logWarning("Cannot parse volume '%s'", volume);
+            throw new LocalizableValidationException("Invalid volume directory.",
+                    "compute.volumes.invalid.directory");
         }
 
-        String hostDir = hostContainerDir[0];
-
-        return hostDir;
+        return hostContainerDir[0];
     }
 
     /**

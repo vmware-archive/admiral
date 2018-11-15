@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -15,6 +15,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.vmware.xenon.common.LocalizableValidationException;
+import com.vmware.xenon.common.Utils;
 
 /*
  * Volume binding parsing utility. A volume binding is a string in the following form:
@@ -25,10 +26,12 @@ public class VolumeBinding {
 
     private static final String RX_HOSTDIR = "(?:(?:/(?:[a-zA-Z0-9_.-]+))+/?)|/";
     private static final String RX_NAME = "[a-zA-Z0-9_.-]+";
-    private static final String RX_SOURCE = "(?:(?<src>(?:" + RX_HOSTDIR + ")|(?:" + RX_NAME + ")):)?";
+    private static final String RX_SOURCE =
+            "(?:(?<src>(?:" + RX_HOSTDIR + ")|(?:" + RX_NAME + ")):)?";
     private static final String RX_DESTINATION = "(?<dst>" + RX_HOSTDIR + ")";
     private static final String RX_MODE = "(?::(?<mode>ro))?";
-    private static final Pattern VOLUME_STRING_PATTERN = Pattern.compile("^" + RX_SOURCE + RX_DESTINATION + RX_MODE + "$");
+    private static final Pattern VOLUME_STRING_PATTERN =
+            Pattern.compile("^" + RX_SOURCE + RX_DESTINATION + RX_MODE + "$");
 
     private String hostPart;
     private String containerPart;
@@ -50,7 +53,9 @@ public class VolumeBinding {
         Matcher matcher = VOLUME_STRING_PATTERN.matcher(volume);
 
         if (!matcher.matches()) {
-            throw new LocalizableValidationException("Volume must be [host_path|named_volume:]container_path[:ro]",
+            Utils.logWarning("Cannot parse volume '%s'", volume);
+            throw new LocalizableValidationException(
+                    "Volume must be [host_path|named_volume:]container_path[:ro]",
                     "compute.volume-binding.format");
         }
 
