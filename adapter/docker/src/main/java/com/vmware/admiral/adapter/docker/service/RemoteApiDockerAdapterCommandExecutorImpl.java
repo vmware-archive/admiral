@@ -913,9 +913,6 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
 
     private void createOrUpdateTargetSsl(CommandInput input, DelegatingX509KeyManager keyM,
             ServerX509TrustManager trustM) {
-        if (input.getCredentials() == null) {
-            return;
-        }
 
         if (!isSecure(input.getDockerUri())) {
             return;
@@ -930,6 +927,10 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
 
         if (sslTrust != null && trustM != null) {
             trustM.putDelegate(trustAlias, sslTrust);
+        }
+
+        if (input.getCredentials() == null) {
+            return;
         }
 
         String clientKey = EncryptionUtils.decrypt(input.getCredentials().privateKey);

@@ -115,13 +115,21 @@ public class KubernetesRemoteApiClient {
     }
 
     private void createOrUpdateTargetSsl(KubernetesContext context) {
-        if (context.credentials == null
-                || !AuthCredentialsType.PublicKey.name().equals(context.credentials.type)) {
+        URI uri = UriUtils.buildUri(context.host.address);
+        if (!isSecure(uri)) {
             return;
         }
 
-        URI uri = UriUtils.buildUri(context.host.address);
-        if (!isSecure(uri)) {
+        String sslTrust = context.SSLTrustCertificate;
+
+        if (sslTrust != null && trustManager != null) {
+            String trustAlias = context.SSLTrustAlias;
+
+            trustManager.putDelegate(trustAlias, sslTrust);
+        }
+
+        if (context.credentials == null
+                || !AuthCredentialsType.PublicKey.name().equals(context.credentials.type)) {
             return;
         }
 
@@ -134,23 +142,15 @@ public class KubernetesRemoteApiClient {
                     .getKeyManagers(alias, clientKey, clientCert)[0];
             keyManager.putDelegate(alias, delegateKeyManager);
         }
-
-        String sslTrust = context.SSLTrustCertificate;
-
-        if (sslTrust != null && trustManager != null) {
-            String trustAlias = context.SSLTrustAlias;
-
-            trustManager.putDelegate(trustAlias, sslTrust);
-        }
     }
 
     private void prepareRequest(Operation op, KubernetesContext context) {
         String authorizationHeaderValue = AuthUtils.createAuthorizationHeader(context.credentials);
         if (authorizationHeaderValue != null) {
             op.addRequestHeader(Operation.AUTHORIZATION_HEADER, authorizationHeaderValue);
-        } else {
-            createOrUpdateTargetSsl(context);
         }
+
+        createOrUpdateTargetSsl(context);
 
         op.setReferer(URI.create("/"));
         op.forceRemote();
