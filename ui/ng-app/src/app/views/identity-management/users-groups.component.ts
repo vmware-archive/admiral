@@ -31,7 +31,7 @@ export class UsersGroupsComponent {
     searchTerm: string = '';
     loading: boolean = false;
 
-    selected: any[] = [];
+    selected: any;
     selectedPrincipals: any[] = [];
 
     showAssignRolesDialog: boolean = false;

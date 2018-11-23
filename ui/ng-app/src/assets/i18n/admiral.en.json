@@ -453,7 +453,6 @@
         "columnTitleLastAction": "Last Action",
         "columnTitleLastActionStatus": "Last Action Status",
         "columnTitleInAdmiral": "Registered",
-        "multipleSelectedClustersWarning": "Cannot add more than one cluster at a time.",
         "clusterAlreadyRegisteredWarning": "Cannot add selected cluster. It is already added.",
         "operationInProgressWarning": "Cannot add selected cluster. There is an operation in progress.",
         "yes": "Yes",

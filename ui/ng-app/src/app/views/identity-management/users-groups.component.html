@@ -22,21 +22,21 @@
 </div>
 
 <div class="users-table-holder">
-<clr-datagrid [(clrDgSelected)]="selected" [clrDgLoading]="loading">
+<clr-datagrid [(clrDgSingleSelected)]="selected" [clrDgLoading]="loading">
     <clr-dg-action-bar>
         <div class="btn-group">
-            <button *ngIf="selected.length == 1"
+            <button *ngIf="selected"
                     type="button" class="btn btn-sm btn-secondary" (click)="onAssignRoles()"
                         ><clr-icon shape="pencil"></clr-icon><span
                 class="btn-spaced-text">{{"assignRoles" | i18n}}</span></button>
-            <button *ngIf="selected.length == 1 && !selected[0].isCloudAdmin"
+            <button *ngIf="selected && !selected.isCloudAdmin"
                     type="button" class="btn btn-sm btn-secondary"
-                    (click)="onMakeCloudAdmin(selected && selected[0])"
+                    (click)="onMakeCloudAdmin(selected)"
                         ><clr-icon shape="pencil"></clr-icon><span
                             class="btn-spaced-text">{{"makeAdmin" | i18n}}</span></button>
-            <button *ngIf="selected.length == 1 && selected[0].isCloudAdmin"
+            <button *ngIf="selected && selected.isCloudAdmin"
                     type="button" class="btn btn-sm btn-secondary"
-                    (click)="onUnmakeCloudAdmin(selected[0])"
+                    (click)="onUnmakeCloudAdmin(selected)"
                         ><clr-icon shape="pencil"></clr-icon><span
                             class="btn-spaced-text">{{"unmakeAdmin" | i18n}}</span></button>
         </div>
@@ -70,6 +70,6 @@
 </clr-datagrid>
 </div>
 
-<app-users-assign-roles [visible]="showAssignRolesDialog" [principal]="selected[0]"
+<app-users-assign-roles [visible]="showAssignRolesDialog" [principal]="selected"
                          (onChange)="onAssignRolesDone()"
                          (onCancel)="onAssignRolesCanceled()"></app-users-assign-roles>

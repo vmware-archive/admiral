@@ -41,7 +41,7 @@ export class KubernetesClusterAddExistingComponent implements OnInit {
 
     originalClusters: any[] = [];
     clusters: any[] = [];
-    selectedClusters: any[] = [];
+    selectedCluster: any;
 
     // alert
     alertMessage: string;
@@ -85,7 +85,7 @@ export class KubernetesClusterAddExistingComponent implements OnInit {
 
         if (!this.endpointSelection) {
             this.clusters = [];
-            this.selectedClusters = [];
+            this.selectedCluster = null;
 
             return;
         }
@@ -121,22 +121,17 @@ export class KubernetesClusterAddExistingComponent implements OnInit {
     }
 
     add() {
-        if (this.selectedClusters.length !== 1) {
-            // Currently only single cluster can be added
-            this.showAlertMessage(Constants.alert.type.WARNING,
-                I18n.t('pks.add.existingClusters.multipleSelectedClustersWarning'));
+        if (!this.selectedCluster) {
             return;
         }
 
-        var selectedCluster = this.selectedClusters[0];
-
-        if (selectedCluster.addedInAdmiral) {
+        if (this.selectedCluster.addedInAdmiral) {
             this.showAlertMessage(Constants.alert.type.WARNING,
                 I18n.t('pks.add.existingClusters.clusterAlreadyRegisteredWarning'));
             return;
         }
 
-        if (selectedCluster.lastActionStatus === OPERATION_IN_PROGRESS) {
+        if (this.selectedCluster.lastActionStatus === OPERATION_IN_PROGRESS) {
             this.showAlertMessage(Constants.alert.type.WARNING,
                 I18n.t('pks.add.existingClusters.operationInProgressWarning'));
             return;
@@ -146,7 +141,7 @@ export class KubernetesClusterAddExistingComponent implements OnInit {
 
         this.isAdding = true;
         let clusterToAdd = this.originalClusters.find(originalCluster => {
-                return originalCluster.uuid === selectedCluster.uuid;
+                return originalCluster.uuid === this.selectedCluster.uuid;
         });
 
         let addClusterRequest = {
