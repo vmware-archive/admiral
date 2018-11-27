@@ -21,7 +21,7 @@ public class UsersAndGroupsTabLocators extends PageLocators {
             .cssSelector("#identityUsersGroupsContent>section>app-identity-usersgroups>p");
     private final By SEARCH_FIELD = By.id("searchField");
     private final By FIRST_ROW_CHECKBOX = By
-            .cssSelector(".datagrid-row .datagrid-row-flex clr-checkbox");
+            .cssSelector(".datagrid-body .datagrid-row:first-child .radio");
     private final By ASSIGN_ADMIN_ROLE_BUTTON = By
             .cssSelector(".btn.btn-sm.btn-secondary:nth-child(2)");
 
