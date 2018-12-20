@@ -12,7 +12,7 @@
 # This docker image uses a custom .patch in order to compile shellinabox under # alpine linux. The original implementation can be seen here:
 # https://github.com/gerco/shellinabox-alpine/blob/master/Dockerfile.build
 
-FROM photon:2.0
+FROM photon:2.0-20181211
 
 RUN tdnf distro-sync --refresh -y && \
     tdnf erase toybox -y && \

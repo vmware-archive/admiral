@@ -9,7 +9,7 @@
 # conditions of the subcomponent's license, as noted in the LICENSE file.
 #
 
-FROM photon:2.0
+FROM photon:2.0-20181211
 
 RUN tdnf distro-sync --refresh -y && \
     tdnf erase toybox -y && \

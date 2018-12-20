@@ -9,16 +9,24 @@
 # conditions of the subcomponent's license, as noted in the LICENSE file.
 #
 
-FROM photon:2.0
+FROM photon:2.0-20181211
 
 RUN tdnf distro-sync --refresh -y && \ 
-    tdnf install git wget tar gzip -y && \
+    tdnf install git wget tar gzip unzip -y && \
     tdnf clean all
 
 RUN wget https://storage.googleapis.com/golang/go1.6.linux-amd64.tar.gz
 RUN tar -C /usr/local -xzf go1.6.linux-amd64.tar.gz
 ENV PATH=$PATH:/usr/local/go/bin
 ENV GOPATH=/go
+
+RUN mkdir -p /go/src && \
+    cd /go/src && \
+    wget https://github.com/golang/net/archive/release-branch.go1.6.zip && \
+    mkdir -p golang.org/x/net && \
+    unzip release-branch.go1.6.zip -d golang.org/x/net && \
+    mv golang.org/x/net/net-release-branch.go1.6/context golang.org/x/net && \
+    rm -rf golang.org/x/net/net-release-branch.go1.6 release-branch.go1.6.zip
 
 COPY /go /go
 COPY /github-checkout.sh /
@@ -31,8 +39,6 @@ RUN ./github-checkout.sh fsouza/go-dockerclient 4a2e5288244cd60febbfc7bdd07891ea
     ./github-checkout.sh docker/go-units eb879ae3e2b84e2a142af415b679ddeda47ec71c && \
     ./github-checkout.sh docker/engine-api ebc51d1954fc8934307dd15841b8d64f7cd505df && \
     ./github-checkout.sh opencontainers/runc faa3281ce8f09a1712898d6603e0746e63c6e2f0
-
-RUN go get golang.org/x/net/context
 
 RUN go install shellserver
 RUN go install dockershell
