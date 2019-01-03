@@ -571,7 +571,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
 
                     fetchOp.setExpiration(ServiceUtils.getExpirationTimeFromNowInMicros(
                             getHost().getOperationTimeoutMicros()))
-                            .setReferer(UriUtils.buildUri(getHost(), SELF_LINK))
+                            .setReferer(UriUtils.buildUri(getHost().getPublicUri(), SELF_LINK))
                             .setContextId(context.request.getRequestId())
                             .setCompletion((o, ex) -> {
                                 if (ex != null) {

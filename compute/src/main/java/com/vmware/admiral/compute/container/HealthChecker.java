@@ -342,7 +342,7 @@ public class HealthChecker {
         Operation op = Operation
                 .createGet(uri)
                 .setAction(healthConfig.httpMethod)
-                .setReferer(UriUtils.buildUri(host, SERVICE_REFERRER_PATH))
+                .setReferer(UriUtils.buildUri(host.getPublicUri(), SERVICE_REFERRER_PATH))
                 .setCompletion((o, ex) -> handleHealthResponse(host, containerState, ex, callback));
 
         if (healthConfig.httpVersion == HttpVersion.HTTP_v2) {

@@ -82,10 +82,12 @@ public class KubernetesRemoteApiClient {
     private final ServiceClient serviceClient;
     private final DelegatingX509KeyManager keyManager = new DelegatingX509KeyManager();
     private ServerX509TrustManager trustManager;
+    private final ServiceHost host;
 
     private static KubernetesRemoteApiClient INSTANCE = null;
 
     protected KubernetesRemoteApiClient(ServiceHost host, final TrustManager trustManager) {
+        this.host = host;
         this.serviceClient = ServiceClientFactory.createServiceClient(trustManager, keyManager);
 
         if (trustManager instanceof ServerX509TrustManager) {
@@ -152,7 +154,7 @@ public class KubernetesRemoteApiClient {
 
         createOrUpdateTargetSsl(context);
 
-        op.setReferer(URI.create("/"));
+        op.setReferer(host.getPublicUri());
         op.forceRemote();
 
         setConnectionTag(context.credentials, op);

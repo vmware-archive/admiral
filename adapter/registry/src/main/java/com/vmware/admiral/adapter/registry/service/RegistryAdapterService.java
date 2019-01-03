@@ -335,7 +335,7 @@ public class RegistryAdapterService extends StatelessService {
 
             logInfo("Performing registry search: %s", searchUri);
             Operation search = Operation.createGet(searchUri)
-                    .setReferer(getHost().getUri())
+                    .setReferer(getHost().getPublicUri())
                     .setCompletion((o, ex) -> {
                         if (ex != null) {
                             context.operation.fail(ex);
@@ -406,7 +406,7 @@ public class RegistryAdapterService extends StatelessService {
     private void sendV2SearchRequest(URI searchUri, String searchTerm,
             RegistrySearchResponse response, RequestContext context) {
         Operation search = Operation.createGet(searchUri)
-                .setReferer(getHost().getUri())
+                .setReferer(getHost().getPublicUri())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         if (o.getStatusCode() == 401) {
@@ -514,7 +514,7 @@ public class RegistryAdapterService extends StatelessService {
         }
 
         Operation pingOp = Operation.createGet(pingUri)
-                .setReferer(URI.create("/"))
+                .setReferer(getHost().getPublicUri())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         if (ApiVersion.V2 == apiVersion && o.getStatusCode() == 401) {
@@ -596,7 +596,7 @@ public class RegistryAdapterService extends StatelessService {
 
             logInfo("Performing container image list tags: %s", searchUri);
             Operation search = Operation.createGet(searchUri)
-                    .setReferer(getHost().getUri())
+                    .setReferer(getHost().getPublicUri())
                     .setCompletion((o, ex) -> {
                         if (ex != null) {
                             context.operation.fail(ex);
@@ -636,7 +636,7 @@ public class RegistryAdapterService extends StatelessService {
 
             logInfo("Performing container image list tags: %s", searchUri);
             Operation search = Operation.createGet(searchUri)
-                    .setReferer(getHost().getUri())
+                    .setReferer(getHost().getPublicUri())
                     .setCompletion((o, ex) -> {
                         if (ex != null) {
                             if (o.getStatusCode() == 401) {
@@ -718,7 +718,7 @@ public class RegistryAdapterService extends StatelessService {
 
             logInfo("Requesting token from %s", tokenServiceUri.toString());
             Operation getTokenOp = Operation.createGet(tokenServiceUri)
-                    .setReferer(getUri())
+                    .setReferer(UriUtils.buildUri(getHost().getPublicUri(), getSelfLink()))
                     .setCompletion((op, ex) -> {
                         if (ex != null) {
                             failureCallback.accept(ex);

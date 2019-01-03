@@ -781,7 +781,7 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
      * Common settings on all outgoing requests to the docker server
      */
     protected void prepareRequest(Operation op, boolean longRunningRequest) {
-        op.setReferer(URI.create("/"))
+        op.setReferer(host.getPublicUri())
                 .addRequestHeader(Operation.REQUEST_AUTH_TOKEN_HEADER, "")
                 .forceRemote();
 
