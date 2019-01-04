@@ -26,7 +26,7 @@
     "@clr/angular": "^0.12.12",
     "@clr/icons": "^0.12.12",
     "@clr/ui": "^0.12.12",
-    "@harbor/ui": "1.0.0-rc7",
+    "@harbor/ui": "1.7.1",
     "@ngx-translate/core": "10.0.2",
     "@ngx-translate/http-loader": "^3.0.1",
     "@webcomponents/custom-elements": "^1.0.0",
