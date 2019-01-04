@@ -1,8 +1,8 @@
 open_source_licenses.txt
 
-Admiral 1.4.3 GA
+Admiral 1.5.0 GA
 
-Copyright (c) 2016-2018 VMware, Inc.  All rights reserved.
+Copyright (c) 2016-2019 VMware, Inc.  All rights reserved.
 
 This product is licensed to you under the Apache License version 2.0 (the License).  You may not use this product except in compliance with the License.
 
@@ -89,7 +89,7 @@ limitations under the License.
 
 =======================================================================
 
-Admiral version 1.4.3 includes a number of components with separate 
+Admiral version 1.5.0 includes a number of components with separate 
 copyright notices and license terms.  This product does not necessarily 
 use all the open source components referred to below. Your use of the 
 source code for these components is subject to the terms and conditions 
@@ -4322,4 +4322,4 @@ Source Files is valid for three years from the date you acquired this
 software product. Alternatively, the Source Files may accompany the
 VMware product.
 
-[BELLEVUE143GAAD091018]
+[BELLEVUE150GANT010319]
