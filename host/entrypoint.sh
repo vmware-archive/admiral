@@ -10,7 +10,7 @@ fi
 
 if [ "x" = "x$MEMORY_OPTS" ]
 then
-MEMORY_OPTS="-Xmx768M -Xms768M -Xss256K -Xmn256M -XX:MaxMetaspaceSize=256m"
+MEMORY_OPTS="-Xmx1280M -Xms1280M -Xss256K -Xmn256M -XX:MaxMetaspaceSize=256m"
 fi
 
 CONFIG_FILES="$DIST_CONFIG_FILE_PATH"
