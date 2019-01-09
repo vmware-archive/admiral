@@ -32,7 +32,7 @@ XENON_STACKTRACE=""
 fi
 
 JAVA_OPTS="$JAVA_OPTS $MEMORY_OPTS"
-JAVA_OPTS="$JAVA_OPTS -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=$ADMIRAL_STORAGE_PATH"
+JAVA_OPTS="$JAVA_OPTS -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=$ADMIRAL_STORAGE_PATH -XX:+ExitOnOutOfMemoryError"
 
 java -Djava.util.logging.config.file=$LOG_CONFIG_FILE_PATH -Dconfiguration.properties=$CONFIG_FILES $JAVA_OPTS -cp $ADMIRAL_ROOT/*:$ADMIRAL_ROOT/lib/*:/etc/xenon/dynamic-services/* $XENON_PHOTON_MODEL_PROPS $XENON_STACKTRACE com.vmware.admiral.host.ManagementHost --bindAddress=0.0.0.0 --port=$ADMIRAL_PORT --sandbox=$ADMIRAL_STORAGE_PATH $XENON_OPTS &
 PID=$!
