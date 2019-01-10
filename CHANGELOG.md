@@ -1,5 +1,7 @@
 # CHANGELOG
 
+## 1.5.1-SNAPSHOT
+
 ## 1.5.0
 
 * After marking docker containers, volumes and networks as retired they will be automatically removed from Admiral in 5 hours.
