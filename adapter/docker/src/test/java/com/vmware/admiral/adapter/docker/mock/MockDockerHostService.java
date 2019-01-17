@@ -116,7 +116,7 @@ public class MockDockerHostService extends StatefulService {
 
     private Map<String, String> getVersionBody() {
         Map<String, String> body = new HashMap<>();
-        body.put("Version", "1.5.0");
+        body.put("Version", "1.5.1");
         body.put("Os", "linux");
         body.put("KernelVersion", "3.18.5-tinycore64");
         body.put("GoVersion", "go1.4.1");
