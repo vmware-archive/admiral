@@ -1219,6 +1219,14 @@
         "running": "執行中",
         "failed": "失敗"
       },
+      "type": {
+        "ALLOCATION_ONLY": "配置",
+        "PROVISIONING_ONLY": "佈建",
+        "ALLOCATION_AND_PROVISIONING": "配置和佈建",
+        "REMOVE": "刪除",
+        "RESIZE": "調整大小",
+        "CLUSTERING": "叢集化"
+      },
       "actions": {
         "details": {
           "show": "詳細資料",
@@ -1407,6 +1415,7 @@
   "advanced": "進階",
   "noSelection": "未選取",
   "noItems": "沒有項目",
+  "items": "項目",
   "buildNumber": "組建編號",
   "errors": {
     "hostIp": "值必須為主機名稱或 IP 位址。",

@@ -46,25 +46,26 @@
     },
     "summary": {
       "title": "概要",
-      "type": "タイプ：",
-      "creationDate": "作成日時:",
+      "overviewTitle": "概要",
+      "type": "タイプ",
+      "creationDate": "作成済み",
       "team": {
         "title": "プロジェクト チーム",
-        "administrators": "プロジェクト管理者:",
-        "members": "開発者:",
+        "administrators": "プロジェクト管理者",
+        "members": "開発者",
         "viewers": "閲覧者",
         "users": "ユーザー"
       },
       "repositories": {
         "title": "内部リポジトリ",
-        "repositories": "リポジトリ:"
+        "repositories": "リポジトリ"
       },
       "resources": {
         "title": "プロジェクト リソース",
-        "clusters": "クラスタ:",
-        "clustersVic": "コンテナ ホスト:",
-        "templates": "アプリのテンプレート:",
-        "images": "イメージ:"
+        "clusters": "クラスタ",
+        "clustersVic": "コンテナ ホスト",
+        "templates": "アプリのテンプレート",
+        "images": "イメージ"
       }
     },
     "members": {
@@ -192,7 +193,7 @@
       "WARNING": "警告",
       "PROVISIONING": "プロビジョニング",
       "RESIZING": "サイズ変更",
-      "REMOVING": "削除",
+      "DESTROYING": "破棄中",
       "UNREACHABLE": "アクセスできません"
     },
     "search": {
@@ -217,7 +218,7 @@
       "clusterResources": "クラスタ リソース",
       "clusterResourcesVic": "コンテナ ホスト リソース",
       "status": "ステータス:",
-      "creationDate": "Added:",
+      "creationDate": "追加:",
       "containersCount": "コンテナ:",
       "cpu": "vCPU:",
       "memory": "メモリ:"
@@ -280,7 +281,7 @@
         "nameRequired": "名前は必須です。",
         "description": "説明",
         "url": "URL",
-        "invalidUrl": "URL must contain a valid scheme and hostname.",
+        "invalidUrl": "URL には、有効なスキームとホスト名が含まれている必要があります。",
         "credentials": "認証情報"
       },
       "search": {
@@ -301,11 +302,11 @@
           "masterNodesIPs": "マスター IP アドレス:",
           "dashboardInstalled": "インストール済み",
           "dashboardNotInstalled": "未インストール",
+          "dashboardTooltip": "Kubernetes API サーバがユーザー名とパスワードによる認証を許可するように設定されている場合、ブラウザからダッシュボードのユーザー インターフェイスにアクセスできます。",
           "totalMemory": "合計メモリ:"
         },
         "nodes": {
           "title": "ノード",
-          "searchPlaceholder": "ノードの検索",
           "nameColumn": "名前",
           "cpuCountColumn": "CPU 数",
           "totalMemoryColumn": "メモリの合計",
@@ -316,12 +317,12 @@
           "count": "ノード"
         }
       },
-      "remove": {
-        "title": "クラスタの削除",
+      "delete": {
+        "title": "{{clusterName}} の削除",
         "confirmation": "クラスタ {{clusterName}} の削除の確認。このクラスタに関連付けられた展開済みエンティティも削除されます。"
-      },
+        },
       "destroy": {
-        "title": "クラスタの破棄",
+        "title": "{{clusterName}} の破棄",
         "confirmation": "クラスタ {{clusterName}} の破棄の確認。このクラスタに関連付けられた展開済みエンティティも削除されます。この操作は元に戻すことができません。"
       }
     },
@@ -335,10 +336,25 @@
         "namespace": "名前空間:",
         "containersNumber": "コンテナ:",
         "restartPolicy": "再起動ポリシー:",
+        "restartPolicyValues": {
+            "Always": "常時",
+            "OnFailure": "失敗時",
+            "Never": "なし"
+        },
         "strategy": "戦略:",
+        "strategyValues": {
+            "Recreate": "再作成",
+            "RollingUpdate": "ローリング アップデート"
+        },
         "replicas": "レプリカ:",
         "terminationGracePeriodSeconds": "終了猶予期間 (秒):",
         "dnsPolicy": "DNS ポリシー:",
+        "dnsPolicyValues": {
+            "Default": "デフォルト",
+            "ClusterFirst": "クラスタが最初",
+            "ClusterFirstWithHostNet": "ホスト ネットワークを使用するクラスタが最初",
+            "None": "なし"
+        },
         "summaryTitle": "概要",
         "containersTitle": "コンテナ",
         "containers": {
@@ -364,7 +380,13 @@
             "containerStatuses": {
               "title": "コンテナ",
               "name": "コンテナ名",
-              "state": "ステータス"
+              "state": "ステータス",
+              "status": {
+                  "RUNNING": "実行中",
+                  "WAITING": "待機中",
+                  "TERMINATED": "終了",
+                  "UNKNOWN": "不明"
+              }
             },
             "volumes": {
               "title": "ボリューム",
@@ -372,6 +394,13 @@
               "hostPath": "ホスト上のパス"
             },
             "logsTitle": "ログ"
+        },
+        "state": {
+            "RUNNING": "実行中",
+            "PENDING": "保留中",
+            "SUCCEEDED": "成功",
+            "FAILED": "失敗",
+            "UNKNOWN": "不明"
         }
     },
     "services": {
@@ -399,7 +428,7 @@
         "fieldTitleMasterHostName": "マスター ホスト名",
         "masterHostNameFieldRequired": "マスター ホスト名は必須です",
         "fieldTitleMasterHostPort": "マスター ホスト ポート",
-        "masterHostPortFieldRequired": "マスター ホストのポートは必須です",
+        "masterHostPortFieldNotInteger": "マスター ホストのポートは 0 より大きい整数にする必要があります。",
         "fieldTitleNumberNodes": "ワーカー ノード",
         "workerFieldRequired": "ワーカー フィールドは必須です。0 よりも大きい整数のみを入力できます。",
         "fieldConnectBy": "使用する接続",
@@ -414,7 +443,7 @@
       "title": "クラスタの追加",
       "existingClusters": {
         "descriptionText": "エンドポイントを選択し、割り当てられていない既存の Kubernetes クラスタを 1 つ選択して、現在のビジネス グループに追加します。",
-        "fieldTitleEndpoint": "エンドポイント:",
+        "fieldTitleEndpoint": "PKS エンドポイント",
         "columnTitleName": "名前",
         "columnTitleHostname": "ホスト名",
         "columnTitleMasterNodesIPs": "マスター IP アドレス",
@@ -424,7 +453,6 @@
         "columnTitleLastAction": "前回のアクション",
         "columnTitleLastActionStatus": "前回のアクションのステータス",
         "columnTitleInAdmiral": "登録済み",
-        "multipleSelectedClustersWarning": "複数のクラスタを同時に追加することはできません。",
         "clusterAlreadyRegisteredWarning": "選択したクラスタを追加できません。すでに追加されています。",
         "operationInProgressWarning": "選択したクラスタを追加できません。進行中の操作があります。",
         "yes": "はい",
@@ -497,11 +525,13 @@
     "delete": "削除",
     "deleteConfirmation": {
       "title": "エンドポイントの削除",
-      "description": "選択したエンドポイントを削除するか確認してください。この操作は元に戻すことができません。"
+      "description": "選択したエンドポイントを削除するか確認してください。この操作は元に戻すことができません。",
+      "titleSingleEndpoint": "{{endpointName}} の削除",
+      "descriptionSingleEndpoint": "{{endpointName}} の削除を確認してください。この操作を元に戻すことはできません。"
     },
     "name": "名前",
-    "status": "ステータス",
-    "address": "アドレス",
+    "uaaEndpoint": "UAA エンドポイント",
+    "apiEndpoint": "API エンドポイント",
     "count": "エンドポイント",
     "details": {
       "titleCreate": "エンドポイントの作成",
@@ -517,11 +547,15 @@
       "testConnectionBtn": "接続をテスト",
       "assignmentsTabTitle": "プラン割り当て",
       "assignmentsPlansTitle": "プラン",
+      "groupSelectorTitle": "グループ",
+      "groupSearchPlaceholder": "グループ",
+      "projectSelectorTitle": "プロジェクト",
+      "projectSearchPlaceholder": "プロジェクト",
+      "planSelectorTitle": "プラン",
+      "planSearchPlaceholder": "プラン",
       "clustersTabTitle": "クラスタ",
       "connectionVerified": "エンドポイントへの接続に成功しました。",
-      "certificateNotAccepted": "証明書が承認されません。続行できません。",
-      "assignToProjects": "プロジェクトに割り当て",
-      "assignToGroups": "グループに割り当て"
+      "certificateNotAccepted": "証明書が承認されません。続行できません。"
     }
   },
   "requests": {
@@ -537,9 +571,19 @@
     "compositeComponentLink": "アプリケーションに移動",
     "containerNetworkLink": "ネットワークに移動",
     "containerVolumeLink": "ボリュームに移動",
+    "kubernetesDeploymentLink": "展開に移動",
+    "kubernetesClusterLink": "PKS クラスタに移動",
     "deleteRequest": {
       "title": "申請の削除",
       "description": "選択した申請を削除するか確認してください。この操作は元に戻すことができません。"
+    },
+    "type": {
+      "ALLOCATION_ONLY": "割り当て",
+      "PROVISIONING_ONLY": "プロビジョニング",
+      "ALLOCATION_AND_PROVISIONING": "割り当てとプロビジョニング",
+      "REMOVE": "削除",
+      "RESIZE": "サイズ変更",
+      "CLUSTERING": "クラスタリング"
     }
   },
   "eventLogs": {
@@ -591,11 +635,17 @@
   "back": "戻る",
   "refresh": "更新",
   "unknown": "不明",
+  "open": "オープン",
+  "of": "/",
+  "moreActions": "その他のアクション",
   "assignRoles": "プロジェクトのロールの割り当て",
   "makeAdmin": " 管理者ロールの割り当て",
   "unmakeAdmin": "管理者ロールの割り当て解除",
   "noItems": "アイテムがありません",
+  "noSelection": "選択されていません",
+  "credentials": "認証情報",
   "reload": "再ロード",
+  "loading": "ロードしています...",
   "notAvailable": "N/A",
   "selectAll": "すべて選択",
   "sessionExpired": "セッションが無効になりました。ログインし直してください。",
@@ -620,7 +670,7 @@
     "internalRepositories": "組み込みリポジトリ",
     "publicRepositories": "リポジトリ",
     "infrastructure": "インフラストラクチャ",
-    "clusters": "クラスタ",
+    "clusters": "コンテナ ホスト クラスタ",
     "clustersVic": "コンテナ ホスト",
     "kubernetesClusters": "PKS クラスタ",
     "hosts": "ホスト",

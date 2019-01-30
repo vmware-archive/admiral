@@ -1219,6 +1219,14 @@
         "running": "Запущено",
         "failed": "Сбой"
       },
+      "type": {
+        "ALLOCATION_ONLY": "Выделение",
+        "PROVISIONING_ONLY": "Подготовка",
+        "ALLOCATION_AND_PROVISIONING": "Выделение и подготовка",
+        "REMOVE": "Удаление",
+        "RESIZE": "Изменение размера",
+        "CLUSTERING": "Кластеризация"
+      },
       "actions": {
         "details": {
           "show": "Сведения",
@@ -1407,6 +1415,7 @@
   "advanced": "Дополнительно",
   "noSelection": "Нет выбранных элементов",
   "noItems": "Нет элементов",
+  "items": "элементы",
   "buildNumber": "Номер сборки",
   "errors": {
     "hostIp": "В качестве значения должно быть указано имя узла или IP-адрес.",

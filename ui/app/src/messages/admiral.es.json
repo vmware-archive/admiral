@@ -1219,6 +1219,14 @@
         "running": "En ejecución",
         "failed": "Fallida"
       },
+      "type": {
+        "ALLOCATION_ONLY": "Asignación",
+        "PROVISIONING_ONLY": "Aprovisionamiento",
+        "ALLOCATION_AND_PROVISIONING": "Asignación y aprovisionamiento",
+        "REMOVE": "Eliminación",
+        "RESIZE": "Cambio de tamaño",
+        "CLUSTERING": "Agrupación en clústeres"
+      },
       "actions": {
         "details": {
           "show": "Detalles",
@@ -1407,6 +1415,7 @@
   "advanced": "Avanzado",
   "noSelection": "Ninguna selección",
   "noItems": "No hay elementos",
+  "items": "elementos",
   "buildNumber": "Número de compilación",
   "errors": {
     "hostIp": "El valor debe ser el nombre de host o la dirección IP.",

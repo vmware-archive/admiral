@@ -46,25 +46,26 @@
     },
     "summary": {
       "title": "Resumo",
-      "type": "Tipo:",
-      "creationDate": "Criado:",
+      "overviewTitle": "visão geral",
+      "type": "Tipo",
+      "creationDate": "Criado",
       "team": {
         "title": "Equipe do projeto",
-        "administrators": "Administradores do projeto:",
-        "members": "Desenvolvedores:",
+        "administrators": "Administradores do Projeto",
+        "members": "Desenvolvedores",
         "viewers": "Espectadores",
         "users": "usuários"
       },
       "repositories": {
         "title": "Repositórios Internos",
-        "repositories": "Repositórios:"
+        "repositories": "Repositórios"
       },
       "resources": {
         "title": "Recursos do projeto:",
-        "clusters": "Clusters:",
-        "clustersVic": "Hosts de Contêiner:",
-        "templates": "Modelos de app:",
-        "images": "Imagens:"
+        "clusters": "Clusters",
+        "clustersVic": "Hosts de Contêiner",
+        "templates": "Modelos de Aplicativo",
+        "images": "Imagens"
       }
     },
     "members": {
@@ -192,7 +193,7 @@
       "WARNING": "AVISO",
       "PROVISIONING": "PROVISIONAMENTO",
       "RESIZING": "REDIMENSIONANDO",
-      "REMOVING": "REMOVENDO",
+      "DESTROYING": "DESTRUINDO",
       "UNREACHABLE": "INACESSÍVEL"
     },
     "search": {
@@ -217,7 +218,7 @@
       "clusterResources": "Recursos do cluster",
       "clusterResourcesVic": "Recursos do Host de Contêiner",
       "status": "Status:",
-      "creationDate": "Added:",
+      "creationDate": "Adicionado:",
       "containersCount": "Contêineres:",
       "cpu": "vCPU:",
       "memory": "Memória:"
@@ -280,7 +281,7 @@
         "nameRequired": "O nome é obrigatório.",
         "description": "Descrição",
         "url": "URL",
-        "invalidUrl": "URL must contain a valid scheme and hostname.",
+        "invalidUrl": "A URL deve conter um esquema e um nome de host válidos.",
         "credentials": "Credenciais"
       },
       "search": {
@@ -301,11 +302,11 @@
           "masterNodesIPs": "IPs Mestre:",
           "dashboardInstalled": "INSTALADO",
           "dashboardNotInstalled": "NÃO INSTALADO",
+          "dashboardTooltip": "Você pode acessar a Interface de Usuário do Dashboard via navegador se o Servidor de API do Kubernetes estiver configurado para permitir a autenticação com nome de usuário e senha.",
           "totalMemory": "Memória Total:"
         },
         "nodes": {
           "title": "Nós",
-          "searchPlaceholder": "Procurar nós",
           "nameColumn": "Nome",
           "cpuCountColumn": "Nº de CPUs",
           "totalMemoryColumn": "Memória Total",
@@ -316,12 +317,12 @@
           "count": "Nós"
         }
       },
-      "remove": {
-        "title": "Remover cluster",
-        "confirmation": "Confirme a remoção do cluster {{clusterName}}. As entidades implantadas associadas a esse cluster também serão removidas."
-      },
+      "delete": {
+        "title": "Excluir {{clusterName}}",
+        "confirmation": "Confirme a exclusão do cluster {{clusterName}}. As entidades implantadas associadas a esse cluster também serão removidas."
+        },
       "destroy": {
-        "title": "Destruir Cluster",
+        "title": "Destruir {{clusterName}}",
         "confirmation": "Confirme a destruição do cluster {{clusterName}}. As entidades implantadas associadas a esse cluster também serão destruídas. A operação não pode ser desfeita."
       }
     },
@@ -335,10 +336,25 @@
         "namespace": "Namespace:",
         "containersNumber": "Contêineres:",
         "restartPolicy": "Política de Reinício:",
+        "restartPolicyValues": {
+            "Always": "Sempre",
+            "OnFailure": "Em caso de falha",
+            "Never": "Nunca"
+        },
         "strategy": "Estratégia:",
+        "strategyValues": {
+            "Recreate": "Recriar",
+            "RollingUpdate": "Atualização Contínua"
+        },
         "replicas": "Réplicas:",
         "terminationGracePeriodSeconds": "Período de Carência de Rescisão (segundos):",
         "dnsPolicy": "Política de DNS:",
+        "dnsPolicyValues": {
+            "Default": "Padrão",
+            "ClusterFirst": "Cluster Primeiro",
+            "ClusterFirstWithHostNet": "Cluster Primeiro com a Rede do Host",
+            "None": "Nenhum"
+        },
         "summaryTitle": "Resumo",
         "containersTitle": "Contêineres",
         "containers": {
@@ -364,7 +380,13 @@
             "containerStatuses": {
               "title": "Contêineres",
               "name": "Nome do Contêiner",
-              "state": "Status"
+              "state": "Status",
+              "status": {
+                  "RUNNING": "EM EXECUÇÃO",
+                  "WAITING": "AGUARDANDO",
+                  "TERMINATED": "ENCERRADO",
+                  "UNKNOWN": "DESCONHECIDO"
+              }
             },
             "volumes": {
               "title": "Volumes",
@@ -372,6 +394,13 @@
               "hostPath": "Caminho no Host"
             },
             "logsTitle": "Logs"
+        },
+        "state": {
+            "RUNNING": "EM EXECUÇÃO",
+            "PENDING": "PENDENTE",
+            "SUCCEEDED": "BEM-SUCEDIDO",
+            "FAILED": "FALHOU",
+            "UNKNOWN": "DESCONHECIDO"
         }
     },
     "services": {
@@ -399,7 +428,7 @@
         "fieldTitleMasterHostName": "Nome do Host Mestre",
         "masterHostNameFieldRequired": "O nome do host mestre é obrigatório",
         "fieldTitleMasterHostPort": "Porta do Host Mestre",
-        "masterHostPortFieldRequired": "A porta do host mestre é obrigatória",
+        "masterHostPortFieldNotInteger": "A porta do host principal deve ser um número inteiro maior que 0.",
         "fieldTitleNumberNodes": "Nós de Trabalhador",
         "workerFieldRequired": "O campo de trabalhador é obrigatório. Apenas valores de número inteiro maiores que 0 podem ser inseridos.",
         "fieldConnectBy": "Conectar-se por",
@@ -414,7 +443,7 @@
       "title": "Adicionar Cluster",
       "existingClusters": {
         "descriptionText": "Selecione um endpoint e, em seguida, selecione um cluster Kubernetes existente e não atribuído para adicionar ao grupo de negócios atual.",
-        "fieldTitleEndpoint": "Endpoint:",
+        "fieldTitleEndpoint": "Endpoint PKS",
         "columnTitleName": "Nome",
         "columnTitleHostname": "Nome do Host",
         "columnTitleMasterNodesIPs": "IPs Mestre",
@@ -424,7 +453,6 @@
         "columnTitleLastAction": "Última Ação",
         "columnTitleLastActionStatus": "Status da Última Ação",
         "columnTitleInAdmiral": "Registrado",
-        "multipleSelectedClustersWarning": "Não é possível adicionar mais de um cluster por vez.",
         "clusterAlreadyRegisteredWarning": "Não é possível adicionar o cluster selecionado. Ele já foi adicionado.",
         "operationInProgressWarning": "Não é possível adicionar o cluster selecionado. Há uma operação em andamento.",
         "yes": "Sim",
@@ -494,14 +522,16 @@
     "title": "Endpoints",
     "searchPlaceholder": "Procurar endpoints",
     "new": "Novo Endpoint",
-    "delete": "Remover",
+    "delete": "Excluir",
     "deleteConfirmation": {
-      "title": "Remover Endpoints",
-      "description": "Confirme a remoção dos endpoints selecionados. A operação não pode ser desfeita."
+      "title": "Excluir endpoints",
+      "description": "Confirme a exclusão dos endpoints selecionados. A operação não pode ser desfeita.",
+      "titleSingleEndpoint": "Excluir {{endpointName}}",
+      "descriptionSingleEndpoint": "Confirme a exclusão de {{endpointName}}. A operação não pode ser desfeita."
     },
     "name": "Nome",
-    "status": "Status",
-    "address": "Endereço",
+    "uaaEndpoint": "Endpoint do UAA",
+    "apiEndpoint": "Endpoint da API",
     "count": "endpoints",
     "details": {
       "titleCreate": "Criar Endpoint",
@@ -517,11 +547,15 @@
       "testConnectionBtn": "Testar conexão",
       "assignmentsTabTitle": "Atribuições de Plano",
       "assignmentsPlansTitle": "Planos",
+      "groupSelectorTitle": "grupos",
+      "groupSearchPlaceholder": "grupo",
+      "projectSelectorTitle": "projetos",
+      "projectSearchPlaceholder": "projeto",
+      "planSelectorTitle": "planos",
+      "planSearchPlaceholder": "plano",
       "clustersTabTitle": "Clusters",
       "connectionVerified": "Conexão ao endpoint realizada com êxito.",
-      "certificateNotAccepted": "O certificado não é aceito. Não é possível continuar.",
-      "assignToProjects": "Atribuir a Projetos",
-      "assignToGroups": "Atribuir a Grupos"
+      "certificateNotAccepted": "O certificado não é aceito. Não é possível continuar."
     }
   },
   "requests": {
@@ -530,23 +564,33 @@
     "columnPhase": "Fase",
     "columnRequest": "Solicitação",
     "columnDetails": "Detalhes",
-    "count": "Mostrando as {{number}} solicitações mais recentes",
+    "count": "Mostrando as últimas {{number}} solicitações",
     "error": "Erro",
     "eventLogLink": "Ir para log de evento",
     "containerLink": "Ir para contêiner",
     "compositeComponentLink": "Ir para aplicativo",
     "containerNetworkLink": "Ir para rede",
     "containerVolumeLink": "Ir para volume",
+    "kubernetesDeploymentLink": "Ir para a implantação",
+    "kubernetesClusterLink": "Ir para o cluster do PKS",
     "deleteRequest": {
       "title": "Remover solicitação",
       "description": "Confirme a remoção das solicitações selecionadas. A operação não pode ser desfeita."
+    },
+    "type": {
+      "ALLOCATION_ONLY": "Alocação",
+      "PROVISIONING_ONLY": "Provisionamento",
+      "ALLOCATION_AND_PROVISIONING": "Alocação e Provisionamento",
+      "REMOVE": "Exclusão",
+      "RESIZE": "Redimensionamento",
+      "CLUSTERING": "Agrupação em Clusters"
     }
   },
   "eventLogs": {
     "title": "Logs de Evento",
     "columnDescription": "Descrição",
     "columnTimestamp": "Hora",
-    "count": "Mostrando os {{number}} logs de evento mais recentes",
+    "count": "Mostrando os últimos {{number}} logs de evento",
     "deleteEventLog": {
       "title": "Remover log de evento",
       "description": "Confirme a remoção dos logs de evento selecionados. A operação não pode ser desfeita."
@@ -591,11 +635,17 @@
   "back": "Voltar",
   "refresh": "Atualizar",
   "unknown": "Desconhecido",
+  "open": "Aberto",
+  "of": "/",
+  "moreActions": "Mais Ações",
   "assignRoles": "Atribuir Funções do Projeto",
   "makeAdmin": " Atribuir Função do Administrador",
   "unmakeAdmin": "Cancelar Atribuição da Função do Administrador",
   "noItems": "Nenhum item",
+  "noSelection": "Nenhuma seleção",
+  "credentials": "Credenciais",
   "reload": "Recarregar",
+  "loading": "Carregando...",
   "notAvailable": "N/D",
   "selectAll": "Selecionar tudo",
   "sessionExpired": "Sua sessão não é mais válida, faça login novamente!",
@@ -620,7 +670,7 @@
     "internalRepositories": "Repositórios Internos",
     "publicRepositories": "Repositórios",
     "infrastructure": "Infraestrutura",
-    "clusters": "Clusters",
+    "clusters": "Clusters de Hosts do Contêiner",
     "clustersVic": "Hosts de Contêiner",
     "kubernetesClusters": "Clusters do PKS",
     "hosts": "Hosts",

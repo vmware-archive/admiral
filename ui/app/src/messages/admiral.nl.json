@@ -293,7 +293,7 @@
           "repositories": "Opslagplaatsen"
         },
         "createTemplate": "Sjabloon",
-        "addToFavorites": "Afbeelding toevoegen aan favorieten",
+        "addToFavorites": "Image toevoegen aan favorieten",
         "removeFromFavorites": "Afbeelding verwijderen uit favorieten",
         "addedImageToFavoritesMessage": "Afbeelding toegevoegd aan favorieten"
       },
@@ -1219,6 +1219,14 @@
         "running": "Wordt uitgevoerd",
         "failed": "Mislukt"
       },
+      "type": {
+        "ALLOCATION_ONLY": "Toewijzing",
+        "PROVISIONING_ONLY": "Inrichting",
+        "ALLOCATION_AND_PROVISIONING": "Toewijzing en inrichting",
+        "REMOVE": "Verwijdering",
+        "RESIZE": "Grootte wijzigen",
+        "CLUSTERING": "Clustering"
+      },
       "actions": {
         "details": {
           "show": "Details",
@@ -1407,6 +1415,7 @@
   "advanced": "Geavanceerd",
   "noSelection": "Geen selectie",
   "noItems": "Geen items",
+  "items": "items",
   "buildNumber": "Versienummer",
   "errors": {
     "hostIp": "Waarde moet hostnaam of IP-adres zijn.",

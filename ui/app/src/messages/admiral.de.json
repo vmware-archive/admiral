@@ -1219,6 +1219,14 @@
         "running": "Wird ausgeführt",
         "failed": "Fehlgeschlagen"
       },
+      "type": {
+        "ALLOCATION_ONLY": "Zuteilung",
+        "PROVISIONING_ONLY": "Bereitstellung",
+        "ALLOCATION_AND_PROVISIONING": "Zuteilung und Bereitstellung",
+        "REMOVE": "Löschung",
+        "RESIZE": "Ändern der Größe",
+        "CLUSTERING": "Clustering"
+      },
       "actions": {
         "details": {
           "show": "Details",
@@ -1407,6 +1415,7 @@
   "advanced": "Erweitert",
   "noSelection": "Keine Auswahl",
   "noItems": "Keine Elemente",
+  "items": "Elemente",
   "buildNumber": "Build-Nummer",
   "errors": {
     "hostIp": "Wert muss ein Hostname oder eine IP-Adresse sein.",

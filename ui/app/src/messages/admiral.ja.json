@@ -1219,6 +1219,14 @@
         "running": "実行中",
         "failed": "失敗"
       },
+      "type": {
+        "ALLOCATION_ONLY": "割り当て",
+        "PROVISIONING_ONLY": "プロビジョニング",
+        "ALLOCATION_AND_PROVISIONING": "割り当てとプロビジョニング",
+        "REMOVE": "削除",
+        "RESIZE": "サイズ変更",
+        "CLUSTERING": "クラスタリング"
+      },
       "actions": {
         "details": {
           "show": "詳細",
@@ -1407,6 +1415,7 @@
   "advanced": "詳細",
   "noSelection": "選択なし",
   "noItems": "アイテムがありません",
+  "items": "アイテム",
   "buildNumber": "ビルド番号",
   "errors": {
     "hostIp": "値はホスト名または IP アドレスである必要があります。",

@@ -46,25 +46,26 @@
     },
     "summary": {
       "title": "Résumé",
-      "type": "Type :",
-      "creationDate": "Créé le :",
+      "overviewTitle": "Présentation",
+      "type": "Type",
+      "creationDate": "Créé le",
       "team": {
         "title": "Équipe de projet",
-        "administrators": "Administrateurs de projet :",
-        "members": "Développeurs :",
+        "administrators": "Administrateurs de projet",
+        "members": "Développeurs",
         "viewers": "Observateurs",
         "users": "utilisateurs"
       },
       "repositories": {
         "title": "Référentiels internes",
-        "repositories": "Référentiels :"
+        "repositories": "Référentiels"
       },
       "resources": {
         "title": "Ressources de projet",
-        "clusters": "Clusters :",
-        "clustersVic": "Hôtes de conteneur :",
-        "templates": "Modèles d'applications :",
-        "images": "Images :"
+        "clusters": "Clusters",
+        "clustersVic": "Hôtes de conteneur",
+        "templates": "Modèles d'applications",
+        "images": "Images"
       }
     },
     "members": {
@@ -133,7 +134,7 @@
           "fieldCredentials": "Informations d'identification de connexion"
         },
         "count": "registres",
-        "insecureRegistryHint": "Registre HTTP ordinaire détecté. La connexion au registre n'est pas sécurisée. Vérifiez que les hôtes sont correctement configurés et que vous pouvez vous y connecter. <a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">Plus d'informations</a>"
+        "insecureRegistryHint": "Registre HTTP ordinaire détecté. La connexion au registre n'est pas sécurisée. Vérifiez que les hôtes sont correctement configurés et que vous pouvez vous y connecter. <a target=\\'_blank\\' href=\\'https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\\'>Plus d'informations</a>"
     },
     "config": {
       "title": "Configuration",
@@ -192,7 +193,7 @@
       "WARNING": "AVERTISSEMENT",
       "PROVISIONING": "PROVISIONNEMENT",
       "RESIZING": "REDIMENSIONNEMENT",
-      "REMOVING": "SUPPRESSION",
+      "DESTROYING": "DESTRUCTION EN COURS",
       "UNREACHABLE": "INACCESSIBLE"
     },
     "search": {
@@ -217,7 +218,7 @@
       "clusterResources": "Ressources du cluster",
       "clusterResourcesVic": "Ressources de l'hôte de conteneur",
       "status": "Statut :",
-      "creationDate": "Added:",
+      "creationDate": "Ajout :",
       "containersCount": "Conteneurs :",
       "cpu": "vCPU :",
       "memory": "Mémoire :"
@@ -280,7 +281,7 @@
         "nameRequired": "Un nom est requis.",
         "description": "Description",
         "url": "URL",
-        "invalidUrl": "URL must contain a valid scheme and hostname.",
+        "invalidUrl": "L'URL doit contenir un schéma et un nom d'hôte valides.",
         "credentials": "Informations d'identification"
       },
       "search": {
@@ -301,11 +302,11 @@
           "masterNodesIPs": "Adresses IP principales :",
           "dashboardInstalled": "INSTALLÉ",
           "dashboardNotInstalled": "NON INSTALLÉ",
+          "dashboardTooltip": "Vous pouvez accéder à l'interface utilisateur du tableau de bord via un navigateur si le serveur d'API Kubernetes est configuré pour autoriser l'authentification avec le nom d'utilisateur et le mot de passe.",
           "totalMemory": "Mémoire totale :"
         },
         "nodes": {
           "title": "Nœuds",
-          "searchPlaceholder": "Rechercher des nœuds",
           "nameColumn": "Nom",
           "cpuCountColumn": "Nombre de CPU",
           "totalMemoryColumn": "Mémoire totale",
@@ -316,12 +317,12 @@
           "count": "Nœuds"
         }
       },
-      "remove": {
-        "title": "Supprimer le cluster",
+      "delete": {
+        "title": "Supprimer {{clusterName}}",
         "confirmation": "Confirmez la suppression du cluster {{clusterName}}. Les entités déployées associées à ce cluster seront également supprimées."
-      },
+        },
       "destroy": {
-        "title": "Détruire le cluster",
+        "title": "Détruire {{clusterName}}",
         "confirmation": "Confirmez la destruction du cluster {{clusterName}}. Les entités déployées associées à ce cluster seront également supprimées. Cette opération ne peut pas être annulée."
       }
     },
@@ -335,10 +336,25 @@
         "namespace": "Espace de noms :",
         "containersNumber": "Conteneurs :",
         "restartPolicy": "Stratégie de redémarrage :",
+        "restartPolicyValues": {
+            "Always": "Toujours",
+            "OnFailure": "En cas d'échec",
+            "Never": "Jamais"
+        },
         "strategy": "Stratégie :",
+        "strategyValues": {
+            "Recreate": "Recréer",
+            "RollingUpdate": "Mise à jour propagée"
+        },
         "replicas": "Réplicas :",
         "terminationGracePeriodSeconds": "Période de grâce d'arrêt (secondes) :",
         "dnsPolicy": "Stratégie DNS :",
+        "dnsPolicyValues": {
+            "Default": "Par défaut",
+            "ClusterFirst": "Cluster en premier",
+            "ClusterFirstWithHostNet": "Cluster avec réseau hôte en premier",
+            "None": "Aucun"
+        },
         "summaryTitle": "Résumé",
         "containersTitle": "Conteneurs",
         "containers": {
@@ -364,7 +380,13 @@
             "containerStatuses": {
               "title": "Conteneurs",
               "name": "Nom du conteneur",
-              "state": "Statut"
+              "state": "Statut",
+              "status": {
+                  "RUNNING": "EN COURS D'EXÉCUTION",
+                  "WAITING": "EN ATTENTE",
+                  "TERMINATED": "TERMINÉ",
+                  "UNKNOWN": "INCONNU"
+              }
             },
             "volumes": {
               "title": "Volumes",
@@ -372,6 +394,13 @@
               "hostPath": "Chemin d'accès sur l'hôte"
             },
             "logsTitle": "Journaux"
+        },
+        "state": {
+            "RUNNING": "EN COURS D'EXÉCUTION",
+            "PENDING": "EN ATTENTE",
+            "SUCCEEDED": "RÉUSSI",
+            "FAILED": "ÉCHEC",
+            "UNKNOWN": "INCONNU"
         }
     },
     "services": {
@@ -399,7 +428,7 @@
         "fieldTitleMasterHostName": "Nom d'hôte maître",
         "masterHostNameFieldRequired": "Le nom d'hôte maître est requis",
         "fieldTitleMasterHostPort": "Port de l'hôte maître",
-        "masterHostPortFieldRequired": "Le port d'hôte maître est requis",
+        "masterHostPortFieldNotInteger": "Le port de l'hôte maître doit être un nombre entier supérieur à 0.",
         "fieldTitleNumberNodes": "Nœuds de travailleur",
         "workerFieldRequired": "Le champ Travailleur est obligatoire. Vous pouvez uniquement entrer des nombres entiers supérieurs à 0.",
         "fieldConnectBy": "Se connecter par",
@@ -414,7 +443,7 @@
       "title": "Ajouter un cluster",
       "existingClusters": {
         "descriptionText": "Sélectionnez un point de terminaison, puis un cluster Kubernetes non attribué existant à ajouter au groupe d'activité actuel.",
-        "fieldTitleEndpoint": "Point de terminaison :",
+        "fieldTitleEndpoint": "Point de terminaison PKS",
         "columnTitleName": "Nom",
         "columnTitleHostname": "Nom d'hôte",
         "columnTitleMasterNodesIPs": "Adresses IP principales",
@@ -424,7 +453,6 @@
         "columnTitleLastAction": "Dernière action",
         "columnTitleLastActionStatus": "État de la dernière action",
         "columnTitleInAdmiral": "Enregistré",
-        "multipleSelectedClustersWarning": "Impossible d'ajouter plusieurs clusters à la fois.",
         "clusterAlreadyRegisteredWarning": "Impossible d'ajouter le cluster sélectionné, car il a déjà été ajouté.",
         "operationInProgressWarning": "Impossible d'ajouter le cluster sélectionné, car une opération est en cours.",
         "yes": "Oui",
@@ -496,12 +524,14 @@
     "new": "Nouveau point de terminaison",
     "delete": "Supprimer",
     "deleteConfirmation": {
-      "title": "Supprimer des points de terminaison",
-      "description": "Confirmez la suppression des points de terminaison sélectionnés. Cette opération ne peut pas être annulée."
+      "title": "Supprimer les points de terminaison",
+      "description": "Confirmez la suppression des points de terminaison sélectionnés. Cette opération ne peut pas être annulée.",
+      "titleSingleEndpoint": "Supprimer {{endpointName}}",
+      "descriptionSingleEndpoint": "Confirmez la suppression de {{endpointName}}. L'opération ne peut pas être annulée."
     },
     "name": "Nom",
-    "status": "Statut",
-    "address": "Adresse",
+    "uaaEndpoint": "Point de terminaison UAA",
+    "apiEndpoint": "Point de terminaison d'API",
     "count": "points de terminaison",
     "details": {
       "titleCreate": "Créer un point de terminaison",
@@ -517,11 +547,15 @@
       "testConnectionBtn": "Tester la connexion",
       "assignmentsTabTitle": "Attributions de plan",
       "assignmentsPlansTitle": "Plans",
+      "groupSelectorTitle": "groupes",
+      "groupSearchPlaceholder": "d'activité",
+      "projectSelectorTitle": "projets",
+      "projectSearchPlaceholder": "projet",
+      "planSelectorTitle": "plans",
+      "planSearchPlaceholder": "plan",
       "clustersTabTitle": "Clusters",
       "connectionVerified": "La connexion au point de terminaison a été établie.",
-      "certificateNotAccepted": "Impossible de continuer, car le certificat n'est pas accepté.",
-      "assignToProjects": "Attribuer à des projets",
-      "assignToGroups": "Attribuer à des groupes"
+      "certificateNotAccepted": "Impossible de continuer, car le certificat n'est pas accepté."
     }
   },
   "requests": {
@@ -537,16 +571,26 @@
     "compositeComponentLink": "Accéder à l'application",
     "containerNetworkLink": "Accéder au réseau",
     "containerVolumeLink": "Accéder au volume",
+    "kubernetesDeploymentLink": "Accéder au déploiement",
+    "kubernetesClusterLink": "Accéder au cluster PKS",
     "deleteRequest": {
       "title": "Supprimer la demande",
       "description": "Confirmez la suppression des demandes sélectionnées. Cette opération ne peut pas être annulée."
+    },
+    "type": {
+      "ALLOCATION_ONLY": "Allocation",
+      "PROVISIONING_ONLY": "Provisionnement",
+      "ALLOCATION_AND_PROVISIONING": "Allocation et provisionnement",
+      "REMOVE": "Suppression",
+      "RESIZE": "Redimensionnement",
+      "CLUSTERING": "Clustering"
     }
   },
   "eventLogs": {
     "title": "Journaux des événements",
     "columnDescription": "Description",
     "columnTimestamp": "Heure",
-    "count": "Affichage des {{number}} derniers journaux des événements",
+    "count": "Affichage des {{number}} derniers journaux d'événements",
     "deleteEventLog": {
       "title": "Supprimer le journal des événements",
       "description": "Confirmez la suppression des journaux des événements sélectionnés. Cette opération ne peut pas être annulée."
@@ -591,11 +635,17 @@
   "back": "Retour",
   "refresh": "Actualiser",
   "unknown": "Inconnu",
+  "open": "Ouverte",
+  "of": "/",
+  "moreActions": "Plus d'actions",
   "assignRoles": "Attribuer des rôles de projet",
   "makeAdmin": " Attribuer le rôle d'administrateur",
   "unmakeAdmin": "Annuler l'attribution du rôle d'administrateur",
   "noItems": "Aucun élément",
+  "noSelection": "Aucune sélection",
+  "credentials": "Informations d'identification",
   "reload": "Recharger",
+  "loading": "Chargement…",
   "notAvailable": "S/O",
   "selectAll": "Tout sélectionner",
   "sessionExpired": "Votre session n'est plus valide. Veuillez vous reconnecter.",
@@ -620,7 +670,7 @@
     "internalRepositories": "Référentiels intégrés",
     "publicRepositories": "Référentiels",
     "infrastructure": "Infrastructure",
-    "clusters": "Clusters",
+    "clusters": "Clusters d'hôtes de conteneur",
     "clustersVic": "Hôtes de conteneur",
     "kubernetesClusters": "Clusters PKS",
     "hosts": "Hôtes",

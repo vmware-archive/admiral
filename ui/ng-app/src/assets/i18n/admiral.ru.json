@@ -46,25 +46,26 @@
     },
     "summary": {
       "title": "Сводка",
-      "type": "Тип:",
-      "creationDate": "Создано:",
+      "overviewTitle": "Обзор",
+      "type": "Тип",
+      "creationDate": "Дата создания",
       "team": {
         "title": "Команда проекта",
-        "administrators": "Администраторы проекта:",
-        "members": "Разработчики:",
+        "administrators": "Администраторы проекта",
+        "members": "Разработчики",
         "viewers": "Наблюдатели:",
         "users": "пользователи"
       },
       "repositories": {
         "title": "Внутренние репозитории",
-        "repositories": "Репозитории:"
+        "repositories": "Репозитории"
       },
       "resources": {
         "title": "Ресурсы проекта",
-        "clusters": "Кластеры:",
-        "clustersVic": "Узлы контейнеров:",
-        "templates": "Шаблоны приложений:",
-        "images": "Образы:"
+        "clusters": "Кластеры",
+        "clustersVic": "Узлы контейнеров",
+        "templates": "Шаблоны приложений",
+        "images": "Образы"
       }
     },
     "members": {
@@ -192,7 +193,7 @@
       "WARNING": "ПРЕДУПРЕЖДЕНИЕ",
       "PROVISIONING": "ПОДГОТОВКА",
       "RESIZING": "ИЗМЕНЕНИЕ РАЗМЕРА",
-      "REMOVING": "УДАЛЕНИЕ",
+      "DESTROYING": "УНИЧТОЖЕНИЕ",
       "UNREACHABLE": "НЕДОСТУПЕН"
     },
     "search": {
@@ -217,7 +218,7 @@
       "clusterResources": "Ресурсы кластера",
       "clusterResourcesVic": "Ресурсы узла контейнера",
       "status": "Состояние:",
-      "creationDate": "Added:",
+      "creationDate": "Добавлено:",
       "containersCount": "Контейнеры:",
       "cpu": "Виртуальные ЦП:",
       "memory": "Память:"
@@ -280,7 +281,7 @@
         "nameRequired": "Необходимо указать имя.",
         "description": "Описание",
         "url": "URL-адрес",
-        "invalidUrl": "URL must contain a valid scheme and hostname.",
+        "invalidUrl": "URL-адрес должен содержать допустимую схему и имя узла.",
         "credentials": "Учетные данные"
       },
       "search": {
@@ -301,11 +302,11 @@
           "masterNodesIPs": "Основные IP-адреса:",
           "dashboardInstalled": "УСТАНОВЛЕНО",
           "dashboardNotInstalled": "НЕ УСТАНОВЛЕНО",
+          "dashboardTooltip": "Можно открыть интерфейс панели управления через браузер, если сервер Kubernetes API настроен для проверки подлинности с помощью имени пользователя и пароля.",
           "totalMemory": "Общий объем памяти:"
         },
         "nodes": {
           "title": "Узлы",
-          "searchPlaceholder": "Искать узлы",
           "nameColumn": "Имя",
           "cpuCountColumn": "Количество ЦП",
           "totalMemoryColumn": "Общий объем памяти",
@@ -316,12 +317,12 @@
           "count": "Узлы"
         }
       },
-      "remove": {
-        "title": "Удалить кластер",
+      "delete": {
+        "title": "Удалить {{clusterName}}",
         "confirmation": "Подтвердите удаление кластера {{clusterName}}. Развернутые объекты, связанные с этим кластером, будут также удалены."
-      },
+        },
       "destroy": {
-        "title": "Уничтожение кластера",
+        "title": "Удалить {{clusterName}}",
         "confirmation": "Подтвердите уничтожение кластера {{clusterName}}. Развернутые объекты, связанные с этим кластером, будут также уничтожены. Это действие невозможно отменить."
       }
     },
@@ -335,10 +336,25 @@
         "namespace": "Пространство имен:",
         "containersNumber": "Контейнеры:",
         "restartPolicy": "Политика перезапуска:",
+        "restartPolicyValues": {
+            "Always": "Всегда",
+            "OnFailure": "При сбое",
+            "Never": "Никогда"
+        },
         "strategy": "Стратегия:",
+        "strategyValues": {
+            "Recreate": "Снова создать",
+            "RollingUpdate": "Чередующееся обновление"
+        },
         "replicas": "Реплики:",
         "terminationGracePeriodSeconds": "Льготный период прерывания (в секундах):",
         "dnsPolicy": "Политика DNS:",
+        "dnsPolicyValues": {
+            "Default": "По умолчанию",
+            "ClusterFirst": "Сначала кластер",
+            "ClusterFirstWithHostNet": "Сначала кластер с сетью узла",
+            "None": "Нет"
+        },
         "summaryTitle": "Сводка",
         "containersTitle": "Контейнеры",
         "containers": {
@@ -364,7 +380,13 @@
             "containerStatuses": {
               "title": "Контейнеры",
               "name": "Имя контейнера",
-              "state": "Состояние"
+              "state": "Состояние",
+              "status": {
+                  "RUNNING": "ЗАПУЩЕНО",
+                  "WAITING": "ОЖИДАНИЕ",
+                  "TERMINATED": "ЗАВЕРШЕНО",
+                  "UNKNOWN": "НЕТ ДАННЫХ"
+              }
             },
             "volumes": {
               "title": "Тома",
@@ -372,6 +394,13 @@
               "hostPath": "Расположение на узле"
             },
             "logsTitle": "Журналы"
+        },
+        "state": {
+            "RUNNING": "ЗАПУЩЕНО",
+            "PENDING": "ОЖИДАНИЕ",
+            "SUCCEEDED": "ВЫПОЛНЕНО УСПЕШНО",
+            "FAILED": "СБОЙ",
+            "UNKNOWN": "НЕТ ДАННЫХ"
         }
     },
     "services": {
@@ -399,7 +428,7 @@
         "fieldTitleMasterHostName": "Имя ведущего узла",
         "masterHostNameFieldRequired": "Требуется указать имя главного узла",
         "fieldTitleMasterHostPort": "Порт ведущего узла",
-        "masterHostPortFieldRequired": "Требуется указать порт главного узла",
+        "masterHostPortFieldNotInteger": "Порт ведущего узла должен быть целым числом больше 0.",
         "fieldTitleNumberNodes": "Узлы рабочих процессов",
         "workerFieldRequired": "Поле рабочего процесса является обязательным. Можно ввести только целое число больше 0.",
         "fieldConnectBy": "Подключение по",
@@ -414,7 +443,7 @@
       "title": "Добавить кластер",
       "existingClusters": {
         "descriptionText": "Выберите конечную точку, а затем укажите один существующий, неназначенный кластер Kubernetes для добавления к текущей бизнес-группе.",
-        "fieldTitleEndpoint": "Конечная точка:",
+        "fieldTitleEndpoint": "Конечная точка PKS",
         "columnTitleName": "Имя",
         "columnTitleHostname": "Имя узла",
         "columnTitleMasterNodesIPs": "Основные IP-адреса",
@@ -424,7 +453,6 @@
         "columnTitleLastAction": "Последнее действие",
         "columnTitleLastActionStatus": "Состояние последнего действия",
         "columnTitleInAdmiral": "Зарегистрирован",
-        "multipleSelectedClustersWarning": "Не удается добавить одновременно несколько кластеров.",
         "clusterAlreadyRegisteredWarning": "Не удается добавить выбранный кластер, поскольку он уже добавлен.",
         "operationInProgressWarning": "Не удается добавить выбранный кластер, поскольку в настоящее время выполняется операция.",
         "yes": "Да",
@@ -496,12 +524,14 @@
     "new": "Новая конечная точка",
     "delete": "Удалить",
     "deleteConfirmation": {
-      "title": "Удаление конечных точек",
-      "description": "Подтвердите удаление выбранных конечных точек. Операция необратима."
+      "title": "Удалить конечные точки",
+      "description": "Подтвердите удаление выбранных конечных точек. Операция необратима.",
+      "titleSingleEndpoint": "Удалить {{endpointName}}",
+      "descriptionSingleEndpoint": "Подтвердите удаление {{endpointName}}. Операция необратима."
     },
     "name": "Имя",
-    "status": "Состояние",
-    "address": "Адрес",
+    "uaaEndpoint": "Конечная точка UAA",
+    "apiEndpoint": "Конечная точка API",
     "count": "конечн. точ.",
     "details": {
       "titleCreate": "Создание конечной точки",
@@ -517,11 +547,15 @@
       "testConnectionBtn": "Проверить подключение",
       "assignmentsTabTitle": "Назначения планов",
       "assignmentsPlansTitle": "Планы",
+      "groupSelectorTitle": "группы",
+      "groupSearchPlaceholder": "группа",
+      "projectSelectorTitle": "проекты",
+      "projectSearchPlaceholder": "проект",
+      "planSelectorTitle": "планы",
+      "planSearchPlaceholder": "план",
       "clustersTabTitle": "Кластеры",
       "connectionVerified": "Подключение к конечной точке успешно установлено.",
-      "certificateNotAccepted": "Сертификат не будет принят. Невозможно продолжить.",
-      "assignToProjects": "Назначить проектам",
-      "assignToGroups": "Назначить группам"
+      "certificateNotAccepted": "Сертификат не будет принят. Невозможно продолжить."
     }
   },
   "requests": {
@@ -537,9 +571,19 @@
     "compositeComponentLink": "Перейти к приложению",
     "containerNetworkLink": "Перейти к сети",
     "containerVolumeLink": "Перейти к тому",
+    "kubernetesDeploymentLink": "Перейти к развертыванию",
+    "kubernetesClusterLink": "Перейти к кластеру PKS",
     "deleteRequest": {
       "title": "Удалить запрос",
       "description": "Подтвердите удаление выбранных запросов. Это действие невозможно отменить."
+    },
+    "type": {
+      "ALLOCATION_ONLY": "Выделение",
+      "PROVISIONING_ONLY": "Подготовка",
+      "ALLOCATION_AND_PROVISIONING": "Выделение и подготовка",
+      "REMOVE": "Удаление",
+      "RESIZE": "Изменение размера",
+      "CLUSTERING": "Кластеризация"
     }
   },
   "eventLogs": {
@@ -581,9 +625,9 @@
   "create": "Создание",
   "add": "Добавить",
   "yes": "Да",
-  "remove": "Удалить",
+  "remove": "Убрать",
   "delete": "Удалить",
-  "destroy": "Удалить",
+  "destroy": "Уничтожить",
   "details": "Сведения",
   "verify": "Проверить",
   "update": "Обновить",
@@ -591,11 +635,17 @@
   "back": "Назад",
   "refresh": "Обновить",
   "unknown": "Нет данных",
+  "open": "Открыть",
+  "of": "/",
+  "moreActions": "Дополнительные действия",
   "assignRoles": "Назначить роли в проекте",
   "makeAdmin": " Назначить роль администратора",
   "unmakeAdmin": "Отменить назначение роли администратора",
   "noItems": "Нет элементов",
+  "noSelection": "Нет выбранных элементов",
+  "credentials": "Учетные данные",
   "reload": "Перезагрузить",
+  "loading": "Загрузка...",
   "notAvailable": "Н/д",
   "selectAll": "Выбрать все",
   "sessionExpired": "Ваш сеанс прекращен. Выполните вход повторно.",
@@ -620,7 +670,7 @@
     "internalRepositories": "Встроенные репозитории",
     "publicRepositories": "Репозитории",
     "infrastructure": "Инфраструктура",
-    "clusters": "Кластеры",
+    "clusters": "Кластеры узлов контейнера",
     "clustersVic": "Узлы контейнеров",
     "kubernetesClusters": "Кластеры PKS",
     "hosts": "Узлы",

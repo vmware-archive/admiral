@@ -1219,6 +1219,14 @@
         "running": "正在运行",
         "failed": "失败"
       },
+      "type": {
+        "ALLOCATION_ONLY": "分配",
+        "PROVISIONING_ONLY": "正在置备",
+        "ALLOCATION_AND_PROVISIONING": "分配和置备",
+        "REMOVE": "删除",
+        "RESIZE": "调整大小",
+        "CLUSTERING": "群集"
+      },
       "actions": {
         "details": {
           "show": "详细信息",
@@ -1407,6 +1415,7 @@
   "advanced": "高级",
   "noSelection": "未选择任何内容",
   "noItems": "无任何项",
+  "items": "项目",
   "buildNumber": "内部版本号",
   "errors": {
     "hostIp": "值必须是主机名或 IP 地址。",

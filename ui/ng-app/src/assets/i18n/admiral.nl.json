@@ -46,25 +46,26 @@
     },
     "summary": {
       "title": "Samenvatting",
-      "type": "Type:",
-      "creationDate": "Gemaakt:",
+      "overviewTitle": "Overzicht",
+      "type": "Type",
+      "creationDate": "Gemaakt",
       "team": {
         "title": "Projectteam",
-        "administrators": "Projectbeheerders:",
-        "members": "Ontwikkelaars:",
+        "administrators": "Projectbeheerders",
+        "members": "Ontwikkelaars",
         "viewers": "Kijkers",
         "users": "gebruikers"
       },
       "repositories": {
         "title": "Interne opslagplaatsen",
-        "repositories": "Opslagplaatsen:"
+        "repositories": "Opslagplaatsen"
       },
       "resources": {
         "title": "Projectbronnen",
-        "clusters": "Clusters:",
-        "clustersVic": "Containerhosts:",
-        "templates": "Appsjablonen:",
-        "images": "Images:"
+        "clusters": "Clusters",
+        "clustersVic": "Containerhosts",
+        "templates": "Appsjablonen",
+        "images": "Images"
       }
     },
     "members": {
@@ -192,7 +193,7 @@
       "WARNING": "WAARSCHUWING",
       "PROVISIONING": "INRICHTING",
       "RESIZING": "GROOTTE WIJZIGEN",
-      "REMOVING": "VERWIJDEREN",
+      "DESTROYING": "BEZIG MET VERNIETIGEN",
       "UNREACHABLE": "NIET BEREIKBAAR"
     },
     "search": {
@@ -217,7 +218,7 @@
       "clusterResources": "Clusterbronnen",
       "clusterResourcesVic": "Containerhostbronnen",
       "status": "Status:",
-      "creationDate": "Added:",
+      "creationDate": "Toegevoegd:",
       "containersCount": "Containers:",
       "cpu": "vCPU:",
       "memory": "Geheugen:"
@@ -280,7 +281,7 @@
         "nameRequired": "Naam is vereist.",
         "description": "Beschrijving",
         "url": "URL",
-        "invalidUrl": "URL must contain a valid scheme and hostname.",
+        "invalidUrl": "De URL moet een geldig schema en een geldige hostnaam bevatten.",
         "credentials": "Verificatiegegevens"
       },
       "search": {
@@ -301,11 +302,11 @@
           "masterNodesIPs": "Primaire IP-adressen:",
           "dashboardInstalled": "GEÏNSTALLEERD",
           "dashboardNotInstalled": "NIET GEÏNSTALLEERD",
+          "dashboardTooltip": "U hebt toegang tot de dashboard-UI via de browser als de Kubernetes API-server is ingesteld om verificatie met gebruikersnaam en wachtwoord toe te staan.",
           "totalMemory": "Totaal geheugen:"
         },
         "nodes": {
           "title": "Knooppunten",
-          "searchPlaceholder": "Zoeken naar knooppunten",
           "nameColumn": "Naam",
           "cpuCountColumn": "Aantal CPU's",
           "totalMemoryColumn": "Totaal geheugen",
@@ -316,12 +317,12 @@
           "count": "knooppunten"
         }
       },
-      "remove": {
-        "title": "Cluster verwijderen",
-        "confirmation": "Bevestig het verwijderen van het cluster {{clusterName}}. De geïmplementeerde entiteiten die zijn gekoppeld aan dit cluster, worden ook verwijderd."
-      },
+      "delete": {
+        "title": "{{clusterName}} verwijderen",
+        "confirmation": "Bevestig het verwijderen van het cluster {{clusterName}}. De geïmplementeerde entiteiten die zijn gekoppeld aan dit cluster worden ook verwijderd."
+        },
       "destroy": {
-        "title": "Cluster vernietigen",
+        "title": "{{clusterName}} vernietigen",
         "confirmation": "Bevestig het vernietigen van het cluster {{clusterName}}. De geïmplementeerde entiteiten die zijn gekoppeld aan dit cluster, worden ook vernietigd. De bewerking kan niet ongedaan worden gemaakt."
       }
     },
@@ -335,10 +336,25 @@
         "namespace": "Naamruimte:",
         "containersNumber": "Containers:",
         "restartPolicy": "Beleid voor opnieuw starten:",
+        "restartPolicyValues": {
+            "Always": "Altijd",
+            "OnFailure": "Bij fout",
+            "Never": "Nooit"
+        },
         "strategy": "Strategie:",
+        "strategyValues": {
+            "Recreate": "Opnieuw maken",
+            "RollingUpdate": "Rolling update"
+        },
         "replicas": "Replica's:",
         "terminationGracePeriodSeconds": "Respijtperiode voor beëindiging (in seconden):",
         "dnsPolicy": "DNS-beleid:",
+        "dnsPolicyValues": {
+            "Default": "Standaard",
+            "ClusterFirst": "Cluster eerst",
+            "ClusterFirstWithHostNet": "Cluster eerst met hostnetwerk",
+            "None": "Geen"
+        },
         "summaryTitle": "Samenvatting",
         "containersTitle": "Containers",
         "containers": {
@@ -364,7 +380,13 @@
             "containerStatuses": {
               "title": "Containers",
               "name": "Containernaam",
-              "state": "Status"
+              "state": "Status",
+              "status": {
+                  "RUNNING": "WORDT UITGEVOERD",
+                  "WAITING": "WACHTEN",
+                  "TERMINATED": "BEËINDIGD",
+                  "UNKNOWN": "ONBEKEND"
+              }
             },
             "volumes": {
               "title": "Volumes",
@@ -372,6 +394,13 @@
               "hostPath": "Pad op host"
             },
             "logsTitle": "Logboeken"
+        },
+        "state": {
+            "RUNNING": "WORDT UITGEVOERD",
+            "PENDING": "IN BEHANDELING",
+            "SUCCEEDED": "GESLAAGD",
+            "FAILED": "MISLUKT",
+            "UNKNOWN": "ONBEKEND"
         }
     },
     "services": {
@@ -399,7 +428,7 @@
         "fieldTitleMasterHostName": "Naam van meesterhost",
         "masterHostNameFieldRequired": "Naam van meesterhost is vereist",
         "fieldTitleMasterHostPort": "Poort van meesterhost",
-        "masterHostPortFieldRequired": "Poort van meesterhost is vereist",
+        "masterHostPortFieldNotInteger": "De hoofdhostpoort moet een geheel getal zijn dat groter is dan 0.",
         "fieldTitleNumberNodes": "Werkerknooppunten",
         "workerFieldRequired": "Het veld Werker is verplicht. Alleen gehele getallen groter dan 0 kunnen worden ingevoerd.",
         "fieldConnectBy": "Verbinding maken via",
@@ -414,7 +443,7 @@
       "title": "Cluster toevoegen",
       "existingClusters": {
         "descriptionText": "Selecteer een endpoint en selecteer vervolgens een bestaande, niet-toegewezen Kubernetes-cluster die u wilt toevoegen aan de huidige beddrijfsgroep.",
-        "fieldTitleEndpoint": "Endpoint:",
+        "fieldTitleEndpoint": "PKS-endpoint",
         "columnTitleName": "Naam",
         "columnTitleHostname": "Hostnaam",
         "columnTitleMasterNodesIPs": "Primaire IP-adressen",
@@ -424,7 +453,6 @@
         "columnTitleLastAction": "Laatste actie",
         "columnTitleLastActionStatus": "Status van laatste actie",
         "columnTitleInAdmiral": "Geregistreerd",
-        "multipleSelectedClustersWarning": "Kan niet meer dan één cluster tegelijk toevoegen.",
         "clusterAlreadyRegisteredWarning": "Kan geselecteerde cluster niet toevoegen. Deze is al toegevoegd.",
         "operationInProgressWarning": "Kan geselecteerde cluster niet toevoegen. Er wordt al een bewerking uitgevoerd.",
         "yes": "Ja",
@@ -497,11 +525,13 @@
     "delete": "Verwijderen",
     "deleteConfirmation": {
       "title": "Endpoints verwijderen",
-      "description": "Bevestig de verwijdering van de geselecteerde endpoints. De bewerking kan niet ongedaan worden gemaakt."
+      "description": "Bevestig de verwijdering van de geselecteerde endpoints. De bewerking kan niet ongedaan worden gemaakt.",
+      "titleSingleEndpoint": "{{endpointName}} verwijderen",
+      "descriptionSingleEndpoint": "Bevestig de verwijdering van {{endpointName}}. De bewerking kan niet ongedaan worden gemaakt."
     },
     "name": "Naam",
-    "status": "Status",
-    "address": "Adres",
+    "uaaEndpoint": "UAA-endpoint",
+    "apiEndpoint": "API-endpoint",
     "count": "endpoints",
     "details": {
       "titleCreate": "Endpoint maken",
@@ -517,11 +547,15 @@
       "testConnectionBtn": "Testverbinding",
       "assignmentsTabTitle": "Toewijzingen plannen",
       "assignmentsPlansTitle": "Plannen",
+      "groupSelectorTitle": "groepen",
+      "groupSearchPlaceholder": "groep",
+      "projectSelectorTitle": "projecten",
+      "projectSearchPlaceholder": "project",
+      "planSelectorTitle": "plannen",
+      "planSearchPlaceholder": "plan",
       "clustersTabTitle": "Clusters",
       "connectionVerified": "Verbinding met eindpunt is geslaagd.",
-      "certificateNotAccepted": "Het certificaat wordt niet geaccepteerd. Kan niet doorgaan.",
-      "assignToProjects": "Toewijzen aan projecten",
-      "assignToGroups": "Toewijzen aan groepen"
+      "certificateNotAccepted": "Het certificaat wordt niet geaccepteerd. Kan niet doorgaan."
     }
   },
   "requests": {
@@ -537,9 +571,19 @@
     "compositeComponentLink": "Ga naar toepassing",
     "containerNetworkLink": "Ga naar netwerk",
     "containerVolumeLink": "Ga naar volume",
+    "kubernetesDeploymentLink": "Ga naar implementatie",
+    "kubernetesClusterLink": "Ga naar PKS-cluster",
     "deleteRequest": {
       "title": "Aanvraag verwijderen",
       "description": "Bevestig de verwijdering van de geselecteerde aanvragen. De bewerking kan niet ongedaan worden gemaakt."
+    },
+    "type": {
+      "ALLOCATION_ONLY": "Toewijzing",
+      "PROVISIONING_ONLY": "Inrichting",
+      "ALLOCATION_AND_PROVISIONING": "Toewijzing en inrichting",
+      "REMOVE": "Verwijdering",
+      "RESIZE": "Grootte wijzigen",
+      "CLUSTERING": "Clustering"
     }
   },
   "eventLogs": {
@@ -591,11 +635,17 @@
   "back": "Terug",
   "refresh": "Vernieuwen",
   "unknown": "Onbekend",
+  "open": "Openen",
+  "of": "/",
+  "moreActions": "Meer acties",
   "assignRoles": "Projectrollen toewijzen",
   "makeAdmin": " Beheerdersrol toewijzen",
   "unmakeAdmin": "Toewijzing van beheerdersrol opheffen",
   "noItems": "Geen items",
+  "noSelection": "Geen selectie",
+  "credentials": "Verificatiegegevens",
   "reload": "Herladen",
+  "loading": "Laden...",
   "notAvailable": "N.v.t.",
   "selectAll": "Alles selecteren",
   "sessionExpired": "Uw sessie is niet meer geldig. U moet zich opnieuw aanmelden.",
@@ -620,7 +670,7 @@
     "internalRepositories": "Ingebouwde opslagplaatsen",
     "publicRepositories": "Opslagplaatsen",
     "infrastructure": "Infrastructuur",
-    "clusters": "Clusters",
+    "clusters": "Containerhost-clusters",
     "clustersVic": "Containerhosts",
     "kubernetesClusters": "PKS-clusters",
     "hosts": "Hosts",

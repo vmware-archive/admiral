@@ -46,25 +46,26 @@
     },
     "summary": {
       "title": "摘要",
-      "type": "类型:",
-      "creationDate": "创建时间:",
+      "overviewTitle": "概览",
+      "type": "类型",
+      "creationDate": "创建时间",
       "team": {
         "title": "项目组",
-        "administrators": "项目管理员:",
-        "members": "开发人员:",
+        "administrators": "项目管理员",
+        "members": "开发人员",
         "viewers": "查看者",
         "users": "用户"
       },
       "repositories": {
         "title": "内部存储库",
-        "repositories": "存储库:"
+        "repositories": "存储库"
       },
       "resources": {
         "title": "项目资源",
-        "clusters": "群集:",
-        "clustersVic": "容器主机:",
-        "templates": "应用程序模板:",
-        "images": "映像:"
+        "clusters": "群集",
+        "clustersVic": "容器主机",
+        "templates": "应用程序模板",
+        "images": "映像"
       }
     },
     "members": {
@@ -192,7 +193,7 @@
       "WARNING": "警告",
       "PROVISIONING": "正在置备",
       "RESIZING": "调整大小",
-      "REMOVING": "移除",
+      "DESTROYING": "正在销毁",
       "UNREACHABLE": "无法访问"
     },
     "search": {
@@ -217,7 +218,7 @@
       "clusterResources": "群集资源",
       "clusterResourcesVic": "容器主机资源",
       "status": "状态:",
-      "creationDate": "Added:",
+      "creationDate": "已添加：",
       "containersCount": "容器:",
       "cpu": "vCPU:",
       "memory": "内存:"
@@ -280,7 +281,7 @@
         "nameRequired": "“名称”是必填字段。",
         "description": "描述",
         "url": "URL",
-        "invalidUrl": "URL must contain a valid scheme and hostname.",
+        "invalidUrl": "URL 必须包含有效的方案和主机名。",
         "credentials": "凭据"
       },
       "search": {
@@ -301,11 +302,11 @@
           "masterNodesIPs": "主节点 IP:",
           "dashboardInstalled": "已安装",
           "dashboardNotInstalled": "未安装",
+          "dashboardTooltip": "如果 Kubernetes API 服务器设置为允许使用用户名和密码进行身份验证，则可以通过浏览器访问仪表板 UI。",
           "totalMemory": "总内存:"
         },
         "nodes": {
           "title": "节点",
-          "searchPlaceholder": "搜索节点",
           "nameColumn": "名称",
           "cpuCountColumn": "CPU 数",
           "totalMemoryColumn": "总内存",
@@ -316,12 +317,12 @@
           "count": "节点"
         }
       },
-      "remove": {
-        "title": "移除群集",
-        "confirmation": "确认移除群集 {{clusterName}}。与此群集关联的已部署实体也将被移除。"
-      },
+      "delete": {
+        "title": "删除 {{clusterName}}",
+        "confirmation": "确认删除群集 {{clusterName}}。与此群集关联的已部署实体也将被移除。"
+        },
       "destroy": {
-        "title": "销毁群集",
+        "title": "销毁 {{clusterName}}",
         "confirmation": "确认销毁群集 {{clusterName}}。与此群集关联的已部署实体也将被销毁。此操作不可撤消。"
       }
     },
@@ -335,10 +336,25 @@
         "namespace": "命名空间:",
         "containersNumber": "容器:",
         "restartPolicy": "重新启动策略:",
+        "restartPolicyValues": {
+            "Always": "始终",
+            "OnFailure": "出现故障",
+            "Never": "从不"
+        },
         "strategy": "策略:",
+        "strategyValues": {
+            "Recreate": "重新创建",
+            "RollingUpdate": "滚动更新"
+        },
         "replicas": "副本:",
         "terminationGracePeriodSeconds": "终止宽限期 (秒):",
         "dnsPolicy": "DNS 策略:",
+        "dnsPolicyValues": {
+            "Default": "默认",
+            "ClusterFirst": "群集优先",
+            "ClusterFirstWithHostNet": "具有主机网络的群集优先",
+            "None": "无"
+        },
         "summaryTitle": "摘要",
         "containersTitle": "容器",
         "containers": {
@@ -364,7 +380,13 @@
             "containerStatuses": {
               "title": "容器",
               "name": "容器名称",
-              "state": "状态"
+              "state": "状态",
+              "status": {
+                  "RUNNING": "正在运行",
+                  "WAITING": "正在等待",
+                  "TERMINATED": "已终止",
+                  "UNKNOWN": "未知"
+              }
             },
             "volumes": {
               "title": "卷",
@@ -372,6 +394,13 @@
               "hostPath": "主机上的路径"
             },
             "logsTitle": "日志"
+        },
+        "state": {
+            "RUNNING": "正在运行",
+            "PENDING": "挂起",
+            "SUCCEEDED": "已成功",
+            "FAILED": "失败",
+            "UNKNOWN": "未知"
         }
     },
     "services": {
@@ -399,7 +428,7 @@
         "fieldTitleMasterHostName": "主节点主机名",
         "masterHostNameFieldRequired": "“主节点主机名称”是必填字段",
         "fieldTitleMasterHostPort": "主节点主机端口",
-        "masterHostPortFieldRequired": "“主节点主机端口”是必填字段",
+        "masterHostPortFieldNotInteger": "主控主机端口必须是大于 0 的整数。",
         "fieldTitleNumberNodes": "工作线程节点",
         "workerFieldRequired": "“工作线程”字段是必填字段。只能输入大于 0 的整数值。",
         "fieldConnectBy": "连接方式",
@@ -414,7 +443,7 @@
       "title": "添加群集",
       "existingClusters": {
         "descriptionText": "选择一个端点，然后选择一个现有未分配的 Kubernetes 群集以添加到当前业务组。",
-        "fieldTitleEndpoint": "端点:",
+        "fieldTitleEndpoint": "PKS 端点",
         "columnTitleName": "名称",
         "columnTitleHostname": "主机名",
         "columnTitleMasterNodesIPs": "主节点 IP",
@@ -424,12 +453,11 @@
         "columnTitleLastAction": "上次执行操作的时间",
         "columnTitleLastActionStatus": "上次操作状态",
         "columnTitleInAdmiral": "已注册",
-        "multipleSelectedClustersWarning": "无法同时添加多个群集。",
         "clusterAlreadyRegisteredWarning": "无法添加选定群集。选定群集已添加。",
         "operationInProgressWarning": "无法添加选定群集。已有操作正在进行中。",
         "yes": "是",
         "no": "否",
-        "count": "群集数"
+        "count": "个群集"
       }
     }
   },
@@ -494,14 +522,16 @@
     "title": "端点",
     "searchPlaceholder": "搜索端点",
     "new": "新建端点",
-    "delete": "移除",
+    "delete": "删除",
     "deleteConfirmation": {
-      "title": "移除端点",
-      "description": "确认移除所选端点。此操作无法撤消。"
+      "title": "删除端点",
+      "description": "确认删除所选端点。此操作无法撤消。",
+      "titleSingleEndpoint": "删除 {{endpointName}}",
+      "descriptionSingleEndpoint": "确认删除 {{endpointName}}。此操作无法撤消。"
     },
     "name": "名称",
-    "status": "状态",
-    "address": "地址",
+    "uaaEndpoint": "UAA 端点",
+    "apiEndpoint": "API 端点",
     "count": "端点",
     "details": {
       "titleCreate": "创建端点",
@@ -517,11 +547,15 @@
       "testConnectionBtn": "测试连接",
       "assignmentsTabTitle": "计划分配",
       "assignmentsPlansTitle": "计划",
+      "groupSelectorTitle": "组",
+      "groupSearchPlaceholder": "组",
+      "projectSelectorTitle": "项目",
+      "projectSearchPlaceholder": "项目",
+      "planSelectorTitle": "计划",
+      "planSearchPlaceholder": "计划",
       "clustersTabTitle": "群集",
       "connectionVerified": "已成功连接到端点。",
-      "certificateNotAccepted": "未接受证书。无法继续。",
-      "assignToProjects": "分配给项目",
-      "assignToGroups": "分配给组"
+      "certificateNotAccepted": "未接受证书。无法继续。"
     }
   },
   "requests": {
@@ -530,23 +564,33 @@
     "columnPhase": "阶段",
     "columnRequest": "请求",
     "columnDetails": "详细信息",
-    "count": "显示最近的 {{number}} 个请求",
+    "count": "显示最近 {{number}} 个请求",
     "error": "错误",
     "eventLogLink": "转到事件日志",
     "containerLink": "转到容器",
     "compositeComponentLink": "转到应用程序",
     "containerNetworkLink": "转到网络",
     "containerVolumeLink": "转到卷",
+    "kubernetesDeploymentLink": "转到部署",
+    "kubernetesClusterLink": "转到 PKS 群集",
     "deleteRequest": {
       "title": "移除请求",
       "description": "确认移除所选请求。此操作无法撤消。"
+    },
+    "type": {
+      "ALLOCATION_ONLY": "分配",
+      "PROVISIONING_ONLY": "正在置备",
+      "ALLOCATION_AND_PROVISIONING": "分配和置备",
+      "REMOVE": "删除",
+      "RESIZE": "调整大小",
+      "CLUSTERING": "群集"
     }
   },
   "eventLogs": {
     "title": "事件日志",
     "columnDescription": "描述",
     "columnTimestamp": "时间",
-    "count": "显示最近的 {{number}} 条事件日志",
+    "count": "显示最近 {{number}} 条事件日志",
     "deleteEventLog": {
       "title": "移除事件日志",
       "description": "确认移除所选事件日志。此操作无法撤消。"
@@ -591,11 +635,17 @@
   "back": "返回",
   "refresh": "刷新",
   "unknown": "未知",
+  "open": "打开",
+  "of": "/",
+  "moreActions": "更多操作",
   "assignRoles": "分配项目角色",
   "makeAdmin": " 分配管理员角色",
   "unmakeAdmin": "取消分配管理员角色",
   "noItems": "无任何项",
+  "noSelection": "未选择任何内容",
+  "credentials": "凭据",
   "reload": "重新加载",
+  "loading": "正在加载...",
   "notAvailable": "不适用",
   "selectAll": "全选",
   "sessionExpired": "您的会话不再有效，请重新登录!",
@@ -620,7 +670,7 @@
     "internalRepositories": "内置存储库",
     "publicRepositories": "存储库",
     "infrastructure": "基础架构",
-    "clusters": "群集",
+    "clusters": "容器主机群集",
     "clustersVic": "容器主机",
     "kubernetesClusters": "PKS 群集",
     "hosts": "主机",

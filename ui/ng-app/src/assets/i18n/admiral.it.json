@@ -46,25 +46,26 @@
     },
     "summary": {
       "title": "Riepilogo",
-      "type": "Tipo:",
-      "creationDate": "Data creazione:",
+      "overviewTitle": "Panoramica",
+      "type": "Tipo",
+      "creationDate": "Data di creazione",
       "team": {
         "title": "Team di progetto",
-        "administrators": "Amministratori di progetto:",
-        "members": "Sviluppatori:",
+        "administrators": "Amministratori di progetto",
+        "members": "Sviluppatori",
         "viewers": "Visualizzatori",
         "users": "utenti"
       },
       "repositories": {
         "title": "Repository interni",
-        "repositories": "Repository:"
+        "repositories": "Repository"
       },
       "resources": {
         "title": "Risorse di progetto",
-        "clusters": "Cluster:",
-        "clustersVic": "Host contenitori:",
-        "templates": "Modelli di app:",
-        "images": "Immagini:"
+        "clusters": "Cluster",
+        "clustersVic": "Host contenitori",
+        "templates": "Modelli di app",
+        "images": "Immagini"
       }
     },
     "members": {
@@ -192,7 +193,7 @@
       "WARNING": "AVVISO",
       "PROVISIONING": "PROVISIONING",
       "RESIZING": "RIDIMENSIONAMENTO",
-      "REMOVING": "RIMOZIONE",
+      "DESTROYING": "ELIMINAZIONE",
       "UNREACHABLE": "NON RAGGIUNGIBILE"
     },
     "search": {
@@ -217,7 +218,7 @@
       "clusterResources": "Risorse cluster",
       "clusterResourcesVic": "Risorse host contenitore",
       "status": "Stato:",
-      "creationDate": "Added:",
+      "creationDate": "Aggiunta:",
       "containersCount": "Contenitori:",
       "cpu": "vCPU:",
       "memory": "Memoria:"
@@ -280,7 +281,7 @@
         "nameRequired": "Il nome è obbligatorio.",
         "description": "Descrizione",
         "url": "URL",
-        "invalidUrl": "URL must contain a valid scheme and hostname.",
+        "invalidUrl": "L'URL deve contenere uno schema e un nome host validi.",
         "credentials": "Credenziali"
       },
       "search": {
@@ -301,11 +302,11 @@
           "masterNodesIPs": "Indirizzi IP master:",
           "dashboardInstalled": "INSTALLATO",
           "dashboardNotInstalled": "NON INSTALLATO",
+          "dashboardTooltip": "È possibile accedere all'interfaccia utente del dashboard tramite browser se il server dell'API di Kubernetes è configurato per consentire l'autenticazione con nome utente e password.",
           "totalMemory": "Memoria totale:"
         },
         "nodes": {
           "title": "Nodi",
-          "searchPlaceholder": "Cerca nodi",
           "nameColumn": "Nome",
           "cpuCountColumn": "N. CPU",
           "totalMemoryColumn": "Memoria totale",
@@ -316,12 +317,12 @@
           "count": "Nodi"
         }
       },
-      "remove": {
-        "title": "Rimuovi cluster",
-        "confirmation": "Confermare la rimozione del cluster {{clusterName}}. Anche le entità distribuite associate al cluster verranno rimosse."
-      },
+      "delete": {
+        "title": "Elimina {{clusterName}}",
+        "confirmation": "Confermare l'eliminazione del cluster {{clusterName}}. Anche le entità distribuite associate al cluster verranno rimosse."
+        },
       "destroy": {
-        "title": "Elimina cluster",
+        "title": "Elimina {{clusterName}}",
         "confirmation": "Confermare la rimozione del cluster {{clusterName}}. Anche le entità distribuite associate al cluster verranno rimosse. L'operazione non potrà essere annullata."
       }
     },
@@ -335,10 +336,25 @@
         "namespace": "Spazio dei nomi:",
         "containersNumber": "Contenitori:",
         "restartPolicy": "Criterio di riavvio:",
+        "restartPolicyValues": {
+            "Always": "Sempre",
+            "OnFailure": "In caso di errore",
+            "Never": "Mai"
+        },
         "strategy": "Strategia:",
+        "strategyValues": {
+            "Recreate": "Ricrea",
+            "RollingUpdate": "Aggiornamento in sequenza"
+        },
         "replicas": "Repliche:",
         "terminationGracePeriodSeconds": "Periodo di proroga termine (in secondi):",
         "dnsPolicy": "Criterio DNS:",
+        "dnsPolicyValues": {
+            "Default": "Predefinito",
+            "ClusterFirst": "Prima il cluster",
+            "ClusterFirstWithHostNet": "Prima il cluster con rete host",
+            "None": "Nessuno"
+        },
         "summaryTitle": "Riepilogo",
         "containersTitle": "Contenitori",
         "containers": {
@@ -364,7 +380,13 @@
             "containerStatuses": {
               "title": "Contenitori",
               "name": "Nome del contenitore",
-              "state": "Stato"
+              "state": "Stato",
+              "status": {
+                  "RUNNING": "IN ESECUZIONE",
+                  "WAITING": "IN ATTESA",
+                  "TERMINATED": "TERMINATO",
+                  "UNKNOWN": "SCONOSCIUTO"
+              }
             },
             "volumes": {
               "title": "Volumi",
@@ -372,6 +394,13 @@
               "hostPath": "Percorso host"
             },
             "logsTitle": "Registri"
+        },
+        "state": {
+            "RUNNING": "IN ESECUZIONE",
+            "PENDING": "IN SOSPESO",
+            "SUCCEEDED": "COMPLETATO",
+            "FAILED": "NON RIUSCITO",
+            "UNKNOWN": "SCONOSCIUTO"
         }
     },
     "services": {
@@ -399,7 +428,7 @@
         "fieldTitleMasterHostName": "Nome host master",
         "masterHostNameFieldRequired": "Il nome host master è obbligatorio",
         "fieldTitleMasterHostPort": "Porta host master",
-        "masterHostPortFieldRequired": "La porta host master è obbligatoria",
+        "masterHostPortFieldNotInteger": "La porta dell'host master deve essere un numero intero maggiore di 0.",
         "fieldTitleNumberNodes": "Nodi worker",
         "workerFieldRequired": "Il campo Worker è obbligatorio. È possibile immettere solo valori interi maggiori di 0.",
         "fieldConnectBy": "Connetti con",
@@ -414,7 +443,7 @@
       "title": "Aggiungi cluster",
       "existingClusters": {
         "descriptionText": "Selezionare un endpoint, quindi selezionare un cluster Kubernetes non assegnato esistente da aggiungere al gruppo di business corrente.",
-        "fieldTitleEndpoint": "Endpoint:",
+        "fieldTitleEndpoint": "Endpoint PKS",
         "columnTitleName": "Nome",
         "columnTitleHostname": "Nome host",
         "columnTitleMasterNodesIPs": "Indirizzi IP master",
@@ -424,7 +453,6 @@
         "columnTitleLastAction": "Ultima azione",
         "columnTitleLastActionStatus": "Stato ultima azione",
         "columnTitleInAdmiral": "Registrato",
-        "multipleSelectedClustersWarning": "Impossibile aggiungere più di un cluster alla volta.",
         "clusterAlreadyRegisteredWarning": "Impossibile aggiungere il cluster selezionato. È già stato aggiunto.",
         "operationInProgressWarning": "Impossibile aggiungere il cluster selezionato. È in corso un'operazione.",
         "yes": "Sì",
@@ -494,14 +522,16 @@
     "title": "Endpoint",
     "searchPlaceholder": "Cerca endpoint",
     "new": "Nuovo endpoint",
-    "delete": "Rimuovi",
+    "delete": "Elimina",
     "deleteConfirmation": {
-      "title": "Rimuovi endpoint",
-      "description": "Confermare la rimozione degli endpoint selezionati. L'operazione non può essere annullata."
+      "title": "Elimina endpoint",
+      "description": "Confermare l'eliminazione degli endpoint selezionati. L'operazione non può essere annullata.",
+      "titleSingleEndpoint": "Elimina {{endpointName}}",
+      "descriptionSingleEndpoint": "Confermare l'eliminazione di {{endpointName}}. L'operazione non può essere annullata."
     },
     "name": "Nome",
-    "status": "Stato",
-    "address": "Indirizzo",
+    "uaaEndpoint": "Endpoint UAA",
+    "apiEndpoint": "Endpoint API",
     "count": "endpoint",
     "details": {
       "titleCreate": "Crea endpoint",
@@ -517,11 +547,15 @@
       "testConnectionBtn": "Prova connessione",
       "assignmentsTabTitle": "Assegnazioni piano",
       "assignmentsPlansTitle": "Piani",
+      "groupSelectorTitle": "gruppi",
+      "groupSearchPlaceholder": "gruppo",
+      "projectSelectorTitle": "progetti",
+      "projectSearchPlaceholder": "progetto",
+      "planSelectorTitle": "piani",
+      "planSearchPlaceholder": "piano",
       "clustersTabTitle": "Cluster",
       "connectionVerified": "Connessione a endpoint riuscita.",
-      "certificateNotAccepted": "Il certificato non è stato accettato. Impossibile continuare.",
-      "assignToProjects": "Assegna a progetti",
-      "assignToGroups": "Assegna a gruppi"
+      "certificateNotAccepted": "Il certificato non è stato accettato. Impossibile continuare."
     }
   },
   "requests": {
@@ -537,9 +571,19 @@
     "compositeComponentLink": "Vai all'applicazione",
     "containerNetworkLink": "Vai alla rete",
     "containerVolumeLink": "Vai al volume",
+    "kubernetesDeploymentLink": "Vai alla distribuzione",
+    "kubernetesClusterLink": "Vai al cluster PKS",
     "deleteRequest": {
       "title": "Rimuovi richiesta",
       "description": "Confermare la rimozione delle richieste selezionate. L'operazione non può essere annullata."
+    },
+    "type": {
+      "ALLOCATION_ONLY": "Allocazione",
+      "PROVISIONING_ONLY": "Provisioning",
+      "ALLOCATION_AND_PROVISIONING": "Allocazione e provisioning",
+      "REMOVE": "Eliminazione",
+      "RESIZE": "Ridimensionamento",
+      "CLUSTERING": "Clustering"
     }
   },
   "eventLogs": {
@@ -591,11 +635,17 @@
   "back": "Indietro",
   "refresh": "Aggiorna",
   "unknown": "Sconosciuto",
+  "open": "Apri",
+  "of": "di",
+  "moreActions": "Altre azioni",
   "assignRoles": "Assegna ruoli progetto",
   "makeAdmin": " Assegna ruolo amministratore",
   "unmakeAdmin": "Annulla assegnazione ruolo amministratore",
   "noItems": "Nessun elemento",
+  "noSelection": "Nessuna selezione",
+  "credentials": "Credenziali",
   "reload": "Ricarica",
+  "loading": "Caricamento in corso...",
   "notAvailable": "N/A",
   "selectAll": "Seleziona tutto",
   "sessionExpired": "La sessione non è più valida. Accedere nuovamente.",
@@ -620,7 +670,7 @@
     "internalRepositories": "Repository integrati",
     "publicRepositories": "Repository",
     "infrastructure": "Infrastruttura",
-    "clusters": "Cluster",
+    "clusters": "Cluster host contenitore",
     "clustersVic": "Host contenitori",
     "kubernetesClusters": "Cluster PKS",
     "hosts": "Host",

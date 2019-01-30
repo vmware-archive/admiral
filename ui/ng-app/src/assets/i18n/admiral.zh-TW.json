@@ -46,25 +46,26 @@
     },
     "summary": {
       "title": "摘要",
-      "type": "類型:",
-      "creationDate": "建立時間:",
+      "overviewTitle": "概觀",
+      "type": "類型",
+      "creationDate": "已建立",
       "team": {
         "title": "專案團隊",
-        "administrators": "專案管理員:",
-        "members": "開發人員:",
+        "administrators": "專案管理員",
+        "members": "開發人員",
         "viewers": "檢視者",
         "users": "使用者"
       },
       "repositories": {
         "title": "內部存放庫",
-        "repositories": "存放庫:"
+        "repositories": "存放庫"
       },
       "resources": {
         "title": "專案資源",
-        "clusters": "叢集:",
-        "clustersVic": "容器主機:",
-        "templates": "應用程式範本:",
-        "images": "映像:"
+        "clusters": "叢集",
+        "clustersVic": "容器主機",
+        "templates": "應用程式範本",
+        "images": "映像"
       }
     },
     "members": {
@@ -192,7 +193,7 @@
       "WARNING": "警告",
       "PROVISIONING": "佈建中",
       "RESIZING": "調整大小",
-      "REMOVING": "移除",
+      "DESTROYING": "銷毀中",
       "UNREACHABLE": "無法連線"
     },
     "search": {
@@ -217,7 +218,7 @@
       "clusterResources": "叢集資源",
       "clusterResourcesVic": "容器主機資源",
       "status": "狀態:",
-      "creationDate": "Added:",
+      "creationDate": "已新增:",
       "containersCount": "容器:",
       "cpu": "vCPU:",
       "memory": "記憶體:"
@@ -280,7 +281,7 @@
         "nameRequired": "名稱為必填。",
         "description": "說明",
         "url": "URL",
-        "invalidUrl": "URL must contain a valid scheme and hostname.",
+        "invalidUrl": "URL 必須包含有效的配置和主機名稱。",
         "credentials": "認證"
       },
       "search": {
@@ -301,11 +302,11 @@
           "masterNodesIPs": "主要 IP:",
           "dashboardInstalled": "已安裝",
           "dashboardNotInstalled": "未安裝",
+          "dashboardTooltip": "如果 Kubernetes API 伺服器設定為允許透過使用者名稱和密碼進行驗證，則可以透過瀏覽器存取儀表板使用者介面。",
           "totalMemory": "記憶體總計:"
         },
         "nodes": {
           "title": "節點",
-          "searchPlaceholder": "搜尋節點",
           "nameColumn": "名稱",
           "cpuCountColumn": "CPU 數目",
           "totalMemoryColumn": "記憶體總計",
@@ -316,12 +317,12 @@
           "count": "節點"
         }
       },
-      "remove": {
-        "title": "移除叢集",
-        "confirmation": "確認移除叢集 {{clusterName}}。與此叢集相關聯的已部署實體也將移除。"
-      },
+      "delete": {
+        "title": "刪除 {{clusterName}}",
+        "confirmation": "確認刪除叢集 {{clusterName}}。與此叢集相關聯的已部署實體也將移除。"
+        },
       "destroy": {
-        "title": "銷毀叢集",
+        "title": "銷毀 {{clusterName}}",
         "confirmation": "確認銷毀叢集 {{clusterName}}。與此叢集相關聯的已部署實體也將銷毀。此作業無法復原。"
       }
     },
@@ -335,10 +336,25 @@
         "namespace": "命名空間:",
         "containersNumber": "容器:",
         "restartPolicy": "重新啟動原則:",
+        "restartPolicyValues": {
+            "Always": "一律",
+            "OnFailure": "發生故障時",
+            "Never": "永不"
+        },
         "strategy": "策略:",
+        "strategyValues": {
+            "Recreate": "重新建立",
+            "RollingUpdate": "滾動更新"
+        },
         "replicas": "複本:",
         "terminationGracePeriodSeconds": "終止寬限期 (秒):",
         "dnsPolicy": "DNS 原則:",
+        "dnsPolicyValues": {
+            "Default": "預設值",
+            "ClusterFirst": "叢集優先",
+            "ClusterFirstWithHostNet": "具有主機網路的叢集優先",
+            "None": "無"
+        },
         "summaryTitle": "摘要",
         "containersTitle": "容器",
         "containers": {
@@ -364,7 +380,13 @@
             "containerStatuses": {
               "title": "容器",
               "name": "容器名稱",
-              "state": "狀態"
+              "state": "狀態",
+              "status": {
+                  "RUNNING": "執行中",
+                  "WAITING": "等待中",
+                  "TERMINATED": "已終止",
+                  "UNKNOWN": "不明"
+              }
             },
             "volumes": {
               "title": "磁碟區",
@@ -372,6 +394,13 @@
               "hostPath": "主機上的路徑"
             },
             "logsTitle": "記錄"
+        },
+        "state": {
+            "RUNNING": "執行中",
+            "PENDING": "擱置中",
+            "SUCCEEDED": "已成功",
+            "FAILED": "失敗",
+            "UNKNOWN": "不明"
         }
     },
     "services": {
@@ -399,7 +428,7 @@
         "fieldTitleMasterHostName": "主控主機名稱",
         "masterHostNameFieldRequired": "主控主機名稱為必填",
         "fieldTitleMasterHostPort": "主控主機連接埠",
-        "masterHostPortFieldRequired": "主控主機連接埠為必填",
+        "masterHostPortFieldNotInteger": "主控主機連接埠必須是大於 0 的整數。",
         "fieldTitleNumberNodes": "Worker 節點",
         "workerFieldRequired": "Worker 欄位為必填。僅可以輸入大於 0 的整數值。",
         "fieldConnectBy": "連線方式",
@@ -414,7 +443,7 @@
       "title": "新增叢集",
       "existingClusters": {
         "descriptionText": "選取端點，然後選取一個現有取消指派的 Kubernetes 叢集，以新增至目前的業務群組。",
-        "fieldTitleEndpoint": "端點:",
+        "fieldTitleEndpoint": "PKS 端點",
         "columnTitleName": "名稱",
         "columnTitleHostname": "主機名稱",
         "columnTitleMasterNodesIPs": "主要 IP",
@@ -424,7 +453,6 @@
         "columnTitleLastAction": "上次動作",
         "columnTitleLastActionStatus": "上次動作狀態",
         "columnTitleInAdmiral": "已登錄",
-        "multipleSelectedClustersWarning": "無法一次新增多個叢集。",
         "clusterAlreadyRegisteredWarning": "無法新增選取的叢集。已將其新增。",
         "operationInProgressWarning": "無法新增選取的叢集。有作業正在進行中。",
         "yes": "是",
@@ -494,14 +522,16 @@
     "title": "端點",
     "searchPlaceholder": "搜尋端點",
     "new": "新增端點",
-    "delete": "移除",
+    "delete": "刪除",
     "deleteConfirmation": {
-      "title": "移除端點",
-      "description": "確認移除所選端點。此作業無法復原。"
+      "title": "刪除端點",
+      "description": "確認刪除所選端點。此作業無法復原。",
+      "titleSingleEndpoint": "刪除 {{endpointName}}",
+      "descriptionSingleEndpoint": "確認刪除 {{endpointName}}。此作業無法復原。"
     },
     "name": "名稱",
-    "status": "狀態",
-    "address": "位址",
+    "uaaEndpoint": "UAA 端點",
+    "apiEndpoint": "API 端點",
     "count": "端點",
     "details": {
       "titleCreate": "建立端點",
@@ -517,11 +547,15 @@
       "testConnectionBtn": "測試連線",
       "assignmentsTabTitle": "計劃指派",
       "assignmentsPlansTitle": "計劃",
+      "groupSelectorTitle": "群組",
+      "groupSearchPlaceholder": "群組",
+      "projectSelectorTitle": "專案",
+      "projectSearchPlaceholder": "專案",
+      "planSelectorTitle": "計劃",
+      "planSearchPlaceholder": "計劃",
       "clustersTabTitle": "叢集",
       "connectionVerified": "已成功連線到端點。",
-      "certificateNotAccepted": "不接受憑證。無法繼續。",
-      "assignToProjects": "指派給專案",
-      "assignToGroups": "指派給群組"
+      "certificateNotAccepted": "不接受憑證。無法繼續。"
     }
   },
   "requests": {
@@ -537,9 +571,19 @@
     "compositeComponentLink": "移至應用程式",
     "containerNetworkLink": "移至網路",
     "containerVolumeLink": "移至磁碟區",
+    "kubernetesDeploymentLink": "移至部署",
+    "kubernetesClusterLink": "移至 PKS 叢集",
     "deleteRequest": {
       "title": "移除要求",
       "description": "確認移除所選要求。此作業無法復原。"
+    },
+    "type": {
+      "ALLOCATION_ONLY": "配置",
+      "PROVISIONING_ONLY": "佈建",
+      "ALLOCATION_AND_PROVISIONING": "配置和佈建",
+      "REMOVE": "刪除",
+      "RESIZE": "調整大小",
+      "CLUSTERING": "叢集化"
     }
   },
   "eventLogs": {
@@ -591,11 +635,17 @@
   "back": "上一步",
   "refresh": "重新整理",
   "unknown": "不明",
+  "open": "開啟",
+  "of": "/",
+  "moreActions": "更多動作",
   "assignRoles": "指派專案角色",
   "makeAdmin": " 指派管理員角色",
   "unmakeAdmin": "取消指派管理員角色",
   "noItems": "沒有項目",
+  "noSelection": "未選取",
+  "credentials": "認證",
   "reload": "重新載入",
+  "loading": "正在載入...",
   "notAvailable": "N/A",
   "selectAll": "全選",
   "sessionExpired": "您的工作階段不再有效，請重新登入!",
@@ -620,7 +670,7 @@
     "internalRepositories": "內建存放庫",
     "publicRepositories": "存放庫",
     "infrastructure": "基礎結構",
-    "clusters": "叢集",
+    "clusters": "容器主機叢集",
     "clustersVic": "容器主機",
     "kubernetesClusters": "PKS 叢集",
     "hosts": "主機",

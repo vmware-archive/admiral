@@ -1219,6 +1219,14 @@
         "running": "실행 중",
         "failed": "실패"
       },
+      "type": {
+        "ALLOCATION_ONLY": "할당",
+        "PROVISIONING_ONLY": "프로비저닝",
+        "ALLOCATION_AND_PROVISIONING": "할당 및 프로비저닝",
+        "REMOVE": "삭제",
+        "RESIZE": "크기 조정",
+        "CLUSTERING": "클러스터링"
+      },
       "actions": {
         "details": {
           "show": "세부 정보",
@@ -1407,6 +1415,7 @@
   "advanced": "고급",
   "noSelection": "선택 항목 없음",
   "noItems": "항목 없음",
+  "items": "개 항목",
   "buildNumber": "빌드 번호",
   "errors": {
     "hostIp": "값은 호스트 이름 또는 IP 주소여야 합니다.",
