@@ -40,6 +40,7 @@ export class ClusterCreateComponent implements OnInit {
 
     alertType: string;
     alertMessage: string;
+    projectLink: string;
 
     private isSingleHostCluster: boolean = false;
 
@@ -70,6 +71,10 @@ export class ClusterCreateComponent implements OnInit {
 
     ngOnInit() {
         this.populateCredentials();
+
+        this.route.queryParams.subscribe((params: any) => {
+            this.projectLink = params.projectLink;
+        })
     }
 
     populateCredentials() {
@@ -133,7 +138,7 @@ export class ClusterCreateComponent implements OnInit {
                 'acceptCertificate': certificateAccepted
             };
 
-            this.documentService.post(Links.CLUSTERS, hostSpec).then((response) => {
+            this.documentService.post(Links.CLUSTERS, hostSpec, this.projectLink).then((response) => {
 
                 if (response.certificate) {
                     // certificate to be accepted by the user

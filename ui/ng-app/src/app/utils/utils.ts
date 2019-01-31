@@ -447,9 +447,10 @@ export class Utils {
     public static getPathUp(url, tabId) {
         const PATH_UP = '../../';
         const PROJECTS_VIEW_URL_PART = 'projects';
+        const ADMINISTRATION_TAB_URL_PART = 'administration';
 
         let path: any[] = [PATH_UP];
-        if (url.indexOf(PROJECTS_VIEW_URL_PART) > -1) {
+        if (url.indexOf(ADMINISTRATION_TAB_URL_PART) > -1 && url.indexOf(PROJECTS_VIEW_URL_PART) > -1) {
             if (url.indexOf(tabId) < 0) {
                 // Preselect tab in project details view
                 path = [PATH_UP + tabId];

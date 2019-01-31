@@ -25,6 +25,7 @@
         <button class="btn btn-sm btn-secondary addCluster-btn"
                 allowNavigation [roles]="clustersNewRouteRestrictions"
                 [routerLink]="['./'+ tabId + '/cluster/new']"
+                [queryParams]="{'projectLink': projectLink}"
         ><clr-icon shape="plus"></clr-icon> {{createButtonText | uppercase}}</button>
     </div>
 
