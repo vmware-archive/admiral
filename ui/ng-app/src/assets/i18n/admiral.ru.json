@@ -343,8 +343,8 @@
         },
         "strategy": "Стратегия:",
         "strategyValues": {
-            "Recreate": "Снова создать",
-            "RollingUpdate": "Чередующееся обновление"
+            "Recreate": "Создать повторно",
+            "RollingUpdate": "Скользящее обновление"
         },
         "replicas": "Реплики:",
         "terminationGracePeriodSeconds": "Льготный период прерывания (в секундах):",

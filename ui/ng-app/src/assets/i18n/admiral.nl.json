@@ -442,7 +442,7 @@
     "add": {
       "title": "Cluster toevoegen",
       "existingClusters": {
-        "descriptionText": "Selecteer een endpoint en selecteer vervolgens een bestaande, niet-toegewezen Kubernetes-cluster die u wilt toevoegen aan de huidige beddrijfsgroep.",
+        "descriptionText": "Selecteer een endpoint en selecteer vervolgens een bestaande, niet-toegewezen Kubernetes-cluster die u wilt toevoegen aan de huidige bedrijfsgroep.",
         "fieldTitleEndpoint": "PKS-endpoint",
         "columnTitleName": "Naam",
         "columnTitleHostname": "Hostnaam",
@@ -699,7 +699,7 @@
       "title": "Endpoints"
     },
     "compute": {
-      "title": "Computingbron"
+      "title": "Berekenen"
     },
     "profiles": {
       "title": "Profielen"

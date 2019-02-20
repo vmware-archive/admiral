@@ -134,7 +134,7 @@
           "fieldCredentials": "Informations d'identification de connexion"
         },
         "count": "registres",
-        "insecureRegistryHint": "Registre HTTP ordinaire détecté. La connexion au registre n'est pas sécurisée. Vérifiez que les hôtes sont correctement configurés et que vous pouvez vous y connecter. <a target=\\'_blank\\' href=\\'https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\\'>Plus d'informations</a>"
+        "insecureRegistryHint": "Registre HTTP ordinaire détecté. La connexion au registre n'est pas sécurisée. Vérifiez que les hôtes sont correctement configurés et que vous pouvez vous y connecter. <a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">Plus d'informations</a>"
     },
     "config": {
       "title": "Configuration",

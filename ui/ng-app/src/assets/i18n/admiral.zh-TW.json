@@ -165,7 +165,7 @@
       "makePublic": "設為公用",
       "makePrivate": "設為私人",
       "addUsersAndGroups": "新增使用者和群組",
-      "addClusters": "新增叢集",
+      "addClusters": "增加叢集",
       "addClustersVic": "新增容器主機"
     }
   },
@@ -272,7 +272,7 @@
   "kubernetes": {
     "clusters": {
       "title": "PKS 叢集",
-      "addBtn": "新增叢集",
+      "addBtn": "增加叢集",
       "newBtn": "新增叢集",
       "nodeCount": "節點",
       "dashboard": "儀表板",
@@ -440,7 +440,7 @@
       "title": "編輯叢集"
     },
     "add": {
-      "title": "新增叢集",
+      "title": "增加叢集",
       "existingClusters": {
         "descriptionText": "選取端點，然後選取一個現有取消指派的 Kubernetes 叢集，以新增至目前的業務群組。",
         "fieldTitleEndpoint": "PKS 端點",

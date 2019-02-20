@@ -1184,7 +1184,7 @@
         }
       },
       "state": {
-        "RUNNING": "実行時間",
+        "RUNNING": "実行中",
         "STOPPED": "停止",
         "REBOOTING": "再起動中",
         "PAUSED": "一時停止中",

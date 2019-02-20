@@ -38,7 +38,7 @@
       "placementZones": "Plaatsingszones",
       "profiles": "Profielen",
       "endpoints": "Endpoints",
-      "compute": "Computingbron",
+      "compute": "Berekenen",
       "kubernetesResources": "K8S-bronnen",
       "kubernetesDeployments": "Implementaties",
       "kubernetesPods": "Pods",
@@ -460,7 +460,7 @@
         "instancesLabel": "Instanties",
         "instancesPlaceholder": "Aantal instanties",
         "instancesHint": "Positief geheel getal om het maximum aantal instanties te beperken. Laat leeg of voer 0 in voor onbeperkt aantal.",
-        "cpuSharesLabel": "CPU-gedeelten",
+        "cpuSharesLabel": "CPU-shares",
         "memoryLimitLabel": "Geheugenlimiet",
         "storageLimitLabel": "Opslaglimiet"
       }
@@ -518,7 +518,7 @@
         "editTitle": "Profiel bewerken",
         "save": "Opslaan",
         "basicTab": "Basis",
-        "computeTab": "Computingbron",
+        "computeTab": "Berekenen",
         "networkTab": "Netwerk",
         "storageTab": "Opslag",
         "nameLabel": "Naam",
@@ -583,33 +583,33 @@
           "vsphere": {
             "storagePolicyLabel": "Opslagbeleid",
             "provisioningTypeLabel": "Inrichtingstype",
-            "datastoreLabel": "Datastore",
-            "sharesLevelLabel": "Niveau van gedeelten",
-            "sharesLabel": "Gedeelten",
+            "datastoreLabel": "Gegevensopslag",
+            "sharesLevelLabel": "Niveau van shares",
+            "sharesLabel": "Shares",
             "limitLabel": "IOPS beperken",
-            "datastoreContextPanelTooltip": "Datastores",
+            "datastoreContextPanelTooltip": "Gegevensopslagruimten",
             "storagePolicyContextPanelTooltip": "Opslagbeleid",
-            "datastoreEntityLabel": "Datastores",
+            "datastoreEntityLabel": "Gegevensopslagruimten",
             "storagePolicyEntityLabel": "Opslagbeleid",
             "snapshotsLabel": "Momentopnamen",
             "independentOfSnapshotsLabel": "Onafhankelijk van momentopnamen",
             "persistentLabel": "Persistent",
             "nonPersistentLabel": "Niet-persistent",
             "provisioningSelectDefault": "Inrichtingstype selecteren",
-            "sharesLevelDefault": "Niveau van gedeelten selecteren",
+            "sharesLevelDefault": "Niveau van shares selecteren",
             "datastore": {
               "typeLabel": "Type",
               "capacityLabel": "Capaciteit",
               "capacityUnit": "GB",
               "list": {
-                "title": "Datastores",
+                "title": "Gegevensopslagruimten",
                 "nameColumn": "Naam",
                 "typeColumn": "Type",
                 "capacityColumn": "Capaciteit (GB)",
                 "encryptionColumn": "Ondersteunt versleuteling",
                 "edit": {
-                  "title": "Datastore bewerken",
-                  "nameLabel": "Datastore",
+                  "title": "Gegevensopslag bewerken",
+                  "nameLabel": "Gegevensopslag",
                   "typeLabel": "Type",
                   "encryptionLabel": "Ondersteunt versleuteling",
                   "capacityLabel": "Capaciteit (GB)"
@@ -794,9 +794,9 @@
     "compute": {
       "entity": "bestemming",
       "list": {
-        "title": "Computingbron",
-        "titleSearch": "Computingbron gevonden",
-        "searchPlaceholder": "Zoeken naar computingbron"
+        "title": "Berekenen",
+        "titleSearch": "Berekening gevonden",
+        "searchPlaceholder": "Zoeken naar berekening"
       },
       "details": {
         "type": "Type",
@@ -809,7 +809,7 @@
         "resourcepool": "Bronpool"
       },
       "edit": {
-        "title": "Computingbron bewerken",
+        "title": "Berekening bewerken",
         "nameLabel": "Naam"
       },
       "actions": {
@@ -1007,7 +1007,7 @@
           "restartCount": "Aantal keer opnieuw gestart",
           "memory": "Geheugen",
           "memorySwap": "Wisselgeheugen",
-          "cpuShares": "CPU-gedeelten",
+          "cpuShares": "CPU-shares",
           "cpusetCpus": "Cpu setCpus"
         },
         "operation": {
@@ -1117,8 +1117,8 @@
           },
           "maxRestarts": "Max. aantal keer opnieuw starten",
           "maxRestartsDescription": "Het maximum aantal keer dat opnieuw wordt gestart indien er een fout met de container is opgetreden",
-          "cpuShares": "CPU-gedeelten",
-          "cpuSharesDescription": "Een geheel getal dat de CPU-gedeelten van de container aangeeft (d.w.z. het relatieve gewicht t.o.v. andere containers)",
+          "cpuShares": "CPU-shares",
+          "cpuSharesDescription": "Een geheel getal dat de CPU-shares van de container aangeeft (d.w.z. het relatieve gewicht t.o.v. andere containers)",
           "memoryLimit": "Geheugenlimiet",
           "memoryLimitDescription": "Geheugenlimiet in bytes",
           "memorySwapLimit": "Limiet wisselgeheugen",

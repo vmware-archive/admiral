@@ -1262,7 +1262,7 @@
         "CREATED": "CREATA",
         "STARTED": "AVVIATA",
         "FINISHED": "TERMINATA",
-        "FAILED": "NON RIUSCITA",
+        "FAILED": "NON RIUSCITO",
         "CANCELLED": "ANNULLATA"
       },
       "list": {
