@@ -87,7 +87,7 @@
         <xenon.group>com.vmware.xenon</xenon.group>
 
         <!-- other -->
-        <bouncycastle.version>1.57</bouncycastle.version>
+        <bouncycastle.version>1.61</bouncycastle.version>
         <jackson.version>2.9.8</jackson.version>
         <httpclient.version>4.5.5</httpclient.version>
         <guava.version>20.0</guava.version>
@@ -230,6 +230,18 @@
               <groupId>com.google.guava</groupId>
               <artifactId>guava</artifactId>
               <version>${guava.version}</version>
+            </dependency>
+
+            <!-- Bouncy castle management -->
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcprov-jdk15on</artifactId>
+                <version>${bouncycastle.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcpkix-jdk15on</artifactId>
+                <version>${bouncycastle.version}</version>
             </dependency>
 
             <!--TEST -->
