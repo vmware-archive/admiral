@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2019 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -53,7 +53,7 @@ public class ClusterLocalAffinityHostFilterTest extends BaseAffinityHostFilterTe
     @Test
     public void testFilterWithoutNamedVolumes() throws Throwable {
         ContainerDescription desc = createDescription();
-        desc.volumes = new String[] { "/var/run/docker.sock:/var/run/docker.sock" };
+        desc.volumes = new String[] { "/var/some-volume:/var/some-volume" };
         filter = new ClusterLocalAffinityHostFilter(host, desc);
         // filter is not active
         assertFalse(filter.isActive());

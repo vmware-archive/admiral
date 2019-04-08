@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2019 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -812,7 +812,7 @@ public class ContainerDescriptionService extends StatefulService {
                         ":/go/bin" };
         template.command = new String[] { "/usr/lib/postgresql/9.3/bin/postgres" };
         template.entryPoint = new String[] { "./dockerui" };
-        template.volumes = new String[] { "/var/run/docker.sock:/var/run/docker.sock" };
+        template.volumes = new String[] { "/var/some-volume:/var/some-volume" };
         template.volumesFrom = new String[] { "parent", "other:ro" };
         template.dependsOn = new String[] { "parent" };
         template.workingDir = "/container";

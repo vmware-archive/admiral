@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2019 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -56,8 +56,6 @@ import com.vmware.admiral.service.common.AbstractCallbackServiceHandler.Callback
 import com.vmware.admiral.service.common.DefaultSubStage;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
-import com.vmware.admiral.service.common.SslTrustImportService;
-import com.vmware.admiral.service.common.SslTrustImportService.SslTrustImportRequest;
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.LocalizableValidationException;
@@ -778,70 +776,8 @@ public class HostContainerListDataCollection extends StatefulService {
                 sendRequest(Operation
                         .createPost(this, HostConfigCertificateDistributionService.SELF_LINK)
                         .setBodyNoCloning(distState));
-
-                // Import agent SSL certificate
-                importAgentSslCertificate(container, null, SYSTEM_CONTAINER_SSL_RETRIES_COUNT);
             }
         };
-    }
-
-    private void importAgentSslCertificate(ContainerState container, ComputeState host,
-            int retryCount) {
-
-        if (container.ports == null) {
-            OperationUtil.getDocumentState(this, container.documentSelfLink, ContainerState.class,
-                    (ContainerState c) -> {
-                        if (c.ports == null) {
-                            logSevere("Couldn't get valid ports for system container %s",
-                                    container.documentSelfLink);
-                        } else {
-                            importAgentSslCertificate(c, host, retryCount);
-                        }
-                    });
-            return;
-        }
-
-        if (host == null) {
-            OperationUtil.getDocumentState(this, container.parentLink, ComputeState.class,
-                    (ComputeState h) -> importAgentSslCertificate(container, h, retryCount));
-            return;
-        }
-
-        logFine("Import SSL certificate for system container %s", container.documentSelfLink);
-
-        SslTrustImportRequest request = new SslTrustImportRequest();
-        request.acceptCertificate = true;
-
-        try {
-            request.hostUri = ContainerUtil.getShellUri(host, container);
-        } catch (Exception e) {
-            logSevere("Exception getting shell URI for system container %s:\n%s",
-                    container.documentSelfLink, Utils.toString(e));
-            return;
-        }
-
-        sendRequest(Operation
-                .createPut(this, SslTrustImportService.SELF_LINK)
-                .setBodyNoCloning(request)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        if (retryCount > 0) {
-                            logWarning("Retrying with count %s after error importing system"
-                                            + " container SSL certificate from '%s':\n%s",
-                                    retryCount, request.hostUri, Utils.toString(e));
-                            getHost().schedule(() -> {
-                                logInfo("Waiting for the system container SSL certificate from '%s'"
-                                        + " to be imported", request.hostUri);
-                                importAgentSslCertificate(container, host, retryCount - 1);
-                            }, SYSTEM_CONTAINER_SSL_RETRIES_WAIT, TimeUnit.MILLISECONDS);
-                        } else {
-                            logSevere("Exception importing system container SSL certificate from"
-                                    + " '%s':\n%s", request.hostUri, Utils.toString(e));
-                        }
-                        return;
-                    }
-                    logInfo("System container SSL certificate imported from '%s'", request.hostUri);
-                }));
     }
 
     private void deleteSystemContainer(

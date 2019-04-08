@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2019 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -47,8 +47,8 @@ public class TestAuthServiceDocumentHelper extends AbstractInitialBootService {
                         TEST_CONTAINER_DESC_SELF_LINK);
         containerDesc.name = "test-name";
         containerDesc.image = String.format("%s:%s", "test", "latest");
-        containerDesc.volumes = new String[] { "/var/run/docker.sock:/var/run/docker.sock",
-                "/etc/docker:/etc/docker" };
+        containerDesc.volumes = new String[] { "/var/some-volume-1:/var/some-volume-1",
+                "/etc/some-volume-2:/etc/some-volume-2" };
         containerDesc.restartPolicy = "always";
         containerDesc.networkMode = "host";
         return containerDesc;

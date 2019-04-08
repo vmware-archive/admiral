@@ -17,6 +17,7 @@ import static org.junit.Assert.fail;
 import java.net.URI;
 import java.util.function.Function;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.common.test.BaseTestCase;
@@ -50,44 +51,64 @@ public class ReverseProxyServiceTest extends BaseTestCase {
         doPost(config, ConfigurationFactoryService.SELF_LINK);
     }
 
+    @Ignore("VBV-1849")
     @Test
     public void testGet() throws Throwable {
         testOperation(Operation::createGet, null);
     }
 
+    @Ignore("VBV-1849")
     @Test
     public void testPost() throws Throwable {
         testOperation(Operation::createPost, null);
     }
 
+    @Ignore("VBV-1849")
     @Test
     public void testPatch() throws Throwable {
         testOperation(Operation::createPatch, MockPingService.BODY_PING);
     }
 
+    @Ignore("VBV-1849")
     @Test
     public void testPut() throws Throwable {
         testOperation(Operation::createPut, MockPingService.BODY_PING);
     }
 
+    @Ignore("VBV-1849")
     @Test
     public void testDelete() throws Throwable {
         testOperation(Operation::createDelete, null);
     }
 
+    @Ignore("VBV-1849")
     @Test
     public void testOptions() throws Throwable {
         testOperation(Operation::createOptions, null);
     }
 
     @Test
+    public void testOperationForbiddenByDefault() throws Throwable {
+
+        // As part of VBV-1849 and VBV-2382, shell in a box is removed so SSH console cannot be
+        // enabled even via config property. Thus, ReverseProxyService should always return
+        // forbidden
+        toggleConfig(ConfigurationUtil.EMBEDDED_MODE_PROPERTY, false);
+        toggleConfig(ConfigurationUtil.VIC_MODE_PROPERTY, false);
+        toggleConfig(ConfigurationUtil.ALLOW_SSH_CONSOLE_PROPERTY, true);
+
+        try {
+            testOperation(Operation::createGet, null);
+            fail("It should have been forbidden!");
+        } catch (IllegalAccessError e) {
+            assertEquals("forbidden", e.getMessage());
+        }
+    }
+
+    @Test
     public void testOperationForbiddenWhenEmbedded() throws Throwable {
 
-        ConfigurationState config = new ConfigurationState();
-        config.key = ConfigurationUtil.EMBEDDED_MODE_PROPERTY;
-        config.value = "true";
-        config.documentSelfLink = config.key;
-        doPost(config, ConfigurationFactoryService.SELF_LINK);
+        toggleConfig(ConfigurationUtil.EMBEDDED_MODE_PROPERTY, true);
 
         try {
             testOperation(Operation::createGet, null);
@@ -100,11 +121,7 @@ public class ReverseProxyServiceTest extends BaseTestCase {
     @Test
     public void testOperationForbiddenWhenVic() throws Throwable {
 
-        ConfigurationState config = new ConfigurationState();
-        config.key = ConfigurationUtil.VIC_MODE_PROPERTY;
-        config.value = "true";
-        config.documentSelfLink = config.key;
-        doPost(config, ConfigurationFactoryService.SELF_LINK);
+        toggleConfig(ConfigurationUtil.VIC_MODE_PROPERTY, true);
 
         try {
             testOperation(Operation::createGet, null);
@@ -116,12 +133,7 @@ public class ReverseProxyServiceTest extends BaseTestCase {
 
     @Test
     public void testOperationForbiddenWhenShellDisabled() throws Throwable {
-
-        ConfigurationState config = new ConfigurationState();
-        config.key = ConfigurationUtil.ALLOW_SSH_CONSOLE_PROPERTY;
-        config.value = "false";
-        config.documentSelfLink = config.key;
-        doPost(config, ConfigurationFactoryService.SELF_LINK);
+        toggleConfig(ConfigurationUtil.ALLOW_SSH_CONSOLE_PROPERTY, false);
 
         try {
             testOperation(Operation::createGet, null);
@@ -129,6 +141,14 @@ public class ReverseProxyServiceTest extends BaseTestCase {
         } catch (IllegalAccessError e) {
             assertEquals("forbidden", e.getMessage());
         }
+    }
+
+    private void toggleConfig(String toggle, boolean value) throws Throwable {
+        ConfigurationState config = new ConfigurationState();
+        config.key = toggle;
+        config.value = Boolean.toString(value);
+        config.documentSelfLink = config.key;
+        doPost(config, ConfigurationFactoryService.SELF_LINK);
     }
 
     private void testOperation(final Function<URI, Operation> createOp, String inBody)

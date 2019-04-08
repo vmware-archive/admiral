@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2019 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -70,6 +70,12 @@ public class ConfigurationUtil {
         if (configProperties == null || propertyName == null) {
             return null;
         }
+
+        if (ALLOW_SSH_CONSOLE_PROPERTY.equals(propertyName)) {
+            // shell in a box feature was removed due to security issues
+            return Boolean.toString(false);
+        }
+
         for (ConfigurationState config : configProperties) {
             if (propertyName.equals(config.key)) {
                 return config.value;
@@ -96,17 +102,7 @@ public class ConfigurationUtil {
      */
     public static void getConfigProperty(Service service, String propName,
             Consumer<String> callback) {
-        service.sendRequest(Operation
-                .createGet(service, UriUtils.buildUriPath(CONFIG_PROPS, propName))
-                .setCompletion((res, ex) -> {
-                    if (ex != null) {
-                        logger.warning(String.format("Unable to get config property: %s", ex.getMessage()));
-                        callback.accept(null);
-                        return;
-                    }
-                    ConfigurationState body = res.getBody(ConfigurationState.class);
-                    callback.accept(body.value);
-                }));
+        getConfigProperty(service.getHost(), propName, callback);
     }
 
     /**
@@ -114,6 +110,11 @@ public class ConfigurationUtil {
      */
     public static void getConfigProperty(ServiceHost host, String propName,
             Consumer<String> callback) {
+        if (ALLOW_SSH_CONSOLE_PROPERTY.equals(propName)) {
+            // shell in a box feature was removed due to security issues
+            callback.accept(Boolean.toString(false));
+            return;
+        }
         host.sendRequest(Operation
                 .createGet(host, UriUtils.buildUriPath(CONFIG_PROPS, propName))
                 .setReferer(host.getUri())

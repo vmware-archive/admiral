@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2019 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -39,10 +39,10 @@ public class SystemContainerDescriptions {
     public static final String AGENT_IMAGE_REFERENCE = System.getProperty(
             "dcp.management.images.agent.reference", AGENT_IMAGE_TAR_FILENAME + ".tar.xz");
     static final String[] AGENT_CONTAINER_VOLUMES = {
-            "/var/run/docker.sock:/var/run/docker.sock",
+            // needed for certificate distribution
             "/etc/docker:/etc/docker" };
     public static final String AGENT_IMAGE_VERSION_PROPERTY_NAME = "dcp.management.images.agent.version";
-    private static final String AGENT_IMAGE_VERSION = "1.5.1";
+    private static final String AGENT_IMAGE_VERSION = "1.5.3-SNAPSHOT";
 
     /** Create a container description to be used for installing host agents containers. */
     public static ContainerDescription buildCoreAgentContainerDescription() {

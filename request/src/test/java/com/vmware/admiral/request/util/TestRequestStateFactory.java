@@ -145,7 +145,7 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         containerDesc.extraHosts = new String[] { "test-hostname:ip" };
         containerDesc.command = new String[] { "/usr/lib/postgresql/9.3/bin/postgres" };
         containerDesc.entryPoint = new String[] { "./dockerui" };
-        containerDesc.volumes = new String[] { "/var/run/docker.sock:/var/run/docker.sock" };
+        containerDesc.volumes = new String[] { "/var/some-volume:/var/some-volume" };
         containerDesc.volumeDriver = CONTAINER_VOLUME_DRIVER;
         // containerDesc.volumesFrom = new String[] { "parent", "other:ro" };
         containerDesc.workingDir = "/container";

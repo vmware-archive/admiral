@@ -12,8 +12,6 @@
 package com.vmware.admiral.compute.container;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.Arrays;
@@ -27,8 +25,6 @@ import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFacto
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
-import com.vmware.xenon.common.LocalizableValidationException;
-import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.UriUtils;
 
 public class ContainerShellServiceTest extends ComputeBaseTest {
@@ -100,8 +96,9 @@ public class ContainerShellServiceTest extends ComputeBaseTest {
         try {
             getDocument(String.class, ContainerShellService.SELF_LINK);
             fail("It should have failed!");
-        } catch (LocalizableValidationException e) {
-            assertEquals("Container id is required.", e.getMessage());
+        } catch (IllegalAccessError e) {
+            // Shell in a box was removed in VBV-1849 and VBV-2382 due to security issues
+            assertEquals("forbidden", e.getMessage());
         }
     }
 
@@ -110,8 +107,9 @@ public class ContainerShellServiceTest extends ComputeBaseTest {
         try {
             getDocument(String.class, ContainerShellService.SELF_LINK + "?id=invalid");
             fail("It should have failed!");
-        } catch (ServiceNotFoundException e) {
-            assertTrue(e.getMessage().endsWith("/resources/containers/invalid"));
+        } catch (IllegalAccessError e) {
+            // Shell in a box was removed in VBV-1849 and VBV-2382 due to security issues
+            assertEquals("forbidden", e.getMessage());
         }
     }
 
@@ -132,9 +130,9 @@ public class ContainerShellServiceTest extends ComputeBaseTest {
             getDocument(String.class, ContainerShellService.SELF_LINK + "?id="
                     + UriUtils.getLastPathSegment(containerState.documentSelfLink));
             fail("It should have failed!");
-        } catch (ServiceNotFoundException e) {
-            assertTrue(
-                    e.getMessage().contains("Service not found: " + host.getPublicUriAsString()));
+        } catch (IllegalAccessError e) {
+            // Shell in a box was removed in VBV-1849 and VBV-2382 due to security issues
+            assertEquals("forbidden", e.getMessage());
         }
     }
 
@@ -162,8 +160,9 @@ public class ContainerShellServiceTest extends ComputeBaseTest {
             getDocument(String.class, ContainerShellService.SELF_LINK + "?id="
                     + UriUtils.getLastPathSegment(containerState.documentSelfLink));
             fail("It should have failed!");
-        } catch (ServiceNotFoundException e) {
-            assertTrue(e.getMessage().contains("/resources/containers/admiral_agent__"));
+        } catch (IllegalAccessError e) {
+            // Shell in a box was removed in VBV-1849 and VBV-2382 due to security issues
+            assertEquals("forbidden", e.getMessage());
         }
     }
 
@@ -198,8 +197,9 @@ public class ContainerShellServiceTest extends ComputeBaseTest {
             getDocument(String.class, ContainerShellService.SELF_LINK + "?id="
                     + UriUtils.getLastPathSegment(containerState.documentSelfLink));
             fail("It should have failed!");
-        } catch (LocalizableValidationException e) {
-            assertEquals("Could not locate shell port", e.getMessage());
+        } catch (IllegalAccessError e) {
+            // Shell in a box was removed in VBV-1849 and VBV-2382 due to security issues
+            assertEquals("forbidden", e.getMessage());
         }
     }
 
@@ -236,11 +236,13 @@ public class ContainerShellServiceTest extends ComputeBaseTest {
 
         agentState = doPost(agentState, ContainerFactoryService.SELF_LINK);
 
-        String document = getDocument(String.class, ContainerShellService.SELF_LINK + "?id="
-                + UriUtils.getLastPathSegment(containerState.documentSelfLink));
-
-        assertNotNull(document);
-        assertTrue(document.startsWith("/rp/"));
+        try {
+            getDocument(String.class, ContainerShellService.SELF_LINK + "?id="
+                    + UriUtils.getLastPathSegment(containerState.documentSelfLink));
+        } catch (IllegalAccessError e) {
+            // Shell in a box was removed in VBV-1849 and VBV-2382 due to security issues
+            assertEquals("forbidden", e.getMessage());
+        }
     }
 
 }
