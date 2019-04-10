@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2019 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -761,7 +761,10 @@ public class RegistryAdapterService extends StatelessService {
     }
 
     private String getRegistryHostAddress(RequestContext c) {
-        if (c != null && c.registryState != null && c.registryState.address != null) {
+        if (c == null) {
+            return null;
+        }
+        if (c.registryState != null && c.registryState.address != null) {
             String registry = c.registryState.address;
             try {
                 URI registryUri = new URI(registry);
@@ -770,6 +773,10 @@ public class RegistryAdapterService extends StatelessService {
                 logWarning("Problem while getting the host from registry address %s. Error: %s",
                         registry, e.getMessage());
             }
+        } else if (c.request != null && c.request.resourceReference != null) {
+            String host = c.request.resourceReference.getHost();
+            int port = c.request.resourceReference.getPort();
+            return port != -1 ? host + ":" + port : host;
         }
         return null;
     }

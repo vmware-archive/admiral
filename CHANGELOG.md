@@ -1,6 +1,8 @@
 # CHANGELOG
 
-## 1.5.1-SNAPSHOT
+## 1.5.3-SNAPSHOT
+
+* Fix issue ignoring registry.no.proxy.list property and routing connections to registries through the proxy.
 
 ## 1.5.0
 
