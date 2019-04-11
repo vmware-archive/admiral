@@ -25,7 +25,7 @@
     <packaging>pom</packaging>
 
     <properties>
-        <apache.commons-compress>1.16.1</apache.commons-compress>
+        <apache.commons-compress>1.18</apache.commons-compress>
     </properties>
 
     <modules>
