@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2019 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -900,7 +900,8 @@ let TemplatesStore = Reflux.createStore({
         containerRequest.definitionInstance = {
           image: itemId,
           name: utils.getDocumentId(itemId),
-          deploymentPolicies: policies
+          deploymentPolicies: policies,
+          publishAll: true
         };
 
         if (groupsResult) {
@@ -2118,7 +2119,8 @@ let TemplatesStore = Reflux.createStore({
     Promise.all(calls).then(([policies]) => {
       var definitionInstance = {
         image: imageId,
-        name: utils.getDocumentId(imageId)
+        name: utils.getDocumentId(imageId),
+        publishAll: true
       };
       if (policies) {
         definitionInstance.deploymentPolicies = policies;
