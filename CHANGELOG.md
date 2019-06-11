@@ -1,8 +1,9 @@
 # CHANGELOG
 
-## 1.5.3-SNAPSHOT
+## 1.5.3
 
 * Fix issue ignoring registry.no.proxy.list property and routing connections to registries through the proxy.
+* Fix issue with 'Publish All Ports' option always forced to true
 
 ## 1.5.0
 

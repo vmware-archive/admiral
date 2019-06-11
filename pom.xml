@@ -17,7 +17,7 @@
 
     <groupId>com.vmware.admiral</groupId>
     <artifactId>admiral</artifactId>
-    <version>1.5.3-SNAPSHOT</version>
+    <version>1.5.3</version>
     <packaging>pom</packaging>
 
     <url>https://github.com/vmware/admiral</url>
