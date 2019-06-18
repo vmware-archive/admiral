@@ -36,19 +36,24 @@ public class VotingAppCommons {
     public static final String VOLUME_DRIVER_LOCAL = "local";
 
     public static final String RESULT_CONTAINER_IMAGE = "eesprit/voting-app-result";
+    public static final String RESULT_CONTAINER_IMAGE_SEARCH_CRITERIA = "voting-app-result";
     public static final String RESULT_CONTAINER_NAME = "result";
 
     public static final String WORKER_CONTAINER_IMAGE = "eesprit/voting-app-worker";
+    public static final String WORKER_CONTAINER_IMAGE_SEARCH_CRITERIA = "voting-app-worker";
     public static final String WORKER_CONTAINER_NAME = "worker";
 
     public static final String VOTE_CONTAINER_IMAGE = "eesprit/voting-app-vote";
+    public static final String VOTE_CONTAINER_IMAGE_SEARCH_CRITERIA = "voting-app-vote";
     public static final String VOTE_CONTAINER_NAME = "vote";
 
-    public static final String REDIS_CONTAINER_IMAGE = "library/redis";
+    public static final String REDIS_CONTAINER_IMAGE = "lazo/redis-e2e-adm-unique";
+    public static final String REDIS_CONTAINER_IMAGE_SEARCH_CRITERIA = "redis-e2e-adm-unique";
     public static final String REDIS_CONTAINER_TAG = "alpine";
     public static final String REDIS_CONTAINER_NAME = "redis";
 
-    public static final String DB_CONTAINER_IMAGE = "library/postgres";
+    public static final String DB_CONTAINER_IMAGE = "lazo/postgres-e2e-adm-unique";
+    public static final String DB_CONTAINER_IMAGE_SEARCH_CRITERIA = "postgres-e2e-adm-unique";
     public static final String DB_CONTAINER_TAG = "9.4";
     public static final String DB_CONTAINER_NAME = "db";
 
@@ -78,12 +83,8 @@ public class VotingAppCommons {
         templates.addVolumePage().submit();
 
         editTemplate.waitToLoad();
-        addContainer(client, RESULT_CONTAINER_IMAGE);
+        addContainer(client, RESULT_CONTAINER_IMAGE_SEARCH_CRITERIA, RESULT_CONTAINER_IMAGE);
 
-        // editTemplate.clickAddContainerButton();
-        // templates.selectImagePage().waitToLoad();
-        // templates.selectImagePage().searchForImage(RESULT_CONTAINER_IMAGE);
-        // templates.selectImagePage().selectImageByName(RESULT_CONTAINER_IMAGE);
         templates.basicTab().setName(RESULT_CONTAINER_NAME);
         templates.basicTab().addCommand("nodemon --debug server.js");
 
@@ -95,24 +96,16 @@ public class VotingAppCommons {
         templates.addContainerPage().submit();
 
         editTemplate.waitToLoad();
-        addContainer(client, WORKER_CONTAINER_IMAGE);
+        addContainer(client, WORKER_CONTAINER_IMAGE_SEARCH_CRITERIA, WORKER_CONTAINER_IMAGE);
 
-        // editTemplate.clickAddContainerButton();
-        // templates.selectImagePage().waitToLoad();
-        // templates.selectImagePage().searchForImage(WORKER_CONTAINER_IMAGE);
-        // templates.selectImagePage().selectImageByName(WORKER_CONTAINER_IMAGE);
         templates.basicTab().setName(WORKER_CONTAINER_NAME);
         templates.addContainerPage().clickNetworkTab();
         templates.networkTab().linkNetwork(NETWORK_NAME_BACK_TIER, null, null, null);
         templates.addContainerPage().submit();
 
         editTemplate.waitToLoad();
-        addContainer(client, VOTE_CONTAINER_IMAGE);
+        addContainer(client, VOTE_CONTAINER_IMAGE_SEARCH_CRITERIA, VOTE_CONTAINER_IMAGE);
 
-        // editTemplate.clickAddContainerButton();
-        // templates.selectImagePage().waitToLoad();
-        // templates.selectImagePage().searchForImage(VOTE_CONTAINER_IMAGE);
-        // templates.selectImagePage().selectImageByName(VOTE_CONTAINER_IMAGE);
         templates.basicTab().setName(VOTE_CONTAINER_NAME);
         templates.basicTab().addCommand("python app.py");
 
@@ -123,12 +116,8 @@ public class VotingAppCommons {
         templates.addContainerPage().submit();
 
         editTemplate.waitToLoad();
-        addContainer(client, REDIS_CONTAINER_IMAGE);
+        addContainer(client, REDIS_CONTAINER_IMAGE_SEARCH_CRITERIA, REDIS_CONTAINER_IMAGE);
 
-        // editTemplate.clickAddContainerButton();
-        // templates.selectImagePage().waitToLoad();
-        // templates.selectImagePage().searchForImage(REDIS_CONTAINER_IMAGE);
-        // templates.selectImagePage().selectImageByName(REDIS_CONTAINER_IMAGE);
         templates.basicTab().setTag(REDIS_CONTAINER_TAG);
         templates.basicTab().setName(REDIS_CONTAINER_NAME);
 
@@ -138,12 +127,8 @@ public class VotingAppCommons {
         templates.addContainerPage().submit();
 
         editTemplate.waitToLoad();
-        addContainer(client, DB_CONTAINER_IMAGE);
+        addContainer(client, DB_CONTAINER_IMAGE_SEARCH_CRITERIA, DB_CONTAINER_IMAGE);
 
-        // editTemplate.clickAddContainerButton();
-        // templates.selectImagePage().waitToLoad();
-        // templates.selectImagePage().searchForImage(DB_CONTAINER_IMAGE);
-        // templates.selectImagePage().selectImageByName(DB_CONTAINER_IMAGE);
         templates.basicTab().setTag(DB_CONTAINER_TAG);
         templates.basicTab().setName(DB_CONTAINER_NAME);
         templates.addContainerPage().clickNetworkTab();
@@ -158,14 +143,14 @@ public class VotingAppCommons {
 
     // sometimes when searching for an image the spinner appears and does not disappear
     // so we retry
-    private static void addContainer(CommonWebClient<?> client, String imageName) {
+    private static void addContainer(CommonWebClient<?> client,String searchCriteria, String imageName) {
         client.templates().editTemplatePage().clickAddContainerButton();
         client.templates().selectImagePage().waitToLoad();
         int retriesCount = 3;
         TimeoutException ex = null;
         while (retriesCount > 0) {
             try {
-                client.templates().selectImagePage().searchForImage(imageName);
+                client.templates().selectImagePage().searchForImage(searchCriteria);
                 client.templates().selectImagePage().selectImageByName(imageName);
                 return;
             } catch (TimeoutException e) {
