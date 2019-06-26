@@ -11,7 +11,7 @@
 
 package com.vmware.admiral.compute.container;
 
-import static com.vmware.admiral.compute.container.ContainerHostDataCollectionService.MAINTENANCE_INTERVAL_MICROS;
+import static com.vmware.admiral.compute.container.ContainerHostDataCollectionService.isUpdatedRecently;
 
 import java.net.URI;
 import java.time.Instant;
@@ -983,11 +983,12 @@ public class HostContainerListDataCollection extends StatefulService {
                 // cluster mode not to create container states that we already have
                 String selfLink = UriUtils.buildUriPath(ContainerFactoryService.SELF_LINK,
                         containerState.names.get(0));
-                List<ContainerState> containerStatesFound = new ArrayList<>();
+                AtomicBoolean containerStateFound = new AtomicBoolean();
                 QueryTask containerServicesQuery = QueryUtil.buildPropertyQuery(
                         ContainerState.class,
                         ContainerState.FIELD_NAME_SELF_LINK, selfLink);
                 containerServicesQuery.querySpec.options.add(QueryOption.INCLUDE_DELETED);
+                containerServicesQuery.querySpec.options.add(QueryOption.EXPAND_CONTENT);
                 new ServiceDocumentQuery<>(getHost(), ContainerState.class)
                         .query(containerServicesQuery, (r) -> {
                             if (r.hasException()) {
@@ -995,12 +996,13 @@ public class HostContainerListDataCollection extends StatefulService {
                                         containerState.names.get(0), r.getException().getMessage());
                                 callback.accept(r.getException());
                             } else if (r.hasResult()) {
-                                if (r.getResult().documentUpdateTimeMicros < Utils.fromNowMicrosUtc(
-                                        -MAINTENANCE_INTERVAL_MICROS / 2)) {
-                                    containerStatesFound.add(r.getResult());
+                                boolean updatedRecently = isUpdatedRecently(r.getResult());
+                                if (updatedRecently) {
+                                    // skip creating the state
+                                    containerStateFound.set(true);
                                 }
                             } else {
-                                if (containerStatesFound.isEmpty()) {
+                                if (!containerStateFound.get()) {
                                     createDiscoveredContainer(callback, counter, containerState);
                                 } else {
                                     if (counter.decrementAndGet() == 0) {

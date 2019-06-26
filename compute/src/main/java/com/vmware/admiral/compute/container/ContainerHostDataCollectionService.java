@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2019 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -91,7 +91,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
     public static final String HOST_INFO_DATA_COLLECTION_LINK = UriUtils.buildUriPath(
             FACTORY_LINK, HOST_INFO_DATA_COLLECTION_ID);
 
-    public static final long MAINTENANCE_INTERVAL_MICROS = Long.getLong(
+    private static final long MAINTENANCE_INTERVAL_MICROS = Long.getLong(
             "com.vmware.admiral.compute.container.maintenance.interval.micros",
             TimeUnit.MINUTES.toMicros(5));
     private static final int MAX_RETRIES_COUNT = Integer.getInteger(
@@ -158,6 +158,15 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 PropertyIndexingOption.STORE_ONLY,
                 PropertyIndexingOption.EXCLUDE_FROM_SIGNATURE })
         public boolean noHostOperation;
+    }
+
+    /**
+     * Returns {@code true} if the document has been updated recently. As time frame is taken a half
+     * of the data collection interval.
+     */
+    static boolean isUpdatedRecently(ServiceDocument d) {
+        return d.documentUpdateTimeMicros > Utils
+                .fromNowMicrosUtc(-MAINTENANCE_INTERVAL_MICROS / 2);
     }
 
     public ContainerHostDataCollectionService() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2019 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,7 +11,7 @@
 
 package com.vmware.admiral.compute.container;
 
-import static com.vmware.admiral.compute.container.ContainerHostDataCollectionService.MAINTENANCE_INTERVAL_MICROS;
+import static com.vmware.admiral.compute.container.ContainerHostDataCollectionService.isUpdatedRecently;
 
 import java.net.URI;
 import java.time.Instant;
@@ -24,6 +24,7 @@ import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
@@ -471,11 +472,12 @@ public class HostNetworkListDataCollection extends StatefulService {
                 // check again if the network state already exists by id. This is needed in
                 // cluster mode not to create container network states that we already have
 
-                List<ContainerNetworkState> networkStatesFound = new ArrayList<>();
+                AtomicBoolean networkStateFound = new AtomicBoolean();
                 QueryTask networkServicesQuery = QueryUtil.buildPropertyQuery(
                         ContainerNetworkState.class,
                         ContainerNetworkState.FIELD_NAME_ID, networkState.id);
                 networkServicesQuery.querySpec.options.add(QueryOption.INCLUDE_DELETED);
+                networkServicesQuery.querySpec.options.add(QueryOption.EXPAND_CONTENT);
                 new ServiceDocumentQuery<>(getHost(), ContainerNetworkState.class)
                         .query(networkServicesQuery, (r) -> {
                             if (r.hasException()) {
@@ -483,12 +485,13 @@ public class HostNetworkListDataCollection extends StatefulService {
                                         networkState.name, r.getException().getMessage());
                                 callback.accept(r.getException());
                             } else if (r.hasResult()) {
-                                if (r.getResult().documentUpdateTimeMicros < Utils.fromNowMicrosUtc(
-                                        -MAINTENANCE_INTERVAL_MICROS / 2)) {
-                                    networkStatesFound.add(r.getResult());
+                                boolean updatedRecently = isUpdatedRecently(r.getResult());
+                                if (updatedRecently) {
+                                    // skip creating the state
+                                    networkStateFound.set(true);
                                 }
                             } else {
-                                if (networkStatesFound.isEmpty()) {
+                                if (!networkStateFound.get()) {
                                     createDiscoveredContainerNetwork(callback, counter,
                                             networkState);
                                 } else {

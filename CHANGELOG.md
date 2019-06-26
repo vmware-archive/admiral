@@ -2,6 +2,8 @@
 
 ## 1.5.4-SNAPSHOT
 
+* Fix issue preventing rediscovering of resources for re-added hosts.
+
 ## 1.5.3
 
 * Fix issue ignoring registry.no.proxy.list property and routing connections to registries through the proxy.

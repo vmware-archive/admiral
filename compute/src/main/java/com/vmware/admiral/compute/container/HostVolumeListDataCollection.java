@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2019 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,7 +11,7 @@
 
 package com.vmware.admiral.compute.container;
 
-import static com.vmware.admiral.compute.container.ContainerHostDataCollectionService.MAINTENANCE_INTERVAL_MICROS;
+import static com.vmware.admiral.compute.container.ContainerHostDataCollectionService.isUpdatedRecently;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.logging.Level;
@@ -430,11 +431,12 @@ public class HostVolumeListDataCollection extends StatefulService {
                 String possibleVolumeSelfLink = UriUtils.buildUriPath(ContainerVolumeService
                         .FACTORY_LINK, volumeState.name);
 
-                List<ContainerVolumeState> volumeStatesFound = new ArrayList<>();
+                AtomicBoolean volumeStateFound = new AtomicBoolean();
                 QueryTask volumeServicesQuery = QueryUtil.buildPropertyQuery(
                         ContainerVolumeState.class,
                         ContainerVolumeState.FIELD_NAME_SELF_LINK, possibleVolumeSelfLink);
                 volumeServicesQuery.querySpec.options.add(QueryOption.INCLUDE_DELETED);
+                volumeServicesQuery.querySpec.options.add(QueryOption.EXPAND_CONTENT);
                 new ServiceDocumentQuery<>(getHost(), ContainerVolumeState.class)
                         .query(volumeServicesQuery, (r) -> {
                             if (r.hasException()) {
@@ -442,12 +444,13 @@ public class HostVolumeListDataCollection extends StatefulService {
                                         volumeState.name, r.getException().getMessage());
                                 callback.accept(r.getException());
                             } else if (r.hasResult()) {
-                                if (r.getResult().documentUpdateTimeMicros < Utils.fromNowMicrosUtc(
-                                        -MAINTENANCE_INTERVAL_MICROS / 2)) {
-                                    volumeStatesFound.add(r.getResult());
+                                boolean updatedRecently = isUpdatedRecently(r.getResult());
+                                if (updatedRecently) {
+                                    // skip creating the state
+                                    volumeStateFound.set(true);
                                 }
                             } else {
-                                if (volumeStatesFound.isEmpty()) {
+                                if (!volumeStateFound.get()) {
                                     createDiscoveredContainerVolume(callback, counter,
                                             volumeState);
                                 } else {
