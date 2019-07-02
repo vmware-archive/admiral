@@ -32,6 +32,7 @@ import java.util.logging.Logger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.registry.service.RegistrySearchResponse;
@@ -172,6 +173,7 @@ public class TemplateSearchServiceIT extends BaseIntegrationSupportIT {
         assertEquals(0, searchResponse.results.size());
     }
 
+    @Ignore("VBV-2777")
     @Test
     public void testSearchImagesWhenRegistriesAreDisabled() throws Exception {
         logger.info("Assert the default registry is there");
@@ -212,6 +214,7 @@ public class TemplateSearchServiceIT extends BaseIntegrationSupportIT {
         assertEquals(0, searchResponse.results.size());
     }
 
+    @Ignore("VBV-2777")
     @Test
     public void testSearchImagesFromRegistriesWithSpecificPath() throws Exception {
         logger.info("Assert the default registry is there");

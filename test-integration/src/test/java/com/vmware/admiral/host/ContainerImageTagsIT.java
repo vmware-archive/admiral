@@ -30,6 +30,7 @@ import java.util.UUID;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.registry.service.RegistryAdapterService;
@@ -105,6 +106,7 @@ public class ContainerImageTagsIT extends BaseTestCase {
         verifyImageTags(imageName, TENANT, new String[] { DEFAULT_TAG });
     }
 
+    @Ignore("VBV-2777")
     @Test
     public void testListTagsFromDockerHub() throws Throwable {
         // Docker Hub list tags requests are expected to use the v2 endpoint,
@@ -114,6 +116,7 @@ public class ContainerImageTagsIT extends BaseTestCase {
         verifyImageTags(TEST_IMAGE_DOCKER_HUB, TENANT, expectedTags);
     }
 
+    @Ignore("VBV-2777")
     @Test
     public void testListTagsFromDockerHubFullImageName() throws Throwable {
         configureRegistry(defaultRegistryAddress, TENANT);
