@@ -88,8 +88,6 @@ Admiral is available under the [Apache 2 license](LICENSE).
 This project uses open source components which have additional licensing terms.  The source files / docker images and licensing terms for these open source components can be found at the following locations:
 
 - Photon OS [docker image](https://hub.docker.com/_/photon/), [license](https://github.com/vmware/photon/blob/master/COPYING)
-- Shell in a box [sources](https://github.com/shellinabox), [license](https://github.com/shellinabox/shellinabox/blob/master/GPL-2)
-
 
 
 [Admiral wiki](https://github.com/vmware/admiral/wiki)
