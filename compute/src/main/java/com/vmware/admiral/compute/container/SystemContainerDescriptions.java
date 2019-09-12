@@ -42,7 +42,7 @@ public class SystemContainerDescriptions {
             // needed for certificate distribution
             "/etc/docker:/etc/docker" };
     public static final String AGENT_IMAGE_VERSION_PROPERTY_NAME = "dcp.management.images.agent.version";
-    private static final String AGENT_IMAGE_VERSION = "1.5.4-SNAPSHOT";
+    private static final String AGENT_IMAGE_VERSION = "1.5.4";
 
     /** Create a container description to be used for installing host agents containers. */
     public static ContainerDescription buildCoreAgentContainerDescription() {

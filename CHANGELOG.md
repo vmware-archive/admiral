@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 1.5.4-SNAPSHOT
+## 1.5.4
 
 * Fix issue preventing rediscovering of resources for re-added hosts.
 
