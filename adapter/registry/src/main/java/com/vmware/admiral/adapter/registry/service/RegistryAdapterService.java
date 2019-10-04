@@ -13,6 +13,8 @@ package com.vmware.admiral.adapter.registry.service;
 
 import static java.net.HttpURLConnection.HTTP_OK;
 
+import static com.vmware.admiral.common.util.UriUtilsExtended.OFFICIAL_REGISTRY_LIST;
+
 import static com.vmware.admiral.service.common.RegistryService.API_VERSION_PROP_NAME;
 
 import java.net.URI;
@@ -76,6 +78,7 @@ public class RegistryAdapterService extends StatelessService {
 
     private static final String DEFAULT_NAMESPACE = "library";
     private static final String V1_PING_ENDPOINT = "/v1/_ping";
+    private static final String V1_SEARCH_ENDPOINT = "/v1/search";
 
     // Use catalog endpoint instead of the API Version Check endpoint (/v2) because some solutions
     // like JFrog Artifactory (cse-artifactory.eng.vmware.com) does not support it.
@@ -329,7 +332,7 @@ public class RegistryAdapterService extends StatelessService {
     private void processV1SearchRequest(RequestContext context) {
         try {
             URI searchUri = URI.create(context.registryState.address);
-            searchUri = UriUtils.extendUri(searchUri, "/v1/search");
+            searchUri = UriUtils.extendUri(searchUri, V1_SEARCH_ENDPOINT);
             searchUri = UriUtils.extendUriWithQuery(searchUri, SEARCH_QUERY_PROP_NAME,
                     context.request.customProperties.get(SEARCH_QUERY_PROP_NAME));
 
@@ -503,7 +506,12 @@ public class RegistryAdapterService extends StatelessService {
     private void doPing(ApiVersion apiVersion, String pingEndpoint,
             RequestContext context, Consumer<Throwable> failureCallback) {
         URI registryUri = context.request.resourceReference;
-        URI pingUri = UriUtils.extendUri(registryUri, pingEndpoint);
+
+        // overwrite default ping endpoint for docker hub because it is no longer supported
+        final String pingPath = OFFICIAL_REGISTRY_LIST.contains(registryUri.getHost())
+                ? V1_SEARCH_ENDPOINT
+                : pingEndpoint;
+        URI pingUri = UriUtils.extendUri(registryUri, pingPath);
 
         logInfo("Pinging registry: %s", pingUri);
 
@@ -528,7 +536,7 @@ public class RegistryAdapterService extends StatelessService {
 
                             if (isBearerTokenChallenge(wwwAuthHeader)) {
                                 requestAuthorizationToken(wwwAuthHeader, context,
-                                        () -> doPing(apiVersion, pingEndpoint, context,
+                                        () -> doPing(apiVersion, pingPath, context,
                                                 failureCallback),
                                         failureCallback);
                                 return;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -53,12 +53,9 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import org.junit.Test;
-
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.adapter.docker.util.DockerDevice;
 import com.vmware.admiral.adapter.docker.util.DockerPortMapping;
-import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
@@ -73,10 +70,11 @@ import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.service.common.LogService;
 import com.vmware.xenon.common.Utils;
 
-public class DockerProvisioningOnCoreOsIT extends BaseProvisioningOnCoreOsIT {
+public class DockerProvisioningOnCoreOsBase extends BaseProvisioningOnCoreOsIT {
     private static final String[] TEST_COMMAND = { "/etc/hosts", "-" };
     private static final String TEST_PORT_BINDINGS = "127.0.0.1::8282/tcp";
-    private static final String TEST_ENV_PROP = "TEST_PROP WITH SPACE=testValue with space ' \" \\' attempt injection";
+    private static final String TEST_ENV_PROP = "TEST_PROP WITH SPACE=testValue with space ' \" \\'"
+            + " attempt injection";
     private static final String[] TEST_ENV = { TEST_ENV_PROP };
     private static final String TEST_RESTART_POLICY_NAME = "on-failure";
     private static final int TEST_RESTART_POLICY_RETRIES = 3;
@@ -99,57 +97,6 @@ public class DockerProvisioningOnCoreOsIT extends BaseProvisioningOnCoreOsIT {
     private static final String TEST_WORKING_DIR = "/tmp";
     private static final boolean TEST_PRIVILEGED = true;
 
-    @Test
-    public void testProvisionDockerContainerOnCoreOSWithImageDownloadAPI()
-            throws Exception {
-
-        doProvisionDockerContainerOnCoreOS(true, DockerAdapterType.API);
-    }
-
-    @Test
-    public void testProvisionDockerContainerOnCoreOSWithRegistryImageAPI()
-            throws Exception {
-
-        doProvisionDockerContainerOnCoreOS(false, DockerAdapterType.API);
-    }
-
-    @Test
-    public void testProvisionDockerContainerOnCoreOSWithV2RegistryImageAPI()
-            throws Exception {
-
-        doProvisionDockerContainerOnCoreOS(false, DockerAdapterType.API,
-                RegistryType.V2_SSL_SECURE);
-    }
-
-    @Test
-    public void testProvisionDockerContainerOnCoreOSWithInsecureRegistryImageAPI()
-            throws Exception {
-
-        doProvisionDockerContainerOnCoreOS(false, DockerAdapterType.API,
-                RegistryType.V1_HTTP_INSECURE);
-    }
-
-    @Test
-    public void testProvisionDockerContainerOnCoreOSWithSecureRegistryImageAPI()
-            throws Exception {
-
-        doProvisionDockerContainerOnCoreOS(false, DockerAdapterType.API,
-                RegistryType.V2_BASIC_AUTH);
-    }
-
-    @Test
-    public void testProvisionDockerContainerOnCoreOSUsingLocalImageWithPriority()
-            throws Exception {
-        setupCoreOsHost(DockerAdapterType.API);
-
-        logger.info(
-                "---------- 5. Create test docker image container description using local image with priority. "
-                        + "--------");
-        String contDescriptionLink = getResourceDescriptionLinkUsingLocalImage(false,
-                RegistryType.V1_SSL_SECURE);
-        requestContainerAndDelete(contDescriptionLink);
-    }
-
     @Override
     protected String getResourceDescriptionLink(boolean downloadImage,
             RegistryType registryType) throws Exception {
@@ -158,11 +105,73 @@ public class DockerProvisioningOnCoreOsIT extends BaseProvisioningOnCoreOsIT {
         return containerDec.documentSelfLink;
     }
 
-    private String getResourceDescriptionLinkUsingLocalImage(boolean downloadImage,
+    protected String getResourceDescriptionLinkUsingLocalImage(boolean downloadImage,
             RegistryType registryType) throws Exception {
         ContainerDescription containerDec = createContainerDescription(downloadImage, registryType,
                 true);
         return containerDec.documentSelfLink;
+    }
+
+    @Override
+    protected void validateAfterStart(String resourceDescLink, RequestBrokerState request)
+            throws Exception {
+
+        super.validateAfterStart(resourceDescLink, request);
+
+        String containerStateLink = request.resourceLinks.iterator().next();
+
+        logger.info("---------- V1. Request Stop operation on the container. --------");
+        RequestBrokerState day2StopRequest = new RequestBrokerState();
+        day2StopRequest.resourceType = ResourceType.CONTAINER_TYPE.getName();
+        day2StopRequest.operation = ContainerOperationType.STOP.id;
+        day2StopRequest.resourceLinks = request.resourceLinks;
+        day2StopRequest = postDocument(RequestBrokerFactoryService.SELF_LINK, day2StopRequest);
+
+        waitForTaskToComplete(day2StopRequest.documentSelfLink);
+
+        ContainerState containerState = getDocument(containerStateLink, ContainerState.class);
+        assertNotNull(containerState);
+        assertEquals(PowerState.STOPPED, containerState.powerState);
+
+        logger.info("---------- V2. Request Start operation on the container. --------");
+        RequestBrokerState day2StartRequest = new RequestBrokerState();
+        day2StartRequest.resourceType = ResourceType.CONTAINER_TYPE.getName();
+        day2StartRequest.operation = ContainerOperationType.START.id;
+        day2StartRequest.resourceLinks = request.resourceLinks;
+        day2StartRequest = postDocument(RequestBrokerFactoryService.SELF_LINK, day2StartRequest);
+
+        waitForTaskToComplete(day2StartRequest.documentSelfLink);
+
+        containerState = getDocument(containerStateLink, ContainerState.class);
+        assertNotNull(containerState);
+        assertEquals(PowerState.RUNNING, containerState.powerState);
+        assertArrayEquals(DOCKER_CONTAINER_COMMAND_PROP_NAME, containerState.command, TEST_COMMAND);
+        assertEquals(0, containerState.documentExpirationTimeMicros);
+        verifyPortMappings(containerState, TEST_PORT_BINDINGS);
+        verifyConfig(containerState);
+        verifyHostConfig(containerState);
+
+        logger.info("---------- V3. Request container logs for the created container. --------");
+        // Fetch the logs from the log service
+        String logRequestUriPath = String.format("%s?%s=%s", ContainerLogService.SELF_LINK,
+                ContainerLogService.CONTAINER_ID_QUERY_PARAM, extractId(containerStateLink));
+
+        LogService.LogServiceState logServiceState = getDocument(logRequestUriPath,
+                LogService.LogServiceState.class);
+        assertNotNull(logServiceState);
+        assertNotNull(logServiceState.logs);
+        assertTrue("The logs is empty", logServiceState.logs.length > 0);
+        assertNotEquals("The logs is empty", "--".getBytes(), logServiceState);
+
+        logger.info("---------- V4. Request container stats for the created container. --------");
+        RequestBrokerState day2FetchStatsRequest = new RequestBrokerState();
+        day2FetchStatsRequest.resourceType = ResourceType.CONTAINER_TYPE.getName();
+        day2FetchStatsRequest.operation = ContainerOperationType.STATS.id;
+        day2FetchStatsRequest.resourceLinks = request.resourceLinks;
+        day2FetchStatsRequest = postDocument(RequestBrokerFactoryService.SELF_LINK,
+                day2FetchStatsRequest);
+
+        waitForTaskToComplete(day2FetchStatsRequest.documentSelfLink);
     }
 
     private ContainerDescription createContainerDescription(boolean downloadImage,
@@ -236,72 +245,8 @@ public class DockerProvisioningOnCoreOsIT extends BaseProvisioningOnCoreOsIT {
         return URI.create(result);
     }
 
-    @Override
-    protected void validateAfterStart(String resourceDescLink, RequestBrokerState request)
-            throws Exception {
-
-        super.validateAfterStart(resourceDescLink, request);
-
-        String containerStateLink = request.resourceLinks.iterator().next();
-
-        logger.info("---------- V1. Request Stop operation on the container. --------");
-        RequestBrokerState day2StopRequest = new RequestBrokerState();
-        day2StopRequest.resourceType = ResourceType.CONTAINER_TYPE.getName();
-        day2StopRequest.operation = ContainerOperationType.STOP.id;
-        day2StopRequest.resourceLinks = request.resourceLinks;
-        day2StopRequest = postDocument(RequestBrokerFactoryService.SELF_LINK, day2StopRequest);
-
-        waitForTaskToComplete(day2StopRequest.documentSelfLink);
-
-        ContainerState containerState = getDocument(containerStateLink, ContainerState.class);
-        assertNotNull(containerState);
-        assertEquals(PowerState.STOPPED, containerState.powerState);
-
-        logger.info("---------- V2. Request Start operation on the container. --------");
-        RequestBrokerState day2StartRequest = new RequestBrokerState();
-        day2StartRequest.resourceType = ResourceType.CONTAINER_TYPE.getName();
-        day2StartRequest.operation = ContainerOperationType.START.id;
-        day2StartRequest.resourceLinks = request.resourceLinks;
-        day2StartRequest = postDocument(RequestBrokerFactoryService.SELF_LINK, day2StartRequest);
-
-        waitForTaskToComplete(day2StartRequest.documentSelfLink);
-
-        containerState = getDocument(containerStateLink, ContainerState.class);
-        assertNotNull(containerState);
-        assertEquals(PowerState.RUNNING, containerState.powerState);
-        assertArrayEquals(DOCKER_CONTAINER_COMMAND_PROP_NAME, containerState.command, TEST_COMMAND);
-        assertEquals(0, containerState.documentExpirationTimeMicros);
-        verifyPortMappings(containerState, TEST_PORT_BINDINGS);
-        verifyConfig(containerState);
-        verifyHostConfig(containerState);
-
-        logger.info("---------- V3. Request container logs for the created container. --------");
-        // Fetch the logs from the log service
-        String logRequestUriPath = String.format("%s?%s=%s", ContainerLogService.SELF_LINK,
-                ContainerLogService.CONTAINER_ID_QUERY_PARAM, extractId(containerStateLink));
-
-        LogService.LogServiceState logServiceState = getDocument(logRequestUriPath,
-                LogService.LogServiceState.class);
-        assertNotNull(logServiceState);
-        assertNotNull(logServiceState.logs);
-        assertTrue("The logs is empty", logServiceState.logs.length > 0);
-        assertNotEquals("The logs is empty", "--".getBytes(), logServiceState);
-
-        logger.info("---------- V4. Request container stats for the created container. --------");
-        RequestBrokerState day2FetchStatsRequest = new RequestBrokerState();
-        day2FetchStatsRequest.resourceType = ResourceType.CONTAINER_TYPE.getName();
-        day2FetchStatsRequest.operation = ContainerOperationType.STATS.id;
-        day2FetchStatsRequest.resourceLinks = request.resourceLinks;
-        day2FetchStatsRequest = postDocument(RequestBrokerFactoryService.SELF_LINK,
-                day2FetchStatsRequest);
-
-        waitForTaskToComplete(day2FetchStatsRequest.documentSelfLink);
-    }
-
     /**
      * Verify the port mappings in the created container
-     *
-     * @param containerState
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private void verifyPortMappings(ContainerState containerState, String expectedPortBindings) {

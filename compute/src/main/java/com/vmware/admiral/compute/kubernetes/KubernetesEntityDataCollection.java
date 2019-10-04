@@ -141,14 +141,14 @@ public class KubernetesEntityDataCollection extends StatefulService {
         q.taskInfo.isDirect = true;
 
         Iterator<Class<? extends ResourceState>> iterator = CompositeComponentRegistry.getClasses();
-
+        QueryTask.Query clause = new QueryTask.Query().setOccurance(Occurance.MUST_OCCUR);
         while (iterator.hasNext()) {
-            q.querySpec.query.addBooleanClause(new Query()
+            clause.addBooleanClause(new Query()
                     .setTermPropertyName(ServiceDocument.FIELD_NAME_KIND)
                     .setTermMatchValue(Utils.buildKind(iterator.next()))
                     .setOccurance(Occurance.SHOULD_OCCUR));
         }
-
+        q.querySpec.query.addBooleanClause(clause);
         q.documentExpirationTimeMicros = ServiceDocumentQuery.getDefaultQueryExpiration();
 
         QueryUtil.addExpandOption(q);
