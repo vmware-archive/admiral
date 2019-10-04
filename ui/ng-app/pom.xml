@@ -30,6 +30,11 @@
                 <groupId>com.github.eirslett</groupId>
                 <artifactId>frontend-maven-plugin</artifactId>
                 <version>${maven.plugin.frontend.version}</version>
+                <configuration>
+                    <nodeDownloadRoot>http://artifactory.eng.vmware.com/nodejs-dist/</nodeDownloadRoot>
+                    <npmDownloadRoot>http://artifactory.eng.vmware.com/npm-remote-cache/npm/-/</npmDownloadRoot>
+                    <npmRegistryURL>http://build-artifactory.eng.vmware.com/artifactory/api/npm/npm</npmRegistryURL>
+                </configuration>
                 <executions>
 
                     <execution>
