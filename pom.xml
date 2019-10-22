@@ -83,7 +83,7 @@
         <httpclient.version>4.5.2</httpclient.version>
 
         <!-- JS -->
-        <maven.plugin.frontend.version>0.0.29</maven.plugin.frontend.version>
+        <maven.plugin.frontend.version>1.3</maven.plugin.frontend.version>
         <nodejs.version>v6.7.0</nodejs.version>
         <npm.version>3.10.7</npm.version>
 

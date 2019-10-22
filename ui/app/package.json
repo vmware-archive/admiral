@@ -66,5 +66,8 @@
     "properties-parser": "0.2.3",
     "proxy-middleware": "0.12.0",
     "require-dir": "0.3.0"
+  },
+  "publishConfig": {
+    "registry": "http://build-artifactory.eng.vmware.com/artifactory/api/npm/npm"
   }
 }
