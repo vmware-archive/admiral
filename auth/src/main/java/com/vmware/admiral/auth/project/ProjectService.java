@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2019 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -513,6 +513,8 @@ public class ProjectService extends StatefulService {
                 return;
             }
             handleProjectIndex(index, putState);
+
+            ResourceState.copyTenantLinks(currentState, putState);
             setState(put, putState);
             put.setBody(putState);
             put.complete();

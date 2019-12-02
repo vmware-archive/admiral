@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018-2019 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,16 +11,20 @@
 
 package com.vmware.admiral.compute.container;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionFactoryService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.network.Ipam;
@@ -94,7 +98,7 @@ public class ContainerNetworkDescriptionServiceTest extends ComputeBaseTest {
         ipamConfig.auxAddresses = Collections.singletonMap("router", "10.23.12.2");
         contNetworkDesc.ipam.config = new IpamConfig[] { ipamConfig };
 
-        Operation op = Operation.createPost(getContainerNetoworkDescriptionUri())
+        Operation op = Operation.createPost(getContainerNetworkDescriptionUri())
                 .setBody(contNetworkDesc)
                 .setCompletion((o, e) -> {
                     if (e != null) {
@@ -113,13 +117,43 @@ public class ContainerNetworkDescriptionServiceTest extends ComputeBaseTest {
         host.testWait();
     }
 
-    private URI getContainerNetoworkDescriptionUri() {
+    /**
+     * Test case for bug 2461433. Editing a composite description component through UI loses the
+     * tenant links.
+     */
+    @Test
+    public void testTenantLinksAfterPut() throws Throwable {
+        ContainerNetworkDescription desc = createContainerNetworkDescription();
+        desc = doPost(desc, ContainerNetworkDescriptionFactoryService.SELF_LINK);
+        assertNotNull(desc);
+
+        ContainerNetworkDescription newDesc = new ContainerNetworkDescription();
+        newDesc.documentSelfLink = desc.documentSelfLink;
+        newDesc.name = desc.name;
+        newDesc.customProperties = new HashMap<>();
+        newDesc.customProperties.put("key", "value");
+
+        newDesc = doPut(newDesc);
+
+        assertNotNull("tenantLinks should not be lost", newDesc.tenantLinks);
+        assertEquals("tenantLinks count should be the same", desc.tenantLinks.size(),
+                newDesc.tenantLinks.size());
+        assertTrue("tenantLinks should be the same",
+                newDesc.tenantLinks.containsAll(desc.tenantLinks));
+    }
+
+    private URI getContainerNetworkDescriptionUri() {
         return UriUtils.buildUri(host, ContainerNetworkDescriptionService.FACTORY_LINK);
     }
 
     private ContainerNetworkDescription createContainerNetworkDescription() {
         ContainerNetworkDescription containerNetworkDesc = new ContainerNetworkDescription();
         containerNetworkDesc.name = "networkDesc";
+
+        containerNetworkDesc.tenantLinks = new LinkedList<>();
+        containerNetworkDesc.tenantLinks.add("/tenants/qe");
+        containerNetworkDesc.tenantLinks.add("/user/fritz@sdfdsf.dsf");
+        containerNetworkDesc.tenantLinks.add("/tenants/qe/groups/dftyguhijokpl");
 
         return containerNetworkDesc;
     }

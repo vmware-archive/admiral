@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2019 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -59,6 +59,7 @@ public abstract class AbstractKubernetesObjectService<T extends BaseKubernetesSt
         }
 
         T putBody = put.getBody(stateType);
+        putBody.copyTenantLinks(getState(put));
 
         this.setState(put, putBody);
         put.setBody(putBody);

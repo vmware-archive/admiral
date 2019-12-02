@@ -2,6 +2,8 @@
 
 ## 1.5.5-SNAPSHOT
 
+* Fix for an issue causing Project admins not to be able to edit templates.
+
 ## 1.5.4
 
 * Fix issue preventing rediscovering of resources for re-added hosts.

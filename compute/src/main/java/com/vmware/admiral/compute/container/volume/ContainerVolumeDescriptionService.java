@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2019 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -153,6 +153,7 @@ public class ContainerVolumeDescriptionService extends StatefulService {
     public void handlePut(Operation put) {
         try {
             ContainerVolumeDescription putDesc = getValidInputFrom(put, false);
+            putDesc.copyTenantLinks(getState(put));
             setState(put, putDesc);
             put.setBody(putDesc).complete();
         } catch (Throwable e) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018-2019 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,6 +11,7 @@
 
 package com.vmware.photon.controller.model.resources;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -25,7 +26,10 @@ import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.services.common.ResourceGroupService;
 
 /**
- * Base PODO for all photon model resource services
+ * Base PODO for all photon model resource services.
+ * <p/>
+ * Services serving {@link ResourceState} descendants may want to use {@code copyTenantLinks} method
+ * in handlePut to avoid loosing tenantLinks field.
  */
 public class ResourceState extends ServiceDocument {
 
@@ -125,6 +129,43 @@ public class ResourceState extends ServiceDocument {
         target.tagLinks = this.tagLinks;
         target.creationTimeMicros = this.creationTimeMicros;
         target.regionId = this.regionId;
+    }
+
+    /**
+     * Utility method to keep the tenant links when overwriting the whole resource state document
+     * using PUT operation. In case currentState is null or does not have tenantLinks this method
+     * does nothing.
+     *
+     * @param currentState
+     *         current resource state to get the tenant links from
+     *
+     * @see ResourceState#copyTenantLinks
+     */
+    public void copyTenantLinks(ResourceState currentState) {
+        ResourceState.copyTenantLinks(currentState, this);
+    }
+
+    /**
+     * Utility method to keep the tenant links when overwriting the whole resource state document
+     * using PUT operation. In case currentState is null or does not have tenantLinks this method
+     * does nothing.
+     *
+     * @param currentState
+     *         existing state with tenant links
+     * @param newState
+     *         new state overwriting the existing one
+     */
+    public static void copyTenantLinks(ResourceState currentState, ResourceState newState) {
+        if (newState == null) {
+            throw new IllegalArgumentException("new state cannot be null");
+        }
+        if (currentState == null || currentState.tenantLinks == null
+                || currentState.tenantLinks.isEmpty()) {
+            return;
+        }
+        if (newState.tenantLinks == null || newState.tenantLinks.isEmpty()) {
+            newState.tenantLinks = new ArrayList<>(currentState.tenantLinks);
+        }
     }
 
 }

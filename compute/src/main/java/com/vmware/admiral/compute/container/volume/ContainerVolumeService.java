@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2019 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -193,6 +193,7 @@ public class ContainerVolumeService extends StatefulService {
     public void handlePut(Operation put) {
         try {
             ContainerVolumeState putState = getValidInputFrom(put, false);
+            putState.copyTenantLinks(getState(put));
             setState(put, putState);
             put.setBody(putState).complete();
         } catch (Throwable e) {

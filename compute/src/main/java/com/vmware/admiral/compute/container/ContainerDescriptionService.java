@@ -625,6 +625,7 @@ public class ContainerDescriptionService extends StatefulService {
 
         try {
             validateState(putBody);
+            putBody.copyTenantLinks(getState(put));
             this.setState(put, putBody);
             put.setBody(putBody).complete();
         } catch (Throwable e) {

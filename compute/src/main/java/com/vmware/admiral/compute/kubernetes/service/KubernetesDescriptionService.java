@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2019 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -155,6 +155,7 @@ public class KubernetesDescriptionService extends StatefulService {
 
         try {
             validateDescription(description);
+            description.copyTenantLinks(getState(put));
             this.setState(put, description);
             put.setBody(description).complete();
         } catch (Throwable e) {
