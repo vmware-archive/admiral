@@ -108,6 +108,7 @@ public class RegistryAdapterService extends StatelessService {
         @SuppressWarnings("unused")
         String issued_at;
         String token;
+        String access_token;
     }
 
     private static class V2ImageTagsResponse {
@@ -733,10 +734,9 @@ public class RegistryAdapterService extends StatelessService {
                             return;
                         }
 
-                        TokenServiceResponse tokenServiceResponse = op
-                                .getBody(TokenServiceResponse.class);
+                        String token = getToken(op.getBody(TokenServiceResponse.class));
                         String authorizationHeaderValue = String.format("%s %s",
-                                BEARER_TOKEN_PREFIX, tokenServiceResponse.token);
+                                BEARER_TOKEN_PREFIX, token);
                         context.request.customProperties.put(AUTHORIZATION_HEADER,
                                 authorizationHeaderValue);
                         context.tokenAlreadyRequested = true;
@@ -756,6 +756,22 @@ public class RegistryAdapterService extends StatelessService {
         } catch (Exception e) {
             failureCallback.accept(e);
         }
+    }
+
+    /**
+     * Get token or access_token from token response instance.
+     *
+     * @return token or access_token if not null (checked in that order) or {@code null}
+     */
+    private String getToken(TokenServiceResponse r) {
+        if (r != null) {
+            if (r.token != null && !r.token.isEmpty()) {
+                return r.token;
+            } else if (r.access_token != null && !r.access_token.isEmpty()) {
+                return r.access_token;
+            }
+        }
+        return null;
     }
 
     private void sendOperationWithClient(Operation op, RequestContext context) {

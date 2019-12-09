@@ -2,7 +2,8 @@
 
 ## 1.5.5-SNAPSHOT
 
-* Fix for an issue causing Project admins not to be able to edit templates.
+* Fix issue causing Project admins not to be able to edit templates.
+* Fix issue authenticating against some private docker registries. 
 
 ## 1.5.4
 
