@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -981,8 +981,8 @@ public class HostContainerListDataCollection extends StatefulService {
                 }
                 // check again if the container state already exists by names. This is needed in
                 // cluster mode not to create container states that we already have
-                String selfLink = UriUtils.buildUriPath(ContainerFactoryService.SELF_LINK,
-                        containerState.names.get(0));
+                String cName = containerState.names.get(0);
+                String selfLink = UriUtils.buildUriPath(ContainerFactoryService.SELF_LINK, cName);
                 AtomicBoolean containerStateFound = new AtomicBoolean();
                 QueryTask containerServicesQuery = QueryUtil.buildPropertyQuery(
                         ContainerState.class,
@@ -993,7 +993,7 @@ public class HostContainerListDataCollection extends StatefulService {
                         .query(containerServicesQuery, (r) -> {
                             if (r.hasException()) {
                                 logSevere("Failed to get container %s : %s",
-                                        containerState.names.get(0), r.getException().getMessage());
+                                        cName, Utils.toJson(r.getException()));
                                 callback.accept(r.getException());
                             } else if (r.hasResult()) {
                                 boolean updatedRecently = isUpdatedRecently(r.getResult());
