@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,6 +11,9 @@
 
 package com.vmware.admiral.service.common;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 
 import com.vmware.admiral.auth.idm.AuthConfigProvider;
@@ -34,6 +37,10 @@ import com.vmware.xenon.common.Utils;
 public class AuthBootstrapService extends StatefulService {
 
     public static final String FACTORY_LINK = ManagementUriParts.CONFIG + "/auth-bootstrap";
+
+    public static final long AUTH_INIT_TIMEOUT_MICROS = TimeUnit.SECONDS.toMicros(Integer
+            .getInteger("com.vmware.admiral.service.common.auth.bootstrap.timeout.seconds",
+                    180));
 
     public static FactoryService createFactory() {
         return FactoryService.create(AuthBootstrapService.class);
@@ -73,18 +80,64 @@ public class AuthBootstrapService extends StatefulService {
 
     @Override
     public void handleStart(Operation post) {
+        // Initialize authentication provider, and as this could be a slow operation (in case of
+        // PSC integration in VIC) the operation is completed immediately.
+        // Then, later if there's error during initialization it is logged and the host is stopped.
+
+        logInfo("Auth bootstrap starting");
+
         AuthConfigProvider provider = AuthUtil.getPreferredAuthConfigProvider();
 
-        if (!ServiceHost.isServiceCreate(post)) {
+        boolean executeBootConfig = ServiceHost.isServiceCreate(post);
+        CountDownLatch latch = new CountDownLatch(executeBootConfig ? 2 : 1);
+        AtomicReference<Throwable> error = new AtomicReference<>();
+
+        // initBootConfig
+        if (executeBootConfig) {
             // do not perform bootstrap logic when the post is NOT from direct client, eg: node
             // restart
-            provider.initConfig(getHost(), post, null);
-            post.complete();
-            return;
+            Operation op = Operation.createGet(this, "/")
+                    .setExpiration(Utils.fromNowMicrosUtc(AUTH_INIT_TIMEOUT_MICROS))
+                    .setCompletion((o, e) -> {
+                        if (e != null) {
+                            logSevere("Auth bootstrap init boot error: %s", Utils.toString(e));
+                            error.set(e);
+                        }
+                        latch.countDown();
+                    });
+            provider.initBootConfig(getHost(), op, null);
         }
 
-        provider.initBootConfig(getHost(), post, null);
-        provider.initConfig(getHost(), post, null);
+        // initConfig
+        Operation op = Operation.createGet(this, "/")
+                .setExpiration(Utils.fromNowMicrosUtc(AUTH_INIT_TIMEOUT_MICROS))
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        logSevere("Auth bootstrap init error: %s", Utils.toString(e));
+                        error.set(e);
+                    }
+                    latch.countDown();
+                });
+        provider.initConfig(getHost(), op, null);
+
+        // wait for results and stop the host in case of an error
+        new Thread(() -> {
+            try {
+                latch.await();
+                if (error.get() != null) {
+                    logSevere("Auth bootstrap error detected, stopping host!");
+                    getHost().stop();
+                } else {
+                    logInfo("Auth bootstrap finished successfully");
+                }
+            } catch (InterruptedException e) {
+                logSevere("Auth bootstrap start interrupted while waiting for initialization,"
+                                + " stopping host! Error: %s", Utils.toString(e));
+                getHost().stop();
+            }
+        }).start();
+
+        // complete the operation
         post.complete();
     }
 

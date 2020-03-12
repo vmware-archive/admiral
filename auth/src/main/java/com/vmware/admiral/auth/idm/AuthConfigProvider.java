@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -31,12 +31,16 @@ public interface AuthConfigProvider {
     }
 
     /**
-     * Initialization method to be executed as a first-boot script.
+     * Initialization method to be executed as a first-boot script. When initialization completes
+     * successful the passed as an parameter operation completes, in case of an error the operation
+     * fails with the exception that has occurred.
      */
     void initBootConfig(ServiceHost host, Operation post, Consumer<Operation> authContext);
 
     /**
-     * Initialization method to be executed as an every-boot script.
+     * Initialization method to be executed as an every-boot script. When initialization completes
+     * successful the passed as an parameter operation completes, in case of an error the operation
+     * fails with the exception that has occurred.
      */
     void initConfig(ServiceHost host, Operation post, Consumer<Operation> authContext);
 

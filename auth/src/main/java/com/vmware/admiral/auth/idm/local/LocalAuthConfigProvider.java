@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -107,6 +107,7 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
                 hasError.set(true);
                 host.log(Level.SEVERE, "Unable to create default user groups: %s",
                         Utils.toString(ex));
+                post.fail(ex);
             } else {
                 if (counter.decrementAndGet() == 0 && !hasError.get()) {
                     createUsers(host, config, post);
@@ -119,6 +120,7 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
     @Override
     public void initConfig(ServiceHost host, Operation post, Consumer<Operation> authContext) {
         // Nothing to do here...
+        post.complete();
     }
 
     private static Config getConfig(ServiceHost host, String localUsers) {
