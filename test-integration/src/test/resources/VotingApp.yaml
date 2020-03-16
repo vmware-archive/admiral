@@ -17,6 +17,11 @@ components:
       _cluster: 1
       image: postgres:9.4
       name: db
+      env:
+      - var: POSTGRES_USER
+        value: postgres
+      - var: POSTGRES_PASSWORD
+        value: postgres
       volumes:
       - db-data:/var/lib/postgresql/data
       networks:
