@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -1031,8 +1031,8 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 .setBodyNoCloning(body)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        logWarning("Failure creating callback handler. Error %s",
-                                Utils.toString(e));
+                        logWarning("Failure creating callback handler %s. Error %s",
+                                callbackLink, Utils.toString(e));
                         return;
                     }
                     logInfo("Callback task created with uri: %s, %s", callbackUri, o.getUri());
@@ -1057,13 +1057,15 @@ public class ContainerHostDataCollectionService extends StatefulService {
 
         @Override
         protected void handleFailedStagePatch(CallbackServiceHandlerState state) {
-            ServiceErrorResponse err = state.taskInfo.failure;
-            logWarning("Failed updating host info");
-            if (err != null && err.stackTrace != null) {
-                logFine("Task failure stack trace: %s", err.stackTrace);
-                logWarning("Task failure error message: %s", err.message);
-                consumer.accept(state, err);
-
+            try {
+                ServiceErrorResponse err = state.taskInfo.failure;
+                logWarning("Failed updating host info");
+                if (err != null && err.stackTrace != null) {
+                    logFine("Task failure stack trace: %s", err.stackTrace);
+                    logWarning("Task failure error message: %s", err.message);
+                    consumer.accept(state, err);
+                }
+            } finally {
                 if (completionCallback != null) {
                     completionCallback.run();
                 }
@@ -1072,10 +1074,12 @@ public class ContainerHostDataCollectionService extends StatefulService {
 
         @Override
         protected void handleFinishedStagePatch(CallbackServiceHandlerState state) {
-            consumer.accept(state, null);
-
-            if (completionCallback != null) {
-                completionCallback.run();
+            try {
+                consumer.accept(state, null);
+            } finally {
+                if (completionCallback != null) {
+                    completionCallback.run();
+                }
             }
         }
     }
