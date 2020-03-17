@@ -1060,7 +1060,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
             try {
                 ServiceErrorResponse err = state.taskInfo.failure;
                 logWarning("Failed updating host info");
-                if (err != null && err.stackTrace != null) {
+                if (err != null) {
                     logFine("Task failure stack trace: %s", err.stackTrace);
                     logWarning("Task failure error message: %s", err.message);
                     consumer.accept(state, err);
