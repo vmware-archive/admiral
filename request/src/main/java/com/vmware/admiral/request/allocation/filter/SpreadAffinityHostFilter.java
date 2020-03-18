@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -27,7 +27,6 @@ import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService.Elast
 import com.vmware.admiral.compute.ElasticPlacementZoneService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
-
 import com.vmware.admiral.request.PlacementHostSelectionTaskService;
 import com.vmware.admiral.request.PlacementHostSelectionTaskService.PlacementHostSelectionTaskState;
 import com.vmware.admiral.request.ReservationTaskFactoryService;

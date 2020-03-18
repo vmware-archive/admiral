@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,22 +11,43 @@
 
 package com.vmware.admiral.host.swagger;
 
-import static com.vmware.admiral.host.swagger.SwaggerDocumentationUtils.*;
+import static com.vmware.admiral.host.swagger.SwaggerDocumentationUtils.bodyParameter;
+import static com.vmware.admiral.host.swagger.SwaggerDocumentationUtils.formParameter;
+import static com.vmware.admiral.host.swagger.SwaggerDocumentationUtils.getApiMethods;
+import static com.vmware.admiral.host.swagger.SwaggerDocumentationUtils.getApiTagsAsList;
+import static com.vmware.admiral.host.swagger.SwaggerDocumentationUtils.headerParameter;
+import static com.vmware.admiral.host.swagger.SwaggerDocumentationUtils.methodPath;
+import static com.vmware.admiral.host.swagger.SwaggerDocumentationUtils.model;
+import static com.vmware.admiral.host.swagger.SwaggerDocumentationUtils.pathParameter;
+import static com.vmware.admiral.host.swagger.SwaggerDocumentationUtils.queryParameter;
 import static com.vmware.xenon.common.Operation.STATUS_CODE_OK;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import javax.ws.rs.*;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.HEAD;
+import javax.ws.rs.OPTIONS;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 
-import io.swagger.annotations.*;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponses;
 import io.swagger.jaxrs.PATCH;
-import io.swagger.models.*;
 import io.swagger.models.Info;
+import io.swagger.models.Model;
+import io.swagger.models.Operation;
+import io.swagger.models.Response;
+import io.swagger.models.Scheme;
+import io.swagger.models.Swagger;
 import io.swagger.models.properties.RefProperty;
-
 import org.reflections.Reflections;
 
 import com.vmware.admiral.common.SwaggerDocumentation;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,12 +11,11 @@
 
 package com.vmware.admiral.adapter.kubernetes.service;
 
-import static org.junit.Assert.assertEquals;
-
 import static com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent.CUSTOM_PROPERTY_HOST_LINK;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.KUBERNETES_LABEL_APP_ID;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.POD_TYPE;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.REPLICA_SET_TYPE;
+import static org.junit.Assert.assertEquals;
 
 import java.net.URI;
 import java.util.ArrayList;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -12,7 +12,6 @@
 package com.vmware.admiral.compute;
 
 import static junit.framework.TestCase.assertEquals;
-
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
@@ -25,24 +24,31 @@ import org.junit.Test;
 
 import com.vmware.admiral.compute.content.Binding;
 
-
-@SuppressWarnings({"serial", "rawtypes"})
+@SuppressWarnings({ "serial", "rawtypes" })
 public class BindingUtilsTest {
 
     @Test
     public void extractBindingsSimple() {
         final String componentName = "component-name";
         //CHECKSTYLE:OFF
-        Map<String, Object> input = new HashMap<String, Object>() {{
-            put(BindingUtils.COMPONENTS, new HashMap<String, Object>() {{
-                put(componentName, new HashMap<String, Object>() {{
-                    put(BindingUtils.DATA, new HashMap<String, Object>() {{
-                        put("field1", 3);
-                        put("field2", "${component1~field1}");
-                    }});
-                }});
-            }});
-        }};
+        Map<String, Object> input = new HashMap<String, Object>() {
+            {
+                put(BindingUtils.COMPONENTS, new HashMap<String, Object>() {
+                    {
+                        put(componentName, new HashMap<String, Object>() {
+                            {
+                                put(BindingUtils.DATA, new HashMap<String, Object>() {
+                                    {
+                                        put("field1", 3);
+                                        put("field2", "${component1~field1}");
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+        };
         //CHECKSTYLE:ON
 
         List<Binding.ComponentBinding> componentBindings = BindingUtils.extractBindings(input);
@@ -62,16 +68,24 @@ public class BindingUtilsTest {
     public void extractBindingsSimpleProvisioningTimeBinding() {
         final String componentName = "component-name";
         //CHECKSTYLE:OFF
-        Map<String, Object> input = new HashMap<String, Object>() {{
-            put(BindingUtils.COMPONENTS, new HashMap<String, Object>() {{
-                put(componentName, new HashMap<String, Object>() {{
-                    put(BindingUtils.DATA, new HashMap<String, Object>() {{
-                        put("field1", 3);
-                        put("field2", "${_resource~component1~field1}");
-                    }});
-                }});
-            }});
-        }};
+        Map<String, Object> input = new HashMap<String, Object>() {
+            {
+                put(BindingUtils.COMPONENTS, new HashMap<String, Object>() {
+                    {
+                        put(componentName, new HashMap<String, Object>() {
+                            {
+                                put(BindingUtils.DATA, new HashMap<String, Object>() {
+                                    {
+                                        put("field1", 3);
+                                        put("field2", "${_resource~component1~field1}");
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+        };
         //CHECKSTYLE:ON
 
         List<Binding.ComponentBinding> componentBindings = BindingUtils.extractBindings(input);
@@ -92,18 +106,28 @@ public class BindingUtilsTest {
     public void extractBindingsNested() {
         final String componentName = "component-name";
         //CHECKSTYLE:OFF
-        Map<String, Object> input = new HashMap<String, Object>() {{
-            put(BindingUtils.COMPONENTS, new HashMap<String, Object>() {{
-                put(componentName, new HashMap<String, Object>() {{
-                    put(BindingUtils.DATA, new HashMap<String, Object>() {{
-                        put("field1", 3);
-                        put("field2", new HashMap<String, Object>() {{
-                            put("field21", "${component1~field1}");
-                        }});
-                    }});
-                }});
-            }});
-        }};
+        Map<String, Object> input = new HashMap<String, Object>() {
+            {
+                put(BindingUtils.COMPONENTS, new HashMap<String, Object>() {
+                    {
+                        put(componentName, new HashMap<String, Object>() {
+                            {
+                                put(BindingUtils.DATA, new HashMap<String, Object>() {
+                                    {
+                                        put("field1", 3);
+                                        put("field2", new HashMap<String, Object>() {
+                                            {
+                                                put("field21", "${component1~field1}");
+                                            }
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+        };
         //CHECKSTYLE:ON
 
         List<Binding.ComponentBinding> componentBindings = BindingUtils.extractBindings(input);
@@ -125,20 +149,30 @@ public class BindingUtilsTest {
     public void extractBindingsNestedList() {
         final String componentName = "component-name";
         //CHECKSTYLE:OFF
-        Map<String, Object> input = new HashMap<String, Object>() {{
-            put(BindingUtils.COMPONENTS, new HashMap<String, Object>() {{
-                put(componentName, new HashMap<String, Object>() {{
-                    put(BindingUtils.DATA, new HashMap<String, Object>() {{
-                        put("field1", 3);
-                        put("field2", new ArrayList<Object>() {{
-                            add("stuff");
-                            add("${component1~field1}");
-                            add("more stuff");
-                        }});
-                    }});
-                }});
-            }});
-        }};
+        Map<String, Object> input = new HashMap<String, Object>() {
+            {
+                put(BindingUtils.COMPONENTS, new HashMap<String, Object>() {
+                    {
+                        put(componentName, new HashMap<String, Object>() {
+                            {
+                                put(BindingUtils.DATA, new HashMap<String, Object>() {
+                                    {
+                                        put("field1", 3);
+                                        put("field2", new ArrayList<Object>() {
+                                            {
+                                                add("stuff");
+                                                add("${component1~field1}");
+                                                add("more stuff");
+                                            }
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+        };
         //CHECKSTYLE:ON
 
         List<Binding.ComponentBinding> componentBindings = BindingUtils.extractBindings(input);

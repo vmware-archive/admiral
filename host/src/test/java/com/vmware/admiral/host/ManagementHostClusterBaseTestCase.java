@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,13 +11,6 @@
 
 package com.vmware.admiral.host;
 
-import static java.lang.Boolean.TRUE;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import static com.vmware.admiral.common.util.FileUtil.switchToUnixLineEnds;
 import static com.vmware.admiral.host.HostInitDockerAdapterServiceConfig.FIELD_NAME_START_MOCK_HOST_ADAPTER_INSTANCE;
 import static com.vmware.admiral.host.ManagementHostAuthUsersTest.DEFAULT_WAIT_SECONDS_FOR_AUTH_SERVICES;
@@ -26,6 +19,11 @@ import static com.vmware.admiral.host.ManagementHostAuthUsersTest.doRestrictedOp
 import static com.vmware.admiral.host.ManagementHostAuthUsersTest.login;
 import static com.vmware.xenon.common.CommandLineArgumentParser.ARGUMENT_ASSIGNMENT;
 import static com.vmware.xenon.common.CommandLineArgumentParser.ARGUMENT_PREFIX;
+import static java.lang.Boolean.TRUE;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,7 +39,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
-
 import javax.net.ssl.SSLSocketFactory;
 
 import org.junit.Rule;

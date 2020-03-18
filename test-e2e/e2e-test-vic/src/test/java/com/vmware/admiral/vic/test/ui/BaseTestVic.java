@@ -15,7 +15,6 @@ import java.util.Arrays;
 import java.util.Objects;
 
 import com.codeborne.selenide.Configuration;
-
 import org.apache.http.Header;
 import org.apache.http.client.HttpClient;
 import org.apache.http.message.BasicHeader;

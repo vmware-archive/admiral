@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -14,7 +14,6 @@ package com.vmware.admiral.test.ui.pages.common;
 import static com.codeborne.selenide.Selenide.switchTo;
 
 import com.codeborne.selenide.Condition;
-
 import org.openqa.selenium.By;
 
 public class CheckCondition extends Action {

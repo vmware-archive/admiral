@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,13 +11,12 @@
 
 package com.vmware.admiral.compute.cluster;
 
-import static java.util.EnumSet.of;
-
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_CLUSTER_NAME_PROP_NAME;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_CLUSTER_PLAN_NAME_PROP_NAME;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_CLUSTER_UUID_PROP_NAME;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_ENDPOINT_PROP_NAME;
 import static com.vmware.admiral.adapter.pks.PKSConstants.PKS_MASTER_NODES_IPS_PROP_NAME;
+import static java.util.EnumSet.of;
 
 import java.net.HttpURLConnection;
 import java.net.URI;

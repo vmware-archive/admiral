@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,16 +11,15 @@
 
 package com.vmware.admiral.adapter.registry.service;
 
+import static com.vmware.admiral.adapter.registry.service.RegistryAdapterService.REGISTRY_NO_PROXY_LIST_PARAM_NAME;
+import static com.vmware.admiral.adapter.registry.service.RegistryAdapterService.REGISTRY_PROXY_NULL_VALUE;
+import static com.vmware.admiral.adapter.registry.service.RegistryAdapterService.REGISTRY_PROXY_PARAM_NAME;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
-
-import static com.vmware.admiral.adapter.registry.service.RegistryAdapterService.REGISTRY_NO_PROXY_LIST_PARAM_NAME;
-import static com.vmware.admiral.adapter.registry.service.RegistryAdapterService.REGISTRY_PROXY_NULL_VALUE;
-import static com.vmware.admiral.adapter.registry.service.RegistryAdapterService.REGISTRY_PROXY_PARAM_NAME;
 
 import java.lang.reflect.Field;
 import java.net.URI;

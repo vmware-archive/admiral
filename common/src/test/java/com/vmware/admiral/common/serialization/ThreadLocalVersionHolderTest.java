@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,15 +11,14 @@
 
 package com.vmware.admiral.common.serialization;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
 import static com.vmware.admiral.common.serialization.ReleaseConstants.API_VERSION_0_9_1;
 import static com.vmware.admiral.common.serialization.ReleaseConstants.CURRENT_API_VERSION;
 import static com.vmware.admiral.common.serialization.ReleaseConstants.VERSION_PREFIX;
 import static com.vmware.xenon.common.Operation.MEDIA_TYPE_APPLICATION_JSON;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;

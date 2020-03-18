@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,10 +11,9 @@
 
 package com.vmware.admiral.adapter.docker.service;
 
+import static com.vmware.admiral.adapter.docker.mock.MockDockerPathConstants.CREATE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-
-import static com.vmware.admiral.adapter.docker.mock.MockDockerPathConstants.CREATE;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -24,7 +23,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.logging.Level;
-
 import javax.net.ssl.TrustManager;
 
 import org.junit.After;

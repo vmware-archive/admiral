@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,7 +11,6 @@
 
 package com.vmware.admiral.tiller;
 
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -20,12 +19,10 @@ import java.util.Iterator;
 import hapi.services.tiller.ReleaseServiceGrpc.ReleaseServiceBlockingStub;
 import hapi.services.tiller.Tiller.ListReleasesRequest;
 import hapi.services.tiller.Tiller.ListReleasesResponse;
-
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.grpc.health.v1.HealthCheckRequest;
 import io.grpc.health.v1.HealthCheckResponse;
 import io.grpc.health.v1.HealthCheckResponse.ServingStatus;
-
 import org.junit.Test;
 import org.microbean.helm.Tiller;
 

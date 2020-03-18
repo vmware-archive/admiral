@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,15 +11,14 @@
 
 package com.vmware.admiral.compute.cluster;
 
+import static com.vmware.admiral.compute.ContainerHostUtil.PROPERTY_NAME_DRIVER;
+import static com.vmware.admiral.compute.ContainerHostUtil.VMWARE_VIC_DRIVER1;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-
-import static com.vmware.admiral.compute.ContainerHostUtil.PROPERTY_NAME_DRIVER;
-import static com.vmware.admiral.compute.ContainerHostUtil.VMWARE_VIC_DRIVER1;
 
 import java.net.URI;
 import java.util.ArrayList;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -38,6 +38,11 @@ import static com.vmware.admiral.test.integration.data.IntegratonTestStateFactor
 import static com.vmware.admiral.test.integration.data.IntegratonTestStateFactory.CONTAINER_DCP_TEST_LATEST_IMAGE;
 import static com.vmware.admiral.test.integration.data.IntegratonTestStateFactory.CONTAINER_DCP_TEST_LATEST_NAME;
 import static com.vmware.admiral.test.integration.data.IntegratonTestStateFactory.CONTAINER_IMAGE_DOWNLOAD_URL_FORMAT;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.net.URI;
 import java.util.Arrays;
@@ -46,12 +51,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
-
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.adapter.docker.util.DockerDevice;

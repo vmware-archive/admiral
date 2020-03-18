@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,13 +11,12 @@
 
 package com.vmware.admiral.auth;
 
+import static com.vmware.admiral.auth.util.PrincipalUtil.encode;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-
-import static com.vmware.admiral.auth.util.PrincipalUtil.encode;
 
 import java.io.File;
 import java.net.URI;

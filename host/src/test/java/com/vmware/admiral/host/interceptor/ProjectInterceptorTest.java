@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,14 +11,13 @@
 
 package com.vmware.admiral.host.interceptor;
 
+import static com.vmware.admiral.auth.util.PrincipalUtil.encode;
+import static com.vmware.admiral.host.ManagementHostAuthUsersTest.DEFAULT_WAIT_SECONDS_FOR_AUTH_SERVICES;
+import static com.vmware.admiral.request.util.TestRequestStateFactory.COMPUTE_ADDRESS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-
-import static com.vmware.admiral.auth.util.PrincipalUtil.encode;
-import static com.vmware.admiral.host.ManagementHostAuthUsersTest.DEFAULT_WAIT_SECONDS_FOR_AUTH_SERVICES;
-import static com.vmware.admiral.request.util.TestRequestStateFactory.COMPUTE_ADDRESS;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -32,7 +31,6 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableMap;
-
 import org.junit.Before;
 import org.junit.Test;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -14,20 +14,15 @@ package com.vmware.admiral.tiller.client;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.concurrent.CompletableFuture;
-
 import javax.net.ssl.SSLException;
 
 import io.grpc.health.v1.HealthCheckRequest;
 import io.grpc.health.v1.HealthCheckResponse;
 import io.grpc.health.v1.HealthCheckResponse.ServingStatus;
 import io.grpc.stub.StreamObserver;
-
 import org.microbean.helm.Tiller;
 
 import com.vmware.admiral.tiller.TillerFactory;
-import com.vmware.admiral.tiller.client.TillerClient;
-import com.vmware.admiral.tiller.client.TillerClientException;
-import com.vmware.admiral.tiller.client.TillerConfig;
 
 public class MicrobeanTillerClient implements TillerClient {
 

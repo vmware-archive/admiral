@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,11 +11,9 @@
 
 package com.vmware.admiral.adapter.registry.service;
 
-import static java.net.HttpURLConnection.HTTP_OK;
-
 import static com.vmware.admiral.common.util.UriUtilsExtended.OFFICIAL_REGISTRY_LIST;
-
 import static com.vmware.admiral.service.common.RegistryService.API_VERSION_PROP_NAME;
+import static java.net.HttpURLConnection.HTTP_OK;
 
 import java.net.URI;
 import java.util.ArrayList;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,13 +11,6 @@
 
 package com.vmware.admiral.compute.content;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.assertComponentTypes;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.deserializeCompositeTemplate;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.deserializeDockerCompose;
@@ -27,6 +20,12 @@ import static com.vmware.admiral.compute.content.CompositeTemplateUtil.getYamlTy
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.isNullOrEmpty;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.serializeCompositeTemplate;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.serializeDockerCompose;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.util.Collection;

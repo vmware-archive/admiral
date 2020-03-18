@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -36,14 +36,12 @@ import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.NamespacedKubernetesClient;
 import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
 import io.netty.handler.codec.http.HttpResponseStatus;
-
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
 import org.microbean.helm.Tiller;
 
-import com.vmware.admiral.tiller.TillerFactory;
 import com.vmware.admiral.tiller.client.TillerConfig;
 import com.vmware.admiral.tiller.client.TillerConfig.Builder;
 import com.vmware.admiral.tiller.client.TillerConfig.TillerConnectionType;

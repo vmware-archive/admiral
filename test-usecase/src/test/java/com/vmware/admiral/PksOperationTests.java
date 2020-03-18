@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,13 +11,18 @@
 
 package com.vmware.admiral;
 
-import static java.text.MessageFormat.format;
-
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.assertThat;
-
 import static com.vmware.admiral.AdmiralClientSuite.createLocalhostClient;
 import static com.vmware.admiral.restmock.MockUtils.resourceToString;
+import static java.text.MessageFormat.format;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.emptyString;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.iterableWithSize;
+import static org.hamcrest.Matchers.not;
+import static org.junit.Assert.assertThat;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -26,7 +31,6 @@ import java.util.stream.StreamSupport;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-
 import org.apache.commons.lang3.StringUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;

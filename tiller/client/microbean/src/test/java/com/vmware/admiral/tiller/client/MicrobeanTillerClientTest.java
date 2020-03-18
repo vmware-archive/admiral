@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -10,7 +10,6 @@
  */
 
 package com.vmware.admiral.tiller.client;
-
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -26,16 +25,11 @@ import java.util.concurrent.TimeUnit;
 
 import io.grpc.health.v1.HealthCheckResponse.ServingStatus;
 import io.grpc.stub.StreamObserver;
-
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
 import org.microbean.helm.Tiller;
-
-import com.vmware.admiral.tiller.client.MicrobeanTillerClient;
-import com.vmware.admiral.tiller.client.TillerClientException;
-import com.vmware.admiral.tiller.client.TillerConfig;
 
 public class MicrobeanTillerClientTest {
 

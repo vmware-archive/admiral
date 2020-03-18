@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,15 +11,14 @@
 
 package com.vmware.admiral.request.composition;
 
+import static com.vmware.admiral.compute.BindingUtils.FIELD_SEPARATOR;
+import static com.vmware.admiral.compute.BindingUtils.RESOURCE;
+import static com.vmware.admiral.request.util.TestRequestStateFactory.createContainerDescription;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-
-import static com.vmware.admiral.compute.BindingUtils.FIELD_SEPARATOR;
-import static com.vmware.admiral.compute.BindingUtils.RESOURCE;
-import static com.vmware.admiral.request.util.TestRequestStateFactory.createContainerDescription;
 
 import java.util.Arrays;
 import java.util.Collection;

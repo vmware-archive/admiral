@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -19,7 +19,6 @@ import java.util.regex.Pattern;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import com.vmware.admiral.test.util.HostType;

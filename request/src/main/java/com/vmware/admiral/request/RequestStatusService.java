@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
-
 import io.swagger.annotations.ApiModelProperty;
 
 import com.vmware.admiral.common.ManagementUriParts;

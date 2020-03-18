@@ -15,7 +15,6 @@ import java.util.Objects;
 import java.util.logging.Logger;
 
 import com.google.gson.Gson;
-
 import org.apache.commons.codec.binary.Base64;
 
 import com.vmware.admiral.test.util.HostType;

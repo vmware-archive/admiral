@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,8 +11,6 @@
 
 package com.vmware.photon.controller.model.tasks;
 
-import static io.netty.util.internal.StringUtil.isNullOrEmpty;
-
 import static com.vmware.photon.controller.model.util.AssertUtil.assertTrue;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.EXPAND;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.FIXED_ITEM_NAME;
@@ -23,6 +21,7 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOp
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
 import static com.vmware.xenon.common.UriUtils.buildUri;
 import static com.vmware.xenon.common.UriUtils.buildUriPath;
+import static io.netty.util.internal.StringUtil.isNullOrEmpty;
 
 import java.net.URI;
 import java.util.ArrayList;

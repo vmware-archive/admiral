@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,10 +11,9 @@
 
 package com.vmware.photon.controller.model.resources;
 
+import static com.vmware.xenon.common.UriUtils.buildUriPath;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
-
-import static com.vmware.xenon.common.UriUtils.buildUriPath;
 
 import com.vmware.photon.controller.model.ServiceUtils;
 import com.vmware.photon.controller.model.UriPaths;

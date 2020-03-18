@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -15,8 +15,7 @@ import static com.vmware.admiral.request.utils.RequestUtils.CONTAINER_REDEPLOYME
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
-import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption
-        .SINGLE_ASSIGNMENT;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
 
 import java.util.HashMap;
 import java.util.List;
@@ -29,14 +28,12 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.log.EventLogService;
 import com.vmware.admiral.log.EventLogService.EventLogState;
 import com.vmware.admiral.log.EventLogService.EventLogState.EventLogType;
-import com.vmware.admiral.request.ContainerRedeploymentTaskService.ContainerRedeploymentTaskState
-        .SubStage;
+import com.vmware.admiral.request.ContainerRedeploymentTaskService.ContainerRedeploymentTaskState.SubStage;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
-import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription
-        .ComputeType;
+import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.TaskState.TaskStage;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,12 +11,11 @@
 
 package com.vmware.admiral;
 
+import static com.vmware.admiral.BaseProvisioningOnCoreOsIT.RegistryType.V1_SSL_SECURE;
+import static com.vmware.admiral.TestPropertiesUtil.getTestRequiredProp;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-
-import static com.vmware.admiral.BaseProvisioningOnCoreOsIT.RegistryType.V1_SSL_SECURE;
-import static com.vmware.admiral.TestPropertiesUtil.getTestRequiredProp;
 
 import java.io.IOException;
 import java.net.URI;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,10 +11,9 @@
 
 package com.vmware.admiral.closures;
 
+import static com.vmware.admiral.closures.drivers.DriverConstants.RUNTIME_JAVA_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-
-import static com.vmware.admiral.closures.drivers.DriverConstants.RUNTIME_JAVA_8;
 
 import java.io.IOException;
 import java.security.KeyManagementException;

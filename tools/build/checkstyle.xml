@@ -34,6 +34,7 @@
             <property name="ordered" value="true"/>
             <property name="separated" value="true"/>
             <property name="option" value="top"/>
+            <property name="sortStaticImportsAlphabetically" value="true"/>
         </module>
         <module name="NeedBraces"/>
         <module name="OuterTypeFilename"/>
@@ -82,11 +83,10 @@
                      value="Package name ''{0}'' must match pattern ''{1}''."/>
         </module>
         <module name="TypeName">
+            <property name="format" value="^[A-Z][a-zA-Z0-9_]*$"/>
             <message key="name.invalidPattern"
                      value="Type name ''{0}'' must match pattern ''{1}''."/>
         </module>
-
-
         <module name="Indentation">
             <property name="basicOffset" value="4"/>
             <property name="braceAdjustment" value="0"/>
@@ -96,9 +96,6 @@
             <property name="arrayInitIndent" value="4"/>
         </module>
 
-        <!-- Additional to xenon. Needed for SuppressionCommentFilter -->
-        <!-- NB: This module is removed in checkstyle 8.2 -->
-        <module name="FileContentsHolder"/>
     </module>
 
     <module name="RegexpHeader">
@@ -119,6 +116,4 @@
         <property name="message" value="Trailing whitespace"/>
     </module>
 
-    <!-- Additional to xenon -->
-    <module name="SuppressionCommentFilter"/>
 </module>

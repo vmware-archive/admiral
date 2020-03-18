@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,9 +11,8 @@
 
 package com.vmware.admiral;
 
-import static org.junit.Assert.assertNotNull;
-
 import static com.vmware.admiral.TestPropertiesUtil.getSystemOrTestProp;
+import static org.junit.Assert.assertNotNull;
 
 import java.net.HttpURLConnection;
 import java.net.URI;

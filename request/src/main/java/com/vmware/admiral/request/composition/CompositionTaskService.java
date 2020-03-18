@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -700,13 +700,16 @@ public class CompositionTaskService
             callbackFunction.accept(description);
             return;
         }
-        convertCompositeDescriptionToCompositeTemplate(this, description).thenApply(template -> {
-            BindingEvaluator.evaluateBindings(template);
-            return template;
-        }).thenAccept(template -> DeferredResult.allOf(template.components.values().stream()
-                .map(t -> new NestedState((ServiceDocument) t.data, t.children))
-                .map(n -> n.sendRequest(this, Action.PUT))
-                .collect(Collectors.toList()))).thenCompose(nothing -> this.sendWithDeferredResult(
+        convertCompositeDescriptionToCompositeTemplate(this, description)
+                .thenApply(template -> {
+                    BindingEvaluator.evaluateBindings(template);
+                    return template;
+                })
+                .thenAccept(template -> DeferredResult.allOf(template.components.values().stream()
+                        .map(t -> new NestedState((ServiceDocument) t.data, t.children))
+                        .map(n -> n.sendRequest(this, Action.PUT))
+                        .collect(Collectors.toList())))
+                .thenCompose(nothing -> this.sendWithDeferredResult(
                         Operation.createGet(uri),
                         CompositeDescriptionExpanded.class))
                 .whenComplete((result, ex) -> {
@@ -716,7 +719,6 @@ public class CompositionTaskService
                     }
                     callbackFunction.accept(result);
                 });
-
     }
 
     private void cleanResource(CompositionTaskState state) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,12 +11,11 @@
 
 package com.vmware.admiral.host;
 
+import static com.vmware.xenon.services.common.authn.BasicAuthenticationUtils.constructBasicAuth;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
-
-import static com.vmware.xenon.services.common.authn.BasicAuthenticationUtils.constructBasicAuth;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -38,7 +37,6 @@ import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;

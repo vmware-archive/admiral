@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -17,7 +17,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
 import io.netty.util.internal.StringUtil;
-
 import org.junit.Assert;
 import org.junit.Test;
 

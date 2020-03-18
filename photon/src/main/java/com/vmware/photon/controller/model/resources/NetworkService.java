@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -17,7 +17,6 @@ import java.net.URI;
 import java.util.UUID;
 
 import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
-
 import org.apache.commons.net.util.SubnetUtils;
 
 import com.vmware.photon.controller.model.ServiceUtils;

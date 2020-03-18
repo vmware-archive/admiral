@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,13 +11,12 @@
 
 package com.vmware.admiral.request.allocation.filter;
 
+import static com.vmware.admiral.request.allocation.filter.AffinityConstraint.AffinityConstraintType.HARD;
+import static com.vmware.admiral.request.allocation.filter.AffinityConstraint.AffinityConstraintType.SOFT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
-
-import static com.vmware.admiral.request.allocation.filter.AffinityConstraint.AffinityConstraintType.HARD;
-import static com.vmware.admiral.request.allocation.filter.AffinityConstraint.AffinityConstraintType.SOFT;
 
 import java.util.ArrayList;
 import java.util.Arrays;

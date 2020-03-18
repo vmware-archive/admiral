@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -20,7 +20,6 @@ import static org.junit.Assert.assertTrue;
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import javax.net.ssl.SSLContext;
 
 import org.junit.Test;

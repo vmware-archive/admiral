@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -37,15 +37,15 @@ import java.util.zip.ZipInputStream;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-
-import org.apache.http.conn.HttpClientConnectionManager;
-import org.apache.http.config.ConnectionConfig;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.*;
-import org.apache.http.entity.StringEntity;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPatch;
+import org.apache.http.config.ConnectionConfig;
+import org.apache.http.conn.HttpClientConnectionManager;
 import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 
@@ -295,8 +295,7 @@ public class AppRunner {
         if (!src.exists()) {
             src.mkdir();
         }
-        try (ZipInputStream zipInput = new ZipInputStream(new FileInputStream
-                (SRC_FILE_ZIP))) {
+        try (ZipInputStream zipInput = new ZipInputStream(new FileInputStream(SRC_FILE_ZIP))) {
             ZipEntry entry = zipInput.getNextEntry();
             while (entry != null) {
                 String fileName = entry.getName();

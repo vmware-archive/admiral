@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,15 +11,13 @@
 
 package com.vmware.admiral.test.integration;
 
-import static org.junit.Assert.assertEquals;
-
 import static com.vmware.admiral.test.integration.TestPropertiesUtil.getSystemOrTestProp;
+import static org.junit.Assert.assertEquals;
 
 import java.net.URI;
 import java.util.stream.Collectors;
 
 import com.google.common.io.Files;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

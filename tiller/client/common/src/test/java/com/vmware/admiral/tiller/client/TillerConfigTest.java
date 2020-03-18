@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -20,7 +20,6 @@ import java.util.Random;
 
 import org.junit.Test;
 
-import com.vmware.admiral.tiller.client.TillerConfig;
 import com.vmware.admiral.tiller.client.TillerConfig.TillerConnectionType;
 
 public class TillerConfigTest {

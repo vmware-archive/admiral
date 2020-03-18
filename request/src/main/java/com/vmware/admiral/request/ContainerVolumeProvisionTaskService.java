@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -456,7 +456,8 @@ public class ContainerVolumeProvisionTaskService
             retrieveContainerHostsByLinks(state, providedHostLinks, (hosts) -> {
                 List<String> disabledHosts = hosts.stream().filter((host) -> {
                     return host.powerState != PowerState.ON;
-                }).map(host -> host.address).collect(Collectors.toList());
+                })
+                        .map(host -> host.address).collect(Collectors.toList());
 
                 if (disabledHosts.isEmpty()) {
                     callback.accept(hosts);

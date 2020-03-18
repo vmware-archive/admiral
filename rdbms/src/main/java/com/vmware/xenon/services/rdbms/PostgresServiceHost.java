@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2018-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -13,7 +13,6 @@ package com.vmware.xenon.services.rdbms;
 
 import java.util.EnumSet;
 import java.util.logging.Level;
-
 import javax.sql.DataSource;
 
 import com.vmware.xenon.common.FactoryService;
