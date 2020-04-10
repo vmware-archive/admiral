@@ -1,9 +1,12 @@
 # CHANGELOG
 
-## 1.5.5-SNAPSHOT
+## 1.5.6-SNAPSHOT
+
+## 1.5.5
 
 * Fix issue causing Project admins not to be able to edit templates.
-* Fix issue authenticating against some private docker registries. 
+* Fix issue authenticating against some private docker registries.
+* Fix issue causing destroyed VCH to stay in ON state. 
 
 ## 1.5.4
 

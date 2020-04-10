@@ -17,7 +17,7 @@
     <parent>
         <groupId>com.vmware.admiral</groupId>
         <artifactId>pom-e2e</artifactId>
-        <version>1.5.5-SNAPSHOT</version>
+        <version>1.5.6-SNAPSHOT</version>
         <relativePath>../pom-e2e.xml</relativePath>
     </parent>
 

@@ -18,7 +18,7 @@
     <parent>
         <groupId>com.vmware.admiral</groupId>
         <artifactId>admiral-adapter</artifactId>
-        <version>1.5.5-SNAPSHOT</version>
+        <version>1.5.6-SNAPSHOT</version>
     </parent>
 
     <artifactId>admiral-adapter-common</artifactId>
