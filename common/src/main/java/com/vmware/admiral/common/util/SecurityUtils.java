@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017-2020 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -28,14 +28,22 @@ public class SecurityUtils {
     public static final String CERTIFICATE_STORE_PASSWORD = "certificate.store.password";
 
     /**
-     * Unless explicitly enabled, disable TLS v1.0 by default due to the BEAST vulnerability.
-     * (see https://en.wikipedia.org/wiki/Transport_Layer_Security#BEAST_attack)
+     * Unless explicitly enabled, disable TLS v1.0 and v1.1 by default <br />
+     * - TLS v1.0 due to the BEAST vulnerability
+     * (see https://en.wikipedia.org/wiki/Transport_Layer_Security#BEAST_attack) <br />
+     * - TLS v1.1 Bug 2573012
      */
     public static void ensureTlsDisabledAlgorithms() {
         boolean enableTlsv1 = Boolean.getBoolean("com.vmware.admiral.enable.tlsv1");
         if (!enableTlsv1) {
             String disabledAlgorithms = Security.getProperty("jdk.tls.disabledAlgorithms");
             disabledAlgorithms = "TLSv1, " + disabledAlgorithms;
+            Security.setProperty("jdk.tls.disabledAlgorithms", disabledAlgorithms);
+        }
+        boolean enableTlsv1_1 = Boolean.getBoolean("com.vmware.admiral.enable.tlsv1.1");
+        if (!enableTlsv1_1) {
+            String disabledAlgorithms = Security.getProperty("jdk.tls.disabledAlgorithms");
+            disabledAlgorithms = "TLSv1.1, " + disabledAlgorithms;
             Security.setProperty("jdk.tls.disabledAlgorithms", disabledAlgorithms);
         }
     }
