@@ -43,7 +43,7 @@
     "ngx-cookie": "4.0.2",
     "ngx-infinite-scroll": "6.0.1",
     "ngx-markdown": "^1.5.1",
-    "node-sass": "^4.9.3",
+    "node-sass": "^4.13.1",
     "prismjs": "^1.6.0",
     "rxjs": "6.3.3",
     "ts-helpers": "1.1.1",
