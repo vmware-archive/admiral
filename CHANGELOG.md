@@ -1,6 +1,8 @@
 # CHANGELOG
 
-## 1.5.6-SNAPSHOT
+## 1.5.6
+
+* TLS v1.1 is disabled
 
 ## 1.5.5
 

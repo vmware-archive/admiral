@@ -17,7 +17,7 @@
     <parent>
         <groupId>com.vmware.admiral</groupId>
         <artifactId>admiral-tiller</artifactId>
-        <version>1.5.6-SNAPSHOT</version>
+        <version>1.5.6</version>
     </parent>
 
     <artifactId>admiral-tiller-test-integration</artifactId>
