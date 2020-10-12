@@ -107,7 +107,7 @@
         <swagger.mvn.plugin.version>3.1.5</swagger.mvn.plugin.version>
 
         <!-- TEST -->
-        <junit.version>4.12</junit.version>
+        <junit.version>4.13.1</junit.version>
         <mockito.version>2.19.0</mockito.version>
         <jacoco.version>0.7.5.201505241946</jacoco.version>
 
