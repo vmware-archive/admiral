@@ -23,7 +23,7 @@
 
     <properties>
         <!-- Avoid platform dependent build warnings: set encoding to UTF8 -->
-        <junit.version>4.12</junit.version>
+        <junit.version>4.13.1</junit.version>
     </properties>
 
     <artifactId>test-e2e</artifactId>
