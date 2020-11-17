@@ -23,7 +23,7 @@
 
     <properties>
         <!-- Avoid platform dependent build warnings: set encoding to UTF8 -->
-        <junit.version>4.12</junit.version>
+        <junit.version>4.13.1</junit.version>
     </properties>
 
     <artifactId>test-e2e</artifactId>
@@ -54,7 +54,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>23.0</version><!--$NO-MVN-MAN-VER$-->
+            <version>24.1.1</version><!--$NO-MVN-MAN-VER$-->
         </dependency>
     </dependencies>
 
