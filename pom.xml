@@ -113,7 +113,6 @@
 
         <!-- rdbms -->
         <hikaricp.version>3.0.0</hikaricp.version>
-        <junit.version>4.12</junit.version>
         <postgres.version>42.2.2</postgres.version>
         <assertj.version>3.8.0</assertj.version>
         <liquibase.version>3.5.5</liquibase.version>
