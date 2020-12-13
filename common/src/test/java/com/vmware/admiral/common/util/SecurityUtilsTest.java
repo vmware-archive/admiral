@@ -75,6 +75,9 @@ public class SecurityUtilsTest {
         assertNotNull(disabledAlgorithms);
         assertFalse(disabledAlgorithms.contains("TLSv1,"));
         assertFalse(disabledAlgorithms.contains("TLSv1.1,"));
+
+        System.setProperty("com.vmware.admiral.enable.tlsv1", Boolean.FALSE.toString());
+        System.setProperty("com.vmware.admiral.enable.tlsv1.1", Boolean.FALSE.toString());
     }
 
     @Test
@@ -171,6 +174,10 @@ public class SecurityUtilsTest {
         securityProperties = System.getProperty(SECURITY_PROPERTIES);
         assertNotNull(securityProperties);
         assertEquals(securityPropertiesValue, securityProperties);
+
+        System.clearProperty(JAVAX_NET_SSL_TRUST_STORE);
+        System.clearProperty(JAVAX_NET_SSL_TRUST_STORE_PASSWORD);
+        System.clearProperty(SECURITY_PROPERTIES);
     }
 
 }
