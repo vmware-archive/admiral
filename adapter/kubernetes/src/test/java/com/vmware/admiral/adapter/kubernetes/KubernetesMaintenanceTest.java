@@ -76,6 +76,7 @@ public class KubernetesMaintenanceTest extends ComputeBaseTest {
                 .requestOnInspect.operationTypeId);
         assertEquals(podState.documentSelfLink, MockKubernetesAdapterService.requestOnInspect
                 .resourceReference.getPath());
+        MockKubernetesAdapterService.requestOnInspect = null;
     }
 
 }
