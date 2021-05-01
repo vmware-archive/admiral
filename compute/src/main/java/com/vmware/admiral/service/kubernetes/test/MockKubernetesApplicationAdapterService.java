@@ -312,5 +312,6 @@ public class MockKubernetesApplicationAdapterService extends BaseMockAdapterServ
 
     public static void clear() {
         PROVISIONED_COMPONENTS.clear();
+        CREATED_DEPLOYMENT_STATES.clear();
     }
 }
