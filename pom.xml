@@ -87,7 +87,7 @@
         <xenon.group>com.vmware.xenon</xenon.group>
 
         <!-- other -->
-        <bouncycastle.version>1.61</bouncycastle.version>
+        <bouncycastle.version>1.67</bouncycastle.version>
         <jackson.version>2.10.0</jackson.version>
         <httpclient.version>4.5.5</httpclient.version>
         <guava.version>27.1-jre</guava.version>
